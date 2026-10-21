@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07351");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07382");
 
 
 /* css/base.css */
@@ -2623,6 +2623,18 @@ body{
 }
 .searchText::placeholder{ opacity: .65; }
 .searchText::-webkit-search-cancel-button{ display: none; }
+/* Pole szukania jak w oknie „Przenieś do” (decyzja 2026-10-21): lupa w polu
+   po lewej, pełna szerokość, wysokość zwykłego pola (40 px). */
+.searchBox--field{ height: 40px; box-sizing: border-box; padding: 0 6px 0 12px; gap: 8px; width: 100%; }
+.searchBox--field > svg, .searchBox--field > .ico{ flex: 0 0 auto; width: 16px; height: 16px; opacity: .6; }
+.searchBox--field .searchText{ height: 100%; padding: 0 2px; }
+@media (max-width: 600px), (hover: none) and (pointer: coarse){
+  .searchBox--field .searchText{ font-size: 16px; } /* iOS nie przybliża */
+}
+.searchClear{ appearance: none; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; opacity: .7; cursor: pointer; }
+.searchClear:hover{ opacity: 1; background: rgba(255,255,255,.08); }
+.searchClear svg{ width: 16px; height: 16px; }
+.searchClear[hidden]{ display: none; }
 
 
 /* ===== Dymek komunikatu po akcji (shared/js/core/toast.js) ===== */

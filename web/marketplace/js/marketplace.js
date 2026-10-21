@@ -1,19 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T07351";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T07351";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T07351";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T07351";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-21T07351";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T07351";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T07351";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T07351";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T07351";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07351";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T07351";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T07351";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T07351";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T07351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T07382";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T07382";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T07382";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T07382";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-21T07382";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T07382";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T07382";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T07382";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T07382";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07382";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T07382";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T07382";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T07382";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T07382";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -65,6 +65,7 @@ const els = {
   browseInfo:  document.getElementById("browseInfo"),
   searchInput: document.getElementById("searchInput"),
   btnSearchFocus: document.getElementById("btnSearchFocus"),
+  btnSearchClear: document.getElementById("btnSearchClear"),
   langFilter: document.getElementById("langFilter"),
   sortSelect: document.getElementById("sortSelect"),
   loadMoreWrap:document.getElementById("loadMoreWrap"),
@@ -167,6 +168,7 @@ function refreshBrowseSelectLabels() {
 
 function syncSearchButton() {
   const active = !!String(els.searchInput?.value || "").trim();
+  if (els.btnSearchClear) els.btnSearchClear.hidden = !String(els.searchInput?.value || "");
   if (els.btnSearchFocus) {
     els.btnSearchFocus.innerHTML = icon(active ? "close" : "search");
     els.btnSearchFocus.classList.toggle("is-active", active);
@@ -203,11 +205,21 @@ function initBrowseUiSelects() {
       title: t("marketplace.searchLabel"),
       value: currentSearch,
       placeholder: t("marketplace.searchPlaceholder"),
+      text: "",
+      okText: t("common.modal.alertOk"),
+      search: true,
     });
     if (value === null) return;
     els.searchInput.value = value;
     syncSearchButton();
     els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  els.btnSearchClear?.addEventListener("click", (e) => {
+    e.preventDefault();
+    els.searchInput.value = "";
+    syncSearchButton();
+    els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    els.searchInput.focus();
   });
   langFilterUiSelect = initUiSelect(els.langFilter, {
     options: langFilterOptions(),

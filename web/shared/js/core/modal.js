@@ -1,6 +1,6 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-21T07351";
-import { t } from "../../translation/translation.js?v=v2026-10-21T07351";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-21T07351";
+import { icon, iconText } from "./icons.js?v=v2026-10-21T07382";
+import { t } from "../../translation/translation.js?v=v2026-10-21T07382";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-21T07382";
 
 let modalSeq = 0;
 
@@ -410,13 +410,23 @@ export function promptModal({
   selectAll = false,
   validate = null,
   onSubmit = null,
+  search = false,
 } = {}) {
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "inp uni-inp";
+  // search: pole jak w oknie „Przenieś do” menedżera bazy (lupa w polu).
+  input.className = search ? "searchText uni-inp" : "inp uni-inp";
   input.value = value;
   input.placeholder = placeholder;
   if (maxLength) input.maxLength = maxLength;
+  let body = input;
+  if (search) {
+    input.setAttribute("enterkeyhint", "search");
+    body = document.createElement("label");
+    body.className = "searchBox searchBox--field";
+    body.innerHTML = icon("search");
+    body.append(input);
+  }
 
   // validate(value) -> tekst błędu albo nic; onSubmit(value) -> zapis,
   // zwraca tekst błędu (okno zostaje) albo nic (okno się zamyka).
@@ -433,7 +443,7 @@ export function promptModal({
     okText: okText ?? modalText("common.modal.promptOk", "Zapisz"),
     cancelText: cancelText ?? modalText("common.modal.promptCancel", "Anuluj"),
     showCancel: true,
-    body: input,
+    body,
     initialFocus: input,
     modalClass: "modal--narrow",
     // telefon / tablet dotykowy: roletka od dołu dopasowana do treści

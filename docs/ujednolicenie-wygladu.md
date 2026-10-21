@@ -221,6 +221,13 @@ Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon)
 - **Control — krok Urządzenia:** mniej przycisków, ładniejsze statusy,
   przyciski równej szerokości w siatce (jak inne siatki Control).
 - **Wdrożenie na `main`:** użytkownik zezwolił; dalsze uwagi przekaże później.
+- **Pola wyszukiwania (2026-10-21):** wszędzie jak w oknie „Przenieś do”
+  menedżera bazy (E22): `.searchBox.searchBox--field` — lupa w polu po
+  lewej, X w polu czyści frazę, filtrowanie na żywo; bez osobnego przycisku
+  lupy obok pola (zastępuje wcześniejszą zasadę E20 „lupa po prawej, bez X
+  w polu”). Listy wierszy: pole nad listą także na telefonie (bez okienka).
+  Dolny pasek Gier/Baz/Logo i Społeczność na telefonie: lupa otwiera okno
+  z takim samym polem i „OK”.
 
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 

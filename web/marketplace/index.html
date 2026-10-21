@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T07351"/>
+  <meta name="app-version" content="v2026-10-21T07382"/>
 
 
   <meta charset="UTF-8"/>
@@ -27,15 +27,15 @@
   <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
 
   <base href="/"/>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07351"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07351"/>
-  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-21T07351"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07382"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07382"/>
+  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-21T07382"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07351" defer></script>
-  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-21T07351" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07351" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07382" defer></script>
+  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-21T07382" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07382" defer></script>
 
 </head>
 <body class="mkt-body skel-body">
@@ -72,14 +72,18 @@
         </div>
       </div>
 
-      <div class="card mkt-tools-card">
+      <div class="card mkt-games-card">
       <div class="mkt-search-bar">
         <div class="mkt-search-field">
-          <input class="inp mkt-search-input" id="searchInput" type="text" enterkeyhint="search"
+          <label class="searchBox searchBox--field mkt-search-box">
+          <i class="ico" data-icon="search" aria-hidden="true"></i>
+          <input class="searchText mkt-search-input" id="searchInput" type="text" enterkeyhint="search"
             data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier"
             data-i18n-placeholder="marketplace.searchPlaceholder"
             placeholder="Szukaj gry…"
             autocomplete="off"/>
+          <button class="searchClear" id="btnSearchClear" type="button" hidden data-i18n-title="marketplace.searchClear" data-i18n-aria-label="marketplace.searchClear"><i class="ico" data-icon="close" aria-hidden="true"></i></button>
+          </label>
           <button class="btn mkt-search-button" id="btnSearchFocus" type="button" data-i18n-title="marketplace.searchLabel" data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier" title="Szukaj gier"><i class="ico" data-icon="search" aria-hidden="true"></i></button>
         </div>
         <div class="ui-select mkt-filter" id="langFilter">
@@ -100,10 +104,6 @@
           <div class="ui-select-menu" role="listbox"></div>
         </div>
       </div>
-
-      </div>
-
-      <div class="card mkt-games-card">
       <div class="mkt-grid" id="browseGrid" data-skel-step></div>
       <div class="mkt-load-more-wrap" id="loadMoreWrap" hidden>
         <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore" data-i18n-icon="arrow-down">Pokaż więcej</button>
@@ -231,7 +231,7 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07351"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07382"></script>
 
 </body>
 </html>

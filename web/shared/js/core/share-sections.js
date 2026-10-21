@@ -6,10 +6,9 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T07351";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T07351";
-import { promptModal } from "./modal.js?v=v2026-10-21T07351";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07351";
+import { t } from "../../translation/translation.js?v=v2026-10-21T07382";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T07382";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07382";
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -123,9 +122,10 @@ export function attachListTools(heading, list, key) {
   const empty = document.createElement("div");
   empty.className = "shareEmpty listToolsEmpty empty-state";
   empty.hidden = true;
-  // Komputer: pole szukania nad listą (wpisywanie na żywo); telefon: okno.
+  // Pole szukania nad listą (wpisywanie na żywo) — na komputerze i telefonie,
+  // jak w oknie „Przenieś do” menedżera bazy (decyzja 2026-10-21).
   const inline = document.createElement("div");
-  inline.className = "searchBox listToolsInline";
+  inline.className = "searchBox searchBox--field listToolsInline";
   inline.hidden = true;
   inline.innerHTML = icon("search");
   const inlineInput = document.createElement("input");
@@ -135,7 +135,7 @@ export function attachListTools(heading, list, key) {
   inlineInput.autocomplete = "off";
   const inlineClear = document.createElement("button");
   inlineClear.type = "button";
-  inlineClear.className = "listToolsInlineClear";
+  inlineClear.className = "searchClear listToolsInlineClear";
   inlineClear.innerHTML = icon("close");
   inline.append(inlineInput, inlineClear);
   list.before(inline);
@@ -145,7 +145,6 @@ export function attachListTools(heading, list, key) {
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeInline(); searchBtn.focus(); }
   });
   inlineClear.addEventListener("click", (e) => { e.stopPropagation(); closeInline(); });
-  const phoneMq = window.matchMedia("(max-width: 600px)");
 
   const sortOptions = () => [
     { value: "", label: t("common.sort.default") },
@@ -210,10 +209,9 @@ export function attachListTools(heading, list, key) {
       const showEmpty = rows.length > 0 && visible === 0;
       if (showEmpty && empty.parentElement !== list) list.append(empty);
       empty.hidden = !showEmpty;
-      if (state.q && phoneMq.matches) inline.hidden = true;
-      if (state.q && !phoneMq.matches && inline.hidden) { inline.hidden = false; inlineInput.value = state.q; }
+      if (state.q && inline.hidden) { inline.hidden = false; inlineInput.value = state.q; }
       if (list.hidden || rows.length === 0) inline.hidden = true;
-      searchBtn.innerHTML = icon(state.q && phoneMq.matches ? "close" : "search");
+      searchBtn.innerHTML = icon("search");
       searchBtn.classList.toggle("is-active", !!state.q || !inline.hidden);
       searchBtn.setAttribute("aria-expanded", String(!inline.hidden));
       sortEl.classList.toggle("is-active", !!state.sort);
@@ -226,24 +224,11 @@ export function attachListTools(heading, list, key) {
 
   searchBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    if (!phoneMq.matches) {
-      if (!inline.hidden) { closeInline(); return; }
-      inline.hidden = false;
-      inlineInput.value = state.q;
-      apply();
-      inlineInput.focus();
-      return;
-    }
-    if (state.q) { state.q = ""; inline.hidden = true; inlineInput.value = ""; apply(); return; }
-    const value = await promptModal({
-      title: t("common.searchByName"),
-      value: state.q,
-      placeholder: t("common.searchByName"),
-      onReady: ({ overlay, okBtn }) => overlay.querySelector(".uni-inp")?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
-      }),
-    });
-    if (value !== null) { state.q = String(value).trim(); apply(); }
+    if (!inline.hidden) { closeInline(); return; }
+    inline.hidden = false;
+    inlineInput.value = state.q;
+    apply();
+    inlineInput.focus();
   });
   tools.addEventListener("click", (e) => e.stopPropagation());
   new MutationObserver(apply).observe(list, { childList: true, attributes: true, attributeFilter: ["hidden"] });
