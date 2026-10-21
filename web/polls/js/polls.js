@@ -978,9 +978,14 @@ function renderBar() {
   show(btnAbort, !prepared && (st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED));
 
   if (btnOpenPoll) {
-    btnOpenPoll.textContent = nInvite > 0
+    // ikona + etykieta (na telefonie sama ikona); textContent kasował oba
+    const label = nInvite > 0
       ? t("polls.actions.openAndInvite", { n: nInvite })
       : t("polls.actions.openPoll");
+    btnOpenPoll.innerHTML = `${icon("play")}<span class="pollActionLabel"></span>`;
+    btnOpenPoll.querySelector(".pollActionLabel").textContent = label;
+    btnOpenPoll.title = label;
+    btnOpenPoll.setAttribute("aria-label", label);
     const ok = chk?.poll_open?.ok;
     btnOpenPoll.disabled = busy || !ok;
     if (st === STATUS.DRAFT && chk && !ok) hint = chk.poll_open.reason;

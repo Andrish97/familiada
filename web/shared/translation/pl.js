@@ -4045,6 +4045,7 @@ const pl = {
       confirmClear: "Usunąć wszystko ze sceny?",
       ui: {
         deleteSelection: "Usuń zaznaczone — Delete (Mac: Fn + Backspace)",
+        ctxEmpty: "Wybierz narzędzie albo zaznacz obiekt, żeby zobaczyć jego ustawienia.",
         strokeLabel: "Grubość",
         styleLabel: "Styl",
         colorLabel: "Kolor",

@@ -1091,14 +1091,15 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
       await seedPrepared(page, gameId, [["Stare 1", [["S1"]]], ["Stare 2", [["S2"]]]]);
       await openEditor(page, gameId);
 
-      // druga odpowiedź drugiego pytania pusta -> CHECK answers_text_len
+      // drugie pytanie z pustą treścią -> CHECK questions_text_len (puste
+      // odpowiedzi od E21/406 import po prostu pomija, więc nie wywołują błędu)
       const err = await page.evaluate(async (id) => {
         const { error } = await window.__sbClient.rpc("game_import_content", {
           p_game_id: id,
           p_name: "Nie zmieniaj nazwy",
           p_questions: [
             { text: "Nowe 1", answers: [{ text: "N1", points: 10 }] },
-            { text: "Nowe 2", answers: [{ text: "N2", points: 10 }, { text: "", points: 5 }] },
+            { text: "", answers: [{ text: "N2", points: 10 }] },
           ],
         });
         return error?.message || null;

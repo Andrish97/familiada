@@ -132,8 +132,10 @@ podliczania jako stan bieżącej operacji.
   jako ikony z dymkiem. Podpowiedzi podliczania skrócone (PL/EN/UK) do
   działania i progu 4% (usuwanie znaków pokazuje licznik pustych, limit 17
   pilnuje pole).
-- **Edytory logo (uwaga użytkownika 2026-10-20):** ustawienia narzędzia
-  rysunku w linii narzędzi (puste znikają — bez pustego pasa); sekcja edytora
+- **Edytory logo (uwaga użytkownika 2026-10-20):** wiersz ustawień narzędzia
+  rysunku stały (płótno nie skacze przy zmianie narzędzia — w linii narzędzi
+  skakało o 23–46 px i psuło klikanie); gdy narzędzie nie ma ustawień,
+  zamiast pustego pasa podpowiedź „Wybierz narzędzie albo zaznacz obiekt…”; sekcja edytora
   kurczy się nad stopką (edytor tekstu wypychał stopkę); jeden styl etykiet
   (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); podgląd „jak na
   wyświetlaczu” w edytorze tekstu = ta sama karta co w edytorze obrazu

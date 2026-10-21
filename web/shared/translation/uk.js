@@ -4142,6 +4142,7 @@ const uk = {
       confirmClear: "Прибрати все зі сцени?",
       ui: {
         deleteSelection: "Видалити вибрані — Delete (Mac: Fn + Backspace)",
+        ctxEmpty: "Вибери інструмент або виділи об’єкт, щоб побачити його налаштування.",
         strokeLabel: "Товщина",
         styleLabel: "Стиль",
         colorLabel: "Колір",

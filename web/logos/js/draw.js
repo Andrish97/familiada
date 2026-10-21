@@ -791,6 +791,7 @@ export function initDrawEditor(ctx) {
     lineStyleSel?.destroy();
     lineStyleSel = null;
     if (!toolCtx) return;
+    toolCtx.dataset.empty = T("ctxEmpty"); // podpowiedź w pustym wierszu ustawień (CSS :empty)
     const active = canvas?.getActiveObject();
 
     if (tool === TOOL.SELECT && active && !isTextObj(active)) return renderShapeObjectSettings();

@@ -236,6 +236,11 @@
 /* Przyciski układają się w jednym rzędzie, a na wąskim ekranie mogą zejść niżej. */
 .pollLinkActions .btn{ white-space: normal; flex: 1 1 105px; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
+/* telefon: ikona nad napisem -- najdłuższe słowo („wyświetlaczu”) mieści się
+   w jednej z trzech równych kolumn bez ucinania */
+@media (max-width: 600px){
+  .pollLinkActions .btn{ flex-direction: column; padding: 6px; gap: 3px; text-align: center; }
+}
 
 /* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”
    z podpisem; kliknięcie powiększa go w oknie. Prawie cała szerokość

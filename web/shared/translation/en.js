@@ -4145,6 +4145,7 @@ const en = {
       confirmClear: "Remove everything from the canvas?",
       ui: {
         deleteSelection: "Delete selected — Delete (Mac: Fn + Backspace)",
+        ctxEmpty: "Pick a tool or select an object to see its settings.",
         strokeLabel: "Width",
         styleLabel: "Style",
         colorLabel: "Color",
