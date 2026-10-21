@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-21T06422";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06422";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06422";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06422";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06422";
-import { normalizeText } from "./data/listing.js?v=v2026-10-21T06422";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T06422";
+import * as ops from "./ops.js?v=v2026-10-21T06490";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06490";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06490";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06490";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06490";
+import { normalizeText } from "./data/listing.js?v=v2026-10-21T06490";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T06490";
 
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;

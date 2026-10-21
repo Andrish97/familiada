@@ -3,12 +3,12 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T06422";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T06422";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T06422";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06422";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T06422";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T06422";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T06490";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T06490";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T06490";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06490";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T06490";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T06490";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
