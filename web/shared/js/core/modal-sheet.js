@@ -9,8 +9,8 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T13373";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-21T13373";
+import { t } from "../../translation/translation.js?v=v2026-10-21T13380";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-21T13380";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -19,7 +19,7 @@ import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-21T13373";
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-21T13373"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-21T13380"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -124,7 +124,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-21T13373").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-21T13380").then((module) => module.openContactModal());
 
     }, 0);
     return;
