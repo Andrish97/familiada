@@ -7,6 +7,8 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 
 ## Decyzje (2026-10-21, 01:00 UTC)
 
+- **Użytkownik (2026-10-21, ok. 07:40 UTC):** pracować bez zatrzymywania aż do ukończenia całego manuala (PL/EN/UK), ale **nie publikować** (bez pushu na `main`) — użytkownik najpierw przeczyta i obejrzy nowy manual (zrzuty / podgląd z brancha).
+
 - **Użytkownik (2026-10-21):** manual piszemy całkowicie od nowa, ze zmienionym wyglądem strony — rozdziały i podrozdziały zamiast dawnych zakładek; stary manual nie jest poprawiany. Wykonanie: treść z `docs/podrecznik/*.md` (generator `scripts/manual/build-content.mjs` → `web/manual/content/{pl,en,uk}.js`), adres `?ch=N#s-N-M`, nazwa w UI „Podręcznik”.
 
 - Osobny plik `PROGRESS-E13.md`, bo `PROGRESS.md` prowadzi równolegle sesja E21 (jej budziki 02:45 i 04:45 UTC) — wspólny plik groziłby konfliktami.
