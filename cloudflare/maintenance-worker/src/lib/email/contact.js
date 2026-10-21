@@ -6,6 +6,13 @@ import { buildContactEmail } from "./contact-email.js";
 import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
 import { htmlToPlainTextPreview } from "./html-to-text.js";
 import { normalizeLang } from "../core/utils.js";
+import { sha256Hex, clientIp, claimSlots } from "../core/rate-limit.js";
+
+// Formularz kontaktu (okno 1 h): na adres IP i łącznie dla całej strony.
+// Limit na adres e-mail jest w bazie (save_form_message, rate_limited_email).
+const SUBMIT_WINDOW_S = 3600;
+export const SUBMIT_MAX_PER_IP = 5;
+export const SUBMIT_MAX_GLOBAL = 100;
 
 export async function handleContactSubmit(request, env) {
   const body = await readJsonOr400(request);
@@ -13,6 +20,12 @@ export async function handleContactSubmit(request, env) {
   if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
 
   const { email, subject, message, lang = "pl", attachments: formAttachments = [] } = body;
+
+  const allowed = await claimSlots(env, [
+    { key: `contact_submit_ip:${await sha256Hex(clientIp(request))}`, max: SUBMIT_MAX_PER_IP, windowS: SUBMIT_WINDOW_S },
+    { key: "contact_submit_global", max: SUBMIT_MAX_GLOBAL, windowS: SUBMIT_WINDOW_S },
+  ]);
+  if (!allowed) return json({ ok: false, error: "rate_limited" }, 429);
 
   const rpc = await supabaseRpc(env, "save_form_message", {
     p_email:   String(email   || "").trim().toLowerCase(),
@@ -114,11 +127,6 @@ export async function handleContactSubmit(request, env) {
 const APPEND_WINDOW_S = 3600;
 const APPEND_MAX_PER_EMAIL = 5;
 const APPEND_MAX_PER_IP = 20;
-
-async function sha256Hex(text) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 async function claimAppendSlot(env, key, max) {
   const count = Number(await env.MAINT_KV.get(key)) || 0;
