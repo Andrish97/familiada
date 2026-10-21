@@ -667,6 +667,7 @@ const uk = {
       close: "Готово",
     },
     shareModal: {
+      hint: "Введіть ім'я або e-mail чи виберіть друзів. Дозвіл обирається внизу вікна.",
       title: "Поділитися базою",
       placeholder: "Ім'я користувача або e-mail...",
       roleEditor: "Може редагувати",
@@ -4996,6 +4997,9 @@ const uk = {
       sectionFriends: "Друзі, з якими можна поділитися",
       sectionShared: "Надано доступ у цій сесії",
       shareSelected: "Поділитися з вибраними",
+      shareSelectedN: "Поділитися з вибраними ({n})",
+      shareSelectedShortN: "Поділитися ({n})",
+      hint: "Введіть ім'я або e-mail чи виберіть друзів.",
       recipientKind: { friend: "друг", account: "має акаунт", mail: "пошта" },
       noneShared: "Не надано.",
       noSubs: "Немає підписників.",

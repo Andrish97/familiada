@@ -680,6 +680,7 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",
@@ -4710,6 +4711,9 @@ const pl = {
       sectionFriends: "Znajomi, którym możesz udostępnić",
       sectionShared: "Udostępnione w tej sesji",
       shareSelected: "Udostępnij zaznaczonym",
+      shareSelectedN: "Udostępnij zaznaczonym ({n})",
+      shareSelectedShortN: "Udostępnij ({n})",
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych.",
       recipientKind: { friend: "znajomy", account: "ma konto", mail: "mail" },
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",

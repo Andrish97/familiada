@@ -56,7 +56,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShare(page, baseId);
     const friend = page.locator(`#baseShareFriends [data-id="${recipientId}"]`);
     await friend.locator('input[type="checkbox"]').check();
-    await page.locator("#baseShareFriendsRole button").click(); // editor -> viewer
+    await page.locator("#shareRole button").click(); // editor -> viewer (jedno uprawnienie w stopce)
     await page.locator("#btnBaseShareFriends").click();
     const sharedRow = page.locator("#shareSectionsHost .shareRow");
     await expect(sharedRow).toHaveCount(1);

@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07131");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07184");
 
 
 /* css/base.css */
@@ -1169,7 +1169,7 @@ main:has(> .footer){
     .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot) {
         flex-wrap: nowrap;
     }
-    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup) {
         margin-top: 0 !important;
     }
     /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
@@ -2450,6 +2450,12 @@ body{
 .empty-state a{ color:var(--gold); }
 .empty-state--tile{ width:auto; min-height:130px; border-radius:18px; }
 .empty-state[hidden]{ display:none; }
+/* Okna udostępniania (Baza, urządzenie): pole adresu z przyciskiem w jednym wierszu. */
+.baseShareLookup{ display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 10px; }
+.baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
+.baseShareLookup .btn{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
+/* „Udostępnij zaznaczonym (n)”: na telefonie krótko „Udostępnij (n)”. */
+.shareSelectedShort{ display:none; }
 
 /* Wysyłanie kopii: wspólny modal i sekcje w stylu udostępniania Baz/Control. */
 .resource-send-modal{
@@ -2883,7 +2889,6 @@ body{
 .shareActionTimer .ico{ width: 18px; height: 18px; }
 .shareActionTimer[hidden]{ display: none; }
 .shareRow.is-cooling-down{ opacity: .5; filter: grayscale(1); }
-.shareSectionActions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .shareCountdown{ flex: 0 0 auto; min-width: 38px; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; text-align: center; color: var(--gold); }
 .shareCountdown[hidden]{ display: none; }
 /* Aktywny licznik w wierszu: wszystkie przyciski wiersza nieco wyższe, przycisk
@@ -2984,8 +2989,8 @@ button.rowsSectionHead{ cursor: pointer; }
    naturalnej wysokości. */
 #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
 #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"],
-#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--friends,
-#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--shared {
+#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--friends,
+#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--shared {
   min-height: 180px;
   box-sizing: border-box;
 }
@@ -3018,13 +3023,15 @@ button.rowsSectionHead{ cursor: pointer; }
     margin: 0;
   }
   .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
-  .baseShareLookup .btn .only-desktop,
-  .baseShareFooter .btn .only-desktop { display: none !important; }
+  .baseShareLookup .btn .only-desktop { display: none !important; }
+  .shareSelectedFull { display: none; }
+  .shareSelectedShort { display: inline; }
 
   /* Udostępnianie bazy: formularz ma własny wiersz, a obie listy są
      jednocześnie widoczne i dzielą pozostałą wysokość arkusza. */
   #shareOverlay.sheet-active .shareModal { overflow: hidden; }
-  #shareOverlay.sheet-active .sheet-modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .sheet-modal-body,
+  #shareOverlay.sheet-active .uni-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0; }
   #shareOverlay.sheet-active .baseShareSections {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
@@ -3052,6 +3059,14 @@ button.rowsSectionHead{ cursor: pointer; }
      wiersze; przewijają się wyłącznie listy znajomych i udostępnionych. */
   #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
   #shareDeviceOverlay.sheet-active .sheet-modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .uni-body {
+    margin-top: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
     flex: 1 1 auto;
@@ -3059,7 +3074,7 @@ button.rowsSectionHead{ cursor: pointer; }
     gap: 8px;
     overflow: hidden;
   }
-  #shareDeviceOverlay.sheet-active .sheet-modal-body > .shareSection {
+  #shareDeviceOverlay.sheet-active .uni-body > .shareSection {
     display: flex;
     flex-direction: column;
     min-height: 0;

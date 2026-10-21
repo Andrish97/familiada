@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T07131"/>
+  <meta name="app-version" content="v2026-10-21T07184"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,17 +15,17 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07131"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07131"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07184"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07184"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07131"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-21T07131"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07184"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-21T07184"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-21T07131" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07131" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07131" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-21T07184" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07184" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07184" defer></script>
 
 </head>
 
@@ -117,32 +117,37 @@
 
     <!-- Modal: udostępnienia -->
     <div class="overlay modal--sheet" id="shareOverlay" style="display:none;">
-      <div class="modal shareModal" data-sheet-local-actions>
-        <div class="mHead">
-          <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
+      <div class="modal uni-modal shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle" data-sheet-local-actions>
+        <div class="uni-head">
+          <div class="mTitle" id="shareModalTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
-
-        <div class="baseShareSections">
-          <section class="shareSection" data-section="lookup">
-            <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
-            <div class="baseShareLookup">
-              <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
-              <div id="shareRole"></div>
-              <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n-title="baseSharePanel.share" data-i18n-aria-label="baseSharePanel.share" aria-label="Udostępnij">
-                <i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="baseSharePanel.share">Udostępnij</span>
-              </button>
-            </div>
-          </section>
-          <section class="shareSection" data-section="friends">
-            <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2><div id="baseShareBulkActions"></div></div>
-            <div id="baseShareFriends" class="shareList shareList--scroll"></div>
-            <div class="baseShareFooter"><div id="baseShareFriendsRole"></div><button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</span></button></div>
-          </section>
-          <section class="shareSection" data-section="shared">
-            <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
-            <div id="shareSectionsHost" class="shareList shareList--scroll"></div>
-          </section>
+        <div class="uni-body">
+          <div class="uni-hint" data-i18n="bases.shareModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.</div>
+          <div class="baseShareSections">
+            <section class="shareSection" data-section="lookup">
+              <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
+              <div class="baseShareLookup">
+                <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
+                <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n-title="baseSharePanel.share" data-i18n-aria-label="baseSharePanel.share" aria-label="Udostępnij">
+                  <i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="baseSharePanel.share">Udostępnij</span>
+                </button>
+              </div>
+            </section>
+            <section class="shareSection" data-section="friends">
+              <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2><div id="baseShareBulkActions"></div></div>
+              <div id="baseShareFriends" class="shareList shareList--scroll"></div>
+            </section>
+            <section class="shareSection" data-section="shared">
+              <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
+              <div id="shareSectionsHost" class="shareList shareList--scroll"></div>
+            </section>
+          </div>
+        </div>
+        <div class="uni-foot modal-actions">
+          <div id="shareRole" class="baseShareRoleSlot"></div>
+          <button class="btn sm" id="btnShareCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="baseShareFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="baseShareFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
         </div>
       </div>
     </div>
@@ -192,7 +197,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07131"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07184"></script>
 
 </body>
 </html>

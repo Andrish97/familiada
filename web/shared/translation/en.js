@@ -672,6 +672,7 @@ const en = {
       close: "Done",
     },
     shareModal: {
+      hint: "Enter a username or e-mail, or select friends. Choose the permission at the bottom.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",
@@ -5000,6 +5001,9 @@ const en = {
       sectionFriends: "Friends you can share with",
       sectionShared: "Shared in this session",
       shareSelected: "Share with selected",
+      shareSelectedN: "Share with selected ({n})",
+      shareSelectedShortN: "Share ({n})",
+      hint: "Enter a username or e-mail, or select friends.",
       recipientKind: { friend: "friend", account: "has an account", mail: "email" },
       noneShared: "Not shared.",
       noSubs: "No subscribers.",

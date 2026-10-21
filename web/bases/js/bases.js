@@ -1,31 +1,31 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T07131";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T07184";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-21T07131";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-21T07184";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T07131";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T07184";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T07131";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-21T07131";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T07131";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T07131";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T07131";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T07131";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T07131";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T07131";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T07131";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07131";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T07131";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T07131";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T07131";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T07131";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T07131";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T07131";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T07131";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T07131";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T07131";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T07131";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T07184";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-21T07184";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T07184";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T07184";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T07184";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T07184";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T07184";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T07184";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T07184";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07184";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T07184";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T07184";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T07184";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T07184";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T07184";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T07184";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T07184";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T07184";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T07184";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T07184";
 
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
@@ -103,7 +103,9 @@ const baseShareFriends = document.getElementById("baseShareFriends");
 const baseShareBulkHost = document.getElementById("baseShareBulkActions");
 attachListTools(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
 attachListTools(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
-const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
+const baseShareFriendsLabel = document.getElementById("baseShareFriendsLabel");
+const baseShareFriendsShort = document.getElementById("baseShareFriendsShort");
+const btnShareCancel = document.getElementById("btnShareCancel");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
@@ -174,7 +176,6 @@ function stopAutoRefresh() {
 }
 
 let shareRoleValue = "editor";
-let friendsRoleValue = "editor";
 let ownBaseDeclines = [];
 let baseDeclinesCollapsed = true;
 let shareRenderVersion = 0;
@@ -221,8 +222,8 @@ function baseRoleButton(value, onChange) {
   return button;
 }
 function initShareRoleSelect() {
+  // Jedno uprawnienie dla nowych udostępnień (wpisany adres i zaznaczeni znajomi).
   shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
-  baseShareFriendsRole?.replaceChildren(baseRoleButton(friendsRoleValue, value => { friendsRoleValue = value; }));
 }
 function showShareMessage(message, kind = "info") {
   if (!message) { hideToast(); return; }
@@ -812,7 +813,7 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId,
 async function openShareModal() {
   showShareMessage("");
   shareEmail.value = "";
-  shareRoleValue = friendsRoleValue = "editor";
+  shareRoleValue = "editor";
   initShareRoleSelect();
   await renderShareModal();
   show(shareOverlay, true);
@@ -945,7 +946,10 @@ async function renderShareModal() {
 let baseShareBulkActions = null;
 function updateBaseShareSelection() {
   const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
-  btnBaseShareFriends.disabled = shareAddInFlight || !baseShareFriends?.querySelector('input:checked:not(:disabled)');
+  const selected = baseShareFriends?.querySelectorAll('input:checked:not(:disabled)').length || 0;
+  btnBaseShareFriends.disabled = shareAddInFlight || !selected;
+  if (baseShareFriendsLabel) baseShareFriendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
+  if (baseShareFriendsShort) baseShareFriendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
   baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {
@@ -975,12 +979,12 @@ async function shareAdd(friendIds = null) {
   try {
     for (const id of friendIds || [null]) {
       const { data, error } = await sb().rpc(id ? "base_share_to_friend" : "base_share_by_user", id
-        ? { p_base_id: b.id, p_recipient_user_id: id, p_role: friendsRoleValue }
+        ? { p_base_id: b.id, p_recipient_user_id: id, p_role: shareRoleValue }
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
       if (error || !row?.ok) { message = baseShareError(row); messageKind = "error"; continue; }
       try {
-        const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
+        const queued = await deliverBaseShare(row, b.id, { role: shareRoleValue });
         if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
       }
       catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
@@ -1425,6 +1429,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   btnShareClose?.addEventListener("click", () => closeShareModal());
+  btnShareCancel?.addEventListener("click", () => closeShareModal());
   btnShareAdd?.addEventListener("click", async () => shareAdd());
   shareEmail?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") shareAdd();
