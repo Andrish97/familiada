@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aPxQJaLnM90aBses2GPWzITqv6cFLhafHakdCJ0iyYrlIpHytmNWjHxfJN58bXC
+\restrict IqI92jRRr37ajxnvFghyJ5acyUOu8Wewg0DC1js5rZNNThhI1YmwjYnwP0HlCVF
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -25888,24 +25888,16 @@ CREATE POLICY "email_intents_service_only" ON "public"."email_intents" TO "authe
 ALTER TABLE "public"."email_providers" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: email_providers email_providers_admin_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "email_providers_admin_all" ON "public"."email_providers" USING (true) WITH CHECK (true);
-
-
---
--- Name: email_providers email_providers_read_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "email_providers_read_all" ON "public"."email_providers" FOR SELECT USING (true);
-
-
---
 -- Name: email_unsub_tokens; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE "public"."email_unsub_tokens" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: example_table; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."example_table" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: friendships; Type: ROW SECURITY; Schema: public; Owner: -
@@ -26079,6 +26071,12 @@ CREATE POLICY "guest_migration_staging_service_only" ON "public"."guest_migratio
 
 
 --
+-- Name: konta_do_stworzenia; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."konta_do_stworzenia" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: mail_center_links; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -26206,31 +26204,10 @@ CREATE POLICY "marketing_ai_providers_all" ON "public"."marketing_ai_providers" 
 ALTER TABLE "public"."marketing_cities" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: marketing_cities marketing_cities_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_cities_all" ON "public"."marketing_cities" USING (true) WITH CHECK (true);
-
-
---
 -- Name: marketing_search_logs marketing_logs_all; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "marketing_logs_all" ON "public"."marketing_search_logs" USING (true) WITH CHECK (true);
-
-
---
--- Name: marketing_search_queries_log marketing_queries_log_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_queries_log_all" ON "public"."marketing_search_queries_log" USING (true) WITH CHECK (true);
-
-
---
--- Name: marketing_raw_contacts marketing_raw_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_raw_all" ON "public"."marketing_raw_contacts" USING (true) WITH CHECK (true);
 
 
 --
@@ -26628,13 +26605,6 @@ CREATE POLICY "pte_owner_read" ON "public"."poll_text_entries" FOR SELECT USING 
 ALTER TABLE "public"."public_kv" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: public_kv public_kv_read_auth; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "public_kv_read_auth" ON "public"."public_kv" FOR SELECT TO "authenticated" USING (true);
-
-
---
 -- Name: question_bases qb_bases_delete; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -26931,6 +26901,12 @@ ALTER TABLE "public"."resource_copy_offers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."resource_demo_origins" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: schema_migrations; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."schema_migrations" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -26959,6 +26935,12 @@ ALTER TABLE "public"."snake_events" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."snake_progress" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: stats_excluded_users; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."stats_excluded_users" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: storage_cleanup_queue; Type: ROW SECURITY; Schema: public; Owner: -
@@ -27071,5 +27053,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aPxQJaLnM90aBses2GPWzITqv6cFLhafHakdCJ0iyYrlIpHytmNWjHxfJN58bXC
+\unrestrict IqI92jRRr37ajxnvFghyJ5acyUOu8Wewg0DC1js5rZNNThhI1YmwjYnwP0HlCVF
 
