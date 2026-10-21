@@ -1648,7 +1648,7 @@ export default {
 
 <h4 class="m-h3" id="r16-5-1">16.5.1 Ustawienia pytań</h4>
 <p class="m-p">W sekcji <span class="m-btn">Pytania — Ustawienia</span> są dwie części.</p>
-<p class="m-p"><span class="m-strong">Finał.</span> Przełącznik <span class="m-strong">Czy gra zawiera finał?</span> ma dwie pozycje: <span class="m-btn">Tak</span> i <span class="m-btn">Nie</span> (domyślnie <span class="m-strong">Nie</span>). Bez finału gra kończy się po rundach. Po wybraniu <span class="m-strong">Tak</span> pojawia się <span class="m-strong">Tryb wyboru pytań finału</span>:</p>
+<p class="m-p"><span class="m-strong">Finał.</span> Przełącznik <span class="m-strong">Czy gra zawiera finał?</span> ma dwie pozycje: <span class="m-btn">Tak</span> i <span class="m-btn">Nie</span> (domyślnie <span class="m-strong">Tak</span>). Bez finału gra kończy się po rundach. Po wybraniu <span class="m-strong">Tak</span> pojawia się <span class="m-strong">Tryb wyboru pytań finału</span>:</p>
 <ul class="m-ul">
 <li><span class="m-btn">Losowe</span> (domyślnie) — przed startem gry system losuje 5 pytań z pytań przeznaczonych do rund i usuwa je z rund;</li>
 <li><span class="m-btn">Ręcznie</span> — sam wybierasz dokładnie 5 pytań w sekcji <span class="m-btn">Pytania — Finał</span> (<a class="m-ref" href="#r16-5-2">rozdział 16.5.2</a>).</li>
@@ -1694,7 +1694,7 @@ export default {
 <ul class="m-ul">
 <li><span class="m-strong">Logo</span> — Wyświetlacz pokazuje logo gry;</li>
 <li><span class="m-strong">Punkty</span> — Wyświetlacz pokazuje wynik zwycięskiej drużyny (po finale — razem z punktami zdobytymi w finale);</li>
-<li><span class="m-strong">Kwota nagrody</span> — dostępna tylko w grze z finałem. Po finale Wyświetlacz pokazuje kwotę: punkty zwycięskiej drużyny razem z punktami finału, pomnożone przez <span class="m-strong">Mnożnik nagrody</span>, a gdy osiągnięto <span class="m-strong">Cel finału</span> — powiększone o <span class="m-strong">Kwotę główną nagrody</span>. Przykład przy wartościach domyślnych: 320 punktów i osiągnięty cel to 320 × 3 + 25 000 = 25 960. Pola kwoty i mnożnika pojawiają się dopiero po wybraniu tej opcji.</li>
+<li><span class="m-strong">Kwota nagrody</span> (domyślnie) — dostępna tylko w grze z finałem. Po finale Wyświetlacz pokazuje kwotę: punkty zwycięskiej drużyny razem z punktami finału, pomnożone przez <span class="m-strong">Mnożnik nagrody</span>, a gdy osiągnięto <span class="m-strong">Cel finału</span> — powiększone o <span class="m-strong">Kwotę główną nagrody</span>. Przykład przy wartościach domyślnych: 320 punktów i osiągnięty cel to 320 × 3 + 25 000 = 25 960. Pola kwoty i mnożnika pojawiają się dopiero po wybraniu tej opcji.</li>
 </ul>
 <p class="m-p">Gdy gra bez finału zakończy się remisem, Wyświetlacz zawsze pokazuje logo.</p>
 <p class="m-p">Przycisk <span class="m-btn"><i class="ico" data-icon="refresh"></i>Przywróć domyślne</span> na dole sekcji przywraca domyślne wartości tylko tych ustawień.</p>

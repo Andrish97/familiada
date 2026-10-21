@@ -8,7 +8,7 @@
 // prawdziwy odczyt game_state.
 
 export const DEFAULT_SETTINGS = {
-  hasFinal: null,
+  hasFinal: true,
   // Język Display/Host/Buzzer — control/js/app.js's LANG-push zapisuje tu
   // język operatora zamiast wysyłać osobną komendę (control/js/app.js).
   uiLang: null,
@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS = {
   roundMultipliers: [1, 1, 1, 2, 3],
   finalMinPoints: 300,
   finalTarget: 200,
-  endScreenMode: "logo",
+  endScreenMode: "money",
   finalPrizeMultiplier: 3,
   mainPrizeAmount: 25000,
   // Dźwięk (zgłoszone: przełącznik źródła w kroku Urządzeń) — "control"
