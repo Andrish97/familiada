@@ -1,0 +1,42 @@
+name: Diagnostyka lead-finder (jednorazowa, tylko odczyt)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Diagnostyka (bez sekretów)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'bash -s' <<'REMOTE'
+          mask() { sed -E 's/(--token|token:|TUNNEL_TOKEN=|credentials-file:)[ =]*[^ ]+/\1 ***/g; s/eyJ[A-Za-z0-9._-]{20,}/***/g'; }
+          echo "== kontenery (nazwa | obraz | porty | sieci | status)"
+          docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}} | {{.Networks}} | {{.Status}}' | grep -iE 'lead|cloudflared|tunnel|nginx|caddy|traefik|kong' || true
+          echo "== lead-finder lokalnie"
+          for u in /health /api/search-runs/status; do printf '%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://localhost:8001$u"; done
+          echo "-- OPTIONS preflight POST /api/search-runs"
+          curl -s -D - -o /dev/null --max-time 10 -X OPTIONS 'http://localhost:8001/api/search-runs?target_count=1' -H 'Origin: https://settings.familiada.online' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization' | grep -iE '^HTTP|^access-control' || true
+          echo "-- POST bez klucza z Origin"
+          curl -s -D - -o /dev/null --max-time 10 -X POST 'http://localhost:8001/api/search-runs?target_count=1' -H 'Origin: https://settings.familiada.online' | grep -iE '^HTTP|^access-control' || true
+          echo "== procesy cloudflared"
+          pgrep -a cloudflared | mask || echo "(brak procesu cloudflared na hoście)"
+          systemctl list-units --type=service --no-pager 2>/dev/null | grep -i cloudflared || true
+          echo "== konfiguracje tunelu (tylko hostname/service)"
+          for f in /etc/cloudflared/*.yml /etc/cloudflared/*.yaml ~/.cloudflared/*.yml ~/.cloudflared/*.yaml; do [ -r "$f" ] && { echo "-- $f"; grep -E 'hostname|service' "$f" | mask; }; done 2>/dev/null
+          for c in $(docker ps --format '{{.Names}}' | grep -i cloudflared); do echo "-- kontener $c: args"; docker inspect "$c" --format '{{json .Args}}' | mask; docker logs --tail 200 "$c" 2>&1 | grep -iE 'leads|ingress|Updated to new configuration' | mask | tail -15; done
+          echo "== z serwera przez Cloudflare"
+          for u in /health /api/search-runs/status; do printf 'https://leads.familiada.online%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "https://leads.familiada.online$u"; done
+          echo "== start lead-findera (tylko komunikaty uvicorn)"
+          docker logs --tail 300 familiada-lead-finder 2>&1 | grep -E 'Uvicorn running|Application startup|Started server' | tail -3
+          echo "== deploy-lead-finder.sh na serwerze: linie docker run"
+          grep -nE 'PORT=|-p |--network|--name|docker run' ~/supabase-selfhost/supabase/scripts/deploy-lead-finder.sh || true
+          REMOTE
