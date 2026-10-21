@@ -206,6 +206,22 @@ Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon)
   okno; jedna wspólna karta z grami, a wyszukiwanie i filtry wyżej w osobnej
   małej podkarcie.
 
+### Decyzje użytkownika (2026-10-21, wieczór) — „zrób, żeby było ładnie”
+
+- **Wypustki:** wariant A — ten sam wygląd, budowa z jednego elementu
+  (przycisk karty rysuje tło, obramowanie i wklęsłe narożniki), bez
+  `.tab-wrapper`/`.tab-active`/`.tab-corner`.
+- **Zadania / Podłącz urządzenie:** zostaje obecny układ (karta na całą
+  szerokość, węższa treść) — warianty B i C odrzucone.
+- **Podłącz urządzenie:** pole kodu po lewej, układ lewo–prawo; lewa
+  kolumna (kod) węższa, prawa — udostępnione urządzenia.
+- **Społeczność:** obecna wersja odrzucona. „Moje wysłane”/wysyłka w oknie,
+  na stronie jedna karta jak wszędzie (narzędzia w karcie, bez osobnej
+  podkarty).
+- **Control — krok Urządzenia:** mniej przycisków, ładniejsze statusy,
+  przyciski równej szerokości w siatce (jak inne siatki Control).
+- **Wdrożenie na `main`:** użytkownik zezwolił; dalsze uwagi przekaże później.
+
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
 - Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,
