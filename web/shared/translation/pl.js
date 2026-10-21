@@ -3872,7 +3872,7 @@ const pl = {
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
     "accountCreated": "Ma konto — przejdź do Znajomych.",
-    "sections": {"declined": "Odrzucone", "incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
+    "sections": {"declined": "Odrzucone", "incoming": "Propozycje", "outgoing": "Oczekujące", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
     "status": {"pending": "Oczekuje", "active": "Zaakceptowano", "declined": "Odrzucono"},
     "empty": {"incoming": "Nie masz nowych propozycji.", "outgoing": "Nie masz wysłanych zaproszeń.", "friend": "Nie masz jeszcze znajomych.", "pending": "Nie masz oczekujących zaproszeń.", "active": "Nie masz jeszcze subskrybentów."},
     "actions": {
