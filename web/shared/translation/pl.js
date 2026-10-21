@@ -4270,6 +4270,7 @@ const pl = {
       addTag: "Dodaj tag",
       editTitle: "Tag",
       namePlaceholder: "Nazwa taga…",
+      nameLabel: "Nazwa",
       pickColor: "Wybierz kolor",
       colorLabel: "Kolor",
       colorModalTitle: "Kolor",

@@ -2235,6 +2235,53 @@ tr.row.is-drop-after td:last-child::after {
   background: transparent !important;
 }
 
+/* Warstwy „Tag” i „Kolor” jak sekcje okien z main (.shareSection / karta
+   w edytorze gry): treść w karcie z podpisem, kafel koloru jako wiersz,
+   podgląd koloru bez cienia, „Anuluj” obok „Zapisz” (2026-10-21). */
+.tags-modal .tagsCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tagsCardLbl { font-weight: 800; }
+.tags-modal .tagsColorTile {
+  justify-content: flex-start;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tagsColorTile:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+.tags-modal .tagsColorDot { width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto; }
+.tags-modal .tagsColorLbl { flex: 1 1 auto; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 700; }
+.tags-modal .tagsColorGo { opacity: .7; }
+.tags-modal .colorTopRow.tagsCard {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+.tags-modal .colorPreview { flex: 0 0 auto; width: 72px; height: 72px; border-radius: 14px; box-shadow: none; }
+.tags-modal .colorHexField { flex: 1 1 auto; min-width: 0; }
+.tags-modal .colorHexField .inp { width: 100%; }
+.tags-modal .sliders {
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+/* Okno od dołu: podpowiedź warstwy („Zaznaczenie…”, „Dodaj nowy tag.”)
+   pod tytułem, nad przyciskami — jak w „Utwórz grę”. */
+.modal--sheet.sheet-active .tags-modal .tags-layer > :is(.mSub, .tagsAssignInfo) {
+  order: 0 !important; /* base.css: :not(.tagsHead):not(.tagsFoot) { order: 2 } */
+  margin: -2px 0 10px;
+}
+.modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { margin-bottom: 6px !important; }
+
 /* ===== Telefon: w wysuwanym panelu samo drzewo, filtry w oknie (2026-10-21) ===== */
 #btnFilters { position: relative; }
 #btnFilters .badge { position: absolute; top: -6px; right: -6px; }
@@ -2286,40 +2333,75 @@ tr.row.is-drop-after td:last-child::after {
 .moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .moveSearch { flex: 0 0 auto; }
 .moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
+/* Drzewo w jednej karcie (jak .shareSection), wiersze bez ramek; linie
+   prowadzące rysuje ::before z --depth (co 20 px, pod środkiem strzałki). */
 .moveList {
+  --step: 20px;
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 0;
   max-height: min(420px, 55vh);
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
 }
 .modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
 .moveRow {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  padding: 9px 10px 9px calc(10px + var(--depth, 0) * 16px);
-  border-radius: 12px;
-  background: var(--card2, rgba(255,255,255,.03));
-  border: 1px solid var(--line2, rgba(255,255,255,.10));
+  min-height: 40px;
+  padding: 4px 10px 4px calc(6px + max(0px, (var(--depth, 0) - 1) * var(--step)));
+  border-radius: 10px;
   cursor: pointer;
   user-select: none;
 }
-.moveRow:hover { border-color: var(--gold); }
-.moveRow.is-picked { border-color: rgba(255,234,166,.9); background: rgba(255,234,166,.10); }
-.moveRow.is-blocked { opacity: .45; cursor: not-allowed; }
-.moveRow.is-blocked:hover { border-color: var(--line2, rgba(255,255,255,.10)); }
-.moveRow .list-ico { width: 18px; height: 18px; flex: 0 0 18px; opacity: .85; }
-.moveName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.movePath { margin-left: auto; min-width: 0; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .65; }
-.moveToggle {
-  width: 22px; height: 22px; flex: 0 0 22px;
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 0; border: 0; background: none; color: inherit; cursor: pointer; opacity: .85;
+.moveRow::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(6px + var(--step) / 2);
+  width: max(0px, (var(--depth, 0) - 1) * var(--step));
+  background: repeating-linear-gradient(90deg, var(--line2, rgba(255,255,255,.12)) 0 1px, transparent 1px var(--step));
+  pointer-events: none;
 }
+.moveRow:hover { background: rgba(255,255,255,.05); }
+.moveRow.is-root { font-weight: 700; }
+.moveRow.is-picked { background: rgba(255,234,166,.16); box-shadow: inset 3px 0 0 var(--gold), inset 0 0 0 1px rgba(255,234,166,.45); }
+.moveRow.is-picked .moveIco,
+.moveRow.is-picked .moveName { color: var(--gold); }
+.moveRow.is-blocked { opacity: .4; cursor: not-allowed; }
+.moveRow.is-blocked:hover { background: none; }
+.moveIco { display: inline-flex; flex: 0 0 auto; opacity: .9; }
+.moveRow .list-ico { width: 18px; height: 18px; }
+.moveText { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.moveName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.movePath { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
+.moveCount {
+  flex: 0 0 auto;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  font-size: 12px;
+  text-align: center;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+}
+.moveToggle {
+  width: var(--step); height: 28px; flex: 0 0 var(--step);
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
+}
+.moveToggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.moveToggle .ico { width: 14px; height: 14px; }
+.moveRow.is-root .moveToggle { display: none; }
+.moveList > .list-empty { padding: 14px; opacity: .7; }
 /* stopka okien Filtry i Przenieś do: jak .tagsFoot (odstęp i linia nad przyciskami) */
 .move-modal > .modal-actions,
 .filters-modal > .modal-actions {

@@ -3596,6 +3596,46 @@ test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
   });
 });
 
+test.describe("base-explorer: warstwy okna tagów — Anuluj (E22 etap 9)", () => {
+  test("Anuluj w kolorze przywraca poprzedni kolor, Anuluj w tagu wraca do listy, Zapisz nic nie zmienia bez wyboru", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TAGBACK-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Bez tagu", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editTags", "Control+t");
+      await expect(page.locator("#tagsL1")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#tagsAddNew").click();
+      await expect(page.locator("#tagsL2")).toBeVisible({ timeout: 5000 });
+      const dot = page.locator("#tagsEditColorDot");
+      const before = await dot.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+      await page.locator("#tagsEditColorTile").click();
+      await expect(page.locator("#tagsL3")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsColorHex").fill("#ff0000");
+      await expect.poll(() => dot.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(255, 0, 0)");
+      await page.locator("#tagsL3Back").click();
+      await expect(page.locator("#tagsL2")).toBeVisible();
+      await expect.poll(() => dot.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(before);
+
+      await page.locator("#tagsL2Back").click();
+      await expect(page.locator("#tagsL1")).toBeVisible();
+      await expect(page.locator("#tagsOverlay")).toBeVisible();
+      await page.locator("#tagsL1Close").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+      expect(await getQuestionTagIds(page, qid)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
 test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () => {
   test("przeniesienie przez wyszukiwanie w oknie z drzewem; folder nie może trafić sam do siebie; kopia przez drzewo", async ({ page, context }) => {
     test.setTimeout(60_000);

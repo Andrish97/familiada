@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T06574"/>
+  <meta name="app-version" content="v2026-10-21T07045"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06574" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T06574" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T06574" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T06574" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07045" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07045" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T07045" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T07045" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06574"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07045"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T06574"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T07045"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06574" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07045" defer></script>
 
 </head>
 
@@ -175,18 +175,21 @@
   
         <div class="mSub" id="tagsEditHelp">—</div>
   
-        <div class="tagsEditGrid">
-          <input id="tagsEditName" class="inp tagsNameCenter" type="text" maxlength="40" autocomplete="off" placeholder="Nazwa taga…" data-i18n-placeholder="baseExplorer.tags.namePlaceholder"/>
+        <div class="tagsEditGrid tagsCard">
+          <label class="tagsCardLbl" for="tagsEditName" data-i18n="baseExplorer.tags.nameLabel">Nazwa</label>
+          <input id="tagsEditName" class="inp" type="text" maxlength="40" autocomplete="off" placeholder="Nazwa taga…" data-i18n-placeholder="baseExplorer.tags.namePlaceholder"/>
 
           <button id="tagsEditColorTile" class="tagsColorTile" type="button" aria-label="Wybierz kolor" data-i18n-aria-label="baseExplorer.tags.pickColor">
             <span class="tagsColorDot" id="tagsEditColorDot"></span>
             <span class="tagsColorLbl" data-i18n="baseExplorer.tags.colorLabel">Kolor</span>
+            <i class="ico tagsColorGo" data-icon="caret-right"></i>
           </button>
         </div>
   
         <div class="tagsFoot">
           <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
           <div class="tagsFootSpacer"></div>
+          <button class="btn sm" id="tagsL2Back" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
       </section>
@@ -198,15 +201,14 @@
           <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <!-- Twoja warstwa 3 jest OK — zostawiamy układ, poprawiamy tylko przyciski -->
         <div class="colorModalBody">
-          <div class="colorTopRow">
+          <div class="colorTopRow tagsCard">
             <div class="colorPreview" id="tagsColorPreview" aria-label="Podgląd koloru" data-i18n-aria-label="baseExplorer.tags.colorPreview"></div>
 
-            <div class="field sm" style="min-width:260px;">
+            <div class="field sm colorHexField">
               <div class="lbl2" data-i18n="baseExplorer.tags.hexLabel">HEX</div>
               <input class="inp" id="tagsColorHex" autocomplete="off" spellcheck="false" inputmode="text" />
-              <div class="hint" style="max-width:360px;" data-i18n-html="baseExplorer.tags.hexHint">Format: <b>#RRGGBB</b></div>
+              <div class="hint" data-i18n-html="baseExplorer.tags.hexHint">Format: <b>#RRGGBB</b></div>
             </div>
           </div>
   
@@ -233,6 +235,7 @@
   
         <div class="tagsFoot">
           <div class="tagsFootSpacer"></div>
+          <button class="btn sm" id="tagsL3Back" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="tagsL3Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
       </section>
@@ -385,7 +388,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06574"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07045"></script>
 
 </body>
 </html>

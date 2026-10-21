@@ -4370,6 +4370,7 @@ const en = {
       addTag: "Add tag",
       editTitle: "Tag",
       namePlaceholder: "Tag name…",
+      nameLabel: "Name",
       pickColor: "Pick color",
       colorLabel: "Color",
       colorModalTitle: "Color",

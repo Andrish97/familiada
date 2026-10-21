@@ -4367,6 +4367,7 @@ const uk = {
       addTag: "Додати тег",
       editTitle: "Тег",
       namePlaceholder: "Назва тегу…",
+      nameLabel: "Назва",
       pickColor: "Вибрати колір",
       colorLabel: "Колір",
       colorModalTitle: "Колір",

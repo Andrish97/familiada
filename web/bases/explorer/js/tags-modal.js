@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-21T06574";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06574";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06574";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06574";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06574";
-import { normalizeText } from "./data/listing.js?v=v2026-10-21T06574";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T06574";
+import * as ops from "./ops.js?v=v2026-10-21T07045";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T07045";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T07045";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07045";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07045";
+import { normalizeText } from "./data/listing.js?v=v2026-10-21T07045";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T07045";
 
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
@@ -140,6 +140,7 @@ function els() {
     // L2
     l2Close: document.getElementById("tagsL2Close"),
     l2Save: document.getElementById("tagsL2Save"),
+    l2Back: document.getElementById("tagsL2Back"),
     editTitle: document.getElementById("tagsEditTitle"),
     editHelp: document.getElementById("tagsEditHelp"),
     editName: document.getElementById("tagsEditName"),
@@ -150,6 +151,7 @@ function els() {
     // L3
     l3Close: document.getElementById("tagsL3Close"),
     l3Save: document.getElementById("tagsL3Save"),
+    l3Back: document.getElementById("tagsL3Back"),
     colorPreview: document.getElementById("tagsColorPreview"),
     colorHex: document.getElementById("tagsColorHex"),
     colorR: document.getElementById("tagsColorR"),
@@ -282,6 +284,8 @@ export async function openTagsModal(state, opts = {}) {
     E.l1Close?.removeEventListener("click", onClose);
     E.l2Close?.removeEventListener("click", onClose);
     E.l3Close?.removeEventListener("click", onClose);
+    E.l2Back?.removeEventListener("click", onLayerBack);
+    E.l3Back?.removeEventListener("click", onLayerBack);
 
     E.l1Save?.removeEventListener("click", onSave);
     E.l2Save?.removeEventListener("click", onSave);
@@ -315,6 +319,25 @@ export async function openTagsModal(state, opts = {}) {
 
   function onClose() {
     close(false);
+  }
+
+  // „Anuluj” w warstwie: kolor — porzuć zmianę i wróć do tagu; tag — wróć
+  // do listy (przypisywanie) albo zamknij okno (samo dodawanie/edycja).
+  function layerBack() {
+    if (m.layer === 3) {
+      setPickerUI(hexToRgb(m.colorBase) || { r: 77, g: 163, b: 255 }, { silent: false });
+      go(2);
+      return true;
+    }
+    if (m.layer === 2 && mode === "assign") {
+      go(1);
+      return true;
+    }
+    return false;
+  }
+
+  function onLayerBack() {
+    if (!layerBack()) close(false);
   }
 
   // Klik w tło zamyka jak X (nie w arkuszu na telefonie — tam wyjściem jest Wstecz).
@@ -693,18 +716,8 @@ export async function openTagsModal(state, opts = {}) {
   enterModalSheet(E.overlay, {
     backBtn: btnBack,
     onClose: () => close(false),
-    onBack: () => {
-      if (m.layer === 3) {
-        go(2);
-        return true;
-      }
-      if (m.layer === 2 && mode === "assign") {
-        go(1);
-        return true;
-      }
-      // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
-      return false;
-    },
+    // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
+    onBack: layerBack,
   });
   document.addEventListener("keydown", onKey);
   E.overlay?.addEventListener("click", onBackdrop);
@@ -713,6 +726,8 @@ export async function openTagsModal(state, opts = {}) {
   E.l1Close?.addEventListener("click", onClose);
   E.l2Close?.addEventListener("click", onClose);
   E.l3Close?.addEventListener("click", onClose);
+  E.l2Back?.addEventListener("click", onLayerBack);
+  E.l3Back?.addEventListener("click", onLayerBack);
 
   // Save wszędzie
   E.l1Save?.addEventListener("click", onSave);

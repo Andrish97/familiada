@@ -58,6 +58,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9. Prośba użytkownika 2026-10-21: okno „Przenieś do / Kopiuj do” z drzewem i wyszukiwaniem (`ui/move-modal.js`, akcje `item.moveTo`/`item.copyTo`); na telefonie lewy panel = samo drzewo, filtry w oknie „Filtry” (`ui/filters.js`, `#btnFilters` z licznikiem); okna wg `main` (zmiana nazwy przez `promptModal`, listy bez ramek, kafle, stopki); tytuł okna gry „Utwórz grę”. Testy e2e (Przenieś do, filtry na telefonie), sceny zrzutów, makiety propozycji odgracenia lewego panelu na komputerze (A/B/C w planie, „Decyzje” 2026-10-21) — **czeka na wybór użytkownika**.
 
+- [x] 9b. Uwagi użytkownika 2026-10-21: okno tagów — warstwy „Nowy tag” i „Kolor” w kartach jak sekcje z `main` (podpis „Nazwa”, kafel koloru jako wiersz, podgląd bez cienia), „Anuluj” obok „Zapisz” (kolor: przywraca poprzedni; tag: wraca do listy albo zamyka), podpowiedź warstwy pod tytułem w roletce; nagłówek bez ciemnego paska. „Przenieś/Kopiuj do”: drzewo w jednej karcie z liniami prowadzącymi, folder otwarty/zamknięty, liczba pytań, złoty wybór; demo z podfolderami. Safe area: wspólna roletka `base.css` (góra, dół, boki); telefon poziomo — strona pokazuje „Obróć urządzenie”. Menu: „Przenieś do / Kopiuj do” po schowku. E2e lokalne: 79/83 w pełnym przebiegu (3× `networkidle` — przechodzą przy powtórce; Shift+F10 naprawiony), punktowo tagi/Przenieś/Filtry 13/13 + nowy test „Anuluj” w warstwach.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

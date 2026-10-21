@@ -5,10 +5,10 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-21T06574";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T06574";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T06574";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06574";
+import { normalizeText } from "../data/listing.js?v=v2026-10-21T07045";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07045";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07045";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07045";
 
 const ROOT = "root";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -38,12 +38,18 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   ok.innerHTML = `${icon(mode === "copy" ? "copy" : "folder")} ${esc(t(mode === "copy" ? "baseExplorer.move.copyHere" : "baseExplorer.move.moveHere"))}`;
   search.value = "";
 
-  const rowHtml = (key, label, { depth = 0, toggle = "", path = "", isRoot = false } = {}) => {
+  // Drzewo (prośba użytkownika 2026-10-21: „ładniejsze drzewo”): jedna karta,
+  // wiersze bez ramek, linie prowadzące wcięć (CSS z --depth), strzałka,
+  // folder otwarty/zamknięty i liczba pytań w poddrzewie po prawej.
+  const countOf = (key) => (key === ROOT ? d.questionById.size : d.subtreeQuestionIds(key).length);
+  const rowHtml = (key, label, { depth = 0, toggle = "", path = "", isRoot = false, isOpen = false } = {}) => {
     const blocked = !isRoot && blockedIds.has(key);
-    const cls = ["moveRow", picked === key ? "is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
-    return `<div class="${cls}" role="treeitem" data-id="${esc(key)}" style="--depth:${depth}"${blocked ? ' aria-disabled="true"' : ""}>
-      ${toggle}${icon(isRoot ? "home" : "folder", { className: "list-ico" })}
-      <span class="moveName">${esc(label)}</span>${path ? `<span class="movePath">${esc(path)}</span>` : ""}
+    const cls = ["moveRow", isRoot ? "is-root" : "", picked === key ? "is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
+    const ico = isRoot ? "home" : isOpen ? "folder-open" : "folder";
+    return `<div class="${cls}" role="treeitem" data-id="${esc(key)}" style="--depth:${depth}"${blocked ? ' aria-disabled="true"' : ""}${toggle && !path ? ` aria-expanded="${isOpen}"` : ""}>
+      ${toggle}<span class="moveIco">${icon(ico, { className: "list-ico" })}</span>
+      <span class="moveText"><span class="moveName">${esc(label)}</span>${path ? `<span class="movePath">${esc(path)}</span>` : ""}</span>
+      <span class="moveCount">${countOf(key)}</span>
     </div>`;
   };
 
@@ -52,15 +58,15 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
     const walk = (parentId, depth) => {
       for (const f of d.childFolders(parentId)) {
         const kids = d.childFolders(f.id).length > 0;
-        const isOpen = open.has(f.id);
+        const isOpen = kids && open.has(f.id);
         const toggle = kids
           ? `<button type="button" class="moveToggle" data-toggle="${esc(f.id)}" aria-label="${esc(t("baseExplorer.tree.toggle"))}">${icon(isOpen ? "caret-down" : "caret-right")}</button>`
           : `<span class="moveToggle"></span>`;
-        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, toggle }));
-        if (kids && isOpen) walk(f.id, depth + 1);
+        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, toggle, isOpen }));
+        if (isOpen) walk(f.id, depth + 1);
       }
     };
-    out.push(rowHtml(ROOT, t("baseExplorer.tree.root"), { isRoot: true, toggle: `<span class="moveToggle"></span>` }));
+    out.push(rowHtml(ROOT, t("baseExplorer.tree.root"), { isRoot: true }));
     walk(null, 1);
     return out.join("");
   }

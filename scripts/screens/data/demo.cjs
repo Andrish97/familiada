@@ -151,6 +151,10 @@ function buildDb(lang, extras = {}) {
   c.bases.tags.forEach(([name, color], i) => tables.qb_tags.push({ id: id("8500", i + 1), base_id: mainBase, name, color, ord: i + 1, created_at: daysAgo(30) }));
   const folders = [...new Set([...p.folders, ...c.bases.folders.slice(0, 5)])];
   folders.forEach((name, i) => tables.qb_categories.push({ id: id("8600", i + 1), base_id: mainBase, parent_id: null, name, ord: i + 1, created_at: daysAgo(30), updated_at: daysAgo(30) }));
+  // podfoldery (drzewo w oknie „Przenieś do”): folder 4 > Śniadania, Desery > Na słodko
+  const [sub1, sub2, sub3] = c.bases.subfolders;
+  [[90, 4, sub1, 1], [91, 4, sub2, 2], [92, 91, sub3, 1]].forEach(([n, parent, name, ord]) =>
+    tables.qb_categories.push({ id: id("8600", n), base_id: mainBase, parent_id: id("8600", parent), name, ord, created_at: daysAgo(30), updated_at: daysAgo(30) }));
   // Pytania z panelu w pierwszych folderach, dalej pula content.cjs.
   const baseQuestions = [...p.gameQuestions.slice(1, 7), ...c.questions];
   baseQuestions.forEach(([text, answers], i) => {
