@@ -104,20 +104,15 @@ test("usunięcie konta czyści user-sounds i user-logos dla tego usera", async (
   // (jedyna dostępna dla gościa, patrz account.js loadProfile()).
   await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  const visible = await page.locator("#deleteAccount").isVisible().catch(() => false);
-  if (!visible) {
-    // [e2e-diag] dlaczego przycisk usuwania jest niewidoczny (bez danych konta)
-    const diag = await page.evaluate(() => {
-      const chain = [];
-      for (let el = document.getElementById("deleteAccount"); el; el = el.parentElement) {
-        const cs = getComputedStyle(el);
-        chain.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""} display=${cs.display} vis=${cs.visibility} hidden=${el.hidden} h=${Math.round(el.getBoundingClientRect().height)}`);
-      }
-      const overlays = [...document.querySelectorAll("[class*=guard],[class*=overlay],[class*=modal],dialog")].filter((e) => e.offsetParent || getComputedStyle(e).position === "fixed").map((e) => `${e.tagName.toLowerCase()}.${String(e.className).trim().split(/\s+/).join(".")} hidden=${e.hidden}`).slice(0, 8);
-      return { url: location.pathname, chain, overlays };
-    });
-    console.log("[e2e-diag] account delete button", JSON.stringify(diag));
-  }
+  // Jednorazowe okno „Konto gościa” (guest-info-modal, per konto w localStorage):
+  // strona Konta odsłania się dopiero po jego zamknięciu (page-init czeka na
+  // showAccountNotices). Zamknij je, jeśli się pojawi.
+  const guestInfoOk = page.locator(".uni-modal").getByRole("button", { name: "Rozumiem", exact: true });
+  try {
+    await guestInfoOk.waitFor({ state: "visible", timeout: 5_000 });
+    await guestInfoOk.click();
+    console.log("[e2e-diag] account: zamknięte okno informacji dla gościa");
+  } catch { /* okno już było potwierdzone wcześniej */ }
   await page.locator("#deleteAccount").click();
   await page.getByRole("button", { name: "Usuń", exact: true }).click();
 
