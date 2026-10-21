@@ -3861,7 +3861,7 @@ const en = {
     "sent": "Invitation saved.",
     "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
     "accountCreated": "Has an account — go to Friends.",
-    "sections": {"declined": "Declined", "incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
+    "sections": {"declined": "Declined", "incoming": "Suggestions", "outgoing": "Pending", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
     "status": {"pending": "Pending", "active": "Accepted", "declined": "Declined"},
     "empty": {"incoming": "No new suggestions.", "outgoing": "No sent invitations.", "friend": "No friends yet.", "pending": "No pending invitations.", "active": "No subscribers yet."},
     "actions": {

@@ -3,6 +3,7 @@ import { normalizeE2ERecipient } from "../e2e/e2e-api.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
 import { uploadToStorage } from "../core/storage.js";
 import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
+import { findTicketOwner } from "./contact.js";
 
 export function decodeMimeWords(str) {
   if (!str || typeof str !== "string") return str || "";
@@ -87,9 +88,11 @@ export async function handleInboundEmail(message, env) {
     }
   }
 
-  // Detect ticket number in subject: [TICKET-YYYY-NNNN] or [YYYY-NNNN]
+  // Detect ticket number in subject: [TICKET-YYYY-NNNN] or [YYYY-NNNN].
+  // Dopięcie do zgłoszenia tylko od adresu zgłoszenia (jak /_api/contact/
+  // append; audyt E24, N6). Inny nadawca -> skrzynka bez zgłoszenia.
   const ticketMatch = subject.match(/\[(?:TICKET-)?(\d{4}-\d{4})\]/i);
-  const ticketArg = ticketMatch ? ticketMatch[1] : null;
+  const ticketArg = ticketMatch ? await ticketForSender(env, ticketMatch[1], from) : null;
 
   // Check if this is a reply to a marketing email (by subject thread)
   const cleanSubject = subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
@@ -349,4 +352,17 @@ export function extractMimeParts(raw) {
   const decoded = decodeMimePart(raw, content);
   const isHtml = /^\s*<!doctype html|^\s*<html/i.test(decoded);
   return { text: isHtml ? "" : decoded, html: isHtml ? decoded : "", attachments: [] };
+}
+
+// Numer zgłoszenia, gdy nadawca (adres koperty) jest adresem zgłoszenia;
+// w przeciwnym razie null (wiadomość trafia do skrzynki bez zgłoszenia).
+export async function ticketForSender(env, ticket, from) {
+  const sender = String(from || "").trim().toLowerCase();
+  if (!sender) return null;
+  const found = await findTicketOwner(env, ticket);
+  if (found.error || !found.report || !found.owner || found.owner !== sender) {
+    console.log("[email] ticket in subject not attached (sender is not ticket address)");
+    return null;
+  }
+  return found.report.ticket_number;
 }

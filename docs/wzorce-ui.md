@@ -197,7 +197,18 @@ akcji po przyjęciu). Odrzucona kopia gry/logo **przepada** — bez sekcji
 odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone” w Bazach
 (położenie u dołu bez zmian). Tytuł zwijanej sekcji odrzuconych wszędzie
 (Bazy, Znajomi, Subskrybenci) to krótkie „Odrzucone” / „Declined” / „Відхилені”
-— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Dawna ramka „Otrzymane kopie”
+— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Sekcja wysłanych
+zaproszeń (Znajomi → Zaproś, Subskrybenci → Zaproszenia) to krótkie „Oczekujące” /
+„Pending” / „Очікують” — odrzucone zaproszenia w tej sekcji rozpoznaje
+oznaczenie „Odrzucono” w wierszu; nagłówek z narzędziami w jednej linii na
+390 px (`contacts.sections.outgoing`, decyzja właściciela 2026-10-21).
+
+**Wiersz kontaktu `.shareRow--compact`** (Znajomi, Subskrybenci, okna
+udostępniania i wyboru odbiorców, Odrzucone; decyzja właściciela 2026-10-21):
+pierwsza linia — nazwa (wielokropek) i obok oznaczenia; e-mail / notatka
+**zawsze w osobnej linii pod nazwą**, niezależnie od długości tekstu (siatka
+`.shareMain`, `.shareNote` na całą szerokość). Wszystkie wiersze tej samej
+wysokości (`min-height: 64px`). Dawna ramka „Otrzymane kopie”
 (`.resource-copy-inbox`) usunięta.
 
 **✕ czy kosz (decyzja 2026-10-21):** kosz tylko dla **własnych** zasobów

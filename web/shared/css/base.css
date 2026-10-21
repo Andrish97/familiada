@@ -2961,9 +2961,13 @@ body{
 .shareRowActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 .shareRowActions .btn:disabled{ opacity: .4; cursor: not-allowed; }
 .shareRow--compact{ min-height: 64px; box-sizing: border-box; }
-.shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+/* Wiersz kontaktu: nazwa (+ znaczniki) w pierwszej linii, e-mail / notatka
+   zawsze w osobnej linii pod spodem — niezależnie od długości tekstu; wszystkie
+   wiersze tej samej wysokości (decyzja 2026-10-21). */
+.shareRow--compact .shareMain{ display: grid; grid-template-columns: minmax(0, max-content) auto; justify-content: start; align-items: center; align-content: center; gap: 4px 6px; }
+.shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
 .shareRow--compact .shareTags{ margin-top: 0; }
-.shareRow--compact .shareNote{ max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shareRow--compact .shareNote{ grid-column: 1 / -1; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shareRow--compact .shareRowActions{ align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
 .shareRow--compact .shareRowActions .btn{ width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .shareRowActions .shareActionCountdown{ flex-direction: column; gap: 3px; }
@@ -3045,10 +3049,6 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
 @media (max-width: 720px){
-  /* Nazwa, znaczniki i e-mail w jednej linii, gdy się mieszczą; następny
-     element schodzi pod spód dopiero przy braku miejsca (decyzja 2026-10-20). */
-  .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
-  .shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
   .shareRow--compact .shareRowActions{ gap: 4px; }
   .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ width: 36px; min-width: 36px; min-height: 40px; padding: 4px; }
   .shareRow--compact{ gap: 8px; padding: 8px; }
