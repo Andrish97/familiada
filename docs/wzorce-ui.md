@@ -166,7 +166,14 @@ Siatka `.grid`: `repeat(auto-fill, minmax(230px,1fr))`, odstęp 14 px — jedna
 minimalna szerokość dla wszystkich list. Przewijana siatka (Gry, Bazy, Logo) ma
 `padding:4px` oddany ujemnym `margin:-4px` — luz na poświatę zaznaczenia i
 uniesienie przy najechaniu (bez niego krawędź przewijania ucinała górę
-obwódki); na ekranie dotykowym (`hover:none`) kafel się nie unosi (2026-10-21). Kafel „+” (`.addCard`): zawsze ten sam
+obwódki); na ekranie dotykowym (`hover:none`) kafel się nie unosi (2026-10-21).
+Krawędź przewijanej siatki jest **wygaszona** (maska 32 px, `.has-more-above/below`
+z `list-search.js`) tylko wtedy, gdy za nią są kafle — bez ostrego cięcia kafla
+nad dolnym paskiem czy sekcją „Odrzucone” w Bazach; ten sam sygnał „jest więcej”
+co w przewijanym dolnym pasku (2026-10-21). Bez `scrollbar-gutter` — kafle mają
+symetryczne marginesy jak w Grach i Bazach (Logo wyrównane 2026-10-21). Kafle
+zasobów nie pokazują daty (Logo bez „20.10.2026, 14:00”; kolejność z serwera wg
+`updated_at`). Kafel „+” (`.addCard`): zawsze ten sam
 kod — `.plus` + `.txt` (nazwa akcji) + opcjonalnie `.sub` (typ); jedna wysokość
 z sąsiednimi kaflami. Kolor stanu **nie** koloruje całego kafla (sekcje wg stanu
 zamiast kolorów, E17c pkt 5; dziś wyjątek `.card.proposed`, A9).
@@ -176,17 +183,21 @@ dzwonek i kosz jako `.x` (E17c pkt 4; do oceny po wdrożeniu).
 
 **Kafel propozycji (decyzja 2026-10-21)** — `shared/js/core/proposed-tile.js`,
 jeden kod dla zaproszenia do bazy (Bazy → Udostępnione) i otrzymanej kopii gry
-lub logo (Moje gry, Moje loga). Zwykły kafel siatki, **na samej górze** (przed
-kaflem „+”; `list-search.js` przypina `data-proposed` przy sortowaniu). Układ
+lub logo (Moje gry, Moje loga). Zwykły kafel siatki, **zaraz po kaflu „+”**
+(„+” zawsze pierwszy, potem propozycje, potem reszta; `list-search.js` pilnuje
+tej kolejności przy sortowaniu — poprawka właściciela 2026-10-21). Układ
 jak zwykły kafel: nazwa u góry, **✓ (złoty) i ✕ obok siebie w prawym górnym
 rogu** w miejscu kosza (32 × 32 px, `.tileMiniActions`), oznaczenia
 „PROPOZYCJA” (`tag--warn`) + „OD: …” (`tag--info`; w Bazach jeszcze ikona roli)
-na dole w jednej linii (zawijanie przy braku miejsca), ta sama wysokość kafla.
+na dole **zawsze w jednej linii** — „OD: …” skraca się wielokropkiem, ikona roli
+nie spada pod spód (`.tileTags:has(> [data-kind=from])`), ta sama wysokość kafla.
 Kafel Logo: oznaczenia pod nazwą na całą szerokość, podgląd niższy o tyle, żeby
 kafel miał wysokość pozostałych. Zaznaczona propozycja ma tylko podgląd (reszta
 akcji po przyjęciu). Odrzucona kopia gry/logo **przepada** — bez sekcji
-odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone przeze
-mnie” w Bazach (położenie bez zmian). Dawna ramka „Otrzymane kopie”
+odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone” w Bazach
+(położenie u dołu bez zmian). Tytuł zwijanej sekcji odrzuconych wszędzie
+(Bazy, Znajomi, Subskrybenci) to krótkie „Odrzucone” / „Declined” / „Відхилені”
+— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Dawna ramka „Otrzymane kopie”
 (`.resource-copy-inbox`) usunięta.
 
 **✕ czy kosz (decyzja 2026-10-21):** kosz tylko dla **własnych** zasobów

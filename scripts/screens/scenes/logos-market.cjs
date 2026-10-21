@@ -186,7 +186,7 @@ module.exports = [
   { id: "logos-market-logos-empty-draw", category: CAT, title: "Biblioteka logo — pusta lista (rysunek)", path: "/logos/", sources: LIST, ready: ".logoShell.skel-step-ready",
     db: (db) => { db.tables.user_logos = []; }, steps: [click("#tabLogoDraw")] },
   { id: "logos-market-logos-selected", category: CAT, title: "Biblioteka logo — zaznaczone logo (aktywne przyciski)", path: "/logos/", sources: LIST, ready: ".logoTile", steps: [selectLogo(1)] },
-  { id: "logos-market-logos-received", category: CAT, title: "Biblioteka logo — otrzymane kopie jako kafle propozycji na górze (podgląd, ✓/✕ w rogu), liczniki w linii na wypustkach", path: "/logos/", sources: [...LIST, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: '.logoTile[data-proposed] .logoPrev canvas',
+  { id: "logos-market-logos-received", category: CAT, title: "Biblioteka logo — otrzymane kopie jako kafle propozycji zaraz po kaflu tworzenia (podgląd, ✓/✕ w rogu), liczniki w linii na wypustkach", path: "/logos/", sources: [...LIST, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: '.logoTile[data-proposed] .logoPrev canvas',
     db: (db, lang) => {
       const from = require("../data/panel.cjs")[lang].friends.accepted;
       const text = db.tables.user_logos.filter((l) => l.type === "GLYPH_30x10");

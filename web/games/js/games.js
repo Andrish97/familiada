@@ -1036,17 +1036,12 @@ function render() {
 
   const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
-  // Propozycje (otrzymane kopie) na samej górze, przed kaflem „Nowa gra”.
-  const proposed = games.filter(g => copyOffers.has(g.id));
-  for (const g of proposed) {
-    const el = cardGame(g);
-    if (g.id === selectedId) el.classList.add("selected");
-    grid.appendChild(el);
-  }
-
+  // Kafel „Nowa gra” zawsze pierwszy, zaraz po nim propozycje (otrzymane
+  // kopie), potem reszta gier.
   grid.appendChild(cardAdd(activeTab));
 
-  for (const g of games.filter(g => !copyOffers.has(g.id))) {
+  const proposed = games.filter(g => copyOffers.has(g.id));
+  for (const g of [...proposed, ...games.filter(g => !copyOffers.has(g.id))]) {
     const el = cardGame(g);
     if (g.id === selectedId) el.classList.add("selected");
     grid.appendChild(el);

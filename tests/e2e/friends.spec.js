@@ -184,7 +184,7 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(incoming).toBeHidden();
       await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-collapsed-${width}.png`), fullPage: true });
       await toggle.click();
-      // sekcja „Odrzucone przeze mnie” — stan jest w tytule, wiersz nie powtarza znacznika
+      // sekcja „Odrzucone” — stan jest w tytule, wiersz nie powtarza znacznika
       await expect(incoming).toBeVisible();
       await expect(incoming.locator('[data-act="accept"]')).toHaveCount(0);
       await expect(incoming.locator('[data-act="undo_reject"]')).toBeEnabled();
@@ -222,7 +222,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(incoming).toHaveCount(0);
     await recipient.page.locator('.rowsSection--declined button.rowsSectionHead').click();
     const refusal = recipient.page.locator(`.rowsSection--declined [data-id="${id}"]`);
-    // stan jest w tytule sekcji „Odrzucone przeze mnie”, wiersz go nie powtarza
+    // stan jest w tytule sekcji „Odrzucone”, wiersz go nie powtarza
     await expect(refusal).toBeVisible();
     await expect(refusal.locator('[data-act="undo_reject"]')).toBeEnabled();
     await owner.page.reload();

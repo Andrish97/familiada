@@ -3872,7 +3872,7 @@ const pl = {
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
     "accountCreated": "Ma konto — przejdź do Znajomych.",
-    "sections": {"declined": "Odrzucone przeze mnie", "incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
+    "sections": {"declined": "Odrzucone", "incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
     "status": {"pending": "Oczekuje", "active": "Zaakceptowano", "declined": "Odrzucono"},
     "empty": {"incoming": "Nie masz nowych propozycji.", "outgoing": "Nie masz wysłanych zaproszeń.", "friend": "Nie masz jeszcze znajomych.", "pending": "Nie masz oczekujących zaproszeń.", "active": "Nie masz jeszcze subskrybentów."},
     "actions": {
@@ -3893,7 +3893,7 @@ const pl = {
         "alreadyFriend": "Ta osoba jest już Twoim znajomym.",
         "incomingPending": "Masz oczekującą prośbę od tej osoby. Sprawdź Propozycje.",
         "outgoingPending": "Zaproszenie do tej osoby już oczekuje na odpowiedź.",
-        "ownDeclined": "Odrzuciłeś tę prośbę. Możesz cofnąć odmowę w sekcji Odrzucone przeze mnie.",
+        "ownDeclined": "Odrzuciłeś tę prośbę. Możesz cofnąć odmowę w sekcji Odrzucone.",
         "declined": "Ta osoba odrzuciła zaproszenie. Nie można teraz wysłać kolejnego.",
 
         "hasAccount": "Do tego maila jest przypisane konto w systemie Familiada — możesz zaprosić tę osobę do znajomych.",

@@ -126,14 +126,6 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 }
 
-function fmtDate(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const lang = document.documentElement.lang || "pl";
-  const locale = lang.startsWith("en") ? "en-US" : lang.startsWith("uk") ? "uk-UA" : "pl-PL";
-  return d.toLocaleString(locale, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
-
 /** Nazwa niekolidująca (bez względu na wielkość liter) z innymi logo użytkownika. */
 function makeUniqueName(baseName, excludeId = null) {
   const base = String(baseName || "").trim() || defaultName();
@@ -328,7 +320,7 @@ function makeTile(logo) {
     <div class="logoTileTop">
       <div style="min-width:0">
         <div class="logoName" title="${esc(name)}">${esc(name)}</div>
-        <div class="logoMeta">${logo.received_from_label ? `${esc(t("resourceSend.from", { name: logo.received_from_label }))} · ` : ""}${esc(fmtDate(logo.updated_at))}</div>
+        ${logo.received_from_label ? `<div class="logoMeta">${esc(t("resourceSend.from", { name: logo.received_from_label }))}</div>` : ""}
       </div>
       <div class="logoActions">
         <div class="logoX" role="button" tabindex="0" title="${esc(t("logoEditor.list.delete"))}" aria-label="${esc(t("logoEditor.list.delete"))}">${icon("trash")}</div>
@@ -386,8 +378,8 @@ function renderList() {
     el.grid.appendChild(tile);
     queue.push({ wrap: tile.querySelector(".logoPrev"), logo });
   }
-  // Propozycje (otrzymane kopie) na samej górze, przed kaflem tworzenia.
-  el.grid.prepend(...el.grid.querySelectorAll(':scope > .logoTile[data-proposed="1"]'));
+  // Propozycje (otrzymane kopie) zaraz po kaflu tworzenia, przed resztą.
+  add.after(...el.grid.querySelectorAll(':scope > .logoTile[data-proposed="1"]'));
   const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
   const next = () => {
     const item = queue.shift();

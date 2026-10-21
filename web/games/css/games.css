@@ -202,6 +202,12 @@ body.games-body > main.wrap{
   padding: 4px;
   margin: -4px;
 }
+/* Kafel schowany pod krawędzią przewijanej siatki zanika (list-search.js
+   ustawia .has-more-above/below) zamiast ostrego cięcia -- ten sam sygnał
+   „jest więcej” co w przewijanym dolnym pasku (decyzja 2026-10-21). */
+.games-shell .grid.has-more-below{ mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent); }
+.games-shell .grid.has-more-above{ mask-image: linear-gradient(to bottom, transparent, #000 32px); }
+.games-shell .grid.has-more-above.has-more-below{ mask-image: linear-gradient(to bottom, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
 .games-shell .grid.logoGridBig{ border-radius: var(--radius-lg, var(--radius)); }
 
 .addCard:hover{

@@ -1188,7 +1188,7 @@ function render() {
       `;
       sharedGrid.appendChild(empty);
     } else {
-      // Zaproszenia (kafle propozycji) na samej górze.
+      // Zaproszenia (kafle propozycji) na początku (tu bez kafla „+”).
       for (const b of sharedBases.filter((x) => x.proposed)) renderTile(b, sharedGrid);
       for (const b of sharedBases.filter((x) => !x.proposed)) renderTile(b, sharedGrid);
     }

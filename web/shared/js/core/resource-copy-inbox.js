@@ -1,7 +1,7 @@
 // Otrzymane kopie gier i logo (resource_copy_*): dane do kafli propozycji
 // (proposed-tile.js) i liczniki na wypustkach. Kopia czekająca na decyzję
 // jest już wierszem games/user_logos odbiorcy — strona rysuje ją jak
-// zaproszenie do bazy, na samej górze siatki, z ✓/✕ zamiast kosza.
+// zaproszenie do bazy, zaraz po kaflu „+”, z ✓/✕ zamiast kosza.
 import {sb} from './supabase.js?v=v2026-10-21T17405';
 
 

@@ -123,7 +123,7 @@ module.exports = [
     steps: [click("#tabMarket", 600), click("#grid .card[data-market-id]"), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .bld-q-block").first().waitFor(); await view.waitForTimeout(300); }] },
   { id: "games-empty", category: CAT, title: "Moje gry — pusta biblioteka (tylko kafel „Nowa gra”)", path: "/games/", sources: GAMES, ready: "#grid .addCard",
     db: (db) => { db.tables.games = []; db.tables.questions = []; db.tables.answers = []; db.rpc.polls_vote_counts = []; } },
-  { id: "games-received-copies", category: CAT, title: "Moje gry — otrzymane kopie jako kafle propozycji na górze (✓/✕ w rogu, „Propozycja” + „Od”), liczniki w linii na wypustkach", path: "/games/", sources: [...GAMES, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
+  { id: "games-received-copies", category: CAT, title: "Moje gry — otrzymane kopie jako kafle propozycji zaraz po kaflu „Nowa gra” (✓/✕ w rogu, „Propozycja” + „Od”), liczniki w linii na wypustkach", path: "/games/", sources: [...GAMES, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
     db: receivedCopies },
   { id: "games-received-selected", category: CAT, title: "Moje gry — zaznaczona kopia do przyjęcia (tylko podgląd)", path: "/games/", sources: [...GAMES, "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
     db: receivedCopies, steps: [click("#grid .card[data-proposed] .name")] },

@@ -2823,6 +2823,18 @@ body{
   letter-spacing: .06em;
   text-transform: uppercase;
 }
+/* Rząd z „Od: …” (kafel propozycji, udostępniona baza) zostaje w jednej
+   linii: „Od” skraca się wielokropkiem, ikona roli nie spada pod spód —
+   kafel ma wysokość zwykłego (2026-10-21). */
+.grid :is(.tile, .logoTile) .tileTags:has(> .tag[data-kind="from"]){ flex-wrap: nowrap; min-width: 0; }
+.grid :is(.tile, .logoTile) .tileTags > .tag[data-kind="from"]{
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+}
 .grid .tile .tileTags .pollBadge--tally{
   border-color: rgba(255,234,166,.8);
   background: rgba(255,234,166,.24);

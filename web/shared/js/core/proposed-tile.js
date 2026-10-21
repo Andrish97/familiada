@@ -1,10 +1,10 @@
 // proposed-tile.js
 // Kafel propozycji — jeden wygląd i jedno działanie dla zaproszenia do bazy
 // (Bazy → Udostępnione) i otrzymanej kopii gry/logo (Moje gry, Moje loga):
-// zwykły kafel siatki na samej górze, oznaczenia „Propozycja” + „Od: X”,
+// zwykły kafel siatki zaraz po kaflu „+”, oznaczenia „Propozycja” + „Od: X”,
 // a zamiast kosza przyciski ✓ (przyjmij, złoty) i ✕ (odrzuć). Odrzucona
 // kopia gry/logo przepada; zaproszenie do bazy da się przywrócić z paska
-// „Odrzucone przeze mnie” w Bazach (decyzja 2026-10-21).
+// „Odrzucone” w Bazach (decyzja 2026-10-21).
 // Wygląd: base.css (.tag, .grid .tile .tileMiniActions).
 
 import { t } from "../../translation/translation.js?v=v2026-10-21T17405";

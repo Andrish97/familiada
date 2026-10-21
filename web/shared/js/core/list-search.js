@@ -120,9 +120,9 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     window.addEventListener("i18n:lang", () => { ariaS(); apiS.setOptions(optsS()); apply(); });
   }
 
-  // Układa kafle wg wybranego sortowania: kafle propozycji (data-proposed,
-  // proposed-tile.js) zawsze na samej górze, potem kafel „+” (.addCard), potem
-  // reszta. Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
+  // Układa kafle wg wybranego sortowania: kafel „+” (.addCard) zawsze
+  // pierwszy, zaraz po nim kafle propozycji (data-proposed, proposed-tile.js),
+  // potem reszta. Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
   const sortGrid = (grid) => {
     if (!sort) return;
     const own = [...grid.children].filter((el) => (el.matches(tile) || el.classList.contains("addCard")) && !el.classList.contains("list-empty"));
@@ -134,8 +134,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       : sortValue === "created" ? (a, b) => stamp(b, "created") - stamp(a, "created")
       : (a, b) => stamp(b, "updated") - stamp(a, "updated");
     const sorted = [
-      ...tiles.filter((el) => el.dataset.proposed === "1").sort(cmp),
       ...own.filter((el) => el.classList.contains("addCard")),
+      ...tiles.filter((el) => el.dataset.proposed === "1").sort(cmp),
       ...tiles.filter((el) => el.dataset.proposed !== "1").sort(cmp),
     ];
     if (sorted.every((el, i) => el === own[i])) return;
@@ -228,6 +228,22 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     if (listChanged && (input.value || filterValue || sortValue || sort)) apply();
   });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
+
+  // Wygaszona krawędź przewijanej siatki (games.css, .has-more-above/below):
+  // kafel schowany pod krawędzią zanika zamiast ostrego cięcia — ten sam
+  // sygnał „jest więcej” co w przewijanym dolnym pasku (decyzja 2026-10-21).
+  const fadeEdges = (grid) => {
+    const max = grid.scrollHeight - grid.clientHeight;
+    grid.classList.toggle("has-more-above", max > 1 && grid.scrollTop > 1);
+    grid.classList.toggle("has-more-below", max > 1 && grid.scrollTop < max - 1);
+  };
+  const fadeRo = typeof ResizeObserver === "function" ? new ResizeObserver((entries) => entries.forEach((e) => fadeEdges(e.target))) : null;
+  for (const grid of document.querySelectorAll(grids)) {
+    grid.addEventListener("scroll", () => fadeEdges(grid), { passive: true });
+    fadeRo?.observe(grid);
+    new MutationObserver(() => fadeEdges(grid)).observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+    fadeEdges(grid);
+  }
   window.addEventListener("i18n:lang", () => { label(); apply(); });
   if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
   if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);

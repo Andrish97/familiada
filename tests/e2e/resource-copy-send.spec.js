@@ -47,10 +47,11 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   const logoSend=await sendFromUi(page,'logos','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
   const logoMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.parse(gameMail.received_at)+1).toISOString(),subject:/kopię|copy/i,timeout:120000});
   expect(extractHttpLinks(logoMail).some(value=>new URL(value).searchParams.has('c'))).toBeTruthy();
-  // Otrzymana kopia = kafel propozycji na samej górze siatki (jak zaproszenie do bazy): ✓/✕ zamiast kosza.
+  // Otrzymana kopia = kafel propozycji zaraz po kaflu tworzenia (jak zaproszenie do bazy): ✓/✕ zamiast kosza.
   await recipientPage.goto('https://www.familiada.online/logos/');
   const logoTile=recipientPage.locator('#grid .logoTile[data-proposed="1"]').filter({hasText:logo.name});
   await expect(logoTile).toBeVisible({timeout:20000});
+  await expect(recipientPage.locator('#grid > :first-child')).toHaveClass(/addCard/);
   await expect(recipientPage.locator('#grid > .logoTile').first()).toHaveAttribute('data-proposed','1');
   await expect(logoTile.locator('.logoX')).toHaveCount(0);
   await logoTile.locator('[data-accept]').click();
