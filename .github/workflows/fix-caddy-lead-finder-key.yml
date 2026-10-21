@@ -1,0 +1,47 @@
+name: Naprawa — klucz lead-findera w Caddy (jednorazowa)
+
+# Po rotacji LEAD_FINDER_API_KEY (przebieg 39655412768) Caddy dla
+# leads.familiada.online nadal przepuszcza tylko stary klucz (@valid_key),
+# więc każde żądanie panelu dostaje 404 bez CORS ("Failed to fetch").
+# Wpisuje bieżący klucz z supabase/docker/.env do matchera, waliduje i
+# przeładowuje Caddy. Wartości nie trafiają do logu (tylko true/false i kody).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Klucz w Caddy = LEAD_FINDER_API_KEY z .env
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          CF=/etc/caddy/Caddyfile
+          K=$(grep -E '^LEAD_FINDER_API_KEY=' ~/supabase-selfhost/supabase/docker/.env | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')
+          [ -n "$K" ] || { echo "brak klucza w .env"; exit 1; }
+          TS=$(date -u +%Y%m%d%H%M%S)
+          sudo -n cp -p "$CF" "$CF.bak-leadkey-$TS"
+          TMP=$(mktemp); trap 'rm -f "$TMP"' EXIT
+          # podmiana tylko linii @valid_key w bloku leads.familiada.online
+          K="$K" awk '
+            /^leads\.familiada\.online/ {inblk=1}
+            inblk && /@valid_key header Authorization/ { sub(/@valid_key header Authorization .*/, "@valid_key header Authorization \"Bearer " ENVIRON["K"] "\""); done=1 }
+            inblk && /^}/ {inblk=0}
+            {print}
+            END { if (!done) exit 3 }' "$CF" > "$TMP"
+          sudo -n caddy validate --config "$TMP" --adapter caddyfile >/dev/null 2>&1 && echo "walidacja: ok"
+          sudo -n cp "$TMP" "$CF"
+          sudo -n systemctl reload caddy && echo "reload: ok"
+          sleep 2
+          printf 'Caddyfile zawiera bieżący klucz: '; grep -qF -- "$K" "$CF" && echo true || echo false
+          printf 'leads /status z kluczem -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 -H "Authorization: Bearer $K" --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/api/search-runs/status
+          printf 'leads /status bez klucza -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/api/search-runs/status
+          REMOTE
