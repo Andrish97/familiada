@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
+\restrict 08PP4BaQb86sDAATBqXIfXyTEfr9mSDIbJWygchlxw2QHB0iNeA9KL4aATot4fc
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10135,12 +10135,12 @@ BEGIN
       AND (
         (g.settings->'game'->'advanced' IS NOT NULL
           AND g.settings->'game'->'advanced' <> '{}'::jsonb
-          AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+          AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"money","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
         OR (g.settings->'display'->'colors' IS NOT NULL
           AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
         OR (g.settings->'display'->>'theme' IS NOT NULL)
         OR (g.settings->'display'->>'logoId' IS NOT NULL)
-        OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+        OR (g.settings->'game'->>'hasFinal' = 'false')
         OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
         OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
         OR EXISTS (
@@ -11001,12 +11001,12 @@ BEGIN
         AND (
           (g.settings->'game'->'advanced' IS NOT NULL
             AND g.settings->'game'->'advanced' <> '{}'::jsonb
-            AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+            AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"money","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
           OR (g.settings->'display'->'colors' IS NOT NULL
             AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
           OR (g.settings->'display'->>'theme' IS NOT NULL)
           OR (g.settings->'display'->>'logoId' IS NOT NULL)
-          OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+          OR (g.settings->'game'->>'hasFinal' = 'false')
           OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
           OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
           OR EXISTS (
@@ -27040,5 +27040,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
+\unrestrict 08PP4BaQb86sDAATBqXIfXyTEfr9mSDIbJWygchlxw2QHB0iNeA9KL4aATot4fc
 
