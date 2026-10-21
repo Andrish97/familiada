@@ -53,7 +53,7 @@ a summary "Invited · Voted · Declined". You can send [Remind] to people who ha
 You can combine both ways — the votes are counted together.
 
 A subscriber without an account can view their invitations and opt out of them on the
-*My notifications* page (→ 14.5).
+*My notifications* page.
 
 ## 15.3 Voting
 
@@ -71,7 +71,7 @@ A voter opens the poll from the link, the QR code, an email or a task.
 
 A person invited by name votes in the same way; their status for the poll owner changes to
 "voted". A person without an account can open the poll from the email or from the
-*My notifications* page (→ 14.5).
+*My notifications* page.
 
 ## 15.4 Tasks and voting invitations
 
@@ -82,7 +82,7 @@ A task is a poll invitation you got from a friend. You will find tasks on the
   means you will not take part (the poll disappears from the list),
 - "Done" — polls you have already voted in (collapsed, shown for 5 days).
 
-People without an account have their tasks on the *My notifications* page (→ 14.5).
+People without an account have their tasks on the *My notifications* page.
 
 ## 15.5 Running the vote
 
@@ -137,5 +137,5 @@ to "Poll".
 
 - [Restart] opens a new poll for the same game — the existing votes and results
   will be deleted.
-- Editing the game or changing its type also deletes the results (after you confirm, → 7.5, 7.8).
+- Editing the game (→ 7.5) or changing its type (→ 7.8) also deletes the results — after you confirm.
 - To keep the result and collect a new poll at the same time, duplicate the game first (→ 6.6).

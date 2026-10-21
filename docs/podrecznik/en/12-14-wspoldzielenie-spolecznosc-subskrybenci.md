@@ -98,7 +98,7 @@ once a game has three ratings.
 2. The game appears in *My games*, in the "Community Games" tab.
 3. Select it and choose [Play] (→ 17). You can also change its [Game settings] (→ 16).
 
-A Community game cannot be edited, have its type changed, be duplicated, exported or
+Such a game cannot be edited, have its type changed, be duplicated, exported or
 sent.
 
 To remove a game from your library, choose [Remove from my games] in the details, or the bin icon on
@@ -114,7 +114,7 @@ still have it.
    [Submit to Community Games].
 
 You can submit your own game that is **ready to play** (→ 7.6): a prepared game or
-a game with a closed poll. Demo games and Community games cannot be submitted. A game can
+a game with a closed poll. Demo games and games added from Community Games cannot be submitted. A game can
 have only one submission at a time.
 
 A submission is **a snapshot of the game at the moment you send it** — later changes to your game will not
@@ -143,7 +143,7 @@ you can invite them to polls. A subscriber:
 
 - gets emails from you about polls and shared devices,
 - answers polls and connects devices without signing in,
-- manages their emails on the *My notifications* page (→ 14.5).
+- manages their emails on the *My notifications* page.
 
 You add people who have an account as friends (→ 10). When a subscriber creates an account, their address
 shows "Has an account — go to Friends.", and you get a friend suggestion from them.
@@ -199,10 +199,10 @@ in *Account settings* (→ 5.8).
 - **Subscriptions** — who you can receive polls from. You accept pending ones with [Accept] or
   decline them with [Decline]; you leave an active one with [Unsubscribe] — that person will be able to invite
   you again only after 30 days.
-- **Tasks** — polls waiting for your vote ([Vote], [Decline] → 15.3), and devices shared
-  with you ([Connect device] → 17.1).
+- **Tasks** — polls waiting for your vote: [Vote] or [Decline] (→ 15.3), and devices shared
+  with you: [Connect device] (→ 17.1).
 - **"Notifications are on"** — [Unsubscribe] turns off all emails: it cancels your subscriptions,
   pending polls and shared devices, and nobody will be able to invite you. If you
   turn notifications back on, the old invitations will not come back.
 
-A visit to the page expires after an hour of inactivity — after that, come back in through the link.
+Access to the page expires after an hour of inactivity — after that, come back in through the link.

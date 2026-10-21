@@ -55,7 +55,7 @@ For a prepared game to be ready:
 - the total points in a question can be **at most 100** — it does not have to equal 100.
 
 The app will save values that do not meet these conditions, but it will mark them in red, and the game will not
-be ready. How points count during a game → 3.
+be ready. How points count during a game (→ 3.2).
 
 ## 7.5 Saving and editing a game after the poll has started
 
@@ -70,7 +70,7 @@ An empty question or answer will be saved as "Question 1", "ANS 1" and so on.
 **A game with a poll:**
 
 - When the poll is **open** or **stopped**, editing is locked. To edit,
-  abort the poll (the collected votes will be lost → 15.5).
+  abort the poll (→ 15.5) — the collected votes will be lost.
 - When the poll is **closed**, the app will ask when you try to edit: "Reset poll?".
   If you choose [Reset], the votes, the respondents' answers and the poll links and QR codes
   will be deleted; the questions and answers stay, the points are reset to zero, and the game goes back to being a draft.
@@ -132,7 +132,7 @@ a copy. If you want to keep the current version, use [Duplicate] first (→ 6.6)
 
 - A game with an **open or stopped** poll cannot be changed at that moment.
 - For a **closed** poll, the app will first ask whether to reset it (→ 7.5).
-- Community games cannot be changed.
+- Games in the Community Games tab cannot be changed.
 
 In the "Change game type" window, each type has a description of what will happen — check it before choosing [Change]:
 

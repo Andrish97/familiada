@@ -16,12 +16,12 @@ and [Forgot password].
 
 You need an account to work with other people. Only with an account can you:
 
-- have friends and subscribers and receive tasks (→ 10, 14, 15.4),
-- duplicate games and logos and send copies of them to friends (→ 6.6, 11),
+- have friends (→ 10) and subscribers (→ 14) and receive tasks (→ 15.4),
+- duplicate games and logos (→ 6.6) and send copies of them to friends (→ 11),
 - share question bases (→ 12),
 - send poll invitations (→ 15.2),
 - share devices for a game (→ 17.1),
-- submit and rate Community Games (→ 13).
+- submit and rate games in the public catalogue (→ 13).
 
 If you open a page that is only available to accounts while you are a guest, you will see the message
 "Not available for guest account".
@@ -172,4 +172,5 @@ What stays:
 - your answers in other people's polls — no longer linked to you,
 - games you published in Community Games — without your name as the author.
 
-If you want to keep your materials, export them to files before deleting (→ 6.7, 8.5, 9.1).
+If you want to keep your materials, before deleting export to files your games (→ 6.7),
+logos (→ 8.5) and question bases (→ 9.1).

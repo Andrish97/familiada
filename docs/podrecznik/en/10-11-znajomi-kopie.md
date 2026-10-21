@@ -51,8 +51,8 @@ To remove a friend, choose [Remove] and confirm. Then:
 - the person disappears from the list and moves to "Declined by me" — for 30 days you can
   undo this with [Undo decline],
 - pending poll and question base invitations between the two of you are cancelled,
-- **bases and devices you have already shared stay shared** — revoke access to them separately
-  (→ 12.5, 17.1),
+- **bases and devices you have already shared stay shared** — revoke access to bases (→ 12.5) and devices
+  (→ 17.1) separately,
 - copies of games and logos you have already sent stay with that person — a sent copy cannot be taken back (→ 11).
 
 ## 10.5 What a friendship lets you do
@@ -60,7 +60,7 @@ To remove a friend, choose [Remove] and confirm. Then:
 With friends you can:
 
 - invite them to polls (→ 15.2),
-- send them copies of games and logos (→ 11) — friends only,
+- send them copies of games and logos — friends only,
 - quickly pick them from a list when sharing bases (→ 12.2) and devices (→ 17.1).
 
 You can also share a base or a device with someone who is not your friend by entering their email address
@@ -77,7 +77,7 @@ How sending differs from other ways of passing things on:
 
 - [Duplicate] makes a copy for you (→ 6.6),
 - exporting to a file gives you a file you can pass on to anyone (→ 6.7),
-- Community Games is a public catalogue for everyone (→ 13).
+- Community Games is a public catalogue for everyone.
 
 Sending requires an account and at least one friend.
 

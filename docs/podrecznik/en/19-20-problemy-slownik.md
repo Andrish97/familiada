@@ -8,7 +8,7 @@ Each item: **symptom** → possible cause → what to do.
 
 - **The account confirmation email did not arrive** → the email went to spam or the address has
   a typo → check your spam folder; try creating the account again and choose [Resend email]
-  (once an hour) (→ 5.2).
+  — you can do this once an hour (→ 5.2).
 - **"Confirm your email (link in inbox)." when signing in** → the account has not been confirmed →
   click the link in the "FAMILIADA — Confirm your account" email.
 - **"Wrong email or password."** → the password or address is wrong → check upper and lower case in your password; you can
@@ -41,7 +41,7 @@ Each item: **symptom** → possible cause → what to do.
 - **"This database item is currently being edited…"** → someone else is editing this item → wait
   a moment and try again (→ 12.5).
 - **[Send] is inactive** → the game has a poll (only a draft can be sent), comes from Community
-  Games or from demo materials, or you have no friends → see 11.2.
+  Games or from demo materials, or you have no friends → check what can be sent (→ 11.2).
 
 ## 19.3 Problems with polls and voting
 
@@ -146,11 +146,11 @@ After sending, you get a ticket number. To help solve the problem faster, write:
 
 ## 20.3 Game and device terms
 
-- **Question base** — a library of questions you can use again and again (→ 9).
+- **Question base** — a library of questions you can use again and again.
 - **Host screen (Host)** — the device with the question and all the answers for the person
   reading the questions (→ 17.1).
 - **Prepared game** — a game with answers and points entered by hand, without a poll (→ 7.1).
-- **Community Games** — a public catalogue of ready-made games (→ 13).
+- **Community Games** — a public catalogue of ready-made games.
 - **Logo** — lettering or an image shown during the game (→ 8).
 - **Control panel** — the operator's page, from which the game is run (→ 17).
 - **Buzzer** — a phone with the A and B buttons for the players (→ 17.1).

@@ -12,7 +12,7 @@ because that is what most respondents said.
 
 The families stand facing each other, with the host between them. Each family has its own
 "head", who starts the game. Over the rounds, the teams reveal the answers hidden on the board
-and collect points. Mistakes are marked on the board with an X, and after three mistakes
+and collect points. Each mistake is an X on the board, and after three mistakes
 the opponents get their chance. Points are worth more in later rounds.
 
 The game goes on until one of the families reaches a total of 300 points. The winning family
@@ -45,7 +45,7 @@ scattered answers are dropped.
 
 The team tries to guess the answers on the board. An answer that is on the board is
 revealed, and its points go into the round pool. An answer that is not on the board is a mistake.
-How this works in a round → 3.
+Details (→ 3).
 
 ## 2.4 How the app uses poll results
 
@@ -78,7 +78,7 @@ described at the relevant points.
 Rounds are played one after another until one of the families reaches a total of **300 points**.
 Three rounds are usually enough, but the game goes on if nobody has reached the threshold.
 
-**In the app:** you set the threshold yourself (default 300 → 16.6). The number of rounds is not fixed —
+**In the app:** you set the threshold yourself in the game settings (→ 16.6); the default is 300. The number of rounds is not fixed —
 it depends on when one of the teams reaches the threshold and on how many questions you prepared.
 
 ## 3.2 Scoring and the round multiplier
@@ -147,7 +147,7 @@ The app checks the threshold after settling each round. When a team reaches it:
 The game also ends without a final when **the questions run out** before either team
 reaches the threshold.
 
-How the Control panel guides the operator through these stages → 17.
+How the Control panel guides the operator through these stages (→ 17).
 
 # 4. The game show final
 
@@ -176,7 +176,7 @@ The points of both finalists are added up. There is **no multiplier** in the fin
 
 The finalists' goal is **at least 200 points** together.
 
-**In the app:** you set the target yourself (default 200 → 16.6). When the finalists reach it, the operator
+**In the app:** you set the target yourself in the game settings (→ 16.6); the default is 200. When the finalists reach it, the operator
 can end the final right away, without revealing the remaining questions (→ 17.4).
 
 ## 4.4 Grand prize and settling the score

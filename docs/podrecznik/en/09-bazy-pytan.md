@@ -43,7 +43,7 @@ or in the folder tree.
 | [Copy], [Cut], [Paste] | moves or copies the selection to another folder |
 | [Duplicate] | creates a copy next to the original |
 | [Delete] | deletes the selection — after confirmation, with no way to undo |
-| [Create game] | creates a game from the selected questions (→ 9.8) |
+| [Create game] | creates a game from the selected questions |
 | [Refresh view] | shows the latest state of the base |
 
 **Dragging.** Drag the selection onto a folder to move it. With Ctrl held down

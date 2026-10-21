@@ -2,9 +2,9 @@
 
 The game is run by the **operator** in the *Control panel*. The other devices show the game to the
 players and the host. This chapter describes them together — stage by stage: what the operator does
-and what happens on the other screens at the same time. Rules of the rounds and the final → 3 and 4.
+and what happens on the other screens at the same time. Rules of the rounds (→ 3) and the final (→ 4).
 
-## 17.1 Interfaces and connecting devices
+## 17.1 Devices and connecting them
 
 | Device | Role | Where it usually runs |
 |---|---|---|
@@ -45,7 +45,7 @@ scan them from the room. It is best to use two separate devices.
 [Copy] copies the code, and [Share] sends the device to another person — enter their email address or
 username, or choose a friend. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
-email and on the *My notifications* page (→ 14.5). In the shared list, a phone and a tablet
+email and on the *My notifications* page. In the shared list, a phone and a tablet
 show the Host and the Buzzer, and a computer shows the Display. Sharing devices requires an account.
 
 **Without some of the devices:**
@@ -182,7 +182,7 @@ helps spot a repeat. The timer is 20 s.
 - As long as there is time, the host can go back to skipped questions.
 - Scoring and revealing — as for player 1. The host also sees player 1's answer to the same question.
 
-**End of the final.** When the finalists reach the target (200 by default → 4.3), further scoring is blocked,
+**End of the final.** When the finalists reach the target — 200 points by default (→ 4.3) — further scoring is blocked,
 and the button changes to [Finish final] — the operator chooses when to finish. If the target
 was not reached, [Finish final] appears after player 2's last points.
 

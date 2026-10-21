@@ -83,7 +83,7 @@ from your rounds list; after [Reshuffle], the previous final questions go back t
 ### 16.5.3 Round questions
 
 In "Order" mode, in the "Questions — Rounds" section, arrange the order of the questions by dragging (or
-with the arrows) — the list contains all questions except the final ones. The rounds use them one after another; final questions are left out here.
+with the arrows) — the list contains all questions except the final ones. The rounds use them one after another.
 In "Random" mode, the app shuffles the questions before the game — you will see the order in the summary
 (→ 17.2). Final questions that were drawn will not be used in the rounds.
 

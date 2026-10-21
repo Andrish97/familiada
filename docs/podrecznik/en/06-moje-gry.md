@@ -4,7 +4,7 @@
 
 *My games* is the page you land on after logging in, and where most of your work starts.
 From the top bar you can go from here to the other parts of the app: question bases, logos,
-Community Games (→ 13), friends, subscribers, tasks and connecting devices. The counters next to the
+Community Games, friends, subscribers, tasks and connecting devices. The counters next to the
 buttons show things waiting for you: invitations, received copies, tasks
 and shared devices. On a narrower screen some of the buttons are in the [More] menu.
 
@@ -16,7 +16,7 @@ The page is the library of your games, including copies received from friends. G
 into tabs:
 
 - **Standard poll**, **Points**, **Prepared** — games of that type (→ 7.1),
-- **Community Games** — games added from the public catalog (→ 13).
+- **Community Games** — games added from the public catalog.
 
 On a phone the tabs have shorter names: "Poll", "Points", "Prep." and "Community".
 
@@ -116,8 +116,8 @@ What goes into the copy:
 | Poll open or stopped | A draft without the collected votes (the app will warn you about this in the "Without current votes" window). |
 | Poll closed | A ready game, with the poll result. |
 
-You can send a friend a poll draft or a prepared game; an open, stopped
-or closed poll cannot be sent.
+You can send a friend a prepared game or a game with a poll, as long as it is a draft. Games with
+an open, stopped or closed poll cannot be sent.
 
 Duplicating and sending require an account (→ 5.1). This is different from adding a game from Community
 Games (→ 13.4).
@@ -145,7 +145,7 @@ need to be completed — you will see what is missing under its name (→ 6.2).
 > play.
 
 **Export to a question base.** [Export to base] copies the game's questions and answers to the selected
-question base (→ 9). A folder named after the game is created in the base's root folder. You can choose
+question base. A folder named after the game is created in the base's root folder. You can choose
 your own base or a base shared with you with edit rights (→ 12.4). If you don't have such a base,
 the window shows "No bases found." — create a base first (→ 9.1).
 
