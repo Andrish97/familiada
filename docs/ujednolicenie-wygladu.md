@@ -153,6 +153,10 @@ podliczania jako stan bieżącej operacji.
   starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
   z większą (Gry: wyszukiwanie po lewej, akcje wystają w prawo). Menu filtra
   i sortowania zamyka się, gdy przewinie się pojemnik z przyciskiem.
+  Doprecyzowanie użytkownika (2026-10-21): grup nie rozpychać na boki, gdy
+  robi się ciasno — stoją przy sobie, a gdy prawie się stykają, dzieli je
+  cienki separator; przewijanie dopiero, gdy z separatorem się nie mieszczą.
+  Przy dużej ilości miejsca grupy zostają po lewej i po prawej.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

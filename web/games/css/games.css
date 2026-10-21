@@ -938,5 +938,18 @@ body.games-body > main.wrap{
 .change-type-option input { margin: 0; accent-color: var(--gold); }
 .change-type-name { font-weight: 900; }
 .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
-/* W przewijanym pasku grupy nie rozsuwa space-between — osobny odstęp. */
-.games-bottom.is-scroll > .games-bottom-left{ margin-right: 8px; }
+/* Grupy prawie się stykają: przy sobie, rozdzielone cienką kreską. */
+.games-bottom.has-group-sep{ justify-content: flex-start; }
+.games-bottom.has-group-sep > .games-bottom-right{
+  position: relative;
+  padding-left: 9px;
+}
+.games-bottom.has-group-sep > .games-bottom-right::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 1px;
+  background: rgba(255,255,255,.22);
+}

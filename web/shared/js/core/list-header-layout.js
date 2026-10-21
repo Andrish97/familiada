@@ -78,6 +78,11 @@ export function initListHeaderLayout(selector = ".bar") {
 // mieszczą się nawet ikony, pasek zostaje jednym rzędem i przewija się w bok;
 // na starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
 // z większą (decyzja użytkownika 2026-10-21, zamiast zawijania w rzędy).
+// Separator grup: 1 px kreski + 8 px odstępu (CSS .has-group-sep). Pojawia
+// się, gdy odstęp między grupami spadłby poniżej TOOLBAR_SEPARATOR_ROOM.
+const TOOLBAR_SEPARATOR_WIDTH = 9;
+const TOOLBAR_SEPARATOR_ROOM = 24;
+
 function initListBottomToolbarLayout() {
   for (const bar of document.querySelectorAll(".games-bottom")) {
     let queued = false;
@@ -183,15 +188,21 @@ function initListBottomToolbarLayout() {
       if (useIcons) {
         needed = measureGroup(left, "icons").width + measureGroup(right, "icons").width + groupGap;
       }
+      // Gdy grupy niemal się stykają, rozdziela je mały separator (jego
+      // miejsce wlicza się do szerokości); przewijanie dopiero, gdy i z nim
+      // się nie mieszczą.
+      const separated = needed + TOOLBAR_SEPARATOR_ROOM > available + 1;
+      if (separated) needed += TOOLBAR_SEPARATOR_WIDTH;
       const scroll = needed > available + 1;
       const leftCount = [...left.children].filter((item) => item.getClientRects().length).length;
       const rightCount = [...right.children].filter((item) => item.getClientRects().length).length;
       const startAtEnd = scroll && leftCount > rightCount;
-      const layoutKey = `${scroll}:${useIcons}:${startAtEnd}:${available}`;
+      const layoutKey = `${scroll}:${separated}:${useIcons}:${startAtEnd}:${available}`;
       if (layoutKey !== lastLayout) {
         lastLayout = layoutKey;
         bar.classList.add("is-single-row");
         bar.classList.toggle("is-scroll", scroll);
+        bar.classList.toggle("has-group-sep", separated);
         if (scroll) bar.scrollLeft = startAtEnd ? bar.scrollWidth : 0;
       }
       updateEdges();
