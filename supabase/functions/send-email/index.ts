@@ -593,7 +593,11 @@ serve(async (req) => {
       const emailTemplate: EmailType = isGuestMigrate ? "guest_migrate" : "email_change";
       const copy = await getEmailCopy(emailTemplate, lang);
 
-      const thCurrent = tokenHash;
+      // Dwa tokeny = "secure email change" (potwierdza stary i nowy adres).
+      // Jeden token = potwierdza tylko nowy adres; nie może trafić na stary,
+      // bo kliknięcie tam zatwierdziłoby zmianę bez sprawdzenia nowej skrzynki.
+      const secureChange = Boolean(tokenHash && tokenHashNew);
+      const thCurrent = secureChange ? tokenHash : "";
       const thNew = tokenHashNew || tokenHash;
 
       const linkCurrent =
@@ -616,7 +620,7 @@ serve(async (req) => {
         event: "request_done",
         status: "ok",
         actorUserId,
-        meta: { actionType: type, flow: "email_change" },
+        meta: { actionType: type, flow: "email_change", secureChange },
       });
       return json({ ok: true });
     }
