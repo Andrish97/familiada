@@ -4,11 +4,11 @@
 // 2026-10-21): bez osobnego pytania o reset -- to okno jest potwierdzeniem; głosy
 // ankiety znikają, a wyniki (odpowiedzi, punkty) można zachować, gdy nowy typ je
 // wykorzysta (migracja 441, p_keep).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15282";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-21T15282";
-import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15282";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T15282";
-import { validateGame, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-21T15282";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15324";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-21T15324";
+import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15324";
+import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T15324";
+import { validateGame, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-21T15324";
 
 const SOURCE_TYPES = [TYPES.PREPARED, TYPES.POLL_POINTS, TYPES.POLL_TEXT];
 // Nazwy typów jak na zakładkach Gier.
@@ -48,7 +48,8 @@ export function summaryKey(from, to, { closed = false, keep = false } = {}) {
 
 // Karta na typ: nazwa jak na zakładce Gier i skutek zmiany; obecny typ
 // wyłączony, domyślnie wybrany pierwszy inny. Przy zamkniętej ankiecie
-// wybrana karta ma pole „Zachowaj …” (domyślnie zaznaczone).
+// wybrana karta ma pole „Zachowaj …” -- domyślnie odznaczone: wszystko, co
+// powstało w wyniku ankiety, znika (decyzja użytkownika 2026-10-21).
 function buildBody(current, closed) {
   const box = document.createElement("div");
   box.className = "change-type";
@@ -78,7 +79,7 @@ function buildBody(current, closed) {
       row.className = "change-type-keep";
       keep = document.createElement("input");
       keep.type = "checkbox";
-      keep.checked = true;
+      keep.checked = false;
       const text = document.createElement("span");
       text.textContent = t(`games.changeType.keep.${what}`);
       row.append(keep, text);

@@ -169,7 +169,7 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
 });
 
 // Decyzja 2026-10-21 (migracja 441): zamknięta ankieta — „Zmień typ” bez
-// pytania o reset; pod wybranym typem „Zachowaj …” (domyślnie zaznaczone).
+// pytania o reset; pod wybranym typem „Zachowaj …” (domyślnie odznaczone).
 test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez pytania o reset (UI)", async ({ page, context }, testInfo) => {
   test.setTimeout(90_000);
   await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
@@ -194,11 +194,11 @@ test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez 
     await option.locator('input[type="radio"]').check();
     const keep = option.locator(".change-type-keep input");
     await expect(keep).toBeVisible();
-    await expect(keep).toBeChecked();
-    await expect(option.locator(".change-type-desc")).toHaveText("Pytania, odpowiedzi i punkty z ankiety zostaną.");
-    await keep.uncheck();
+    // domyślnie odznaczone: wyniki ankiety znikają
+    await expect(keep).not.toBeChecked();
     await expect(option.locator(".change-type-desc")).toContainText("Punkty zostaną usunięte");
     await keep.check();
+    await expect(option.locator(".change-type-desc")).toHaveText("Pytania, odpowiedzi i punkty z ankiety zostaną.");
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect.poll(async () => page.evaluate(async (id) => {

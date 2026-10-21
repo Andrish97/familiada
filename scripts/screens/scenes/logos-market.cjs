@@ -96,7 +96,7 @@ function adminData(db) {
     locks: [{ holder_user_id: "u2", username: "Wujek_Staszek", holder_context: "logo-editor", resource_type: "logo", resource_name: "Gala 2026", heartbeat_at: T(21, 10, 14) }],
   };
   const growth = (total, a, b, c) => ({ total, new_today: a, new_7d: b, new_30d: c });
-  db.rpc.get_admin_stats = {
+  h["/_admin_api/stats/overview"] = { ok: true, stats: {
     users: { ...growth(1284, 7, 61, 214), langs: { pl: 1012, en: 168, uk: 104 } },
     games: { ...growth(3920, 18, 140, 511), ready: 2615, avg_q: 10.4 },
     custom_settings: { total: 842 },
@@ -104,28 +104,28 @@ function adminData(db) {
     bases: growth(611, 2, 19, 70), logos: growth(1470, 5, 38, 133),
     ratings: { average: 4.8, total: 126, new_today: 1, new_7d: 6, new_30d: 21 },
     health: { mail_errors: 2 }, timestamp: T(21, 9, 40),
-  };
+  } };
   h["/_admin_api/stats/polls"] = { ok: true, stats: {
     games: { total: 1210, text: 430, points: 780, active: 64, active_with_votes: 51 },
     responses: { total: 18240, last_7d: 1312, voters: 5120 },
     sharing: { polls: 388, tasks: 2210, completed_tasks: 1604 },
     subscriptions: { total: 940, active: 802, pending: 96, declined: 31, cancelled: 11 },
   } };
-  db.rpc.get_retention_stats = {
+  h["/_admin_api/stats/retention"] = { ok: true, stats: {
     funnel: { registered: 1284, game_created: 702, game_played: 341, never_active: 318 },
     retention: { d7: { cohort: 212, returned: 74 }, d30: { cohort: 560, returned: 121 } },
     segments: { active_7d: 288, active_8_30d: 241, dormant: 437, never: 318 },
     trend_users: Array.from({ length: 14 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 13 + i); return { day: d.toISOString().slice(0, 10), count: [5, 8, 4, 9, 12, 7, 6, 10, 14, 9, 8, 11, 13, 7][i] }; }),
-  };
-  db.rpc.stats_excluded_list = [
+  } };
+  h["/_admin_api/stats/excluded"] = { ok: true, rows: [
     { user_id: id("8e90", 1), username: "tester_pl", email: "tester@example.test", automatic: true, reason: "test_account" },
     { user_id: id("8e90", 2), username: "gosc_demo", email: "", automatic: true, reason: "test_guest" },
     { user_id: id("8e90", 3), username: "wlasciciel", email: "owner@example.test", automatic: false },
-  ];
-  db.rpc.get_ratings_admin = [
+  ] };
+  h["/_admin_api/ratings"] = { ok: true, rows: [
     ["ania.k", 5, "Świetna zabawa na rodzinnych spotkaniach!", 20], ["Wujek_Staszek", 5, "Gramy co niedzielę.", 19], ["quizmaster", 4, "Brakuje mi trybu drużynowego na czas.", 17],
     ["ola", 5, "", 15], ["kuba2009", 3, "Na telefonie wolałbym większe przyciski.", 12], ["teacher_ewa", 5, "Uczniowie zachwyceni.", 9],
-  ].map(([username, stars, comment, d]) => ({ username, stars, comment, created_at: T(d, 18) }));
+  ].map(([username, stars, comment, d]) => ({ username, stars, comment, created_at: T(d, 18) })) };
   h["/_admin_api/marketplace/producer-ratings"] = { ok: true, rows: [
     { id: id("8b00", 1), title: "Familiada świąteczna", lang: "pl", avg_rating: 4.8, rating_count: 56, library_count: 184 },
     { id: id("8b00", 3), title: "Szkolne wspomnienia", lang: "pl", avg_rating: 4.4, rating_count: 23, library_count: 97 },

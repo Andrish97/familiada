@@ -337,7 +337,8 @@ powielenie ani utworzenie nowej gry: konwersja aktualizuje ten sam rekord.
   migracja 441**: bez osobnego pytania o reset; samo okno „Zmień typ” jest
   potwierdzeniem (tekst: głosy, linki i kody QR ankiety zostaną usunięte).
   Wyniki ankiety można opcjonalnie zachować (`game_change_type(..., p_keep)`,
-  pole „Zachowaj …” pod wybranym typem, domyślnie zaznaczone):
+  pole „Zachowaj …” pod wybranym typem, **domyślnie odznaczone** — domyślnie
+  znika wszystko, co powstało w wyniku ankiety):
   punktacja → preparowana: punkty (odpowiedzi zostają zawsze);
   tekstowa → preparowana: odpowiedzi i punkty (bez zachowania same pytania);
   tekstowa → punktacja: odpowiedzi (punkty da nowa ankieta; bez zachowania same
