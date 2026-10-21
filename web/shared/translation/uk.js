@@ -4324,10 +4324,10 @@ const uk = {
       searchPlaceholder: "Шукати папку…",
       noFolders: "Немає папок із такою назвою.",
     },
-    filters: {
-      title: "Фільтри",
-      clear: "Очистити фільтри",
-      done: "Готово",
+    leftView: {
+      tree: "Дерево папок",
+      tags: "Теги",
+      types: "Запропоновані категорії",
     },
     search: {
       removeTag: "Прибрати фільтр тегу",
@@ -4337,7 +4337,6 @@ const uk = {
     },
     toolbar: {
       groupHistory: "Історія",
-      openPanel: "Відкрити панель",
       groupCreate: "Створення",
       newFolder: "Нова папка",
       newQuestion: "Нове питання",

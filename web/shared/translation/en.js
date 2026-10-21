@@ -4327,10 +4327,10 @@ const en = {
       searchPlaceholder: "Search folders…",
       noFolders: "No folders with this name.",
     },
-    filters: {
-      title: "Filters",
-      clear: "Clear filters",
-      done: "Done",
+    leftView: {
+      tree: "Folder tree",
+      tags: "Tags",
+      types: "Suggested categories",
     },
     search: {
       removeTag: "Remove tag filter",
@@ -4340,7 +4340,6 @@ const en = {
     },
     toolbar: {
       groupHistory: "History",
-      openPanel: "Open panel",
       groupCreate: "Create",
       newFolder: "New folder",
       newQuestion: "New question",

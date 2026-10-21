@@ -3,26 +3,25 @@
 // pierwsze wczytanie (data/store.js), narysowanie (render.js) i podpięcie
 // wejść (ui/*). Logika akcji: actions/registry.js + commands.js.
 
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T07101";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T07101";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T07101";
-import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T07101";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T07101";
-import { createState, setRole, goTo } from "./state.js?v=v2026-10-21T07101";
-import { reload } from "./data/store.js?v=v2026-10-21T07101";
-import { renderAll, renderToolbar, renderList, isNarrow } from "./render.js?v=v2026-10-21T07101";
-import { createHistory } from "./history.js?v=v2026-10-21T07101";
-import { getBaseMeta, getBaseRole } from "./repo.js?v=v2026-10-21T07101";
-import { openFolder, openTrash } from "./commands.js?v=v2026-10-21T07101";
-import { wireToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07101";
-import { wireList } from "./ui/list.js?v=v2026-10-21T07101";
-import { wireTree } from "./ui/tree.js?v=v2026-10-21T07101";
-import { wireLeft } from "./ui/left.js?v=v2026-10-21T07101";
-import { wireDnd } from "./ui/dnd.js?v=v2026-10-21T07101";
-import { wireSearch } from "./ui/search.js?v=v2026-10-21T07101";
-import { wireFilters } from "./ui/filters.js?v=v2026-10-21T07101";
-import { wireKeyboard } from "./ui/keyboard.js?v=v2026-10-21T07101";
-import { initDrawer } from "./mobile.js?v=v2026-10-21T07101";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T07274";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T07274";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T07274";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T07274";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T07274";
+import { createState, setRole, goTo } from "./state.js?v=v2026-10-21T07274";
+import { reload } from "./data/store.js?v=v2026-10-21T07274";
+import { renderAll, renderToolbar, renderList, isNarrow } from "./render.js?v=v2026-10-21T07274";
+import { createHistory } from "./history.js?v=v2026-10-21T07274";
+import { getBaseMeta, getBaseRole } from "./repo.js?v=v2026-10-21T07274";
+import { openFolder, openTrash } from "./commands.js?v=v2026-10-21T07274";
+import { wireToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07274";
+import { wireList } from "./ui/list.js?v=v2026-10-21T07274";
+import { wireTree } from "./ui/tree.js?v=v2026-10-21T07274";
+import { wireLeft } from "./ui/left.js?v=v2026-10-21T07274";
+import { wireDnd } from "./ui/dnd.js?v=v2026-10-21T07274";
+import { wireSearch } from "./ui/search.js?v=v2026-10-21T07274";
+import { wireLeftView } from "./ui/left-view.js?v=v2026-10-21T07274";
+import { wireKeyboard } from "./ui/keyboard.js?v=v2026-10-21T07274";
 
 const baseNameEl = document.getElementById("baseName");
 
@@ -114,8 +113,8 @@ function wireBreadcrumbs(state) {
 
     renderAll(state);
 
-    // hamburger powstaje w szkielecie paska (renderToolbar)
-    initDrawer();
+    // przyciski widoków lewego panelu powstają w szkielecie paska (renderToolbar)
+    wireLeftView(state);
 
     wireToolbarButtons(document.getElementById("toolbar"), state);
     wireSearch(state);
@@ -124,7 +123,6 @@ function wireBreadcrumbs(state) {
     wireLeft(state);
     wireDnd(state);
     wireBreadcrumbs(state);
-    wireFilters(state);
     wireKeyboard(state);
     skeletonReady();
 

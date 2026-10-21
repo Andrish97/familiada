@@ -2241,62 +2241,63 @@ tr.row.is-drop-after td:last-child::after {
 }
 .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { margin-bottom: 6px !important; }
 
-/* ===== Telefon: w wysuwanym panelu samo drzewo, filtry w oknie (2026-10-21) ===== */
-#btnFilters { position: relative; }
-#btnFilters .badge { position: absolute; top: -6px; right: -6px; }
-#btnFilters.is-active { color: var(--gold); border-color: var(--gold); }
-.filters-modal { width: min(560px, 94vw); }
-.filters-modal .filtersBody .left-filters {
-  display: grid;
-  gap: 16px;
+/* ===== Widoki lewego panelu (ui/left-view.js, decyzja 2026-10-21) =====
+   Jeden widok naraz na pełną wysokość: drzewo, tagi albo proponowane
+   kategorie (#explorerLeft[data-view]). Przyciski jak radio: komputer —
+   Tagi/Kategorie przy wyszukiwarce, telefon — drzewo/tagi/kategorie. */
+.explorer-left > .left-sep,
+.left-filters > .left-sep { display: none; }
+.explorer-left:not([data-view="tags"]):not([data-view="types"]) > .left-filters,
+.explorer-left[data-view="tags"] > .tree,
+.explorer-left[data-view="types"] > .tree,
+.explorer-left[data-view="tags"] .left-filters > .matched-categories,
+.explorer-left[data-view="types"] .left-filters > .tags { display: none; }
+.explorer-left > .tree,
+.explorer-left > .left-filters { flex: 1 1 auto; min-height: 0; }
+.left-filters { display: flex; flex-direction: column; }
+.left-filters > .matched-categories,
+.left-filters > .tags { flex: 1 1 auto; }
+/* Tagi i kategorie w panelu — wiersze jak w drzewie (wysokość, bez linii,
+   zaznaczenie jak na liście); pole wyszukiwania bez zbędnego marginesu,
+   bo obok stoją przyciski widoków. */
+#matchedCategories .row,
+#tags .row[data-kind=tag] {
+  min-height: 30px;
+  margin: 0;
+  padding: 1px 8px;
+  border: 0;
+  border-radius: 0;
 }
-.filters-modal .filtersBody .left-sep { display: none; }
-.filters-modal .filtersBody .matched-categories,
-.filters-modal .filtersBody .tags {
-  max-height: none;
-  overflow: visible;
+@media (pointer: coarse) {
+  #matchedCategories .row,
+  #tags .row[data-kind=tag] { min-height: 36px; }
 }
+@media (min-width: 901px) {
+  .search-row .searchBox { margin-right: 0; }
+}
+.left-view-btn { position: relative; }
+.left-view-btn .badge { position: absolute; top: -6px; right: -6px; }
+.left-view-btn .badge:empty { display: none; }
+.left-view-btn.is-active,
+.tbBtn.left-view-btn.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
+.left-view-tabs { gap: 6px; align-items: center; }
 @media (max-width: 900px) {
-  /* panel z samym drzewem, kryjące tło jak okna od dołu */
+  .desktop-only { display: none !important; }
+  /* panel na telefonie: kryjące tło jak okna od dołu */
   .explorer-left { background: #121524; }
-  .explorer-left > .left-sep,
-  .explorer-left > .left-filters { display: none; }
-  .explorer-left > .tree { flex: 1 1 auto; }
 }
-/* wiersze w oknie Filtry jak kafle okien (.shareRow), zaznaczone jak .shareRow.selected */
-#filtersBody .row[data-key] {
-  margin: 0 0 8px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--card2, rgba(255,255,255,.03));
-  border: 1px solid var(--line2, rgba(255,255,255,.10));
-  outline: 0;
-}
-#filtersBody .row[data-key].is-selected {
-  border-color: rgba(255,234,166,.9);
-  background: rgba(255,234,166,.10);
-}
-#filtersBody .left-panel-heading {
-  margin: 0 0 8px;
-  padding: 0;
-  font-weight: 800;
-  opacity: 1;
-}
-#filtersBody .tagList,
-#filtersBody .matched-categories,
-#filtersBody .tags { padding: 0; margin: 0; }
-#filtersBody #btnAddTag { margin: 0 0 8px; }
 
 /* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
 .move-modal { width: min(560px, 94vw); }
 .moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-.moveSearch { flex: 0 0 auto; }
+.moveSearch { flex: 0 0 auto; margin-right: 0; width: 100%; box-sizing: border-box; } /* .searchBox z paska ma margin-right */
 .moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
 /* ===== Drzewo folderów — jeden wygląd (lewy panel i okno „Przenieś do”,
    ui/tree-row.js, decyzja użytkownika 2026-10-21) =====
    Wiersze bez ramek, wcięcie co --step, linie prowadzące (.tree-guides)
-   pod strzałkami przodków, folder otwarty/zamknięty, kropki, liczba pytań;
-   bieżący (lewy panel) / wybrany (okno) folder złoty, zaznaczenie niebieskie. */
+   pod strzałkami przodków, folder otwarty/zamknięty, kropki, liczba pytań.
+   Zaznaczenie jak na liście po prawej (tr.row.is-selected): niebieskie tło
+   i obrys; bieżący folder — samo tło (decyzja 2026-10-21). */
 .treeList,
 .moveList { --step: 20px; display: grid; align-content: start; gap: 0; }
 .row.tree-row,
@@ -2306,12 +2307,12 @@ tr.row.is-drop-after td:last-child::after {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  min-height: 38px;
+  min-height: 30px;
   margin: 0; /* base.css: .row { margin: 10px 0; flex-wrap: wrap } */
   flex-wrap: nowrap;
-  padding: 3px 8px 3px calc(4px + var(--depth, 0) * var(--step));
+  padding: 1px 8px 1px calc(4px + var(--depth, 0) * var(--step));
   border: 0;
-  border-radius: 10px;
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
 }
@@ -2327,14 +2328,15 @@ tr.row.is-drop-after td:last-child::after {
 .tree-row:hover { background: rgba(255,255,255,.05); }
 .tree-row.is-root { font-weight: 700; }
 .row.tree-row.is-current,
-.tree-row.is-current { background: rgba(255,234,166,.14); box-shadow: inset 3px 0 0 var(--gold); }
-.tree-row.is-current .tree-ico,
-.tree-row.is-current .tree-name { color: var(--gold); }
-.row.tree-row.is-selected { outline: 2px solid rgba(120,160,255,.55); outline-offset: -2px; }
+.tree-row.is-current,
+.row.tree-row.is-selected,
+.tree-row.is-selected { background: rgba(120,160,255,.1); }
+.row.tree-row.is-selected,
+.tree-row.is-selected { outline: 2px solid rgba(120,160,255,.55); outline-offset: -2px; }
 .tree-row.is-blocked { opacity: .4; cursor: not-allowed; }
 .tree-row.is-blocked:hover { background: none; }
 .tree-toggle,
-.tree-toggle-space { position: relative; flex: 0 0 var(--step); width: var(--step); height: 26px; }
+.tree-toggle-space { position: relative; flex: 0 0 var(--step); width: var(--step); height: 22px; }
 .tree-toggle {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
@@ -2342,9 +2344,10 @@ tr.row.is-drop-after td:last-child::after {
 .tree-toggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
 .tree-toggle .ico { width: 14px; height: 14px; }
 .tree-ico { display: inline-flex; flex: 0 0 auto; opacity: .9; }
-.tree-row .list-ico { width: 18px; height: 18px; }
+.tree-row .list-ico { width: 16px; height: 16px; }
 .tree-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+@media (pointer: coarse) { .row.tree-row, .tree-row { min-height: 36px; } }
 .tree-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
 .tree-dots { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
 .tree-count {
@@ -2353,7 +2356,7 @@ tr.row.is-drop-after td:last-child::after {
   padding: 1px 8px;
   border-radius: 999px;
   background: rgba(255,255,255,.06);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   text-align: center;
   opacity: .75;

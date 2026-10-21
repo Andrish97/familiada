@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T07101"/>
+  <meta name="app-version" content="v2026-10-21T07274"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07101" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07101" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T07101" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T07101" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07274" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07274" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T07274" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T07274" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07101"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07274"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T07101"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T07274"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07101" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07274" defer></script>
 
 </head>
 
@@ -106,21 +106,6 @@
   </div>
 
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
-  <!-- Filtry na telefonie (ui/filters.js): kategorie i tagi z lewego panelu
-       przenoszone na czas otwarcia do treści okna -->
-  <div class="overlay modal--sheet" id="filtersOverlay" style="display:none;">
-    <div class="modal filters-modal" role="dialog" aria-modal="true" aria-labelledby="filtersTitle">
-      <div class="mHead">
-        <div class="mTitle" id="filtersTitle" data-i18n="baseExplorer.filters.title">Filtry</div>
-        <button class="btn sm" id="filtersClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <div class="filtersBody" id="filtersBody"></div>
-      <div class="modal-actions">
-        <button class="btn sm" id="filtersClear" type="button" data-i18n="baseExplorer.filters.clear" data-i18n-icon="close">Wyczyść filtry</button>
-        <button class="btn sm gold" id="filtersDone" type="button" data-i18n="baseExplorer.filters.done" data-i18n-icon="check">Gotowe</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Przenieś do… / Kopiuj do… (ui/move-modal.js): drzewo folderów z wyszukiwaniem -->
   <div class="overlay modal--sheet" id="moveOverlay" style="display:none;">
@@ -388,7 +373,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07101"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07274"></script>
 
 </body>
 </html>

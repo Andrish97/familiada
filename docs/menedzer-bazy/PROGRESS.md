@@ -62,6 +62,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9c. Jeden wygląd drzewa (uwaga użytkownika 2026-10-21): lewy panel i okno „Przenieś do” rysują wiersze wspólnym `ui/tree-row.js` (klasy `.tree-row`, `.tree-guides`, `.tree-count`); stare style `#tree .row.tree-row` usunięte, `.row` z `base.css` wyzerowane (marginesy, zawijanie). Pełny lokalny e2e 83/84 + powtórka jedynej porażki (`networkidle`) zielona; unit 691/691.
 
+- [x] 9d. Uwagi użytkownika 2026-10-21: widoki lewego panelu jak radio (`ui/left-view.js`, `state.leftView`): komputer — Tagi/Kategorie przy wyszukiwarce, telefon — drzewo/tagi/kategorie zamiast hamburgera (drzewo zachowuje `#btnDrawerToggle`); jeden widok na pełną wysokość; plakietki z liczbą filtrów. Okno „Filtry” usunięte (HTML, `ui/filters.js`, CSS, tłumaczenia, mapa nawigacji). Drzewo ciaśniej (30 px, na dotyku 36 px), zaznaczenie w drzewie, tagach, kategoriach i oknie „Przenieś do” jak na liście (niebieskie tło + obrys). Pole wyszukiwania w oknie „Przenieś do” na pełną szerokość. Testy: nowe „widoki lewego panelu” (telefon, komputer), helper `showLeftView`; `e20-gallery` i `base-explorer-perf` przełączają widok tagów. Pełny lokalny e2e 84/85 (porażka `networkidle` zielona przy powtórce), unit 691/691.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

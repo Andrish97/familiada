@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T07101";
-import { iconText } from "./icons.js?v=v2026-10-21T07101";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T07274";
+import { iconText } from "./icons.js?v=v2026-10-21T07274";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -83,7 +83,7 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
-  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "filtersOverlay", "moveOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
+  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "moveOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
   logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
   } },

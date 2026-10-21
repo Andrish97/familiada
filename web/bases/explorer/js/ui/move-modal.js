@@ -5,11 +5,11 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-21T07101";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07101";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07101";
-import { esc, treeToggleHtml, treeIconName, treeRowInner } from "./tree-row.js?v=v2026-10-21T07101";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07101";
+import { normalizeText } from "../data/listing.js?v=v2026-10-21T07274";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07274";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07274";
+import { esc, treeToggleHtml, treeIconName, treeRowInner } from "./tree-row.js?v=v2026-10-21T07274";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07274";
 
 const ROOT = "root";
 
@@ -39,12 +39,12 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   search.value = "";
 
   // Ten sam wygląd co drzewo w lewym panelu (ui/tree-row.js, decyzja
-  // użytkownika 2026-10-21); wybrany folder złoty jak bieżący w panelu.
+  // użytkownika 2026-10-21); wybrany folder zaznaczony jak na liście.
   const countOf = (key) => (key === ROOT ? d.questionById.size : d.subtreeQuestionIds(key).length);
   const rowHtml = (key, label, { depth = 0, canToggle = false, isOpen = false, path = "" } = {}) => {
     const isRoot = key === ROOT;
     const blocked = !isRoot && blockedIds.has(key);
-    const cls = ["tree-row", "moveRow", isRoot ? "is-root" : "", picked === key ? "is-current is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
+    const cls = ["tree-row", "moveRow", isRoot ? "is-root" : "", picked === key ? "is-selected is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
     const inner = treeRowInner({
       toggle: path ? "" : treeToggleHtml(key, { canToggle, isOpen }),
       iconName: treeIconName(isRoot ? "root" : "cat", isOpen),
@@ -118,8 +118,8 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
       // samo przełączenie klasy (bez przerysowania) — inaczej dwuklik
       // trafiałby w dwa różne elementy i przeglądarka by go nie zgłosiła
       picked = row.dataset.id;
-      list.querySelectorAll(".moveRow.is-picked").forEach((el) => el.classList.remove("is-picked", "is-current"));
-      row.classList.add("is-picked", "is-current");
+      list.querySelectorAll(".moveRow.is-picked").forEach((el) => el.classList.remove("is-picked", "is-selected"));
+      row.classList.add("is-picked", "is-selected");
       ok.disabled = false;
     };
     list.ondblclick = (e) => {

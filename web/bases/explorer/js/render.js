@@ -3,13 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07101";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T07101";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07101";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07101";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07101";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07101";
-import { treeToggleHtml, treeIconName, treeRowInner } from "./ui/tree-row.js?v=v2026-10-21T07101";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07274";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T07274";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07274";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07274";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07274";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07274";
+import { treeToggleHtml, treeIconName, treeRowInner } from "./ui/tree-row.js?v=v2026-10-21T07274";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -100,6 +100,14 @@ export function renderSelection(state) {
 
 /* ================= Pasek narzędzi ================= */
 
+// Widoki lewego panelu (decyzja użytkownika 2026-10-21): jeden naraz, na
+// pełną wysokość; state.leftView, przełączanie w ui/left-view.js.
+export const LEFT_VIEWS = [
+  { id: "tree", icon: "folder", labelKey: "baseExplorer.leftView.tree" },
+  { id: "tags", icon: "tag", labelKey: "baseExplorer.leftView.tags" },
+  { id: "types", icon: "shapes", labelKey: "baseExplorer.leftView.types" },
+];
+
 export function renderToolbar(state) {
   if (!elToolbar) return;
 
@@ -112,13 +120,13 @@ export function renderToolbar(state) {
           <input id="searchText" class="searchText" autocomplete="off" />
         </div>
         <button id="searchSubmitBtn" class="btn search-submit" type="button"></button>
-        <button id="btnFilters" class="btn search-submit mobile-only" type="button">${icon("filter")}<span class="badge" id="filtersCount"></span></button>
+        ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn search-submit left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
         <div id="searchSuggest" class="search-suggest" role="listbox" hidden></div>
       </div>
       <div class="toolbar-btns-row">
-        <button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-expanded="false" aria-controls="explorerLeft">
-          ${icon("hamburger", { className: "tbIco" })}
-        </button>
+        <div class="left-view-tabs mobile-only">
+          ${LEFT_VIEWS.map((v) => `<button${v.id === "tree" ? ' id="btnDrawerToggle"' : ""} class="tbBtn left-view-btn" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon, { className: "tbIco" })}<span class="badge"></span></button>`).join("")}
+        </div>
         ${toolbarButtonsHtml()}
       </div>`;
     elToolbar.dataset.ready = "1";
@@ -130,9 +138,6 @@ export function renderToolbar(state) {
     const text = String(state.query.text ?? "");
     if (document.activeElement !== inp && inp.value !== text) inp.value = text;
   }
-  const burger = document.getElementById("btnDrawerToggle");
-  if (burger) burger.setAttribute("aria-label", t("baseExplorer.toolbar.openPanel"));
-
   // tabletki tagów z zapytania (te same co zaznaczenie w lewym panelu)
   const chipsEl = document.getElementById("searchChips");
   if (chipsEl) {
@@ -156,16 +161,23 @@ export function renderToolbar(state) {
     btn.classList.toggle("is-active", active);
   }
 
-  // Filtry (telefon): liczba aktywnych kategorii i tagów
-  const fBtn = document.getElementById("btnFilters");
-  if (fBtn) {
-    const n = (state.query.types?.length || 0) + (state.query.tagIds?.length || 0);
-    const label = t("baseExplorer.filters.title");
-    fBtn.setAttribute("aria-label", label);
-    fBtn.setAttribute("data-tooltip", label);
-    fBtn.classList.toggle("is-active", n > 0);
-    const cnt = document.getElementById("filtersCount");
-    if (cnt) cnt.textContent = n ? String(n) : "";
+  // Widoki lewego panelu (radio): komputer — Tagi / Kategorie obok wyszukiwarki
+  // (oba zgaszone = drzewo); telefon — drzewo / tagi / kategorie otwierają
+  // panel z tym widokiem. Plakietka: liczba włączonych filtrów danego rodzaju.
+  const drawerOpen = document.getElementById("explorerLeft")?.classList.contains("is-open");
+  for (const b of elToolbar.querySelectorAll("[data-left-view]")) {
+    const v = LEFT_VIEWS.find((x) => x.id === b.dataset.leftView);
+    const mobile = !!b.closest(".left-view-tabs");
+    const on = state.leftView === v.id && (mobile ? !!drawerOpen : v.id !== "tree");
+    const n = v.id === "tags" ? (state.query.tagIds?.length || 0) : v.id === "types" ? (state.query.types?.length || 0) : 0;
+    const label = t(v.labelKey);
+    b.setAttribute("aria-label", label);
+    b.setAttribute("data-tooltip", label);
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("is-active", on);
+    b.classList.toggle("has-filter", n > 0);
+    const badge = b.querySelector(".badge");
+    if (badge) badge.textContent = n ? String(n) : "";
   }
 
   updateToolbarButtons(elToolbar, state);
@@ -249,6 +261,8 @@ export function renderTree(state) {
 
 export function renderLeft(state) {
   if (!elTags || !elTypes) return;
+  const left = document.getElementById("explorerLeft");
+  if (left) left.dataset.view = state.leftView || "tree";
   const q = state.query;
 
   const typeRows = SUGGESTED_TYPES.map((id) => {

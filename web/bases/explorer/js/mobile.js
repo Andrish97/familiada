@@ -7,11 +7,12 @@ const DOUBLE_TAP_MS = 300; // max ms między tapnięciami
 
 /* ================= Drawer ================= */
 
-export function initDrawer() {
-  const btn = document.getElementById("btnDrawerToggle");
+// Panel otwierają przyciski widoków (ui/left-view.js: drzewo / tagi /
+// kategorie); onChange — po każdej zmianie (np. odświeżenie przycisków).
+export function initDrawer({ onChange } = {}) {
   const panel = document.getElementById("explorerLeft");
   const overlay = document.getElementById("drawerOverlay");
-  if (!btn || !panel || !overlay) return;
+  if (!panel || !overlay) return null;
 
   // #toolbar zajmuje realną, zmienną wysokość (1 wiersz na szerszym mobile,
   // 2 wiersze gdy przyciski się zawiną) -- drawer/overlay w CSS doliczają
@@ -24,11 +25,12 @@ export function initDrawer() {
     document.body.style.setProperty("--be-toolbar-h", `${h}px`);
   }
 
+  const isOpen = () => panel.classList.contains("is-open");
+
   function open() {
     updateToolbarOffset();
     panel.classList.add("is-open");
     overlay.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
     // Blokada przewijania tylko, gdy strona się przewija: klasa włącza
     // scrollbar-gutter (base.css), który bez paska przewijania zwęziłby
     // układ i pasek narzędzi „mrugnąłby” przy każdym otwarciu.
@@ -37,26 +39,25 @@ export function initDrawer() {
       document.body.classList.add("explorer-drawer-open");
       document.body.style.overflow = "hidden";
     }
+    onChange?.();
   }
 
   function close() {
+    if (!isOpen()) return;
     panel.classList.remove("is-open");
     overlay.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
     document.body.classList.remove("explorer-drawer-open");
     document.body.style.overflow = "";
+    onChange?.();
   }
-
-  btn.addEventListener("click", () => {
-    panel.classList.contains("is-open") ? close() : open();
-  });
 
   overlay.addEventListener("click", close);
   document.addEventListener("modal-sheet:enter", close);
 
   // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
-  // NIE zamyka już drawera automatycznie -- lista po prawej i tak aktualizuje
-  // się w tle, user zamyka drawer ręcznie (hamburger / klik w overlay).
+  // NIE zamyka drawera automatycznie -- lista po prawej i tak aktualizuje
+  // się w tle, user zamyka drawer ręcznie (ten sam przycisk / klik w overlay).
+  return { open, close, isOpen };
 }
 
 /* ================= Long press → context menu ================= */

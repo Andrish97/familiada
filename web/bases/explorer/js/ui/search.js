@@ -6,9 +6,9 @@
 // - „#pełna_nazwa” + spacja zamienia się w tabletkę (spacja nie zostaje),
 // - tabletki to te same tagi co zaznaczenie w lewym panelu (query.tagIds).
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07101";
-import { renderAll } from "../render.js?v=v2026-10-21T07101";
-import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07101";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07274";
+import { renderAll } from "../render.js?v=v2026-10-21T07274";
+import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07274";
 
 const TEXT_DELAY_MS = 200;
 const MAX_SUGGESTIONS = 8;

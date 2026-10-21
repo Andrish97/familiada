@@ -4,7 +4,7 @@
 // w state.store (data/store.js), pochodne w state.d (data/derived.js), a „co
 // pokazać” liczy data/listing.js — tu nie ma żadnej pamięci podręcznej.
 
-import { emptyQuery, isQueryEmpty } from "./data/listing.js?v=v2026-10-21T07101";
+import { emptyQuery, isQueryEmpty } from "./data/listing.js?v=v2026-10-21T07274";
 
 // Proponowane kategorie (typy gry, game-rules.js) — etykieta i kolor kropki.
 export const TYPE_DEFS = {
@@ -83,6 +83,9 @@ export function createState({ baseId, role = "viewer" }) {
     location: { kind: "root", folderId: null },
     // CO: jedno zapytanie — pole wyszukiwania i lewy panel to te same dane
     query: emptyQuery(),
+
+    // lewy panel: "tree" | "tags" | "types" (jeden widok, ui/left-view.js)
+    leftView: "tree",
 
     // drzewo folderów: które węzły są rozwinięte ("root" zawsze)
     treeOpen: loadTreeOpen(baseId),

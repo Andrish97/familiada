@@ -4227,10 +4227,10 @@ const pl = {
       searchPlaceholder: "Szukaj folderu…",
       noFolders: "Brak folderów o tej nazwie.",
     },
-    filters: {
-      title: "Filtry",
-      clear: "Wyczyść filtry",
-      done: "Gotowe",
+    leftView: {
+      tree: "Drzewo folderów",
+      tags: "Tagi",
+      types: "Proponowane kategorie",
     },
     search: {
       removeTag: "Usuń filtr tagu",
@@ -4240,7 +4240,6 @@ const pl = {
     },
     toolbar: {
       groupHistory: "Historia",
-      openPanel: "Otwórz panel",
       groupCreate: "Tworzenie",
       newFolder: "Nowy folder",
       newQuestion: "Nowe pytanie",

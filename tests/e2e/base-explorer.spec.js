@@ -367,6 +367,14 @@ async function renameInput(page) {
   return input;
 }
 
+// Lewy panel pokazuje jeden widok (drzewo / tagi / kategorie, E22 etap 9):
+// przycisk widoku przy wyszukiwarce (komputer) albo w pasku (telefon).
+async function showLeftView(page, view) {
+  const btn = page.locator(`[data-left-view="${view}"]:visible`).first();
+  if ((await btn.getAttribute("aria-pressed")) !== "true") await btn.click();
+  await expect(btn).toHaveAttribute("aria-pressed", "true");
+}
+
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
 
   test("eksport ('Utwórz grę') faktycznie tworzy grę zamiast rzucać błąd", async ({ page, context }) => {
@@ -1046,6 +1054,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      await showLeftView(page, "tags");
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
@@ -2828,6 +2837,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      await showLeftView(page, "tags");
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
@@ -3578,6 +3588,7 @@ test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
       expect(await getQuestionTagIds(page, qid)).toHaveLength(1);
 
       // „latwe” = „Łatwe” (porównanie jak wyszukiwarka): odmowa
+      await showLeftView(page, "tags");
       await page.locator("#btnAddTag").click();
       await expect(page.locator("#tagsL2")).toBeVisible({ timeout: 5000 });
       await page.locator("#tagsEditName").fill("latwe");
@@ -3688,12 +3699,12 @@ test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () =
   });
 });
 
-test.describe("base-explorer: telefon — panel z drzewem, filtry w oknie (E22 etap 9)", () => {
-  test("w panelu samo drzewo; okno Filtry: klik w tag filtruje listę, licznik na przycisku, Esc zamyka", async ({ page, context }) => {
+test.describe("base-explorer: widoki lewego panelu jak radio (E22 etap 9)", () => {
+  test("telefon: drzewo / tagi / kategorie otwierają panel z jednym widokiem; tag filtruje listę, plakietka liczy filtry", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-    const baseId = await createBase(page, `E2E-XB-FILTERS-${Date.now()}`);
+    const baseId = await createBase(page, `E2E-XB-LEFTVIEW-${Date.now()}`);
 
     try {
       const tagId = await createTag(page, { baseId, name: "filtr" });
@@ -3701,29 +3712,76 @@ test.describe("base-explorer: telefon — panel z drzewem, filtry w oknie (E22 e
       const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Bez tagu", answers: [] } });
       await assignTag(page, { questionId: qTagged, tagId });
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
 
-      await page.locator("#btnDrawerToggle").click();
+      const tabs = page.locator(".left-view-tabs");
+      const btn = (v) => tabs.locator(`[data-left-view="${v}"]`);
+      await expect(tabs.locator("[data-left-view]")).toHaveCount(3);
+
+      // drzewo: panel z samym drzewem
+      await btn("tree").click();
+      await expect(page.locator("#explorerLeft")).toHaveClass(/is-open/);
       await expect(page.locator("#tree")).toBeVisible();
       await expect(page.locator("#leftFilters")).toBeHidden();
-      await page.locator("#btnDrawerToggle").click();
+      await expect(btn("tree")).toHaveAttribute("aria-pressed", "true");
 
-      await page.locator("#btnFilters").click();
-      await expect(page.locator("#filtersOverlay")).toBeVisible();
-      await page.locator(`#filtersBody .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      // tagi: ten sam panel, inny widok (radio)
+      await btn("tags").click();
+      await expect(page.locator("#tree")).toBeHidden();
+      await expect(page.locator("#tags")).toBeVisible();
+      await expect(page.locator("#matchedCategories")).toBeHidden();
+      await expect(btn("tree")).toHaveAttribute("aria-pressed", "false");
+      await expect(btn("tags")).toHaveAttribute("aria-pressed", "true");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
-      await expect(page.locator("#filtersCount")).toHaveText("1");
-      await page.keyboard.press("Escape");
-      await expect(page.locator("#filtersOverlay")).toBeHidden();
-      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible();
+      await expect(btn("tags").locator(".badge")).toHaveText("1");
 
-      // „Wyczyść filtry” zdejmuje filtr
-      await page.locator("#btnFilters").click();
-      await page.locator("#filtersClear").click();
-      await page.locator("#filtersDone").click();
-      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible();
-      await expect(page.locator("#filtersCount")).toHaveText("");
+      // kategorie
+      await btn("types").click();
+      await expect(page.locator("#matchedCategories")).toBeVisible();
+      await expect(page.locator("#tags")).toBeHidden();
+
+      // ponowne stuknięcie zamyka panel; żaden przycisk nie świeci
+      await btn("types").click();
+      await expect(page.locator("#explorerLeft")).not.toHaveClass(/is-open/);
+      await expect(tabs.locator('[aria-pressed="true"]')).toHaveCount(0);
+      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("komputer: Tagi i Kategorie przy wyszukiwarce przełączają lewy panel, ponowny klik wraca do drzewa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-LEFTVIEW-D-${Date.now()}`);
+
+    try {
+      await createTag(page, { baseId, name: "filtr" });
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#tree")).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await expect(page.locator(".left-view-tabs")).toBeHidden();
+
+      const tags = page.locator('.search-row [data-left-view="tags"]');
+      const types = page.locator('.search-row [data-left-view="types"]');
+      await tags.click();
+      await expect(page.locator("#tags")).toBeVisible();
+      await expect(page.locator("#tree")).toBeHidden();
+      await expect(tags).toHaveAttribute("aria-pressed", "true");
+
+      await types.click();
+      await expect(page.locator("#matchedCategories")).toBeVisible();
+      await expect(page.locator("#tags")).toBeHidden();
+      await expect(tags).toHaveAttribute("aria-pressed", "false");
+      await expect(types).toHaveAttribute("aria-pressed", "true");
+
+      await types.click();
+      await expect(page.locator("#tree")).toBeVisible();
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await expect(types).toHaveAttribute("aria-pressed", "false");
     } finally {
       await deleteBase(page, baseId);
     }

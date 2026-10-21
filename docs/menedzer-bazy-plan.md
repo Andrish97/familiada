@@ -21,7 +21,20 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     `ui/tree-row.js` i klasy `.tree-row`: linie prowadzące wcięć, strzałka,
     folder otwarty/zamknięty, kropki, liczba pytań w poddrzewie (kosz bez
     licznika), bieżący/wybrany folder złoty, zaznaczenie niebieskie.
-  - **Do decyzji — odgracanie lewego panelu na komputerze** (makiety
+  - **Widoki lewego panelu (2026-10-21, użytkownik — zastępuje okno
+    „Filtry” i warianty A/B/C):** lewy panel pokazuje jeden widok na pełną
+    wysokość: drzewo (domyślnie), tagi albo proponowane kategorie.
+    Komputer: obok wyszukiwarki dwa przyciski „Tagi” i „Kategorie” działające
+    jak radio (włączony najwyżej jeden; oba zgaszone = drzewo). Telefon:
+    zamiast hamburgera trzy przyciski — drzewo, tagi, kategorie — każdy
+    otwiera panel z tym widokiem (ponowne stuknięcie zamyka). „Dodaj tag”
+    nadal otwiera okno. Okno „Filtry” usunięte.
+  - **Drzewo ciaśniej, zaznaczenie jak na liście (2026-10-21):** mniejsze
+    odstępy wierszy; zaznaczenie w drzewie i w oknie „Przenieś do” takie jak
+    na liście po prawej (niebieskie tło + obrys), bieżący folder — samo
+    niebieskie tło; bez złotego akcentu. Pole wyszukiwania w oknie
+    „Przenieś do” na pełną szerokość.
+  - **Do decyzji (zastąpione wyżej) — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną
       wysokość; filtry w tym samym oknie „Filtry” co na telefonie, aktywne
