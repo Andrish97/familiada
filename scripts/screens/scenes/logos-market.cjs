@@ -276,9 +276,7 @@ module.exports = [
   { id: "logos-market-market-detail", category: CAT, title: "Społeczność — szczegóły gry z oceną", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
     db: (db) => marketDetail(db, { user_stars: 4 }),
     steps: [async (view) => { await view.locator(".mkt-card").first().click(); await view.locator("#gameDetailOverlay[data-detail-state=ready]").waitFor(); await view.waitForTimeout(400); }] },
-  // Tylko komputer: na telefonie „Podgląd / Oceny” z okna Moje wysłane otwiera szczegóły, ale history.back()
-  // zamykanego okna (sheet) przychodzi po pushState szczegółów i popstate je zamyka (do sprawdzenia w aplikacji).
-  { id: "logos-market-market-detail-own", devices: ["desktop"], category: CAT, title: "Społeczność — podgląd własnej gry (lista oceniających)", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
+  { id: "logos-market-market-detail-own", category: CAT, title: "Społeczność — podgląd własnej gry (lista oceniających)", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
     db: (db, lang) => { marketDetail(db, { author_username: db.user.user_metadata.username, description: SUBMIT_DESC[lang] || SUBMIT_DESC.pl, in_library: true }); db.rpc.market_game_raters = [["ania.k", 5], ["Wujek_Staszek", 4], ["quizmaster", 5], ["ola", 3]].map(([username, stars]) => ({ username, stars })); },
     steps: [openModal("#btnMySent", "#mySentOverlay"), wait(600), async (view) => { await view.locator("#mySentList [data-preview]").first().click(); await view.locator("#gameDetailOverlay[data-detail-state=ready]").waitFor(); await view.locator("#detailRaters:not([hidden])").waitFor(); await view.waitForTimeout(400); }] },
   { id: "logos-market-market-my-sent-all", category: CAT, title: "Społeczność — Moje wysłane: wszystkie statusy zgłoszeń", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",

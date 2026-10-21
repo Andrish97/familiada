@@ -1,19 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T13270";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T13270";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T13270";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T13270";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-21T13270";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T13270";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T13270";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T13270";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13270";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13270";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T13270";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T13270";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T13270";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T13270";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T13332";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T13332";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T13332";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T13332";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-21T13332";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T13332";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T13332";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T13332";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13332";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13332";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T13332";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T13332";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T13332";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T13332";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -47,6 +47,7 @@ let browseRows = [];
 let lastDetailTrigger = null;
 // Podgląd i zgłoszenie otwarte z okna „Moje wysłane” wracają do niego po zamknięciu.
 let returnToMySent = false;
+let skipNextPopstate = false;
 
 function currentBackBtn() {
   return els.btnGoGames;
@@ -131,9 +132,17 @@ function closeMySent() {
 // Podgląd lub zgłoszenie z okna „Moje wysłane”: jedno okno naraz, po
 // zamknięciu wracamy do listy zgłoszeń.
 function leaveMySentFor(action) {
-  closeMySent();
   returnToMySent = true;
-  return action();
+  // Na telefonie okno ma wpis ?dialog= w historii: zamknięcie robi history.back(),
+  // a spóźniony popstate zamknąłby od razu nowo otwarte okno. Czekamy na niego.
+  const popsHistory = new URL(location.href).searchParams.get("dialog") === els.mySentOverlay?.id;
+  if (!popsHistory) {
+    closeMySent();
+    return action();
+  }
+  skipNextPopstate = true;
+  window.addEventListener("popstate", () => { skipNextPopstate = false; action(); }, { once: true });
+  closeMySent();
 }
 
 function backToMySent() {
@@ -944,6 +953,7 @@ function wireEvents() {
   // Przycisk wstecz w przeglądarce
   const UUID_RE_NAV = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   window.addEventListener("popstate", e => {
+    if (skipNextPopstate) return; // powrót po zamknięciu „Moje wysłane” (leaveMySentFor)
     const legacyGameId = new URL(location.href).searchParams.get("game");
     if (legacyGameId && UUID_RE_NAV.test(legacyGameId)) {
       openDetail(legacyGameId, { replaceUrl: true });
