@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IqI92jRRr37ajxnvFghyJ5acyUOu8Wewg0DC1js5rZNNThhI1YmwjYnwP0HlCVF
+\restrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -6906,13 +6906,14 @@ CREATE FUNCTION "public"."cron_embed_missing_market_games"() RETURNS "void"
     SET "search_path" TO 'public'
     AS $$
 declare
-  v_url text;
-  v_jwt text;
+  v_url    text;
+  v_jwt    text;
+  v_secret text := (select decrypted_secret from vault.decrypted_secrets where name = 'generate_game_secret');
 begin
   select value into v_url from public.app_config where key = 'edge_url';
   select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
 
-  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' then
+  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' or coalesce(v_secret, '') = '' then
     return;
   end if;
 
@@ -6921,9 +6922,10 @@ begin
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || v_jwt,
-      'apikey', v_jwt
+      'apikey', v_jwt,
+      'X-Internal-Secret', v_secret
     ),
-    body := '{"action":"embed-missing","lang":"all","limit":25}'
+    body := '{"action":"embed-missing","lang":"all","limit":25}'::jsonb
   );
 end;
 $$;
@@ -11811,11 +11813,16 @@ CREATE FUNCTION "public"."invoke_embed_missing_market_games"("p_lang" "text" DEF
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare
-  v_base text := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url');
-  v_anon text := (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key');
-  v_url  text := v_base || '/functions/v1/generate-game';
+  v_base   text := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url');
+  v_anon   text := (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key');
+  v_secret text := (select decrypted_secret from vault.decrypted_secrets where name = 'generate_game_secret');
+  v_url    text := v_base || '/functions/v1/generate-game';
 begin
   if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
+    return;
+  end if;
+  if coalesce(v_secret, '') = '' then
+    raise warning 'invoke_embed_missing_market_games: brak generate_game_secret w vault';
     return;
   end if;
 
@@ -11824,7 +11831,8 @@ begin
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || v_anon,
-      'apikey', v_anon
+      'apikey', v_anon,
+      'X-Internal-Secret', v_secret
     ),
     body := jsonb_build_object(
       'action', 'embed-missing',
@@ -26191,24 +26199,10 @@ ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."marketing_ai_providers" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: marketing_ai_providers marketing_ai_providers_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_ai_providers_all" ON "public"."marketing_ai_providers" USING (true) WITH CHECK (true);
-
-
---
 -- Name: marketing_cities; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE "public"."marketing_cities" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: marketing_search_logs marketing_logs_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_logs_all" ON "public"."marketing_search_logs" USING (true) WITH CHECK (true);
-
 
 --
 -- Name: marketing_raw_contacts; Type: ROW SECURITY; Schema: public; Owner: -
@@ -26227,13 +26221,6 @@ ALTER TABLE "public"."marketing_search_logs" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."marketing_search_queries_log" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: marketing_verified_contacts marketing_verified_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_verified_all" ON "public"."marketing_verified_contacts" USING (true) WITH CHECK (true);
-
 
 --
 -- Name: marketing_verified_contacts; Type: ROW SECURITY; Schema: public; Owner: -
@@ -27053,5 +27040,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IqI92jRRr37ajxnvFghyJ5acyUOu8Wewg0DC1js5rZNNThhI1YmwjYnwP0HlCVF
+\unrestrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
 
