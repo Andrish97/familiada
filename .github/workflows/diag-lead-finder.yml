@@ -18,25 +18,19 @@ jobs:
       - name: Diagnostyka (bez sekretów)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'bash -s' <<'REMOTE'
-          mask() { sed -E 's/(--token|token:|TUNNEL_TOKEN=|credentials-file:)[ =]*[^ ]+/\1 ***/g; s/eyJ[A-Za-z0-9._-]{20,}/***/g'; }
-          echo "== nasłuchujące porty (80/443/8001/8000 i inne publiczne)"
-          (ss -ltnp 2>/dev/null || sudo -n ss -ltnp 2>/dev/null) | awk 'NR==1 || /:80 |:443 |:8001 |:8000 |:8443 /' | sed -E 's/pid=[0-9]+,fd=[0-9]+/pid/g'
-          echo "== usługi proxy na hoście"
-          systemctl list-units --type=service --state=running --no-pager 2>/dev/null | grep -iE 'nginx|caddy|apache|haproxy|traefik|cloudflare|tunnel' || echo "(brak)"
-          echo "== wszystkie kontenery (nazwa | obraz | porty)"
-          docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}}'
-          echo "== konfiguracje z leads/8001"
-          for d in /etc/nginx /etc/caddy /etc/cloudflared /etc/haproxy ~/supabase-selfhost; do [ -d "$d" ] && grep -rIlsE 'leads\.familiada|:8001' "$d" 2>/dev/null | grep -v -E '/node_modules/|\.git/|/volumes/db/' | head -10; done
-          for f in $(grep -rIlsE 'leads\.familiada' /etc/nginx /etc/caddy 2>/dev/null); do echo "-- $f"; grep -nE 'server_name|listen|proxy_pass|reverse_proxy|leads' "$f" | mask; done
-          echo "== Caddyfile / nginx server_name (lista hostów)"
-          grep -rhsE '^\s*server_name' /etc/nginx 2>/dev/null | sort -u | head -20
-          for f in /etc/caddy/Caddyfile ~/Caddyfile; do [ -r "$f" ] && grep -nE '^[^ #].*\{|reverse_proxy' "$f"; done
-          echo "== lokalnie z nagłówkiem Host"
-          for p in 80 443; do sch=http; [ $p = 443 ] && sch=https; printf '%s :%s Host=leads /health -> ' $sch $p; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 -H 'Host: leads.familiada.online' "$sch://127.0.0.1:$p/health"; done
-          printf 'https SNI leads -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/health
-          printf 'https SNI api -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 --resolve api.familiada.online:443:127.0.0.1 https://api.familiada.online/rest/v1/
-          echo "== DNS z serwera"
-          getent hosts leads.familiada.online api.familiada.online | awk '{print $2, ($1 ~ /^(104\.|172\.6|188\.114|2606:4700)/ ? "cloudflare-proxy" : "inny")}'
-          echo "== historia: kontener lead-findera utworzony"
-          docker inspect familiada-lead-finder --format '{{.Created}}'
+          M='s/[A-Za-z0-9_+\/=-]{16,}/<ukryte>/g'
+          echo "== Caddyfile: blok leads (wartości >=16 znaków ukryte)"
+          awk '/^leads\.familiada\.online/{f=1} f{print NR": "$0} f&&/^}/{exit}' /etc/caddy/Caddyfile | sed -E "$M"
+          echo "== porównanie klucza (tylko true/false)"
+          ENVF=~/supabase-selfhost/supabase/docker/.env
+          K=$(grep -E '^LEAD_FINDER_API_KEY=' "$ENVF" | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')
+          printf 'klucz w .env niepusty: '; [ -n "$K" ] && echo true || echo false
+          printf 'Caddyfile zawiera bieżący klucz: '; grep -qF -- "$K" /etc/caddy/Caddyfile && echo true || echo false
+          for b in /etc/caddy/Caddyfile.backup /etc/caddy/Caddyfile.backup2; do printf '%s zawiera bieżący klucz: ' "$b"; grep -qF -- "$K" "$b" && echo true || echo false; done
+          printf 'kontener lead-findera ma bieżący klucz: '; docker exec familiada-lead-finder printenv LEAD_FINDER_API_KEY 2>/dev/null | grep -qxF -- "$K" && echo true || echo false
+          printf 'lokalnie :8001 z bieżącym kluczem /status -> '; curl -s -o /dev/null -w '%{http_code}\n' --max-time 5 -H "Authorization: Bearer $K" http://localhost:8001/api/search-runs/status
+          printf 'Caddy (SNI leads) z bieżącym kluczem /status -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 -H "Authorization: Bearer $K" --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/api/search-runs/status
+          printf 'Caddy (SNI leads) z bieżącym kluczem jako X-API-Key /status -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 -H "X-API-Key: $K" --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/api/search-runs/status
+          ls -l --time-style=+%F_%T /etc/caddy/ | awk '{print $6, $7}'
+          systemctl is-active caddy
           REMOTE
