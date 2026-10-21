@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createHash, webcrypto } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
+import { md5Hex } from '../../supabase/functions/_shared/md5.js';
 import { parseNotificationItem, parseMailLang, prepareNotificationRow } from '../../supabase/functions/_shared/notification-send.js';
 const read = file => fs.readFileSync(new URL('../../' + file, import.meta.url), 'utf8');
 const source = stripTypeScriptTypes(read('supabase/functions/send-mail/index.ts'))
@@ -50,11 +51,10 @@ function handler() {
   };
   const service = fakeService(state);
   const anonymous = { auth: { getUser: async token => users[token] ? { data: { user: users[token] } } : { data: {}, error: new Error('Invalid token') } } };
-  const stdCrypto = { subtle: { digest: async (_alg, data) => createHash('md5').update(Buffer.from(data)).digest() } };
   const context = vm.createContext({ Response, Request, Date, JSON, String, Number, Math, Array, Object, Uint8Array, TextEncoder, crypto: webcrypto,
     Deno: { env: { get: key => key } }, createClient: (_url, key) => key === 'SUPABASE_SERVICE_ROLE_KEY' ? service : anonymous,
     serve: fn => { state.handler = fn; },
-    stdCrypto, parseNotificationItem, parseMailLang, prepareNotificationRow });
+    md5Hex, parseNotificationItem, parseMailLang, prepareNotificationRow });
   vm.runInContext(source, context);
   state.request = async (body, { token = 'valid-test-token', method = 'POST', raw = false } = {}) => {
     const request = new Request('https://example.com/functions/v1/send-mail', { method, headers: token ? { authorization: `Bearer ${token}` } : {}, ...(method === 'POST' ? { body: raw ? body : JSON.stringify(body) } : {}) });

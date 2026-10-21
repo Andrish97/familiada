@@ -1,22 +1,24 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T22122";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T22122";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T22122";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T22122";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T22122";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T22122";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T22122";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T22122";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T22122";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T22122";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T22122";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T22122";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T22122";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T22503";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T22503";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T22503";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T22503";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T22503";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T22503";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T22503";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T22503";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T22503";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T22503";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T22503";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T22503";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T22503";
 
 
 
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
+const emailRepeatInput = document.getElementById("email2");
+const emailActions = document.getElementById("emailActions");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
 const deletePassword = document.getElementById("deletePassword");
@@ -414,7 +416,8 @@ function setEmailPendingUi(nextPendingEmail) {
   const hasPending = !!pendingEmail && pendingEmail !== currentEmail;
 
   if (emailPendingActions) emailPendingActions.hidden = !hasPending;
-  if (saveEmail) saveEmail.hidden = hasPending;
+  if (emailActions) emailActions.hidden = hasPending;
+  if (emailRepeatInput) emailRepeatInput.value = "";
 
   if (emailPendingHint) {
     emailPendingHint.hidden = !hasPending;
@@ -681,6 +684,9 @@ async function handleEmailSave() {
 
     const normalizedMail = mail.toLowerCase();
     if (normalizedMail === currentEmail.toLowerCase()) throw new Error(t("account.errEmailSameAsCurrent"));
+    // Potwierdza tylko nowy adres, więc literówka = link w cudzej skrzynce.
+    const repeated = String(emailRepeatInput?.value || "").trim().toLowerCase();
+    if (repeated !== normalizedMail) throw new Error(t("account.errEmailMismatch"));
 
     const language = getUiLang();
 
@@ -890,7 +896,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // cooldown: server state (cross-device)
   bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
-  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange] });
+  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, emailRepeatInput, saveEmail, resendEmailChange] });
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
@@ -920,6 +926,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   emailInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    emailRepeatInput?.focus();
+  });
+
+  emailRepeatInput?.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     saveEmail?.click();

@@ -99,6 +99,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
 
     const migrateEmail = `e2e-resend-${Date.now()}@example.invalid`;
     await page.fill("#email", migrateEmail);
+    await page.fill("#email2", migrateEmail);
     await page.locator("#saveEmail").click();
 
     // handleEmailSave() czyta stan pending zaraz po sukcesie przez

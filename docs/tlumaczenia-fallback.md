@@ -109,7 +109,6 @@ Element w HTML jest celowo pusty, treść pochodzi tylko z tłumaczeń (np. dłu
 
 | Plik:linia | Klucz |
 |---|---|
-| `account.html:105` | `account.emailNoAccessHint` |
 | `account.html:126` | `account.emailNotifTitle` |
 | `account.html:127` | `account.emailNotifHint` |
 | `account.html:131` | `account.emailNotifCheckbox` |

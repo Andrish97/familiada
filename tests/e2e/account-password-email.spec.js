@@ -43,7 +43,7 @@ async function waitForAuthMailSlot(account, testInfo) {
   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
 }
 
-function expectMailInLanguage(email, copy, lang, label, typeKey) {
+function expectMailInLanguage(email, copy, lang, label, typeKey, { actionPattern = /token_hash=/, vars = {} } = {}) {
   expectMailDocument(email, { lang });
   const html = email.body_html || "";
   // Znacznik wstawiany tylko przez send-email czytający tłumaczenia strony —
@@ -53,9 +53,10 @@ function expectMailInLanguage(email, copy, lang, label, typeKey) {
     .toContain(`<meta name="familiada-i18n" content="authEmail.${typeKey}@${lang}">`);
   expect(email.subject, `${label}: temat`).toBe(copy.subject);
   for (const field of ["subtitle", "title", "desc", "btn", "ignore", "footer"]) {
-    expect(html, `${label}: brak pola ${field}`).toContain(escapeMailText(copy[field]));
+    const text = Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), copy[field]);
+    expect(html, `${label}: brak pola ${field}`).toContain(escapeMailText(text));
   }
-  const action = extractHttpLinks(email).find((link) => /token_hash=/.test(link));
+  const action = extractHttpLinks(email).find((link) => actionPattern.test(link));
   expect(action, `${label}: brak linku akcji`).toBeTruthy();
   expect(new URL(action).searchParams.get("lang"), `${label}: lang w linku`).toBe(lang);
 }
@@ -145,6 +146,7 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
     await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
     await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
     await page.locator("#email").fill(PROFILE_NEW_EMAIL);
+    await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
     await page.locator("#saveEmail").click();
     lastAuthMailAt.set("test12", Date.now());
     await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 30_000 });
@@ -155,13 +157,17 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
     ]);
     const isEmailChangeLink = (link) =>
       /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
+    // Bez "secure email change": stary adres dostaje samo powiadomienie
+    // (link do logowania), potwierdza tylko nowy adres.
     const oldLink = extractHttpLinks(oldEmail).find(isEmailChangeLink);
     const newLink = extractHttpLinks(newEmail).find(isEmailChangeLink);
-    expect(oldLink, "mail na stary adres powinien zawierac link potwierdzajacy").toBeTruthy();
+    expect(oldLink, "mail na stary adres nie moze zawierac linku potwierdzajacego").toBeFalsy();
+    expect(oldEmail.body_html || "", "mail na stary adres powinien wskazywac nowy adres")
+      .toContain(escapeMailText(PROFILE_NEW_EMAIL));
     expect(newLink, "mail na nowy adres powinien zawierac link potwierdzajacy").toBeTruthy();
 
     await context.close();
-    for (const link of [oldLink, newLink]) {
+    for (const link of [newLink]) {
       const confirmContext = await browser.newContext();
       const confirmPage = await confirmContext.newPage();
       await confirmPage.goto(link, { waitUntil: "domcontentloaded" });
@@ -278,6 +284,7 @@ for (const lang of MAIL_LANGS) {
       await page.goto(`https://www.familiada.online/account${lang === "pl" ? "" : `?lang=${lang}`}`, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
       await page.locator("#email").fill(PROFILE_NEW_EMAIL);
+      await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
       await page.locator("#saveEmail").click();
       lastAuthMailAt.set("test12", Date.now());
 
@@ -286,7 +293,8 @@ for (const lang of MAIL_LANGS) {
         waitForEmail({ recipient: PROFILE_EMAIL, after }),
         waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
       ]);
-      expectMailInLanguage(oldEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (stary adres)`, "emailChange");
+      expectMailInLanguage(oldEmail, authEmail.emailChangeNotice, lang, `zmiana e-maila ${lang} (powiadomienie na stary adres)`,
+        "emailChangeNotice", { actionPattern: /\/login\/\?lang=/, vars: { email: PROFILE_NEW_EMAIL } });
       expectMailInLanguage(newEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (nowy adres)`, "emailChange");
     } finally {
       await restoreTestAccount("test12");

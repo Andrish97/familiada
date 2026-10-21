@@ -91,6 +91,7 @@
 .account-field-row > .inp,
 .account-field-row > .pass-wrap{ flex: 1 1 180px; min-width: 0; }
 .account-field-row > .btn{ flex: 0 0 auto; margin-left: auto; }
+.account-field-row[hidden]{ display: none; }
 .account-actions{ display: grid; justify-items: end; gap: 10px; }
 #demoRestoreBtn{ justify-self: end; }
 
@@ -125,12 +126,15 @@
   line-height: 1.35;
 }
 
+/* Para akcji oczekującej zmiany: dwie równe kolumny na całą szerokość karty. */
 .pending-actions{
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
+.pending-actions[hidden]{ display: none; }
+.account-actions > .pending-actions{ justify-self: stretch; }
+.pending-actions > .btn{ min-width: 0; justify-content: center; }
 
 .cooldown-banner{
   margin: 10px 0 18px;

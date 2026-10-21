@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T22122"/>
+  <meta name="app-version" content="v2026-10-21T22503"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,17 +15,17 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="account.pageTitle">Familiada — moje konto</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T22122" />
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T22122" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T22122"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T22122"/>
-  <link rel="stylesheet" href="/account/css/account.css?v=v2026-10-21T22122"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T22503" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T22503" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T22503"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T22503"/>
+  <link rel="stylesheet" href="/account/css/account.css?v=v2026-10-21T22503"/>
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T22122" defer></script>
-  <script type="module" src="/account/js/account.js?v=v2026-10-21T22122" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T22122" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T22503" defer></script>
+  <script type="module" src="/account/js/account.js?v=v2026-10-21T22503" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T22503" defer></script>
 
 </head>
 
@@ -78,9 +78,10 @@
 
       <section class="account-panel" id="emailSection">
         <div class="section-title" data-i18n="account.emailTitle">E-mail</div>
-        <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie sprawdź skrzynkę na obecnym i nowym e-mailu, aby potwierdzić operację.</div>
+        <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie potwierdź ją linkiem wysłanym na nowy adres.</div>
+        <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
         <div class="account-field-row email-actions" id="emailActions">
-          <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
+          <input class="inp" id="email2" type="email" placeholder="Powtórz nowy e-mail" autocomplete="off" data-i18n-placeholder="account.emailRepeatPlaceholder"/>
           <button class="btn sm gold" id="saveEmail" type="button" data-i18n="account.emailSave" data-i18n-icon="envelope-out">Zmień e-mail</button>
         </div>
         <div class="cooldown" id="emailCooldown" hidden></div>
@@ -88,8 +89,7 @@
           <button class="btn sm" id="cancelEmailChange" type="button" data-i18n="account.emailCancel" data-i18n-icon="close">Anuluj zmianę</button>
           <button class="btn sm gold" id="resendEmailChange" type="button" data-i18n="account.emailResend" data-i18n-icon="refresh">Wyślij ponownie</button>
         </div>
-<div class="section-hint" data-i18n="account.emailPostHint">Zmiana e-maila wymaga potwierdzenia linków w skrzynkach. Do tego czasu możesz logować się dotychczasowym adresem. Jeśli nie widzisz wiadomości, sprawdź spam.</div>
-        <div class="section-hint subtle" data-i18n="account.emailNoAccessHint"></div>
+<div class="section-hint" data-i18n="account.emailPostHint">Zmiana e-maila wymaga potwierdzenia linku na nowym adresie. Do tego czasu możesz logować się dotychczasowym adresem. Jeśli nie widzisz wiadomości, sprawdź spam.</div>
         <div class="section-hint" id="emailPendingHint" hidden></div>
       </section>
 
@@ -146,7 +146,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T22122"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T22503"></script>
 
 </body>
 </html>

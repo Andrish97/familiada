@@ -593,7 +593,11 @@ serve(async (req) => {
       const emailTemplate: EmailType = isGuestMigrate ? "guest_migrate" : "email_change";
       const copy = await getEmailCopy(emailTemplate, lang);
 
-      const thCurrent = tokenHash;
+      // Dwa tokeny = "secure email change" (potwierdza stary i nowy adres).
+      // Jeden token = potwierdza tylko nowy adres; nie może trafić na stary,
+      // bo kliknięcie tam zatwierdziłoby zmianę bez sprawdzenia nowej skrzynki.
+      const secureChange = Boolean(tokenHash && tokenHashNew);
+      const thCurrent = secureChange ? tokenHash : "";
       const thNew = tokenHashNew || tokenHash;
 
       const linkCurrent =
@@ -611,12 +615,35 @@ serve(async (req) => {
         await sendEmail(targetEmail, copy.subject, htmlTarget, { requestId, actorUserId });
       }
 
+      // Bez "secure email change" stary adres nie dostaje linku, więc dostaje
+      // samo powiadomienie (zabezpieczenie przy przejętej sesji). Błąd tutaj
+      // nie blokuje zmiany — mail z potwierdzeniem już wyszedł.
+      if (!secureChange && !isGuestMigrate && currentEmail && targetEmail &&
+          targetEmailNormalized !== currentEmailNormalized) {
+        try {
+          const notice = await getEmailCopy("email_change_notice", lang);
+          const noticeCopy = { ...notice, desc: notice.desc.replaceAll("{email}", targetEmail) };
+          const linkLogin = `${baseOrigin}/login/?lang=${lang}`;
+          const htmlNotice = renderEmail(noticeCopy, linkLogin, lang);
+          await sendEmail(currentEmail, notice.subject, htmlNotice, { requestId, actorUserId });
+        } catch (err) {
+          await writeLog({
+            requestId,
+            level: "error",
+            event: "email_change_notice_failed",
+            status: "error",
+            actorUserId,
+            error: String(err),
+          });
+        }
+      }
+
       await writeLog({
         requestId,
         event: "request_done",
         status: "ok",
         actorUserId,
-        meta: { actionType: type, flow: "email_change" },
+        meta: { actionType: type, flow: "email_change", secureChange },
       });
       return json({ ok: true });
     }
