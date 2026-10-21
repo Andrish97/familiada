@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07405");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07441");
 
 
 /* css/base.css */
@@ -3307,21 +3307,25 @@ button.rowsSectionHead{ cursor: pointer; }
   display: block;
   position: absolute;
   top: auto;
+  /* łuk kończy się w wierszu górnej krawędzi karty; niżej (zakład
+     wypustki na kartę) narożnik jest tłem karty i zakrywa boki wypustki */
   bottom: 0;
   width: var(--radius);
-  height: var(--radius);
+  height: calc(var(--radius) + var(--tab-extra) - 1px);
   border-radius: 0;
   opacity: 1;
   transition: none;
   pointer-events: none;
 }
 :is(.tab-label.active, .tab-slot.active > .tab-label)::before{
-  left: calc(-1 * var(--radius) - 1px);
+  /* zachodzi na kolumnę bocznego obramowania karty i je zakrywa — łuk
+     przechodzi płynnie w bok wypustki, bez szczeliny */
+  left: calc(-1 * var(--radius));
   right: auto;
   background: radial-gradient(circle at 0 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
 }
 :is(.tab-label.active, .tab-slot.active > .tab-label)::after{
-  right: calc(-1 * var(--radius) - 1px);
+  right: calc(-1 * var(--radius));
   left: auto;
   background: radial-gradient(circle at 100% 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
 }

@@ -221,6 +221,11 @@ Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon)
 - **Control — krok Urządzenia:** mniej przycisków, ładniejsze statusy,
   przyciski równej szerokości w siatce (jak inne siatki Control).
 - **Wdrożenie na `main`:** użytkownik zezwolił; dalsze uwagi przekaże później.
+- **Wypustki — jeden lity kawałek z kartą (2026-10-21):** bez dziur
+  i szczelin. Narożniki zachodzą na kolumnę bocznego obramowania wypustki
+  i na jej zakład na kartę; łuk kończy się w wierszu górnej krawędzi karty.
+  Sprawdzone zbliżeniami (×2/×3) styków na Grach, Bazach, Ankiecie
+  i Znajomych, komputer i telefon.
 - **Pola wyszukiwania (2026-10-21):** wszędzie jak w oknie „Przenieś do”
   menedżera bazy (E22): `.searchBox.searchBox--field` — lupa w polu po
   lewej, X w polu czyści frazę, filtrowanie na żywo; bez osobnego przycisku
