@@ -14,6 +14,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 - Decyzje użytkownika zapisuj od razu w sekcji „Decyzje” właściwego
   dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`,
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
+  Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
