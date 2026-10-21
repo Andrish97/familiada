@@ -75,7 +75,10 @@ E2E na branchu (spec | przebieg | wynik):
   (`textContent`, stary błąd), „QR na wyświetlaczu” ucięty o 3 px, test liczył
   nakładanie bez przycinania przewijanej listy. editor 43/44: import E21 pomija
   puste odpowiedzi — test używa pustego pytania. Commit `377d0c6`.
-- seq20 (w tle): logo-editor, polls-layout, editor --grep transakcj.
+- seq20: polls-layout 39535582298 ✓, editor --grep transakcj 39535738342 ✓,
+  logo-editor 39535234842 53/55 (14 kształtów, tablet, obrót już OK); zostały
+  „strzałki przesuwają zaznaczenie” (lokalnie działa, +11) i „pula zajęta po
+  utracie blokady” → seq21: oba na main i na branchu dla porównania.
 
 ## Dalej
 
