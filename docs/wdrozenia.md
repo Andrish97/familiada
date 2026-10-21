@@ -225,6 +225,7 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+| 2026-10-21 | E23 — test audytu CSS wyłączony | Na prośbę użytkownika `tests/unit/cssAudit.test.js` → `test.skip` do startu E23; skrypt `scripts/css-audit.mjs` zostaje (raport ręczny). | Przy starcie E23 odświeżyć baseline i włączyć test |
 | 2026-10-21 | E23 — panel admina | Użytkownik: panel admina też przepisać (bardzo złożony) → ostatnia faza E23 z przygotowaniem na starym silniku: analiza paneli, rozbicie `settings.js`, style do klas, sceny, przepięcie (`silnik-stylow-projekt.md` §8a). Szacunek E23 razem 41–56 dni. | — |
 | 2026-10-21 | E22 wdrożenie — krok 1: migracje | Zgoda użytkownika („możesz wypychać i testować na main”). Migracje 427–431 (tylko dodają) na `main` `e481f6e2`, `db-migrate` 39605638653 success, log: 427–431 OK. Następnie e2e `base-explorer.spec.js` na kodzie brancha (produkcyjna baza). | e2e brancha → Pages → testy kontrolne. |
 | 2026-10-21 | E22: zgłoszenia z produkcji (lokalnie) | Podgląd: „Utwórz grę” działa; Ctrl+Shift+N = folder; „(kopia)” tłumaczone (`p_copy_label` w niewdrożonej migracji 427, poprawionej w miejscu), „Nowy folder” / „Nowe pytanie” z tłumaczeń. Testy SQL 427–431 OK, pełny lokalny e2e 88/88. Na produkcji błędy znikną dopiero po wdrożeniu E22. | Wdrożenie tylko po „wdrażaj”. |

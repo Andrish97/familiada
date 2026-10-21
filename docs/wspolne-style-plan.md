@@ -98,6 +98,8 @@ Razem: ok. **13–20 dni roboczych** sesji.
 - Do startu E23 (po E13) praca innych etapów na starym CSS może podnieść
   liczby (np. E22 Eksplorator, 2026-10-21: baseline odświeżony po scaleniu).
   Przy scalaniu takiej pracy: `--write-baseline` w tym samym commicie.
+- **Test zapadki wyłączony** (`test.skip`, decyzja użytkownika 2026-10-21)
+  do startu E23; przy starcie E23: `--write-baseline` i włączenie testu.
 - Test unit nie przepuszcza wzrostu żadnej liczby w żadnym pliku; **nowy
   plik ma poziom 0** — nowa strona musi od razu korzystać ze wspólnych stylów.
 - Pliku tokenów (`TOKEN_FILES`) i dozwolonych progów (`ALLOWED_WIDTHS`)
