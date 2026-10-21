@@ -37,11 +37,22 @@ test("E24: generate-game bez nagłówka sekretu = 401, funkcja lead-finder usuni
 });
 
 test("E24: lead-finder API bez klucza = 401, /health publiczne", async ({ request }) => {
-  const status = await request.get(`${LEADS}/api/search-runs/status`);
-  log("leads status", status.status());
-  expect(status.status()).toBe(401);
-
+  const diag = async (name, res) => {
+    const h = res.headers();
+    const body = res.status() === 200 && name.includes("health") ? "" : (await res.text()).slice(0, 80).replace(/\s+/g, " ");
+    console.log(`[e2e-diag] security ${name} -> ${res.status()} server=${h.server || "-"} type=${h["content-type"] || "-"} cf-ray=${h["cf-ray"] ? "yes" : "no"} body=${body}`);
+  };
   const health = await request.get(`${LEADS}/health`);
-  log("leads health", health.status());
+  await diag("leads health", health);
+  const status = await request.get(`${LEADS}/api/search-runs/status`);
+  await diag("leads status", status);
+  const forged = await request.get(`${LEADS}/api/search-runs/status`, { headers: { Authorization: "Bearer e2e-forged-key" } });
+  await diag("leads status forged", forged);
+  const start = await request.post(`${LEADS}/api/search-runs?target_count=1`);
+  await diag("leads start", start);
+
   expect(health.status()).toBe(200);
+  expect(status.status()).toBe(401);
+  expect(forged.status()).toBe(401);
+  expect(start.status()).toBe(401);
 });
