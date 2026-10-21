@@ -27,7 +27,7 @@ The "Sharing" card offers two ways:
 
 **Anonymous** — for anyone who gets the link:
 
-- "Voting link" with the [Copy link] and [Open] buttons ([Open] opens the poll in a new tab),
+- "Voting link" with the [Copy link] and [Open] buttons (it opens the poll in a new tab),
 - a QR code to scan with a phone; [Enlarge QR code] shows it full screen.
 
 Voters are anonymous — you only see the number of votes. People can vote once per browser.
