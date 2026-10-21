@@ -76,8 +76,10 @@ function locksFor(state, { folderIds = [], questionIds = [] }, extra = []) {
   ];
 }
 
-async function withLocks(resources, context, fn) {
-  const lease = resources.length ? await acquireResourceLocks(resources, { context }) : { ok: true, release() {} };
+// mode "shared": miejsce docelowe tworzenia / kopii — wiele osób może
+// tworzyć naraz, ale nie w folderze, który ktoś właśnie zmienia na wyłączność.
+async function withLocks(resources, context, fn, { mode = "exclusive" } = {}) {
+  const lease = resources.length ? await acquireResourceLocks(resources, { context, mode }) : { ok: true, release() {} };
   if (!lease?.ok) return lockRefused(lease);
   try {
     return await fn();
@@ -199,24 +201,22 @@ export async function goUp(state) {
 
 /* ================= Tworzenie i zmiana nazwy ================= */
 
+const folderLock = (id) => (id ? [{ resourceType: "base_folder", resourceId: id }] : []);
+
 export async function createFolder(state, parentId) {
-  try {
-    const id = await ops.createFolder(state.baseId, parentId, t("baseExplorer.toolbar.newFolder"));
-    rememberCreated(state, "baseExplorer.toolbar.newFolder", { folderIds: [id] });
-  } catch (e) {
-    return opFailed(e);
-  }
+  const id = await withLocks(folderLock(parentId), "base-explorer:create",
+    () => ops.createFolder(state.baseId, parentId, t("baseExplorer.toolbar.newFolder")), { mode: "shared" });
+  if (id === false) return false;
+  rememberCreated(state, "baseExplorer.toolbar.newFolder", { folderIds: [id] });
   await refresh(state);
   return true;
 }
 
 export async function createQuestion(state, folderId) {
-  try {
-    const id = await ops.createQuestion(state.baseId, folderId, { text: t("baseExplorer.toolbar.newQuestion"), answers: [] });
-    rememberCreated(state, "baseExplorer.toolbar.newQuestion", { questionIds: [id] });
-  } catch (e) {
-    return opFailed(e);
-  }
+  const id = await withLocks(folderLock(folderId), "base-explorer:create",
+    () => ops.createQuestion(state.baseId, folderId, { text: t("baseExplorer.toolbar.newQuestion"), answers: [] }), { mode: "shared" });
+  if (id === false) return false;
+  rememberCreated(state, "baseExplorer.toolbar.newQuestion", { questionIds: [id] });
   await refresh(state);
   return true;
 }
@@ -303,18 +303,20 @@ export async function deleteSelected(state) {
 export async function restoreFromTrash(state) {
   const ids = trashIdsOf(state.selection.keys);
   if (!ids.length) return false;
-  try {
-    const restored = await ops.trashRestore(state.baseId, ids);
-    const items = { questionIds: restored?.questions || [], folderIds: restored?.folders || [] };
-    let trashIds = [];
-    remember(state, "baseExplorer.trash.restore", {
-      locks: () => locksFor(state, items),
-      undo: async () => { trashIds = (await ops.deleteItems(state.baseId, items))?.trash || []; },
-      redo: async () => { await ops.trashRestore(state.baseId, trashIds); },
-    });
-  } catch (e) {
-    return opFailed(e);
-  }
+  // dawne miejsca, które nadal są w bazie (tam wracają elementy)
+  const origins = (state.store?.trash || [])
+    .filter((e) => ids.includes(e.id) && e.origin_id && state.d.folderById.has(e.origin_id))
+    .flatMap((e) => folderLock(e.origin_id));
+  const restored = await withLocks(origins, "base-explorer:restore",
+    () => ops.trashRestore(state.baseId, ids), { mode: "shared" });
+  if (restored === false) return false;
+  const items = { questionIds: restored?.questions || [], folderIds: restored?.folders || [] };
+  let trashIds = [];
+  remember(state, "baseExplorer.trash.restore", {
+    locks: () => locksFor(state, items),
+    undo: async () => { trashIds = (await ops.deleteItems(state.baseId, items))?.trash || []; },
+    redo: async () => { await ops.trashRestore(state.baseId, trashIds); },
+  });
   selectionClear(state);
   await refresh(state);
   return true;
@@ -351,12 +353,11 @@ export function copyToClipboard(state, mode) {
 export async function copyItems(state, keys, targetFolderId) {
   const items = splitKeys(keys);
   if (!items.folderIds.length && !items.questionIds.length) return false;
-  try {
-    const res = await ops.copyItems(state.baseId, items, targetFolderId);
-    rememberCreated(state, "baseExplorer.toolbar.paste", { questionIds: res?.questions || [], folderIds: res?.folders || [] });
-  } catch (e) {
-    return opFailed(e);
-  }
+  // źródła (czytane w trakcie kopii) i cel — współdzielenie
+  const res = await withLocks(locksFor(state, items, folderLock(targetFolderId)), "base-explorer:copy",
+    () => ops.copyItems(state.baseId, items, targetFolderId), { mode: "shared" });
+  if (res === false) return false;
+  rememberCreated(state, "baseExplorer.toolbar.paste", { questionIds: res?.questions || [], folderIds: res?.folders || [] });
   await refresh(state);
   return true;
 }

@@ -12,7 +12,11 @@ import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/co
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T23220";
 import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { normalizeText } from "./data/listing.js?v=v2026-10-20T23220";
 import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-20T23220";
+
+// Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
+const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
 
 
 const btnBack = document.getElementById("btnBack");
@@ -62,12 +66,10 @@ function showErr(box, msg) {
   box.textContent = String(msg || "");
 }
 
-function normTagName(s) {
-  return String(s || "")
-    .trim()
-    .replace(/^#/, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
+// Nazwy tagów porównujemy jak wyszukiwarka: bez wielkości liter i bez
+// polskich znaków („Łatwe” = „latwe”), żeby #latwe nie było niejednoznaczne.
+function normTagName(name) {
+  return normalizeText(String(name || "").trim().replace(/^#/, ""));
 }
 
 function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
@@ -583,12 +585,12 @@ export async function openTagsModal(state, opts = {}) {
       .replace(/^#/, "")
       .slice(0, 40);
 
-    // Bez spacji: tylko litery/cyfry i "_"
+    // Bez spacji: litery (także polskie, decyzja 2026-10-20), cyfry i "_"
     if (/\s/.test(nameRaw)) {
       showErr(E.editErr, t("baseExplorer.tags.errors.noSpaces"));
       return false;
     }
-    if (!/^[a-zA-Z0-9_]+$/.test(nameRaw)) {
+    if (!TAG_NAME_RE.test(nameRaw)) {
       showErr(E.editErr, t("baseExplorer.tags.errors.allowedChars"));
       return false;
     }

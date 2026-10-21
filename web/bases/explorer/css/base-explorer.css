@@ -425,6 +425,10 @@ input,textarea {
     position: fixed;
     z-index: 9999;
     min-width: 220px;
+    /* niskie okno: menu nie wychodzi poza ekran, przewija się */
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 6px;
     border-radius: 12px;
     background: #141414; /* kryjące — patrz uwaga przy .lang-menu w base.css */

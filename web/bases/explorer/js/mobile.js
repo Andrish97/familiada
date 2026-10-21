@@ -76,6 +76,8 @@ export function addLongPress(el, callback) {
   let timer = null;
   let startX = 0;
   let startY = 0;
+  // palce na elemencie: drugi palec to ramka (ui/marquee.js), nie menu
+  const pointers = new Set();
 
   function cancel() {
     if (timer) { clearTimeout(timer); timer = null; }
@@ -85,7 +87,9 @@ export function addLongPress(el, callback) {
     // tylko dotyk lub stylus (nie mysz — mysz ma contextmenu)
     if (e.pointerType === "mouse") return;
 
+    pointers.add(e.pointerId);
     cancel();
+    if (pointers.size > 1) return;
     startX = e.clientX;
     startY = e.clientY;
     touchDownAt.set(el, Date.now());
@@ -103,8 +107,9 @@ export function addLongPress(el, callback) {
     if (Math.hypot(dx, dy) > MOVE_THRESHOLD) cancel();
   }, { passive: true });
 
-  el.addEventListener("pointerup", cancel, { passive: true });
-  el.addEventListener("pointercancel", cancel, { passive: true });
+  const lift = (e) => { pointers.delete(e.pointerId); cancel(); };
+  el.addEventListener("pointerup", lift, { passive: true });
+  el.addEventListener("pointercancel", lift, { passive: true });
 }
 
 /**

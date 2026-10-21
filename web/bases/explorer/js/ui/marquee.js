@@ -25,6 +25,32 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
   let toggle = false; // dotyk: przełączanie zamiast dokładania
   let moved = false;
   let suppressClick = false;
+  let last = null;    // ostatni punkt wskaźnika (do przewijania przy krawędzi)
+  let scrollFrame = 0;
+
+  // Wskaźnik przy krawędzi (albo za nią): kontener przewija się sam,
+  // a ramka rośnie razem z nim.
+  const EDGE = 28;
+  const STEP = 18;
+  function autoscroll() {
+    scrollFrame = 0;
+    if (!box || !last) return;
+    const cr = container.getBoundingClientRect();
+    let dy = 0;
+    if (last.clientY > cr.bottom - EDGE) dy = STEP;
+    else if (last.clientY < cr.top + EDGE) dy = -STEP;
+    if (!dy) return;
+    const before = container.scrollTop;
+    container.scrollTop += dy;
+    if (container.scrollTop === before) return; // koniec przewijania
+    update(last);
+    scrollFrame = requestAnimationFrame(autoscroll);
+  }
+  function track(p) {
+    last = { clientX: p.clientX, clientY: p.clientY };
+    update(last);
+    if (!scrollFrame) scrollFrame = requestAnimationFrame(autoscroll);
+  }
 
   const local = (p) => {
     const r = container.getBoundingClientRect();
@@ -72,6 +98,9 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
 
   function end() {
     if (!box) return;
+    cancelAnimationFrame(scrollFrame);
+    scrollFrame = 0;
+    last = null;
     box.remove();
     box = null;
     if (moved) suppressClick = true;
@@ -86,7 +115,7 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
     begin(e, isModKey(e) ? new Set(getBase()) : new Set(), false);
     e.preventDefault(); // bez zaznaczania tekstu
   });
-  document.addEventListener("mousemove", (e) => { if (box && !toggle) update(e); });
+  document.addEventListener("mousemove", (e) => { if (box && !toggle) track(e); });
   document.addEventListener("mouseup", () => { if (box && !toggle) end(); });
 
   // ----- dotyk: dwa palce -----
@@ -97,7 +126,7 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
   container.addEventListener("touchmove", (e) => {
     if (!box || !toggle || e.touches.length < 2) return;
     e.preventDefault();
-    update(e.touches[1]);
+    track(e.touches[1]);
   }, { passive: false });
   container.addEventListener("touchend", () => { if (box && toggle) end(); });
   container.addEventListener("touchcancel", () => { if (box && toggle) end(); });

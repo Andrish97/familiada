@@ -143,6 +143,16 @@ begin
     perform public.qb_save_tag(b, null, 'FAJNE', null);
     raise exception 'brak odmowy duplikatu';
   exception when others then if sqlerrm <> 'qb:duplicate' then raise; end if; end;
+  -- polskie litery dozwolone; „latwe” przy „Łatwe” to duplikat (porównanie jak wyszukiwarka)
+  perform public.qb_save_tag(b, null, 'Łatwe_źródło', null);
+  begin
+    perform public.qb_save_tag(b, null, 'latwe_zrodlo', null);
+    raise exception 'brak odmowy duplikatu bez polskich znaków';
+  exception when others then if sqlerrm <> 'qb:duplicate' then raise; end if; end;
+  begin
+    perform public.qb_save_tag(b, null, 'ze spacją', null);
+    raise exception 'brak odmowy spacji';
+  exception when others then if sqlerrm <> 'qb:invalid' then raise; end if; end;
   d := public.qb_delete_tags(b, array[t]);
   if jsonb_array_length(d->'tags') <> 1 or jsonb_array_length(d->'questionLinks') < 3 then raise exception 'usunięcie tagu: %', d; end if;
   if exists (select 1 from public.qb_question_tags where tag_id=t) then raise exception 'przypisania zostały'; end if;

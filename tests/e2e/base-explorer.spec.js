@@ -3499,3 +3499,79 @@ test.describe("base-explorer: menu kontekstowe z klawiatury (E22)", () => {
     }
   });
 });
+
+test.describe("base-explorer: zaznaczanie ramką (E22)", () => {
+  test("ramka myszą od pustego miejsca zaznacza trafione wiersze i zostaje po puszczeniu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MARQUEE-${Date.now()}`);
+
+    try {
+      for (let i = 1; i <= 5; i++) await createQuestion(page, { baseId, ord: i, payload: { text: `Pytanie ${i}`, answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const rows = page.locator('#list tbody .row[data-kind="q"]');
+      await expect(rows).toHaveCount(5, { timeout: 15000 });
+
+      // od pustego miejsca pod ostatnim wierszem w górę do środka 3. wiersza
+      const last = await rows.nth(4).boundingBox();
+      const third = await rows.nth(2).boundingBox();
+      const x = last.x + 60;
+      await page.mouse.move(x, last.y + last.height + 20);
+      await page.mouse.down();
+      await page.mouse.move(x, last.y + last.height / 2, { steps: 4 });
+      await page.mouse.move(x, third.y + third.height / 2, { steps: 6 });
+      await page.mouse.up();
+
+      await expect(page.locator("#list tbody .row.is-selected")).toHaveCount(3);
+      await expect(rows.nth(0)).not.toHaveClass(/is-selected/);
+      await expect(rows.nth(2)).toHaveClass(/is-selected/);
+      await expect(page.locator("#list .marquee")).toHaveCount(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
+  test("tag „Łatwe” powstaje w oknie tagów, „latwe” to duplikat, #latwe + spacja daje tabletkę", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-PLTAG-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Z tagiem", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await pressToolbarShortcut(page, "editTags", "Control+t");
+      await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#tagsAddNew").click();
+      await page.locator("#tagsEditName").fill("Łatwe");
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsL1")).toBeVisible({ timeout: 5000 });
+      await page.locator('#tagsAssignList input[type="checkbox"][data-tag-id]').first().click();
+      await page.locator("#tagsL1Save").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+      expect(await getQuestionTagIds(page, qid)).toHaveLength(1);
+
+      // „latwe” = „Łatwe” (porównanie jak wyszukiwarka): odmowa
+      await page.locator("#btnAddTag").click();
+      await expect(page.locator("#tagsL2")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsEditName").fill("latwe");
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsEditErr")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsL2Close").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+
+      await page.locator("#searchText").click();
+      await page.keyboard.type("#latwe ");
+      await expect(page.locator("#searchChips .chip")).toHaveText("#Łatwe");
+      await expect(row).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});

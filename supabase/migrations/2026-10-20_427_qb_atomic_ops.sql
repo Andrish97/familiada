@@ -423,6 +423,14 @@ $$;
 
 -- ===== Tagi =====
 
+-- Klucz nazwy tagu: bez wielkości liter i polskich znaków („Łatwe” = „latwe”)
+-- — tak porównuje wyszukiwarka menedżera, więc takie nazwy to duplikat.
+CREATE OR REPLACE FUNCTION public._qb_tag_key(p_name text) RETURNS text
+  LANGUAGE sql IMMUTABLE
+AS $$
+  SELECT lower(translate(coalesce(p_name, ''), 'ĄĆĘŁŃÓŚŹŻąćęłńóśźż', 'ACELNOSZZacelnoszz'));
+$$;
+
 -- Tworzy (p_id NULL) albo zmienia tag. Zwraca {id, before:{name,color}|null}.
 CREATE OR REPLACE FUNCTION public.qb_save_tag(p_base_id uuid, p_id uuid, p_name text, p_color text) RETURNS jsonb
   LANGUAGE plpgsql
@@ -435,8 +443,9 @@ DECLARE
   v_id uuid;
 BEGIN
   PERFORM public._qb_assert_edit(p_base_id);
-  IF v_name !~ '^[a-zA-Z0-9_]+$' THEN RAISE EXCEPTION 'qb:invalid' USING errcode = 'P0001'; END IF;
-  IF EXISTS (SELECT 1 FROM public.qb_tags WHERE base_id = p_base_id AND lower(name) = lower(v_name)
+  -- litery (także polskie, decyzja 2026-10-20), cyfry i _
+  IF v_name !~ '^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$' THEN RAISE EXCEPTION 'qb:invalid' USING errcode = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.qb_tags WHERE base_id = p_base_id AND public._qb_tag_key(name) = public._qb_tag_key(v_name)
               AND id IS DISTINCT FROM p_id) THEN
     RAISE EXCEPTION 'qb:duplicate' USING errcode = 'P0001';
   END IF;

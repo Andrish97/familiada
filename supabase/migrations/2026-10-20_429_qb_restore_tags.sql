@@ -15,7 +15,7 @@ BEGIN
 
   IF EXISTS (
     SELECT 1 FROM jsonb_array_elements(coalesce(p_snapshot->'tags', '[]')) x
-      JOIN public.qb_tags t ON t.base_id = p_base_id AND lower(t.name) = lower(x->>'name') AND t.id <> (x->>'id')::uuid
+      JOIN public.qb_tags t ON t.base_id = p_base_id AND public._qb_tag_key(t.name) = public._qb_tag_key(x->>'name') AND t.id <> (x->>'id')::uuid
   ) THEN
     RAISE EXCEPTION 'qb:duplicate' USING errcode = 'P0001';
   END IF;
