@@ -65,6 +65,8 @@ rund czy wydarzeń.
   spacji) i wybierz kolor.
 - Zaznacz pytania lub foldery i w oknie [Tagi] zaznacz tagi, które chcesz im przypisać.
   Tag oznaczony jako „częściowo” ma tylko część zaznaczonych elementów.
+- Tag przypisany do folderu trafia do wszystkich pytań w nim, także w podfolderach. Folder
+  pokazuje znacznik tagu tylko wtedy, gdy mają go wszystkie pytania w środku.
 - Kliknij tag w lewym panelu, aby zobaczyć tylko pytania z tym tagiem. Kilka zaznaczonych tagów
   pokazuje pytania, które mają je wszystkie.
 

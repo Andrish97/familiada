@@ -9,6 +9,10 @@ jeśli nie wybierzesz własnego, gra pokaże logo domyślne.
 Logo tworzysz i przechowujesz na stronie *Moje loga*. Każdej grze możesz przypisać inne
 logo (→ 8.5).
 
+Wyświetlacz ma **150 × 70 kropek**. To, co wygląda dobrze w dużej rozdzielczości, po zamianie na
+kropki może stać się nieczytelne. Najlepiej sprawdzają się grube kształty, duże litery i wysoki
+kontrast — cienkie linie i drobne szczegóły zwykle znikają. Efekt sprawdzaj przyciskiem [Podgląd].
+
 > Uwaga: logo tworzy się na komputerze lub tablecie. Na telefonie listę logo można
 > przeglądać, ale edytor jest niedostępny.
 
@@ -42,6 +46,21 @@ Do dyspozycji są też: powiększanie i pomniejszanie widoku, tło sceny (czarne
 grubość i styl linii, wypełnienie, [Cofnij], [Ponów], [Duplikuj], [Wyczyść] oraz [Podgląd]
 — pokazuje, jak logo będzie wyglądać na Wyświetlaczu.
 
+Przydatne skróty i zasady:
+
+- Delete (na Macu Fn+Backspace) albo × w pasku opcji usuwa zaznaczone elementy; [Wyczyść] usuwa
+  cały rysunek po potwierdzeniu.
+- Ctrl+Z (⌘Z) cofa, Ctrl+Shift+Z albo Ctrl+Y ponawia, Ctrl+D duplikuje; Ctrl+0 przywraca
+  powiększenie 100%, a Ctrl + plus i Ctrl + minus powiększają i pomniejszają widok.
+- L — linia, R — prostokąt, O — elipsa, P — wielokąt, U — następny kształt, F — wypełnienie;
+  [ i ] zmieniają grubość linii lub gumki.
+- Strzałki przesuwają zaznaczenie o 1 kropkę, a z Shift o 10. Przytrzymany Ctrl chwilowo włącza
+  Wskaźnik.
+- Z wciśniętym Shift narysujesz kwadrat lub koło, a linię i strzałkę — co 15°.
+- Wielokąt kończysz klawiszem Enter, Esc go anuluje, a Backspace usuwa ostatni punkt.
+- [Cofnij] i [Ponów] działają w bieżącej edycji — po ponownym otwarciu logo historia zaczyna się
+  od nowa.
+
 Skróty klawiszowe nie działają podczas wpisywania tekstu.
 
 ## 8.4 Tworzenie logo z obrazu
@@ -64,6 +83,7 @@ zapisywane także przy wyjściu przyciskiem [Wstecz].
 **Lista „Moje loga”.** Dla zaznaczonego logo dostępne są [Edytuj], [Podgląd], [Powiel],
 eksport do pliku `.famlogo`, [Importuj] oraz [Wyślij] — kopia dla znajomego (→ 11.3).
 Nazwę zmienisz dwuklikiem (na dotyku — przytrzymaniem), a logo usuniesz ikoną kosza.
+Nie zmieniaj ręcznie zawartości plików `.famlogo` — import takiego pliku może się nie udać.
 
 **Wybór logo w grze.** Logo wybierasz w *Ustawieniach gry*, w sekcji „Logo” — „Domyślne”
 albo jedno z Twoich (→ 16.3).

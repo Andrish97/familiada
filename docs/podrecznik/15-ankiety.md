@@ -27,10 +27,18 @@ Na karcie „Udostępnianie” są dwa sposoby:
 
 **Anonimowo** — dla każdego, kto dostanie odnośnik:
 
-- „Link do głosowania” z przyciskiem [Kopiuj link],
+- „Link do głosowania” z przyciskami [Kopiuj link] i [Otwórz] (otwiera ankietę w nowej karcie),
 - kod QR do zeskanowania telefonem; [Powiększ kod QR] pokazuje go na cały ekran.
 
 Głosujący są anonimowi — widzisz tylko liczbę głosów. W jednej przeglądarce można zagłosować raz.
+
+**Kod QR na telewizorze lub rzutniku.** [QR na wyświetlaczu] pokazuje 6-cyfrowy kod ekranu
+„Wyświetlacz QR” — to kod do podłączenia ekranu, a nie do głosowania. Na telewizorze otwórz
+familiada.online → [Podłącz urządzenie] i wpisz kod (logowanie nie jest potrzebne). Ekran pokaże
+duży kod QR do głosowania, który uczestnicy skanują telefonami. [Otwórz] otwiera ten ekran na
+bieżącym urządzeniu (np. żeby przesłać go przez HDMI), a [Kopiuj] kopiuje kod. Ekran ma przycisk
+pełnego ekranu, a po zamknięciu ankiety pokazuje „Ankieta została zamknięta”. Przycisk działa
+dopiero po uruchomieniu ankiety.
 
 **Odbiorcy** — imienne zaproszenia dla znajomych (→ 10) i subskrybentów (→ 14):
 
@@ -55,6 +63,8 @@ Głosujący otwiera ankietę z odnośnika, kodu QR, wiadomości e-mail albo zada
 - W ankiecie tekstowej wpisuje się własną odpowiedź — do 17 znaków. Emotki i znaki, których
   nie pokaże Wyświetlacz, zostaną pominięte.
 - W ankiecie „Punktacja” wybiera się jedną z podanych odpowiedzi.
+- Nie można pominąć pytania ani wrócić do poprzedniego. W ankiecie „Punktacja” kliknięcie
+  odpowiedzi od razu przechodzi dalej, a w ankiecie tekstowej trzeba coś wpisać.
 - Odpowiedzi są wysyłane razem **po ostatnim pytaniu**. Kto wyjdzie wcześniej, nie zostanie
   policzony.
 - Na końcu pojawia się „Dziękujemy za udział!”.
@@ -100,7 +110,7 @@ wszystkie pytania), nawet jeśli wynik nie spełnia jeszcze warunków zamknięci
 
 **Ankieta tekstowa** — przed zatwierdzeniem uporządkuj odpowiedzi:
 
-- identyczne wpisy serwis łączy sam (bez względu na wielkość liter); [Scal identyczne] zrobi to
+- identyczne wpisy serwis łączy sam (bez względu na wielkość liter i dodatkowe spacje); [Scal identyczne] zrobi to
   ponownie po Twoich poprawkach,
 - przeciągnij odpowiedź na inną, aby je **połączyć** (na przykład „banan” i „banany”) — na
   telefonie użyj przycisku „Połącz z…”,

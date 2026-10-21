@@ -4,7 +4,13 @@
 
 *Moje gry* to strona, na którą trafiasz po zalogowaniu i od której zaczyna się większość
 pracy. Z górnego paska przejdziesz stąd do pozostałych części serwisu: baz pytań, logo,
-znajomych, subskrybentów, zadań i podłączania urządzeń.
+Gier Społeczności (→ 13), znajomych, subskrybentów, zadań i podłączania urządzeń. Liczniki przy
+przyciskach pokazują sprawy, które czekają na Ciebie: zaproszenia, otrzymane kopie, zadania
+i udostępnione urządzenia. Na węższym ekranie część przycisków jest w menu [Więcej].
+
+Jeśli przeglądarka na to pozwala, na górnym pasku pojawia się też ikona [Zainstaluj Familiadę|download] — dodaje
+Familiadę do ekranu głównego telefonu lub pulpitu. Przydaje się szczególnie na telefonie
+z przyciskiem do pojedynku i na tablecie prowadzącego (→ 17.1).
 
 Strona jest biblioteką Twoich gier, także kopii otrzymanych od znajomych. Gry są podzielone
 na zakładki:
@@ -75,6 +81,9 @@ przytrzymaj go na telefonie), aby zobaczyć powód. Najważniejsze zasady:
 
 [Zmień typ] zmienia tę samą grę — nie tworzy kopii. Szczegóły → 7.8.
 
+Na telefonie i w wąskim oknie przeglądarki przyciski [Graj] i [Ustawienia gry] są ukryte —
+*Panel sterowania* i *Ustawienia gry* otworzysz na komputerze lub tablecie.
+
 W zakładce **Gry Społeczności** dostępne są tylko [Graj], [Podgląd] i [Ustawienia gry].
 Takich gier nie można edytować, powielać, eksportować ani wysyłać (→ 13.4).
 
@@ -137,4 +146,7 @@ wymagać uzupełnienia — braki zobaczysz pod jej nazwą (→ 6.2).
 
 **Eksport do bazy pytań.** [Eksportuj do bazy] kopiuje pytania i odpowiedzi gry do wybranej
 bazy pytań (→ 9). W głównym folderze bazy powstaje folder nazwany jak gra. Możesz wybrać
-swoją bazę albo bazę udostępnioną Ci z prawem edycji (→ 12.4).
+swoją bazę albo bazę udostępnioną Ci z prawem edycji (→ 12.4). Jeśli nie masz takiej bazy,
+okno pokaże „Brak baz do wyboru.” — najpierw utwórz bazę (→ 9.1).
+
+Nie zmieniaj ręcznie zawartości plików `.famgame` — import takiego pliku może się nie udać.

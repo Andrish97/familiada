@@ -13,7 +13,8 @@ i co w tym czasie dzieje się na pozostałych ekranach. Zasady rund i finału �
 | **Prowadzący** | ekran dla osoby czytającej pytania — pytanie i wszystkie odpowiedzi z punktami | tablet lub telefon |
 | **Przycisk do pojedynku** | dwa przyciski, A i B, dla zawodników w pojedynku | telefon ułożony poziomo |
 
-Prowadzący nie steruje grą — robi to operator. Jedna osoba może łączyć obie role, ale wymaga to
+*Panel sterowania* nie działa na telefonie — potrzebny jest komputer lub tablet z szerokim
+ekranem. Prowadzący nie steruje grą — robi to operator. Jedna osoba może łączyć obie role, ale wymaga to
 sprawnego przechodzenia między rozmową z uczestnikami a obsługą panelu.
 
 **Jak otworzyć Panel sterowania.** Zaznacz gotową grę w *Moich grach* i wybierz [Graj].
@@ -25,9 +26,10 @@ połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępni
 - **Drugi monitor lub projektor przy komputerze.** Włącz rozszerzony pulpit (Windows: Win+P,
   Mac: ⌘+F1), wybierz [Otwórz] przy Wyświetlaczu, przeciągnij okno na drugi ekran i włącz pełny
   ekran.
-- **Telewizor z przeglądarką.** Na telewizorze wejdź na familiada.online. Telewizor pokaże
-  uproszczoną stronę z polem na 6-cyfrowy kod i przyciskiem [Podłącz] — wpisz kod Wyświetlacza
-  z panelu. Strzałki góra/dół przełączają między polem a przyciskiem, OK/Enter zatwierdza.
+- **Telewizor z przeglądarką.** W przeglądarce telewizora otwórz adres
+  `familiada.online/connect/tv/` — uproszczoną stronę z polem na 6-cyfrowy kod i przyciskiem
+  [Podłącz]. Wpisz kod Wyświetlacza z panelu; strzałki góra/dół przełączają między polem
+  a przyciskiem, OK/Enter zatwierdza. Możesz też użyć zwykłej strony [Podłącz urządzenie].
   Logowanie na telewizorze nie jest potrzebne.
 - **Inne urządzenie.** Otwórz familiada.online → [Podłącz urządzenie] → [Podłącz kodem] i wpisz kod.
 
@@ -35,13 +37,16 @@ połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępni
 > przeglądarka może wstrzymać animacje i aktualizację tablicy.
 
 **Prowadzący** i **Przycisk** — zeskanuj [Kod QR] telefonem albo wpisz kod przez
-[Podłącz urządzenie]. [QR na wyświetlaczu] pokazuje kody na Wyświetlaczu, żeby ekipa mogła je
+[Podłącz urządzenie]. Strona *Podłącz urządzenie* działa bez logowania: po wpisaniu kodu zobaczysz
+nazwę gry i jej właściciela — sprawdź je i zatwierdź. Na telefonie i tablecie jest też
+[Skanuj QR] (skanowanie aparatem; jeśli przeglądarka tego nie obsługuje, użyj aparatu systemowego). [QR na wyświetlaczu] pokazuje kody na Wyświetlaczu, żeby ekipa mogła je
 szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 
 [Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
 nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
-e-mail i na stronie *Moje powiadomienia* (→ 14.5). Udostępnianie urządzeń wymaga konta.
+e-mail i na stronie *Moje powiadomienia* (→ 14.5). Na liście udostępnionych telefon i tablet
+pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
 **Bez części urządzeń:**
 
