@@ -7,6 +7,7 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 
 ## Decyzje (2026-10-21, 01:00 UTC)
 
+- **Użytkownik (2026-10-21, ok. 08:10 UTC):** bez numerów w nagłówkach i spisie (numery tylko dla autora) — odnośniki pokazują tytuł; lewy pasek jak w Ustawieniach gry. Zrobione `77e167f0`, e2e brancha `39562331102` ✓.
 - **Użytkownik (2026-10-21, ok. 07:40 UTC):** pracować bez zatrzymywania aż do ukończenia całego manuala (PL/EN/UK), ale **nie publikować** (bez pushu na `main`) — użytkownik najpierw przeczyta i obejrzy nowy manual (zrzuty / podgląd z brancha).
 
 - **Użytkownik (2026-10-21):** manual piszemy całkowicie od nowa, ze zmienionym wyglądem strony — rozdziały i podrozdziały zamiast dawnych zakładek; stary manual nie jest poprawiany. Wykonanie: treść z `docs/podrecznik/*.md` (generator `scripts/manual/build-content.mjs` → `web/manual/content/{pl,en,uk}.js`), adres `?ch=N#s-N-M`, nazwa w UI „Podręcznik”.

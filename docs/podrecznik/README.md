@@ -8,7 +8,7 @@ Oznaczenia w szkicach (na stronie dostaną własne style):
 
 - `[Przycisk]` — nazwa przycisku dokładnie jak w serwisie,
 - *Strona* — nazwa strony lub widoku (kursywa),
-- (→ 7.3) — odnośnik do rozdziału lub podrozdziału,
+- (→ 7.3) — odnośnik do rozdziału lub podrozdziału; czytelnik widzi tytuł celu, nie numer (numery są tylko w źródle),
 - `> Uwaga:` — informacja ważna dla skutków decyzji.
 
 Zasady treści (decyzja 2026-10-11): bez słownictwa technicznego, te same nazwy co
