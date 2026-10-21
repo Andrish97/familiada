@@ -868,7 +868,6 @@ const pl = {
       addRecipients: "Dodaj odbiorców",
       addRecipientsHint: "Wybierz osoby, które chcesz zaprosić do tej ankiety.",
       addSelected: "Dodaj wybrane",
-      addSelectedN: "Dodaj wybrane ({n})",
       selectedCount: "Wybrano: {n}",
       noRecipientsToAdd: "Nie ma nowych znajomych ani subskrybentów do dodania.",
       noSharedRecipients: "Nie udostępniono jeszcze tej ankiety.",
@@ -932,7 +931,6 @@ const pl = {
       cancel: "Anuluj",
       noPoll: "Brak ankiety",
       openPoll: "Uruchom",
-      openAndInvite: "Uruchom i wyślij zaproszenia ({n})",
       stopPoll: "Zatrzymaj",
       resumePoll: "Wznów głosowanie",
       tallyPoll: "Podlicz głosy",
@@ -970,7 +968,6 @@ const pl = {
       open: {
         title: "Uruchomić ankietę?",
         text: "Uruchomić ankietę dla „{name}”?",
-        textInvite: "Uruchomić ankietę dla „{name}” i wysłać zaproszenia ({n})?",
         ok: "Uruchom",
         cancel: "Anuluj",
       },
@@ -1018,7 +1015,6 @@ const pl = {
       tally: "Nie udało się podliczyć głosów.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
-      openedInviteFailed: "Ankieta uruchomiona, ale zaproszeń nie udało się wysłać — zrób to w karcie Udostępnianie.",
     },
     tally: {
       loading: "Ładuję odpowiedzi…",

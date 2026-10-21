@@ -854,7 +854,6 @@ const en = {
       addRecipients: "Add recipients",
       addRecipientsHint: "Choose people to invite to this poll.",
       addSelected: "Add selected",
-      addSelectedN: "Add selected ({n})",
       selectedCount: "Selected: {n}",
       noRecipientsToAdd: "There are no new friends or subscribers to add.",
       noSharedRecipients: "This poll has not been shared yet.",
@@ -918,7 +917,6 @@ const en = {
       cancel: "Cancel",
       noPoll: "No poll",
       openPoll: "Start",
-      openAndInvite: "Start and send invitations ({n})",
       stopPoll: "Stop",
       resumePoll: "Resume voting",
       tallyPoll: "Count votes",
@@ -956,7 +954,6 @@ const en = {
       open: {
         title: "Start poll?",
         text: "Start poll for “{name}”?",
-        textInvite: "Start the poll for “{name}” and send invitations ({n})?",
         ok: "Start",
         cancel: "Cancel",
       },
@@ -1004,7 +1001,6 @@ const en = {
       tally: "Failed to count the votes.",
       reopen: "Failed to reopen.",
       loadAnswers: "Failed to load answers.",
-      openedInviteFailed: "The poll started, but the invitations could not be sent — do it in the Sharing tab.",
     },
     tally: {
       loading: "Loading answers…",

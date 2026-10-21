@@ -151,34 +151,11 @@ const WORDS = {
 const P = { category: "polls" };
 module.exports = [
   // ================= /polls/ — stany ankiety =================
-  { ...P, id: "polls-draft-points", title: "Ankieta punktowa — SZKIC (link po uruchomieniu)", path: `/polls/?id=${G.draftPoints}`, sources: POLLS, ready: "#cardMain.skel-step-ready", db: noTasks,
+  { ...P, id: "polls-draft-points", title: "Ankieta punktowa — SZKIC (udostępnianie zablokowane do uruchomienia)", path: `/polls/?id=${G.draftPoints}`, sources: POLLS, ready: "#cardMain.skel-step-ready", db: noTasks,
     steps: [async (view) => { await view.waitForFunction(() => !document.getElementById("btnOpenPoll")?.disabled, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
   { ...P, id: "polls-draft-text-blocked", title: "Ankieta tekstowa — SZKIC zablokowany (za mało pytań, podpowiedź przy „Uruchom”)", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/game-validate.js"], ready: "#cardMain.skel-step-ready", db: noTasks,
     steps: [async (view) => { await view.waitForFunction(() => document.getElementById("hintTop")?.textContent.trim().length > 0, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
-  { ...P, id: "polls-draft-recipients-modal", title: "Ankieta w szkicu — okno „Dodaj odbiorców” z zaznaczonymi osobami", path: `/polls/?id=${G.draftPoints}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready", db: noTasks,
-    steps: [async (view) => {
-      const tab = view.locator("#tabRecipients");
-      if (await tab.isVisible()) await tab.click();
-      await view.locator("#btnAddRecipients").click();
-      await view.locator("#pollRecipientsOverlay .shareList input[type=checkbox]").first().waitFor({ timeout: 5000 });
-      const boxes = view.locator("#pollRecipientsOverlay .shareList input[type=checkbox]");
-      for (const i of [0, 1, 3]) await boxes.nth(i).check();
-      await view.locator("#pollRecipientsSubs .shareList input[type=checkbox]").first().check();
-      await view.waitForTimeout(300);
-    }] },
-  { ...P, id: "polls-draft-invite-ready", title: "Ankieta w szkicu — wybrani odbiorcy, przycisk „Uruchom i zaproś”", path: `/polls/?id=${G.draftPoints}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready", db: noTasks,
-    steps: [async (view) => {
-      const tab = view.locator("#tabRecipients");
-      if (await tab.isVisible()) await tab.click();
-      await view.locator("#btnAddRecipients").click();
-      await view.locator("#pollRecipientsOverlay .shareList input[type=checkbox]").first().waitFor({ timeout: 5000 });
-      const boxes = view.locator("#pollRecipientsOverlay .shareList input[type=checkbox]");
-      for (const i of [0, 1, 3]) await boxes.nth(i).check();
-      await view.locator("#pollRecipientsAdd").click();
-      await view.locator("#pollRecipientsOverlay").waitFor({ state: "hidden" });
-      await view.waitForTimeout(400);
-    }] },
-  { ...P, id: "polls-recipients-modal-empty", title: "Okno „Dodaj odbiorców” — brak znajomych i subskrybentów", path: `/polls/?id=${G.draftPoints}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready",
+  { ...P, id: "polls-recipients-modal-empty", title: "Okno „Dodaj odbiorców” — brak znajomych i subskrybentów", path: `/polls/?id=${IDS.textPoll}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready",
     db: (db) => { db.rpc.poll_share_panel = { ok: true, friends: [], subscribers: [], tasks: [] }; },
     steps: [async (view) => {
       const tab = view.locator("#tabRecipients");
