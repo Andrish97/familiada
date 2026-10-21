@@ -166,7 +166,7 @@ test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, cont
   await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
   await invite(page, "test8@familiada.online");
   await expect(page.locator(".uni-modal")).toContainText("możesz zaprosić tę osobę do znajomych");
-  await expect(page.getByRole("link", { name: "Przejdź →" })).toHaveAttribute("href", /\/friends\//);
+  await expect(page.getByRole("link", { name: "Przejdź", exact: true })).toHaveAttribute("href", /\/friends\//);
 });
 
 test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany", async ({ page, context, browser }) => {
