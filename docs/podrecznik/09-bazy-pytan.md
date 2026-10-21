@@ -1,0 +1,142 @@
+# 9. Bazy pytań
+
+## 9.1 Do czego służy baza pytań
+
+Baza pytań to Twoja biblioteka pytań do wielokrotnego wykorzystania. Nie jest gotową grą:
+z wybranych pytań bazy w każdej chwili utworzysz grę (→ 9.8).
+
+Na stronie *Bazy pytań* są zakładki „Moje bazy” i „Udostępnione” — bazy, do których
+zaprosili Cię inni (→ 12). Filtr nad listą pokaże bazy według roli: Moja, Edycja albo Odczyt.
+
+- Aby utworzyć bazę, kliknij kafelek „Nowa baza” i wpisz nazwę (do 80 znaków).
+- Aby otworzyć bazę, zaznacz ją i wybierz [Przeglądaj].
+- Dla zaznaczonej bazy dostępne są też [Udostępnij] (→ 12.2), [Powiel], [Eksport] do pliku
+  `.fambase` i [Import] z pliku.
+- Nazwę bazy zmienisz dwuklikiem, a bazę usuniesz ikoną kosza — tylko w swoich bazach.
+
+Pytania z gry przeniesiesz do bazy przyciskiem [Eksportuj do bazy] w *Moich grach* (→ 6.7).
+
+## 9.2 Eksplorator bazy
+
+Otwarta baza działa podobnie do eksploratora plików na komputerze:
+
+- **po lewej** — drzewo „Foldery”, zaczynające się od „Folderu głównego”, a pod nim panel
+  „Tagi” i „Pasujące kategorie”,
+- **pośrodku** — zawartość bieżącego folderu: foldery i pytania,
+- **na górze** — pasek narzędzi i pole wyszukiwania.
+
+Kliknij element, aby go zaznaczyć. Aby zaznaczyć kilka, przytrzymaj Ctrl (na Macu ⌘);
+Shift zaznacza zakres. Możesz też zaznaczyć elementy ramką, przeciągając od pustego miejsca.
+Prawy przycisk myszy (na dotyku — przytrzymanie) otwiera menu z czynnościami dla zaznaczenia.
+
+Folder otwierasz dwuklikiem lub klawiszem Enter, a wracasz o poziom wyżej klawiszem Backspace
+albo w drzewie folderów.
+
+## 9.3 Narzędzia do pracy z pytaniami i folderami
+
+| Czynność | Co robi |
+|---|---|
+| [Nowy folder], [Nowe pytanie] | tworzy element w bieżącym folderze |
+| [Edytuj pytanie] | otwiera okno pytania (→ 9.7) |
+| [Tagi] | przypisuje tagi do zaznaczenia (→ 9.4) |
+| [Zmień nazwę] | zmienia nazwę folderu albo treść pytania |
+| [Kopiuj], [Wytnij], [Wklej] | przenosi lub kopiuje zaznaczenie do innego folderu |
+| [Duplikuj] | tworzy kopię obok oryginału |
+| [Usuń] | usuwa zaznaczenie — po potwierdzeniu, bez możliwości cofnięcia |
+| [Utwórz grę] | tworzy grę z zaznaczonych pytań (→ 9.8) |
+| [Odśwież widok] | pokazuje najnowszy stan bazy |
+
+**Przeciąganie.** Przeciągnij zaznaczenie na folder, aby je przenieść. Z wciśniętym Ctrl
+(na Macu Option) elementy zostaną skopiowane — folder razem z zawartością. Upuszczenie na pustym
+tle przenosi elementy do „Folderu głównego”. Przeciągnięcie na tag w lewym panelu przypisuje
+ten tag.
+
+Usunięcie folderu usuwa także wszystko, co jest w środku.
+
+## 9.4 Foldery i tagi
+
+**Foldery** możesz zagnieżdżać dowolnie głęboko i porządkować w nich pytania według tematów,
+rund czy wydarzeń.
+
+**Tagi** to etykiety niezależne od folderów — jedno pytanie może mieć kilka tagów, na przykład
+„sport” i „łatwe”.
+
+- W oknie [Tagi] wybierz [Dodaj tag], wpisz nazwę (do 40 znaków: litery, cyfry i `_`, bez
+  spacji) i wybierz kolor.
+- Zaznacz pytania lub foldery i w oknie [Tagi] zaznacz tagi, które chcesz im przypisać.
+  Tag oznaczony jako „częściowo” ma tylko część zaznaczonych elementów.
+- Kliknij tag w lewym panelu, aby zobaczyć tylko pytania z tym tagiem. Kilka zaznaczonych tagów
+  pokazuje pytania, które mają je wszystkie.
+
+„Pasujące kategorie” pod tagami serwis tworzy sam — pokazują pytania, które już spełniają
+warunki danego rodzaju gry (→ 7.6):
+
+- **typowe** — nadają się do ankiety tekstowej,
+- **punktowane** — mają od 3 do 6 odpowiedzi, więc nadają się do gry „Punktacja”,
+- **preparowane** — mają od 3 do 6 odpowiedzi z punktami (każda co najmniej 4, suma najwyżej
+  100), więc nadają się do gry preparowanej.
+
+## 9.5 Wyszukiwanie i przeglądanie pytań
+
+Wpisz tekst w pole „Szukaj...”. Serwis znajdzie pytania i foldery, których treść lub nazwa
+zawiera ten tekst (wielkość liter nie ma znaczenia; odpowiedzi nie są przeszukiwane).
+Wpisz `#nazwa_tagu`, aby dodać do wyszukiwania tag.
+
+Gdy wyszukujesz albo filtrujesz po tagu, lista pokazuje wyniki z całej bazy, a nie zawartość
+folderu — w tym widoku nie można wklejać ani wycinać. Aby wrócić do folderów, wyczyść pole
+wyszukiwania albo odznacz tagi.
+
+## 9.6 Skróty klawiszowe
+
+Skróty nie działają podczas wpisywania tekstu w polach.
+
+| Czynność | Windows / Linux | macOS |
+|---|---|---|
+| Nowe pytanie | Ctrl+N | ⌘N |
+| Nowy folder | Ctrl+Shift+N | ⌘⇧N |
+| Edytuj pytanie | Ctrl+E | ⌘E |
+| Tagi | Ctrl+T | ⌘T |
+| Zmień nazwę | F2 | F2 |
+| Usuń | Delete | Fn+⌫ |
+| Kopiuj / Wytnij / Wklej | Ctrl+C / Ctrl+X / Ctrl+V | ⌘C / ⌘X / ⌘V |
+| Duplikuj | Ctrl+D | ⌘D |
+| Zaznacz wszystko | Ctrl+A | ⌘A |
+| Otwórz folder | Enter | Enter |
+| Folder wyżej | Backspace | ⌫ |
+| Odznacz | Esc | Esc |
+| Odśwież widok | Ctrl+Alt+R | ⌘⌥R |
+| Utwórz grę | Ctrl+G | ⌘G |
+
+Niektóre przeglądarki zajmują część tych skrótów (na przykład Ctrl+N otwiera nowe okno).
+Wtedy użyj przycisku na pasku narzędzi.
+
+## 9.7 Edycja pytania
+
+Kliknij dwukrotnie pytanie albo wybierz [Edytuj pytanie]. W oknie „Pytanie”:
+
+- „Treść pytania” — do 100 znaków,
+- [+ Odpowiedź] — do 6 odpowiedzi, każda do 17 znaków,
+- „Punkty” — opcjonalnie, od 0 do 100 przy każdej odpowiedzi; suma najwyżej 100.
+
+W bazie punkty nie są wymagane — przydadzą się, jeśli z pytania powstanie gra preparowana.
+Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisujesz osobno (→ 9.4).
+
+## 9.8 Tworzenie gry z wybranych pytań
+
+1. Zaznacz pytania lub foldery i wybierz [Utwórz grę].
+2. W oknie „Eksport gry” wpisz nazwę gry i wybierz rodzaj: ankieta tekstowa, punktacja albo
+   preparowana.
+3. Sprawdź listę: zaznaczone pytania (także z zaznaczonych folderów) są już wybrane. Możesz
+   dodać lub odznaczyć pytania z całej bazy.
+4. Przy każdym pytaniu i w podsumowaniu widać, czego brakuje do gotowości — na przykład
+   „Gotowa po utworzeniu.” albo „Utworzy się szkic. Do gotowości brakuje: …”.
+5. Zatwierdź. Gra pojawi się w *Moich grach*.
+
+Gra powstaje dokładnie z wybranych pytań — serwis nie dobiera brakujących. Nie musi spełniać
+warunków gotowości: możesz utworzyć niekompletny szkic i uzupełnić go w edytorze (→ 7.6).
+
+Wybrany rodzaj gry decyduje, co zostanie przeniesione: ankieta tekstowa zachowa same pytania,
+punktacja — pytania i odpowiedzi bez punktów (punkty wynikną z ankiety), a gra preparowana —
+pytania, odpowiedzi i punkty.
+
+Gry nie utworzysz z bazy, do której masz dostęp tylko do odczytu (→ 12.4).
