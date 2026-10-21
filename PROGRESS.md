@@ -1,78 +1,146 @@
-# PROGRESS — E22: przebudowa menedżera bazy pytań
+# PROGRESS — stan pracy (branch `claude/new-session-ay1h9t`)
 
-Plan (źródło prawdy): [`docs/menedzer-bazy/README.md`](docs/menedzer-bazy/README.md) §4
-„Kolejność prac” + decyzje w [`docs/menedzer-bazy-plan.md`](docs/menedzer-bazy-plan.md).
-Branch: `ccr-ac709a92-0mcpyq`. Dziennik szczegółowy: `docs/wdrozenia.md`.
+**Status: W TOKU**
 
-**Status: GOTOWE LOKALNIE** — plan 1–7 i etap 8 zrobione na lokalnej bazie (nie na produkcji). Wdrożenie (7d, migracje 427–431 + strony) czeka na decyzję użytkownika.
+## Źródło prawdy
 
-Zasada nadrzędna użytkownika (2026-10-20): wszystko tylko na lokalnej,
-symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
+- Plan: `docs/wdrozenia.md` (sekcja „Kolejka”) — decyzja 2026-10-20: polecenie
+  wskazywało „[PLIK Z PLANEM]” bez nazwy pliku; `CLAUDE.md` mówi, że planem jest
+  `docs/wdrozenia.md`, więc przyjęty ten plik. Decyzje wyglądu:
+  `docs/ujednolicenie-wygladu.md`. Ten plik = co zrobione i co dalej.
+- Cykl wdrożenia (CLAUDE.md): e2e z kodem brancha na produkcyjnej bazie →
+  push na `main` (Pages) → te same spece kontrolnie na produkcji → wpis
+  w Dzienniku. Testy zawsze punktowo, jeden przebieg naraz.
 
-## Kroki planu
+## Kolejka planu (stan z `docs/wdrozenia.md`)
 
-| # | Krok | Stan |
-|---|------|------|
-| 1 | Szkielet: rejestr akcji, pasek/menu/skróty z rejestru | ZROBIONE (commit `…krok 1`) |
-| 2 | Stan i dane: `location` + `query`, `store`, `derived`, `listing` | ZROBIONE (`3a61e960`) |
-| 3 | Rysowanie: zaznaczenie bez przebudowy, `LIST_COLUMNS`, sortowanie | ZROBIONE (`3a61e960`) |
-| 4 | Wejścia: zaznaczanie, ramka, przeciąganie, gesty | ZROBIONE (`3a61e960`) |
-| 5 | Kosz jako folder + cofanie/ponawianie przez rejestr | ZROBIONE (`3a61e960`, `48a2ea47`) |
-| 6 | Wyszukiwanie, menu na telefonie (okno od dołu), dymki, nazwy, poprawki z raportów | ZROBIONE (`48a2ea47`, menu jak okna od dołu: ostatni commit) |
-| 7 | Zrzuty, pełny lokalny e2e, zestawienie — potem decyzja o wdrożeniu | ZROBIONE lokalnie; wdrożenie czeka na decyzję |
+| Etap | Stan |
+|---|---|
+| E0–E12, E15–E19N, C2-DIAG, E1 | zrobione (nie ruszać) |
+| E14 sprzątanie | zrobione (2026-10-18, 368 + 388–390, `db-migrate.yml` 39115618243); w tabeli Kolejki poprawione 2026-10-20 |
+| E20 kompaktowy telefon / wygląd | **w toku — ta sesja (pakiet poniżej)** |
+| E21 reguły gry | **zrobione** (inna sesja, 2026-10-21 02:50 UTC — szczegóły niżej, „E21 — podsumowanie”) |
+| E13 instrukcja | ostatni etap, po wszystkim |
 
-### Krok 7 — podkroki
+## Bieżący krok: pakiet wyglądu na branchu → zielone e2e → Pages → kontrola
 
-- [x] Zrzuty 390 px / 1440 px: `docs/menedzer-bazy/img/` (kosz, menu, filtr).
-- [x] Pełny lokalny e2e `base-explorer`: 76/76 (+ test okna od dołu); unit 689/689.
-- [x] Zestawienie dla użytkownika (w rozmowie 2026-10-20).
-- [x] 7a. Scalono `origin/main` (na main w plikach menedżera tylko hashe wersji; `actions.js` zostaje usunięty; konflikt w Dzienniku połączony). Unit 690/690.
-- [x] 7b. Kosz na telefonie: bez kolumny Typ, kolumna „Zniknie” (za N dni) zaraz za nazwą — widoczna bez przewijania (`render.js` `columnsFor`). Zrzut `docs/menedzer-bazy/img/kosz-telefon.png`.
-- [x] 7c. Lokalny e2e `base-explorer` po scaleniu: 77/77; po poprawce kosza ponownie kosz + cofanie 6/6; unit 690/690.
-- [ ] 7d. Wdrożenie (migracje 427–431 → e2e brancha na produkcji → Pages → testy kontrolne) — **poza zakresem agenta do czasu decyzji użytkownika** (zasada „nic na produkcję”). Przygotowanie gotowe: branch scalony z `main`, migracje tylko dodające.
+Zrobione na branchu (commity do `8f56a45`, scalony `origin/main` w `ea17f7a`):
+- ocena w Koncie („Oceń”/„Zmień ocenę”), stopniowe ładowanie, wiersze list
+  w jednej linii, dolny pasek list (równe rzędy), listy bez wewnętrznych ramek;
+- małe okna przez `modal.js` (`promptModal`, `progressModal`, `choiceModal`);
+- roletki od dołu na telefonie/tablecie dotykowym (pasek, animacja, safe area
+  sprawdzone emulacją, przyciski obok podpowiedzi gdy oszczędza miejsce,
+  okno nazwy wyższe nad klawiaturą);
+- formularz pytania: sekcje „Treść pytania”/„Odpowiedzi”, kafle, punkty „pkt”,
+  suma w nagłówku; edytor gry na telefonie — pytanie w roletce (przewija się
+  sama lista odpowiedzi); nagłówek „Pytania” jak nagłówki sekcji;
+- ankieta: „Dodaj odbiorców” w linii nagłówka; dotyk bez przeciągania na
+  wszystkich stronach; podliczanie na telefonie zwarte (tekst + przyciski,
+  głosy + punkty), krótsze podpowiedzi PL/EN/UK, ikony scalania/remisu;
+- edytory logo: bez pustego pasa ustawień rysunku, stopka na ekranie, wspólny
+  styl etykiet i tytułów paneli (`be4cea0`); podgląd w edytorze tekstu w tej
+  samej karcie co w obrazie, przykład rysunku z symetryczną ramką (`0143599`);
+- okno kontaktu: roletka nad całą stroną (pasek był pod topbarem, `1bfa63e`).
 
-## Co dalej
+E2E na branchu (spec | przebieg | wynik):
+- zielone: marketplace 39517512161, resource-copy-send 39515536963, index 39514953878, bases 39515082379, tasks 39507687171, friends 39507853751, subscribers 39508279725,
+  bases 39508596228, mail-center 39509657900, poll-share 39509815512,
+  account-rating 39510298864, games 39510547581, cross-resource-locks
+  39513616617, control2 --grep zerwanie 39514174761;
+- do powtórki po poprawkach (kolejki seq14–seq17 w tle):
+  mobile-sheet-modals 39514434587 — 3 błędy poprawione w `1bfa63e`
+  (kontakt pod topbarem, 2 testy zakładały, że klik w tło nie zamyka) →
+  powtórka + polls --grep podliczania (seq18); editor --grep suma
+  39515701683 padł na nieistniejącym `#msg` (stare od E16, także na main) —
+  9 asercji przepisanych na stan w bazie (`5e56647`), cały editor.spec (seq19);
+  base-explorer 39515808766: 65/68 — tooltip/limit/<10 pytań/lista OK; 3 testy
+  zmiany nazwy padały, bo spec chodził po kodzie produkcji (stare okno
+  `#renameModal`) — dodany `serveBranchCode` (`40476083`), powtórka grep w seq17; marketplace
+  (gość zamyka okno informacyjne, seq16); base-explorer --grep F2|PPM|chmurka|
+  znaków|rozciąga, logo-editor, poll-share, polls-layout (seq17).
 
-Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i log zastosowania, e2e `base-explorer` z `serveBranchCode` na branchu (punktowo), Pages, testy kontrolne na produkcji.
+## Stan na 2026-10-21 01:00 UTC (przed limitem)
 
-## Etap 8 — dopracowanie (lokalnie, polecenie użytkownika 2026-10-20: „kontynuujesz pracę nad edytorem baz”)
+- zielone: mobile-sheet-modals 39518844435, polls --grep odlicz 39519269320,
+  poll-share 39518211119;
+- do analizy po wznowieniu: logo-editor 39517817962, polls-layout 39518631819,
+  editor.spec 39519541277 (failure); base-explorer cały z kodem brancha
+  39520307595 — **zielony**.
 
-- [x] 8a. Duża baza (`tests/e2e/base-explorer-perf.spec.js`, `LOCAL_PERF=1`): przy 20 000 pytań wczytanie 24,5 s → 2,9 s dzięki **migracji 430 `qb_base_content`** (cała baza jednym zapytaniem, RLS; test `tests/sql/qb-base-content-430.sql`). Wyszukiwanie: tekst znormalizowany raz na wersję danych (`computeListing` 8–28 ms przy 20 000). Naprawiony wyścig: klik w lewym panelu zatwierdza oczekujący tekst (wcześniej wyczyszczenie pola + szybki klik w tag dawało 0 wyników).
-- [x] 8b. Menu z klawiatury: Shift+F10 / klawisz menu otwiera menu zaznaczenia z fokusem; strzałki (w kółko), Home/End, Enter, Tab zamyka; skróty strony nie przechwytują klawiszy w menu. Test e2e.
-- [x] 8c. Cofanie/ponawianie z blokadami jak przy zwykłej akcji (tylko elementy istniejące); zajęty element → komunikat, krok zostaje w historii (`keepHistory`). Test jednostkowy + e2e.
-- [x] 8d. Okna tagów / eksportu / pytania na dużych bazach:
-  - migracja **431** `acquire_edit_locks` / `release_edit_locks` (blokady zbiorcze: wszystko albo nic, jedno zapytanie i jedno odnowienie co 8 s zamiast N); test `tests/sql/edit-locks-batch-431.sql`; `acquireResourceLocks` w `shared/js/core/resource-lock.js` na nich (używa go tylko menedżer).
-  - 430: `qb_base_content` i `qb_question_tag_links` jako SECURITY DEFINER z jednym `base_can_access` (RLS na każdy wiersz kosztował ~1 s przy 20 000); test 430 (właściciel, czytelnik, obcy).
-  - okno tagów: przypisania przez `qb_question_tag_links` (lista id w treści zapytania); okno „Utwórz grę”: lista porcjami, przerwanie przy zamknięciu; `repo.js` bez 9 martwych funkcji.
-  - Pomiar 20 000 pytań (2026-10-21): okno tagów dużego folderu >30 s → 1,3 s; okno gry 5,7 s → 0,56 s.
-- [x] 8e. Przegląd raportów (`docs/menedzer-bazy/1-4*.md`) wobec nowego kodu. Niemal wszystkie [BŁĄD]/[NIESP]/[MARTWE] usunięte przez nową budowę (jeden rejestr akcji, jedno zaznaczanie z panelem, brak blokad paneli, `actions.js` usunięty). Dopisane poprawki:
-  - [x] R3: przytrzymanie dwoma palcami nie otwiera menu (ramka) — `mobile.js` liczy palce.
-  - [x] R5: ramka przewija listę przy krawędzi — `ui/marquee.js`.
-  - [x] menu na komputerze w niskim oknie: `max-height` + przewijanie.
-  - [x] test e2e ramki myszą (raport: brak testu).
-  - [x] polskie litery w nazwach tagów (decyzja użytkownika 6): `qb_save_tag` (427) i okno tagów; duplikat liczony bez wielkości liter i polskich znaków (`_qb_tag_key`, także `qb_restore_tags` 429); testy SQL 427 + e2e.
-  - [x] blokady spójnie (raport 4 §5.2): tworzenie — folder nadrzędny, kopia — źródła i cel, przywrócenie z kosza — dawne miejsce; wszystkie we współdzieleniu (`withLocks(..., { mode: "shared" })`).
-  - [ ] świadomie pominięte na razie: „Przenieś do… / Kopiuj do…” w menu (na telefonie jest Wytnij/Kopiuj + Wklej).
-- [x] 8f. Pełny lokalny e2e `base-explorer` 81/81 (5 porażek pierwszego przebiegu = lokalna baza: ponowne zastosowanie samej 427 nadpisało `qb_delete_items` z 428; po 428–431 w kolejności zielone), testy SQL 427–431, unit 691/691, zrzuty `docs/menedzer-bazy/img/` odświeżone.
+## Po wznowieniu 2026-10-21 02:45 UTC
 
-## Wznowienia
+- analiza: logo-editor 50/55 — płótno skakało przy zmianie narzędzia (moja
+  zmiana z ustawieniami w linii narzędzi) → stały wiersz z podpowiedzią;
+  1 test blokady puli logo do obserwacji. polls-layout: „Uruchom” tracił ikonę
+  (`textContent`, stary błąd), „QR na wyświetlaczu” ucięty o 3 px, test liczył
+  nakładanie bez przycinania przewijanej listy. editor 43/44: import E21 pomija
+  puste odpowiedzi — test używa pustego pytania. Commit `377d0c6`.
+- seq20: polls-layout 39535582298 ✓, editor --grep transakcj 39535738342 ✓,
+  logo-editor 39535234842 53/55 (14 kształtów, tablet, obrót już OK); zostały
+  „strzałki przesuwają zaznaczenie” (lokalnie działa, +11) i „pula zajęta po
+  utracie blokady” → seq21: „pula” na branchu ✓ 39536005284 (niestabilny);
+  „strzałki” na main ✓ 39536125096, na branchu ✗ 39535915011 — przyczyna:
+  wyższy kafel nazwy zmniejszył płótno przy 1280×720 (678 vs 739 px), klik
+  testu trafiał 0,8 px w krawędź obrysu. Kafel niższy (padding 8/10) + test
+  klika środek obrysu (`96fbc8f`). seq22: cały logo-editor.
+- Uwaga: workflow e2e na `main` nie ma wejścia `max_failures` (HTTP 422) —
+  przy REF=main pomijać ten parametr.
 
-- 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).
+## Stan na 2026-10-21 ~04:00 UTC — gotowe do wdrożenia, czeka na zgodę
+
+- e2e na branchu zielone dla wszystkich speców pakietu; logo-editor 54/55 —
+  jedyny błąd „pula zajęta po utracie blokady logo” pada identycznie na main
+  (39537348896) → znany, niezwiązany z pakietem (oczekiwanie na pulę cofnięte).
+- `origin/main` scalony (`71b4ab9`), 0 commitów za main, bez migracji
+  i zmian Workera; unit 674/674.
+- **Push na `main` (wdrożenie Pages) zablokowany przez zabezpieczenia sesji
+  („Production Deploy”) — potrzebna zgoda użytkownika** (dodanie reguły
+  uprawnień albo wdrożenie ręczne: `git push origin claude/new-session-ay1h9t:main`).
+- Po wdrożeniu: kontrolnie na produkcji (REF=main, bez `max_failures`)
+  mobile-sheet-modals, editor, base-explorer, polls --grep odlicz,
+  polls-layout, logo-editor, marketplace, poll-share; wpis w Dzienniku.
+
+## Dalej
+
+0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
+   (`.name-field` jako kafel na całą szerokość, 2026-10-21).
+1. Wyniki seq14–seq17 → poprawki → powtórki punktowe aż do zielonych.
+2. Push na `main` (scalić świeży `origin/main`, `resolve-version-conflicts.py`,
+   `version-assets.js`, unit), potem te same spece kontrolnie na produkcji.
+3. Wpis w Dzienniku `docs/wdrozenia.md` z numerami przebiegów; tu status.
 
 ## Znane problemy
 
-- Lokalnie: stosując ponownie jedną z migracji 427–431, stosuj też wszystkie następne (427 i 428 definiują `qb_delete_items`).
+- `spec_filter` nie może zawierać `|` (workflow wkleja go bez cudzysłowu —
+  bash robi potok, 0 testów: przebieg 39517734488). Grep tylko jednym słowem.
+- Kolejki: seq17 (logo-editor, poll-share, polls-layout) w toku; seq18 =
+  mobile-sheet-modals, polls --grep odlicz, editor.spec, base-explorer (cały,
+  z kodem brancha). seq19 anulowana (włączona do seq18).
 
-- Gesty i arkusz menu sprawdzone tylko w emulacji, nie na prawdziwym telefonie.
-- Historia cofania znika po odświeżeniu strony (w pamięci karty — świadomie).
-- Strona ładuje całą bazę naraz (jedno zapytanie 430); przy 20 000 pytań ~3 s lokalnie.
-- Wzorzec „okno od dołu” nie jest jeszcze na `main` (branch `claude/new-session-ay1h9t`);
-  menu ma te same wartości w `base-explorer.css` — po scaleniu można przenieść do wspólnego CSS.
+- base-explorer: 3 testy zmiany nazwy (F2/PPM) nie widzą pola okna na CI,
+  lokalnie działa — dodana diagnostyka `[e2e-diag]` (seq17).
+- resource-copy-send: 409 przy wysyłce logo — test wypisuje kod błędu.
+- Do decyzji użytkownika (nie ruszane): pusty pas pod paskiem narzędzi
+  w edytorze rysunku; stopka lekko ucięta w edytorze tekstu logo.
 
-## Decyzje podjęte samodzielnie
+## Limit wykorzystania
 
-- 2026-10-20: plikiem planu jest `docs/menedzer-bazy/README.md` §4 (w poleceniu był placeholder).
-- 2026-10-21: nazwy tagów różniące się tylko wielkością liter / polskimi znakami („Łatwe” i „latwe”) to duplikat — wyszukiwarka (`#latwe`) i tak ich nie rozróżnia.
-- 2026-10-21: tworzenie, kopia i przywracanie z kosza biorą blokady współdzielone (cel / źródła), nie wyłączne — wiele osób może tworzyć w tym samym folderze naraz.
-- 2026-10-20: wdrożenie (7d) nie jest wykonywane bez wyraźnej decyzji użytkownika — zasada
-  nadrzędna „nic na produkcję” z `docs/menedzer-bazy-plan.md`.
+- 2026-10-21: użytkownik podał odnowienie limitu o 4:40 — przyjęto czas
+  polski (CEST = UTC+2), czyli 02:40 UTC. Przypomnienie ustawione na
+  02:45 UTC = 4:45 PL (`send_later`, trig_0156YD1TXiVDnAnp66EUs5NW;
+  sprawdzone po restarcie workera 01:00 UTC — aktywne, treść zaktualizowana).
+  Do tego czasu praca wstrzymana (prośba użytkownika, żeby nie wpaść w limit).
+
+Przy trafieniu na limit: zapisać tu krok i czas odnowienia (bez komunikatu:
++5 h od błędu), budziki co ≤3600 s do odnowienia +5 min z tym samym promptem.
+
+## E21 — podsumowanie (z `PROGRESS.md` drugiej sesji, scalone 2026-10-21)
+
+Status E21: ZAKOŃCZONE (2026-10-21 02:50 UTC). Plan: `docs/reguly-gier-transfer-plan.md`
+§5 (14 kroków, wszystkie ✅: migracje 403–414, nocna naprawa danych 01:30 UTC,
+ograniczenia `questions_text_len` i `answers_text_chars`, e2e `39535133821` ✓).
+Znany problem stamtąd — ucinanie tekstu odpowiedzi w podliczaniu na telefonie —
+rozwiązany w tym pakiecie (zwarte wiersze, `45c7a34`). Pozostałe uwagi:
+środowisko GitHub `maintenance` i sekret `MAINTENANCE_TOTP_SECRET` nieużywane
+(do skasowania przez użytkownika); `AGENTS.md` ma regułę o mapie nawigacji,
+której brak w `CLAUDE.md`.

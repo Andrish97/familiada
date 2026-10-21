@@ -55,6 +55,7 @@
 .connect-device-tile .shareNote { color: var(--text); opacity: .65; font-size: 12px; margin-top: 5px; }
 .connect-device-tile-meta { overflow-wrap: anywhere; }
 .connect-device-tile-arrow {
+  justify-content: center;   /* .shareRowActions wyrównuje do prawej -- strzałka ma być na środku */
   width: 36px;
   min-width: 36px;
   height: 38px;

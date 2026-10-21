@@ -1,9 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-20T23220";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-20T23220";
-import { toast } from "./toast.js?v=v2026-10-20T23220";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-20T23220";
-import { icon, iconText } from "./icons.js?v=v2026-10-20T23220";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-20T23220";
+import { sb } from "./supabase.js?v=v2026-10-21T06422";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T06422";
+import { toast } from "./toast.js?v=v2026-10-21T06422";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-21T06422";
+import { icon, iconText } from "./icons.js?v=v2026-10-21T06422";
+import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T06422";
+import { attachListTools } from "./share-sections.js?v=v2026-10-21T06422";
 
 
 const attempts = new Map();
@@ -24,7 +25,7 @@ function getDialog() {
       </div>
       <p class="mSub resource-send-name"></p>
       <section class="shareSection resource-send-friends-section">
-        <div class="shareSectionTitle" data-friends-title></div>
+        <div class="shareSectionHeading"><div class="shareSectionTitle" data-friends-title></div></div>
         <div class="shareList resource-send-friends" role="group"></div>
       </section>
       <details class="shareSection resource-send-history">
@@ -33,8 +34,8 @@ function getDialog() {
       </details>
       <p class="resource-send-error" role="status" aria-live="polite"></p>
       <div class="modal-actions resource-send-actions">
-        <button class="btn" type="button" data-cancel></button>
-        <button class="btn gold" type="button" data-send></button>
+        <button class="btn sm" type="button" data-cancel></button>
+        <button class="btn sm gold" type="button" data-send></button>
       </div>
     </div>`;
 
@@ -45,6 +46,7 @@ function getDialog() {
     if (event.target === overlay) close();
   });
   (document.querySelector("main.wrap") || document.body).append(overlay);
+  attachListTools(overlay.querySelector(".resource-send-friends-section .shareSectionHeading"), overlay.querySelector(".resource-send-friends"), "resource-send-friends");
   return overlay;
 }
 

@@ -39,6 +39,13 @@ const { acceptBaseShare } = require("./helpers/base-sharing");
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Poza main: strona i wspólny front z plików brancha (baza/konta produkcyjne),
+// inaczej spec sprawdzał nowy wygląd na starym kodzie produkcji.
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
+});
 
 const BASE_URL = "https://www.familiada.online/bases/explorer";
 
@@ -343,6 +350,23 @@ async function simulateDragDrop(page, sourceSelector, targetSelector, { targetOf
 
 /* ================= 1) Naprawy z audytu ================= */
 
+
+// Pole okna zmiany nazwy (wspólne promptModal). Gdy go nie ma, wypisuje,
+// jakie okno jest otwarte zamiast niego (np. komunikat blokady).
+async function renameInput(page) {
+  const input = page.locator(".uni-modal .uni-inp");
+  try {
+    await expect(input).toBeVisible({ timeout: 8000 });
+  } catch (e) {
+    const open = await page.evaluate(() => [...document.querySelectorAll(".uni-modal, .overlay")]
+      .filter((el) => getComputedStyle(el).display !== "none" && el.getClientRects().length)
+      .map((el) => `${el.id || el.className}: ${(el.innerText || "").replace(/\s+/g, " ").slice(0, 120)}`));
+    console.log(`[e2e-diag] brak pola zmiany nazwy; otwarte: ${JSON.stringify(open)}`);
+    throw e;
+  }
+  return input;
+}
+
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
 
   test("eksport ('Utwórz grę') faktycznie tworzy grę zamiast rzucać błąd", async ({ page, context }) => {
@@ -480,19 +504,18 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Nowy tekst");
 
-      // renameModal.close() (który chowa #renameModal) jest SYNCHRONICZNY na klik
+      // renameModal.close() (który chowa .uni-modal) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
       // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
       // "modal się schował" nie gwarantuje, że zapis (rpc) już doleciał do bazy.
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Nowy tekst");
@@ -729,15 +752,14 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       await renameItem.click();
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Zmienione przez PPM");
 
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Zmienione przez PPM");
@@ -786,8 +808,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const dot = row.locator(".meta-dot").first();
       await expect(dot).toBeVisible({ timeout: 10000 });
 
-      // jeden mechanizm dymków na całej stronie (shared/js/core/tooltips.js)
-      const tip = page.locator("#appTooltip");
+      const tip = page.locator(".app-tooltip");
       await expect(tip).toBeHidden();
 
       await dot.hover();
@@ -2746,8 +2767,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Nowa nazwa");
 
       // pytanie znika "gdzieś indziej" (poza blokadą -- bezpośredni zapis)
@@ -2756,7 +2776,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
         await window.__sbClient.from("qb_questions").delete().eq("id", id);
       }, qid);
 
-      await page.locator("#renameModalSave").click();
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
       await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
     } finally {
       await deleteBase(page, baseId);
@@ -2986,10 +3006,10 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       const listBox = await page.locator("#list").boundingBox();
       expect(listBox).toBeTruthy();
 
-      // #list musi kończyć się tuż nad stopką strony (mała tolerancja na
-      // padding kontenera .explorer), a nie w połowie ekranu.
-      const footerBox = await page.locator("footer.footer").boundingBox();
-      const bottom = footerBox ? footerBox.y : 800;
+      // #list musi kończyć się blisko dołu widoku -- nad stopką, jeśli jest
+      // widoczna (mała tolerancja na padding .explorer), a nie w połowie ekranu.
+      const footer = page.locator("footer.footer");
+      const bottom = (await footer.isVisible()) ? (await footer.boundingBox()).y : 800;
       expect(listBox.y + listBox.height).toBeGreaterThan(bottom - 40);
     } finally {
       await deleteBase(page, baseId);
@@ -3339,8 +3359,8 @@ test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
       // zmiana nazwy folderu (F2)
       await catRow.click();
       await pressToolbarShortcut(page, "rename", "F2");
-      await page.locator("#renameModalInput").fill("Nowa nazwa");
-      await page.locator("#renameModalSave").click();
+      await page.locator(".uni-modal .uni-inp").fill("Nowa nazwa");
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
       await expect(catRow).toContainText("Nowa nazwa", { timeout: 10000 });
 
       const undoBtn = page.locator('#toolbar button[data-act="undo"]');
@@ -3402,8 +3422,8 @@ test.describe("base-explorer: cofanie a blokady (E22)", () => {
       const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
       await catRow.click();
       await pressToolbarShortcut(page, "rename", "F2");
-      await page.locator("#renameModalInput").fill("Nowa");
-      await page.locator("#renameModalSave").click();
+      await page.locator(".uni-modal .uni-inp").fill("Nowa");
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
       await expect(catRow).toContainText("Nowa", { timeout: 10000 });
 
       // folder edytowany w innej karcie (inna blokada)

@@ -6,12 +6,22 @@
    Bez punktów (typowa ankieta / punktacja): klasa .no-points na dowolnym
    przodku. */
 
+/* Treść pytania i odpowiedzi jako dwie sekcje z otoczką, jak sekcje w innych
+   oknach (.shareSection w base.css; uwaga użytkownika 2026-10-20). */
+.qf-section {
+    --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    min-width: 0
+}
+
+/* nagłówek sekcji jak .shareSectionTitle */
 .qf-label {
-    opacity: .8;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: 8px
+    font-weight: 800;
+    letter-spacing: .2px;
+    margin-bottom: 10px
 }
 
 .qf-qtext {
@@ -34,75 +44,93 @@
     border-color: rgba(255,234,166,.45)
 }
 
-.qf-head,.qf-list,.qf-row {
+.qf-list {
     display: grid;
-    gap: 10px
+    grid-template-columns: 1fr;
+    gap: 8px
 }
 
-.qf-head,.qf-row {
-    grid-template-columns: minmax(0,1fr) 110px 40px
-}
-
-.qf-head {
-    font-size: 11px;
-    opacity: .75;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    padding: 0 6px
-}
-
-.qf-head .c-pts {
-    text-align: center
-}
-
+/* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
 .qf-listShell {
-    --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.04);
-    padding: 8px;
+    border-radius: 12px;
     min-height: 0;
     overflow: auto
 }
 
-.qf-list {
-    grid-template-columns: 1fr
-}
-
+/* Kafel odpowiedzi jak wiersze list (.shareRow, decyzja 2026-10-20):
+   tekst odpowiedzi bez własnej ramki, punkty z dopiskiem „pkt”, kosz. */
 .qf-row {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto auto;
     align-items: center;
-    border-radius: 18px;
-    border: 1px solid var(--line);
+    gap: 8px;
+    padding: 6px 6px 6px 4px;
+    border-radius: 12px;
+    border: 1px solid var(--line2);
     background: var(--card2);
-    padding: 10px;
-    min-height: 60px
+    min-width: 0
 }
 
-.qf-text,.qf-pts {
+.qf-row:not(.qf-add):focus-within {
+    border-color: rgba(255,234,166,.45)
+}
+
+.qf-text {
     width: 100%;
     min-width: 0;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
     color: #fff;
     outline: 0;
     font: inherit;
     font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
-    font-weight: 900
+    font-weight: 800
 }
 
-.qf-text:focus,.qf-pts:focus {
-    border-color: rgba(255,234,166,.45)
+.qf-ptsWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 10px 0 6px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: rgba(0,0,0,.25);
+    cursor: text
+}
+
+.qf-ptsWrap:focus-within {
+    border-color: rgba(255,234,166,.55)
 }
 
 .qf-pts {
-    text-align: center
+    width: 3.2ch;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gold);
+    outline: 0;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    text-align: right;
+    font-variant-numeric: tabular-nums
+}
+
+.qf-ptsSuffix {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: .65
 }
 
 /* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
-.qf-text.qf-invalid,.qf-text.qf-invalid:focus,
-.qf-pts.qf-invalid,.qf-pts.qf-invalid:focus {
+.qf-row:has(.qf-text.qf-invalid),.qf-ptsWrap:has(.qf-invalid) {
     border-color: rgba(255,120,120,.75);
     background: rgba(255,120,120,.10)
 }
@@ -121,40 +149,23 @@
     opacity: .72
 }
 
-.qf-del {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 14px;
-    border: 1px solid rgba(255,120,120,.35);
-    --btn-tint: rgba(255,120,120,.12);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-    color: #fff;
-    cursor: pointer
+.btn.icon.qf-del {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px
 }
 
-.qf-del:hover {
-    --btn-tint: rgba(255,120,120,.18)
-}
-
-.no-points .qf-head,.no-points .qf-row {
-    grid-template-columns: minmax(0,1fr) 40px
-}
-
-.no-points .qf-pts,.no-points .qf-head .c-pts {
+.no-points .qf-ptsWrap {
     display: none
 }
 
 /* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
 .qf-row.qf-add {
-    display: grid;
     grid-template-columns: 36px minmax(0,1fr) auto;
     gap: 10px;
-    border-style: dashed;
-    border-color: rgba(255,234,166,.35);
-    border-radius: 18px;
+    min-height: 50px;
+    padding: 6px 12px 6px 0;
+    border: 1px dashed rgba(255,234,166,.35);
     --btn-tint: rgba(255,234,166,.06);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: #fff;
@@ -194,60 +205,48 @@
     border-color: rgba(255,255,255,.32)
 }
 
-/* "SUMA 60/100" -- czerwone powyżej puli */
+/* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”
+   -- czerwonym powyżej puli; bez punktów sam nagłówek. */
 .qf-sum {
     display: flex;
     gap: 10px;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
+    min-height: 20px
+}
+
+.qf-sumTitle {
+    font-weight: 800;
+    letter-spacing: .2px
+}
+
+/* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
+.qf-sumChip {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .8;
+    white-space: nowrap
+}
+
+.qf-sumChip b {
+    margin-left: 4px;
     color: var(--gold);
-    font-weight: 1000;
-    letter-spacing: .12em;
-    text-transform: uppercase
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums
 }
 
-.qf-sum.over {
-    border-color: rgba(255,120,120,.4);
-    background: rgba(255,120,120,.1);
-    color: rgba(255,180,180,.95)
+.qf-sum.over .qf-sumChip {
+    opacity: 1;
+    color: rgba(255,170,170,.95)
 }
 
-.no-points .qf-sum {
+.qf-sum.over .qf-sumChip b {
+    color: rgba(255,140,140,1)
+}
+
+.no-points .qf-sumChip {
     display: none
-}
-
-@media (max-width: 600px) {
-    .qf-head,.qf-row {
-        grid-template-columns: minmax(0,1fr) 72px 36px;
-        gap: 8px
-    }
-
-    .qf-head {
-        padding: 0 4px
-    }
-
-    .qf-row {
-        padding: 8px;
-        border-radius: 16px;
-        min-height: 60px
-    }
-
-    .qf-text,.qf-pts {
-        padding: 8px 10px;
-        border-radius: 12px
-    }
-
-    .qf-del {
-        width: 36px;
-        height: 36px;
-        border-radius: 12px
-    }
-
-    .no-points .qf-head,.no-points .qf-row {
-        grid-template-columns: minmax(0,1fr) 36px
-    }
 }

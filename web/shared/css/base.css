@@ -1,8 +1,13 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-20T23220");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T06422");
 
 
 /* css/base.css */
 :root {
+    /* Odstępy strony (E18 #7): boczny margines treści; ≤980 px — 15 px. */
+    --page-gutter: 18px;
+    /* odstęp + strefa bezpieczna (wcięcie iPhone'a) — dodawane, nie zamiast */
+    --page-pad-left: calc(var(--page-gutter) + env(safe-area-inset-left, 0px));
+    --page-pad-right: calc(var(--page-gutter) + env(safe-area-inset-right, 0px));
     --bg: #050914;
     --card: #111827; /* powierzchnia zewnętrznej karty */
     --card2: rgba(0,0,0,.18);
@@ -287,6 +292,17 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     visibility: visible;
     pointer-events: auto;
 }
+/* Karta z wypustkami/paskiem odsłania się razem z treścią: kontener
+   data-skel-group czeka, aż jego data-skel-step dostanie skel-step-ready
+   (wypustki i pusta karta nie pojawiają się przed listą). */
+[data-skel-group] {
+    transition: opacity .3s ease;
+}
+[data-skel-group]:has([data-skel-step]:not(.skel-step-ready)) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 /*
@@ -306,7 +322,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     gap: 10px;
     flex-wrap: wrap;
 
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
     transition: top .18s ease-out;
     /* Kryjące tło: półprzezroczysty, rozmyty pasek przepuszczał treść strony
        przewijaną pod spodem, więc każdy (też półprzezroczysty) przycisk miał
@@ -460,7 +476,10 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     max-width: 100%;
     text-decoration: none;
     user-select: none;
-    -webkit-tap-highlight-color: transparent
+    -webkit-tap-highlight-color: transparent;
+    /* przyciski z układem flex gubią spację między ikoną a napisem (iconText) --
+       ten odstęp ją zastępuje; w zwykłych przyciskach nie działa */
+    column-gap: .4em
 }
 
 .btn:hover {
@@ -511,15 +530,21 @@ body{
 main{
     flex: 1 0 auto;
 }
+/* Stopka w main: krótka strona — stopka na dole okna (margin-top:auto
+   działa tylko w kolumnie flex); dłuższa — zwykłe przewijanie. */
+main:has(> .footer){
+    display: flex;
+    flex-direction: column;
+}
 
 /* FOOTER */
 .footer{
     position: relative;
     margin: 16px 0 8px;
     padding-top: 20px;
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
-    padding-left: max(16px, env(safe-area-inset-left));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
@@ -535,10 +560,13 @@ main{
 /* .wrap z gier/urządzeń ma własny padding (także dolne 15px), który
    nie może odbierać stopce odstępu safe area po załadowaniu obu arkuszy. */
 .footer.wrap{
+    /* stopka poza main: pełna szerokość jak w Mails i Ustawieniach gry */
+    width: auto;
+    margin-inline: 0;
     padding-top: 20px;
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
-    padding-left: max(16px, env(safe-area-inset-left));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
 }
 .footer > *{ min-width:0; max-width:100%; flex:0 1 auto; overflow-wrap:break-word; hyphens:auto; text-wrap:pretty; }
 .footer > :first-child{ text-align:left; }
@@ -707,9 +735,11 @@ main{
 }
 
 .wrap {
-    width: 90%;
+    /* treść od krawędzi okna: --page-gutter (18 px, ≤980 px 15 px) — wszędzie tak samo */
+    width: 100%;
+    box-sizing: border-box;
     margin: 0 auto;
-    padding: 24px 18px 18px
+    padding: 24px var(--page-pad-right) 18px var(--page-pad-left)
 }
 
 .row,.stack {
@@ -769,6 +799,8 @@ main{
     overflow: auto;
     -webkit-overflow-scrolling: touch
 }
+/* Proste okna (nazwa, krótkie potwierdzenie) — węższe, jak zmiana nazwy w Eksploratorze. */
+.modal.modal--narrow { width: min(560px,94vw); }
 
 .mTitle {
     font-weight: 1000;
@@ -968,115 +1000,131 @@ main{
 
 /* Neutralne poza arkuszem; ułatwia wspólną kolejność mobilną bez zmian
    w wyglądzie okienek desktopowych. */
+.sheet-modal-top,
 .sheet-modal-head,
 .sheet-modal-actions,
 .sheet-modal-body { display: contents; }
 .sheet-modal-head[hidden],
 .sheet-modal-actions[hidden] { display: none; }
 
-/* ===== Modal sheet (mobile) =====
-   Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
-   i zostają małe) dostają na telefonie znacznik .modal--sheet. W tym
-   trybie modal nie jest już fixed-overlayem na wierzchu strony, tylko
-   zastępuje treść strony w normalnym przepływie dokumentu (tuż nad
-   stopką), analogicznie do "mobile-editing" w editor.js/editor.css.
-   Wymaga, by dany .overlay.modal--sheet był w HTML dzieckiem
-   <main class="wrap">/.explorer, umieszczonym przed .footer. Modal nie
-   musi mieć klasy .overlay — settings.html ma jeden modal (#assignReportModal)
-   na klasach .market-preview-overlay/.market-preview-card zamiast
-   .overlay/.modal, więc wykluczenie z reguły "ukryj resztę" opiera się na
-   samej klasie .modal--sheet, nie na .overlay. */
-@media (max-width: 600px) {
-    /* !important: niektóre strony mają dla swoich sekcji reguły na
-       selektorze ID (np. logo.css: #listShell{display:flex}) —
-       specyficzność ID bije dowolną liczbę klas, więc bez !important ta
-       reguła by przegrywała i dana sekcja zostawałaby widoczna obok
-       modala, ściskając go do resztki miejsca zamiast go zastąpić. */
-    body.sheet-open main.wrap > *:not(.footer):not(.modal--sheet),
-    body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet),
-    body.sheet-open main.mail-wrap > *:not(.modal--sheet) {
-        display: none !important;
-    }
+/* ===== Okno od dołu (telefon i tablet dotykowy) =====
+   Rozbudowane okna (.modal--sheet; nie confirm/alert/prompt -- te mają
+   .uni-modal i zostają małe) na telefonie i ekranach dotykowych wysuwają
+   się od dołu nad całą stroną (decyzja 2026-10-20): przyciemnione tło,
+   panel z zaokrąglonymi górnymi rogami i paskiem do przeciągania
+   (.sheet-handle, js/core/modal-sheet.js), stopka ukryta, safe area
+   z góry i z dołu. Treść okna bez zmian -- tylko nagłówek/akcje/treść
+   ułożone w kolumnę z przewijaną treścią. Warunek musi być taki sam jak
+   SHEET_MQ w modal-sheet.js. */
+@media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
+    body.sheet-open { overflow: hidden; }
+    body.sheet-open .footer { visibility: hidden; }
 
-    /* height (nie min-height!) + overflow:hidden wymuszone tutaj,
-       NIEZALEŻNIE od tego, co dana strona robi z overflow/height poza
-       trybem sheet (np. games.css daje body.games-body/main.wrap
-       overflow:hidden bezwarunkowo, inne strony wcale go nie ograniczają)
-       — inaczej łańcuch niżej (.overlay -> .modal) nie dostaje
-       zdefiniowanej, ograniczonej wysokości, więc .modal's overflow:auto
-       nigdy nie tworzy realnego obszaru przewijania (element bez
-       ograniczonej wysokości rośnie zamiast się przewijać) i treść,
-       która nie mieści się na ekranie, jest ucięta i nieosiągalna. */
-    body.sheet-open main.wrap,
-    body.sheet-open main.explorer,
-    body.sheet-open main.mail-wrap {
-        display: flex;
-        flex-direction: column;
-        height: calc(100dvh - var(--topbar-h));
-        overflow: hidden;
-    }
-
-    /* tylko aktualnie otwarty modal (.sheet-active) wchodzi w treść strony;
-       pozostałe .modal--sheet na tej samej stronie zostają ukryte, nawet
-       gdy body.sheet-open jest ustawione przez inny modal. Druga część
-       selektora (.market-preview-overlay) obsługuje #assignReportModal w
-       settings.html, który nie używa klas .overlay/.modal. */
     body.sheet-open .overlay.modal--sheet:not(.sheet-active),
     body.sheet-open .market-preview-overlay.modal--sheet:not(.sheet-active) {
         display: none !important;
     }
 
-    /* !important na position/inset: css/settings.css ma globalną regułę
-       .overlay{position:fixed!important;top:60px!important;...;z-index:9999!important}
-       (dobraną pod małe, wyśrodkowane okno na desktopie) — bez !important
-       tutaj ta reguła by wygrywała mimo niższej specyficzności (sama też ma
-       !important), więc modal renderował się jako fixed na wierzchu strony,
-       poza normalnym układem flex main.wrap, a stopka (zwykły element flex)
-       lądowała POD nim zamiast pod modalem w przepływie dokumentu. */
+    /* !important na position/inset/z-index: css/settings.css ma globalną
+       regułę .overlay{position:fixed!important;top:60px!important;...}. */
     body.sheet-open .overlay.modal--sheet.sheet-active,
     body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
-        position: static !important;
-        inset: auto !important;
-        /* !important: okna z modal.js mają przyciemnienie w inline style
-           (background: var(--modal-scrim)) -- jako strona tło ma być tłem
-           strony, nie ciemniejszym panelem */
-        background: none !important;
-        padding: 0;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1200 !important;
         display: flex !important;
-        flex-direction: column; /* jawnie — .modal ma być jedynym, w pełni wysokim dzieckiem */
-        flex: 1;
-        min-height: 0;
-        overflow: hidden; /* scroll ma być w .modal, nie tutaj */
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0 !important;
+        background: var(--modal-scrim, rgba(0,0,0,.55)) !important;
+        overflow: hidden;
+        animation: sheetScrimIn .28s ease both;
+    }
+    body.sheet-open .modal--sheet.sheet-active.sheet-closing {
+        animation: sheetScrimOut .24s ease both;
     }
 
-    /* !important na width/max-width/height/max-height: niektóre modale mają
-       te własności w inline style="" (np. #maintenancePreviewOverlay .modal
-       ma style="max-width:720px;width:94vw;max-height:90vh" — dobrane pod
-       małe, wyśrodkowane okno na desktopie) — inline style bije zwykłe
-       reguły w arkuszu niezależnie od ich specyficzności, więc bez
-       !important modal zostawał ucięty do 90vh zamiast wypełnić całą
-       dostępną wysokość, a stopka strony (.footer) było widać pod nim. */
-    .modal--sheet .modal,
-    .modal--sheet .market-preview-card {
+    /* !important na wymiarach: część okien ma je w inline style
+       (dobrane pod wyśrodkowane okno na komputerze). */
+    .modal--sheet.sheet-active .modal,
+    .modal--sheet.sheet-active .market-preview-card {
+        position: relative;
         width: 100% !important;
-        max-width: none !important;
-        height: auto !important;
+        max-width: 760px !important;
+        height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
         min-height: 0;
-        flex: 1; /* wypełnia dokładnie tyle, ile zostawi .overlay (flex column) */
         max-height: none !important;
-        border-radius: 0;
-        margin: 0 !important; /* settings.css: .overlay .modal{margin-top:20px!important} */
+        margin: 0 !important;
+        border-radius: 28px 28px 0 0;
+        border: 0;
+        border-top: 1px solid var(--line);
+        background: #121524;
+        --under: #121524;
+        box-shadow: 0 -18px 60px rgba(0,0,0,.6);
+        padding: 32px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+        padding-left: calc(16px + env(safe-area-inset-left, 0px));
+        padding-right: calc(16px + env(safe-area-inset-right, 0px));
         display: flex;
         flex-direction: column;
         overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
-        -webkit-overflow-scrolling: touch;
-        /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
-        background: transparent;
-        --under: #050914; /* arkusz leży na tle strony */
-        border: 0;
-        box-shadow: none;
+        transform: translateY(var(--sheet-drag, 0px));
+        animation: sheetUp .34s cubic-bezier(.2,.8,.2,1) both;
+        will-change: transform;
+    }
+    .modal--sheet.sheet-active.sheet-dragging .modal,
+    .modal--sheet.sheet-active.sheet-dragging .market-preview-card { animation: none; transition: none; }
+    .modal--sheet.sheet-active.sheet-settling .modal,
+    .modal--sheet.sheet-active.sheet-settling .market-preview-card { animation: none; transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+    .modal--sheet.sheet-active.sheet-closing .modal,
+    .modal--sheet.sheet-active.sheet-closing .market-preview-card { animation: sheetDown .24s ease-in both; }
+
+    /* Roletka z polem tekstowym (np. zmiana nazwy): treść u góry, panel
+       wysoki na 78% ekranu, żeby pole i przyciski zostały nad klawiaturą
+       (uwaga użytkownika 2026-10-20); najwyżej do safe area. */
+    .modal--sheet.sheet-active.sheet-fit .modal {
+        height: auto !important;
+        min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
+        justify-content: flex-start;
+        max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
     }
 
+    /* Pasek do przeciągania (zamyka okno: przeciągnięcie w dół albo stuknięcie). */
+    .sheet-handle {
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 140px; height: 30px;
+        padding: 0; border: 0; background: none;
+        cursor: grab; touch-action: none;
+        display: grid; place-items: center;
+    }
+    .sheet-handle::before {
+        content: "";
+        width: 44px; height: 5px; border-radius: 999px;
+        background: rgba(255,255,255,.28);
+    }
+    .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
+
+    /* Tablet: niższy i węższy panel z bocznymi krawędziami. */
+    @media (min-width: 601px) {
+        .modal--sheet.sheet-active .modal,
+        .modal--sheet.sheet-active .market-preview-card {
+            height: min(88dvh, 920px) !important;
+            border: 1px solid var(--line);
+            border-bottom: 0;
+        }
+    }
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
+@keyframes sheetDown { from { transform: translateY(var(--sheet-drag, 0px)); } to { transform: translateY(100%); } }
+@keyframes sheetScrimIn { from { background-color: rgba(0,0,0,0); } }
+@keyframes sheetScrimOut { to { background-color: rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) {
+    .modal--sheet.sheet-active .modal, .modal--sheet.sheet-active .market-preview-card,
+    .modal--sheet.sheet-active.sheet-closing .modal, .modal--sheet.sheet-active.sheet-closing .market-preview-card { animation-duration: 1ms !important; }
+}
+@media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
     .modal--sheet.sheet-active .sheet-modal-head,
     .modal--sheet.sheet-active .sheet-modal-actions,
     .modal--sheet.sheet-active .sheet-modal-body {
@@ -1093,6 +1141,33 @@ main{
         padding-bottom: 12px;
         margin-bottom: 12px;
         border-bottom: 1px solid var(--line2);
+    }
+    /* Przyciski obok tytułu i podpowiedzi (fitSheetTop w modal-sheet.js):
+       jedna linia oddzielająca pod całym paskiem. */
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: flex-end;
+        gap: 12px;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
+        flex: 0 0 auto;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot) {
+        flex-wrap: nowrap;
     }
     .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
         margin-top: 0 !important;
@@ -1456,8 +1531,8 @@ main{
     .topbar {
         padding: 12px 14px;
         padding-top: max(12px, env(safe-area-inset-top));
-        padding-left: max(14px, env(safe-area-inset-left));
-        padding-right: max(14px, env(safe-area-inset-right));
+        padding-left: calc(14px + env(safe-area-inset-left, 0px));
+        padding-right: calc(14px + env(safe-area-inset-right, 0px));
     }
 
     .brand {
@@ -1479,11 +1554,12 @@ main{
 }
 
 @media (max-width: 980px){
+    :root{ --page-gutter: 15px; }
     .wrap{
         width: 100%;
         padding: 15px;
-        padding-left: max(15px, env(safe-area-inset-left));
-        padding-right: max(15px, env(safe-area-inset-right));
+        padding-left: var(--page-pad-left);
+        padding-right: var(--page-pad-right);
     }
 }
 
@@ -1549,7 +1625,7 @@ html.showA2HS .a2hs {
 .lang-switcher.lang-floating {
     position: fixed;
     top: max(12px, env(safe-area-inset-top));
-    right: max(12px, env(safe-area-inset-right));
+    right: calc(12px + env(safe-area-inset-right, 0px));
     z-index: 999;
 }
 
@@ -1795,8 +1871,8 @@ html.showA2HS .a2hs {
     box-sizing: border-box;
     overflow: auto;
     padding: 10px;
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
     padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
@@ -1909,8 +1985,8 @@ html.showA2HS .a2hs {
     gap:8px;
     padding:8px 10px;
     padding-top: max(8px, env(safe-area-inset-top));
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
   }
 
   .topbar-layout-4 .topbar-section-1{ grid-area:s1; }
@@ -2273,8 +2349,8 @@ body{
   opacity: .8;
 }
 /* css/rating-system.css */
-.rating-overlay .rating-modal {
-    max-width: 400px;
+.uni-modal.rating-modal {
+    max-width: 460px;
     text-align: center;
 }
 
@@ -2318,20 +2394,8 @@ body{
     font-family: inherit;
 }
 
-.modal-actions-v {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 
-.modal-actions-row {
-    display: flex;
-    gap: 10px;
-}
 
-.modal-actions-row > .btn {
-    flex: 1;
-}
 
 /* Badge on index */
 .rating-badge-index {
@@ -2471,24 +2535,30 @@ body{
 }
 
 /* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
+/* Nazwa w edytorach (gra, logo): kafel na całą szerokość jak górny pasek
+   ankiety (.pollBar) -- ta sama ramka, tło i zaokrąglenie, wyrównany
+   z panelami pod spodem; etykieta jak słowo stanu ankiety (2026-10-21). */
 .name-field{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  width: min(100%, 820px);
-  align-self: flex-start;
-}
-@media (min-width: 1101px){
-  .name-field{ width: min(50vw, 900px); }
+  width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  padding: 8px 10px; /* niski: edytory na laptopie zachowują wysokość płótna */
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  background: var(--card);
 }
 .name-field-label{
-  font-weight: 900;
-  letter-spacing: .06em;
+  font-weight: 1000;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  font-size: 12px;
-  opacity: .88;
+  font-size: 15px;
+  color: var(--gold);
   flex: 0 0 auto;
+  padding-left: 2px;
 }
 .name-field .inp{
   flex: 1 1 auto;
@@ -2733,12 +2803,39 @@ body{
 .shareSectionHeading > .shareSectionTitle{ flex: 1 1 auto; min-width: 0; }
 .shareSectionTitle.shareSectionHeading{ flex-wrap: wrap; }
 .shareBulkActions{ display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex: 0 0 auto; }
-.shareBulkAction{ appearance: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 0; background: rgba(255,255,255,.035); color: var(--gold, #ffeaa6); cursor: pointer; }
+/* wygląd zwykłego przycisku (.btn), tylko ikona złota */
+.shareBulkAction{ display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 10px; color: var(--gold, #ffeaa6); }
 .shareBulkAction .ico{ display: block; width: 17px; height: 17px; flex: 0 0 auto; }
-.shareBulkAction:hover:not(:disabled){ border-color: rgba(255,234,166,.55); background: rgba(255,234,166,.08); }
 .shareBulkAction:focus-visible{ outline: 2px solid var(--gold, #ffeaa6); outline-offset: 2px; }
 .shareBulkAction:disabled{ opacity: .45; cursor: default; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
+/* Narzędzia listy w nagłówku (share-sections.js, attachListTools): te same
+   przyciski co dolny pasek Gier w wersji ikon — sortowanie, filtr stanu,
+   lupa (okno do wpisania frazy). Aktywne ustawienie — złote. */
+.listToolsHead{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.listToolsHead .shareBulkAction{ width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 10px; }
+.listToolsHead .shareBulkAction .ico{ width: 18px; height: 18px; }
+.listToolsHead .shareBulkActions{ gap: 6px; }
+.rowsSectionHeadRow > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; }
+.listTools{ display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
+.listTools[hidden], .listTools > [hidden]{ display: none; }
+.listTools .btn, .listTools .ui-select-btn{ width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: 10px; }
+.listTools .ico{ width: 18px; height: 18px; }
+.listTools .ui-select.listTools-select{ width: 36px; min-width: 36px; max-width: 36px; flex: 0 0 36px; }
+.listTools .ui-select-label{ display: none; }
+.listTools .ui-select-icon{ display: inline-flex; }
+.listTools .is-active.btn, .listTools .is-active .ui-select-btn{ color: var(--gold, #ffeaa6); border-color: var(--gold, #ffeaa6); --btn-tint: rgba(255,215,0,.12); }
+.listTools .ui-select-item{ min-height: 40px; }
+.shareRow.is-search-hidden, .rowsRow.is-search-hidden{ display: none; }
+.listToolsEmpty[hidden]{ display: none; }
+.listToolsInline{ height: 36px; box-sizing: border-box; margin-top: 8px; padding: 0 4px 0 10px; }
+.listToolsInline[hidden]{ display: none; }
+.listToolsInline > svg{ flex: 0 0 auto; width: 16px; height: 16px; opacity: .6; }
+.listToolsInline .searchText{ height: 100%; padding: 0 4px; }
+.listToolsInlineClear{ appearance: none; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: none; color: inherit; opacity: .7; cursor: pointer; }
+.listToolsInlineClear:hover{ opacity: 1; background: rgba(255,255,255,.08); }
+.listToolsInlineClear svg{ width: 16px; height: 16px; }
+
 .shareList[hidden]{ display: none; }
 .shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }
 .shareHost{ grid-column: 1 / -1; }
@@ -2767,6 +2864,7 @@ body{
 .shareRow--compact{ min-height: 64px; box-sizing: border-box; }
 .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .shareRow--compact .shareTags{ margin-top: 0; }
+.shareRow--compact .shareNote{ max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shareRow--compact .shareRowActions{ align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
 .shareRow--compact .shareRowActions .btn{ width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .shareRowActions .shareActionCountdown{ flex-direction: column; gap: 3px; }
@@ -2778,6 +2876,12 @@ body{
 .shareSectionActions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .shareCountdown{ flex: 0 0 auto; min-width: 38px; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; text-align: center; color: var(--gold); }
 .shareCountdown[hidden]{ display: none; }
+/* Aktywny licznik w wierszu: wszystkie przyciski wiersza nieco wyższe, przycisk
+   z licznikiem szerszy o tekst (ikona nad licznikiem mieści się w całości). */
+.shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions :is(.btn, .shareActionTimer){ height: 52px; min-height: 52px; }
+/* szerokości bez zmian; tylko przycisk z licznikiem rośnie o tekst licznika */
+.shareRow--compact .shareRowActions .shareActionCountdown:has(.shareCountdown:not([hidden])){ width: auto; padding: 4px 6px; gap: 2px; }
+.shareRow--compact .shareRowActions .shareCountdown{ min-width: 0; }
 .grid .tile .tileMiniActions{ display: flex; gap: 6px; padding-top: 8px; }
 
 
@@ -2824,6 +2928,8 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .rowsChannel{ font-weight: 700; }
 .rowsActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* napis i ikona wyśrodkowane w jednej linii (bez przesunięcia napisu w dół) */
+.rowsAct{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; }
 .rowsAct .rowsActIcon{ display: inline-flex; width: 16px; height: 16px; }
 .rowsAct .rowsActIcon svg{ width: 100%; height: 100%; }
 .rowsAct--icon .rowsActIcon{ display: inline-flex; }
@@ -2849,15 +2955,33 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
 @media (max-width: 720px){
-  /* Let row content wrap normally; truncate only long status badges so they
-     stay inside the tile without forcing the tile beyond its available width. */
-  .shareRow--compact .shareMain{ display: block; }
-  .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
-  .shareRow--compact .shareTags{ width: max-content; max-width: 100%; margin-top: 6px; flex-wrap: nowrap; overflow: hidden; }
+  /* Nazwa, znaczniki i e-mail w jednej linii, gdy się mieszczą; następny
+     element schodzi pod spód dopiero przy braku miejsca (decyzja 2026-10-20). */
+  .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+  .shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
+  .shareRow--compact .shareRowActions{ gap: 4px; }
+  .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ width: 36px; min-width: 36px; min-height: 40px; padding: 4px; }
+  .shareRow--compact{ gap: 8px; padding: 8px; }
+  .shareRow--compact .shareRowActions{ align-self: center; }
+  .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ height: 40px; }
+  .shareRow--compact .shareTags{ gap: 4px; }
+  .shareRow--compact .shareTags .tag{ font-size: 10px; padding: 2px 6px; }
+  /* nazwa w jednej linii z wielokropkiem (pełna w dymku), znaczniki zawijają się zamiast ucinać */
+  .shareRow--compact .shareEmail, .shareRow--compact .shareNote{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shareRow--compact .shareTags{ width: auto; max-width: 100%; margin-top: 0; flex-wrap: wrap; overflow: hidden; }
   .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
-.shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
+.shareList--scroll{
+  max-height: 240px; overflow-y: auto; overscroll-behavior: contain;
+  /* bez ramki: przewijane wiersze chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
+  border-radius: 12px;
+}
+.shareList--scroll:not([hidden]){ display: flex; flex-direction: column; }
+.shareList--scroll > *{ flex-shrink: 0; }
+/* to samo przycinanie dla list w kartach (Connect: udostępnione urządzenia) */
+#sharedDevicesList{ border-radius: 12px; }
+
 
 /* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
    nie może zmniejszyć karty do samego kafla braku. Na arkuszu mobile wysokość
@@ -2881,9 +3005,6 @@ button.rowsSectionHead{ cursor: pointer; }
 .shareEmpty{ font-size:13px; color:var(--muted); }
 
 @media (max-width: 600px) {
-  .shareBulkActions{ gap: 5px; }
-  .shareBulkAction{ width: 30px; height: 30px; }
-  .shareBulkAction .ico{ width: 16px; height: 16px; }
   /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
      pozostają dostępne na ekranie. */
   .pollRecipientsModal .shareList--scroll {
@@ -2973,3 +3094,24 @@ button.rowsSectionHead{ cursor: pointer; }
 .contact-footer-entry{ flex:0 0 auto; justify-content:flex-end; }
 .contact-footer-entry--floating{ position:fixed; right:calc(10px + env(safe-area-inset-right,0px)); bottom:calc(8px + env(safe-area-inset-bottom,0px)); width:auto; margin:0; padding:5px 9px; border:1px solid var(--line); border-radius:8px; background:var(--card); z-index:100; }
 .contact-footer-entry--floating .btn-contact-footer{ font-size:11px; }
+
+/* Okno postępu (modal.js progressModal): krok, licznik, pasek, komunikat */
+.uni-progress{ display: grid; gap: 10px; margin-top: 12px; }
+.uni-progress-row{ display: flex; align-items: center; gap: 10px; }
+.uni-progress-step{ font-weight: 800; letter-spacing: .04em; }
+.uni-progress-count{ margin-left: auto; opacity: .8; font-variant-numeric: tabular-nums; }
+.uni-progress-track{ height: 10px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; }
+.uni-progress-bar{ height: 100%; width: 0; background: rgba(255,255,255,.85); transition: width .2s ease; }
+.uni-progress-msg{ min-height: 18px; }
+.uni-progress-msg[data-kind="error"]{ opacity: 1; }
+.uni-progress-bar[data-kind="error"]{ background: #dc3545; }
+
+/* Przyciski stopki wspólnego okna (modal.js): ikona i napis z odstępem */
+.uni-foot .btn{ display: inline-flex; align-items: center; justify-content: center; gap: .4em; }
+
+/* Dotyk: bez chwytania i przeciągania (page-init.js blokuje dragstart);
+   uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20). */
+@media (hover: none) and (pointer: coarse) {
+    [draggable="true"] { -webkit-user-drag: none; }
+    .tcHandle, .roundsOrderHandle { display: none !important; }
+}

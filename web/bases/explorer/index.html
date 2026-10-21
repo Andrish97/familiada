@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-20T23220"/>
+  <meta name="app-version" content="v2026-10-21T06422"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T23220" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T23220" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-20T23220" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-20T23220" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06422" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T06422" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T06422" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T06422" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T23220"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06422"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-20T23220"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T06422"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T23220" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06422" defer></script>
 
 </head>
 
@@ -113,7 +113,7 @@
       <section id="tagsL1" class="tags-layer">
         <div class="tagsHead">
           <div class="mTitle" id="tagsTitle" data-i18n="baseExplorer.tags.modalTitle">Tagi</div>
-          <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+          <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
         <div class="tagsAssignInfo" id="tagsAssignInfo">—</div>
@@ -122,18 +122,18 @@
   
         <div class="tagsFoot">
           <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag" data-i18n-icon="plus">Dodaj tag</button>
+          <div id="tagsAssignErr" class="importMsg" style="display:none;"></div>
           <div class="tagsFootSpacer"></div>
+          <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
-  
-        <div id="tagsAssignErr" class="importMsg" style="display:none;"></div>
       </section>
   
       <!-- WARSTWA 2: dodaj/edytuj -->
       <section id="tagsL2" class="tags-layer" style="display:none;">
         <div class="tagsHead">
           <div class="mTitle" id="tagsEditTitle" data-i18n="baseExplorer.tags.editTitle">Tag</div>
-          <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+          <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
         <div class="mSub" id="tagsEditHelp">—</div>
@@ -148,18 +148,17 @@
         </div>
   
         <div class="tagsFoot">
+          <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
           <div class="tagsFootSpacer"></div>
           <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
-  
-        <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
       </section>
   
       <!-- WARSTWA 3: picker koloru -->
       <section id="tagsL3" class="tags-layer" style="display:none;">
         <div class="tagsHead">
           <div class="mTitle" data-i18n="baseExplorer.tags.colorModalTitle">Kolor</div>
-          <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+          <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
         <!-- Twoja warstwa 3 jest OK — zostawiamy układ, poprawiamy tylko przyciski -->
@@ -212,7 +211,7 @@
 
       <div class="tagsHead">
         <div class="mTitle" id="xTitle" data-i18n="baseExplorer.export.title">Eksport gry</div>
-        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
       <div class="mSub" id="xSub" data-i18n="baseExplorer.export.subtitle">
@@ -283,6 +282,7 @@
           <div id="xProgMsg" class="xProgMsg"></div>
         </div>
 
+        <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
         <button class="btn sm gold" id="xCreate" type="button" disabled data-i18n="baseExplorer.export.create" data-i18n-icon="file-plus">Utwórz</button>
       </div>
 
@@ -308,19 +308,13 @@
       <!-- Ten sam układ i style co pytanie w edytorze gry (css/question-form.css);
            wiersze odpowiedzi i kafelek "+ Dodaj odpowiedź" buduje question-modal.js -->
       <div class="qBody">
-        <div class="qBlock">
+        <div class="qBlock qf-section">
           <div class="qf-label" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
           <textarea id="qText" class="qf-qtext" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
         </div>
 
-        <div class="qBlock qAnswersBlock">
+        <div class="qBlock qAnswersBlock qf-section">
           <div class="qf-sum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle"></div>
-
-          <div class="qf-head">
-            <div data-i18n="baseExplorer.question.answerHeader">Odpowiedź</div>
-            <div class="c-pts" data-i18n="baseExplorer.question.pointsHeader">Punkty</div>
-            <div></div>
-          </div>
 
           <div class="qf-listShell">
             <div id="qAnswers" class="qf-list"></div>
@@ -333,36 +327,13 @@
 
         <div id="qErr" class="importMsg" style="display:none;"></div>
 
+        <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
         <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
       </div>
 
     </div>
   </div>
 
-  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
-  <div class="overlay modal--keep-dialog" id="renameModal" hidden>
-    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
-
-      <div class="tagsHead">
-        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
-        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-
-      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
-
-      <div class="renameBody">
-        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
-      </div>
-
-      <div class="tagsFoot">
-        <div class="tagsFootSpacer"></div>
-        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
-      </div>
-
-      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
-
-    </div>
-  </div>
 
   <footer class="footer">
     <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
@@ -377,7 +348,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T23220"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06422"></script>
 
 </body>
 </html>

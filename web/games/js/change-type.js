@@ -2,11 +2,11 @@
 // §4 „Zmiana typu gry”). Ta sama bramka edit i to samo potwierdzenie resetu
 // zamkniętej ankiety co „Edytuj” (editGate); konwersję wykonuje atomowo
 // game_change_type. Wynik to szkic wybranego typu -- braki pokaże silnik reguł.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T23220";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
-import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T23220";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T23220";
-import { editGate, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-20T23220";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06422";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-21T06422";
+import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-21T06422";
+import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T06422";
+import { editGate, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-21T06422";
 
 const SOURCE_TYPES = [TYPES.PREPARED, TYPES.POLL_POINTS, TYPES.POLL_TEXT];
 // Nazwy typów jak na zakładkach Gier.

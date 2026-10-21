@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 28px 16px 40px;
+  padding: 28px var(--page-pad-right) 40px var(--page-pad-left);
 }
 
 .maintenance-card {
@@ -89,7 +89,7 @@
     align-items: flex-start;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left, 0px));
   }
   .maintenance-card { padding: 16px 18px; }
 }

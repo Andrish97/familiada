@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-20T23220";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T23220";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T23220";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-20T23220";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T06422";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T06422";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T06422";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T06422";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T06422";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T06422";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-20T23220";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T06422";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -89,6 +89,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   if (!overlay || isGuest) {
     return { open: () => {}, isGuest, refreshBadges: async () => ({}) };
   }
+  attachListTools(bulkHost?.parentElement, subsList, "device-share-friends");
+  attachListTools(currentCont?.previousElementSibling, currentCont, "device-share-shared");
 
   let _deviceType = null;
   let renderVersion = 0;

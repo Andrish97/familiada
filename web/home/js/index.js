@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T23220";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-21T06422";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T23220";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T23220";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T23220";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T23220";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-20T23220";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-21T06422";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06422";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T06422";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T06422";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T06422";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T06422";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-21T06422";
 
 
 async function redirectIfSession() {
@@ -425,7 +425,7 @@ function initImageViewer() {
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
     enterModalSheet(overlay, { backBtn, onClose: close });
-    (isSheetViewport() ? backBtn : closeBtn)?.focus();
+    (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
   };
 
   const close = () => {
@@ -453,7 +453,7 @@ function initImageViewer() {
     if (e.key === "Tab") {
       // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();
-      (isSheetViewport() ? backBtn : closeBtn)?.focus();
+      (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
     }
   });
 

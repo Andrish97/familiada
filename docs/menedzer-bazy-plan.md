@@ -127,7 +127,7 @@ szczegółowe w tym katalogu.
 
 ## Etapy
 
-Aktualny stan i lista kroków: [`PROGRESS.md`](../PROGRESS.md) (kroki 1–7 planu
+Aktualny stan i lista kroków: [`menedzer-bazy/PROGRESS.md`](menedzer-bazy/PROGRESS.md) (kroki 1–7 planu
 z `menedzer-bazy/README.md` §4). Skrót:
 
 1. **Porządek zapisów** — migracja 427 `qb_*` (jedna akcja = jedna funkcja

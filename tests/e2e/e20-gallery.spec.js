@@ -111,9 +111,9 @@ function additionalStates(data) {
           await tile.dblclick();
         },
         cleanup: async (page) => {
-          const modal = page.locator("#nameOverlay");
+          const modal = page.locator(".uni-modal");
           if (await modal.isVisible().catch(() => false)) {
-            await page.locator("#btnNameCancel").click();
+            await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
             await modal.waitFor({ state: "hidden", timeout: 5_000 });
           }
         },
@@ -157,7 +157,7 @@ function additionalStates(data) {
       {
         id: "base-explorer", stateId: "modal:rename-item", page: "base-explorer",
         href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
-        expectedVisibleSelector: "#renameModal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
+        expectedVisibleSelector: ".uni-modal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
         prepare: async (page) => {
           const item = page.locator('#list .row[data-kind="cat"][data-id]').first();
           await item.waitFor({ state: "visible", timeout: 15_000 });
@@ -165,7 +165,7 @@ function additionalStates(data) {
           const drawer = page.locator("#btnDrawerToggle");
           if (await drawer.isVisible().catch(() => false)) await drawer.click();
           await page.locator('#toolbar [data-act="rename"]').click();
-          await page.locator("#renameModal").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
         },
       },
       {
@@ -356,9 +356,9 @@ function additionalStates(data) {
           await tile.dblclick();
         },
         cleanup: async (page) => {
-          const modal = page.locator("#nameOverlay");
+          const modal = page.locator(".uni-modal");
           if (await modal.isVisible().catch(() => false)) {
-            await page.locator("#btnNameCancel").click();
+            await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
             await modal.waitFor({ state: "hidden", timeout: 5_000 });
           }
         },
@@ -404,7 +404,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#qText").scrollIntoViewIfNeeded();
         },
       },
@@ -415,7 +415,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#aList").scrollIntoViewIfNeeded();
         },
       },
@@ -454,7 +454,7 @@ function additionalStates(data) {
           await page.locator(`.logoTile[data-key="${logo.id}"]`).click();
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
-          await page.locator("#logoExportOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator(".uni-modal:has(.uni-progress)").waitFor({ state: "visible", timeout: 15_000 });
           await expect(page.locator("#logoExportSub")).toBeVisible();
         },
       },
@@ -762,7 +762,7 @@ async function dismissBlockingModal(page, profile, id) {
   if (!hasRatingModal && !hasGenericModal) return;
 
   if (hasRatingModal) {
-    await page.locator("#btnRatingLater").click({ timeout: 5_000 });
+    await page.locator("#ratingOverlay .uni-foot .btn[data-value=\"later\"]").click({ timeout: 5_000 });
     await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
     return;
   }

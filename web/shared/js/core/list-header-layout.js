@@ -231,10 +231,11 @@ function initListBottomToolbarLayout() {
               }
             }
             // Najpierw jak najmniej rzędów; potem wyrównujemy szerokość
-            // lewego i prawego bloku w każdym rzędzie, a na końcu szerokość
-            // samych rzędów i obu elastycznych "kolumn".
+            // lewego i prawego bloku w każdym rzędzie, potem równe rzędy
+            // w obrębie grupy (6 ikon: 3 + 3, nie 5 + 1), a na końcu
+            // wypełnienie pierwszego rzędu i szerokość obu "kolumn".
             const firstRowFill = (leftRows[0] || 0) + (rightRows[0] || 0);
-            const score = [rowCount, sideBalance, -firstRowFill, rowVariation, Math.abs(leftWidth - rightWidth)];
+            const score = [rowCount, sideBalance, rowVariation, -firstRowFill, Math.abs(leftWidth - rightWidth)];
             if (!best || compareScore(score, best.score) < 0) {
               best = { leftWidth, rightWidth, leftRows, rightRows, score };
             }
@@ -248,15 +249,15 @@ function initListBottomToolbarLayout() {
       const iconLayout = chooseLayout(iconLeft, iconRight);
       const textRows = textLayout ? Math.max(textLayout.leftRows.length, textLayout.rightRows.length) : 0;
       const iconRows = iconLayout ? Math.max(iconLayout.leftRows.length, iconLayout.rightRows.length) : 0;
-      // Gdy tekst wymaga zawinięcia, a wariant ikon mieści się w jednym
-      // rzędzie, wybierz kompaktowy układ. Sama różnica jednego rzędu już
-      // wystarcza: jedna linia jest czytelniejsza niż duże przyciski w dwóch.
-      const useIcons = hasTextLabels && textLayout && iconLayout
-        && textRows > iconRows && iconRows === 1;
+      // Gdy wariant ikon daje mniej rzędów niż przyciski z napisami (albo
+      // napisy w ogóle się nie mieszczą), wybierz kompaktowy układ. Sama
+      // różnica jednego rzędu już wystarcza; na wąskim telefonie ikony w dwóch
+      // rzędach są czytelniejsze niż kolumna szerokich przycisków.
+      const useIcons = hasTextLabels && iconLayout && (!textLayout || textRows > iconRows);
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;
-      const chosen = useIcons ? iconLayout : textLayout;
+      let chosen = useIcons ? iconLayout : textLayout;
       const needed = leftMeasure.width + rightMeasure.width + groupGap;
       if (needed <= available + 1) {
         const layoutKey = `single:${useIcons}`;

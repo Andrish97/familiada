@@ -16,19 +16,22 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T23220";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T23220";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-20T23220";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T23220";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-20T23220";
-import { ANSWER_MAX, clipChars, cleanAnswerText } from "../../shared/js/core/answer-text.js?v=v2026-10-20T23220";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06422";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-21T06422";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T06422";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-21T06422";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T06422";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-21T06422";
+import { ANSWER_MAX, clipChars, cleanAnswerText } from "../../shared/js/core/answer-text.js?v=v2026-10-21T06422";
 
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
   nextTieSelection,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-20T23220";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-21T06422";
+
+// Dotyk: bez przeciągania (page-init.js), scalanie tylko przyciskiem.
+const TOUCH = !!globalThis.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
 
 const SAVE_DEBOUNCE_MS = 900;
@@ -105,6 +108,7 @@ export function createTally({ gameId, pollResults, ui }) {
     const dup = meta.querySelector(".tcMergeDup");
     dup.hidden = !withMergeDup;
       dup.querySelector("span").textContent = t("polls.tally.mergeDup");
+    dup.title = t("polls.tally.mergeDup"); // telefon: sama ikona
     dup.onclick = withMergeDup && qs ? () => mutate(qs, () => mergeDuplicates(qs.q)) : null;
     return meta;
   }
@@ -248,7 +252,7 @@ export function createTally({ gameId, pollResults, ui }) {
     dirty = false;
     states = new Map();
     updateHistory();
-    ui.hintEl.textContent = t("polls.tally.hintText");
+    ui.hintEl.textContent = t(TOUCH ? "polls.tally.hintTextTouch" : "polls.tally.hintText");
     ui.barEl.hidden = false;
     ui.toolsEl.hidden = false;
     setSave("");
@@ -299,7 +303,7 @@ export function createTally({ gameId, pollResults, ui }) {
     row.dataset.itemId = item.id;
 
     const handle = mk("span", "tcHandle", icon("grip"));
-    handle.draggable = true;
+    handle.draggable = !TOUCH; // dotyk: tylko przycisk scalania
     handle.title = t("polls.tally.dragHandle");
     handle.setAttribute("aria-label", t("polls.tally.dragHandle"));
 
@@ -602,6 +606,7 @@ export function createTally({ gameId, pollResults, ui }) {
       const inKeys = analysis.tie.keys.filter((k) => analysis.selectedKeys.includes(k));
       const outKeys = analysis.tie.keys.filter((k) => !analysis.selectedKeys.includes(k));
       tieBtn.querySelector("span").textContent = t("polls.tally.tieSwitch");
+      tieBtn.title = t("polls.tally.tieSwitch");
       tieBtn.onclick = () => mutate(qs, () => { qs.q.selected = nextTieSelection(qs.analysis); });
       tieInfo.textContent = t("polls.tally.tieInfo", { in: inKeys.map(textOf).join(", "), out: outKeys.map(textOf).join(", ") });
     } else if (qs.q.selected) {
@@ -729,7 +734,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (mode === "points") {
         ui.hintEl.textContent = t("polls.tally.hintPoints");
       } else if (mode === "text") {
-        ui.hintEl.textContent = t("polls.tally.hintText");
+        ui.hintEl.textContent = t(TOUCH ? "polls.tally.hintTextTouch" : "polls.tally.hintText");
         for (const qs of states.values()) updateQuestion(qs);
       }
     },
