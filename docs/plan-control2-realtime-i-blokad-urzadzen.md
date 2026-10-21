@@ -81,6 +81,11 @@ Decyzje:
     `resolveEndScreenMode`). Dotyczy też istniejących gier bez zapisu
     (produkcja: 365 gier preparowanych bez `hasFinal`, 639 bez
     `endScreenMode`); jawnie zapisane wartości bez zmian.
+11. **Ustawienia gry pilnują wartości (decyzja użytkownika 2026-10-21).**
+    Błędne wartości ustawień zaawansowanych widać od razu przy polu, a zapis
+    jest wstrzymany (bez cichego powrotu). Cel finału 1–920. Progi wyliczone
+    z pytań (finał: dwie najlepsze odpowiedzi 5 pytań; rundy: punkty pytań ×
+    mnożniki) są podpowiedzią, nie blokadą (`advanced-limits.js`).
 
 ## Cel
 
