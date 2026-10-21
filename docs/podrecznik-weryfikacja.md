@@ -39,3 +39,37 @@ Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
 ## Część II — obecna wersja serwisu
 
 (w toku)
+
+### Rozdz. 6 — Moje gry (sprawdzone 2026-10-21)
+
+Źródła: `web/games/js/games.js`, `web/games/index.html`, `web/shared/js/core/game-rules.js`
+(`QN_MIN 10`, `AN_MIN 3`, `AN_MAX 6`, `PTS_MIN 4`, `SUM_PREPARED 100`; to samo w bazie: `game_rules_compute`).
+
+- Tytuł „Moje gry”; podpowiedź „Zaznacz grę, aby włączyć akcje i eksport. Podwójne naciśnięcie zmienia nazwę.” Lista odświeża się co 20 s.
+- Zakładki: „Ankieta tekstowa”, „Punktacja”, „Preparowana”, „Gry Społeczności” (telefon: „Tekst”, „Punkty”, „Prepar.”, „Społeczność”); domyślnie Preparowana. Filtr: SZKIC, OTWARTA, ZATRZYMANA, GOTOWA, „Otrzymano”.
+- Statusy: „SZKIC” (szary), „OTWARTA” (niebieski) + plakietka liczby głosów, „ZATRZYMANA” (złoty), „GOTOWA” (zielony). Preparowana: GOTOWA, gdy da się grać, inaczej SZKIC. **ROZBIEŻNOŚĆ:** „zatrzymana do podliczenia” to dwie plakietki: „ZATRZYMANA” + „do podliczenia”.
+- Kopia otrzymana: „Od: {nazwa}”. Pod nazwą — czego brakuje do następnego kroku (np. „Gra musi mieć co najmniej 10 pytań (masz: n).”). Kafelek nie pokazuje typu.
+- Nowa gra: kafelek „+ Nowa gra” → okno „Nowa gra” (nazwa wymagana, do 80 znaków), typ = aktywna zakładka, edytor się nie otwiera.
+- Górny pasek: „Graj” (**ROZBIEŻNOŚĆ:** to wejście do panelu sterowania), „Ustawienia gry”, „Edytuj”, „Podgląd”, „Ankieta”. Dolny: „Powiel”, „Zmień typ”, „Eksportuj do pliku”, „Eksportuj do bazy”, „Importuj”, „Wyślij” (telefon: ikony). Wyłączony przycisk pokazuje powód w podpowiedzi.
+  - Edytuj/Zmień typ: zablokowane przy ankiecie otwartej/zatrzymanej i dla Gier Społeczności.
+  - Graj: ankieta tylko po zamknięciu („Gra będzie dostępna dopiero po zamknięciu ankiety.”), preparowana — gdy gotowa.
+  - Ankieta: brak dla preparowanej; w szkicu wymaga 10 pytań (Punktacja: też 3–6 odpowiedzi).
+  - Gry Społeczności: Graj (pierwsze kliknięcie dodaje do biblioteki), Podgląd, Ustawienia; kosz = „Usuń z biblioteki”; „ARCHIWALNA — usunięta ze Społeczności”.
+- Zmiana nazwy: podwójne kliknięcie/stuknięcie → „Zmień nazwę”; gdy gra otwarta gdzie indziej — „Ta gra jest otwarta gdzie indziej.”
+- Usuwanie: „Usuń grę” + przy otwartej/zatrzymanej ankiecie „Ankieta zostanie przerwana.”; blokada, gdy gra otwarta w innej karcie.
+- Powiel: każdy typ i stan; przy otwartej/zatrzymanej ankiecie okno „Bez bieżących głosów” (kopia = szkic: tekstowa bez odpowiedzi, Punktacja z zerowymi punktami); zamknięta → kopia zamknięta z wynikiem, jeśli wynik poprawny, inaczej szkic. Nazwa „{nazwa} kopia”, „kopia 2”… Ukryte dla gości.
+- Wyślij: ankieta tylko w szkicu („Wysłać można tylko szkic gry (bez wyników ankiety).”), preparowana zawsze; tylko do aktywnego znajomego; demo nie.
+- Plik `.famgame` (import przyjmuje też `.json`); eksport otwartej/zatrzymanej ankiety — okno „Bez bieżących głosów” (nie blokada). Import zawsze tworzy nową grę, podgląd: Nazwa, Typ („· zamknięta ankieta (z wynikiem)”), Pytania + notki (niepełny wynik → szkic ankiety). Skracanie: nazwa 80, pytanie 100, odpowiedź 17; >6 odpowiedzi → 6 najwyżej punktowanych.
+- Eksport do bazy: okno „Eksport do bazy”, bazy własne i udostępnione z edycją; folder w głównym katalogu nazwany jak gra („(2)” przy kolizji).
+
+### Rozdz. 7 — Tworzenie i edycja gry (sprawdzone 2026-10-21)
+
+- Typy: „Ankieta tekstowa”, „Punktacja”, „Preparowana”.
+- Edytor: pole „Nazwa”; lewy panel „Pytania”, nagłówek warunków („Ankietę uruchomisz, gdy:” / „Gra będzie gotowa, gdy:”) z listą na żywo (zielone/czerwone, „— pytania: 2, 5”), kafelek „Dodaj pytanie” („Wymagane minimum: 10 (masz N)”), kafelki pytań („Tylko pytania”, „n/6 odpowiedzi • suma X/100”), „Importuj”. Prawy: „Treść pytania”, „Odpowiedź”/„Pkt”, „Dodaj odpowiedź n/6”, „SUMA x/100”. Do 1100 px — lista albo pytanie z „Wstecz”.
+- **ROZBIEŻNOŚĆ:** pytanie do **100** znaków (nie 200); odpowiedź do 17; znaki spoza czcionki Wyświetlacza — odpowiedź się nie zapisze; w finale Wyświetlacz mieści 11 znaków odpowiedzi.
+- Punkty 0–100 (całkowite). Preparowana: min. 4 pkt, suma ≤100 — to warunki gotowości, zapis niższych wartości możliwy (oznaczenie na czerwono).
+- Autozapis: treść 350 ms po przerwie i przy wyjściu z pola; punkty i nazwa — przy wyjściu z pola; Enter kończy edycję. Puste → „Pytanie n” / „ODP n”.
+- Ankieta otwarta/zatrzymana: edytor zablokowany („Niedostępne w tym stanie gry”). Zamknięta: okno „Zresetować ankietę?” (usuwa głosy, odpowiedzi ankietowanych, linki i QR; pytania i odpowiedzi zostają, punkty zerowane, gra wraca do szkicu). Gra w panelu sterowania: „Edycja zablokowana”.
+- Gotowość: ≥10 pytań (bez górnego limitu); Punktacja i Preparowana 3–6 odpowiedzi; Preparowana ≥4 pkt i suma ≤100. Zamknięcie ankiety wymaga ≥10 pełnych ankiet (głosów).
+- Import TXT: `@Nazwa` (przed pierwszym pytaniem), `#pytanie`, odpowiedzi w wierszach (numery „1”, „1.”, „2)”, „3 -”, „4:” usuwane; uwaga: „100 lat” traci liczbę), punkty po ostatnim `/` (tylko Preparowana). Podgląd na żywo, plik `.txt`. ZASTĘPUJE zawartość (potwierdzenie), błąd nie zmienia gry. >6 odpowiedzi → pierwsze 6.
+- Zmień typ: dostępność jak Edytuj; okno „Zmień typ gry” — karty typów ze skutkiem: tekstowa „Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.”; Punktacja „Pytania i odpowiedzi zostaną. Punkty zostaną usunięte.”; Preparowana „Pytania i odpowiedzi zostaną.” (+ „Punkty zostaną usunięte.” po resecie). Zawsze szkic.
