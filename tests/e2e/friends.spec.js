@@ -79,7 +79,7 @@ test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({
     await open(owner.page);
     await invite(owner.page, "test14@familiada.online");
     await expect(owner.page.locator(".uni-modal")).toContainText("możesz dodać tę osobę jako subskrybenta");
-    const link = owner.page.getByRole("link", { name: "Przejdź →" });
+    const link = owner.page.getByRole("link", { name: "Przejdź", exact: true });
     await expect(link).toHaveAttribute("href", /\/subscribers\//);
     await link.click();
     await expect(owner.page).toHaveURL(/\/subscribers\//);
