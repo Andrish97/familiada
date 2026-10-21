@@ -487,9 +487,14 @@ div#cover2Logo {
     word-break: break-word
 }
 
+/* Bardzo niski ekran (podgląd Prowadzącego w ustawieniach gry na telefonie,
+   ok. 200 px wysokości): podpowiedź zostaje widoczna, tylko mniejsza --
+   to jedyna wskazówka, że zasłonę się przesuwa. */
 @media (max-height:280px) {
     .cover2Swipe {
-        display: none
+        font-size: 12px;
+        line-height: 1.1;
+        padding: 0 4px
     }
 }
 
