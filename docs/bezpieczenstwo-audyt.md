@@ -37,4 +37,67 @@ z wyzwalaczy SECURITY INVOKER (`gen_share_key`, `_game_control_active`).
 
 ## Wyniki — Worker, funkcje Edge, sekrety, XSS
 
-(uzupełniane)
+Poprawki na branchu `claude/new-session-ay1h9t` (commity „E24 K1…N7”).
+Funkcje Edge wdraża `deploy-edge.yml`, Worker `deploy-worker.yml`,
+lead-finder `deploy-lead-finder.yml` — wszystkie po pushu na `main`.
+
+| # | Ważność | Problem | Poprawka | Stan |
+|---|---|---|---|---|
+| K1 | KRYTYCZNE | Panel admina, poczta: `extractHtmlPreviewText` wstawiał HTML maila przez `innerHTML` do odpiętego `div` — `<img onerror>` z dowolnego przychodzącego maila wykonywał się w panelu (z ciasteczkiem Access). Generator gier: tytuły, opisy, pytania i odpowiedzi gier wstawiane bez escapowania | `DOMParser` (dokument nieaktywny); `escHtml` w `generator.js` (tytuł, opis, pytania, odpowiedzi, podobne gry, raport jakości). Treść maili zostaje w `iframe sandbox` bez `allow-same-origin` | na branchu |
+| K2 | KRYTYCZNE | Funkcja Edge `generate-game` (klucz serwisowy) bez uwierzytelnienia, CORS `*`: publikacja/zmiana/usuwanie gier producenta w katalogu, generowanie AI na koszt projektu, `embed-missing`, `check-uniqueness` dla każdego | Funkcja wymaga `X-Internal-Secret` = `GENERATE_GAME_SECRET` (porównanie stałoczasowe; brak sekretu = 503), bez CORS, tylko POST. Panel → Worker `/_admin_api/generator/<akcja>` (lista dozwolonych akcji, Access + sekret po stronie Workera). Cron: migracja 450 — `invoke_embed_missing_market_games` i `cron_embed_missing_market_games` wysyłają nagłówek z Vault (`generate_game_secret`), tylko `service_role` | na branchu |
+| W1 | WYSOKIE | Usługa `services/lead-finder` (`leads.familiada.online`): API zleceń wyszukiwania (start/status/pauza/wznowienie/anulowanie) bez uwierzytelnienia, CORS `*` | Zależność FastAPI: `Authorization: Bearer <LEAD_FINDER_API_KEY>` (`hmac.compare_digest`, brak klucza = 503); CORS tylko `https://settings.familiada.online`; `/health` publiczne. Panel już wysyła ten klucz (Worker `/_admin_api/config/lead-finder-token` czyta tę samą nazwę `LEAD_FINDER_API_KEY`) | na branchu |
+| W2 | WYSOKIE | `isAdminAuthorized` sprawdzał tylko obecność nagłówka `Cf-Access-Jwt-Assertion` lub `Cf-Access-Authenticated-User-Email` — żądanie omijające Access (np. `*.workers.dev`) z dopisanym nagłówkiem miało pełne API admina | Weryfikacja tokenu Access (WebCrypto RS256, JWKS `https://<CF_ACCESS_TEAM_DOMAIN>/cdn-cgi/access/certs` z pamięcią podręczną, `aud` = `CF_ACCESS_AUD`, `iss`, `exp`/`nbf`); bez zmiennych = 401. `workers_dev = false`, `preview_urls = false`. Testy: `tests/unit/adminAccessJwt.test.js` (prawdziwy klucz RSA) | na branchu |
+| W3 | WYSOKIE | Eksplorator baz, okno tagów: `tag.name` i `tag.color` wstawiane bez escapowania (XSS u współdzielących bazę) | `esc()` jak w `render.js` | na branchu |
+| Ś1 | ŚREDNIE | `/_admin_api/*` bez ochrony CSRF (ciasteczko Access idzie z żądaniem z innej strony) | Nie-GET tylko z `Origin: https://settings.familiada.online` i `Content-Type: application/json` (wyjątek: `/attachments/upload` multipart); `adminFetch` w panelu dokłada typ JSON | na branchu |
+| Ś2 | ŚREDNIE | `/_admin_api/config/lead-finder-token` oddaje długoterminowy klucz lead-findera do przeglądarki panelu | Do decyzji: wywołania lead-findera przez Worker (jak K2), klucz tylko po stronie serwera | otwarte – decyzja |
+| Ś3 | ŚREDNIE | `/_api/contact/append`: zapis wiadomości także dla nieistniejącego zgłoszenia, dopisywanie do cudzego zgłoszenia po samym numerze, bez limitu | Zapis tylko gdy zgłoszenie istnieje i adres = adres zgłoszenia (pierwsza wiadomość: nadawca formularza / odbiorca wiadomości admina); ta sama odpowiedź 404 w obu przypadkach; limit KV: 5/h na adres, 20/h na IP (skróty SHA-256) | na branchu |
+| Ś4 | ŚREDNIE | `/_api/notify-submission` (publiczne) przekazywał dowolny tekst klienta do Telegrama z `parse_mode: HTML` | Stały komunikat + opcjonalny, sprawdzony UUID gry | na branchu |
+| Ś5 | ŚREDNIE | Funkcja Edge `lead-finder` (klucz serwisowy, CORS `*`) bez uwierzytelnienia: statystyki i zapis `last_search_log`; brak wywołań w repo | Usunięta z repo | na branchu |
+| Ś6 | ŚREDNIE | Podgląd maili w panelu: `iframe sandbox="allow-scripts allow-popups"` — skrypty z przychodzących maili wykonują się (izolowany origin, ale mogą otwierać okna, śledzić otwarcie) | Do decyzji: sandbox bez `allow-scripts` (sprawdzić szablony z JS) | otwarte – decyzja |
+| Ś7 | ŚREDNIE | Ciasteczko obejścia przerwy (`ADMIN_BYPASS_TOKEN`) to stały sekret dla całej domeny na 30 dni, bez rotacji — wyciek = trwałe obejście przerwy technicznej | Do decyzji: podpisany token z datą ważności (HMAC) i rotacja | otwarte – decyzja |
+| N1 | NISKIE | SSR gry: JSON-LD w `<script>` bez zamiany `<` — `</script>` w treści gry zamykał skrypt | `JSON.stringify(...).replace(/</g, "\\u003c")`; punkty odpowiedzi też escapowane | na branchu |
+| N2 | NISKIE | `mail-worker`: przy pustym `MAIL_WORKER_SECRET` otwarty dla wszystkich; sekret także z `Bearer`/`?secret=`, porównanie zwykłe, pełny URL w logu | Tylko nagłówek `x-mail-worker-secret` (tak wysyła `invoke_mail_worker*` z Vault — bez zmiany bazy), stałoczasowo, brak sekretu = 403, w logu sama ścieżka | na branchu |
+| N3 | NISKIE | Brak nagłówków bezpieczeństwa stron (CSP, `X-Content-Type-Options`, `Referrer-Policy`) z Workera | Do decyzji (CSP wymaga przeglądu skryptów inline i CDN) | otwarte – decyzja |
+| N4 | NISKIE | Funkcja Edge `storage-cleanup` bez uwierzytelnienia (każdy może uruchomić przetwarzanie kolejki usuwania; usuwa tylko pozycje z kolejki) | Do decyzji: nagłówek sekretu jak K2 (`storage_cleanup_kick` z Vault) | otwarte – decyzja |
+| N5 | NISKIE | Funkcja Edge `auth-email-status`: sprawdzenie, czy e-mail ma konto (enumeracja; razem z B8) | Do decyzji razem z B8 | otwarte – decyzja |
+| N6 | NISKIE | Poczta przychodząca (`inbound-email.js`): mail z `[TICKET-…]` w temacie dopina się do zgłoszenia bez sprawdzenia nadawcy (odpowiednik Ś3 dla kanału e-mail) | Do decyzji: dopinanie tylko od adresu zgłoszenia, inne do skrzynki bez zgłoszenia | otwarte – decyzja |
+| N7 | NISKIE | Formularz kontaktu: nazwa wybranego pliku wstawiana przez `innerHTML` (self-XSS) | Elementy DOM z `textContent` | na branchu |
+
+Uwaga do numeracji Ś2, Ś6, Ś7, N3–N6: opisy spisane przy wdrażaniu
+poprawek (2026-10-21) na podstawie przeglądu kodu.
+
+Zostają też otwarte B7–B9 (sekcja „Wyniki — baza”).
+
+## Wymagane przed wdrożeniem
+
+Poprawki działają „bez fallbacku”: bez poniższych ustawień panel admina
+(W2), generator gier (K2), lead-finder (W1) i wysyłka poczty (N2) odmawiają.
+Najpierw ustawić sekrety, potem push na `main`.
+
+| Nazwa | Gdzie | Wartość |
+|---|---|---|
+| `CF_ACCESS_TEAM_DOMAIN` | Worker (zmienna lub sekret) | `<zespół>.cloudflareaccess.com` (Zero Trust → Settings → Custom pages / team domain) |
+| `CF_ACCESS_AUD` | Worker (zmienna lub sekret) | Tag „Application Audience (AUD)” aplikacji Access chroniącej `settings.familiada.online` |
+| `GENERATE_GAME_SECRET` | Worker (sekret) **i** env funkcji Edge (self-host: plik env funkcji / `docker compose` usługi `functions`) | Losowy, ≥ 32 znaki, ta sama wartość |
+| `generate_game_secret` | Vault (`select vault.create_secret('<wartość>', 'generate_game_secret')`) | Ta sama wartość co `GENERATE_GAME_SECRET` |
+| `LEAD_FINDER_API_KEY` | env usługi lead-finder (kontener na serwerze, skrypt `deploy-lead-finder.sh`) | Ta sama wartość co istniejący sekret Workera `LEAD_FINDER_API_KEY` |
+| `MAIL_WORKER_SECRET` | env funkcji Edge | Musi być niepusty i równy `mail_worker_secret` w Vault (sprawdzić, że oba są ustawione) |
+
+Kolejność wdrożenia:
+
+1. Ustawić `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `GENERATE_GAME_SECRET`
+   w Workerze; `GENERATE_GAME_SECRET` i sprawdzić `MAIL_WORKER_SECRET`
+   w env funkcji Edge; `generate_game_secret` w Vault;
+   `LEAD_FINDER_API_KEY` w env lead-findera.
+2. Push na `main`: migracja 450 (zgodna wstecz — obecna funkcja ignoruje
+   nagłówek), Worker (W2, Ś1, Ś3, Ś4, N1, proxy K2), funkcje Edge (K2, N2,
+   usunięcie `lead-finder`), lead-finder (W1), Pages (K1, K2 front, W3,
+   N7). Między wdrożeniem Workera a Pages panel przez chwilę woła stare
+   ścieżki — generator gier działa dopiero z nową wersją panelu.
+3. Usunąć funkcję `lead-finder` z serwera, jeśli `deploy-edge.sh` nie
+   usuwa katalogów nieobecnych w repo.
+4. Sprawdzenie: panel admina się ładuje (Access), `curl` do
+   `https://familiada.<konto>.workers.dev` nie odpowiada, `generate-game`
+   bez nagłówka = 401, lead-finder `/api/search-runs/status` bez klucza =
+   401, kolejka poczty schodzi (log `mail-worker` bez
+   `request_forbidden_*`), cron `embed-missing` bez błędów.
