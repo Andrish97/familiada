@@ -201,7 +201,8 @@ Nowych klas pomocniczych nie dodaje się bez wpisu w tym dokumencie.
 | `page--doc` (tekst, spis treści) | Instrukcja, Prywatność, strona główna (sekcje) | urządzenie + work |
 | `page--block` (ekran blokady) — **jeden wzorzec dla przerwy i 404** (decyzja 2026-10-21) | przerwa techniczna, 404 | urządzenie + short |
 | ekrany gry (poza silnikiem, tylko `tokens.css` + wspólne okna/komunikaty) | wyświetlacz, host, buzzer, TV, QR ankiety, snake | własne |
-| **poza E23:** panel admina `/settings/` (osobna sprawa, decyzja 2026-10-21) i laboratoria `/settings/tools/*` (strony techniczne, celowo bez wspólnego silnika) | — | — |
+| `page--admin` (nawigacja paneli + tabele) — **ostatnia faza E23** (§8a) | `/settings/` | urządzenie + work, wide; kontenery |
+| **poza E23:** laboratoria `/settings/tools/*` (strony techniczne, celowo bez wspólnego silnika) | — | — |
 
 Treść ograniczona szerokością tylko tam, gdzie wzorzec tak mówi (dziś
 `.wrap` nie ma `max-width`; karty mają własne limity 520/560/680/720).
@@ -290,11 +291,37 @@ przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
    Mails → Konto → Ankieta → Instrukcja/Prywatność → strona główna →
    edytory logo → edytor gry → ustawienia gry → Eksplorator → Control →
    przerwa/404 (jeden wzorzec) → ekrany gry (tokeny + wspólne okna).
-   Panel admina i laboratoria — poza E23.
+   Na końcu panel admina (§8a). Laboratoria — poza E23.
 5. **Sprzątanie**: usunięcie starego `games.css`, `core/modal*.js` itd.,
-   gdy audyt pokaże 0 użyć; aktualizacja `wzorce-ui.md`. Stary `base.css`
-   (i moduły, których używa) zostaje dla panelu admina do jego osobnego
-   etapu; laboratoria mają własne style.
+   i stary `base.css`, gdy audyt pokaże 0 użyć (po panelu admina);
+   aktualizacja `wzorce-ui.md`. Laboratoria mają własne style.
+
+## 8a. Panel admina `/settings/` (decyzja 2026-10-21: przepisać, ostatnia faza)
+
+Najbardziej złożona strona: `settings.js` 7508 linii (242 funkcje,
+43 szablony `innerHTML`), `settings.css` 2582 linie (66 `!important`),
+`index.html` 1152 linie (153 `style=`, 9 tabel), ~11 paneli (status,
+przerwa, poczta, marketing, kontakty marketingowe, Społeczność gier,
+generator, oceny, zgłoszenia, statystyki, zrzuty strony głównej),
+TinyMCE (`tox-*`), własne okna (`.dt-modal`, podgląd załącznika),
+wyszukiwarki i paski stanu.
+
+Zasada „strona przechodzi w całości” zostaje, ale z przygotowaniem na
+starym silniku, bez zmian wyglądu:
+
+1. **Analiza panel po panelu** (osobny dokument): elementy, stany, okna,
+   tabele, zależności od TinyMCE i podglądu przerwy (`settings.js:1054`).
+2. **Rozbicie `settings.js` na moduły paneli** (jeden plik na panel +
+   wspólne pomocnicze) — bez zmian zachowania i wyglądu; unit/e2e admina.
+3. **Style z HTML/JS do klas** w obecnym `settings.css` (153 `style=`,
+   ~110 szablonów, 36 `cssText`) — bez zmian wyglądu.
+4. **Sceny zrzutów dla każdego panelu** (dziś jedna scena `/settings/`).
+5. **Przepięcie** na silnik i wspólne mechanizmy: komponent
+   `data-table`, `progress`, `status-line`, `dialog`, `list-tools`,
+   pigułki statusów poczty (12+ wariantów → `badge` ze znaczeniami).
+   Zrzuty przed/po wszystkich paneli.
+
+Szacunek: **8–12 dni** (kroki 1–3 to połowa).
 
 ## 9. Ograniczenia przeglądarek
 
@@ -336,7 +363,8 @@ starych plików.
    po E23 poprawić punktowo.
 7. **Progi:** 3 szerokości + rodzaj urządzenia (dotyk) jako warunek (§3.3).
 8. **Przerwa i 404:** jeden wzorzec `page--block`.
-9. **Panel admina** `/settings/`: osobna sprawa, poza E23.
+9. **Panel admina** `/settings/`: też przepisać — bardzo złożony, więc
+   ostatnia faza E23 z przygotowaniem na starym silniku (§8a).
 
 ## 12. Szacunek
 
@@ -347,6 +375,7 @@ starych plików.
 | Pilot (Zadania) i poprawki silnika | 1–2 |
 | Strony (≈24 strony bez panelu admina; Control ~3, Eksplorator ~2, edytory ~3) | 18–23 |
 | Przerwa/404 (jeden wzorzec), ekrany gry (tokeny, wspólne okna), sprzątanie, dokumentacja | 2–3 |
-| **Razem** | **≈ 33–44 dni roboczych sesji** |
+| Panel admina (§8a) | 8–12 |
+| **Razem** | **≈ 41–56 dni roboczych sesji** |
 
-Bez panelu admina (osobny etap) i laboratoriów.
+Bez laboratoriów.
