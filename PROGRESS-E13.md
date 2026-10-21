@@ -12,14 +12,16 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 - Rozdziały pisać dopiero po sprawdzeniu, jak serwis faktycznie działa (pierwszy wiersz planu). Treść w PL, potem EN/UK.
 - Treść rozdziałów najpierw jako robocze pliki Markdown w `docs/podrecznik/NN-*.md` (łatwy przegląd, bez HTML), potem przeniesienie do strony `web/manual` (obecnie 9 zakładek, treść w `web/shared/translation/{pl,en,uk}.js` → `manual.content.*`). Układ strony (rozdziały zamiast zakładek, mapa pomocy kontekstowej, styl przycisków) — w kroku 5.
 - E21 zakończone 02:50 UTC (PROGRESS.md: ZAKOŃCZONE), `main` scalony do brancha.
+- Kolejność: najpierw drobne błędy z weryfikacji (manual opisuje docelowe działanie), potem rozdziały Części II od 5; Część I po odczytaniu pełnego regulaminu.
 - E13 ma być ostatnim etapem; E21 (krok 12–14) kończy druga sesja — przy starcie sprawdzić jej stan w `PROGRESS.md`, ale nie czekać z rozdziałami Części I (zasady teleturnieju), które od E21 nie zależą.
 
 ## Kroki
 
 | # | Krok | Stan |
 |---|---|---|
-| 1 | Przegląd funkcji i limitów w obecnej wersji serwisu (kod `web/`, RPC, limity) — notatki do rozdziałów 5–19 planu → `docs/podrecznik-weryfikacja.md` | 🔄 |
-| 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ⏳ |
+| 1 | Przegląd funkcji i limitów w obecnej wersji serwisu (kod `web/`, RPC, limity) — notatki do rozdziałów 5–19 planu → `docs/podrecznik-weryfikacja.md` | ✅ 2026-10-21 (rozdz. 2, 5–17, 19.6; rozbieżności oznaczone) |
+| 1a | Naprawa drobnych błędów z weryfikacji (lista w `podrecznik-weryfikacja.md`, pkt 1–3, 6, 7, 10, 11; pkt 4, 5, 8, 9 — sprawdzić/zgłosić) | ⏳ |
+| 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ⏸ wstępnie (fragmenty z wyszukiwarki); pełny PDF zablokowany — `s.tvp.pl` poza siecią środowiska, prośba do użytkownika |
 | 3 | Rozdziały Części I (1–4) | ⏳ |
 | 4 | Rozdziały Części II po kolei (5, 6, 7, 8, …) | ⏳ |
 | 5 | EN/UK, sprawdzenie `privacy-manual`, zrzuty ekranów manuala | ⏳ |
@@ -27,7 +29,7 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 
 ## Co dalej
 
-Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`, stan E21 w `PROGRESS.md`, potem krok 1.
+Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`. Następnie krok 1a, potem szkice rozdziałów Części II od rozdz. 5 (Część I czeka na pełny regulamin).
 
 ## Limit wykorzystania
 
@@ -37,4 +39,5 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`, stan
 
 ## Znane problemy
 
-- Brak.
+- `s.tvp.pl` zablokowany przez sieć środowiska (403) — regulamin TVP tylko z fragmentów wyszukiwarki.
+- Dwie sprawy do decyzji użytkownika (mnożniki rund, „Mnożnik nagrody”) — `podrecznik-weryfikacja.md`, koniec pliku; do decyzji podręcznik opisuje obecne działanie serwisu.

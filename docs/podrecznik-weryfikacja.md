@@ -38,8 +38,6 @@ Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
 
 ## Część II — obecna wersja serwisu
 
-(w toku)
-
 ### Rozdz. 6 — Moje gry (sprawdzone 2026-10-21)
 
 Źródła: `web/games/js/games.js`, `web/games/index.html`, `web/shared/js/core/game-rules.js`
@@ -124,6 +122,93 @@ Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
 - Właściciel: zmiana roli (także oczekującej), przypomnienie, odebranie dostępu; odbiorca: „Usuń z listy”; odebranie w trakcie → „Odebrano Ci dostęp”.
 - Blokady: „Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.”; otwarta baza blokuje zmianę nazwy i usunięcie.
 
+### Rozdz. 2 i 15.6 — algorytm wyników ankiety (sprawdzone 2026-10-21)
+
+Jeden moduł `web/shared/js/core/poll-tally-math.js` = SQL migracji 405.
+
+- N = liczba **pełnych ankiet** (osoby, które odpowiedziały na każde pytanie). Udział = ⌊100 · głosy / N⌋ (zawsze w dół; dodatni poniżej 1% → 1%). **ROZBIEŻNOŚĆ:** to nie „przeliczenie proporcjonalne” z zaokrągleniem — w podręczniku: „procent pełnych ankiet, zaokrąglony w dół”.
+- Kwalifikacja: ≥4% po zaokrągleniu (3,9% → 3% → odpada). Punkty = udział; równe głosy = równe punkty; suma ≤100.
+- Bez górnego limitu głosów; podliczyć można od **10 pełnych ankiet**.
+- Tekstowa — kolejność: usunięcie znaków spoza Wyświetlacza → łączenie identycznych (bez wielkości liter) → scalenia/poprawki użytkownika → udział → ≥4% → ranking (głosy, przy remisie kolejność) → do 6 → przy zatwierdzeniu ≥3.
+- Punktowa: odpowiedzi stałe; <4% → 0 pkt; zatwierdzenie wymaga ≥3 odpowiedzi z ≥4 pkt w każdym pytaniu.
+- Remis na granicy szóstki: „Zmień wybór w remisie”; komunikat „Remis na granicy szóstki. Do gry: … Pominięte: …”.
+
+### Rozdz. 15 — Ankiety (sprawdzone 2026-10-21)
+
+- Stany: szkic → otwarta ⇄ zatrzymana → gotowa. Przyciski: „Uruchom” / „Uruchom i wyślij zaproszenia (n)”, „Zatrzymaj”, „Wznów głosowanie”, „Podlicz głosy” (tylko zatrzymana), „Wyjdź z podliczania”, „Zatwierdź”, „Uruchom ponownie” (gotowa, usuwa głosy), „Przerwij” (do szkicu, głosy przepadają).
+- Uruchomienie: ≥10 pytań (punktowa: 3–6 odpowiedzi).
+- Karty „Udostępnianie” („Anonimowo” / „Odbiorcy”) i „Głosy”. Anonimowo: „Link do głosowania”, „Kopiuj link”, QR, „Powiększ kod QR”; „QR na wyświetlaczu” = podłączenie osobnego ekranu z kodem. Jeden głos na przeglądarkę („Już oddałeś głos w tej ankiecie”).
+- Odbiorcy: „Dodaj odbiorców” (znajomi i subskrybenci), „Wyślij zaproszenia (n)”, „Przypomnij” (maks. 2), „Usuń udostępnienie”; statusy czeka/Otwarto/zagłosował/odrzucił; podsumowanie „Zaproszeni · Zagłosowali · Odrzucili”. Anonimowo — tylko licznik.
+- Głosowanie: jedno pytanie na ekran „Pytanie i/n”, odpowiedź tekstowa do 17 znaków, wysłanie po ostatnim pytaniu (wyjście wcześniej — nieuznane), „Dziękujemy za udział!”.
+- **ROZBIEŻNOŚĆ:** Zadania mają sekcje „Do zrobienia” i „Zrobione” (zwinięte, 5 dni), nie „aktualne/archiwalne”; akcje „Głosuj”, „Odrzuć” („Ankieta zniknie z Twojej listy.”).
+- Podliczanie (osobny krok, potem „Zatwierdź”): tekstowa — przeciąganie łączy odpowiedzi („Połącz z…” na dotyku), poprawka literówki, „Usuń”, „Scal identyczne”, „Zmień wybór w remisie”, „Cofnij”/„Ponów”, liczniki „Odpowiedzi: n (wymagane 3–6)”, „Pełne ankiety: n”; poprawki zapisywane. Punktowa — podgląd (poniżej 4% szare). Koniec: „Głosy podliczone. Gra gotowa.”
+
+### Rozdz. 16 — Ustawienia gry (sprawdzone 2026-10-21)
+
+Strona `web/games/settings/`. Sekcje: „Drużyny”, „Wygląd”, „Dźwięk”, „Pytania — Ustawienia”, „Pytania — Finał”, „Pytania — Rundy”, „Ustawienia gry”.
+
+- Drużyny: „Nazwa drużyny A/B” (domyślnie „Drużyna A/B”, długość wg Wyświetlacza).
+- Wygląd: „Kolory” (drużyna A, B, Tło, Kolor kropki; HEX + R/G/B), „Motyw” Klasyczny/Nowoczesny, „Logo”, „Logo prowadzącego” Piksele/Źródło; „Podgląd wyświetlacza”, „Podgląd prowadzącego”.
+- Dźwięk: 10 dźwięków, wariant „Klasyczny”/„Własny” (mp3/wav/ogg; outro do 120 s, intro/przejście/finał 30 s, reszta 5 s), ▶, głośność 0–100%.
+- Pytania — Ustawienia: „Czy gra zawiera finał?” Tak/Nie (domyślnie nie); „Tryb wyboru pytań finału” Losowe/Ręcznie (dokładnie 5); **„Tryb kolejności pytań rund” Losowe/„Kolejność”** (przeciąganie/strzałki).
+- Ustawienia gry: „Mnożniki rund” domyślnie **1, 1, 1, 2, 3** (ostatni powtarza się); „Próg punktów do finału” 300; „Cel finału (pkt)” 200; „Tryb ekranu po zakończeniu” Logo/Punkty/Kwota nagrody; „Kwota główna nagrody” 25 000; „Mnożnik nagrody (po finale)” 3.
+- **ROZBIEŻNOŚĆ:** brak „mnożnika finału” (finał zawsze ×1). „Mnożnik nagrody”: kwota = (punkty z rund + punkty finału) × mnożnik, + kwota główna po osiągnięciu celu (TVP: tylko punkty z rund × 3 zł).
+- Zapis tylko przyciskiem „Zapisz” („Niezapisane zmiany”); „Przywróć domyślne” globalnie i w sekcjach Wygląd/Dźwięk/Ustawienia gry.
+
+### Rozdz. 17 — Panel sterowania i urządzenia (sprawdzone 2026-10-21)
+
+- Kroki: Urządzenia → Podsumowanie ustawień → „Rozpoczęcie gry” → Runda N (pojedynek / rozgrywka / kradzież) → finał → „Koniec gry”.
+- Urządzenia: „Wyświetlacz”, „Prowadzący”, „Przycisk do pojedynku”, „Dźwięk”, „Tryb testowy”. Kod 6-cyfrowy, „Kopiuj”, „Udostępnij”; Wyświetlacz „Otwórz”; Prowadzący/Przycisk „Kod QR”, „QR na wyświetlaczu”. Łączenie: „Podłącz urządzenie” → „Podłącz kodem” / „Skanuj QR”. Opcje „Nie używaj tabletu prowadzącego”, „Przycisk fizyczny”. Wyświetlacz wymagany zawsze.
+- Udostępnienie urządzenia: e-mail/nazwa/znajomi → mail z linkiem; odbiorca: „Podłącz urządzenie → Urządzenia udostępnione dla mnie” (bez konta — przez maile).
+- Tryb testowy: wszystkie urządzenia w jednym oknie (duże okno).
+- Dźwięk: źródło „Panel sterowania” (odblokowuje się przy pierwszym kliknięciu) albo „Wyświetlacz” („Odblokuj dźwięk” na Wyświetlaczu, inaczej Dalej zablokowane).
+- Podsumowanie: podgląd ustawień, głośności, „Losuj ponownie”, „Zmień ustawienia”, „Gotowe — przejdź do rozgrywki”.
+- „Rozpocznij grę” (intro) → „Rozpocznij rundę”. Pojedynek: „Zatwierdź: {drużyna}” / „Ponów naciśnięcie” (przycisk fizyczny: wybór A/B); najwyżej punktowana od razu wygrywa, inaczej odpowiada druga drużyna, wyższa wygrywa, remis — pierwsza; dwa pudła → kolejna para.
+- Rozgrywka: kafle, „X” (n/3), „Oddaj kontrolę” (raz, przed pierwszym trafieniem); akcje dwuetapowe (zaznacz → potwierdź). „Rozpocznij odliczanie 3s” — upływ = X, inna akcja kasuje.
+- **ROZBIEŻNOŚĆ (nazwa):** przejęcie = „Kradzież” (jedna próba).
+- „Zakończ rundę” (bank × mnożnik) → odsłanianie reszty → „Przejdź do następnej rundy / do finału / do zakończenia gry”. Próg po rundzie; do finału drużyna z wyższym wynikiem (remis — A).
+- Finał: „Rozpocznij finał” → gracz 1, 5 pól, „Rozpocznij odliczanie (15s)” → przypisanie (z listy / „Nie ma na liście (0 pkt)” / „Brak odpowiedzi”) → „Pokaż odpowiedź”, „Pokaż punkty” → „Rozpocznij 2 rundę” → gracz 2 „(20s)”, „Powtórzenie” (dźwięk, 0 pkt). Timer jednorazowy, obowiązkowy. Po osiągnięciu celu „Zakończ finał”.
+- „Koniec gry” → „Zakończ grę” (outro + logo/punkty/kwota) → „Zacznij od nowa” / „Wróć do moich gier”.
+- Zmiana ustawień w trakcie: przy otwartym panelu — zablokowane; po jego zamknięciu nakładka „Gra w toku”: „Wróć” / „Zakończ rozgrywkę i otwórz ustawienia” (kończy grę, urządzenia trzeba podłączyć od nowa); blokada wygasa po 1 h bezczynności.
+
+### Rozdz. 19.6 — Kontakt (sprawdzone 2026-10-21)
+
+- „Kontakt” w stopce każdej strony → „Napisz do nas”: „Twój e-mail”, „Numer zgłoszenia (opcjonalnie)” (dopisuje do zgłoszenia), „Temat”, „Wiadomość” (min. 5 znaków), „Załączniki” (do 5 plików po 5 MB). Wynik: „Numer zgłoszenia: …”.
+
+### Rozdz. 10 — Znajomi (sprawdzone 2026-10-21)
+
+- Tylko konta zarejestrowane z potwierdzonym adresem. Pole „E-mail lub nazwa użytkownika” + „Zaproś” — trzeba podać **pełny** adres lub nazwę (bez podpowiedzi). Adres bez konta → podpowiedź „…możesz dodać tę osobę jako subskrybenta.” („Przejdź →”).
+- **ROZBIEŻNOŚĆ (nazwy):** zakładki „Zaproszenia” („Dodaj znajomego”, „Oczekujące i odrzucone” — wysłane) i „Znajomi” („Znajomi”, „Propozycje” — otrzymane, „Odrzucone przeze mnie”); na komputerze oba panele obok siebie.
+- Akcje: „Przyjmij”/„Odrzuć”; „Cofnij odmowę” (30 dni); wysłane: „Wyślij ponownie”, „Cofnij”; znajomy: „Usuń”. Po odmowie 30 dni bez ponownych zaproszeń w tej parze. Maile z zaproszeniem: co najmniej 5 dni odstępu, najwyżej 2 na 30 dni, tylko przy włączonych powiadomieniach.
+- Usunięcie znajomego: znika z listy (30 dni „Cofnij odmowę”), oczekujące zadania ankietowe i zaproszenia do baz anulowane; przyjęte bazy i urządzenia zostają („…można je cofnąć osobno.”); kopie zostają.
+- Znajomość daje: zaproszenia do ankiet, udostępnianie baz i urządzeń (urządzenia i bazy także bez znajomości — po adresie/nazwie), wysyłanie kopii gier i logo (tylko znajomym).
+
+### Rozdz. 11 — Wysyłanie kopii (sprawdzone 2026-10-21)
+
+- „Wyślij” w Moich grach i w Logo (nie dla gości) → „Wyślij znajomym” → „Wybierz znajomych” → „Wyślij”; „Wysłano do znajomych: n.”
+- **ROZBIEŻNOŚĆ:** „tylko szkice” dotyczy gier ankietowych; preparowana i logo — w każdym stanie. Nie wolno: gier ze Społeczności, demo, oczekujących kopii, zasobu otwartego w edycji; baz pytań nie wysyła się.
+- Odbiorca: mail „{nadawca} wysłał Ci kopię” („Zobacz kopię”), sekcja „Otrzymane kopie” (Akceptuj/Odrzuć) z „Od: …”; liczniki przy kartach. Kopia oczekująca wygasa po 5 dniach; po odrzuceniu ten sam zasób od tej osoby — dopiero po 30 dniach; oczekującej nie da się edytować.
+- „Historia wysyłek” w oknie: 30 dni, odbiorca i data; bez akcji i bez statusu przyjęcia. Cofnięcia brak (zgodne).
+
+### Rozdz. 13 — Gry Społeczności (sprawdzone 2026-10-21)
+
+- „Szukaj gry…” (tytuł i opis), „Język” (Wszystkie/Polski/English/Українська), „Sortowanie”: Polecane, Najlepiej oceniane, Najczęściej dodawane, Najnowsze, Tytuł A–Z; „Pokaż więcej”.
+- Karta: język, „W Twoich grach”, tytuł, „od: autor” albo złote „Familiada”, opis, „n dodano”, gwiazdki / „Brak ocen”. Szczegóły: pytania z odpowiedziami i punktami.
+- Ocena 1–5 („Oceń tę grę:”), zmienialna, tylko zalogowani i nie własne; średnia liczona od 3 ocen.
+- „Dodaj do moich gier” → karta „Gry Społeczności” w Moich grach (bez edycji/eksportu/powielania/wysyłania). „Usuń z moich gier” — tylko własna kopia (zgodne).
+- Zgłoszenie: „Moje wysłane” → „Dodaj nową do Gier Społeczności”: „Wybierz grę” (gotowa preparowana albo zamknięta ankieta, ≥10 pytań, własna, nie demo), „Tytuł” (do 120), „Opis” (do 500), „Język gry”, zgoda „Rozumiem, że po wysłaniu zapis gry jest nieedytowalny.”. Zamknięta ankieta trafia jako preparowana (tylko odpowiedzi z punktami). Jedno aktywne zgłoszenie na grę.
+- Statusy: „Oczekuje na weryfikację”, „Opublikowana”, „Odrzucona” („Powód: …”, znika po 5 dniach, można zgłosić ponownie), „Wycofana”. „Wycofaj” tylko przy opublikowanej; kopie u innych zostają („W Twoich grach · Wycofana”) — zgodne.
+
+### Rozdz. 14 — Subskrybenci i maile (sprawdzone 2026-10-21)
+
+- Subskrybent = osoba **bez konta**, tylko adres e-mail („Osoby bez konta, które chcą otrzymywać Twoje ankiety.”); adresu z kontem nie da się dodać. Dostaje ankiety i urządzenia.
+- „Adres e-mail” + „Zaproś” → mail „Zaproszenie do subskrypcji od użytkownika …” („Zobacz zaproszenie”). Limity jak u znajomych (5 dni, 2 na 30 dni, 30 dni po odmowie).
+- Zakładki „Zaproszenia” („Oczekuje”/„Odrzucono”, 5 dni) i „Subskrybenci”; „Ma konto — przejdź do Znajomych.” (wtedy automatyczna propozycja znajomości). Akcje „Wyślij ponownie”, „Usuń” (kasuje oczekujące zadania ankietowe).
+- Maile subskrybenta: zaproszenie/przypomnienie, zaproszenia do ankiet, udostępnione urządzenia; w każdym stopka z „Moje powiadomienia” (link 30 dni) i „Wypisz się ze wszystkich maili Familiada”.
+- `/mails/` bez linku: „Twoje maile w Familiadzie” → adres → „Wyślij link” (ważny 15 min, jednorazowy) → „Otwórz moje powiadomienia”. Adres z kontem → „Zaloguj się”. Sesja do 24 h (1 h bezczynności).
+- Centrum: „Moje powiadomienia”, „Powiadomienia są włączone” + „Zrezygnuj”; „Subskrypcje” („Czeka na akceptację” Akceptuj/Odrzuć; aktywne „Wypisz się” — nowe zaproszenie po 30 dniach); „Zadania” (ankiety „Zagłosuj”/„Odrzuć”, urządzenia „Podłącz urządzenie”).
+- „Zrezygnuj”: wyłącza wszystkie maile, anuluje subskrypcje, ankiety i urządzenia; „Przywróć powiadomienia” nie przywraca dawnych zaproszeń.
+
 ## Błędy znalezione przy weryfikacji (do naprawy przed opisem)
 
 1. Eksplorator: `Delete` (i `Esc`) obsługiwane przed blokadą pól tekstowych — `Delete` w wyszukiwarce/oknie pytania przy zaznaczeniu otwiera „Usunąć …?” (`web/bases/explorer/js/actions.js` ~4639–4690).
@@ -132,3 +217,13 @@ Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
 4. Rejestracja: nazwa z części adresu przed „@” zajęta/zarezerwowana → profil się nie tworzy (do potwierdzenia testem).
 5. „Przywróć pliki demo”: usuwa zmienione materiały demo bez ostrzeżenia w oknie.
 6. Martwe komunikaty „Nie można eksportować gry z otwartą ankietą” (`pl.js` ~2596/2599).
+7. Podliczanie: okna potwierdzenia mówią o progu 3%, algorytm liczy od 4% (`pl.js` ~979/984 i EN/UK).
+8. Ankieta punktowa: odpowiedź <4% dostaje 0 pkt i prawdopodobnie pojawia się na planszy jako kafel z 0 pkt (`game-validate.js` `loadAnswers`) — do sprawdzenia.
+9. Oczekująca kopia gry/logo da się przyjąć po usunięciu znajomego (`_copy_decide` nie sprawdza znajomości) — do decyzji.
+10. Usunięcie subskrybenta pokazuje tekst znajomych o bazach i urządzeniach (`pl.js` ~5152).
+11. Literówka w finale: „Dźwiek powtórzenia”.
+
+## Do decyzji użytkownika (nie blokuje pisania)
+
+- Domyślne mnożniki rund w serwisie 1, 1, 1, 2, 3, a w obecnym regulaminie TVP 1, 2, 3 (+ dogrywka ×3) — zostawić czy zmienić domyślne?
+- „Mnożnik nagrody (po finale)” mnoży także punkty z finału; w TVP ×3 dotyczy tylko punktów z rund — zostawić czy dopasować?
