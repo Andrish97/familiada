@@ -146,7 +146,13 @@ module.exports = [
   { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
   // Pusty stan (wspólny .empty-state): wyszukiwanie bez wyników w siatce kafli i na liście wierszy.
   { id: "empty-state-games", category: "Dodatkowe", title: "Pusty stan — Moje gry, wyszukiwanie bez wyników", path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
-    steps: [async (view) => { await view.locator(".games-bottom .searchText").first().fill("zzzz"); await view.waitForTimeout(500); }] },
+    steps: [async (view) => {
+      // Dłuższe napisy (UK) zwijają pasek do ikon: wtedy wyszukiwanie otwiera lupa.
+      const open = view.locator(".games-bottom .list-search-open");
+      if (await open.isVisible()) { await open.click(); await view.waitForTimeout(300); }
+      await view.locator(".games-bottom .searchText:visible, .searchText:visible").first().fill("zzzz");
+      await view.waitForTimeout(500);
+    }] },
   { id: "empty-state-friends", category: "Dodatkowe", title: "Pusty stan — Znajomi, wyszukiwanie bez wyników", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0, devices: ["desktop"],
     steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("zzzz"); await view.waitForTimeout(400); }] },
   { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
