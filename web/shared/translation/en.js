@@ -461,7 +461,7 @@ const en = {
     hint: "If the link expired, log in again or request a password reset.",
     sessionInfo: "You have an active session — it doesn't block link confirmation.",
     linkAlreadyUsed: "This link has already been used.",
-    linkAlreadyUsedHint: "If this is an email change, confirm the second link from the other inbox.",
+    linkAlreadyUsedHint: "If this is an email change, check in account settings whether it is already complete.",
     linkInvalid: "The link is invalid or expired.",
     emailChangeCancelled: "Email address change was cancelled.",
     emailChangeCancelledHint: "The confirmation link is no longer valid. You can start a new email change in account settings.",

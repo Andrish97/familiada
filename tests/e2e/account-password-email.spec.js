@@ -197,10 +197,16 @@ async function openConfirmLink(browser, link) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(link, { waitUntil: "domcontentloaded" });
-  const status = page.locator("#status");
-  await expect(status).not.toHaveText(/^\s*$|aktywuj|sprawdzam/i, { timeout: 20_000 });
-  await page.waitForTimeout(1_500);
-  const text = (await status.textContent()) || "";
+  // Po sukcesie strona po chwili sama przechodzi dalej -- zapamiętujemy ostatni
+  // komunikat, zanim #status zniknie.
+  const final = /gotowe|nie udało|anulowana|już użyty|nieprawidłowy|zapisane|brak kodu|potwierdzone/i;
+  let text = "";
+  await expect.poll(async () => {
+    const now = await page.locator("#status").textContent({ timeout: 500 }).catch(() => null);
+    if (now) text = now;
+    return final.test(text);
+  }, { timeout: 30_000, intervals: [100] }).toBe(true);
+  console.log("[e2e-diag] link potwierdzajacy:", text.trim());
   await context.close();
   return text;
 }

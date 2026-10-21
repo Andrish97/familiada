@@ -474,7 +474,7 @@ const pl = {
     hint: "Jeśli link wygasł, spróbuj zalogować się ponownie albo poproś o reset hasła.",
     sessionInfo: "Masz aktywną sesję — nie przeszkadza w potwierdzeniu linków.",
     linkAlreadyUsed: "Ten link został już użyty.",
-    linkAlreadyUsedHint: "Jeśli to zmiana e-maila, potwierdź drugi link z drugiej skrzynki.",
+    linkAlreadyUsedHint: "Jeśli to zmiana e-maila, sprawdź w ustawieniach konta, czy jest już zakończona.",
     linkInvalid: "Link jest nieprawidłowy lub wygasł.",
     emailChangeCancelled: "Zmiana adresu e-mail została anulowana.",
     emailChangeCancelledHint: "Link potwierdzający jest już nieważny. Możesz zainicjować nową zmianę w ustawieniach konta.",
