@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
+\restrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10135,12 +10135,12 @@ BEGIN
       AND (
         (g.settings->'game'->'advanced' IS NOT NULL
           AND g.settings->'game'->'advanced' <> '{}'::jsonb
-          AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+          AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"money","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
         OR (g.settings->'display'->'colors' IS NOT NULL
           AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
         OR (g.settings->'display'->>'theme' IS NOT NULL)
         OR (g.settings->'display'->>'logoId' IS NOT NULL)
-        OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+        OR (g.settings->'game'->>'hasFinal' = 'false')
         OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
         OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
         OR EXISTS (
@@ -11001,12 +11001,12 @@ BEGIN
         AND (
           (g.settings->'game'->'advanced' IS NOT NULL
             AND g.settings->'game'->'advanced' <> '{}'::jsonb
-            AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+            AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"money","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
           OR (g.settings->'display'->'colors' IS NOT NULL
             AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
           OR (g.settings->'display'->>'theme' IS NOT NULL)
           OR (g.settings->'display'->>'logoId' IS NOT NULL)
-          OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+          OR (g.settings->'game'->>'hasFinal' = 'false')
           OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
           OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
           OR EXISTS (
@@ -19172,13 +19172,19 @@ CREATE FUNCTION "public"."storage_cleanup_kick"() RETURNS "void"
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare
-  v_base text;
-  v_anon text;
+  v_base   text;
+  v_anon   text;
+  v_secret text;
 begin
   select decrypted_secret into v_base from vault.decrypted_secrets where name = 'project_url';
   select decrypted_secret into v_anon from vault.decrypted_secrets where name = 'anon_key';
+  select btrim(decrypted_secret) into v_secret from vault.decrypted_secrets where name = 'mail_worker_secret';
   if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
     raise warning 'storage_cleanup_kick: brak project_url/anon_key w vault';
+    return;
+  end if;
+  if coalesce(v_secret, '') = '' then
+    raise warning 'storage_cleanup_kick: brak mail_worker_secret w vault';
     return;
   end if;
   perform net.http_post(
@@ -19186,7 +19192,8 @@ begin
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || v_anon,
-      'apikey', v_anon
+      'apikey', v_anon,
+      'X-Internal-Secret', encode(extensions.hmac('storage-cleanup', v_secret, 'sha256'), 'hex')
     ),
     body := '{}'::jsonb
   );
@@ -20393,18 +20400,6 @@ CREATE TABLE "public"."email_unsub_tokens" (
 
 
 --
--- Name: example_table; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."example_table" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "name" "text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "notes" "text"
-);
-
-
---
 -- Name: game_gen_queue; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -20610,18 +20605,6 @@ CREATE TABLE "public"."guest_migration_staging" (
     "pending_username" "text",
     "pending_password_hash" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-
---
--- Name: konta_do_stworzenia; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."konta_do_stworzenia" (
-    "new_user_id" "uuid",
-    "user_username" "text",
-    "user_email" "text",
-    "encrypted_pw" "text"
 );
 
 
@@ -21935,14 +21918,6 @@ ALTER TABLE ONLY "public"."email_unsub_tokens"
 
 
 --
--- Name: example_table example_table_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."example_table"
-    ADD CONSTRAINT "example_table_pkey" PRIMARY KEY ("id");
-
-
---
 -- Name: friendships friendships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -22851,13 +22826,6 @@ CREATE INDEX "email_intents_cooldown_idx" ON "public"."email_intents" USING "btr
 --
 
 CREATE INDEX "email_intents_status_idx" ON "public"."email_intents" USING "btree" ("status");
-
-
---
--- Name: example_table_created_at_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "example_table_created_at_idx" ON "public"."example_table" USING "btree" ("created_at" DESC);
 
 
 --
@@ -25902,12 +25870,6 @@ ALTER TABLE "public"."email_providers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."email_unsub_tokens" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: example_table; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."example_table" ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: friendships; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -26077,12 +26039,6 @@ ALTER TABLE "public"."guest_migration_staging" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "guest_migration_staging_service_only" ON "public"."guest_migration_staging" TO "authenticated" USING (false) WITH CHECK (false);
 
-
---
--- Name: konta_do_stworzenia; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."konta_do_stworzenia" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: mail_center_links; Type: ROW SECURITY; Schema: public; Owner: -
@@ -27040,5 +26996,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qhDjNj7mqpYep4jZqSy8N04WPzskvy5Iv73tNXMKb5elJflMsfx7gw7SRqjfrxu
+\unrestrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
 
