@@ -5,10 +5,10 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-21T13462";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-21T13462";
-import { rt } from "./realtime.js?v=v2026-10-21T13462";
-import { icon } from "./icons.js?v=v2026-10-21T13462";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-21T13533";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-21T13533";
+import { rt } from "./realtime.js?v=v2026-10-21T13533";
+import { icon } from "./icons.js?v=v2026-10-21T13533";
 
 
 const TAB_ID_KEY = "familiada:tabId";
@@ -446,47 +446,75 @@ export async function acquireResourceLock({ resourceType, resourceId, context = 
 }
 
 /**
- * Atomowo z perspektywy klienta zajmuje uporządkowany zestaw blokad. Stała
- * kolejność usuwa deadlock dwóch kart; porażka zwalnia wszystko już zajęte.
- * `ok`/`reason` na zwróconym lease agregują stan wszystkich trzymanych
- * blokad składowych (patrz `acquireResourceLock`).
+ * Atomowo zajmuje zestaw blokad jednym wywołaniem bazy (acquire_edit_locks,
+ * migracja 431): stała kolejność usuwa deadlock dwóch kart, odmowa na
+ * którymkolwiek zasobie wycofuje całość i zwraca jej wynik (`error`,
+ * `resource`). `ok`/`reason` na zwróconym lease jak w `acquireResourceLock`
+ * — odnowienie całego zestawu co HEARTBEAT_MS.
  */
-export async function acquireResourceLocks(resources, { context = null } = {}) {
+export async function acquireResourceLocks(resources, { context = null, mode = "exclusive" } = {}) {
   const unique = new Map();
   for (const item of (resources || [])) {
     if (!item?.resourceType || !item?.resourceId) continue;
-    unique.set(`${item.resourceType}:${item.resourceId}`, item);
+    unique.set(`${item.resourceType}:${item.resourceId}`, { type: item.resourceType, id: item.resourceId });
   }
-  const ordered = Array.from(unique.values()).sort((a, b) =>
-    `${a.resourceType}:${a.resourceId}`.localeCompare(`${b.resourceType}:${b.resourceId}`)
-  );
-  const leases = [];
-  for (const item of ordered) {
-    let lease;
-    try {
-      lease = await acquireResourceLock({ ...item, context: item.context ?? context });
-    } catch (error) {
-      for (const held of leases.reverse()) held.release();
-      throw error;
-    }
-    if (!lease?.ok) {
-      for (const held of leases.reverse()) held.release();
-      return lease || { ok: false, error: "locked" };
-    }
-    leases.push(lease);
-  }
-  return {
-    get ok() {
-      return leases.every((l) => l.ok);
-    },
-    get reason() {
-      const lost = leases.find((l) => !l.ok);
-      return lost ? lost.reason : null;
-    },
-    release() {
-      for (const lease of leases.reverse()) lease.release();
-    },
+  const list = Array.from(unique.values());
+  if (!list.length) return { ok: true, reason: null, release() {} };
+
+  // Jedno zapytanie na cały zestaw (migracja 431): stała kolejność i „wszystko
+  // albo nic” po stronie bazy; odnowienie i zwolnienie też jednym wywołaniem
+  // (duży folder w menedżerze bazy to setki zasobów).
+  const acquireAll = async () => {
+    void refreshAccessToken();
+    const { data, error } = await sb().rpc("acquire_edit_locks", {
+      p_resources: list, p_tab_id: getTabId(), p_context: context ?? null, p_mode: mode,
+    });
+    if (error) throw error;
+    return data;
   };
+  const first = await acquireAll();
+  if (!first?.ok) return first || { ok: false, error: "locked" };
+
+  let released = false;
+  const lease = { ok: true, reason: null };
+  const heartbeatTimer = setInterval(async () => {
+    const result = await acquireAll().catch((error) => {
+      console.warn("[resource-lock] batch heartbeat failed:", error);
+      return null;
+    });
+    if (result?.error === "gone" || result?.error === "forbidden" || result?.error === "locked") {
+      lease.ok = false;
+      lease.reason = result.error;
+      clearInterval(heartbeatTimer);
+    }
+  }, HEARTBEAT_MS);
+
+  // Zasoby tych blokad (pytania, foldery, tagi) nie mają czekających okien
+  // (guardResourceLocks dotyczy gier, logo i całej bazy) — bez RELEASED.
+  const body = () => ({ p_resources: list, p_tab_id: getTabId() });
+  const release = () => {
+    if (released) return;
+    released = true;
+    clearInterval(heartbeatTimer);
+    window.removeEventListener("pagehide", releaseOnHide);
+    void sb().rpc("release_edit_locks", body()).then(() => {}, () => {});
+  };
+  const releaseOnHide = () => {
+    if (!released && lastAccessToken) {
+      try {
+        fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_locks`, {
+          method: "POST",
+          keepalive: true,
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${lastAccessToken}` },
+          body: JSON.stringify(body()),
+        }).catch(() => {});
+      } catch {}
+    }
+    release();
+  };
+  window.addEventListener("pagehide", releaseOnHide);
+  lease.release = release;
+  return lease;
 }
 
 /**

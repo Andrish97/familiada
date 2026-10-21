@@ -151,6 +151,10 @@ function buildDb(lang, extras = {}) {
   c.bases.tags.forEach(([name, color], i) => tables.qb_tags.push({ id: id("8500", i + 1), base_id: mainBase, name, color, ord: i + 1, created_at: daysAgo(30) }));
   const folders = [...new Set([...p.folders, ...c.bases.folders.slice(0, 5)])];
   folders.forEach((name, i) => tables.qb_categories.push({ id: id("8600", i + 1), base_id: mainBase, parent_id: null, name, ord: i + 1, created_at: daysAgo(30), updated_at: daysAgo(30) }));
+  // podfoldery (drzewo w oknie „Przenieś do”): folder 4 > Śniadania, Desery > Na słodko
+  const [sub1, sub2, sub3] = c.bases.subfolders;
+  [[90, 4, sub1, 1], [91, 4, sub2, 2], [92, 91, sub3, 1]].forEach(([n, parent, name, ord]) =>
+    tables.qb_categories.push({ id: id("8600", n), base_id: mainBase, parent_id: id("8600", parent), name, ord, created_at: daysAgo(30), updated_at: daysAgo(30) }));
   // Pytania z panelu w pierwszych folderach, dalej pula content.cjs.
   const baseQuestions = [...p.gameQuestions.slice(1, 7), ...c.questions];
   baseQuestions.forEach(([text, answers], i) => {
@@ -247,8 +251,34 @@ function buildDb(lang, extras = {}) {
     get_admin_stats: null, get_retention_stats: null, stats_excluded_list: [],
     // Control: wszystkie urządzenia na miejscu (migracja 397).
     control_devices_snapshot: `fn:() => ({ ok: true, server_time: new Date().toISOString(), devices: Object.fromEntries(["display", "host", "buzzer"].map((k) => [k, { primary_online: true, audio_unlocked: true, visibility: "visible", focused: true, waiting_count: 0, last_seen_at: new Date().toISOString(), meta: { page_visibility: "visible" } }])) })`,
+    // Kosz menedżera bazy (migracja 428): foldery spoza głównej bazy demo
+    // i pytanie z panelu, różny wiek wpisów (licznik dni, ostrzeżenie ≤ 3).
+    qb_trash_list: `fn:() => ${JSON.stringify([
+      [c.bases.folders[5], "folder", 2, 4, 1], [p.gameQuestions[0][0], "question", 12, 1, 0], [c.bases.folders[6], "folder", 27, 7, 2],
+    ].map(([label, kind, age, nq, nf], i) => ({ id: id("8800", i + 1), kind, label, item_id: id("8801", i + 1), origin_id: null, n_questions: nq, n_folders: nf, age })))}
+      .map(({ age, ...it }) => ({ ...it, deleted_at: new Date(Date.now() - age * 864e5 - 36e5).toISOString(), expires_at: new Date(Date.now() + (30 - age) * 864e5 - 36e5).toISOString() }))`,
+    // E22 (430): cała zawartość bazy menedżera jednym zapytaniem
+    qb_base_content: `fn:(args, db) => {
+      const id = args.p_base_id;
+      const byOrd = (a, b) => (a.ord || 0) - (b.ord || 0) || String(a.id).localeCompare(String(b.id));
+      const questions = db.tables.qb_questions.filter((q) => q.base_id === id).sort(byOrd);
+      const qids = new Set(questions.map((q) => q.id));
+      return {
+        categories: db.tables.qb_categories.filter((c) => c.base_id === id).sort(byOrd),
+        tags: db.tables.qb_tags.filter((t) => t.base_id === id).sort(byOrd),
+        questions,
+        questionTags: db.tables.qb_question_tags.filter((l) => qids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id })),
+      };
+    }`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
+    // E22 (431): blokady zbiorcze
+    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true },
+    // E22 (430): przypisania tagów wskazanych pytań (okno tagów)
+    qb_question_tag_links: `fn:(args, db) => {
+      const ids = new Set(args.p_question_ids || []);
+      return db.tables.qb_question_tags.filter((l) => ids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id }));
+    }`,
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
     badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [
@@ -331,6 +361,7 @@ function buildDb(lang, extras = {}) {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
       "question_base_shares.question_bases": { local: "base_id", one: true },
+      "qb_question_tags.qb_questions": { local: "question_id", one: true },
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
