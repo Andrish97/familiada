@@ -84,12 +84,13 @@ test("hasFinal=true + finalQuestionsMode='pick' + potwierdzone ale niepełne (4/
   assert.equal(store.state.step, "r_gameEnd");
 });
 
-test("resolveEndScreenMode: rozpoznaje logo/points/money, fallback na winEnabled dla starych gier", () => {
+test("resolveEndScreenMode: rozpoznaje logo/points/money, winEnabled starych gier, domyślnie kwota", () => {
   assert.equal(resolveEndScreenMode({ endScreenMode: "logo" }), "logo");
   assert.equal(resolveEndScreenMode({ endScreenMode: "points" }), "points");
   assert.equal(resolveEndScreenMode({ endScreenMode: "money" }), "money");
   assert.equal(resolveEndScreenMode({ winEnabled: true }), "points");
-  assert.equal(resolveEndScreenMode({}), "logo");
+  assert.equal(resolveEndScreenMode({ winEnabled: false }), "logo");
+  assert.equal(resolveEndScreenMode({}), "money");
 });
 
 test("resolveRoundsEndScreen: remis zawsze pokazuje logo, niezależnie od endScreenMode", () => {

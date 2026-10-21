@@ -1648,7 +1648,7 @@ export default {
 
 <h4 class="m-h3" id="r16-5-1">16.5.1 Question settings</h4>
 <p class="m-p">The <span class="m-btn">Questions — Settings</span> section has two parts.</p>
-<p class="m-p"><span class="m-strong">Finale.</span> The <span class="m-strong">Does the game include a finale?</span> switch has two positions: <span class="m-btn">Yes</span> and <span class="m-btn">No</span> (default <span class="m-strong">No</span>). Without a finale, the game ends after the rounds. When you choose <span class="m-strong">Yes</span>, the <span class="m-strong">Finale questions mode</span> appears:</p>
+<p class="m-p"><span class="m-strong">Finale.</span> The <span class="m-strong">Does the game include a finale?</span> switch has two positions: <span class="m-btn">Yes</span> and <span class="m-btn">No</span> (default <span class="m-strong">Yes</span>). Without a finale, the game ends after the rounds. When you choose <span class="m-strong">Yes</span>, the <span class="m-strong">Finale questions mode</span> appears:</p>
 <ul class="m-ul">
 <li><span class="m-btn">Random</span> (default) — before the game starts, the system draws 5 questions from the questions meant for the rounds and removes them from the rounds;</li>
 <li><span class="m-btn">Manual</span> — you choose exactly 5 questions yourself in the <span class="m-btn">Questions — Finale</span> section (<a class="m-ref" href="#r16-5-2">chapter 16.5.2</a>).</li>
@@ -1694,7 +1694,7 @@ export default {
 <ul class="m-ul">
 <li><span class="m-strong">Logo</span> — the Display shows the game logo;</li>
 <li><span class="m-strong">Points</span> — the Display shows the winning team's score (after a finale — together with the points won in the finale);</li>
-<li><span class="m-strong">Prize amount</span> — available only in a game with a finale. After the finale, the Display shows an amount: the winning team's points together with the finale points, multiplied by the <span class="m-strong">Prize multiplier</span>, and when the <span class="m-strong">Finale target</span> is reached — increased by the <span class="m-strong">Main prize amount</span>. Example with the default values: 320 points and the target reached gives 320 × 3 + 25,000 = 25,960. The amount and multiplier fields appear only after you choose this option.</li>
+<li><span class="m-strong">Prize amount</span> (default) — available only in a game with a finale. After the finale, the Display shows an amount: the winning team's points together with the finale points, multiplied by the <span class="m-strong">Prize multiplier</span>, and when the <span class="m-strong">Finale target</span> is reached — increased by the <span class="m-strong">Main prize amount</span>. Example with the default values: 320 points and the target reached gives 320 × 3 + 25,000 = 25,960. The amount and multiplier fields appear only after you choose this option.</li>
 </ul>
 <p class="m-p">When a game without a finale ends in a draw, the Display always shows the logo.</p>
 <p class="m-p">The <span class="m-btn"><i class="ico" data-icon="refresh"></i>Restore defaults</span> button at the bottom of the section restores the default values of these settings only.</p>

@@ -13,8 +13,11 @@
 export function resolveEndScreenMode(settings) {
   const mode = settings?.endScreenMode;
   if (mode === "logo" || mode === "points" || mode === "money") return mode;
-  // stary klucz kompatybilności (winEnabled) — jak w dzisiejszym kodzie
-  return settings?.winEnabled === true ? "points" : "logo";
+  // stary klucz kompatybilności (winEnabled); bez żadnego ustawienia —
+  // kwota (domyślne od 2026-10-21, decyzja użytkownika)
+  if (settings?.winEnabled === true) return "points";
+  if (settings?.winEnabled === false) return "logo";
+  return "money";
 }
 
 /**

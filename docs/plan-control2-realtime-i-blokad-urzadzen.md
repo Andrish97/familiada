@@ -75,6 +75,12 @@ Decyzje:
      `logo_familiada.json`) i „Źródło” (napis FAMILIADA). Bez ustawienia
      domyślny tryb to „Źródło”; gry z zapisanym `hostLogoMode: "pixel"`
      zostają przy pikselach.
+10. **Domyślnie gra z finałem i ekranem kwoty (decyzja użytkownika
+    2026-10-21).** Bez zapisanego ustawienia: „Czy gra zawiera finał?” = Tak,
+    ekran końcowy = Kwota nagrody (`gameStateShape.js`, Ustawienia gry,
+    `resolveEndScreenMode`). Dotyczy też istniejących gier bez zapisu
+    (produkcja: 365 gier preparowanych bez `hasFinal`, 639 bez
+    `endScreenMode`); jawnie zapisane wartości bez zmian.
 
 ## Cel
 

@@ -5819,7 +5819,7 @@ const ADVANCED_SETTINGS_DEFAULTS = {
   roundMultipliers: [1, 1, 1, 2, 3],
   finalMinPoints: 300,
   finalTarget: 200,
-  endScreenMode: "logo",
+  endScreenMode: "money",
   finalPrizeMultiplier: 3,
   mainPrizeAmount: 25000,
 };

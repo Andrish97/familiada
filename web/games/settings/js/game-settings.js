@@ -45,14 +45,14 @@ const DEFAULT_SETTINGS = {
     hostLogoMode: "source",
   },
   game: {
-    hasFinal: null,
+    hasFinal: true,
     finalQuestionsMode: "random",
     roundsQuestionsMode: "random",
     advanced: {
       roundMultipliers: [1, 1, 1, 2, 3],
       finalMinPoints: 300,
       finalTarget: 200,
-      endScreenMode: "logo",
+      endScreenMode: "money",
       finalPrizeMultiplier: 3,
       mainPrizeAmount: 25000,
     },
@@ -1534,7 +1534,7 @@ function initDragSort(listEl, getItems, setItems, reRender) {
 function renderGame() {
   const adv = localSettings.game.advanced;
   const hasFinal = localSettings.game.hasFinal === true;
-  const endMode = adv.endScreenMode || "logo";
+  const endMode = adv.endScreenMode || "money";
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
