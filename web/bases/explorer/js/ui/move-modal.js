@@ -5,11 +5,11 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-21T07274";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07274";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07274";
-import { esc, treeToggleHtml, treeIconName, treeRowInner } from "./tree-row.js?v=v2026-10-21T07274";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07274";
+import { normalizeText } from "../data/listing.js?v=v2026-10-21T07421";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07421";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07421";
+import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-21T07421";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07421";
 
 const ROOT = "root";
 
@@ -41,11 +41,12 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   // Ten sam wygląd co drzewo w lewym panelu (ui/tree-row.js, decyzja
   // użytkownika 2026-10-21); wybrany folder zaznaczony jak na liście.
   const countOf = (key) => (key === ROOT ? d.questionById.size : d.subtreeQuestionIds(key).length);
-  const rowHtml = (key, label, { depth = 0, canToggle = false, isOpen = false, path = "" } = {}) => {
+  const rowHtml = (key, label, { depth = 0, canToggle = false, isOpen = false, path = "", lines = [] } = {}) => {
     const isRoot = key === ROOT;
     const blocked = !isRoot && blockedIds.has(key);
     const cls = ["tree-row", "moveRow", isRoot ? "is-root" : "", picked === key ? "is-selected is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
     const inner = treeRowInner({
+      lines,
       toggle: path ? "" : treeToggleHtml(key, { canToggle, isOpen }),
       iconName: treeIconName(isRoot ? "root" : "cat", isOpen),
       label, path, count: countOf(key),
@@ -55,18 +56,20 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
 
   function treeHtml() {
     const out = [];
-    const walk = (parentId, depth) => {
-      for (const f of d.childFolders(parentId)) {
+    const walk = (parentId, depth, cont) => {
+      const kids = d.childFolders(parentId);
+      kids.forEach((f, i) => {
+        const isLast = i === kids.length - 1;
         const canToggle = d.childFolders(f.id).length > 0;
         const isOpen = canToggle && open.has(f.id);
-        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, canToggle, isOpen }));
-        if (isOpen) walk(f.id, depth + 1);
-      }
+        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, canToggle, isOpen, lines: treeLines(cont, isLast) }));
+        if (isOpen) walk(f.id, depth + 1, [...cont, !isLast]);
+      });
     };
     const rootKids = d.childFolders(null).length > 0;
     const rootOpen = rootKids && open.has(ROOT);
     out.push(rowHtml(ROOT, t("baseExplorer.tree.root"), { canToggle: rootKids, isOpen: rootOpen }));
-    if (rootOpen) walk(null, 1);
+    if (rootOpen) walk(null, 1, []);
     return out.join("");
   }
 

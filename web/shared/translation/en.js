@@ -4337,6 +4337,9 @@ const en = {
       results: "Results",
       placeholder: "Search...",
       clear: "Clear",
+      sheetTitle: "Search",
+      done: "Done",
+      sheetHelp: "Question or folder name; #tag adds a tag filter.",
     },
     toolbar: {
       groupHistory: "History",

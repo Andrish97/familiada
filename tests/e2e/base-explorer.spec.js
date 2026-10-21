@@ -1144,18 +1144,32 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.waitForLoadState("networkidle");
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
 
+      // telefon: pole w pasku otwiera okno „Szukaj” (E22 etap 9) z tym samym polem
+      await page.locator("#searchBox").click();
+      await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#searchSheetBody #searchText")).toBeFocused();
+
       // klawiatura ekranowa: same zdarzenia input (insertText nie wysyła keydown);
       // bez polskich znaków i małymi literami też pasuje
-      await page.locator("#searchText").click();
       await page.keyboard.insertText("#latwe ");
       await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
       await expect(page.locator("#searchText")).toHaveValue("");
       await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
 
-      // klik w tabletkę zdejmuje filtr
-      await page.locator("#searchChips .chip").click();
+      // „Gotowe” zamyka okno, tabletka zostaje w pasku
+      await page.locator("#searchSheetDone").click();
+      await expect(page.locator("#searchOverlay")).toBeHidden();
+      await expect(page.locator("#toolbar #searchChips .chip")).toHaveCount(1);
+
+      // w oknie klik w tabletkę zdejmuje filtr
+      await page.locator("#searchBox").click();
+      await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
+      await page.locator("#searchSheetBody #searchChips .chip").click();
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 10000 });
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#searchOverlay")).toBeHidden();
+      await expect(page.locator("#toolbar #searchBox")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }

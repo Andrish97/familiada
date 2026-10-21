@@ -34,6 +34,14 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     na liście po prawej (niebieskie tło + obrys), bieżący folder — samo
     niebieskie tło; bez złotego akcentu. Pole wyszukiwania w oknie
     „Przenieś do” na pełną szerokość.
+  - **Poprawki 2026-10-21 (użytkownik):** zaznaczenie w lewym panelu na
+    całą szerokość panelu, jak wiersze listy po prawej, i jednolite
+    wszędzie; linie drzewa kończą się na ostatnim dziecku (└), nie są
+    ucięte; wyszukiwarka na telefonie jako okno (stuknięcie w pole otwiera
+    okno z polem, tabletkami i podpowiedziami), na komputerze szersza
+    w prawo i w jednej linii (tabletki przewijane w poziomie); nowa ikona
+    przycisku proponowanych kategorii; plakietki liczników w obrębie
+    przycisku (nie wchodzą pod pasek wyszukiwania).
   - **Do decyzji (zastąpione wyżej) — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną

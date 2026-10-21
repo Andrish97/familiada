@@ -159,6 +159,24 @@ module.exports = [
     steps: [async (view) => { await view.locator('[data-left-view="tags"]:visible').click(); await view.locator('#tags .row[data-kind="tag"]').first().click(); await view.waitForTimeout(500); }] },
   { id: "base-explorer-left-types", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok proponowanych kategorii", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('[data-left-view="types"]:visible').click(); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-search-sheet", devices: ["phone"], category: "Dodatkowe", title: "Eksplorator bazy — telefon: okno Szukaj (tabletki tagów i podpowiedzi)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => {
+      await view.locator("#searchBox").click();
+      await view.locator("#searchOverlay.sheet-active").waitFor({ timeout: 5000 });
+      const names = await view.evaluate(() => [...document.querySelectorAll('#tags .row[data-kind="tag"] .title-text')].map((el) => el.textContent.trim().replace(/^#/, "")));
+      for (const n of names.slice(0, 3)) await view.locator("#searchText").pressSequentially(`#${n} `);
+      await view.locator("#searchText").pressSequentially("#");
+      await view.waitForTimeout(500);
+    }] },
+  { id: "base-explorer-search-chips", category: "Dodatkowe", title: "Eksplorator bazy — wiele tabletek tagów w pasku (jedna linia)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => {
+      const names = await view.evaluate(() => [...document.querySelectorAll('#tags .row[data-kind="tag"] .title-text')].map((el) => el.textContent.trim().replace(/^#/, "")).filter((n) => !n.includes(" ")));
+      if (await view.locator("#searchOverlay").isHidden() && await view.locator(".left-view-tabs").isVisible()) await view.locator("#searchBox").click();
+      for (const n of names.slice(0, 4)) await view.locator("#searchText").pressSequentially(`#${n} `);
+      if (await view.locator("#searchSheetDone").isVisible()) await view.locator("#searchSheetDone").click();
+      else await view.locator("#searchText").blur();
+      await view.waitForTimeout(500);
+    }] },
   { id: "base-explorer-move", category: "Dodatkowe", title: "Eksplorator bazy — Przenieś do… (drzewo folderów z wyszukiwaniem)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator('#contextMenu .cm-item', { hasText: "Przenieś do" }).click(); await view.locator("#moveOverlay .moveRow").first().waitFor({ timeout: 5000 }); await view.locator("#moveList .tree-toggle").nth(1).click(); await view.locator("#moveList .tree-toggle").nth(2).click(); await view.locator('#moveList .moveRow[aria-expanded="true"] + .moveRow').last().click(); await view.waitForTimeout(400); }] },
   { id: "base-explorer-move-search", category: "Dodatkowe", title: "Eksplorator bazy — Przenieś do…: wyszukiwanie folderu", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',

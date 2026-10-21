@@ -5,10 +5,16 @@
 // - po wpisaniu „#” pokazuje pasujące tagi (strzałki + Enter / stuknięcie),
 // - „#pełna_nazwa” + spacja zamienia się w tabletkę (spacja nie zostaje),
 // - tabletki to te same tagi co zaznaczenie w lewym panelu (query.tagIds).
+// Telefon (decyzja użytkownika 2026-10-21): pole w pasku jest jednoliniowym
+// podglądem; stuknięcie otwiera okno „Szukaj” (#searchOverlay), do którego
+// na czas edycji przenosimy to samo pole, tabletki i podpowiedzi — dlatego
+// nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07274";
-import { renderAll } from "../render.js?v=v2026-10-21T07274";
-import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07274";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07421";
+import { renderAll } from "../render.js?v=v2026-10-21T07421";
+import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07421";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07421";
+import { isNarrow } from "../render.js?v=v2026-10-21T07421";
 
 const TEXT_DELAY_MS = 200;
 const MAX_SUGGESTIONS = 8;
@@ -22,7 +28,7 @@ export function commitPendingSearch() {
 }
 
 export function wireSearch(state) {
-  const toolbarEl = document.getElementById("toolbar");
+  const root = document; // pole bywa w pasku albo w oknie „Szukaj”
   const inp = () => document.getElementById("searchText");
   const box = () => document.getElementById("searchSuggest");
 
@@ -101,7 +107,7 @@ export function wireSearch(state) {
     renderSuggestions();
   }
 
-  toolbarEl?.addEventListener("input", (e) => {
+  root.addEventListener("input", (e) => {
     const el = e.target;
     if (el?.id !== "searchText") return;
 
@@ -116,7 +122,7 @@ export function wireSearch(state) {
     applyText(el.value);
   });
 
-  toolbarEl?.addEventListener("keydown", (e) => {
+  root.addEventListener("keydown", (e) => {
     const el = e.target;
     if (el?.id !== "searchText") return;
 
@@ -149,7 +155,7 @@ export function wireSearch(state) {
   });
 
   // podpowiedź: mousedown, żeby pole nie straciło fokusu przed wyborem
-  toolbarEl?.addEventListener("mousedown", (e) => {
+  root.addEventListener("mousedown", (e) => {
     const item = e.target.closest(".search-suggest-item[data-tag-id]");
     if (!item) return;
     e.preventDefault();
@@ -157,13 +163,15 @@ export function wireSearch(state) {
     if (el && token) addTag(item.dataset.tagId, el, token);
   });
 
-  toolbarEl?.addEventListener("focusout", (e) => {
+  root.addEventListener("focusout", (e) => {
     if (e.target?.id === "searchText") setTimeout(hideSuggestions, 150);
   });
 
-  toolbarEl?.addEventListener("click", (e) => {
+  root.addEventListener("click", (e) => {
+    // telefon: stuknięcie w podgląd w pasku (także w tabletkę) otwiera okno
+    if (isNarrow() && !sheet.isOpen() && e.target.closest("#searchBox")) { sheet.open(); return; }
     // klik w tabletkę zdejmuje tag
-    const chip = e.target.closest(".chip[data-tag-id]");
+    const chip = e.target.closest("#searchChips .chip[data-tag-id]");
     if (chip) {
       setQuery(state, { tagIds: state.query.tagIds.filter((id) => id !== chip.dataset.tagId) });
       renderAll(state);
@@ -185,4 +193,76 @@ export function wireSearch(state) {
     }
     if (e.target.closest("#searchBox")) inp()?.focus();
   });
+
+  const sheet = wireSearchSheet(state, { clear: () => {
+    clearTimeout(textTimer);
+    const el = inp();
+    if (el) el.value = "";
+    hideSuggestions();
+    clearQuery(state);
+    renderAll(state);
+  }, commit: () => commitPending() });
+}
+
+// Okno „Szukaj” na telefonie: przenosi #searchBox i #searchSuggest z paska
+// do okna na czas edycji i oddaje je przy zamknięciu.
+function wireSearchSheet(state, { clear, commit }) {
+  const overlay = document.getElementById("searchOverlay");
+  const body = document.getElementById("searchSheetBody");
+  let open = false;
+  let home = null;
+
+  function onKey(e) {
+    if (e.key !== "Escape" || document.getElementById("searchSuggest")?.hidden === false) return;
+    e.preventDefault();
+    e.stopPropagation();
+    hide();
+  }
+
+  function show() {
+    const box = document.getElementById("searchBox");
+    const suggest = document.getElementById("searchSuggest");
+    if (!overlay || !body || !box || open) return;
+    open = true;
+    home = { parent: box.parentElement, next: box.nextSibling };
+    body.append(box);
+    if (suggest) body.append(suggest);
+    overlay.style.display = "grid";
+    enterModalSheet(overlay, { onClose: hide });
+    document.addEventListener("keydown", onKey, true);
+    const inp = document.getElementById("searchText");
+    inp?.focus();
+  }
+
+  function hide() {
+    if (!open) return;
+    open = false;
+    commit();
+    document.removeEventListener("keydown", onKey, true);
+    exitModalSheet(overlay);
+    overlay.style.display = "none";
+    const box = document.getElementById("searchBox");
+    const suggest = document.getElementById("searchSuggest");
+    if (home?.parent && box) {
+      home.parent.insertBefore(box, home.next?.parentNode === home.parent ? home.next : null);
+      if (suggest) home.parent.append(suggest);
+    }
+    document.getElementById("searchText")?.blur();
+    renderAll(state);
+  }
+
+  document.getElementById("searchSheetDone")?.addEventListener("click", hide);
+  document.getElementById("searchSheetClose")?.addEventListener("click", hide);
+  document.getElementById("searchSheetClear")?.addEventListener("click", () => { clear(); document.getElementById("searchText")?.focus(); });
+  overlay?.addEventListener("click", (e) => { if (e.target === overlay) hide(); });
+  // Enter w polu (bez podpowiedzi) zatwierdza i zamyka okno
+  document.addEventListener("keydown", (e) => {
+    // podpowiedź tagu obsłużył już nasłuch pola (preventDefault)
+    if (!open || e.key !== "Enter" || e.target?.id !== "searchText" || e.defaultPrevented) return;
+    e.preventDefault();
+    hide();
+  });
+  window.matchMedia?.("(max-width: 900px)").addEventListener?.("change", (e) => { if (!e.matches) hide(); });
+
+  return { open: show, close: hide, isOpen: () => open };
 }

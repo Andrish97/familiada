@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T07274"/>
+  <meta name="app-version" content="v2026-10-21T07421"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07274" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07274" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T07274" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T07274" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07421" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07421" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T07421" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T07421" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07274"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07421"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T07274"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T07421"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07274" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07421" defer></script>
 
 </head>
 
@@ -108,6 +108,23 @@
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
 
   <!-- Przenieś do… / Kopiuj do… (ui/move-modal.js): drzewo folderów z wyszukiwaniem -->
+  <!-- Szukaj na telefonie (ui/search.js): pole, tabletki i podpowiedzi z paska
+       przenoszone na czas edycji do treści okna -->
+  <div class="overlay modal--sheet sheet-fit" id="searchOverlay" style="display:none;">
+    <div class="modal search-modal" role="dialog" aria-modal="true" aria-labelledby="searchSheetTitle">
+      <div class="mHead">
+        <div class="mTitle" id="searchSheetTitle" data-i18n="baseExplorer.search.sheetTitle">Szukaj</div>
+        <button class="btn sm" id="searchSheetClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="mSub" data-i18n="baseExplorer.search.sheetHelp">Nazwa pytania lub folderu, #tag dodaje filtr tagu.</div>
+      <div class="searchSheetBody" id="searchSheetBody"></div>
+      <div class="modal-actions">
+        <button class="btn sm" id="searchSheetClear" type="button" data-i18n="baseExplorer.search.clear" data-i18n-icon="close">Wyczyść</button>
+        <button class="btn sm gold" id="searchSheetDone" type="button" data-i18n="baseExplorer.search.done" data-i18n-icon="check">Gotowe</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay modal--sheet" id="moveOverlay" style="display:none;">
     <div class="modal move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
       <div class="mHead">
@@ -373,7 +390,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07274"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07421"></script>
 
 </body>
 </html>

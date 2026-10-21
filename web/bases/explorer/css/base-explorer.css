@@ -1078,12 +1078,12 @@ tr.row.is-drop-after td:last-child::after {
     gap: 6px
 }
 
-/* Komputer: pasek w tych samych kolumnach co strona (.explorer: 320px | reszta)
-   — wyszukiwarka na szerokość lewego panelu, przyciski od początku prawego. */
+/* Komputer: wyszukiwarka szersza niż lewy panel (decyzja użytkownika
+   2026-10-21 — przy wielu tabletkach robiło się ciasno), przyciski za nią. */
 @media (min-width: 901px) {
     .toolbar {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-columns: 520px minmax(0, 1fr);
         column-gap: 0;
     }
     .search-row {
@@ -2264,10 +2264,18 @@ tr.row.is-drop-after td:last-child::after {
 #tags .row[data-kind=tag] {
   min-height: 30px;
   margin: 0;
-  padding: 1px 8px;
+  padding: 1px 10px;
   border: 0;
   border-radius: 0;
 }
+/* Zaznaczenie na całą szerokość panelu, jak wiersze listy po prawej:
+   kontenery bez bocznego paddingu, wcięcie (10 px) mają nagłówki i wiersze. */
+.explorer-left > .tree,
+.left-filters > .tags,
+.left-filters > .matched-categories { padding-left: 0; padding-right: 0; border-radius: 0; }
+.explorer-left .left-panel-heading { padding: 0 10px; }
+.explorer-left .left-panel-empty { padding: 0 10px; }
+.explorer-left #btnAddTag { width: calc(100% - 20px); margin: 4px 10px 8px; }
 @media (pointer: coarse) {
   #matchedCategories .row,
   #tags .row[data-kind=tag] { min-height: 36px; }
@@ -2276,7 +2284,13 @@ tr.row.is-drop-after td:last-child::after {
   .search-row .searchBox { margin-right: 0; }
 }
 .left-view-btn { position: relative; }
-.left-view-btn .badge { position: absolute; top: -6px; right: -6px; }
+/* plakietka w rogu przycisku (nie wystaje pod pasek wyszukiwania, który ją
+   przycinał), mniejsza od zwykłej .badge */
+.left-view-btn .badge {
+  position: absolute; top: 1px; right: 1px; margin: 0;
+  min-width: 14px; height: 14px; padding: 0 3px; font-size: 9px;
+  background: #2a2614; pointer-events: none;
+}
 .left-view-btn .badge:empty { display: none; }
 .left-view-btn.is-active,
 .tbBtn.left-view-btn.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
@@ -2299,7 +2313,7 @@ tr.row.is-drop-after td:last-child::after {
    Zaznaczenie jak na liście po prawej (tr.row.is-selected): niebieskie tło
    i obrys; bieżący folder — samo tło (decyzja 2026-10-21). */
 .treeList,
-.moveList { --step: 20px; display: grid; align-content: start; gap: 0; }
+.moveList { --step: 20px; --pad0: 10px; display: grid; align-content: start; gap: 0; }
 .row.tree-row,
 .tree-row {
   position: relative;
@@ -2310,20 +2324,35 @@ tr.row.is-drop-after td:last-child::after {
   min-height: 30px;
   margin: 0; /* base.css: .row { margin: 10px 0; flex-wrap: wrap } */
   flex-wrap: nowrap;
-  padding: 1px 8px 1px calc(4px + var(--depth, 0) * var(--step));
+  padding: 1px 10px 1px calc(var(--pad0, 10px) + var(--depth, 0) * var(--step));
   border: 0;
   border-radius: 0;
   cursor: pointer;
   user-select: none;
 }
-.tree-guides {
+.tree-guides { position: absolute; inset: 0; pointer-events: none; }
+/* linia pod strzałką przodka na poziomie --k: │ przez cały wiersz, ├ z odnogą
+   w połowie, └ do połowy z odnogą (ostatnie dziecko) */
+.tree-g {
   position: absolute;
-  top: 0; bottom: 0;
-  left: calc(4px + var(--step) / 2);
-  width: calc(var(--depth, 0) * var(--step));
-  background: repeating-linear-gradient(90deg, var(--line2, rgba(255,255,255,.12)) 0 1px, transparent 1px var(--step));
-  pointer-events: none;
+  top: 0;
+  left: calc(var(--pad0) + var(--step) / 2 + var(--k) * var(--step));
+  width: 1px;
+  height: 100%;
+  background: var(--line2, rgba(255,255,255,.14));
 }
+.tree-g-end { height: 50%; }
+.tree-g-tee::after,
+.tree-g-end::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: calc(var(--step) / 2 - 2px);
+  height: 1px;
+  background: inherit;
+}
+.tree-g-tee::after { top: 50%; }
+.tree-g-end::after { top: 100%; }
 .row.tree-row:hover,
 .tree-row:hover { background: rgba(255,255,255,.05); }
 .tree-row.is-root { font-weight: 700; }
@@ -2377,6 +2406,53 @@ tr.row.is-drop-after td:last-child::after {
 /* stopka okien Filtry i Przenieś do: jak .tagsFoot (odstęp i linia nad przyciskami) */
 .move-modal > .modal-actions,
 .filters-modal > .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+/* ===== Wyszukiwarka (2026-10-21) =====
+   W pasku zawsze jedna linia: tabletki przewijane w poziomie, tekst obok.
+   Telefon: pole w pasku to podgląd — stuknięcie otwiera okno „Szukaj”
+   (ui/search.js), gdzie pole, tabletki i podpowiedzi mają pełną szerokość. */
+.toolbar .searchBox { flex-wrap: nowrap; overflow: hidden; flex-shrink: 1; min-width: 0; }
+.toolbar .searchChips {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.toolbar .searchChips::-webkit-scrollbar { display: none; }
+/* przewijane tabletki wygasają przy polu tekstowym zamiast ostrego cięcia */
+.toolbar .searchChips:not(:empty) {
+  padding-right: 14px;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+}
+.toolbar .searchText { flex: 1 1 90px; min-width: 90px; }
+@media (max-width: 900px) {
+  .toolbar .searchBox { cursor: pointer; }
+  .toolbar .searchText { pointer-events: none; }
+}
+.search-modal { width: min(560px, 94vw); }
+.searchSheetBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.searchSheetBody .searchBox { margin: 0; flex: 0 0 auto; flex-wrap: wrap; overflow: visible; width: 100%; box-sizing: border-box; }
+.searchSheetBody .searchChips { flex-wrap: wrap; }
+.searchSheetBody .searchText { flex: 1 1 140px; min-width: 140px; }
+.searchSheetBody .search-suggest {
+  position: static;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,.04);
+  box-shadow: none;
+}
+.search-modal > .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;

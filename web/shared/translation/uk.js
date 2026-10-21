@@ -4334,6 +4334,9 @@ const uk = {
       results: "Результати",
       placeholder: "Пошук...",
       clear: "Очистити",
+      sheetTitle: "Пошук",
+      done: "Готово",
+      sheetHelp: "Назва питання або папки; #тег додає фільтр тегу.",
     },
     toolbar: {
       groupHistory: "Історія",

@@ -3,13 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07274";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T07274";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07274";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07274";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07274";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07274";
-import { treeToggleHtml, treeIconName, treeRowInner } from "./ui/tree-row.js?v=v2026-10-21T07274";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07421";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T07421";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07421";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07421";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07421";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07421";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T07421";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -105,7 +105,7 @@ export function renderSelection(state) {
 export const LEFT_VIEWS = [
   { id: "tree", icon: "folder", labelKey: "baseExplorer.leftView.tree" },
   { id: "tags", icon: "tag", labelKey: "baseExplorer.leftView.tags" },
-  { id: "types", icon: "shapes", labelKey: "baseExplorer.leftView.types" },
+  { id: "types", icon: "categories", labelKey: "baseExplorer.leftView.types" },
 ];
 
 export function renderToolbar(state) {
@@ -192,10 +192,11 @@ export function renderTree(state) {
   const here = currentFolderId(state);
 
   // wspólny wygląd z oknem „Przenieś do” (ui/tree-row.js); aktywny folder złoty
-  function row({ kind, id, depth, label, canToggle, isOpen, active, dots = "", count = null }) {
+  function row({ kind, id, depth, label, canToggle, isOpen, active, dots = "", count = null, lines = [] }) {
     const key = kind === "cat" ? `c:${id}` : id; // "root" / "trash"
     const draggable = kind === "cat" && state.canEdit ? ` draggable="true"` : "";
     const inner = treeRowInner({
+      lines,
       toggle: treeToggleHtml(id, { canToggle, isOpen }),
       iconName: treeIconName(kind, isOpen),
       label,
@@ -207,11 +208,13 @@ export function renderTree(state) {
            data-kind="${kind}" data-id="${esc(id)}" data-key="${esc(key)}" style="--depth:${depth}"${canToggle ? ` aria-expanded="${isOpen}"` : ""}>${inner}</div>`;
   }
 
-  function subtree(parentId, depth, seen) {
+  // cont: czy przodkowie mają dalsze rodzeństwo (linie │ na ich poziomach)
+  function subtree(parentId, depth, seen, cont) {
     let out = "";
-    for (const f of d.childFolders(parentId)) {
-      if (seen.has(f.id)) continue; // uszkodzone dane: cykl
+    const kids = d.childFolders(parentId).filter((f) => !seen.has(f.id)); // uszkodzone dane: cykl
+    kids.forEach((f, i) => {
       seen.add(f.id);
+      const isLast = i === kids.length - 1;
       const canToggle = d.childFolders(f.id).length > 0;
       const isOpen = canToggle && open.has(f.id);
       out += row({
@@ -221,9 +224,10 @@ export function renderTree(state) {
         active: here === f.id && !isTrash(state),
         dots: tagDotsHtml(state, d.folderTags(f.id)) + typeDotHtml(d.folderType(f.id)),
         count: d.subtreeQuestionIds(f.id).length,
+        lines: treeLines(cont, isLast),
       });
-      if (isOpen) out += subtree(f.id, depth + 1, seen);
-    }
+      if (isOpen) out += subtree(f.id, depth + 1, seen, [...cont, !isLast]);
+    });
     return out;
   }
 
@@ -236,7 +240,7 @@ export function renderTree(state) {
     active: state.location.kind === "root",
     count: d.questionById.size,
   });
-  const folders = rootOpen ? subtree(null, 1, new Set()) : "";
+  const folders = rootOpen ? subtree(null, 1, new Set(), []) : "";
   // Kosz: zwykły wiersz folderu pod wszystkimi folderami, bez licznika
   // (decyzja 2026-10-20); widzą go właściciel i edytorzy.
   const trashRow = state.canEdit

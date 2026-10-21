@@ -4237,6 +4237,9 @@ const pl = {
       results: "Wyniki",
       placeholder: "Szukaj...",
       clear: "Wyczyść",
+      sheetTitle: "Szukaj",
+      done: "Gotowe",
+      sheetHelp: "Nazwa pytania lub folderu, #tag dodaje filtr tagu.",
     },
     toolbar: {
       groupHistory: "Historia",
