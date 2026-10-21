@@ -67,6 +67,16 @@ E2E na branchu (spec | przebieg | wynik):
   editor.spec 39519541277 (failure); base-explorer cały z kodem brancha
   39520307595 — **zielony**.
 
+## Po wznowieniu 2026-10-21 02:45 UTC
+
+- analiza: logo-editor 50/55 — płótno skakało przy zmianie narzędzia (moja
+  zmiana z ustawieniami w linii narzędzi) → stały wiersz z podpowiedzią;
+  1 test blokady puli logo do obserwacji. polls-layout: „Uruchom” tracił ikonę
+  (`textContent`, stary błąd), „QR na wyświetlaczu” ucięty o 3 px, test liczył
+  nakładanie bez przycinania przewijanej listy. editor 43/44: import E21 pomija
+  puste odpowiedzi — test używa pustego pytania. Commit `377d0c6`.
+- seq20 (w tle): logo-editor, polls-layout, editor --grep transakcj.
+
 ## Dalej
 
 0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
