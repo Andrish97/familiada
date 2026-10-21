@@ -3017,8 +3017,11 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
     page.on("response", async (res) => {
       if (!res.url().includes("/rpc/control_device_share_preflight_by_lookup")) return;
-      const body = await res.text().catch(() => "");
-      console.log(`[e2e-diag] preflight_by_lookup ${res.status()} ${body.replace(/[^{}\[\]:,"a-z_0-9 -]/gi, "").slice(0, 200)}`);
+      const data = await res.json().catch(() => null);
+      const row = Array.isArray(data) ? data[0] : data;
+      // tylko flagi (repo publiczne: bez adresów i nazw)
+      const flags = row && typeof row === "object" ? Object.fromEntries(Object.entries(row).filter(([, v]) => typeof v === "boolean" || v === null)) : row;
+      console.log(`[e2e-diag] preflight_by_lookup ${res.status()} ${JSON.stringify(flags)} err=${row?.error || ""}`);
     });
     await page.locator("#shareDeviceEmail").fill(recipient);
     await expect(page.locator(".app-toast-text")).toContainText("już udostępniono", { timeout: 10000 });
