@@ -12,6 +12,8 @@
 //   guest     -- odwiedzający bez konta i sesji (atrapa nie zwraca użytkownika)
 //   safeArea  -- emulacja strefy bezpiecznej { top, bottom, … } (env(safe-area-inset-*) w CSS strony)
 //   deviceFrame -- "iphone": ekran w ramce iPhone'a na czarnym tle (frameSize: { width, height, scale })
+//   db        -- (db, lang) => {} -- zmiana danych atrapy tylko dla tej sceny (pusty stan, błąd, inny stan)
+// Sceny obszarów (pełna seria stron, okien i stanów) są w scenes/<obszar>.cjs i dołączane na końcu.
 // Przy zmianie strony: dopisz/popraw tu scenę i dane w data/, potem
 //   node scripts/screens/run.cjs --changed
 const { id, IDS } = require("./data/demo.cjs");
@@ -231,3 +233,14 @@ module.exports = [
   { id: "manual-games", category: "Podręcznik", title: "Podręcznik — Gry (rozdz. 7.6)", path: "/manual/?tab=games#r7-6", sources: page("manual"), ready: "#tab-games .m-toc", settle: 800 },
   { id: "manual-control", category: "Podręcznik", title: "Podręcznik — Prowadzenie gry", path: "/manual/?tab=control", sources: page("manual"), ready: "#tab-control .m-toc" },
 ];
+
+// Seria zrzutów: każda strona, okno i stan — pliki obszarów (scenes/*.cjs).
+const fs = require("node:fs");
+const path = require("node:path");
+const areaDir = path.join(__dirname, "scenes");
+if (fs.existsSync(areaDir)) {
+  for (const file of fs.readdirSync(areaDir).filter((f) => f.endsWith(".cjs")).sort()) {
+    module.exports.push(...require(path.join(areaDir, file)));
+  }
+}
+

@@ -67,6 +67,8 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const db = buildDb(lang, scene.gameState ? { gameState: buildGameState(lang, scene.gameState) } : {});
   // guest: odwiedzający bez konta i sesji.
   if (scene.guest) { db.user = null; db.localStorage = {}; }
+  // Dane tylko dla tej sceny (np. pusty stan, błąd, inny stan gry) bez zmian w demo.cjs.
+  if (typeof scene.db === "function") scene.db(db, lang);
   const context = await newContext(browser, db, lang, device);
   if (scene.safeArea) await emulateSafeArea(context, origin, scene.safeArea);
   const page = await context.newPage();
