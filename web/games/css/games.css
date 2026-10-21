@@ -840,19 +840,7 @@ body.games-body > main.wrap{
   .list-search .searchBox{ display:none; }
   .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 }
-.list-empty{
-  min-height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px;
-  border: 1px solid rgba(255,255,255,.22);
-  border-radius: 18px;
-  background: #070b16;
-  opacity: .76;
-  text-align: center;
-  cursor: default;
-}
+.list-empty{ cursor: default; }
 .logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
 .list-empty[hidden]{ display: none; }
 

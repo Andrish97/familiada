@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-21T07070";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T07070";
-import { toast } from "./toast.js?v=v2026-10-21T07070";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-21T07070";
-import { icon, iconText } from "./icons.js?v=v2026-10-21T07070";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T07070";
-import { attachListTools } from "./share-sections.js?v=v2026-10-21T07070";
+import { sb } from "./supabase.js?v=v2026-10-21T07090";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T07090";
+import { toast } from "./toast.js?v=v2026-10-21T07090";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-21T07090";
+import { icon, iconText } from "./icons.js?v=v2026-10-21T07090";
+import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T07090";
+import { attachListTools } from "./share-sections.js?v=v2026-10-21T07090";
 
 
 const attempts = new Map();
@@ -118,7 +118,7 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
 
       if (!friends.length) {
         const empty = document.createElement("div");
-        empty.className = "share-empty-state resource-send-empty";
+        empty.className = "empty-state resource-send-empty";
         empty.textContent = t("resourceSend.noFriends");
         list.append(empty);
       }

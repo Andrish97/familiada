@@ -99,19 +99,6 @@ body.mkt-body > main.wrap {
 }
 
 /* ===== Empty state ===== */
-.mkt-empty {
-  min-height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255,255,255,.22);
-  border-radius: 18px;
-  background: #070b16;
-  text-align: center;
-  padding: 14px;
-  opacity: .76;
-  font-size: 14px;
-}
 #mySentList > .mkt-empty{ width:min(100%, 420px); box-sizing:border-box; }
 
 /* ===== Game card ===== */

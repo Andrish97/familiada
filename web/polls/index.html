@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T07070"/>
+  <meta name="app-version" content="v2026-10-21T07090"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,16 +15,16 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07070"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07070"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07070"/>
-  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-21T07070"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T07090"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T07090"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T07090"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-21T07090"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07070" defer></script>
-  <script type="module" src="/polls/js/polls.js?v=v2026-10-21T07070" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07070" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T07090" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-21T07090" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T07090" defer></script>
 
 </head>
 
@@ -116,7 +116,7 @@
         <div class="card games-card polls-card">
           <!-- Udostępnianie -->
           <div class="polls-section active" id="secShare" role="tabpanel">
-            <div class="pollsEmpty" id="shareEmpty"></div>
+            <div class="pollsEmpty empty-state" id="shareEmpty"></div>
             <div class="shareCols" id="shareBody" style="display:none;">
               <section class="pollSec pollLinkSec">
                 <h3 class="shareSectionTitle pollSecTitle" data-i18n="pollSharePanel.anonymous">Anonimowo</h3>
@@ -142,7 +142,7 @@
                     <button class="btn sm gold" id="btnAddRecipients" type="button" data-i18n="polls.share.addRecipients" data-i18n-icon="people">Dodaj odbiorców</button>
                   </div>
                 </div>
-                <div class="pollsEmpty" id="subsEmpty" style="display:none;"></div>
+                <div class="pollsEmpty empty-state" id="subsEmpty" style="display:none;"></div>
                 <div class="grid subsGrid" id="subsGrid"></div>
                 <div class="subsFoot">
                   <span class="pollBarHint subsSendHint" id="sendHint"></span>
@@ -180,7 +180,7 @@
         </div>
         <div class="uni-body">
           <div class="uni-hint" data-i18n="polls.share.addRecipientsHint">Wybierz osoby, które chcesz zaprosić do tej ankiety.</div>
-          <div id="pollRecipientsEmpty" class="pollsEmpty" hidden></div>
+          <div id="pollRecipientsEmpty" class="pollsEmpty empty-state" hidden></div>
           <div id="pollRecipientsFriends" class="pollRecipientGroup"></div>
           <div id="pollRecipientsSubs" class="pollRecipientGroup"></div>
         </div>
@@ -218,7 +218,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07070"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T07090"></script>
 
 </body>
 </html>

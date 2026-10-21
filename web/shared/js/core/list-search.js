@@ -8,11 +8,11 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T07070";
-import { promptModal } from "./modal.js?v=v2026-10-21T07070";
-import { icon } from "./icons.js?v=v2026-10-21T07070";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07070";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T07070";
+import { t } from "../../translation/translation.js?v=v2026-10-21T07090";
+import { promptModal } from "./modal.js?v=v2026-10-21T07090";
+import { icon } from "./icons.js?v=v2026-10-21T07090";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07090";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T07090";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -133,7 +133,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     let el = emptyEls.get(grid);
     if (!el) {
       el = document.createElement("div");
-      el.className = "list-empty";
+      el.className = "list-empty empty-state empty-state--tile";
       el.hidden = true;
       emptyEls.set(grid, el);
     }

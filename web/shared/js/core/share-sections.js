@@ -6,10 +6,10 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T07070";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T07070";
-import { promptModal } from "./modal.js?v=v2026-10-21T07070";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07070";
+import { t } from "../../translation/translation.js?v=v2026-10-21T07090";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T07090";
+import { promptModal } from "./modal.js?v=v2026-10-21T07090";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-21T07090";
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -121,7 +121,7 @@ export function attachListTools(heading, list, key) {
   const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions']");
   if (bulk) heading.insertBefore(tools, bulk); else heading.append(tools);
   const empty = document.createElement("div");
-  empty.className = "shareEmpty listToolsEmpty";
+  empty.className = "shareEmpty listToolsEmpty empty-state";
   empty.hidden = true;
   // Komputer: pole szukania nad listą (wpisywanie na żywo); telefon: okno.
   const inline = document.createElement("div");
@@ -336,7 +336,7 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
   for (const row of rows) list.append(shareRowEl(row));
   if (!rows.length && emptyText) {
     const empty = document.createElement("div");
-    empty.className = "shareEmpty";
+    empty.className = "shareEmpty empty-state";
     empty.textContent = emptyText;
     list.append(empty);
   }
@@ -499,7 +499,7 @@ export function renderRowSections(host, sections, opts = {}) {
   }
   if (!frag.childNodes.length && opts.emptyText) {
     const d = document.createElement("div");
-    d.className = "rowsEmpty";
+    d.className = "rowsEmpty empty-state";
     d.textContent = opts.emptyText;
     frag.append(d);
   }

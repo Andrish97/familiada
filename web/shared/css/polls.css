@@ -166,15 +166,6 @@
   min-height: 0;
   overflow: hidden;
 }
-.pollsEmpty{
-  margin: auto;
-  padding: 24px 12px;
-  text-align: center;
-  opacity: .75;
-  font-size: 14px;
-  line-height: 1.4;
-}
-.pollsEmpty a{ color: var(--gold); }
 
 /* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
 .shareCols{

@@ -1416,11 +1416,11 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 await shareButton.click();
                 await modalPage.waitForFunction(() => {
                   const list = document.getElementById("shareDeviceCurrentContent");
-                  return list && (list.querySelector(".share-empty-state") || list.querySelector(".shareRow"));
+                  return list && (list.querySelector(".empty-state") || list.querySelector(".shareRow"));
                 }, null, { timeout: 15_000 });
                 const sharedList = modalPage.locator("#shareDeviceCurrentContent");
                 if (await sharedList.locator(":scope > .shareRow").count() === 0) {
-                  await expect(sharedList.locator(":scope > .share-empty-state")).toBeVisible();
+                  await expect(sharedList.locator(":scope > .empty-state")).toBeVisible();
                 }
               },
               null,
