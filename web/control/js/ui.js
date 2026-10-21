@@ -16,15 +16,15 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-21T21441";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T21441";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-21T21441";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-21T21441";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T21441";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T21441";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-21T21523";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T21523";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-21T21523";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-21T21523";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T21523";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T21523";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-21T21441";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-21T21441";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-21T21523";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-21T21523";
 
 
 const $ = (id) => document.getElementById(id);
