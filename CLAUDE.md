@@ -131,6 +131,11 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+- **Teksty maili (decyzja użytkownika 2026-10-21):** jedno źródło — tłumaczenia strony
+  `web/shared/translation/{pl,en,uk}.js`. Maile powiadomień składa serwer (funkcja Edge
+  `send-mail`) z kopii `supabase/functions/_shared/notification-mail-texts.js`, generowanej
+  przez `node scripts/sync-notification-mail-texts.mjs` (nie edytować ręcznie; test
+  `notificationMail.test.js` pilnuje zgodności).
 
 ## Stan i wznawianie
 
