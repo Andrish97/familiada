@@ -564,4 +564,5 @@ Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści nale�
   z bazy (przycisk „Utwórz grę” aktywny, ale nic nie robi); Ctrl+Shift+N tworzy pytanie zamiast folderu
   (warunek Ctrl+N przed Ctrl+Shift+N w `actions.js`); Delete w polu wyszukiwania może usuwać
   zaznaczenie; „Utwórz grę…” w menu wyłączone w wynikach wyszukiwania/tagu, a na pasku i Ctrl+G działa.
-  Podręcznik pomija te skróty i opisuje obecne działanie.
+  Nazwy domyślne „Nowy folder”, „Nowe pytanie” i dopisek „(kopia)” są wpisane po polsku w `actions.js`
+  (bez tłumaczeń EN/UK). Podręcznik pomija te skróty i opisuje obecne działanie.
