@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07090");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07131");
 
 
 /* css/base.css */
@@ -3108,4 +3108,278 @@ button.rowsSectionHead{ cursor: pointer; }
 @media (hover: none) and (pointer: coarse) {
     [draggable="true"] { -webkit-user-drag: none; }
     .tcHandle, .roundsOrderHandle { display: none !important; }
+}
+
+/* Zmienne wypustek kart (dawniej games.css). */
+:root{
+  --radius: 16px;
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --corner-bottom: 0px;
+  --corner-shift: 1px;
+  --border-fudge: 2px;
+
+  --page-bg: var(--bg);
+  --surface: #111827;
+  --inactive-text: rgba(255,255,255,.70);
+  --border-color: var(--line2);
+}
+/* =========================================================
+   WYPUSTKI KART — wspólne dla wszystkich stron (ujednolicenie 2026-10-21,
+   wcześniej w games.css; strony dopisują tylko zaokrąglenia swojej karty)
+========================================================= */
+.tabs-card{
+  width: 100%;
+  margin: 8px auto 0;
+  position: relative;
+
+  /* 🔑 najważniejsze: tabs-card musi być flex-kolumną */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs-strip{
+  flex: 0 0 auto;
+
+  display: flex;
+  height: var(--tab-height);
+  align-items: stretch;
+  background: var(--page-bg);
+  position: relative;
+  z-index: 1;
+}
+
+.tab-label,
+.tab-slot{
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
+  content: attr(data-copy-count);
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  z-index: 4;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--gold, #e6b84c);
+  color: #171717;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
+#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){ padding-right:32px; }
+
+#tabs-root .tab-slot,
+.tab-slot{
+  width: auto;
+  min-width: 0;
+  flex: 1 1 max-content;
+  align-items: stretch;
+}
+
+.tab-label{
+  border: 0;
+  background: transparent;
+  color: var(--inactive-text);
+
+  width: 100%;
+  height: var(--tab-height);
+  line-height: var(--tab-height);
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  white-space: nowrap;
+  align-items: center;
+
+  padding: 0;
+  margin: 0;
+}
+
+.tab-label.active,
+.tab-slot.active .tab-label{ color: #f9fafb; }
+
+.tab-label::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: rgba(0,0,0,.35);
+  display: none;
+}
+.tab-label.active::after{ display: none !important; }
+
+.tab-label::before{
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 14%;
+  bottom: 14%;
+  border-radius: calc(var(--radius)*.9);
+  background: rgba(255,255,255,.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+}
+/* Tylko mysz: na dotyku hover „przykleja się” po tapnięciu i zostawał szary
+   prostokąt (zwłaszcza na „Gry Społeczności”, która przed aktywacją czeka
+   na pobranie listy) — jak w bases.css. */
+@media (hover: hover) and (pointer: fine){
+  .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover{ color: #fff; }
+  .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover::before{ opacity: 1; }
+}
+
+.tab-wrapper{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+
+/* Twoje warunki pokazywania wrappera */
+.tab-slot.active .tab-wrapper,
+.tab-slot:has(.tab-label.active) .tab-wrapper{
+  display: block;
+}
+/* Separator między dwiema sąsiednimi nieaktywnymi wypustkami. */
+.tab-slot:not(.active):not(:has(.tab-label.active)) + .tab-slot:not(.active):not(:has(.tab-label.active)) .tab-label::after{
+  display: block;
+}
+
+.tab-active,
+.tab-corner::before{
+  border: 1px solid var(--border-color);
+}
+
+.tab-active{
+  height: calc(var(--tab-height) + var(--tab-extra));
+  width: 100%;
+  line-height: var(--tab-height);
+  text-align: center;
+
+  background: var(--surface);
+  border-bottom: none;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #f9fafb;
+
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.tab-corner{
+  position: absolute;
+  bottom: var(--corner-bottom);
+  width: var(--radius);
+  height: var(--radius);
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tab-corner-left{
+  left: 0;
+  transform: translateX(calc(-100% + var(--corner-shift)));
+  background-image: radial-gradient(circle at 0% 0%, transparent var(--radius), var(--surface) var(--radius));
+}
+
+.tab-corner-right{
+  right: 0;
+  transform: translateX(calc(100% - var(--corner-shift)));
+  background-image: radial-gradient(circle at 100% 0%, transparent var(--radius), var(--surface) var(--radius));
+}
+
+.tab-corner::before{
+  content: "";
+  position: absolute;
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  border-radius: 50%;
+  background: transparent;
+}
+
+.tab-corner-left::before{
+  top: calc(-1 * var(--radius) - var(--border-fudge));
+  left: calc(-1 * var(--radius) - var(--border-fudge));
+}
+.tab-corner-right::before{
+  top: calc(-1 * var(--radius) - var(--border-fudge));
+  right: calc(-1 * var(--radius) - var(--border-fudge));
+}
+
+/* Skrajne wypustki stykają się z krawędzią karty — bez zaokrąglenia na zewnątrz. */
+.tab-slot:first-child .tab-corner-left,
+.tab-slot:last-child .tab-corner-right{
+  display: none;
+}
+
+@media (max-width: 600px){
+  :root{
+    --tab-height: 56px;
+    --tab-extra: 2px;
+  }
+
+  .tabs-strip{
+    display: flex;
+    gap: 0;
+  }
+
+  /* Krótkie nazwy zakładek na mobilkach */
+  .tabs-strip .only-desktop { display: none !important; }
+  .tabs-strip .only-mobile  { display: inline !important; }
+
+  .tab-slot{
+    width: auto;
+    flex: 1 1 max-content;
+    justify-content: center;
+  }
+
+  .tab-active,
+  .tab-label{
+    line-height: var(--tab-height);
+  }
+
+  .tab-label{
+    height: var(--tab-height);
+    z-index: 2;
+  }
+
+  .tab-active{
+    height: calc(var(--tab-height) + var(--tab-extra));
+    color: transparent; /* jak było */
+  }
+
+  .tab-label.active::after,
+  .tab-label::after{
+    display: none !important;
+  }
+
+  .tab-wrapper{ z-index: 1; }
 }

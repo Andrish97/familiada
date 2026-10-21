@@ -92,18 +92,7 @@
   wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
   wypustce i tylko dla urządzeń z myszą.
 */
-.bases-tabs-card .tab-label::before{ opacity: 0 !important; }
-@media (hover: hover) and (pointer: fine){
-  .bases-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
-}
-
-.bases-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
-.bases-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
 .bases-tabs-card .tab-active{ z-index: 1; }
-
-/* skrajne wypustki: bez zewnętrznego zaokrąglenia */
-.bases-tabs-card:has(.slot-mine.active) .slot-mine .tab-corner-left,
-.bases-tabs-card:has(.slot-shared.active) .slot-shared .tab-corner-right{ display: none; }
 
 /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
 .bases-card{

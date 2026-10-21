@@ -37,8 +37,6 @@
   .contacts-tabs > .tabs-strip{ display: flex; }
   .contacts-tabs .tab-slot{ width: 100%; }
   .contacts-tabs .tab-label{ z-index: 3; }
-  .contacts-tabs .tab-slot:first-child .tab-corner-left,
-  .contacts-tabs .tab-slot:last-child .tab-corner-right{ display: none; }
   .contacts-tabs:has([data-contact-tab="invite"].active) #contactsInvite{ border-top-left-radius: 0; }
   .contacts-tabs:has([data-contact-tab="received"].active) #contactsReceived{ border-top-right-radius: 0; }
 }
