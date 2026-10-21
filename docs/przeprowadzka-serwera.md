@@ -91,3 +91,11 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - SSH: logowanie na root wyłączone, hasła wyłączone. Automat do P7 wchodzi przez `andrish97` swoim tymczasowym kluczem.
 - Cała Familiada w `/srv/familiada/` (`supabase/`, `lead-finder/`, `backups/`) zamiast `~/supabase-selfhost/supabase/docker`. Docker w miejscach systemowych.
 - Strefa czasu serwera: Europe/Warsaw.
+- **Panel serwera (propozycja agenta, 2026-10-21):** Portainer CE (Docker: kontenery, logi, restart) + Cockpit (system: terminal, usługi, aktualizacje, dyski). Oba tylko na `127.0.0.1`, z zewnątrz przez Caddy **za Cloudflare Access** (jak `settings`), nigdy otwarte porty. Adresy do ustalenia po spisie starego serwera (stara „konsola właściciela” idzie przez Caddy). Wersje przypięte w skrypcie.
+- **Lepsze wdrożenia (Edge, migracje, Lead Finder) na nowym serwerze:**
+  - konto `deploy` bez Dockera i bez sudo ogólnego; tylko `sudo` na 3 skrypty root w `/usr/local/sbin/` (`familiada-deploy-edge`, `familiada-migrate`, `familiada-deploy-lead-finder`), wersjonowane w `familiada-server`;
+  - automat wysyła pliki tylko do `/home/deploy/staging/<sha>`; skrypt root sprawdza, kopiuje i uruchamia;
+  - Edge: wydania w `/srv/familiada/supabase/functions/releases/<sha>` + przełączenie dowiązania `current` (szybki powrót do poprzedniej wersji), restart tylko kontenera `functions`, test zdrowia;
+  - Lead Finder: obraz z tagiem `<sha>`, zarządzany przez compose (nie `docker run`), poprzedni obraz zostaje do powrotu, test `/health`;
+  - migracje: blokada przed równoległym uruchomieniem, zrzut bazy przed migracją do `/srv/familiada/backups/`, log jak dziś (`supabase/migration_logs/latest.log`);
+  - workflow w repo familiada zmieniamy dopiero przy przełączeniu (P6), z sekretami `SERVER_*` wskazującymi nowy serwer i konto `deploy`.
