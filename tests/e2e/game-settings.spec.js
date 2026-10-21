@@ -778,3 +778,51 @@ test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu be
     expect(game.settings.teams.teamA).toBe("Zachowany dźwięk");
   } finally { await deleteGame(page, gameId); }
 });
+
+// Telefon (decyzja 2026-10-21): Ustawienia gry działają na telefonie. W Moich
+// grach widać „Ustawienia gry” bez „Graj” (Control na telefonie niedostępny);
+// w Ustawieniach brak „Graj”, powrót to sama strzałka, sekcje nie wystają
+// poza ekran, a zapis działa.
+test.describe("ustawienia gry: telefon", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test("ustawienia gry: telefon — wejście z Moich gier, bez Graj, sekcje mieszczą się, zapis działa", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context);
+    const name = `E2E-SETTINGS-PHONE-${Date.now()}`;
+    const gameId = await createGame(page, { name });
+    try {
+      await page.goto("https://www.familiada.online/games/?tab=prepared", { waitUntil: "domcontentloaded" });
+      const tile = page.locator("#grid .card", { has: page.locator(".name", { hasText: name }) });
+      await tile.tap();
+      await expect(page.locator("#btnPlay")).toBeHidden();
+      await expect(page.locator("#btnSettings")).toBeVisible();
+      await page.locator("#btnSettings").tap();
+      await page.waitForURL(/\/games\/settings\/?\?id=/);
+      await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#pageGuard, .page-guard")).toHaveCount(0);
+      await expect(page.locator(".gs-actionbar #btnPlay")).toBeHidden();
+      // powrót: sama strzałka (tekst tylko dla czytnika ekranu)
+      const backFont = await page.locator("#btnBack").evaluate((el) => getComputedStyle(el).fontSize);
+      expect(backFont).toBe("0px");
+
+      const overflow = () => page.evaluate(() => [...document.querySelectorAll("#gsContentInner *")]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && el.getClientRects().length).length);
+      for (const cat of ["sound", "display", "questions", "game"]) {
+        await page.locator("#gsSidebarToggle").tap();
+        await page.locator(`.gs-sidebar-item[data-cat="${cat}"]`).tap();
+        await expect(page.locator("#gsSidebar")).not.toHaveClass(/is-open/);
+        await page.waitForTimeout(400);
+        expect(await overflow(), `sekcja ${cat} wystaje poza ekran`).toBe(0);
+      }
+
+      await page.locator("#gsSidebarToggle").tap();
+      await page.locator('.gs-sidebar-item[data-cat="teams"]').tap();
+      await page.locator("#gsTeamA").fill("Telefon A");
+      await saveAndWait(page);
+      expect((await getGameRow(page, gameId)).settings.teams.teamA).toBe("Telefon A");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+});

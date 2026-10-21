@@ -26,6 +26,23 @@ podliczania jako stan bieżącej operacji.
 
 ---
 
+## Decyzje — telefon: Ustawienia gry i przycisk powrotu (2026-10-21)
+
+- **Ustawienia gry działają na telefonie** (bez blokady urządzenia i progu
+  szerokości). Sekcje w wysuwanym panelu (hamburger); Dźwięk: nazwa nad
+  kontrolkami; kolory 2×2; logo w dwóch równych kolumnach; pytania rund
+  w dwóch liniach; komunikat paska pod przyciskami.
+- **Moje gry na telefonie:** „Ustawienia gry” widoczne, „Graj” ukryte
+  (Control na telefonie niedostępny). W Ustawieniach gry „Graj” też ukryte
+  poniżej 980 px.
+- **Przycisk powrotu na telefonach (≤ 600 px) to sama strzałka** — na
+  wszystkich stronach i w oknach w trybie arkusza; tekst zostaje jako nazwa
+  dla czytnika ekranu.
+- **Stany kafla gry ankietowej:** szkic, który spełnia warunki uruchomienia,
+  ma stan „DO URUCHOMIENIA” (niebieski, także w filtrze stanu).
+- Zamknięta ankieta (GOTOWA) ma zablokowane zakładki udostępniania
+  (potwierdzone, bez zmian).
+
 ## Decyzje — wspólne style wszędzie (E23, 2026-10-21)
 
 - Każda strona korzysta ze wspólnych stylów i mechanizmów z `web/shared/`;

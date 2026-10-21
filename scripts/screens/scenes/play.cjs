@@ -23,6 +23,8 @@ const CONTROL_URL = `/control/?id=${IDS.game}`;
 const SETTINGS_URL = `/games/settings/?id=${IDS.game}`;
 const DESKTOP = ["desktop"];
 const DESKTOP_TABLET = ["desktop", "tablet"];
+// Ustawienia gry: telefon, tablet i komputer (od 2026-10-21 także telefon).
+const SETTINGS_DEVICES = ["desktop", "tablet", "phone"];
 
 // ---------- dane gry ----------
 // Pięć pytań finału z pełną listą odpowiedzi (mapowanie, Prowadzący): pytania 2–6 gry.
@@ -188,7 +190,7 @@ function settingsDb({ finalPick = 0, roundsPick = false, hasFinal = true, endMod
     if (inProgress) db.rpc.control_game_settings_status = { ok: true, in_progress: true, expires_at: new Date(Date.now() + 14 * 60e3 + 32e3).toISOString() };
   };
 }
-// Na tablecie sekcje są w wysuwanym panelu (przycisk z menu na pasku akcji).
+// Na tablecie i telefonie sekcje są w wysuwanym panelu (przycisk z menu na pasku akcji).
 const cat = (name) => async (view) => {
   const toggle = view.locator("#gsSidebarToggle");
   if (await toggle.isVisible()) { await toggle.click(); await view.waitForTimeout(300); }
@@ -367,19 +369,19 @@ module.exports = [
   { id: "play-connect-tv-only", category: CAT, title: "Podłącz telewizor — otwarte na komputerze (tylko telewizor)", path: "/connect/tv/", sources: TV, ready: docReady, guest: true, settle: 600 },
 
   // ======================= Ustawienia gry =======================
-  { id: "play-settings-teams", category: CAT, title: "Ustawienia gry — Drużyny (nazwy z podglądem długości)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP_TABLET, settle: 800,
+  { id: "play-settings-teams", category: CAT, title: "Ustawienia gry — Drużyny (nazwy z podglądem długości)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: SETTINGS_DEVICES, settle: 800,
     db: settingsDb() },
-  { id: "play-settings-questions", category: CAT, title: "Ustawienia gry — Pytania: finał ręcznie, rundy w ustalonej kolejności", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP_TABLET, settle: 500,
+  { id: "play-settings-questions", category: CAT, title: "Ustawienia gry — Pytania: finał ręcznie, rundy w ustalonej kolejności", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: SETTINGS_DEVICES, settle: 500,
     db: settingsDb({ finalPick: 5, roundsPick: true }), steps: [cat("questions")] },
   { id: "play-settings-questions-no-final", category: CAT, title: "Ustawienia gry — Pytania: bez finału (zakładki Finał i Rundy wyszarzone)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP, settle: 500,
     db: settingsDb({ hasFinal: false }), steps: [cat("questions")] },
-  { id: "play-settings-finale", category: CAT, title: "Ustawienia gry — Pytania — Finał: wybór pytań (3/5)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP_TABLET, settle: 500,
+  { id: "play-settings-finale", category: CAT, title: "Ustawienia gry — Pytania — Finał: wybór pytań (3/5)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: SETTINGS_DEVICES, settle: 500,
     db: settingsDb({ finalPick: 3 }), steps: [cat("finale")] },
   { id: "play-settings-finale-full", category: CAT, title: "Ustawienia gry — Pytania — Finał: komplet 5 pytań", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP, settle: 500,
     db: settingsDb({ finalPick: 5 }), steps: [cat("finale")] },
-  { id: "play-settings-rounds", category: CAT, title: "Ustawienia gry — Pytania — Rundy: kolejność pytań", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP_TABLET, settle: 500,
+  { id: "play-settings-rounds", category: CAT, title: "Ustawienia gry — Pytania — Rundy: kolejność pytań", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: SETTINGS_DEVICES, settle: 500,
     db: settingsDb({ finalPick: 5, roundsPick: true }), steps: [cat("rounds")] },
-  { id: "play-settings-game", category: CAT, title: "Ustawienia gry — Ustawienia gry: mnożniki, próg finału, ekran końcowy", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP_TABLET, settle: 500,
+  { id: "play-settings-game", category: CAT, title: "Ustawienia gry — Ustawienia gry: mnożniki, próg finału, ekran końcowy", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: SETTINGS_DEVICES, settle: 500,
     db: settingsDb({ endMode: "points" }), steps: [cat("game")] },
   { id: "play-settings-final-need5", category: CAT, title: "Ustawienia gry — okno: finał wymaga 5 pytań (zapis z 3)", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP, settle: 400,
     db: settingsDb({ finalPick: 2 }),
@@ -389,6 +391,6 @@ module.exports = [
     steps: [async (view) => { await view.locator("#gsTeamA").fill(panel.pl.teams[0] + "!"); await view.waitForTimeout(300); await view.locator("#btnBack").click(); }, waitModal(".uni-modal")] },
   { id: "play-settings-reset-all", category: CAT, title: "Ustawienia gry — okno „Przywróć domyślne”", path: SETTINGS_URL, sources: SETTINGS, ready: "#gsTeamA", devices: DESKTOP, settle: 400,
     db: settingsDb(), steps: [click("#btnResetAll", 200), waitModal(".uni-modal")] },
-  { id: "play-settings-ingame", category: CAT, title: "Ustawienia gry — okno „Gra w toku” (blokada trwającej rozgrywki)", path: SETTINGS_URL, sources: SETTINGS, ready: "#ingameGuard", devices: DESKTOP_TABLET, settle: 600,
+  { id: "play-settings-ingame", category: CAT, title: "Ustawienia gry — okno „Gra w toku” (blokada trwającej rozgrywki)", path: SETTINGS_URL, sources: SETTINGS, ready: "#ingameGuard", devices: SETTINGS_DEVICES, settle: 600,
     db: settingsDb({ inProgress: true }) },
 ];

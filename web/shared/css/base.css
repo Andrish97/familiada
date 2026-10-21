@@ -1448,6 +1448,25 @@ main:has(> .footer){
 }
 .topbar-sheet-back > svg.ico { display: block; }
 
+/* Telefon (decyzja 2026-10-21): przycisk powrotu w górnym pasku to sama
+   strzałka. Tekst zostaje w przycisku (nazwa dla czytnika ekranu), znika
+   tylko wizualnie; dotyczy też „Wstecz” okien w trybie arkusza. */
+@media (max-width: 600px) {
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) {
+        font-size: 0;
+        gap: 0;
+        min-width: 40px;
+        padding-inline: 10px;
+        justify-content: center;
+    }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > svg.ico {
+        width: 18px;
+        height: 18px;
+        vertical-align: middle;
+    }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > .badge { font-size: 11px; }
+}
+
 /* ===== UI Select (custom dropdown) ===== */
 .ui-select {
     position: relative;

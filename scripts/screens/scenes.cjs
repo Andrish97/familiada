@@ -24,6 +24,13 @@ const clickTab = (selector) => async (view) => {
   await view.locator(selector).first().click();
   await view.waitForTimeout(400);
 };
+// Ustawienia gry: na tablecie i telefonie sekcje są w wysuwanym panelu.
+const gsCat = (name) => async (view) => {
+  const toggle = view.locator("#gsSidebarToggle");
+  if (await toggle.isVisible()) { await toggle.click(); await view.waitForTimeout(300); }
+  await view.locator(`.gs-sidebar-item[data-cat="${name}"]`).first().click();
+  await view.waitForTimeout(400);
+};
 const openModal = (selector, modal = ".overlay:visible") => async (view) => {
   await view.locator(selector).first().click();
   await view.locator(modal).first().waitFor({ state: "visible", timeout: 5000 });
@@ -62,7 +69,7 @@ module.exports = [
   { ...H, id: "poll-results", category: "Znajomi, zadania i ankiety", title: "Głosy i wyniki ankiety", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
 
   // ---------- 3. Wygląd i logo ----------
-  { ...H, id: "appearance", category: "Wygląd i logo", title: "Ustawienia wyglądu", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), ...DISPLAY], ready: "#gsContentInner", steps: [clickTab('.gs-sidebar-item[data-cat="display"]')], devices: ["desktop"], settle: 1500 },
+  { ...H, id: "appearance", category: "Wygląd i logo", title: "Ustawienia wyglądu", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), ...DISPLAY], ready: "#gsContentInner", steps: [gsCat("display")], devices: ["desktop"], settle: 1500 },
   { ...H, id: "sound", category: "Wygląd i logo", title: "Ustawienia dźwięku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", steps: [clickTab('.gs-sidebar-item[data-cat="sound"]')], devices: ["desktop"] },
   { ...H, id: "logos", category: "Wygląd i logo", title: "Biblioteka logo", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile" },
   {
@@ -86,9 +93,8 @@ module.exports = [
   { id: "games-poll-text", category: "Dodatkowe", title: "Moje gry — ankiety tekstowe", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [clickTab("#tabPollText")] },
   { id: "games-poll-points", category: "Dodatkowe", title: "Moje gry — punktacja", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [clickTab("#tabPollPoints")] },
   { id: "games-new", category: "Dodatkowe", title: "Moje gry — nowa gra", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [openModal("#grid .addCard")] },
-  { id: "game-settings", category: "Dodatkowe", title: "Ustawienia gry — drużyny", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "tablet"] },
-  { id: "game-settings-phone", category: "Dodatkowe", title: "Ustawienia gry na telefonie — blokada urządzenia", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/device-guard.js"], ready: () => !!document.querySelector("#pageGuard, .page-guard"), devices: ["phone"], settle: 600 },
-  { id: "game-settings-team-limit", category: "Dodatkowe", title: "Ustawienia gry — nazwa drużyny dłuższa niż Wyświetlacz", path: `/games/settings/?id=${IDS.game}`, devices: ["desktop"], sources: [...page("games/settings"), "web/shared/js/display/long-text.js"], ready: "#gsTeamA",
+  { id: "game-settings", category: "Dodatkowe", title: "Ustawienia gry — drużyny", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "tablet", "phone"] },
+  { id: "game-settings-team-limit", category: "Dodatkowe", title: "Ustawienia gry — nazwa drużyny dłuższa niż Wyświetlacz", path: `/games/settings/?id=${IDS.game}`, devices: ["desktop", "phone"], sources: [...page("games/settings"), "web/shared/js/display/long-text.js"], ready: "#gsTeamA",
     steps: [async (view) => {
       await view.waitForFunction(() => performance.getEntriesByType("resource").some((r) => r.name.includes("font_5x7.json")));
       await view.locator("#gsTeamA").fill("");
@@ -96,21 +102,22 @@ module.exports = [
       await view.locator("#gsTeamB").fill("Zajączki 😀");
       await view.waitForFunction(() => ["A", "B"].every((k) => document.getElementById(`gsTeam${k}Measure`)?.classList.contains("is-warn")));
     }] },
-  { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
-    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
-  { id: "game-settings-prize", category: "Dodatkowe", title: "Ustawienia gry — kwota nagrody po finale (wyjaśnienie wzoru)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/gameplay/endScreen.js"], ready: "#gsTeamA", devices: ["desktop"], settle: 600,
+  { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
+    steps: [gsCat("display"), scrollPreview] },
+  { id: "game-settings-prize", category: "Dodatkowe", title: "Ustawienia gry — kwota nagrody po finale (wyjaśnienie wzoru)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/gameplay/endScreen.js"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 600,
     steps: [async (view) => {
-      await view.locator('.gs-sidebar-item[data-cat="questions"]').click();
+      await gsCat("questions")(view);
       await view.locator("label:has([name='gsHasFinal'][value='yes'])").click();
-      await view.locator('.gs-sidebar-item[data-cat="game"]').click();
+      await gsCat("game")(view);
       await view.locator("label:has([name='gsEndMode'][value='money'])").click();
       await view.locator("#gsPrizeSettingsRow").scrollIntoViewIfNeeded();
       await view.waitForTimeout(300);
     }] },
-  { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop"], settle: 800,
-    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
-  { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
-    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
+  { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 800,
+    steps: [gsCat("display"), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
+  { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
+    steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
+  { id: "game-settings-sound", category: "Dodatkowe", title: "Ustawienia gry — dźwięki (telefon: nazwa nad kontrolkami)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["phone", "tablet"], steps: [gsCat("sound")] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
