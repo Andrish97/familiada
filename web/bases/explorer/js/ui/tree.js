@@ -5,13 +5,13 @@
 // listy (selection.pane) — Delete nie usunie niewidocznego folderu z drzewa
 // razem z elementami listy.
 
-import { saveTreeOpen, selectionClear, selectionSetSingle, selectionToggle, selectionRange } from "../state.js?v=v2026-10-21T15403";
-import { renderTree, renderSelection } from "../render.js?v=v2026-10-21T15403";
-import { openFolder, openTrash } from "../commands.js?v=v2026-10-21T15403";
-import { showContextMenu } from "../context-menu.js?v=v2026-10-21T15403";
-import { attachMarquee } from "./marquee.js?v=v2026-10-21T15403";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-21T15403";
-import { isModKey } from "../platform.js?v=v2026-10-21T15403";
+import { saveTreeOpen, selectionClear, selectionSetSingle, selectionToggle, selectionRange } from "../state.js?v=v2026-10-21T16330";
+import { renderTree, renderSelection } from "../render.js?v=v2026-10-21T16330";
+import { openFolder, openTrash } from "../commands.js?v=v2026-10-21T16330";
+import { showContextMenu } from "../context-menu.js?v=v2026-10-21T16330";
+import { attachMarquee } from "./marquee.js?v=v2026-10-21T16330";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-21T16330";
+import { isModKey } from "../platform.js?v=v2026-10-21T16330";
 
 const ROW = ".row[data-key]";
 
