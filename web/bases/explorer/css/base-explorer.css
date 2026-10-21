@@ -257,39 +257,6 @@ input,textarea {
     background: rgba(120,160,255,.1)
 }
 
-#tree .row.tree-row {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    min-height: 32px;
-    border-bottom: 1px solid rgba(255,255,255,.08)
-}
-
-#tree .row.tree-row:hover {
-    background: rgba(255,255,255,.04)
-}
-
-#tree .row.tree-row .col-meta,#tree .row.tree-row .col-num {
-    display: none!important
-}
-
-#tree .row.tree-row .col-main {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 6px
-}
-
-#tree .tree-toggle {
-    color: inherit;
-    fill: currentColor;
-    flex: 0 0 18px
-}
-
-#tree .tree-toggle:hover {
-    opacity: .75
-}
-
 #tree .treeList {
     padding-bottom: 30px;
     scroll-padding-bottom: 30px
@@ -2083,14 +2050,6 @@ tr.row.is-drop-after td:last-child::after {
 
 /* ===== Przebudowa E22: style dawniej wpisane w HTML (render.js) ===== */
 .tree-row { cursor: pointer; position: relative; } /* position: linie przed/za przy przeciąganiu */
-.tree-row.is-active .col-main { font-weight: 700; }
-.tree-toggle {
-    width: 18px; height: 18px; flex: 0 0 18px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .9;
-}
-.tree-toggle:hover { opacity: .75; }
-.tree-toggle-space { display: inline-block; width: 18px; flex: 0 0 18px; }
 #matchedCategories .row,
 #tags .row[data-kind=tag] {
     padding: 6px 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -2333,13 +2292,75 @@ tr.row.is-drop-after td:last-child::after {
 .moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .moveSearch { flex: 0 0 auto; }
 .moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
-/* Drzewo w jednej karcie (jak .shareSection), wiersze bez ramek; linie
-   prowadzące rysuje ::before z --depth (co 20 px, pod środkiem strzałki). */
+/* ===== Drzewo folderów — jeden wygląd (lewy panel i okno „Przenieś do”,
+   ui/tree-row.js, decyzja użytkownika 2026-10-21) =====
+   Wiersze bez ramek, wcięcie co --step, linie prowadzące (.tree-guides)
+   pod strzałkami przodków, folder otwarty/zamknięty, kropki, liczba pytań;
+   bieżący (lewy panel) / wybrany (okno) folder złoty, zaznaczenie niebieskie. */
+.treeList,
+.moveList { --step: 20px; display: grid; align-content: start; gap: 0; }
+.row.tree-row,
+.tree-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0; /* base.css: .row { margin: 10px 0; flex-wrap: wrap } */
+  flex-wrap: nowrap;
+  padding: 3px 8px 3px calc(4px + var(--depth, 0) * var(--step));
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.tree-guides {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(4px + var(--step) / 2);
+  width: calc(var(--depth, 0) * var(--step));
+  background: repeating-linear-gradient(90deg, var(--line2, rgba(255,255,255,.12)) 0 1px, transparent 1px var(--step));
+  pointer-events: none;
+}
+.row.tree-row:hover,
+.tree-row:hover { background: rgba(255,255,255,.05); }
+.tree-row.is-root { font-weight: 700; }
+.row.tree-row.is-current,
+.tree-row.is-current { background: rgba(255,234,166,.14); box-shadow: inset 3px 0 0 var(--gold); }
+.tree-row.is-current .tree-ico,
+.tree-row.is-current .tree-name { color: var(--gold); }
+.row.tree-row.is-selected { outline: 2px solid rgba(120,160,255,.55); outline-offset: -2px; }
+.tree-row.is-blocked { opacity: .4; cursor: not-allowed; }
+.tree-row.is-blocked:hover { background: none; }
+.tree-toggle,
+.tree-toggle-space { position: relative; flex: 0 0 var(--step); width: var(--step); height: 26px; }
+.tree-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
+}
+.tree-toggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.tree-toggle .ico { width: 14px; height: 14px; }
+.tree-ico { display: inline-flex; flex: 0 0 auto; opacity: .9; }
+.tree-row .list-ico { width: 18px; height: 18px; }
+.tree-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tree-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
+.tree-dots { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.tree-count {
+  flex: 0 0 auto;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+}
+/* Okno: drzewo w jednej karcie (jak .shareSection); wyniki wyszukiwania bez wcięć. */
 .moveList {
-  --step: 20px;
-  display: grid;
-  align-content: start;
-  gap: 0;
   max-height: min(420px, 55vh);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2349,58 +2370,6 @@ tr.row.is-drop-after td:last-child::after {
   border: 1px solid var(--line2, rgba(255,255,255,.10));
 }
 .modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
-.moveRow {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  min-height: 40px;
-  padding: 4px 10px 4px calc(6px + max(0px, (var(--depth, 0) - 1) * var(--step)));
-  border-radius: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-.moveRow::before {
-  content: "";
-  position: absolute;
-  top: 0; bottom: 0;
-  left: calc(6px + var(--step) / 2);
-  width: max(0px, (var(--depth, 0) - 1) * var(--step));
-  background: repeating-linear-gradient(90deg, var(--line2, rgba(255,255,255,.12)) 0 1px, transparent 1px var(--step));
-  pointer-events: none;
-}
-.moveRow:hover { background: rgba(255,255,255,.05); }
-.moveRow.is-root { font-weight: 700; }
-.moveRow.is-picked { background: rgba(255,234,166,.16); box-shadow: inset 3px 0 0 var(--gold), inset 0 0 0 1px rgba(255,234,166,.45); }
-.moveRow.is-picked .moveIco,
-.moveRow.is-picked .moveName { color: var(--gold); }
-.moveRow.is-blocked { opacity: .4; cursor: not-allowed; }
-.moveRow.is-blocked:hover { background: none; }
-.moveIco { display: inline-flex; flex: 0 0 auto; opacity: .9; }
-.moveRow .list-ico { width: 18px; height: 18px; }
-.moveText { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.moveName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.movePath { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
-.moveCount {
-  flex: 0 0 auto;
-  min-width: 26px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.06);
-  font-size: 12px;
-  text-align: center;
-  opacity: .75;
-  font-variant-numeric: tabular-nums;
-}
-.moveToggle {
-  width: var(--step); height: 28px; flex: 0 0 var(--step);
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
-}
-.moveToggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
-.moveToggle .ico { width: 14px; height: 14px; }
-.moveRow.is-root .moveToggle { display: none; }
 .moveList > .list-empty { padding: 14px; opacity: .7; }
 /* stopka okien Filtry i Przenieś do: jak .tagsFoot (odstęp i linia nad przyciskami) */
 .move-modal > .modal-actions,

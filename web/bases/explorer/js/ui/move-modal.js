@@ -5,13 +5,13 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-21T07045";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07045";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07045";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07045";
+import { normalizeText } from "../data/listing.js?v=v2026-10-21T07101";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-21T07101";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-21T07101";
+import { esc, treeToggleHtml, treeIconName, treeRowInner } from "./tree-row.js?v=v2026-10-21T07101";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07101";
 
 const ROOT = "root";
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let active = null; // jedno okno naraz
 
@@ -38,36 +38,35 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   ok.innerHTML = `${icon(mode === "copy" ? "copy" : "folder")} ${esc(t(mode === "copy" ? "baseExplorer.move.copyHere" : "baseExplorer.move.moveHere"))}`;
   search.value = "";
 
-  // Drzewo (prośba użytkownika 2026-10-21: „ładniejsze drzewo”): jedna karta,
-  // wiersze bez ramek, linie prowadzące wcięć (CSS z --depth), strzałka,
-  // folder otwarty/zamknięty i liczba pytań w poddrzewie po prawej.
+  // Ten sam wygląd co drzewo w lewym panelu (ui/tree-row.js, decyzja
+  // użytkownika 2026-10-21); wybrany folder złoty jak bieżący w panelu.
   const countOf = (key) => (key === ROOT ? d.questionById.size : d.subtreeQuestionIds(key).length);
-  const rowHtml = (key, label, { depth = 0, toggle = "", path = "", isRoot = false, isOpen = false } = {}) => {
+  const rowHtml = (key, label, { depth = 0, canToggle = false, isOpen = false, path = "" } = {}) => {
+    const isRoot = key === ROOT;
     const blocked = !isRoot && blockedIds.has(key);
-    const cls = ["moveRow", isRoot ? "is-root" : "", picked === key ? "is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
-    const ico = isRoot ? "home" : isOpen ? "folder-open" : "folder";
-    return `<div class="${cls}" role="treeitem" data-id="${esc(key)}" style="--depth:${depth}"${blocked ? ' aria-disabled="true"' : ""}${toggle && !path ? ` aria-expanded="${isOpen}"` : ""}>
-      ${toggle}<span class="moveIco">${icon(ico, { className: "list-ico" })}</span>
-      <span class="moveText"><span class="moveName">${esc(label)}</span>${path ? `<span class="movePath">${esc(path)}</span>` : ""}</span>
-      <span class="moveCount">${countOf(key)}</span>
-    </div>`;
+    const cls = ["tree-row", "moveRow", isRoot ? "is-root" : "", picked === key ? "is-current is-picked" : "", blocked ? "is-blocked" : ""].filter(Boolean).join(" ");
+    const inner = treeRowInner({
+      toggle: path ? "" : treeToggleHtml(key, { canToggle, isOpen }),
+      iconName: treeIconName(isRoot ? "root" : "cat", isOpen),
+      label, path, count: countOf(key),
+    });
+    return `<div class="${cls}" role="treeitem" data-id="${esc(key)}" style="--depth:${depth}"${blocked ? ' aria-disabled="true"' : ""}${canToggle ? ` aria-expanded="${isOpen}"` : ""}>${inner}</div>`;
   };
 
   function treeHtml() {
     const out = [];
     const walk = (parentId, depth) => {
       for (const f of d.childFolders(parentId)) {
-        const kids = d.childFolders(f.id).length > 0;
-        const isOpen = kids && open.has(f.id);
-        const toggle = kids
-          ? `<button type="button" class="moveToggle" data-toggle="${esc(f.id)}" aria-label="${esc(t("baseExplorer.tree.toggle"))}">${icon(isOpen ? "caret-down" : "caret-right")}</button>`
-          : `<span class="moveToggle"></span>`;
-        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, toggle, isOpen }));
+        const canToggle = d.childFolders(f.id).length > 0;
+        const isOpen = canToggle && open.has(f.id);
+        out.push(rowHtml(f.id, f.name || t("baseExplorer.defaults.folder"), { depth, canToggle, isOpen }));
         if (isOpen) walk(f.id, depth + 1);
       }
     };
-    out.push(rowHtml(ROOT, t("baseExplorer.tree.root"), { isRoot: true }));
-    walk(null, 1);
+    const rootKids = d.childFolders(null).length > 0;
+    const rootOpen = rootKids && open.has(ROOT);
+    out.push(rowHtml(ROOT, t("baseExplorer.tree.root"), { canToggle: rootKids, isOpen: rootOpen }));
+    if (rootOpen) walk(null, 1);
     return out.join("");
   }
 
@@ -107,9 +106,9 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
     const confirm = () => { if (picked !== null) finish(picked === ROOT ? null : picked); };
 
     list.onclick = (e) => {
-      const tog = e.target.closest("[data-toggle]");
+      const tog = e.target.closest(".tree-toggle[data-id]");
       if (tog) {
-        const id = tog.dataset.toggle;
+        const id = tog.dataset.id;
         if (open.has(id)) open.delete(id); else open.add(id);
         render();
         return;
@@ -119,13 +118,13 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
       // samo przełączenie klasy (bez przerysowania) — inaczej dwuklik
       // trafiałby w dwa różne elementy i przeglądarka by go nie zgłosiła
       picked = row.dataset.id;
-      list.querySelectorAll(".moveRow.is-picked").forEach((el) => el.classList.remove("is-picked"));
-      row.classList.add("is-picked");
+      list.querySelectorAll(".moveRow.is-picked").forEach((el) => el.classList.remove("is-picked", "is-current"));
+      row.classList.add("is-picked", "is-current");
       ok.disabled = false;
     };
     list.ondblclick = (e) => {
       const row = e.target.closest(".moveRow[data-id]");
-      if (!row || row.classList.contains("is-blocked") || e.target.closest("[data-toggle]")) return;
+      if (!row || row.classList.contains("is-blocked") || e.target.closest(".tree-toggle")) return;
       picked = row.dataset.id;
       confirm();
     };

@@ -3,12 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07045";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T07045";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07045";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07045";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07045";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07045";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T07101";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T07101";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T07101";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07101";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T07101";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T07101";
+import { treeToggleHtml, treeIconName, treeRowInner } from "./ui/tree-row.js?v=v2026-10-21T07101";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -178,24 +179,20 @@ export function renderTree(state) {
   const open = state.treeOpen;
   const here = currentFolderId(state);
 
-  function row({ kind, id, depth, label, rowIcon, canToggle, isOpen, active, dots = "" }) {
+  // wspólny wygląd z oknem „Przenieś do” (ui/tree-row.js); aktywny folder złoty
+  function row({ kind, id, depth, label, canToggle, isOpen, active, dots = "", count = null }) {
     const key = kind === "cat" ? `c:${id}` : id; // "root" / "trash"
-    const pad = 6 + depth * 10;
-    const toggle = canToggle
-      ? `<button type="button" class="tree-toggle" data-id="${esc(id)}" aria-label="${esc(t("baseExplorer.tree.toggle"))}">${icon(isOpen ? "caret-down" : "caret-right")}</button>`
-      : `<span class="tree-toggle-space"></span>`;
     const draggable = kind === "cat" && state.canEdit ? ` draggable="true"` : "";
+    const inner = treeRowInner({
+      toggle: treeToggleHtml(id, { canToggle, isOpen }),
+      iconName: treeIconName(kind, isOpen),
+      label,
+      extra: dots ? `<span class="tree-dots">${dots}</span>` : "",
+      count,
+    });
     return `
-      <div class="row tree-row${isSelected(state, "tree", key) ? " is-selected" : ""}${active ? " is-active" : ""}"${draggable}
-           data-kind="${kind}" data-id="${esc(id)}" data-key="${esc(key)}">
-        <div class="col-main" style="padding-left:${pad}px">
-          ${toggle}
-          <div class="title-line">
-            <span class="title-text">${rowIcon} ${esc(label)}</span>
-            ${dots}
-          </div>
-        </div>
-      </div>`;
+      <div class="row tree-row${kind === "root" ? " is-root" : ""}${isSelected(state, "tree", key) ? " is-selected" : ""}${active ? " is-current" : ""}"${draggable}
+           data-kind="${kind}" data-id="${esc(id)}" data-key="${esc(key)}" style="--depth:${depth}"${canToggle ? ` aria-expanded="${isOpen}"` : ""}>${inner}</div>`;
   }
 
   function subtree(parentId, depth, seen) {
@@ -208,10 +205,10 @@ export function renderTree(state) {
       out += row({
         kind: "cat", id: f.id, depth,
         label: f.name || t("baseExplorer.defaults.folder"),
-        rowIcon: icon("folder", { className: "list-ico" }),
         canToggle, isOpen,
         active: here === f.id && !isTrash(state),
         dots: tagDotsHtml(state, d.folderTags(f.id)) + typeDotHtml(d.folderType(f.id)),
+        count: d.subtreeQuestionIds(f.id).length,
       });
       if (isOpen) out += subtree(f.id, depth + 1, seen);
     }
@@ -223,18 +220,17 @@ export function renderTree(state) {
   const rootRow = row({
     kind: "root", id: "root", depth: 0,
     label: t("baseExplorer.tree.root"),
-    rowIcon: icon("home", { className: "list-ico" }),
     canToggle: rootHasChildren, isOpen: rootOpen,
     active: state.location.kind === "root",
+    count: d.questionById.size,
   });
-  const folders = rootOpen ? subtree(null, 0, new Set()) : "";
+  const folders = rootOpen ? subtree(null, 1, new Set()) : "";
   // Kosz: zwykły wiersz folderu pod wszystkimi folderami, bez licznika
   // (decyzja 2026-10-20); widzą go właściciel i edytorzy.
   const trashRow = state.canEdit
     ? row({
       kind: "trash", id: "trash", depth: 0,
       label: t("baseExplorer.trash.title"),
-      rowIcon: icon("trash", { className: "list-ico" }),
       canToggle: false, isOpen: false,
       active: isTrash(state),
     })

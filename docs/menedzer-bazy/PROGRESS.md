@@ -60,6 +60,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9b. Uwagi użytkownika 2026-10-21: okno tagów — warstwy „Nowy tag” i „Kolor” w kartach jak sekcje z `main` (podpis „Nazwa”, kafel koloru jako wiersz, podgląd bez cienia), „Anuluj” obok „Zapisz” (kolor: przywraca poprzedni; tag: wraca do listy albo zamyka), podpowiedź warstwy pod tytułem w roletce; nagłówek bez ciemnego paska. „Przenieś/Kopiuj do”: drzewo w jednej karcie z liniami prowadzącymi, folder otwarty/zamknięty, liczba pytań, złoty wybór; demo z podfolderami. Safe area: wspólna roletka `base.css` (góra, dół, boki); telefon poziomo — strona pokazuje „Obróć urządzenie”. Menu: „Przenieś do / Kopiuj do” po schowku. E2e lokalne: 79/83 w pełnym przebiegu (3× `networkidle` — przechodzą przy powtórce; Shift+F10 naprawiony), punktowo tagi/Przenieś/Filtry 13/13 + nowy test „Anuluj” w warstwach.
 
+- [x] 9c. Jeden wygląd drzewa (uwaga użytkownika 2026-10-21): lewy panel i okno „Przenieś do” rysują wiersze wspólnym `ui/tree-row.js` (klasy `.tree-row`, `.tree-guides`, `.tree-count`); stare style `#tree .row.tree-row` usunięte, `.row` z `base.css` wyzerowane (marginesy, zawijanie). Pełny lokalny e2e 83/84 + powtórka jedynej porażki (`networkidle`) zielona; unit 691/691.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

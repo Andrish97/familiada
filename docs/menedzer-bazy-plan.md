@@ -16,6 +16,11 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
   - Okna wyglądają jak na `main` (zmiana nazwy przez wspólne
     `promptModal`, listy bez ramek, wiersze-kafle, stopka „Anuluj” +
     złota akcja, na telefonie roletka od dołu).
+  - **Jeden wygląd drzewa (2026-10-21, użytkownik):** drzewo w lewym
+    panelu wygląda jak drzewo w oknie „Przenieś do” — wspólny kod
+    `ui/tree-row.js` i klasy `.tree-row`: linie prowadzące wcięć, strzałka,
+    folder otwarty/zamknięty, kropki, liczba pytań w poddrzewie (kosz bez
+    licznika), bieżący/wybrany folder złoty, zaznaczenie niebieskie.
   - **Do decyzji — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną
