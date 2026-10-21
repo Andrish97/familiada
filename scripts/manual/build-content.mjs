@@ -84,7 +84,7 @@ function buildIconMap(tr) {
 
 /* ---------- inline ---------- */
 
-function inline(text, icons) {
+function inline(text, icons, titles = new Map()) {
   const slots = [];
   const keep = (html) => `\u0000${slots.push(html) - 1}\u0000`;
   let s = text;
@@ -99,7 +99,8 @@ function inline(text, icons) {
   // odnośniki: „→ 7.3”, „→ 10, 14, 15.4”, „→ 3 i 4”, „zob. 19.5”
   s = s.replace(/(→|zob\.|see|див\.)\s+(\d+(?:\.\d+)*(?:(?:,\s*|\s+(?:i|and|і|та)\s+)\d+(?:\.\d+)*)*)/g, (_, lead, list) => {
     const parts = list.split(/(,\s*|\s+(?:i|and|і|та)\s+)/);
-    const html = parts.map((p) => (/^\d/.test(p) ? `<a class="m-ref" href="${refHref(p)}">${esc(p)}</a>` : esc(p))).join("");
+    // Numer jest tylko adresem — czytelnik widzi tytuł rozdziału/podrozdziału.
+    const html = parts.map((p) => (/^\d/.test(p) ? `<a class="m-ref" href="${refHref(p)}">${esc(titles.get(p) || p)}</a>` : esc(p))).join("");
     return keep(`${esc(lead)} ${html}`);
   });
   s = esc(s);
@@ -109,6 +110,8 @@ function inline(text, icons) {
 }
 
 /* ---------- bloki ---------- */
+
+let TITLES = new Map();
 
 function renderBlocks(lines, icons) {
   const out = [];
@@ -137,7 +140,7 @@ function renderBlocks(lines, icons) {
       const cells = (r) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
       const head = cells(rows[0]);
       const body = rows.slice(2).map(cells);
-      out.push(`<div class="m-table-wrap"><table class="m-table"><thead><tr>${head.map((h) => `<th>${inline(h, icons)}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c, icons)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      out.push(`<div class="m-table-wrap"><table class="m-table"><thead><tr>${head.map((h) => `<th>${inline(h, icons, TITLES)}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c, icons, TITLES)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
       continue;
     }
     if (isList(line)) {
@@ -148,7 +151,7 @@ function renderBlocks(lines, icons) {
     }
     const para = [];
     for (; i < lines.length && lines[i].trim() && !isTable(lines[i]) && !isList(lines[i]) && !/^(```|>|#)/.test(lines[i]); i++) para.push(lines[i].trim());
-    out.push(`<p class="m-p">${inline(para.join(" "), icons)}</p>`);
+    out.push(`<p class="m-p">${inline(para.join(" "), icons, TITLES)}</p>`);
   }
   return out.join("\n");
 }
@@ -166,14 +169,29 @@ function renderList(block, icons) {
     const nestedStart = rest.findIndex((l) => /^(\s*)([-*]|\d+\.)\s+/.test(l));
     const cont = (nestedStart === -1 ? rest : rest.slice(0, nestedStart)).map((l) => l.trim());
     const nested = nestedStart === -1 ? "" : renderList(rest.slice(nestedStart), icons);
-    return `<li>${inline([first, ...cont].join(" "), icons)}${nested}</li>`;
+    return `<li>${inline([first, ...cont].join(" "), icons, TITLES)}${nested}</li>`;
   });
   return ordered ? `<ol class="m-ol">${li.join("")}</ol>` : `<ul class="m-ul">${li.join("")}</ul>`;
 }
 
 /* ---------- rozdziały ---------- */
 
+function collectTitles(markdownFiles) {
+  const titles = new Map();
+  for (const md of markdownFiles) {
+    let fenced = false;
+    for (const raw of md.split(/\r?\n/)) {
+      if (/^```/.test(raw)) { fenced = !fenced; continue; }
+      if (fenced) continue;
+      const m = raw.match(/^#\s+(\d+)\.\s+(.+)$/) || raw.match(/^#{2,3}\s+(\d+(?:\.\d+)+)\s+(.+)$/);
+      if (m) titles.set(m[1], m[2].trim().replace(/[*`]/g, ""));
+    }
+  }
+  return titles;
+}
+
 export function parseManual(markdownFiles, icons) {
+  TITLES = collectTitles(markdownFiles);
   const parts = [{ title: "", chapters: [] }, { title: "", chapters: [] }, { title: "", chapters: [] }];
   const chapters = [];
   let ch = null;
@@ -229,7 +247,7 @@ export function parseManual(markdownFiles, icons) {
         const level = h[1].length;
         sections.push({ id: h[2], title: h[3].trim(), level });
         const tag = level === 2 ? "h2" : "h3";
-        html.push(`<${tag} class="m-h${level}" id="${sectionAnchor(h[2])}"><span class="m-num">${esc(h[2])}</span> ${inline(h[3].trim(), icons)}</${tag}>`);
+        html.push(`<${tag} class="m-h${level}" id="${sectionAnchor(h[2])}">${inline(h[3].trim(), icons, TITLES)}</${tag}>`);
         continue;
       }
       lines.push(l);

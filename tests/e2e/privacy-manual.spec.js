@@ -62,7 +62,7 @@ test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", a
     await expect(page.locator(".m-part-card")).toHaveCount(3);
     await expect(page.locator(".m-part-title").first()).toContainText(item.part);
     await expect(page.locator("#manualToc")).toHaveAttribute("aria-label", item.toc);
-    await expect(page.locator("#manualToc .m-toc-chapter")).toHaveCount(19);
+    await expect(page.locator("#manualToc .m-side-item:not(.m-side-sub)")).toHaveCount(19);
   }
 });
 
@@ -71,10 +71,10 @@ test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik 
   await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
   const historyBefore = await page.evaluate(() => history.length);
 
-  await page.locator('#manualToc a[data-ch="6"]').first().click();
+  await page.locator('#manualToc a.m-side-item[data-ch="6"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Moje gry");
   await expect(page).toHaveURL(/[?&]ch=6(?:&|#|$)/);
-  await expect(page.locator(".m-sections li")).toHaveCount(7);
+  await expect(page.locator("#manualToc .m-side-sub")).toHaveCount(7);
   await expect(page.locator(".m-doc .m-control").first()).toBeVisible();
   await expect(page.locator(".m-doc .m-control svg.ico").first()).toBeVisible();
 
@@ -117,7 +117,7 @@ test("manual: telefon — spis treści pod przyciskiem", async ({ page, context 
   await expect(page.locator("#manualToc")).toBeHidden();
   await page.locator("#manualTocToggle").click();
   await expect(page.locator("#manualToc")).toBeVisible();
-  await page.locator('#manualToc a[data-ch="15"]').first().click();
+  await page.locator('#manualToc a.m-side-item[data-ch="15"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Ankiety");
   await expect(page.locator("#manualToc")).toBeHidden();
 });

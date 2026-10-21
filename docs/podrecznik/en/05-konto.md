@@ -67,7 +67,7 @@ Choose [Continue as guest] on the *Login* page. A guest account:
 
 - works only in this browser — you cannot open it on another device,
 - is deleted after **5 days without using the app**; each visit restarts the count,
-- does not have the collaboration features listed in 5.1.
+- does not have the collaboration features listed above (→ 5.1).
 
 From time to time the app reminds you that the guest account will be deleted and offers [Migrate now].
 

@@ -33,13 +33,13 @@ for (const lang of ["pl", "en", "uk"]) {
     .replace(/<i data-icon="([\w-]+)"><\/i>/g, (_, n) => iconSvg(n))
     .replace(/href="\?ch=\d+#(s-[\d-]+)"/g, 'href="#$1"')
     .replace(/href="\?ch=(\d+)"/g, 'href="#ch-$1"');
-  const toc = manual.parts.map((p) => `<div class="m-toc-part"><div class="m-toc-part-title">${esc(p.title)}</div><ol class="m-toc-chapters">${
-    p.chapters.map((id) => { const c = manual.chapters.find((x) => x.id === id); return `<li class="m-toc-chapter"><a href="#ch-${id}"><span class="m-num">${id}.</span> ${esc(c.title)}</a></li>`; }).join("")}</ol></div>`).join("");
+  const toc = manual.parts.map((p) => `<div class="m-side-part">${esc(p.title)}</div>${
+    p.chapters.map((id) => { const c = manual.chapters.find((x) => x.id === id); return `<a class="m-side-item" href="#ch-${id}">${esc(c.title)}</a>`; }).join("")}`).join("");
   const body = manual.parts.map((p) => `<section><div class="m-crumb">${esc(p.title)}</div>${local(p.intro || "")}${
-    p.chapters.map((id) => { const c = manual.chapters.find((x) => x.id === id); return `<article class="m-article" id="ch-${id}" style="margin-bottom:48px"><h1 class="m-title"><span class="m-num">${id}.</span> ${esc(c.title)}</h1><div class="m-doc">${local(c.html)}</div></article>`; }).join("")}</section>`).join("");
+    p.chapters.map((id) => { const c = manual.chapters.find((x) => x.id === id); return `<article class="m-article" id="ch-${id}" style="margin-bottom:48px"><h1 class="m-title">${esc(c.title)}</h1><div class="m-doc">${local(c.html)}</div></article>`; }).join("")}</section>`).join("");
   const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${TITLES[lang]} — podgląd</title><style>${css}
-body{background:var(--bg);color:#fff;margin:0}.wrap{padding:24px var(--page-gutter)}</style></head>
-<body class="manual-body"><main class="wrap"><div class="m-layout"><aside class="m-side"><nav class="m-toc" style="display:block">${toc}</nav></aside><div>${body}</div></div></main></body></html>`;
+body{background:var(--bg);color:#fff;margin:0}@media (max-width:980px){.m-side{display:none}}</style></head>
+<body class="manual-body"><div class="m-layout"><nav class="m-side">${toc}</nav><main class="m-content">${body}</main></div></body></html>`;
   const out = path.join(outDir, `podrecznik-${lang}.html`);
   fs.writeFileSync(out, html);
   console.log(out);

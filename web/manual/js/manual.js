@@ -18,9 +18,11 @@ const CONTENT = {
 export const CHAPTER_PARAM = "ch";
 
 const article = document.getElementById("manualArticle");
+const content = document.getElementById("manualContent");
 const toc = document.getElementById("manualToc");
-const side = document.getElementById("manualSide");
 const tocToggle = document.getElementById("manualTocToggle");
+const tocBackdrop = document.getElementById("manualTocBackdrop");
+const currentLabel = document.getElementById("manualCurrent");
 
 let manual = null;
 let current = null;
@@ -48,22 +50,20 @@ async function loadContent(lang) {
   return (await load()).default;
 }
 
+const sectionId = (id) => `s-${id.replace(/\./g, "-")}`;
+
+// Lewy pasek jak w Ustawieniach gry: części jako etykiety, rozdziały jako pozycje,
+// podrozdziały otwartego rozdziału jako wcięte pozycje. Bez numerów — numer jest tylko adresem.
 function renderToc() {
   toc.innerHTML = manual.parts.map((part) => `
-    <div class="m-toc-part">
-      <div class="m-toc-part-title">${esc(part.title)}</div>
-      <ol class="m-toc-chapters">
-        ${part.chapters.map((id) => {
-          const ch = findChapter(id);
-          const active = current === id;
-          const sections = active ? ch.sections.filter((s) => s.level === 2) : [];
-          return `<li class="m-toc-chapter${active ? " active" : ""}">
-            <a href="${chapterHref(id)}" data-ch="${esc(id)}"${active ? ' aria-current="page"' : ""}><span class="m-num">${esc(id)}.</span> ${esc(ch.title)}</a>
-            ${sections.length ? `<ol class="m-toc-sections">${sections.map((s) => `<li><a href="${chapterHref(id, `#s-${s.id.replace(/\./g, "-")}`)}" data-ch="${esc(id)}" data-sec="${esc(s.id)}"><span class="m-num">${esc(s.id)}</span> ${esc(s.title)}</a></li>`).join("")}</ol>` : ""}
-          </li>`;
-        }).join("")}
-      </ol>
-    </div>`).join("");
+    <div class="m-side-part">${esc(part.title)}</div>
+    ${part.chapters.map((id) => {
+      const ch = findChapter(id);
+      const active = current === id;
+      const sections = active ? ch.sections.filter((s) => s.level === 2) : [];
+      return `<a class="m-side-item${active ? " active" : ""}" href="${chapterHref(id)}" data-ch="${esc(id)}"${active ? ' aria-current="page"' : ""}>${esc(ch.title)}</a>
+        ${sections.map((s) => `<a class="m-side-item m-side-sub" href="${chapterHref(id, `#${sectionId(s.id)}`)}" data-ch="${esc(id)}" data-sec="${esc(s.id)}">${esc(s.title)}</a>`).join("")}`;
+    }).join("")}`).join("");
 }
 
 function renderStart() {
@@ -78,7 +78,7 @@ function renderStart() {
           <h2 class="m-part-title">${esc(part.title)}</h2>
           ${part.intro || ""}
           <ol class="m-part-chapters">
-            ${part.chapters.map((id) => `<li><a href="${chapterHref(id)}" data-ch="${esc(id)}"><span class="m-num">${esc(id)}.</span> ${esc(findChapter(id).title)}</a></li>`).join("")}
+            ${part.chapters.map((id) => `<li><a href="${chapterHref(id)}" data-ch="${esc(id)}">${esc(findChapter(id).title)}</a></li>`).join("")}
           </ol>
         </section>`).join("")}
     </div>`;
@@ -92,15 +92,15 @@ function renderChapter(ch) {
   const part = partOf(ch.id);
   const sections = ch.sections.filter((s) => s.level === 2);
   const pager = (c, cls, label) => c
-    ? `<a class="m-pager-link ${cls}" href="${chapterHref(c.id)}" data-ch="${esc(c.id)}"><span class="m-pager-label">${esc(label)}</span><span class="m-pager-title"><span class="m-num">${esc(c.id)}.</span> ${esc(c.title)}</span></a>`
+    ? `<a class="m-pager-link ${cls}" href="${chapterHref(c.id)}" data-ch="${esc(c.id)}"><span class="m-pager-label">${esc(label)}</span><span class="m-pager-title">${esc(c.title)}</span></a>`
     : `<span class="m-pager-link ${cls} is-empty"></span>`;
   article.innerHTML = `
     <header class="m-head">
       ${part ? `<div class="m-crumb">${esc(part.title)}</div>` : ""}
-      <h1 class="m-title"><span class="m-num">${esc(ch.id)}.</span> ${esc(ch.title)}</h1>
+      <h1 class="m-title">${esc(ch.title)}</h1>
       ${sections.length > 1 ? `<nav class="m-sections" aria-label="${esc(t("manual.sections"))}">
         <div class="m-sections-title">${esc(t("manual.sections"))}</div>
-        <ol>${sections.map((s) => `<li><a href="#s-${s.id.replace(/\./g, "-")}" data-sec="${esc(s.id)}"><span class="m-num">${esc(s.id)}</span> ${esc(s.title)}</a></li>`).join("")}</ol>
+        <ol>${sections.map((s) => `<li><a href="#${sectionId(s.id)}" data-sec="${esc(s.id)}">${esc(s.title)}</a></li>`).join("")}</ol>
       </nav>` : ""}
     </header>
     <div class="m-doc">${ch.html}</div>
@@ -113,7 +113,17 @@ function renderChapter(ch) {
 function scrollToHash(hash, smooth = false) {
   const el = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
   if (el) el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
-  else window.scrollTo({ top: 0 });
+  else content.scrollTo({ top: 0 });
+  markSection();
+}
+
+// Podświetla w pasku podrozdział, który jest właśnie czytany.
+function markSection() {
+  const heads = [...article.querySelectorAll(".m-doc .m-h2")];
+  const top = content.getBoundingClientRect().top + 24;
+  let currentId = heads[0]?.id || "";
+  for (const h of heads) if (h.getBoundingClientRect().top <= top) currentId = h.id;
+  for (const a of toc.querySelectorAll(".m-side-sub")) a.classList.toggle("current", sectionId(a.dataset.sec) === currentId);
 }
 
 function show(id, hash = "", { updateUrl = true, smooth = false } = {}) {
@@ -121,6 +131,7 @@ function show(id, hash = "", { updateUrl = true, smooth = false } = {}) {
   current = ch ? ch.id : null;
   if (ch) renderChapter(ch); else renderStart();
   renderToc();
+  currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
   hydrateIcons(article);
   setTocOpen(false);
   if (updateUrl) {
@@ -131,7 +142,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false } = {}) {
 }
 
 function setTocOpen(open) {
-  side.classList.toggle("open", open);
+  toc.classList.toggle("is-open", open);
+  tocBackdrop.classList.toggle("is-open", open);
   tocToggle.setAttribute("aria-expanded", String(open));
 }
 
@@ -152,7 +164,11 @@ function wireNavigation() {
     }
     show(id, url.hash);
   });
-  tocToggle.addEventListener("click", () => setTocOpen(!side.classList.contains("open")));
+  tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
+  tocBackdrop.addEventListener("click", () => setTocOpen(false));
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
+  let raf = 0;
+  content.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(markSection); }, { passive: true });
 }
 
 async function renderForLang() {

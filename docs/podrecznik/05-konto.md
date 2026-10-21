@@ -67,7 +67,7 @@ Wybierz [Wejdź jako gość] na stronie *Logowanie*. Konto gościa:
 
 - działa tylko w tej przeglądarce — na innym urządzeniu go nie otworzysz,
 - jest usuwane po **5 dniach bez korzystania z serwisu**; każda wizyta liczy czas od nowa,
-- nie ma funkcji współpracy wymienionych w 5.1.
+- nie ma funkcji współpracy wymienionych wyżej (→ 5.1).
 
 Serwis co jakiś czas przypomina, że konto gościa zostanie usunięte, i proponuje [Migruj teraz].
 
