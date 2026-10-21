@@ -104,6 +104,15 @@ test("usunięcie konta czyści user-sounds i user-logos dla tego usera", async (
   // (jedyna dostępna dla gościa, patrz account.js loadProfile()).
   await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
+  // Jednorazowe okno „Konto gościa” (guest-info-modal, per konto w localStorage):
+  // strona Konta odsłania się dopiero po jego zamknięciu (page-init czeka na
+  // showAccountNotices). Zamknij je, jeśli się pojawi.
+  const guestInfoOk = page.locator(".uni-modal").getByRole("button", { name: "Rozumiem", exact: true });
+  try {
+    await guestInfoOk.waitFor({ state: "visible", timeout: 5_000 });
+    await guestInfoOk.click();
+    console.log("[e2e-diag] account: zamknięte okno informacji dla gościa");
+  } catch { /* okno już było potwierdzone wcześniej */ }
   await page.locator("#deleteAccount").click();
   await page.getByRole("button", { name: "Usuń", exact: true }).click();
 
