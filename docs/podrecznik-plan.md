@@ -560,3 +560,8 @@ Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści nale�
 - **Wysyłanie gry znajomemu:** kod pozwala wysłać tylko szkic (blokuje też otwartą/zatrzymaną ankietę).
 - **„Eksportuj do bazy”** przy otwartej/zatrzymanej ankiecie nie pyta o potwierdzenie (eksport do pliku
   i powielanie pytają) — do decyzji, czy ujednolicić.
+- **Eksplorator baz (dla sesji ujednolicającej Eksplorator):** osoba „Tylko podgląd” nie utworzy gry
+  z bazy (przycisk „Utwórz grę” aktywny, ale nic nie robi); Ctrl+Shift+N tworzy pytanie zamiast folderu
+  (warunek Ctrl+N przed Ctrl+Shift+N w `actions.js`); Delete w polu wyszukiwania może usuwać
+  zaznaczenie; „Utwórz grę…” w menu wyłączone w wynikach wyszukiwania/tagu, a na pasku i Ctrl+G działa.
+  Podręcznik pomija te skróty i opisuje obecne działanie.
