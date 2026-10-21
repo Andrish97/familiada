@@ -262,7 +262,7 @@ export async function buildAll() {
   return results;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const check = process.argv.includes("--check");
   const results = await buildAll();
   let stale = false;
