@@ -50,15 +50,15 @@ Details (→ 3).
 ## 2.4 How the app uses poll results
 
 The app can collect answers in your own poll (→ 15) and turn them into a board
-in the same way:
+of answers with points:
 
 - **Any number of voters** — there can be fewer than 100 people or several hundred. To
   count the votes you need at least 10 people who answered all the questions
   (complete responses).
 - **Points are the percentage of complete responses**, rounded down. If 20 out of 50 people
   gave the same answer, it gets 40 points — as if there were 100 respondents.
-- **An answer makes it onto the board from 4 points.** Rarer answers are left out, just like
-  in the game show.
+- **An answer makes it onto the board from 4 points.** Rarer answers are
+  left out.
 - **The board holds at most 6 answers** — that is how many rows the Display has. If more
   answers qualify, the six most popular stay. This is a screen limit,
   not a game show rule.
@@ -170,7 +170,7 @@ How the Control panel guides the operator through these stages (→ 17).
 
 The points of both finalists are added up. There is **no multiplier** in the final — the survey points count.
 
-**In the app:** the same — final points always count once.
+**In the app:** final points always count once.
 
 ## 4.3 The final points target
 

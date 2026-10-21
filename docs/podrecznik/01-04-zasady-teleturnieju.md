@@ -50,15 +50,15 @@ Szczegóły (→ 3).
 ## 2.4 Jak serwis wykorzystuje wyniki ankiety
 
 Serwis może zebrać odpowiedzi w Twojej własnej ankiecie (→ 15) i zamienić je na tablicę
-w taki sam sposób:
+odpowiedzi z punktami:
 
 - **Liczba głosujących jest dowolna** — może być mniej niż 100 osób albo kilkaset. Do
   podliczenia potrzeba co najmniej 10 osób, które odpowiedziały na wszystkie pytania
   (pełnych ankiet).
 - **Punkty to procent pełnych ankiet**, zaokrąglony w dół. Jeśli na 50 osób 20 podało tę
   samą odpowiedź, dostaje ona 40 punktów — tak jakby ankietowanych było 100.
-- **Odpowiedź trafia na tablicę od 4 punktów.** Rzadsze odpowiedzi są pomijane, podobnie jak
-  w teleturnieju.
+- **Odpowiedź trafia na tablicę od 4 punktów.** Rzadsze odpowiedzi są
+  pomijane.
 - **Na tablicy mieści się najwyżej 6 odpowiedzi** — tyle wierszy ma Wyświetlacz. Jeśli
   kwalifikuje się więcej, zostaje sześć najpopularniejszych. To ograniczenie ekranu,
   nie zasada teleturnieju.
@@ -170,7 +170,7 @@ Jak panel sterowania prowadzi operatora przez te etapy (→ 17).
 
 Punkty obu finalistów się sumują. W finale **nie ma mnożnika** — liczą się punkty z ankiety.
 
-**W serwisie:** tak samo — punkty finałowe zawsze liczą się pojedynczo.
+**W serwisie:** punkty finałowe zawsze liczą się pojedynczo.
 
 ## 4.3 Cel punktowy finału
 
