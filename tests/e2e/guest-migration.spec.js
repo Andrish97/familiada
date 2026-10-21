@@ -183,7 +183,8 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
 
   try {
     await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#migrateSection")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator("#btnMigrate")).toBeVisible();
     const after = new Date(Date.now() - 2_000).toISOString();
     await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
     await page.locator("#migrateEmail").fill(MAILBOX);
@@ -230,10 +231,18 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     console.log("[e2e-diag] link migracji po anulowaniu:", (await linkPage.locator("#status").textContent())?.trim());
     await linkContext.close();
     await expect.poll(() => getGuestState(page), { timeout: 10000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
+  } catch (error) {
+    console.log("[e2e-diag] migracja: blad w tresci testu:", error.message.split("\n")[0], "url:", page.url());
+    throw error;
   } finally {
-    await page.locator("#deleteAccount").click();
-    await page.getByRole("button", { name: "Usuń", exact: true }).click();
-    await page.waitForURL(/login/, { timeout: 20000 });
+    try {
+      if (!/\/account/.test(page.url())) await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+      await page.locator("#deleteAccount").click({ timeout: 30000 });
+      await page.getByRole("button", { name: "Usuń", exact: true }).click();
+      await page.waitForURL(/login/, { timeout: 20000 });
+    } catch (cleanupError) {
+      console.log("[e2e-diag] migracja: sprzatanie goscia nieudane:", cleanupError.message.split("\n")[0]);
+    }
     await clearMailbox(MAILBOX);
   }
 });
