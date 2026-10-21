@@ -17,6 +17,8 @@ import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
+const emailRepeatInput = document.getElementById("email2");
+const emailActions = document.getElementById("emailActions");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
 const deletePassword = document.getElementById("deletePassword");
@@ -414,7 +416,8 @@ function setEmailPendingUi(nextPendingEmail) {
   const hasPending = !!pendingEmail && pendingEmail !== currentEmail;
 
   if (emailPendingActions) emailPendingActions.hidden = !hasPending;
-  if (saveEmail) saveEmail.hidden = hasPending;
+  if (emailActions) emailActions.hidden = hasPending;
+  if (emailRepeatInput) emailRepeatInput.value = "";
 
   if (emailPendingHint) {
     emailPendingHint.hidden = !hasPending;
@@ -681,6 +684,9 @@ async function handleEmailSave() {
 
     const normalizedMail = mail.toLowerCase();
     if (normalizedMail === currentEmail.toLowerCase()) throw new Error(t("account.errEmailSameAsCurrent"));
+    // Potwierdza tylko nowy adres, więc literówka = link w cudzej skrzynce.
+    const repeated = String(emailRepeatInput?.value || "").trim().toLowerCase();
+    if (repeated !== normalizedMail) throw new Error(t("account.errEmailMismatch"));
 
     const language = getUiLang();
 
@@ -890,7 +896,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // cooldown: server state (cross-device)
   bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
-  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange] });
+  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, emailRepeatInput, saveEmail, resendEmailChange] });
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
@@ -920,6 +926,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   emailInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    emailRepeatInput?.focus();
+  });
+
+  emailRepeatInput?.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     saveEmail?.click();

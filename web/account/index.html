@@ -79,8 +79,9 @@
       <section class="account-panel" id="emailSection">
         <div class="section-title" data-i18n="account.emailTitle">E-mail</div>
         <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie potwierdź ją linkiem wysłanym na nowy adres.</div>
+        <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
         <div class="account-field-row email-actions" id="emailActions">
-          <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
+          <input class="inp" id="email2" type="email" placeholder="Powtórz nowy e-mail" autocomplete="off" data-i18n-placeholder="account.emailRepeatPlaceholder"/>
           <button class="btn sm gold" id="saveEmail" type="button" data-i18n="account.emailSave" data-i18n-icon="envelope-out">Zmień e-mail</button>
         </div>
         <div class="cooldown" id="emailCooldown" hidden></div>

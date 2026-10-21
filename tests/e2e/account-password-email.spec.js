@@ -146,6 +146,7 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
     await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
     await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
     await page.locator("#email").fill(PROFILE_NEW_EMAIL);
+    await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
     await page.locator("#saveEmail").click();
     lastAuthMailAt.set("test12", Date.now());
     await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 30_000 });
@@ -283,6 +284,7 @@ for (const lang of MAIL_LANGS) {
       await page.goto(`https://www.familiada.online/account${lang === "pl" ? "" : `?lang=${lang}`}`, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
       await page.locator("#email").fill(PROFILE_NEW_EMAIL);
+      await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
       await page.locator("#saveEmail").click();
       lastAuthMailAt.set("test12", Date.now());
 
