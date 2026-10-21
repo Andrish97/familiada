@@ -986,12 +986,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 3% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
+        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 4% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 3% po zaokrągleniu są pomijane.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 4% po zaokrągleniu są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {

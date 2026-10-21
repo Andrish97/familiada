@@ -972,12 +972,12 @@ const en = {
       },
       tallyPoints: {
         title: "Count the votes?",
-        text: "Points are based on all votes. Answers below 3% after rounding will be skipped. Links and invitations will expire.",
+        text: "Points are based on all votes. Answers below 4% after rounding will be skipped. Links and invitations will expire.",
         ok: "Approve",
       },
       tallyText: {
         title: "Approve the answers?",
-        text: "Answers will be saved with points. Shares are based on all votes; answers below 3% after rounding are skipped.",
+        text: "Answers will be saved with points. Shares are based on all votes; answers below 4% after rounding are skipped.",
         ok: "Approve",
       },
       reopen: {
@@ -1010,7 +1010,7 @@ const en = {
       loading: "Loading answers…",
       hintText: "Drag an answer onto another to merge them; click the text to fix it. Below 4% of votes — skipped.",
       hintTextTouch: "Merge: tap the button on one answer, then on the other. Tap the text to fix it. Below 4% — skipped.",
-        hintPoints: "Votes converted to points from all votes. Below 3% after rounding is skipped (gray row).",
+        hintPoints: "Votes converted to points from all votes. Below 4% after rounding is skipped (gray row).",
       counter: "Answers: {n} (3–6 required)",
       sum: "total points: {n}",
       votes: "{n} v.",

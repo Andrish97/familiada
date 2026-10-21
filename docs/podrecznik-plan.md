@@ -147,7 +147,7 @@ Przedstawić układ edytora: nazwa gry, lista pytań, edycja wybranego pytania o
 
 #### 7.3 Pytania i odpowiedzi
 
-Opisać wpisywanie oraz poprawianie treści pytań i odpowiedzi. Wyjaśnić, że pytanie może mieć do 200 znaków, a odpowiedź do 17 znaków. W ankiecie tekstowej edytuje się tylko pytania; w dwóch pozostałych typach gry edytuje się również listę odpowiedzi. Szczegółowe omówienie odpowiedzi pochodzących z bazy pytań pozostawić rozdziałowi 9.
+Opisać wpisywanie oraz poprawianie treści pytań i odpowiedzi. Wyjaśnić, że pytanie może mieć do 100 znaków (E21), a odpowiedź do 17 znaków. W ankiecie tekstowej edytuje się tylko pytania; w dwóch pozostałych typach gry edytuje się również listę odpowiedzi. Szczegółowe omówienie odpowiedzi pochodzących z bazy pytań pozostawić rozdziałowi 9.
 
 #### 7.4 Punktacja odpowiedzi
 
