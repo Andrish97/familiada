@@ -332,22 +332,18 @@ module.exports = [
   // Panel kontaktów ładuje dane dopiero przy zmianie atrybutu hidden (MutationObserver), więc krok przełącza zakładkę przyciskiem.
   { id: "logos-market-admin-contacts", category: CAT, title: "Panel admina — Kontakty Marketingowe", path: "/settings/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
     steps: [async (view) => { await view.evaluate(() => document.getElementById("btnTabMarketingContacts").click()); await view.waitForFunction(() => document.querySelectorAll("#mcTableBody tr").length > 1); await view.waitForTimeout(600); }] },
-  // Edge Function generate-game: atrapa zwraca zawsze { ok: true }; krok podaje listę gier
-  // producenta przez tę samą warstwę (functions.invoke klienta-atrapy), potem „Wczytaj”.
-  { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/settings/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], db: adminData, settle: 800,
-    steps: [async (view, { lang }) => {
+  // Funkcja Edge generate-game idzie przez Worker (/_admin_api/generator/<akcja>):
+  // lista gier producenta z danych sceny, pozostałe akcje zwracają { ok: true }.
+  { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/settings/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], settle: 800,
+    db: (db, lang) => {
+      adminData(db);
       const p = require("../data/panel.cjs")[lang];
       const market = require("../data/content.cjs")[lang].market.filter(([, , author]) => !author);
-      const games = market.map(([title, description], i) => ({ id: `prod${i + 1}`, title, description, lang,
+      db.http["/_admin_api/generator/*"] = { ok: true };
+      db.http["/_admin_api/generator/list-producer-games"] = market.map(([title, description], i) => ({ id: `prod${i + 1}`, title, description, lang,
         payload: { questions: (i === 1 ? p.gameQuestions.slice(0, 6) : p.gameQuestions).map(([text, answers]) => ({ text, answers: answers.map(([a, pts]) => ({ text: a, fixed_points: pts })) })) } }));
-      await view.evaluate((games) => {
-        const client = window.supabase.createClient();
-        client.functions.invoke = async (name, { body } = {}) => ({ data: body?.action === "list-producer-games" ? games : { ok: true }, error: null });
-        // Pierwsze wywołanie przy starcie (wybór języka) poszło jeszcze do domyślnej atrapy -- teraz ma dane.
-        const misses = window.__SCREENS_MISSES__ || [];
-        const i = misses.indexOf("function:generate-game");
-        if (i >= 0) misses.splice(i, 1);
-      }, games);
+    },
+    steps: [async (view) => {
       await view.locator("#gen-load-btn").click();
       await view.locator("#gen-game-list .game-item").first().waitFor();
       await view.locator("#gen-game-list .game-item .game-chevron").first().click().catch(() => {});

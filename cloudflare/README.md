@@ -54,12 +54,18 @@ Nie wymaga to przekierowania przeglądarki. Linki aplikacji używają `/nazwa/`.
 Recommended setup:
 - Protect `settings.familiada.online` with Cloudflare Access policy.
 - Restrict access in Access policy (for example: only your account).
-- Worker authorizes by Cloudflare Access headers (`Cf-Access-Authenticated-User-Email` or `CF-Access-Jwt-Assertion`).
+- Worker verifies the signed `Cf-Access-Jwt-Assertion` token (RS256, JWKS z `https://<CF_ACCESS_TEAM_DOMAIN>/cdn-cgi/access/certs`, `aud` = `CF_ACCESS_AUD`, `iss`, `exp`). Bez tych zmiennych API panelu zwraca 401 (bez fallbacku).
+- Zmiany (`POST/PUT/DELETE`) tylko z `Origin: https://settings.familiada.online` i jako `application/json` (wyjątek: `/_admin_api/attachments/upload` multipart) — ochrona CSRF.
+- `workers_dev = false` i `preview_urls = false` w `wrangler.toml`: Worker dostępny tylko przez trasy domeny.
 
 ### Worker vars/secrets
 - `SUPABASE_URL` (var) → base URL to Supabase (`https://api.familiada.online`)
 - `SUPABASE_SERVICE_ROLE_KEY` (secret) → required for `/_admin_api/mail/*`
 - `ADMIN_BYPASS_TOKEN` (secret) → bypass cookie token
+- `CF_ACCESS_TEAM_DOMAIN` (var/secret) → np. `<zespół>.cloudflareaccess.com`
+- `CF_ACCESS_AUD` (var/secret) → tag AUD aplikacji Access dla `settings.familiada.online` (można kilka po przecinku)
+- `GENERATE_GAME_SECRET` (secret) → nagłówek `X-Internal-Secret` do funkcji Edge `generate-game` (proxy `/_admin_api/generator/*`); ta sama wartość w env funkcji i w Vault (`generate_game_secret`)
+- `LEAD_FINDER_API_KEY` (secret) → klucz API usługi lead-finder (ta sama wartość w env usługi)
 
 Example:
 - `wrangler secret put SUPABASE_SERVICE_ROLE_KEY`

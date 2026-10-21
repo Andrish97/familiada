@@ -1,5 +1,4 @@
 
-import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-21T17405";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T17405";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T17405";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T17405";
@@ -48,10 +47,19 @@ function makeLocalId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-// API Call
+// API: funkcja Edge generate-game przez Worker (/_admin_api/generator/<akcja>);
+// sekret funkcji zna tylko Worker, dostęp admina sprawdza Cloudflare Access.
 async function callEdgeAction(action, body = {}) {
-  const { data, error } = await supabase().functions.invoke('generate-game', { body: { action, ...body } });
-  if (error) throw new Error(error.message || 'Unknown error');
+  const res = await fetch(`/_admin_api/generator/${encodeURIComponent(action)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+    body: JSON.stringify(body),
+  });
+  let data = null;
+  try { data = await res.json(); } catch { data = null; }
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
   return data;
 }
 

@@ -1,10 +1,29 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Wołają tylko serwery: Worker (/_admin_api/generator/*, panel admina za
+// Cloudflare Access) i cron w bazie (invoke_embed_missing_market_games).
+// Bez nagłówków CORS -- przeglądarka nie ma tu wstępu.
+const CORS: Record<string, string> = {};
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  let diff = ea.length ^ eb.length;
+  const n = Math.max(ea.length, eb.length);
+  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
+  return diff === 0;
+}
+
+// Sekret GENERATE_GAME_SECRET (env funkcji) w nagłówku X-Internal-Secret;
+// brak sekretu w env = odmowa każdego żądania.
+function authorizeInternal(req: Request): Response | null {
+  const secret = (Deno.env.get("GENERATE_GAME_SECRET") || "").trim();
+  if (!secret) return new Response(JSON.stringify({ error: "not_configured" }), { status: 503 });
+  const given = req.headers.get("x-internal-secret") || "";
+  if (!timingSafeEqual(given, secret)) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+  return null;
+}
 
 // ─── Embedding ────────────────────────────────────────────────────────────────
 
@@ -297,7 +316,9 @@ function normalizeGamePayload(payload: any) {
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const denied = authorizeInternal(req);
+  if (denied) return denied;
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405 });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const groqKey = Deno.env.get("GROQ_API_KEY")!;
