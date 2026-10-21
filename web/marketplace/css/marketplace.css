@@ -41,11 +41,12 @@ body.mkt-body > main.wrap {
 .mkt-head #btnMySent{display:inline-flex;align-items:center;gap:6px}
 .mkt-head #btnMySent .ico{width:17px;height:17px}
 
+/* Tytuł jak .bar .title na pozostałych stronach (ujednolicenie 2026-10-21). */
 .mkt-title {
-  font-weight: 1000;
-  font-size: 22px;
-  letter-spacing: .06em;
-  color: var(--gold);
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
   margin: 0;
 }
 .mkt-head > :first-child{min-width:0;flex:1 1 0}
@@ -56,8 +57,8 @@ body.mkt-body > main.wrap {
 
 .mkt-subtitle {
   opacity: .75;
-  font-size: 14px;
-  margin: 6px 0 0;
+  font-size: 12px;
+  margin: 4px 0 0;
 }
 
 /* ===== Search bar ===== */
@@ -460,10 +461,6 @@ body.mkt-body > main.wrap {
 
   .mkt-sent-row {
     gap: 8px;
-  }
-
-  .mkt-title {
-    font-size: 18px;
   }
 }
 

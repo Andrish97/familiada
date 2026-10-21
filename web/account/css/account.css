@@ -61,8 +61,7 @@
   .account-panel--demo #demoRestoreBtn {
     grid-column: 2;
     grid-row: 1 / span 3;
-    width: auto;
-    min-width: 260px;
+    justify-self: end;
   }
 }
 
@@ -81,11 +80,19 @@
   }
 }
 
-@media (max-width: 600px) {
-  .account-panel .btn {
-    width: 100%;
-  }
+/* Formularze jak w Znajomych („Zaproś”): pole i mały przycisk w jednym
+   wierszu; przyciski bez pola — małe, po prawej (ujednolicenie 2026-10-21). */
+.account-field-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
+.account-field-row > .inp,
+.account-field-row > .pass-wrap{ flex: 1 1 180px; min-width: 0; }
+.account-field-row > .btn{ flex: 0 0 auto; margin-left: auto; }
+.account-actions{ display: grid; justify-items: end; gap: 10px; }
+#demoRestoreBtn{ justify-self: end; }
 
 .cooldown{
   font-size: 12px;
@@ -119,19 +126,10 @@
 }
 
 .pending-actions{
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.pending-actions .btn{
-  width: 100%;
-}
-
-@media (max-width: 600px) {
-  .pending-actions{
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .cooldown-banner{
@@ -154,37 +152,23 @@
 
 /* --- fixed control sizing (avoid multi-line buttons changing height) --- */
 .account-panel .inp,
-.account-panel .btn,
 .cooldown {
-  height: 44px;
-  min-height: 44px;
+  height: 40px;
+  min-height: 40px;
   box-sizing: border-box;
 }
 
 .account-panel .inp {
   padding: 0 14px;
-  line-height: 44px;
+  line-height: 40px;
   align-self: end;
 }
 
 .account-panel .btn {
-  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.email-actions{
-  display: grid;
-  gap: 10px;
-}
-
-/* stacked layout for pending email actions */
-.pending-actions--stack{
-  grid-template-columns: 1fr !important;
 }
 
 .spacer{
@@ -223,3 +207,6 @@
 #userRatingInfo .rating-comment-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 #userRatingInfo .label { font-size: 12px; opacity: .75; }
 #userRatingInfo .value.italic { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }
+#userRatingInfo{ display: grid; gap: 10px; }
+#ratingEditBtn{ justify-self: end; }
+.account-panel .pass-wrap .inp{ padding-right: 44px; }

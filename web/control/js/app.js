@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-21T06554";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-21T07070";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,20 +8,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T06554";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T06554";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T06554";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-21T06554";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T06554";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06554";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T06554";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-21T06554";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-21T06554";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-21T06554";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T06554";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T06554";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-21T06554";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T06554";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T07070";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07070";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T07070";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-21T07070";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T07070";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T07070";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T07070";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-21T07070";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-21T07070";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-21T07070";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T07070";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T07070";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-21T07070";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T07070";
 
 
 function qrImgSrc(url) {
@@ -111,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-21T06554";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-21T06554";
-import { createEngine } from "./engine.js?v=v2026-10-21T06554";
-import { createActionGate } from "./actionGate.js?v=v2026-10-21T06554";
-import { createDevices } from "./devices.js?v=v2026-10-21T06554";
-import { createPresence } from "./presence.js?v=v2026-10-21T06554";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-21T06554";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-21T06554";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-21T06554";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-21T06554";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-21T06554";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-21T06554";
-import { createUI } from "./ui.js?v=v2026-10-21T06554";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-21T06554";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T06554";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T06554";
+import { createStore } from "./store.js?v=v2026-10-21T07070";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-21T07070";
+import { createEngine } from "./engine.js?v=v2026-10-21T07070";
+import { createActionGate } from "./actionGate.js?v=v2026-10-21T07070";
+import { createDevices } from "./devices.js?v=v2026-10-21T07070";
+import { createPresence } from "./presence.js?v=v2026-10-21T07070";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-21T07070";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-21T07070";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-21T07070";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-21T07070";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-21T07070";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-21T07070";
+import { createUI } from "./ui.js?v=v2026-10-21T07070";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-21T07070";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T07070";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T07070";
 
 
 async function pickQuestionPool(state) {

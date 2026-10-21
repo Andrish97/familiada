@@ -169,6 +169,30 @@ podliczania jako stan bieżącej operacji.
   z napisami (wcześniej tylko przy jednym rzędzie — na 390 px zostawała
   kolumna szerokich przycisków).
 
+## Decyzje — paczka ujednolicenia po przeglądzie zrzutów (2026-10-21)
+
+Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon):
+
+- **Marginesy na komputerze:** ujednolicić. Wykonanie wg rodzaju strony
+  (`wzorce-ui.md` A1): strony aplikacji (listy, praca, formularze — m.in.
+  Konto, edytor gry, Społeczność) mają `--page-gutter` jak Gry; strony
+  tekstowe (landing, Instrukcja, Prywatność) zachowują wąską kolumnę do czytania.
+- **Pusty stan:** ujednolicić do jednego wspólnego elementu (zamiast ~15 klas).
+- **Wyszukiwanie:** Społeczność to inna strona — zostaje. Gry/Logo/Bazy:
+  wyszukiwanie dotyczy jednej części listy, więc zostaje w dolnym pasku listy.
+  Eksplorator — ujednolica inna sesja (nie ruszać).
+- **Tytuł w topbarze czy w treści:** decyduje rodzaj strony (A1) — bez zmian.
+- **Tytuły stron:** ujednolicić (Społeczność, Instrukcja i inne odstające
+  do stylu `.bar .title`).
+- **Przyciski formularzy w Koncie:** ujednolicić z resztą formularzy.
+- **Zadania / Connect (wąska kolumna w szerokiej karcie):** do pokazania
+  wariantów — użytkownik nie jest pewien, czy węższa karta nie zepsuje koncepcji.
+- **Okna udostępniania:** ujednolicić okno udostępniania Bazy i okno
+  udostępniania urządzenia na wzór okna „Dodaj odbiorców” ankiety.
+- **Wypustki kart:** wspólny CSS; najpierw pokazać, jak wyglądałaby
+  Społeczność z kartą „Moje wysłane”. Control nie ma już wypustek — usunąć
+  stamtąd ich CSS (po sprawdzeniu, że nieużywany).
+
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
 - Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,
