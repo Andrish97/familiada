@@ -90,3 +90,45 @@ Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
 - **ROZBIEŻNOŚĆ (antybot):** niewidoczna weryfikacja przy każdym logowaniu/rejestracji/resecie/gościu; widoczne okno „Potwierdź, że jesteś człowiekiem” po 3 nieudanych próbach (przy 4.) albo gdy niewidoczna zawiedzie. W podręczniku: „po kilku nieudanych próbach może pojawić się dodatkowe potwierdzenie”.
 - Ustawienia: „Wiadomości e-mail” (przełącznik, wyłączenie z potwierdzeniem), „Twoja ocena systemu” (tylko podgląd), „Materiały Demo” → „Przywróć pliki demo”. **Uwaga (poza podręcznikiem):** przywrócenie najpierw usuwa obecne gry/bazy/logo demo, także zmienione — okno tego nie mówi.
 - Usunięcie: „Usuń konto” → hasło → „Usuń konto i dane” (gość: okno „Usunąć konto gościa?”). Usuwane: gry, bazy (i dostępy innych), dostępy do cudzych baz, logo, znajomości, subskrypcje, zadania, zaproszenia, otrzymane kopie, oceny, biblioteka Gier Społeczności, pliki. Zostają: kopie wysłane innym, głosy w cudzych ankietach (bez powiązania), gry w Grach Społeczności (bez autora).
+
+### Rozdz. 8 — Logo (sprawdzone 2026-10-21)
+
+- **ROZBIEŻNOŚĆ:** 3 tryby, nie 4: „Tekst” („Napis czcionką jak w klasycznym logo Familiady”), „Rysunek” („Rysuj, dodawaj kształty i napisy”), „Obraz” („Twój obraz zamieniony na kropki wyświetlacza”). Tekstu pikselowego nie ma (napis — narzędziem „Tekst” w Rysunku).
+- Nowe logo: „+” → „Nowe logo” (nazwa do 80 znaków, przy kolizji „(2)”) → od razu edytor. Liczba logo bez limitu.
+- Tekst: pole „Np. FAMILIADA”, „Dozwolone znaki”, licznik „Szerokość: n/30”; błędny napis nie zapisuje się.
+- Rysunek: Wskaźnik (V), Rączka (H/Spacja), Powiększ/Pomniejsz, Tło sceny, Pędzel (B), Gumka (E), Kształty (S; 15 kształtów), Tekst (T, 45 czcionek), Cofnij/Ponów, Duplikuj, Wyczyść, Podgląd; kolory tylko czarny/biały; wynik 150×70 kropek. Skróty wyłączone w polach tekstowych.
+- Obraz: „Wybierz obraz” (JPG/PNG/GIF/WEBP, do 5 MB), kadr „Obszar wyświetlacza”, obrót 90°, prostowanie ±30°, Jasność, Kontrast, Gamma, Czerń, Biel, Dither, „Odwróć”, „Przywróć”.
+- Zapis automatyczny (bez przycisku i bez komunikatu), natychmiast przy „Wstecz”.
+- Lista „Moje loga”: Edytuj, Podgląd, Powiel, Eksport (`.famlogo`), Import, Wyślij, kosz; zmiana nazwy dwuklikiem/przytrzymaniem. Telefon: edytor „Niedostępne na telefonie”, lista bez Edytuj/Nowe logo (<700 px).
+- Logo wybiera się w Ustawieniach gry → „Logo” („Domyślne” = logo Familiady albo własne); globalnego aktywnego logo nie ma.
+- Blokady: w trakcie rozgrywki lub otwartych ustawień gry logo nie da się edytować ani usunąć; edycja logo blokuje wejście do gry i ustawień.
+- Wyświetlacz zawsze kropki. Prowadzący: „Piksele” / „Źródło” (domyślnie Źródło). Źródło: Tekst — napis w stylu logo Familiady; Obraz — oryginał z kadrem; **ROZBIEŻNOŚĆ:** Rysunek — kształt wektorowy jednobarwny w kolorze kropek (nie „oryginał”). Logo w edycji → prowadzący widzi domyślne.
+
+### Rozdz. 9 — Bazy pytań (sprawdzone 2026-10-21)
+
+- Lista: zakładki „Moje bazy” / „Udostępnione”; „Nowa baza” (do 80 znaków); „Przeglądaj”, „Udostępnij” (właściciel), „Powiel” (właściciel, nie gość), „Eksport” (`.fambase`), „Import”; filtr ról Moja/Edycja/Odczyt.
+- Eksplorator („Menedżer bazy pytań”): drzewo „Foldery” od „Folder główny” (nieusuwalny), panel „Tagi” i „Pasujące kategorie” (automatyczne: preparowane/punktowane/typowe). Głębokość folderów bez limitu, drzewo pokazuje 8 poziomów.
+- Pasek: Nowy folder, Nowe pytanie, Edytuj pytanie, Tagi, Zmień nazwę, Usuń, Kopiuj, Wytnij, Wklej, Duplikuj, Utwórz grę, Odśwież widok. Menu kontekstowe (dotyk: przytrzymanie) — te same + „Otwórz folder”, „Nowy folder/pytanie w tym folderze”; w panelu tagów: Pokaż, Dodaj/Edytuj/Usuń tag.
+- Skróty (Mac: ⌘): Ctrl+Shift+N folder*, Ctrl+N pytanie, Ctrl+E edycja, Ctrl+T tagi, F2 nazwa, Delete usuń, Ctrl+C/X/V/D, Ctrl+A, Ctrl+G utwórz grę, Ctrl+Alt+R odśwież, Enter otwórz folder, Backspace folder wyżej, Esc odznacz. *zob. błędy.
+- Zaznaczanie: Ctrl/⌘, Shift (zakres), ramka. Przeciąganie na folder przenosi (z Ctrl/Option kopiuje); na puste tło → do „Folderu głównego”; na tag — przypisuje.
+- Tagi: do 40 znaków, litery/cyfry/_, kolor; przypisanie do całego zaznaczenia (stan „częściowo”); filtr: kilka tagów = wszystkie naraz (AND); zaznaczone tagi blokują wyszukiwarkę i drzewo.
+- Wyszukiwanie „Szukaj...”: treść pytań i nazwy folderów (nie odpowiedzi), chipy `#tag`.
+- Okno „Pytanie”: treść do 100, do 6 odpowiedzi po 17 znaków, punkty opcjonalne 0–100 (suma do 100); tagi osobno.
+- „Utwórz grę” → okno „Eksport gry”: nazwa (folder albo „gra”), drzewo całej bazy z zaznaczeniem, typ (domyślnie Preparowana), znacznik braków przy pytaniu, podsumowanie „Gotowa po utworzeniu.” / „Utworzy się szkic. Do gotowości brakuje: …”. Bez minimum, nic nie dobiera (zgodne z planem); potem lista gier.
+
+### Rozdz. 12 — Współdzielenie baz (sprawdzone 2026-10-21)
+
+- Tylko właściciel z kontem. Okno „Udostępnij bazę”: „E-mail lub nazwa użytkownika” (**odbiorca nie musi być znajomym**), lista „Znajomi” (wielu naraz), sekcja „Udostępnione” (oczekujące/aktywne/odrzucone). Rola: „Może edytować” (domyślnie) / „Tylko podgląd”.
+- Role: Moja / EDYCJA / ODCZYT. Edytor: pełna edycja zawartości, eksport gier do bazy; nie udostępnia, nie zmienia nazwy, nie usuwa. Odczyt: przegląda i eksportuje do pliku; **nie tworzy gier** (zob. błędy).
+- Odbiorca: e-mail z linkiem; kafelek „Proponowana”, „Od: …”, „Przyjmij”/„Odrzuć”; licznik na zakładce; zaproszenie wygasa po 5 dniach.
+- Właściciel: zmiana roli (także oczekującej), przypomnienie, odebranie dostępu; odbiorca: „Usuń z listy”; odebranie w trakcie → „Odebrano Ci dostęp”.
+- Blokady: „Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.”; otwarta baza blokuje zmianę nazwy i usunięcie.
+
+## Błędy znalezione przy weryfikacji (do naprawy przed opisem)
+
+1. Eksplorator: `Delete` (i `Esc`) obsługiwane przed blokadą pól tekstowych — `Delete` w wyszukiwarce/oknie pytania przy zaznaczeniu otwiera „Usunąć …?” (`web/bases/explorer/js/actions.js` ~4639–4690).
+2. Eksplorator: `Ctrl/⌘+Shift+N` tworzy pytanie zamiast folderu — gałąź Ctrl+N sprawdzana wcześniej (`actions.js` ~4759/4774).
+3. Eksplorator: „Utwórz grę” na pasku aktywne dla roli Odczyt, kliknięcie nic nie robi (`render.js` ~407–418).
+4. Rejestracja: nazwa z części adresu przed „@” zajęta/zarezerwowana → profil się nie tworzy (do potwierdzenia testem).
+5. „Przywróć pliki demo”: usuwa zmienione materiały demo bez ostrzeżenia w oknie.
+6. Martwe komunikaty „Nie można eksportować gry z otwartą ankietą” (`pl.js` ~2596/2599).
