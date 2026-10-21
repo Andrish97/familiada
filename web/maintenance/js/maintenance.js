@@ -1,7 +1,7 @@
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T13332";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-21T13332";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T13341";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-21T13341";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-10-21T13332";
+const ENDPOINT = "/maintenance-state.json?v=v2026-10-21T13341";
 
 const POLL_MS = 30000;
 

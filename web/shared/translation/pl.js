@@ -3051,9 +3051,9 @@ const pl = {
     shortcuts: {"mappingAnswers": "1–6 — zaznacz odpowiedź z listy", "i": "I — przejdź do pola wpisanej odpowiedzi", "answers": "1–6 → Enter — odsłoń odpowiedź", "x": "X → Enter — pudło", "t": "T → Enter — timer", "a": "A → Enter — drużyna A", "b": "B → Enter — powrót / ręczny wybór drużyny B w pojedynku", "c": "C → Enter — zatwierdź zgłoszenie", "p": "P → Enter — oddaj kontrolę", "n": "N → Enter — przycisk dalszego przejścia", "e": "E → Enter — zmień ustawienia", "w": "W — wpisana odpowiedź", "o": "O — brak odpowiedzi", "r": "R — powtórzenie", "m": "M — wycisz / włącz dźwięk", "reveal": "Enter — odsłoń odpowiedź, kolejny Enter — punkty", "fields": "↑ / ↓ / Enter — poprzednie / następne puste pole", "entryTimer": "Ctrl+Enter (Cmd+Enter na Macu) — start / stop timera", "entryRepeat": "Shift+Enter w pustym polu — powtórzenie"},
     hints: {
       rIntro: "Gra gotowa. Ekran oczekuje na start.",
-      rRoundStart: "Runda {roundNo} gotowa. Kliknij „Start rundy”, żeby zacząć.",
+      rRoundStart: "Runda {roundNo} gotowa. Kliknij „Rozpocznij rundę”, żeby zacząć.",
       duelFirst: "Pierwsza: {team}. Kliknij „Zatwierdź”, żeby przyjąć zgłoszenie.",
-      duelPhysical: "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Potwierdź”.",
+      duelPhysical: "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Zatwierdź”.",
       duelWaiting: "Przycisk aktywny. Czekam na zgłoszenie drużyny.",
       duelNowAnswering: "Teraz odpowiada: {team}.",
       duelAnswering: "Pojedynek — odpowiada: {team}.",

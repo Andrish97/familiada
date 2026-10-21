@@ -9,6 +9,18 @@ import { getRoundsHint, getFinalHint } from "../../web/shared/js/gameplay/hints.
 import { createEngine } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
+import { readFileSync } from "node:fs";
+
+// Hinty idą przez t() — w gołym Node słownik trzeba wczytać ręcznie (PL),
+// z minimalnymi atrapami document/window, których setUiLang dotyka.
+// Ten sam specyfikator co w hints.js (z ?v=), inaczej Node wczyta osobną
+// instancję translation.js i t() w hints.js nadal nie miałoby słownika.
+const HINTS_URL = new URL("../../web/shared/js/gameplay/hints.js", import.meta.url);
+const translationSpec = readFileSync(HINTS_URL, "utf8").match(/from "([^"]*translation\.js[^"]*)"/)[1];
+const { setUiLang } = await import(new URL(translationSpec, HINTS_URL).href);
+globalThis.document ??= { documentElement: {} };
+globalThis.window ??= { dispatchEvent() {} };
+await setUiLang("pl", { persist: false, updateUrl: false, apply: false });
 
 function questionPool(n = 3) {
   return Array.from({ length: n }, (_, i) => ({ id: `q${i + 1}`, ord: i + 1, text: `Pytanie ${i + 1}` }));

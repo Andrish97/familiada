@@ -1,4 +1,4 @@
-import { sb } from "./supabase.js?v=v2026-10-21T13332";
+import { sb } from "./supabase.js?v=v2026-10-21T13341";
 
 
 function pickRpcRow(data, fnName) {
