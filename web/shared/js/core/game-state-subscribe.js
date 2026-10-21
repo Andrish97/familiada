@@ -416,6 +416,15 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
       trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
     });
+    // Kanał zgłasza SUBSCRIBED, ale nie dostarcza zmian (statystyki
+    // 2026-10-21: Prowadzący nadrabiał co ~6 s każdą zmianę). Dopóki
+    // directConnected=true, dzwonek i odpytywanie są wyłączone, więc bez
+    // odbudowy kanału każda kolejna zmiana czekałaby na heartbeat.
+    if (directConnected) {
+      noteDirectFailure("STALE");
+      resync();
+      return;
+    }
     void fetchGuarded("rpc_fallback");
   }
 

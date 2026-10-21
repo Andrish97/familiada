@@ -5650,7 +5650,7 @@ function buildSessionRunDetails(r) {
         const visibility = metrics.start_visibility === "hidden" ? " · karta była w tle" : metrics.start_visibility === "visible" ? " · karta była widoczna" : "";
         const background = Number(metrics.hidden_duration_ms) > 0 ? `, w tym ${formatDuration(metrics.hidden_duration_ms)} w tle` : "";
         const network = metrics.start_online === false ? " · przeglądarka zgłaszała brak sieci" : "";
-        const cause = metrics.first_status ? ` · status ${metrics.first_status}` : "";
+        const cause = metrics.first_status === "STALE" ? " · kanał milczał mimo połączenia (wykrył heartbeat), odbudowany" : metrics.first_status ? ` · status ${metrics.first_status}` : "";
         return { title: `Przerwa kanału: ${devices}`, detail: `${duration}${cause}${catchups}${visibility}${background}${network}${metrics.was_discarded ? " · karta została odtworzona po odrzuceniu" : ""}`.trim() };
       }
       if (event.category === "device_state_sync") {
