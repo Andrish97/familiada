@@ -193,9 +193,13 @@ function ensureModal() {
     const list = document.getElementById("cModalFileList");
     if (!list) return;
     const files = Array.from(e.target.files || []);
-    list.innerHTML = files.map(f =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)">${f.name}</span>`
-    ).join("");
+    // Nazwa pliku jako tekst (nazwa może zawierać znaczniki HTML).
+    list.replaceChildren(...files.map(f => {
+      const chip = document.createElement("span");
+      chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)";
+      chip.textContent = f.name;
+      return chip;
+    }));
   });
 
   window.addEventListener("i18n:lang", applyLabels);

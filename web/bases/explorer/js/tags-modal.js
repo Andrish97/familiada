@@ -15,6 +15,11 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T1740
 import { normalizeText } from "./data/listing.js?v=v2026-10-21T17405";
 import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T17405";
 
+// Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
 
@@ -431,10 +436,10 @@ export async function openTagsModal(state, opts = {}) {
         const ui = triToUi(tri);
 
         return `
-          <label class="tags-row" data-tag-id="${tag.id}" data-state="${tri}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
-            <input type="checkbox" data-tag-id="${tag.id}" aria-checked="${tri === "some" ? "mixed" : ui.checked}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
-            <span class="tag-dot" style="background:${tag.color || "#777"}"></span>
-            <span class="m-p">#${String(tag.name || "")}</span>
+          <label class="tags-row" data-tag-id="${esc(tag.id)}" data-state="${tri}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
+            <input type="checkbox" data-tag-id="${esc(tag.id)}" aria-checked="${tri === "some" ? "mixed" : ui.checked}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
+            <span class="tag-dot" style="background:${esc(tag.color || "#777")}"></span>
+            <span class="m-p">#${esc(tag.name || "")}</span>
             ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
           </label>
         `;
