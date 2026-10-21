@@ -167,3 +167,47 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
     await deleteGame(page, game.id);
   }
 });
+
+// Decyzja 2026-10-21 (migracja 441): zamknięta ankieta — „Zmień typ” bez
+// pytania o reset; pod wybranym typem „Zachowaj …” (domyślnie zaznaczone).
+test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez pytania o reset (UI)", async ({ page, context }, testInfo) => {
+  test.setTimeout(90_000);
+  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+  const name = `E2E-E21-KEEP-${Date.now()}`;
+  const game = await seedGame(page, { type: "poll_points", name, questions: 10 });
+  try {
+    await page.evaluate(async (id) => {
+      const { error } = await window.__sbClient.from("games").update({ status: "ready" }).eq("id", id);
+      if (error) throw new Error(error.message);
+    }, game.id);
+    await page.goto(`${ORIGIN}/games/?tab=poll_points`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    const tile = page.locator("#grid .card", { has: page.locator(".name", { hasText: name }) });
+    await tile.click();
+    await expect(page.locator("#btnChangeType")).toBeEnabled({ timeout: 15000 });
+    await page.locator("#btnChangeType").click();
+    await expect(page.locator(".change-type")).toBeVisible();
+    await expect(page.locator(".uni-modal")).toContainText("Ankieta jest zamknięta");
+    const option = page.locator(".change-type-option", { has: page.locator('input[value="prepared"]') });
+    await option.locator('input[type="radio"]').check();
+    const keep = option.locator(".change-type-keep input");
+    await expect(keep).toBeVisible();
+    await expect(keep).toBeChecked();
+    await expect(option.locator(".change-type-desc")).toHaveText("Pytania, odpowiedzi i punkty z ankiety zostaną.");
+    await keep.uncheck();
+    await expect(option.locator(".change-type-desc")).toContainText("Punkty zostaną usunięte");
+    await keep.check();
+    await page.locator(".uni-foot .btn.gold:visible").click();
+
+    await expect.poll(async () => page.evaluate(async (id) => {
+      const { data } = await window.__sbClient.from("games").select("type,status").eq("id", id).single();
+      return data && `${data.type}/${data.status}`;
+    }, game.id), { timeout: 15000 }).toBe("prepared/draft");
+    expect((await answersOf(page, game.questionIds[0])).map((a) => a.fixed_points)).toEqual([40, 30, 20]);
+    await expect(page.locator(".uni-modal")).toHaveCount(0);
+  } finally {
+    await deleteGame(page, game.id);
+  }
+});

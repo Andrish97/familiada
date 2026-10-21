@@ -1463,6 +1463,7 @@ const en = {
       action: "Change type",
       title: "Change game type",
       text: "Choose a type. The same game changes (not a copy) and returns to draft.",
+      textClosed: "The poll is closed. Its votes, links and QR codes will be removed, and the game returns to a draft of the chosen type.",
       ok: "Change",
       cancel: "Cancel",
       failed: "Could not change the game type. Try again.",
@@ -1471,7 +1472,14 @@ const en = {
         toText: "Questions stay. Answers and points are removed.",
         toPoints: "Questions and answers stay. Points are removed.",
         toPrepared: "Questions and answers stay.",
-        pointsRemoved: "Points are removed.",
+        keepAll: "Questions, answers and points from the poll stay.",
+        keepAnswers: "Questions and answers from the poll stay. A new poll will set the points.",
+        questionsOnly: "Only the questions stay.",
+      },
+      keep: {
+        points: "Keep the points from the poll",
+        answersPoints: "Keep the answers and points from the poll",
+        answers: "Keep the answers from the poll",
       },
     },
     transferDropsVotes: {

@@ -333,10 +333,16 @@ powielenie ani utworzenie nowej gry: konwersja aktualizuje ten sam rekord.
 - Ankieta `poll_open` jest zablokowana dla zmiany typu tak samo jak dla edycji.
   `poll_stopped` również pozostaje zablokowana, jeśli wspólna reguła edycji ją
   blokuje. Typ `market` nie podlega edycji.
-- Dla zamkniętej ankiety (`ready`) modal korzysta z tego samego
-  `needs_reset`/potwierdzenia co edytor. Bez potwierdzenia nic się nie zmienia;
-  po potwierdzeniu resetuje wyniki i przypisaną punktację tak jak zwykła edycja,
-  a następnie zmienia typ i ustawia grę jako szkic docelowego typu.
+- Dla zamkniętej ankiety (`ready`) — **decyzja użytkownika 2026-10-21,
+  migracja 441**: bez osobnego pytania o reset; samo okno „Zmień typ” jest
+  potwierdzeniem (tekst: głosy, linki i kody QR ankiety zostaną usunięte).
+  Wyniki ankiety można opcjonalnie zachować (`game_change_type(..., p_keep)`,
+  pole „Zachowaj …” pod wybranym typem, domyślnie zaznaczone):
+  punktacja → preparowana: punkty (odpowiedzi zostają zawsze);
+  tekstowa → preparowana: odpowiedzi i punkty (bez zachowania same pytania);
+  tekstowa → punktacja: odpowiedzi (punkty da nowa ankieta; bez zachowania same
+  pytania); → tekstowa: same pytania, bez wyboru. Gra zawsze wraca do szkicu
+  docelowego typu. „Edytuj” zamkniętej ankiety nadal pyta o reset.
 - Dla szkicu zmiana typu może przejść bez resetu wyników ankiety, bo ich nie ma;
   nadal wykonuje konwersję danych z tabeli poniżej.
 - Modal pokazuje podsumowanie konwersji i utraconych danych przed

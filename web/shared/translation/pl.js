@@ -1466,6 +1466,7 @@ const pl = {
       action: "Zmień typ",
       title: "Zmień typ gry",
       text: "Wybierz typ. Zmienia się ta sama gra (to nie kopia) i wraca do szkicu.",
+      textClosed: "Ankieta jest zamknięta. Głosy, linki i kody QR ankiety zostaną usunięte, a gra wróci do szkicu wybranego typu.",
       ok: "Zmień",
       cancel: "Anuluj",
       failed: "Nie udało się zmienić typu gry. Spróbuj ponownie.",
@@ -1474,7 +1475,14 @@ const pl = {
         toText: "Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.",
         toPoints: "Pytania i odpowiedzi zostaną. Punkty zostaną usunięte.",
         toPrepared: "Pytania i odpowiedzi zostaną.",
-        pointsRemoved: "Punkty zostaną usunięte.",
+        keepAll: "Pytania, odpowiedzi i punkty z ankiety zostaną.",
+        keepAnswers: "Pytania i odpowiedzi z ankiety zostaną. Punkty da nowa ankieta.",
+        questionsOnly: "Zostaną same pytania.",
+      },
+      keep: {
+        points: "Zachowaj punkty z ankiety",
+        answersPoints: "Zachowaj odpowiedzi i punkty z ankiety",
+        answers: "Zachowaj odpowiedzi z ankiety",
       },
     },
     transferDropsVotes: {
