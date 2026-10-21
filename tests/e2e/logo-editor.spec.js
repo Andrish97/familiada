@@ -993,21 +993,11 @@ test.describe("blokady", () => {
     return sb.rpc(fn, { p_resource_type: "logos", p_resource_id: u.user.id, p_tab_id: tab });
   }, { fn, tab });
 
-  // Spec biegnie równolegle na jednym koncie: inny worker może akurat
-  // edytować logo (blokada logo:L), a wtedy pula `logos` jest zajęta.
-  // Czekamy, aż się zwolni, zamiast przegrywać wyścig jednym strzałem.
-  const acquirePool = async (lock) => {
-    let got = null;
-    await expect.poll(async () => (got = await lock("acquire_edit_lock_mode")).data?.ok === true,
-      { timeout: 30000, intervals: [500, 1000, 2000] }).toBe(true);
-    return got;
-  };
-
   test("otwarte ustawienia gry (logos) blokują edycję logo (cała pula)", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("pool"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     const lock = poolLock(page, `e2e-le2-${Date.now()}`);
-    const got = await acquirePool(lock);
+    const got = await lock("acquire_edit_lock_mode");
     expect(got.data?.ok, "logos współdzielone powinno się zająć").toBe(true);
     try {
       await edit(page, id);
@@ -1029,7 +1019,7 @@ test.describe("blokady", () => {
       await window.__sbClient.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
     }, id);
     const lock = poolLock(page, `e2e-le2-mid-${Date.now()}`);
-    const got = await acquirePool(lock);
+    const got = await lock("acquire_edit_lock_mode");
     expect(got.data?.ok, "logos współdzielone po zwolnieniu logo:L").toBe(true);
     try {
       await page.fill("#textValue", "CD");
