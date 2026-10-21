@@ -1,8 +1,5 @@
 # Część III — Informacje dodatkowe
 
-> Rozdział 18 („Najczęstsze pytania”) — pominięty do czasu, gdy pojawią się rzeczywiście
-> powtarzające się pytania użytkowników (plan, rozdz. 18).
-
 # 19. Rozwiązywanie problemów
 
 Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.

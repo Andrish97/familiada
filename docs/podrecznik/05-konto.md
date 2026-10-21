@@ -1,3 +1,5 @@
+# Część II — Obsługa serwisu
+
 # 5. Konto użytkownika
 
 ## 5.1 Sposoby korzystania z serwisu

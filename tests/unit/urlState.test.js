@@ -10,7 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase
 test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez sessionStorage)", () => {
   const files = [
     "games/js/games.js", "bases/js/bases.js", "settings/js/settings.js", "polls/js/polls.js",
-    "logos/js/list.js", "manual/js/manual.js",
+    "logos/js/list.js",
   ];
   for (const file of files) {
     const source = read(file);
@@ -23,10 +23,12 @@ test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez
   }
 });
 
-test("manual: karta w ?tab=, bez hashchange i #hash jako karty", () => {
+test("manual: rozdział w ?ch=, podrozdział w #s-…, zmiana przez replaceState", () => {
   const source = read("manual/js/manual.js");
-  assert.doesNotMatch(source, /hashchange|location\.hash/);
-  assert.doesNotMatch(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ hash:/);
+  assert.match(source, /CHAPTER_PARAM = "ch"/);
+  assert.match(source, /history\.replaceState/);
+  assert.doesNotMatch(source, /history\.pushState|hashchange|sessionStorage/);
+  assert.match(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ ch, hash:/);
 });
 
 test("strona główna odzwierciedla przewijaną sekcję w hash", () => {

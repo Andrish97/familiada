@@ -3,7 +3,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T06445"/>
+  <meta name="app-version" content="v2026-10-21T07051"/>
 
 
   <meta charset="UTF-8" />
@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://supabase.familiada.online">
   <meta name="robots" content="noindex, nofollow" />
-  <title data-i18n="manual.title">Familiada — wskazówki</title>
+  <title data-i18n="manual.title">Familiada — podręcznik</title>
 
   <link rel="icon" href="/favicon.ico?v=v2026-10-21T06445" />
 
@@ -48,30 +48,13 @@
   </header>
 
   <main class="wrap m-wrap" data-skel-step>
-    <h1 class="page-title" data-i18n="manual.pageTitle">Wskazówki dla użytkownika</h1>
-    <div class="page-subtitle mobile-only-tab-subtitle" id="manualTabSubtitle" aria-live="polite"></div>
-
-    <nav class="simple-tabs" role="tablist" aria-label="Zakładki" data-i18n-aria-label="manual.tabsLabel">
-      <button class="tab active" type="button" data-tab="general" data-i18n="manual.tabs.general">Ogólny opis</button>
-      <button class="tab" type="button" data-tab="edit" data-i18n="manual.tabs.edit">Gry</button>
-      <button class="tab" type="button" data-tab="community" data-i18n="manual.tabs.community">Gry Społeczności</button>
-      <button class="tab" type="button" data-tab="bases" data-i18n="manual.tabs.bases">Bazy pytań</button>
-      <button class="tab" type="button" data-tab="polls" data-i18n="manual.tabs.polls">Ankiety</button>
-      <button class="tab" type="button" data-tab="logo" data-i18n="manual.tabs.logo">Tworzenie logo</button>
-      <button class="tab" type="button" data-tab="control" data-i18n="manual.tabs.control">Panel sterowania</button>
-      <button class="tab" type="button" data-tab="gameSettings" data-i18n="manual.tabs.gameSettings">Ustawienia gry</button>
-      <button class="tab" type="button" data-tab="connect" data-i18n="manual.tabs.connect">Podłącz urządzenie</button>
-    </nav>
-
-    <section class="tab-page tab-panel active" id="tab-general" data-tab="general"><div class="m-doc" data-i18n-html="manual.content.general"></div></section>
-    <section class="tab-page tab-panel" id="tab-edit" data-tab="edit"><div class="m-doc" data-i18n-html="manual.content.edit"></div></section>
-    <section class="tab-page tab-panel" id="tab-community" data-tab="community"><div class="m-doc" data-i18n-html="manual.content.community"></div></section>
-    <section class="tab-page tab-panel" id="tab-bases" data-tab="bases"><div class="m-doc" data-i18n-html="manual.content.bases"></div></section>
-    <section class="tab-page tab-panel" id="tab-polls" data-tab="polls"><div class="m-doc" data-i18n-html="manual.content.polls"></div></section>
-    <section class="tab-page tab-panel" id="tab-logo" data-tab="logo"><div class="m-doc" data-i18n-html="manual.content.logo"></div></section>
-    <section class="tab-page tab-panel" id="tab-control" data-tab="control"><div class="m-doc" data-i18n-html="manual.content.control"></div></section>
-    <section class="tab-page tab-panel" id="tab-connect" data-tab="connect"><div class="m-doc" data-i18n-html="manual.content.connect"></div></section>
-    <section class="tab-page tab-panel" id="tab-gameSettings" data-tab="gameSettings"><div class="m-doc" data-i18n-html="manual.content.gameSettings"></div></section>
+    <div class="m-layout">
+      <aside class="m-side" id="manualSide">
+        <button class="btn m-toc-toggle" id="manualTocToggle" type="button" aria-expanded="false" aria-controls="manualToc" data-i18n="manual.toc" data-i18n-icon="hamburger">Spis treści</button>
+        <nav class="m-toc" id="manualToc" aria-label="Spis treści podręcznika" data-i18n-aria-label="manual.tocLabel"></nav>
+      </aside>
+      <article class="m-article" id="manualArticle" aria-live="polite"></article>
+    </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>

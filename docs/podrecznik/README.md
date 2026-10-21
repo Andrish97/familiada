@@ -13,3 +13,11 @@ Oznaczenia w szkicach (na stronie dostaną własne style):
 
 Zasady treści (decyzja 2026-10-11): bez słownictwa technicznego, te same nazwy co
 w serwisie, tylko informacje, które wpływają na użytkownika.
+
+Pliki `NN-*.md` (w kolejności nazw) to źródło strony `/manual/`: po każdej zmianie
+`node scripts/manual/build-content.mjs` (zapisuje `web/manual/content/{pl,en,uk}.js`;
+test jednostkowy sprawdza aktualność). Tłumaczenia: `en/`, `uk/` — te same nazwy plików.
+Nagłówki: `# Część …` (część), `# 7. Tytuł` (rozdział), `## 7.3 Tytuł`, `### 16.5.1 Tytuł`.
+
+Rozdział 18 („Najczęstsze pytania”) jest pominięty, dopóki nie pojawią się rzeczywiście
+powtarzające się pytania użytkowników (plan, rozdz. 18).

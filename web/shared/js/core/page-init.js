@@ -8,7 +8,7 @@
 //               guest  — wymaga sesji (konto albo gość), inaczej loginUrl(),
 //               user   — tylko konto; gość dostaje wspólną nakładkę (page-overlay.js),
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
-//               #btnManual (linkTo("manual", { tab: wpis.manual })), konto, topbar-ready,
+//               #btnManual (linkTo("manual", { ch, hash }) z wpis.manual), konto, topbar-ready,
 //   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
 //               albo zbyt wąskiego viewportu są chowane i aktualizowane po obrocie,
 //               pozostałe dostają przejście przez linkTo() — chyba że opis ma
@@ -104,7 +104,9 @@ function wireManual(id, user, opts) {
   // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
   if (!user && PAGES.manual.access !== "public") { btn.hidden = true; btn.style.display = "none"; return; }
   btn.addEventListener("click", async (ev) => {
-    const href = linkTo("manual", { tab: anchor });
+    const section = String(anchor || "");
+    const ch = section.split(".")[0] || null;
+    const href = linkTo("manual", { ch, hash: section.includes(".") ? `s-${section.replace(/\./g, "-")}` : null });
     if (opts.onManual) { await opts.onManual(href, ev); return; }
     location.href = href;
   });

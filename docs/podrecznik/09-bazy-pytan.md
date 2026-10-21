@@ -9,7 +9,7 @@ Na stronie *Bazy pytań* są zakładki „Moje bazy” i „Udostępnione” —
 zaprosili Cię inni (→ 12). Filtr nad listą pokaże bazy według roli: Moja, Edycja albo Odczyt.
 
 - Aby utworzyć bazę, kliknij kafelek „Nowa baza” i wpisz nazwę (do 80 znaków).
-- Aby otworzyć bazę, zaznacz ją i wybierz [Przeglądaj].
+- Aby otworzyć bazę, zaznacz ją i wybierz [Przeglądaj|folder].
 - Dla zaznaczonej bazy dostępne są też [Udostępnij] (→ 12.2), [Powiel], [Eksport] do pliku
   `.fambase` i [Import] z pliku.
 - Nazwę bazy zmienisz dwuklikiem, a bazę usuniesz ikoną kosza — tylko w swoich bazach.
