@@ -2,12 +2,12 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T10194";
-import { initI18n, setUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T10194";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T10194";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T10194";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T10194";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T10194";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T10282";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T10282";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T10282";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T10282";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T10282";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T10282";
 
 
 async function initManualI18n() {
@@ -20,6 +20,27 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: true });
+}
+
+// Treść podręcznika w osobnych modułach (nie w tłumaczeniach wszystkich stron).
+const CONTENT = {
+  pl: async () => (await import("../content/pl.js?v=v2026-10-21T10282")).default,
+  en: async () => (await import("../content/en.js?v=v2026-10-21T10282")).default,
+  uk: async () => (await import("../content/uk.js?v=v2026-10-21T10282")).default,
+};
+let contentLang = "";
+
+async function renderContent(lang) {
+  const load = CONTENT[lang] || CONTENT.pl;
+  const content = await load();
+  if (lang !== (getUiLang() || "pl")) return false; // w międzyczasie zmieniono język
+  contentLang = lang;
+  for (const [tab, panel] of Object.entries(pages)) {
+    const doc = panel.querySelector(".m-doc");
+    if (doc) doc.innerHTML = content[tab] || "";
+    buildToc(panel);
+  }
+  return true;
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -161,7 +182,7 @@ async function init() {
   });
   await i18nP;
 
-  Object.values(pages).forEach(buildToc);
+  await renderContent(getUiLang() || "pl").catch((err) => console.error("[manual] treść:", err));
   wireTabs();
   wireRefs();
   // Pomoc kontekstowa: ?tab= wybiera kartę, #kotwica wskazuje rozdział w niej.
@@ -174,5 +195,7 @@ void init();
 
 
 window.addEventListener("i18n:lang", () => {
-  Object.values(pages).forEach(buildToc);
+  const lang = getUiLang() || "pl";
+  if (lang !== contentLang) void renderContent(lang);
+  else Object.values(pages).forEach(buildToc);
 });
