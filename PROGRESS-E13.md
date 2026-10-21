@@ -29,7 +29,7 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 | 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ✅ regulamin 2019 (PDF od użytkownika) — `podrecznik-weryfikacja.md`, Część I |
 | 3 | Rozdziały Części I (1–4) | ✅ szkic `docs/podrecznik/01-04-zasady-teleturnieju.md` |
 | 4 | Rozdziały Części II i III | ✅ szkice PL 5–17, 19–20 w `docs/podrecznik/` (18 pominięty zgodnie z planem) |
-| 5 | Nowa strona `/manual/` (od zera): części → rozdziały → podrozdziały, spis treści, poprzedni/następny, przyciski pomocy stron → rozdziały; EN/UK; e2e `privacy-manual`; zrzuty | 🔄 strona PL gotowa (`6c8a3ed9`), stara treść usunięta; tłumaczenia EN/UK w toku; e2e przepisane |
+| 5 | Nowa strona `/manual/` (od zera): części → rozdziały → podrozdziały, spis treści, poprzedni/następny, przyciski pomocy stron → rozdziały; EN/UK; e2e `privacy-manual`; zrzuty | 🔄 strona PL/EN/UK gotowa, stara treść usunięta; e2e brancha `39560631731` ✓ 6/6; rozdz. 17 rozbudowany; uzupełnienia ze starego manuala (PL `01f99335`) — tłumaczenie EN/UK w toku; potem podgląd do przeglądu użytkownika (bez publikacji) |
 | 6 | Wdrożenie i testy kontrolne na produkcji | ⏳ |
 
 ## Co dalej

@@ -231,6 +231,7 @@ Strona `web/games/settings/`. Sekcje: „Drużyny”, „Wygląd”, „Dźwięk
 9. Oczekująca kopia gry/logo da się przyjąć po usunięciu znajomego (`_copy_decide` nie sprawdza znajomości) — do decyzji.
 10. Usunięcie subskrybenta pokazuje tekst znajomych o bazach i urządzeniach (`pl.js` ~5152).
 11. Literówka w finale: „Dźwiek powtórzenia”.
+12. Uproszczona strona podłączenia telewizora `/connect/tv/` istnieje, ale nic do niej nie prowadzi (strona główna nie przekierowuje telewizorów; `device-guard.js` kieruje na `/connect/?tv=1`). Podręcznik podaje adres wprost — do decyzji: odnośnik albo przekierowanie.
 
 ## Do decyzji użytkownika (nie blokuje pisania)
 
