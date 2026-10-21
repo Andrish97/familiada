@@ -2594,7 +2594,7 @@ const en = {
     list: {
       title: "My logos",
       emptyPhone: "You don't have any logos of this kind yet. You can create a new logo on a computer or tablet.",
-      hint: "Click a tile to select it. Double-click (or long-press on touch) to rename.",
+      hint: "Press a tile to select it. Double-tap to rename.",
       preview: "Preview",
       edit: "Edit",
       export: "Export",
