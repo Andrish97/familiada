@@ -16,7 +16,7 @@ The page is the library of your games, including copies received from friends. G
 into tabs:
 
 - **Standard poll**, **Points**, **Prepared** — games of that type (→ 7.1),
-- **Community Games** — games added from the public catalog.
+- **Community Games** — games added from the public catalogue.
 
 On a phone the tabs have shorter names: "Poll", "Points", "Prep." and "Community".
 
