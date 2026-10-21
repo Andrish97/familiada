@@ -48,6 +48,13 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
 
 ## Znane problemy
 
+- **Zapowiedziane zmiany z drugiej sesji (2026-10-21 15:26 UTC) — sprawdzić w kodzie przy ponownej weryfikacji, opisać bez „wcześniej…”:**
+  1. „Zmień typ” przy zamkniętej ankiecie (6.4, 7.8): bez pytania „Zresetować ankietę?”; okno „Zmień typ gry” jest potwierdzeniem („Ankieta jest zamknięta. Głosy, linki i kody QR ankiety zostaną usunięte, a gra wróci do szkicu wybranego typu.”) + pole (domyślnie zaznaczone): Punktacja→Preparowana „Zachowaj punkty z ankiety”; Tekstowa→Preparowana „Zachowaj odpowiedzi i punkty z ankiety”; Tekstowa→Punktacja „Zachowaj odpowiedzi z ankiety”; →Tekstowa bez opcji. „Edytuj” nadal z resetem (7.5).
+  2. Nowy status „DO URUCHOMIENIA” (niebieski) dla szkicu ankiety spełniającego warunki — tabela statusów i filtr (6.2).
+  3. Ustawienia gry działają na telefonie (tylko pionowo; poziomo „Obróć urządzenie”); w Moich grach na telefonie „Ustawienia gry” widoczne, „Graj” ukryte; w Ustawieniach poniżej 980 px brak „Graj”. Telefon: Finał — „dotknij pytania, żeby je dodać lub usunąć”, Rundy — strzałki; okno koloru od dołu. Poprawić 6.4 i 16.1.
+  4. Przycisk „Wstecz” na telefonie (≤600 px) — sama strzałka (7.2 i inne).
+  5. Szkic ankiety: udostępnianie zablokowane do uruchomienia (Anonimowo/Odbiorcy wyszarzone, przycisk „Uruchom”); zamknięta — zakładki udostępniania zablokowane (15.1/15.2).
+
 - **Zasada treści (decyzja użytkownika 2026-10-21, przez drugą sesję; `docs/wdrozenia.md` „Zasady działania”):** opisywać tylko, jak jest teraz — bez „jak w teleturnieju/regulaminie” przy opisie działania serwisu, bez wzmianek o wcześniejszym działaniu i bez tłumaczenia się z poprawek. Sprawdzić całość przy ponownej weryfikacji (porównania w Części I wymagane planem zostają, ale opisują teleturniej i serwis osobno).
 
 - **Zależność od drugiej sesji (`claude/new-session-ay1h9t`):** podręcznik opisuje docelowe działanie wg decyzji użytkownika — nagroda jak w regulaminie TVP (punkty z rund × mnożnik + kwota główna po osiągnięciu celu; rozdz. 4.4, 16.6) i potwierdzenie przed „Eksportuj do bazy” przy otwartej/zatrzymanej ankiecie (6.7). Kod robi tamta sesja; przed wdrożeniem podręcznika sprawdzić, że jest na `main` (`web/shared/js/gameplay/endScreen.js` — `resolveFinalEndScreen({roundsPoints, finalPoints, hitTarget})`, migracja 440, `gameSettings.game.prizeHint`, `games.transferDropsVotes.baseText`). Po wznowieniu dopisać w 4.4/16.6 przykład z tamtej sesji: 276 pkt z rund i cel osiągnięty → 276×3+25 000 = 25 828; bez celu → 828.
