@@ -370,13 +370,13 @@ test("FINISH_FINAL: sumę finału wtapia w totals zwycięzcy, idempotentne", asy
   assert.equal(store.state.rev, revAfterFirst);
 });
 
-test("resolveFinalEndScreen: punkty = rundy + finał; kwota jak w regulaminie (cel: rundy + kwota główna, bez celu: rundy × mnożnik)", () => {
+test("resolveFinalEndScreen: punkty = rundy + finał; kwota jak w regulaminie (rundy × mnożnik, przy celu + kwota główna)", () => {
   const pointsScreen = resolveFinalEndScreen({ endScreenMode: "points" }, { roundsPoints: 310, finalPoints: 205, hitTarget: true });
   assert.deepEqual(pointsScreen, { kind: "win", amount: 515 });
 
   const moneySettings = { endScreenMode: "money", finalPrizeMultiplier: 3, mainPrizeAmount: 25000 };
   const hit = resolveFinalEndScreen(moneySettings, { roundsPoints: 310, finalPoints: 205, hitTarget: true });
-  assert.deepEqual(hit, { kind: "win", amount: 310 + 25000 });
+  assert.deepEqual(hit, { kind: "win", amount: 310 * 3 + 25000 });
 
   const miss = resolveFinalEndScreen(moneySettings, { roundsPoints: 284, finalPoints: 136, hitTarget: false });
   assert.deepEqual(miss, { kind: "win", amount: 284 * 3 });

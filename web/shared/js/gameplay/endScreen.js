@@ -35,9 +35,9 @@ export function resolveRoundsEndScreen(settings, { isDraw, totals }) {
 /**
  * Ekran końca FINAŁU (f_end). "points" pokazuje punkty zwycięskiej drużyny
  * z rund i finału. "money" liczy kwotę jak regulamin teleturnieju
- * (decyzja użytkownika 2026-10-21): cel finału osiągnięty — wygrana z rund
- * plus kwota główna; nieosiągnięty — wygrana z rund razy mnożnik nagrody.
- * Punkty z finału służą tylko do sprawdzenia celu.
+ * (Dział V pkt 21–22, decyzja użytkownika 2026-10-21): pieniądze z gry to
+ * punkty zwycięskiej drużyny z rund razy mnożnik; przy osiągniętym celu
+ * finału dochodzi kwota główna. Punkty z finału służą tylko do sprawdzenia celu.
  *
  * @returns {{kind: "logo"}|{kind: "win", amount: number}}
  */
@@ -50,5 +50,5 @@ export function resolveFinalEndScreen(settings, { roundsPoints, finalPoints, hit
   // "money"
   const multiplier = Number(settings?.finalPrizeMultiplier ?? 3);
   const mainPrize = Number(settings?.mainPrizeAmount ?? 25000);
-  return { kind: "win", amount: hitTarget ? rounds + mainPrize : rounds * multiplier };
+  return { kind: "win", amount: rounds * multiplier + (hitTarget ? mainPrize : 0) };
 }

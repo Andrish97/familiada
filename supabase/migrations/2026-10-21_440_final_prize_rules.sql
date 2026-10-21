@@ -1,6 +1,6 @@
 -- Statystyki rozgrywki (game_sessions.stats_detail.prize) liczą nagrodę po finale
--- tak samo jak Wyświetlacz (web/shared/js/gameplay/endScreen.js), zgodnie z regulaminem:
--- cel osiągnięty = punkty z rund + kwota główna; nieosiągnięty = punkty z rund × mnożnik.
+-- tak samo jak Wyświetlacz (web/shared/js/gameplay/endScreen.js), zgodnie z regulaminem TVP
+-- (Dział V pkt 21–22): punkty z rund × mnożnik, przy osiągniętym celu finału + kwota główna.
 -- Zmienia tylko wyliczenie pola prize; reszta funkcji bez zmian (z schema.sql).
 
 CREATE OR REPLACE FUNCTION "public"."track_control2_session"() RETURNS "trigger"
@@ -97,11 +97,11 @@ BEGIN
       ELSE 'questions_exhausted' END;
     info:=info || jsonb_build_object('end_reason',reason,'end_screen',d #> '{settings,endScreenMode}');
     IF played_final AND d #>> '{settings,endScreenMode}'='money' THEN
-      -- Regulamin (decyzja 2026-10-21): cel finału osiągnięty = punkty z rund + kwota główna,
-      -- nieosiągnięty = punkty z rund × mnożnik. Punkty finału decydują tylko o celu.
-      info:=info || jsonb_build_object('prize', CASE WHEN coalesce((d #>> '{final,runtime,reached200}')::boolean,false)
-        THEN greatest(ra,rb) + coalesce((d #>> '{settings,mainPrizeAmount}')::integer,25000)
-        ELSE greatest(ra,rb) * coalesce((d #>> '{settings,finalPrizeMultiplier}')::integer,3) END);
+      -- Regulamin TVP (Dział V pkt 21–22): punkty z rund × mnożnik, przy osiągniętym celu
+      -- + kwota główna. Punkty finału decydują tylko o celu.
+      info:=info || jsonb_build_object('prize', greatest(ra,rb) * coalesce((d #>> '{settings,finalPrizeMultiplier}')::integer,3)
+        + CASE WHEN coalesce((d #>> '{final,runtime,reached200}')::boolean,false)
+          THEN coalesce((d #>> '{settings,mainPrizeAmount}')::integer,25000) ELSE 0 END);
     END IF;
   END IF;
   UPDATE public.game_sessions SET last_seen_at=now(),
@@ -119,17 +119,3 @@ EXCEPTION WHEN OTHERS THEN
   RETURN NEW;
 END;
 $_$;
-
-
---
--- Name: trash_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."trash_message"("p_message_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-  UPDATE public.messages SET deleted_at = now() WHERE id = p_message_id AND deleted_at IS NULL;
-END;
-$$;

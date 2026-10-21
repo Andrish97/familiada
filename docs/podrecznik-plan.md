@@ -553,9 +553,10 @@ Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści nale�
 
 ## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21)
 
-- **Nagroda w finale** — decyzja 2026-10-21: jak w regulaminie. Cel osiągnięty: punkty zwycięskiej
-  drużyny z rund + kwota główna; nieosiągnięty: punkty z rund × mnożnik. Punkty z finału decydują
-  tylko o celu. Wyjaśnienie pod polami nagrody w Ustawieniach gry (`gameSettings.game.prizeHint`).
+- **Nagroda w finale** — decyzja 2026-10-21: jak w regulaminie TVP (2019, Dział V pkt 21–22):
+  kwota = punkty zwycięskiej drużyny z rund × mnożnik, przy osiągniętym celu finału + kwota główna.
+  Punkty z finału decydują tylko o celu. Wyświetlacz (`endScreen.js`) i statystyki (migracja 440)
+  liczą tak samo; wyjaśnienie pod polami nagrody (`gameSettings.game.prizeHint`).
 - Regulamin TVP nie był dostępny przez sieć agenta (PDF z s.tvp.pl zablokowany) — rozdz. 1–4 oparte
   na faktach z planu; szczegóły pojedynku (kto pierwszy naciska) opisane ogólnie.
 - **Zmiana typu (7.8):** okno pokazuje przy każdym typie, co zostanie, a co zostanie usunięte
