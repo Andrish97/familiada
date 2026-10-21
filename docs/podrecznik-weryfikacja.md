@@ -236,4 +236,4 @@ Strona `web/games/settings/`. Sekcje: „Drużyny”, „Wygląd”, „Dźwięk
 ## Do decyzji użytkownika (nie blokuje pisania)
 
 - ~~Domyślne mnożniki rund~~ — rozstrzygnięte: zgodne z regulaminem 2019 (V.9), bez zmian.
-- „Mnożnik nagrody (po finale)” mnoży także punkty z finału; w regulaminie (V.21–22) ×3 dotyczy punktów zdobytych w grze przed finałem — zostawić czy dopasować? Do decyzji podręcznik opisuje działanie serwisu.
+- ~~„Mnożnik nagrody (po finale)”~~ — rozstrzygnięte (decyzja użytkownika przekazana przez drugą sesję, 2026-10-21): jak w regulaminie — punkty z rund × mnożnik + kwota główna po osiągnięciu celu; kod zmienia sesja `claude/new-session-ay1h9t`, podręcznik opisuje docelowe działanie.
