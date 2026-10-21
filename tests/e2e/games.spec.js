@@ -807,7 +807,7 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 
-  test("szkic ankiety gotowy do uruchomienia ma etykietę „do uruchomienia”", async ({ page, context }) => {
+  test("szkic ankiety spełniający warunki ma stan „do uruchomienia” (także w filtrze)", async ({ page, context }) => {
     test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const stamp = Date.now();
@@ -824,11 +824,15 @@ test.describe("games: audyt -- game_validate", () => {
         }
       }, { ready, short });
       await openGames(page, "?tab=poll_text&lang=pl");
-      await expect(tileByName(page, ready).locator(".cardStatus")).toContainText("SZKIC", { timeout: 15000 });
-      await expect(tileByName(page, ready).locator(".pollBadge")).toHaveText(/do uruchomienia/i);
-      await expect(tileByName(page, short).locator(".cardStatus")).toContainText("SZKIC");
-      await expect(tileByName(page, short).locator(".pollBadge")).toHaveCount(0);
+      await expect(tileByName(page, ready).locator(".cardStatus")).toHaveText(/do uruchomienia/i, { timeout: 15000 });
+      await expect(tileByName(page, ready).locator(".rules")).toHaveText("");
+      await expect(tileByName(page, short).locator(".cardStatus")).toHaveText(/szkic/i);
       await expect(tileByName(page, short).locator(".rules")).toContainText(/10/);
+      await page.locator(".list-filter .ui-select-btn").click();
+      await page.locator(".list-filter .ui-select-menu [data-value='toOpen']").click();
+      await expect(page).toHaveURL(/status=toOpen/);
+      await expect(tileByName(page, ready)).toBeVisible();
+      await expect(tileByName(page, short)).toBeHidden();
     } finally {
       await deleteGamesByName(page, ready);
       await deleteGamesByName(page, short);

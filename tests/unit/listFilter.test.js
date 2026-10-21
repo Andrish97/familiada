@@ -38,6 +38,9 @@ test("gameStateKey: stan jak etykieta kafla", () => {
   assert.equal(gameStateKey("draft", { isPrepared: true, playOk: true }), "ready");
   assert.equal(gameStateKey("draft", { isPrepared: true, playOk: false }), "draft");
   assert.equal(gameStateKey("draft", { isPrepared: false, playOk: true }), "draft");
+  assert.equal(gameStateKey("draft", { isPrepared: false, openOk: true }), "toOpen");
+  assert.equal(gameStateKey("draft", { isPrepared: true, openOk: true }), "draft");
+  assert.equal(gameStateKey("poll_open", { openOk: true }), "open");
   assert.equal(gameStateKey("poll_open"), "open");
   assert.equal(gameStateKey("poll_stopped"), "stopped");
   assert.equal(gameStateKey("ready"), "ready");

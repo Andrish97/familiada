@@ -1426,6 +1426,7 @@ const pl = {
       open: "OTWARTA",
       stopped: "ZATRZYMANA",
       ready: "GOTOWA",
+      toOpen: "DO URUCHOMIENIA",
     },
     badges: {
       votes: ({ n }) => {
@@ -1436,7 +1437,6 @@ const pl = {
         return last >= 2 && last <= 4 && (tens < 10 || tens >= 20) ? `${k} głosy` : `${k} głosów`;
       },
       toTally: "do podliczenia",
-      toOpen: "do uruchomienia",
     },
     newGame: {
       pollText: "Nowa ankieta",

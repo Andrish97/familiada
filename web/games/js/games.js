@@ -1,23 +1,23 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-21T14343";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T14343";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T14343";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T14343";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T14343";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T14343";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T14343";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T14343";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T14343";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T14343";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T14343";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T14343";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T14343";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T14343";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T14343";
+import { changeGameType } from "./change-type.js?v=v2026-10-21T14362";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T14362";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T14362";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T14362";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T14362";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T14362";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T14362";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T14362";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T14362";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T14362";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T14362";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T14362";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T14362";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T14362";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T14362";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T14343";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T14343";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T14343";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T14343";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T14362";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T14362";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T14362";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T14362";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -25,10 +25,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T14343";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T14343';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T14362";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T14362';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T14343";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T14362";
 
 import {
   TYPES,
@@ -37,13 +37,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-21T14343";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T14343";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T14343";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T14343";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T14343";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T14343";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T14343";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-21T14362";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T14362";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T14362";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T14362";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T14362";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T14362";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T14362";
 
 
 const MSG = {
@@ -61,8 +61,8 @@ const MSG = {
   statusStopped: () => t("games.status.stopped"),
   badgeVotes: (n) => t("games.badges.votes", { n }),
   badgeToTally: () => t("games.badges.toTally"),
-  badgeToOpen: () => t("games.badges.toOpen"),
   statusReady: () => t("games.status.ready"),
+  statusToOpen: () => t("games.status.toOpen"),
   newGamePollText: () => t("games.newGame.pollText"),
   newGamePollPoints: () => t("games.newGame.pollPoints"),
   newGamePrepared: () => t("games.newGame.prepared"),
@@ -708,18 +708,20 @@ function typeLabel(uiType) {
   return String(uiType || t("control.dash")).toUpperCase();
 }
 
-// Klucz stanu kafla (draft/open/stopped/ready) — wspólny dla etykiety i filtra.
+// Klucz stanu kafla (draft/toOpen/open/stopped/ready) — wspólny dla etykiety i filtra.
 function statusKey(st, g) {
   // Preparowana ma zawsze stan „draft” — gotowa do gry to nie szkic.
   return gameStateKey(st, {
     isPrepared: !!g && uiTypeFromRow(g) === TYPES.PREPARED,
     playOk: !!g && !!rulesFromState(g.rules_state)?.play?.ok,
+    openOk: !!g && !!rulesFromState(g.rules_state)?.poll_open?.ok,
   });
 }
 
 function statusLabel(st, g) {
   const k = statusKey(st, g);
   if (k === "ready") return MSG.statusReady();
+  if (k === "toOpen") return MSG.statusToOpen();
   if (k === "open") return MSG.statusOpen();
   if (k === "stopped") return MSG.statusStopped();
   return MSG.statusDraft();
@@ -884,10 +886,6 @@ async function loadPollVoteCounts() {
 }
 
 function pollBadge(g) {
-  // Szkic ankiety spełniający warunki uruchomienia: następny krok to „Uruchom”.
-  if (g.status === STATUS.DRAFT && uiTypeFromRow(g) !== TYPES.PREPARED && rulesFromState(g.rules_state)?.poll_open?.ok) {
-    return { cls: "tag--info", text: MSG.badgeToOpen() };
-  }
   if (g.status === STATUS.POLL_OPEN) {
     return pollVoteCounts.has(g.id) ? { cls: "tag--muted", text: MSG.badgeVotes(pollVoteCounts.get(g.id)) } : null;
   }
@@ -895,11 +893,12 @@ function pollBadge(g) {
   return null;
 }
 
-// Kolor oznaczenia stanu: szkic wyciszony, otwarta niebieska, zatrzymana złota, gotowa zielona.
+// Kolor oznaczenia stanu: szkic wyciszony, do uruchomienia i otwarta niebieska,
+// zatrzymana złota, gotowa zielona.
 function statusTagClass(g) {
-  const label = statusLabel(g.status, g);
-  if (label === MSG.statusReady()) return "tag--ok";
-  if (g.status === STATUS.POLL_OPEN) return "tag--info";
+  const k = statusKey(g.status, g);
+  if (k === "ready") return "tag--ok";
+  if (k === "toOpen" || k === "open") return "tag--info";
   if (g.status === STATUS.POLL_STOPPED) return "tag--gold";
   return "tag--muted";
 }
@@ -923,8 +922,7 @@ function cardGame(g) {
   el.querySelector(".name").textContent = g.name || t("control.dash");
 
   // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
-  // obok plakietka ankiety — SZKIC gotowy do uruchomienia: „do uruchomienia”,
-  // OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
+  // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
   const tags = el.querySelector(".tileTags");
   const addTag = (text, cls) => {
     const tag = document.createElement("span");
@@ -1243,7 +1241,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     filter: {
       param: "status", attr: "status",
       options: [
-        ...["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+        ...["draft", "toOpen", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
         { value: "received", labelKey: "resourceSend.receivedFilter", matches: (tile) => !!tile.dataset.received },
       ],
       allKey: "common.filterAll", ariaKey: "games.filter.label",
