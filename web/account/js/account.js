@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06445";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T06445";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T06445";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T06445";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T06445";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T06445";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T06445";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T06445";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T06445";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T06445";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T06445";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T06445";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T12475";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T12475";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T12475";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T12475";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T12475";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T12475";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12475";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T12475";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12475";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T12475";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12475";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T12475";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T12475";
 
 
 
@@ -555,7 +555,7 @@ async function loadUserRating(userId) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.id = "ratingEditBtn";
-  btn.className = `btn full${data ? "" : " gold"}`;
+  btn.className = `btn sm${data ? "" : " gold"}`;
   btn.innerHTML = iconText(data ? "pencil" : "star", t(data ? "common.rating.account.change" : "common.rating.account.rate"));
   btn.addEventListener("click", async () => {
     if (!(await openRatingEditor(userId, data))) return;

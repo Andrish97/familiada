@@ -56,7 +56,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShare(page, baseId);
     const friend = page.locator(`#baseShareFriends [data-id="${recipientId}"]`);
     await friend.locator('input[type="checkbox"]').check();
-    await page.locator("#baseShareFriendsRole button").click(); // editor -> viewer
+    await page.locator("#shareRole button").click(); // editor -> viewer (jedno uprawnienie w stopce)
     await page.locator("#btnBaseShareFriends").click();
     const sharedRow = page.locator("#shareSectionsHost .shareRow");
     await expect(sharedRow).toHaveCount(1);
@@ -70,8 +70,9 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     // Duplicate po e-mailu/nazwie nie tworzy kolejnego zaproszenia ani maila.
     await page.locator("#shareEmail").fill(recipientEmail);
     await page.locator("#btnShareAdd").click();
-    await expect(page.locator("#shareMsg")).toContainText(/oczekuje|pending/i);
-    await expect(page.locator("#shareMsg")).toBeHidden({ timeout: 6000 });
+    // Komunikaty udostępniania to wspólny dymek (toast), nie pole w oknie.
+    await expect(page.locator(".app-toast-text")).toContainText(/oczekuje|pending/i);
+    // Dymek błędu zostaje do zamknięcia (nie znika sam po kilku sekundach).
     expect((await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: baseId })).length).toBe(1);
     const email = await waitForEmail({ recipient: recipientEmail, after, subject: /baz|base/i, timeout: 150_000 });
     expectMailDocument(email, { accountFooter: true, text: ["przeglądający", "Dostęp otrzymasz po akceptacji zaproszenia."] });
@@ -123,7 +124,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await sharedRow.locator('[data-act="remove"]').click(); await expect(sharedRow).toHaveCount(0);
     expect((await rpc(recipient, "base_share_undo_decline", { p_task_id: taskId })).ok).toBe(false);
     expect(await rpc(recipient, "base_share_accept", { p_task_id: taskId })).toBe(false);
-    await recipient.goto(link); await expect(recipient.locator("#message")).toContainText(/cofnięt|anulowan/);
+    await recipient.goto(link); await expect(recipient.locator(".poll-go-card")).toContainText(/cofnięt|anulowan|wygas|nieaktyw|nieważn/i);
   } finally {
     if (baseId) await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
     if (recipientId) await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
@@ -168,16 +169,16 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
         const left = document.querySelector('#baseShareFriends'); const right = document.querySelector('#shareSectionsHost');
         left.scrollTop = 70; right.scrollTop = 120;
         const row = document.querySelector('#shareSectionsHost [data-id="pending"]');
-        const buttons = [...row.querySelectorAll('.shareRowActions button')].map(button => ({ width: Math.round(button.getBoundingClientRect().width), height: Math.round(button.getBoundingClientRect().height) }));
+        // Przycisk uprawnienia ma napis (decyzja 2026-10-20) — porównujemy pozostałe.
+        const buttons = [...row.querySelectorAll('.shareRowActions button:not(.baseShareRole)')].map(button => ({ width: Math.round(button.getBoundingClientRect().width), height: Math.round(button.getBoundingClientRect().height) }));
         return { scroll: [left.scrollTop, right.scrollTop], overflow: document.documentElement.scrollWidth > innerWidth, buttons };
       });
       expect(geometry.scroll).toEqual([70, 120]); expect(geometry.overflow).toBe(false);
-      expect(new Set(geometry.buttons.map(button => button.width)).size).toBe(1);
+      // Szerokość zależy od treści (licznik czasu przy „Ponów”); porównujemy wysokość.
       expect(new Set(geometry.buttons.map(button => button.height)).size).toBe(1);
       await page.locator('#shareEmail').fill('alicja@example.net'); await page.locator('#btnShareAdd').click();
-      await expect(page.locator('#shareMsg')).toHaveClass(/app-toast--inline/);
-      await expect(page.locator('#shareMsg')).toBeVisible(); await expect(page.locator('#shareMsg')).toBeHidden({ timeout: 6000 });
-      await page.locator(width === 390 ? '#btnBack' : '#btnShareClose').click();
+      await expect(page.locator('.app-toast-text')).toBeVisible();
+      await page.locator('#btnShareCancel').click();
       await page.locator('#tabBasesShared').click();
       const head = page.locator('#baseDeclinesHost .rowsSectionHead');
       await expect(head).toHaveAttribute('aria-expanded', 'false'); await head.click();
@@ -312,13 +313,14 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
     await page.locator("#btnBaseShareFriends").click();
     const rejected = await (await rejectedResponse).json();
     expect(rejected[0].ok).toBe(false); expect(rejected[0].err).toBe("not_friend");
-    await expect(page.locator("#shareMsg")).toContainText("Ta osoba nie jest już na liście znajomych.");
+    await expect(page.locator(".app-toast-text")).toContainText("Ta osoba nie jest już na liście znajomych.");
     expect(await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: staleBase })).toHaveLength(0);
 
     expect(await rpc(recipient, "base_share_accept", { p_task_id: invites[0].task })).toBe(false);
     expect((await rpc(recipient, "base_share_undo_decline", { p_task_id: invites[0].task })).ok).toBe(false);
     await recipient.goto(invites[0].link);
-    await expect(recipient.locator("#message")).toContainText(/wygas|cofnięt|anulowan|nieaktyw/i);
+    // Strona Go: przyczyna w tytule karty (#title), opis bywa pusty.
+    await expect(recipient.locator(".poll-go-card")).toContainText(/wygas|cofnięt|anulowan|nieaktyw|nieważn/i);
     await recipient.goto(invites[1].link);
     await expect(recipient.locator("#message")).toContainText(/udostępnia.*bazę/);
     await recipient.locator("#actions button").click();

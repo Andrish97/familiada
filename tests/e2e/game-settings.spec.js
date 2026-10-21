@@ -287,7 +287,7 @@ test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do set
     await openSettings(page, gameId);
     await switchTab(page, "display");
     await page.locator('.swatchBtn[data-color-key="A"]').click();
-    // Wybór koloru to wspólne okno (.uni-modal) z polem HEX i „Gotowe”.
+    // Wybór koloru to wspólne okno (.uni-modal) z polem HEX i „Zapisz”.
     const colorModal = page.locator(".uni-modal:has(#gsColorHex)");
     await expect(colorModal).toBeVisible();
 

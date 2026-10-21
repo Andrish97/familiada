@@ -100,6 +100,50 @@ E2E na branchu (spec | przebieg | wynik):
   mobile-sheet-modals, editor, base-explorer, polls --grep odlicz,
   polls-layout, logo-editor, marketplace, poll-share; wpis w Dzienniku.
 
+## 2026-10-21 — wdrożone
+
+- Push na `main` (`04dbea3` → `f20b87c`) po zgodzie użytkownika; reguła
+  w `.claude/settings.local.json` zablokowana przez zabezpieczenia sesji
+  (zbędna — push przeszedł). Kontrola na produkcji (REF=main) w kolejce
+  `ctl.sh`: mobile-sheet-modals, editor, base-explorer, polls --grep odlicz,
+  polls-layout, logo-editor, marketplace, poll-share.
+
+## 2026-10-21 — kontrola produkcji zakończona, nowa paczka ujednolicenia
+
+- Kontrola po wdrożeniu: 8/8 speców zielonych (logo-editor bez znanego testu
+  puli 39560595993), wpis w Dzienniku.
+- Paczka ujednolicenia (decyzje w `docs/ujednolicenie-wygladu.md`, sekcja
+  „paczka ujednolicenia po przeglądzie zrzutów”), na branchu:
+  pasek list jeden rząd + separator + przewijanie (`dcb7739`, `4a57faf`,
+  e2e 39561090186 ✓), tytuły Społeczności/Instrukcji i formularze Konta
+  (`c09319b`), wspólny pusty stan (`b0b1d29`), wypustki w base.css i Control
+  bez martwej kopii (`f35a1c3`), okna udostępniania Bazy i urządzenia na wzór
+  okna odbiorców (`7457f35`). Marginesy: już równe (18 px) — bez zmian.
+- Pokazane użytkownikowi do decyzji: makieta Społeczności z wypustkami
+  „Przeglądaj | Moje wysłane”; warianty Zadania/Connect (szerokość).
+- E2E paczki na branchu: kolejka `pk.sh` (12 speców) w toku. Padły
+  nieaktualne testy (#shareMsg/#shareDeviceMsg od E16, `.uni-modal` łapał
+  ukryte okno udostępniania, równe szerokości z przyciskiem roli) —
+  poprawione (`9b0…`, `5604ef0`); do powtórki po kolejce: mobile-sheet-modals,
+  base-refusals, control2 --grep udostępnianie, control2 --grep control358.
+- Druga runda uwag (2026-10-21): okno koloru jak kolor tagów E22 (`b7b0f36`),
+  przycisk obok pola = wysokość pola (`5604ef0`), udostępnianie w Control jak
+  w Bazach (`7ac1165`), Społeczność: Moje wysłane w oknie + podkarta
+  wyszukiwania (`8327276`). Wypustki: pokazane makiety A (ten sam wygląd
+  z jednego elementu) i B (pigułki) — czeka na wybór użytkownika.
+
+## 2026-10-21 wieczór — runda „zrób, żeby było ładnie” (zgoda na wdrożenie)
+
+- Wypustki wariant A — jeden element (`1c35c50`); pola wyszukiwania jak
+  „Przenieś do” E22 + Społeczność w jednej karcie (`5d07ce8`); Podłącz
+  urządzenie lewo–prawo (`7196fbd`); Control krok Urządzenia — siatka
+  równych przycisków, kod kopiuje, lekki status (`9f57f81`); menu filtra
+  pod kaflami przy masce paska — poprawione (`2c12415`).
+- Wdrożone na `main` (`1012638`), kontrola produkcji 13/13 ✓ (Dziennik).
+  Dalej: E13 (indeks → zrzuty indeksu → wydajność → instrukcja).
+- E13: 13.1 indeks — poprawki nazw (`c526b68` i nast.), 13.2 zrzuty — automat
+  `screens.yml`, 13.3 wydajność — czeka na limit PSI; 13.4 instrukcja — w toku.
+
 ## Dalej
 
 0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione

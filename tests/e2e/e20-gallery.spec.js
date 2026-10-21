@@ -322,7 +322,7 @@ function additionalStates(data) {
     ] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
-      await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+      await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
     } },
     ...["friends", "subscribers"].map((id) => ({
       id, stateId: "list", page: id, href: `/${id}/?tab=received`, mobileOnly: true,
@@ -569,11 +569,11 @@ function additionalStates(data) {
       },
     },
     {
-      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/?tab=mine",
+      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/",
       modalCapture: true, expectedModalId: "submitOverlay", actionLabel: "Moje wysłane → Zgłoś grę",
       prepare: async (page) => {
         await page.locator("#btnMySent").click();
-        await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").click();
       },
@@ -1107,9 +1107,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
     listHeaderActionsBelow: document.querySelector("main .bar")?.classList.contains("has-actions-below") || false,
-    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
-      ? "single-row"
-      : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
+    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-scroll")
+      ? "scroll"
+      : document.querySelector(".games-bottom")?.classList.contains("is-single-row") ? "single-row" : "not-measured",
     listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
       .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
@@ -1158,8 +1158,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     if (fitsSingleRow && state.listBottomLayout !== "single-row") {
       throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
     }
-    if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
-        throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
+    if (!fitsSingleRow && state.listBottomLayout !== "scroll") {
+        throw new Error(`${profile.label} · ${id}: dolny pasek nie przewija się w bok, choć się nie mieści; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (state.listBottomTextLabels && state.listBottomMetrics) {
       const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);
@@ -1416,11 +1416,11 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 await shareButton.click();
                 await modalPage.waitForFunction(() => {
                   const list = document.getElementById("shareDeviceCurrentContent");
-                  return list && (list.querySelector(".share-empty-state") || list.querySelector(".shareRow"));
+                  return list && (list.querySelector(".empty-state") || list.querySelector(".shareRow"));
                 }, null, { timeout: 15_000 });
                 const sharedList = modalPage.locator("#shareDeviceCurrentContent");
                 if (await sharedList.locator(":scope > .shareRow").count() === 0) {
-                  await expect(sharedList.locator(":scope > .share-empty-state")).toBeVisible();
+                  await expect(sharedList.locator(":scope > .empty-state")).toBeVisible();
                 }
               },
               null,

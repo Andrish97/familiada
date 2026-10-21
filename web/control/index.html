@@ -12,9 +12,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06445"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06445"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-21T06445"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T12475"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T12475" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T12475"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-21T12475"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
@@ -22,12 +23,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06445" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T12475" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-21T06445";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-21T12475";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-21T06445");
+    import("/control/js/app.js?v=v2026-10-21T12475");
 
   </script>
 
@@ -289,8 +290,17 @@
        monitor (~2200px+). */
     .device-name { font-size:calc(var(--c2-fs) * .98); }
     #app > .cardBody .device-row-2 .btn { font-size:calc(var(--c2-fs) * .92); }
-    .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:flex-start; gap:6px; }
-    .device-row-line { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    /* Siatka równych przycisków (decyzja 2026-10-21): dwie kolumny tej samej
+       szerokości w obu liniach; kod jest przyciskiem kopiowania. */
+    .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:stretch; gap:6px; }
+    .device-row-line { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
+    .device-row-line > .btn { width:100%; min-width:0; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .device-row-line > .device-connect-code { gap:.5em; padding:0 .6em; }
+    .device-row-line > .device-connect-code .ico { opacity:.7; }
+    .device-row-line > .device-connect-code:hover { border-color:rgba(255,234,166,.5); }
+    /* Status połączenia: lekka plakietka z kropką zamiast dużego kafla. */
+    .c2-devicerows .conn-status { padding:.35em .75em .35em .6em; border-radius:999px; gap:.45em; border-color:transparent; }
+    .c2-devicerows .conn-status::before { content:""; width:.55em; height:.55em; border-radius:50%; background:currentColor; box-shadow:0 0 .5em currentColor; }
     .device-opt-check-label { font-size:calc(var(--c2-fs) * .88); }
     .device-opt-check-hint { font-size:calc(var(--c2-fs) * .76); }
     /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
@@ -523,7 +533,7 @@
     #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
     @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-21T06445"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-21T12475"/>
 
 </head>
 <body class="control-body skel-body">
@@ -601,34 +611,38 @@
 
   <!-- Modal "Udostępnij urządzenie" — dokładnie jak dzisiejsze control.html,
        reużywa control/js/share-device.js bez zmian (patrz control/js/app.js). -->
-  <div class="overlay modal--sheet" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
-    <div class="modal shareModal" data-sheet-local-actions>
-      <div class="mHead">
+  <div class="overlay modal--sheet" id="shareDeviceOverlay" style="display:none;">
+    <div class="modal share-uni shareModal" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" data-sheet-local-actions>
+      <div class="uni-head">
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <section class="shareSection shareSection--mail">
-        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Mail lub nazwa użytkownika</div>
-        <div class="importRow">
-          <input id="shareDeviceEmail" class="inp" type="text"
-                 placeholder="Nazwa użytkownika lub e-mail..."
-                 data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDevice">Udostępnij</span></button>
-        </div>
-      </section>
+      <div class="uni-body">
+        <div class="uni-hint" data-i18n="control.shareDeviceModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych.</div>
+        <section class="shareSection shareSection--lookup">
+          <div class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div>
+          <div class="baseShareLookup">
+            <input id="shareDeviceEmail" class="inp" type="text"
+                   placeholder="Nazwa użytkownika lub e-mail..."
+                   data-i18n-placeholder="bases.shareModal.placeholder"/>
+            <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDevice">Udostępnij</span></button>
+          </div>
+        </section>
 
-      <section class="shareSection shareSection--friends">
-        <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionFriends">Znajomi, którym możesz udostępnić</div><div id="shareDeviceBulkActions"></div></div>
-        <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
-        <div class="shareSectionActions">
-          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym"><i class="ico" data-icon="people" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</span></button>
-        </div>
-      </section>
+        <section class="shareSection shareSection--friends">
+          <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</div><div id="shareDeviceBulkActions"></div></div>
+          <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
+        </section>
 
-      <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
-        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
-        <div id="shareDeviceCurrentContent" class="shareList"></div>
-      </section>
+        <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
+          <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
+          <div id="shareDeviceCurrentContent" class="shareList"></div>
+        </section>
+      </div>
+      <div class="uni-foot modal-actions">
+        <button class="btn sm" id="btnShareDeviceCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="shareDeviceFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="shareDeviceFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
+      </div>
     </div>
   </div>
 
@@ -638,7 +652,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06445"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T12475"></script>
 
 </body>
 </html>

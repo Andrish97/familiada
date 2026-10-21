@@ -169,14 +169,14 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.waitForLoadState("networkidle");
 
       await page.locator("#mineGrid .addCard").click();
-      const overlay = page.locator(".uni-modal");
+      const overlay = page.locator(".uni-modal:visible");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
       await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
       await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator(".bar")).toBeVisible();
 
-      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
 
       // Esc zamyka tak samo jak X / Anuluj
@@ -271,7 +271,7 @@ test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na te
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.locator(".x").click();
 
-      const uniModal = page.locator(".uni-modal");
+      const uniModal = page.locator(".uni-modal:visible");
       await expect(uniModal).toBeVisible({ timeout: 5000 });
 
       // Mały dialog: NIE zajmuje pełnej szerokości viewportu (390px), i
@@ -281,7 +281,7 @@ test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na te
       await expect(page.locator(".bar")).toBeVisible();
       await expect(uniModal).not.toHaveClass(/modal--sheet/);
 
-      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn.gold").click();
       await expect(page.locator("#mineGrid .card", { hasText: name })).toHaveCount(0, { timeout: 10000 });
       deleted = true;
     } finally {
@@ -616,6 +616,40 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
   });
 });
 
+test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
+  test.use({ viewport: MOBILE_VIEWPORT });
+
+  // Decyzja 2026-10-21: zamiast zawijania w rzędy pasek zostaje jednym
+  // rzędem i przewija się w bok; wystaje grupa z większą liczbą przycisków.
+  test("jeden rząd, przewijanie w prawo, menu filtra zamyka się przy przewinięciu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
+    await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
+    const bar = page.locator(".games-bottom:not(.toolbar-measure-box)");
+    await expect(bar).toHaveClass(/is-scroll/);
+    await expect(bar, "grupy przy sobie, rozdzielone separatorem").toHaveClass(/has-group-sep/);
+    const state = await bar.evaluate((el) => {
+      const tops = [...el.querySelectorAll(":scope > div > *")]
+        .filter((item) => item.getClientRects().length)
+        .map((item) => Math.round(item.getBoundingClientRect().top));
+      return { rows: new Set(tops).size, scrollLeft: el.scrollLeft, overflow: el.scrollWidth - el.clientWidth };
+    });
+    console.log(`[e2e-diag] pasek: ${JSON.stringify(state)}`);
+    expect(state.rows, "jeden rząd przycisków").toBe(1);
+    expect(state.overflow).toBeGreaterThan(0);
+    expect(state.scrollLeft, "start od lewej (więcej przycisków po prawej)").toBe(0);
+    await expect(bar).toHaveClass(/has-more-end/);
+
+    await page.locator(".games-bottom .list-filter .ui-select-btn").click();
+    await expect(page.locator(".games-bottom .list-filter")).toHaveClass(/open/);
+    await bar.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(page.locator(".games-bottom .list-filter")).not.toHaveClass(/open/);
+    await expect(bar).toHaveClass(/has-more-start/);
+    await expect(bar).not.toHaveClass(/has-more-end/);
+  });
+});
+
 test.describe("games/editor: pytanie na telefonie w oknie od dołu", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
@@ -677,8 +711,9 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       await page.goto(MARKETPLACE_URL, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      // „Moje wysłane” to okno (2026-10-21); zgłoszenie zastępuje je i po zamknięciu do niego wraca.
       await page.locator("#btnMySent").click();
-      await expect(page.locator("#viewMine")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("#mySentOverlay")).toBeVisible({ timeout: 10000 });
       await page.locator("#btnSubmitNew").click();
 
       const overlay = page.locator("#submitOverlay");
@@ -689,7 +724,9 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 
       await page.locator("#btnSubmitCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#viewMine")).toBeVisible();
+      await expect(page.locator("#mySentOverlay")).toBeVisible();
+      await closeSheetViaHandle(page); // na telefonie okno zamyka pasek u góry (X ukryty)
+      await expect(page.locator("#mySentOverlay")).toBeHidden();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
     } finally {
       await deleteGameDirect(page, gameId);
@@ -796,7 +833,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator("#listShell")).toBeVisible();
 
-      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       await deleteLogoDirect(page, logoId);

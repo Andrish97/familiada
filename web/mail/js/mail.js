@@ -1,11 +1,11 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-21T06445";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-21T12475";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-21T06445';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-21T06445';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-21T06445';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-21T06445';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-21T06445';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-21T06445';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-21T12475';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-21T12475';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-21T12475';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-21T12475';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-21T12475';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-21T12475';
 
 
 const $ = id => document.getElementById(id);
@@ -57,7 +57,7 @@ function setTab(value) {
   });
   document.querySelectorAll('[data-panel]').forEach(node => node.classList.toggle('active', node.dataset.panel === value));
 }
-function empty(id, key) { const node = document.createElement('div'); node.className = 'mail-empty'; node.textContent = text(key); $(id).replaceChildren(node); }
+function empty(id, key) { const node = document.createElement('div'); node.className = 'mail-empty empty-state'; node.textContent = text(key); $(id).replaceChildren(node); }
 function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
   node.title = text(label); node.setAttribute('aria-label', text(label)); node.innerHTML = icon(name);

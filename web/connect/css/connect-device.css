@@ -114,3 +114,24 @@
   opacity: .55;
   line-height: 1.4;
 }
+
+/* Komputer i tablet poziomo: lewo–prawo (decyzja 2026-10-21) — po lewej
+   węższa karta z kodem, po prawej udostępnione urządzenia na całą wysokość. */
+@media (min-width: 721px) {
+  .connect-device-main-card .tasks-scroll {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .connect-device-main-card .tasks-scroll:has(> #sharedDevicesCard[hidden]) {
+    grid-template-columns: minmax(260px, 340px);
+  }
+  #enterCodeCard { min-height: 0; }
+  #enterCodeCard .connect-device-enter-code-row { justify-content: stretch; }
+  #enterCodeCard .connect-device-code-input { max-width: none; min-width: 0; }
+  #enterCodeCard .connect-device-msg { text-align: left; }
+  #sharedDevicesCard .shareList { width: 100%; max-width: none; margin: 8px 0 0; }
+  /* Nagłówki obu kart tej samej wysokości (prawa ma przyciski listy). */
+  .connect-device-inner-card > .connect-device-card-header { min-height: 36px; display: flex; align-items: center; }
+}
+.connect-device-code-hint { margin-top: 8px; }

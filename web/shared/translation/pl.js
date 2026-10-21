@@ -48,6 +48,7 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    save: "Zapisz",
     sort: {
       label: "Sortowanie",
       updated: "Ostatnio zmienione",
@@ -210,7 +211,7 @@ const pl = {
     narrowMessage: "Poszerz okno przeglądarki lub wyjdź z widoku podzielonego ekranu.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
-    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
+    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać ze Znajomych, Subskrybentów, Zadań i udostępniania.",
     login: "Zaloguj / Załóż konto",
   },
   resourceLock: {
@@ -353,8 +354,8 @@ const pl = {
       q24: { q: "Czy osoba prowadząca musi znać odpowiedzi?", a: "Nie. Odpowiedzi i punkty może obsługiwać osoba przy Panelu sterowania, a prowadzący może skupić się na czytaniu pytań i kontakcie z uczestnikami." },
       q25: { q: "Czy jedna osoba może prowadzić i obsługiwać grę?", a: "Może, ale przeprowadzenie finału w pojedynkę bywa trudne: trzeba wtedy wpisywać odpowiedzi graczy w Panelu sterowania i jednocześnie prowadzić grę. Warto poprosić drugą osobę o pomoc." },
       q26: { q: "Co zrobić, jeśli ekran przestanie się aktualizować?", a: "Sprawdź połączenie urządzenia z grą i otwórz ponownie jego widok. W Panelu sterowania sprawdź, czy urządzenie jest podłączone, zanim przejdziesz dalej." },
-      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W ustawieniach rozgrywki możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
-      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w Centrum ankiet widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
+      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W Ustawieniach gry możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
+      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w sekcji Odbiorcy ankiety widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
     },
     footer: {
@@ -680,6 +681,7 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",
@@ -1763,8 +1765,8 @@ const pl = {
     subscribeAdded: "Subskrypcja została dodana.",
     subscriptionInviteActive: "Zaproszenie do subskrypcji jest aktywne.",
     subscribePrompt: "Jeśli chcesz zaakceptować subskrypcję, podaj adres e-mail.",
-    acceptInHub: "Żeby zaakceptować, przejdź do Centrum ankiet.",
-    hubLabel: "Centrum ankiet",
+    acceptInHub: "Żeby zaakceptować, przejdź na stronę poniżej.",
+    hubTo: { friends: "Przejdź do Znajomych", tasks: "Przejdź do Zadań", bases: "Przejdź do Baz pytań", games: "Przejdź do Moich gier", logos: "Przejdź do Logo" },
     acceptLabel: "Akceptuj",
     declineLabel: "Odrzuć",
     subscribeLabel: "Subskrybuj",
@@ -2035,7 +2037,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
@@ -2266,7 +2268,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
@@ -3230,7 +3232,7 @@ const pl = {
     finalStartBtn: "Rozpocznij finał",
     finalP1EntryTitle: "Runda 1 — wpisywanie",
     finalP1EntryName: "Odpowiedzi gracza 1 (15s)",
-    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer można uruchomić przyciskiem lub skrótem Ctrl + Enter (Cmd + Enter na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer15: "Rozpocznij odliczanie (15s)",
     finalP1MapQ1Title: "Runda 1 — mapowanie (P1)",
     finalMapHint: "Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt. Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.",
@@ -3245,7 +3247,7 @@ const pl = {
     finalRepeatSound: "Dźwięk powtórzenia",
     finalP2EntryTitle: "Runda 2 — wpisywanie",
     finalP2EntryName: "Odpowiedzi gracza 2 (20s)",
-    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Ctrl + Enter (Cmd + Enter na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer20: "Rozpocznij odliczanie (20s)",
     finalP2MapQ1Title: "Runda 2 — mapowanie (P1)",
     finalP2MapQ2Title: "Runda 2 — mapowanie (P2)",
@@ -3316,6 +3318,9 @@ const pl = {
       sectionFriends: "Znajomi, którym możesz udostępnić",
       sectionShared: "Udostępnione w tej sesji",
       shareSelected: "Udostępnij zaznaczonym",
+      shareSelectedN: "Udostępnij zaznaczonym ({n})",
+      shareSelectedShortN: "Udostępnij ({n})",
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych.",
       recipientKind: { friend: "znajomy", account: "ma konto", mail: "mail" },
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",

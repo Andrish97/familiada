@@ -1,4 +1,3 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T06445");
 
 
 /* css/base.css */
@@ -18,7 +17,7 @@
     --tab-label-letter-spacing: .08em;
 }
 
-.tabs-strip :is(.tab-label,.tab-active){
+.tabs-strip .tab-label{
     font-size: var(--tab-label-font-size);
     letter-spacing: var(--tab-label-letter-spacing);
 }
@@ -905,6 +904,17 @@ main:has(> .footer){
     -webkit-overflow-scrolling: touch
 }
 
+/* Okna udostępniania (Baza, urządzenie): szkielet .uni-* bez klasy
+   .uni-modal, która oznacza małe okna potwierdzeń/wpisywania. */
+.share-uni {
+    width: min(720px,94vw);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden
+}
+.share-uni > .uni-head,
+.share-uni > .uni-foot,
 .uni-modal > .uni-head,
 .uni-modal > .mHead,
 .uni-modal > .mSub,
@@ -970,6 +980,7 @@ main:has(> .footer){
     font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace
 }
 
+.share-uni .uni-hint,
 .uni-modal .uni-hint {
     text-align: center;
     line-height: 1.4
@@ -1169,7 +1180,7 @@ main:has(> .footer){
     .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot) {
         flex-wrap: nowrap;
     }
-    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup) {
         margin-top: 0 !important;
     }
     /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
@@ -2425,21 +2436,46 @@ body{
 }
 
 /* Wspólny pusty stan list udostępniania (bazy i Control). */
-.share-empty-state{
+/* Pusty stan — jeden element na wszystkich stronach (ujednolicenie
+   2026-10-21): przerywana obwódka, wyśrodkowane zdanie. Wariant --tile
+   w siatkach kafli ma wysokość i zaokrąglenie kafla. Dawne klasy
+   (shareEmpty, rowsEmpty, list-empty…) zostają tylko jako uchwyty. */
+.empty-state{
+  display:flex;
   min-height:84px;
-  display:grid;
-  place-items:center;
-  border:1px dashed var(--line2);
-  border-radius:12px;
+  align-items:center;
+  justify-content:center;
   padding:16px;
-  font-size:.85rem;
-  opacity:.7;
   text-align:center;
   align-self:start;
   justify-self:stretch;
+  width:100%;
   box-sizing:border-box;
+  border:1px dashed var(--line2, rgba(255,255,255,.2));
+  border-radius:12px;
   background:rgba(255,255,255,.015);
+  font-size:13px;
+  line-height:1.4;
+  color:var(--muted, rgba(255,255,255,.7));
 }
+.empty-state a{ color:var(--gold); }
+.empty-state--tile{ width:auto; min-height:130px; border-radius:18px; }
+.empty-state[hidden]{ display:none; }
+/* Przycisk obok pola ma wysokość pola (decyzja użytkownika 2026-10-21):
+   wiersze „pole + przycisk” rozciągają przycisk do wysokości pola. */
+:is(.account-field-row, .contacts-invite-row, .baseShareLookup, .connect-device-enter-code-row) > .btn{
+  align-self: stretch;
+  height: auto;
+  min-height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+/* Okna udostępniania (Baza, urządzenie): pole adresu z przyciskiem w jednym wierszu. */
+.baseShareLookup{ display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 10px; }
+.baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
+.baseShareLookup .btn{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
+/* „Udostępnij zaznaczonym (n)”: na telefonie krótko „Udostępnij (n)”. */
+.shareSelectedShort{ display:none; }
 
 /* Wysyłanie kopii: wspólny modal i sekcje w stylu udostępniania Baz/Control. */
 .resource-send-modal{
@@ -2598,6 +2634,18 @@ body{
 }
 .searchText::placeholder{ opacity: .65; }
 .searchText::-webkit-search-cancel-button{ display: none; }
+/* Pole szukania jak w oknie „Przenieś do” (decyzja 2026-10-21): lupa w polu
+   po lewej, pełna szerokość, wysokość zwykłego pola (40 px). */
+.searchBox--field{ height: 40px; box-sizing: border-box; padding: 0 6px 0 12px; gap: 8px; width: 100%; }
+.searchBox--field > svg, .searchBox--field > .ico{ flex: 0 0 auto; width: 16px; height: 16px; opacity: .6; }
+.searchBox--field .searchText{ height: 100%; padding: 0 2px; }
+@media (max-width: 600px), (hover: none) and (pointer: coarse){
+  .searchBox--field .searchText{ font-size: 16px; } /* iOS nie przybliża */
+}
+.searchClear{ appearance: none; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; opacity: .7; cursor: pointer; }
+.searchClear:hover{ opacity: 1; background: rgba(255,255,255,.08); }
+.searchClear svg{ width: 16px; height: 16px; }
+.searchClear[hidden]{ display: none; }
 
 
 /* ===== Dymek komunikatu po akcji (shared/js/core/toast.js) ===== */
@@ -2873,7 +2921,6 @@ body{
 .shareActionTimer .ico{ width: 18px; height: 18px; }
 .shareActionTimer[hidden]{ display: none; }
 .shareRow.is-cooling-down{ opacity: .5; filter: grayscale(1); }
-.shareSectionActions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .shareCountdown{ flex: 0 0 auto; min-width: 38px; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; text-align: center; color: var(--gold); }
 .shareCountdown[hidden]{ display: none; }
 /* Aktywny licznik w wierszu: wszystkie przyciski wiersza nieco wyższe, przycisk
@@ -2934,21 +2981,6 @@ button.rowsSectionHead{ cursor: pointer; }
 .rowsAct .rowsActIcon svg{ width: 100%; height: 100%; }
 .rowsAct--icon .rowsActIcon{ display: inline-flex; }
 .rowsAct:disabled{ opacity: .4; cursor: not-allowed; }
-.rowsEmpty,.shareEmpty{
-    display:flex;
-    min-height:84px;
-    align-items:center;
-    justify-content:center;
-    padding:16px;
-    text-align:center;
-    align-self:start;
-    justify-self:stretch;
-    box-sizing:border-box;
-    opacity:.76;
-    border:1px dashed var(--line2, rgba(255,255,255,.2));
-    border-radius:12px;
-    background:rgba(255,255,255,.015);
-}
 @media (max-width: 640px){
   .rowsAct .rowsActText{ display: none; }
   .rowsAct .rowsActIcon{ display: inline-flex; }
@@ -2989,8 +3021,8 @@ button.rowsSectionHead{ cursor: pointer; }
    naturalnej wysokości. */
 #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
 #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"],
-#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--friends,
-#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--shared {
+#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--friends,
+#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--shared {
   min-height: 180px;
   box-sizing: border-box;
 }
@@ -3002,7 +3034,6 @@ button.rowsSectionHead{ cursor: pointer; }
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
-.shareEmpty{ font-size:13px; color:var(--muted); }
 
 @media (max-width: 600px) {
   /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
@@ -3024,13 +3055,15 @@ button.rowsSectionHead{ cursor: pointer; }
     margin: 0;
   }
   .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
-  .baseShareLookup .btn .only-desktop,
-  .baseShareFooter .btn .only-desktop { display: none !important; }
+  .baseShareLookup .btn .only-desktop { display: none !important; }
+  .shareSelectedFull { display: none; }
+  .shareSelectedShort { display: inline; }
 
   /* Udostępnianie bazy: formularz ma własny wiersz, a obie listy są
      jednocześnie widoczne i dzielą pozostałą wysokość arkusza. */
   #shareOverlay.sheet-active .shareModal { overflow: hidden; }
-  #shareOverlay.sheet-active .sheet-modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .sheet-modal-body,
+  #shareOverlay.sheet-active .uni-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0; }
   #shareOverlay.sheet-active .baseShareSections {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
@@ -3058,6 +3091,14 @@ button.rowsSectionHead{ cursor: pointer; }
      wiersze; przewijają się wyłącznie listy znajomych i udostępnionych. */
   #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
   #shareDeviceOverlay.sheet-active .sheet-modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .uni-body {
+    margin-top: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
     flex: 1 1 auto;
@@ -3065,7 +3106,7 @@ button.rowsSectionHead{ cursor: pointer; }
     gap: 8px;
     overflow: hidden;
   }
-  #shareDeviceOverlay.sheet-active .sheet-modal-body > .shareSection {
+  #shareDeviceOverlay.sheet-active .uni-body > .shareSection {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -3114,4 +3155,226 @@ button.rowsSectionHead{ cursor: pointer; }
 @media (hover: none) and (pointer: coarse) {
     [draggable="true"] { -webkit-user-drag: none; }
     .tcHandle, .roundsOrderHandle { display: none !important; }
+}
+
+/* Zmienne wypustek kart (dawniej games.css). */
+:root{
+  --radius: 16px;
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --corner-bottom: 0px;
+  --corner-shift: 1px;
+  --border-fudge: 2px;
+
+  --page-bg: var(--bg);
+  --surface: #111827;
+  --inactive-text: rgba(255,255,255,.70);
+  --border-color: var(--line2);
+}
+/* =========================================================
+   WYPUSTKI KART — wspólne dla wszystkich stron (ujednolicenie 2026-10-21,
+   wcześniej w games.css; strony dopisują tylko zaokrąglenia swojej karty)
+========================================================= */
+.tabs-card{
+  width: 100%;
+  margin: 8px auto 0;
+  position: relative;
+
+  /* 🔑 najważniejsze: tabs-card musi być flex-kolumną */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs-strip{
+  flex: 0 0 auto;
+
+  display: flex;
+  height: var(--tab-height);
+  align-items: stretch;
+  background: var(--page-bg);
+  position: relative;
+  z-index: 1;
+}
+
+.tab-label,
+.tab-slot{
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
+  content: attr(data-copy-count);
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  z-index: 4;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--gold, #e6b84c);
+  color: #171717;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
+#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) .tab-label{ padding-right:32px; }
+
+#tabs-root .tab-slot,
+.tab-slot{
+  width: auto;
+  min-width: 0;
+  flex: 1 1 max-content;
+  align-items: stretch;
+}
+
+.tab-label{
+  border: 0;
+  background: transparent;
+  color: var(--inactive-text);
+
+  width: 100%;
+  height: var(--tab-height);
+  line-height: var(--tab-height);
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  white-space: nowrap;
+  align-items: center;
+
+  padding: 0;
+  margin: 0;
+}
+
+.tab-label.active,
+.tab-slot.active .tab-label{ color: #f9fafb; }
+
+/* Separator (::after) i podświetlenie najechania (::before) nieaktywnych kart. */
+.tab-label::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: rgba(0,0,0,.35);
+  display: none;
+}
+
+.tab-label::before{
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 14%;
+  bottom: 14%;
+  border-radius: calc(var(--radius)*.9);
+  background: rgba(255,255,255,.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+}
+/* Tylko mysz: na dotyku hover „przykleja się” po tapnięciu i zostawał szary
+   prostokąt (zwłaszcza na „Gry Społeczności”, która przed aktywacją czeka
+   na pobranie listy) — jak w bases.css. */
+@media (hover: hover) and (pointer: fine){
+  .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover{ color: #fff; }
+  .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover::before{ opacity: 1; }
+}
+
+/* Separator między dwiema sąsiednimi nieaktywnymi wypustkami. */
+.tab-slot:not(.active):not(:has(.tab-label.active)) + .tab-slot:not(.active):not(:has(.tab-label.active)) .tab-label::after{
+  display: block;
+}
+
+/* Aktywna wypustka to sam przycisk karty (wariant A, decyzja 2026-10-21):
+   tło i obramowanie z zaokrągleniem u góry, zachodzi o --tab-extra na
+   górną krawędź karty; ::before/::after rysują wklęsłe narożniki (obrys
+   i tło w jednym gradiencie). Dawniej .tab-wrapper + .tab-active + 2 × .tab-corner. */
+:is(.tab-label.active, .tab-slot.active > .tab-label){
+  height: calc(var(--tab-height) + var(--tab-extra));
+  margin-bottom: calc(-1 * var(--tab-extra));
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  z-index: 3;
+}
+:is(.tab-label.active, .tab-slot.active > .tab-label)::before,
+:is(.tab-label.active, .tab-slot.active > .tab-label)::after{
+  content: "";
+  display: block;
+  position: absolute;
+  top: auto;
+  /* łuk kończy się w wierszu górnej krawędzi karty; niżej (zakład
+     wypustki na kartę) narożnik jest tłem karty i zakrywa boki wypustki */
+  bottom: 0;
+  width: var(--radius);
+  height: calc(var(--radius) + var(--tab-extra) - 1px);
+  border-radius: 0;
+  opacity: 1;
+  transition: none;
+  pointer-events: none;
+}
+:is(.tab-label.active, .tab-slot.active > .tab-label)::before{
+  /* zachodzi na kolumnę bocznego obramowania karty i je zakrywa — łuk
+     przechodzi płynnie w bok wypustki, bez szczeliny */
+  left: calc(-1 * var(--radius));
+  right: auto;
+  background: radial-gradient(circle at 0 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
+}
+:is(.tab-label.active, .tab-slot.active > .tab-label)::after{
+  right: calc(-1 * var(--radius));
+  left: auto;
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
+}
+/* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
+.tab-slot:first-child > .tab-label.active::before,
+.tab-slot.active:first-child > .tab-label::before,
+.tab-slot:last-child > .tab-label.active::after,
+.tab-slot.active:last-child > .tab-label::after{ display: none; }
+
+@media (max-width: 600px){
+  :root{
+    --tab-height: 56px;
+    --tab-extra: 2px;
+  }
+
+  .tabs-strip{
+    display: flex;
+    gap: 0;
+  }
+
+  /* Krótkie nazwy zakładek na mobilkach */
+  .tabs-strip .only-desktop { display: none !important; }
+  .tabs-strip .only-mobile  { display: inline !important; }
+
+  .tab-slot{
+    width: auto;
+    flex: 1 1 max-content;
+    justify-content: center;
+  }
+
+  .tab-label{
+    height: var(--tab-height);
+    line-height: var(--tab-height);
+    z-index: 2;
+  }
+
+  /* Telefon: bez separatorów między nieaktywnymi (narożniki aktywnej zostają). */
+  .tab-slot:not(.active) > .tab-label:not(.active)::after{
+    display: none !important;
+  }
 }

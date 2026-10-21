@@ -48,6 +48,7 @@ const en = {
   "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Sign in again.","decisionFailed":"Could not save your decision. Try again."}
 },
   common: {
+    save: "Save",
     sort: {
       label: "Sort",
       updated: "Recently modified",
@@ -210,7 +211,7 @@ const en = {
     narrowMessage: "Make the browser window wider or leave split-screen view.",
     back: "Back",
     guestTitle: "Not available for guest account",
-    guestMessage: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
+    guestMessage: "This section is available only for registered users. Sign in or create an account to use Friends, Subscribers, Tasks, and sharing.",
     login: "Sign in / Create account",
   },
   resourceLock: {
@@ -341,7 +342,7 @@ const en = {
       q25: { q: "Can one person host and operate the game?", a: "Yes, but running the finale alone can be difficult: you need to enter the players’ answers in the Control Panel while also hosting. It helps to have another person assist." },
       q26: { q: "What should I do if a screen stops updating?", a: "Check that the device is still connected to the game and reopen its view. In the Control Panel, confirm that the device is connected before continuing." },
       q27: { q: "Can I change the board's appearance?", a: "Yes. In game settings, choose an available theme, team colors, sounds and logo. You will see the changes on the Display." },
-      q29: { q: "Is a subscriber poll different from an anonymous poll?", a: "The votes go to the same poll; only the invitation method differs. Anyone with the link or QR code can open it, while you can send subscribers a poll as a task. Before tallying, the Poll Hub shows which invited subscribers have responded; after tallying, that status is less clear." },
+      q29: { q: "Is a subscriber poll different from an anonymous poll?", a: "The votes go to the same poll; only the invitation method differs. Anyone with the link or QR code can open it, while you can send subscribers a poll as a task. Before tallying, the poll's Recipients section shows which invited subscribers have responded; after tallying, that status is less clear." },
       q30: { q: "How can I share materials with friends?", a: "It depends on the item: send a game or logo as a copy, share a Question Base with a selected role, or share a device for use during a game." },
     },
     footer: {
@@ -672,6 +673,7 @@ const en = {
       close: "Done",
     },
     shareModal: {
+      hint: "Enter a username or e-mail, or select friends. Choose the permission at the bottom.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",
@@ -1760,8 +1762,8 @@ const en = {
     subscribeAdded: "Subscription added.",
     subscriptionInviteActive: "Subscription invitation is active.",
     subscribePrompt: "Enter email if you want to subscribe.",
-    acceptInHub: "To accept, go to the Polls hub.",
-    hubLabel: "Polls hub",
+    acceptInHub: "To accept, go to the page below.",
+    hubTo: { friends: "Go to Friends", tasks: "Go to Tasks", bases: "Go to Question bases", games: "Go to My games", logos: "Go to Logos" },
     acceptLabel: "Accept",
     declineLabel: "Decline",
     subscribeLabel: "Subscribe",
@@ -2032,7 +2034,7 @@ const en = {
     pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Polls hub",
+      subtitle: "Tasks",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -2263,7 +2265,7 @@ const en = {
     pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Polls hub",
+      subtitle: "Tasks",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -3503,6 +3505,9 @@ const en = {
       sectionFriends: "Friends you can share with",
       sectionShared: "Shared in this session",
       shareSelected: "Share with selected",
+      shareSelectedN: "Share with selected ({n})",
+      shareSelectedShortN: "Share ({n})",
+      hint: "Enter a username or e-mail, or select friends.",
       recipientKind: { friend: "friend", account: "has an account", mail: "email" },
       noneShared: "Not shared.",
       noSubs: "No subscribers.",

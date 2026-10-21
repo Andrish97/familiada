@@ -8,11 +8,11 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T06445";
-import { promptModal } from "./modal.js?v=v2026-10-21T06445";
-import { icon } from "./icons.js?v=v2026-10-21T06445";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T06445";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T06445";
+import { t } from "../../translation/translation.js?v=v2026-10-21T12475";
+import { promptModal } from "./modal.js?v=v2026-10-21T12475";
+import { icon } from "./icons.js?v=v2026-10-21T12475";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-21T12475";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T12475";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -39,13 +39,19 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
 export function initListSearch({ grids, tile, name, filter, sort }) {
   const slot = document.querySelector(".games-bottom-left");
   if (!slot) return;
-  // Zewnętrzny wrapper odpowiada za szerokość/grupowanie. Przycisk po prawej
-  // stronie pola przełącza lupę na X, który czyści wyszukiwanie — tak jak w
-  // mobilnym wyszukiwaniu Gier Społeczności.
+  // Komputer: pole jak w oknie „Przenieś do” (lupa w polu, X czyści frazę).
+  // Telefon: sam przycisk lupy otwiera okno z takim samym polem; po
+  // wyszukaniu lupa zmienia się w X, który czyści frazę.
   const search = document.createElement("div");
   search.className = "list-search";
-  const box = document.createElement("div");
-  box.className = "searchBox";
+  const box = document.createElement("label");
+  box.className = "searchBox searchBox--field";
+  box.innerHTML = icon("search");
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "searchClear";
+  clear.innerHTML = icon("close");
+  clear.hidden = true;
   const input = document.createElement("input");
   input.type = "text";
   input.setAttribute("enterkeyhint", "search");
@@ -59,9 +65,11 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     input.setAttribute("aria-label", t("common.searchByName"));
     mobileSearch.title = input.value ? t("baseExplorer.search.clear") : t("common.searchByName");
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
+    clear.title = t("baseExplorer.search.clear");
+    clear.setAttribute("aria-label", clear.title);
   };
   label();
-  box.append(input);
+  box.append(input, clear);
   search.append(box, mobileSearch);
   slot.append(search);
 
@@ -133,7 +141,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     let el = emptyEls.get(grid);
     if (!el) {
       el = document.createElement("div");
-      el.className = "list-empty";
+      el.className = "list-empty empty-state empty-state--tile";
       el.hidden = true;
       emptyEls.set(grid, el);
     }
@@ -151,6 +159,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     mobileSearch.classList.toggle("is-active", !!q);
     mobileSearch.title = q ? t("baseExplorer.search.clear") : t("common.searchByName");
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
+    clear.hidden = !q;
     if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
     if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);
     for (const grid of document.querySelectorAll(grids)) {
@@ -174,6 +183,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     }
   };
   input.addEventListener("input", apply);
+  clear.addEventListener("click", (e) => { e.preventDefault(); input.value = ""; apply(); input.focus(); });
+  input.addEventListener("keydown", (e) => { if (e.key === "Escape" && input.value) { e.preventDefault(); input.value = ""; apply(); } });
   mobileSearch.addEventListener("click", async () => {
     if (input.value) {
       input.value = "";
@@ -189,6 +200,9 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       title: t("common.searchByName"),
       value: input.value,
       placeholder: t("common.searchByName"),
+      text: "",
+      okText: t("common.modal.alertOk"),
+      search: true,
       onReady: ({ overlay, okBtn }) => overlay.querySelector(".uni-inp")?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
       }),

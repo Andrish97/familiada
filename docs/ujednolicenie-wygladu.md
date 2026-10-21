@@ -144,6 +144,19 @@ podliczania jako stan bieżącej operacji.
   logo) to kafel na całą szerokość jak górny pasek ankiety (`.pollBar`):
   ramka, tło, zaokrąglenie; etykieta „NAZWA” jak słowo stanu ankiety (złote
   wersaliki), pole wypełnia resztę kafla (`.name-field` w `base.css`).
+- **Dolny pasek list przewija się w bok (pomysł użytkownika 2026-10-21):**
+  pasek wyszukiwania/filtrów i akcji (Gry, Bazy, Logo) zostaje zawsze jednym
+  rzędem; zawijanie w rzędy usunięte. Gdy nie mieszczą się napisy — same
+  ikony; gdy nie mieszczą się nawet ikony — pasek przewija się w bok
+  (bez paska przewijania, wygaszona krawędź po stronie z ukrytymi
+  przyciskami). Interpretacja „w zależności, gdzie więcej przycisków”: na
+  starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
+  z większą (Gry: wyszukiwanie po lewej, akcje wystają w prawo). Menu filtra
+  i sortowania zamyka się, gdy przewinie się pojemnik z przyciskiem.
+  Doprecyzowanie użytkownika (2026-10-21): grup nie rozpychać na boki, gdy
+  robi się ciasno — stoją przy sobie, a gdy prawie się stykają, dzieli je
+  cienki separator; przewijanie dopiero, gdy z separatorem się nie mieszczą.
+  Przy dużej ilości miejsca grupy zostają po lewej i po prawej.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
@@ -155,6 +168,71 @@ podliczania jako stan bieżącej operacji.
   telefonie przechodzi na ikony, gdy dają mniej rzędów niż przyciski
   z napisami (wcześniej tylko przy jednym rzędzie — na 390 px zostawała
   kolumna szerokich przycisków).
+
+## Decyzje — paczka ujednolicenia po przeglądzie zrzutów (2026-10-21)
+
+Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon):
+
+- **Marginesy na komputerze:** ujednolicić. Wykonanie wg rodzaju strony
+  (`wzorce-ui.md` A1): strony aplikacji (listy, praca, formularze — m.in.
+  Konto, edytor gry, Społeczność) mają `--page-gutter` jak Gry; strony
+  tekstowe (landing, Instrukcja, Prywatność) zachowują wąską kolumnę do czytania.
+- **Pusty stan:** ujednolicić do jednego wspólnego elementu (zamiast ~15 klas).
+- **Wyszukiwanie:** Społeczność to inna strona — zostaje. Gry/Logo/Bazy:
+  wyszukiwanie dotyczy jednej części listy, więc zostaje w dolnym pasku listy.
+  Eksplorator — ujednolica inna sesja (nie ruszać).
+- **Tytuł w topbarze czy w treści:** decyduje rodzaj strony (A1) — bez zmian.
+- **Tytuły stron:** ujednolicić (Społeczność, Instrukcja i inne odstające
+  do stylu `.bar .title`).
+- **Przyciski formularzy w Koncie:** ujednolicić z resztą formularzy.
+- **Zadania / Connect (wąska kolumna w szerokiej karcie):** do pokazania
+  wariantów — użytkownik nie jest pewien, czy węższa karta nie zepsuje koncepcji.
+- **Okna udostępniania:** ujednolicić okno udostępniania Bazy i okno
+  udostępniania urządzenia na wzór okna „Dodaj odbiorców” ankiety.
+- **Wypustki kart:** wspólny CSS; najpierw pokazać, jak wyglądałaby
+  Społeczność z kartą „Moje wysłane”. Control nie ma już wypustek — usunąć
+  stamtąd ich CSS (po sprawdzeniu, że nieużywany).
+
+### Doprecyzowania użytkownika (2026-10-21, po zrzutach)
+
+- **Okno koloru w Ustawieniach gry:** jak okno koloru tagów z brancha E22
+  (`ccr-ac709a92-0mcpyq`): karta z podglądem i HEX, karta z suwakami R/G/B,
+  Anuluj + Zapisz.
+- **Przyciski obok pola:** zawsze tej samej wysokości co pole (wszystkie strony).
+- **Udostępnianie w Control:** poprawić wygląd (okno i przycisk w kaflu).
+- **Wypustki:** użytkownik pyta o ładniejszą budowę (dziś trzy elementy:
+  etykieta, `.tab-active`, dwa narożniki) — przygotować propozycję.
+- **Społeczność:** makieta z wypustkami odrzucona. „Moje wysłane” jako
+  okno; jedna wspólna karta z grami, a wyszukiwanie i filtry wyżej w osobnej
+  małej podkarcie.
+
+### Decyzje użytkownika (2026-10-21, wieczór) — „zrób, żeby było ładnie”
+
+- **Wypustki:** wariant A — ten sam wygląd, budowa z jednego elementu
+  (przycisk karty rysuje tło, obramowanie i wklęsłe narożniki), bez
+  `.tab-wrapper`/`.tab-active`/`.tab-corner`.
+- **Zadania / Podłącz urządzenie:** zostaje obecny układ (karta na całą
+  szerokość, węższa treść) — warianty B i C odrzucone.
+- **Podłącz urządzenie:** pole kodu po lewej, układ lewo–prawo; lewa
+  kolumna (kod) węższa, prawa — udostępnione urządzenia.
+- **Społeczność:** obecna wersja odrzucona. „Moje wysłane”/wysyłka w oknie,
+  na stronie jedna karta jak wszędzie (narzędzia w karcie, bez osobnej
+  podkarty).
+- **Control — krok Urządzenia:** mniej przycisków, ładniejsze statusy,
+  przyciski równej szerokości w siatce (jak inne siatki Control).
+- **Wdrożenie na `main`:** użytkownik zezwolił; dalsze uwagi przekaże później.
+- **Wypustki — jeden lity kawałek z kartą (2026-10-21):** bez dziur
+  i szczelin. Narożniki zachodzą na kolumnę bocznego obramowania wypustki
+  i na jej zakład na kartę; łuk kończy się w wierszu górnej krawędzi karty.
+  Sprawdzone zbliżeniami (×2/×3) styków na Grach, Bazach, Ankiecie
+  i Znajomych, komputer i telefon.
+- **Pola wyszukiwania (2026-10-21):** wszędzie jak w oknie „Przenieś do”
+  menedżera bazy (E22): `.searchBox.searchBox--field` — lupa w polu po
+  lewej, X w polu czyści frazę, filtrowanie na żywo; bez osobnego przycisku
+  lupy obok pola (zastępuje wcześniejszą zasadę E20 „lupa po prawej, bez X
+  w polu”). Listy wierszy: pole nad listą także na telefonie (bez okienka).
+  Dolny pasek Gier/Baz/Logo i Społeczność na telefonie: lupa otwiera okno
+  z takim samym polem i „OK”.
 
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 

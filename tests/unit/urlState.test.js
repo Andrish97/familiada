@@ -29,7 +29,7 @@ test("manual: rozdział w ?ch=, podrozdział w #s-…, zmiana przez replaceState
   assert.match(source, /history\.replaceState/);
   assert.doesNotMatch(source, /history\.pushState|hashchange|sessionStorage/);
   assert.match(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ ch, hash:/);
-});
+})
 
 test("strona główna odzwierciedla przewijaną sekcję w hash", () => {
   const source = read("home/js/index.js");
@@ -62,8 +62,10 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  assert.match(css, /tabLogoText\.active[\s\S]*tab-corner-left/);
-  assert.match(css, /tabLogoImage\.active[\s\S]*tab-corner-right/);
+  // Narożniki skrajnych wypustek: wspólna reguła w base.css (pierwsza/ostatnia).
+  const base = read("shared/css/base.css");
+  assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
+  assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
   assert.match(css, /tabLogoText\.active[\s\S]*border-top-left-radius: 0/);
   assert.match(css, /tabLogoImage\.active[\s\S]*border-top-right-radius: 0/);
 });

@@ -95,6 +95,8 @@ module.exports = [
     }] },
   { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
+  { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop"], settle: 800,
+    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
@@ -105,23 +107,16 @@ module.exports = [
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
   // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
-  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie (komputer: pole w liście, telefon: okno)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie (pole nad listą, jak „Przenieś do”)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
     steps: [async (view, { device }) => {
       const tab = view.locator("#contactsTabReceived");
       if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
       await view.locator("#contactsReceived .listTools-search:visible").first().click();
-      if (device === "phone") { await view.locator(".uni-inp").fill("k"); await view.locator(".uni-modal .btn.gold").click(); }
-      else await view.locator("#contactsReceived .listToolsInline .searchText").fill("k");
+      await view.locator("#contactsReceived .listToolsInline .searchText").fill("k");
       await view.waitForTimeout(300);
     }] },
-  { id: "subscribers-search-prompt", category: "Dodatkowe", title: "Subskrybenci — okno wyszukiwania (telefon)", devices: ["phone"], path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
-    steps: [async (view) => {
-      const tab = view.locator("#contactsTabReceived");
-      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
-      await view.locator("#contactsReceived .listTools-search:visible").first().click();
-      await view.locator(".uni-inp").fill("klasa");
-      await view.waitForTimeout(300);
-    }] },
+  { id: "games-search-prompt", category: "Dodatkowe", title: "Moje gry — okno wyszukiwania na telefonie (pole jak „Przenieś do”)", devices: ["phone"], path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js", "web/shared/js/core/modal.js"], ready: "#grid .card",
+    steps: [async (view) => { await view.locator(".list-search-open").click(); await view.locator(".uni-modal .uni-inp").fill("rodz"); await view.waitForTimeout(300); }] },
   { id: "subscribers-filter", category: "Dodatkowe", title: "Subskrybenci — filtr stanu (oczekujące i odrzucone)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
     steps: [async (view) => {
       const tab = view.locator("#contactsTabInvite");
@@ -130,11 +125,18 @@ module.exports = [
       await view.waitForTimeout(300);
     }] },
   { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
+  // Pusty stan (wspólny .empty-state): wyszukiwanie bez wyników w siatce kafli i na liście wierszy.
+  { id: "empty-state-games", category: "Dodatkowe", title: "Pusty stan — Moje gry, wyszukiwanie bez wyników", path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
+    steps: [async (view) => { await view.locator(".games-bottom .searchText").first().fill("zzzz"); await view.waitForTimeout(500); }] },
+  { id: "empty-state-friends", category: "Dodatkowe", title: "Pusty stan — Znajomi, wyszukiwanie bez wyników", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0, devices: ["desktop"],
+    steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("zzzz"); await view.waitForTimeout(400); }] },
   { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
   { id: "bases-share-tools", category: "Dodatkowe", title: "Bazy — okno udostępniania z przyciskami list", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
   { id: "bases-share-long-name", category: "Dodatkowe", title: "Bazy — udostępnione: długa nazwa użytkownika (wielokropek, stała wysokość kafla)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); await view.locator("#shareSectionsHost").evaluate((el) => { el.scrollTop = el.scrollHeight; }); await view.waitForTimeout(200); }] },
+  { id: "control-share-device", category: "Dodatkowe", title: "Panel sterowania — okno udostępniania urządzenia", path: `/control/?id=${IDS.game}`, sources: [...page("control"), "web/shared/js/core/share-sections.js"], gameState: "devices", ready: ".device-row", devices: ["desktop"], settle: 800,
+    steps: [async (view) => { await view.locator(".device-row button:has(.badge)").first().click(); await view.locator("#shareDeviceOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
   { id: "poll-recipients-tools", category: "Dodatkowe", title: "Ankieta — okno odbiorców z przyciskami list", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/share-sections.js"], ready: "#cardMain",
     steps: [async (view) => { const b = view.locator("#btnAddRecipients"); if (!(await b.isVisible())) { const tab = view.locator(".slot-recipients button, #tabRecipients").first(); if (await tab.count()) await tab.click(); } await view.locator("#btnAddRecipients").click(); await view.waitForTimeout(600); }] },
   { id: "mails-tools", category: "Dodatkowe", title: "Mails — listy subskrypcji i zadań z przyciskami", path: "/mails/", sources: ["web/mails/", "web/mail/", "web/shared/js/core/share-sections.js"], ready: "#subscriptionList > *" },
@@ -159,6 +161,7 @@ module.exports = [
     steps: [clickTab("#tabResults"), async (view) => { await view.locator("#btnTallyPoll").click(); await view.locator("#tallyBar:not([hidden])").waitFor({ timeout: 8000 }); await view.waitForTimeout(400); }] },
   { id: "polls-stopped", category: "Dodatkowe", title: "Ankieta zatrzymana — głosy", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "marketplace", category: "Dodatkowe", title: "Społeczność", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card" },
+  { id: "marketplace-my-sent", category: "Dodatkowe", title: "Społeczność — okno Moje wysłane", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card", steps: [openModal("#btnMySent", "#mySentOverlay")] },
   { id: "snake-iphone", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — iPhone w poziomie (wcięcie i pasek gestu)", path: "/snake/?qr=00000000-0000-4000-8000-000000000103", devices: ["phone-landscape"], safeArea: { left: 59, right: 59, bottom: 21 },
     sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]" },
   // Okno „Do ekranu początkowego” pokazuje się po przycisku pełnego ekranu w Safari na iPhonie;
@@ -218,4 +221,7 @@ module.exports = [
     steps: [async (view) => { await view.locator("body").press("ArrowUp"); await view.waitForTimeout(450); await view.locator("body").press("ArrowRight"); await view.waitForTimeout(1500); }] },
   { id: "home-viewer", guest: true, category: "Dodatkowe", title: "Strona główna — podgląd kadru z przybliżaniem", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(3); await shot.scrollIntoViewIfNeeded(); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-img").click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.waitForTimeout(600); }] },
+  { id: "manual", category: "Podręcznik", title: "Podręcznik — Zasady gry", path: "/manual/?tab=rules", sources: page("manual"), ready: "#tab-rules .m-toc" },
+  { id: "manual-games", category: "Podręcznik", title: "Podręcznik — Gry (rozdz. 7.6)", path: "/manual/?tab=games#r7-6", sources: page("manual"), ready: "#tab-games .m-toc", settle: 800 },
+  { id: "manual-control", category: "Podręcznik", title: "Podręcznik — Prowadzenie gry", path: "/manual/?tab=control", sources: page("manual"), ready: "#tab-control .m-toc" },
 ];
