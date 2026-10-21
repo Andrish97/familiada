@@ -3983,6 +3983,8 @@ const en = {
     },
     finale: {
       dragHint: "Select finale questions. Click or drag, you must choose 5",
+      tapHint: "Choose 5 questions for the final: tap a question to add or remove it.",
+      tapEmpty: "Tap a question to add it (max 5)",
       hasFinal: "Does the game include a finale?",
       yes: "Yes",
       no: "No",
@@ -3997,6 +3999,7 @@ const en = {
     },
     rounds: {
       hint: "Set the order of questions for rounds. Drag or use the arrows.",
+      hintPhone: "Set the order of round questions with the arrows.",
       up: "Move up",
       down: "Move down",
     },

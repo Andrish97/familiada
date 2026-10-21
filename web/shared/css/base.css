@@ -1454,15 +1454,19 @@ main:has(> .footer){
 @media (max-width: 600px) {
     .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) {
         font-size: 0;
+        line-height: 0;
         gap: 0;
         min-width: 40px;
         padding-inline: 10px;
+        align-items: center;
         justify-content: center;
     }
+    /* Arkuszowy „Wstecz” zostaje ukryty, dopóki okno go nie aktywuje. */
+    .topbar :is(#btnBack, #backToGames, #btnGoGames):not([hidden]) { display: inline-flex; }
     .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > svg.ico {
+        display: block;
         width: 18px;
         height: 18px;
-        vertical-align: middle;
     }
     .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > .badge { font-size: 11px; }
 }

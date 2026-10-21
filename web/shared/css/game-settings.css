@@ -844,10 +844,6 @@
   /* Komunikat paska (np. „Niezapisane zmiany”) w osobnej linii pod przyciskami. */
   .gs-actionbar { flex-wrap: wrap; row-gap: 6px; }
   .gs-actionbar-msg { order: 10; flex-basis: 100%; }
-  .sfx-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 8px; padding: 10px 0; }
-  .sfx-row-desc, .sfx-file-wrap { grid-column: 1 / -1; }
-  .sfx-file-wrap:not(:has(.sfx-file-tag, .sfx-add-btn:not([hidden]))) { display: none; }
-  .sfx-row .sfx-variant-select { width: 100%; }
   .sfx-vol, .sound-volume-slider { width: 72px; }
 
   .colorRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -865,4 +861,21 @@
   .roundsOrderText, .qRow .txt {
     white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.3;
   }
+}
+
+/* Dźwięk: kolumna pliku o stałej szerokości — wiersz z własnym plikiem albo
+   „Wybierz plik” nie przesuwa listy, podglądu ani suwaka (kolumny równe). */
+.sfx-row { grid-template-columns: minmax(130px, 1fr) 160px 30px 180px 170px; }
+.sfx-row .sfx-variant-select { width: 100%; }
+.sfx-file-wrap { min-width: 0; justify-content: flex-end; }
+.sfx-file-tag { min-width: 0; max-width: 100%; }
+.sfx-file-name { max-width: none; min-width: 0; flex: 1; }
+
+/* Tablet w pionie i telefon: nazwa nad kontrolkami, plik na całą szerokość. */
+@media (max-width: 900px) {
+  .sfx-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 8px; padding: 10px 0; }
+  .sfx-row-desc, .sfx-file-wrap { grid-column: 1 / -1; }
+  .sfx-file-wrap { justify-content: flex-start; }
+  .sfx-file-wrap:not(:has(.sfx-file-tag, .sfx-add-btn:not([hidden]))) { display: none; }
+  .sfx-file-tag { flex: 1; }
 }

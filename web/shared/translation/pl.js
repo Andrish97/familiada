@@ -3994,6 +3994,8 @@ const pl = {
     },
     finale: {
       dragHint: "Wybierz pytania do finału. Klikaj lub przeciągaj, musisz wybrać 5",
+      tapHint: "Wybierz 5 pytań do finału: dotknij pytania, żeby je dodać lub usunąć.",
+      tapEmpty: "Dotknij pytania, żeby dodać (max 5)",
       hasFinal: "Czy gra zawiera finał?",
       yes: "Tak",
       no: "Nie",
@@ -4008,6 +4010,7 @@ const pl = {
     },
     rounds: {
       hint: "Ustaw kolejność pytań dla rund. Przeciągnij lub użyj strzałek.",
+      hintPhone: "Ustaw kolejność pytań dla rund strzałkami.",
       up: "W górę",
       down: "W dół",
     },

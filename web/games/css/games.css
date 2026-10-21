@@ -111,12 +111,11 @@ body.games-body > main.wrap{
 }
 .actions .btn{ white-space: nowrap; }
 
+/* „Graj” | „Ustawienia gry”: „Graj” znika poniżej progu Control (nav-map),
+   „Ustawienia gry” zostaje także na telefonie — wtedy sam, z pełnym zaokrągleniem. */
 .btn-group{
-  display: none;
+  display: inline-flex;
   align-items: stretch;
-}
-@media (min-width: 981px){
-  .btn-group{ display: inline-flex; }
 }
 .btn-group > .btn:not(:last-child){
   border-top-right-radius: 0;
@@ -127,6 +126,7 @@ body.games-body > main.wrap{
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
+.btn-group > .btn[hidden] + .btn{ border-radius: 14px; }
 
 /* --- GAMES SHELL: wypełnia resztę ekranu --- */
 .games-shell{

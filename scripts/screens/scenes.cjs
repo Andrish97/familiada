@@ -118,6 +118,19 @@ module.exports = [
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
     steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "game-settings-sound", category: "Dodatkowe", title: "Ustawienia gry — dźwięki (telefon: nazwa nad kontrolkami)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["phone", "tablet"], steps: [gsCat("sound")] },
+  { id: "game-settings-sound-custom", category: "Dodatkowe", title: "Ustawienia gry — własne dźwięki: plik z długą nazwą i „Własny” bez pliku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "phone"], settle: 600,
+    steps: [gsCat("sound"), async (view) => {
+      // Pierwszy wiersz: własny plik o długiej nazwie (cisza WAV, bez dźwięku w zrzucie).
+      const wav = Buffer.alloc(44 + 800); wav.write("RIFF", 0); wav.writeUInt32LE(36 + 800, 4); wav.write("WAVEfmt ", 8);
+      wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(8000, 28);
+      wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write("data", 36); wav.writeUInt32LE(800, 40);
+      await view.locator(".sfx-row .sfx-file-input").first().setInputFiles({ name: "Nasza-muzyka-na-wejscie-druzyn-wersja-finalna.wav", mimeType: "audio/wav", buffer: wav });
+      await view.locator(".sfx-row .sfx-file-tag").first().waitFor({ timeout: 5000 });
+      // Drugi wiersz: „Własny” bez pliku — przycisk wyboru pliku.
+      await view.locator(".sfx-row").nth(1).locator(".ui-select-btn").click();
+      await view.locator(".sfx-row").nth(1).locator(".ui-select-item").last().click();
+      await view.waitForTimeout(300);
+    }] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
