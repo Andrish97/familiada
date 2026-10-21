@@ -15,6 +15,9 @@ crons = ["0 3 * * *"]
 
 [vars]
 SUPABASE_URL = "https://api.familiada.online"
+# Cloudflare Access (panel admina, weryfikacja podpisu JWT) — wartości jawne
+CF_ACCESS_TEAM_DOMAIN = "familiada.cloudflareaccess.com"
+CF_ACCESS_AUD = "a07dd0a38af828cd052b5f72dc7ad0ba69771bf7606522635367d4b4b0a13675"
 
 [observability]
 [observability.logs]

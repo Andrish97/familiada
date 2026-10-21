@@ -70,6 +70,25 @@ Zostają też otwarte B7–B9 (sekcja „Wyniki — baza”).
 
 ## Wymagane przed wdrożeniem
 
+**Stan 2026-10-21: ustawione** (zgoda właściciela, jednorazowy workflow
+`rotate-secrets.yml` na `main`, potem usunięty; wartości wygenerowane
+w przebiegu, maskowane, nikt ich nie widział):
+- rozpoznanie (tylko nazwy/wartości logiczne): przebieg 39655023969 —
+  env funkcji Edge = `supabase/docker/.env` (przez `environment:` w
+  `docker-compose.override.yml`), lead-finder = `docker run --env-file` tego
+  samego `.env`; `MAIL_WORKER_SECRET` niepusty i równy Vault;
+- rotacja: przebieg 39655412768 (success) — `GENERATE_GAME_SECRET`
+  (Worker, `.env` + wpis w `override.yml`, Vault `generate_game_secret`),
+  nowy `LEAD_FINDER_API_KEY` (Worker i `.env` — lead-finder i funkcje Edge),
+  odtworzone kontenery `supabase-edge-functions` (`compose up -d --no-deps
+  functions`) i `familiada-lead-finder` (skrypt `deploy-lead-finder.sh`,
+  health OK); weryfikacja skrótów: wszystko `true`;
+- `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`: `[vars]` w `wrangler.toml`
+  (wartości jawne), wejdą z wdrożeniem Workera;
+- na serwerze kopie `.env.bak-rotate-20261021184453` i
+  `docker-compose.override.yml.bak-rotate-20261021184453` (uprawnienia
+  zachowane; zawierają stare wartości — właściciel może je usunąć).
+
 Poprawki działają „bez fallbacku”: bez poniższych ustawień panel admina
 (W2), generator gier (K2), lead-finder (W1) i wysyłka poczty (N2) odmawiają.
 Najpierw ustawić sekrety, potem push na `main`.
