@@ -408,7 +408,7 @@ test("zmiana e-maila: ponowne wyslanie uniewaznia stary link, anulowanie nowy", 
     await page.locator("#cancelEmailChange").click();
     await expectToast(page, "Anulowano zmianę e-maila");
     const newLinkStatus = await openConfirmLink(browser, secondLink);
-    expect(newLinkStatus, "link po anulowaniu").not.toMatch(/gotowe/i);
+    expect(newLinkStatus, "link po anulowaniu").toMatch(/anulowana/i);
 
     await openAccount(page);
     await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15_000 });
@@ -460,7 +460,7 @@ test("zmiana e-maila: anulowanie z drugiego urzadzenia, blokada, link niewazny",
     await expect(page.locator("#email")).toHaveValue(PROFILE_EMAIL);
 
     const status = await openConfirmLink(browser, confirmLink);
-    expect(status, "link po anulowaniu").toMatch(/anulowana|nie udało/i);
+    expect(status, "link po anulowaniu").toMatch(/anulowana/i);
 
     await otherContext.close();
     await context.close();
