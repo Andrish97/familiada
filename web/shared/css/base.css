@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07441");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07474");
 
 
 /* css/base.css */
@@ -905,6 +905,17 @@ main:has(> .footer){
     -webkit-overflow-scrolling: touch
 }
 
+/* Okna udostępniania (Baza, urządzenie): szkielet .uni-* bez klasy
+   .uni-modal, która oznacza małe okna potwierdzeń/wpisywania. */
+.share-uni {
+    width: min(720px,94vw);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden
+}
+.share-uni > .uni-head,
+.share-uni > .uni-foot,
 .uni-modal > .uni-head,
 .uni-modal > .mHead,
 .uni-modal > .mSub,
@@ -970,6 +981,7 @@ main:has(> .footer){
     font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace
 }
 
+.share-uni .uni-hint,
 .uni-modal .uni-hint {
     text-align: center;
     line-height: 1.4

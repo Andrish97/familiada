@@ -1752,7 +1752,7 @@
 /* =========================================================
    SHARE MODAL (Udostępnianie urządzeń)
 ========================================================= */
-/* Jak okno odbiorców ankiety i udostępniania Bazy (.uni-modal, 720 px). */
+/* Jak okno odbiorców ankiety i udostępniania Bazy (.share-uni, 720 px). */
 .shareModal {
   max-width: 720px;
   width: min(720px, calc(100% - 32px));
