@@ -1599,11 +1599,11 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     expect(earlyFinalSessions).toHaveLength(1);
     expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 276, team_a_score: 476, final_points: 200 });
     expect(earlyFinalSessions[0].stats_detail.end_reason).toBe("final_target");
-    expect(earlyFinalSessions[0].stats_detail.prize).toBe(26428);
+    expect(earlyFinalSessions[0].stats_detail.prize).toBe(25828); // regulamin: 276 z rund × 3 + 25000 (cel osiągnięty)
     expect(earlyFinalSessions[0].stats_detail.final.mapping1.filter(row => row.revealedPoints)).toHaveLength(4);
     expect(earlyFinalSessions[0].stats_detail.final.mapping2.filter(row => row.revealedPoints)).toHaveLength(0);
     await attachStatistics(testInfo, "early-final", earlyFinalSessions);
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26428);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(25828);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await expect(finishBtn).toBeEnabled({ timeout: 150000 });
@@ -2213,7 +2213,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await waitForSfxKeysAnyOrder(page, ["show_outro"], 15000);
     expect(await getSfxKeys(page)).not.toContain("round_transition");
     expect(await getSfxKeys(page)).not.toContain("reveal");
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1233);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(828);
     const finalSessions = await readControl2Sessions(page, game.id);
     expect(finalSessions).toHaveLength(1);
     expect(finalSessions[0]).toMatchObject({ status: "final", final_points: 135 });
@@ -2221,7 +2221,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(finalSessions[0].stats_detail.final.mapping1).toHaveLength(5);
     expect(finalSessions[0].stats_detail.final.mapping2).toHaveLength(5);
     expect(finalSessions[0].stats_detail.end_reason).toBe("final_complete");
-    expect(finalSessions[0].stats_detail.prize).toBe(1233);
+    expect(finalSessions[0].stats_detail.prize).toBe(828); // regulamin: 276 z rund × 3 (cel nieosiągnięty)
     await attachStatistics(testInfo, "full-final", finalSessions);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");

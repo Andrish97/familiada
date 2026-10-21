@@ -12,11 +12,13 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 - **2026-10-21:** wspólne style wszędzie zamiast samego sprzątania; strony
   nie definiują własnych wersji wspólnych elementów (bez lokalnych kopii
   klas i nadpisań per strona).
-- **Zakres Control/TV/wyświetlacz/buzzer/snake (domyślnie, do potwierdzenia
-  przez użytkownika):** wspólne tokeny, przyciski, pola, okna i komunikaty
-  także tam; plansza TV, wyświetlacz gry, buzzer i snake zachowują własny
-  wygląd rozgrywki (zasada z `ujednolicenie-wygladu.md`: nie psuć układu TV
-  i Control).
+- **Zakres Control i ekranów gry (decyzja użytkownika 2026-10-21):**
+  panel Control (operator) — pełna zgodność ze wspólnymi stylami.
+  Buzzer, host, wyświetlacz/TV i snake (żartobliwa kopia wyświetlacza) są
+  odrębne — **częściowo**: wspólne tokeny (kolory, odstępy, `z-index`)
+  oraz wspólne okna/komunikaty, gdy ich używają; własny wygląd rozgrywki
+  zostaje (`control/buzzer`, `control/host`, `control/display`,
+  `connect/tv`, `shared/css/tv-layout.css`, `snake`).
 
 ## Stan wyjściowy (pomiar 2026-10-21)
 
@@ -58,20 +60,40 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 | # | Krok | Szac. |
 |---|------|-------|
-| 1 | Narzędzia: stylelint (duplikaty, `!important`, kolory spoza tokenów, `@media` spoza progów) jako raport w unit; skrypt nieużywanych klas | 0,5 d |
+| 1 | **Zrobione 2026-10-21.** Narzędzie `scripts/css-audit.mjs` (bez zależności, zamiast stylelinta) + zapadka `tests/unit/cssAudit.test.js` z `scripts/css-audit/baseline.json` | 0,5 d |
 | 2 | Usunięcie martwego CSS | 0,5–1 d |
 | 3 | `tokens.css`: jedna paleta, odstępy, skala `z-index`, progi; podmiana wartości na zmienne we wszystkich plikach | 2–3 d |
 | 4 | Przyciski i pola — jeden komponent, usunięcie wersji stronowych | 1–2 d |
 | 5 | Okna — wszystkie przez `modal.js` i dwa wzorce okien | 1–2 d |
 | 6 | Karty/wypustki, kafle, wiersze, paski akcji, oznaczenia, puste stany | 2–3 d |
-| 7 | Strony po kolei: plik strony = tylko układ (kolejność: Gry/Bazy/Logo → Ankiety/Znajomi/Zadania/Connect → Konto/Ustawienia → Eksplorator → Control/host/TV) | 3–5 d |
+| 7 | Strony po kolei: plik strony = tylko układ (kolejność: Gry/Bazy/Logo → Ankiety/Znajomi/Zadania/Connect → Konto/Ustawienia → Eksplorator → Control; buzzer/host/display/TV/snake tylko tokeny) | 3–5 d |
 | 8 | Style inline z JS/HTML do klas; bloki `<style>` do plików | 2–3 d |
 | 9 | Reguła w lintach: nowa strona nie może łamać zasad z pkt 4 „Docelowej budowy” | 0,5 d |
 
 Razem: ok. **13–20 dni roboczych** sesji.
+
+## Narzędzie (krok 1)
+
+- `node scripts/css-audit.mjs` — sumy naruszeń i zmiana względem baseline.
+- `--unused [--file=web/…css]` — klasy bez wystąpienia w HTML/JS (kandydaci
+  do kroku 2; przed usunięciem sprawdzić klasy składane dynamicznie w JS).
+- `--file=web/…` — liczby dla jednego pliku.
+- `--write-baseline` — po każdym kroku obniżającym liczby.
+- Test unit nie przepuszcza wzrostu żadnej liczby w żadnym pliku; **nowy
+  plik ma poziom 0** — nowa strona musi od razu korzystać ze wspólnych stylów.
+- Pliku tokenów (`TOKEN_FILES`) i dozwolonych progów (`ALLOWED_WIDTHS`)
+  dotyczy krok 3; do tego czasu wszystkie `--token` poza `base.css` i każdy
+  próg `@media` są liczone jako naruszenia.
+
+Baseline 2026-10-21: `!important` 184, kolory na sztywno 1475, własne
+`--token` 186, progi `@media` 112, `z-index` liczbą 104, klasy w kilku
+plikach 227, nieużywane klasy 201, style w JS 879, `style=` w HTML 320,
+bloki `<style>` 14.
 
 ## Dziennik E23
 
 | Data | Krok | Wynik |
 |------|------|-------|
 | 2026-10-21 | Decyzja i plan | Pomiar stanu wyjściowego, plan kroków. |
+| 2026-10-21 | Krok 1 — narzędzie | `css-audit.mjs` + test zapadki; unit pełne zielone. |
+| 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |

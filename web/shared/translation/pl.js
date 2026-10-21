@@ -1483,6 +1483,7 @@ const pl = {
     transferDropsVotes: {
       title: "Bez bieżących głosów",
       text: "Ankieta jest otwarta lub zatrzymana. Kopia powstanie jako szkic tego samego typu — bieżące głosy nie zostaną zachowane.",
+      baseText: "Ankieta jest otwarta lub zatrzymana. Do bazy trafią pytania i odpowiedzi bez bieżących głosów.",
       ok: "Kontynuuj",
       cancel: "Anuluj",
     },
@@ -3931,6 +3932,7 @@ const pl = {
       endModeMoneyShort: "Kwota nagrody",
       prizeMultiplier: "Mnożnik nagrody (po finale)",
       prizeAmount: "Kwota główna nagrody",
+      prizeHint: "Kwota = punkty zwycięskiej drużyny z rund × mnożnik. Gdy finał osiągnie cel, dochodzi kwota główna. Punkty z finału decydują tylko o osiągnięciu celu.",
       restoreDefaults: "Przywróć domyślne",
     },
   },

@@ -84,7 +84,7 @@ test("final result appears only after Finish final; outro does not redraw or cou
   endedFinal.sound_cue_key = "round_transition";
   endedFinal.sound_cue_seq = 1;
   await renderer.renderDiff(mapping, endedFinal);
-  assert.equal(calls.filter((call) => call.name === "win.set").at(-1).args[0], 26500);
+  assert.equal(calls.filter((call) => call.name === "win.set").at(-1).args[0], 25900); // regulamin: 300 z rund × 3 + 25000 (cel osiągnięty)
   calls.length = 0;
   state.rounds.totals.A += state.final.runtime.sum;
   state.locks.gameEnded = true;
@@ -94,7 +94,7 @@ test("final result appears only after Finish final; outro does not redraw or cou
   await renderer.renderDiff(endedFinal, endedGame);
   assert.equal(calls.some((call) => call.name === "win.set" || call.name === "logo.show"), false);
   await renderer.renderSnapshot(endedGame);
-  assert.equal(calls.filter((call) => call.name === "win.set").at(-1).args[0], 26500);
+  assert.equal(calls.filter((call) => call.name === "win.set").at(-1).args[0], 25900); // po dopisaniu finału do sumy rund wynik się nie zmienia
 });
 
 for (const winner of ["A", "B"]) test(`final keeps ${winner}'s score and bank while the opponent side becomes the timer`, async () => {
