@@ -95,6 +95,8 @@ module.exports = [
     }] },
   { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
+  { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop"], settle: 800,
+    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },

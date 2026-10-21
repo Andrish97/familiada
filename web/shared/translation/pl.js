@@ -48,6 +48,7 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    save: "Zapisz",
     sort: {
       label: "Sortowanie",
       updated: "Ostatnio zmienione",

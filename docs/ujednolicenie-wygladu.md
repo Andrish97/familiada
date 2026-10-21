@@ -193,6 +193,19 @@ Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon)
   Społeczność z kartą „Moje wysłane”. Control nie ma już wypustek — usunąć
   stamtąd ich CSS (po sprawdzeniu, że nieużywany).
 
+### Doprecyzowania użytkownika (2026-10-21, po zrzutach)
+
+- **Okno koloru w Ustawieniach gry:** jak okno koloru tagów z brancha E22
+  (`ccr-ac709a92-0mcpyq`): karta z podglądem i HEX, karta z suwakami R/G/B,
+  Anuluj + Zapisz.
+- **Przyciski obok pola:** zawsze tej samej wysokości co pole (wszystkie strony).
+- **Udostępnianie w Control:** poprawić wygląd (okno i przycisk w kaflu).
+- **Wypustki:** użytkownik pyta o ładniejszą budowę (dziś trzy elementy:
+  etykieta, `.tab-active`, dwa narożniki) — przygotować propozycję.
+- **Społeczność:** makieta z wypustkami odrzucona. „Moje wysłane” jako
+  okno; jedna wspólna karta z grami, a wyszukiwanie i filtry wyżej w osobnej
+  małej podkarcie.
+
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
 - Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,
