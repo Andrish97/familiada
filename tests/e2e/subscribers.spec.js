@@ -10,6 +10,10 @@ test.describe.configure({ mode: "serial" });
 test.beforeEach(async ({ context }) => {
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["subscribers", "friends", "go"] });
 });
+// Linki z poprzednich wariantów (tryb serial, jeden worker): spóźniona albo
+// powtórzona dostawa starego maila nie może podsunąć wygasłego tokenu.
+const usedLinks = new Set();
+const subscribeLink = (mail) => extractHttpLinks(mail).find(url => new URL(url).searchParams.has("s"));
 async function cleanup(page) {
   await page.evaluate(async email => {
     const { data, error } = await window.__sbClient.rpc("e2e_subscriber_email_cleanup", { p_email: email });
@@ -40,10 +44,12 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await invite(page, email);
     await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: email })).toHaveCount(1);
     await page.screenshot({ path: testInfo.outputPath("shot-subscribers-layout.png"), fullPage: true });
-    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000,
+      accept: (row) => !usedLinks.has(subscribeLink(row)) });
     expectMailDocument(delivered, { globalUnsub: true });
-    const link = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("s"));
+    const link = subscribeLink(delivered);
     expect(link).toBeTruthy();
+    usedLinks.add(link);
     expect(new URL(link).pathname).toMatch(/^\/go\/?$/);
     // Duplikat nie tworzy kolejnego wpisu. Ponowienie respektuje cooldown.
     await invite(page, email);
@@ -58,6 +64,8 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     expect(blocked.err).toBe("cooldown");
     const invitePage = await anonymous.newPage();
     await invitePage.goto(link);
+    await invitePage.locator(".poll-go-title").filter({ hasNotText: /Ładuję/ }).waitFor({ timeout: 15000 }).catch(() => {});
+    console.log("[e2e-diag] go po otwarciu linku:", JSON.stringify(await invitePage.locator(".poll-go-title").textContent().catch(() => null)));
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toBeVisible();
     await invitePage.getByRole("button", { name: "Akceptuj", exact: true }).click();
     await expect(invitePage.locator(".poll-go-title")).toContainText(/aktywna/i);
@@ -87,6 +95,8 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     }
     await removalRow.locator('[data-act="remove"]').click();
     await page.locator(".uni-foot .btn.gold").click();
+    // Czekamy na zniknięcie usuwanego wiersza (po wypisaniu lista aktywnych jest już pusta).
+    await expect(removalRow).toHaveCount(0);
     await expect(active).toHaveCount(0);
     await invitePage.reload();
     await expect(invitePage.locator(".poll-go-title")).toContainText("To zaproszenie wygasło");
@@ -121,13 +131,17 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
     await page.goto("https://www.familiada.online/subscribers/");
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
     await invite(page, email);
-    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000,
+      accept: (row) => !usedLinks.has(subscribeLink(row)) });
     expectMailDocument(delivered, { globalUnsub: true });
-    const link = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("s"));
+    const link = subscribeLink(delivered);
     expect(link).toBeTruthy();
+    usedLinks.add(link);
     const token = new URL(link).searchParams.get("s");
     const invitePage = await anonymous.newPage();
     await invitePage.goto(link);
+    await invitePage.locator(".poll-go-title").filter({ hasNotText: /Ładuję/ }).waitFor({ timeout: 15000 }).catch(() => {});
+    console.log("[e2e-diag] go po otwarciu linku:", JSON.stringify(await invitePage.locator(".poll-go-title").textContent().catch(() => null)));
     await invitePage.getByRole("button", { name: "Odrzuć", exact: true }).click();
     await expect(invitePage.locator(".poll-go-title")).toContainText("Odrzucono");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
