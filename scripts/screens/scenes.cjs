@@ -95,6 +95,15 @@ module.exports = [
     }] },
   { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
+  { id: "game-settings-prize", category: "Dodatkowe", title: "Ustawienia gry — kwota nagrody po finale (wyjaśnienie wzoru)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/gameplay/endScreen.js"], ready: "#gsTeamA", devices: ["desktop"], settle: 600,
+    steps: [async (view) => {
+      await view.locator('.gs-sidebar-item[data-cat="questions"]').click();
+      await view.locator("label:has([name='gsHasFinal'][value='yes'])").click();
+      await view.locator('.gs-sidebar-item[data-cat="game"]').click();
+      await view.locator("label:has([name='gsEndMode'][value='money'])").click();
+      await view.locator("#gsPrizeSettingsRow").scrollIntoViewIfNeeded();
+      await view.waitForTimeout(300);
+    }] },
   { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop"], settle: 800,
     steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
