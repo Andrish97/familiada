@@ -6,9 +6,9 @@
 // ui/left.js: kliknięcia, przytrzymanie, „Dodaj tag”), więc zachowanie jest
 // identyczne jak w lewym panelu na komputerze.
 
-import { setQuery } from "../state.js?v=v2026-10-21T06490";
-import { renderAll } from "../render.js?v=v2026-10-21T06490";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06490";
+import { setQuery } from "../state.js?v=v2026-10-21T06574";
+import { renderAll } from "../render.js?v=v2026-10-21T06574";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06574";
 
 const DESKTOP_QUERY = "(min-width: 901px)";
 
@@ -21,9 +21,18 @@ export function wireFilters(state) {
   const homeNext = filters.nextSibling;
   let open = false;
 
+  // Esc zamyka (fokus bywa poza oknem — nasłuch na dokumencie, gdy otwarte)
+  function onKey(e) {
+    if (e.key !== "Escape") return;
+    e.preventDefault();
+    e.stopPropagation();
+    hide();
+  }
+
   function show() {
     if (open) return;
     open = true;
+    document.addEventListener("keydown", onKey, true);
     body.append(filters);
     overlay.style.display = "grid";
     enterModalSheet(overlay, { onClose: hide });
@@ -32,6 +41,7 @@ export function wireFilters(state) {
   function hide() {
     if (!open) return;
     open = false;
+    document.removeEventListener("keydown", onKey, true);
     exitModalSheet(overlay);
     overlay.style.display = "none";
     home.insertBefore(filters, homeNext?.parentNode === home ? homeNext : null);

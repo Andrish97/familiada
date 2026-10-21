@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T06490"/>
+  <meta name="app-version" content="v2026-10-21T06574"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06490" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T06490" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T06490" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T06490" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06574" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T06574" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-21T06574" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-21T06574" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06490"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06574"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T06490"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-21T06574"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06490" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06574" defer></script>
 
 </head>
 
@@ -118,6 +118,27 @@
       <div class="modal-actions">
         <button class="btn sm" id="filtersClear" type="button" data-i18n="baseExplorer.filters.clear" data-i18n-icon="close">Wyczyść filtry</button>
         <button class="btn sm gold" id="filtersDone" type="button" data-i18n="baseExplorer.filters.done" data-i18n-icon="check">Gotowe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Przenieś do… / Kopiuj do… (ui/move-modal.js): drzewo folderów z wyszukiwaniem -->
+  <div class="overlay modal--sheet" id="moveOverlay" style="display:none;">
+    <div class="modal move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
+      <div class="mHead">
+        <div class="mTitle" id="moveTitle">Przenieś do</div>
+        <button class="btn sm" id="moveClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="moveBody">
+        <label class="searchBox moveSearch">
+          <i class="ico" data-icon="search"></i>
+          <input id="moveSearch" class="searchText" type="search" autocomplete="off" data-i18n-placeholder="baseExplorer.move.searchPlaceholder" placeholder="Szukaj folderu…" />
+        </label>
+        <div id="moveList" class="moveList" role="tree"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn sm" id="moveCancel" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="moveOk" type="button" disabled>Przenieś tutaj</button>
       </div>
     </div>
   </div>
@@ -364,7 +385,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06490"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06574"></script>
 
 </body>
 </html>

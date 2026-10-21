@@ -5,6 +5,32 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
 
 ## Decyzje
 
+- **2026-10-21 (użytkownik) — lewy panel i okna:**
+  - Na telefonie w wysuwanym lewym panelu zostaje **samo drzewo**;
+    proponowane kategorie i tagi są w oknie **„Filtry”** (przycisk przy
+    lupie z licznikiem aktywnych filtrów, „Wyczyść filtry” / „Gotowe”).
+  - Okno **„Przenieś do… / Kopiuj do…”** z drzewem folderów i
+    **wyszukiwaniem** (płaska lista pasujących folderów ze ścieżką);
+    przy przenoszeniu foldery przenoszone i ich wnętrze są zablokowane.
+    W menu kontekstowym i na pasku (grupa schowka).
+  - Okna wyglądają jak na `main` (zmiana nazwy przez wspólne
+    `promptModal`, listy bez ramek, wiersze-kafle, stopka „Anuluj” +
+    złota akcja, na telefonie roletka od dołu).
+  - **Do decyzji — odgracanie lewego panelu na komputerze** (makiety
+    `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
+    - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną
+      wysokość; filtry w tym samym oknie „Filtry” co na telefonie, aktywne
+      widać jako tabletki w wyszukiwarce i licznik na przycisku. Traci się
+      tylko upuszczanie elementów na tag w panelu (zostaje „Tagi…”, Ctrl+T).
+    - **B:** drzewo + zwijane sekcje „Kategorie” i „Tagi” na dole
+      (domyślnie zwinięte); przeciąganie na tag zostaje.
+    - **C:** bez drzewa — ścieżka (okruszki jako cele upuszczania) +
+      „Przenieś do…”; najwięcej miejsca, ale bez przeglądu struktury —
+      niezalecane przy głębokich bazach.
+    - Czy drzewo jest potrzebne: na komputerze tak (przegląd, kosz,
+      przeciąganie daleko); do samego przenoszenia już nie — jest
+      „Przenieś do…”.
+
 - **2026-10-20:** menu kontekstowe na telefonie i tablecie dotykowym wygląda jak ujednolicone okna od dołu z brancha `claude/new-session-ay1h9t` (tło #121524, rogi 28 px, linia u góry, pasek do przeciągania, wysuwanie/zjazd z animacją, przyciemnione tło, safe area, ten sam warunek telefon / tablet dotykowy).
 
 - **2026-10-20 22:35 (użytkownik) — NADRZĘDNE, zastępują wcześniejsze ustalenia niżej:**

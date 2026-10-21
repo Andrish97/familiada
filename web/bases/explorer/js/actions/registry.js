@@ -19,9 +19,9 @@
 //   run       (ctx) => Promise
 //   errorKey  komunikat, gdy wykonanie się nie uda (bez własnego komunikatu)
 
-import * as cmd from "../commands.js?v=v2026-10-21T06490";
-import { setQuery } from "../state.js?v=v2026-10-21T06490";
-import { renderAll } from "../render.js?v=v2026-10-21T06490";
+import * as cmd from "../commands.js?v=v2026-10-21T06574";
+import { setQuery } from "../state.js?v=v2026-10-21T06574";
+import { renderAll } from "../render.js?v=v2026-10-21T06574";
 
 const R = "baseExplorer.reasons.";
 
@@ -201,6 +201,28 @@ export const ACTIONS = [
     enabled: (ctx) => (ctx.inTrash ? needTrashSel(ctx) : needSel(ctx)),
     run: (ctx) => cmd.deleteSelected(ctx.state),
     errorKey: "baseExplorer.errors.deleteFailed",
+  },
+
+  // ===== Przenieś do / Kopiuj do (okno z drzewem) =====
+  {
+    id: "item.moveTo",
+    label: () => "baseExplorer.menu.moveTo",
+    icon: "folder",
+    menu: ["cat", "q"], menuGroup: "clipboard",
+    visible: onItems,
+    enabled: needSel,
+    run: (ctx) => cmd.moveOrCopyTo(ctx.state, "move"),
+    errorKey: "baseExplorer.errors.moveFailed",
+  },
+  {
+    id: "item.copyTo",
+    label: () => "baseExplorer.menu.copyTo",
+    icon: "copy",
+    menu: ["cat", "q"], menuGroup: "clipboard",
+    visible: onItems,
+    enabled: needSel,
+    run: (ctx) => cmd.moveOrCopyTo(ctx.state, "copy"),
+    errorKey: "baseExplorer.errors.operationFailed",
   },
 
   // ===== Schowek =====

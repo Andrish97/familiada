@@ -3595,3 +3595,97 @@ test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
     }
   });
 });
+
+test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () => {
+  test("przeniesienie przez wyszukiwanie w oknie z drzewem; folder nie może trafić sam do siebie; kopia przez drzewo", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MOVETO-${Date.now()}`);
+
+    try {
+      const a = await createCategory(page, { baseId, name: "Alfa", ord: 1 });
+      const b = await createCategory(page, { baseId, name: "Beta", ord: 2 });
+      const b1 = await createCategory(page, { baseId, parentId: b, name: "Głęboki", ord: 1 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do przeniesienia", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // pytanie → „Przenieś do…” → szukaj „gleb” (bez polskich znaków) → Przenieś tutaj
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await qRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await expect(page.locator("#moveOverlay")).toBeVisible();
+      await page.locator("#moveSearch").fill("gleb");
+      await page.locator(`#moveList .moveRow[data-id="${b1}"]`).click();
+      await expect(page.locator(`#moveList .moveRow[data-id="${b1}"] .movePath`)).toContainText("Beta");
+      await page.locator("#moveOk").click();
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect(qRow).toBeHidden({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id).toBe(b1);
+
+      // folder Beta: w oknie Beta i Głęboki są wyszarzone
+      const bRow = page.locator(`#list .row[data-kind="cat"][data-id="${b}"]`);
+      await bRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await expect(page.locator(`#moveList .moveRow[data-id="${b}"]`)).toHaveClass(/is-blocked/);
+      await page.locator(`#moveList .moveRow[data-id="${b}"]`).click({ force: true });
+      await expect(page.locator("#moveOk")).toBeDisabled();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+
+      // kopia folderu Alfa do Beta przez drzewo (dwuklik zatwierdza)
+      const aRow = page.locator(`#list .row[data-kind="cat"][data-id="${a}"]`);
+      await aRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Kopiuj do/ }).click();
+      await page.locator(`#moveList .moveRow[data-id="${b}"]`).dblclick();
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect(aRow).toBeVisible(); // oryginał zostaje
+      await bRow.dblclick();
+      await expect(page.locator('#list .row[data-kind="cat"]', { hasText: "Alfa" })).toHaveCount(1, { timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: telefon — panel z drzewem, filtry w oknie (E22 etap 9)", () => {
+  test("w panelu samo drzewo; okno Filtry: klik w tag filtruje listę, licznik na przycisku, Esc zamyka", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-FILTERS-${Date.now()}`);
+
+    try {
+      const tagId = await createTag(page, { baseId, name: "filtr" });
+      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Z tagiem", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Bez tagu", answers: [] } });
+      await assignTag(page, { questionId: qTagged, tagId });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+
+      await page.locator("#btnDrawerToggle").click();
+      await expect(page.locator("#tree")).toBeVisible();
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await page.locator("#btnDrawerToggle").click();
+
+      await page.locator("#btnFilters").click();
+      await expect(page.locator("#filtersOverlay")).toBeVisible();
+      await page.locator(`#filtersBody .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+      await expect(page.locator("#filtersCount")).toHaveText("1");
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#filtersOverlay")).toBeHidden();
+      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible();
+
+      // „Wyczyść filtry” zdejmuje filtr
+      await page.locator("#btnFilters").click();
+      await page.locator("#filtersClear").click();
+      await page.locator("#filtersDone").click();
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible();
+      await expect(page.locator("#filtersCount")).toHaveText("");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});

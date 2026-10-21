@@ -4219,6 +4219,14 @@ const pl = {
       tag: "tag",
       question: "Pytanie",
     },
+    move: {
+      moveTitle: "Przenieś do",
+      copyTitle: "Kopiuj do",
+      moveHere: "Przenieś tutaj",
+      copyHere: "Kopiuj tutaj",
+      searchPlaceholder: "Szukaj folderu…",
+      noFolders: "Brak folderów o tej nazwie.",
+    },
     filters: {
       title: "Filtry",
       clear: "Wyczyść filtry",
@@ -4411,6 +4419,8 @@ const pl = {
       tag: "Nadaj tag",
     },
     menu: {
+      moveTo: "Przenieś do…",
+      copyTo: "Kopiuj do…",
       undo: "Cofnij",
       redo: "Ponów",
       show: "Pokaż",

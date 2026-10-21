@@ -4316,6 +4316,14 @@ const uk = {
       tag: "тег",
       question: "Питання",
     },
+    move: {
+      moveTitle: "Перемістити до",
+      copyTitle: "Копіювати до",
+      moveHere: "Перемістити сюди",
+      copyHere: "Копіювати сюди",
+      searchPlaceholder: "Шукати папку…",
+      noFolders: "Немає папок із такою назвою.",
+    },
     filters: {
       title: "Фільтри",
       clear: "Очистити фільтри",
@@ -4508,6 +4516,8 @@ const uk = {
       tag: "Додати тег",
     },
     menu: {
+      moveTo: "Перемістити до…",
+      copyTo: "Копіювати до…",
       undo: "Скасувати",
       redo: "Повторити",
       show: "Показати",

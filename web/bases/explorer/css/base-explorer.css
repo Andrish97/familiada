@@ -2280,3 +2280,53 @@ tr.row.is-drop-after td:last-child::after {
 #filtersBody .matched-categories,
 #filtersBody .tags { padding: 0; margin: 0; }
 #filtersBody #btnAddTag { margin: 0 0 8px; }
+
+/* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
+.move-modal { width: min(560px, 94vw); }
+.moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.moveSearch { flex: 0 0 auto; }
+.moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
+.moveList {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 12px;
+}
+.modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
+.moveRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px 9px calc(10px + var(--depth, 0) * 16px);
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+  cursor: pointer;
+  user-select: none;
+}
+.moveRow:hover { border-color: var(--gold); }
+.moveRow.is-picked { border-color: rgba(255,234,166,.9); background: rgba(255,234,166,.10); }
+.moveRow.is-blocked { opacity: .45; cursor: not-allowed; }
+.moveRow.is-blocked:hover { border-color: var(--line2, rgba(255,255,255,.10)); }
+.moveRow .list-ico { width: 18px; height: 18px; flex: 0 0 18px; opacity: .85; }
+.moveName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.movePath { margin-left: auto; min-width: 0; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .65; }
+.moveToggle {
+  width: 22px; height: 22px; flex: 0 0 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; background: none; color: inherit; cursor: pointer; opacity: .85;
+}
+/* stopka okien Filtry i Przenieś do: jak .tagsFoot (odstęp i linia nad przyciskami) */
+.move-modal > .modal-actions,
+.filters-modal > .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}

@@ -4319,6 +4319,14 @@ const en = {
       tag: "tag",
       question: "Question",
     },
+    move: {
+      moveTitle: "Move to",
+      copyTitle: "Copy to",
+      moveHere: "Move here",
+      copyHere: "Copy here",
+      searchPlaceholder: "Search folders…",
+      noFolders: "No folders with this name.",
+    },
     filters: {
       title: "Filters",
       clear: "Clear filters",
@@ -4511,6 +4519,8 @@ const en = {
       tag: "Add tag",
     },
     menu: {
+      moveTo: "Move to…",
+      copyTo: "Copy to…",
       undo: "Undo",
       redo: "Redo",
       show: "Show",

@@ -53,8 +53,10 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
   - [x] test e2e ramki myszą (raport: brak testu).
   - [x] polskie litery w nazwach tagów (decyzja użytkownika 6): `qb_save_tag` (427) i okno tagów; duplikat liczony bez wielkości liter i polskich znaków (`_qb_tag_key`, także `qb_restore_tags` 429); testy SQL 427 + e2e.
   - [x] blokady spójnie (raport 4 §5.2): tworzenie — folder nadrzędny, kopia — źródła i cel, przywrócenie z kosza — dawne miejsce; wszystkie we współdzieleniu (`withLocks(..., { mode: "shared" })`).
-  - [ ] świadomie pominięte na razie: „Przenieś do… / Kopiuj do…” w menu (na telefonie jest Wytnij/Kopiuj + Wklej).
+  - [x] „Przenieś do… / Kopiuj do…” — zrobione w kroku 9.
 - [x] 8f. Pełny lokalny e2e `base-explorer` 81/81 (5 porażek pierwszego przebiegu = lokalna baza: ponowne zastosowanie samej 427 nadpisało `qb_delete_items` z 428; po 428–431 w kolejności zielone), testy SQL 427–431, unit 691/691, zrzuty `docs/menedzer-bazy/img/` odświeżone.
+
+- [x] 9. Prośba użytkownika 2026-10-21: okno „Przenieś do / Kopiuj do” z drzewem i wyszukiwaniem (`ui/move-modal.js`, akcje `item.moveTo`/`item.copyTo`); na telefonie lewy panel = samo drzewo, filtry w oknie „Filtry” (`ui/filters.js`, `#btnFilters` z licznikiem); okna wg `main` (zmiana nazwy przez `promptModal`, listy bez ramek, kafle, stopki); tytuł okna gry „Utwórz grę”. Testy e2e (Przenieś do, filtry na telefonie), sceny zrzutów, makiety propozycji odgracenia lewego panelu na komputerze (A/B/C w planie, „Decyzje” 2026-10-21) — **czeka na wybór użytkownika**.
 
 ## Wznowienia
 
