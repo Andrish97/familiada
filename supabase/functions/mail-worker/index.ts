@@ -11,7 +11,16 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const WORKER_SECRET = Deno.env.get("MAIL_WORKER_SECRET") || "";
+const WORKER_SECRET = (Deno.env.get("MAIL_WORKER_SECRET") || "").trim();
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  let diff = ea.length ^ eb.length;
+  const n = Math.max(ea.length, eb.length);
+  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
+  return diff === 0;
+}
 
 const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
@@ -398,27 +407,25 @@ serve(async (req) => {
     requestId,
     event: "request_start",
     status: "started",
-    meta: { method: req.method, url: req.url },
+    // Bez pełnego adresu (zapytanie mogło kiedyś nieść sekret).
+    meta: { method: req.method, path: new URL(req.url).pathname },
   });
 
   const url = new URL(req.url);
 
-  if (WORKER_SECRET) {
-    const fromHeader = req.headers.get("x-mail-worker-secret") || "";
-    const authHeader = req.headers.get("authorization") || "";
-    const fromBearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    const fromQuery = url.searchParams.get("secret") || "";
-    const got = fromHeader || fromBearer || fromQuery;
-    if (got !== WORKER_SECRET) {
-      console.warn("[mail-worker] request:forbidden_bad_secret");
-      await writeLog({
-        requestId,
-        level: "warn",
-        event: "request_forbidden_bad_secret",
-        status: "failed",
-      });
-      return json({ ok: false, error: "forbidden" }, 403);
-    }
+  // Tylko nagłówek x-mail-worker-secret (wysyła go invoke_mail_worker*
+  // z Vault). Brak MAIL_WORKER_SECRET w env = odmowa (bez trybu otwartego).
+  const fromHeader = req.headers.get("x-mail-worker-secret") || "";
+  if (!WORKER_SECRET || !timingSafeEqual(fromHeader, WORKER_SECRET)) {
+    const reason = WORKER_SECRET ? "request_forbidden_bad_secret" : "request_forbidden_no_secret_configured";
+    console.warn(`[mail-worker] ${reason}`);
+    await writeLog({
+      requestId,
+      level: "warn",
+      event: reason,
+      status: "failed",
+    });
+    return json({ ok: false, error: "forbidden" }, 403);
   }
 
   const settings = await loadSettings();
