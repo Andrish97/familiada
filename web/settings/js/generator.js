@@ -437,7 +437,7 @@ function renderWeakInfo(container, report) {
   }
   const items = report.reasons.slice(0, 6).map(r => `<li>${escHtml(r)}</li>`).join("");
   const more = report.reasons.length > 6 ? `<li>… i ${report.reasons.length - 6} więcej</li>` : "";
-  container.innerHTML = `<div>${report.summary}</div><ul style="margin:6px 0 0 16px">${items}${more}</ul>`;
+  container.innerHTML = `<div>${escHtml(report.summary)}</div><ul style="margin:6px 0 0 16px">${items}${more}</ul>`;
 }
 
 async function scanForDuplicates() {
@@ -491,7 +491,7 @@ function renderGameList() {
     const hasDup = Array.isArray(matches) && matches.length > 0;
     const top = Array.isArray(matches) && matches.length ? matches[0] : null;
     const topLine = top
-      ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}`
+      ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${escHtml(top.title)} · ${escHtml(top.origin)}`
       : (matches ? 'Podobne: brak (>=45%)' : 'Podobne: nie sprawdzono');
 
     const weak = weaknessCache.get(game.id) || analyzeWeakness(game);
@@ -502,18 +502,18 @@ function renderGameList() {
     const checked = selectedIds.has(game.id) ? 'checked' : '';
     item.innerHTML = `
       <div class="game-row">
-        <input type="checkbox" class="game-cb" data-id="${game.id}" ${checked} />
-        <span class="game-title">${game.title}</span>
+        <input type="checkbox" class="game-cb" data-id="${escHtml(game.id)}" ${checked} />
+        <span class="game-title">${escHtml(game.title)}</span>
         ${hasDup ? `<span class="tag tag--warn">DUP</span>` : ``}
         ${isWeak ? `<span class="tag tag--bad">SŁABE</span>` : ``}
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
-        <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
-        <button class="btn sm" data-action="edit" data-id="${game.id}">Edytuj</button>
-        <button class="btn sm danger" data-id="${game.id}">Usuń</button>
+        <button class="btn sm" data-action="uniq" data-id="${escHtml(game.id)}">Unikalność</button>
+        <button class="btn sm" data-action="edit" data-id="${escHtml(game.id)}">Edytuj</button>
+        <button class="btn sm danger" data-id="${escHtml(game.id)}">Usuń</button>
         <span class="game-chevron">${icon("caret-right")}</span>
       </div>
       <div class="game-preview">
-        <div class="preview-desc">${game.description || ''}</div>
+        <div class="preview-desc">${escHtml(game.description)}</div>
         <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
         <div class="preview-questions"></div>
       </div>
@@ -578,20 +578,20 @@ function renderGeneratedList() {
     const cand = g.candidate || {};
     const w = analyzeWeakness({ title: cand.title, description: cand.description, payload: cand.payload });
     const top = Array.isArray(g.matches) && g.matches.length ? g.matches[0] : null;
-    const dupLine = top ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}` : 'Podobne: brak';
+    const dupLine = top ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${escHtml(top.title)} · ${escHtml(top.origin)}` : 'Podobne: brak';
 
     const item = document.createElement('div');
     item.className = `game-item ${g.approved ? 'approved' : ''} ${g.generating ? 'generating' : ''}`;
     item.innerHTML = `
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${g.id}" ${g.approved ? 'checked' : ''} />
-        <span class="game-title">${cand.title || '—'}</span>
+        <span class="game-title">${escHtml(cand.title || '—')}</span>
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${dupLine} · ${w.summary}</span>
         <button class="btn sm danger" data-action="reject" data-id="${g.id}" ${g.generating ? 'disabled' : ''}>Odrzuć</button>
         <span class="game-chevron">${icon("caret-right")}</span>
       </div>
       <div class="game-preview">
-        <div class="preview-desc">${cand.description || ''}</div>
+        <div class="preview-desc">${escHtml(cand.description)}</div>
         <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
         <div class="preview-questions"></div>
       </div>
@@ -682,9 +682,9 @@ function renderPreviewQuestions(container, payload) {
   if (!payload || !payload.questions) return;
   container.innerHTML = payload.questions.map(q => `
     <div class="q-block">
-      <div class="q-text">${q.text}</div>
+      <div class="q-text">${escHtml(q.text)}</div>
       <div class="answers-grid">
-        ${(q.answers || []).map(a => `<span class="ans-chip">${a.text} <span class="ans-pts">${a.fixed_points || ''}</span></span>`).join('')}
+        ${(q.answers || []).map(a => `<span class="ans-chip">${escHtml(a.text)} <span class="ans-pts">${escHtml(a.fixed_points || "")}</span></span>`).join('')}
       </div>
     </div>
   `).join('');
@@ -730,7 +730,7 @@ function renderEditorQuestions(questions) {
             <span style="font-size:11px;opacity:.4;min-width:14px">${ai + 1}</span>
             <input class="inp ge-a-text" data-qi="${qi}" data-ai="${ai}" value="${escHtml(a.text)}" style="flex:1">
             <span class="ge-a-len" data-qi="${qi}" data-ai="${ai}" style="font-size:11px;opacity:.45;white-space:nowrap"></span>
-            <input class="inp ge-a-pts" data-qi="${qi}" data-ai="${ai}" type="number" value="${a.fixed_points ?? ''}" style="width:60px" placeholder="pkt">
+            <input class="inp ge-a-pts" data-qi="${qi}" data-ai="${ai}" type="number" value="${escHtml(a.fixed_points ?? '')}" style="width:60px" placeholder="pkt">
           </div>
         `).join('')}
       </div>
@@ -804,7 +804,7 @@ function updateTitleLen() {
 }
 
 function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function collectEditorData() {

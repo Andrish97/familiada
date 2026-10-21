@@ -2760,10 +2760,11 @@ function extractHtmlPreviewText(html) {
   // element.textContent includes the raw text of <style>/<script> children
   // (they're just text nodes to the DOM) - strip them first so CSS source
   // like "P {margin-top:0;...}" doesn't leak into the preview.
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  tmp.querySelectorAll("style, script").forEach((el) => el.remove());
-  return (tmp.textContent || tmp.innerText || "").trim();
+  // DOMParser tworzy dokument nieaktywny: obrazy się nie ładują, a atrybuty
+  // typu onerror nie wykonują się (innerHTML na elemencie odpiętym — tak).
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  doc.querySelectorAll("style, script").forEach((el) => el.remove());
+  return (doc.body?.textContent || "").trim();
 }
 
 function renderMailList(rows) {
