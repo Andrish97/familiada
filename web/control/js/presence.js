@@ -8,7 +8,7 @@
 // offline->online — urządzenie samo wie, co pokazać, bo czyta game_state przy
 // każdym (re)connect. Ten moduł opisuje wyłącznie fakt obecności.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T21183";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T21302";
 
 
 const STATUS_READ_TIMEOUT_MS = 6_500;
