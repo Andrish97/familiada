@@ -1,0 +1,52 @@
+name: Lighthouse (wydajność produkcji)
+
+# Punkt odniesienia wydajności (E13.3) bez limitu PageSpeed API: Lighthouse
+# na maszynie GitHuba, telefon i komputer, kilka przebiegów na adres (mediana).
+# Wynik i najważniejsze audyty trafiają do adnotacji przebiegu; pełne raporty
+# JSON do artefaktu. Uruchamiane ręcznie.
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Ścieżki oddzielone spacją, np. "/ /marketplace/"'
+        required: false
+        default: '/'
+      runs:
+        description: 'Przebiegi na adres i urządzenie (mediana)'
+        required: false
+        default: '3'
+
+concurrency:
+  group: lighthouse
+  cancel-in-progress: false
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Lighthouse
+        env:
+          PATHS: ${{ inputs.paths }}
+          RUNS: ${{ inputs.runs }}
+        run: node scripts/lighthouse-run.cjs
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: lighthouse/
+          retention-days: 14
