@@ -134,6 +134,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ALL: ${{ inputs.homepage && '1' || '' }}
         run: |
+          # Porównanie z ostatnim odświeżeniem kadrów, nie z poprzednim pushem:
+          # przebieg anulowany przez kolejny push (concurrency) nie gubi zmian.
+          LAST=$(git log -1 --format=%H --grep="^Refresh homepage screenshots" HEAD 2>/dev/null || true)
+          [ -n "$LAST" ] && BASE="$LAST"
           if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
           node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
           [ -d home-out ] || { echo "Brak zmienionych kadrów strony głównej."; exit 0; }
