@@ -49,16 +49,19 @@ export async function handleNotifySubmission(request, env) {
     return json({ ok: true });
   }
 
-  let text = null;
+  // Publiczny endpoint: nie przekazujemy tekstu od klienta (parse_mode HTML,
+  // treść szła prosto do Telegrama). Stały komunikat + opcjonalny UUID gry.
+  let gameId = "";
   try {
     const body = await request.json();
-    text = String(body.text || "").slice(0, 2000);
+    const raw = String(body?.game_id || "").trim().toLowerCase();
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(raw)) gameId = raw;
   } catch {}
 
   const tg = getTelegramConfig(env);
   if (!tg) return json({ ok: true });
 
   await env.MAINT_KV.put(key, String(now), { expirationTtl: 600 });
-  const message = text || "🎮 Familiada — marketplace\nNowa gra czeka na zatwierdzenie";
+  const message = "🎮 Familiada — marketplace\nNowa gra czeka na zatwierdzenie" + (gameId ? `\nID: ${gameId}` : "");
   return sendTelegram(tg, message);
 }
