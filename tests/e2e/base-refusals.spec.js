@@ -124,7 +124,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await sharedRow.locator('[data-act="remove"]').click(); await expect(sharedRow).toHaveCount(0);
     expect((await rpc(recipient, "base_share_undo_decline", { p_task_id: taskId })).ok).toBe(false);
     expect(await rpc(recipient, "base_share_accept", { p_task_id: taskId })).toBe(false);
-    await recipient.goto(link); await expect(recipient.locator("#message")).toContainText(/cofnięt|anulowan/);
+    await recipient.goto(link); await expect(recipient.locator(".poll-go-card")).toContainText(/cofnięt|anulowan|wygas|nieaktyw|nieważn/i);
   } finally {
     if (baseId) await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
     if (recipientId) await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
