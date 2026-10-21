@@ -555,3 +555,8 @@ Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści nale�
   Podręcznik opisuje oba sposoby osobno (rozdz. 4.4) — czy serwis ma pozostać tak, jak jest?
 - Regulamin TVP nie był dostępny przez sieć agenta (PDF z s.tvp.pl zablokowany) — rozdz. 1–4 oparte
   na faktach z planu; szczegóły pojedynku (kto pierwszy naciska) opisane ogólnie.
+- **Zmiana typu (7.8):** okno pokazuje jednozdaniowy skutek dla typu, bez podsumowania, które
+  pytania/odpowiedzi/punkty zostaną; bieżącego typu nie da się wybrać. Podręcznik opisuje stan kodu.
+- **Wysyłanie gry znajomemu:** kod pozwala wysłać tylko szkic (blokuje też otwartą/zatrzymaną ankietę).
+- **„Eksportuj do bazy”** przy otwartej/zatrzymanej ankiecie nie pyta o potwierdzenie (eksport do pliku
+  i powielanie pytają) — do decyzji, czy ujednolicić.
