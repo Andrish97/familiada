@@ -3762,6 +3762,13 @@ test.describe("base-explorer: Przenieś do — klawiatura i adres (E22 przegląd
       await expect(page.locator("#moveOverlay")).toBeHidden({ timeout: 5000 });
       await expect.poll(() => page.evaluate(() => new URL(location.href).searchParams.get("dialog"))).toBeNull();
 
+      // starsze okna menedżera z adresu też się nie wieszają puste
+      for (const dialog of ["tagsOverlay", "exportOverlay", "questionOverlay"]) {
+        await page.goto(`${BASE_URL}?id=${baseId}&dialog=${dialog}`, { waitUntil: "domcontentloaded" });
+        await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+        await expect(page.locator(`#${dialog}`)).toBeHidden({ timeout: 5000 });
+      }
+
       // to samo dla okna „Szukaj”: pole zostaje w pasku, okno się nie wiesza
       await page.goto(`${BASE_URL}?id=${baseId}&dialog=searchOverlay`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });

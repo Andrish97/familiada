@@ -68,7 +68,7 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9f. Porządki: scalony `main`; zaznaczenie drzewa czyszczone przy zmianie widoku panelu; `data-action` w menu kontekstowym; komentarze po `actions.js`; diagnostyka wolnych żądań w lokalnym e2e. Pełny lokalny e2e 85/85, EN/UK sprawdzone zrzutami.
 
-- [x] 9g. Poprawki po przeglądzie kodu: Enter w „Przenieś do” (Anuluj z fokusem anuluje, wybór spoza listy nie obowiązuje, jeden wynik — Enter go wybiera), `ui/sheet-guard.js` (okno z `?dialog=` w adresie lub z „Dalej” zamyka się zamiast wisieć puste), fokus po zamknięciu okien, lupa na telefonie, szuflada zamykana przy oknach (`explorer:close-drawer`), cykle w wynikach szukania. Pełny lokalny e2e 86/86.
+- [x] 9g. Poprawki po przeglądzie kodu: Enter w „Przenieś do” (Anuluj z fokusem anuluje, wybór spoza listy nie obowiązuje, jeden wynik — Enter go wybiera), `ui/sheet-guard.js` (okno z `?dialog=` w adresie lub z „Dalej” zamyka się zamiast wisieć puste), fokus po zamknięciu okien, lupa na telefonie, szuflada zamykana przy oknach (`explorer:close-drawer`), cykle w wynikach szukania. Strażnik także dla okien tagów, „Utwórz grę” i pytania (ten sam błąd był w nich przed E22: `?dialog=tagsOverlay` w adresie pokazywał puste okno bez działających przycisków; test sprawdzony — bez poprawki pada). Pełny lokalny e2e 86/86.
 
 ## Wznowienia
 

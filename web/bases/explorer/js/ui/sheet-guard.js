@@ -4,11 +4,12 @@
 // pokazać takie okno „z adresu” (?dialog=… po odświeżeniu albo „Dalej”
 // w historii) — bez treści, bo treść wstawia dopiero nasz kod przy otwarciu.
 // Strażnik: okno pokazane, gdy nasz kod go nie otworzył → od razu zamknij
-// (exitModalSheet cofa przy tym wpis historii).
+// (exitModalSheet cofa przy tym wpis historii). Okna menedżera otwierane
+// przez nasz kod mają display:grid, wejście z adresu zostawia display:"".
 
-import { exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T08050";
+import { exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T08095";
 
-export function guardRoutedSheet(overlay, isOpen) {
+export function guardRoutedSheet(overlay, isOpen = () => overlay?.style.display === "grid") {
   if (!overlay) return;
   const dismiss = () => {
     if (isOpen() || overlay.style.display === "none") return;
