@@ -4,7 +4,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount } = require("./helpers/mailbox");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, withE2EBypass } = require("./helpers/login");
 
 const PASSWORD_EMAIL = "test11@familiada.online";
 const PROFILE_EMAIL = "test12@familiada.online";
@@ -132,139 +132,330 @@ test("konto test12: zmiana nazwy i administracyjne przywrocenie", async ({ page,
   }
 });
 
-test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ browser }) => {
-  test.setTimeout(180_000);
-  await restoreTestAccount("test12");
-  await clearMailbox(PROFILE_EMAIL);
-  await clearMailbox(PROFILE_NEW_EMAIL);
-  const after = new Date(Date.now() - 2_000).toISOString();
+// ─────────────────────────────────────────────────────────────────────────────
+// Zmiana e-maila: wszystko, co może zrobić użytkownik (test12 → test13, prawdziwe
+// skrzynki). Bez "secure email change": link tylko na nowy adres, na stary samo
+// powiadomienie. Konto test12 przywracane przed i po każdym teście.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ACCOUNT_URL = "https://www.familiada.online/account";
+const isEmailChangeLink = (link) =>
+  /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
+
+async function openAccount(page) {
+  await page.goto(ACCOUNT_URL, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
+}
+
+async function submitEmailChange(page, first, second = first) {
+  await page.locator("#email").fill(first);
+  await page.locator("#email2").fill(second);
+  await page.locator("#saveEmail").click();
+}
+
+async function expectToast(page, pattern, { error = false } = {}) {
+  const toast = page.locator("#appToast");
+  await expect(toast).toContainText(pattern, { timeout: 30_000 });
+  if (error) await expect(toast).toHaveClass(/error/);
+  else await expect(toast).not.toHaveClass(/error/);
+  await dismissToast(page);
+}
+
+// Błąd zostaje do kliknięcia; zamykamy, żeby następna asercja widziała nowy dymek.
+async function dismissToast(page) {
+  const toast = page.locator("#appToast");
+  if (await toast.evaluate((el) => el.classList.contains("show")).catch(() => false)) await toast.click();
+  await expect(toast).not.toHaveClass(/\bshow\b/, { timeout: 5_000 });
+}
+
+async function expectNoEmail(recipient, after, timeout = 20_000) {
+  let email = null;
+  try { email = await waitForEmail({ recipient, after, timeout }); } catch {}
+  expect(email, `${recipient}: nie powinien dostac maila`).toBeNull();
+}
+
+// Mail na stary adres: powiadomienie z nowym adresem i linkiem do logowania, bez potwierdzenia.
+function expectOldAddressNotice(email) {
+  const html = email.body_html || "";
+  expect(html).toContain('content="authEmail.emailChangeNotice@pl"');
+  expect(html).toContain(escapeMailText(PROFILE_NEW_EMAIL));
+  const links = extractHttpLinks(email);
+  expect(links.find(isEmailChangeLink), "stary adres: bez linku potwierdzajacego").toBeFalsy();
+  const loginLink = links.find((link) => /\/login\/\?lang=pl/.test(link));
+  expect(loginLink, "stary adres: link do logowania").toBeTruthy();
+  return loginLink;
+}
+
+function confirmLinkFrom(email) {
+  expect(email.body_html || "").toContain('content="authEmail.emailChange@pl"');
+  const link = extractHttpLinks(email).find(isEmailChangeLink);
+  expect(link, "nowy adres: link potwierdzajacy").toBeTruthy();
+  return link;
+}
+
+async function openConfirmLink(browser, link) {
   const context = await browser.newContext();
   const page = await context.newPage();
+  await page.goto(link, { waitUntil: "domcontentloaded" });
+  const status = page.locator("#status");
+  await expect(status).not.toHaveText(/^\s*$|aktywuj|sprawdzam/i, { timeout: 20_000 });
+  await page.waitForTimeout(1_500);
+  const text = (await status.textContent()) || "";
+  await context.close();
+  return text;
+}
 
-  try {
-    await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
-    await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
-    await page.locator("#email").fill(PROFILE_NEW_EMAIL);
-    await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
-    await page.locator("#saveEmail").click();
-    lastAuthMailAt.set("test12", Date.now());
-    await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 30_000 });
+async function expectLoginFails(browser, username) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await withE2EBypass(context);
+  await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => {
+    const status = document.querySelector("#status")?.textContent?.trim() || "";
+    return !document.documentElement.classList.contains("page-loading") && !!status && !/checking|sprawdzam/i.test(status);
+  }, null, { timeout: 20_000 });
+  await page.fill("#email", username);
+  await page.fill("#pass", process.env.TEST_PASSWORD);
+  await page.click("#btnPrimary");
+  await expect(page.locator("#err")).not.toBeEmpty({ timeout: 20_000 });
+  expect(page.url()).not.toMatch(/\/games/);
+  await context.close();
+}
 
-    const [oldEmail, newEmail] = await Promise.all([
-      waitForEmail({ recipient: PROFILE_EMAIL, after }),
-      waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
-    ]);
-    const isEmailChangeLink = (link) =>
-      /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
-    // Bez "secure email change": stary adres dostaje samo powiadomienie
-    // (link do logowania), potwierdza tylko nowy adres.
-    const oldLink = extractHttpLinks(oldEmail).find(isEmailChangeLink);
-    const newLink = extractHttpLinks(newEmail).find(isEmailChangeLink);
-    expect(oldLink, "mail na stary adres nie moze zawierac linku potwierdzajacego").toBeFalsy();
-    expect(oldEmail.body_html || "", "mail na stary adres powinien wskazywac nowy adres")
-      .toContain(escapeMailText(PROFILE_NEW_EMAIL));
-    expect(newLink, "mail na nowy adres powinien zawierac link potwierdzajacy").toBeTruthy();
+async function currentAuthEmail(page) {
+  return page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user?.email);
+}
 
-    await context.close();
-    for (const link of [newLink]) {
-      const confirmContext = await browser.newContext();
-      const confirmPage = await confirmContext.newPage();
-      await confirmPage.goto(link, { waitUntil: "domcontentloaded" });
-      await confirmPage.waitForTimeout(2_000);
-      const status = await confirmPage.locator("#status").textContent();
-      expect(status || "").not.toMatch(/nieprawid|błąd|wygas/i);
-      await confirmContext.close();
-    }
+async function releaseEmailCooldown(page) {
+  await page.evaluate(async () => {
+    const { error } = await window.__sbClient.rpc("cooldown_release", { p_action_key: "account:email", p_max_age_seconds: 7200 });
+    if (error) throw new Error("cooldown_release: " + error.message);
+  });
+}
 
-    const loginContext = await browser.newContext();
-    const loginPage = await loginContext.newPage();
-    await loginAsTestUser(loginPage, loginContext, { username: PROFILE_NEW_EMAIL });
-    await expect(loginPage).toHaveURL(/\/games\/?(?:[?#]|$)/);
-    await loginContext.close();
-  } finally {
-    await context.close().catch(() => {});
-    await restoreTestAccount("test12");
-    await clearMailbox(PROFILE_EMAIL);
-    await clearMailbox(PROFILE_NEW_EMAIL);
-  }
-});
-
-test("konto test12: anulowana zmiana e-maila uniewaznia link i zostawia stary adres", async ({ browser }, testInfo) => {
-  test.setTimeout(240_000);
+async function startEmailChangeTest(testInfo) {
   await restoreTestAccount("test12");
   await clearMailbox(PROFILE_EMAIL);
   await clearMailbox(PROFILE_NEW_EMAIL);
   await waitForAuthMailSlot("test12", testInfo);
+}
+
+async function finishEmailChangeTest() {
+  await restoreTestAccount("test12");
+  await clearMailbox(PROFILE_EMAIL);
+  await clearMailbox(PROFILE_NEW_EMAIL);
+}
+
+test("zmiana e-maila: bledne dane nic nie wysylaja", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  await startEmailChangeTest(testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
   const context = await browser.newContext();
   const page = await context.newPage();
-
   try {
     await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
-    await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
+    await openAccount(page);
 
-    // Różne adresy w dwóch polach: nic nie wychodzi.
-    await page.locator("#email").fill(PROFILE_NEW_EMAIL);
-    await page.locator("#email2").fill("test13@familiada.onlin");
-    await page.locator("#saveEmail").click();
-    await expect(page.locator("#appToast")).toContainText("nie są takie same", { timeout: 10_000 });
+    await submitEmailChange(page, "test13familiada.online");
+    await expectToast(page, "Podaj poprawny e-mail", { error: true });
+
+    await submitEmailChange(page, PROFILE_EMAIL.toUpperCase(), PROFILE_EMAIL);
+    await expectToast(page, "To jest Twój obecny adres e-mail", { error: true });
+
+    await submitEmailChange(page, PROFILE_NEW_EMAIL, "test13@familiada.onlin");
+    await expectToast(page, "Adresy e-mail nie są takie same", { error: true });
+
+    // Adres zajęty przez inne konto: błąd z serwera, nic nie zostaje w toku.
+    await submitEmailChange(page, "test1@familiada.online");
+    const toast = page.locator("#appToast");
+    await expect(toast).toHaveClass(/\bshow\b/, { timeout: 30_000 });
+    await expect(toast).toHaveClass(/error/);
+    console.log("[e2e-diag] zajety adres:", (await toast.textContent())?.trim());
+
+    await openAccount(page);
+    await expect(page.locator("#emailPendingActions")).toBeHidden();
     await expect(page.locator("#emailCooldown")).toBeHidden();
+    await expect(page.locator("#email")).toHaveValue(PROFILE_EMAIL);
+    await expectNoEmail(PROFILE_EMAIL, after);
+    await expectNoEmail(PROFILE_NEW_EMAIL, after, 5_000);
+  } finally {
+    await context.close().catch(() => {});
+    await finishEmailChangeTest();
+  }
+});
 
-    await page.locator("#email2").fill(PROFILE_NEW_EMAIL);
-    await page.locator("#saveEmail").click();
+test("zmiana e-maila: pelna zmiana, maile, link raz, logowanie nowym adresem", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  await startEmailChangeTest(testInfo);
+  const after = new Date(Date.now() - 2_000).toISOString();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
+    await openAccount(page);
+    // Wielkość liter i spacje nie mają znaczenia przy porównaniu pól.
+    await submitEmailChange(page, ` ${PROFILE_NEW_EMAIL.toUpperCase()} `, PROFILE_NEW_EMAIL);
     lastAuthMailAt.set("test12", Date.now());
-    await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 30_000 });
+    await expectToast(page, "Wysłano");
 
-    // Blokada 1 h po zmianie: licznik widoczny, "Wyślij ponownie" wyłączone.
-    await expect(page.locator("#emailCooldown")).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator("#emailCooldown")).toContainText("Ponowna akcja możliwa za");
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
+    await openAccount(page);
     await expect(page.locator("#emailPendingActions")).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator("#resendEmailChange")).toBeDisabled();
+    await expect(page.locator("#emailActions")).toBeHidden();
+    await expect(page.locator("#email")).toHaveValue(PROFILE_NEW_EMAIL);
+    await expect(page.locator("#emailPendingHint")).toContainText(PROFILE_NEW_EMAIL);
 
     const [oldEmail, newEmail] = await Promise.all([
       waitForEmail({ recipient: PROFILE_EMAIL, after }),
       waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
     ]);
-    const isEmailChangeLink = (link) =>
-      /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
-    expect(extractHttpLinks(oldEmail).find(isEmailChangeLink), "stary adres: bez linku potwierdzajacego").toBeFalsy();
-    const newLink = extractHttpLinks(newEmail).find(isEmailChangeLink);
-    expect(newLink, "nowy adres: link potwierdzajacy").toBeTruthy();
+    const loginLink = expectOldAddressNotice(oldEmail);
+    const confirmLink = confirmLinkFrom(newEmail);
 
-    // Anulowanie przyciskiem na stronie.
-    await page.locator("#cancelEmailChange").click();
-    await expect(page.locator("#appToast")).toContainText("Anulowano zmianę e-maila", { timeout: 20_000 });
-    await expect(page.locator("#emailPendingActions")).toBeHidden();
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
-    await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15_000 });
-    await expect(page.locator("#email")).toHaveValue(PROFILE_EMAIL);
+    // Przycisk z powiadomienia prowadzi na stronę logowania.
+    const noticeContext = await browser.newContext();
+    const noticePage = await noticeContext.newPage();
+    const res = await noticePage.goto(loginLink, { waitUntil: "domcontentloaded" });
+    expect(res?.status()).toBeLessThan(400);
+    await expect(noticePage.locator("#btnPrimary")).toBeVisible({ timeout: 20_000 });
+    await noticeContext.close();
+
+    // Przed potwierdzeniem nadal loguje stary adres.
+    expect(await currentAuthEmail(page)).toBe(PROFILE_EMAIL);
     await context.close();
 
-    // Link z nowej skrzynki po anulowaniu już nie działa.
-    const confirmContext = await browser.newContext();
-    const confirmPage = await confirmContext.newPage();
-    await confirmPage.goto(newLink, { waitUntil: "domcontentloaded" });
-    await expect(confirmPage.locator("#status")).toContainText(/anulowana|nie udało|błąd/i, { timeout: 20_000 });
-    await expect(confirmPage.locator("#status")).not.toContainText(/gotowe|potwierdzono/i);
-    await confirmContext.close();
+    const first = await openConfirmLink(browser, confirmLink);
+    expect(first, "pierwsze klikniecie linku").toMatch(/gotowe/i);
+    const second = await openConfirmLink(browser, confirmLink);
+    expect(second, "drugie klikniecie tego samego linku").not.toMatch(/gotowe/i);
 
-    // Logowanie starym adresem nadal działa i konto ma stary adres.
+    const loginContext = await browser.newContext();
+    const loginPage = await loginContext.newPage();
+    await loginAsTestUser(loginPage, loginContext, { username: PROFILE_NEW_EMAIL });
+    expect(await currentAuthEmail(loginPage)).toBe(PROFILE_NEW_EMAIL);
+    await openAccount(loginPage);
+    await expect(loginPage.locator("#email")).toHaveValue(PROFILE_NEW_EMAIL);
+    await expect(loginPage.locator("#emailPendingActions")).toBeHidden();
+    await loginContext.close();
+
+    await expectLoginFails(browser, PROFILE_EMAIL);
+    // Po potwierdzeniu nikt nie dostaje kolejnych maili.
+    const afterConfirm = new Date().toISOString();
+    await expectNoEmail(PROFILE_EMAIL, afterConfirm, 10_000);
+  } finally {
+    await context.close().catch(() => {});
+    await finishEmailChangeTest();
+  }
+});
+
+test("zmiana e-maila: ponowne wyslanie uniewaznia stary link, anulowanie nowy", async ({ browser }, testInfo) => {
+  test.setTimeout(300_000);
+  await startEmailChangeTest(testInfo);
+  const after = new Date(Date.now() - 2_000).toISOString();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
+    await openAccount(page);
+    await submitEmailChange(page, PROFILE_NEW_EMAIL);
+    lastAuthMailAt.set("test12", Date.now());
+    await expectToast(page, "Wysłano");
+    const [oldEmail, newEmail] = await Promise.all([
+      waitForEmail({ recipient: PROFILE_EMAIL, after }),
+      waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
+    ]);
+    expectOldAddressNotice(oldEmail);
+    const firstLink = confirmLinkFrom(newEmail);
+
+    // "Minęła godzina" (ta sama RPC co rollback w account.js) i odstęp GoTrue.
+    await releaseEmailCooldown(page);
+    await waitForAuthMailSlot("test12", testInfo);
+    await openAccount(page);
+    await expect(page.locator("#resendEmailChange")).toBeEnabled({ timeout: 15_000 });
+    const resendAfter = new Date(Date.now() - 1_000).toISOString();
+    await page.locator("#resendEmailChange").click();
+    lastAuthMailAt.set("test12", Date.now());
+    await expectToast(page, "Wysłano ponownie");
+    await expect(page.locator("#emailCooldown")).toBeVisible({ timeout: 15_000 });
+
+    const resent = await waitForEmail({ recipient: PROFILE_NEW_EMAIL, after: resendAfter });
+    const secondLink = confirmLinkFrom(resent);
+    expect(secondLink).not.toBe(firstLink);
+    let resentNotice = null;
+    try { resentNotice = await waitForEmail({ recipient: PROFILE_EMAIL, after: resendAfter, timeout: 20_000 }); } catch {}
+    if (resentNotice) expectOldAddressNotice(resentNotice);
+    console.log("[e2e-diag] powiadomienie na stary adres po ponownym wyslaniu:", !!resentNotice);
+
+    const oldLinkStatus = await openConfirmLink(browser, firstLink);
+    expect(oldLinkStatus, "link sprzed ponownego wyslania").not.toMatch(/gotowe/i);
+
+    await page.locator("#cancelEmailChange").click();
+    await expectToast(page, "Anulowano zmianę e-maila");
+    const newLinkStatus = await openConfirmLink(browser, secondLink);
+    expect(newLinkStatus, "link po anulowaniu").not.toMatch(/gotowe/i);
+
+    await openAccount(page);
+    await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15_000 });
+    expect(await currentAuthEmail(page)).toBe(PROFILE_EMAIL);
+  } finally {
+    await context.close().catch(() => {});
+    await finishEmailChangeTest();
+  }
+});
+
+test("zmiana e-maila: anulowanie z drugiego urzadzenia, blokada, link niewazny", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  await startEmailChangeTest(testInfo);
+  const after = new Date(Date.now() - 2_000).toISOString();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const otherContext = await browser.newContext();
+  const otherPage = await otherContext.newPage();
+  try {
+    await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
+    await openAccount(page);
+    await submitEmailChange(page, PROFILE_NEW_EMAIL);
+    lastAuthMailAt.set("test12", Date.now());
+    await expectToast(page, "Wysłano");
+
+    // Blokada 1 h: licznik widoczny, "Wyślij ponownie" wyłączone, "Anuluj" dostępne.
+    await openAccount(page);
+    await expect(page.locator("#emailCooldown")).toContainText("Ponowna akcja możliwa za", { timeout: 15_000 });
+    await expect(page.locator("#resendEmailChange")).toBeDisabled();
+    await expect(page.locator("#cancelEmailChange")).toBeEnabled();
+
+    const [, newEmail] = await Promise.all([
+      waitForEmail({ recipient: PROFILE_EMAIL, after }),
+      waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
+    ]);
+    const confirmLink = confirmLinkFrom(newEmail);
+
+    // Drugie urządzenie widzi zmianę w toku i ją anuluje.
+    await loginAsTestUser(otherPage, otherContext, { username: PROFILE_EMAIL });
+    await openAccount(otherPage);
+    await expect(otherPage.locator("#emailPendingActions")).toBeVisible({ timeout: 15_000 });
+    await expect(otherPage.locator("#email")).toHaveValue(PROFILE_NEW_EMAIL);
+    await otherPage.locator("#cancelEmailChange").click();
+    await expectToast(otherPage, "Anulowano zmianę e-maila");
+
+    // Pierwsze urządzenie po odświeżeniu: brak zmiany w toku, stary adres.
+    await openAccount(page);
+    await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15_000 });
+    await expect(page.locator("#email")).toHaveValue(PROFILE_EMAIL);
+
+    const status = await openConfirmLink(browser, confirmLink);
+    expect(status, "link po anulowaniu").toMatch(/anulowana|nie udało/i);
+
+    await otherContext.close();
+    await context.close();
     const loginContext = await browser.newContext();
     const loginPage = await loginContext.newPage();
     await loginAsTestUser(loginPage, loginContext, { username: PROFILE_EMAIL });
-    const email = await loginPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user?.email);
-    expect(email).toBe(PROFILE_EMAIL);
+    expect(await currentAuthEmail(loginPage)).toBe(PROFILE_EMAIL);
     await loginContext.close();
   } finally {
+    await otherContext.close().catch(() => {});
     await context.close().catch(() => {});
-    await restoreTestAccount("test12");
-    await clearMailbox(PROFILE_EMAIL);
-    await clearMailbox(PROFILE_NEW_EMAIL);
+    await finishEmailChangeTest();
   }
 });
 
