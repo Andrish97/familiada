@@ -141,6 +141,8 @@ E2E na branchu (spec | przebieg | wynik):
   pod kaflami przy masce paska — poprawione (`2c12415`).
 - Wdrożone na `main` (`1012638`), kontrola produkcji 13/13 ✓ (Dziennik).
   Dalej: E13 (indeks → zrzuty indeksu → wydajność → instrukcja).
+- E13: 13.1 indeks — poprawki nazw (`c526b68` i nast.), 13.2 zrzuty — automat
+  `screens.yml`, 13.3 wydajność — czeka na limit PSI; 13.4 instrukcja — w toku.
 
 ## Dalej
 
