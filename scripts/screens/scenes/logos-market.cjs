@@ -162,19 +162,21 @@ function adminData(db) {
   h["/_admin_api/marketplace/list?status=published*"] = { ok: true, rows: [market(5, "Familiada weselna", "dj_marek", "published", 12), market(6, "Biuro od kuchni", "hr_magda", "published", 9), market(7, "Wakacje nad morzem", "tomek_quiz", "published", 4)] };
   h["/_admin_api/marketplace/detail*"] = { ok: true, game: { ...market(1, "Rodzinny quiz", "ania.k", "pending", 20), description: "Dziesięć pytań na rodzinne spotkanie — od jedzenia po wakacje.",
     payload: { questions: db.tables.questions.filter((q) => q.game_id === IDS.game).sort((a, b) => a.ord - b.ord).slice(0, 5).map((q) => ({ text: q.text, answers: db.tables.answers.filter((a) => a.question_id === q.id).sort((a, b) => a.ord - b.ord).map((a) => ({ text: a.text, fixed_points: a.fixed_points })) })) } } };
-  db.tables.marketing_ai_providers = [
+  const aiProviders = [
     { name: "gemini", label: "Gemini", priority: 0, is_active: true, cooldown_until: null },
     { name: "groq", label: "Groq", priority: 1, is_active: true, cooldown_until: new Date(Date.now() + (2 * 60 + 37) * 60e3).toISOString() },
     { name: "mistral", label: "Mistral", priority: 2, is_active: false, cooldown_until: null },
   ];
-  db.tables.marketing_search_logs = [];
-  db.tables.marketing_verified_contacts = [
+  const contacts = [
     ["Szkoła Podstawowa nr 12", "sekretariat@sp12.example.test", "https://sp12.example.test", false, 20],
     ["Dom Kultury „Zorza”", "biuro@zorza.example.test", "https://zorza.example.test", true, 18],
     ["Biuro podróży Słoneczko", "kontakt@sloneczko.example.test", "https://sloneczko.example.test", false, 15],
     ["Klub seniora „Pogodna Jesień”", "klub@pogodna.example.test", "https://pogodna.example.test", false, 11],
     ["Agencja eventowa Fiesta", "hello@fiesta.example.test", "https://fiesta.example.test", true, 6],
   ].map(([title, email, url, is_used, d], i) => ({ id: i + 1, title, email, url, is_used, added_at: T(d, 9), created_at: T(d, 9) }));
+  h["/_admin_api/marketing/ai-providers"] = { ok: true, rows: aiProviders };
+  h["/_admin_api/marketing/logs"] = { ok: true, rows: [] };
+  h["/_admin_api/marketing/contacts?*"] = { ok: true, rows: contacts, total: contacts.length };
 }
 
 module.exports = [

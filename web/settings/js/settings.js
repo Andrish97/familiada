@@ -343,7 +343,7 @@ async function adminGet(path, key) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || "błąd");
-  return data[key];
+  return key ? data[key] : data;
 }
 
 async function adminPost(path, body, key) {
@@ -2077,10 +2077,7 @@ function renderAiProviderOrder() {
 async function saveAiProviderOrder() {
   try {
     // Aktualizuj priorytety dla wszystkich modeli w bazie
-    const updates = aiProviders.map((p, idx) => 
-      sb().from('marketing_ai_providers').update({ priority: idx }).eq('name', p.name)
-    );
-    await Promise.all(updates);
+    await adminPost("/marketing/ai-providers/order", { names: aiProviders.map((p) => p.name) });
     showToast(`Kolejność AI zapisana.`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
@@ -2089,12 +2086,7 @@ async function saveAiProviderOrder() {
 
 async function loadAiProviderOrder() {
   try {
-    const { data, error } = await sb()
-      .from('marketing_ai_providers')
-      .select('*')
-      .order('priority', { ascending: true });
-    
-    if (error) throw error;
+    const data = await adminGet("/marketing/ai-providers", "rows");
     if (data) {
       aiProviders = data;
       renderAiProviderOrder();
@@ -6796,7 +6788,6 @@ function wireEvents() {
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
-  let mcRealtimeChannel = null;
 
   async function mcGetToken() {
     if (mcToken) return mcToken;
@@ -6954,20 +6945,13 @@ function wireEvents() {
     const tbody = document.getElementById("mcTableBody");
     console.log('[MC] mcLoadContacts called, page:', mcState.page, 'panel hidden:', document.getElementById("marketingContactsPanel")?.hidden);
     try {
-      let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
-      const fUsed = mcFilterUsedValue;
-      if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
+      const q = new URLSearchParams({ page: String(mcState.page), sort: mcState.sortCol, dir: mcState.sortDir });
+      if (mcFilterUsedValue !== "") q.set("used", mcFilterUsedValue);
       const search = mcSearchValue.trim();
-      if (search) {
-        const esc = search.replace(/[\\,()%_]/g, '\\$&');
-        query = query.or(`title.ilike.%${esc}%,email.ilike.%${esc}%,url.ilike.%${esc}%`);
-      }
-      const from = (mcState.page - 1) * MC_PAGE_SIZE;
-      const to = from + MC_PAGE_SIZE - 1;
-      const { data, error, count } = await query.order(mcState.sortCol, {ascending: mcState.sortDir === 'asc'}).range(from, to);
-      if (error) throw error;
-      mcState.contacts = data || [];
-      mcRenderContacts(count || 0);
+      if (search) q.set("search", search);
+      const { rows, total } = await adminGet(`/marketing/contacts?${q}`);
+      mcState.contacts = rows || [];
+      mcRenderContacts(total || 0);
       mcUpdateSortHeaders();
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
@@ -7212,13 +7196,6 @@ function wireEvents() {
 
   function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
-  window.mcUpdate = async function(id, field, value) {
-    try {
-      const { error } = await sb().from("marketing_verified_contacts").update({[field]:value}).eq("id", id);
-      if (error) throw error;
-    } catch(e) { mcLoadContacts(); }
-  };
-
   function mcUpdateSelectionInfo() {
     const info = document.getElementById("mcSelectionInfo");
     const urlBtn = document.getElementById("mcVisitUrlBtn");
@@ -7263,8 +7240,7 @@ function wireEvents() {
       if (!selected.length) return;
       const allUsed = selected.every(c => c.is_used);
       const ids = selected.map(c => c.id);
-      const { error } = await sb().from("marketing_verified_contacts").update({is_used: !allUsed}).in("id", ids);
-      if (error) throw error;
+      await adminPost("/marketing/contacts/used", { ids, used: !allUsed });
       mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
@@ -7276,8 +7252,7 @@ function wireEvents() {
     if (!await confirmModal({ text: `Usunąć ${rows.size} kontaktów?` })) return;
     try {
       const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-      const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
-      if (error) throw error;
+      await adminPost("/marketing/contacts/delete", { ids });
       mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
@@ -7293,73 +7268,12 @@ function wireEvents() {
   async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
     try {
-      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: false}).limit(200);
-      if (error) throw error;
+      const data = await adminGet("/marketing/logs", "rows");
       // Odwróć, aby najstarsze były na górze, najnowsze na dole (chronologicznie)
       mcState.logs = (data || []).reverse();
       mcRenderLogs();
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
-  async function mcClearLogs() {
-    try {
-      const { error } = await sb().rpc('clear_marketing_logs');
-      if (error) throw error;
-      mcState.logs = [];
-      mcRenderLogs();
-    } catch(e) { console.warn('[MC] Clear logs error:', e); }
-  }
-  
-  function mcInitRealtime() {
-    mcDestroyRealtime();
-    try {
-      const channelName = 'marketing-search-logs-changes';
-      mcRealtimeChannel = sb().channel(channelName);
-      mcRealtimeChannel
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'marketing_search_logs'
-          },
-          (payload) => {
-            if (payload.new) {
-              mcState.logs.push(payload.new);
-              if (mcState.logs.length > 200) mcState.logs.shift();
-              mcRenderLogs();
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'marketing_verified_contacts'
-          },
-          () => {
-            if (mcState.page === 1) mcLoadContacts();
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[MC] Realtime subscribed');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.warn('[MC] Realtime channel error');
-          }
-        });
-    } catch(e) {
-      console.warn('[MC] Realtime init error:', e);
-    }
-  }
-  
-  function mcDestroyRealtime() {
-    if (mcRealtimeChannel) {
-      sb().removeChannel(mcRealtimeChannel);
-      mcRealtimeChannel = null;
-    }
-  }
-
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
     if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
@@ -7374,7 +7288,6 @@ function wireEvents() {
 
   function mcStartLogAutoRefresh() {
     if (mcState.logTimer) return;
-    mcInitRealtime();
     mcState.logTimer = setInterval(async () => {
       try {
         const tk = await mcGetToken();
@@ -7387,19 +7300,19 @@ function wireEvents() {
         mcState.status = data.status || "idle";
         mcState.logRun = data.run_id;
         mcUpdateButtons();
+        if (mcState.page === 1) mcLoadContacts();
         if (mcState.status !== "running") {
           mcStopLogAutoRefresh();
         }
       } catch(e) {}
     }, 3000);
-    // Polling fallback for logs (every 2s)
+    // Logi co 2 s (tabela tylko przez Worker, bez Realtime)
     mcState.logPollTimer = setInterval(() => mcLoadLogs(), 2000);
   }
 
   function mcStopLogAutoRefresh() {
     if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }
     if (mcState.logPollTimer) { clearInterval(mcState.logPollTimer); mcState.logPollTimer = null; }
-    mcDestroyRealtime();
   }
 
   // Init MC events
