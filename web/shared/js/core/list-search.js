@@ -8,11 +8,11 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T02484";
-import { promptModal } from "./modal.js?v=v2026-10-21T02484";
-import { icon } from "./icons.js?v=v2026-10-21T02484";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T02484";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T02484";
+import { t } from "../../translation/translation.js?v=v2026-10-21T06445";
+import { promptModal } from "./modal.js?v=v2026-10-21T06445";
+import { icon } from "./icons.js?v=v2026-10-21T06445";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-21T06445";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T06445";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -135,9 +135,10 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       el = document.createElement("div");
       el.className = "list-empty";
       el.hidden = true;
-      grid.append(el);
       emptyEls.set(grid, el);
     }
+    // ponowny render siatki (innerHTML) usuwa komunikat — dopinamy go z powrotem
+    if (el.parentElement !== grid) grid.append(el);
     const message = t("common.noResults");
     if (el.textContent !== message) el.textContent = message;
     return el;

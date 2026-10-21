@@ -157,10 +157,24 @@ function measureInPage() {
     .filter((el, i, arr) => arr.indexOf(el) === i && visible(el));
   const inMain = all.filter((el) => el.closest("main"));
   const vw = window.innerWidth;
+  // Widoczna część przycisku: przycięta przez przodków z overflow != visible
+  // (np. przewijana lista wyników) -- schowana pod krawędzią listy część nie
+  // nakłada się na nic, czego użytkownik widzi.
+  const clipRect = (el) => {
+    const b = el.getBoundingClientRect();
+    let r = { left: b.left, top: b.top, right: b.right, bottom: b.bottom };
+    for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+      const ps = getComputedStyle(p);
+      if (ps.overflowX === "visible" && ps.overflowY === "visible") continue;
+      const pr = p.getBoundingClientRect();
+      r = { left: Math.max(r.left, pr.left), top: Math.max(r.top, pr.top), right: Math.min(r.right, pr.right), bottom: Math.min(r.bottom, pr.bottom) };
+    }
+    return r;
+  };
   const boxes = all.map((el) => {
-    const r = el.getBoundingClientRect();
+    const r = clipRect(el);
     return { el, r, label: describe(el), text: (el.textContent || "").trim().slice(0, 24) };
-  });
+  }).filter((b) => b.r.right - b.r.left >= 1 && b.r.bottom - b.r.top >= 1);
   const violations = [];
   const push = (kind, b, extra) => violations.push({ kind, el: b.label, text: b.text, ...extra });
 

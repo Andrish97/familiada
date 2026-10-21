@@ -39,6 +39,13 @@ const { acceptBaseShare } = require("./helpers/base-sharing");
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Poza main: strona i wspólny front z plików brancha (baza/konta produkcyjne),
+// inaczej spec sprawdzał nowy wygląd na starym kodzie produkcji.
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
+});
 
 const BASE_URL = "https://www.familiada.online/bases/explorer";
 
@@ -343,6 +350,23 @@ async function simulateDragDrop(page, sourceSelector, targetSelector, { targetOf
 
 /* ================= 1) Naprawy z audytu ================= */
 
+
+// Pole okna zmiany nazwy (wspólne promptModal). Gdy go nie ma, wypisuje,
+// jakie okno jest otwarte zamiast niego (np. komunikat blokady).
+async function renameInput(page) {
+  const input = page.locator(".uni-modal .uni-inp");
+  try {
+    await expect(input).toBeVisible({ timeout: 8000 });
+  } catch (e) {
+    const open = await page.evaluate(() => [...document.querySelectorAll(".uni-modal, .overlay")]
+      .filter((el) => getComputedStyle(el).display !== "none" && el.getClientRects().length)
+      .map((el) => `${el.id || el.className}: ${(el.innerText || "").replace(/\s+/g, " ").slice(0, 120)}`));
+    console.log(`[e2e-diag] brak pola zmiany nazwy; otwarte: ${JSON.stringify(open)}`);
+    throw e;
+  }
+  return input;
+}
+
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
 
   test("eksport ('Utwórz grę') faktycznie tworzy grę zamiast rzucać błąd", async ({ page, context }) => {
@@ -480,19 +504,18 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Nowy tekst");
 
-      // renameModal.close() (który chowa #renameModal) jest SYNCHRONICZNY na klik
+      // renameModal.close() (który chowa .uni-modal) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
       // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
       // "modal się schował" nie gwarantuje, że PATCH już doleciał do bazy.
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Nowy tekst");
@@ -729,15 +752,14 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       await renameItem.click();
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Zmienione przez PPM");
 
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Zmienione przez PPM");
@@ -786,7 +808,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const dot = row.locator(".meta-dot").first();
       await expect(dot).toBeVisible({ timeout: 10000 });
 
-      const tip = page.locator(".dot-tooltip");
+      const tip = page.locator(".app-tooltip");
       await expect(tip).toBeHidden();
 
       await dot.hover();
@@ -1751,7 +1773,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     }
   });
 
-  test("treść pytania jest ograniczana do 200 znaków (ten sam limit co przy F2)", async ({ page, context }) => {
+  test("treść pytania jest ograniczana do 100 znaków (E21, ten sam limit co przy F2)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-QTXTLEN-${Date.now()}`);
@@ -1771,7 +1793,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
       const qText = page.locator("#qText");
       await qText.fill(long);
-      await expect(qText).toHaveValue("A".repeat(200), { timeout: 5000 });
+      await expect(qText).toHaveValue("A".repeat(100), { timeout: 5000 });
 
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
@@ -1780,7 +1802,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
-      expect(fresh?.payload?.text?.length).toBeLessThanOrEqual(200);
+      expect(fresh?.payload?.text?.length).toBeLessThanOrEqual(100);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -2246,30 +2268,8 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     }
   });
 
-  test("baza z mniej niż 10 pytaniami pokazuje błąd i nie pozwala na eksport", async ({ page, context }) => {
-    test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-    const baseId = await createBase(page, `E2E-XM-TOOFEW-${Date.now()}`);
-
-    try {
-      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Jedyne pytanie", answers: [] } });
-
-      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
-
-      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
-      await expect(row).toBeVisible({ timeout: 15000 });
-      await row.click();
-      await pressToolbarShortcut(page, "createGame", "Control+g");
-
-      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#xErr")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#xErr")).toContainText("Potrzebujesz co najmniej", { timeout: 5000 });
-      await expect(page.locator("#xCreate")).toBeDisabled();
-    } finally {
-      await deleteBase(page, baseId);
-    }
-  });
+  // „baza z mniej niż 10 pytaniami pokazuje błąd” usunięty: od E21 eksport
+  // poniżej 10 pytań jest dozwolony (test „E21: poniżej 10 pytań…” wyżej).
 });
 
 /* ================= 5) współdzielenie i uprawnienia (dwóch RÓŻNYCH użytkowników) =================
@@ -2710,8 +2710,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
-      await expect(input).toBeVisible({ timeout: 5000 });
+      const input = await renameInput(page);
       await input.fill("Nowa nazwa");
 
       // pytanie znika "gdzieś indziej" (poza blokadą -- bezpośredni zapis)
@@ -2720,7 +2719,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
         await window.__sbClient.from("qb_questions").delete().eq("id", id);
       }, qid);
 
-      await page.locator("#renameModalSave").click();
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
       await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
     } finally {
       await deleteBase(page, baseId);
@@ -2950,9 +2949,11 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       const listBox = await page.locator("#list").boundingBox();
       expect(listBox).toBeTruthy();
 
-      // #list musi kończyć się blisko dołu viewportu (mała tolerancja na
-      // padding kontenera .explorer), a nie w połowie ekranu.
-      expect(listBox.y + listBox.height).toBeGreaterThan(800 - 40);
+      // #list musi kończyć się blisko dołu widoku -- nad stopką, jeśli jest
+      // widoczna (mała tolerancja na padding .explorer), a nie w połowie ekranu.
+      const footer = page.locator("footer.footer");
+      const bottom = (await footer.isVisible()) ? (await footer.boundingBox()).y : 800;
+      expect(listBox.y + listBox.height).toBeGreaterThan(bottom - 40);
     } finally {
       await deleteBase(page, baseId);
     }

@@ -31,7 +31,8 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#btnSearchFocus")).toBeVisible();
     await expect(page.locator("#langFilter")).toBeVisible();
     await expect(page.locator("#langFilter .ui-select-icon svg")).toBeVisible();
-    expect(await page.locator("#langFilter .ui-select-icon svg").textContent()).toBe("A文");
+    // ikona języka: globus z pliku SVG (icons.js), nie tekst
+    await expect(page.locator("#langFilter .ui-select-icon svg.ico-globe")).toHaveCount(1);
     await expect(page.locator("#langFilter .mkt-filter-btn #langFilterLabel")).toHaveText("Język");
     await expect(page.locator("#sortSelect")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -59,9 +60,8 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#gameDetailOverlay")).toBeVisible();
     await expect(page.locator("#detailTitle")).toContainText(title);
     await page.screenshot({ path: testInfo.outputPath("shot-e20-marketplace-phone-detail.png"), fullPage: true });
-    // W mobilnym sheet własny przycisk „×” jest ukryty. Zamyka go
-    // widoczny przycisk Wstecz w topbarze.
-    await page.locator("#btnGoGames").click();
+    // Na telefonie okno od dołu: „×” ukryty, zamyka pasek u góry okna.
+    await page.locator("#gameDetailOverlay .sheet-handle").click();
     await expect(page.locator("#gameDetailOverlay")).toBeHidden();
     await expect(page.locator("#searchInput")).toHaveValue(title);
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
@@ -181,15 +181,18 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page).toHaveURL(/sort=title/);
 });
 
-test("wolny prawdziwy backend pokazuje loading, a nieistniejący UUID konkretny błąd", async ({ page }) => {
+test("wolny prawdziwy backend: siatka ukryta do pierwszej odpowiedzi, nieistniejący UUID konkretny błąd", async ({ page }) => {
   await page.route("**/rest/v1/rpc/market_browse", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     await route.continue();
   });
-  const navigation = page.goto(URL, { waitUntil: "domcontentloaded" });
-  await navigation;
-  await expect(page.locator("#browseInfo")).toHaveText("Ładowanie…");
+  // stopniowe ładowanie (decyzja 2026-10-20): przy pierwszym odczycie bez napisu „Ładowanie…",
+  // siatka odsłania się razem z kartami
+  await page.goto(URL, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#browseGrid")).not.toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#browseInfo")).not.toHaveText("Ładowanie…");
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator("#browseGrid")).toHaveClass(/skel-step-ready/);
 
   await page.goto(`${URL}/game/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#appToast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
@@ -266,10 +269,13 @@ test("gość może dodać i usunąć kopię, ale nie ocenia ani nie wysyła gry"
   test.setTimeout(90_000);
   await loginAsGuest(page, context);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
+  // jednorazowa informacja dla gościa wstrzymuje start strony do „OK”
+  await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 20_000 });
   const game = await publishedGame(page);
   try {
-    await page.locator(`#browseGrid .mkt-card[data-id="${game.id}"]`).click();
-    await expect(page.locator("#btnAddLibrary")).toBeVisible();
+    // bezpośredni link do gry: siatka pokazuje 20 kart naraz, a kolejność zależy od katalogu
+    await page.goto(`${URL}/game/${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#btnAddLibrary")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".mkt-star-input")).toHaveCount(0);
     await expect(page.locator("#btnMySent")).toBeHidden();
     await page.locator("#btnAddLibrary").click();

@@ -120,11 +120,10 @@ const qCard = (page, i) => page.locator("#qList .qcard:not(.addTile)").nth(i);
 const aRow = (page, i) => page.locator("#aList .qf-row:not(.qf-add)").nth(i);
 const aRows = (page) => page.locator("#aList .qf-row:not(.qf-add)");
 
-// Import to jedno RPC (migracja 276): po sukcesie modal się zamyka, a w
-// stopce jest komunikat.
+// Import to jedno RPC (migracja 276): po sukcesie modal się zamyka (bez
+// komunikatu -- pole #msg zastąpił dymek błędów, E16).
 async function expectImportDone(page) {
   await expect(page.locator("#txtImportOverlay")).toBeHidden({ timeout: 20000 });
-  await expect(page.locator("#msg")).toHaveText("Import zakończony.");
 }
 
 // trg_assert_game_answers_minmax (schema.sql) blokuje UPDATE games.status na
@@ -168,12 +167,11 @@ test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie bł�
     await page.locator("#qText").fill("");
     await page.locator("#qText").blur();
 
-    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
     // Pole powinno odzwierciedlać fallback, nie zostać puste (desync).
-    await expect(page.locator("#qText")).toHaveValue("Pytanie 1");
+    await expect(page.locator("#qText")).toHaveValue("Pytanie 1", { timeout: 10000 });
 
-    const q = await getQuestionsRows(page, gameId);
-    expect(q.find((x) => x.id === qId)?.text, "pusty tekst -> fallback do domyślnej etykiety w bazie").toBe("Pytanie 1");
+    await expect.poll(async () => (await getQuestionsRows(page, gameId)).find((x) => x.id === qId)?.text,
+      { timeout: 10000, message: "pusty tekst -> fallback do domyślnej etykiety w bazie" }).toBe("Pytanie 1");
   } finally {
     await deleteGame(page, gameId);
   }
@@ -397,17 +395,13 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
 
     await aRow(page, 0).locator(".qf-pts").fill("80");
     await aRow(page, 0).locator(".qf-pts").blur();
-    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
-
     await aRow(page, 1).locator(".qf-pts").fill("50");
     await aRow(page, 1).locator(".qf-pts").blur();
-    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
 
     await expect(page.locator(".qf-sum")).toHaveClass(/over/, { timeout: 5000 });
-    await expect(page.locator(".qf-sum b")).toHaveText("130/100");
+    await expect(page.locator(".qf-sum .qf-sumChip b")).toHaveText("130/100");
 
-    // „Zapisano.” zostaje po pierwszym zapisie, więc nie potwierdza drugiego —
-    // czekamy na stan w bazie.
+    // zapis potwierdza stan w bazie
     await expect.poll(async () => {
       const answers = await getAnswersRows(page, qId);
       return answers.reduce((s, a) => s + a.fixed_points, 0);
@@ -680,7 +674,7 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
     await page.locator("#qText").fill("Nowy tekst po usunięciu gdzie indziej");
     await page.locator("#qText").blur();
 
-    await expect(page.locator("#msg")).toHaveText(
+    await expect(page.locator(".app-toast-text")).toHaveText(
       "Ten element został zmieniony lub usunięty w innym miejscu. Odśwież stronę.",
       { timeout: 10000 }
     );
@@ -787,11 +781,8 @@ test("edytor: pusta nazwa gry po blur zapisuje się jako domyślna, nie jako pus
 
     await page.locator("#gameName").fill("");
     await page.locator("#gameName").blur();
-    // Zapis nazwy gry ma własny, inny komunikat niż zapis pytania/odpowiedzi.
-    await expect(page.locator("#msg")).toHaveText("Zapisano nazwę.", { timeout: 10000 });
-
-    const game = await getGameRow(page, gameId);
-    expect(game.name, "pusta nazwa -> fallback do 'Nowa gra', nie błąd i nie pusty string").toBe("Nowa gra");
+    await expect.poll(async () => (await getGameRow(page, gameId)).name,
+      { timeout: 10000, message: "pusta nazwa -> fallback do 'Nowa gra', nie błąd i nie pusty string" }).toBe("Nowa gra");
   } finally {
     await deleteGame(page, gameId);
   }
@@ -807,11 +798,8 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
     const longName = "X".repeat(120);
     await page.locator("#gameName").fill(longName);
     await page.locator("#gameName").blur();
-    await expect(page.locator("#msg")).toHaveText("Zapisano nazwę.", { timeout: 10000 });
-
-    const game = await getGameRow(page, gameId);
-    expect(game.name.length, "nazwa w bazie nie powinna przekroczyć 80 znaków (games_name_len)").toBe(80);
-    expect(game.name).toBe("X".repeat(80));
+    await expect.poll(async () => (await getGameRow(page, gameId)).name,
+      { timeout: 10000, message: "nazwa w bazie nie powinna przekroczyć 80 znaków (games_name_len)" }).toBe("X".repeat(80));
   } finally {
     await deleteGame(page, gameId);
   }
@@ -877,9 +865,8 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await expect(qText).toHaveValue("Ala ma kota");
 
       await qText.blur();
-      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
-      const qs = await getQuestionsRows(page, gameId);
-      expect(qs.find((q) => q.id === qId).text).toBe("Ala ma kota");
+      await expect.poll(async () => (await getQuestionsRows(page, gameId)).find((q) => q.id === qId).text,
+        { timeout: 10000 }).toBe("Ala ma kota");
     } finally {
       await deleteGame(page, gameId);
     }
@@ -939,10 +926,11 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await expect(qCard(page, 0).locator(".qmeta")).toContainText("40/100");
 
       await next.blur();
-      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
-      const rows = await getAnswersRows(page, (await getQuestionsRows(page, gameId))[0].id);
-      expect(rows.find((a) => a.id === aIds[0]).fixed_points).toBe(40);
-      expect(rows.find((a) => a.id === aIds[1]).text).toBe("A2BC");
+      const firstQ = (await getQuestionsRows(page, gameId))[0].id;
+      await expect.poll(async () => {
+        const rows = await getAnswersRows(page, firstQ);
+        return [rows.find((a) => a.id === aIds[0]).fixed_points, rows.find((a) => a.id === aIds[1]).text];
+      }, { timeout: 10000 }).toEqual([40, "A2BC"]);
     } finally {
       await deleteGame(page, gameId);
     }
@@ -989,10 +977,8 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await expect(pts).toHaveValue("");
       await pts.blur();
       await expect(pts).toHaveValue("0");
-      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
-
-      const rows = await getAnswersRows(page, qId);
-      expect(rows.find((a) => a.id === aIds[0]).fixed_points).toBe(0);
+      await expect.poll(async () => (await getAnswersRows(page, qId)).find((a) => a.id === aIds[0]).fixed_points,
+        { timeout: 10000 }).toBe(0);
     } finally {
       await deleteGame(page, gameId);
     }
@@ -1105,14 +1091,15 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
       await seedPrepared(page, gameId, [["Stare 1", [["S1"]]], ["Stare 2", [["S2"]]]]);
       await openEditor(page, gameId);
 
-      // druga odpowiedź drugiego pytania pusta -> CHECK answers_text_len
+      // drugie pytanie z pustą treścią -> CHECK questions_text_len (puste
+      // odpowiedzi od E21/406 import po prostu pomija, więc nie wywołują błędu)
       const err = await page.evaluate(async (id) => {
         const { error } = await window.__sbClient.rpc("game_import_content", {
           p_game_id: id,
           p_name: "Nie zmieniaj nazwy",
           p_questions: [
             { text: "Nowe 1", answers: [{ text: "N1", points: 10 }] },
-            { text: "Nowe 2", answers: [{ text: "N2", points: 10 }, { text: "", points: 5 }] },
+            { text: "", answers: [{ text: "N2", points: 10 }] },
           ],
         });
         return error?.message || null;

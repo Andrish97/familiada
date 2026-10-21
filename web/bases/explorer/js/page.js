@@ -1,13 +1,13 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T02484";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T02484";
-import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T02484";
-import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T02484";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T02484";
-import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-21T02484";
-import { renderAll } from "./render.js?v=v2026-10-21T02484";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06445";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06445";
+import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T06445";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T06445";
+import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-21T06445";
+import { renderAll } from "./render.js?v=v2026-10-21T06445";
 
 import {
   getBaseMeta,
@@ -15,9 +15,9 @@ import {
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-10-21T02484";
-import { wireActions } from "./actions.js?v=v2026-10-21T02484";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-21T02484";
+} from "./repo.js?v=v2026-10-21T06445";
+import { wireActions } from "./actions.js?v=v2026-10-21T06445";
+import { initDrawer } from "./mobile.js?v=v2026-10-21T06445";
 
 
 /* ================= DOM ================= */
@@ -106,7 +106,6 @@ function getBaseIdFromUrl() {
 
     // ===== mobile =====
     initDrawer();
-    disableDragOnTouch();
 
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });

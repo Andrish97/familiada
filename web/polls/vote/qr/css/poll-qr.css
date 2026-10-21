@@ -41,7 +41,7 @@ body.poll-qr-body {
 .qr-fs-btn {
     position: fixed;
     top: max(14px, env(safe-area-inset-top));
-    right: max(14px, env(safe-area-inset-right));
+    right: calc(14px + env(safe-area-inset-right, 0px));
     width: 46px;
     height: 46px;
     padding: 0;

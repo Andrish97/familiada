@@ -237,7 +237,7 @@ body.mode-login #pwdHint               { display: none; }
 .login-back-fixed {
     position: fixed;
     top: max(20px, env(safe-area-inset-top));
-    left: max(20px, env(safe-area-inset-left));
+    left: calc(20px + env(safe-area-inset-left, 0px));
     z-index: 1000;
 
     display: inline-flex;
@@ -269,8 +269,8 @@ body.mode-login #pwdHint               { display: none; }
 
 .login-body .footer {
     width: 100%;
-    padding-left: max(18px, env(safe-area-inset-left));
-    padding-right: max(18px, env(safe-area-inset-right));
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
     box-sizing: border-box;
 }
 .login-body .footer::before {
@@ -278,15 +278,15 @@ body.mode-login #pwdHint               { display: none; }
 }
 @media (max-width: 980px) {
     .login-body .footer {
-        padding-left: max(15px, env(safe-area-inset-left));
-        padding-right: max(15px, env(safe-area-inset-right));
+        padding-left: calc(15px + env(safe-area-inset-left, 0px));
+        padding-right: calc(15px + env(safe-area-inset-right, 0px));
     }
 }
 
 @media (max-width: 600px) {
     .login-back-fixed {
         top: max(14px, env(safe-area-inset-top));
-        left: max(14px, env(safe-area-inset-left));
+        left: calc(14px + env(safe-area-inset-left, 0px));
         padding: 8px 12px;
         font-size: 14px;
     }

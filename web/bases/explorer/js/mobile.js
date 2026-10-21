@@ -145,18 +145,6 @@ export function addDoubleTap(el, callback) {
   }, { passive: false });
 }
 
-/**
- * Na urządzeniach dotykowych HTML5 DnD nie działa poprawnie.
- * Wyłączamy przez CSS — bez dotykania atrybutu draggable (żeby desktop działał normalnie).
- */
-export function disableDragOnTouch() {
-  if (!isTouchDevice()) return;
-
-  const style = document.createElement("style");
-  style.textContent = `[draggable="true"] { -webkit-user-drag: none; }`;
-  document.head.appendChild(style);
-}
-
 export function isTouchDevice() {
   // coarse = dotyk/rysik, fine = mysz/touchpad
   // any-pointer:fine oznacza że jest też mysz — wtedy traktujemy jako desktop

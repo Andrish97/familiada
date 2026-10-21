@@ -3,29 +3,29 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T02484";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T02484";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T02484";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-21T02484";
-import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T02484";
-import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T02484";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T06445";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T06445";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06445";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-21T06445";
+import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T06445";
+import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T06445";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   wireAnswerInput, answerFieldProblem, buildAnswerHints, loadAnswerGlyphs,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-21T02484";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T02484";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T02484";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T02484";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T02484";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-21T02484";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T02484";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-21T02484";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T02484";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-21T02484";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-21T02484";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-21T06445";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06445";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T06445";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T06445";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-21T06445";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T06445";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-21T06445";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T06445";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-21T06445";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-21T06445";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -417,8 +417,34 @@ async function boot() {
     document.body.classList.toggle("no-points", !cfg.allowPoints);
   }
 
+  // Telefon i tablet dotykowy: pytanie edytuje się w oknie od dołu (jak okno
+  // pytania w Eksploratorze; decyzja użytkownika 2026-10-20). Węższe okno
+  // komputera zostaje przy widoku pytania z „Wstecz”.
+  const editorBox = $("editor");
+  const sheetOverlay = $("questionSheetOverlay");
+  let sheetOpen = false;
+  const useQuestionSheet = () => isMobileLayout() && isSheetViewport() && !!activeQId;
+
+  function openQuestionSheet() {
+    sheetOpen = true;
+    $("qSheetBody").append(editorBox);
+    sheetOverlay.style.display = "grid";
+    enterModalSheet(sheetOverlay, { onClose: leaveQuestionEditor });
+  }
+
+  function closeQuestionSheet() {
+    sheetOpen = false;
+    sheetOverlay.style.display = "none";
+    exitModalSheet(sheetOverlay);
+    rightPanel?.append(editorBox);
+  }
+
   function syncMobileEditingState() {
-    const on = isMobileLayout() && !!activeQId;
+    const sheet = useQuestionSheet();
+    if (sheet && !sheetOpen) openQuestionSheet();
+    else if (!sheet && sheetOpen) closeQuestionSheet();
+    if (sheetOpen) $("qSheetTitle").textContent = MSG.questionLabel(activeQuestion()?.ord ?? "");
+    const on = isMobileLayout() && !!activeQId && !sheet;
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : backLabel("editor"));
   }
@@ -819,10 +845,12 @@ async function boot() {
     addA.addEventListener("click", addAnswer);
     aList.appendChild(addA);
 
-    if (cfg.allowPoints && pointsRemainTop) {
+    if (pointsRemainTop) {
+      // nagłówek „Odpowiedzi” zawsze; znacznik sumy tylko z punktami
       const box = document.createElement("div");
       box.className = "qf-sum";
       pointsRemainTop.appendChild(box);
+      renderSumPill(box, 0);
     }
 
     for (const a of answers) aList.appendChild(answerRow(a));

@@ -84,9 +84,11 @@ async function countQA(page, gameId) {
   }, gameId);
 }
 
+// Strona Gier odświeża liczniki w tle, więc „networkidle” bywa nieosiągalne —
+// czekamy na wyrenderowaną siatkę (kafel „Nowa gra” jest zawsze).
 async function openGames(page, query = "") {
   await page.goto(GAMES_URL + query, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
+  await page.locator("#grid > :is(.card, .addCard)").first().waitFor({ state: "visible", timeout: 30_000 });
 }
 
 function tileByName(page, name) {
@@ -102,14 +104,15 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   const open = page.locator(".list-search-open");
   await expect(open).toBeVisible();
   await open.click();
-  await page.locator(".uni-modal input[type=search]").fill("zachowaj po anulowaniu");
-  await page.getByRole("button", { name: "Nie", exact: true }).click();
+  // okno wpisywania (promptModal): pole .uni-inp, w stopce Anuluj i złote Zapisz
+  await page.locator(".uni-modal .uni-inp").fill("zachowaj po anulowaniu");
+  await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
   await expect(page.locator(".uni-modal")).toHaveCount(0);
   await expect(open).not.toHaveClass(/is-active/);
 
   await open.click();
-  await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
-  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await page.locator(".uni-modal .uni-inp").fill(`E20_BRAK_${Date.now()}`);
+  await page.locator(".uni-modal .uni-foot .btn.gold").click();
   await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
   await expect(open).toHaveAttribute("data-tooltip", "Wyczyść");
   const clearButton = await open.boundingBox();
@@ -183,7 +186,8 @@ test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", 
   await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
   const list = page.locator(".logoShell");
   await expect(list).toHaveClass(/skel-step-ready/);
-  await expect(page.locator("#msg")).not.toBeEmpty();
+  // błąd pierwszego odczytu: dymek z komunikatem
+  await expect(page.locator(".app-toast-text")).not.toBeEmpty();
 });
 
 test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context }) => {
@@ -211,9 +215,9 @@ test.describe("games: audyt -- kafelki", () => {
       const search = page.locator(".list-search-open");
       await expect(search).toBeVisible();
       await search.tap();
-      const searchInput = page.locator(".uni-modal input[type=search]");
+      const searchInput = page.locator(".uni-modal .uni-inp");
       await searchInput.fill(name);
-      await page.getByRole("button", { name: "OK", exact: true }).tap();
+      await page.locator(".uni-modal .uni-foot .btn.gold").tap();
 
       const tile = tileByName(page, name);
       await expect(tile).toBeVisible();
@@ -271,10 +275,13 @@ test.describe("games: audyt -- kafelki", () => {
       await expect(page.locator("#btnPlay")).toBeEnabled({ timeout: 10000 });
       await page.waitForTimeout(500);
 
-      await tile.tap();
-      await tile.tap();
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#nameInp")).toHaveValue(name);
+      // dwa tapnięcia w odstępie < 300 ms (tile.tap() czeka na gotowość elementu i w CI bywa wolniejsze)
+      const box = await tile.boundingBox();
+      const x = box.x + box.width / 2, y = box.y + box.height / 2;
+      await page.touchscreen.tap(x, y);
+      await page.touchscreen.tap(x, y);
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(".uni-modal .uni-inp")).toHaveValue(name);
     } finally {
       await deleteGamesByName(page, name);
       await ctx.close();
@@ -289,24 +296,24 @@ test.describe("games: audyt -- kafelki", () => {
     try {
       await openGames(page);
       await page.locator("#grid .addCard").click();
-      await expect(page.locator("#nameOverlay")).toBeVisible();
+      await expect(page.locator(".uni-modal")).toBeVisible();
 
-      await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameMsg")).not.toBeEmpty();
-      await expect(page.locator("#nameOverlay")).toBeVisible();
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal .uni-foot .importMsg")).not.toBeEmpty();
+      await expect(page.locator(".uni-modal")).toBeVisible();
 
-      await page.locator("#nameInp").fill(name);
-      await page.locator("#nameInp").press("Enter");
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 15000 });
+      await page.locator(".uni-modal .uni-inp").fill(name);
+      await page.locator(".uni-modal .uni-inp").press("Enter");
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 15000 });
       const tile = tileByName(page, name);
       await expect(tile).toHaveClass(/selected/);
       expect(await gamesByName(page, name)).toMatchObject([{ type: "prepared", status: "draft" }]);
 
       await tile.dblclick();
-      await expect(page.locator("#nameInp")).toHaveValue(name);
-      await page.locator("#nameInp").fill(renamed);
-      await page.locator("#nameInp").press("Enter");
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 15000 });
+      await expect(page.locator(".uni-modal .uni-inp")).toHaveValue(name);
+      await page.locator(".uni-modal .uni-inp").fill(renamed);
+      await page.locator(".uni-modal .uni-inp").press("Enter");
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 15000 });
       await expect(tileByName(page, renamed)).toBeVisible();
 
       await tileByName(page, renamed).locator(".x").click();
@@ -326,6 +333,8 @@ test.describe("games: audyt -- kafelki", () => {
     const stamp = Date.now();
     const ready = `E2E-GM-FLT-R-${stamp}`;
     const draft = `E2E-GM-FLT-D-${stamp}`;
+    // pole wyszukiwania jest widoczne, gdy pasek mieści napisy (od ~1400 px; węższy — ikony i lupa)
+    await page.setViewportSize({ width: 1400, height: 900 });
     try {
       await page.evaluate(async ({ ready, draft }) => {
         const sb = window.__sbClient;
@@ -384,13 +393,14 @@ test.describe("games: audyt -- kafelki", () => {
     try {
       await seedPreparedGame(page, name, { questions: 1 });
       await openGames(page, "?lang=pl");
-      const meta = tileByName(page, name).locator(".meta");
-      await expect(meta).toContainText("PREPAROWANA", { timeout: 15000 });
+      // kafel nie pokazuje już typu (zakładki), tylko stan -- gra z 1 pytaniem to szkic
+      const status = tileByName(page, name).locator(".cardStatus");
+      await expect(status).toContainText("SZKIC", { timeout: 15000 });
 
       await page.locator(".lang-btn").click();
       await page.locator('.lang-option[data-lang="en"]').click();
-      await expect(meta).toContainText("PREPARED", { timeout: 5000 });
-      await expect(meta).not.toContainText("PREPAROWANA");
+      await expect(status).toContainText("DRAFT", { timeout: 5000 });
+      await expect(status).not.toContainText("SZKIC");
     } finally {
       await deleteGamesByName(page, name);
     }
@@ -419,11 +429,11 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       expect(json.game).toMatchObject({ name, type: "prepared" });
       expect(json.questions).toHaveLength(10);
 
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath("shot-e20-export-success-390.png"), fullPage: true });
-      await page.locator("#btnExportJsonClose").click();
-      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
 
       await page.locator("#btnImport").click();
       await page.locator("#importFile").setInputFiles(file);
@@ -458,16 +468,16 @@ test.describe("games: audyt -- eksport / import pliku", () => {
         return route.continue();
       });
       await page.locator("#btnExport").click();
-      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await expect(page.locator(".uni-progress-msg")).toContainText("E20 controlled export error");
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
       await page.waitForTimeout(1300);
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
       await page.unroute("**/rest/v1/games**");
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       expect(download.suggestedFilename()).toBe(`${name}.famgame`);
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
     } finally {
       await page.unroute("**/rest/v1/games**");
       await deleteGamesByName(page, name);
@@ -756,8 +766,10 @@ test.describe("games: audyt -- game_validate", () => {
       expect(res.pp.poll_open).toMatchObject({ ok: false, code: "answersRange", params: { ord: 1, n: 2 } });
       expect(res.pp.play).toMatchObject({ ok: false, code: "playAfterPoll" });
       expect(res.pt.edit).toMatchObject({ ok: false, code: "pollOpenNoEdit" });
-      expect(res.pt.poll_close).toMatchObject({ ok: false, code: "noSession", params: { ord: 1 } });
-      expect(res.pt.export).toMatchObject({ ok: false });
+      // E21 (migracja 405): zamknięcie wymaga najpierw 10 pełnych ankiet
+      expect(res.pt.poll_close).toMatchObject({ ok: false, code: "tallyMinVotes", params: { min: 10, n: 0 } });
+      // E21 (migracja 404): otwartą ankietę można wyeksportować jako szkic, bez głosów
+      expect(res.pt.export).toMatchObject({ ok: true, drops_votes: true });
       expect(res.missing).toMatchObject({ ok: false, error: "not_found" });
     } finally {
       for (const n of names) await deleteGamesByName(page, n);

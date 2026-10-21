@@ -159,6 +159,7 @@
 .editorShell{
   margin-top: 0;
   height: calc(100vh - 74px - 24px); /* topbar + padding wrappera */
+  min-height: 0; /* kurczy się do miejsca nad stopką (podgląd tekstu wypychał stopkę za ekran) */
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -226,6 +227,15 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   margin: 2px 0;
 }
 
+/* Stały wiersz ustawień narzędzia: płótno nie skacze przy zmianie narzędzia
+   (testy i użytkownik klikają w to samo miejsce). Gdy narzędzie nie ma
+   ustawień -- podpowiedź zamiast pustego pasa (uwaga użytkownika 2026-10-20). */
+#toolCtxSettings:empty::before{
+  content: attr(data-empty);
+  font-size: 12px;
+  opacity: .55;
+}
+
 #toolCtxSettings{
   display: flex;
   align-items: center;
@@ -233,7 +243,8 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   /* zawija się na węższym ekranie (np. tablet w pionie) zamiast ucinać ostatnie pola */
   flex-wrap: wrap;
   row-gap: 6px;
-  min-height: 34px;
+  min-height: 36px; /* = wysokość wiersza z polami: bez skoku płótna */
+  box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.15) transparent;
   padding: 4px 8px;
@@ -260,13 +271,12 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   width: 1px;
   background: rgba(255,255,255,.12);
 }
+/* etykiety jak w przyciskach ustawień obrazu („Jasność:”) -- jeden styl edytorów logo */
 .ctxLabel{
   white-space: nowrap;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .7;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: .8;
   color: #fff;
   flex-shrink: 0;
 }
@@ -439,27 +449,6 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
 #drawFontPickPop .fontPickItem.on{ background:#232426; color:var(--gold, #ffeaa6); }
 #drawFontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
 
-/* =========================================================
-   TEXT: preview
-========================================================= */
-.prevFull{
-  height: 100%;
-  min-height: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  overflow:hidden;
-  padding: 10px;
-}
-.prevFull canvas{
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  image-rendering: pixelated;
-}
 
 /* =========================================================
    PIX PREVIEW WARNING
@@ -630,14 +619,15 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   flex-direction: column;
   min-height: 0;
 }
+/* tytuł panelu jak nagłówki sekcji w innych miejscach (.shareSectionTitle);
+   wspólny dla edytora obrazu i podglądu w edytorze tekstu */
 .imgCardTitle{
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .86;
+  font-weight: 800;
+  letter-spacing: .2px;
   margin-bottom: 8px;
 }
+
+#paneText > .imgCard{ height: 100%; box-sizing: border-box; }
 
 .imgStage{
   position: relative;
@@ -665,7 +655,8 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   justify-content:center;
   padding: 8px;
 }
-#imgBigPreview{
+#imgBigPreview,
+#paneText #bigPreview{
   width: 100%;
   height: auto;
   max-height: 100%;

@@ -1,15 +1,16 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-21T02484";
-import { initPage } from "./page-init.js?v=v2026-10-21T02484";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-21T02484";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-21T02484";
-import { toast } from "./toast.js?v=v2026-10-21T02484";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-21T02484";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-21T02484";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-21T02484";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-21T02484";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-21T02484";
-import "./contact-modal.js?v=v2026-10-21T02484";
+import { sb } from "./supabase.js?v=v2026-10-21T06445";
+import { initPage } from "./page-init.js?v=v2026-10-21T06445";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-21T06445";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-21T06445";
+import { toast } from "./toast.js?v=v2026-10-21T06445";
+import { iconText } from "./icons.js?v=v2026-10-21T06445";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-21T06445";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-21T06445";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-21T06445";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-21T06445";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-21T06445";
+import "./contact-modal.js?v=v2026-10-21T06445";
 
 
 export async function initContactsPage(pageId) {
@@ -76,7 +77,7 @@ export async function initContactsPage(pageId) {
       const link = document.createElement("a");
       link.className = "btn sm gold";
       link.href = linkTo(other);
-      link.textContent = t("contacts.go");
+      link.innerHTML = iconText("arrow-right", t("contacts.go"));
       await alertModal({ text: t(`contacts.errors.${other === "friends" ? "hasAccount" : "emailOnly"}`), body: link });
     } else {
       if (friends && result?.err === "already") {
@@ -99,8 +100,7 @@ export async function initContactsPage(pageId) {
     button.disabled = true;
     try {
       if (["remove", "cancel", "reject"].includes(kind)) {
-        const confirmKey = !friends && kind === "remove" ? "removeSubscriber" : kind;
-        if (!await confirmModal({ text: t(`contacts.confirm.${confirmKey}`) })) return;
+        if (!await confirmModal({ text: t(`contacts.confirm.${!friends && kind === "remove" ? "removeSubscriber" : kind}`) })) return;
       }
       const data = await call(friends ? `friends_${kind}` : kind === "resend" ? "polls_hub_subscriber_resend" : "polls_hub_subscriber_remove", { p_id: row.id });
       if (kind === "resend" && data.to && data.link) {
@@ -133,6 +133,7 @@ export async function initContactsPage(pageId) {
     else add("remove", "trash", false, true);
     const state = friends && row.direction === "friend" ? "active" : row.status;
     return { id: row.id, label: friends ? row.label : row.email, compact: true,
+      state: { key: state, label: t(`contacts.status.${state}`) },
       tags: state === "active" || statusIsRedundant ? [] : [{ text: t(`contacts.status.${state}`) }],
       note: friends ? row.email : row.friend_user_id ? t("contacts.accountCreated") : "",
       actions };

@@ -1,7 +1,7 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T02484";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T02484";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T02484";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T02484";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T06445";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T06445";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T06445";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T06445";
 // familiada/logos/js/list.js
 // Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logos/editor/<tryb>/
@@ -15,33 +15,33 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T02
 //   core/pinch-zoom.js – wspólny pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T02484";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-21T02484";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T02484";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T02484";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T02484";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T02484";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T02484";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T02484";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-21T02484";
-import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-21T02484";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T02484";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T02484";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T02484";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T02484";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T02484";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T06445";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-21T06445";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T06445";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T06445";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T06445";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T06445";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T06445";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-21T06445";
+import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-21T06445";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T06445";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T06445";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T06445";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T06445";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T06445";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-21T02484";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-21T02484";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-21T02484";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-21T02484";
-import { cannotEditReason } from "./text.js?v=v2026-10-21T02484";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-21T02484";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T02484";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T02484";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-21T06445";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-21T06445";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-21T06445";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-21T06445";
+import { cannotEditReason } from "./text.js?v=v2026-10-21T06445";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-21T06445";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T06445";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T06445";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-21T02484";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-21T02484";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-21T06445";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-21T06445";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -67,12 +67,6 @@ const el = {
   btnImport: $("btnImport"),
   tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
 
-  renameOverlay: $("renameOverlay"),
-  renameTitle: $("renameTitle"),
-  renameSub: $("renameSub"),
-  renameInput: $("renameInput"),
-  renameMsg: $("renameMsg"),
-  btnRenameOk: $("btnRenameOk"),
 
   importOverlay: $("logoImportOverlay"),
   importFile: $("inpImportLogoFile"),
@@ -89,10 +83,6 @@ const el = {
   btnImportCancelAction: $("btnLogoImportCancelAction"),
   btnImportDone: $("btnLogoImportDone"),
 
-  exportOverlay: $("logoExportOverlay"),
-  exportBar: $("logoExportBar"),
-  exportMsg: $("logoExportMsg"),
-  btnExportClose: $("btnLogoExportClose"),
 
   previewOverlay: $("previewOverlay"),
   previewCanvas: $("bigPreviewFull"),
@@ -195,7 +185,11 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
     DRAW: "logoEditor.create.drawSubtitle",
     IMAGE: "logoEditor.create.imageSubtitle",
   };
-  if (el.hint) el.hint.textContent = t(hintKeys[activeListMode]);
+  if (el.hint) {
+    // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
+    el.hint.removeAttribute("data-i18n");
+    el.hint.textContent = t(hintKeys[activeListMode]);
+  }
   for (const [key, tab] of Object.entries(el.tabs)) {
     const active = key === activeListMode;
     tab?.classList.toggle("active", active);
@@ -380,17 +374,26 @@ async function removeLogo(logo, name) {
 /* =========================================================
    Modal nazwy: zmiana nazwy istniejącego / nazwa nowego logo
 ========================================================= */
-let nameModal = null; // { kind:"rename", logo, lease } | { kind:"create", mode }
-
-function openNameModal(state) {
-  nameModal = state;
+// Okno nazwy -- wspólne promptModal (modal.js).
+// state: { kind:"rename", logo, lease } | { kind:"create", mode }
+async function openNameModal(state) {
   const creating = state.kind === "create";
-  el.renameTitle.textContent = t(creating ? "logoEditor.create.nameModalTitle" : "logoEditor.rename.title");
-  el.renameSub.textContent = t(creating ? "logoEditor.create.nameModalSub" : "logoEditor.rename.sub");
-  el.renameInput.value = creating ? makeUniqueName(modeLabel(state.mode)) : state.logo.name || "";
-  el.renameMsg.textContent = "";
-  openOverlay(el.renameOverlay, closeNameModal);
-  setTimeout(() => el.renameInput.select(), 0);
+  try {
+    await promptModal({
+      title: t(creating ? "logoEditor.create.nameModalTitle" : "logoEditor.rename.title"),
+      text: t(creating ? "logoEditor.create.nameModalSub" : "logoEditor.rename.sub"),
+      okText: t("logoEditor.common.save"),
+      cancelText: t("logoEditor.common.cancel"),
+      value: creating ? makeUniqueName(modeLabel(state.mode)) : state.logo.name || "",
+      placeholder: t("logoEditor.rename.placeholder"),
+      maxLength: 80,
+      selectAll: true,
+      validate: (v) => (String(v).trim() ? null : t("logoEditor.rename.emptyError")),
+      onSubmit: (v) => (creating ? createAndOpen(state.mode, String(v).trim()) : renameLogo(state, String(v).trim())),
+    });
+  } finally {
+    state.lease?.release?.();
+  }
 }
 
 // Okno zmiany nazwy trzyma logo:L wyłącznie do zamknięcia okna (docs/blokady-
@@ -409,46 +412,20 @@ async function openRenameModal(logo) {
     void alertModal({ text: lockBusyMessage(lease) });
     return;
   }
-  openNameModal({ kind: "rename", logo, lease });
+  void openNameModal({ kind: "rename", logo, lease });
 }
 
-function closeNameModal() {
-  nameModal?.lease?.release?.();
-  nameModal = null;
-  closeOverlay(el.renameOverlay);
-}
-
-async function confirmNameModal() {
-  if (!nameModal || el.btnRenameOk.disabled) return;
-  const name = el.renameInput.value.trim();
-  if (!name) {
-    el.renameMsg.textContent = t("logoEditor.rename.emptyError");
-    return;
-  }
-
-  if (nameModal.kind === "create") {
-    await createAndOpen(nameModal.mode, name);
-    return;
-  }
-
-  const { logo } = nameModal;
-  el.btnRenameOk.disabled = true;
-  el.renameMsg.textContent = "";
+/** Zapis nowej nazwy; zwraca tekst błędu (okno zostaje) albo nic. */
+async function renameLogo({ logo, lease }, name) {
+  // Blokada logo:L z otwarcia okna mogła zginąć (uśpiona karta) -- wtedy
+  // zapis stąd nadpisałby cudzą edycję. RPC i tak odmówi, ale mówimy wprost.
+  if (lease && !lease.ok) return t("resourceLock.lostMessage");
   try {
-    // Blokada logo:L z otwarcia okna mogła zginąć (uśpiona karta) -- wtedy
-    // zapis stąd nadpisałby cudzą edycję. RPC i tak odmówi, ale mówimy wprost.
-    if (nameModal.lease && !nameModal.lease.ok) {
-      el.renameMsg.textContent = t("resourceLock.lostMessage");
-      return;
-    }
     if (name !== logo.name) await updateLogo(logo.id, { name: makeUniqueName(name, logo.id) });
     await refresh();
-    closeNameModal();
   } catch (e) {
     console.error(e);
-    el.renameMsg.textContent = e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.rename.failed");
-  } finally {
-    el.btnRenameOk.disabled = false;
+    return e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.rename.failed");
   }
 }
 
@@ -467,14 +444,12 @@ function emptyPayload(mode) {
   };
 }
 
+/** Tworzy logo i przechodzi do edytora; zwraca tekst błędu (okno zostaje). */
 async function createAndOpen(mode, name) {
-  el.btnRenameOk.disabled = true;
-  el.renameMsg.textContent = "";
   try {
     // Pula logo trzymana (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
     if (await isResourceBusy("logos", currentUser.id).catch(() => false)) {
-      el.renameMsg.textContent = t("resourceLock.logoPoolBusy");
-      return;
+      return t("resourceLock.logoPoolBusy");
     }
     let finalName = makeUniqueName(name);
     let id;
@@ -490,11 +465,10 @@ async function createAndOpen(mode, name) {
       }
     }
     location.href = editorUrl(mode, id);
+    return false; // okno zostaje do przejścia na stronę edytora
   } catch (e) {
     console.error(e);
-    el.renameMsg.textContent = t("logoEditor.errors.saveFailed");
-  } finally {
-    el.btnRenameOk.disabled = false;
+    return t("logoEditor.errors.saveFailed");
   }
 }
 
@@ -620,33 +594,21 @@ async function confirmImport() {
 
 async function exportSelected() {
   if (!selectedId) return;
-  el.exportBar.style.width = "30%";
-  el.exportBar.style.background = "rgba(255,255,255,.85)";
-  el.exportMsg.textContent = "";
-  el.btnExportClose.hidden = true;
-  show(el.exportOverlay, true);
-  enterModalSheet(el.exportOverlay, {
-    backBtn: el.btnBack,
-    onClose: () => {
-      if (!el.btnExportClose.hidden) {
-        show(el.exportOverlay, false);
-        exitModalSheet(el.exportOverlay);
-      }
-    },
-  });
+  const progress = progressModal({ title: t("logoEditor.export.title"), text: t("logoEditor.export.subtitle"), doneText: t("logoEditor.export.close") });
+  progress.setPercent(30);
   try {
     const logo = await fetchLogo(selectedId);
     const fileName = `${safeFileName(logo.name, t("logoEditor.defaults.logoFileName"))}.famlogo`;
     const out = await buildExport(logo, defaultName());
-    el.exportBar.style.width = "100%";
+    progress.setPercent(100);
     downloadJson(out, fileName);
-    el.exportMsg.textContent = t("logoEditor.export.success");
+    progress.setMessage(t("logoEditor.export.success"));
   } catch (e) {
     console.error(e);
-    el.exportMsg.textContent = t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e });
-    el.exportBar.style.background = "#dc3545";
+    progress.setMessage(t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }), "error");
+    progress.setPercent(100, { isError: true });
   } finally {
-    el.btnExportClose.hidden = false;
+    progress.allowClose();
   }
 }
 
@@ -662,11 +624,6 @@ async function loadFonts() {
 
 function bindUi() {
   el.btnImportDone.addEventListener("click", () => closeOverlay(el.importOverlay));
-  el.btnExportClose.addEventListener("click", () => {
-    show(el.exportOverlay, false);
-    exitModalSheet(el.exportOverlay);
-    el.btnExportClose.hidden = true;
-  });
   bindResourceDuplicate({button:el.btnDuplicate,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async id=>{await refresh();const logo=logos.find(l=>l.id===id);if(logo)setActiveListMode(listModeForLogo(logo));selectTile(id);},onState:updateListButtons});
   bindResourceSend({button:el.btnSendCopy,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async()=>refresh(),onState:updateListButtons});
   // lista
@@ -681,16 +638,6 @@ function bindUi() {
   for (const [mode, tab] of Object.entries(el.tabs)) {
     tab?.addEventListener("click", () => setActiveListMode(mode));
   }
-
-  // modal nazwy
-  el.btnRenameOk.addEventListener("click", () => void confirmNameModal());
-  $("btnRenameCancel").addEventListener("click", closeNameModal);
-  $("btnRenameClose")?.addEventListener("click", closeNameModal);
-  closeOnBackdrop(el.renameOverlay, closeNameModal);
-  el.renameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); void confirmNameModal(); }
-    if (e.key === "Escape") { e.preventDefault(); closeNameModal(); }
-  });
 
   // import
   el.importFile.addEventListener("change", () => void onImportFileChosen());

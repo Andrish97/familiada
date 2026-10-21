@@ -13,6 +13,8 @@ set -euo pipefail
 WF="${1:?nazwa workflow, np. db-read.yml}"; shift
 REPO="${REPO:-Andrish97/familiada}"
 REF="${REF:-main}"
+# Przebiegi filtrowane po gałęzi: równoległa sesja na innej gałęzi nie podmieni
+# numeru przebiegu (wcześniej brany był najnowszy przebieg workflow).
 API="https://api.github.com/repos/$REPO"
 : "${GITHUB_TOKEN:?GITHUB_TOKEN nie ustawiony}"
 H=(-H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json")
@@ -20,7 +22,7 @@ H=(-H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+j
 INPUTS=$(python3 -c 'import json,sys; print(json.dumps(dict(a.split("=",1) for a in sys.argv[1:])))' "$@")
 BODY=$(python3 -c 'import json,sys; print(json.dumps({"ref": sys.argv[1], "inputs": json.loads(sys.argv[2])}))' "$REF" "$INPUTS")
 
-LAST=$(curl -s "${H[@]}" "$API/actions/workflows/$WF/runs?per_page=1&event=workflow_dispatch" \
+LAST=$(curl -s "${H[@]}" "$API/actions/workflows/$WF/runs?per_page=1&event=workflow_dispatch&branch=$REF" \
   | python3 -c 'import json,sys; r=json.load(sys.stdin).get("workflow_runs",[]); print(r[0]["id"] if r else 0)')
 CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${H[@]}" -H "Content-Type: application/json" \
   "$API/actions/workflows/$WF/dispatches" -d "$BODY")
@@ -28,7 +30,7 @@ CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${H[@]}" -H "Content-Type
 
 RUN=0
 for _ in $(seq 1 60); do
-  RUN=$(curl -s "${H[@]}" "$API/actions/workflows/$WF/runs?per_page=1&event=workflow_dispatch" \
+  RUN=$(curl -s "${H[@]}" "$API/actions/workflows/$WF/runs?per_page=1&event=workflow_dispatch&branch=$REF" \
     | python3 -c 'import json,sys; r=json.load(sys.stdin).get("workflow_runs",[]); print(r[0]["id"] if r else 0)')
   [ "$RUN" != "$LAST" ] && [ "$RUN" != 0 ] && break
   sleep 3

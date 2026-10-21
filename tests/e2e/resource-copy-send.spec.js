@@ -14,11 +14,11 @@ async function setMailFlag(page,id,enabled){await page.evaluate(async({id,enable
 async function cleanCopyFixtures(page){await page.evaluate(async()=>{const db=window.__sbClient;for(const kind of ['game','logo']){const {data,error}=await db.rpc('resource_copy_inbox',{p_kind:kind});if(error)throw error;for(const item of data.items||[]){if(String(item.name).startsWith('E2E-SEND-')){const {error:e}=await db.rpc('resource_copy_decide',{p_offer:item.id,p_decision:'decline'});if(e)throw e;}}}for(const [table,ownerColumn] of [['games','owner_id'],['user_logos','user_id']]){const {data:rows,error}=await db.from(table).select('id').like('name','E2E-SEND-%');if(error)throw error;for(const row of rows||[]){const {error:e}=await db.from(table).delete().eq('id',row.id);if(e)throw e;}}});}
 async function sendFromUi(page,path,selector,name,recipientId,{testInfo,captureScreenshots=false}={}){
  await page.goto(`https://www.familiada.online/${path}/`);await page.locator(selector).filter({hasText:name}).click();
- await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendDialog');await expect(dialog).toBeVisible();
+ await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendOverlay');await expect(dialog).toBeVisible();
  await dialog.locator(`input[value="${recipientId}"]`).check();
  if(captureScreenshots){for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){await page.setViewportSize({width,height});await page.screenshot({path:testInfo.outputPath(`shot-resource-copy-send-${label}.png`),fullPage:true});}await page.setViewportSize({width:1400,height:960});}
  const response=page.waitForResponse(r=>r.url().endsWith('/_api/resource-send')&&r.request().method()==='POST');
- await dialog.locator('[data-send]').click();const result=await response;expect(result.status()).toBe(200);return result.json();
+ await dialog.locator('[data-send]').click();const result=await response;const body=await result.json().catch(()=>null);expect(result.status(),`[e2e-diag] resource-send: ${JSON.stringify(body)}`).toBe(200);return body;
 }
 test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',async({page,context,browser},testInfo)=>{
  test.setTimeout(240000);const name=`E2E-SEND-${Date.now()}`;let recipientContext,recipientPage,recipientId,senderId,previousFlag;const sourceGames=[],sourceLogos=[],receivedGames=[],receivedLogos=[];
@@ -44,7 +44,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   const gameCopy=await recipientPage.evaluate(async name=>{const {data,error}=await window.__sbClient.from('games').select('id,name,received_from_label').eq('name',name).single();if(error)throw error;return data;},game.name);receivedGames.push(gameCopy.id);expect(gameCopy.received_from_label).toBeTruthy();
 
   const logo=await page.evaluate(async prefix=>{const db=window.__sbClient,{data:u}=await db.auth.getUser();const row={user_id:u.user.id,name:prefix+'-LOGO',type:'GLYPH_30x10',payload:{layers:[{color:'main',rows:['10101','01110']}],source:{mode:'TEXT',text:'RODZINA',fontId:'familiada'}}};const {data,error}=await db.from('user_logos').insert(row).select('id,name').single();if(error)throw error;return data;},name);sourceLogos.push(logo.id);
-  const logoSend=await sendFromUi(page,'logo','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
+  const logoSend=await sendFromUi(page,'logos','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
   const logoMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.parse(gameMail.received_at)+1).toISOString(),subject:/kopię|copy/i,timeout:120000});
   expect(extractHttpLinks(logoMail).some(value=>new URL(value).searchParams.has('c'))).toBeTruthy();
   await recipientPage.goto('https://www.familiada.online/logos/');await expect(recipientPage.locator('#receivedCopies')).toContainText(logo.name,{timeout:20000});

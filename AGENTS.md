@@ -16,6 +16,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
   Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
+  Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 - **Kompletna mapa stron i nawigacji (decyzja 2026-10-17):** dodanie,
   usunięcie, zmiana adresu albo zachowania dowolnej strony wymaga równoczesnej
   aktualizacji centralnej mapy nawigacji `web/shared/js/core/nav-map.js`

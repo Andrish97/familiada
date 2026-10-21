@@ -1,23 +1,23 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-21T02484";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T02484";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T02484";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T02484";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T02484";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T02484";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T02484";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T02484";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T02484";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T02484";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T02484";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T02484";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T02484";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T02484";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T02484";
+import { changeGameType } from "./change-type.js?v=v2026-10-21T06445";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T06445";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T06445";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T06445";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T06445";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T06445";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T06445";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T06445";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T06445";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T06445";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T06445";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T06445";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T06445";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T06445";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T02484";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T02484";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T02484";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T02484";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T06445";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T06445";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T06445";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T06445";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -25,10 +25,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T02484";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T02484';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T06445";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T06445';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T02484";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T06445";
 
 import {
   TYPES,
@@ -37,13 +37,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-21T02484";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T02484";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T02484";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T02484";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T02484";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T02484";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T02484";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-21T06445";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T06445";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T06445";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T06445";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T06445";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T06445";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T06445";
 
 
 const MSG = {
@@ -181,22 +181,7 @@ const importProgBar = document.getElementById("importProgBar");
 const importProgMsg = document.getElementById("importProgMsg");
 
 // Export do pliku progress (osobny overlay)
-const exportJsonOverlay = document.getElementById("exportJsonOverlay");
-const btnExportJsonClose = document.getElementById("btnExportJsonClose");
-const exportJsonSub = document.getElementById("exportJsonSub");
-const exportJsonStep = document.getElementById("exportJsonStep");
-const exportJsonCount = document.getElementById("exportJsonCount");
-const exportJsonBar = document.getElementById("exportJsonBar");
-const exportJsonMsg = document.getElementById("exportJsonMsg");
 
-// Modal zmiany nazwy
-const nameOverlay = document.getElementById("nameOverlay");
-const nameTitle = document.getElementById("nameTitle");
-const nameSub = document.getElementById("nameSub");
-const nameInp = document.getElementById("nameInp");
-const btnNameOk = document.getElementById("btnNameOk");
-const btnNameCancel = document.getElementById("btnNameCancel");
-const nameMsg = document.getElementById("nameMsg");
 
 /* ================= STATE ================= */
 let currentUser = null;
@@ -205,10 +190,7 @@ let selectedId = null;
 let marketGamesAll = [];
 let selectedMarketId = null;
 
-let renamingGameId = null;
 let renameLease = null; // blokada game:G trzymana, dopóki okno zmiany nazwy jest otwarte
-let nameMode = "rename"; // "rename" | "create"
-let creatingUiType = null;
 
 // =======================================================
 // Auto-refresh
@@ -220,8 +202,9 @@ let autoRefreshTimer = null;
 let gamesRefreshInFlight = null;
 
 function anyOverlayOpen() {
-  const ovs = [importOverlay, exportBaseOverlay, exportJsonOverlay, nameOverlay];
-  return ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
+  const ovs = [importOverlay, exportBaseOverlay];
+  return !!document.querySelector(".uni-modal")
+    || ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
 }
 
 async function refreshView() {
@@ -341,6 +324,8 @@ function showProgBlock(el, on) {
 
 function setHint(t) {
   if (!hint) return;
+  // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
+  hint.removeAttribute("data-i18n");
   hint.textContent = t || "";
 }
 
@@ -381,60 +366,60 @@ function closeImportModal() {
   exitModalSheet(importOverlay);
 }
 
-function setNameMsg(t) {
-  if (!nameMsg) return;
-  nameMsg.textContent = t || "";
-}
-
-// Okno zmiany nazwy trzyma game:G wyłącznie do zamknięcia okna (docs/blokady-
+// Okno nazwy (tworzenie i zmiana nazwy) -- wspólne promptModal (modal.js).
+// Zmiana nazwy trzyma game:G wyłącznie do zamknięcia okna (docs/blokady-
 // zasobow.md, sekcja 6) -- w tym czasie nikt nie otworzy tej gry w edytorze,
 // ustawieniach, ankiecie ani Control.
-async function openRenameModal(game) {
-  if (!game) return;
-  let lease;
+async function openNameDialog({ game = null, uiType = null } = {}) {
+  const create = !game;
+  if (!create) {
+    let lease;
+    try {
+      lease = await acquireResourceLock({ resourceType: "game", resourceId: game.id, context: "games-list" });
+    } catch (e) {
+      console.error("[games] rename lock error:", e);
+      void alertModal({ text: t("games.nameModal.failed") });
+      return;
+    }
+    if (!lease?.ok) {
+      void alertModal({ text: t(lease?.error === "gone" ? "resourceLock.goneMessage" : "resourceLock.gameMessage") });
+      return;
+    }
+    renameLease = lease;
+  }
   try {
-    lease = await acquireResourceLock({ resourceType: "game", resourceId: game.id, context: "games-list" });
-  } catch (e) {
-    console.error("[games] rename lock error:", e);
-    void alertModal({ text: t("games.nameModal.failed") });
-    return;
+    await promptModal({
+      title: t(create ? "games.nameModal.titleCreate" : "games.nameModal.title"),
+      text: t(create ? "games.nameModal.subCreate" : "games.nameModal.sub"),
+      okText: t("games.common.save"),
+      cancelText: t("games.common.cancel"),
+      value: create ? "" : (game.name || ""),
+      placeholder: t("games.nameModal.placeholder"),
+      maxLength: 80,
+      selectAll: !create,
+      validate: (v) => (String(v).trim() ? null : t("games.nameModal.empty")),
+      onSubmit: async (v) => {
+        const val = String(v).trim();
+        try {
+          if (create) {
+            const g = await createGame(uiType, val);
+            selectedId = g.id;
+          } else if (!(await renameGame(game.id, val))) {
+            return false;
+          }
+          await refresh();
+        } catch (e) {
+          console.error("[games] name modal error:", e);
+          return create ? MSG.alertCreateFailed() : t("games.nameModal.failed");
+        }
+      },
+    });
+  } finally {
+    if (!create) {
+      renameLease?.release?.();
+      renameLease = null;
+    }
   }
-  if (!lease?.ok) {
-    void alertModal({ text: t(lease?.error === "gone" ? "resourceLock.goneMessage" : "resourceLock.gameMessage") });
-    return;
-  }
-  renameLease = lease;
-  nameMode = "rename";
-  renamingGameId = game.id;
-  setNameMsg("");
-  if (nameTitle) nameTitle.textContent = t("games.nameModal.title");
-  if (nameSub) nameSub.textContent = t("games.nameModal.sub");
-  if (nameInp) nameInp.value = game.name || "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
-  setTimeout(() => nameInp?.select(), 0);
-}
-
-function openCreateModal(uiType) {
-  nameMode = "create";
-  creatingUiType = uiType;
-  setNameMsg("");
-  if (nameTitle) nameTitle.textContent = t("games.nameModal.titleCreate");
-  if (nameSub) nameSub.textContent = t("games.nameModal.subCreate");
-  if (nameInp) nameInp.value = "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
-  setTimeout(() => nameInp?.focus(), 0);
-}
-
-function closeRenameModal() {
-  renameLease?.release?.();
-  renameLease = null;
-  renamingGameId = null;
-  creatingUiType = null;
-  nameMode = "rename";
-  show(nameOverlay, false);
-  exitModalSheet(nameOverlay);
 }
 
 async function renameGame(gameId, newName) {
@@ -953,7 +938,7 @@ function cardGame(g) {
   el.addEventListener("click", () => selectGame(g.id));
 
   addRenameGesture(el, () => {
-    openRenameModal(g);
+    void openNameDialog({ game: g });
   });
 
   el.querySelector(".x").addEventListener("click", async (e) => {
@@ -1003,7 +988,7 @@ function cardAdd(uiType) {
     <div class="txt">${t("games.card.newGame")}</div>
   `;
     el.addEventListener("click", () => {
-      openCreateModal(uiType);
+      void openNameDialog({ uiType });
     });
   return el;
 }
@@ -1388,7 +1373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // wyświetlacz) — wcześniej liczył wszystkie udostępnienia, więc badge
   // obiecywał więcej pozycji niż było na stronie.
   async function refreshConnectDeviceBadge(){
-    if (!showConnectDevice) return;
+    if (!connectDeviceBadge) return;
     try{
       const { data, error } = await sb().rpc("list_shared_devices_for_me");
       if (error) throw error;
@@ -1754,42 +1739,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (!(await confirmTransferDropsVotes(gamesAll.find((g) => g.id === selectedId)))) return;
 
-    if (exportJsonSub) exportJsonSub.textContent = MSG.exportJsonSub();
-    if (btnExportJsonClose) btnExportJsonClose.hidden = true;
-    show(exportJsonOverlay, true);
-    enterModalSheet(exportJsonOverlay, {
-      backBtn: btnBackSheet,
-      onClose: () => {
-        if (!btnExportJsonClose?.hidden) {
-          show(exportJsonOverlay, false);
-          exitModalSheet(exportJsonOverlay);
-        }
-      },
-    });
-    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: MSG.exportStart(), i: 0, n: 0, msg: "" });
+    const progress = progressModal({ title: t("games.exportFile.title"), text: MSG.exportJsonSub(), doneText: t("games.exportFile.close") });
+    progress.update({ step: MSG.exportStart(), i: 0, n: 0 });
     if (btnExport) btnExport.disabled = true;
 
     try {
       const obj = await exportGame(selectedId, ({ step, i, n, msg } = {}) => {
-        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: step || MSG.exportFetch(), i, n, msg });
+        progress.update({ step: step || MSG.exportFetch(), i, n, msg });
       });
       downloadJson(safeDownloadName(obj?.game?.name), obj);
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.allowClose(); // „Gotowe” jak dotąd -- okno zamyka użytkownik
     } catch (e) {
       console.error(e);
-      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: MSG.exportErrorLabel(), i: 0, n: 1, msg: e?.message || MSG.exportFailed(), isError: true,
-      });
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.update({ step: MSG.exportErrorLabel(), i: 0, n: 1, msg: e?.message || MSG.exportFailed(), isError: true });
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
-  });
-
-  btnExportJsonClose?.addEventListener("click", () => {
-    show(exportJsonOverlay, false);
-    exitModalSheet(exportJsonOverlay);
-    btnExportJsonClose.hidden = true;
   });
 
   btnExportBase?.addEventListener("click", async () => {
@@ -1880,56 +1845,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
+  importOverlay?.addEventListener("click", (e) => {
+    if (e.target !== importOverlay) return;
+    if (importOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeImportModal();
+  });
   btnCancelImport?.addEventListener("click", closeImportModal);
   btnImportCancelAction?.addEventListener("click", closeImportModal);
-
-  // RENAME (modal)
-  btnNameCancel?.addEventListener("click", closeRenameModal);
-  document.getElementById("btnNameClose")?.addEventListener("click", closeRenameModal);
-  nameOverlay?.addEventListener("click", (ev) => {
-    if (ev.target !== nameOverlay) return;
-    if (nameOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closeRenameModal();
-  });
-  btnNameOk?.addEventListener("click", async () => {
-    if (btnNameOk?.disabled) return;
-    const val = String(nameInp?.value || "").trim();
-    if (!val) {
-      setNameMsg(t("games.nameModal.empty"));
-      nameInp?.focus();
-      return;
-    }
-
-    if (btnNameOk) btnNameOk.disabled = true;
-    setNameMsg("");
-
-    try {
-      if (nameMode === "create") {
-        const g = await createGame(creatingUiType, val);
-        selectedId = g.id;
-      } else {
-        if (!renamingGameId) return;
-        const renamed = await renameGame(renamingGameId, val);
-        if (!renamed) return;
-      }
-      await refresh();
-      closeRenameModal();
-    } catch (e) {
-      console.error("[games] name modal error:", e);
-      setNameMsg(nameMode === "create" ? MSG.alertCreateFailed() : t("games.nameModal.failed"));
-    } finally {
-      if (btnNameOk) btnNameOk.disabled = false;
-    }
-  });
-  nameInp?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      btnNameOk?.click();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      closeRenameModal();
-    }
-  });
 
   // Wczytanie pliku → podgląd w modalu
   importFile?.addEventListener("change", async () => {

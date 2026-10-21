@@ -229,6 +229,17 @@ function buildDb(lang, extras = {}) {
       return { ok: true, status: g.status, type: g.type, questions };
     }`,
     contacts_list: `fn:(args) => (args.p_kind === "friends" ? ${JSON.stringify(friends)} : ${JSON.stringify(subscribers)})`,
+    // Okno udostępniania bazy: znajomi do zaznaczenia, wysłane (oczekujące/odrzucone) i aktywne udostępnienia.
+    base_share_panel: {
+      ok: true,
+      friends: friends.filter((f) => f.direction === "friend").slice(2).map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, cooldown_until: null })),
+      // pierwsze zaproszenie z aktywnym licznikiem ponownej wysyłki (5 h)
+      outgoing: friends.filter((f) => f.direction === "friend").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 1), user_id: f.friend_user_id, label: f.label, email: f.email, status: "pending", role: "viewer", is_friend: true, email_enabled: true, cooldown_until: new Date(Date.now() + 5 * 3600e3 + 7 * 60e3).toISOString() }))
+        .concat(friends.filter((f) => f.direction === "outgoing").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 5), user_id: f.friend_user_id, label: f.label, email: f.email, status: "declined", role: "viewer", is_friend: false, email_enabled: true, cooldown_until: null }))),
+      active: friends.filter((f) => f.direction === "friend").slice(1, 2).map((f, i) => ({ task_id: id("8e00", i + 9), user_id: f.friend_user_id, label: f.label, email: f.email, status: "done", role: "editor", is_friend: true, email_enabled: true }))
+        // długa nazwa: sprawdza wielokropek i stałą wysokość kafla
+        .concat([{ task_id: id("8e00", 12), user_id: id("8810", 99), label: "bardzo_dluga_nazwa_uzytkownika_do_testu", email: "bardzo.dluga.nazwa.uzytkownika@example.test", status: "pending", role: "editor", is_friend: true, email_enabled: true, cooldown_until: null }]),
+    },
     tasks_list: tasks,
     resource_copy_inbox: [],
     snake_log: { ok: true, best: 23, games: 7 },
@@ -240,7 +251,12 @@ function buildDb(lang, extras = {}) {
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
-    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [],
+    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [
+      { share_id: "00000000-0000-4000-9300-000000000001", device_type: "display", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000002", device_type: "host", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000003", device_type: "buzzer", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000004", device_type: "display", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+    ],
     polls_vote_counts: voteCounts,
     // E21: dane podliczania (N pełnych ankiet, głosy pełnych ankiet, teksty już oczyszczone).
     poll_tally_source: `fn:(args, db) => {
@@ -288,7 +304,7 @@ function buildDb(lang, extras = {}) {
       return { ...row };
     }`,
     game_state_set_ui_lang: `fn:(args, db) => ({ ...(db.tables.game_state.find((r) => r.game_id === args.p_game_id) || {}) })`,
-    control_device_shares_list: [], friends_list: [],
+    control_device_shares_list: [], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
     control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
@@ -314,7 +330,12 @@ function buildDb(lang, extras = {}) {
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
-      "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true, subscriptions: [], items: [] },
+      "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true,
+        subscriptions: friends.filter((f) => f.direction === "friend").slice(0, 4).map((f, i) => ({ kind: "subscription", id: id("8f00", i + 1), owner_label: f.label, status: i === 1 ? "pending" : "active" })),
+        items: [
+          ...tasks.filter((x) => x.state === "todo").map((x, i) => ({ kind: "poll", id: id("8f10", i + 1), name: x.title, owner_label: x.owner_label, status: i === 0 ? "opened" : "pending", link: `/go/?t=${x.token}` })),
+          { kind: "device", id: id("8f20", 1), name: p.game, owner_label: friends[0].label, device_type: "host", link: "/go/?t=00000000-0000-4000-8000-0000000000aa" },
+        ] },
       // Panel admina (/settings/): odpowiedzi API Workera za Cloudflare Access.
       "/_admin_api/me": { ok: true, email: "admin@example.com" },
       "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },

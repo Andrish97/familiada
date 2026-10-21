@@ -91,21 +91,17 @@ body.editor-body .wrap {
 .rulesList li.ok .ico { color: #7ef0a2 }
 .rulesList li.bad .ico { color: var(--gold) }
 
+/* jak nagłówki sekcji „Treść pytania” / „Odpowiedzi” (.qf-label) */
 .panelTitle {
-    font-weight: 1000;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--gold);
-    font-size: 12px
+    font-weight: 800;
+    letter-spacing: .2px
 }
 
+/* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
 .listShell {
   --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     margin-top: 10px;
     border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.03);
-    padding: 8px;
     min-height: 0;
     flex: 1;
     overflow: auto;
@@ -209,17 +205,52 @@ body.editor-body .wrap {
     flex-direction: column;
 }
 
+/* Okno pytania na telefonie (#questionSheetOverlay), jak okno pytania
+   w Eksploratorze: treść pytania i nagłówek odpowiedzi stoją, przewija się
+   sama lista odpowiedzi, a sekcja kończy się nad dolnym safe area
+   (uwaga użytkownika 2026-10-20). */
+.modal--sheet.sheet-active .question-sheet > .sheet-modal-body {
+    overflow: hidden
+}
+
+.qSheetBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column
+}
+
+.qSheetBody .editorBox {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto
+}
+
+.qSheetBody .answersBlock {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: auto minmax(0,1fr) auto
+}
+
+body.editor-body .qSheetBody .qf-listShell {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch
+}
+
 .block {
     margin-bottom: 12px
 }
 
 .answersBlock {
-    margin-top: 10px;
+    margin-top: 0;
     display: grid;
     gap: 10px;
     min-height: 0;
     flex: 1;
-    grid-template-rows: auto auto 1fr auto; /* remainTop, head, list, hintBottom */align-content: start; /* nie rozciągaj wierszy */
+    grid-template-rows: auto 1fr auto; /* nagłówek z sumą, lista, hintBottom */align-content: start; /* nie rozciągaj wierszy */
 }
 
 .answersTop {

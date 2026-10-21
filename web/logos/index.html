@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T02484"/>
+  <meta name="app-version" content="v2026-10-21T06445"/>
 
 
   <meta charset="UTF-8"/>
@@ -16,19 +16,19 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T02484"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-21T02484"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06445"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-21T06445"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T02484"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T02484"/>
-  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-21T02484"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06445"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T06445"/>
+  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-21T06445"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <script type="module" src="/logos/js/list.js?v=v2026-10-21T02484" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T02484" defer></script>
+  <script type="module" src="/logos/js/list.js?v=v2026-10-21T06445" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06445" defer></script>
 
 </head>
 
@@ -47,7 +47,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who"></span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="close">Wyloguj</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -60,7 +60,7 @@
       <div class="bar">
         <div>
           <div class="title" data-i18n="logoEditor.list.title">Moje loga</div>
-          <div class="hint" id="hint"></div>
+          <div class="hint" id="hint" data-i18n="logoEditor.create.textSubtitle"></div>
         </div>
 
         <div class="actions">
@@ -103,26 +103,6 @@
 
     </section>
 
-  <!-- Modal: zmiana nazwy logo -->
-  <div class="overlay modal--keep-dialog" id="renameOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mHead">
-        <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
-        <button class="btn sm" id="btnRenameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
-
-      <div class="importRow">
-        <input id="renameInput" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="logoEditor.rename.placeholder"/>
-      </div>
-
-      <div class="importRow modal-actions">
-        <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel" data-i18n-icon="close">Anuluj</button>
-        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save" data-i18n-icon="save">Zapisz</button>
-        <div class="importMsg" id="renameMsg"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal: import logo -->
   <div class="overlay modal--sheet" id="logoImportOverlay" style="display:none;">
@@ -181,22 +161,6 @@
       </div>
     </div>
 
-  <!-- Progres eksportu logo -->
-  <div class="overlay modal--keep-dialog" id="logoExportOverlay" style="display:none;">
-    <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="logoEditor.export.title">Eksport…</div>
-      <div class="mSub" id="logoExportSub" data-i18n="logoEditor.export.subtitle">Nie zamykaj strony — trwa przygotowanie pliku.</div>
-      <div style="margin-top:12px;display:grid;gap:10px">
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="logoExportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85);transition:width .2s"></div>
-        </div>
-        <div class="importMsg" id="logoExportMsg" style="min-height:18px"></div>
-      </div>
-      <div class="importRow modal-actions" style="margin-top:12px;justify-content:flex-end">
-        <button class="btn sm gold" id="btnLogoExportClose" type="button" data-i18n="logoEditor.export.close" data-i18n-icon="check" hidden>Gotowe</button>
-      </div>
-    </div>
-  </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
@@ -205,8 +169,8 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T02484"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T02484"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06445"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T06445"></script>
 
 </body>
 </html>

@@ -18,21 +18,25 @@ const { serveBranchCode } = require("./helpers/branch-code");
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
-// Arkusz na telefonie zajmuje całą szerokość treści strony (main bez
-// paddingu) — margines .wrap (15 px) zostaje, jak treść strony.
-// Na telefonie „✕” w nagłówku arkusza jest ukryty (base.css: .modal--sheet
-// .sheet-active ... button[aria-label]) — arkusz zamyka przycisk „Wstecz”
-// w topbarze (modal-sheet.js przejmuje go na czas otwarcia arkusza).
-async function closeSheetViaBack(page) {
-  await page.locator(".topbar button", { hasText: "Wstecz" }).first().click();
+// Okno od dołu (decyzja 2026-10-20): na telefonie duże okna wysuwają się od
+// dołu nad stroną (strona zostaje pod przyciemnieniem), prawie na całą
+// wysokość, stopka ukryta; zamyka je pasek u góry (.sheet-handle), klik
+// w tło albo Wstecz przeglądarki. Przycisk wstecz w topbarze nie jest
+// przejmowany. Małe okna (confirm/prompt) zostają okienkami.
+async function expectBottomSheet(page, overlay, { panel = ".modal, .market-preview-card", handle = true } = {}) {
+  await expect(overlay).toHaveClass(/sheet-active/);
+  await page.waitForTimeout(450); // animacja wjazdu
+  const vp = page.viewportSize();
+  const box = await overlay.locator(panel).first().boundingBox();
+  expect(box.width, "okno na całą szerokość ekranu").toBeGreaterThanOrEqual(vp.width - 2);
+  expect(Math.round(box.y + box.height), "okno przy dolnej krawędzi").toBeGreaterThanOrEqual(vp.height - 2);
+  expect(box.y, "okno prawie na całą wysokość").toBeLessThan(60);
+  if (handle) await expect(overlay.locator(".sheet-handle")).toBeVisible();
+  await expect(page.locator(".footer")).toBeHidden();
 }
 
-async function contentWidth(page) {
-  return page.evaluate(() => {
-    const m = document.querySelector("main");
-    const cs = getComputedStyle(m);
-    return m.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  });
+async function closeSheetViaHandle(page) {
+  await page.locator(".sheet-active .sheet-handle").click();
 }
 
 /* =====================================================================
@@ -107,6 +111,13 @@ async function deleteBaseDirect(page, baseId) {
   }, baseId);
 }
 
+// Cały spec sprawdza wygląd okien z kodu brancha (strony i wspólny front).
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main") {
+    await serveBranchCode(context, { pages: ["bases", "bases/explorer", "games", "marketplace", "logos", "settings"] });
+  }
+});
+
 test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
@@ -132,15 +143,10 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
       await expect.poll(() => page.evaluate(() => history.state?.__sheetDialog || null)).toBe("shareOverlay");
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator(".bar")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
+      await expectBottomSheet(page, overlay);
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
 
-      await closeSheetViaBack(page);
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -149,8 +155,11 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
     }
   });
 
-  test("modal nazwy (tworzenie) na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  // Proste okno z jednym polem jest zwykłym okienkiem także na telefonie
+  // (modal--keep-dialog, decyzja 2026-10-20): treść strony zostaje pod spodem.
+  test("modal nazwy (tworzenie) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     let baseId = null;
@@ -160,26 +169,21 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.waitForLoadState("networkidle");
 
       await page.locator("#mineGrid .addCard").click();
-      const overlay = page.locator("#nameOverlay");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator(".bar")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
-
-      // klik w tło (poza .modal) nic nie robi na telefonie -- jedynym
-      // wyjściem jest widoczny przycisk Anuluj
-      await overlay.click({ position: { x: 5, y: 5 } });
-      await expect(overlay).toBeVisible();
-
-      await page.locator("#btnNameCancel").click();
-      await expect(overlay).toBeHidden({ timeout: 5000 });
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator(".bar")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
+
+      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await expect(overlay).toBeHidden({ timeout: 5000 });
+
+      // Esc zamyka tak samo jak X / Anuluj
+      await page.locator("#mineGrid .addCard").click();
+      await expect(overlay).toBeVisible({ timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       if (baseId) await deleteBaseDirect(page, baseId);
     }
@@ -189,7 +193,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modala", () => {
   test.use({ viewport: MOBILE_VIEWPORT, serviceWorkers: "block" });
 
-  test("btnBack pokazuje 'Wstecz' gdy #shareOverlay jest otwarty, zamyka modal (nie nawiguje) i wraca do oryginalnego tekstu", async ({ page, context }) => {
+  test("okno od dołu: topbar bez przejęcia, pasek i Wstecz przeglądarki zamykają, adres ?dialog= odtwarza okno", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
@@ -213,12 +217,12 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
       const overlay = page.locator("#shareOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      // Topbar back button przejmuje tekst "Wstecz" (z ikoną strzałki) (t("common.modalBack"));
-      // NIE ma już wewnątrz modala osobnego przycisku, który się relabeluje.
-      await expect(btnBack).toHaveText("Wstecz");
+      // Przycisk wstecz w topbarze nie jest przejmowany (okno leży nad nim).
+      await expectBottomSheet(page, overlay);
+      await expect(btnBack).toHaveText(originalText);
 
-      // Klik w topbarowy "wstecz" zamyka modal (i NIE nawiguje do innej strony).
-      await btnBack.click();
+      // Pasek u góry okna zamyka je (i NIE nawiguje do innej strony).
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       expect(page.url()).toContain("/bases");
       expect(new URL(page.url()).searchParams.has("dialog")).toBe(false);
@@ -238,8 +242,8 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
       await page.reload({ waitUntil: "domcontentloaded" });
       await expect(overlay).toBeVisible({ timeout: 10000 });
 
-      // Tekst przycisku wraca do oryginału po zamknięciu.
-      await page.locator("#btnBack").click();
+      // Wstecz przeglądarki zamyka okno; przycisk w topbarze bez zmian.
+      await page.goBack();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(btnBack).toHaveText(originalText);
     } finally {
@@ -377,12 +381,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       const overlay = page.locator("#tagsOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator("#explorerLeft")).toBeHidden();
-      await expect(page.locator(".explorer-right")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
+      await expectBottomSheet(page, overlay);
 
       await expect(page.locator("#tagsAssignList .tags-row")).toHaveCount(60, { timeout: 10000 });
 
@@ -421,7 +420,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator("#tagsAssignList .tags-row")).toHaveCount(61, { timeout: 10000 });
       await expect(page.locator("#tagsL1Save")).toBeInViewport();
 
-      await closeSheetViaBack(page);
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
@@ -462,10 +461,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       const overlay = page.locator("#exportOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-      await expect(page.locator("#explorerLeft")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
+      await expectBottomSheet(page, overlay);
 
       const scrollState = await page.locator("#exportOverlay").evaluate((overlay) => {
         const modal = overlay.querySelector(".modal");
@@ -479,15 +475,13 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
           list: overflows(list),
         };
       });
-      expect(scrollState.body, "na telefonie ma przewijać się treść arkusza").toBe(true);
+      // E20 (2026-10-17): nazwa, typ i stopka stoją, przewija się tylko lista pytań
+      expect(scrollState.list, "lista pytań ma jedyny wewnętrzny scroll").toBe(true);
+      expect(scrollState.body, "treść arkusza nie tworzy drugiego scrolla").toBe(false);
       expect(scrollState.xBody, "wewnętrzny kontener nie powinien tworzyć drugiego scrolla").toBe(false);
-      expect(scrollState.list, "lista pytań nie powinna tworzyć trzeciego scrolla").toBe(false);
       await expect(page.locator("#xCreate")).toBeInViewport();
 
-      // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
-      await overlay.click({ position: { x: 5, y: 5 } });
-      await expect(overlay).toBeVisible();
-
+      // (klik w tło zamyka okno od dołu -- sprawdzane w teście importu logo)
       const gameName = `E2E-XB-MOBILE-GAME-${Date.now()}`;
       await page.locator("#lbl0").click();
       await page.locator("#xName").fill(gameName);
@@ -526,12 +520,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       const overlay = page.locator("#questionOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-      await expect(page.locator("#explorerLeft")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
+      await expectBottomSheet(page, overlay);
 
-      await closeSheetViaBack(page);
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
@@ -539,7 +530,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal zmiany nazwy (renameModal) na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal zmiany nazwy (renameModal) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -561,22 +552,15 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(renameItem).toBeVisible({ timeout: 5000 });
       await renameItem.click();
 
-      const overlay = page.locator("#renameModal");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-      expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
-
-      await expect(page.locator("#explorerLeft")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
-
-      const btnBack = page.locator("#btnBack");
-      await expect(btnBack).toHaveText("Wstecz");
-
-      await btnBack.click();
+      // „Anuluj” w stopce zamyka okno bez zmian
+      await overlay.locator(".uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#explorerLeft")).toBeVisible();
       expect(page.url()).toContain("bases/explorer");
     } finally {
       await deleteBase(page, baseId);
@@ -607,7 +591,7 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
       }
 
       await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
+      await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
 
       const tile = page.locator("#grid .card", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
@@ -619,18 +603,49 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
       const overlay = page.locator("#exportBaseOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator(".bar")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
+      await expectBottomSheet(page, overlay);
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
 
-      await closeSheetViaBack(page);
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
+    } finally {
+      await deleteGameDirect(page, gameId);
+    }
+  });
+});
+
+test.describe("games/editor: pytanie na telefonie w oknie od dołu", () => {
+  test.use({ viewport: MOBILE_VIEWPORT });
+
+  test("kliknięcie pytania otwiera roletkę z edycją; pasek zamyka i zapisuje treść", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-EDITOR-SHEET-${Date.now()}`;
+    const gameId = await createGameDirect(page, { name, type: "prepared", status: "draft" });
+    try {
+      await addQuestionDirect(page, gameId, 1, "Pytanie testowe 1");
+      await addQuestionDirect(page, gameId, 2, "Pytanie testowe 2");
+      await page.goto(`https://www.familiada.online/games/editor/?id=${gameId}`, { waitUntil: "domcontentloaded" });
+      const card = page.locator("#qList .qcard[data-id]").nth(1);
+      await card.waitFor({ timeout: 30000 });
+      await card.click();
+
+      const overlay = page.locator("#questionSheetOverlay");
+      await expectBottomSheet(page, overlay);
+      await expect(overlay.locator("#qSheetTitle")).toHaveText(/2/);
+      await expect(page.locator("body")).not.toHaveClass(/mobile-editing/);
+      await overlay.locator("#qText").fill("Zmienione w roletce");
+
+      await closeSheetViaHandle(page);
+      await expect(overlay).toBeHidden({ timeout: 5000 });
+      await expect(page.locator(".rightPanel #editor")).toHaveCount(1);
+      await expect(page).not.toHaveURL(/[?&]q=/);
+      await expect.poll(async () => page.evaluate(async (id) => {
+        const { data } = await window.__sbClient.from("questions").select("text").eq("game_id", id).eq("ord", 2).single();
+        return data?.text;
+      }, gameId), { timeout: 10000 }).toBe("Zmienione w roletce");
     } finally {
       await deleteGameDirect(page, gameId);
     }
@@ -669,13 +684,8 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       const overlay = page.locator("#submitOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator("#viewMine")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
+      await expectBottomSheet(page, overlay);
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
 
       await page.locator("#btnSubmitCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
@@ -709,16 +719,11 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       overlay.style.display = "";
       document.body.classList.add("sheet-open");
       overlay.classList.add("sheet-active");
-      document.getElementById("btnGoGames").textContent = "Wstecz";
     });
 
     await expect(overlay).toBeVisible();
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-    expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
-    await expect(page.locator("#viewBrowse")).toBeHidden();
-    await expect(page.locator(".topbar")).toBeVisible();
-    await expect(page.locator("#btnGoGames")).toHaveText("Wstecz");
+    await expectBottomSheet(page, overlay, { handle: false });
+    await expect(page.locator("#btnGoGames")).toHaveText(originalText);
 
     await page.evaluate(() => {
       const overlay = document.getElementById("gameDetailOverlay");
@@ -769,7 +774,7 @@ async function deleteLogoDirect(page, logoId) {
 test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal zmiany nazwy logo na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal zmiany nazwy logo na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -784,21 +789,15 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.dblclick();
 
-      const overlay = page.locator("#renameOverlay");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator("#listShell")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-      await expect(page.locator(".topbar")).toBeVisible();
-
-      await page.locator("#btnRenameCancel").click();
-      await expect(overlay).toBeHidden({ timeout: 5000 });
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator("#listShell")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
+
+      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       await deleteLogoDirect(page, logoId);
     }
@@ -816,19 +815,16 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     const overlay = page.locator("#logoImportOverlay");
     await expect(overlay).toBeVisible({ timeout: 5000 });
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-    await expect(page.locator("#listShell")).toBeHidden();
-    await expect(page.locator(".footer")).toBeVisible();
+    await expectBottomSheet(page, overlay);
     await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
-    await expect(page.locator(".topbar")).toBeVisible();
 
-    // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
+    // klik w tło zamyka okno od dołu (decyzja 2026-10-20), pasek też
     await overlay.click({ position: { x: 5, y: 5 } });
-    await expect(overlay).toBeVisible();
+    await expect(overlay).toBeHidden({ timeout: 5000 });
 
-    await closeSheetViaBack(page);
+    await page.locator("#btnImport").click();
+    await expectBottomSheet(page, overlay);
+    await closeSheetViaHandle(page);
     await expect(overlay).toBeHidden({ timeout: 5000 });
     await expect(page.locator("#listShell")).toBeVisible();
     await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -855,18 +851,9 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       const overlay = page.locator("#previewOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-      expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
+      await expectBottomSheet(page, overlay);
 
-      await expect(page.locator("#listShell")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
-      await expect(page.locator(".topbar")).toBeVisible();
-
-      const btnBack = page.locator("#btnBack");
-      await expect(btnBack).toHaveText("Wstecz");
-
-      await btnBack.click();
+      await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#listShell")).toBeVisible();
       expect(page.url()).toContain("/logos/");
@@ -941,10 +928,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     const overlay = page.locator(overlaySel);
     await expect(overlay).toBeVisible();
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-    await expect(page.locator(".topbar")).toBeVisible();
+    await expectBottomSheet(page, overlay, { handle: false });
 
     await simulateSheetClose(page, overlaySel);
     await expect(overlay).toBeHidden();
@@ -962,8 +946,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     const overlay = page.locator(overlaySel);
     await expect(overlay).toBeVisible();
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
+    await expectBottomSheet(page, overlay, { handle: false });
 
     await simulateSheetClose(page, overlaySel);
     await expect(overlay).toBeHidden();
@@ -982,8 +965,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     await expect(overlay).toBeVisible();
 
     // ten modal używa .market-preview-card zamiast .modal
-    const box = await overlay.locator(".market-preview-card").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
+    await expectBottomSheet(page, overlay, { handle: false });
 
     await simulateSheetClose(page, overlaySel);
     await expect(overlay).toBeHidden();
@@ -1001,9 +983,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     const overlay = page.locator(overlaySel);
     await expect(overlay).toBeVisible();
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-    expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
+    await expectBottomSheet(page, overlay, { handle: false });
 
     await simulateSheetClose(page, overlaySel);
     await expect(overlay).toBeHidden();
@@ -1021,8 +1001,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     const overlay = page.locator(overlaySel);
     await expect(overlay).toBeVisible();
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
+    await expectBottomSheet(page, overlay, { handle: false });
 
     await simulateSheetClose(page, overlaySel);
     await expect(overlay).toBeHidden();
@@ -1062,11 +1041,8 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
     const overlay = page.locator("#e2eStatsDetailOverlay");
     await expect(overlay).toBeVisible();
 
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-    expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
-    // Przycisk "✕" w nagłówku ma być ukryty -- jedynym wyjściem w trybie
-    // sheet jest przycisk wstecz w topbarze (btnBackSheet), nie ten "✕".
+    await expectBottomSheet(page, overlay, { handle: false });
+    // Przycisk "✕" w nagłówku ukryty -- okno od dołu zamyka pasek u góry.
     await expect(overlay.locator(".uni-head button[aria-label]")).toBeHidden();
 
     await page.evaluate(() => {
@@ -1103,23 +1079,13 @@ test.describe("contact-modal: mobile sheet modal (wspólny dla wielu stron)", ()
     const overlay = page.locator("#contactModalOverlay");
     await expect(overlay).toBeVisible({ timeout: 5000 });
 
-    // Modal zastępuje treść strony tak samo jak inne rozbudowane modale --
-    // jest teraz dzieckiem main.wrap i dostał klasę modal--sheet.
-    await expect(page.locator("main.wrap > #contactModalOverlay")).toHaveCount(1);
-    const box = await overlay.locator(".modal").boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-    await expect(page.locator(".bar")).toBeHidden();
-    await expect(page.locator(".footer")).toBeVisible();
+    await expectBottomSheet(page, overlay);
     // Reguła CSS istniejąca już wcześniej (body.sheet-open .footer .btn-contact-footer)
     await expect(footerContactBtn).toBeHidden();
-    await expect(page.locator(".topbar")).toBeVisible();
 
-    // Przycisk wstecz w topbarze przejął zamykanie -- ten sam mechanizm co
-    // dla shareOverlay/nameOverlay na tej stronie.
-    await expect(btnBack).toHaveText("Wstecz");
-
-    await btnBack.click();
+    // Przycisk wstecz w topbarze nie jest przejmowany; okno zamyka pasek.
+    await expect(btnBack).toHaveText(originalText);
+    await closeSheetViaHandle(page);
     await expect(overlay).toBeHidden({ timeout: 5000 });
     await expect(page.locator(".bar")).toBeVisible();
     await expect(footerContactBtn).toBeVisible();

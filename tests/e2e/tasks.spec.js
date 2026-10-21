@@ -89,16 +89,17 @@ test("E20 zadania pokazują ładowanie, błąd i pozwalają ponowić odczyt", as
   });
   try {
     await page.setViewportSize({ width: 390, height: 844 });
-    const navigation = page.goto(TASKS_URL);
-    await expect(page.locator("#tasksLoadMessage")).toHaveText("Wczytuję zadania…");
-    await navigation;
-    await expect(page.locator("#tasksLoadMessage")).toHaveText(/Nie udało się wczytać zadań/, { timeout: 20000 });
+    // Ładowanie: szkielet strony; błąd: dymek + przycisk „Ponów” (bez osobnego komunikatu w treści)
+    await page.goto(TASKS_URL);
+    await expect(page.locator(".app-toast-text")).toHaveText(/Nie udało się wczytać zadań/, { timeout: 20000 });
     await expect(page.locator("#tasksLoadRetry")).toBeVisible();
-    await expect(page.locator(".tasks-scroll")).not.toHaveClass(/skel-step-ready/);
+    // przy błędzie szkielet znika (lista odsłonięta), żeby „Ponów” był widoczny
+    await expect(page.locator(".tasks-scroll")).toHaveClass(/skel-step-ready/);
+    await expect(page.locator(".rowsRow")).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath("shot-e20-tasks-error-390.png"), fullPage: true });
     allowRetry = true;
     await page.locator("#tasksLoadRetry").click();
-    await expect(page.locator("#tasksLoadState")).toBeHidden();
+    await expect(page.locator("#tasksLoadRetry")).toBeHidden();
     await expect(page.locator(".tasks-scroll")).toHaveClass(/skel-step-ready/);
     await expect(page.locator(".rowsRow")).toHaveCount(4);
     await page.setViewportSize({ width: 1400, height: 900 });
@@ -139,7 +140,8 @@ for (const viewport of [
           await expect(row.locator(note)).not.toContainText(/Ankieta tekstowa|Punktacja|Ankieta punktowa/);
           await expect(row.locator(note)).toContainText(task.owner_label);
         }
-        if (viewport.width <= 980) {
+        // wiersz w wersji telefonu do 640 px (base.css .rowsNote/.rowsAct); szerszy poziomy telefon ma pełną notatkę
+        if (viewport.width <= 640) {
           await expect(row.locator(".rowsNote--desktop")).toBeHidden();
           await expect(row.locator(".rowsNote--mobile")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");

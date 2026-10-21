@@ -10,11 +10,11 @@
 // game_validate) -- tu tylko do pilnowania pól i podpowiedzi w UI; o tym,
 // czy grę wolno otworzyć / grać, decyduje baza (js/core/game-validate.js).
 
-import { RULES, TYPES } from "./game-rules.js?v=v2026-10-21T02484";
-import { t } from "../../translation/translation.js?v=v2026-10-21T02484";
-import { icon } from "./icons.js?v=v2026-10-21T02484";
-import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-21T02484";
-import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-21T02484";
+import { RULES, TYPES } from "./game-rules.js?v=v2026-10-21T06445";
+import { t } from "../../translation/translation.js?v=v2026-10-21T06445";
+import { icon } from "./icons.js?v=v2026-10-21T06445";
+import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-21T06445";
+import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-21T06445";
 
 
 export const LIMITS = {
@@ -155,15 +155,20 @@ export function sumPoints(answers) {
   return s;
 }
 
-/** Pasek "SUMA x/100" -- czerwony (klasa "over") powyżej puli. */
+/** Nagłówek listy odpowiedzi z dopiskiem „Suma x/100” -- czerwony
+ *  (klasa "over") powyżej puli. Wygląd jak nagłówki list (decyzja 2026-10-20). */
 export function renderSumPill(el, sum) {
   if (!el) return;
   el.classList.toggle("over", sum > LIMITS.SUM_MAX);
   el.innerHTML = "";
   const label = document.createElement("span");
-  label.textContent = t("questionForm.sumLabel");
-  const val = document.createElement("b");
-  val.textContent = `${sum}/${LIMITS.SUM_MAX}`;
+  label.className = "qf-sumTitle";
+  label.textContent = t("questionForm.answersHeading");
+  const val = document.createElement("span");
+  val.className = "qf-sumChip";
+  const num = document.createElement("b");
+  num.textContent = `${sum}/${LIMITS.SUM_MAX}`;
+  val.append(t("questionForm.sumLabel"), num);
   el.append(label, val);
 }
 
@@ -188,16 +193,23 @@ export function buildAnswerRow({ text = "", points = null, placeholder = "", poi
 
   let iPts = null;
   if (showPoints) {
+    // punkty z dopiskiem „pkt” w jednym polu
+    const wrap = document.createElement("label");
+    wrap.className = "qf-ptsWrap";
     iPts = document.createElement("input");
     iPts.className = "qf-pts";
     iPts.value = points === null || points === undefined ? "" : String(points);
     iPts.placeholder = pointsPlaceholder;
-    row.appendChild(iPts);
+    const suffix = document.createElement("span");
+    suffix.className = "qf-ptsSuffix";
+    suffix.textContent = t("questionForm.pointsSuffix");
+    wrap.append(iPts, suffix);
+    row.appendChild(wrap);
   }
 
   const bDel = document.createElement("button");
   bDel.type = "button";
-  bDel.className = "qf-del";
+  bDel.className = "btn icon danger qf-del";
   bDel.innerHTML = icon("trash");
   bDel.title = t("questionForm.deleteAnswer");
   bDel.setAttribute("aria-label", bDel.title);

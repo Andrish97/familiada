@@ -52,6 +52,7 @@ module.exports = [
   { ...H, id: "friends", category: "Znajomi, zadania i ankiety", title: "Znajomi", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
   { ...H, id: "subscribers", category: "Znajomi, zadania i ankiety", title: "Subskrybenci", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
   { ...H, id: "tasks", category: "Znajomi, zadania i ankiety", title: "Zadania", path: "/tasks/", sources: page("tasks"), ready: "#tasksHost > *" },
+  { id: "connect-device", category: "Znajomi, zadania i ankiety", title: "Podłącz urządzenie", path: "/connect/", sources: page("connect"), ready: ".games-shell.skel-step-ready" },
   { ...H, id: "poll-share", category: "Znajomi, zadania i ankiety", title: "Udostępnianie ankiety", path: `/polls/?id=${IDS.poll}`, sources: page("polls"), ready: "#cardMain" },
   { ...H, id: "poll-vote-mobile", category: "Znajomi, zadania i ankiety", title: "Głosowanie anonimowe — telefon", path: `/polls/vote/points/?id=${IDS.poll}&key=poll103KEY`, sources: ["web/polls/vote/points/", "web/shared/js/core/poll"], ready: "#qbox", devices: ["phone"],
     // Jak w dawnym panelu: iPhone 14 (safe area 47/34) na czarnym tle 1440×900.
@@ -99,7 +100,46 @@ module.exports = [
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
+  { id: "logo-image", category: "Dodatkowe", title: "Edytor logo — obraz", path: `/logos/editor/image/?id=${id("8300", 47)}`, sources: ["web/logos/editor/image/", "web/logos/js/editor-image.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], settle: 1500 },
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
+  { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
+    steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
+  // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie (komputer: pole w liście, telefon: okno)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view, { device }) => {
+      const tab = view.locator("#contactsTabReceived");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsReceived .listTools-search:visible").first().click();
+      if (device === "phone") { await view.locator(".uni-inp").fill("k"); await view.locator(".uni-modal .btn.gold").click(); }
+      else await view.locator("#contactsReceived .listToolsInline .searchText").fill("k");
+      await view.waitForTimeout(300);
+    }] },
+  { id: "subscribers-search-prompt", category: "Dodatkowe", title: "Subskrybenci — okno wyszukiwania (telefon)", devices: ["phone"], path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabReceived");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsReceived .listTools-search:visible").first().click();
+      await view.locator(".uni-inp").fill("klasa");
+      await view.waitForTimeout(300);
+    }] },
+  { id: "subscribers-filter", category: "Dodatkowe", title: "Subskrybenci — filtr stanu (oczekujące i odrzucone)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabInvite");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsOutgoing .list-filter .ui-select-btn:visible").first().click();
+      await view.waitForTimeout(300);
+    }] },
+  { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
+  { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
+  { id: "bases-share-tools", category: "Dodatkowe", title: "Bazy — okno udostępniania z przyciskami list", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
+  { id: "bases-share-long-name", category: "Dodatkowe", title: "Bazy — udostępnione: długa nazwa użytkownika (wielokropek, stała wysokość kafla)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); await view.locator("#shareSectionsHost").evaluate((el) => { el.scrollTop = el.scrollHeight; }); await view.waitForTimeout(200); }] },
+  { id: "poll-recipients-tools", category: "Dodatkowe", title: "Ankieta — okno odbiorców z przyciskami list", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/share-sections.js"], ready: "#cardMain",
+    steps: [async (view) => { const b = view.locator("#btnAddRecipients"); if (!(await b.isVisible())) { const tab = view.locator(".slot-recipients button, #tabRecipients").first(); if (await tab.count()) await tab.click(); } await view.locator("#btnAddRecipients").click(); await view.waitForTimeout(600); }] },
+  { id: "mails-tools", category: "Dodatkowe", title: "Mails — listy subskrypcji i zadań z przyciskami", path: "/mails/", sources: ["web/mails/", "web/mail/", "web/shared/js/core/share-sections.js"], ready: "#subscriptionList > *" },
+  { id: "games-send-tools", category: "Dodatkowe", title: "Moje gry — okno Wyślij kopię (lista znajomych z przyciskami)", path: "/games/", sources: [...page("games"), "web/shared/js/core/resource-send.js", "web/shared/js/core/share-sections.js"], ready: "#grid .card",
+    steps: [selectTile("#grid .card:not(.addCard)"), async (view) => { await view.locator("#btnSendCopy").click(); await view.locator("#resourceSendOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(500); }] },
   // E21: reguły gier, edytory i podliczanie
   { id: "game-editor-answer-rules", category: "Dodatkowe", title: "Edycja gry — warunki gotowości, odpowiedź ze znakiem spoza Wyświetlacza i poniżej 4 pkt, podpowiedzi 17/finał 11", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/question-form.js", "web/shared/js/core/game-rules.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#qList .qcard:not(.addTile)").first().click(); const inp = view.locator("#aList .qf-row:not(.qf-add) .qf-text").first(); await inp.fill("kawa😀"); const pts = view.locator("#aList .qf-row:not(.qf-add) .qf-pts").nth(3); await pts.fill("2"); await pts.blur(); await view.waitForTimeout(600); }] },
@@ -107,12 +147,16 @@ module.exports = [
     steps: [selectTile("#grid .card:not(.addCard)"), openModal("#btnChangeType", ".change-type"), async (view) => { await view.locator('.change-type-option:has(input[value="poll_text"])').click(); await view.waitForTimeout(250); }] },
   { id: "base-explorer-create-game", category: "Dodatkowe", title: "Eksplorator bazy — Utwórz grę (braki informacyjnie)", devices: ["desktop"], path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer"), "web/shared/js/core/game-rules.js"], ready: "#list > *",
     steps: [async (view) => { await view.locator("#list .row[data-kind=\"q\"]").first().click(); await view.locator("#list .row[data-kind=\"q\"]").nth(1).click({ modifiers: ["Control"] }); await view.locator('#toolbar button[data-act="createGame"]').click(); await view.locator("#exportOverlay").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(300); }] },
+  { id: "game-editor-question-sheet", devices: ["phone"], category: "Dodatkowe", title: "Edycja gry na telefonie — pytanie w oknie od dołu", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/modal-sheet.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#qList .qcard[data-id]").first().click(); await view.locator("#questionSheetOverlay.sheet-active").waitFor({ timeout: 5000 }); await view.locator("#aList .qf-row:not(.qf-add)").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(500); }] },
   { id: "base-explorer-question-modal", category: "Dodatkowe", title: "Eksplorator bazy — edycja pytania (podpowiedzi nad kafelkiem dodawania)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer"), "web/shared/js/core/question-form.js", "web/shared/css/question-form.css"], ready: "#list > *",
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().dblclick(); await view.locator("#questionOverlay").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(400); }] },
   { id: "polls-tally-tie", category: "Dodatkowe", title: "Podliczanie ankiety tekstowej — remis na granicy szóstki", path: `/polls/?id=${IDS.tallyTie}`, sources: [...page("polls"), "web/shared/js/core/poll-tally-math.js", "web/shared/js/core/poll-results.js"], ready: "#cardMain",
     steps: [clickTab("#tabResults"), async (view) => { await view.locator("#btnTallyPoll").click(); await view.locator(".tallyTieInfo:not([hidden])").first().waitFor({ timeout: 8000 }); await view.waitForTimeout(400); }] },
   { id: "poll-vote-text", category: "Dodatkowe", title: "Głosowanie tekstowe — podpowiedź (17 znaków, pomijane znaki)", path: `/polls/vote/text/?id=${IDS.textPoll}&key=poll104KEY`, sources: ["web/polls/vote/text/", "web/shared/js/core/answer-text.js"], ready: "#answerInput", devices: ["phone"] },
   { id: "polls-text", category: "Dodatkowe", title: "Ankieta tekstowa — głosy", path: `/polls/?id=${IDS.textPoll}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
+  { id: "polls-tally-points", category: "Dodatkowe", title: "Podliczanie ankiety punktowej (zamykanie)", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-tally-math.js", "web/shared/js/core/poll-results.js"], ready: "#cardMain",
+    steps: [clickTab("#tabResults"), async (view) => { await view.locator("#btnTallyPoll").click(); await view.locator("#tallyBar:not([hidden])").waitFor({ timeout: 8000 }); await view.waitForTimeout(400); }] },
   { id: "polls-stopped", category: "Dodatkowe", title: "Ankieta zatrzymana — głosy", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "marketplace", category: "Dodatkowe", title: "Społeczność", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card" },
   { id: "snake-iphone", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — iPhone w poziomie (wcięcie i pasek gestu)", path: "/snake/?qr=00000000-0000-4000-8000-000000000103", devices: ["phone-landscape"], safeArea: { left: 59, right: 59, bottom: 21 },
@@ -134,6 +178,31 @@ module.exports = [
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },
+  { id: "bases-name-create", category: "Dodatkowe", title: "Bazy — okno nazwy nowej bazy (wspólne promptModal)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/modal.js"], ready: "#mineGrid > *:nth-child(2)", steps: [openModal("#mineGrid .addCard", ".uni-modal")] },
+  { id: "logos-name-create", devices: ["desktop"], category: "Dodatkowe", title: "Logo — okno nazwy nowego logo (wspólne promptModal)", path: "/logos/", sources: [...page("logos"), "web/shared/js/core/modal.js"], ready: ".logoTile", steps: [openModal("#grid .addCard", ".uni-modal")] },
+  { id: "games-export-progress", category: "Dodatkowe", title: "Moje gry — okno postępu eksportu (wspólne progressModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [selectTile("#grid .card[data-game-id]"), openModal("#btnExport", ".uni-modal")] },
+  { id: "rating-prompt", category: "Dodatkowe", title: "Prośba o ocenę — trzy przyciski (wspólne choiceModal)", path: "/games/", sources: ["web/shared/js/core/rating-system.js", "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [async (view) => {
+    await view.evaluate(async () => {
+      const m = await import("/shared/js/core/rating-system.js");
+      // okno pokazuje się po 7 dniach od rejestracji i bez wcześniejszej odmowy
+      try { for (const k of Object.keys(localStorage)) if (k.startsWith("fam:app_rat")) localStorage.removeItem(k); } catch {}
+      void m.initRatingSystem({ id: "screens-user", created_at: "2026-01-01T00:00:00Z" });
+    });
+    await view.locator("#ratingOverlay").waitFor({ state: "visible", timeout: 5000 });
+    await view.locator('#ratingOverlay .star-btn[data-value="4"]').click();
+    await view.waitForTimeout(300);
+  }] },
+  { id: "account-rating-modal", category: "Dodatkowe", title: "Konto — okno oceny", path: "/account/", sources: [...page("account"), "web/shared/js/core/rating-system.js"], ready: "#ratingEditBtn", steps: [openModal("#ratingEditBtn", "#ratingEditOverlay")] },
+  { id: "account-rating-saved", category: "Dodatkowe", title: "Konto — zapisana ocena", path: "/account/", sources: [...page("account"), "web/shared/js/core/rating-system.js"], ready: "#ratingEditBtn", steps: [async (view) => {
+    await openModal("#ratingEditBtn", "#ratingEditOverlay")(view);
+    await view.locator('#ratingEditOverlay .star-btn[data-value="4"]').click();
+    await view.locator("#ratingEditOverlay .rating-comment").fill("Świetna zabawa na rodzinnych spotkaniach, <b>bez</b> HTML.");
+    await view.locator("#ratingEditOverlay .uni-foot .btn.gold").click();
+    await view.locator("#ratingEditOverlay").waitFor({ state: "detached", timeout: 5000 });
+    await view.locator("#userRatingInfo .rating-info").waitFor({ timeout: 5000 });
+    await view.waitForTimeout(300);
+  }] },
   { id: "home", guest: true, category: "Dodatkowe", title: "Strona główna", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded", fullPage: true },
   { id: "home-gallery", guest: true, category: "Dodatkowe", title: "Strona główna — karuzela kadrów w kaflu", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(1); await shot.scrollIntoViewIfNeeded(); await view.evaluate(() => window.scrollBy(0, -120)); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-carousel-next").click(); await view.waitForFunction(() => document.querySelectorAll(".tile-shot")[1].querySelector("img.is-loaded")); await view.waitForTimeout(400); }] },

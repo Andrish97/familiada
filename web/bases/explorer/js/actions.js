@@ -12,13 +12,13 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-21T02484";
+} from "./state.js?v=v2026-10-21T06445";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-21T02484";
-import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T02484";
-import { normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-21T02484";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-21T06445";
+import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T06445";
+import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-21T06445";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-21T02484";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-21T06445";
 
 
 import {
@@ -27,20 +27,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-21T02484";
+} from "./repo.js?v=v2026-10-21T06445";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-21T02484";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-21T02484";
-import { initExportModal } from "./export-modal.js?v=v2026-10-21T02484";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-21T02484";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T02484";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T02484";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T02484";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T02484";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T02484";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T02484";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-21T02484";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T02484";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-21T06445";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-21T06445";
+import { initExportModal } from "./export-modal.js?v=v2026-10-21T06445";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-21T06445";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T06445";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T06445";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T06445";
+import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T06445";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T06445";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T06445";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-21T06445";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -1074,81 +1073,18 @@ export async function renameByKey(state, key, newValueRaw) {
   return false;
 }
 
-function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
-  const modal = document.getElementById("renameModal");
-  const input = document.getElementById("renameModalInput");
-  const btnSave = document.getElementById("renameModalSave");
-  const btnClose = document.getElementById("renameModalClose");
-  const titleEl = document.getElementById("renameModalTitle");
-
-  if (!modal || !input || !btnSave || !btnClose || !titleEl) {
-    // jeśli ktoś zapomni wkleić HTML: po prostu anuluj
-    return Promise.resolve(null);
-  }
-
-  // jednorazowe bindowanie (żeby nie dokładać listenerów przy każdym otwarciu)
-  if (!modal._wired) {
-    modal._wired = true;
-
-    modal.addEventListener("click", (e) => {
-      // klik w tło zamyka -- ale nie w trybie sheet (mobile), gdzie
-      // jedynym wyjściem ma być przycisk wstecz w topbarze.
-      if (modal.classList.contains("modal--sheet") && isSheetViewport()) return;
-      if (e.target && e.target.matches?.("[data-close]")) {
-        modal._resolver?.(null);
-      }
-    });
-
-    btnClose.addEventListener("click", () => {
-      modal._resolver?.(null);
-    });
-
-    // ESC zamyka
-    document.addEventListener("keydown", (e) => {
-      if (modal.hidden) return;
-      if (e.key === "Escape") {
-        e.preventDefault();
-        modal._resolver?.(null);
-      }
-    });
-
-    // Enter = zapisz
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        btnSave.click();
-      }
-    });
-
-    btnSave.addEventListener("click", () => {
-      const v = String(input.value || "").trim();
-      modal._resolver?.(v || null);
-    });
-  }
-
-  titleEl.textContent = title || t("baseExplorer.rename.title");
-  input.value = String(value || "");
-  input.maxLength = Number(maxLen) || 80;
-
-  modal.hidden = false;
-  enterModalSheet(modal, { backBtn: btnBack, onClose: () => modal._resolver?.(null) });
-
-  // focus + zaznacz tekst
-  setTimeout(() => {
-    try {
-      input.focus();
-      input.setSelectionRange(0, input.value.length);
-    } catch {}
-  }, 0);
-
-  return new Promise((resolve) => {
-    modal._resolver = (result) => {
-      modal.hidden = true;
-      exitModalSheet(modal);
-      modal._resolver = null;
-      resolve(result);
-    };
+// Okno zmiany nazwy -- wspólne promptModal (modal.js); pusta nazwa = anuluj.
+async function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
+  const v = await promptModal({
+    title: title || t("baseExplorer.rename.title"),
+    text: t("baseExplorer.rename.help"),
+    okText: t("baseExplorer.common.save"),
+    cancelText: t("common.cancel"),
+    value: String(value || ""),
+    maxLength: Number(maxLen) || 80,
+    selectAll: true,
   });
+  return String(v ?? "").trim() || null;
 }
 
 export async function renameSelectedPrompt(state) {
@@ -1183,7 +1119,7 @@ export async function renameSelectedPrompt(state) {
   const title = isFolder
     ? t("baseExplorer.rename.folderTitle")
     : t("baseExplorer.rename.questionTitle");
-  const maxLen = isFolder ? 80 : 200;
+  const maxLen = isFolder ? 80 : LIMITS.Q_TEXT; // pytanie: ten sam limit co w oknie pytania (E21)
   const resourceId = key.slice(2);
   let lease = null;
   try {

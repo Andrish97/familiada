@@ -577,10 +577,10 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
     await card.dblclick();
 
     // Okno zmiany nazwy trzyma game:G wyłącznie (migracja 313) -- zajęta gra
-    // nie pozwala nawet otworzyć okna: alert-modal zamiast #nameOverlay.
+    // nie pozwala nawet otworzyć okna: komunikat zamiast okna nazwy.
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
-    await expect(page.locator("#nameOverlay")).toBeHidden();
+    await expect(page.locator(".uni-modal:has(.uni-inp)")).toHaveCount(0); // okno nazwy się nie otworzyło
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     const nameAfter = await page.evaluate(async (id) => {
@@ -693,7 +693,7 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
     // Eksport nigdy się nie zaczął -- overlay postępu eksportu nie mógł się pokazać.
-    await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
   } finally {
     await editorPage.close();
@@ -814,7 +814,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     // (ustawienia gry) okno się nie otwiera, jest alert-modal z powodem.
     await tile.dblclick();
     await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia gry", { timeout: 5000 });
-    await expect(page.locator("#renameOverlay")).toBeHidden();
+    await expect(page.locator(".uni-modal:has(.uni-inp)")).toHaveCount(0); // okno nazwy się nie otworzyło
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
 
     const nameAfter = await page.evaluate(async (id) => {

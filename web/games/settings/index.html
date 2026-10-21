@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T02484"/>
+  <meta name="app-version" content="v2026-10-21T06445"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,20 +14,20 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="gameSettings.title">Familiada — ustawienia gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T02484"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T02484"/>
-  <link rel="stylesheet" href="/shared/css/game-settings.css?v=v2026-10-21T02484"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T06445"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T06445"/>
+  <link rel="stylesheet" href="/shared/css/game-settings.css?v=v2026-10-21T06445"/>
 
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T02484" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T06445" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-21T02484";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-21T06445";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/games/settings/js/game-settings.js?v=v2026-10-21T02484");
+    import("/games/settings/js/game-settings.js?v=v2026-10-21T06445");
 
   </script>
 </head>
@@ -35,7 +35,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <div class="topbar-title">
@@ -48,7 +48,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="whoStatic">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -93,7 +93,7 @@
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T02484"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T06445"></script>
 
 </body>
 </html>
