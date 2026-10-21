@@ -31,6 +31,13 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 - [x] 7b. Kosz na telefonie: bez kolumny Typ, kolumna „Zniknie” (za N dni) zaraz za nazwą — widoczna bez przewijania (`render.js` `columnsFor`). Zrzut `docs/menedzer-bazy/img/kosz-telefon.png`.
 - [x] 7c. Lokalny e2e `base-explorer` po scaleniu: 77/77; po poprawce kosza ponownie kosz + cofanie 6/6; unit 690/690.
 - [ ] 7d. Wdrożenie (migracje 427–431 → e2e brancha na produkcji → Pages → testy kontrolne) — **poza zakresem agenta do czasu decyzji użytkownika** (zasada „nic na produkcję”). Przygotowanie gotowe: branch scalony z `main`, migracje tylko dodające.
+  Lista kroków po „wdrażaj” (stan 2026-10-21: na `main` ostatnia migracja 426, numery 427–431 wolne):
+  1. Scalić świeży `main` (`git -c merge.conflictstyle=diff3 merge`, `resolve-version-conflicts.py`, sprawdzić, czy nie wrócił `web/bases/explorer/js/actions.js`, `version-assets.js`, unit).
+  2. Ocena przerwy technicznej: migracje 427–431 tylko dodają funkcje (stary kod działa dalej), ale 428 przenosi usuwanie do kosza dopiero z nowym kodem — przerwa niepotrzebna dla migracji; nowe strony zmieniają menedżer dla osób, które go mają otwartego (odświeżenie) — `maintenance-blockers.sql` przed Pages.
+  3. Migracje 427–431 na `main` → `supabase/migration_logs/latest.log`.
+  4. E2e brancha na produkcji (`serveBranchCode`, `REF=ccr-ac709a92-0mcpyq`), punktowo: `base-explorer.spec.js` w paczkach (`--grep`), konta z puli 1–8.
+  5. Pages (merge na `main`) → te same spece kontrolnie na produkcji; `e20-gallery` (przełącza widok tagów) dopiero teraz.
+  6. Wpis w Dzienniku z numerami przebiegów; 7d zamknięte.
 
 ## Co dalej
 
