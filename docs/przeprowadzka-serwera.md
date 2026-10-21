@@ -68,7 +68,7 @@ Zacznij od planu etapów i spisu ze starego serwera (tylko odczyt). Pisz po pols
 
 ## Etapy (uzgodnione 2026-10-21, sesja przeprowadzki)
 
-Stan: P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `bootstrap/bootstrap.sh`, `inventory/old-server.sh`, workflow `bootstrap.yml` i `inventory-old.yml`). **P1 — w toku** (właściciel: klucze z Termuxa, sekrety).
+Stan: P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `bootstrap/bootstrap.sh`, `inventory/old-server.sh`, workflow `bootstrap.yml` i `inventory-old.yml`). P1 zrobione 2026-10-21 (klucz właściciela z Termuxa; sekrety `INSTALL_SSH_KEY`, `NEW_SERVER_HOST`, `NEW_SERVER_KNOWN_HOSTS` w familiada-server). P3 warstwa systemowa zrobiona (`bootstrap.yml` apply: Docker, Caddy, swap 4 GB, ufw, fail2ban, konta `andrish97` i `deploy`, `/srv/familiada`, SSH tylko kluczem bez root). **Następne: P2 spis starego serwera.**
 
 | Etap | Co | Kto |
 |---|---|---|
@@ -84,3 +84,10 @@ Stan: P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `boot
 Zasada przekazywania sekretów: tylko `gh secret set NAZWA < plik` z Termuxa
 lub serwer → serwer (`scp`/`ssh` między serwerami). Nigdy wklejanie do czatu.
 Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
+
+## Decyzje właściciela (2026-10-21, sesja przeprowadzki)
+
+- Konto `andrish97` na nowym serwerze zakłada skrypt (wcześniej było tylko root); logowanie właściciela kluczem z Termuxa, `sudo` bez hasła (konto bez hasła, SSH tylko kluczem).
+- SSH: logowanie na root wyłączone, hasła wyłączone. Automat do P7 wchodzi przez `andrish97` swoim tymczasowym kluczem.
+- Cała Familiada w `/srv/familiada/` (`supabase/`, `lead-finder/`, `backups/`) zamiast `~/supabase-selfhost/supabase/docker`. Docker w miejscach systemowych.
+- Strefa czasu serwera: Europe/Warsaw.
