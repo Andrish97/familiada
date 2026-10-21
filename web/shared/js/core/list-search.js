@@ -13,6 +13,7 @@ import { promptModal } from "./modal.js?v=v2026-10-21T17405";
 import { icon } from "./icons.js?v=v2026-10-21T17405";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-21T17405";
 import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T17405";
+import { scrollFade } from "./scroll-fade.js?v=v2026-10-21T17405";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -229,21 +230,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
 
-  // Wygaszona krawędź przewijanej siatki (games.css, .has-more-above/below):
-  // kafel schowany pod krawędzią zanika zamiast ostrego cięcia — ten sam
-  // sygnał „jest więcej” co w przewijanym dolnym pasku (decyzja 2026-10-21).
-  const fadeEdges = (grid) => {
-    const max = grid.scrollHeight - grid.clientHeight;
-    grid.classList.toggle("has-more-above", max > 1 && grid.scrollTop > 1);
-    grid.classList.toggle("has-more-below", max > 1 && grid.scrollTop < max - 1);
-  };
-  const fadeRo = typeof ResizeObserver === "function" ? new ResizeObserver((entries) => entries.forEach((e) => fadeEdges(e.target))) : null;
-  for (const grid of document.querySelectorAll(grids)) {
-    grid.addEventListener("scroll", () => fadeEdges(grid), { passive: true });
-    fadeRo?.observe(grid);
-    new MutationObserver(() => fadeEdges(grid)).observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
-    fadeEdges(grid);
-  }
+  // Wygaszona krawędź przewijanej siatki — wspólny kod list (scroll-fade.js).
+  for (const grid of document.querySelectorAll(grids)) scrollFade(grid);
   window.addEventListener("i18n:lang", () => { label(); apply(); });
   if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
   if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);

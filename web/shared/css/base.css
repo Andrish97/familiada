@@ -3069,6 +3069,31 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .shareList--scroll:not([hidden]){ display: flex; flex-direction: column; }
 .shareList--scroll > *{ flex-shrink: 0; }
+/* Wygaszona krawędź przewijanych list (scroll-fade.js, decyzja 2026-10-21):
+   element schowany pod krawędzią zanika na 32 px zamiast ostrego cięcia —
+   tylko gdy za krawędzią coś jest (.has-more-above / .has-more-below).
+   Dwie warstwy maski: odwrócony gradient w obszarze wewnętrznym (padding-box)
+   „wycięty” (exclude) z pełnej warstwy — ramka listy (.qList, .moveList)
+   zostaje cała, zanika tylko treść. --scroll-fade-top: wysokość
+   przyklejonego nagłówka tabeli, pod którym zaczyna się górna maska. */
+.scroll-fade.has-more-above,
+.scroll-fade.has-more-below{
+  --sf-size: var(--scroll-fade-size, 32px);
+  --sf-top: var(--scroll-fade-top, 0px);
+  mask-image:
+    linear-gradient(to bottom,
+      transparent var(--sf-top), var(--sf-a, transparent) var(--sf-top),
+      transparent calc(var(--sf-top) + var(--sf-size)),
+      transparent calc(100% - var(--sf-size)), var(--sf-b, transparent)),
+    linear-gradient(#000 0 0);
+  mask-origin: padding-box, border-box;
+  mask-clip: border-box;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+.scroll-fade.has-more-above{ --sf-a: #000; }
+.scroll-fade.has-more-below{ --sf-b: #000; }
 /* to samo przycinanie dla list w kartach (Connect: udostępnione urządzenia) */
 #sharedDevicesList{ border-radius: 12px; }
 

@@ -9,6 +9,7 @@
 import { t } from "../../translation/translation.js?v=v2026-10-21T17405";
 import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T17405";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-21T17405";
+import "./scroll-fade.js?v=v2026-10-21T17405"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];

@@ -33,6 +33,7 @@ import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked,
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-21T17405";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-21T17405";
 import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-21T17405";
+import "./scroll-fade.js?v=v2026-10-21T17405"; // wygaszona krawędź przewijanych list (wszystkie strony)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach

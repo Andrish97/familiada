@@ -1947,7 +1947,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span><span style="opacity:.6">${t("games.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
           </div>
           ${notes.map((note) => `<div class="import-note">${escapeHtml(note)}</div>`).join("")}
-          <div style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
+          <div class="scroll-fade" style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
         importPreview.style.display = "grid";
       }
       if (btnImportJson) btnImportJson.disabled = false;

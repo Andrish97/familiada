@@ -40,6 +40,7 @@ import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10
 import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-21T17405";
 import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-21T17405";
 import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-21T17405";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-21T17405"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-21T17405";
@@ -6042,6 +6043,7 @@ async function openStatsDetailModal(type) {
 
   const tableWrap = document.createElement("div");
   tableWrap.style.cssText = "min-height:60px;overflow-y:auto;flex:1";
+  tableWrap.className = "scroll-fade";
   tableWrap.textContent = "Ładowanie…";
 
   const pageWrap = document.createElement("div");

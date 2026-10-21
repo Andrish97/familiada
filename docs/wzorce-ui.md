@@ -167,8 +167,8 @@ minimalna szerokość dla wszystkich list. Przewijana siatka (Gry, Bazy, Logo) m
 `padding:4px` oddany ujemnym `margin:-4px` — luz na poświatę zaznaczenia i
 uniesienie przy najechaniu (bez niego krawędź przewijania ucinała górę
 obwódki); na ekranie dotykowym (`hover:none`) kafel się nie unosi (2026-10-21).
-Krawędź przewijanej siatki jest **wygaszona** (maska 32 px, `.has-more-above/below`
-z `list-search.js`) tylko wtedy, gdy za nią są kafle — bez ostrego cięcia kafla
+Krawędź przewijanej siatki jest **wygaszona** (maska 32 px, wspólny
+`scroll-fade.js` — A15; `list-search.js` podpina siatki) tylko wtedy, gdy za nią są kafle — bez ostrego cięcia kafla
 nad dolnym paskiem czy sekcją „Odrzucone” w Bazach; ten sam sygnał „jest więcej”
 co w przewijanym dolnym pasku (2026-10-21). Bez `scrollbar-gutter` — kafle mają
 symetryczne marginesy jak w Grach i Bazach (Logo wyrównane 2026-10-21). Kafle
@@ -336,6 +336,41 @@ Pusta lista = kafel „+” (`.addCard`) + `.empty-state` pod nim z tekstem „B
   nie karta Preparowana).
 - Jedna nazwa na stronę: „Ustawienia gry” (decyzja), a nie „Ustawienia
   rozgrywki”; „Wstecz” tylko jako atrybut dostępności, w UI nazwa strony.
+
+## A15. Przewijane listy — wygaszona krawędź [decyzja właściciela 2026-10-21]
+
+Każda przewijana lista w aplikacji ma **ten sam** sygnał „jest więcej”: element
+schowany pod krawędzią zanika na 32 px zamiast ostrego cięcia. Dolna krawędź —
+gdy pod spodem są jeszcze elementy; górna — gdy lista jest przewinięta w dół.
+Gdy treść się mieści, maski nie ma (obwódka fokusu pierwszego i ostatniego
+elementu zostaje cała).
+
+- **Jeden kod:** `shared/js/core/scroll-fade.js` (klasy `.has-more-above` /
+  `.has-more-below` na kontenerze) + reguła `.scroll-fade` w `base.css`.
+  Moduł ładuje się na każdej stronie (`page-init.js`, `share-sections.js`,
+  panel admina `settings.js`) i sam podpina kontenery z rejestru
+  `SCROLL_FADE_SELECTOR` — także dorysowane później (okna, przerysowane listy).
+- **Nowa lista:** dopisz selektor do rejestru albo daj kontenerowi klasę
+  `.scroll-fade` w znaczniku; strona może też wywołać `scrollFade(el)`.
+  Maska działa tylko na kontenerze z `overflow-y: auto/scroll` — element bez
+  przewijania nigdy jej nie dostaje.
+- **Ramka zostaje:** maska wygasza tylko wnętrze (padding-box), ramka listy
+  (`.qList`, `.moveList`) jest cała. Przyklejony nagłówek tabeli
+  (Eksplorator, panel admina) nie zanika — górna maska zaczyna się pod nim.
+- **Bez maski:** okna z własnym tłem (`.modal`) i menu rozwijane — wygasza się
+  lista w oknie albo ciało arkusza, nie karta.
+- **Wydajność:** pasywne nasłuchy przewijania, `ResizeObserver`, jeden
+  `MutationObserver` na treść; przeliczenie najwyżej raz na klatkę
+  (`requestAnimationFrame`).
+- **Objęte listy:** siatki Gier/Baz/Logo; listy `.shareList` (Znajomi,
+  Subskrybenci, okna udostępniania i wyboru odbiorców, Wyślij kopię, poczta,
+  Connect); Zadania; Eksplorator (tabela, drzewo, tagi, kategorie, Przenieś do,
+  listy tagów i eksportu, kolory); edytor gry i edycja pytania (`.listShell`,
+  `.qf-listShell`); Ustawienia gry i Control (`.qList`, obszar i podsumowanie
+  Control); podglądy pytań (Gry, Społeczność, panel admina); wyniki ankiety;
+  lista czcionek i obrazów Logo; ciało arkusza i okien `uni-modal`; listy
+  panelu admina (poczta, generator, tabele, logi, oceniający).
+- Zrzuty: sceny `fade-*` (`scripts/screens/scenes/scroll-fade.cjs`).
 
 ---
 
