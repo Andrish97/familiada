@@ -2,12 +2,12 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T09563";
-import { initI18n, setUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T09563";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T09563";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T09563";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T09563";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T09563";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T10013";
+import { initI18n, setUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T10013";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T10013";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T10013";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T10013";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T10013";
 
 
 async function initManualI18n() {
@@ -58,7 +58,11 @@ function setActive(name, { updateUrl = true } = {}) {
     el?.classList.toggle("active", active);
     if (el) el.hidden = !active;
   });
-  if (updateUrl) setTab(name, DEFAULT_MANUAL_TAB);
+  if (updateUrl) {
+    setTab(name, DEFAULT_MANUAL_TAB);
+    // Kotwica dotyczy poprzedniej karty — po zmianie karty znika z adresu.
+    if (location.hash) replaceAnchor("");
+  }
   updateMobileTabSubtitle(name);
 }
 
@@ -93,12 +97,17 @@ function buildToc(panel) {
   doc.before(nav);
 }
 
+function replaceAnchor(id) {
+  history.replaceState(history.state, "", `${location.pathname}${location.search}${id ? `#${id}` : ""}`);
+}
+
 // Kotwica w podręczniku: przełącza kartę z danym rozdziałem i przewija do niego.
-function goToAnchor(id, { smooth = true } = {}) {
+function goToAnchor(id, { smooth = true, updateUrl = true } = {}) {
   const target = id ? document.getElementById(id) : null;
   const panel = target?.closest(".tab-panel[data-tab]");
   if (!target || !panel) return false;
   if (!panel.classList.contains("active")) setActive(panel.dataset.tab);
+  if (updateUrl) replaceAnchor(id);
   target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
   target.classList.remove("m-flash");
   void target.offsetWidth;
@@ -157,7 +166,7 @@ async function init() {
   wireRefs();
   // Pomoc kontekstowa: ?tab= wybiera kartę, #kotwica wskazuje rozdział w niej.
   const anchor = decodeURIComponent(location.hash.slice(1));
-  if (anchor) requestAnimationFrame(() => goToAnchor(anchor, { smooth: false }));
+  if (anchor) requestAnimationFrame(() => goToAnchor(anchor, { smooth: false, updateUrl: false }));
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 

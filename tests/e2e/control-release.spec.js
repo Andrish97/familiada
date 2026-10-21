@@ -30,9 +30,8 @@ test('release: approved Polish manual and native icons are published',async({pag
  const control=page.locator('#tab-control');
  await expect(control).toContainText('Ponowne kliknięcie nie usuwa oznaczenia');
  await expect(control).toContainText('Wpisanie nowej odpowiedzi samo usuwa oznaczenie powtórzenia');
+ await expect(control).toContainText('Sam brak pytań nie prowadzi do finału');
  await expect(control.locator('svg.ico').first()).toBeVisible();
- await page.locator('[data-tab="rules"]').first().click();
- await expect(page.locator('#tab-rules')).toContainText('Sam brak pytań nie prowadzi do finału');
  await page.locator('[data-tab="settings"]').first().click();
  await expect(page.locator('#tab-settings')).toContainText('2 minuty');
  await expect(page.locator('#tab-settings')).toContainText('Muzyka outro programu');
