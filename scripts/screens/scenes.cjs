@@ -326,6 +326,13 @@ module.exports = [
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  // Karty formularzy: zmiana e-maila w toku (Anuluj zmianę + Wyślij ponownie), hasło, usuwanie konta — cała strona.
+  { id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, new_email: "nowy.adres@example.com" }; },
+    ready: () => !document.getElementById("emailPendingActions")?.hidden },
+  { id: "account-guest", category: "Dodatkowe", title: "Konto gościa — zapis danych (migracja) i usuwanie konta", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, is_anonymous: true, email: null, user_metadata: { ...db.user.user_metadata, is_guest: true } }; db.rpc.guest_is_expired = false; db.rpc.guest_touch = null; },
+    ready: "main", steps: [async (view) => { await view.getByRole("button", { name: /Rozumiem|Got it|Зрозуміло/ }).click({ timeout: 5000 }).catch(() => {}); await view.waitForFunction(() => !document.getElementById("migrateSection")?.hidden, null, { timeout: 5000 }).catch(() => {}); await view.waitForTimeout(400); }] },
   { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },
   { id: "bases-name-create", category: "Dodatkowe", title: "Bazy — okno nazwy nowej bazy (wspólne promptModal)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/modal.js"], ready: "#mineGrid > *:nth-child(2)", steps: [openModal("#mineGrid .addCard", ".uni-modal")] },
   { id: "logos-name-create", devices: ["desktop"], category: "Dodatkowe", title: "Logo — okno nazwy nowego logo (wspólne promptModal)", path: "/logos/", sources: [...page("logos"), "web/shared/js/core/modal.js"], ready: ".logoTile", steps: [openModal("#grid .addCard", ".uni-modal")] },
