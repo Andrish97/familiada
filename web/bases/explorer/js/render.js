@@ -404,7 +404,7 @@ export function renderToolbar(state) {
     dis.set("copy",         !canCopy);
     dis.set("cut",          !canCut);
     dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
+    dis.set("createGame",   !(editor && (hasQuestionInSel || hasFolderInSel)));
   }
 
   if (manySel) {
@@ -415,7 +415,7 @@ export function renderToolbar(state) {
     dis.set("copy",         !canCopy);
     dis.set("cut",          !canCut);
     dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
+    dis.set("createGame",   !(editor && (hasQuestionInSel || hasFolderInSel)));
   }
   
   // zastosuj do DOM

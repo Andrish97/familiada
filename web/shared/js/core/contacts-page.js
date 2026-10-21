@@ -99,7 +99,8 @@ export async function initContactsPage(pageId) {
     button.disabled = true;
     try {
       if (["remove", "cancel", "reject"].includes(kind)) {
-        if (!await confirmModal({ text: t(`contacts.confirm.${kind}`) })) return;
+        const confirmKey = !friends && kind === "remove" ? "removeSubscriber" : kind;
+        if (!await confirmModal({ text: t(`contacts.confirm.${confirmKey}`) })) return;
       }
       const data = await call(friends ? `friends_${kind}` : kind === "resend" ? "polls_hub_subscriber_resend" : "polls_hub_subscriber_remove", { p_id: row.id });
       if (kind === "resend" && data.to && data.link) {

@@ -4642,6 +4642,11 @@ export function wireActions({ state }) {
       return;
     }
   
+    // Pisanie w polu (wyszukiwarka, okno pytania) nie usuwa zaznaczonych elementów.
+    const activeEl = document.activeElement;
+    const activeTag = String(activeEl?.tagName || "").toLowerCase();
+    if (activeTag === "input" || activeTag === "textarea" || activeTag === "select" || activeEl?.isContentEditable) return;
+
     if (e.key === "Delete") {
       // C: SEARCH – blokada
       if (!canDeleteHere(state)) {
@@ -4755,8 +4760,8 @@ export function wireActions({ state }) {
         return;
       }
 
-      // Ctrl+N / Cmd+N = nowe pytanie
-      if (mod && (e.key === "n" || e.key === "N")) {
+      // Ctrl+N / Cmd+N = nowe pytanie (z Shift — nowy folder, niżej)
+      if (mod && !e.shiftKey && (e.key === "n" || e.key === "N")) {
 
         if (!canMutateHere(state)) return;
         e.preventDefault();

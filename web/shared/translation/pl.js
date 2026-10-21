@@ -976,12 +976,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 3% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
+        text: "Punkty to udział od pełnych ankiet, zaokrąglony w dół. Odpowiedzi poniżej 4% zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 3% po zaokrągleniu są pomijane.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Punkty to udział od pełnych ankiet, zaokrąglony w dół; odpowiedzi poniżej 4% są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {
@@ -4628,7 +4628,7 @@ const pl = {
     finalP2StartName: "Rozpocznij 2 rundę",
     finalP2StartHint: "Odpowiedzi gracza 1 są ukryte.",
     finalP2StartBtn: "Rozpocznij 2 rundę",
-    finalRepeatSound: "Dźwiek powtórzenia",
+    finalRepeatSound: "Dźwięk powtórzenia",
     finalP2EntryTitle: "Runda 2 — wpisywanie",
     finalP2EntryName: "Odpowiedzi gracza 2 (20s)",
     finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
@@ -5149,7 +5149,8 @@ const pl = {
     "confirm": {
         "reject": "Odrzucić zaproszenie?",
         "cancel": "Cofnąć zaproszenie?",
-        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno."
+        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno.",
+        "removeSubscriber": "Usunąć tego subskrybenta? Jego oczekujące zaproszenia do ankiet zostaną usunięte."
     },
     "errors": {
         "alreadyFriend": "Ta osoba jest już Twoim znajomym.",

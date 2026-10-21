@@ -962,12 +962,12 @@ const en = {
       },
       tallyPoints: {
         title: "Count the votes?",
-        text: "Points are based on all votes. Answers below 3% after rounding will be skipped. Links and invitations will expire.",
+        text: "Points are the share of complete polls, rounded down. Answers below 4% will be skipped. Links and invitations will expire.",
         ok: "Approve",
       },
       tallyText: {
         title: "Approve the answers?",
-        text: "Answers will be saved with points. Shares are based on all votes; answers below 3% after rounding are skipped.",
+        text: "Answers will be saved with points. Points are the share of complete polls, rounded down; answers below 4% are skipped.",
         ok: "Approve",
       },
       reopen: {
@@ -999,7 +999,7 @@ const en = {
     tally: {
       loading: "Loading answers…",
       hintText: "Share counted from all complete polls. Below 4% — skipped (grey row). Characters the Display does not have (e.g. emoji) are removed before counting. Drag an answer onto another to merge them; click the text to fix a typo. Max 17 characters.",
-        hintPoints: "Votes converted to points from all votes. Below 3% after rounding is skipped (gray row).",
+        hintPoints: "Points = share of all complete polls. Below 4% — skipped (grey row).",
       counter: "Answers: {n} (3–6 required)",
       sum: "total points: {n}",
       votes: "{n} v.",
@@ -5241,7 +5241,8 @@ const en = {
     "confirm": {
         "reject": "Decline this invitation?",
         "cancel": "Withdraw this invitation?",
-        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately."
+        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately.",
+        "removeSubscriber": "Remove this subscriber? Their pending poll invitations will be deleted."
     },
     "errors": {
         "alreadyFriend": "This person is already your friend.",

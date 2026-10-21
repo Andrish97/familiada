@@ -3093,3 +3093,76 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
 // Mobile "sheet" modal testy (tagi/eksport/pytanie) zostały przeniesione
 // do tests/e2e/mobile-sheet-modals.spec.js -- tam są zebrane testy tego
 // mechanizmu dla wszystkich stron w jednym pliku.
+
+// E13 (2026-10-21): poprawki znalezione przy weryfikacji podręcznika — kod z brancha.
+test.describe("base-explorer: skróty i uprawnienia (E13)", () => {
+  test.use({ serviceWorkers: "block" });
+  const { serveBranchCode } = require("./helpers/branch-code");
+  const useBranch = () => process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
+
+  test("Delete w polu wyszukiwania nie usuwa zaznaczenia; Ctrl+Shift+N tworzy folder, Ctrl+N pytanie", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    if (useBranch()) await serveBranchCode(context, { pages: ["bases/explorer"] });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-E13KEYS-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "ZostajeE13", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await row.click();
+      await page.locator("#searchText").focus();
+      await page.keyboard.press("Delete");
+      await page.waitForTimeout(800);
+      await expect(page.locator(".uni-modal .mSub")).toBeHidden();
+      expect(await getQuestionRow(page, qid), "Delete w polu tekstowym nie może usuwać pytania").not.toBeNull();
+
+      const counts = () => page.evaluate(async (baseId) => {
+        const sb = window.__sbClient;
+        const c = await sb.from("qb_categories").select("id", { count: "exact", head: true }).eq("base_id", baseId);
+        const q = await sb.from("qb_questions").select("id", { count: "exact", head: true }).eq("base_id", baseId);
+        return { folders: c.count, questions: q.count };
+      }, baseId);
+
+      await page.locator("#searchText").blur();
+      await page.locator("body").click({ position: { x: 5, y: 5 } });
+      await pressToolbarShortcut(page, "newFolder", "Control+Shift+N");
+      await expect.poll(counts, { timeout: 10000 }).toEqual({ folders: 1, questions: 1 });
+
+      await pressToolbarShortcut(page, "newQuestion", "Control+n");
+      await expect.poll(counts, { timeout: 10000 }).toEqual({ folders: 1, questions: 2 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("viewer: „Utwórz grę” na pasku nieaktywne przy zaznaczonym pytaniu", async ({ page, context, browser }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-E13VIEW-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "PodgladE13", answers: [] } });
+      context2 = await browser.newContext({ serviceWorkers: "block" });
+      if (useBranch()) await serveBranchCode(context2, { pages: ["bases/explorer"] });
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
+      const user2Id = await page2.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+      await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
+
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.waitForLoadState("networkidle");
+      const row = page2.locator(`#list .row[data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await expect(page2.locator('#toolbar button[data-act="createGame"]')).toBeDisabled({ timeout: 5000 });
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+});
