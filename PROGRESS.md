@@ -86,6 +86,20 @@ E2E na branchu (spec | przebieg | wynik):
 - Uwaga: workflow e2e na `main` nie ma wejścia `max_failures` (HTTP 422) —
   przy REF=main pomijać ten parametr.
 
+## Stan na 2026-10-21 ~04:00 UTC — gotowe do wdrożenia, czeka na zgodę
+
+- e2e na branchu zielone dla wszystkich speców pakietu; logo-editor 54/55 —
+  jedyny błąd „pula zajęta po utracie blokady logo” pada identycznie na main
+  (39537348896) → znany, niezwiązany z pakietem (oczekiwanie na pulę cofnięte).
+- `origin/main` scalony (`71b4ab9`), 0 commitów za main, bez migracji
+  i zmian Workera; unit 674/674.
+- **Push na `main` (wdrożenie Pages) zablokowany przez zabezpieczenia sesji
+  („Production Deploy”) — potrzebna zgoda użytkownika** (dodanie reguły
+  uprawnień albo wdrożenie ręczne: `git push origin claude/new-session-ay1h9t:main`).
+- Po wdrożeniu: kontrolnie na produkcji (REF=main, bez `max_failures`)
+  mobile-sheet-modals, editor, base-explorer, polls --grep odlicz,
+  polls-layout, logo-editor, marketplace, poll-share; wpis w Dzienniku.
+
 ## Dalej
 
 0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
