@@ -44,5 +44,13 @@ for (const p of paths) {
       .map((a) => `${a.id} ~${Math.round(a.details.overallSavingsMs)} ms`);
     const line = `${device} ${p}: wynik ${scores[Math.floor(scores.length / 2)]} (przebiegi ${scores.join("/")}); ${metrics}; oszczędności: ${savings.join(", ") || "brak ≥100 ms"}`;
     console.log(`::notice title=Lighthouse ${device} ${p}::${line}`);
+    // Szczegóły do poprawek: element LCP i fazy LCP, pliki blokujące renderowanie.
+    const lcpItems = lhr.audits["largest-contentful-paint-element"]?.details?.items || [];
+    const node = lcpItems.flatMap((it) => it.items || [it]).find((it) => it.node)?.node;
+    const phases = (lcpItems.find((it) => it.items && !it.items[0]?.node)?.items || [])
+      .map((ph) => `${ph.phase || ph.label} ${Math.round(ph.timing || 0)} ms`).join(", ");
+    const blocking = (lhr.audits["render-blocking-resources"]?.details?.items || [])
+      .map((it) => `${it.url.replace(ORIGIN, "")} ${Math.round(it.wastedMs || 0)} ms`).join(", ");
+    console.log(`::notice title=Szczegóły ${device} ${p}::LCP: ${node?.selector || "?"} [${(node?.nodeLabel || "").slice(0, 60)}]; fazy: ${phases || "?"}; blokujące: ${blocking || "brak"}`);
   }
 }
