@@ -1433,6 +1433,7 @@ const en = {
     badges: {
       votes: ({ n }) => (Math.abs(Number(n) || 0) === 1 ? "1 vote" : `${Math.abs(Number(n) || 0)} votes`),
       toTally: "to be counted",
+      toOpen: "ready to launch",
     },
     newGame: {
       pollText: "New poll",

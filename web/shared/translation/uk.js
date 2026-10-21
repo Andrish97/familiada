@@ -1441,6 +1441,7 @@ const uk = {
         return last >= 2 && last <= 4 && (tens < 10 || tens >= 20) ? `${k} голоси` : `${k} голосів`;
       },
       toTally: "до підрахунку",
+      toOpen: "можна запускати",
     },
     newGame: {
       pollText: "Нове опитування",

@@ -807,6 +807,34 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 
+  test("szkic ankiety gotowy do uruchomienia ma etykietę „do uruchomienia”", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const stamp = Date.now();
+    const ready = `E2E-GM-TOOPEN-${stamp}`;
+    const short = `E2E-GM-TOOPEN9-${stamp}`;
+    try {
+      await page.evaluate(async ({ ready, short }) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        for (const [name, qn] of [[ready, 10], [short, 9]]) {
+          const { data: g, error } = await sb.from("games").insert({ name, owner_id: u.user.id, type: "poll_text", status: "draft" }).select("id").single();
+          if (error) throw new Error(error.message);
+          await sb.from("questions").insert(Array.from({ length: qn }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` })));
+        }
+      }, { ready, short });
+      await openGames(page, "?tab=poll_text&lang=pl");
+      await expect(tileByName(page, ready).locator(".cardStatus")).toContainText("SZKIC", { timeout: 15000 });
+      await expect(tileByName(page, ready).locator(".pollBadge")).toHaveText(/do uruchomienia/i);
+      await expect(tileByName(page, short).locator(".cardStatus")).toContainText("SZKIC");
+      await expect(tileByName(page, short).locator(".pollBadge")).toHaveCount(0);
+      await expect(tileByName(page, short).locator(".rules")).toContainText(/10/);
+    } finally {
+      await deleteGamesByName(page, ready);
+      await deleteGamesByName(page, short);
+    }
+  });
+
   test("wyłączony 'Graj' podpowiada powód z bazy, w wybranym języku", async ({ page, context }) => {
     test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
