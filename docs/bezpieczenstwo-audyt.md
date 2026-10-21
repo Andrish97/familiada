@@ -174,3 +174,47 @@ Kolejność wdrożenia:
   (stare ciasteczko nieważne; nowe ważne 12 h); opcjonalnie poprawić regułę
   nagłówków CSP w Cloudflare (dodać `frame-ancestors 'self'`, usunąć
   `leads.familiada.online` z `connect-src`) albo ją usunąć.
+
+## Paczka P2 (2026-10-21/22) — B7, B8, N5, formularz kontaktu, send-mail
+
+Zgoda właściciela. Krok A (zaplecze, zgodne wstecz) `cce88c9dd6`, poprawka
+startu send-mail `3533a5c520`, krok B (strona + migracja 455) — SHA w Dzienniku.
+
+- **B7 logowanie nazwą:** Worker `/_api/auth/login` (nazwa → e-mail kluczem
+  serwisowym, `token?grant_type=password` kluczem anon z tokenem captcha jak
+  z przeglądarki, przeglądarka dostaje tylko sesję → `setSession`); ta sama
+  odpowiedź `invalid_credentials` dla nieznanej nazwy i złego hasła; limity KV
+  nieudanych prób: 10/15 min na login, 30/15 min na IP (skróty SHA-256).
+  Reset hasła nazwą: `/_api/auth/reset` (cooldown w bazie + `/recover`).
+  Logowanie adresem e-mail bez zmian (bezpośrednio GoTrue).
+- **B7 udostępnianie:** RPC udostępnień baz, zaproszeń do znajomych i urządzeń
+  nie zwracają adresu odbiorcy; panel udostępnień bazy i lista urządzeń
+  w Control pokazują adres tylko znajomym. **Do dalszej decyzji:** lista
+  Znajomych (`friends_list`/`contacts_list`) nadal pokazuje adres przy
+  oczekujących zaproszeniach (w obie strony) — osobna zmiana UX.
+- **B8/N5:** `/_api/auth/email-status` (30/h IP, 10/h adres) i
+  `/_api/auth/resend-prepare` (10/h IP, 5/h adres; bez stanu konta w
+  odpowiedzi); funkcje bazy tylko `service_role`; `auth-email-status` usunięta;
+  `get_email_intent_status` zwraca tylko „expired”.
+- **Formularz kontaktu:** `/_api/contact` 5/h na IP i 100/h łącznie (KV), poza
+  istniejącym limitem na adres w `save_form_message`.
+- **send-mail:** wyłącznie `{ lang, items: [{ action, token, reminder }] }`;
+  odbiorca, nazwy, linki i klucze cooldownu z przydziału
+  `mail_notification_allocations` i tabel źródłowych; HTML i adres od klienta
+  odrzucane (400); goście (anonimowi / `is_guest`) — 403. Szablony:
+  `supabase/functions/_shared/notification-mail.js`, teksty kopiowane
+  z `web/shared/translation/*.js` skryptem
+  `node scripts/sync-notification-mail-texts.mjs` (test jednostkowy pilnuje
+  zgodności i identyczności dokumentu z dawnym mailem z przeglądarki).
+  Jedyna zmiana treści: przycisk maila urządzenia ma nazwę typu
+  („Otwórz: Prowadzący”; wcześniej dosłownie „{type}”).
+- **Incydent:** po kroku A funkcja send-mail nie startowała (import
+  `std/crypto` z WASM) 22:37–22:51 UTC (wdrożenia Edge 39687748087 → 39689329023) — maile powiadomień nie wychodziły (przeglądarka pokazywała „nie udało się wysłać”);
+  naprawa `3533a5c520` (MD5 w czystym JS), sprawdzone e2e 39689434179.
+- **Turnstile — wymaga właściciela:** weryfikacja tokenu po stronie Workera
+  (logowanie, rejestracja, stan adresu, formularz kontaktu) potrzebuje sekretu
+  Workera **`TURNSTILE_SECRET_KEY`** (klucz tajny widżetu dla sitekey
+  `0x4AAAAAACgSBNCEZ9064to_`; Cloudflare → Turnstile). Nie wdrożono.
+  Uwaga: testy e2e logują się z testowym sitekey (token „dummy”), co działa
+  tylko wtedy, gdy GoTrue nie weryfikuje captchy — captcha w Supabase Auth
+  jest więc najpewniej wyłączona i Turnstile działa dziś tylko w przeglądarce.
