@@ -66,12 +66,15 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9e. Uwagi użytkownika 2026-10-21: zaznaczenie w lewym panelu na całą szerokość (kontenery bez bocznego paddingu, wcięcie 10 px w wierszach i nagłówkach); linie drzewa ├/└/│ (`treeLines` w `ui/tree-row.js`) — gałąź kończy się na ostatnim dziecku; wyszukiwarka: na komputerze 520 px i jedna linia (tabletki przewijane w poziomie z wygaszeniem), na telefonie pole w pasku = podgląd, stuknięcie otwiera okno „Szukaj” (`#searchOverlay`, to samo pole przenoszone na czas edycji; nasłuch `ui/search.js` na dokumencie); nowa ikona kategorii `categories.svg` (trzy kółka jak kropki kategorii); plakietki w rogu przycisku. Test wyszukiwania na telefonie przez okno; pełny lokalny e2e 83/85 (porażki: test do nowego okna — poprawiony, `networkidle` — zielony przy powtórce).
 
+- [x] 9f. Porządki: scalony `main`; zaznaczenie drzewa czyszczone przy zmianie widoku panelu; `data-action` w menu kontekstowym; komentarze po `actions.js`; diagnostyka wolnych żądań w lokalnym e2e. Pełny lokalny e2e 85/85, EN/UK sprawdzone zrzutami.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).
 
 ## Znane problemy
 
+- Lokalne e2e: sporadycznie (1–3 na 85) `page.waitForLoadState("networkidle")` przekracza 30 s; przy powtórce zielone. `preload.cjs` loguje teraz żądania > 5 s (`[lb] wolne >5s`) — przy następnym wystąpieniu sprawdzić, które.
 - Lokalnie: stosując ponownie jedną z migracji 427–431, stosuj też wszystkie następne (427 i 428 definiują `qb_delete_items`).
 
 - Gesty i arkusz menu sprawdzone tylko w emulacji, nie na prawdziwym telefonie.

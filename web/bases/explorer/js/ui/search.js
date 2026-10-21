@@ -10,11 +10,11 @@
 // na czas edycji przenosimy to samo pole, tabletki i podpowiedzi — dlatego
 // nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07445";
-import { renderAll } from "../render.js?v=v2026-10-21T07445";
-import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07445";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07445";
-import { isNarrow } from "../render.js?v=v2026-10-21T07445";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07594";
+import { renderAll } from "../render.js?v=v2026-10-21T07594";
+import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07594";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07594";
+import { isNarrow } from "../render.js?v=v2026-10-21T07594";
 
 const TEXT_DELAY_MS = 200;
 const MAX_SUGGESTIONS = 8;
