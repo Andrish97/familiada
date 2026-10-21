@@ -64,8 +64,8 @@ E2E na branchu (spec | przebieg | wynik):
 - zielone: mobile-sheet-modals 39518844435, polls --grep odlicz 39519269320,
   poll-share 39518211119;
 - do analizy po wznowieniu: logo-editor 39517817962, polls-layout 39518631819,
-  editor.spec 39519541277 (failure); base-explorer (cały, seq18) — wynik w
-  `seq18.log`, jeśli kolejka zdążyła.
+  editor.spec 39519541277 (failure); base-explorer cały z kodem brancha
+  39520307595 — **zielony**.
 
 ## Dalej
 
