@@ -211,7 +211,7 @@ const pl = {
     narrowMessage: "Poszerz okno przeglądarki lub wyjdź z widoku podzielonego ekranu.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
-    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
+    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać ze Znajomych, Subskrybentów, Zadań i udostępniania.",
     login: "Zaloguj / Załóż konto",
   },
   resourceLock: {
@@ -355,7 +355,7 @@ const pl = {
       q25: { q: "Czy jedna osoba może prowadzić i obsługiwać grę?", a: "Może, ale przeprowadzenie finału w pojedynkę bywa trudne: trzeba wtedy wpisywać odpowiedzi graczy w Panelu sterowania i jednocześnie prowadzić grę. Warto poprosić drugą osobę o pomoc." },
       q26: { q: "Co zrobić, jeśli ekran przestanie się aktualizować?", a: "Sprawdź połączenie urządzenia z grą i otwórz ponownie jego widok. W Panelu sterowania sprawdź, czy urządzenie jest podłączone, zanim przejdziesz dalej." },
       q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W ustawieniach rozgrywki możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
-      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w Centrum ankiet widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
+      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w sekcji Odbiorcy ankiety widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
     },
     footer: {
@@ -3159,8 +3159,8 @@ const pl = {
     subscribeAdded: "Subskrypcja została dodana.",
     subscriptionInviteActive: "Zaproszenie do subskrypcji jest aktywne.",
     subscribePrompt: "Jeśli chcesz zaakceptować subskrypcję, podaj adres e-mail.",
-    acceptInHub: "Żeby zaakceptować, przejdź do Centrum ankiet.",
-    hubLabel: "Centrum ankiet",
+    acceptInHub: "Żeby zaakceptować, przejdź na stronę poniżej.",
+    hubTo: { friends: "Przejdź do Znajomych", tasks: "Przejdź do Zadań", bases: "Przejdź do Baz pytań", games: "Przejdź do Moich gier", logos: "Przejdź do Logo" },
     acceptLabel: "Akceptuj",
     declineLabel: "Odrzuć",
     subscribeLabel: "Subskrybuj",
@@ -3431,7 +3431,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
@@ -3662,7 +3662,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
