@@ -1,6 +1,6 @@
 # PROGRESS — E13 (podręcznik użytkownika)
 
-**Status:** GOTOWE DO PRZEGLĄDU — nowy podręcznik PL/EN/UK na branchu `ccr-ab64ea01-znmxxs`, nieopublikowany (decyzja użytkownika). Po akceptacji: krok 6.
+**Status:** PAUZA (decyzja użytkownika 2026-10-21) — czekamy, aż użytkownik skończy menedżer plików i poprawki. Potem: scalić `main`, sprawdzić zmienione funkcje w kodzie, dopasować rozdziały (PL→EN/UK), przebudować treść i podgląd, e2e brancha, dać do przeczytania; wdrożenie dopiero po zatwierdzeniu.
 
 **Plan (źródło prawdy):** [`docs/podrecznik-plan.md`](docs/podrecznik-plan.md) — plan uzgodniony 2026-10-20; zasady E13 w [`docs/wdrozenia.md`](docs/wdrozenia.md), „E13 — instrukcja, indeks, zrzuty i wydajność” (zasady treści manuala z 2026-10-11).
 Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
