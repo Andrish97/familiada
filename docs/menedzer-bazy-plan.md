@@ -48,7 +48,10 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     potrzebujemy tagów w wyszukiwarce” — pole wyszukiwania tylko na tekst
     (bez tabletek i `#tag`), tagi i kategorie filtruje się w lewym panelu
     (przyciski widoków z licznikiem), tekst i filtry łączą się (AND),
-    „X” przy polu czyści tekst i filtry.
+    „X” przy polu czyści tekst i filtry. Doprecyzowanie (2026-10-21):
+    na telefonie w pasku sam przycisk „Szukaj” (otwiera okno z polem),
+    na komputerze pole jak w „Przenieś do” (lupa w środku, „X” w polu,
+    gdy coś jest włączone).
   - **Do decyzji (zastąpione wyżej) — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną

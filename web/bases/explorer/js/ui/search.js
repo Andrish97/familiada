@@ -3,14 +3,14 @@
 // wyszukiwanie i filtry działają razem, tagi i kategorie filtruje się
 // w lewym panelu, bez tabletek i „#tag” w polu). Tekst łączy się z filtrami
 // z panelu (AND); „X” przy polu czyści tekst i filtry.
-// Telefon: pole w pasku jest jednoliniowym podglądem; stuknięcie otwiera okno
-// „Szukaj” (#searchOverlay), do którego na czas edycji przenosimy to samo
-// pole — dlatego nasłuch jest na dokumencie, nie na #toolbar.
+// Telefon: w pasku sam przycisk „Szukaj” (#btnSearchSheet); otwiera okno
+// (#searchOverlay), do którego na czas edycji przenosimy to samo pole z paska
+// (tam schowane) — dlatego nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T12512";
-import { renderAll, isNarrow } from "../render.js?v=v2026-10-21T12512";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T12512";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-21T12512";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T12563";
+import { renderAll } from "../render.js?v=v2026-10-21T12563";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T12563";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-21T12563";
 
 const TEXT_DELAY_MS = 200;
 
@@ -64,15 +64,13 @@ export function wireSearch(state) {
   });
 
   root.addEventListener("click", (e) => {
-    // telefon: stuknięcie w podgląd w pasku otwiera okno
-    if (isNarrow() && !sheet.isOpen() && e.target.closest("#searchBox")) { sheet.open(); return; }
-    // lupa / X: z aktywnym tekstem lub filtrem czyści wszystko, bez nich — pole
+    // telefon: przycisk „Szukaj” w pasku otwiera okno z polem
+    if (e.target.closest("#btnSearchSheet")) { sheet.open(); return; }
+    // „X” w polu: czyści tekst i filtry
     if (e.target.closest("#searchSubmitBtn")) {
       e.preventDefault();
-      const el = inp();
-      const any = !!el?.value.trim() || state.query.text || state.query.tagIds.length || state.query.types.length;
-      if (!any) { if (isNarrow() && !sheet.isOpen()) sheet.open(); else el?.focus(); return; }
       clearAll();
+      inp()?.focus();
       return;
     }
     if (e.target.closest("#searchBox")) inp()?.focus();
@@ -121,8 +119,8 @@ function wireSearchSheet(state, { clear, commit }) {
     const box = document.getElementById("searchBox");
     if (home?.parent && box) home.parent.insertBefore(box, home.next?.parentNode === home.parent ? home.next : null);
     renderAll(state);
-    // fokus na przycisku w pasku (pole w pasku to podgląd, bez klawiatury)
-    document.getElementById("searchSubmitBtn")?.focus({ preventScroll: true });
+    // fokus wraca na przycisk „Szukaj” w pasku
+    document.getElementById("btnSearchSheet")?.focus({ preventScroll: true });
   }
 
   document.getElementById("searchSheetDone")?.addEventListener("click", hide);

@@ -1165,8 +1165,9 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.locator('.left-view-tabs [data-left-view="tags"]').click();
       await expect(rowOf(qPlain)).toHaveCount(0, { timeout: 10000 });
 
-      // pole w pasku otwiera okno „Szukaj” (E22 etap 9) z tym samym polem
-      await page.locator("#searchBox").click();
+      // przycisk „Szukaj” w pasku otwiera okno z polem (na telefonie w pasku nie ma pola)
+      await expect(page.locator("#toolbar #searchBox")).toBeHidden();
+      await page.locator("#btnSearchSheet").click();
       await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#searchSheetBody #searchText")).toBeFocused();
 
@@ -1175,18 +1176,20 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(rowOf(qTagged2)).toHaveCount(0, { timeout: 10000 });
       await expect(rowOf(qTagged)).toBeVisible();
 
-      // „Gotowe” zamyka okno, pole wraca do paska z tekstem
+      // „Gotowe” zamyka okno, pole wraca do paska z tekstem, przycisk świeci
       await page.locator("#searchSheetDone").click();
       await expect(page.locator("#searchOverlay")).toBeHidden();
       await expect(page.locator("#toolbar #searchText")).toHaveValue("zolw");
+      await expect(page.locator("#btnSearchSheet")).toHaveClass(/is-active/);
 
       // „Wyczyść” w oknie zdejmuje tekst i filtr tagu
-      await page.locator("#searchBox").click();
+      await page.locator("#btnSearchSheet").click();
       await page.locator("#searchSheetClear").click();
       await page.keyboard.press("Escape");
       await expect(page.locator("#searchOverlay")).toBeHidden();
       await expect(rowOf(qPlain)).toBeVisible({ timeout: 10000 });
-      await expect(page.locator("#toolbar #searchBox")).toBeVisible();
+      await expect(page.locator("#toolbar #searchBox")).toBeAttached(); // pole wróciło do (schowanego na telefonie) paska
+      await expect(page.locator("#btnSearchSheet")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }
@@ -3791,8 +3794,9 @@ test.describe("base-explorer: Przenieś do — klawiatura i adres (E22 przegląd
       await page.goto(`${BASE_URL}?id=${baseId}&dialog=searchOverlay`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
       await expect(page.locator("#searchOverlay")).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#toolbar #searchBox")).toBeVisible();
-      await page.locator("#searchBox").click();
+      await expect(page.locator("#toolbar #searchBox")).toBeAttached(); // pole wróciło do (schowanego na telefonie) paska
+      await expect(page.locator("#btnSearchSheet")).toBeVisible();
+      await page.locator("#btnSearchSheet").click();
       await expect(page.locator("#searchSheetBody #searchText")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);

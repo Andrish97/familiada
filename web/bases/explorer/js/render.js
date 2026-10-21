@@ -3,13 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T12512";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T12512";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T12512";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12512";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T12512";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T12512";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T12512";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T12563";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T12563";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T12563";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12563";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T12563";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T12563";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T12563";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -116,14 +116,16 @@ export function renderToolbar(state) {
     elToolbar.innerHTML = `
       <div class="search-row">
         <div class="searchBox" id="searchBox">
-          <input id="searchText" class="searchText" autocomplete="off" />
+          ${icon("search", { className: "searchBoxIco" })}
+          <input id="searchText" class="searchText" type="search" autocomplete="off" />
+          <button id="searchSubmitBtn" class="searchClear" type="button" hidden>${icon("close")}</button>
         </div>
-        <button id="searchSubmitBtn" class="btn search-submit" type="button"></button>
         ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn search-submit left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
       </div>
       <div class="toolbar-btns-row">
         <div class="left-view-tabs mobile-only">
           ${LEFT_VIEWS.map((v) => `<button${v.id === "tree" ? ' id="btnDrawerToggle"' : ""} class="tbBtn left-view-btn" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon, { className: "tbIco" })}<span class="badge"></span></button>`).join("")}
+          <button id="btnSearchSheet" class="tbBtn" type="button" aria-controls="searchOverlay">${icon("search", { className: "tbIco" })}</button>
         </div>
         ${toolbarButtonsHtml()}
       </div>`;
@@ -136,15 +138,22 @@ export function renderToolbar(state) {
     const text = String(state.query.text ?? "");
     if (document.activeElement !== inp && inp.value !== text) inp.value = text;
   }
+  // „X” w polu: czyści tekst i filtry; widoczny, gdy coś jest włączone
+  const active = hasQuery(state) && !isTrash(state);
   const btn = document.getElementById("searchSubmitBtn");
   if (btn) {
-    const active = hasQuery(state) && !isTrash(state);
-    const label = t(active ? "baseExplorer.search.clear" : "common.searchByName");
-    const iconHtml = icon(active ? "close" : "search");
-    if (btn.dataset.state !== String(active)) { btn.innerHTML = iconHtml; btn.dataset.state = String(active); }
+    const label = t("baseExplorer.search.clear");
+    btn.hidden = !active;
     btn.setAttribute("aria-label", label);
     btn.setAttribute("data-tooltip", label);
-    btn.classList.toggle("is-active", active);
+  }
+  // telefon: sam przycisk „Szukaj” (okno z polem); złoty, gdy jest tekst
+  const sheetBtn = document.getElementById("btnSearchSheet");
+  if (sheetBtn) {
+    const label = t("baseExplorer.search.sheetTitle");
+    sheetBtn.setAttribute("aria-label", label);
+    sheetBtn.setAttribute("data-tooltip", label);
+    sheetBtn.classList.toggle("is-active", !!String(state.query.text || "").trim());
   }
 
   // Widoki lewego panelu (radio): komputer — Tagi / Kategorie obok wyszukiwarki

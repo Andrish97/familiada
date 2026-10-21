@@ -2365,14 +2365,27 @@ tr.row.is-drop-after td:last-child::after {
 }
 
 /* ===== Wyszukiwarka (2026-10-21) =====
-   Samo pole tekstowe (filtry tagów i kategorii są w lewym panelu).
-   Telefon: pole w pasku to podgląd — stuknięcie otwiera okno „Szukaj”
-   (ui/search.js), w którym jest to samo pole. */
-.toolbar .searchBox { flex-wrap: nowrap; overflow: hidden; flex-shrink: 1; min-width: 0; }
-.toolbar .searchText { flex: 1 1 90px; min-width: 90px; }
+   Samo pole tekstowe (filtry tagów i kategorii są w lewym panelu), wygląd
+   jak pole w oknie „Przenieś do”: lupa w środku po lewej, „X” po prawej, gdy
+   tekst albo filtry są włączone. Telefon: w pasku sam przycisk „Szukaj”
+   (#btnSearchSheet) — pole jest w oknie (ui/search.js przenosi je z paska). */
+.searchBox { margin-right: 0; }
+.toolbar .searchBox { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; min-width: 0; min-height: 36px; box-sizing: border-box; }
+.searchBoxIco { width: 16px; height: 16px; flex: 0 0 16px; opacity: .6; }
+.searchBox .searchText { flex: 1 1 auto; min-width: 0; }
+.searchClear {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  padding: 0; border: 0; border-radius: 8px;
+  background: none; color: inherit; cursor: pointer; opacity: .7;
+}
+.searchClear:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.searchClear .ico { width: 14px; height: 14px; }
+.searchClear[hidden] { display: none; }
+#btnSearchSheet.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
 @media (max-width: 900px) {
-  .toolbar .searchBox { cursor: pointer; }
-  .toolbar .searchText { pointer-events: none; }
+  .toolbar > .search-row { display: none; }
 }
 .search-modal { width: min(560px, 94vw); }
 .searchSheetBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }

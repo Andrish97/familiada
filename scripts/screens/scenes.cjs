@@ -161,7 +161,7 @@ module.exports = [
     steps: [async (view) => { await view.locator('[data-left-view="types"]:visible').click(); await view.waitForTimeout(500); }] },
   { id: "base-explorer-search-sheet", devices: ["phone", "tablet"], category: "Dodatkowe", title: "Eksplorator bazy — telefon: okno Szukaj (tekst; filtry w panelu)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => {
-      await view.locator("#searchBox").click();
+      await view.locator("#btnSearchSheet").click();
       await view.locator("#searchOverlay.sheet-active").waitFor({ timeout: 5000 });
       await view.locator("#searchText").pressSequentially("co");
       await view.waitForTimeout(500);
@@ -174,7 +174,7 @@ module.exports = [
       const narrow = await view.locator(".left-view-tabs").isVisible();
       if (narrow) {
         await view.locator('.left-view-tabs [data-left-view="tags"]').click();
-        await view.locator("#searchBox").click();
+        await view.locator("#btnSearchSheet").click();
         await view.locator("#searchText").pressSequentially("co");
         await view.locator("#searchSheetDone").click();
       } else {
