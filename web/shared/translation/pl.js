@@ -354,7 +354,7 @@ const pl = {
       q24: { q: "Czy osoba prowadząca musi znać odpowiedzi?", a: "Nie. Odpowiedzi i punkty może obsługiwać osoba przy Panelu sterowania, a prowadzący może skupić się na czytaniu pytań i kontakcie z uczestnikami." },
       q25: { q: "Czy jedna osoba może prowadzić i obsługiwać grę?", a: "Może, ale przeprowadzenie finału w pojedynkę bywa trudne: trzeba wtedy wpisywać odpowiedzi graczy w Panelu sterowania i jednocześnie prowadzić grę. Warto poprosić drugą osobę o pomoc." },
       q26: { q: "Co zrobić, jeśli ekran przestanie się aktualizować?", a: "Sprawdź połączenie urządzenia z grą i otwórz ponownie jego widok. W Panelu sterowania sprawdź, czy urządzenie jest podłączone, zanim przejdziesz dalej." },
-      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W ustawieniach rozgrywki możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
+      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W Ustawieniach gry możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
       q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w sekcji Odbiorcy ankiety widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
     },

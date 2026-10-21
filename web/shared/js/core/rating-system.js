@@ -1,8 +1,8 @@
 // js/core/rating-system.js
-import { sb } from "./supabase.js?v=v2026-10-21T09320";
-import { t } from "../../translation/translation.js?v=v2026-10-21T09320";
-import { alertModal, choiceModal, confirmModal } from "./modal.js?v=v2026-10-21T09320";
-import { icon } from "./icons.js?v=v2026-10-21T09320";
+import { sb } from "./supabase.js?v=v2026-10-21T09323";
+import { t } from "../../translation/translation.js?v=v2026-10-21T09323";
+import { alertModal, choiceModal, confirmModal } from "./modal.js?v=v2026-10-21T09323";
+import { icon } from "./icons.js?v=v2026-10-21T09323";
 
 
 const RATING_LS_PREFIX = "fam:app_rated:";
