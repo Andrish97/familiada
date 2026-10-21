@@ -59,6 +59,14 @@ E2E na branchu (spec | przebieg | wynik):
   (gość zamyka okno informacyjne, seq16); base-explorer --grep F2|PPM|chmurka|
   znaków|rozciąga, logo-editor, poll-share, polls-layout (seq17).
 
+## Stan na 2026-10-21 01:00 UTC (przed limitem)
+
+- zielone: mobile-sheet-modals 39518844435, polls --grep odlicz 39519269320,
+  poll-share 39518211119;
+- do analizy po wznowieniu: logo-editor 39517817962, polls-layout 39518631819,
+  editor.spec 39519541277 (failure); base-explorer (cały, seq18) — wynik w
+  `seq18.log`, jeśli kolejka zdążyła.
+
 ## Dalej
 
 0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
@@ -86,7 +94,9 @@ E2E na branchu (spec | przebieg | wynik):
 
 - 2026-10-21: użytkownik podał odnowienie limitu o 4:40 — przyjęto czas
   polski (CEST = UTC+2), czyli 02:40 UTC. Przypomnienie ustawione na
-  02:45 UTC (`send_later`, trig_0156YD1TXiVDnAnp66EUs5NW).
+  02:45 UTC = 4:45 PL (`send_later`, trig_0156YD1TXiVDnAnp66EUs5NW;
+  sprawdzone po restarcie workera 01:00 UTC — aktywne, treść zaktualizowana).
+  Do tego czasu praca wstrzymana (prośba użytkownika, żeby nie wpaść w limit).
 
 Przy trafieniu na limit: zapisać tu krok i czas odnowienia (bez komunikatu:
 +5 h od błędu), budziki co ≤3600 s do odnowienia +5 min z tym samym promptem.
