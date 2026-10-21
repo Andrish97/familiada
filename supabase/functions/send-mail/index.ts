@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { crypto as stdCrypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
 import { mailQueueResult } from "../_shared/mail-queue-results.js";
 import { notificationReference } from "../_shared/notification-reference.js";
+import { md5Hex } from "../_shared/md5.js";
 import { parseNotificationItem, parseMailLang, prepareNotificationRow } from "../_shared/notification-send.js";
 
 const corsHeaders = {
@@ -33,11 +33,6 @@ async function isGuest(user: any): Promise<boolean> {
   const { data, error } = await sbAdmin.from("profiles").select("is_guest").eq("id", user.id).maybeSingle();
   if (error) throw error;
   return data?.is_guest === true;
-}
-
-async function md5Hex(text: string): Promise<string> {
-  const digest = await stdCrypto.subtle.digest("MD5", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 // Dostęp do danych dla szablonów (klucz serwisowy; tylko odczyt).
