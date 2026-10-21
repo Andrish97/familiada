@@ -1,10 +1,10 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07432";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T07432";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07432";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T07432";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07445";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T07445";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07445";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T07445";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -310,7 +310,7 @@ export function initExportModal() {
     }
 
     // Domyślna nazwa gry: nazwa folderu, gdy caller ją poda (tworzenie
-    // gry "z folderu" -- patrz actions.js's openExportModal), w
+    // gry "z folderu" -- patrz commands.js), w
     // pozostałych przypadkach zwykły domyślny placeholder.
     if (xName) xName.value = opts.defaultName || t("baseExplorer.export.defaultGameName");
 

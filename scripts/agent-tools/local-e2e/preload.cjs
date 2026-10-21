@@ -100,7 +100,15 @@ async function handle(route) {
 }
 
 async function install(context) {
-  await context.route("**/*", (route) => handle(route).catch((e) => { console.log("[lb] route error", e.message); return route.abort().catch(() => {}); }));
+  await context.route("**/*", (route) => {
+    // diagnostyka wiszących żądań (networkidle): tylko host i ścieżka, bez treści
+    const u = new URL(route.request().url());
+    const t0 = Date.now();
+    const slow = setTimeout(() => console.log(`[lb] wolne >5s: ${route.request().method()} ${u.hostname}${u.pathname}`), 5000);
+    return handle(route)
+      .catch((e) => { console.log("[lb] route error", e.message); return route.abort().catch(() => {}); })
+      .finally(() => { clearTimeout(slow); if (Date.now() - t0 > 5000) console.log(`[lb] koniec po ${Date.now() - t0} ms: ${u.hostname}${u.pathname}`); });
+  });
 }
 
 // Podpięcie do każdego nowego kontekstu Playwrighta.

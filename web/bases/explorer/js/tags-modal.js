@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-21T07432";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T07432";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T07432";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07432";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07432";
-import { normalizeText } from "./data/listing.js?v=v2026-10-21T07432";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T07432";
+import * as ops from "./ops.js?v=v2026-10-21T07445";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T07445";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T07445";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07445";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T07445";
+import { normalizeText } from "./data/listing.js?v=v2026-10-21T07445";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T07445";
 
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
@@ -171,9 +171,9 @@ function showLayer(E, n) {
 
 /* ================= Data helpers ================= */
 
-// Rozwijanie folderów -> pytania w poddrzewie: używa cache z actions.js, ale tu robimy minimum:
-// Jeśli masz już state._folderDescQIds z ensureDerivedFolderMaps – podajemy go opcjonalnie przez opts.
-// Jeśli nie: fallback to "nie rozwijamy folderów" (bezpieczne, ale uboższe).
+// Rozwijanie folderów -> pytania w poddrzewie: mapę folder -> pytania liczy
+// wołający (commands.js: openTagsWindow, z state.d.subtreeQuestionIds) i podaje
+// w opts.folderDescQIds. Bez mapy foldery nie są rozwijane (bezpiecznie).
 async function expandFoldersToQuestionIds(state, folderIds, opts) {
   const cIds = uniqIds(folderIds);
   if (!cIds.length) return [];

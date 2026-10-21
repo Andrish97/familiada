@@ -5,8 +5,16 @@
 // wraca do drzewa. Telefon: drzewo / tagi / kategorie zamiast hamburgera —
 // przycisk otwiera panel z tym widokiem, ponowne stuknięcie go zamyka.
 
-import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-21T07432";
-import { initDrawer } from "../mobile.js?v=v2026-10-21T07432";
+import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-21T07445";
+import { selectionClear } from "../state.js?v=v2026-10-21T07445";
+import { initDrawer } from "../mobile.js?v=v2026-10-21T07445";
+
+// Schowane drzewo nie trzyma zaznaczenia — skróty (Usuń, F2…) działałyby
+// na niewidocznych folderach.
+function setView(state, view) {
+  if (view !== "tree" && state.selection.pane === "tree") { selectionClear(state); state.selection.pane = "list"; }
+  state.leftView = view;
+}
 
 export function wireLeftView(state) {
   const toolbar = document.getElementById("toolbar");
@@ -19,12 +27,12 @@ export function wireLeftView(state) {
     const view = btn.dataset.leftView;
     if (isNarrow()) {
       if (drawer?.isOpen() && state.leftView === view) { drawer.close(); return; }
-      state.leftView = view;
+      setView(state, view);
       renderAll(state);
       drawer?.open();
       return;
     }
-    state.leftView = state.leftView === view ? "tree" : view;
+    setView(state, state.leftView === view ? "tree" : view);
     renderAll(state);
   });
 

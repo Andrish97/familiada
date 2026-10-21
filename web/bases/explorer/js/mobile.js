@@ -119,7 +119,7 @@ export function addLongPress(el, callback) {
  * "contextmenu" niezależne od naszego JS-a (teoretyczne ryzyko na
  * prawdziwym touchscreenie, którego e2e -- oparte na syntetycznych
  * PointerEventach -- nie odtwarza). Wołający (desktopowy listener
- * "contextmenu" w actions.js) ma ignorować menu w tym oknie niezależnie od
+ * "contextmenu" w ui/list.js, ui/tree.js, ui/left.js) ma ignorować menu w tym oknie niezależnie od
  * tego czy nasz long-press "się udał" czy został anulowany ruchem.
  * Zaimplementowane jako WCZESNY GUARD wewnątrz JEDYNEGO listenera
  * "contextmenu" na danym elemencie (a nie jako osobny, konkurujący
