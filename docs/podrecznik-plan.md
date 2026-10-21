@@ -547,3 +547,11 @@ Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu man
 ## Następny etap pracy
 
 Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści należy jeszcze sprawdzić funkcje i ograniczenia w aktualnej wersji serwisu oraz potwierdzić zgodność zasad teleturnieju z regulaminem. Następnie można opracowywać rozdziały po kolei. Rozdział 18 jest warunkowy i może zostać pominięty, jeśli nie pojawią się powtarzające się pytania użytkowników.
+
+## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21)
+
+- **Nagroda w finale:** regulamin TVP (wg planu) mnoży wygraną ×3 tylko przy nieosiągniętym celu;
+  serwis (`endScreen.js`) zawsze mnoży sumę rund i finału, a po osiągnięciu celu dodaje kwotę główną.
+  Podręcznik opisuje oba sposoby osobno (rozdz. 4.4) — czy serwis ma pozostać tak, jak jest?
+- Regulamin TVP nie był dostępny przez sieć agenta (PDF z s.tvp.pl zablokowany) — rozdz. 1–4 oparte
+  na faktach z planu; szczegóły pojedynku (kto pierwszy naciska) opisane ogólnie.
