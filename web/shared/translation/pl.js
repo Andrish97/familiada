@@ -2587,6 +2587,7 @@ const pl = {
     },
     list: {
       title: "Moje loga",
+      emptyPhone: "Nie masz jeszcze logo tego rodzaju. Nowe logo utworzysz na komputerze albo tablecie.",
       hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
       preview: "Podgląd",
       edit: "Edytuj",

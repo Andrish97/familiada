@@ -1488,6 +1488,8 @@ main:has(> .footer){
     top: calc(100% + 6px);
     left: 0;
     right: 0;
+    /* przycisk z samą ikoną (telefon) — menu szerokie na etykiety, nie na ikonę */
+    min-width: max-content;
     z-index: 60;
     background: #050914; /* kryjące — patrz uwaga przy .topbar */
     border: 1px solid var(--line);
