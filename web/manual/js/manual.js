@@ -2,12 +2,12 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12584";
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T12584";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T12584";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T12584";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12584";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12584";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13091";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T13091";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T13091";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T13091";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T13091";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T13091";
 
 
 async function initManualI18n() {
@@ -24,9 +24,9 @@ async function initManualI18n() {
 
 // Treść podręcznika w osobnych modułach (nie w tłumaczeniach wszystkich stron).
 const CONTENT = {
-  pl: async () => (await import("../content/pl.js?v=v2026-10-21T12584")).default,
-  en: async () => (await import("../content/en.js?v=v2026-10-21T12584")).default,
-  uk: async () => (await import("../content/uk.js?v=v2026-10-21T12584")).default,
+  pl: async () => (await import("../content/pl.js?v=v2026-10-21T13091")).default,
+  en: async () => (await import("../content/en.js?v=v2026-10-21T13091")).default,
+  uk: async () => (await import("../content/uk.js?v=v2026-10-21T13091")).default,
 };
 let contentLang = "";
 
