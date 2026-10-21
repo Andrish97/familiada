@@ -1676,7 +1676,7 @@ const pl = {
 <h3 class="m-h2" id="r8-1">8.1 Czym jest logo gry</h3>
 <p class="m-p">Logo gry to obrazek, który sam przygotowujesz i który pojawia się w trakcie rozgrywki — między innymi na początku gry i na jej zakończenie. Nie myl go z logo serwisu Familiada widocznym na stronach: logo gry jest częścią Twojej rozgrywki i możesz je dowolnie zmieniać.</p>
 <p class="m-p">Wyświetlacz uczestników jest tablicą złożoną z kropek, dlatego każde logo zostaje na nim pokazane jako obraz z zapalonych i zgaszonych kropek. Jeśli nie wybierzesz własnego logo, gra użyje logo domyślnego — napisu FAMILIADA.</p>
-<p class="m-p">Swoje loga znajdziesz na stronie <span class="m-page">Moje loga</span>. Przejdziesz do niej ze strony <span class="m-page">Moje gry</span> przyciskiem <span class="m-btn"><i class="ico" data-icon="display"></i>Logo</span> na górnym pasku. Strona ma trzy zakładki, odpowiadające trzem sposobom tworzenia logo:</p>
+<p class="m-p">Swoje loga znajdziesz na stronie <span class="m-page">Moje loga</span>. Przejdziesz do niej ze strony <span class="m-page">Moje gry</span> przyciskiem <span class="m-btn"><i class="ico" data-icon="display"></i>Loga</span> na górnym pasku. Strona ma trzy zakładki, odpowiadające trzem sposobom tworzenia logo:</p>
 <ul class="m-ul">
   <li><span class="m-btn">Tekst</span> — napis czcionką jak w klasycznym logo Familiady (<a class="m-ref" href="#r8-2">rozdział 8.2</a>),</li>
   <li><span class="m-btn">Rysunek</span> — własny rysunek z kształtami i napisami (<a class="m-ref" href="#r8-3">rozdział 8.3</a>),</li>
