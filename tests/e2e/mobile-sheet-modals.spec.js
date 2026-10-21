@@ -176,7 +176,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator(".bar")).toBeVisible();
 
-      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
 
       // Esc zamyka tak samo jak X / Anuluj
@@ -281,7 +281,7 @@ test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na te
       await expect(page.locator(".bar")).toBeVisible();
       await expect(uniModal).not.toHaveClass(/modal--sheet/);
 
-      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn.gold").click();
       await expect(page.locator("#mineGrid .card", { hasText: name })).toHaveCount(0, { timeout: 10000 });
       deleted = true;
     } finally {
@@ -725,7 +725,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       await page.locator("#btnSubmitCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#mySentOverlay")).toBeVisible();
-      await page.locator("#btnMySentClose").click();
+      await closeSheetViaHandle(page); // na telefonie okno zamyka pasek u góry (X ukryty)
       await expect(page.locator("#mySentOverlay")).toBeHidden();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
     } finally {
@@ -833,7 +833,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator("#listShell")).toBeVisible();
 
-      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
+      await page.locator(".uni-modal:visible .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       await deleteLogoDirect(page, logoId);
