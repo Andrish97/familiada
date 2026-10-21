@@ -22,11 +22,8 @@ async function clearMailbox(recipient) {
   await api(`/emails?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
 }
 
-async function resetMailProviderLimits(page) {
-  await page.evaluate(async () => {
-    const { error } = await window.__sbClient.rpc("reset_email_limits");
-    if (error) throw new Error(`reset_email_limits: ${error.message}`);
-  });
+async function resetMailProviderLimits() {
+  await api("/mail-limits/reset", { method: "POST" });
   console.log("[e2e-mail] provider limits reset before delivery test");
 }
 

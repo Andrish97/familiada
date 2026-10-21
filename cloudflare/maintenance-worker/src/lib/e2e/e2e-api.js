@@ -143,6 +143,13 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: true, queued: Array.isArray(result.data) ? result.data.length : 0 });
   }
 
+  // Reset dziennych limitów dostawców poczty przed testami dostarczania
+  // (reset_email_limits tylko dla klucza serwisowego, migracja 448).
+  if (url.pathname === "/_e2e_api/mail-limits/reset" && request.method === "POST") {
+    const result = await supabaseRpc(env, "reset_email_limits", {});
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
   if (url.pathname === "/_e2e_api/mark-test-guest" && request.method === "POST") {
     const token = request.headers.get("Authorization") || "";
     if (!token.startsWith("Bearer ")) return json({ok:false,error:"guest_token_required"},401);
