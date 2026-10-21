@@ -1,5 +1,6 @@
 // src/lib/admin-auth.js -- admin bypass cookie + Cloudflare Access checks.
 import { getCookie } from "../core/http.js";
+import { verifyAccessJwt } from "./access-jwt.js";
 
 export function hasAdminBypass(request, env) {
   const hostOnly = getCookie(request, "__Host-fml_admin");
@@ -8,24 +9,32 @@ export function hasAdminBypass(request, env) {
   return Boolean(token && (hostOnly === token || allDomains === token));
 }
 
-export function hasAccessJwt(request) {
-  return Boolean(
-    request.headers.get("CF-Access-Jwt-Assertion") ||
-      request.headers.get("Cf-Access-Jwt-Assertion")
-  );
+export function accessJwtFromRequest(request) {
+  return String(request.headers.get("Cf-Access-Jwt-Assertion") || "").trim();
 }
 
-export function hasAccessUserIdentity(request) {
-  return Boolean(
-    request.headers.get("Cf-Access-Authenticated-User-Email") ||
-      request.headers.get("CF-Access-Authenticated-User-Email") ||
-      request.headers.get("cf-access-authenticated-user-email")
-  );
+// Jedyna warstwa uwierzytelnienia API panelu: podpisany token Cloudflare
+// Access (sama obecność nagłówków nie wystarcza -- można je dopisać przy
+// żądaniu omijającym Access, np. przez *.workers.dev).
+export async function isAdminAuthorized(request, env) {
+  const token = accessJwtFromRequest(request);
+  if (!token) return false;
+  const result = await verifyAccessJwt(token, env);
+  return result.ok;
 }
 
-export async function isAdminAuthorized(request) {
-  // Access is the only auth layer for settings admin API.
-  return hasAccessUserIdentity(request) || hasAccessJwt(request);
+export const ADMIN_ORIGIN = "https://settings.familiada.online";
+
+// Ochrona przed CSRF dla zmian (POST/PUT/PATCH/DELETE): żądanie musi przyjść
+// z panelu (Origin) i nieść JSON. Wyjątek typu treści: wgrywanie załącznika
+// (multipart/form-data) -- tam wystarcza zgodny Origin.
+export function adminWriteAllowed(request, url) {
+  const method = String(request.method || "GET").toUpperCase();
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return true;
+  if (request.headers.get("Origin") !== ADMIN_ORIGIN) return false;
+  const type = String(request.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
+  if (type === "application/json") return true;
+  return url.pathname === "/_admin_api/attachments/upload" && type === "multipart/form-data";
 }
 
 export async function readJson(request) {

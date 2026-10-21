@@ -4666,8 +4666,15 @@ async function cleanupTrash() {
   }
 }
 
+// Zmiany (nie-GET) Worker przyjmuje tylko jako JSON z Origin panelu (CSRF);
+// FormData (załączniki) ustawia własny typ multipart.
 function adminFetch(path, init = {}) {
-  return fetch(`/_admin_api${path}`, init);
+  const method = String(init.method || "GET").toUpperCase();
+  const headers = new Headers(init.headers || {});
+  if (method !== "GET" && method !== "HEAD" && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(`/_admin_api${path}`, { ...init, headers });
 }
 
 function escSetting(str) {

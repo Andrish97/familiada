@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gameActivity } from '../../web/settings/js/activity.js';
 import { handleAdminApi } from '../../cloudflare/maintenance-worker/src/lib/admin/admin-api.js';
+import { ACCESS_ENV, signAccessJwt, withJwks } from './helpers/accessJwt.js';
+const ADMIN_ORIGIN='https://settings.familiada.online';
 test('unconfirmed old session is possible, not confirmed active',()=>{
  assert.equal(gameActivity({control_version:1,status:'playing',operator_online:false}).label,'Możliwa trwająca gra');
  assert.equal(gameActivity({control_version:1,status:'playing',operator_online:true}).label,'Gra w toku');
@@ -17,11 +19,13 @@ test('activity API requires admin access and never invokes database for anonymou
 });
 test('activity API is read-only and uncached for admin requests',async()=>{
  const url='https://settings.familiada.online/_admin_api/activity';
- assert.equal((await handleAdminApi(new Request(url,{method:'POST',headers:{'CF-Access-Jwt-Assertion':'unit'}}),{})).status,405);
  const previous=globalThis.fetch;
  try {
- globalThis.fetch=async()=>new Response(JSON.stringify({generated_at:'now',pages:[],locks:[],games:[],history:{}}),{headers:{'content-type':'application/json'}});
- const response=await handleAdminApi(new Request(url,{headers:{'CF-Access-Jwt-Assertion':'unit'}}),{SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
+ globalThis.fetch=withJwks();
+ const jwt=await signAccessJwt();
+ assert.equal((await handleAdminApi(new Request(url,{method:'POST',headers:{'CF-Access-Jwt-Assertion':jwt,Origin:ADMIN_ORIGIN,'Content-Type':'application/json'}}),ACCESS_ENV)).status,405);
+ globalThis.fetch=withJwks(async()=>new Response(JSON.stringify({generated_at:'now',pages:[],locks:[],games:[],history:{}}),{headers:{'content-type':'application/json'}}));
+ const response=await handleAdminApi(new Request(url,{headers:{'CF-Access-Jwt-Assertion':jwt}}),{...ACCESS_ENV,SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
  assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');assert.equal((await response.json()).ok,true);
  } finally {globalThis.fetch=previous;}
 });
@@ -31,14 +35,14 @@ test('Admin gameplay stats merge lease transitions into stats_detail JSON and ke
  const calls=[];
  const leaseEvent={kind:'diagnostic',category:'device_lease',at:'2026-10-15T12:00:00Z',devices:['buzzer'],metrics:{from_state:'waiting',to_state:'primary',epoch:4}};
  try {
-  globalThis.fetch=async(url)=>{
+  globalThis.fetch=withJwks(async(url)=>{
    const path=new URL(url).pathname;
    calls.push(path);
    if(path.endsWith('/get_stats_detail')) return new Response(JSON.stringify([{session_id:'session-1',control_version:2,stats_detail:{events:[]}}]),{headers:{'content-type':'application/json'}});
    if(path.endsWith('/get_control2_display_events')) return new Response(JSON.stringify({'session-1':[leaseEvent]}),{headers:{'content-type':'application/json'}});
    throw new Error(`Unexpected Admin stats RPC: ${path}`);
-  };
-  const response=await handleAdminApi(new Request('https://settings.familiada.online/_admin_api/stats/detail?type=gameplay',{headers:{'CF-Access-Jwt-Assertion':'unit'}}),{SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
+  });
+  const response=await handleAdminApi(new Request('https://settings.familiada.online/_admin_api/stats/detail?type=gameplay',{headers:{'CF-Access-Jwt-Assertion':await signAccessJwt()}}),{...ACCESS_ENV,SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
   assert.equal(response.status,200);
   const body=await response.json();
   assert.deepEqual(body.rows[0].stats_detail.events,[leaseEvent]);

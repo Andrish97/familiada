@@ -1,6 +1,6 @@
 // src/lib/admin-api.js -- /_admin_api/* core dispatcher (auth, state, bypass, stats).
 import { json } from "../core/http.js";
-import { isAdminAuthorized, readJson, setAdminBypassCookieForAllDomains, clearAdminBypassCookieForAllDomains } from "./admin-auth.js";
+import { isAdminAuthorized, adminWriteAllowed, readJson, setAdminBypassCookieForAllDomains, clearAdminBypassCookieForAllDomains } from "./admin-auth.js";
 import { clampInt } from "../core/utils.js";
 import { supabaseRpc, summarizeSupabaseError } from "../core/supabase.js";
 import { getState, validateState, invalidateStateCache } from "../core/state.js";
@@ -13,8 +13,12 @@ import { handleAdminConfigApi } from "./admin-config-api.js";
 export async function handleAdminApi(request, env) {
   const url = new URL(request.url);
 
+  if (!adminWriteAllowed(request, url)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   if (url.pathname === "/_admin_api/me") {
-    const ok = await isAdminAuthorized(request);
+    const ok = await isAdminAuthorized(request, env);
     return new Response(ok ? "OK" : "Unauthorized", { status: ok ? 200 : 401 });
   }
 
@@ -25,7 +29,7 @@ export async function handleAdminApi(request, env) {
     if (!env.ADMIN_BYPASS_TOKEN) {
       return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
     }
-    const authorized = await isAdminAuthorized(request);
+    const authorized = await isAdminAuthorized(request, env);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass ON", {
       headers: {
@@ -39,7 +43,7 @@ export async function handleAdminApi(request, env) {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
-    const authorized = await isAdminAuthorized(request);
+    const authorized = await isAdminAuthorized(request, env);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass OFF", {
       headers: {
@@ -49,7 +53,7 @@ export async function handleAdminApi(request, env) {
     });
   }
 
-  const authorized = await isAdminAuthorized(request);
+  const authorized = await isAdminAuthorized(request, env);
   if (!authorized) {
     return new Response("Unauthorized", { status: 401 });
   }
