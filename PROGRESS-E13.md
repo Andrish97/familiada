@@ -7,6 +7,8 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 
 ## Decyzje (2026-10-21, 01:00 UTC)
 
+- **Użytkownik (2026-10-21):** manual piszemy całkowicie od nowa, ze zmienionym wyglądem strony — rozdziały i podrozdziały zamiast dawnych zakładek; stary manual nie jest poprawiany. Wykonanie: treść z `docs/podrecznik/*.md` (generator `scripts/manual/build-content.mjs` → `web/manual/content/{pl,en,uk}.js`), adres `?ch=N#s-N-M`, nazwa w UI „Podręcznik”.
+
 - Osobny plik `PROGRESS-E13.md`, bo `PROGRESS.md` prowadzi równolegle sesja E21 (jej budziki 02:45 i 04:45 UTC) — wspólny plik groziłby konfliktami.
 - „4:45” = czas polski (CEST), jak w `PROGRESS.md` E21: limit odnawia się o 4:40 CEST = 02:40 UTC, start 5 min później → **02:45 UTC**.
 - Rozdziały pisać dopiero po sprawdzeniu, jak serwis faktycznie działa (pierwszy wiersz planu). Treść w PL, potem EN/UK.
@@ -25,7 +27,7 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 | 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ✅ regulamin 2019 (PDF od użytkownika) — `podrecznik-weryfikacja.md`, Część I |
 | 3 | Rozdziały Części I (1–4) | ✅ szkic `docs/podrecznik/01-04-zasady-teleturnieju.md` |
 | 4 | Rozdziały Części II i III | ✅ szkice PL 5–17, 19–20 w `docs/podrecznik/` (18 pominięty zgodnie z planem) |
-| 5 | EN/UK, sprawdzenie `privacy-manual`, zrzuty ekranów manuala | ⏳ |
+| 5 | Nowa strona `/manual/` (od zera): części → rozdziały → podrozdziały, spis treści, poprzedni/następny, przyciski pomocy stron → rozdziały; EN/UK; e2e `privacy-manual`; zrzuty | 🔄 strona PL gotowa (`6c8a3ed9`), stara treść usunięta; tłumaczenia EN/UK w toku; e2e przepisane |
 | 6 | Wdrożenie i testy kontrolne na produkcji | ⏳ |
 
 ## Co dalej

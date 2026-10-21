@@ -62,7 +62,7 @@ const pl = {
     noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
     filePicker: { choose: "Wybierz plik", none: "Nie wybrano pliku" },
-    manualLabel: "Wskazówki",
+    manualLabel: "Podręcznik",
     contactBtn: "Kontakt",
     modalBack: "Wstecz",
     languageLabel: "Język",
@@ -169,7 +169,7 @@ const pl = {
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
-      manual: "Instrukcja",
+      manual: "Podręcznik",
       privacy: "Prywatność",
     },
   },
@@ -1070,7 +1070,7 @@ const pl = {
     title: "Familiada Online — polityka prywatności",
     description: "Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem.",
     pageTitle: "Familiada Online — Polityka Prywatności",
-    backToManual: "Wskazówki",
+    backToManual: "Podręcznik",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Data ostatniej aktualizacji: 15 lipca 2026 r.</p>

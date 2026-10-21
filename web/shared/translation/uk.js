@@ -62,7 +62,7 @@ const uk = {
     noResults: "Немає результатів.",
     genericError: "Сталася помилка.",
     filePicker: { choose: "Вибрати файл", none: "Файл не вибрано" },
-    manualLabel: "Підказки",
+    manualLabel: "Посібник",
     contactBtn: "Контакт",
     modalBack: "Назад",
     languageLabel: "Мова",
@@ -169,7 +169,7 @@ const uk = {
       marketplace: "Ігри Спільноти",
       connectDevice: "Підключити пристрій",
       account: "Налаштування акаунта",
-      manual: "Інструкція",
+      manual: "Посібник",
       privacy: "Приватність",
     },
   },
@@ -1058,7 +1058,7 @@ const uk = {
     title: "Familiada Online — політика конфіденційності",
     description: "Політика конфіденційності Familiada Online: обробка персональних даних, файли cookie та зв’язок з адміністратором.",
     pageTitle: "Familiada Online — Політика конфіденційності",
-    backToManual: "Підказки",
+    backToManual: "Посібник",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Останнє оновлення: 15 липня 2026 року</p>

@@ -8,7 +8,7 @@ test.use({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
 
 test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", async ({ page, context }, testInfo) => {
   test.setTimeout(180_000);
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["logos", "manual"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["logos"] });
   await loginAsTestUser(page, context, { username: testAccountUsername(2) });
   await L.openList(page, { origin: ORIGIN });
   const name = L.uniq("delete-selection");
@@ -100,11 +100,6 @@ test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", 
     await L.waitEditorReady(page, "Draw");
     expect((await L.readLogo(page, id)).payload.source.fabricData.objects).toEqual(withText);
     await expect(page.locator("#tUndo")).toBeDisabled();
-    for (const lang of ["pl", "en", "uk"]) {
-      await page.goto(`${ORIGIN}/manual/?tab=logo&lang=${lang}`);
-      await expect(page.locator("#tab-logo .m-doc")).toContainText("Fn + Backspace");
-      await expect(page.locator("#tab-logo .m-doc")).toContainText("Ctrl + Z");
-    }
   } finally {
     if (id) await page.evaluate(async id => {
       const { error } = await window.__sbClient.from("user_logos").delete().eq("id", id);

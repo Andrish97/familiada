@@ -35,95 +35,89 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
   await page.waitForURL((url) => url.origin === ORIGIN && !url.pathname.startsWith("/privacy"));
   expect(new URL(page.url()).origin).toBe(ORIGIN);
 
-  const safeBack = "/manual/?tab=polls";
+  const safeBack = "/manual/?ch=15#s-15-4";
   await page.goto(`${ORIGIN}/privacy?lang=uk&ret=${encodeURIComponent(safeBack)}`);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
   await page.waitForURL(/\/manual/);
   const returned = new URL(page.url());
   expect(returned.origin).toBe(ORIGIN);
-  expect(returned.searchParams.get("tab")).toBe("polls");
+  expect(returned.searchParams.get("ch")).toBe("15");
   expect(returned.searchParams.get("lang")).toBe("uk");
-  await expect(page.locator("#tab-polls")).toBeVisible();
+  await expect(page.locator("#s-15-4")).toBeVisible();
 });
 
-test("manual: tłumaczy UI i ma semantykę zakładek (zwykła strona, bez ?modal=)", async ({ page, context }) => {
+test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", async ({ page, context }) => {
   await loginAsTestUser(page, context);
-  await page.goto(`${ORIGIN}/manual?lang=en`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("html")).not.toHaveClass(/page-loading/);
-  await expect(page).toHaveURL(/\/manual/);
-  await expect(page.locator(".modal-tabs")).toHaveCount(0);
-  await expect(page.locator(".topbar")).toBeVisible();
-
-  const tabs = page.locator('.simple-tabs [role="tab"]');
-  await expect(tabs).toHaveCount(10);
-  await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", "User guide tabs");
-  await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator('#tab-general[role="tabpanel"]')).toBeVisible();
-
-  await tabs.first().press("ArrowRight");
-  await expect(page.locator('#tab-edit')).toBeVisible();
-  await expect(page).toHaveURL(/[?&]tab=edit(?:&|$)/);
+  const cases = [
+    { lang: "pl", title: "Podręcznik użytkownika", part: "Część I", toc: "Spis treści podręcznika" },
+    { lang: "en", title: "User guide", part: "Part I", toc: "User guide contents" },
+    { lang: "uk", title: "Посібник користувача", part: "Частина I", toc: "Зміст посібника" },
+  ];
+  for (const item of cases) {
+    await page.goto(`${ORIGIN}/manual/?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).not.toHaveClass(/page-loading/);
+    await expect(page.locator(".modal-tabs")).toHaveCount(0);
+    await expect(page.locator(".m-article h1")).toHaveText(item.title);
+    await expect(page.locator(".m-part-card")).toHaveCount(3);
+    await expect(page.locator(".m-part-title").first()).toContainText(item.part);
+    await expect(page.locator("#manualToc")).toHaveAttribute("aria-label", item.toc);
+    await expect(page.locator("#manualToc .m-toc-chapter")).toHaveCount(19);
+  }
 });
 
-test("manual: karta w ?tab= (replaceState): odświeżenie ją zachowuje, nieznana to ogólny opis", async ({ page, context }) => {
+test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik → i poprzedni/następny", async ({ page, context }, testInfo) => {
   await loginAsTestUser(page, context);
-  await page.goto(`${ORIGIN}/manual?lang=pl`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
   const historyBefore = await page.evaluate(() => history.length);
-  await page.locator('[data-tab="edit"][role="tab"]').click();
-  await page.locator('[data-tab="polls"][role="tab"]').click();
-  await expect(page.locator("#tab-polls")).toBeVisible();
-  await expect(page).toHaveURL(/[?&]tab=polls(?:&|$)/);
-  expect(await page.evaluate(() => history.length)).toBe(historyBefore); // zmiana karty nie dokłada wpisów historii
 
+  await page.locator('#manualToc a[data-ch="6"]').first().click();
+  await expect(page.locator(".m-article h1")).toContainText("Moje gry");
+  await expect(page).toHaveURL(/[?&]ch=6(?:&|#|$)/);
+  await expect(page.locator(".m-sections li")).toHaveCount(7);
+  await expect(page.locator(".m-doc .m-control").first()).toBeVisible();
+  await expect(page.locator(".m-doc .m-control svg.ico").first()).toBeVisible();
+
+  await page.locator('.m-doc a.m-ref[href="?ch=7#s-7-1"]').first().click();
+  await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
+  await expect(page).toHaveURL(/[?&]ch=7#s-7-1$/);
+  await expect(page.locator("#s-7-1")).toBeInViewport();
+
+  await page.locator(".m-pager-link.next").click();
+  await expect(page).toHaveURL(/[?&]ch=8(?:&|#|$)/);
+  expect(await page.evaluate(() => history.length)).toBe(historyBefore);
+  if (testInfo) await page.screenshot({ path: testInfo.outputPath("shot-manual-chapter-pl.png") });
+
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=16#s-16-5-2`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#s-16-5-2")).toBeInViewport();
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator("#tab-polls")).toBeVisible();
-  await expect(page.locator('[data-tab="polls"][role="tab"]')).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".m-article h1")).toContainText("Ustawienia rozgrywki");
 
-  await page.goto(`${ORIGIN}/manual?lang=pl&tab=nieznana`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#tab-general")).toBeVisible();
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=99`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".m-part-card")).toHaveCount(3);
+  await expect(page).not.toHaveURL(/[?&]ch=/);
 });
 
-test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page, context }) => {
+test("manual: przycisk pomocy strony otwiera jej rozdział, Wstecz wraca", async ({ page, context }) => {
+  await serveBranchCode(context, { pages: ["privacy", "manual", "bases"] });
   await loginAsTestUser(page, context);
-  const cases = [
-    { lang: "pl", label: "Zakładki wskazówek", title: "Wskazówki dla użytkownika" },
-    { lang: "en", label: "User guide tabs", title: "User guide" },
-    { lang: "uk", label: "Вкладки підказок", title: "Підказки для користувача" },
-  ];
-
-  for (const item of cases) {
-    await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h1")).toHaveText(item.title);
-    await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", item.label);
-    await expect(page.locator("#tab-general .m-p").first()).not.toBeEmpty();
-  }
+  await page.goto(`${ORIGIN}/bases/?lang=pl`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+  await page.locator("#btnManual").click();
+  await page.waitForURL(/\/manual\/\?.*ch=9/);
+  await expect(page.locator(".m-article h1")).toContainText("Bazy pytań");
+  await page.locator("#btnBack").click();
+  await page.waitForURL(/\/bases\//);
 });
 
-test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page, context }, testInfo) => {
+test("manual: telefon — spis treści pod przyciskiem", async ({ page, context }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await loginAsTestUser(page, context);
-  const cases = [
-    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło", detail: "czerń jest przezroczysta" },
-    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source", detail: "black made transparent" },
-    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело", detail: "чорний стає прозорим" },
-  ];
-
-  for (const item of cases) {
-    await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
-    await page.locator('[data-tab="control"][role="tab"]').click();
-    const control = page.locator("#tab-control .m-doc");
-    await expect(control).toContainText(item.control);
-    await expect(control).toContainText(item.source);
-    await expect(control.locator(".m-ul .m-strong").filter({ hasText: item.control })).toBeVisible();
-    if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-control-pl.png"), fullPage: true });
-
-    await page.locator('[data-tab="gameSettings"][role="tab"]').click();
-    const settings = page.locator("#tab-gameSettings .m-doc");
-    await expect(settings).toContainText(item.settings);
-    await expect(settings).toContainText(item.source);
-    await expect(settings).toContainText(item.detail);
-    await expect(settings.locator(".m-strong").filter({ hasText: item.control }).first()).toBeVisible();
-    await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
-    if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-settings-pl.png"), fullPage: true });
-  }
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#manualToc")).toBeHidden();
+  await page.locator("#manualTocToggle").click();
+  await expect(page.locator("#manualToc")).toBeVisible();
+  await page.locator('#manualToc a[data-ch="15"]').first().click();
+  await expect(page.locator(".m-article h1")).toContainText("Ankiety");
+  await expect(page.locator("#manualToc")).toBeHidden();
 });

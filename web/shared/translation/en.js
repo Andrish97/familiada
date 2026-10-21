@@ -62,7 +62,7 @@ const en = {
     noResults: "No results.",
     genericError: "Something went wrong.",
     filePicker: { choose: "Choose file", none: "No file chosen" },
-    manualLabel: "Help",
+    manualLabel: "User guide",
     contactBtn: "Contact",
     modalBack: "Back",
     languageLabel: "Language",
@@ -169,7 +169,7 @@ const en = {
       marketplace: "Community Games",
       connectDevice: "Connect a device",
       account: "Account settings",
-      manual: "Guide",
+      manual: "User guide",
       privacy: "Privacy",
     },
   },
@@ -1057,7 +1057,7 @@ const en = {
     title: "Familiada Online — privacy policy",
     description: "Familiada Online privacy policy: personal data processing, cookies, and how to contact the administrator.",
     pageTitle: "Familiada Online — Privacy Policy",
-    backToManual: "Guide",
+    backToManual: "User guide",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Last updated: July 15, 2026</p>
