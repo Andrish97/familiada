@@ -130,7 +130,7 @@ test("#btnManual prowadzi do instrukcji z kotwicą ze strony i ret", async () =>
   loc.search = "?id=7&lang=pl";
   await initPage("polls", { deps });
   await els.btnManual.click();
-  assert.equal(loc.href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7");
+  assert.equal(loc.href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7#r15");
 });
 
 test("onManual dostaje adres instrukcji", async () => {
@@ -138,7 +138,7 @@ test("onManual dostaje adres instrukcji", async () => {
   let got = null;
   await initPage("editor", { deps, onManual: async (href) => { got = href; } });
   await els.btnManual.click();
-  assert.match(got, /^\/manual\/\?tab=edit&ret=/);
+  assert.match(got, /^\/manual\/\?tab=games&ret=.*#r7$/);
 });
 
 test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {

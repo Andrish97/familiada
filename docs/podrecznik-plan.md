@@ -530,6 +530,20 @@ Przygotować mapę powiązań między stronami i widokami serwisu a konkretnymi 
 
 Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu manuala można zastąpić FAQ na stronie głównej odnośnikiem do podręcznika; sam rozdział FAQ pozostawić tylko wtedy, gdy pojawią się powtarzające się pytania użytkowników.
 
+## Decyzje wdrożeniowe (2026-10-21, E13.4)
+
+- **Karty podręcznika** (`?tab=`): `rules` (rozdz. 1–4), `account` (5), `games` (6–7), `logo` (8),
+  `bases` (9, 12), `people` (10, 11, 14), `community` (13), `polls` (15), `settings` (16),
+  `control` (17), `help` (19–20). Rozdział 18 (FAQ) pominięty — warunkowy.
+- **Kotwice**: rozdział `#r<N>`, podrozdział `#r<N>-<M>` (np. `#r7-6`); `#hash` to tylko kotwica
+  w karcie — kartę wybiera `?tab=`, a odnośnik wewnątrz podręcznika sam przełącza kartę.
+- **Pomoc kontekstowa**: `manual` w `nav-map.js` ma postać `karta#kotwica` (np. `games#r6`);
+  przycisk „?” prowadzi do `/manual/?tab=games#r6`.
+- **Spis treści** każdej karty budowany z nagłówków rozdziałów i podrozdziałów.
+- **Oznaczenia**: przycisk `span.m-btn` (z ikoną aplikacji, jeśli ją ma), strona/widok `span.m-page`,
+  odnośnik do rozdziału `a.m-ref`, wartość/plik `span.m-code`, klawisz `kbd.m-kbd`.
+  Zgadywanie przycisków po liście etykiet (`controls.js`) usunięte.
+
 ## Następny etap pracy
 
 Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści należy jeszcze sprawdzić funkcje i ograniczenia w aktualnej wersji serwisu oraz potwierdzić zgodność zasad teleturnieju z regulaminem. Następnie można opracowywać rozdziały po kolei. Rozdział 18 jest warunkowy i może zostać pominięty, jeśli nie pojawią się powtarzające się pytania użytkowników.

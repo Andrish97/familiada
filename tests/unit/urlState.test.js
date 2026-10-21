@@ -23,9 +23,10 @@ test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez
   }
 });
 
-test("manual: karta w ?tab=, bez hashchange i #hash jako karty", () => {
+test("manual: karta w ?tab=, #hash tylko kotwica rozdziału w karcie", () => {
   const source = read("manual/js/manual.js");
-  assert.doesNotMatch(source, /hashchange|location\.hash/);
+  assert.doesNotMatch(source, /hashchange|location\.hash\s*=/);
+  assert.match(source, /tabFromUrl\(MANUAL_TABS, DEFAULT_MANUAL_TAB\)/);
   assert.doesNotMatch(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ hash:/);
 });
 

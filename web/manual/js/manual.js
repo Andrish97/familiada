@@ -2,14 +2,12 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T09323";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T09323";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T09323";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T09323";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T09323";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T09323";
-
-import { decorateManualControls } from "./controls.js?v=v2026-10-21T09323";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T09412";
+import { initI18n, setUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T09412";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T09412";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T09412";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T09412";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T09412";
 
 
 async function initManualI18n() {
@@ -64,6 +62,60 @@ function setActive(name, { updateUrl = true } = {}) {
   updateMobileTabSubtitle(name);
 }
 
+// Spis treści karty z nagłówków rozdziałów (h2) i podrozdziałów (h3).
+function buildToc(panel) {
+  const doc = panel.querySelector(".m-doc");
+  if (!doc) return;
+  panel.querySelector(".m-toc")?.remove();
+  const heads = Array.from(doc.querySelectorAll("h2.m-ch[id], h3.m-h2[id]"));
+  if (heads.length < 2) return;
+  const nav = document.createElement("nav");
+  nav.className = "m-toc";
+  const title = document.createElement("p");
+  title.className = "m-toc-title";
+  title.textContent = t("manual.toc");
+  const root = document.createElement("ol");
+  let sub = null;
+  for (const h of heads) {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = `#${h.id}`;
+    a.className = "m-ref";
+    a.textContent = h.textContent.trim();
+    li.appendChild(a);
+    if (h.tagName === "H2") { root.appendChild(li); sub = null; continue; }
+    if (!sub) {
+      sub = document.createElement("ol");
+      (root.lastElementChild || root).appendChild(sub);
+    }
+    sub.appendChild(li);
+  }
+  nav.append(title, root);
+  doc.before(nav);
+}
+
+// Kotwica w podręczniku: przełącza kartę z danym rozdziałem i przewija do niego.
+function goToAnchor(id, { smooth = true } = {}) {
+  const target = id ? document.getElementById(id) : null;
+  const panel = target?.closest(".tab-panel[data-tab]");
+  if (!target || !panel) return false;
+  if (!panel.classList.contains("active")) setActive(panel.dataset.tab);
+  target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  target.classList.remove("m-flash");
+  void target.offsetWidth;
+  target.classList.add("m-flash");
+  return true;
+}
+
+function wireRefs() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.('a[href^="#"]');
+    if (!link || !link.closest(".tab-page")) return;
+    const id = decodeURIComponent(link.getAttribute("href").slice(1));
+    if (goToAnchor(id)) event.preventDefault();
+  });
+}
+
 function wireTabs() {
   const tabs = getTabs();
   tabs.forEach((tab, index) => {
@@ -101,8 +153,12 @@ async function init() {
   });
   await i18nP;
 
-  decorateManualControls(document, document.documentElement.lang);
+  Object.values(pages).forEach(buildToc);
   wireTabs();
+  wireRefs();
+  // Pomoc kontekstowa: ?tab= wybiera kartę, #kotwica wskazuje rozdział w niej.
+  const anchor = decodeURIComponent(location.hash.slice(1));
+  if (anchor) requestAnimationFrame(() => goToAnchor(anchor, { smooth: false }));
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
@@ -110,5 +166,5 @@ void init();
 
 
 window.addEventListener("i18n:lang", () => {
-  decorateManualControls(document, document.documentElement.lang);
+  Object.values(pages).forEach(buildToc);
 });
