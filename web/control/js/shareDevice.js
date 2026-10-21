@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T13373";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T13373";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T13373";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T13373";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T13373";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13373";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T13380";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T13380";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T13380";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T13380";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T13380";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13380";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T13373";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T13380";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
