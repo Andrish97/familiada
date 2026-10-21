@@ -90,10 +90,116 @@ Baseline 2026-10-21: `!important` 184, kolory na sztywno 1475, własne
 plikach 227, nieużywane klasy 201, style w JS 879, `style=` w HTML 320,
 bloki `<style>` 14.
 
+## Analiza szczegółowa (2026-10-21, tylko odczyt)
+
+Użytkownik: „na spokojnie, zatrzymaj się i analizuj”. Bez zmian w `web/`
+do decyzji użytkownika. Cztery przeglądy: komponenty, palety/progi/warstwy,
+mechanizmy JS, weryfikacja martwych i zdublowanych klas.
+
+### Główna przyczyna bałaganu
+
+- **`games.css` jest drugim, nieoficjalnym plikiem wspólnym** — ładuje go
+  15 stron (paski `.bar`/`.actions`/`.games-bottom`, kopia `.overlay`/`.modal`,
+  `.card`, `.tabs-card`, `.list-empty`). Strony bez niego (Społeczność,
+  edytor gry, Control) mają własne odpowiedniki. Jedyne prawdziwe konflikty
+  kaskady (`overlay`, `modal`, `tabs-card`, `card`) to zawsze strona +
+  `games.css`.
+- **Mechanizmy są wspólne tylko częściowo**: `modal.js` istnieje, ale okna
+  ze statycznego HTML każda strona otwiera sama (3 sposoby: `style.display`,
+  `.hidden`, `[hidden]`); ~15 własnych obsług kliknięcia w tło, 5 ESC,
+  5 kopii `show(el,on)`. Dopóki znaczniki i sposób ukrywania są różne,
+  wspólny CSS nie zadziała jednakowo.
+- **Control v1**: martwe pozostałości (`summary*`, `colorModal*`, `final*`,
+  `ansGrid`, `qr*`, `share*`…) w `control.css` i skopiowane do
+  `game-settings.css` / `base-explorer.css`. Control 2 używa `c2-*`,
+  a jego style są w bloku `<style>` ~500 linii w `control/index.html`
+  (audyt go nie liczy).
+
+### Martwy CSS (zweryfikowany)
+
+| plik | lista | martwe | raczej | używane |
+|---|---|---|---|---|
+| control.css | 90 | 87 | 3 | 0 |
+| settings.css | 37 | 23 | 0 | 14 (klasy składane `${}` i TinyMCE `tox-*`) |
+| game-settings.css | 25 | 25 | 0 | 0 |
+| base-explorer.css | 15 | 15 | 0 | 0 |
+| base.css | 12 | 12 | 0 | 0 |
+
+Audyt `--unused` ma fałszywe alarmy dla klas `prefix-${wartość}`
+(settings: `mail-status-*`, `mail-level-*`, `session-status--*`;
+mail: `mail-row--*`) — przed usunięciem zawsze grep rdzenia nazwy.
+
+### Kolory i tokeny
+
+- Konflikty nazw: `--bg` (display: #d21180), `--line` (host: długość,
+  nie kolor), `--card` (auth-landing), `--radius` 12/16, `--tab-extra`
+  1/2/3, `--topbar-h` (tv-layout). Zmiana nazw ostrożnie.
+- **1:1 bez zmiany wyglądu (~200 wystąpień):** #050914→`--bg`,
+  #111827→`--card`, #ffeaa6→`--gold`, białe .14/.18→`--line`/`--line2`,
+  czarne .18→`--card2`, scrimy.
+- Reszta to rodziny alfa (biel .03–.25, czerń .18–.7, złoto .1–.7)
+  i ~7 odcieni podłoża `--under`; zwinięcie do kilku tokenów **zmienia
+  wygląd minimalnie** — wymaga zrzutów i zgody.
+
+### Progi szerokości (propozycja)
+
+600 / 760 / 980 / 1120. Ryzykowne (widoczne): 900→980 w Control (×5)
+i Eksploratorze (tablety 901–980), 640→600 w Ustawieniach i Zadaniach,
+720→760 w kontaktach i Control. max-height i pliki „częściowe” bez zmian.
+
+### Warstwy (propozycja)
+
+lokalne 0–10, przyklejone 100, szuflada 300, menu 500, pływające 600,
+okno 1000 (+10 zagnieżdżone), dymek 2000, podpowiedź 2100, blokada 9999.
+Dziś `.overlay` ma 50–9999 zależnie od strony (+`!important` w settings).
+
+### Komponenty — osobne wersje pod inną nazwą
+
+przyciski ~12 (`.fsBtn`×3, `.fs-btn`, `.qr-fs-btn`, `.tbBtn`, `.ctxBtn`,
+`.tcBtn`, `.abtn`, `.m-btn`, `.icon-btn`, `.c2-btn`…), pola 6, okna 4
+(`.m-modal`, `.colorModal*`×2, `.dt-modal`, `.imgv-overlay`), `.card`
+w 3 wersjach (promień 18/20/22), kafle 6, puste stany 7, pigułki 8+.
+Pickery koloru 2 (game-settings, Eksplorator); baner A2HS/pełny ekran
+3 kopie (buzzer, host, snake); własne wyszukiwarki (Społeczność,
+Ustawienia); puste stany pisane ręcznie zamiast `showEmptyResult`.
+
+### Style w JS/HTML
+
+~900 przypisań w JS: ~40% pokaż/ukryj (do `[hidden]`), ~25% dynamiczne
+albo muszą zostać (maile, SVG), ~35% stały wygląd (60% z tego w
+`settings.js`). HTML: `settings/index.html` 153 `style=`; ~89 `display:none`
+zamiast `[hidden]`; 7 jednolinijkowych strażników `<style>` (potrzebne).
+
+### Rozjazdy dokumentacji (`wzorce-ui.md`)
+
+A5 (kafel jest `.tile` w base), A7/A10 (numery linii), A11 (`.btn.danger`
+już ma obrys; `.green` nadal zdefiniowany), A13 (`.empty-state` istnieje).
+Na `/` `base.css` linkowany dwa razy; `control/display` bez `base.css`.
+
+### Wnioski dla kolejności
+
+1. Najpierw **architektura plików**: co z `games.css` jest wspólne → do
+   `shared/css`; jeden zestaw wspólnych plików na każdej stronie.
+2. Potem **mechanizmy** (jeden `openOverlay/closeOverlay`, jedna konwencja
+   `[hidden]`, puste stany, picker koloru, A2HS/pełny ekran) — one ustalają
+   znaczniki, do których pasuje wspólny CSS.
+3. **Martwy CSS Control v1** — bezpieczny, duży zysk (~160 klas).
+4. **Tokeny 1:1** — bez zmiany wyglądu.
+5. Komponenty po kolei, strona po stronie (Ustawienia osobno — największe).
+6. Na końcu decyzje wizualne: zwinięcie rodzin kolorów, progi, promienie.
+
+Do decyzji użytkownika (przed krokami 5–6): progi szerokości (zwłaszcza
+900→980), zwinięcie odcieni (drobne zmiany wyglądu), jeden promień kart
+i zakładek (12/16/18/20/22).
+
+Szacunek po analizie: **15–22 dni** (więcej pracy w mechanizmach JS
+i Ustawieniach niż zakładał pierwszy plan).
+
 ## Dziennik E23
 
 | Data | Krok | Wynik |
 |------|------|-------|
 | 2026-10-21 | Decyzja i plan | Pomiar stanu wyjściowego, plan kroków. |
 | 2026-10-21 | Krok 1 — narzędzie | `css-audit.mjs` + test zapadki; unit pełne zielone. |
+| 2026-10-21 | Analiza szczegółowa | Wstrzymanie zmian na prośbę użytkownika; 4 przeglądy tylko do odczytu, wnioski w sekcji „Analiza szczegółowa”. |
 | 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |
