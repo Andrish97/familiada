@@ -4,8 +4,13 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-// Twardy limit celu finału (decyzja użytkownika 2026-10-21).
-export const FINAL_TARGET_MAX = 920;
+import { RULES } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T21302";
+
+// Twardy limit celu finału: gracz 2 nie może powtórzyć odpowiedzi gracza 1,
+// więc w pytaniu razem najwyżej dwie najlepsze odpowiedzi; trzecia ma co
+// najmniej PTS_MIN, a suma pytania najwyżej SUM_PREPARED — 5 × (100 − 4)
+// = 480 (decyzja użytkownika 2026-10-21, wcześniej 920 = 10 × 92).
+export const FINAL_TARGET_MAX = 5 * (RULES.SUM_PREPARED - RULES.PTS_MIN);
 
 export const ADVANCED_LIMITS = {
   finalMinPoints: { min: 0, max: 9999 },

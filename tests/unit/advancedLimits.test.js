@@ -4,13 +4,13 @@ import { parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints, ADV
 
 test("parseIntInRange: tylko liczby całkowite w zakresie", () => {
   assert.equal(parseIntInRange("200", ADVANCED_LIMITS.finalTarget), 200);
-  assert.equal(parseIntInRange(" 920 ", ADVANCED_LIMITS.finalTarget), 920);
-  assert.equal(parseIntInRange("921", ADVANCED_LIMITS.finalTarget), null);
+  assert.equal(parseIntInRange(" 480 ", ADVANCED_LIMITS.finalTarget), 480);
+  assert.equal(parseIntInRange("481", ADVANCED_LIMITS.finalTarget), null);
   assert.equal(parseIntInRange("0", ADVANCED_LIMITS.finalTarget), null);
   assert.equal(parseIntInRange("12.5", ADVANCED_LIMITS.finalMinPoints), null);
   assert.equal(parseIntInRange("", ADVANCED_LIMITS.finalMinPoints), null);
   assert.equal(parseIntInRange("-3", ADVANCED_LIMITS.finalMinPoints), null);
-  assert.equal(FINAL_TARGET_MAX, 920);
+  assert.equal(FINAL_TARGET_MAX, 480);
 });
 
 test("parseMultipliers: dodatnie liczby całkowite po przecinku", () => {

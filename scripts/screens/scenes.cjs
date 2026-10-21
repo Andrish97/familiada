@@ -141,7 +141,7 @@ module.exports = [
     steps: [clickTab('.gs-sidebar-item[data-cat="game"]')] },
   { id: "game-settings-game-invalid", category: "Dodatkowe", title: "Ustawienia gry — błędna wartość i podpowiedzi progów", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
     steps: [clickTab('.gs-sidebar-item[data-cat="game"]'), async (view) => {
-      await view.locator("#gsFinalTarget").fill("950");
+      await view.locator("#gsFinalTarget").fill("500");
       await view.locator("#gsFinalMinPts").fill("5000");
       await view.locator("#gsMultipliers").fill("1, 0, 2");
       await view.waitForTimeout(800);

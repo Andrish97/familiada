@@ -651,8 +651,8 @@ test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrz
     await page.locator("#gsMultipliers").fill("abc, xyz");
     await expect(page.locator("#gsMultipliersMsg")).toBeVisible();
     await expect(page.locator("#gsMultipliers")).toHaveClass(/\bis-invalid\b/);
-    await page.locator("#gsFinalTarget").fill("921");
-    await expect(page.locator("#gsFinalTargetMsg")).toContainText("920");
+    await page.locator("#gsFinalTarget").fill("481");
+    await expect(page.locator("#gsFinalTargetMsg")).toContainText("480");
 
     // Zapis wstrzymany oknem; wpisane wartości zostają w polach.
     await page.locator("#btnSaveAll").click();
