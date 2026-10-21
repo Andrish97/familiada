@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T07255";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T07255";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T07255";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T07255";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T07255";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07255";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T07271";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T07271";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T07271";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T07271";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T07271";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T07271";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T07255";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T07271";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -206,7 +206,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     }
     for (const friend of activeFriends) {
       const row = document.createElement("label");
-      row.className = "shareRow shareDeviceFriendRow";
+      row.className = "shareRow shareRow--compact shareDeviceFriendRow";
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.value = friend.user_id;

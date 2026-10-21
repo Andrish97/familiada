@@ -3000,7 +3000,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
     // Regresja CSS: brak klamry wcześniej zagnieżdżał te reguły pod finałem.
     await expect(page.locator('[data-device="host"]')).toHaveCSS("border-top-style", "solid");
-    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "520px");
+    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "720px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
     await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     await page.locator("#shareDeviceEmail").fill(recipient.split("@")[0]);

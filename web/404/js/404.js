@@ -1,5 +1,5 @@
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T07255";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-21T07255";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T07271";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-21T07271";
 
 
 (async () => {
