@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T13051";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T13051";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T13051";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13051";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13051";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T13051";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T13051";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T13051";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T13051";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-21T13051";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-21T13051";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T13373";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T13373";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T13373";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13373";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T13373";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T13373";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T13373";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T13373";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T13373";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-21T13373";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-21T13373";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +33,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-21T13051";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-21T13373";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-21T13051";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-21T13051";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-21T13051";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-21T13373";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-21T13373";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-21T13373";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-21T13051";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-21T13373";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1051,9 +1051,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T13051"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T13051"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-21T13051"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T13373"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T13373"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-21T13373"/>
 
   <style>
     body{margin:0;padding:0}
@@ -6780,7 +6780,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-21T13051");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-21T13373");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
