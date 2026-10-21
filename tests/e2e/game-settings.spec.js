@@ -633,7 +633,7 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
   }
 });
 
-test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje zapisanej wartości", async ({ page, context }) => {
+test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrzymany, w bazie poprzednia wartość", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -649,15 +649,21 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await saveAndWait(page);
 
     await page.locator("#gsMultipliers").fill("abc, xyz");
-    await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
+    await expect(page.locator("#gsMultipliersMsg")).toBeVisible();
+    await expect(page.locator("#gsMultipliers")).toHaveClass(/\bis-invalid\b/);
+    await page.locator("#gsFinalTarget").fill("921");
+    await expect(page.locator("#gsFinalTargetMsg")).toContainText("920");
 
-    await saveAndWait(page);
-    await expect(page.locator("#gsMultipliers")).toHaveValue("1, 2, 3, 4, 5");
+    // Zapis wstrzymany oknem; wpisane wartości zostają w polach.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator(".uni-modal")).toContainText("niepoprawne");
+    await page.locator(".uni-foot .btn").first().click();
+    await expect(page.locator("#gsMultipliers")).toHaveValue("abc, xyz");
 
     const game = await getGameRow(page, gameId);
     expect(
       game.settings.game.advanced.roundMultipliers,
-      "parsowanie zwracające 0 poprawnych liczb nie powinno nadpisać poprzedniej wartości"
+      "niepoprawna wartość nie może trafić do bazy"
     ).toEqual([1, 2, 3, 4, 5]);
   } finally {
     await deleteGame(page, gameId);

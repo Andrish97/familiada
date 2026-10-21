@@ -139,6 +139,13 @@ module.exports = [
     steps: [clickTab('.gs-sidebar-item[data-cat="questions"]')] },
   { id: "game-settings-game", category: "Dodatkowe", title: "Ustawienia gry — rozgrywka (ekran końcowy)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
     steps: [clickTab('.gs-sidebar-item[data-cat="game"]')] },
+  { id: "game-settings-game-invalid", category: "Dodatkowe", title: "Ustawienia gry — błędna wartość i podpowiedzi progów", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
+    steps: [clickTab('.gs-sidebar-item[data-cat="game"]'), async (view) => {
+      await view.locator("#gsFinalTarget").fill("950");
+      await view.locator("#gsFinalMinPts").fill("5000");
+      await view.locator("#gsMultipliers").fill("1, 0, 2");
+      await view.waitForTimeout(800);
+    }] },
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
     steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "game-settings-phone-landscape", category: "Dodatkowe", title: "Ustawienia gry — telefon w poziomie: prośba o obrót (działa tylko w pionie)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/device-guard.js"], ready: () => !!document.querySelector("#pageGuard, .page-guard"), devices: ["phone-landscape"], settle: 600 },
