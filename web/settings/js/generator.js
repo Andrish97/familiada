@@ -1,8 +1,8 @@
 
-import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-21T15324";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15324";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T15324";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15324";
+import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-21T15391";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15391";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T15391";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15391";
 
 
 let games = [];
@@ -936,7 +936,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-21T15324';
+    a.download = 'przykladowa-gra.json?v=v2026-10-21T15391';
 
     document.body.appendChild(a);
     a.click();

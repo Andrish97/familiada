@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15324";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T15324";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T15324";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T15324";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T15324";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T15324";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T15324";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T15324";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15324";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T15324";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T15324";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15324";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T15324";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15391";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T15391";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T15391";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T15391";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T15391";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T15391";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T15391";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T15391";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15391";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T15391";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T15391";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15391";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T15391";
 
 
 
@@ -493,16 +493,11 @@ function startEmailStateWatcher() {
   emailStateTimer = setInterval(tick, 30_000);
 }
 
-async function ensureUsernameAvailable(username, userId) {
-  const { data, error } = await sb()
-    .from("profiles")
-    .select("id")
-    .ilike("username", username)
-    .neq("id", userId)
-    .limit(1)
-    .maybeSingle();
+// Cudze profile nie są czytelne (migracja 445) -- zajętość nazwy sprawdza RPC.
+async function ensureUsernameAvailable(username) {
+  const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
   if (error) throw error;
-  if (data?.id) throw new Error(t("index.errUsernameTaken"));
+  if (taken) throw new Error(t("index.errUsernameTaken"));
 }
 
 async function loadUserRating(userId) {
@@ -646,7 +641,7 @@ async function handleUsernameSave() {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
-    await ensureUsernameAvailable(username, userData.user.id);
+    await ensureUsernameAvailable(username);
 
     await reserveCooldownOrThrow(CD.username);
     reserved = true;

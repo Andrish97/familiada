@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-21T15324";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-21T15391";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -21,17 +21,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-21T15324";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T15324";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15324";
+} from "../../shared/js/core/auth.js?v=v2026-10-21T15391";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T15391";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T15391";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T15324";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-21T15324";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15324";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T15324";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T15324";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15324";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T15324";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T15391";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-21T15391";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T15391";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T15391";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T15391";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T15391";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T15391";
 
 
 const $ = (s) => document.querySelector(s);
@@ -723,16 +723,11 @@ function closeUsernameSetup() {
   document.body.classList.remove("setup-mode");
 }
 
-async function ensureUsernameAvailable(username, userId) {
-  const { data, error } = await sb()
-    .from("profiles")
-    .select("id")
-    .ilike("username", username)
-    .neq("id", userId)
-    .limit(1)
-    .maybeSingle();
+// Cudze profile nie są czytelne (migracja 445) -- zajętość nazwy sprawdza RPC.
+async function ensureUsernameAvailable(username) {
+  const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
   if (error) throw error;
-  if (data?.id) throw new Error(t("index.errUsernameTaken"));
+  if (taken) throw new Error(t("index.errUsernameTaken"));
 }
 
 async function saveUsername() {
@@ -743,7 +738,7 @@ async function saveUsername() {
 
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
 
-    await ensureUsernameAvailable(username, userData.user.id);
+    await ensureUsernameAvailable(username);
 
     const res = await sb()
       .from("profiles")
