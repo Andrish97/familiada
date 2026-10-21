@@ -1,6 +1,6 @@
 # Silnik stylów i wspólne mechanizmy — projekt (E23)
 
-Status: **projekt do zatwierdzenia** (2026-10-21). Bez zmian w `web/` do
+Status: **projekt z decyzjami użytkownika** (2026-10-21, §11); start po E13. Bez zmian w `web/` do
 decyzji użytkownika. Plan etapu i pomiary: [`wspolne-style-plan.md`](wspolne-style-plan.md).
 Wzorce wyglądu: [`wzorce-ui.md`](wzorce-ui.md) (część do aktualizacji, patrz §10).
 
@@ -98,32 +98,48 @@ strony) i **znaczenie** (to, czego używają komponenty i strony).
   `--z-tooltip 2100`, `--z-block 9999`.
 - Ruch: `--ease`, `--dur-fast/base/slow`; `prefers-reduced-motion` w `base`.
 
-### 3.3 Progi (decyzja: wspólne, więcej progów)
+### 3.3 Progi: mało progów + rodzaj urządzenia (decyzja 2026-10-21)
 
-CSS nie przyjmuje zmiennych w `@media`, więc skala jest **zamkniętą listą
-wartości** pilnowaną przez audyt (`ALLOWED_WIDTHS`), zawsze `max-width`
-(„poniżej”), ewentualnie `min-width: próg+1`:
+Decyzja użytkownika: 8 progów to za dużo; **dotyk/rodzaj urządzenia jako
+dodatkowy warunek** (jak w strażnikach), dzięki czemu progów szerokości
+jest niewiele. Zmienia to zasadę E20 z 2026-10-13 („układ wynika tylko
+z wymiarów”): rodzaj urządzenia **jest** warunkiem układu.
 
-| nazwa | px | dziś zastępuje |
+**Rodzaj urządzenia** — profil z `device-guard.js` (`getDeviceProfile`:
+`formFactor` phone/tablet/desktop/tv, `touch`; telefon = dotyk i krótszy
+bok < 700 px) wystawiony na `<html>` **przed pierwszym malowaniem**
+(mały skrypt w `<head>`, aktualizacja przy obrocie/zmianie okna):
+
+- `html[data-device="phone|tablet|desktop|tv"]`
+- `html[data-input="touch|pointer"]`
+- `html[data-orientation="portrait|landscape"]`
+
+Przykłady: telefon poziomo (844 px) zostaje telefonem (pasek ikon,
+okna jako arkusze) bez progu szerokości; tablet nie dostaje wariantu
+telefonu z samego dotyku; laptop z ekranem dotykowym zostaje komputerem.
+Większe cele dotyku dla `data-input="touch"`.
+
+**Progi szerokości** (zamknięta lista pilnowana przez audyt
+`ALLOWED_WIDTHS`, zawsze `max-width`, ewentualnie `min-width: próg+1`):
+
+| nazwa | px | rola |
 |---|---|---|
-| `xs` | 400 | (nowy: mały telefon) |
-| `sm` | 600 | 520, 600, 620, 640 |
-| `md` | 720 | 680, 700, 720, 760, 768 |
-| `lg` | 900 | 900 |
-| `xl` | 980 | 980 (topbar telefon/komputer) |
-| `2xl` | 1120 | 1100, 1120 |
-| `3xl` | 1280 | 1200 |
-| `4xl` | 1440 | 1366, 1400 |
+| `narrow` | 600 | wąskie okno na komputerze/tablecie (np. podzielony ekran) |
+| `work` | 980 | topbar telefon/komputer, minimum stron pracy (Control) |
+| `wide` | 1280 | dodatkowe kolumny na dużych ekranach |
 
-Wysokość: `h-sm 500`, `h-md 720` (TV 650 zostaje w pliku TV). Strona
-potrzebująca więcej miejsca (Control, edytory, Eksplorator, Ustawienia
-admina, narzędzia) wybiera wyższy próg z tej samej skali.
+Wysokość: `short` 500 (TV 650 zostaje w pliku TV).
+
+Dzisiejsze 400/640/720/760/768/900/1100/1120/1200/1366/1400 znikają:
+telefon → `data-device`, układ elementu w kolumnie → `@container`
+(niżej), reszta → najbliższy z trzech progów.
 
 **Zapytania kontenerowe** (`@container`) dla elementów, które stoją w
 kolumnach o różnej szerokości: siatki kafli, formularz pytania (edytor
 i Eksplorator), `.cards2/.twoCol/.qrRow`/podglądy urządzeń w Control,
 listy finałowe (Control i ustawienia gry), układ kontaktów i Konta,
-panele Ustawień, pasek Ankiety. Progi kontenerów z tej samej skali.
+pasek Ankiety. Progi kontenerów: `360 / 600 / 900` (szerokość
+kolumny, nie okna), także zamknięta lista.
 
 ## 4. Komponenty
 
@@ -178,15 +194,14 @@ Nowych klas pomocniczych nie dodaje się bez wpisu w tym dokumencie.
 
 | szkielet | strony | progi |
 |---|---|---|
-| `page--list` (bar + karta z wypustkami + siatka + dolny pasek) | Gry, Bazy, Logo, Społeczność (Znajomi/Subskrybenci), Zadania, Społeczność gier (market) | sm, md, xl |
-| `page--work` (tytuł w topbarze + karta z wypustkami / krokami) | Ankieta, Konto, Mails, Control | sm, md, lg, xl, 2xl |
-| `page--editor` (panel boczny + praca, szuflada poniżej progu) | edytor gry, Eksplorator, ustawienia gry, edytory logo | sm, md, lg, xl, 2xl |
-| `page--admin` (nawigacja paneli + tabele) | `/settings/` | sm, md, xl, 2xl |
-| `page--entry` (jedna karta pośrodku, 520–720 px) | login, confirm, reset, Go, Connect, głosowanie publiczne | xs, sm |
-| `page--doc` (tekst, spis treści) | Instrukcja, Prywatność, strona główna (sekcje) | sm, lg, xl |
-| `page--block` (ekran blokady) | przerwa techniczna, 404 | sm, h-sm |
+| `page--list` (bar + karta z wypustkami + siatka + dolny pasek) | Gry, Bazy, Logo, Społeczność (Znajomi/Subskrybenci), Zadania, Społeczność gier (market) | urządzenie + narrow, work |
+| `page--work` (tytuł w topbarze + karta z wypustkami / krokami) | Ankieta, Konto, Mails, Control | urządzenie + work, wide; kontenery |
+| `page--editor` (panel boczny + praca, szuflada poniżej progu) | edytor gry, Eksplorator, ustawienia gry, edytory logo | urządzenie + work; kontenery |
+| `page--entry` (jedna karta pośrodku, 520–720 px) | login, confirm, reset, Go, Connect, głosowanie publiczne | urządzenie |
+| `page--doc` (tekst, spis treści) | Instrukcja, Prywatność, strona główna (sekcje) | urządzenie + work |
+| `page--block` (ekran blokady) — **jeden wzorzec dla przerwy i 404** (decyzja 2026-10-21) | przerwa techniczna, 404 | urządzenie + short |
 | ekrany gry (poza silnikiem, tylko `tokens.css` + wspólne okna/komunikaty) | wyświetlacz, host, buzzer, TV, QR ankiety, snake | własne |
-| narzędzia `/settings/tools/*` | 6 laboratoriów | decyzja §11 |
+| **poza E23:** panel admina `/settings/` (osobna sprawa, decyzja 2026-10-21) i laboratoria `/settings/tools/*` (strony techniczne, celowo bez wspólnego silnika) | — | — |
 
 Treść ograniczona szerokością tylko tam, gdzie wzorzec tak mówi (dziś
 `.wrap` nie ma `max-width`; karty mają własne limity 520/560/680/720).
@@ -274,10 +289,12 @@ przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
    głosowanie publiczne → Gry → Bazy → Logo (lista) → Społeczność gier →
    Mails → Konto → Ankieta → Instrukcja/Prywatność → strona główna →
    edytory logo → edytor gry → ustawienia gry → Eksplorator → Control →
-   Ustawienia admina → przerwa/404 → ekrany gry (tokeny + wspólne okna).
-5. **Sprzątanie**: usunięcie starego `base.css`, `games.css`,
-   `core/modal*.js` itd., gdy audyt pokaże 0 użyć; aktualizacja
-   `wzorce-ui.md`.
+   przerwa/404 (jeden wzorzec) → ekrany gry (tokeny + wspólne okna).
+   Panel admina i laboratoria — poza E23.
+5. **Sprzątanie**: usunięcie starego `games.css`, `core/modal*.js` itd.,
+   gdy audyt pokaże 0 użyć; aktualizacja `wzorce-ui.md`. Stary `base.css`
+   (i moduły, których używa) zostaje dla panelu admina do jego osobnego
+   etapu; laboratoria mają własne style.
 
 ## 9. Ograniczenia przeglądarek
 
@@ -299,32 +316,37 @@ zdefiniowany mimo zakazu), A13 (`.empty-state` istnieje). Po zatwierdzeniu
 projektu `wzorce-ui.md` opisuje komponenty silnika (§4) zamiast klas
 starych plików.
 
-## 11. Decyzje do podjęcia przez użytkownika
+## 11. Decyzje użytkownika (2026-10-21)
 
-1. **Próg przeglądarek** dla stron aplikacji: Safari 16+ / Chrome 105+
-   (pozwala na `@layer` i `@container` bez obejść). Alternatywa: bez
-   `@layer`/`@container` (więcej pracy, słabszy porządek).
-2. **Zwinięcie odcieni** (biel/czerń/złoto alfa, 7 odcieni podłoża) do
-   rodzin z §3.1 — drobne, widoczne na zrzutach zmiany.
-3. **Promienie**: 8 / 12 / 16 / 22 / pigułka — jedna wartość dla kart
-   i zakładek (dziś 12/16/18/20/22).
-4. **Narzędzia `/settings/tools/*`**: przepinać na silnik czy zostawić
-   jako samodzielne laboratoria (tylko tokeny)?
-5. **Kolejność stron** (§8.4) i strona pilotażowa (Zadania).
-6. **Tryb prac**: E23 przed E13 (zgodnie z zasadą „E13 ostatni”) —
-   potwierdzić, że wstrzymuje to dalszą pracę nad E13 do końca E23.
+1. **Przeglądarki:** Safari 16+ / Chrome 105+ — tak (`@layer`,
+   `@container`). Ekrany TV tylko `tokens.css`.
+2. **Odcienie:** zwinąć, **jak najmniej** wartości. Cel: biel alfa 4
+   (`4/8/14/25`), czerń alfa 3 (`20/40/70`), złoto alfa 3 (`10/35/60`),
+   podłoża 3 (`bg`, `surface-1`, `surface-2`) + `surface-modal`. Zmiany
+   pokazane na zrzutach przed/po.
+3. **Promienie:** ujednolicić, **jak najmniej** wartości. Cel: `--r-sm 8`
+   (małe: pigułki w polach, chipy), `--r-md 14` (przyciski, pola,
+   wiersze, kafle), `--r-lg 20` (karty, okna) + `--r-pill`. Karty
+   i zakładki — jedna wartość (`--r-lg`).
+4. **Laboratoria** `/settings/tools/*` — bez podpięcia do silnika.
+5. **Kolejność stron i pilot** — przyjęta domyślna z §8 (najpierw mała
+   strona Zadania jako próba procesu, potem od prostych do złożonych).
+6. **E23 po E13** — E13 dotyczy treści i zachowań, E23 to lekkie
+   poprawki wyglądu bez zmiany zachowań; ewentualne zmiany w Instrukcji
+   po E23 poprawić punktowo.
+7. **Progi:** 3 szerokości + rodzaj urządzenia (dotyk) jako warunek (§3.3).
+8. **Przerwa i 404:** jeden wzorzec `page--block`.
+9. **Panel admina** `/settings/`: osobna sprawa, poza E23.
 
 ## 12. Szacunek
 
 | część | dni |
 |---|---|
-| Fundament: silnik, tokeny, komponenty, katalog, audyt, porównanie zrzutów, sceny | 6–8 |
+| Fundament: silnik, tokeny, atrybuty urządzenia, komponenty, katalog, audyt, porównanie zrzutów, sceny | 6–8 |
 | Mechanizmy `web/shared/ui/` z testami | 6–8 |
 | Pilot (Zadania) i poprawki silnika | 1–2 |
-| Strony (≈25 stron; Ustawienia admina ~4, Control ~3, Eksplorator ~2, edytory ~3) | 22–28 |
-| Ekrany gry (tokeny, wspólne okna), sprzątanie starego kodu, dokumentacja | 2–3 |
-| **Razem** | **≈ 37–49 dni roboczych sesji** |
+| Strony (≈24 strony bez panelu admina; Control ~3, Eksplorator ~2, edytory ~3) | 18–23 |
+| Przerwa/404 (jeden wzorzec), ekrany gry (tokeny, wspólne okna), sprzątanie, dokumentacja | 2–3 |
+| **Razem** | **≈ 33–44 dni roboczych sesji** |
 
-Większy niż szacunek z analizy (15–22), bo obejmuje pełne ujednolicenie:
-nowe moduły zamiast poprawek, wyciągnięcie stylów z HTML/JS, przepisanie
-testów zależnych od klas i porównywanie zrzutów.
+Bez panelu admina (osobny etap) i laboratoriów.

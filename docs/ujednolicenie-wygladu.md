@@ -36,6 +36,11 @@ podliczania jako stan bieżącej operacji.
 - Kierunek (2026-10-21): nowy silnik stylów od zera → ujednolicenie wspólnych
   mechanizmów JS → przepinanie strona po stronie. Progi wspólne, ale więcej
   progów. Style z HTML wyciągnąć. Szczegóły: `wspolne-style-plan.md`.
+- Progi (2026-10-21, zmienia zasadę E20 z 2026-10-13): tylko 3 szerokości
+  (600/980/1280) + rodzaj urządzenia i dotyk jako warunek układu (profil
+  `device-guard` na `<html>`). Przerwa i 404 — jeden wzorzec. Panel admina
+  osobno. Odcienie i promienie — jak najmniej wartości. E23 po E13.
+  Szczegóły: `silnik-stylow-projekt.md` §3.3, §11.
 
 ## Decyzje — zamknięcie E20 i reszta E18 (2026-10-20)
 
