@@ -78,7 +78,13 @@ E2E na branchu (spec | przebieg | wynik):
 - seq20: polls-layout 39535582298 ✓, editor --grep transakcj 39535738342 ✓,
   logo-editor 39535234842 53/55 (14 kształtów, tablet, obrót już OK); zostały
   „strzałki przesuwają zaznaczenie” (lokalnie działa, +11) i „pula zajęta po
-  utracie blokady” → seq21: oba na main i na branchu dla porównania.
+  utracie blokady” → seq21: „pula” na branchu ✓ 39536005284 (niestabilny);
+  „strzałki” na main ✓ 39536125096, na branchu ✗ 39535915011 — przyczyna:
+  wyższy kafel nazwy zmniejszył płótno przy 1280×720 (678 vs 739 px), klik
+  testu trafiał 0,8 px w krawędź obrysu. Kafel niższy (padding 8/10) + test
+  klika środek obrysu (`96fbc8f`). seq22: cały logo-editor.
+- Uwaga: workflow e2e na `main` nie ma wejścia `max_failures` (HTTP 422) —
+  przy REF=main pomijać ten parametr.
 
 ## Dalej
 
