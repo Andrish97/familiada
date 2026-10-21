@@ -119,7 +119,7 @@ module.exports = [
     steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "game-settings-phone-landscape", category: "Dodatkowe", title: "Ustawienia gry — telefon w poziomie: prośba o obrót (działa tylko w pionie)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/device-guard.js"], ready: () => !!document.querySelector("#pageGuard, .page-guard"), devices: ["phone-landscape"], settle: 600 },
   { id: "game-settings-sound", category: "Dodatkowe", title: "Ustawienia gry — dźwięki (telefon: nazwa nad kontrolkami)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["phone", "tablet"], steps: [gsCat("sound")] },
-  { id: "game-settings-sound-custom", category: "Dodatkowe", title: "Ustawienia gry — własne dźwięki: plik z długą nazwą i „Własny” bez pliku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "phone"], settle: 600,
+  { id: "game-settings-sound-custom", category: "Dodatkowe", title: "Ustawienia gry — własne dźwięki: plik z długą nazwą i „Własny” bez pliku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "tablet", "phone"], settle: 600,
     steps: [gsCat("sound"), async (view) => {
       // Pierwszy wiersz: własny plik o długiej nazwie (cisza WAV, bez dźwięku w zrzucie).
       const wav = Buffer.alloc(44 + 800); wav.write("RIFF", 0); wav.writeUInt32LE(36 + 800, 4); wav.write("WAVEfmt ", 8);
