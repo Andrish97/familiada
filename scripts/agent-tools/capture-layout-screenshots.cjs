@@ -230,7 +230,7 @@ function deviceCss(device) {
         if (pageName === 'games' && device.name === 'iphone-portrait') {
           await page.locator('.slot-prepared').evaluate((tab) => {
             tab.setAttribute('data-copy-count', '9');
-            for (const label of [tab.querySelector('.tab-label'), tab.querySelector('.tab-active')].filter(Boolean)) {
+            for (const label of [tab.querySelector('.tab-label')].filter(Boolean)) {
               const badge = document.createElement('span');
               badge.className = 'tab-copy-count';
               badge.setAttribute('aria-hidden', 'true');

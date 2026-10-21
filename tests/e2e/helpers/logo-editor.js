@@ -74,7 +74,7 @@ async function waitEditorReady(page, mode) {
 async function createNew(page, mode, name) {
   const tab = { Text: "#tabLogoText", Draw: "#tabLogoDraw", Image: "#tabLogoImage" }[mode];
   if (!tab) throw new Error(`Unknown logo mode: ${mode}`);
-  // Aktywna karta ma nad sobą wypustkę (.tab-active), która przechwytuje klik.
+  // Klik w aktywną kartę nic nie zmienia — klikamy tylko nieaktywną.
   if (!(await page.locator(tab).getAttribute("class")).includes("active")) await page.locator(tab).click();
   await page.locator("#grid .addCard").click();
   await page.fill(".uni-modal .uni-inp", name);

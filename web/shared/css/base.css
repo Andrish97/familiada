@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07302");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07351");
 
 
 /* css/base.css */
@@ -18,7 +18,7 @@
     --tab-label-letter-spacing: .08em;
 }
 
-.tabs-strip :is(.tab-label,.tab-active){
+.tabs-strip .tab-label{
     font-size: var(--tab-label-font-size);
     letter-spacing: var(--tab-label-letter-spacing);
 }
@@ -3202,7 +3202,7 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 
 /* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
-#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){ padding-right:32px; }
+#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) .tab-label{ padding-right:32px; }
 
 #tabs-root .tab-slot,
 .tab-slot{
@@ -3237,6 +3237,7 @@ button.rowsSectionHead{ cursor: pointer; }
 .tab-label.active,
 .tab-slot.active .tab-label{ color: #f9fafb; }
 
+/* Separator (::after) i podświetlenie najechania (::before) nieaktywnych kart. */
 .tab-label::after{
   content: "";
   position: absolute;
@@ -3247,7 +3248,6 @@ button.rowsSectionHead{ cursor: pointer; }
   background: rgba(0,0,0,.35);
   display: none;
 }
-.tab-label.active::after{ display: none !important; }
 
 .tab-label::before{
   content: "";
@@ -3270,99 +3270,54 @@ button.rowsSectionHead{ cursor: pointer; }
   .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover::before{ opacity: 1; }
 }
 
-.tab-wrapper{
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-  z-index: 2;
-  display: none;
-}
-
-/* Twoje warunki pokazywania wrappera */
-.tab-slot.active .tab-wrapper,
-.tab-slot:has(.tab-label.active) .tab-wrapper{
-  display: block;
-}
 /* Separator między dwiema sąsiednimi nieaktywnymi wypustkami. */
 .tab-slot:not(.active):not(:has(.tab-label.active)) + .tab-slot:not(.active):not(:has(.tab-label.active)) .tab-label::after{
   display: block;
 }
 
-.tab-active,
-.tab-corner::before{
-  border: 1px solid var(--border-color);
-}
-
-.tab-active{
+/* Aktywna wypustka to sam przycisk karty (wariant A, decyzja 2026-10-21):
+   tło i obramowanie z zaokrągleniem u góry, zachodzi o --tab-extra na
+   górną krawędź karty; ::before/::after rysują wklęsłe narożniki (obrys
+   i tło w jednym gradiencie). Dawniej .tab-wrapper + .tab-active + 2 × .tab-corner. */
+:is(.tab-label.active, .tab-slot.active > .tab-label){
   height: calc(var(--tab-height) + var(--tab-extra));
-  width: 100%;
-  line-height: var(--tab-height);
-  text-align: center;
-
+  margin-bottom: calc(-1 * var(--tab-extra));
+  box-sizing: border-box;
   background: var(--surface);
-  border-bottom: none;
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #f9fafb;
-
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
+  border: 1px solid var(--border-color);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  z-index: 3;
 }
-
-.tab-corner{
+:is(.tab-label.active, .tab-slot.active > .tab-label)::before,
+:is(.tab-label.active, .tab-slot.active > .tab-label)::after{
+  content: "";
+  display: block;
   position: absolute;
-  bottom: var(--corner-bottom);
+  top: auto;
+  bottom: 0;
   width: var(--radius);
   height: var(--radius);
-  overflow: hidden;
-  background-color: transparent;
-  z-index: 3;
+  border-radius: 0;
+  opacity: 1;
+  transition: none;
   pointer-events: none;
 }
-
-.tab-corner-left{
-  left: 0;
-  transform: translateX(calc(-100% + var(--corner-shift)));
-  background-image: radial-gradient(circle at 0% 0%, transparent var(--radius), var(--surface) var(--radius));
+:is(.tab-label.active, .tab-slot.active > .tab-label)::before{
+  left: calc(-1 * var(--radius) - 1px);
+  right: auto;
+  background: radial-gradient(circle at 0 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
 }
-
-.tab-corner-right{
-  right: 0;
-  transform: translateX(calc(100% - var(--corner-shift)));
-  background-image: radial-gradient(circle at 100% 0%, transparent var(--radius), var(--surface) var(--radius));
+:is(.tab-label.active, .tab-slot.active > .tab-label)::after{
+  right: calc(-1 * var(--radius) - 1px);
+  left: auto;
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--radius) - 1px), var(--border-color) calc(var(--radius) - 1px), var(--border-color) var(--radius), var(--surface) calc(var(--radius) + .5px));
 }
-
-.tab-corner::before{
-  content: "";
-  position: absolute;
-  width: calc(2 * var(--radius));
-  height: calc(2 * var(--radius));
-  border-radius: 50%;
-  background: transparent;
-}
-
-.tab-corner-left::before{
-  top: calc(-1 * var(--radius) - var(--border-fudge));
-  left: calc(-1 * var(--radius) - var(--border-fudge));
-}
-.tab-corner-right::before{
-  top: calc(-1 * var(--radius) - var(--border-fudge));
-  right: calc(-1 * var(--radius) - var(--border-fudge));
-}
-
-/* Skrajne wypustki stykają się z krawędzią karty — bez zaokrąglenia na zewnątrz. */
-.tab-slot:first-child .tab-corner-left,
-.tab-slot:last-child .tab-corner-right{
-  display: none;
-}
+/* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
+.tab-slot:first-child > .tab-label.active::before,
+.tab-slot.active:first-child > .tab-label::before,
+.tab-slot:last-child > .tab-label.active::after,
+.tab-slot.active:last-child > .tab-label::after{ display: none; }
 
 @media (max-width: 600px){
   :root{
@@ -3385,25 +3340,14 @@ button.rowsSectionHead{ cursor: pointer; }
     justify-content: center;
   }
 
-  .tab-active,
-  .tab-label{
-    line-height: var(--tab-height);
-  }
-
   .tab-label{
     height: var(--tab-height);
+    line-height: var(--tab-height);
     z-index: 2;
   }
 
-  .tab-active{
-    height: calc(var(--tab-height) + var(--tab-extra));
-    color: transparent; /* jak było */
-  }
-
-  .tab-label.active::after,
-  .tab-label::after{
+  /* Telefon: bez separatorów między nieaktywnymi (narożniki aktywnej zostają). */
+  .tab-slot:not(.active) > .tab-label:not(.active)::after{
     display: none !important;
   }
-
-  .tab-wrapper{ z-index: 1; }
 }

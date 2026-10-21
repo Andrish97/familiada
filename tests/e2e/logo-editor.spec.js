@@ -61,18 +61,20 @@ test.describe("lista", () => {
     const historyBefore = await page.evaluate(() => history.length);
     await expect(page.locator("#tabLogoText")).toHaveClass(/active/);
     await expect(page.locator("#hint")).toContainText(/klasycznym logo/i);
-    await expect(page.locator(".slot-logo-text .tab-corner-left")).toBeHidden();
+    // Narożniki aktywnej wypustki to ::before/::after przycisku karty (2026-10-21).
+    const corner = (sel, pseudo) => page.locator(sel).evaluate((el, p) => getComputedStyle(el, p).display, pseudo);
+    expect(await corner("#tabLogoText", "::before")).toBe("none");
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
     await expect(page.locator("#hint")).toContainText(/rysuj/i);
-    await expect(page.locator(".slot-logo-draw .tab-corner-left")).toBeVisible();
-    await expect(page.locator(".slot-logo-draw .tab-corner-right")).toBeVisible();
+    await expect.poll(() => corner("#tabLogoDraw", "::before")).toBe("block");
+    expect(await corner("#tabLogoDraw", "::after")).toBe("block");
 
     await page.locator("#tabLogoImage").click();
     await expect(page).toHaveURL(/tab=image/);
     await expect(page.locator("#hint")).toContainText(/obraz/i);
-    await expect(page.locator(".slot-logo-image .tab-corner-right")).toBeHidden();
+    await expect.poll(() => corner("#tabLogoImage", "::after")).toBe("none");
 
     // Karta przez replaceState: odświeżenie zostaje na karcie, a przeglądarkowe
     // „Wstecz” nie przełącza kart, tylko wychodzi ze strony.

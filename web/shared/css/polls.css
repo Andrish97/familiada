@@ -132,7 +132,6 @@
 .polls-tabs-card .slot-recipients{ display: none; }
 .pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
-.polls-tabs-card .tab-active{ z-index: 1; }
 /* Ukryta wypustka „Odbiorcy” (komputer) nie liczy się jako sąsiad separatora. */
 @media (min-width: 981px){
   .polls-tabs-card .slot-recipients + .slot-results .tab-label::after{ display: none; }

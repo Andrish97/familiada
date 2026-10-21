@@ -58,8 +58,7 @@
 
 /* =========================================================
    KARTA Z WYPUSTKAMI (wszystkie szerokości)
-   Kształt wypustek jak w games.css (.tab-active + .tab-corner), ale 2 × 50%.
-   Tekst jest na .tab-label (nad wypustką), .tab-active jest tylko tłem.
+   Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
 ========================================================= */
 
 .tabs-card.hub-tabs.bases-tabs-card{
@@ -90,7 +89,6 @@
   wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
   wypustce i tylko dla urządzeń z myszą.
 */
-.bases-tabs-card .tab-active{ z-index: 1; }
 
 /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
 .bases-card{
