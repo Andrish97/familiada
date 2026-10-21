@@ -132,6 +132,16 @@ E2E na branchu (spec | przebieg | wynik):
   wyszukiwania (`8327276`). Wypustki: pokazane makiety A (ten sam wygląd
   z jednego elementu) i B (pigułki) — czeka na wybór użytkownika.
 
+## 2026-10-21 wieczór — runda „zrób, żeby było ładnie” (zgoda na wdrożenie)
+
+- Wypustki wariant A — jeden element (`1c35c50`); pola wyszukiwania jak
+  „Przenieś do” E22 + Społeczność w jednej karcie (`5d07ce8`); Podłącz
+  urządzenie lewo–prawo (`7196fbd`); Control krok Urządzenia — siatka
+  równych przycisków, kod kopiuje, lekki status (`9f57f81`); menu filtra
+  pod kaflami przy masce paska — poprawione (`2c12415`).
+- E2E: seria `fin.sh` (15 speców) na obecnym kodzie w toku; po zielonych —
+  push na `main`, kontrola na produkcji, wpis w Dzienniku.
+
 ## Dalej
 
 0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
