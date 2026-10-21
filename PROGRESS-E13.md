@@ -24,13 +24,16 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 | 1a | Naprawa drobnych błędów z weryfikacji (lista w `podrecznik-weryfikacja.md`) | 🔄 pkt 1, 2, 3, 7, 10, 11 poprawione (`3b120cac`), e2e brancha `39557135472` ✓ 2/2; **czeka na wdrożenie na `main`** (push na `main` zablokowany uprawnieniami sesji — zgoda użytkownika); pkt 6 zostaje (kody z SQL); pkt 4, 5, 8, 9 — do sprawdzenia/decyzji |
 | 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ✅ regulamin 2019 (PDF od użytkownika) — `podrecznik-weryfikacja.md`, Część I |
 | 3 | Rozdziały Części I (1–4) | ✅ szkic `docs/podrecznik/01-04-zasady-teleturnieju.md` |
-| 4 | Rozdziały Części II po kolei (5, 6, 7, 8, …) | 🔄 szkice 5–17 w `docs/podrecznik/` |
+| 4 | Rozdziały Części II i III | ✅ szkice PL 5–17, 19–20 w `docs/podrecznik/` (18 pominięty zgodnie z planem) |
 | 5 | EN/UK, sprawdzenie `privacy-manual`, zrzuty ekranów manuala | ⏳ |
 | 6 | Wdrożenie i testy kontrolne na produkcji | ⏳ |
 
 ## Co dalej
 
-Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`. Następnie krok 1a, potem szkice rozdziałów Części II od rozdz. 5 (Część I czeka na pełny regulamin).
+Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
+1. Gdy użytkownik zgodzi się na wdrożenie: push na `main`, Pages, kontrola `e2e/base-explorer.spec.js --grep E13` na produkcji → 1a ✅.
+2. Krok 5: strona `/manual/` z rozdziałami (układ, style przycisków/stron/odnośników, mapa pomocy kontekstowej), EN/UK, `privacy-manual`, zrzuty. Najlepiej po wdrożeniu E20 (inna sesja) — wtedy też przegląd szkiców pod nazwy i układ.
+3. Uwaga: wg `docs/wdrozenia.md` E13 obejmuje też indeks `/`, zrzuty `landing-*` i PageSpeed (przed treścią manuala) — do ustalenia z użytkownikiem, czy w tym planie.
 
 ## Limit wykorzystania
 
