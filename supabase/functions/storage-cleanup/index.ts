@@ -8,11 +8,29 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // niczego nie przyjmuje i jest bezpieczne do powtórzenia: listę do usunięcia
 // daje tylko baza (storage_cleanup_claim, dostępna wyłącznie dla service_role).
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Wołają tylko serwery (pg_net z bazy: storage_cleanup_kick). Bez CORS.
+// Uwierzytelnienie (audyt E24, N4): nagłówek X-Internal-Secret =
+// hex(HMAC-SHA256(klucz MAIL_WORKER_SECRET, "storage-cleanup")). Baza liczy
+// to samo z Vault (mail_worker_secret) -- bez nowego sekretu, a znajomość
+// wartości pochodnej nie daje dostępu do mail-worker.
+const CLEANUP_CONTEXT = "storage-cleanup";
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  let diff = ea.length ^ eb.length;
+  const n = Math.max(ea.length, eb.length);
+  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
+  return diff === 0;
+}
+
+async function expectedSecret(): Promise<string> {
+  const base = (Deno.env.get("MAIL_WORKER_SECRET") || "").trim();
+  if (!base) return "";
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(base), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(CLEANUP_CONTEXT)));
+  return Array.from(sig, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -24,8 +42,12 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
 type Item = { id: number; bucket: string; path: string; is_folder: boolean };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+  const expected = await expectedSecret();
+  if (!expected) return json({ ok: false, error: "not_configured" }, 503);
+  if (!timingSafeEqual(req.headers.get("x-internal-secret") || "", expected)) {
+    return json({ ok: false, error: "unauthorized" }, 401);
+  }
   if (!serviceRoleKey) return json({ ok: false, error: "Missing SUPABASE_SERVICE_ROLE_KEY" }, 500);
 
   let done = 0;
@@ -94,6 +116,6 @@ async function removeFolderRecursive(bucket: string, prefix: string) {
 function json(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 }

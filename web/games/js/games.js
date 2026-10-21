@@ -1,24 +1,24 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-21T21302";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T21302";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T21302";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T21302";
-import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T21302";
-import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-21T21302";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T21302";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T21302";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T21302";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T21302";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T21302";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T21302";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T21302";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T21302";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T21302";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T21302";
+import { changeGameType } from "./change-type.js?v=v2026-10-21T21441";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T21441";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T21441";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T21441";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T21441";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-21T21441";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T21441";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T21441";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T21441";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T21441";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T21441";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T21441";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T21441";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T21441";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T21441";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T21441";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T21302";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T21302";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T21302";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T21302";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T21441";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T21441";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T21441";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T21441";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -26,10 +26,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T21302";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T21302';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T21441";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T21441';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T21302";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T21441";
 
 import {
   TYPES,
@@ -38,13 +38,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-21T21302";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T21302";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T21302";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T21302";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T21302";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T21302";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T21302";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-21T21441";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T21441";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T21441";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T21441";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T21441";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T21441";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T21441";
 
 
 const MSG = {
