@@ -48,13 +48,16 @@ test('anonymous Go: both kinds, source link and QR, every real parent state, inv
    parsed.searchParams.set('key',game.key);link=parsed.href;await voter.goto(link);await expect(voter.locator('.qtext')).toContainText('? 1');
    const questions=await page.evaluate(async id=>{const {data,error}=await window.__sbClient.from('questions').select('id,ord,answers(id,ord)').eq('game_id',id).order('ord');if(error)throw error;return data;},game.id);
    const labels=['Książkę','Piłkę','Aparat'];
-   for(let choice=0;choice<3;choice++){
+   // Zamknięcie ankiety wymaga co najmniej 10 pełnych głosów (E21).
+   const votes=10;
+   for(let n=0;n<votes;n++){
+    const choice=n%3;
     const items=questions.map(q=>({question_id:q.id,answer_raw:labels[choice],answer_id:q.answers.find(a=>a.ord===choice+1)?.id}));
     expect(await voter.evaluate(async({game,items})=>{const {data,error}=await window.__sbClient.rpc('poll_anonymous_submit',{p_game_id:game.id,p_key:game.key,p_browser_token:crypto.randomUUID(),p_voter_token:crypto.randomUUID(),p_items:items});if(error)throw error;return data;},{game,items})).toMatchObject({ok:true});
    }
    await rpc(page,'poll_stop',{p_game_id:game.id});
    if(type==='poll_points')await rpc(page,'poll_points_tally',{p_game_id:game.id});
-   else await rpc(page,'poll_text_tally_apply',{p_game_id:game.id,p_payload:{items:questions.map(q=>({question_id:q.id,answers:labels.map(text=>({text,count:1}))}))}});
+   else await rpc(page,'poll_text_tally_apply',{p_game_id:game.id,p_payload:{items:questions.map(q=>({question_id:q.id,answers:labels.map((text,i)=>({text,count:Math.ceil((votes-i)/3)}))}))}});
    await voter.goto(link);await expect(voter.locator('#title')).toHaveText('Ankieta zakończona');await evidence(voter,testInfo,type+'-ended');
    await page.goto(`${origin}/games/`,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>Boolean(window.__sbClient));
