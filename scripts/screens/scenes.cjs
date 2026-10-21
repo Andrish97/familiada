@@ -18,6 +18,26 @@
 //   node scripts/screens/run.cjs --changed
 const { id, IDS } = require("./data/demo.cjs");
 
+// Bazy → Udostępnione: dwa zaproszenia (kafle propozycji), dwie przyjęte bazy
+// i dwie odrzucone przeze mnie (pasek u dołu).
+function sharedBasesDemo(db, lang) {
+  const names = {
+    pl: ["Pytania na wesele", "Quiz rodzinny", "Baza szkolna 2026", "Wieczór filmowy", "Sport i rekreacja", "Kuchnia świata"],
+    en: ["Wedding questions", "Family quiz", "School base 2026", "Movie night", "Sports and leisure", "World cuisine"],
+    uk: ["Питання на весілля", "Сімейна вікторина", "Шкільна база 2026", "Кіновечір", "Спорт і відпочинок", "Кухні світу"],
+  }[lang];
+  const owners = [["aleksandra_nowak", "ola.nowak@example.test"], ["jan_kowalski", "jan.k@example.test"]];
+  const row = (i, extra) => ({ id: id("8b10", i + 1), name: names[i], owner_id: id("8810", 50 + (i % 2)), owner_username: owners[i % 2][0], owner_email: owners[i % 2][1], created_at: `2026-10-${20 - i}T09:00:00Z`, updated_at: `2026-10-${20 - i}T09:00:00Z`, shared_role: null, proposed: false, task_id: null, task_status: null, proposed_role: null, ...extra });
+  db.rpc.list_shared_bases_ext = [
+    row(0, { proposed: true, task_id: id("8b20", 1), task_status: "pending", proposed_role: "editor" }),
+    row(1, { proposed: true, task_id: id("8b20", 2), task_status: "opened", proposed_role: "viewer" }),
+    row(2, { shared_role: "editor" }),
+    row(3, { shared_role: "viewer" }),
+  ];
+  db.rpc.base_declines_list_mine = [4, 5].map((i) => ({ id: id("8b20", i + 1), base_id: id("8b10", i + 1), name: names[i], owner_label: owners[i % 2][0], role: "viewer", token: id("8b30", i), declined_at: "2026-10-18T10:00:00Z", expires_at: "2026-11-17T10:00:00Z" }));
+  db.rpc.bases_count_incoming_share_invites = 2;
+}
+
 const page = (dir) => [`web/${dir}/index.html`, `web/${dir}/js/`, `web/${dir}/css/`];
 const DISPLAY = ["web/control/display/", "web/shared/js/gameplay/", "web/shared/fonts/"];
 const clickTab = (selector) => async (view) => {
@@ -170,6 +190,10 @@ module.exports = [
   { id: "empty-state-friends", category: "Dodatkowe", title: "Pusty stan — Znajomi, wyszukiwanie bez wyników", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0, devices: ["desktop"],
     steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("zzzz"); await view.waitForTimeout(400); }] },
   { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
+  { id: "bases-shared-proposed", category: "Dodatkowe", title: "Bazy — Udostępnione: zaproszenia jako kafle propozycji na górze (✓/✕ w rogu), licznik w linii na wypustce", path: "/bases/?tab=shared", sources: [...page("bases"), "web/shared/js/core/proposed-tile.js"], ready: "#sharedGrid .card[data-proposed]",
+    db: sharedBasesDemo },
+  { id: "bases-shared-declined-open", category: "Dodatkowe", title: "Bazy — Udostępnione: rozwinięta sekcja „Odrzucone przeze mnie” (narzędzia listy w linii nagłówka)", path: "/bases/?tab=shared", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#sharedGrid .card[data-proposed]",
+    db: sharedBasesDemo, steps: [async (view) => { const head = view.locator("#baseDeclinesHost .rowsSectionHead").first(); await head.scrollIntoViewIfNeeded(); await head.click(); await view.waitForTimeout(400); await view.locator("#baseDeclinesHost .shareRow").last().scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
   { id: "bases-share-tools", category: "Dodatkowe", title: "Bazy — okno udostępniania z przyciskami list", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
   { id: "bases-share-long-name", category: "Dodatkowe", title: "Bazy — udostępnione: długa nazwa użytkownika (wielokropek, stała wysokość kafla)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",

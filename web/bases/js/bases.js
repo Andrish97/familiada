@@ -22,6 +22,7 @@ import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T17405";
 import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T17405";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T17405";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-21T17405";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T17405";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T17405";
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T17405";
@@ -1022,6 +1023,20 @@ function setSharedBasesBadge(n) {
   basesSharedBadge.textContent = v > 99 ? "99+" : (v > 0 ? String(v) : "");
 }
 
+// Linia pod nazwą odrzuconej bazy, jak w Zadaniach:
+// „od X · odrzucono D · zniknie za N dni” (odmiana liczby wg języka).
+function declineNote(item) {
+  const lang = getUiLang() || "pl";
+  const parts = [t("bases.declineNote.from", { name: item.owner_label || "—" })];
+  if (item.declined_at) parts.push(t("bases.declineNote.declinedAt", { date: new Date(item.declined_at).toLocaleDateString(lang) }));
+  const ms = Date.parse(item.expires_at || "");
+  if (ms) {
+    const n = Math.max(1, Math.ceil((ms - Date.now()) / 864e5));
+    parts.push(t(`bases.declineNote.expires.${new Intl.PluralRules(lang).select(n)}`, { n }));
+  }
+  return parts.join(" · ");
+}
+
 /* ================= Render kafelków ================= */
 function render() {
   if (!mineGrid || !sharedGrid) return;
@@ -1034,7 +1049,7 @@ function render() {
       key: "base-declines", title: t("contacts.sections.declined"), collapsed: baseDeclinesCollapsed,
       onToggle: value => { baseDeclinesCollapsed = value; },
       rows: ownBaseDeclines.map(item => ({ id: item.id, label: item.name, compact: true,
-        note: item.owner_label,
+        note: declineNote(item),
         actions: [{ key: "undo", icon: "undo", title: t("contacts.actions.undo_reject"), onClick: async () => {
           const { data, error } = await sb().rpc("base_share_undo_decline", { p_task_id: item.id });
           if (error || !data?.ok) await alertModal({ text: t("bases.proposed.failed") });
@@ -1056,23 +1071,18 @@ function render() {
     if (b.proposed) tile.dataset.proposed = "1";
     const badges = [];
 
-    if (b.proposed) {
-      badges.push({
-        text: t("bases.badges.proposed"),
-        title: t("bases.badges.proposedTitle"),
-        kind: "proposed",
-      });
-    }
-
     // Udostępniona (albo dopiero proponowana) -- ta sama informacja "od kogo"
     // i z jakim dostępem; dla zaproszenia rola pochodzi z proposed_role.
+    // Zaproszenie: wspólny kafel propozycji (proposed-tile.js) jak otrzymane
+    // kopie gier i logo.
     const shareRole = b.sharedRole || (b.proposed ? b.proposedRole : null);
     if (shareRole) {
       const ownerUn = String(b.ownerUsername || "").trim();
       const ownerMail = String(b.ownerEmail || "").trim();
       const fromLabel = ownerUn || ownerMail || "—";
 
-      badges.push({
+      if (b.proposed) badges.push(...proposedTags({ from: fromLabel, fromTitle: ownerMail || fromLabel, title: t("bases.badges.proposedTitle") }));
+      else badges.push({
         text: t("bases.badges.from", { name: fromLabel }),
         title: ownerMail ? ownerMail : fromLabel,
         kind: "from",
@@ -1102,48 +1112,24 @@ function render() {
         )}">${icon(canDeleteOwned ? "trash" : "close")}</button>`
       : ``;
 
-    const proposedBtns = b.proposed
-      ? `
-        <div class="tileMiniActions">
-          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}" aria-label="${escapeHtml(t("bases.proposed.accept"))}">${icon("check")}</button>
-          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}" aria-label="${escapeHtml(t("bases.proposed.decline"))}">${icon("close")}</button>
-        </div>`
-      : "";
-
-    const badgesHtml = badges.length
-      ? badges
-          .map(
-            (x) =>
-              `<span class="tag ${TILE_TAG_VARIANT[x.kind] || ""} tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
-                x.title || ""
-              )}">${x.icon ? icon(x.icon) : ""}${escapeHtml(x.text || "")}</span>`
-          )
-          .join("")
-      : "";
-
-      // wspólny kafel (base.css .tile): nazwa, oznaczenia przy dole, ikona w rogu
+      // wspólny kafel (base.css .tile): nazwa, oznaczenia przy dole, przyciski w rogu
       tile.innerHTML = `
-        ${deleteBtn}
+        ${b.proposed ? proposedActionsHtml() : deleteBtn}
         <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
-        <div class="tileTags">${badgesHtml}</div>
-        ${proposedBtns}
+        <div class="tileTags">${tileTagsHtml(badges)}</div>
       `;
 
     if (b.proposed) {
-      const respond = (rpcName) => async (e) => {
-        e.stopPropagation();
-        const btns = tile.querySelectorAll("[data-accept],[data-decline]");
-        if ([...btns].some((x) => x.disabled)) return;
-        btns.forEach((x) => { x.disabled = true; });
+      const respond = (rpcName) => async () => {
         const { data: ok, error } = await sb().rpc(rpcName, { p_task_id: b.taskId });
-        if (error || ok !== true) {
-          btns.forEach((x) => { x.disabled = false; });
-          await alertModal({ text: t("bases.proposed.failed") });
-        }
-        await refreshView();
+        return !error && ok === true;
       };
-      tile.querySelector("[data-accept]")?.addEventListener("click", respond("base_share_accept"));
-      tile.querySelector("[data-decline]")?.addEventListener("click", respond("base_share_decline"));
+      bindProposedActions(tile, {
+        accept: respond("base_share_accept"),
+        decline: respond("base_share_decline"),
+        onFail: () => alertModal({ text: t("bases.proposed.failed") }),
+        onDone: () => refreshView(),
+      });
     }
 
     // Zaznaczenie NIE przebudowuje kafelków (tylko przełącza klasę) -- inaczej
@@ -1202,7 +1188,9 @@ function render() {
       `;
       sharedGrid.appendChild(empty);
     } else {
-      for (const b of sharedBases) renderTile(b, sharedGrid);
+      // Zaproszenia (kafle propozycji) na samej górze.
+      for (const b of sharedBases.filter((x) => x.proposed)) renderTile(b, sharedGrid);
+      for (const b of sharedBases.filter((x) => !x.proposed)) renderTile(b, sharedGrid);
     }
   }
 
@@ -1448,8 +1436,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// Oznaczenia na kafelku (.tag z base.css): kolor wg znaczenia.
-const TILE_TAG_VARIANT = { proposed: "tag--warn", from: "tag--info", role: "tag--gold", mine: "" };
 
 async function refreshAltBadge() {
   try {

@@ -186,13 +186,16 @@ module.exports = [
   { id: "logos-market-logos-empty-draw", category: CAT, title: "Biblioteka logo — pusta lista (rysunek)", path: "/logos/", sources: LIST, ready: ".logoShell.skel-step-ready",
     db: (db) => { db.tables.user_logos = []; }, steps: [click("#tabLogoDraw")] },
   { id: "logos-market-logos-selected", category: CAT, title: "Biblioteka logo — zaznaczone logo (aktywne przyciski)", path: "/logos/", sources: LIST, ready: ".logoTile", steps: [selectLogo(1)] },
-  { id: "logos-market-logos-received", category: CAT, title: "Biblioteka logo — otrzymane kopie do przyjęcia", path: "/logos/", sources: [...LIST, "web/shared/js/core/resource-copy-inbox.js"], ready: ".resource-copy-inbox-row",
+  { id: "logos-market-logos-received", category: CAT, title: "Biblioteka logo — otrzymane kopie jako kafle propozycji na górze (podgląd, ✓/✕ w rogu), liczniki w linii na wypustkach", path: "/logos/", sources: [...LIST, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: '.logoTile[data-proposed] .logoPrev canvas',
     db: (db, lang) => {
       const from = require("../data/panel.cjs")[lang].friends.accepted;
-      db.rpc.resource_copy_inbox = { ok: true, items: [
-        { id: id("8f30", 1), name: { pl: "Turniej klasowy", en: "Class tournament", uk: "Класний турнір" }[lang], sender_label: from[0][0], variant: "GLYPH_30x10", logo_mode: "TEXT" },
-        { id: id("8f30", 2), name: { pl: "Gala 2026", en: "Gala 2026", uk: "Гала 2026" }[lang], sender_label: from[1][0], variant: "GLYPH_30x10", logo_mode: "TEXT" },
-      ] };
+      const text = db.tables.user_logos.filter((l) => l.type === "GLYPH_30x10");
+      const rows = [
+        { ...text[0], id: id("8f41", 1), name: { pl: "Turniej klasowy", en: "Class tournament", uk: "Класний турнір" }[lang], received_from_label: from[0][0], created_at: "2026-10-21T08:00:00Z", updated_at: "2026-10-21T08:00:00Z" },
+        { ...text[1 % text.length], id: id("8f41", 2), name: { pl: "Gala 2026", en: "Gala 2026", uk: "Гала 2026" }[lang], received_from_label: from[1][0], created_at: "2026-10-20T08:00:00Z", updated_at: "2026-10-20T08:00:00Z" },
+      ];
+      db.tables.user_logos.push(...rows);
+      db.rpc.resource_copy_inbox = { ok: true, items: rows.map((l, i) => ({ id: id("8f30", i + 1), name: l.name, sender_label: l.received_from_label, variant: "GLYPH_30x10", logo_mode: "TEXT", resource_kind: "logo", logo_id: l.id, created_at: l.created_at })) };
       db.rpc.resource_copy_badges = { ok: true, items: [{ kind: "logo", variant: "GLYPH_30x10", mode: "TEXT", count: 2 }, { kind: "logo", variant: "PIX_150x70", mode: "DRAW", count: 1 }, { kind: "game", variant: "prepared", count: 3 }] };
     } },
   { id: "logos-market-logos-import", category: CAT, title: "Biblioteka logo — okno importu (bez pliku)", path: "/logos/", sources: LIST, ready: ".logoTile", steps: [openModal("#btnImport", "#logoImportOverlay")] },

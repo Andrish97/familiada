@@ -42,7 +42,7 @@
 #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
 #baseDeclinesHost .shareSection{ margin-top: 8px; }
 #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
-#baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; }
+#baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; white-space: normal; } /* „od · odrzucono · zniknie za” w całości, jak w Zadaniach */
 @media (max-width: 600px){
   .modal.shareModal{ max-height: none; }
   .baseShareLookup .inp{ flex: 1 1 0; }
@@ -71,13 +71,6 @@
 }
 
 .bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
-
-/* Szerokości wypustek wynikają z ich etykiet i plakietek. */
-.bases-tabs-card .tab-slot{
-  width: auto;
-  flex: 1 1 max-content;
-  min-width: 0;
-}
 
 .bases-tabs-card .tab-label{
   z-index: 4; /* label zawsze nad aktywną wypustką */

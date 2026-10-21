@@ -128,7 +128,6 @@
   overflow: hidden;
 }
 .polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
-.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 max-content; min-width: 0; }
 .polls-tabs-card .slot-recipients{ display: none; }
 .pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }

@@ -21,13 +21,18 @@
     font-size: var(--tab-label-font-size);
     letter-spacing: var(--tab-label-letter-spacing);
 }
+/* Równe kolumny: licznik pojawiający się na wypustce nie zmienia szerokości
+   żadnej z nich (decyzja 2026-10-21). */
 .tabs-strip > .tab-slot{
     width: auto;
     min-width: 0;
-    flex: 1 1 max-content;
+    flex: 1 1 0;
 }
+/* Licznik na wypustce: zwykły .badge w etykiecie, w jednej linii obok tekstu
+   — tak samo na aktywnej i nieaktywnej wypustce, na każdej stronie
+   (Moje gry, Moje loga, Bazy, Znajomi, Subskrybenci, Centrum maili). */
 .tabs-strip .tab-label > .badge{
-    min-width: 30px;
+    margin-left: 6px;
 }
 .tabs-strip .tab-label > .badge:empty{
     display: none;
@@ -2803,7 +2808,7 @@ body{
 
 /* Rząd oznaczeń na kafelku: stan + plakietka ankiety — równa wysokość,
    stały odstęp, zawijanie całymi oznaczeniami (nie w środku tekstu). */
-.grid .tile .tileTags{
+.grid :is(.tile, .logoTile) .tileTags{
   margin-top: auto; /* rząd oznaczeń zawsze przy dole kafla, równo w całej siatce */
   padding-top: 8px;
   display: flex;
@@ -2811,7 +2816,7 @@ body{
   align-items: center;
   gap: 6px;
 }
-.grid .tile .tileTags .tag{
+.grid :is(.tile, .logoTile) .tileTags .tag{
   height: 22px;
   padding: 0 8px;
   font-size: 10.5px;
@@ -2894,7 +2899,11 @@ body{
 .listToolsHead .shareBulkAction{ width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 10px; }
 .listToolsHead .shareBulkAction .ico{ width: 18px; height: 18px; }
 .listToolsHead .shareBulkActions{ gap: 6px; }
-.rowsSectionHeadRow > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; }
+/* Zwijana sekcja: przycisk nagłówka (tytuł + licznik) … narzędzia … strzałka —
+   jedna linia tej samej wysokości co nagłówek zwykłej sekcji z narzędziami. */
+:is(.rowsSectionHeadRow, .listToolsHead) > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; padding: 0; }
+.listToolsHead:has(> .rowsSectionCaret){ flex-wrap: nowrap; min-height: 36px; }
+.listToolsHead > .rowsSectionCaret{ flex: 0 0 auto; margin-left: 0; cursor: pointer; }
 .listTools{ display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
 .listTools[hidden], .listTools > [hidden]{ display: none; }
 .listTools .btn, .listTools .ui-select-btn{ width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: 10px; }
@@ -2959,7 +2968,14 @@ body{
 /* szerokości bez zmian; tylko przycisk z licznikiem rośnie o tekst licznika */
 .shareRow--compact .shareRowActions .shareActionCountdown:has(.shareCountdown:not([hidden])){ width: auto; padding: 4px 6px; gap: 2px; }
 .shareRow--compact .shareRowActions .shareCountdown{ min-width: 0; }
-.grid .tile .tileMiniActions{ display: flex; gap: 6px; padding-top: 8px; }
+/* Kafel propozycji (proposed-tile.js): zaproszenie do bazy i otrzymana kopia
+   gry/logo. ✓/✕ obok siebie w prawym górnym rogu, w miejscu kosza i tej samej
+   wielkości (32 px); oznaczenia „Propozycja” + „Od: X” na dole jak w zwykłym kaflu. */
+.tileMiniActions{ display: flex; gap: 6px; flex: 0 0 auto; }
+.tileMiniActions .btn{ width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+.tileMiniActions .btn .ico{ width: 16px; height: 16px; }
+.grid .tile .tileMiniActions{ position: absolute; top: 8px; right: 8px; }
+.grid .tile[data-proposed] :is(.name, .rules){ padding-right: 78px; }
 
 
 /* =========================================================
@@ -3235,33 +3251,11 @@ button.rowsSectionHead{ cursor: pointer; }
   justify-content: center;
 }
 
-.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
-  content: attr(data-copy-count);
-  position: absolute;
-  top: 2px;
-  right: 8px;
-  z-index: 4;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--gold, #e6b84c);
-  color: #171717;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
-#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) .tab-label{ padding-right:32px; }
-
 #tabs-root .tab-slot,
 .tab-slot{
   width: auto;
   min-width: 0;
-  flex: 1 1 max-content;
+  flex: 1 1 0;
   align-items: stretch;
 }
 

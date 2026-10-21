@@ -2,7 +2,8 @@ import { changeGameType } from "./change-type.js?v=v2026-10-21T17405";
 import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T17405";
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T17405";
 import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T17405";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T17405";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T17405";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-21T17405";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T17405";
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T17405";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T17405";
@@ -187,6 +188,7 @@ const importProgMsg = document.getElementById("importProgMsg");
 /* ================= STATE ================= */
 let currentUser = null;
 let gamesAll = [];
+let copyOffers = new Map(); // otrzymane kopie czekające na decyzję: id gry → oferta
 let selectedId = null;
 let marketGamesAll = [];
 let selectedMarketId = null;
@@ -745,8 +747,6 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChan
     btnSendCopy.hidden = guest;
     btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canSend || guest;
   }
-  const receivedCopies = document.getElementById("receivedCopies");
-  if (receivedCopies && guest) receivedCopies.hidden = true;
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
@@ -779,7 +779,6 @@ function setActiveTab(type, { updateUrl = true } = {}) {
 
   render();
   updateActionState();
-  void refreshResourceCopyInbox({kind:"game",variant:type===TYPES.MARKET?null:type,host:document.getElementById("receivedCopies"),onChanged:refresh});
 }
 
 /* ================= DB ================= */
@@ -903,7 +902,36 @@ function statusTagClass(g) {
   return "tag--muted";
 }
 
+// Otrzymana kopia czekająca na decyzję: kafel propozycji jak zaproszenie do
+// bazy (proposed-tile.js) — „Propozycja” + „Od: X”, ✓/✕ zamiast kosza.
+function cardProposed(g, offer) {
+  const el = document.createElement("div");
+  el.className = "card tile";
+  el.dataset.gameId = g.id;
+  el.dataset.proposed = "1";
+  el.dataset.created = g.created_at || "";
+  el.dataset.updated = g.updated_at || "";
+  el.dataset.received = g.created_at || "";
+  el.dataset.status = statusKey(g.status, g);
+  el.innerHTML = `
+    ${proposedActionsHtml()}
+    <div class="name"></div>
+    <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
+  `;
+  el.querySelector(".name").textContent = g.name || offer.name || t("control.dash");
+  el.addEventListener("click", () => selectGame(g.id));
+  bindProposedActions(el, {
+    accept: () => decideResourceCopy(offer.id, "accept"),
+    decline: () => decideResourceCopy(offer.id, "decline"),
+    onFail: () => alertModal({ text: t("resourceSend.errors.decisionFailed") }),
+    onDone: refresh,
+  });
+  return el;
+}
+
 function cardGame(g) {
+  const offer = copyOffers.get(g.id);
+  if (offer) return cardProposed(g, offer);
   const el = document.createElement("div");
   el.className = "card tile";
   el.dataset.gameId = g.id;
@@ -1008,9 +1036,17 @@ function render() {
 
   const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
+  // Propozycje (otrzymane kopie) na samej górze, przed kaflem „Nowa gra”.
+  const proposed = games.filter(g => copyOffers.has(g.id));
+  for (const g of proposed) {
+    const el = cardGame(g);
+    if (g.id === selectedId) el.classList.add("selected");
+    grid.appendChild(el);
+  }
+
   grid.appendChild(cardAdd(activeTab));
 
-  for (const g of games) {
+  for (const g of games.filter(g => !copyOffers.has(g.id))) {
     const el = cardGame(g);
     if (g.id === selectedId) el.classList.add("selected");
     grid.appendChild(el);
@@ -1160,6 +1196,13 @@ async function updateActionState() {
     setButtonReasons(null);
     return;
   }
+  // Kopia czekająca na decyzję: tylko podgląd; resztę odblokowuje przyjęcie (✓ na kafelku).
+  if (copyOffers.has(sel.id)) {
+    setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
+    if (btnSettings) btnSettings.disabled = true;
+    setButtonReasons(null);
+    return;
+  }
 
   try {
     const v = await selectionRules(sel);
@@ -1211,8 +1254,9 @@ async function readFileAsText(file) {
 
 /* ================= Main ================= */
 async function refresh() {
-  const [games] = await Promise.all([listGames(), loadPollVoteCounts()]);
+  const [games, , offers] = await Promise.all([listGames(), loadPollVoteCounts(), loadResourceCopyOffers("game")]);
   gamesAll = games;
+  copyOffers = offers;
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 
@@ -1223,7 +1267,6 @@ async function refresh() {
 
   render();
   await updateActionState();
-  await refreshResourceCopyInbox({kind:"game",variant:activeTab===TYPES.MARKET?null:activeTab,host:document.getElementById("receivedCopies"),onChanged:refresh});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

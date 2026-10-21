@@ -1,6 +1,7 @@
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T17405";
 import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T17405";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T17405";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T17405";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-21T17405";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T17405";
 // familiada/logos/js/list.js
 // Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
@@ -57,7 +58,6 @@ const el = {
 
   listShell: $("listShell"),
   grid: $("grid"),
-  receivedCopies: $("receivedCopies"),
   hint: $("hint"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
@@ -99,6 +99,7 @@ const importFilePicker = bindLocalizedFilePicker({
 ========================================================= */
 let currentUser = null;
 let logos = [];          // lekka lista (bez fabricData/obrazów) -- patrz db.listLogos
+let copyOffers = new Map(); // otrzymane kopie czekające na decyzję: id logo → oferta
 let selectedId = null;
 let activeListMode = "TEXT";
 
@@ -201,7 +202,6 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
     setTab(activeListMode.toLowerCase(), DEFAULT_LOGO_TAB);
   }
   renderList();
-  void refreshResourceCopyInbox({kind:"logo",variant:activeListMode,host:el.receivedCopies,onChanged:refresh});
 }
 
 /* =========================================================
@@ -253,10 +253,9 @@ function closePreview() {
    Lista kafelków
 ========================================================= */
 async function refresh() {
-  logos = await listLogos();
+  [logos, copyOffers] = await Promise.all([listLogos(), loadResourceCopyOffers("logo")]);
   if (selectedId && !logos.some((l) => l.id === selectedId)) selectedId = null;
   renderList();
-  await refreshResourceCopyInbox({kind:"logo",variant:activeListMode,host:el.receivedCopies,onChanged:refresh});
 }
 
 function selectTile(id) {
@@ -277,17 +276,49 @@ el.grid?.closest(".logoCard")?.addEventListener("click", (event) => {
 function updateListButtons() {
   const has = !!selectedId;
   const guest = isGuestUser(currentUser);
+  // Kopia czekająca na decyzję: tylko podgląd; resztę odblokowuje przyjęcie (✓ na kafelku).
+  const proposed = has && copyOffers.has(selectedId);
   el.btnPreview.disabled = !has;
-  el.btnEdit.disabled = !has;
-  el.btnExport.disabled = !has;
+  el.btnEdit.disabled = !has || proposed;
+  el.btnExport.disabled = !has || proposed;
   el.btnDuplicate.hidden = guest;
-  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || guest;
+  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || proposed || guest;
   el.btnSendCopy.hidden = guest;
-  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || guest;
-  if (el.receivedCopies && guest) el.receivedCopies.hidden = true;
+  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || proposed || guest;
+}
+
+// Otrzymana kopia czekająca na decyzję: kafel propozycji jak zaproszenie do
+// bazy (proposed-tile.js) — podgląd jak w innych kaflach, ✓/✕ zamiast kosza,
+// „Propozycja” + „Od: X” pod nazwą na całą szerokość (ta sama wysokość kafla).
+function makeProposedTile(logo, offer) {
+  const name = logo.name || offer.name || t("logoEditor.defaults.unnamed");
+  const tile = document.createElement("div");
+  tile.className = "logoTile";
+  tile.dataset.key = logo.id;
+  tile.dataset.proposed = "1";
+  tile.classList.toggle("is-selected", logo.id === selectedId);
+  tile.innerHTML = `
+    <div class="logoTileTop">
+      <div style="min-width:0">
+        <div class="logoName" title="${esc(name)}">${esc(name)}</div>
+      </div>
+      <div class="logoActions">${proposedActionsHtml()}</div>
+      <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
+    </div>
+    <div class="logoPrev"></div>`;
+  tile.addEventListener("click", () => selectTile(logo.id));
+  bindProposedActions(tile, {
+    accept: () => decideResourceCopy(offer.id, "accept"),
+    decline: () => decideResourceCopy(offer.id, "decline"),
+    onFail: () => alertModal({ text: t("resourceSend.errors.decisionFailed") }),
+    onDone: refresh,
+  });
+  return tile;
 }
 
 function makeTile(logo) {
+  const offer = copyOffers.get(logo.id);
+  if (offer) return makeProposedTile(logo, offer);
   const name = logo.name || t("logoEditor.defaults.unnamed");
   const tile = document.createElement("div");
   tile.className = "logoTile";
@@ -355,6 +386,8 @@ function renderList() {
     el.grid.appendChild(tile);
     queue.push({ wrap: tile.querySelector(".logoPrev"), logo });
   }
+  // Propozycje (otrzymane kopie) na samej górze, przed kaflem tworzenia.
+  el.grid.prepend(...el.grid.querySelectorAll(':scope > .logoTile[data-proposed="1"]'));
   const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
   const next = () => {
     const item = queue.shift();

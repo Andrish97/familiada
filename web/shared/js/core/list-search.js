@@ -120,19 +120,25 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     window.addEventListener("i18n:lang", () => { ariaS(); apiS.setOptions(optsS()); apply(); });
   }
 
-  // Układa kafle (bez .addCard, który zostaje pierwszy) wg wybranego sortowania.
-  // Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
+  // Układa kafle wg wybranego sortowania: kafle propozycji (data-proposed,
+  // proposed-tile.js) zawsze na samej górze, potem kafel „+” (.addCard), potem
+  // reszta. Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
   const sortGrid = (grid) => {
     if (!sort) return;
-    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && !el.classList.contains("list-empty") && el.parentElement === grid);
-    if (tiles.length < 2 || tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
+    const own = [...grid.children].filter((el) => (el.matches(tile) || el.classList.contains("addCard")) && !el.classList.contains("list-empty"));
+    const tiles = own.filter((el) => !el.classList.contains("addCard"));
+    if (tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
     const cmp = sortValue === "name" ? (a, b) => nm(a).localeCompare(nm(b), "pl")
       : sortValue === "created" ? (a, b) => stamp(b, "created") - stamp(a, "created")
       : (a, b) => stamp(b, "updated") - stamp(a, "updated");
-    const sorted = [...tiles].sort(cmp);
-    if (sorted.every((el, i) => el === tiles[i])) return;
+    const sorted = [
+      ...tiles.filter((el) => el.dataset.proposed === "1").sort(cmp),
+      ...own.filter((el) => el.classList.contains("addCard")),
+      ...tiles.filter((el) => el.dataset.proposed !== "1").sort(cmp),
+    ];
+    if (sorted.every((el, i) => el === own[i])) return;
     for (const el of sorted) grid.appendChild(el);
   };
 

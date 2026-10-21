@@ -119,6 +119,14 @@ Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
   (`manual.css`) zostają, ale mechanizm adresu jak wyżej (`?tab=`).
 - Lewe menu w Ustawieniach gry (`.gs-nav`) to nawigacja sekcji, nie karty —
   zostaje (strona tylko na tablet / komputer).
+- **Licznik na wypustce (decyzja 2026-10-21):** zwykły `.badge` jako ostatni
+  element `.tab-label`, w jednej linii obok tekstu — jak „Udostępnione 1”
+  w Bazach i karty Znajomych. Tak samo na aktywnej i nieaktywnej wypustce, na
+  każdej stronie z kartami (Moje gry, Moje loga, Bazy, Znajomi, Subskrybenci,
+  Centrum maili) i na telefonie. Bez pseudo-elementu w rogu wypustki (dawne
+  `.tab-slot[data-copy-count]::after`) i bez rezerwowania `padding-right`.
+  Szerokości wypustek stałe: równe kolumny (`flex: 1 1 0` w `base.css`, bez
+  nadpisań na stronach), więc pojawienie się licznika niczego nie przesuwa.
 
 ## A4. Paski akcji [WZÓR: ujednolicenie 1, E17c, ankiety-refaktor 1]
 
@@ -166,6 +174,25 @@ zamiast kolorów, E17c pkt 5; dziś wyjątek `.card.proposed`, A9).
 Kafel subskrybenta: inicjał w kółku + nazwa / e-mail, `.cardTags` ze stanem,
 dzwonek i kosz jako `.x` (E17c pkt 4; do oceny po wdrożeniu).
 
+**Kafel propozycji (decyzja 2026-10-21)** — `shared/js/core/proposed-tile.js`,
+jeden kod dla zaproszenia do bazy (Bazy → Udostępnione) i otrzymanej kopii gry
+lub logo (Moje gry, Moje loga). Zwykły kafel siatki, **na samej górze** (przed
+kaflem „+”; `list-search.js` przypina `data-proposed` przy sortowaniu). Układ
+jak zwykły kafel: nazwa u góry, **✓ (złoty) i ✕ obok siebie w prawym górnym
+rogu** w miejscu kosza (32 × 32 px, `.tileMiniActions`), oznaczenia
+„PROPOZYCJA” (`tag--warn`) + „OD: …” (`tag--info`; w Bazach jeszcze ikona roli)
+na dole w jednej linii (zawijanie przy braku miejsca), ta sama wysokość kafla.
+Kafel Logo: oznaczenia pod nazwą na całą szerokość, podgląd niższy o tyle, żeby
+kafel miał wysokość pozostałych. Zaznaczona propozycja ma tylko podgląd (reszta
+akcji po przyjęciu). Odrzucona kopia gry/logo **przepada** — bez sekcji
+odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone przeze
+mnie” w Bazach (położenie bez zmian). Dawna ramka „Otrzymane kopie”
+(`.resource-copy-inbox`) usunięta.
+
+**✕ czy kosz (decyzja 2026-10-21):** kosz tylko dla **własnych** zasobów
+(usunięcie). ✕ = „zniknie z mojej listy” — tak samo dla odrzucenia propozycji
+i „Usuń z listy” na udostępnionej bazie; bez osobnej ikony.
+
 **Aktualizacja Zadania / mobile (2026-10-11):** Zadania używają wierszy
 `rowEl`, z ikoną rodzaju zasobu po lewej (`avatarIcon`) i delikatnym akcentem
 koloru (ankieta złoto, baza niebieski, urządzenie zielonkawy). Na telefonie
@@ -200,6 +227,15 @@ osób).
   klas pigułek (`.mkt-added-badge`, `.chip` poza etykietami użytkownika).
 - `.badge` (`base.css:1328`) — **licznik do obsłużenia** (kółko z liczbą na
   przycisku / karcie: zaproszenia, powiadomienia). Nie używać do tekstu.
+- **Zwijana sekcja listy** (`shareSectionEl({collapsed})`, `renderRowSections`;
+  „Odrzucone przeze mnie” w Bazach/Znajomych, „Zrobione” w Zadaniach, decyzja
+  2026-10-21): jedna linia — przycisk nagłówka (tytuł + licznik) … narzędzia
+  listy (sortowanie, szukanie) … strzałka zwijania **na końcu**; wysokość jak
+  nagłówek zwykłej sekcji z narzędziami (36 px). Narzędzia znikają, gdy sekcja
+  zwinięta lub pusta.
+- **Linia pod nazwą odrzuconej pozycji** (Bazy, jak w Zadaniach):
+  „od X · odrzucono D · zniknie za N dni” (odmiana liczby wg języka,
+  `Intl.PluralRules`). Znajomi/Subskrybenci nie mają terminu w danych — bez zmian.
 - `.chip` (menedżer bazy, `base-explorer.css:264`) — etykieta kolorowana przez
   **użytkownika** (`--chip`); zostaje jako osobny byt, nie jako `.tag`.
 - `.conn-status` (Control) — stan połączenia na żywo; osobny, większy.

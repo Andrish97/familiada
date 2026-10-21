@@ -51,6 +51,21 @@ const RECEIVED = {
   pl: ["Quiz o Krakowie", "Familiada sąsiedzka"], en: ["London quiz", "Neighbourhood Family Feud"], uk: ["Вікторина про Київ", "Сусідська Familiada"],
 };
 
+// Otrzymane kopie czekające na decyzję: wiersze gier odbiorcy (jak w bazie)
+// + oferty resource_copy_inbox z game_id; liczniki wypustek z resource_copy_badges.
+function receivedCopies(db, lang) {
+  const base = db.tables.games.find((g) => g.type === "prepared");
+  const textBase = db.tables.games.find((g) => g.type === "poll_text");
+  const rows = [
+    { ...base, id: id("8f40", 1), name: RECEIVED[lang][0], type: "prepared", status: "draft", received_from_label: SENDERS[lang][0], received_from_identity: { username: SENDERS[lang][0] }, created_at: "2026-10-21T08:00:00Z", updated_at: "2026-10-21T08:00:00Z" },
+    { ...base, id: id("8f40", 2), name: RECEIVED[lang][1], type: "prepared", status: "draft", received_from_label: SENDERS[lang][1], received_from_identity: { username: SENDERS[lang][1] }, created_at: "2026-10-20T08:00:00Z", updated_at: "2026-10-20T08:00:00Z" },
+    { ...textBase, id: id("8f40", 3), name: { pl: "Ankieta: ulubione wakacje", en: "Poll: favourite holidays", uk: "Опитування: улюблена відпустка" }[lang], type: "poll_text", status: "draft", received_from_label: SENDERS[lang][0], received_from_identity: { username: SENDERS[lang][0] }, created_at: "2026-10-19T08:00:00Z", updated_at: "2026-10-19T08:00:00Z" },
+  ];
+  db.tables.games.push(...rows);
+  db.rpc.resource_copy_inbox = { ok: true, items: rows.map((g, i) => ({ id: id("8f30", i + 1), name: g.name, sender_label: g.received_from_label, variant: g.type, resource_kind: "game", game_id: g.id, created_at: g.created_at })) };
+  db.rpc.resource_copy_badges = { ok: true, items: [{ kind: "game", variant: "prepared", count: 2 }, { kind: "game", variant: "poll_text", count: 1 }, { kind: "logo", variant: "GLYPH_30x10", mode: "TEXT", count: 1 }] };
+}
+
 // Zaznaczony kafel przy górnej krawędzi przewijanej siatki (kursor nad nim:
 // uniesienie przy najechaniu); na telefonie siatka przewinięta tak, żeby
 // kafel stał dokładnie przy krawędzi. Obwódka ma być widoczna w całości.
@@ -108,11 +123,12 @@ module.exports = [
     steps: [click("#tabMarket", 600), click("#grid .card[data-market-id]"), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .bld-q-block").first().waitFor(); await view.waitForTimeout(300); }] },
   { id: "games-empty", category: CAT, title: "Moje gry — pusta biblioteka (tylko kafel „Nowa gra”)", path: "/games/", sources: GAMES, ready: "#grid .addCard",
     db: (db) => { db.tables.games = []; db.tables.questions = []; db.tables.answers = []; db.rpc.polls_vote_counts = []; } },
-  { id: "games-received-copies", category: CAT, title: "Moje gry — otrzymane kopie od znajomych (Przyjmij / Odrzuć, licznik na zakładce)", path: "/games/", sources: [...GAMES, "web/shared/js/core/resource-copy-inbox.js"], ready: ".resource-copy-inbox-row",
-    db: (db, lang) => {
-      db.rpc.resource_copy_inbox = { ok: true, items: RECEIVED[lang].map((name, i) => ({ id: id("8f30", i + 1), name, sender_label: SENDERS[lang][i], variant: "prepared", kind: "game" })) };
-      db.rpc.resource_copy_badges = { ok: true, items: [{ kind: "game", variant: "prepared", count: 2 }, { kind: "game", variant: "poll_text", count: 1 }, { kind: "logo", variant: "GLYPH_30x10", mode: "TEXT", count: 1 }] };
-    } },
+  { id: "games-received-copies", category: CAT, title: "Moje gry — otrzymane kopie jako kafle propozycji na górze (✓/✕ w rogu, „Propozycja” + „Od”), liczniki w linii na wypustkach", path: "/games/", sources: [...GAMES, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
+    db: receivedCopies },
+  { id: "games-received-selected", category: CAT, title: "Moje gry — zaznaczona kopia do przyjęcia (tylko podgląd)", path: "/games/", sources: [...GAMES, "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
+    db: receivedCopies, steps: [click("#grid .card[data-proposed] .name")] },
+  { id: "games-received-poll-tab", category: CAT, title: "Moje gry — Ankieta tekstowa: kopia do przyjęcia, licznik na aktywnej wypustce", path: "/games/?tab=poll_text", sources: [...GAMES, "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
+    db: receivedCopies },
 
   // ---------- wyszukiwanie, filtr, sortowanie ----------
   { id: "games-search", category: CAT, title: "Moje gry — wyszukiwanie po nazwie", path: "/games/", sources: [...GAMES, "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
