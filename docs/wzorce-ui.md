@@ -155,7 +155,10 @@ Wspólne wymiary: promień 18 px, ramka `rgba(255,255,255,.22)`, tło `#070b16` 
 Lista Logo i Marketplace używa tej samej bazowej powierzchni i odstępu
 wewnętrznego 14 px; większy kafel Logo zachowuje wysokość wymaganą przez podgląd.
 Siatka `.grid`: `repeat(auto-fill, minmax(230px,1fr))`, odstęp 14 px — jedna
-minimalna szerokość dla wszystkich list. Kafel „+” (`.addCard`): zawsze ten sam
+minimalna szerokość dla wszystkich list. Przewijana siatka (Gry, Bazy, Logo) ma
+`padding:4px` oddany ujemnym `margin:-4px` — luz na poświatę zaznaczenia i
+uniesienie przy najechaniu (bez niego krawędź przewijania ucinała górę
+obwódki); na ekranie dotykowym (`hover:none`) kafel się nie unosi (2026-10-21). Kafel „+” (`.addCard`): zawsze ten sam
 kod — `.plus` + `.txt` (nazwa akcji) + opcjonalnie `.sub` (typ); jedna wysokość
 z sąsiednimi kaflami. Kolor stanu **nie** koloruje całego kafla (sekcje wg stanu
 zamiast kolorów, E17c pkt 5; dziś wyjątek `.card.proposed`, A9).

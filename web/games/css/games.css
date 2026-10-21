@@ -195,7 +195,12 @@ body.games-body > main.wrap{
    tak jak same kafle (decyzja 2026-10-20) -- Gry, Bazy, Logo. */
 .games-shell .grid:not(.subsGrid){
   border-radius: var(--radius);
-  padding: 0;
+  /* Luz na obwódkę zaznaczenia (box-shadow 2 px) i uniesienie kafla przy
+     najechaniu (2 px): bez niego krawędź przewijania ucinała górę obwódki
+     kafli z pierwszego rzędu. Ujemny margines oddaje ten luz, więc kafle
+     stoją dokładnie tam, gdzie bez niego (wyrównanie z paskiem i stopką). */
+  padding: 4px;
+  margin: -4px;
 }
 .games-shell .grid.logoGridBig{ border-radius: var(--radius-lg, var(--radius)); }
 

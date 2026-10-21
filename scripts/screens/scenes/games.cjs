@@ -51,8 +51,27 @@ const RECEIVED = {
   pl: ["Quiz o Krakowie", "Familiada sąsiedzka"], en: ["London quiz", "Neighbourhood Family Feud"], uk: ["Вікторина про Київ", "Сусідська Familiada"],
 };
 
+// Zaznaczony kafel przy górnej krawędzi przewijanej siatki (kursor nad nim:
+// uniesienie przy najechaniu); na telefonie siatka przewinięta tak, żeby
+// kafel stał dokładnie przy krawędzi. Obwódka ma być widoczna w całości.
+const selectAtTopEdge = (selector) => async (view) => {
+  const el = view.locator(selector).first();
+  await el.click();
+  await view.waitForTimeout(300);
+  await el.evaluate((t) => {
+    const grid = t.closest(".grid");
+    const pad = parseFloat(getComputedStyle(grid).paddingTop) || 0;
+    grid.scrollTop += t.getBoundingClientRect().top - grid.getBoundingClientRect().top - pad;
+  });
+  await view.waitForTimeout(300);
+};
+
 module.exports = [
   // ---------- /games/: zakładki i stany kafli ----------
+  { id: "games-selected-top-edge", category: CAT, title: "Moje gry — zaznaczony kafel przy górnej krawędzi listy (cała obwódka widoczna)", path: "/games/", sources: GAMES, ready: "#grid .card",
+    devices: ["desktop", "phone"], steps: [selectAtTopEdge("#grid .card:not(.addCard)")] },
+  { id: "logos-selected-top-edge", category: CAT, title: "Logo — zaznaczony kafel przy górnej krawędzi listy (cała obwódka widoczna)", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile",
+    devices: ["desktop", "phone"], steps: [selectAtTopEdge(".logoTile")] },
   { id: "games-prepared-states", category: CAT, title: "Moje gry — Preparowane: gotowa, szkic z powodem blokady, kopia od znajomego", path: "/games/", sources: GAMES, ready: "#grid .card",
     steps: [select(G.football)] },
   { id: "games-prepared-not-ready", category: CAT, title: "Moje gry — zaznaczona gra niegotowa (za mało pytań): Graj wyłączone, powód na kafelku", path: "/games/", sources: GAMES, ready: "#grid .card",

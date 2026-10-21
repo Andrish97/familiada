@@ -2853,6 +2853,11 @@ body{
     0 0 0 2px rgba(255,234,166,.55),
     0 10px 22px rgba(0,0,0,.35);
 }
+/* Ekran dotykowy: :hover zostaje po stuknięciu, więc bez uniesienia kafla
+   (inaczej po zaznaczeniu kafel zostawał przesunięty o 1-2 px w górę). */
+@media (hover: none){
+  .grid :is(.tile, .addCard, .logoTile):hover{ transform: none; }
+}
 .grid .tile .x{ appearance: none; -webkit-appearance: none; }
 .grid .tile .x.x-bell{ right: 46px; }
 .grid .tile .x:disabled{ opacity: .4; cursor: not-allowed; }

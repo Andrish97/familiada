@@ -1035,7 +1035,6 @@ body.games-body.logo-body > main.logoWrap{
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable; /* nie zabiera dodatkowej szerokości kaflom na małym ekranie */
-  padding-right: 2px;
 }
 
 /* stopka pod kartą nie może wypychać wysokości */
