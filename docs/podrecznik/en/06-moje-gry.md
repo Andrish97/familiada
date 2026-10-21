@@ -4,7 +4,13 @@
 
 *My games* is the page you land on after logging in, and where most of your work starts.
 From the top bar you can go from here to the other parts of the app: question bases, logos,
-friends, subscribers, tasks and connecting devices.
+Community Games (→ 13), friends, subscribers, tasks and connecting devices. The counters next to the
+buttons show things waiting for you: invitations, received copies, tasks
+and shared devices. On a narrower screen some of the buttons are in the [More] menu.
+
+If your browser supports it, the top bar also shows an [Install Familiada|download] icon — it adds
+Familiada to your phone's home screen or your desktop. This is especially handy on a phone used
+as a buzzer and on the host's tablet (→ 17.1).
 
 The page is the library of your games, including copies received from friends. Games are divided
 into tabs:
@@ -75,6 +81,9 @@ press and hold it on a phone) to see the reason. The most important rules:
 
 [Change type] changes the same game — it does not create a copy. Details → 7.8.
 
+On a phone and in a narrow browser window the [Play] and [Game settings] buttons are hidden —
+open the *Control panel* and *Game settings* on a computer or tablet.
+
 In the **Community Games** tab only [Play], [Preview] and [Game settings] are available.
 These games cannot be edited, duplicated, exported or sent (→ 13.4).
 
@@ -137,4 +146,7 @@ need to be completed — you will see what is missing under its name (→ 6.2).
 
 **Export to a question base.** [Export to base] copies the game's questions and answers to the selected
 question base (→ 9). A folder named after the game is created in the base's root folder. You can choose
-your own base or a base shared with you with edit rights (→ 12.4).
+your own base or a base shared with you with edit rights (→ 12.4). If you don't have such a base,
+the window shows "No bases found." — create a base first (→ 9.1).
+
+Don't edit the contents of `.famgame` files by hand — importing such a file may fail.

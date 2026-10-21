@@ -5,6 +5,8 @@
 Settings apply to one specific game. You open them with the [Game settings] button
 in *My games* or with [Change settings] in the summary in the control panel (→ 17.2).
 
+*Game settings* are not available on a phone — use a tablet or a computer.
+
 Prepare the settings **before the game starts**. While the game is open in the control panel,
 you cannot change its settings. If you closed the panel during a game, the app shows "Game in progress" with a choice:
 [Go back] or [End game and open settings] — the second option ends the game, and you will have to connect
@@ -24,7 +26,7 @@ be accepted.
 
 - **Colors** — the Team A color, the Team B color, the background and the dot color (the glowing points of
   the Display). Click a color to enter a color code or set it with the sliders.
-- **Theme** — "Classic" or "Modern".
+- **Theme** — "Classic" (default) or "Modern".
 - **Logo** — "Default" or one of your logos (→ 8).
 - **Host logo** — how the logo looks on the host screen:
   - "Pixels" — the same as on the Display, made of dots,
@@ -48,6 +50,14 @@ A custom file can be up to 120 seconds long for the outro, up to 30 seconds for 
 and up to 5 seconds for the other sounds. If you choose "Custom", you must add a file — otherwise
 the settings cannot be saved.
 
+Custom files are saved in the app together with the game when you choose [Save] — they will work on any
+device where you start this game.
+
+> Note: deleting a custom file (the icon next to its name) and [Restore defaults] in the
+> "Sound" section delete the files right away, even if you don't save your changes afterwards. [Restore defaults]
+> also brings back the "Classic" variant and 100% volume. Deleted files cannot be recovered —
+> you have to upload them again.
+
 ## 16.5 Questions
 
 These sections decide which questions go into the final and in what order the rounds are played.
@@ -55,7 +65,7 @@ These sections decide which questions go into the final and in what order the ro
 ### 16.5.1 Question settings
 
 - **"Does the game include a finale?"** — "Yes" or "No" (by default there is no final). Without a final, the game ends
-  after the rounds (→ 3.7).
+  after the rounds (→ 3.7). When you turn the final off, the selected final questions go back to the rounds.
 - **"Finale questions mode"** — "Random" (the app draws 5 questions) or "Manual" (you choose
   them yourself in the "Questions — Finale" section).
 - **"Rounds question order mode"** — "Random" or "Order" (you set it yourself in the
@@ -67,12 +77,13 @@ With manual selection, tick **exactly 5** final questions — with any other num
 be saved. Final questions are not used in the rounds.
 
 With a random draw, you will see the set in the summary before the game starts, where you can choose
-[Reshuffle] (→ 17.2).
+[Reshuffle] (→ 17.2). With a random final and "Order" mode, the final first takes 5 questions
+from your rounds list; after [Reshuffle], the previous final questions go back to the end of the list.
 
 ### 16.5.3 Round questions
 
-In "Order" mode, in the "Questions — Rounds" section, choose the questions for the rounds and arrange them
-by dragging (or with the arrows). The rounds use them one after another; final questions are left out here.
+In "Order" mode, in the "Questions — Rounds" section, arrange the order of the questions by dragging (or
+with the arrows) — the list contains all questions except the final ones. The rounds use them one after another; final questions are left out here.
 In "Random" mode, the app shuffles the questions before the game — you will see the order in the summary
 (→ 17.2). Final questions that were drawn will not be used in the rounds.
 
@@ -85,9 +96,12 @@ The "Game settings" section:
 | "Round multipliers" | 1, 1, 1, 2, 3 | How many times the points count in each round. The last multiplier applies to all further rounds (→ 3.2). |
 | "Points threshold for finale" | 300 | The team's total score at which the game moves on to the final or ends (→ 3.6). |
 | "Finale target (pts)" | 200 | How many points the finalists must score together (→ 4.3). Shown when the final is turned on. |
-| "End screen mode" | — | What the end screen shows: "Logo", "Points" or "Prize amount" (only with a final). |
+| "End screen mode" | "Logo" | What the end screen shows: "Logo", "Points" or "Prize amount" (only with a final). |
 | "Main prize amount" | 25 000 | The prize for reaching the final target. |
 | "Prize multiplier (after finale)" | 3 | What the winning team's points are multiplied by to calculate the amount. |
+
+Multipliers and amounts are positive whole numbers — for example, 0.5 won't work. The app won't save
+an invalid value: after [Save], the field goes back to its previous value.
 
 The last two settings are shown when the game has a final and the end screen shows the prize amount.
 The amount on the end screen is the winning team's points (from the rounds and the final) multiplied by

@@ -65,6 +65,8 @@ round or event.
   spaces) and choose a color.
 - Select questions or folders, and in the [Tags] window tick the tags you want to assign to them.
   A tag marked as "partial" is on only some of the selected items.
+- A tag assigned to a folder goes to all the questions in it, including those in subfolders. A folder
+  shows the tag marker only when all the questions inside have it.
 - Click a tag in the left panel to see only the questions with that tag. Several selected tags
   show the questions that have all of them.
 

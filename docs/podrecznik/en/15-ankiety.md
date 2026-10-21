@@ -27,10 +27,18 @@ The "Sharing" card offers two ways:
 
 **Anonymous** — for anyone who gets the link:
 
-- "Voting link" with a [Copy link] button,
+- "Voting link" with the [Copy link] and [Open] buttons ([Open] opens the poll in a new tab),
 - a QR code to scan with a phone; [Enlarge QR code] shows it full screen.
 
 Voters are anonymous — you only see the number of votes. People can vote once per browser.
+
+**QR code on a TV or projector.** [QR on display] shows the 6-digit code of the "QR Display"
+screen — it is a code for connecting the screen, not for voting. On the TV, open
+familiada.online → [Connect device] and enter the code (no login needed). The screen shows
+a large voting QR code that participants scan with their phones. [Open] opens this screen on
+the current device (for example, to send it over HDMI), and [Copy] copies the code. The screen has
+a full-screen button, and once the poll is closed it shows "The poll has been closed". The button works
+only after the poll has been started.
 
 **Recipients** — personal invitations for friends (→ 10) and subscribers (→ 14):
 
@@ -55,6 +63,8 @@ A voter opens the poll from the link, the QR code, an email or a task.
 - In a standard poll, voters type their own answer — up to 17 characters. Emoji and characters
   the Display cannot show are left out.
 - In a "Points" poll, voters choose one of the given answers.
+- You can't skip a question or go back to the previous one. In a "Points" poll, clicking
+  an answer moves on right away; in a standard poll you have to type something.
 - Answers are sent together **after the last question**. Anyone who leaves earlier is not
   counted.
 - At the end, "Thanks for participating!" appears.
@@ -100,7 +110,7 @@ all the questions), even if the result does not yet meet the conditions for clos
 
 **Standard poll** — tidy up the answers before you approve them:
 
-- the app merges identical entries on its own (regardless of upper or lower case); [Merge duplicates] does it
+- the app merges identical entries on its own (regardless of upper or lower case and extra spaces); [Merge duplicates] does it
   again after your corrections,
 - drag an answer onto another one to **merge** them (for example "banana" and "bananas") — on
   a phone, use the "Merge with…" button,

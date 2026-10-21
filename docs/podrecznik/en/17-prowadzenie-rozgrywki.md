@@ -13,7 +13,8 @@ and what happens on the other screens at the same time. Rules of the rounds and 
 | **Host** | the screen for the person reading the questions — the question and all answers with points | tablet or phone |
 | **Buzzer** | two buttons, A and B, for the players in the duel | phone held sideways |
 
-The host does not control the game — the operator does. One person can do both jobs, but it takes
+The *Control panel* does not work on a phone — you need a computer or a tablet with a wide
+screen. The host does not control the game — the operator does. One person can do both jobs, but it takes
 smooth switching between talking to the players and working the panel.
 
 **How to open the Control panel.** Select a ready game in *My games* and choose [Play].
@@ -25,9 +26,10 @@ The **Display** is always needed — you cannot continue without it.
 - **A second monitor or projector next to the computer.** Turn on the extended desktop (Windows: Win+P,
   Mac: ⌘+F1), choose [Open] next to the Display, drag the window to the second screen and switch it to
   full screen.
-- **A TV with a browser.** On the TV, go to familiada.online. The TV shows a simplified page
-  with a field for the 6-digit code and a [Connect] button — enter the Display code
-  from the panel. The up/down arrows switch between the field and the button, OK/Enter confirms.
+- **A TV with a browser.** In the TV's browser, open
+  `familiada.online/connect/tv/` — a simplified page with a field for the 6-digit code and a
+  [Connect] button. Enter the Display code from the panel; the up/down arrows switch between the field
+  and the button, OK/Enter confirms. You can also use the regular [Connect device] page.
   You do not need to sign in on the TV.
 - **Another device.** Open familiada.online → [Connect device] → [Connect by code] and enter the code.
 
@@ -35,13 +37,16 @@ The **Display** is always needed — you cannot continue without it.
 > the browser may pause the animations and the board updates.
 
 **Host** and **Buzzer** — scan the [QR Code] with a phone or enter the code via
-[Connect device]. [QR on display] shows the codes on the Display, so the crew can quickly
+[Connect device]. The *Connect a device* page works without signing in: after you enter the code, you will see
+the game's name and its owner — check them and confirm. On a phone and tablet there is also
+[Scan QR] (scanning with the camera; if your browser doesn't support it, use the system camera app). [QR on display] shows the codes on the Display, so the crew can quickly
 scan them from the room. It is best to use two separate devices.
 
 [Copy] copies the code, and [Share] sends the device to another person — enter their email address or
 username, or choose a friend. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
-email and on the *My notifications* page (→ 14.5). Sharing devices requires an account.
+email and on the *My notifications* page (→ 14.5). In the shared list, a phone and a tablet
+show the Host and the Buzzer, and a computer shows the Display. Sharing devices requires an account.
 
 **Without some of the devices:**
 

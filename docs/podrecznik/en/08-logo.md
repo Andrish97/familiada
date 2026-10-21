@@ -9,6 +9,10 @@ if you do not choose your own, the game will show the default logo.
 You create and store logos on the *My logos* page. You can assign a different
 logo to each game (→ 8.5).
 
+The Display has **150 × 70 dots**. Something that looks good in high resolution can become
+unreadable once turned into dots. Thick shapes, large letters and high contrast work best —
+thin lines and small details usually disappear. Check the result with the [Preview] button.
+
 > Note: logos are created on a computer or tablet. On a phone you can
 > browse the list of logos, but the editor is not available.
 
@@ -42,6 +46,21 @@ You also have: zooming the view in and out, the canvas background (black or whit
 line thickness and style, fill, [Undo], [Redo], [Duplicate], [Clear] and [Preview]
 — which shows how the logo will look on the Display.
 
+Useful shortcuts and rules:
+
+- Delete (on a Mac Fn+Backspace) or × in the options bar removes the selected elements; [Clear] removes
+  the whole drawing after you confirm.
+- Ctrl+Z (⌘Z) undoes, Ctrl+Shift+Z or Ctrl+Y redoes, Ctrl+D duplicates; Ctrl+0 resets
+  the zoom to 100%, and Ctrl + plus and Ctrl + minus zoom the view in and out.
+- L — line, R — rectangle, O — ellipse, P — polygon, U — next shape, F — fill;
+  [ and ] change the thickness of the line or eraser.
+- The arrow keys move the selection by 1 dot, or by 10 with Shift. Holding Ctrl temporarily switches
+  to the Pointer.
+- Holding Shift draws a square or a circle, and a line or arrow snaps to 15° steps.
+- Press Enter to finish a polygon, Esc to cancel it, and Backspace to remove the last point.
+- [Undo] and [Redo] work within the current editing session — when you reopen the logo, the history starts
+  from scratch.
+
 Keyboard shortcuts do not work while you are typing text.
 
 ## 8.4 Creating a logo from an image
@@ -64,6 +83,7 @@ also saved when you leave with the [Back] button.
 **The "My logos" list.** For the selected logo, [Edit], [Preview], [Duplicate],
 export to a `.famlogo` file, [Import] and [Send] — a copy for a friend (→ 11.3) — are available.
 You rename a logo by double-clicking it (on touch screens — by pressing and holding), and delete it with the trash icon.
+Don't edit the contents of `.famlogo` files by hand — importing such a file may fail.
 
 **Choosing a logo in a game.** You choose the logo in *Game settings*, in the "Logo" section — "Default"
 or one of yours (→ 16.3).
