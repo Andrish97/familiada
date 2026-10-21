@@ -4,37 +4,46 @@ Fakty sprawdzone w obecnej wersji serwisu i w regulaminie TVP, na podstawie
 których powstają rozdziały [`podrecznik-plan.md`](podrecznik-plan.md).
 Rozbieżności z planem oznaczone **ROZBIEŻNOŚĆ**; decyzje — w PROGRESS-E13.md.
 
-## Część I — regulamin TVP (stan: WSTĘPNY, 2026-10-21)
+## Część I — regulamin TVP (sprawdzone 2026-10-21)
 
-Pełnego tekstu nie odczytano: sieć środowiska blokuje `s.tvp.pl` (403).
-Poniżej ustalenia z fragmentów regulaminów pokazanych przez wyszukiwarkę —
-**bez numerów paragrafów, do potwierdzenia w PDF** przed napisaniem rozdz. 1–4.
+Podstawa (wskazana przez użytkownika): **Regulamin teleturnieju „FAMILIADA”** — Producent
+Telewizja Polska S.A., Wykonawca ASTRO S.A., wersja z „głową rodziny” (2019):
+https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf
+(PDF przeczytany w całości; numery poniżej — dział i punkt).
 
-- Regulamin (prawdopodobnie najnowszy, nadawca „Telewizja Polska S.A. w likwidacji”,
-  producent FremantleMedia Polska): https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf
-  Strona TVP: https://www.tvp.pl/83918733/program-familiada-jak-sie-zglosic-casting-regulamin
-- Ankieta: 100-osobowa próba; punkty = liczba wskazań — zgodne z planem.
-- Rzadkie odpowiedzi „uznawane są za błędne i nie wchodzą do końcowego
-  opracowania” — przykład „1, 2 i 3 razy” z planu **niepotwierdzony**.
-- Rundy I–III, dogrywka, gdy żadna drużyna nie ma łącznie 300 pkt; dogrywka
-  trwa do osiągnięcia 300 — zgodne.
-- **ROZBIEŻNOŚĆ / uzupełnienie:** mnożniki: runda I ×1, II ×2, III ×3,
-  dogrywka ×3, finał ×1 (starsze regulaminy: 3 rundy ×1, czwarta ×2, od piątej ×3).
-- Pojedynek: po jednej osobie z drużyny (najpierw kapitanowie), odpowiada
-  szybszy przycisk; gdy odpowiedź nie jest najwyżej punktowana, odpowiada
-  przeciwnik; lepsza odpowiedź daje drużynie wybór: grać albo oddać pytanie.
-  Obie spoza tablicy → kolejni uczestnicy; po czterech osobach bez trafienia
-  pytanie wycofane.
-- 3 sekundy na odpowiedź, po przekroczeniu brzęczek i X — zgodne; moment
-  startu („od zakończenia odczytywania pytania”) niepotwierdzony.
-- Trzy błędy → drużyna przeciwna ma jedną odpowiedź; trafiona — przejmuje bank.
-- Finał: dwóch finalistów wskazanych przez kapitana, 5 tych samych pytań,
-  15 s i 20 s, drugi ze słuchawkami z muzyką, powtórzenie → brzęczek i inna
-  odpowiedź; finał bez mnożnika, cel 200 pkt — zgodne.
-- **ROZBIEŻNOŚĆ:** nagroda za rundy = punkty × 3 zł zawsze (to wycena punktów,
-  nie kara za nieosiągnięcie 200); 25 000 zł dochodzi tylko przy ≥200 pkt
-  w finale (od 22.09.2019; wcześniej 15 000 zł).
-- Uzupełnienie: drużyna 4-osobowa (od 2025; wcześniej 5), uczestnicy pełnoletni.
+- **IV.4** Każde pytanie analizowane pod kątem odpowiedzi 100 osób; przykład „wymień coś koloru
+  żółtego”: banan 29, cytryna 19, żonkil 15 (= 75 odpowiedzi); pozostałe, np. czapka 3, pasy na
+  drodze 1, wełna 2 — „uważane za niewłaściwe i nie SA wprowadzane do końcowego opracowania”. Zgodne z planem.
+- **IV.5** Właściwe pytania — te, na które uzyskano 3–8 takich samych odpowiedzi; bardzo
+  podzielone i niejasne są wycofywane.
+- **V.1–2** Dwie drużyny (rodziny) z „głową rodziny”; punkty = liczba osób z taką odpowiedzią;
+  punkty gromadzone w „banku” na tablicy.
+- **V.3–4** Pojedynek: „głowy” przy pulpicie z przyciskami; odpowiada szybsza; jeśli odpowiedź
+  nie jest najwyżej punktowana — szansa dla drugiej „głowy”; wyżej na tablicy = prawo dalszych
+  odpowiedzi; drużyna może zrezygnować i przekazać pytanie przeciwnikom; obie spoza tablicy →
+  kolejni członkowie rodzin. Dalej odpowiadają kolejni członkowie drużyny.
+- **V.4** Zła odpowiedź = X i brzęczek, utrata „szansy”; **limit 3 sekund** — po przekroczeniu
+  brzęczek i utrata szansy (regulamin nie określa, od kiedy liczony).
+- **V.5–7** Trzy stracone szanse przed odkryciem wszystkich odpowiedzi → pytanie przechodzi do
+  przeciwnej drużyny; przeciwnicy mogą się naradzać od utraty drugiej szansy grających;
+  „głowa” przeciwnej drużyny ma jedną odpowiedź — trafiona: punkty do jej banku, inaczej
+  zostają u grających.
+- **V.8–9** Zwykle trzy rundy; **czwarta runda — podwójna wartość, od piątej — potrójna**;
+  gra trwa do zdobycia przez jedną rodzinę łącznie **300 punktów**.
+  **ROZBIEŻNOŚĆ z planem (3.):** regulamin nie przewiduje „trzech zaplanowanych rund i dogrywki”
+  — to sformułowanie nowszych regulaminów. Domyślne mnożniki serwisu 1, 1, 1, 2, 3 są z nim zgodne.
+- **V.10–13** Pokonana drużyna zabiera zgromadzone pieniądze; „głowa” zwycięzców wskazuje dwóch
+  finalistów; drugi schodzi ze sceny i dostaje słuchawki z muzyką; finał: 5 pytań, cel 200 pkt.
+- **V.14–16** Pierwszy gracz: 5 pytań w **15 s**; może pominąć pytanie i wrócić, jeśli zostanie
+  czas; odpowiedź spoza tablicy = 0 pkt; potem odpowiedzi znikają z tablicy.
+- **V.17–20** Drugi gracz: prowadzący podaje mu wynik partnera, te same pytania, **20 s**;
+  powtórzenie odpowiedzi pierwszego → brzęczek i inna odpowiedź; odsłanianie razem
+  z odpowiedziami pierwszego.
+- **V.21–22** ≥200 pkt → nagroda główna **25 tys. zł** dodana do pieniędzy wygranych wcześniej;
+  <200 → pieniądze zebrane w grze (**liczba punktów mnożona przez 3**). Finał bez mnożnika.
+- Uczestnicy: pełnoletni (II.1). Liczby członków drużyny ta wersja nie podaje.
+- Nowsza wersja regulaminu (fragmenty z wyszukiwarki, nie podstawa podręcznika): rundy I–III
+  ×1/×2/×3 i dogrywka ×3, drużyny 4-osobowe.
 
 ## Część II — obecna wersja serwisu
 
@@ -225,5 +234,5 @@ Strona `web/games/settings/`. Sekcje: „Drużyny”, „Wygląd”, „Dźwięk
 
 ## Do decyzji użytkownika (nie blokuje pisania)
 
-- Domyślne mnożniki rund w serwisie 1, 1, 1, 2, 3, a w obecnym regulaminie TVP 1, 2, 3 (+ dogrywka ×3) — zostawić czy zmienić domyślne?
-- „Mnożnik nagrody (po finale)” mnoży także punkty z finału; w TVP ×3 dotyczy tylko punktów z rund — zostawić czy dopasować?
+- ~~Domyślne mnożniki rund~~ — rozstrzygnięte: zgodne z regulaminem 2019 (V.9), bez zmian.
+- „Mnożnik nagrody (po finale)” mnoży także punkty z finału; w regulaminie (V.21–22) ×3 dotyczy punktów zdobytych w grze przed finałem — zostawić czy dopasować? Do decyzji podręcznik opisuje działanie serwisu.
