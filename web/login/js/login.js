@@ -11,7 +11,8 @@ import {
   convertGuestToRegisteredEmailOnly,
   discardCurrentGuestAccount,
   resetPassword,
-  resolveLoginToEmail,
+  resetPasswordByUsername,
+  prepareConfirmationResend,
   updateUserLanguage,
   validatePassword,
   validateUsername,
@@ -444,7 +445,6 @@ const RESET_ACTION_KEY = "auth:reset_password";
 // (migracja 288/293), nie parametrem wywołania -- stąd brak tu już
 // *_COOLDOWN_SECONDS (dawniej przekazywane do cooldownEmailReserve).
 const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
-const SIGNUP_RESEND_ACTION_KEY = "auth:signup_confirm";
 
 let _forgotTimer = null;
 let _forgotDebounce = null;
@@ -645,27 +645,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   if (!ok) return true;
 
   const intent = pendingIntent === "guest_migrate" ? "guest_migrate" : "signup";
-  let reserveOk = false;
-  let nextAllowedAtMs = 0;
-
-  try {
-    const { data, error } = await sb().rpc("email_resend_prepare", {
-      p_email: String(emailAddr || "").trim().toLowerCase(),
-      p_intent: intent,
-    });
-    if (!error && Array.isArray(data) && data.length) {
-      reserveOk = !!data[0]?.ok;
-      nextAllowedAtMs = data[0]?.nextallowedat ? new Date(data[0].nextallowedat).getTime() : 0;
-    }
-  } catch {}
-
-  // Fallback for environments without the new RPC.
-  if (!reserveOk && !nextAllowedAtMs) {
-    const actionKey = intent === "guest_migrate" ? GUEST_UPGRADE_ACTION_KEY : SIGNUP_RESEND_ACTION_KEY;
-    const reserve = await mailCooldownEmailReserve(actionKey, emailAddr);
-    reserveOk = !!reserve.ok;
-    nextAllowedAtMs = reserve.nextAllowedAtMs || 0;
-  }
+  const { allowed: reserveOk, nextAllowedAtMs } = await prepareConfirmationResend(emailAddr, intent);
 
   if (!reserveOk) {
     const left = (nextAllowedAtMs || 0) - Date.now();
@@ -1117,10 +1097,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   
     try {
-      // 1) resolve (email lub username -> email)
-      const resolved = await resolveLoginToEmail(loginOrEmail);
-      if (!resolved) throw new Error(t("index.errResetMissingLogin"));
-      // 2) cooldown check (per email, cross-device)
+      // Nazwa użytkownika: Worker rozwiązuje nazwę, pilnuje cooldownu i wysyła
+      // link -- adres e-mail konta nie trafia do przeglądarki.
+      if (!loginOrEmail.includes("@")) {
+        const key = loginOrEmail.toLowerCase();
+        if (getForgotUntil(key) > Date.now()) {
+          setStatus(t("index.statusResetSent"));
+          showForgotCooldownForEmail(key);
+          return;
+        }
+        setStatus(t("index.statusResetSending"));
+        let captchaToken = await getCaptchaTokenOrPrompt();
+        let result;
+        try {
+          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
+        } catch (e) {
+          if (!isCaptchaError(e)) throw e;
+          captchaToken = await getCaptchaTokenOrPrompt();
+          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
+        }
+        if (result.nextAllowedAtMs) setForgotUntil(key, result.nextAllowedAtMs);
+        setStatus(t("index.statusResetSent"));
+        hideForgotCooldown();
+        showForgotCooldownForEmail(key);
+        return;
+      }
+      const resolved = loginOrEmail.toLowerCase();
+      // 1) cooldown check (per email, cross-device)
       await refreshForgotUntil(resolved);
       const until = getForgotUntil(resolved);
       const left = until - Date.now();
@@ -1130,12 +1133,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         showForgotCooldownForEmail(resolved);
         return;
       }
-      // 3) reserve cooldown (cross-device) + send
+      // 2) reserve cooldown (cross-device) + send
       const reserve = await mailCooldownEmailReserve(RESET_ACTION_KEY, resolved);
       if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
 
       if (!reserve.ok) {
-        const left2 = getForgotUntil(resolved) - Date.now();
         setStatus(t("index.statusResetSent"));
         setErr("");
         showForgotCooldownForEmail(resolved);
@@ -1148,11 +1150,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       let captchaToken = await getCaptchaTokenOrPrompt();
       let usedEmail;
       try {
-        usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
+        usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
       } catch (e) {
         if (isCaptchaError(e)) {
           captchaToken = await getCaptchaTokenOrPrompt();
-          usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
+          usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
         } else {
           throw e;
         }

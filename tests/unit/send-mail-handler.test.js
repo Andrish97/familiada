@@ -4,10 +4,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createHash, webcrypto } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
-import { notificationReference } from '../../supabase/functions/_shared/notification-reference.js';
 import { parseNotificationItem, parseMailLang, prepareNotificationRow } from '../../supabase/functions/_shared/notification-send.js';
 const read = file => fs.readFileSync(new URL('../../' + file, import.meta.url), 'utf8');
-const resultModule = await import('data:text/javascript;base64,' + Buffer.from(read('supabase/functions/_shared/mail-queue-results.js')).toString('base64'));
 const source = stripTypeScriptTypes(read('supabase/functions/send-mail/index.ts'))
   .replace(/^import .*;\n/gm, '')
   .replace(/Deno.env.get\(([^)]*)\)!/g, 'Deno.env.get($1)');
@@ -55,7 +53,7 @@ function handler() {
   const stdCrypto = { subtle: { digest: async (_alg, data) => createHash('md5').update(Buffer.from(data)).digest() } };
   const context = vm.createContext({ Response, Request, Date, JSON, String, Number, Math, Array, Object, Uint8Array, TextEncoder, crypto: webcrypto,
     Deno: { env: { get: key => key } }, createClient: (_url, key) => key === 'SUPABASE_SERVICE_ROLE_KEY' ? service : anonymous,
-    serve: fn => { state.handler = fn; }, mailQueueResult: resultModule.mailQueueResult, notificationReference,
+    serve: fn => { state.handler = fn; },
     stdCrypto, parseNotificationItem, parseMailLang, prepareNotificationRow });
   vm.runInContext(source, context);
   state.request = async (body, { token = 'valid-test-token', method = 'POST', raw = false } = {}) => {
@@ -65,37 +63,33 @@ function handler() {
   };
   return state;
 }
-const item = to => ({ to, subject: 'Test', html: '<a href="https://www.familiada.online/go/?f=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa">Test</a>', cooldownActionKey: 'friend:invite', cooldownTargetKey: `email:${to}` });
-test('full send-mail handler returns actual queued0/mixed/full results, keeping owner and policy in inserted rows', async () => {
+test('send-mail: odrzuca HTML i adres od klienta (dawny tryb), nieautoryzowane i błędne żądania; OPTIONS', async () => {
   const app = handler();
-  const body = { items: [item('test8@familiada.online'), item('test14@familiada.online')] };
-  for (const inserted of [[], [{ to_email: body.items[1].to }], body.items.map(i => ({ to_email: i.to }))]) {
-    app.inserted = inserted;
-    const response = await app.request(body);
-    assert.equal(response.status, 200); assert.equal(response.body.queued, inserted.length);
-    assert.equal(response.body.results.filter(r => r.queued).length, inserted.length);
-    assert.equal(response.body.results.filter(r => r.skipped).length, 2 - inserted.length);
-    assert.equal(app.rows.length, 2);
-    assert.ok(app.rows.every(row => row.created_by === 'test-owner' && row.cooldown_action_key === 'friend:invite'));
+  const legacy = { to: 'test8@familiada.online', subject: 'Test', html: '<a href="https://www.familiada.online/go/?f=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa">Test</a>', cooldownActionKey: 'friend:invite', cooldownTargetKey: 'email:test8@familiada.online' };
+  for (const body of [legacy, { items: [legacy] }]) {
+    const res = await app.request(body);
+    assert.equal(res.status, 400); assert.equal(res.body.error, 'invalid_notification_request');
   }
-});
-test('full send-mail handler returns explicit batch overflow and current database cooldown failure', async () => {
-  const app = handler(); app.batchMax = 1; app.inserted = [{ to_email: 'test8@familiada.online' }];
-  const response = await app.request({ items: [item('test8@familiada.online'), item('test14@familiada.online')] });
-  assert.equal(app.rows.length, 1); assert.equal(response.body.queued, 1);
-  assert.equal(response.body.results[1].error, 'batch_limit');
-  app.error = { message: 'cooldown_active' }; assert.equal((await app.request(item('test8@familiada.online'))).status, 429);
-  app.error = { message: 'Database error' }; assert.equal((await app.request(item('test8@familiada.online'))).status, 500);
-});
-test('full send-mail handler rejects unauthorized, malformed, empty and missing-policy requests, permits OPTIONS', async () => {
-  const app = handler();
-  for (const token of ['', 'invalid-test-token']) assert.equal((await app.request(item('test8@familiada.online'), { token })).status, 401);
+  assert.equal(app.rows.length, 0);
+  for (const token of ['', 'invalid-test-token']) assert.equal((await app.request({ lang: 'pl', items: [] }, { token })).status, 401);
   for (const raw of ['', '{']) assert.equal((await app.request(raw, { raw: true })).status, 400);
-  for (const body of [null, 14, "body", [], {}, { to: 'test8@familiada.online', subject: 'Test', html: '<p>Test</p>' }]) assert.equal((await app.request(body)).status, 400);
-  for (const cooldownActionKey of ['admin:compose','contact:confirmation','auth:reset_password']) {
-    assert.equal((await app.request({...item('test8@familiada.online'),cooldownActionKey})).status,400);
-  }
+  for (const body of [null, 14, "body", [], {}]) assert.equal((await app.request(body)).status, 400);
   assert.equal((await app.request(null, { method: 'OPTIONS', token: '' })).status, 204);
+});
+
+test('send-mail: limit partii i cooldown bazy per element', async () => {
+  const app = handler(); app.batchMax = 1; app.inserted = undefined;
+  const T2 = '1f1e2d3c-4b5a-4968-8776-5a4b3c2d1e0f';
+  app.tables.mail_notification_allocations = [TOKEN, T2].map(source_token => ({ owner_id: OWNER, source_kind: 'friend', source_token, consumed_at: null, revoked_at: null,
+    enqueue_before: '2999-01-01T00:00:00Z', to_email: 'f@example.com', recipient_id: RECIPIENT, snapshot: { resource: {} }, copy_offer_id: null }));
+  const res = await app.request({ lang: 'pl', items: [{ action: 'friend:invite', token: TOKEN }, { action: 'friend:invite', token: T2 }] }, { token: 'owner-token' });
+  assert.equal(res.status, 200); assert.equal(res.body.queued, 1);
+  assert.equal(res.body.results[1].error, 'batch_limit');
+  app.batchMax = 100; app.error = { message: 'cooldown_active: baseline' };
+  const cooldown = await app.request({ lang: 'pl', items: [{ action: 'friend:invite', token: TOKEN }] }, { token: 'owner-token' });
+  assert.equal(cooldown.status, 429); assert.equal(cooldown.body.error, 'cooldown');
+  app.error = { message: 'Database error' };
+  assert.equal((await app.request({ lang: 'pl', items: [{ action: 'friend:invite', token: TOKEN }] }, { token: 'owner-token' })).status, 500);
 });
 
 test('send-mail: goście (anonimowi i z profilem gościa) nie wysyłają żadnych maili', async () => {

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 const read = path => fs.readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
 const rendererSource = read('supabase/functions/_shared/mail-document.js');
 const { renderMailDocument, renderRichMailDocument, escapeMailText } = await import('data:text/javascript;base64,' + Buffer.from(rendererSource).toString('base64'));
+import { buildNotificationMail } from '../../supabase/functions/_shared/notification-mail.js';
 const translations = {};
 for (const lang of ['pl','en','uk']) translations[lang] = (await import('data:text/javascript;base64,' + Buffer.from(read(`web/shared/translation/${lang}.js`)).toString('base64'))).default;
 const input = { lang: 'pl', title: 'Test', body: 'Body', actionLabel: 'Go', actionUrl: 'https://www.familiada.online/go/?t=token&lang=pl' };
@@ -37,23 +38,21 @@ test('common mail layout and all new reminder/role translations exist for PL/EN/
   }
 });
 test('invitation footers use canonical language links for account, subscriber and global opt-out', () => {
-  for (const file of ['web/shared/js/core/invite-mail.js', 'web/shared/js/core/poll-mail.js']) {
-    const source = read(file);
-    const helper = source.match(/(?:export )?function mailLink\([^)]*\) \{[\s\S]*?\n\}/)?.[0].replace(/^export /, '');
-    const wrapper = source.match(/(?:export )?function buildMailHtml\([\s\S]*?\n\}/)?.[0].replace(/^export /, '');
-    assert.ok(wrapper); assert.ok(helper);
-    for (const lang of ['pl','en','uk']) {
-      const context = vm.createContext({ URL, location: { origin: 'https://www.familiada.online' }, getUiLang: () => lang, renderMailDocument, t: key => key });
-      vm.runInContext(helper + '\n' + wrapper, context);
-      for (const isRegistered of [false, true]) {
-        const html = context.buildMailHtml({ ...input, isRegistered, subToken: 'sub', unsubToken: 'global' });
-        const links = [...html.matchAll(/href="([^"]+)"/g)].map(m => new URL(m[1].replaceAll('&amp;', '&')));
-        const footers = links.slice(1);
-        assert.ok(footers.length);
-        for (const url of footers) assert.equal(url.searchParams.get('lang'), lang);
-        if (isRegistered) assert.deepEqual(footers.map(u => u.pathname), ['/account/']);
-        else assert.ok(footers.every(u => u.pathname === '/go/'));
-      }
+  const token = '0f1e2d3c-4b5a-4968-8776-5a4b3c2d1e0f';
+  for (const lang of ['pl','en','uk']) {
+    const cases = [
+      { mail: buildNotificationMail({ action: 'friend:invite', lang, data: { ownerLabel: 'O', token } }), registered: true },
+      { mail: buildNotificationMail({ action: 'poll:resend', lang, data: { ownerLabel: 'O', token, unsubToken: 'global' } }), registered: false },
+      { mail: buildNotificationMail({ action: 'poll:share', lang, data: { ownerLabel: 'O', token, pollName: 'P', isRegistered: true } }), registered: true },
+      { mail: buildNotificationMail({ action: 'poll:share', lang, data: { ownerLabel: 'O', token, pollName: 'P', subToken: 'sub', unsubToken: 'global', isRegistered: false } }), registered: false },
+    ];
+    for (const { mail, registered } of cases) {
+      const links = [...mail.html.matchAll(/href="([^"]+)"/g)].map(m => new URL(m[1].replaceAll('&amp;', '&')));
+      const footers = links.slice(1);
+      assert.ok(footers.length);
+      for (const url of footers) assert.equal(url.searchParams.get('lang'), lang);
+      if (registered) assert.deepEqual(footers.map(u => u.pathname), ['/account/']);
+      else assert.ok(footers.every(u => u.pathname === '/go/'));
     }
   }
 });
@@ -63,51 +62,38 @@ function translate(lang, key, params = {}) {
   if (typeof value === 'function') return value(params);
   return String(value).replace(/\{(\w+)\}/g, (_, name) => params[name] ?? '');
 }
-test('friend and subscriber reminders use distinct subjects/body and preserve existing token', async () => {
-  const source = read('web/shared/js/core/invite-mail.js');
-  const sender = source.slice(
-    source.indexOf('export async function sendInviteMail'),
-    source.indexOf('export async function sendResourceCopyMail'),
-  ).replace('export ', '');
+test('friend and subscriber reminders use distinct subjects/body and preserve existing token', () => {
+  const token = '0f1e2d3c-4b5a-4968-8776-5a4b3c2d1e0f';
   for (const lang of ['pl','en','uk']) {
-    const sent = [];
-    const context = vm.createContext({ t: (key, params) => translate(lang, key, params), sendMail: async item => sent.push(item), buildMailHtml: item => JSON.stringify(item), mailLink: path => new URL(path, 'https://www.familiada.online').href });
-    vm.runInContext(sender, context);
     for (const kind of ['friend','subscriber']) {
-      const args = { kind, to: 'test14@familiada.online', link: '/go/?t=existing', ownerLabel: '<Owner>', unsubToken: 'global' };
-      await context.sendInviteMail(args); await context.sendInviteMail({ ...args, reminder: true, actionKey: kind === 'friend' ? 'friend:resend' : 'poll:resend' });
-      const initial = sent.at(-2), reminder = sent.at(-1);
+      const data = { ownerLabel: '<Owner>', token, unsubToken: 'global' };
+      const initial = buildNotificationMail({ action: kind === 'friend' ? 'friend:invite' : 'poll:resend', lang, data });
+      const reminder = buildNotificationMail({ action: kind === 'friend' ? 'friend:resend' : 'poll:resend', lang, reminder: true, data });
       assert.notEqual(initial.subject, reminder.subject);
-      assert.notEqual(JSON.parse(initial.html).body, JSON.parse(reminder.html).body);
-      assert.equal(JSON.parse(initial.html).actionUrl, JSON.parse(reminder.html).actionUrl);
-      assert.equal(JSON.parse(reminder.html).unsubToken, 'global');
-      assert.equal(reminder.cooldownActionKey, kind === 'friend' ? 'friend:resend' : 'poll:resend');
+      assert.notEqual(initial.html, reminder.html);
+      const action = html => html.match(/href="([^"]+)"/)[1];
+      assert.equal(action(initial.html), action(reminder.html));
+      assert.ok(action(initial.html).includes(token));
+      if (kind === 'subscriber') assert.ok(reminder.html.includes('/go/?u=global'));
     }
   }
 });
-test('base mail includes current editor/viewer role and pending acceptance, reminder preserves link/budget', async () => {
-  const source = read('web/bases/js/bases.js');
-  const sender = source.slice(source.indexOf('async function sendBaseShareEmail'), source.indexOf('async function openShareModal'));
+test('base mail includes current editor/viewer role and pending acceptance, reminder preserves link', () => {
+  const token = '0f1e2d3c-4b5a-4968-8776-5a4b3c2d1e0f';
   for (const lang of ['pl','en','uk']) {
-    const sent = [];
-    const context = vm.createContext({ t: (key, params) => translate(lang, key, params), sendMail: async item => sent.push(item), buildMailHtml: item => JSON.stringify(item), mailLink: path => new URL(path, 'https://www.familiada.online').href, currentUser: { id: 'owner' } });
-    vm.runInContext(sender, context);
     for (const role of ['editor','viewer']) {
-      const args = { to: 'test8@familiada.online', link: '/go/?b=existing', baseName: '<Base>', ownerLabel: '<Owner>', recipientId: 'recipient', baseId: 'base', role };
-      await context.sendBaseShareEmail(args); await context.sendBaseShareEmail({ ...args, reminder: true });
-      const initial = sent.at(-2), reminder = sent.at(-1);
+      const data = { ownerLabel: '<Owner>', token, baseName: '<Base>', role };
+      const initial = buildNotificationMail({ action: 'base:share', lang, data });
+      const reminder = buildNotificationMail({ action: 'base:share', lang, reminder: true, data });
       assert.notEqual(initial.subject, reminder.subject);
-      for (const item of [initial,reminder]) {
-        const body = JSON.parse(item.html).body;
-        assert.ok(body.includes(translate(lang, `sharingMail.${role}`)));
-        assert.ok(body.includes('<Base>')); assert.ok(body.includes('<Owner>'));
-        assert.equal(item.cooldownTargetKey, 'pair:owner:recipient:base:base');
+      for (const item of [initial, reminder]) {
+        assert.ok(item.html.includes(escapeMailText(translate(lang, `sharingMail.${role}`))));
+        assert.ok(item.html.includes('&lt;Base&gt;')); assert.ok(item.html.includes('&lt;Owner&gt;'));
       }
-      assert.equal(JSON.parse(initial.html).actionUrl, JSON.parse(reminder.html).actionUrl);
+      const action = html => html.match(/href="([^"]+)"/)[1];
+      assert.equal(action(initial.html), action(reminder.html));
     }
   }
-  assert.match(source, /deliverBaseShare\(response, b.id, \{ role: recipient.role, reminder: true \}\)/);
-  assert.match(source, /deliverBaseShare\(row, b.id, \{ role: shareRoleValue \}\)/);
 });
 test('all four auth variants keep language, source metadata and genuine action URL in common renderer', () => {
   const source = read('supabase/functions/send-email/index.ts');
@@ -124,30 +110,29 @@ test('all four auth variants keep language, source metadata and genuine action U
   }
   assert.equal((source.match(/renderEmail\(copy, (?:linkCurrent|linkTarget|actionLink), lang\)/g) || []).length, 3);
 });
-test('device mail transport rejects missing session, network and HTTP failure, sends language and account footer only for account', async () => {
-  const source = read('web/control/js/shareDevice.js');
-  const helper = source.slice(source.indexOf('function buildMailHtml'), source.indexOf('export function createShareDevice'));
+function notifyTransport() {
+  const source = read('web/shared/js/core/notify-mail.js').replace(/^import .*;\n/gm, '').replaceAll('export ', '');
+  const state = { session: { access_token: 'test-token' }, response: null, requests: [] };
+  const context = vm.createContext({ URL, location: { origin: 'https://www.familiada.online' }, getUiLang: () => state.lang || 'pl', t: key => key,
+    SUPABASE_URL: 'https://example.com', JSON,
+    sb: () => ({ auth: { getSession: async () => ({ data: { session: state.session } }), refreshSession: async () => ({ data: {} }) } }),
+    fetch: async (url, options) => { state.requests.push({ url, body: JSON.parse(options.body) }); if (state.response instanceof Error) throw state.response; return state.response; } });
+  vm.runInContext(source, context);
+  return { context, state };
+}
+test('mail transport sends only action, token and language; rejects missing session, network and HTTP failure', async () => {
+  const { context, state } = notifyTransport();
   for (const lang of ['pl','en','uk']) {
-    let response = { ok: true, json: async () => ({ ok: true, queued: 1 }) }, session = { access_token: 'test-token' }, request;
-    const context = vm.createContext({ URL, location: { origin: 'https://www.familiada.online' }, getUiLang: () => lang,
-      t: (key, params) => translate(lang, key, params), renderMailDocument, deviceTypeLabel: () => 'Display',
-      sb: () => ({ auth: { getSession: async () => ({ data: { session } }) } }), MAIL_FUNCTION_URL: 'https://example.com/send-mail',
-      fetch: async (_url, options) => { request = JSON.parse(options.body); if (response instanceof Error) throw response; return response; } });
-    vm.runInContext(helper, context);
-    const args = { to: 'test8@familiada.online', ownerLabel: '<Owner>', deviceType: 'display', gameId: 'game', gameName: '<Game>', shareKey: 'existing', cooldownTargetKey: 'pair:existing' };
-    for (const isRegistered of [false,true]) {
-      await context.sendShareEmail({ ...args, isRegistered });
-      const urls = [...request.html.matchAll(/href="([^"]+)"/g)].map(m => new URL(m[1].replaceAll('&amp;', '&')));
-      assert.equal(urls[0].searchParams.get('key'), 'existing'); assert.equal(urls[0].searchParams.get('lang'), lang);
-      assert.equal(urls.length, isRegistered ? 2 : 1);
-      if (isRegistered) assert.equal(urls[1].pathname, '/account/');
-      assert.ok(request.html.includes('&lt;Owner&gt;')); assert.ok(request.html.includes('&lt;Game&gt;'));
-      assert.equal(request.cooldownTargetKey, 'pair:existing');
-    }
-    response = { ok: false }; await assert.rejects(context.sendShareEmail(args));
-    response = new Error('Network failed'); await assert.rejects(context.sendShareEmail(args));
-    response = { ok: true, json: async () => ({ ok: true, queued: 1 }) }; session = null; await assert.rejects(context.sendShareEmail(args));
+    state.lang = lang;
+    state.response = { ok: true, status: 200, json: async () => ({ ok: true, queued: 1, results: [{ ok: true, queued: true }] }) };
+    assert.equal(await context.sendNotificationMail({ action: 'device:share', token: 'existing' }), true);
+    assert.deepEqual(state.requests.at(-1).body, { lang, items: [{ action: 'device:share', token: 'existing' }] });
+    assert.equal(state.requests.at(-1).url, 'https://example.com/functions/v1/send-mail');
   }
+  state.response = { ok: false, status: 500, json: async () => ({ ok: false }) }; await assert.rejects(context.sendNotificationMail({ action: 'device:share', token: 'x' }));
+  state.response = new Error('Network failed'); await assert.rejects(context.sendNotificationMail({ action: 'device:share', token: 'x' }));
+  state.session = null; await assert.rejects(context.sendNotificationMail({ action: 'device:share', token: 'x' }));
+  assert.equal(context.goLinkToken('/go/?b=abc&lang=pl', 'b'), 'abc');
 });
 test('auth provider token validation refuses missing/empty/non-string tokens and caches valid token', async () => {
   const source = read('supabase/functions/send-email/index.ts');
@@ -162,31 +147,27 @@ test('auth provider token validation refuses missing/empty/non-string tokens and
 test('poll sender marks only queued tasks as emailed and reports muted recipients as skipped', async () => {
   const source = read('web/shared/js/core/poll-mail.js');
   const sender = source.slice(source.indexOf('export async function sendPollInviteMails')).replace('export ', '');
-  const marked = [];
-  const context = vm.createContext({ t: (key, params) => translate('pl', key, params), buildMailHtml: item => JSON.stringify(item), mailLink: value => value,
+  const marked = [], sentItems = [];
+  const context = vm.createContext({ Map, String, Array, goLinkToken: (link, p) => new URL(link, 'https://www.familiada.online').searchParams.get(p) || '',
     sb: () => ({ rpc: async (name, args) => { if (name === 'polls_hub_tasks_mark_emailed') marked.push(args.p_task_ids); return { data: [] }; } }),
-    sendMailBatch: async () => ({ results: [{ to: 'test8@familiada.online', ok: true, queued: false, skipped: true }, { to: 'test14@familiada.online', ok: true, queued: true }] }) });
+    sendNotificationMails: async items => { sentItems.push(...items); return { ok: true, results: [{ token: 'muted', ok: true, queued: false, skipped: true }, { token: 'queued', ok: true, queued: true }] }; } });
   vm.runInContext(sender, context);
-  const args = { mailItems: [{ to: 'test8@familiada.online', link: '/go/?t=muted', task_id: 'muted' }, { to: 'test14@familiada.online', link: '/go/?t=queued', task_id: 'queued' }], pollName: 'Poll', currentUser: { id: 'owner', username: 'Owner' } };
-  const result = await context.sendPollInviteMails(args);
+  const result = await context.sendPollInviteMails({ mailItems: [{ to: 'test8@familiada.online', link: '/go/?t=muted', task_id: 'muted' }, { token: 'queued', link: '/go/?t=queued', task_id: 'queued' }], reminder: true });
   assert.equal(result.sent, 1); assert.equal(result.skipped, 1); assert.equal(result.failed, 0);
   assert.deepEqual(Array.from(marked[0]), ['queued']);
+  assert.deepEqual(sentItems.map(i => [i.action, i.token, i.reminder]), [['poll:share', 'muted', true], ['poll:share', 'queued', true]]);
+  assert.ok(sentItems.every(i => !('to' in i) && !('html' in i)));
 });
-test('single sharing mail transports report queue omission and legacy queued count without false success', async () => {
-  for (const file of ['web/shared/js/core/invite-mail.js','web/bases/js/bases.js']) {
+test('single sharing mail transport reports queue omission without false success', async () => {
+  const { context, state } = notifyTransport();
+  for (const queued of [true,false]) {
+    state.response = { ok: true, status: 200, json: async () => ({ ok: true, queued: queued ? 1 : 0, results: [{ token: 't', ok: true, queued, ...(queued ? {} : { skipped: true }) }] }) };
+    assert.equal(await context.sendNotificationMail({ action: 'friend:invite', token: 't' }), queued);
+  }
+  state.response = { ok: true, status: 200, json: async () => ({ ok: false }) }; await assert.rejects(context.sendNotificationMail({ action: 'friend:invite', token: 't' }));
+  for (const file of ['web/shared/js/core/invite-mail.js','web/bases/js/bases.js','web/control/js/shareDevice.js','web/shared/js/core/poll-mail.js']) {
     const source = read(file);
-    const helper = source.match(/async function sendMail\([\s\S]*?\n\}/)?.[0]; assert.ok(helper);
-    let payload;
-    const context = vm.createContext({ sb: () => ({ auth: { getSession: async () => ({ data: { session: { access_token: 'test' } } }) } }), t: key => key,
-      MAIL_FUNCTION_URL: 'https://example.com/mail', fetch: async () => ({ ok: true, status: 200, json: async () => payload }) });
-    vm.runInContext(helper, context);
-    const args = { to: 'test8@familiada.online', subject: 'Test', html: '<p>Test</p>', cooldownActionKey: 'friend:invite', cooldownTargetKey: 'email:test8@familiada.online' };
-    for (const queued of [true,false]) {
-      payload = { ok: true, queued: queued ? 1 : 0, results: [{ to: args.to, ok: true, queued }] };
-      assert.equal(await context.sendMail(args), queued);
-      payload = { ok: true, queued: queued ? 1 : 0 }; assert.equal(await context.sendMail(args), queued);
-    }
-    payload = { ok: false }; await assert.rejects(context.sendMail(args));
+    assert.ok(!source.includes('renderMailDocument') && !source.includes('functions/v1/send-mail'), `${file}: HTML maila tylko na serwerze`);
   }
 });
 

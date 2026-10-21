@@ -150,19 +150,9 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
             if (!response.ok || !result.ok) throw new Error(result.error || "copy_failed");
             attempts.delete(key);
 
-            const recipientEmail = result.mail_to || friends.find(row => row.user_id === recipient_id)?.email;
-            if (result.mail_allowed && result.go_token && recipientEmail) {
+            if (result.mail_allowed && result.go_token) {
               try {
-                const sent = await sendResourceCopyMail({
-                  to: recipientEmail,
-                  link: `/go/?c=${encodeURIComponent(result.go_token)}`,
-                  ownerLabel: sessionData.session.user.user_metadata?.username || sessionData.session.user.email || "Familiada",
-                  name: source.name || "",
-                  kind,
-                  ownerId: sessionData.session.user.id,
-                  recipientId: recipient_id,
-                  sourceId: source.id,
-                });
+                const sent = await sendResourceCopyMail({ token: result.go_token });
                 if (!sent) throw new Error("mail_not_sent");
               } catch (mailError) {
                 console.warn("[resource-copy-mail] email delivery failed:", mailError);

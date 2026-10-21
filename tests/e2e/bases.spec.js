@@ -169,6 +169,8 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
   return { ...data, tabId };
 }
 
+// Udostępnienie po NAZWIE użytkownika (P2, B7): adres odbiorcy nie trafia
+// do przeglądarki właściciela; mail buduje send-mail z szablonu serwera.
 test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context, browser }) => {
   test.setTimeout(240_000);
   const recipient = testAccountUsername(8); // skrzynka test8 jest używana w kontrolach dostarczania maili
@@ -178,6 +180,21 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
   let anonymousContext;
 
   try {
+    const recipientUser = await newUserContext(browser, recipient);
+    recipientContext = recipientUser.ctx;
+    const recipientName = await recipientUser.page.evaluate(async () => {
+      const client = window.__sbClient;
+      const user = (await client.auth.getUser()).data.user;
+      const { data, error } = await client.from("profiles").select("username").eq("id", user.id).single();
+      if (error) throw new Error(error.message);
+      return data.username;
+    });
+    expect(recipientName).toBeTruthy();
+    const ownerTraffic = [];
+    page.on("response", async (res) => {
+      if (!/\/rest\/v1\/rpc\/(base_share_by_user|base_share_panel)|\/functions\/v1\/send-mail/.test(res.url())) return;
+      ownerTraffic.push({ url: res.url(), request: res.request().postData() || "", text: await res.text().catch(() => "") });
+    });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     baseId = await createBaseDirect(page, name);
     await resetMailProviderLimits(page);
@@ -189,9 +206,19 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await page.locator("#mineGrid .card", { hasText: name }).click();
     await page.locator("#btnShare").click();
     await expect(page.locator("#shareOverlay")).toBeVisible();
-    await page.locator("#shareEmail").fill(recipient);
+    await page.locator("#shareEmail").fill(recipientName);
     await page.locator("#btnShareAdd").click();
     await expect(page.locator(".app-toast-text")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
+    await expect.poll(() => ownerTraffic.filter((r) => r.url.includes("/functions/v1/send-mail")).length, { timeout: 10_000 }).toBe(1);
+    const sendMail = ownerTraffic.filter((r) => r.url.includes("/functions/v1/send-mail"));
+    const sendBody = JSON.parse(sendMail[0].request);
+    expect(Object.keys(sendBody).sort()).toEqual(["items", "lang"]);
+    expect(sendBody.items[0]).toMatchObject({ action: "base:share" });
+    expect(sendMail[0].request).not.toContain("@");
+    // Po migracji 455 (produkcja): także RPC udostępnienia i panel bez adresu odbiorcy.
+    if (process.env.GITHUB_REF_NAME === "main") {
+      for (const r of ownerTraffic) expect(r.text.toLowerCase(), r.url).not.toContain(recipient.toLowerCase());
+    }
 
     const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i"), timeout: 150_000 });
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
@@ -208,8 +235,6 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await expect.poll(() => new URL(anonymousPage.url()).pathname).toBe('/login/');
     expect(new URL(anonymousPage.url()).searchParams.get('next')).toBe('bases');
     expect(new URL(anonymousPage.url()).searchParams.get('b')).toBe(new URL(invitation).searchParams.get('b'));
-    const recipientUser = await newUserContext(browser, recipient);
-    recipientContext = recipientUser.ctx;
     await recipientUser.page.goto(invitation);
     await recipientUser.page.getByRole('button', { name: 'Otwórz Bazy' }).click();
     await expect.poll(() => new URL(recipientUser.page.url()).pathname).toBe('/bases/');

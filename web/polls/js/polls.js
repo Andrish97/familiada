@@ -725,7 +725,7 @@ async function sendInvitesCore() {
     throw new Error(rpcErrText(error, data));
   }
 
-  const res = await sendPollInviteMails({ mailItems: data?.mail, pollName: game.name, currentUser });
+  const res = await sendPollInviteMails({ mailItems: data?.mail });
   selectedSubIds.clear();
   selectedFriendIds.clear();
 
@@ -884,7 +884,7 @@ async function remindShare(tk, sub) {
       return;
     }
     if (data.mail_allowed === false) { setMsg(t("pollSharePanel.mailDisabled")); return; }
-    const res = await sendPollInviteMails({ mailItems: data.mail, pollName: game.name, currentUser, reminder: true });
+    const res = await sendPollInviteMails({ mailItems: data.mail, reminder: true });
     if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
     else setMsg(t(res.skipped ? "pollSharePanel.mailDisabled" : "polls.share.reminded"));
     // Po akcji ponownie pobieramy rzeczywiste zegary i flagi z bazy.
