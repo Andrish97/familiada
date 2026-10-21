@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T22503";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T22503";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T22503";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T22503";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T22503";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T22503";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T22503";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T22503";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T22503";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T22503";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T22503";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T22503";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T22503";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T23580";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T23580";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T23580";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T23580";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T23580";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T23580";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T23580";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T23580";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T23580";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T23580";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T23580";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T23580";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T23580";
 
 
 
@@ -330,11 +330,12 @@ async function handleMigrateResend() {
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: migratePendingEmail,
-      options: { emailRedirectTo: redirect.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka. auth.resend szuka konta po obecnym
+    // adresie, więc z nowym adresem kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: migratePendingEmail },
+      { emailRedirectTo: redirect.toString() }
+    );
     if (error) throw error;
 
     setStatus(t("account.statusMigrateResent"));
@@ -740,11 +741,12 @@ async function handleEmailResend() {
     reserved = true;
 
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: pendingEmail,
-      options: { emailRedirectTo: confirmUrl.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka (nowy token, nowy mail). auth.resend
+    // szuka konta po obecnym adresie, więc z nowym kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: pendingEmail },
+      { emailRedirectTo: confirmUrl.toString() }
+    );
     if (error) throw error;
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast

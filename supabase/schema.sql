@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
+\restrict ZXZmiDvlSQl5lNmExceR0w7ZdFhIgoNQAu4bm4N0t7CLtRC4UhJu0Dk1iIeNchv
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4532,6 +4532,35 @@ begin
 
   return query select true, null::text;
 end;
+$$;
+
+
+--
+-- Name: agent_mail_window_counts(timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."agent_mail_window_counts"("p_from" timestamp with time zone, "p_to" timestamp with time zone) RETURNS TABLE("przydzialy" bigint, "przydzialy_zuzyte" bigint, "przydzialy_niezuzyte" bigint, "przydzialy_niezuzyte_bez_testowych" bigint, "kolejka_powiadomien" bigint, "kolejka_wyslane" bigint, "kolejka_bledy" bigint, "kolejka_oczekujace" bigint, "kolejka_inne" bigint)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  WITH w AS (
+    SELECT p_from AS f, least(p_to, p_from + interval '1 day') AS t
+  ), a AS (
+    SELECT al.* FROM public.mail_notification_allocations al, w WHERE al.created_at >= w.f AND al.created_at < w.t
+  ), q AS (
+    SELECT mq.* FROM public.mail_queue mq, w WHERE mq.created_at >= w.f AND mq.created_at < w.t
+  )
+  SELECT
+    (SELECT count(*) FROM a),
+    (SELECT count(*) FROM a WHERE consumed_at IS NOT NULL),
+    (SELECT count(*) FROM a WHERE consumed_at IS NULL),
+    (SELECT count(*) FROM a WHERE consumed_at IS NULL
+       AND owner_id NOT IN (SELECT user_id FROM public.stats_exclusions_effective)),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status = 'sent'),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status = 'failed'),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status IN ('pending', 'sending')),
+    (SELECT count(*) FROM q WHERE created_by IS NULL);
 $$;
 
 
@@ -26996,5 +27025,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
+\unrestrict ZXZmiDvlSQl5lNmExceR0w7ZdFhIgoNQAu4bm4N0t7CLtRC4UhJu0Dk1iIeNchv
 

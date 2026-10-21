@@ -46,6 +46,7 @@ const { test, expect } = require("@playwright/test");
 const { loginAsGuest } = require("./helpers/login");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const TEST_PASSWORD = "E2eTest123!";
 const LOGIN_URL = "https://www.familiada.online/login";
@@ -167,6 +168,82 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     await page.locator("#deleteAccount").click();
     await page.getByRole("button", { name: "Usuń", exact: true }).click();
     await page.waitForURL(/login/, { timeout: 20000 });
+  }
+});
+
+// Skrzynka test14 nie ma konta: link nie jest klikany, zmiana anulowana, gość usunięty,
+// więc żadne konto na tym adresie nie powstaje. Spec z @mailbox -- uruchamiać pojedynczo.
+test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, anulowanie unieważnia link @mailbox", async ({ page, context, browser }) => {
+  test.setTimeout(240_000);
+  const MAILBOX = "test14@familiada.online";
+  await resetMailProviderLimits();
+  await clearMailbox(MAILBOX);
+  await loginAsGuest(page, context);
+  const isConfirmLink = (link) => /\/login\/confirm\/\?token_hash=/.test(link);
+
+  try {
+    await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#migrateSection")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator("#btnMigrate")).toBeVisible();
+    const after = new Date(Date.now() - 2_000).toISOString();
+    await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
+    await page.locator("#migrateEmail").fill(MAILBOX);
+    await page.locator("#migratePass1").fill(TEST_PASSWORD);
+    await page.locator("#migratePass2").fill(TEST_PASSWORD);
+    await page.locator("#btnMigrate").click();
+    await expect(page.locator("#migratePendingHint")).toBeVisible({ timeout: 15000 });
+    const sentAt = Date.now();
+
+    const first = await waitForEmail({ recipient: MAILBOX, after });
+    expect(first.body_html || "").toContain('content="authEmail.guestMigrate@pl"');
+    const firstLink = extractHttpLinks(first).find(isConfirmLink);
+    expect(firstLink, "link migracji").toBeTruthy();
+
+    // "Minęła godzina" dla blokady per adres i odstęp GoTrue (60 s na użytkownika).
+    await page.evaluate(async (email) => {
+      const { error } = await window.__sbClient.rpc("cooldown_email_release", {
+        p_email: email, p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200,
+      });
+      if (error) throw new Error("cooldown_email_release: " + error.message);
+    }, MAILBOX);
+    const wait = sentAt + 65_000 - Date.now();
+    if (wait > 0) await page.waitForTimeout(wait);
+
+    const resendAfter = new Date(Date.now() - 1_000).toISOString();
+    await page.locator("#migrateResend").click();
+    await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 20000 });
+    await expect(page.locator("#appToast")).not.toHaveClass(/error/);
+    const resent = await waitForEmail({ recipient: MAILBOX, after: resendAfter });
+    const secondLink = extractHttpLinks(resent).find(isConfirmLink);
+    expect(secondLink, "link po ponownym wyslaniu").toBeTruthy();
+    expect(secondLink).not.toBe(firstLink);
+
+    await page.locator("#migrateCancel").click();
+    await expect(page.locator("#migratePendingHint")).toBeHidden({ timeout: 15000 });
+    await expect.poll(() => getGuestState(page), { timeout: 15000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
+
+    // Po anulowaniu link z maila nie przenosi konta.
+    const linkContext = await browser.newContext({ serviceWorkers: "block" });
+    await serveBranchCode(linkContext, { pages: ["login/confirm"] });
+    const linkPage = await linkContext.newPage();
+    await linkPage.goto(secondLink, { waitUntil: "domcontentloaded" });
+    await expect(linkPage.locator("#status")).toContainText(/anulowana|nie udało/i, { timeout: 20000 });
+    console.log("[e2e-diag] link migracji po anulowaniu:", (await linkPage.locator("#status").textContent())?.trim());
+    await linkContext.close();
+    await expect.poll(() => getGuestState(page), { timeout: 10000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
+  } catch (error) {
+    console.log("[e2e-diag] migracja: blad w tresci testu:", error.message.split("\n")[0], "url:", page.url());
+    throw error;
+  } finally {
+    try {
+      if (!/\/account/.test(page.url())) await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+      await page.locator("#deleteAccount").click({ timeout: 30000 });
+      await page.getByRole("button", { name: "Usuń", exact: true }).click();
+      await page.waitForURL(/login/, { timeout: 20000 });
+    } catch (cleanupError) {
+      console.log("[e2e-diag] migracja: sprzatanie goscia nieudane:", cleanupError.message.split("\n")[0]);
+    }
+    await clearMailbox(MAILBOX);
   }
 });
 

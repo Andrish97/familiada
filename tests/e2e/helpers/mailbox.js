@@ -33,7 +33,16 @@ async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigg
   const startedAt = Date.now();
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
-    const data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
+    // Pojedyncze zerwane połączenie (ECONNRESET) nie przerywa czekania -- kolejne odpytanie za 2 s.
+    let data;
+    try {
+      data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
+    } catch (error) {
+      if (!/fetch failed/i.test(String(error?.message))) throw error;
+      console.log("[e2e-mail] odpytanie skrzynki nieudane, ponawiam:", error.cause?.code || error.message);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      continue;
+    }
     const email = (data.emails || []).find((row) => (!subject || subject.test(row.subject || "")) && (!accept || accept(row)));
     if (email) {
       console.log("[e2e-mail] received", JSON.stringify({ recipient, elapsedMs: Date.now() - startedAt, receivedAt: email.received_at }));

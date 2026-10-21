@@ -602,8 +602,10 @@ serve(async (req) => {
 
       const linkCurrent =
         `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thCurrent)}&type=email_change&lang=${lang}`;
+      // to= pozwala stronie potwierdzenia rozpoznać anulowaną zmianę (email_intents).
       const linkTarget =
-        `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}` +
+        (targetEmail ? `&to=${encodeURIComponent(targetEmail.toLowerCase())}` : "");
 
       if (currentEmail && thCurrent) {
         const htmlCurrent = renderEmail(copy, linkCurrent, lang);
