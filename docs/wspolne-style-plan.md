@@ -106,6 +106,9 @@ Baseline 2026-10-21: `!important` 184, kolory na sztywno 1475, własne
 plikach 227, nieużywane klasy 201, style w JS 879, `style=` w HTML 320,
 bloki `<style>` 14.
 
+**Projekt silnika i mechanizmów:** [`silnik-stylow-projekt.md`](silnik-stylow-projekt.md)
+(zastępuje tabelę „Kroki” powyżej; szacunek ≈37–49 dni).
+
 ## Analiza szczegółowa (2026-10-21, tylko odczyt)
 
 Użytkownik: „na spokojnie, zatrzymaj się i analizuj”. Bez zmian w `web/`
@@ -218,4 +221,5 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-21 | Decyzja i plan | Pomiar stanu wyjściowego, plan kroków. |
 | 2026-10-21 | Krok 1 — narzędzie | `css-audit.mjs` + test zapadki; unit pełne zielone. |
 | 2026-10-21 | Analiza szczegółowa | Wstrzymanie zmian na prośbę użytkownika; 4 przeglądy tylko do odczytu, wnioski w sekcji „Analiza szczegółowa”. |
+| 2026-10-21 | Projekt silnika | Analiza cz. 2 (moduły JS, szkielety stron, progi, style w HTML, testy/narzędzia/przeglądarki) → `silnik-stylow-projekt.md`; 6 decyzji do podjęcia. |
 | 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |
