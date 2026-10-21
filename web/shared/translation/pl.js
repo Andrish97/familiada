@@ -4233,13 +4233,12 @@ const pl = {
       types: "Proponowane kategorie",
     },
     search: {
-      removeTag: "Usuń filtr tagu",
       results: "Wyniki",
       placeholder: "Szukaj...",
       clear: "Wyczyść",
       sheetTitle: "Szukaj",
       done: "Gotowe",
-      sheetHelp: "Nazwa pytania lub folderu, #tag dodaje filtr tagu.",
+      sheetHelp: "Szuka w nazwach pytań i folderów. Tagi i kategorie wybierasz przyciskami w pasku — działają razem z tekstem.",
     },
     toolbar: {
       groupHistory: "Historia",

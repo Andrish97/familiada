@@ -5,9 +5,9 @@
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 //   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-21T12351";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12351";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12351";
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-21T12412";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12412";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12412";
 
 
 window.dispatchEvent(new Event("resize"));

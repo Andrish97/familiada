@@ -1099,7 +1099,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     }
   });
 
-  test("wyszukiwanie po #tagu (chip) pokazuje tylko oznaczone pytania", async ({ page, context }) => {
+  test("tekst z pola i tag z lewego panelu filtrują razem; X czyści oba (bez tabletek w polu)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -1107,28 +1107,41 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
     try {
       const tagId = await createTag(page, { baseId, name: "e2e-searchtag" });
-      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane pytanie", answers: [] } });
-      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zwykłe pytanie", answers: [] } });
-      await assignTag(page, { questionId: qTagged, tagId });
+      const qTaggedA = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane kot", answers: [] } });
+      const qTaggedB = await createQuestion(page, { baseId, ord: 2, payload: { text: "Otagowane pies", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 3, payload: { text: "Zwykłe kot", answers: [] } });
+      await assignTag(page, { questionId: qTaggedA, tagId });
+      await assignTag(page, { questionId: qTaggedB, tagId });
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
-
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+      const rowOf = (id) => page.locator(`#list .row[data-id="${id}"]`);
 
-      // „#pełna_nazwa” + spacja -> tabletka (rozpoznane w zdarzeniu input)
-      await page.locator("#searchText").fill("#e2e-searchtag");
-      await page.locator("#searchText").press("Space");
-      await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
+      // tag z lewego panelu
+      await showLeftView(page, "tags");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await expect(rowOf(qPlain)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTaggedA)).toBeVisible();
+      await expect(rowOf(qTaggedB)).toBeVisible();
 
-      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
-      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+      // + tekst: oba warunki naraz
+      await page.locator("#searchText").fill("kot");
+      await expect(rowOf(qTaggedB)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTaggedA)).toBeVisible();
+      await expect(rowOf(qPlain)).toHaveCount(0);
+      await expect(page.locator("#searchBox .chip")).toHaveCount(0);
+
+      // X czyści tekst i filtr
+      await page.locator("#searchSubmitBtn").click();
+      await expect(page.locator("#searchText")).toHaveValue("");
+      await expect(rowOf(qPlain)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`)).not.toHaveClass(/is-selected/);
     } finally {
       await deleteBase(page, baseId);
     }
   });
 
-  test("telefon: #tag + spacja z klawiatury ekranowej (bez keydown) zamienia się w tabletkę", async ({ page, context }) => {
+  test("telefon: okno Szukaj — tekst z klawiatury ekranowej filtruje razem z tagiem z panelu", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
@@ -1136,39 +1149,43 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
     try {
       const tagId = await createTag(page, { baseId, name: "Łatwe" });
-      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane", answers: [] } });
-      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zwykłe", answers: [] } });
+      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane żółw", answers: [] } });
+      const qTagged2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "Otagowane kot", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 3, payload: { text: "Zwykłe żółw", answers: [] } });
       await assignTag(page, { questionId: qTagged, tagId });
+      await assignTag(page, { questionId: qTagged2, tagId });
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+      const rowOf = (id) => page.locator(`#list .row[data-id="${id}"]`);
 
-      // telefon: pole w pasku otwiera okno „Szukaj” (E22 etap 9) z tym samym polem
+      // tag z panelu (przycisk tagów w pasku), panel zamknięty tym samym przyciskiem
+      await showLeftView(page, "tags");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await page.locator('.left-view-tabs [data-left-view="tags"]').click();
+      await expect(rowOf(qPlain)).toHaveCount(0, { timeout: 10000 });
+
+      // pole w pasku otwiera okno „Szukaj” (E22 etap 9) z tym samym polem
       await page.locator("#searchBox").click();
       await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#searchSheetBody #searchText")).toBeFocused();
 
-      // klawiatura ekranowa: same zdarzenia input (insertText nie wysyła keydown);
-      // bez polskich znaków i małymi literami też pasuje
-      await page.keyboard.insertText("#latwe ");
-      await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
-      await expect(page.locator("#searchText")).toHaveValue("");
-      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
-      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+      // klawiatura ekranowa: same zdarzenia input; bez polskich znaków też pasuje
+      await page.keyboard.insertText("zolw");
+      await expect(rowOf(qTagged2)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTagged)).toBeVisible();
 
-      // „Gotowe” zamyka okno, tabletka zostaje w pasku
+      // „Gotowe” zamyka okno, pole wraca do paska z tekstem
       await page.locator("#searchSheetDone").click();
       await expect(page.locator("#searchOverlay")).toBeHidden();
-      await expect(page.locator("#toolbar #searchChips .chip")).toHaveCount(1);
+      await expect(page.locator("#toolbar #searchText")).toHaveValue("zolw");
 
-      // w oknie klik w tabletkę zdejmuje filtr
+      // „Wyczyść” w oknie zdejmuje tekst i filtr tagu
       await page.locator("#searchBox").click();
-      await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
-      await page.locator("#searchSheetBody #searchChips .chip").click();
-      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 10000 });
+      await page.locator("#searchSheetClear").click();
       await page.keyboard.press("Escape");
       await expect(page.locator("#searchOverlay")).toBeHidden();
+      await expect(rowOf(qPlain)).toBeVisible({ timeout: 10000 });
       await expect(page.locator("#toolbar #searchBox")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
@@ -3578,7 +3595,7 @@ test.describe("base-explorer: zaznaczanie ramką (E22)", () => {
 });
 
 test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
-  test("tag „Łatwe” powstaje w oknie tagów, „latwe” to duplikat, #latwe + spacja daje tabletkę", async ({ page, context }) => {
+  test("tag „Łatwe” powstaje w oknie tagów, „latwe” to duplikat, tag filtruje z panelu", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-PLTAG-${Date.now()}`);
@@ -3611,9 +3628,10 @@ test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
       await page.locator("#tagsL2Close").click();
       await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
 
-      await page.locator("#searchText").click();
-      await page.keyboard.type("#latwe ");
-      await expect(page.locator("#searchChips .chip")).toHaveText("#Łatwe");
+      // tag „Łatwe” w panelu (jeden, bez duplikatu) filtruje listę
+      const tagRows = page.locator('#tags .row[data-kind="tag"]');
+      await expect(tagRows).toHaveCount(1);
+      await tagRows.first().click();
       await expect(row).toBeVisible();
     } finally {
       await deleteBase(page, baseId);

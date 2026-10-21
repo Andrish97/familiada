@@ -159,22 +159,28 @@ module.exports = [
     steps: [async (view) => { await view.locator('[data-left-view="tags"]:visible').click(); await view.locator('#tags .row[data-kind="tag"]').first().click(); await view.waitForTimeout(500); }] },
   { id: "base-explorer-left-types", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok proponowanych kategorii", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('[data-left-view="types"]:visible').click(); await view.waitForTimeout(500); }] },
-  { id: "base-explorer-search-sheet", devices: ["phone", "tablet"], category: "Dodatkowe", title: "Eksplorator bazy — telefon: okno Szukaj (tabletki tagów i podpowiedzi)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+  { id: "base-explorer-search-sheet", devices: ["phone", "tablet"], category: "Dodatkowe", title: "Eksplorator bazy — telefon: okno Szukaj (tekst; filtry w panelu)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => {
       await view.locator("#searchBox").click();
       await view.locator("#searchOverlay.sheet-active").waitFor({ timeout: 5000 });
-      const names = await view.evaluate(() => [...document.querySelectorAll('#tags .row[data-kind="tag"] .title-text')].map((el) => el.textContent.trim().replace(/^#/, "")));
-      for (const n of names.slice(0, 3)) await view.locator("#searchText").pressSequentially(`#${n} `);
-      await view.locator("#searchText").pressSequentially("#");
+      await view.locator("#searchText").pressSequentially("co");
       await view.waitForTimeout(500);
     }] },
-  { id: "base-explorer-search-chips", category: "Dodatkowe", title: "Eksplorator bazy — wiele tabletek tagów w pasku (jedna linia)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+  { id: "base-explorer-search-filters", category: "Dodatkowe", title: "Eksplorator bazy — tekst w wyszukiwarce razem z tagiem z panelu (licznik na przycisku)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => {
-      const names = await view.evaluate(() => [...document.querySelectorAll('#tags .row[data-kind="tag"] .title-text')].map((el) => el.textContent.trim().replace(/^#/, "")).filter((n) => !n.includes(" ")));
-      if (await view.locator("#searchOverlay").isHidden() && await view.locator(".left-view-tabs").isVisible()) await view.locator("#searchBox").click();
-      for (const n of names.slice(0, 4)) await view.locator("#searchText").pressSequentially(`#${n} `);
-      if (await view.locator("#searchSheetDone").isVisible()) await view.locator("#searchSheetDone").click();
-      else await view.locator("#searchText").blur();
+      await view.locator('[data-left-view="tags"]:visible').first().click();
+      const rows = view.locator('#tags .row[data-kind="tag"]');
+      await rows.nth(0).click();
+      const narrow = await view.locator(".left-view-tabs").isVisible();
+      if (narrow) {
+        await view.locator('.left-view-tabs [data-left-view="tags"]').click();
+        await view.locator("#searchBox").click();
+        await view.locator("#searchText").pressSequentially("co");
+        await view.locator("#searchSheetDone").click();
+      } else {
+        await view.locator("#searchText").pressSequentially("co");
+        await view.locator("#searchText").blur();
+      }
       await view.waitForTimeout(500);
     }] },
   { id: "base-explorer-move", category: "Dodatkowe", title: "Eksplorator bazy — Przenieś do… (drzewo folderów z wyszukiwaniem)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
@@ -185,14 +191,11 @@ module.exports = [
     steps: [async (view) => { await view.locator('#list .row[data-kind="trash"]').first().click(); await view.waitForTimeout(300); }] },
   { id: "base-explorer-menu", category: "Dodatkowe", title: "Eksplorator bazy — menu kontekstowe (telefon: arkusz od dołu)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator("#contextMenu:not([hidden])").waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
-  { id: "base-explorer-filter", category: "Dodatkowe", title: "Eksplorator bazy — wyniki filtra (tabletka #tagu, liczba trafień w folderach)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+  { id: "base-explorer-filter", category: "Dodatkowe", title: "Eksplorator bazy — wyniki filtra (tag z lewego panelu, liczba trafień w folderach)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => {
-      const name = await view.locator('#tags .row[data-kind="tag"] .title-text').first().textContent().catch(() => "");
-      const tag = String(name || "").trim().replace(/^#/, "");
-      await view.locator("#searchText").click();
-      await view.keyboard.type(`#${tag} `);
-      await view.locator("#searchChips .chip").first().waitFor({ timeout: 5000 });
-      await view.locator("#searchText").blur();
+      await view.locator('[data-left-view="tags"]:visible').first().click();
+      await view.locator('#tags .row[data-kind="tag"]').first().click();
+      if (await view.locator(".left-view-tabs").isVisible()) await view.locator('.left-view-tabs [data-left-view="tags"]').click();
       await view.waitForTimeout(400);
     }] },
   { id: "game-editor-question-sheet", devices: ["phone"], category: "Dodatkowe", title: "Edycja gry na telefonie — pytanie w oknie od dołu", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/modal-sheet.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",

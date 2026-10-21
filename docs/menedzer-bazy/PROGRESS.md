@@ -79,6 +79,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9h. Tabletki tagów w wyszukiwarce całe w kolorze tagu i cieńsze (tekst: wyższy kontrast WCAG, `chipTextColor` w `render.js`). Komplet zrzutów komputer / tablet / telefon: `docs/menedzer-bazy/img/urzadzenia/` (sceny panelu i „Szukaj” także na tablecie).
 
+- [x] 9i. Decyzja użytkownika 2026-10-21: wyszukiwanie i filtry razem, bez tagów w wyszukiwarce — pole tylko na tekst (`ui/search.js` przepisany: bez tabletek, `#tag` i podpowiedzi; `hashTokenBeforeCaret` / `textWithoutHashTokens` usunięte z `listing.js`), tagi i kategorie w lewym panelu, „X” czyści tekst i filtry, okno „Szukaj” na telefonie z samym polem. Testy e2e o `#tag` przepisane na „tekst + tag z panelu”; pełny lokalny e2e 86/86 (po ponownym uruchomieniu lokalnego Postgresa — kontener był zrestartowany), unit 690/690.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

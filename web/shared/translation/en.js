@@ -4333,13 +4333,12 @@ const en = {
       types: "Suggested categories",
     },
     search: {
-      removeTag: "Remove tag filter",
       results: "Results",
       placeholder: "Search...",
       clear: "Clear",
       sheetTitle: "Search",
       done: "Done",
-      sheetHelp: "Question or folder name; #tag adds a tag filter.",
+      sheetHelp: "Searches question and folder names. Pick tags and categories with the toolbar buttons — they work together with the text.",
     },
     toolbar: {
       groupHistory: "History",

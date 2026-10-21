@@ -19,9 +19,9 @@
 //   run       (ctx) => Promise
 //   errorKey  komunikat, gdy wykonanie się nie uda (bez własnego komunikatu)
 
-import * as cmd from "../commands.js?v=v2026-10-21T12351";
-import { setQuery } from "../state.js?v=v2026-10-21T12351";
-import { renderAll } from "../render.js?v=v2026-10-21T12351";
+import * as cmd from "../commands.js?v=v2026-10-21T12412";
+import { setQuery } from "../state.js?v=v2026-10-21T12412";
+import { renderAll } from "../render.js?v=v2026-10-21T12412";
 
 const R = "baseExplorer.reasons.";
 

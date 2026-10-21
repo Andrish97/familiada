@@ -28,18 +28,6 @@ export function normalizeText(s) {
   return String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l");
 }
 
-// Token „#…” tuż przed kursorem: { start, name } albo null.
-export function hashTokenBeforeCaret(value, caret) {
-  const m = String(value).slice(0, caret).match(/(?:^|\s)#([^\s#]*)$/);
-  if (!m) return null;
-  return { start: caret - m[1].length - 1, name: m[1] };
-}
-
-// Tekst zapytania bez rozpoczętych „#…” (te nie filtrują po treści).
-export function textWithoutHashTokens(value) {
-  return String(value).replace(/(^|\s)#[^\s#]*/g, " ").replace(/\s+/g, " ").trim();
-}
-
 function words(text) {
   return normalizeText(text).split(/\s+/).filter(Boolean);
 }

@@ -99,7 +99,7 @@ test("duża baza: wczytanie, rysowanie, filtry i zaznaczanie mieszczą się w pr
     await expect.poll(() => rows.count(), { timeout: 30000 }).toBeLessThan(500);
     await page.locator('[data-left-view="tags"]:visible').first().click(); // lewy panel: widok tagów
     const filterTag = await timed(page, "filtr tagu (klik w lewym panelu)", () => page.locator(`#tags .row[data-kind="tag"][data-id="${s.tags[0]}"]`).click(),
-      () => expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 30000 }));
+      () => expect(page.locator(`#tags .row[data-kind="tag"][data-id="${s.tags[0]}"]`)).toHaveClass(/is-selected/, { timeout: 30000 }));
     console.log(`[perf]   wierszy po filtrze tagu: ${await rows.count()}`);
 
     const select = await timed(page, "klik w wiersz (zaznaczenie)", () => rows.nth(5).click(),

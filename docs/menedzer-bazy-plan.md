@@ -43,7 +43,12 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     przycisku proponowanych kategorii; plakietki liczników w obrębie
     przycisku (nie wchodzą pod pasek wyszukiwania).
   - **Tabletki w wyszukiwarce (2026-10-21, użytkownik):** całe w kolorze
-    tagu i cieńsze; kolor tekstu dobierany do kontrastu.
+    tagu i cieńsze; kolor tekstu dobierany do kontrastu. — **Zastąpione
+    tego samego dnia:** „wyszukiwanie i filtry działają razem, wtedy nie
+    potrzebujemy tagów w wyszukiwarce” — pole wyszukiwania tylko na tekst
+    (bez tabletek i `#tag`), tagi i kategorie filtruje się w lewym panelu
+    (przyciski widoków z licznikiem), tekst i filtry łączą się (AND),
+    „X” przy polu czyści tekst i filtry.
   - **Do decyzji (zastąpione wyżej) — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną
