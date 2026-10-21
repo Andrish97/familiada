@@ -201,7 +201,13 @@ function measureInPage() {
       push("outside-parent", b, { left: Math.round(r.left), right: Math.round(r.right), parentLeft: Math.round(pr.left), parentRight: Math.round(pr.right) });
     }
     // c) obcięty tekst
-    if (b.el.scrollWidth > b.el.clientWidth + 1) push("text-clipped", b, { scrollWidth: b.el.scrollWidth, clientWidth: b.el.clientWidth });
+    // Aktywna wypustka ma narożniki z ::before/::after poza przyciskiem — doliczają
+    // się do scrollWidth, choć tekst się mieści; dla kart mierzymy sam tekst.
+    if (b.el.matches(".tab-label")) {
+      const range = document.createRange(); range.selectNodeContents(b.el);
+      const textWidth = Math.ceil(range.getBoundingClientRect().width);
+      if (textWidth > b.el.clientWidth + 1) push("text-clipped", b, { textWidth, clientWidth: b.el.clientWidth });
+    } else if (b.el.scrollWidth > b.el.clientWidth + 1) push("text-clipped", b, { scrollWidth: b.el.scrollWidth, clientWidth: b.el.clientWidth });
   }
   // d) ta sama wysokość w jednym rzędzie (ten sam rodzic, pokrywanie w pionie > 50%)
   for (let i = 0; i < mainBoxes.length; i++) {
