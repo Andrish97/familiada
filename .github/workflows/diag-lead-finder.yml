@@ -19,24 +19,24 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'bash -s' <<'REMOTE'
           mask() { sed -E 's/(--token|token:|TUNNEL_TOKEN=|credentials-file:)[ =]*[^ ]+/\1 ***/g; s/eyJ[A-Za-z0-9._-]{20,}/***/g'; }
-          echo "== kontenery (nazwa | obraz | porty | sieci | status)"
-          docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}} | {{.Networks}} | {{.Status}}' | grep -iE 'lead|cloudflared|tunnel|nginx|caddy|traefik|kong' || true
-          echo "== lead-finder lokalnie"
-          for u in /health /api/search-runs/status; do printf '%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://localhost:8001$u"; done
-          echo "-- OPTIONS preflight POST /api/search-runs"
-          curl -s -D - -o /dev/null --max-time 10 -X OPTIONS 'http://localhost:8001/api/search-runs?target_count=1' -H 'Origin: https://settings.familiada.online' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization' | grep -iE '^HTTP|^access-control' || true
-          echo "-- POST bez klucza z Origin"
-          curl -s -D - -o /dev/null --max-time 10 -X POST 'http://localhost:8001/api/search-runs?target_count=1' -H 'Origin: https://settings.familiada.online' | grep -iE '^HTTP|^access-control' || true
-          echo "== procesy cloudflared"
-          pgrep -a cloudflared | mask || echo "(brak procesu cloudflared na hoście)"
-          systemctl list-units --type=service --no-pager 2>/dev/null | grep -i cloudflared || true
-          echo "== konfiguracje tunelu (tylko hostname/service)"
-          for f in /etc/cloudflared/*.yml /etc/cloudflared/*.yaml ~/.cloudflared/*.yml ~/.cloudflared/*.yaml; do [ -r "$f" ] && { echo "-- $f"; grep -E 'hostname|service' "$f" | mask; }; done 2>/dev/null
-          for c in $(docker ps --format '{{.Names}}' | grep -i cloudflared); do echo "-- kontener $c: args"; docker inspect "$c" --format '{{json .Args}}' | mask; docker logs --tail 200 "$c" 2>&1 | grep -iE 'leads|ingress|Updated to new configuration' | mask | tail -15; done
-          echo "== z serwera przez Cloudflare"
-          for u in /health /api/search-runs/status; do printf 'https://leads.familiada.online%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "https://leads.familiada.online$u"; done
-          echo "== start lead-findera (tylko komunikaty uvicorn)"
-          docker logs --tail 300 familiada-lead-finder 2>&1 | grep -E 'Uvicorn running|Application startup|Started server' | tail -3
-          echo "== deploy-lead-finder.sh na serwerze: linie docker run"
-          grep -nE 'PORT=|-p |--network|--name|docker run' ~/supabase-selfhost/supabase/scripts/deploy-lead-finder.sh || true
+          echo "== nasłuchujące porty (80/443/8001/8000 i inne publiczne)"
+          (ss -ltnp 2>/dev/null || sudo -n ss -ltnp 2>/dev/null) | awk 'NR==1 || /:80 |:443 |:8001 |:8000 |:8443 /' | sed -E 's/pid=[0-9]+,fd=[0-9]+/pid/g'
+          echo "== usługi proxy na hoście"
+          systemctl list-units --type=service --state=running --no-pager 2>/dev/null | grep -iE 'nginx|caddy|apache|haproxy|traefik|cloudflare|tunnel' || echo "(brak)"
+          echo "== wszystkie kontenery (nazwa | obraz | porty)"
+          docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}}'
+          echo "== konfiguracje z leads/8001"
+          for d in /etc/nginx /etc/caddy /etc/cloudflared /etc/haproxy ~/supabase-selfhost; do [ -d "$d" ] && grep -rIlsE 'leads\.familiada|:8001' "$d" 2>/dev/null | grep -v -E '/node_modules/|\.git/|/volumes/db/' | head -10; done
+          for f in $(grep -rIlsE 'leads\.familiada' /etc/nginx /etc/caddy 2>/dev/null); do echo "-- $f"; grep -nE 'server_name|listen|proxy_pass|reverse_proxy|leads' "$f" | mask; done
+          echo "== Caddyfile / nginx server_name (lista hostów)"
+          grep -rhsE '^\s*server_name' /etc/nginx 2>/dev/null | sort -u | head -20
+          for f in /etc/caddy/Caddyfile ~/Caddyfile; do [ -r "$f" ] && grep -nE '^[^ #].*\{|reverse_proxy' "$f"; done
+          echo "== lokalnie z nagłówkiem Host"
+          for p in 80 443; do sch=http; [ $p = 443 ] && sch=https; printf '%s :%s Host=leads /health -> ' $sch $p; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 -H 'Host: leads.familiada.online' "$sch://127.0.0.1:$p/health"; done
+          printf 'https SNI leads -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 --resolve leads.familiada.online:443:127.0.0.1 https://leads.familiada.online/health
+          printf 'https SNI api -> '; curl -sk -o /dev/null -w '%{http_code}\n' --max-time 5 --resolve api.familiada.online:443:127.0.0.1 https://api.familiada.online/rest/v1/
+          echo "== DNS z serwera"
+          getent hosts leads.familiada.online api.familiada.online | awk '{print $2, ($1 ~ /^(104\.|172\.6|188\.114|2606:4700)/ ? "cloudflare-proxy" : "inny")}'
+          echo "== historia: kontener lead-findera utworzony"
+          docker inspect familiada-lead-finder --format '{{.Created}}'
           REMOTE
