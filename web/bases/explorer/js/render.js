@@ -111,6 +111,7 @@ export function renderToolbar(state) {
           <input id="searchText" class="searchText" autocomplete="off" />
         </div>
         <button id="searchSubmitBtn" class="btn search-submit" type="button"></button>
+        <button id="btnFilters" class="btn search-submit mobile-only" type="button">${icon("filter")}<span class="badge" id="filtersCount"></span></button>
         <div id="searchSuggest" class="search-suggest" role="listbox" hidden></div>
       </div>
       <div class="toolbar-btns-row">
@@ -152,6 +153,18 @@ export function renderToolbar(state) {
     btn.setAttribute("aria-label", label);
     btn.setAttribute("data-tooltip", label);
     btn.classList.toggle("is-active", active);
+  }
+
+  // Filtry (telefon): liczba aktywnych kategorii i tagów
+  const fBtn = document.getElementById("btnFilters");
+  if (fBtn) {
+    const n = (state.query.types?.length || 0) + (state.query.tagIds?.length || 0);
+    const label = t("baseExplorer.filters.title");
+    fBtn.setAttribute("aria-label", label);
+    fBtn.setAttribute("data-tooltip", label);
+    fBtn.classList.toggle("is-active", n > 0);
+    const cnt = document.getElementById("filtersCount");
+    if (cnt) cnt.textContent = n ? String(n) : "";
   }
 
   updateToolbarButtons(elToolbar, state);

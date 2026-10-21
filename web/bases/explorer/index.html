@@ -106,6 +106,22 @@
   </div>
 
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
+  <!-- Filtry na telefonie (ui/filters.js): kategorie i tagi z lewego panelu
+       przenoszone na czas otwarcia do treści okna -->
+  <div class="overlay modal--sheet" id="filtersOverlay" style="display:none;">
+    <div class="modal filters-modal" role="dialog" aria-modal="true" aria-labelledby="filtersTitle">
+      <div class="mHead">
+        <div class="mTitle" id="filtersTitle" data-i18n="baseExplorer.filters.title">Filtry</div>
+        <button class="btn sm" id="filtersClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="filtersBody" id="filtersBody"></div>
+      <div class="modal-actions">
+        <button class="btn sm" id="filtersClear" type="button" data-i18n="baseExplorer.filters.clear" data-i18n-icon="close">Wyczyść filtry</button>
+        <button class="btn sm gold" id="filtersDone" type="button" data-i18n="baseExplorer.filters.done" data-i18n-icon="check">Gotowe</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
     <div class="modal tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
   
@@ -210,7 +226,7 @@
     <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
 
       <div class="tagsHead">
-        <div class="mTitle" id="xTitle" data-i18n="baseExplorer.export.title">Eksport gry</div>
+        <div class="mTitle" id="xTitle" data-i18n="baseExplorer.export.title">Utwórz grę</div>
         <button class="btn sm" id="xClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 

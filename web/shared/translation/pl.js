@@ -4219,6 +4219,11 @@ const pl = {
       tag: "tag",
       question: "Pytanie",
     },
+    filters: {
+      title: "Filtry",
+      clear: "Wyczyść filtry",
+      done: "Gotowe",
+    },
     search: {
       removeTag: "Usuń filtr tagu",
       results: "Wyniki",
@@ -4268,7 +4273,7 @@ const pl = {
       empty: "Brak tagów.",
       selectionQuestions: "{count} pyt.",
       selectionFolders: "{count} folder(ów)",
-      selectionSummary: "Zaznaczenie: {items}.",
+      selectionSummary: "Zaznaczenie: {items}",
       selectionEmpty: "Brak zaznaczenia.",
       partialWarning: "Tag jest przypisany częściowo. Kliknięcie ustawi: wszyscy.",
       partial: "częściowo",
@@ -4325,7 +4330,7 @@ const pl = {
       questionTitle: "Zmień treść pytania",
     },
     export: {
-      title: "Eksport gry",
+      title: "Utwórz grę",
       subtitle: "Gra powstanie z zaznaczonych pytań. Oznaczenia pokazują, czego brakuje do gotowości wybranego typu — można to uzupełnić później.",
       gameNameLabel: "Nazwa gry",
       questionsLabel: "Pytania",

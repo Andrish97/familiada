@@ -2201,3 +2201,82 @@ tr.row.is-drop-after td:last-child::after {
 @media (prefers-reduced-motion: reduce) {
   .context-menu.is-sheet, .context-menu.is-sheet.is-closing, .context-menu-backdrop { animation-duration: 1ms !important; }
 }
+
+/* ===== Okna wg wzorców z main (E22 etap 9, 2026-10-21) =====
+   Listy w oknach bez wewnętrznej ramki (przycinanie z zaokrągleniem),
+   wiersze jako kafle jak .shareRow (promień 12, --card2, --line2). */
+.tagsPickList,
+.tags-modal .tagsPickList {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+}
+.tags-modal .tags-row {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tags-row:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+.xPickList,
+.export-modal .xPickList {
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+}
+.xPickItem { border-radius: 12px; }
+/* Okno od dołu: nagłówek warstwy okna tagów leży na panelu okna (#121524),
+   nie na tle strony — bez ciemnego paska pod tytułem. */
+.modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
+  position: static;
+  background: transparent !important;
+}
+
+/* ===== Telefon: w wysuwanym panelu samo drzewo, filtry w oknie (2026-10-21) ===== */
+#btnFilters { position: relative; }
+#btnFilters .badge { position: absolute; top: -6px; right: -6px; }
+#btnFilters.is-active { color: var(--gold); border-color: var(--gold); }
+.filters-modal { width: min(560px, 94vw); }
+.filters-modal .filtersBody .left-filters {
+  display: grid;
+  gap: 16px;
+}
+.filters-modal .filtersBody .left-sep { display: none; }
+.filters-modal .filtersBody .matched-categories,
+.filters-modal .filtersBody .tags {
+  max-height: none;
+  overflow: visible;
+}
+@media (max-width: 900px) {
+  /* panel z samym drzewem, kryjące tło jak okna od dołu */
+  .explorer-left { background: #121524; }
+  .explorer-left > .left-sep,
+  .explorer-left > .left-filters { display: none; }
+  .explorer-left > .tree { flex: 1 1 auto; }
+}
+/* wiersze w oknie Filtry jak kafle okien (.shareRow), zaznaczone jak .shareRow.selected */
+#filtersBody .row[data-key] {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+  outline: 0;
+}
+#filtersBody .row[data-key].is-selected {
+  border-color: rgba(255,234,166,.9);
+  background: rgba(255,234,166,.10);
+}
+#filtersBody .left-panel-heading {
+  margin: 0 0 8px;
+  padding: 0;
+  font-weight: 800;
+  opacity: 1;
+}
+#filtersBody .tagList,
+#filtersBody .matched-categories,
+#filtersBody .tags { padding: 0; margin: 0; }
+#filtersBody #btnAddTag { margin: 0 0 8px; }

@@ -4319,6 +4319,11 @@ const en = {
       tag: "tag",
       question: "Question",
     },
+    filters: {
+      title: "Filters",
+      clear: "Clear filters",
+      done: "Done",
+    },
     search: {
       removeTag: "Remove tag filter",
       results: "Results",
@@ -4368,7 +4373,7 @@ const en = {
       empty: "No tags.",
       selectionQuestions: "{count} q.",
       selectionFolders: "{count} folder(s)",
-      selectionSummary: "Selection: {items}.",
+      selectionSummary: "Selection: {items}",
       selectionEmpty: "No selection.",
       partialWarning: "This tag is partially assigned. Clicking will set: all.",
       partial: "partial",
@@ -4425,7 +4430,7 @@ const en = {
       questionTitle: "Rename question text",
     },
     export: {
-      title: "Export game",
+      title: "Create game",
       subtitle: "The game is created from the selected questions. Marks show what is missing for the chosen type to be ready — you can fill it in later.",
       gameNameLabel: "Game name",
       questionsLabel: "Questions",

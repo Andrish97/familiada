@@ -4316,6 +4316,11 @@ const uk = {
       tag: "тег",
       question: "Питання",
     },
+    filters: {
+      title: "Фільтри",
+      clear: "Очистити фільтри",
+      done: "Готово",
+    },
     search: {
       removeTag: "Прибрати фільтр тегу",
       results: "Результати",
@@ -4365,7 +4370,7 @@ const uk = {
       empty: "Немає тегів.",
       selectionQuestions: "{count} пит.",
       selectionFolders: "{count} папк.",
-      selectionSummary: "Вибір: {items}.",
+      selectionSummary: "Вибрано: {items}",
       selectionEmpty: "Немає вибору.",
       partialWarning: "Тег призначено частково. Натискання встановить: усім.",
       partial: "частково",
@@ -4422,7 +4427,7 @@ const uk = {
       questionTitle: "Перейменувати текст питання",
     },
     export: {
-      title: "Експорт гри",
+      title: "Створити гру",
       subtitle: "Гра буде створена з позначених питань. Позначки показують, чого бракує до готовності вибраного типу — це можна доповнити пізніше.",
       gameNameLabel: "Назва гри",
       questionsLabel: "Питання",

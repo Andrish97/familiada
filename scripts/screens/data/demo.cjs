@@ -268,6 +268,13 @@ function buildDb(lang, extras = {}) {
     }`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
+    // E22 (431): blokady zbiorcze
+    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true },
+    // E22 (430): przypisania tagów wskazanych pytań (okno tagów)
+    qb_question_tag_links: `fn:(args, db) => {
+      const ids = new Set(args.p_question_ids || []);
+      return db.tables.qb_question_tags.filter((l) => ids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id }));
+    }`,
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
     badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [

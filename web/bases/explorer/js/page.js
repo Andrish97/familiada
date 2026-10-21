@@ -20,6 +20,7 @@ import { wireTree } from "./ui/tree.js?v=v2026-10-21T06422";
 import { wireLeft } from "./ui/left.js?v=v2026-10-21T06422";
 import { wireDnd } from "./ui/dnd.js?v=v2026-10-21T06422";
 import { wireSearch } from "./ui/search.js?v=v2026-10-21T06422";
+import { wireFilters } from "./ui/filters.js?v=v2026-10-20T23220";
 import { wireKeyboard } from "./ui/keyboard.js?v=v2026-10-21T06422";
 import { initDrawer } from "./mobile.js?v=v2026-10-21T06422";
 
@@ -123,6 +124,7 @@ function wireBreadcrumbs(state) {
     wireLeft(state);
     wireDnd(state);
     wireBreadcrumbs(state);
+    wireFilters(state);
     wireKeyboard(state);
     skeletonReady();
 

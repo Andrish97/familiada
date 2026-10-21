@@ -12,7 +12,7 @@ import { renderSelection } from "../render.js?v=v2026-10-21T06422";
 import { goUp } from "../commands.js?v=v2026-10-21T06422";
 import { hideContextMenu, showContextMenu } from "../context-menu.js?v=v2026-10-21T06422";
 
-const MODAL_IDS = ["questionOverlay", "tagsOverlay", "exportOverlay"];
+const MODAL_IDS = ["questionOverlay", "tagsOverlay", "exportOverlay", "filtersOverlay"];
 
 function shortcutsBlocked() {
   const el = document.activeElement;
