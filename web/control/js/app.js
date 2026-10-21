@@ -22,11 +22,13 @@ import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T17405";
 import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-21T17405";
 import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T17405";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-21T17405";
 
 
+// QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
+// wcześniej przez chwilę widać było samą białą ramkę <img>.
 function qrImgSrc(url) {
-  const u = encodeURIComponent(String(url ?? ""));
-  return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
+  return qrDataUrl(String(url ?? ""), { margin: 0 });
 }
 
 // Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2

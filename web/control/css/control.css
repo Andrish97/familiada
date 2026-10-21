@@ -1230,6 +1230,7 @@
     max-width: 260px;
     width: 100%;
     height: auto;
+    aspect-ratio: 1; /* kwadrat od razu, zanim obraz się zdekoduje (bez białego paska) */
     border-radius: 12px;
     padding: 18px
 }
