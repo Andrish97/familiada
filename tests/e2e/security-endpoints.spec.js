@@ -36,23 +36,19 @@ test("E24: generate-game bez nagłówka sekretu = 401, funkcja lead-finder usuni
   expect(lead.status()).toBeGreaterThanOrEqual(400);
 });
 
-test("E24: lead-finder API bez klucza = 401, /health publiczne", async ({ request }) => {
-  const diag = async (name, res) => {
-    const h = res.headers();
-    const body = res.status() === 200 && name.includes("health") ? "" : (await res.text()).slice(0, 80).replace(/\s+/g, " ");
-    console.log(`[e2e-diag] security ${name} -> ${res.status()} server=${h.server || "-"} type=${h["content-type"] || "-"} cf-ray=${h["cf-ray"] ? "yes" : "no"} body=${body}`);
-  };
+// leads.* przez Caddy: bez poprawnego klucza (Authorization: Bearer) Caddy
+// odpowiada 404 i nie przekazuje żądania do usługi (która sama też wymaga
+// klucza: 401). Przy rotacji LEAD_FINDER_API_KEY trzeba zmienić też Caddyfile.
+test("E24: lead-finder bez klucza lub z fałszywym kluczem nie odpowiada (404 z Caddy)", async ({ request }) => {
+  const diag = (name, res) => console.log(`[e2e-diag] security ${name} -> ${res.status()}`);
   const health = await request.get(`${LEADS}/health`);
-  await diag("leads health", health);
+  diag("leads health", health);
   const status = await request.get(`${LEADS}/api/search-runs/status`);
-  await diag("leads status", status);
+  diag("leads status", status);
   const forged = await request.get(`${LEADS}/api/search-runs/status`, { headers: { Authorization: "Bearer e2e-forged-key" } });
-  await diag("leads status forged", forged);
+  diag("leads status forged", forged);
   const start = await request.post(`${LEADS}/api/search-runs?target_count=1`);
-  await diag("leads start", start);
+  diag("leads start", start);
 
-  expect(health.status()).toBe(200);
-  expect(status.status()).toBe(401);
-  expect(forged.status()).toBe(401);
-  expect(start.status()).toBe(401);
+  for (const res of [health, status, forged, start]) expect([401, 404]).toContain(res.status());
 });
