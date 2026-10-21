@@ -626,7 +626,7 @@ test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
     await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
-    const bar = page.locator(".games-bottom");
+    const bar = page.locator(".games-bottom:not(.toolbar-measure-box)");
     await expect(bar).toHaveClass(/is-scroll/);
     await expect(bar, "grupy przy sobie, rozdzielone separatorem").toHaveClass(/has-group-sep/);
     const state = await bar.evaluate((el) => {
