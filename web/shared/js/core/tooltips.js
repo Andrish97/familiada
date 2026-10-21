@@ -1,4 +1,4 @@
-const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-21T22370", import.meta.url).href;
+const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-21T22375", import.meta.url).href;
 
 function install() {
   if (typeof document === "undefined" || document.documentElement.dataset.tooltipSystem) return;
