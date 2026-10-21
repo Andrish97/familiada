@@ -13,27 +13,35 @@ for(const route of Object.keys(entryScripts)) {
 test('approved manual uses application icons and current Repeat behaviour',()=>{
  assert.match(pl.manual.content.control,/Ponowne kliknięcie nie usuwa oznaczenia/);
  assert.doesNotMatch(pl.manual.content.control,/zaznacza lub zdejmuje Powtórzenie|manual-assets\//);
- assert.match(pl.manual.content.gameSettings,/data-icon="play"/);
- assert.match(pl.manual.content.gameSettings,/2 minuty/);
+ assert.match(pl.manual.content.settings,/data-icon="play"/);
+ assert.match(pl.manual.content.settings,/2 minuty/);
 });
 
-test('all manual languages contain the same sections, Host blocks and application icons',async()=>{
+// Podręcznik E13.4: każdy język ma te same karty, rozdziały (id), odnośniki,
+// przyciski, ramki prowadzącego i tabele co polski.
+test('all manual languages contain the same chapters, anchors, buttons and Host blocks',async()=>{
  const {default:en}=await import('../../web/shared/translation/en.js');
  const {default:uk}=await import('../../web/shared/translation/uk.js');
- const count=(html,pattern)=>(html.match(pattern)||[]).length;
- for(const translation of [pl,en,uk]){
-  const {control,gameSettings}=translation.manual.content;
-  assert.equal(count(control+gameSettings,/<h[34] /g),49);
-  assert.equal(count(control+gameSettings,/<table class="m-table">/g),3);
-  assert.equal(count(control,/class="m-host"/g),12);
-  assert.equal(count(control,/class="m-note"/g),9);
-  assert.equal(count(control+gameSettings,/data-icon="/g),8);
-  assert.doesNotMatch(control+gameSettings,/manual-assets\//);
-  assert.match(control+gameSettings,/class="m-code"/);
-  assert.doesNotMatch(control+gameSettings,/m-control|<li><p class="m-p">/);
+ const all=(html,pattern)=>[...html.matchAll(pattern)].map((m)=>m[1]);
+ const shape=(html)=>({
+  ids:all(html,/\sid="([^"]+)"/g),
+  refs:all(html,/href="#([^"]+)"/g),
+  icons:all(html,/data-icon="([^"]+)"/g),
+  buttons:all(html,/class="(m-btn)"/g).length,
+  host:all(html,/class="(m-host)"/g).length,
+  tables:all(html,/class="(m-table)"/g).length,
+ });
+ const tabs=Object.keys(pl.manual.content);
+ assert.equal(tabs.length,11);
+ const ids=new Set();
+ for(const tab of tabs){
+  const base=shape(pl.manual.content[tab]);
+  for(const id of base.ids){ assert.ok(!ids.has(id),`powtórzone id ${id}`); ids.add(id); }
+  for(const translation of [en,uk]){
+   assert.deepEqual(Object.keys(translation.manual.content),tabs);
+   assert.deepEqual(shape(translation.manual.content[tab]),base,`${tab}: inna struktura niż PL`);
+  }
  }
- assert.match(en.manual.content.control,/Every click plays the repeat sound/);
- assert.match(uk.manual.content.control,/Кожне натискання відтворює звук/);
- assert.match(en.manual.content.gameSettings,/2 minutes/);
- assert.match(uk.manual.content.gameSettings,/2 хвилини/);
+ for(const tab of tabs) for(const ref of shape(pl.manual.content[tab]).refs) assert.ok(ids.has(ref),`brak celu #${ref} (${tab})`);
+ for(const translation of [pl,en,uk]) assert.doesNotMatch(Object.values(translation.manual.content).join(''),/manual-assets\/|m-control/);
 });

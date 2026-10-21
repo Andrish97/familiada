@@ -41,7 +41,7 @@
 
 .simple-tabs {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 10px;
     margin: 0 0 18px
 }
@@ -340,6 +340,8 @@
 .m-toc a { color: rgba(255,255,255,.9); text-decoration: none; }
 .m-toc a:hover { color: var(--gold); text-decoration: underline; }
 .m-toc > ol > li > a { font-weight: 900; }
+.m-toc > ol > li { break-inside: avoid; margin-bottom: 8px; }
+@media (min-width: 900px) { .m-toc > ol { columns: 2; column-gap: 32px; } }
 
 .m-btn {
     display: inline-flex;
