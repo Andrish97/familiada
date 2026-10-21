@@ -28,3 +28,4 @@ tests/test-results/
 tests/recordings/
 .claude/worktrees/
 screens-out/
+scripts/manual/out/
