@@ -144,6 +144,15 @@ podliczania jako stan bieżącej operacji.
   logo) to kafel na całą szerokość jak górny pasek ankiety (`.pollBar`):
   ramka, tło, zaokrąglenie; etykieta „NAZWA” jak słowo stanu ankiety (złote
   wersaliki), pole wypełnia resztę kafla (`.name-field` w `base.css`).
+- **Dolny pasek list przewija się w bok (pomysł użytkownika 2026-10-21):**
+  pasek wyszukiwania/filtrów i akcji (Gry, Bazy, Logo) zostaje zawsze jednym
+  rzędem; zawijanie w rzędy usunięte. Gdy nie mieszczą się napisy — same
+  ikony; gdy nie mieszczą się nawet ikony — pasek przewija się w bok
+  (bez paska przewijania, wygaszona krawędź po stronie z ukrytymi
+  przyciskami). Interpretacja „w zależności, gdzie więcej przycisków”: na
+  starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
+  z większą (Gry: wyszukiwanie po lewej, akcje wystają w prawo). Menu filtra
+  i sortowania zamyka się, gdy przewinie się pojemnik z przyciskiem.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

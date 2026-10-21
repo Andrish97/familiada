@@ -1107,9 +1107,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
     listHeaderActionsBelow: document.querySelector("main .bar")?.classList.contains("has-actions-below") || false,
-    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
-      ? "single-row"
-      : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
+    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-scroll")
+      ? "scroll"
+      : document.querySelector(".games-bottom")?.classList.contains("is-single-row") ? "single-row" : "not-measured",
     listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
       .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
@@ -1158,8 +1158,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     if (fitsSingleRow && state.listBottomLayout !== "single-row") {
       throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
     }
-    if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
-        throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
+    if (!fitsSingleRow && state.listBottomLayout !== "scroll") {
+        throw new Error(`${profile.label} · ${id}: dolny pasek nie przewija się w bok, choć się nie mieści; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (state.listBottomTextLabels && state.listBottomMetrics) {
       const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);

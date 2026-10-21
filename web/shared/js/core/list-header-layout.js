@@ -74,9 +74,10 @@ export function initListHeaderLayout(selector = ".bar") {
 }
 
 // Dolny pasek list: najpierw sprawdza naturalną szerokość wszystkich kontrolek.
-// Jeśli mieszczą się razem, blokuje zawijanie. Gdy nie mieszczą się, dzieli
-// dostępną szerokość proporcjonalnie między lewą i prawą grupę, a kontrolki
-// każdej grupy układa w najmniejszą liczbę możliwie równych wierszy.
+// Gdy napisy się nie mieszczą, przyciski przechodzą na same ikony. Gdy nie
+// mieszczą się nawet ikony, pasek zostaje jednym rzędem i przewija się w bok;
+// na starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
+// z większą (decyzja użytkownika 2026-10-21, zamiast zawijania w rzędy).
 function initListBottomToolbarLayout() {
   for (const bar of document.querySelectorAll(".games-bottom")) {
     let queued = false;
@@ -150,6 +151,13 @@ function initListBottomToolbarLayout() {
       measureBox.replaceChildren();
       return { width, items };
     };
+    const updateEdges = () => {
+      const max = bar.scrollWidth - bar.clientWidth;
+      const scrolling = bar.classList.contains("is-scroll") && max > 1;
+      bar.classList.toggle("has-more-start", scrolling && bar.scrollLeft > 1);
+      bar.classList.toggle("has-more-end", scrolling && bar.scrollLeft < max - 1);
+    };
+    bar.addEventListener("scroll", updateEdges, { passive: true });
     const update = () => {
       queued = false;
       const left = bar.querySelector(":scope > .games-bottom-left");
@@ -160,127 +168,33 @@ function initListBottomToolbarLayout() {
         bar.classList.remove("is-compact-icons");
       }
       lastAvailableWidth = available;
-      const textLeft = bar.classList.contains("is-compact-icons") && lastTextMeasures
-        ? lastTextMeasures.left
-        : measureGroup(left, "text");
-      const textRight = bar.classList.contains("is-compact-icons") && lastTextMeasures
-        ? lastTextMeasures.right
-        : measureGroup(right, "text");
-      if (!bar.classList.contains("is-compact-icons") || !lastTextMeasures) {
-        lastTextMeasures = { left: textLeft, right: textRight };
-      }
-      const iconLeft = measureGroup(left, "icons");
-      const iconRight = measureGroup(right, "icons");
+      const compact = bar.classList.contains("is-compact-icons") && lastTextMeasures;
+      const textLeft = compact ? lastTextMeasures.left : measureGroup(left, "text");
+      const textRight = compact ? lastTextMeasures.right : measureGroup(right, "text");
+      if (!compact) lastTextMeasures = { left: textLeft, right: textRight };
       const barStyle = getComputedStyle(bar);
       const groupGap = parseFloat(barStyle.columnGap) || parseFloat(barStyle.gap) || 0;
-      const room = Math.max(0, available - groupGap);
-      const leftGap = parseFloat(getComputedStyle(left).columnGap) || parseFloat(getComputedStyle(left).gap) || 0;
-      const rightGap = parseFloat(getComputedStyle(right).columnGap) || parseFloat(getComputedStyle(right).gap) || 0;
-      const packRows = (items, width, gap) => {
-        const rows = [];
-        let rowWidth = 0;
-        for (const itemWidth of items) {
-          const nextWidth = rowWidth ? rowWidth + gap + itemWidth : itemWidth;
-          if (rowWidth && nextWidth > width + 1) {
-            rows.push(rowWidth);
-            rowWidth = itemWidth;
-          } else rowWidth = nextWidth;
-        }
-        if (rowWidth || !items.length) rows.push(rowWidth);
-        return rows;
-      };
-      const candidateWidths = (items, gap) => {
-        if (!items.length) return [0];
-        const widths = new Set();
-        // Każdy rząd może zaczynać się od innego przycisku. Mierz wszystkie
-        // ciągłe zestawy, nie tylko prefiksy grupy; inaczej algorytm nie widzi
-        // szerokości potrzebnej np. dla drugiej pary i niepotrzebnie tworzy
-        // dodatkowy rząd.
-        for (let start = 0; start < items.length; start++) {
-          let width = 0;
-          for (let end = start; end < items.length; end++) {
-            width += items[end] + (end > start ? gap : 0);
-            widths.add(width);
-          }
-        }
-        return [...widths].sort((a, b) => a - b);
-      };
-      const compareScore = (a, b) => {
-        for (let index = 0; index < a.length; index++) {
-          if (Math.abs(a[index] - b[index]) > 0.01) return a[index] < b[index] ? -1 : 1;
-        }
-        return 0;
-      };
-      const chooseLayout = (leftMeasure, rightMeasure) => {
-        let best = null;
-        for (const leftWidth of candidateWidths(leftMeasure.items, leftGap)) {
-          for (const rightWidth of candidateWidths(rightMeasure.items, rightGap)) {
-            if (leftWidth + rightWidth + groupGap > available + 1) continue;
-            const leftRows = packRows(leftMeasure.items, leftWidth, leftGap);
-            const rightRows = packRows(rightMeasure.items, rightWidth, rightGap);
-            const rowCount = Math.max(leftRows.length, rightRows.length);
-            let sideBalance = 0;
-            let rowVariation = 0;
-            for (let row = 0; row < rowCount; row++) {
-              const leftRow = leftRows[row] || 0;
-              const rightRow = rightRows[row] || 0;
-              sideBalance += Math.abs(leftRow - rightRow);
-              if (row) {
-                rowVariation += Math.abs(leftRow - (leftRows[row - 1] || 0));
-                rowVariation += Math.abs(rightRow - (rightRows[row - 1] || 0));
-              }
-            }
-            // Najpierw jak najmniej rzędów; potem wyrównujemy szerokość
-            // lewego i prawego bloku w każdym rzędzie, potem równe rzędy
-            // w obrębie grupy (6 ikon: 3 + 3, nie 5 + 1), a na końcu
-            // wypełnienie pierwszego rzędu i szerokość obu "kolumn".
-            const firstRowFill = (leftRows[0] || 0) + (rightRows[0] || 0);
-            const score = [rowCount, sideBalance, rowVariation, -firstRowFill, Math.abs(leftWidth - rightWidth)];
-            if (!best || compareScore(score, best.score) < 0) {
-              best = { leftWidth, rightWidth, leftRows, rightRows, score };
-            }
-          }
-        }
-        return best;
-      };
       const hasTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
         .some((label) => label.textContent.trim());
-      const textLayout = chooseLayout(textLeft, textRight);
-      const iconLayout = chooseLayout(iconLeft, iconRight);
-      const textRows = textLayout ? Math.max(textLayout.leftRows.length, textLayout.rightRows.length) : 0;
-      const iconRows = iconLayout ? Math.max(iconLayout.leftRows.length, iconLayout.rightRows.length) : 0;
-      // Gdy wariant ikon daje mniej rzędów niż przyciski z napisami (albo
-      // napisy w ogóle się nie mieszczą), wybierz kompaktowy układ. Sama
-      // różnica jednego rzędu już wystarcza; na wąskim telefonie ikony w dwóch
-      // rzędach są czytelniejsze niż kolumna szerokich przycisków.
-      const useIcons = hasTextLabels && iconLayout && (!textLayout || textRows > iconRows);
-      bar.classList.toggle("is-compact-icons", Boolean(useIcons));
-      const leftMeasure = useIcons ? iconLeft : textLeft;
-      const rightMeasure = useIcons ? iconRight : textRight;
-      let chosen = useIcons ? iconLayout : textLayout;
-      const needed = leftMeasure.width + rightMeasure.width + groupGap;
-      if (needed <= available + 1) {
-        const layoutKey = `single:${useIcons}`;
-        if (layoutKey === lastLayout) return;
-        lastLayout = layoutKey;
-        bar.classList.remove("is-balanced-wrap");
-        bar.classList.add("is-single-row");
-        left.style.removeProperty("width");
-        right.style.removeProperty("width");
-        return;
+      const textNeeded = textLeft.width + textRight.width + groupGap;
+      const useIcons = hasTextLabels && textNeeded > available + 1;
+      bar.classList.toggle("is-compact-icons", useIcons);
+      let needed = textNeeded;
+      if (useIcons) {
+        needed = measureGroup(left, "icons").width + measureGroup(right, "icons").width + groupGap;
       }
-      const layout = `${available}:${leftMeasure.items.length}:${rightMeasure.items.length}:${useIcons}`;
-      bar.classList.remove("is-single-row");
-      bar.classList.add("is-balanced-wrap");
-      chosen ||= { leftWidth: Math.min(room / 2, available), rightWidth: Math.min(room / 2, available) };
-      const layoutKey = `${layout}:${chosen.leftWidth}:${chosen.rightWidth}`;
-      if (layoutKey === lastLayout) return;
-      lastLayout = layoutKey;
-      left.style.width = `${chosen.leftWidth}px`;
-      right.style.width = `${chosen.rightWidth}px`;
-      left.style.removeProperty("--toolbar-columns");
-      right.style.removeProperty("--toolbar-columns");
-      for (const item of [...left.children, ...right.children]) item.style.flex = "0 0 auto";
+      const scroll = needed > available + 1;
+      const leftCount = [...left.children].filter((item) => item.getClientRects().length).length;
+      const rightCount = [...right.children].filter((item) => item.getClientRects().length).length;
+      const startAtEnd = scroll && leftCount > rightCount;
+      const layoutKey = `${scroll}:${useIcons}:${startAtEnd}:${available}`;
+      if (layoutKey !== lastLayout) {
+        lastLayout = layoutKey;
+        bar.classList.add("is-single-row");
+        bar.classList.toggle("is-scroll", scroll);
+        if (scroll) bar.scrollLeft = startAtEnd ? bar.scrollWidth : 0;
+      }
+      updateEdges();
     };
     const schedule = () => {
       if (queued) return;

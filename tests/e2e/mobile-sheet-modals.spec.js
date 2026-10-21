@@ -616,6 +616,39 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
   });
 });
 
+test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
+  test.use({ viewport: MOBILE_VIEWPORT });
+
+  // Decyzja 2026-10-21: zamiast zawijania w rzędy pasek zostaje jednym
+  // rzędem i przewija się w bok; wystaje grupa z większą liczbą przycisków.
+  test("jeden rząd, przewijanie w prawo, menu filtra zamyka się przy przewinięciu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
+    await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
+    const bar = page.locator(".games-bottom");
+    await expect(bar).toHaveClass(/is-scroll/);
+    const state = await bar.evaluate((el) => {
+      const tops = [...el.querySelectorAll(":scope > div > *")]
+        .filter((item) => item.getClientRects().length)
+        .map((item) => Math.round(item.getBoundingClientRect().top));
+      return { rows: new Set(tops).size, scrollLeft: el.scrollLeft, overflow: el.scrollWidth - el.clientWidth };
+    });
+    console.log(`[e2e-diag] pasek: ${JSON.stringify(state)}`);
+    expect(state.rows, "jeden rząd przycisków").toBe(1);
+    expect(state.overflow).toBeGreaterThan(0);
+    expect(state.scrollLeft, "start od lewej (więcej przycisków po prawej)").toBe(0);
+    await expect(bar).toHaveClass(/has-more-end/);
+
+    await page.locator(".games-bottom .list-filter .ui-select-btn").click();
+    await expect(page.locator(".games-bottom .list-filter")).toHaveClass(/open/);
+    await bar.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(page.locator(".games-bottom .list-filter")).not.toHaveClass(/open/);
+    await expect(bar).toHaveClass(/has-more-start/);
+    await expect(bar).not.toHaveClass(/has-more-end/);
+  });
+});
+
 test.describe("games/editor: pytanie na telefonie w oknie od dołu", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 

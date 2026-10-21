@@ -856,9 +856,9 @@ body.games-body > main.wrap{
 .logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
 .list-empty[hidden]{ display: none; }
 
-/* Układ wspólny dla Gier, Baz i Logo. Najpierw pełny pojedynczy rząd; klasy
-   włącza pomiar naturalnej szerokości z list-header-layout.js dopiero wtedy,
-   gdy wszystkie kontrolki faktycznie przekraczają szerokość paska. */
+/* Układ wspólny dla Gier, Baz i Logo: zawsze jeden rząd. Gdy kontrolki nie
+   mieszczą się nawet jako ikony, list-header-layout.js włącza .is-scroll —
+   pasek przewija się w bok, a wygaszona krawędź pokazuje, że jest więcej. */
 .games-bottom.is-single-row > .games-bottom-left,
 .games-bottom.is-single-row > .games-bottom-right{
   flex: 0 0 auto;
@@ -866,17 +866,17 @@ body.games-body > main.wrap{
   width: max-content;
   max-width: none;
 }
-.games-bottom.is-balanced-wrap > .games-bottom-left,
-.games-bottom.is-balanced-wrap > .games-bottom-right{
-  display: flex;
-  flex-wrap: wrap;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  align-content: start;
+.games-bottom.is-scroll{
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
-.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-content: flex-start; }
-.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-content: flex-end; }
+.games-bottom.is-scroll::-webkit-scrollbar{ display: none; }
+.games-bottom.has-more-end{ mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.games-bottom.has-more-start{ mask-image: linear-gradient(to right, transparent, #000 28px); }
+.games-bottom.has-more-start.has-more-end{ mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 .games-bottom.is-compact-icons .only-desktop{ display:none !important; }
 .games-bottom.is-compact-icons .games-bottom-right .btn,
 .games-bottom.is-compact-icons .list-filter .ui-select-btn,
@@ -938,3 +938,5 @@ body.games-body > main.wrap{
 .change-type-option input { margin: 0; accent-color: var(--gold); }
 .change-type-name { font-weight: 900; }
 .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
+/* W przewijanym pasku grupy nie rozsuwa space-between — osobny odstęp. */
+.games-bottom.is-scroll > .games-bottom-left{ margin-right: 8px; }
