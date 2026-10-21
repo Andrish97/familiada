@@ -4,7 +4,7 @@ Plan (źródło prawdy): [`docs/menedzer-bazy/README.md`](docs/menedzer-bazy/REA
 „Kolejność prac” + decyzje w [`docs/menedzer-bazy-plan.md`](docs/menedzer-bazy-plan.md).
 Branch: `ccr-ac709a92-0mcpyq`. Dziennik szczegółowy: `docs/wdrozenia.md`.
 
-**Status: W TOKU** — plan 1–7 gotowy lokalnie (nie na produkcji); trwa etap 8 (dopracowanie, lokalnie). Wdrożenie (7d, teraz z migracjami 427–431) czeka na decyzję użytkownika.
+**Status: GOTOWE LOKALNIE** — plan 1–7 i etap 8 zrobione na lokalnej bazie (nie na produkcji). Wdrożenie (7d, migracje 427–431 + strony) czeka na decyzję użytkownika.
 
 Zasada nadrzędna użytkownika (2026-10-20): wszystko tylko na lokalnej,
 symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
@@ -45,7 +45,7 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
   - 430: `qb_base_content` i `qb_question_tag_links` jako SECURITY DEFINER z jednym `base_can_access` (RLS na każdy wiersz kosztował ~1 s przy 20 000); test 430 (właściciel, czytelnik, obcy).
   - okno tagów: przypisania przez `qb_question_tag_links` (lista id w treści zapytania); okno „Utwórz grę”: lista porcjami, przerwanie przy zamknięciu; `repo.js` bez 9 martwych funkcji.
   - Pomiar 20 000 pytań (2026-10-21): okno tagów dużego folderu >30 s → 1,3 s; okno gry 5,7 s → 0,56 s.
-- [ ] 8e. Przegląd raportów (`docs/menedzer-bazy/1-4*.md`) wobec nowego kodu — W TOKU. Niemal wszystkie [BŁĄD]/[NIESP]/[MARTWE] usunięte przez nową budowę (jeden rejestr akcji, jedno zaznaczanie z panelem, brak blokad paneli, `actions.js` usunięty). Dopisane poprawki:
+- [x] 8e. Przegląd raportów (`docs/menedzer-bazy/1-4*.md`) wobec nowego kodu. Niemal wszystkie [BŁĄD]/[NIESP]/[MARTWE] usunięte przez nową budowę (jeden rejestr akcji, jedno zaznaczanie z panelem, brak blokad paneli, `actions.js` usunięty). Dopisane poprawki:
   - [x] R3: przytrzymanie dwoma palcami nie otwiera menu (ramka) — `mobile.js` liczy palce.
   - [x] R5: ramka przewija listę przy krawędzi — `ui/marquee.js`.
   - [x] menu na komputerze w niskim oknie: `max-height` + przewijanie.
@@ -53,13 +53,15 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
   - [x] polskie litery w nazwach tagów (decyzja użytkownika 6): `qb_save_tag` (427) i okno tagów; duplikat liczony bez wielkości liter i polskich znaków (`_qb_tag_key`, także `qb_restore_tags` 429); testy SQL 427 + e2e.
   - [x] blokady spójnie (raport 4 §5.2): tworzenie — folder nadrzędny, kopia — źródła i cel, przywrócenie z kosza — dawne miejsce; wszystkie we współdzieleniu (`withLocks(..., { mode: "shared" })`).
   - [ ] świadomie pominięte na razie: „Przenieś do… / Kopiuj do…” w menu (na telefonie jest Wytnij/Kopiuj + Wklej).
-- [ ] 8f. Pełny lokalny e2e + zrzuty + zestawienie.
+- [x] 8f. Pełny lokalny e2e `base-explorer` 81/81 (5 porażek pierwszego przebiegu = lokalna baza: ponowne zastosowanie samej 427 nadpisało `qb_delete_items` z 428; po 428–431 w kolejności zielone), testy SQL 427–431, unit 691/691, zrzuty `docs/menedzer-bazy/img/` odświeżone.
 
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).
 
 ## Znane problemy
+
+- Lokalnie: stosując ponownie jedną z migracji 427–431, stosuj też wszystkie następne (427 i 428 definiują `qb_delete_items`).
 
 - Gesty i arkusz menu sprawdzone tylko w emulacji, nie na prawdziwym telefonie.
 - Historia cofania znika po odświeżeniu strony (w pamięci karty — świadomie).
