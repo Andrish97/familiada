@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits } = require("./helpers/mailbox");
 const { loginAsTestUser, withE2EBypass } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
 
 const PASSWORD_EMAIL = "test11@familiada.online";
 const PROFILE_EMAIL = "test12@familiada.online";
@@ -142,6 +143,14 @@ const ACCOUNT_URL = "https://www.familiada.online/account";
 const isEmailChangeLink = (link) =>
   /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
 
+// Konto i strona potwierdzenia z plików brancha (helpers/branch-code.js) --
+// po wdrożeniu to ten sam kod co na produkcji.
+async function branchContext(browser) {
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  await serveBranchCode(context, { pages: ["account", "login/confirm"] });
+  return context;
+}
+
 async function openAccount(page) {
   await page.goto(ACCOUNT_URL, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
@@ -194,7 +203,7 @@ function confirmLinkFrom(email) {
 }
 
 async function openConfirmLink(browser, link) {
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
   await page.goto(link, { waitUntil: "domcontentloaded" });
   // Po sukcesie strona po chwili sama przechodzi dalej -- zapamiętujemy ostatni
@@ -212,7 +221,7 @@ async function openConfirmLink(browser, link) {
 }
 
 async function expectLoginFails(browser, username) {
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
   await withE2EBypass(context);
   await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
@@ -258,7 +267,7 @@ test("zmiana e-maila: bledne dane nic nie wysylaja", async ({ browser }, testInf
   test.setTimeout(180_000);
   await startEmailChangeTest(testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
   try {
     await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
@@ -296,7 +305,7 @@ test("zmiana e-maila: pelna zmiana, maile, link raz, logowanie nowym adresem", a
   test.setTimeout(240_000);
   await startEmailChangeTest(testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
   try {
     await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
@@ -320,7 +329,7 @@ test("zmiana e-maila: pelna zmiana, maile, link raz, logowanie nowym adresem", a
     const confirmLink = confirmLinkFrom(newEmail);
 
     // Przycisk z powiadomienia prowadzi na stronę logowania.
-    const noticeContext = await browser.newContext();
+    const noticeContext = await branchContext(browser);
     const noticePage = await noticeContext.newPage();
     const res = await noticePage.goto(loginLink, { waitUntil: "domcontentloaded" });
     expect(res?.status()).toBeLessThan(400);
@@ -336,7 +345,7 @@ test("zmiana e-maila: pelna zmiana, maile, link raz, logowanie nowym adresem", a
     const second = await openConfirmLink(browser, confirmLink);
     expect(second, "drugie klikniecie tego samego linku").not.toMatch(/gotowe/i);
 
-    const loginContext = await browser.newContext();
+    const loginContext = await branchContext(browser);
     const loginPage = await loginContext.newPage();
     await loginAsTestUser(loginPage, loginContext, { username: PROFILE_NEW_EMAIL });
     expect(await currentAuthEmail(loginPage)).toBe(PROFILE_NEW_EMAIL);
@@ -359,7 +368,7 @@ test("zmiana e-maila: ponowne wyslanie uniewaznia stary link, anulowanie nowy", 
   test.setTimeout(300_000);
   await startEmailChangeTest(testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
   try {
     await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
@@ -414,9 +423,9 @@ test("zmiana e-maila: anulowanie z drugiego urzadzenia, blokada, link niewazny",
   test.setTimeout(240_000);
   await startEmailChangeTest(testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
-  const context = await browser.newContext();
+  const context = await branchContext(browser);
   const page = await context.newPage();
-  const otherContext = await browser.newContext();
+  const otherContext = await branchContext(browser);
   const otherPage = await otherContext.newPage();
   try {
     await loginAsTestUser(page, context, { username: PROFILE_EMAIL });
@@ -455,7 +464,7 @@ test("zmiana e-maila: anulowanie z drugiego urzadzenia, blokada, link niewazny",
 
     await otherContext.close();
     await context.close();
-    const loginContext = await browser.newContext();
+    const loginContext = await branchContext(browser);
     const loginPage = await loginContext.newPage();
     await loginAsTestUser(loginPage, loginContext, { username: PROFILE_EMAIL });
     expect(await currentAuthEmail(loginPage)).toBe(PROFILE_EMAIL);

@@ -330,11 +330,12 @@ async function handleMigrateResend() {
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: migratePendingEmail,
-      options: { emailRedirectTo: redirect.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka. auth.resend szuka konta po obecnym
+    // adresie, więc z nowym adresem kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: migratePendingEmail },
+      { emailRedirectTo: redirect.toString() }
+    );
     if (error) throw error;
 
     setStatus(t("account.statusMigrateResent"));
@@ -740,11 +741,12 @@ async function handleEmailResend() {
     reserved = true;
 
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: pendingEmail,
-      options: { emailRedirectTo: confirmUrl.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka (nowy token, nowy mail). auth.resend
+    // szuka konta po obecnym adresie, więc z nowym kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: pendingEmail },
+      { emailRedirectTo: confirmUrl.toString() }
+    );
     if (error) throw error;
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
