@@ -533,3 +533,12 @@ Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu man
 ## Następny etap pracy
 
 Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści należy jeszcze sprawdzić funkcje i ograniczenia w aktualnej wersji serwisu oraz potwierdzić zgodność zasad teleturnieju z regulaminem. Następnie można opracowywać rozdziały po kolei. Rozdział 18 jest warunkowy i może zostać pominięty, jeśli nie pojawią się powtarzające się pytania użytkowników.
+
+## Decyzje
+
+- **2026-10-21 — podstawa Części I:** regulamin TVP w wersji z „głową rodziny” (2019),
+  [PDF](https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf),
+  wskazany przez użytkownika. Wynikają z niego: gra do 300 pkt bez stałej liczby rund
+  i bez „dogrywki” (rozdz. 3 opisuje to zamiast „trzech rund i dogrywki”), mnożniki
+  ×1, ×1, ×1, ×2, ×3 (zgodne z domyślnymi w serwisie), wynik bez nagrody głównej =
+  punkty × 3. Szczegóły: `podrecznik-weryfikacja.md`, Część I.
