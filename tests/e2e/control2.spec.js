@@ -3015,6 +3015,11 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 
     // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
     await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
+    page.on("response", async (res) => {
+      if (!res.url().includes("/rpc/control_device_share_preflight_by_lookup")) return;
+      const body = await res.text().catch(() => "");
+      console.log(`[e2e-diag] preflight_by_lookup ${res.status()} ${body.replace(/[^{}\[\]:,"a-z_0-9 -]/gi, "").slice(0, 200)}`);
+    });
     await page.locator("#shareDeviceEmail").fill(recipient);
     await expect(page.locator(".app-toast-text")).toContainText("już udostępniono", { timeout: 10000 });
     const messageShot = testInfo.outputPath("shot-control-share-message.png");
