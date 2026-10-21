@@ -322,7 +322,7 @@ function additionalStates(data) {
     ] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
-      await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+      await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
     } },
     ...["friends", "subscribers"].map((id) => ({
       id, stateId: "list", page: id, href: `/${id}/?tab=received`, mobileOnly: true,
@@ -569,11 +569,11 @@ function additionalStates(data) {
       },
     },
     {
-      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/?tab=mine",
+      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/",
       modalCapture: true, expectedModalId: "submitOverlay", actionLabel: "Moje wysłane → Zgłoś grę",
       prepare: async (page) => {
         await page.locator("#btnMySent").click();
-        await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").click();
       },

@@ -711,8 +711,9 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       await page.goto(MARKETPLACE_URL, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      // „Moje wysłane” to okno (2026-10-21); zgłoszenie zastępuje je i po zamknięciu do niego wraca.
       await page.locator("#btnMySent").click();
-      await expect(page.locator("#viewMine")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("#mySentOverlay")).toBeVisible({ timeout: 10000 });
       await page.locator("#btnSubmitNew").click();
 
       const overlay = page.locator("#submitOverlay");
@@ -723,7 +724,9 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 
       await page.locator("#btnSubmitCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#viewMine")).toBeVisible();
+      await expect(page.locator("#mySentOverlay")).toBeVisible();
+      await page.locator("#btnMySentClose").click();
+      await expect(page.locator("#mySentOverlay")).toBeHidden();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
     } finally {
       await deleteGameDirect(page, gameId);

@@ -99,7 +99,20 @@ body.mkt-body > main.wrap {
 }
 
 /* ===== Empty state ===== */
-#mySentList > .mkt-empty{ width:min(100%, 420px); box-sizing:border-box; }
+/* Podkarta narzędzi (wyszukiwanie, język, sortowanie) nad wspólną kartą
+   gier — decyzja 2026-10-21; „Moje wysłane” to okno (#mySentOverlay). */
+.mkt-tools-card,
+.mkt-games-card{
+  background: var(--surface, #111827);
+  border: 1px solid var(--line2, rgba(255,255,255,.12));
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+.mkt-tools-card{ padding: 10px 12px; margin-bottom: 12px; }
+.mkt-tools-card .mkt-search-bar{ margin-bottom: 0; }
+.mkt-games-card{ padding: 16px; }
+.mkt-games-card > .mkt-info:empty{ display: none; }
+#mySentList{ display: grid; gap: 10px; }
 
 /* ===== Game card ===== */
 .mkt-card {
@@ -485,3 +498,4 @@ body.mkt-body > main.wrap {
 .mkt-lang-picker .btn .ico { width: 2em; height: 2em; vertical-align: middle; }
 .mkt-stars, .mkt-rater-stars { display: inline-flex; gap: 1px; vertical-align: middle; }
 .mkt-star-btn .ico { width: 1em; height: 1em; vertical-align: middle; }
+.mkt-sent-actions .btn{ display:inline-flex; align-items:center; gap:6px; }

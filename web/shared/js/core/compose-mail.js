@@ -1,4 +1,4 @@
-import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-21T07271";
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-21T07302";
 
 
 // Podgląd i wysyłka korzystają z tego samego dokumentu oraz podpisu.
