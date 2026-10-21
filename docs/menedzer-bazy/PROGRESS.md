@@ -85,6 +85,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9k. Telefon: w pasku zamiast pola przycisk „Szukaj” (`#btnSearchSheet`, złoty przy wpisanym tekście) obok drzewa / tagów / kategorii; pole tylko w oknie. Komputer: pole jak w „Przenieś do” (lupa w środku, „X” w polu przy aktywnym tekście/filtrach, bez osobnego przycisku lupy). Pełny lokalny e2e 88/88, unit 690/690.
 
+- [ ] 10. Do zrobienia po wdrożeniu: audyt CSS (`scripts/css-audit.mjs`, test `cssAudit`) — poziom podniesiony przy wdrożeniu E22 dla `base-explorer.css` (`!important` 6→12, kolory na sztywno 142→169, progi `@media` 4→9, klasy też w innym pliku 19→21) i nowych modułów (style z JS: move-modal 3, search 2, marquee/sheet-guard/tree-row po 1; za to `actions.js` −42 i `render.js` 29→9). Zbić z powrotem: tokeny zamiast kolorów, wspólne progi `@media`, klasy/atrybut `hidden` zamiast `.style`.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).
