@@ -43,7 +43,7 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
   assert.doesNotMatch(page, /addEventListener\("popstate"/);
   assert.match(state, /history\.replaceState/);
   assert.doesNotMatch(state, /history\.pushState/);
-  assert.match(state, /searchParams\.set\("folder", state\.folderId\)/);
+  assert.match(state, /searchParams\.set\("folder", state\.location\.folderId\)/);
   assert.match(state, /searchParams\.delete\("folder"\)/);
 });
 

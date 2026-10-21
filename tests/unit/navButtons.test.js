@@ -118,7 +118,7 @@ test("kod strony nie podpina ręcznie przejść z mapy (bez dublowania initPage)
 
 test("w kodzie stron nie ma twardych przejść na adresy z mapy", () => {
   const files = [
-    "bases/explorer/js/actions.js", "account/js/account.js", "games/js/games.js",
+    "bases/explorer/js/commands.js", "account/js/account.js", "games/js/games.js",
     "bases/js/bases.js", "manual/js/manual.js", "games/settings/js/game-settings.js",
   ];
   for (const f of files) {

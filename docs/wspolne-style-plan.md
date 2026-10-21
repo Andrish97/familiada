@@ -95,6 +95,9 @@ Razem: ok. **13–20 dni roboczych** sesji.
   do kroku 2; przed usunięciem sprawdzić klasy składane dynamicznie w JS).
 - `--file=web/…` — liczby dla jednego pliku.
 - `--write-baseline` — po każdym kroku obniżającym liczby.
+- Do startu E23 (po E13) praca innych etapów na starym CSS może podnieść
+  liczby (np. E22 Eksplorator, 2026-10-21: baseline odświeżony po scaleniu).
+  Przy scalaniu takiej pracy: `--write-baseline` w tym samym commicie.
 - Test unit nie przepuszcza wzrostu żadnej liczby w żadnym pliku; **nowy
   plik ma poziom 0** — nowa strona musi od razu korzystać ze wspólnych stylów.
 - Pliku tokenów (`TOKEN_FILES`) i dozwolonych progów (`ALLOWED_WIDTHS`)

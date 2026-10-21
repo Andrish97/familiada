@@ -1,10 +1,10 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T13091";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T13091";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T13091";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T13091";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T13380";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T13380";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T13380";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T13380";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -99,7 +99,7 @@ function buildExportPayload({ name, type, questions }) {
   };
 }
 
-export function initExportModal({ state } = {}) {
+export function initExportModal() {
   const overlay = $("exportOverlay");
   if (!overlay) return null;
 
@@ -109,7 +109,6 @@ export function initExportModal({ state } = {}) {
   const xList = $("xList");
   const xTypeRange = $("xTypeRange");
   const xTypeHint = $("xTypeHint");
-  const xCountPill = $("xCountPill");
   const xCountVal = $("xCountVal");
   const xSummary = $("xSummary");
 
@@ -187,49 +186,58 @@ export function initExportModal({ state } = {}) {
     return t("baseExplorer.export.preparedSummary", { count: an, sum: s });
   }
 
+  // Lista porcjami: pierwsze pozycje od razu, reszta w kolejnych klatkach
+  // (baza ma czasem dziesiątki tysięcy pytań); nowe rysowanie (zmiana typu)
+  // przerywa poprzednie. Kliknięcia przez jedną obsługę na liście.
+  const FIRST_CHUNK = 300;
+  const NEXT_CHUNK = 1000;
+  let renderToken = 0;
+
+  function rowHtml(q, type) {
+    const issue = questionIssue(q, type);
+    const label = qText(q) || t("baseExplorer.common.dash");
+    // powód braku bez numeru pytania (numer zależy od zaznaczenia)
+    const why = issue ? t(`baseExplorer.export.issue.${issue.code}`, issue.params) : "";
+    return `<label class="xPickItem ${issue ? "bad" : "ok"}" data-qid="${escapeHtml(q.id)}"${why ? ` title="${escapeHtml(why)}"` : ""}>
+      <input type="checkbox" ${selectedIds.has(q.id) ? "checked" : ""}/>
+      <div class="xNm">${escapeHtml(label)}</div>
+      <div class="xMeta">${metaText(q, type)}${why ? ` • ${escapeHtml(why)}` : ""}</div>
+    </label>`;
+  }
+
   function renderList() {
     if (!xList) return;
-    xList.innerHTML = "";
-
+    const token = ++renderToken;
     const type = TYPES[typeIndex] || GAME_TYPES.PREPARED;
-
-    for (const q of allQuestions) {
-
-      const issue = questionIssue(q, type);
-      const label = qText(q) || t("baseExplorer.common.dash");
-      const checked = selectedIds.has(q.id);
-
-      const row = document.createElement("label");
-      row.className = "xPickItem " + (issue ? "bad" : "ok");
-      row.dataset.qid = q.id;
-
-      // powód braku bez numeru pytania (numer zależy od zaznaczenia)
-      const why = issue ? t(`baseExplorer.export.issue.${issue.code}`, issue.params) : "";
-      row.innerHTML = `
-        <input type="checkbox" ${checked ? "checked" : ""}/>
-        <div class="xNm">${escapeHtml(label)}</div>
-        <div class="xMeta">${metaText(q, type)}${why ? ` • ${escapeHtml(why)}` : ""}</div>
-      `;
-      if (why) row.title = why;
-
-      row.addEventListener("click", (e) => {
-        const cb = row.querySelector("input");
-        // read from selectedIds (source of truth), not from DOM checkbox state
-        // (label+checkbox cause double-toggle if we read cb.checked directly)
-        const will = !selectedIds.has(q.id);
-        if (will) selectedIds.add(q.id);
-        else selectedIds.delete(q.id);
-        if (cb) cb.checked = will;
-        // prevent label from sending a second synthetic click to the checkbox
-        if (e.target !== cb) e.preventDefault();
-        updateCountUI();
-      });
-
-      xList.appendChild(row);
-    }
-
+    const chunk = (from, to) => allQuestions.slice(from, to).map((q) => rowHtml(q, type)).join("");
+    xList.innerHTML = chunk(0, FIRST_CHUNK);
+    let next = FIRST_CHUNK;
+    const more = () => {
+      if (token !== renderToken || next >= allQuestions.length) return;
+      xList.insertAdjacentHTML("beforeend", chunk(next, next + NEXT_CHUNK));
+      next += NEXT_CHUNK;
+      requestAnimationFrame(more);
+    };
+    requestAnimationFrame(more);
     updateCountUI();
   }
+
+  xList?.addEventListener("click", (e) => {
+    const row = e.target.closest(".xPickItem[data-qid]");
+    if (!row || running) return;
+    const qid = row.dataset.qid;
+    const cb = row.querySelector("input");
+    // stan z selectedIds (źródło prawdy), nie z pola: label + checkbox
+    // dawałyby podwójne przełączenie
+    const will = !selectedIds.has(qid);
+    if (will) selectedIds.add(qid);
+    else selectedIds.delete(qid);
+    if (cb) cb.checked = will;
+    // label nie wysyła drugiego, syntetycznego kliknięcia do pola
+    if (e.target !== cb) e.preventDefault();
+    updateCountUI();
+  });
+
 
   function showProgress(on) {
     if (xProg) xProg.style.display = on ? "" : "none";
@@ -262,6 +270,7 @@ export function initExportModal({ state } = {}) {
   }
 
   function close(result = { ok: false }) {
+    renderToken += 1; // przerwij dorysowywanie listy
     show(overlay, false);
     exitModalSheet(overlay);
     setErr("");
@@ -281,14 +290,8 @@ export function initExportModal({ state } = {}) {
     setProgress({ step: t("baseExplorer.common.dash"), i: 0, n: 0, msg: "" });
     lockUi(false);
 
-    // Źródło danych:
-    // 1) opts.questions (jeśli podane) ma pierwszeństwo
-    // 2) fallback: state.questions
-    const src = Array.isArray(opts.questions) ? opts.questions
-              : Array.isArray(state?.questions) ? state.questions
-              : [];
-
-    allQuestions = src.slice();
+    // lista okna: pytania przekazane przez menedżera (cała baza)
+    allQuestions = Array.isArray(opts.questions) ? opts.questions.slice() : [];
 
     // Dokładnie to, co użytkownik zaznaczył (pytania/foldery rozwinięte do
     // pytań); bez zaznaczenia -- nic. Bez dobierania i bez progu 10.
@@ -307,7 +310,7 @@ export function initExportModal({ state } = {}) {
     }
 
     // Domyślna nazwa gry: nazwa folderu, gdy caller ją poda (tworzenie
-    // gry "z folderu" -- patrz actions.js's openExportModal), w
+    // gry "z folderu" -- patrz commands.js), w
     // pozostałych przypadkach zwykły domyślny placeholder.
     if (xName) xName.value = opts.defaultName || t("baseExplorer.export.defaultGameName");
 

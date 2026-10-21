@@ -1,961 +1,550 @@
 // base-explorerjs/render.js
-// Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
+// Rysowanie menedżera bazy z magazynu (state.store / state.d) i jednego
+// modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
+// zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-21T13091";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T13091";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T13091";
-
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T13380";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T13380";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T13380";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T13380";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T13380";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T13380";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T13380";
 
 /* ================= DOM ================= */
-const elBaseName = document.getElementById("baseName");
 const elToolbar = document.getElementById("toolbar");
 const elTree = document.getElementById("tree");
 const elTags = document.getElementById("tags");
-const elMatchedCategories = document.getElementById("matchedCategories");
+const elTypes = document.getElementById("matchedCategories");
 const elBreadcrumbs = document.getElementById("breadcrumbs");
 const elList = document.getElementById("list");
 
-/* ================= Utils ================= */
+/* ================= Pomocnicze ================= */
 function esc(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function isSelected(state, key) {
-  return state.selection?.keys?.has(key);
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 function toTime(v) {
-  // obsługa: ISO string / timestamp / null
-  const t = (v ? Date.parse(String(v)) : NaN);
-  return Number.isFinite(t) ? t : 0;
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const n = v ? Date.parse(String(v)) : NaN;
+  return Number.isFinite(n) ? n : 0;
 }
 
 function fmtDate(v) {
   const time = toTime(v);
   if (!time) return t("baseExplorer.common.dash");
   const d = new Date(time);
-  // prosto i czytelnie: YYYY-MM-DD HH:MM (lokalnie)
   const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const IS_MAC = navigator.platform.toLowerCase().includes("mac");
-
-function kbd(win, mac) {
-  return IS_MAC ? mac : win;
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Ile pełnych dni zostało do automatycznego usunięcia z kosza (0 = dziś).
+export function trashDaysLeft(expiresAt, now = Date.now()) {
+  const ms = Date.parse(expiresAt) - now;
+  return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / DAY_MS) : 0;
 }
 
-function setToolbarTip(act, label, win, mac) {
-  const btn = elToolbar?.querySelector?.(`button[data-act="${act}"]`);
-  if (!btn) return;
-
-  const combo = kbd(win, mac);
-  const txt = combo ? `${label} (${combo})` : label;
-
-  btn.setAttribute("data-tip", txt);
-  btn.removeAttribute("title"); // wyłącz natywny tooltip
+function daysLeftText(n) {
+  if (n <= 0) return t("baseExplorer.trash.today");
+  if (n === 1) return t("baseExplorer.trash.dayLeft");
+  return t("baseExplorer.trash.daysLeft", { n });
 }
 
-function pickDate(raw) {
-  // Fallback dla różnych schematów (foldery często mają inne pola)
-  return (
-    raw?.updated_at ??
-    raw?.modified_at ??
-    raw?.changed_at ??
-    raw?.created_at ??
-    raw?.inserted_at ??
-    raw?.created ??
-    raw?.updated ??
-    null
-  );
+const keyOf = (kind, id) => (kind === "cat" ? `c:${id}` : kind === "q" ? `q:${id}` : kind === "trash" ? `t:${id}` : id);
+
+function isSelected(state, pane, key) {
+  return state.selection.pane === pane && state.selection.keys.has(key);
 }
 
-function getFolderMetaRank(state, folderId) {
-  // sort "Typ" wg meta folderu: prepared -> poll_points -> poll_text -> brak
-  const order = Array.isArray(META_ORDER) ? META_ORDER : [];
-  const map = state._allCategoryMetaMap || null; // Map(cid -> Set(metaId))
-  if (!map) return 999;
+/* ================= Kropki: tagi i proponowana kategoria ================= */
 
-  const set = map.get(folderId);
-  if (!set || !set.size) return 999;
-
-  // bierzemy "najwyższy" priorytet wg META_ORDER
-  let best = 999;
-  for (const id of set) {
-    const idx = order.indexOf(id);
-    if (idx !== -1 && idx < best) best = idx;
-  }
-  return best;
-}
-
-function getItemTypeSortKey(item, state) {
-  // najpierw wg meta-ranku folderu, potem folder/pytanie
-  if (item.kind === "cat") {
-    const r = getFolderMetaRank(state, item.id);
-    // foldery bez meta na końcu wśród folderów
-    return `0:${String(r).padStart(3, "0")}:folder`;
-  }
-  return `1:999:question`;
-}
-
-function tagDotsHtml(state, id, kind /* "q" | "c" */) {
-  const tags = Array.isArray(state.tags) ? state.tags : [];
-  if (!tags.length) return "";
-
-  const byId = new Map(tags.map(t => [t.id, t]));
-
-  // mapy: pytania = view map, foldery = all map (drzewo/lista)
-  const map =
-    (kind === "q")
-      ? (state._viewQuestionTagMap || null)
-      : (state._allCategoryTagMap || null);
-
-  if (!map) return "";
-
-  const set = map.get(id);
-  if (!set || !set.size) return "";
-
-  // pokaż max 3 kropki + "+N"
-  const all = Array.from(set);
+function tagDotsHtml(state, tagIdSet) {
+  if (!tagIdSet?.size) return "";
+  const tags = (state.store?.tags || []).filter((tg) => tagIdSet.has(tg.id)); // w kolejności tagów
   const max = 3;
-  const shown = all.slice(0, max);
-  const rest = all.length - shown.length;
-
-  const dots = shown.map((tid) => {
-    const tag = byId.get(tid);
-    const color = tag?.color || "rgba(255,255,255,.25)";
-    const label = tag?.name || t("baseExplorer.defaults.tag");
-    return `<span class="tag-dot" style="background:${esc(color)}" data-tip="#${esc(label)}"></span>`;
-  }).join("");
-
-  const more = rest > 0 ? `<span class="tag-more">+${rest}</span>` : "";
-
-  return `<span class="tag-dots">${dots}${more}</span>`;
+  const dot = (tg) => `<span class="tag-dot" style="background:${esc(tg.color || "rgba(255,255,255,.25)")}" data-tooltip="#${esc(tg.name || t("baseExplorer.defaults.tag"))}"></span>`;
+  const rest = tags.slice(max);
+  const more = rest.length
+    ? `<span class="tag-more" data-tooltip="${esc(rest.map((tg) => `#${tg.name}`).join(" "))}">+${rest.length}</span>`
+    : "";
+  return `<span class="tag-dots">${tags.slice(0, max).map(dot).join("")}${more}</span>`;
 }
 
-function metaDotsHtml(state, id, kind /* "q" | "c" */) {
-  const defs = META || {};
-  const order = Array.isArray(META_ORDER) ? META_ORDER : Object.keys(defs);
-
-  const map =
-    (kind === "q")
-      ? (state._viewQuestionMetaMap || null)   // Map(qid -> metaId)
-      : (state._allCategoryMetaMap || null);   // Map(cid -> Set(metaId))
-
-  if (!map) return "";
-
-  let metaIds = [];
-
-  if (kind === "q") {
-    const v = map.get(id);
-    if (!v) return "";
-    // v może być Setem (zgodnie z ensureMetaMapsForUI)
-    if (v instanceof Set) metaIds = Array.from(v);
-    else metaIds = [v];
-  } else {
-    const set = map.get(id);
-    if (!set || !set.size) return "";
-    metaIds = Array.from(set);
-  }
-
-  // porządek wg META_ORDER
-  metaIds.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-
-  const dots = metaIds.map((mid) => {
-    const d = defs[mid];
-    const color = d?.color || "rgba(255,255,255,.25)";
-    const label = d?.nameKey ? t(d.nameKey) : (d?.name || mid);
-    return `<span class="meta-dot" style="--c:${esc(color)}" data-tip="${esc(label)}"></span>`;
-  }).join("");
-
-  return `<span class="tag-dots">${dots}</span>`;
+function typeDotHtml(type) {
+  const def = type ? TYPE_DEFS[type] : null;
+  if (!def) return "";
+  return `<span class="tag-dots"><span class="meta-dot" style="--c:${esc(def.color)}" data-tooltip="${esc(t(def.nameKey))}"></span></span>`;
 }
 
-/* ================= Render parts ================= */
+/* ================= Całość ================= */
+
 export function renderAll(state) {
-  renderHeader(state);
+  if (!state?.d) return;
   renderToolbar(state);
   renderTree(state);
-  renderTags(state);
+  renderLeft(state);
   renderBreadcrumbs(state);
   renderList(state);
 }
 
-export function renderHeader(state) {
-  if (!elBaseName) return;
-  elBaseName.textContent = state.baseMeta?.name || t("baseExplorer.defaults.baseName");
+// Zmiana samego zaznaczenia: tylko klasy wierszy i przyciski paska.
+export function renderSelection(state) {
+  for (const [el, pane] of [[elList, "list"], [elTree, "tree"]]) {
+    el?.querySelectorAll(".row[data-key]").forEach((row) => {
+      row.classList.toggle("is-selected", isSelected(state, pane, row.dataset.key));
+    });
+  }
+  renderToolbar(state);
 }
+
+/* ================= Pasek narzędzi ================= */
+
+// Widoki lewego panelu (decyzja użytkownika 2026-10-21): jeden naraz, na
+// pełną wysokość; state.leftView, przełączanie w ui/left-view.js.
+export const LEFT_VIEWS = [
+  { id: "tree", icon: "folder", labelKey: "baseExplorer.leftView.tree" },
+  { id: "tags", icon: "tag", labelKey: "baseExplorer.leftView.tags" },
+  { id: "types", icon: "categories", labelKey: "baseExplorer.leftView.types" },
+];
 
 export function renderToolbar(state) {
   if (!elToolbar) return;
 
-  // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
+  // szkielet raz — pole wyszukiwania nie traci fokusu przy odświeżeniach
   if (elToolbar.dataset.ready !== "1") {
     elToolbar.innerHTML = `
       <div class="search-row">
-      <div class="searchBox" id="searchBox">
-        <div id="searchChips" class="searchChips"></div>
-        <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
+        <div class="searchBox" id="searchBox">
+          ${icon("search", { className: "searchBoxIco" })}
+          <input id="searchText" class="searchText" type="search" autocomplete="off" />
+          <button id="searchSubmitBtn" class="searchClear" type="button" hidden>${icon("close")}</button>
+        </div>
+        ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn search-submit left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
       </div>
-      <button id="searchSubmitBtn" class="btn search-submit" type="button" title="${t("common.searchByName")}" aria-label="${t("common.searchByName")}">${icon("search")}</button>
-      </div>
-
       <div class="toolbar-btns-row">
-        <button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-label="Otwórz panel" aria-expanded="false" aria-controls="explorerLeft">
-          ${icon("hamburger", { className: "tbIco" })}
-        </button>
-
-        <div class="tbSep mobile-only" aria-hidden="true"></div>
-
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
-          <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
-            ${svgFolderPlus()}
-          </button>
-          <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
-            ${svgFilePlus()}
-          </button>
+        <div class="left-view-tabs mobile-only">
+          ${LEFT_VIEWS.map((v) => `<button${v.id === "tree" ? ' id="btnDrawerToggle"' : ""} class="tbBtn left-view-btn" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon, { className: "tbIco" })}<span class="badge"></span></button>`).join("")}
+          <button id="btnSearchSheet" class="tbBtn" type="button" aria-controls="searchOverlay">${icon("search", { className: "tbIco" })}</button>
         </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
-          <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
-            ${svgEdit()}
-          </button>
-          <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
-            ${svgTag()}
-          </button>
-          <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
-            ${svgPencil()}
-          </button>
-          <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
-            ${svgTrash()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
-          <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
-            ${svgCopy()}
-          </button>
-          <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
-            ${svgCut()}
-          </button>
-          <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
-            ${svgPaste()}
-          </button>
-          <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
-            ${svgDuplicate()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
-          <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
-            ${svgPlay()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
-          <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
-            ${svgRefresh()}
-          </button>
-        </div>
-      </div>
-    `;
+        ${toolbarButtonsHtml()}
+      </div>`;
     elToolbar.dataset.ready = "1";
   }
-    // Tooltips z automatycznym formatowaniem skrótów (Windows/Linux vs macOS)
-  setToolbarTip("newFolder",   t("baseExplorer.toolbar.newFolder"),   "Ctrl+Shift+N", "⌘⇧N");
-  setToolbarTip("newQuestion", t("baseExplorer.toolbar.newQuestion"), "Ctrl+N",       "⌘N");
-  setToolbarTip("editQuestion",t("baseExplorer.toolbar.editQuestion"),"Ctrl+E",       "⌘E");
-  setToolbarTip("editTags",    t("baseExplorer.toolbar.editTags"),    "Ctrl+T",       "⌘T");
-  setToolbarTip("rename",      t("baseExplorer.toolbar.rename"),      "F2",           "F2");
-  setToolbarTip("delete",      t("baseExplorer.toolbar.delete"),      "Delete",       "Fn⌫");
-  setToolbarTip("copy",        t("baseExplorer.toolbar.copy"),        "Ctrl+C",       "⌘C");
-  setToolbarTip("cut",         t("baseExplorer.toolbar.cut"),         "Ctrl+X",       "⌘X");
-  setToolbarTip("paste",       t("baseExplorer.toolbar.paste"),       "Ctrl+V",       "⌘V");
-  setToolbarTip("duplicate",   t("baseExplorer.toolbar.duplicate"),   "Ctrl+D",       "⌘D");
-  setToolbarTip("createGame",  t("baseExplorer.toolbar.createGame"),  "Ctrl+G",       "⌘G");
-  setToolbarTip("refreshView", t("baseExplorer.toolbar.refreshView"), "Ctrl+Alt+R",   "⌘⌥R");
 
   const inp = document.getElementById("searchText");
-  const chipsEl = document.getElementById("searchChips");
-
-  const tokens = state.searchTokens || { text: state.searchQuery || "", tagIds: [] };
-
-  // 1) Aktualizuj chipsy (kolor z qb_tags.color)
-  if (chipsEl) {
-    const byId = new Map((state.tags || []).map(t => [t.id, t]));
-  
-    // poprzednie ids (żeby animować tylko nowo dodane)
-    const prevIds = new Set(
-      String(chipsEl.dataset.ids || "")
-        .split(",")
-        .map(s => s.trim())
-        .filter(Boolean)
-    );
-  
-    const nextIds = (tokens.tagIds || []).map(String).filter(Boolean);
-    chipsEl.dataset.ids = nextIds.join(",");
-  
-    const chipHtml = nextIds
-      .map((id) => byId.get(id))
-      .filter(Boolean)
-      .map((t) => {
-        const color = t?.color || "rgba(255,255,255,.35)";
-        const label = t?.name || "";
-        const isNew = !prevIds.has(String(t.id));
-        return `
-          <span class="chip ${isNew ? "chip--enter" : ""}" data-tag-id="${esc(t.id)}" title="#${esc(label)}" style="--chip:${esc(color)}">
-            #${esc(label)}
-          </span>
-        `;
-      }).join("");
-  
-    chipsEl.innerHTML = chipHtml;
-  
-    // zdejmij klasę wejścia w następnej klatce -> płynna animacja
-    requestAnimationFrame(() => {
-      chipsEl.querySelectorAll(".chip--enter").forEach(el => el.classList.remove("chip--enter"));
-    });
-  }
-  // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
-  // UWAGA: input pokazuje tylko zwykły tekst (bez #tagów).
-  // #tagi są reprezentowane jako chipsy w #searchChips.
   if (inp) {
-    const active = (document.activeElement === inp);
-    const nextVal = String(tokens.text ?? "");
-    if (!active && inp.value !== nextVal) {
-      inp.value = nextVal;
-    }
+    inp.placeholder = t("baseExplorer.search.placeholder");
+    const text = String(state.query.text ?? "");
+    if (document.activeElement !== inp && inp.value !== text) inp.value = text;
   }
-  const searchButton = document.getElementById("searchSubmitBtn");
-  const hasSearch = !!String(tokens.text || "").trim() || !!tokens.tagIds?.length;
-  if (searchButton) {
-    searchButton.innerHTML = icon(hasSearch ? "close" : "search");
-    const label = t(hasSearch ? "baseExplorer.search.clear" : "common.searchByName");
-    searchButton.title = label;
-    searchButton.setAttribute("aria-label", label);
-    searchButton.classList.toggle("is-active", hasSearch);
+  // „X” w polu: czyści tekst i filtry; widoczny, gdy coś jest włączone
+  const active = hasQuery(state) && !isTrash(state);
+  const btn = document.getElementById("searchSubmitBtn");
+  if (btn) {
+    const label = t("baseExplorer.search.clear");
+    btn.hidden = !active;
+    btn.setAttribute("aria-label", label);
+    btn.setAttribute("data-tooltip", label);
   }
-
-  // 3) Disable przycisków toolbar – spójnie z actions/context-menu + reguły selekcji (0/1/wiele)
-  const editor = (state.role === "owner" || state.role === "editor");
-  
-  // Tylko realne elementy listy (foldery/pytania). Root/tag/meta nie liczą się do selekcji toolbara.
-  const realKeys = Array.from(state.selection?.keys || []).filter((k) => {
-    if (!k) return false;
-    const s = String(k);
-    return s.startsWith("c:") || s.startsWith("q:");
-  });
-  
-  const selCount = realKeys.length;
-  const hasSel = selCount > 0;
-  const oneSel = selCount === 1;
-  const manySel = selCount > 1;
-  
-  const hasClipboard = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  
-  // Twoje "poprzednie narzucone reguły" (role + widoki) zostają:
-  const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  const canDelete = editor && (state.view !== VIEW.META);
-  const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  const canCopy = editor;
-  const canEditTags = editor;
-  const canRename = canMutate;
-
-  const oneSelKey = oneSel ? realKeys[0] : null;
-  const oneSelIsQuestion = oneSelKey?.startsWith("q:");
-  const hasQuestionInSel = realKeys.some(k => k.startsWith("q:"));
-  const hasFolderInSel   = realKeys.some(k => k.startsWith("c:"));
-
-  const dis = new Map();
-
-  dis.set("newFolder",   !canMutate);
-  dis.set("newQuestion", !canMutate);
-  dis.set("paste",       !(canMutate && hasClipboard));
-  dis.set("refreshView", false);
-
-  if (!hasSel) {
-    dis.set("editQuestion", true);
-    dis.set("editTags",     true);
-    dis.set("rename",       true);
-    dis.set("delete",       true);
-    dis.set("copy",         true);
-    dis.set("cut",          true);
-    dis.set("duplicate",    true);
-    dis.set("createGame",   true);
+  // telefon: sam przycisk „Szukaj” (okno z polem); złoty, gdy jest tekst
+  const sheetBtn = document.getElementById("btnSearchSheet");
+  if (sheetBtn) {
+    const label = t("baseExplorer.search.sheetTitle");
+    sheetBtn.setAttribute("aria-label", label);
+    sheetBtn.setAttribute("data-tooltip", label);
+    sheetBtn.classList.toggle("is-active", !!String(state.query.text || "").trim());
   }
 
-  if (oneSel) {
-    dis.set("editQuestion", !(editor && oneSelIsQuestion));
-    dis.set("editTags",     !canEditTags);
-    dis.set("rename",       !canRename);
-    dis.set("delete",       !canDelete);
-    dis.set("copy",         !canCopy);
-    dis.set("cut",          !canCut);
-    dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
+  // Widoki lewego panelu (radio): komputer — Tagi / Kategorie obok wyszukiwarki
+  // (oba zgaszone = drzewo); telefon — drzewo / tagi / kategorie otwierają
+  // panel z tym widokiem. Plakietka: liczba włączonych filtrów danego rodzaju.
+  const drawerOpen = document.getElementById("explorerLeft")?.classList.contains("is-open");
+  for (const b of elToolbar.querySelectorAll("[data-left-view]")) {
+    const v = LEFT_VIEWS.find((x) => x.id === b.dataset.leftView);
+    const mobile = !!b.closest(".left-view-tabs");
+    const on = state.leftView === v.id && (mobile ? !!drawerOpen : v.id !== "tree");
+    const n = v.id === "tags" ? (state.query.tagIds?.length || 0) : v.id === "types" ? (state.query.types?.length || 0) : 0;
+    const label = t(v.labelKey);
+    b.setAttribute("aria-label", label);
+    b.setAttribute("data-tooltip", label);
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("is-active", on);
+    b.classList.toggle("has-filter", n > 0);
+    const badge = b.querySelector(".badge");
+    if (badge) badge.textContent = n ? String(n) : "";
   }
 
-  if (manySel) {
-    dis.set("editQuestion", true);
-    dis.set("editTags",     !canEditTags);
-    dis.set("rename",       true);
-    dis.set("delete",       !canDelete);
-    dis.set("copy",         !canCopy);
-    dis.set("cut",          !canCut);
-    dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
-  }
-  
-  // zastosuj do DOM
-  elToolbar.querySelectorAll('button[data-act]').forEach((b) => {
-    const act = b.dataset.act;
-    if (!act) return;
-    if (dis.has(act)) b.disabled = !!dis.get(act);
-  });
+  updateToolbarButtons(elToolbar, state);
 }
+
+/* ================= Drzewo (z Koszem jako zwykłym folderem) ================= */
 
 export function renderTree(state) {
   if (!elTree) return;
+  const d = state.d;
+  const open = state.treeOpen;
+  const here = currentFolderId(state);
 
-  const cats = Array.isArray(state.categories) ? state.categories : [];
-  const byParent = new Map();
-
-  for (const c of cats) {
-    const pid = c.parent_id || null;
-    if (!byParent.has(pid)) byParent.set(pid, []);
-    byParent.get(pid).push(c);
-  }
-  for (const arr of byParent.values()) {
-    arr.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
-  }
-
-  const open = state.treeOpen instanceof Set ? state.treeOpen : new Set();
-  const maxDepth = 8;
-  const ROOT_ID = "root";
-  const rootHasChildren = (byParent.get(null) || []).length > 0;
-  const rootOpen = rootHasChildren ? open.has(ROOT_ID) : true; // jak są dzieci, to root steruje
-
-  function hasChildren(id) {
-    const kids = byParent.get(id) || [];
-    return kids.length > 0;
-  }
-
-  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon: rowIcon = svgFolder() }) {
-    // wcięcia: bardziej "Explorer", mniej pustego powietrza
-    const BASE_PAD = 6;      // minimalny margines z lewej
-    const INDENT = 10;       // skok na poziom
-    const pad = BASE_PAD + depth * INDENT;
-    const selKey =
-      (kind === "cat" && id) ? `c:${id}` :
-      (kind === "root") ? "root" :
-      null;
-
-    const selClass = (selKey && isSelected(state, selKey)) ? " is-selected" : "";
-
-    const toggle = canToggle
-      ? `<button type="button" class="tree-toggle" data-id="${esc(id)}"
-            aria-label="${t("baseExplorer.tree.toggle")}"
-            style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;cursor:pointer;opacity:.9;">
-           ${icon(isOpen ? "caret-down" : "caret-right")}
-         </button>`
-      : `<span style="display:inline-block;width:18px;"></span>`;
-
-    const activeStyle = isActive ? "font-weight:700;" : "";
-    const draggable =
-      (kind === "cat" && (state.role === "owner" || state.role === "editor"))
-        ? `draggable="true"`
-        : ``;
-    
+  // wspólny wygląd z oknem „Przenieś do” (ui/tree-row.js); aktywny folder złoty
+  function row({ kind, id, depth, label, canToggle, isOpen, active, dots = "", count = null, lines = [] }) {
+    const key = kind === "cat" ? `c:${id}` : id; // "root" / "trash"
+    const draggable = kind === "cat" && state.canEdit ? ` draggable="true"` : "";
+    const inner = treeRowInner({
+      lines,
+      toggle: treeToggleHtml(id, { canToggle, isOpen }),
+      iconName: treeIconName(kind, isOpen),
+      label,
+      extra: dots ? `<span class="tree-dots">${dots}</span>` : "",
+      count,
+    });
     return `
-        <div class="row tree-row${selClass}" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
-        <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
-          ${toggle}
-          <div class="title-line">
-            <span class="title-text">${rowIcon} ${esc(label || t("baseExplorer.defaults.folder"))}</span>
-            ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
-            ${kind === "cat" && id ? metaDotsHtml(state, id, "c") : ""}
-          </div>
-        </div>
-      </div>
-    `;
+      <div class="row tree-row${kind === "root" ? " is-root" : ""}${isSelected(state, "tree", key) ? " is-selected" : ""}${active ? " is-current" : ""}"${draggable}
+           data-kind="${kind}" data-id="${esc(id)}" data-key="${esc(key)}" style="--depth:${depth}"${canToggle ? ` aria-expanded="${isOpen}"` : ""}>${inner}</div>`;
   }
 
-  function renderSubtree(parentIdOrNull, depth) {
-    if (depth >= maxDepth) return "";
-    const kids = byParent.get(parentIdOrNull) || [];
-    if (!kids.length) return "";
-
+  // cont: czy przodkowie mają dalsze rodzeństwo (linie │ na ich poziomach)
+  function subtree(parentId, depth, seen, cont) {
     let out = "";
-    for (const c of kids) {
-      const id = c.id;
-      const canToggle = hasChildren(id);
-      const isOpen = canToggle ? open.has(id) : false;
-      const isActive = (state.view === VIEW.FOLDER && state.folderId === id);
-
-      out += rowHtml({
-        kind: "cat",
-        id,
-        depth,
-        label: c.name || t("baseExplorer.defaults.folder"),
-        isOpen,
-        canToggle,
-        isActive,
+    const kids = d.childFolders(parentId).filter((f) => !seen.has(f.id)); // uszkodzone dane: cykl
+    kids.forEach((f, i) => {
+      seen.add(f.id);
+      const isLast = i === kids.length - 1;
+      const canToggle = d.childFolders(f.id).length > 0;
+      const isOpen = canToggle && open.has(f.id);
+      out += row({
+        kind: "cat", id: f.id, depth,
+        label: f.name || t("baseExplorer.defaults.folder"),
+        canToggle, isOpen,
+        active: here === f.id && !isTrash(state),
+        dots: tagDotsHtml(state, d.folderTags(f.id)) + typeDotHtml(d.folderType(f.id)),
+        count: d.subtreeQuestionIds(f.id).length,
+        lines: treeLines(cont, isLast),
       });
-
-      if (canToggle && isOpen) {
-        out += renderSubtree(id, depth + 1);
-      }
-    }
+      if (isOpen) out += subtree(f.id, depth + 1, seen, [...cont, !isLast]);
+    });
     return out;
   }
 
-  // Root jako osobny wiersz
-  const rootActive = (state.view === VIEW.ALL);
-
-  const rootHtml = rowHtml({
-    kind: "root",
-    id: ROOT_ID,
-    depth: 0,
+  const rootHasChildren = d.childFolders(null).length > 0;
+  const rootOpen = !rootHasChildren || open.has("root");
+  const rootRow = row({
+    kind: "root", id: "root", depth: 0,
     label: t("baseExplorer.tree.root"),
-    icon: svgHome(),
-    canToggle: rootHasChildren,
-    isOpen: rootHasChildren ? rootOpen : true,
-    isActive: rootActive,
+    canToggle: rootHasChildren, isOpen: rootOpen,
+    active: state.location.kind === "root",
+    count: d.questionById.size,
   });
-
-  const treeRows = rootOpen ? renderSubtree(null, 0) : "";
+  const folders = rootOpen ? subtree(null, 1, new Set(), []) : "";
+  // Kosz: zwykły wiersz folderu pod wszystkimi folderami, bez licznika
+  // (decyzja 2026-10-20); widzą go właściciel i edytorzy.
+  const trashRow = state.canEdit
+    ? row({
+      kind: "trash", id: "trash", depth: 0,
+      label: t("baseExplorer.trash.title"),
+      canToggle: false, isOpen: false,
+      active: isTrash(state),
+    })
+    : "";
 
   elTree.innerHTML = `
-    <div style="opacity:.75; margin-bottom:6px;">${t("baseExplorer.tree.folders")}</div>
+    <div class="left-panel-heading">${esc(t("baseExplorer.tree.folders"))}</div>
     <div class="treeList">
-      ${rootHtml}
-      ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">${t("baseExplorer.tree.empty")}</div>`)}
-    </div>
-  `;
+      ${rootRow}
+      ${rootHasChildren ? folders : `<div class="left-panel-empty">${esc(t("baseExplorer.tree.empty"))}</div>`}
+      ${trashRow}
+    </div>`;
 }
 
-export function renderTags(state) {
-  if (!elTags || !elMatchedCategories) return;
+/* ================= Lewy panel: proponowane kategorie i tagi ================= */
 
-  const tags = Array.isArray(state.tags) ? state.tags : [];
+export function renderLeft(state) {
+  if (!elTags || !elTypes) return;
+  const left = document.getElementById("explorerLeft");
+  if (left) left.dataset.view = state.leftView || "tree";
+  const q = state.query;
 
-  const metaDefs = META || {};
-  const metaOrder = Array.isArray(META_ORDER) ? META_ORDER : Object.keys(metaDefs);
-
-  const metaRows = metaOrder.map((id) => {
-    const d = metaDefs[id] || { nameKey: id, name: id, color: "rgba(255,255,255,.25)" };
-    const isSel = !!state?.metaSelection?.ids?.has?.(id);
-    const selClass = isSel ? " is-selected" : "";
-    const dot = `<span class="meta-dot" style="--c:${esc(d.color)}"></span>`;
-    const label = d?.nameKey ? t(d.nameKey) : (d?.name || id);
+  const typeRows = SUGGESTED_TYPES.map((id) => {
+    const def = TYPE_DEFS[id];
+    const sel = q.types.includes(id);
     return `
-      <div class="row${selClass}" data-kind="meta" data-id="${esc(id)}"
-           style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px; opacity:.85;">
-        ${dot}
-        <div class="title-text">${esc(label)}</div>
+      <div class="row${sel ? " is-selected" : ""}" data-kind="meta" data-id="${esc(id)}" data-key="meta:${esc(id)}">
+        <span class="meta-dot" style="--c:${esc(def.color)}"></span>
+        <div class="title-text">${esc(t(def.nameKey))}</div>
       </div>`;
   }).join("");
-
-  const header = `<div class="left-panel-heading">${t("baseExplorer.tags.header")}</div>`;
-  const metaHeader = `<div class="left-panel-heading">${t("baseExplorer.tags.metaHeader")}</div>`;
-  const addBtn = `
-    <button id="btnAddTag" class="btn" type="button" style="width:100%; margin-top:10px;">
-      ${icon("plus")} ${t("baseExplorer.tags.addTag")}
-    </button>
-  `;
-
-  elMatchedCategories.innerHTML = `
+  elTypes.innerHTML = `
     <div class="tagList">
-      ${metaHeader}
-      ${metaRows || `<div class="left-panel-empty">${t("baseExplorer.tags.empty")}</div>`}
-    </div>
-  `;
+      <div class="left-panel-heading">${esc(t("baseExplorer.tags.metaHeader"))}</div>
+      ${typeRows}
+    </div>`;
 
-  const rows = tags
-    .slice()
-    .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
-    .map((tag) => {
-      const isSel = !!state?.tagSelection?.ids?.has?.(tag.id);
-      const selClass = isSel ? " is-selected" : "";
-      const dot = tag.color ? `<span class="tag-dot" style="background:${esc(tag.color)}"></span>` : `<span class="tag-dot"></span>`;
-
-      return `
-        <div class="row${selClass}" data-kind="tag" data-id="${esc(tag.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
-          ${dot}
-          <div class="title-text">#${esc(tag.name || t("baseExplorer.defaults.tag"))}</div>
-        </div>`;
-    })
-    .join("");
-
-elTags.innerHTML = `
-  <div class="tagList">
-    ${header}
-    ${addBtn}
-    ${tags.length ? rows : `<div class="left-panel-empty">${t("baseExplorer.tags.empty")}</div>`}
-  </div>
-`;
+  const tags = state.store?.tags || [];
+  const tagRows = tags.map((tg) => {
+    const sel = q.tagIds.includes(tg.id);
+    return `
+      <div class="row${sel ? " is-selected" : ""}" data-kind="tag" data-id="${esc(tg.id)}" data-key="tag:${esc(tg.id)}">
+        <span class="tag-dot" style="background:${esc(tg.color || "rgba(255,255,255,.25)")}"></span>
+        <div class="title-text">#${esc(tg.name || t("baseExplorer.defaults.tag"))}</div>
+      </div>`;
+  }).join("");
+  const addBtn = state.canEdit
+    ? `<button id="btnAddTag" class="btn" type="button">${icon("plus")} ${esc(t("baseExplorer.tags.addTag"))}</button>`
+    : "";
+  elTags.innerHTML = `
+    <div class="tagList">
+      <div class="left-panel-heading">${esc(t("baseExplorer.tags.header"))}</div>
+      ${addBtn}
+      ${tags.length ? tagRows : `<div class="left-panel-empty">${esc(t("baseExplorer.tags.empty"))}</div>`}
+    </div>`;
 }
+
+/* ================= Ścieżka ================= */
 
 export function renderBreadcrumbs(state) {
-  
   if (!elBreadcrumbs) return;
-  
-  if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
-    elBreadcrumbs.hidden = true;
-    elBreadcrumbs.innerHTML = "";
-    return;
+  const d = state.d;
+  const parts = [{ kind: "root", id: "", name: t("baseExplorer.tree.root") }];
+  if (isTrash(state)) {
+    parts.push({ kind: "trash", id: "trash", name: t("baseExplorer.trash.title") });
+  } else if (state.location.kind === "folder") {
+    const chain = [state.location.folderId, ...d.ancestorIds(state.location.folderId)].reverse();
+    for (const id of chain) parts.push({ kind: "crumb", id, name: d.folderById.get(id)?.name || t("baseExplorer.defaults.folder") });
   }
-  elBreadcrumbs.hidden = false;
-  
-  if (!elBreadcrumbs) return;
-
-  const byId = new Map((state.categories || []).map(c => [c.id, c]));
-  const parts = [];
-
-  // Root zawsze istnieje
-  parts.push({ id: null, name: t("baseExplorer.tree.root") });
-
-  if (state.view === VIEW.FOLDER && state.folderId) {
-    // zbuduj ścieżkę od folderId do root
-    let cur = byId.get(state.folderId);
-    const chain = [];
-    let guard = 0;
-
-    while (cur && guard++ < 20) {
-      chain.push({ id: cur.id, name: cur.name || t("baseExplorer.defaults.folder") });
-      const pid = cur.parent_id || null;
-      cur = pid ? byId.get(pid) : null;
-    }
-
-    chain.reverse();
-    for (const x of chain) parts.push(x);
-  }
-
-  // render jako klikalne segmenty (na razie tylko root + foldery)
-  elBreadcrumbs.innerHTML = parts.map((p, i) => {
-    const sep = i ? `<span style="opacity:.5; padding:0 6px;">/</span>` : ``;
-    const idAttr = (p.id === null) ? "" : `data-id="${esc(p.id)}"`;
-    const kind = (p.id === null) ? `data-kind="root"` : `data-kind="crumb"`;
-    return `${sep}<span class="crumb" ${kind} ${idAttr} style="cursor:pointer;">${esc(p.name)}</span>`;
+  const crumbs = parts.map((p, i) => {
+    const sep = i ? `<span class="crumb-sep">/</span>` : "";
+    return `${sep}<span class="crumb" data-kind="${p.kind}"${p.id ? ` data-id="${esc(p.id)}"` : ""}>${esc(p.name)}</span>`;
   }).join("");
+  const results = hasQuery(state) && !isTrash(state)
+    ? `<span class="crumb-results">${esc(t("baseExplorer.search.results"))}</span>`
+    : "";
+  elBreadcrumbs.innerHTML = crumbs + results;
 }
 
-const COLS_KEY = "base-explorer:cols:v3";
+/* ================= Lista: kolumny i sortowanie ================= */
 
-// Default column widths (px). "name" fills remaining space (no default px).
-const COL_DEFAULTS = { type: 160, date: 180, meta: 120 };
-const COL_MINS    = { name: 160, type: 80,  date: 120, meta: 80  };
+// Jedna definicja kolumn: nagłówek, szerokość (px, telefon osobno), minimum,
+// domyślny kierunek sortowania. Nazwa nie ma szerokości — wypełnia resztę.
+export const LIST_COLUMNS = [
+  { key: "num",  cls: "h-num",  labelKey: "baseExplorer.list.colNumber", width: 44, narrow: 40 },
+  { key: "name", cls: "h-main", labelKey: "baseExplorer.list.colName", min: 160, narrowMin: 150, sort: "asc" },
+  { key: "type", cls: "h-type", labelKey: "baseExplorer.list.colType", width: 160, narrow: 110, min: 80, sort: "asc" },
+  { key: "date", cls: "h-date", labelKey: "baseExplorer.list.colDate", width: 180, narrow: 140, min: 110, sort: "desc" },
+  { key: "info", cls: "h-meta", labelKey: "baseExplorer.list.colInfo", width: 120, narrow: 100, min: 80, sort: "desc" },
+];
+
+export const isNarrow = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 900px)").matches;
+const colsKey = () => (isNarrow() ? "base-explorer:cols:narrow:v4" : "base-explorer:cols:v4");
 
 function loadCols() {
   try {
-    const o = JSON.parse(localStorage.getItem(COLS_KEY) || "{}");
-    return (o && typeof o === "object") ? o : {};
-  } catch {
-    return {};
-  }
+    const o = JSON.parse(localStorage.getItem(colsKey()) || "{}");
+    return o && typeof o === "object" ? o : {};
+  } catch { return {}; }
 }
 
 function saveCols(cols) {
-  try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
+  try { localStorage.setItem(colsKey(), JSON.stringify(cols || {})); } catch {}
 }
 
-// Columns always stay within the container – no horizontal overflow possible.
-// Resizing one column never shifts others (all have explicit px widths).
-// Double-click: name → refills remaining space; others → reset to default.
+function colWidth(col, saved) {
+  const def = isNarrow() ? (col.narrow ?? col.width) : col.width;
+  if (!col.min) return def;
+  const w = parseInt(saved[col.key], 10);
+  return Math.max(col.min, Number.isFinite(w) ? w : def);
+}
 
-function initColumnResizers() {
-  const table = elList?.querySelector?.(".list-table");
-  const head  = table?.querySelector?.(".list-head");
-  if (!table || !head) return;
-  if (head.dataset.resizers === "1") return;
-  head.dataset.resizers = "1";
+const TYPE_RANK = { prepared: 0, poll_points: 1, poll_text: 2 };
 
-  const colEls = table.querySelectorAll("colgroup col");
-  // col indices: 0=num  1=name  2=type  3=date  4=meta
-  // Widths already set in the colgroup HTML by renderList (always fit the container).
+// Wiersze listy z modelu (data/listing.js).
+function listItems(state, listing) {
+  const d = state.d;
+  if (listing.mode === "trash") {
+    return listing.entries.map((e) => ({
+      kind: "trash", id: e.id, isFolder: e.kind === "folder",
+      name: e.label || t("baseExplorer.common.dash"),
+      typeRank: e.kind === "folder" ? 0 : 1,
+      date: toTime(e.deleted_at),
+      info: trashDaysLeft(e.expires_at),
+      raw: e,
+    }));
+  }
+  const folders = listing.folders.map((f) => ({
+    kind: "cat", id: f.id, isFolder: true,
+    name: f.name || t("baseExplorer.defaults.folder"),
+    type: d.folderType(f.id),
+    typeRank: TYPE_RANK[d.folderType(f.id)] ?? 3,
+    date: toTime(f.updated_at || f.created_at),
+    info: listing.mode === "results" ? (listing.matchCount.get(f.id) || 0) : d.childCount(f.id),
+    ord: Number(f.ord) || 0,
+    raw: f,
+  }));
+  const questions = listing.questions.map((q) => ({
+    kind: "q", id: q.id, isFolder: false,
+    name: String(q.payload?.text || t("baseExplorer.defaults.question")),
+    type: d.typeOfQuestion(q.id),
+    typeRank: TYPE_RANK[d.typeOfQuestion(q.id)] ?? 3,
+    date: toTime(q.updated_at || q.created_at),
+    info: Array.isArray(q.payload?.answers) ? q.payload.answers.length : 0,
+    ord: Number(q.ord) || 0,
+    raw: q,
+  }));
+  return folders.concat(questions);
+}
 
-  // Helper: max px a column can be given current widths of all others
-  function maxW(colIdx) {
-    const cw = elList.getBoundingClientRect().width || 800;
-    const others = Array.from(colEls).reduce((s, c, i) => {
-      if (i === colIdx) return s;
-      const w = parseInt(c.style.width, 10);
-      return s + (Number.isFinite(w) ? w : 0);
-    }, 0);
-    return Math.max(COL_MINS[Object.keys(COL_MINS)[colIdx - 1]] || 80, cw - others - 2);
+// Foldery zawsze przed pytaniami (decyzja 2026-10-20); w grupie wg kolumny,
+// remis: nazwa rosnąco → kolejność → id.
+function sortItems(items, sort) {
+  const mul = sort.dir === "desc" ? -1 : 1;
+  const byName = (a, b) => a.name.localeCompare(b.name, "pl", { sensitivity: "base", numeric: true });
+  const field = { name: null, type: "typeRank", date: "date", info: "info" }[sort.key];
+  return items.slice().sort((a, b) => {
+    if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
+    const r = field ? (a[field] - b[field]) * mul : byName(a, b) * mul;
+    return r || byName(a, b) || (a.ord || 0) - (b.ord || 0) || String(a.id).localeCompare(String(b.id));
+  });
+}
+
+function emptyText(state, listing) {
+  if (listing.mode === "trash") return t("baseExplorer.trash.empty");
+  if (listing.mode === "results") return t("baseExplorer.list.noResults");
+  return t("baseExplorer.list.empty");
+}
+
+// Kolumny listy. W koszu bez Typu (ikona mówi, czy to folder, czy pytanie),
+// a „Usunie się” zaraz za nazwą — na telefonie widać ją bez przewijania.
+const TRASH_ORDER = ["num", "name", "info", "date"];
+function columnsFor(listing) {
+  if (listing.mode !== "trash") return LIST_COLUMNS;
+  return TRASH_ORDER.map((key) => LIST_COLUMNS.find((c) => c.key === key));
+}
+
+export function currentListing(state) {
+  return computeListing(state.store, state.d, { location: state.location, query: isTrash(state) ? {} : state.query });
+}
+
+// Przy zmianie miejsca lista wraca na górę (przewinięcie zostaje tylko
+// w obrębie tego samego folderu / zapytania).
+let shownPlace = "";
+
+export function renderList(state) {
+  if (!elList) return;
+  const place = `${state.location.kind}:${state.location.folderId || ""}`;
+  if (place !== shownPlace) {
+    shownPlace = place;
+    elList.scrollTop = 0;
+  }
+  const listing = currentListing(state);
+  const items = sortItems(listItems(state, listing), state.sort);
+  state.visibleListKeys = items.map((it) => keyOf(it.kind, it.id));
+
+  if (!items.length) {
+    elList.innerHTML = `<div class="list-empty">${esc(emptyText(state, listing))}</div>`;
+    return;
   }
 
-  // th indices: 0=num  1=name  2=type  3=date  4=meta
-  const resizable = [
-    { thIdx: 1, colIdx: 1, key: "name", min: COL_MINS.name },
-    { thIdx: 2, colIdx: 2, key: "type", min: COL_MINS.type },
-    { thIdx: 3, colIdx: 3, key: "date", min: COL_MINS.date },
-    { thIdx: 4, colIdx: 4, key: "meta", min: COL_MINS.meta },
-  ];
+  const columns = columnsFor(listing);
+  const saved = loadCols();
+  const narrow = isNarrow();
+  const cols = columns.map((c) => (c.key === "name" ? `<col>` : `<col style="width:${colWidth(c, saved)}px">`)).join("");
+  const minW = columns.reduce((s, c) => s + (c.key === "name" ? (narrow ? c.narrowMin : c.min) : colWidth(c, saved)), 0);
 
-  for (const r of resizable) {
-    const th  = head.children[r.thIdx];
-    const col = colEls[r.colIdx];
-    if (!th || !col) continue;
+  const head = columns.map((c) => {
+    // w koszu kolumna Info mówi, kiedy wpis zniknie na zawsze
+    const label = esc(t(c.key === "info" && listing.mode === "trash" ? "baseExplorer.list.colPurge" : c.labelKey));
+    if (!c.sort) return `<th class="${c.cls}">${label}</th>`;
+    const active = state.sort.key === c.key;
+    const caret = active ? icon(state.sort.dir === "asc" ? "caret-up" : "caret-down", { className: "sort-caret" }) : "";
+    return `<th class="${c.cls}${active ? " active" : ""}" data-sort-key="${c.key}">${label}${caret}</th>`;
+  }).join("");
 
+  const draggable = state.canEdit && !isTrash(state) ? ` draggable="true"` : "";
+  const rows = items.map((it, i) => {
+    const key = keyOf(it.kind, it.id);
+    const sel = isSelected(state, "list", key) ? " is-selected" : "";
+    const cut = state.clipboard.mode === "cut" && state.clipboard.keys.has(key) ? " is-cut" : "";
+    let title, type, info;
+    let dots = "";
+    if (it.kind === "trash") {
+      title = `${icon(it.isFolder ? "folder" : "file-doc", { className: "list-ico" })} ${esc(it.name)}`;
+      type = esc(t(it.isFolder ? "baseExplorer.list.folderType" : "baseExplorer.list.questionType"));
+      info = `<span class="tag ${it.info <= 3 ? "tag--warn" : "tag--muted"}">${esc(daysLeftText(it.info))}</span>`;
+    } else if (it.kind === "cat") {
+      title = `${icon("folder", { className: "list-ico" })} ${esc(it.name)}`;
+      dots = tagDotsHtml(state, state.d.folderTags(it.id));
+      type = `<span class="type-label">${esc(t("baseExplorer.list.folderType"))}</span>${typeDotHtml(it.type)}`;
+      info = esc(t("baseExplorer.list.folderCount", { count: it.info }));
+    } else {
+      title = esc(it.name);
+      dots = tagDotsHtml(state, state.d.tagsOfQuestion(it.id));
+      type = `<span class="type-label">${esc(t("baseExplorer.list.questionType"))}</span>${typeDotHtml(it.type)}`;
+      info = esc(t("baseExplorer.list.answerCount", { count: it.info }));
+    }
+    const cell = {
+      num: `<td class="col-num">${i + 1}</td>`,
+      name: `<td class="col-main"><div class="title-line"><span class="title-text">${title}</span>${dots}</div></td>`,
+      type: `<td class="col-type">${type}</td>`,
+      date: `<td class="col-date">${esc(fmtDate(it.date))}</td>`,
+      info: `<td class="col-meta">${info}</td>`,
+    };
+    return `
+      <tr class="row${sel}${cut}"${it.kind === "trash" ? "" : draggable} data-kind="${it.kind}" data-id="${esc(it.id)}" data-key="${esc(key)}">
+        ${columns.map((c) => cell[c.key]).join("")}
+      </tr>`;
+  }).join("");
+
+  elList.innerHTML = `
+    <table class="list-table" style="min-width:${minW}px">
+      <colgroup>${cols}</colgroup>
+      <thead><tr class="list-head">${head}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  initColumnResizers(columns);
+}
+
+// Uchwyty zmiany szerokości (bez kolumny Nazwa, która wypełnia resztę);
+// dwuklik przywraca domyślną szerokość.
+function initColumnResizers(columns) {
+  const table = elList?.querySelector(".list-table");
+  const head = table?.querySelector(".list-head");
+  if (!table || !head) return;
+  const colEls = table.querySelectorAll("colgroup col");
+
+  columns.forEach((c, i) => {
+    if (!c.min || c.key === "name") return;
+    const th = head.children[i];
+    const col = colEls[i];
+    if (!th || !col) return;
     const handle = document.createElement("div");
     handle.className = "col-resizer";
-    handle.title = t("baseExplorer.list.resizeColumn");
+    handle.setAttribute("data-tooltip", t("baseExplorer.list.resizeColumn"));
     th.appendChild(handle);
 
     handle.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       handle.setPointerCapture(ev.pointerId);
-
       const startX = ev.clientX;
       const startW = th.getBoundingClientRect().width;
-
       const onMove = (e) => {
-        const desired = Math.round(startW + (e.clientX - startX));
-        const newW = Math.min(maxW(r.colIdx), Math.max(r.min, desired));
-        col.style.width = newW + "px";
+        col.style.width = `${Math.max(c.min, Math.round(startW + e.clientX - startX))}px`;
       };
-
       const onUp = () => {
         handle.releasePointerCapture(ev.pointerId);
         window.removeEventListener("pointermove", onMove, true);
-        window.removeEventListener("pointerup",   onUp,   true);
-        const next = loadCols();
-        next[r.key] = col.style.width;
-        saveCols(next);
+        window.removeEventListener("pointerup", onUp, true);
+        saveCols({ ...loadCols(), [c.key]: col.style.width });
       };
-
       window.addEventListener("pointermove", onMove, true);
-      window.addEventListener("pointerup",   onUp,   true);
+      window.addEventListener("pointerup", onUp, true);
     });
-
-    // Double-click: name → refill remaining space; others → reset to default
     handle.addEventListener("dblclick", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       const next = loadCols();
-      if (r.key === "name") {
-        col.style.width = maxW(1) + "px";
-        delete next.name;
-      } else {
-        col.style.width = Math.min(maxW(r.colIdx), COL_DEFAULTS[r.key]) + "px";
-        delete next[r.key];
-      }
+      delete next[c.key];
       saveCols(next);
+      col.style.width = `${colWidth(c, next)}px`;
     });
-  }
-}
-
-export function renderList(state) {
-  // Wiele miejsc w actions.js po zmianie selekcji (klik w puste tło, Escape,
-  // koniec marquee...) odświeża tylko listę, nie cały renderAll() -- bez tego
-  // toolbar (disabled przycisków rename/delete/copy/...) zostawał ze stanem
-  // sprzed odznaczenia. renderToolbar() jest idempotentny/tani (patrz jego
-  // ciało: buduje DOM tylko raz), więc wywołanie "na wszelki wypadek" tutaj
-  // jest bezpieczne nawet gdy renderAll() i tak woła je osobno tuż obok.
-  renderToolbar(state);
-  if (!elList) return;
-
-  const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
-  const questionsRaw = Array.isArray(state.questions) ? state.questions : [];
-
-  const sortKey = state?.sort?.key || "name";    // "name" | "type" | "date"
-  const sortDir = state?.sort?.dir || "asc";     // "asc" | "desc"
-  const mul = (sortDir === "desc") ? -1 : 1;
-
-  const byNamePL = (a, b) =>
-    String(a || "").localeCompare(String(b || ""), "pl", { sensitivity: "base" }) * mul;
-
-  const items = [];
-
-  for (const c of foldersRaw) {
-    items.push({
-      kind: "cat",
-      ord: Number(c.ord) || 0,
-      id: c.id,
-      name: c.name || t("baseExplorer.defaults.folder"),
-      date: toTime(pickDate(c)),
-      raw: c,
-    });
-  }
-
-  for (const q of questionsRaw) {
-    const text = q?.payload?.text ?? q?.text ?? t("baseExplorer.defaults.question");
-    items.push({
-      kind: "q",
-      ord: Number(q.ord) || 0,
-      id: q.id,
-      name: text,
-      date: toTime(pickDate(q)),
-      raw: q,
-    });
-  }
-
-  if (!items.length) {
-    elList.innerHTML = `<div style="opacity:.75; padding:16px;">${t("baseExplorer.list.empty")}</div>`;
-    return;
-  }
-
-  function cmp(a, b) {
-    if (sortKey === "name") {
-      const r = byNamePL(a.name, b.name);
-      if (r) return r;
-      const tv = getItemTypeSortKey(a, state).localeCompare(getItemTypeSortKey(b, state)) * mul;
-      if (tv) return tv;
-      return (a.date - b.date) * mul;
-    }
-    if (sortKey === "type") {
-      const ta = getItemTypeSortKey(a, state);
-      const tb = getItemTypeSortKey(b, state);
-      const r = ta.localeCompare(tb) * mul;
-      if (r) return r;
-      return byNamePL(a.name, b.name);
-    }
-    if (sortKey === "date") {
-      const r = ((a.date || 0) - (b.date || 0)) * mul;
-      if (r) return r;
-      return byNamePL(a.name, b.name);
-    }
-    if (sortKey === "ord") {
-      const r = ((a.ord || 0) - (b.ord || 0)) * mul;
-      if (r) return r;
-      return byNamePL(a.name, b.name);
-    }
-    return byNamePL(a.name, b.name);
-  }
-
-  items.sort(cmp);
-
-  // ===== COLGROUP (explicit px widths – no auto-fill to prevent col-shift on resize) =====
-  const saved = loadCols();
-  const containerW = elList.getBoundingClientRect().width || 800;
-  const typeWpx = Math.max(COL_MINS.type, parseInt(saved.type, 10) || COL_DEFAULTS.type);
-  const dateWpx = Math.max(COL_MINS.date, parseInt(saved.date, 10) || COL_DEFAULTS.date);
-  const metaWpx = Math.max(COL_MINS.meta, parseInt(saved.meta, 10) || COL_DEFAULTS.meta);
-  // name width: saved value OR fill remaining – always capped so total ≤ containerW
-  const maxNameW = Math.max(COL_MINS.name, containerW - 44 - typeWpx - dateWpx - metaWpx - 2);
-  const savedNamePx = parseInt(saved.name, 10);
-  const nameWpx = Math.min(maxNameW, savedNamePx >= COL_MINS.name ? savedNamePx : maxNameW);
-
-  // ===== HEAD =====
-  const dirFor = (k) => (k === sortKey ? sortDir : "asc");
-
-  const sortCaret = (key) => sortKey === key
-    ? icon(dirFor(key) === "asc" ? "caret-up" : "caret-down", { className: "sort-caret" })
-    : "";
-  const head = `
-    <colgroup>
-      <col style="width:44px">
-      <col style="width:${nameWpx}px">
-      <col style="width:${typeWpx}px">
-      <col style="width:${dateWpx}px">
-      <col style="width:${metaWpx}px">
-    </colgroup>
-    <thead>
-      <tr class="list-head">
-        <th class="h-num">${t("baseExplorer.list.colNumber")}</th>
-        <th class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}${sortCaret("name")}</th>
-        <th class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}${sortCaret("type")}</th>
-        <th class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}${sortCaret("date")}</th>
-        <th class="h-meta">${t("baseExplorer.list.colInfo")}</th>
-      </tr>
-    </thead>
-  `;
-
-  // ===== ROWS =====
-  let n = 1;
-
-  const rows = items.map((it) => {
-    const key = (it.kind === "cat") ? `c:${it.id}` : `q:${it.id}`;
-    const selClass = isSelected(state, key) ? " is-selected" : "";
-    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
-
-    if (it.kind === "cat") {
-      const c = it.raw;
-      const typeHtml = `
-        <span style="opacity:.85;">${t("baseExplorer.list.folderType")}</span>
-        <span style="margin-left:6px;">${metaDotsHtml(state, c.id, "c")}</span>
-      `;
-      const count = state._directChildrenCount?.get?.(c.id) ?? null;
-      const metaTxt = (count === null)
-        ? t("baseExplorer.common.dash")
-        : t("baseExplorer.list.folderCount", { count });
-
-      return `
-        <tr class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}">
-          <td class="col-num">${n++}</td>
-          <td class="col-main">
-            <div class="title-line">
-              <span class="title-text">${svgFolder()} ${esc(c.name || t("baseExplorer.defaults.folder"))}</span>
-              ${tagDotsHtml(state, c.id, "c")}
-            </div>
-          </td>
-          <td class="col-type">${typeHtml}</td>
-          <td class="col-date">${esc(fmtDate(pickDate(c)))}</td>
-          <td class="col-meta">${esc(metaTxt)}</td>
-        </tr>
-      `;
-    } else {
-      const q = it.raw;
-      const text = q?.payload?.text ?? q?.text ?? "";
-      const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
-      const metaTxt = t("baseExplorer.list.answerCount", { count: answersCount });
-      const typeHtml = `
-        <span style="opacity:.85;">${t("baseExplorer.list.questionType")}</span>
-        <span style="margin-left:6px;">${metaDotsHtml(state, q.id, "q")}</span>
-      `;
-
-      return `
-        <tr class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}">
-          <td class="col-num">${n++}</td>
-          <td class="col-main">
-            <div class="title-line">
-              <span class="title-text">${esc(text || t("baseExplorer.defaults.question"))}</span>
-              ${tagDotsHtml(state, q.id, "q")}
-            </div>
-          </td>
-          <td class="col-type">${typeHtml}</td>
-          <td class="col-date">${esc(fmtDate(pickDate(q)))}</td>
-          <td class="col-meta">${esc(metaTxt)}</td>
-        </tr>
-      `;
-    }
-  }).join("");
-
-  elList.innerHTML = `<table class="list-table">${head}<tbody>${rows}</tbody></table>`;
-  initColumnResizers();
-}
-
-function svgFolderPlus(){ return icon("folder-plus", { className: "tbIco" }); }
-function svgFilePlus(){ return icon("file-plus", { className: "tbIco" }); }
-function svgEdit(){ return icon("edit-paper", { className: "tbIco" }); }
-function svgTag(){ return icon("tag", { className: "tbIco" }); }
-function svgPencil(){ return icon("pencil", { className: "tbIco" }); }
-function svgTrash(){ return icon("trash", { className: "tbIco" }); }
-function svgCopy(){ return icon("copy", { className: "tbIco" }); }
-function svgCut(){ return icon("cut", { className: "tbIco" }); }
-function svgPaste(){ return icon("paste", { className: "tbIco" }); }
-function svgDuplicate(){ return icon("duplicate", { className: "tbIco" }); }
-function svgPlay(){ return icon("gamepad", { className: "tbIco" }); }
-function svgRefresh(){ return icon("refresh", { className: "tbIco" }); }
-
-/* small inline icons for tree/list rows */
-function svgFolder(){
-  return icon("folder", { className: "list-ico" });
-}
-function svgHome(){
-  return icon("home", { className: "list-ico" });
+  });
 }

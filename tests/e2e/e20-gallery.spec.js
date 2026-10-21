@@ -1361,8 +1361,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL2",
                 actionLabel: "Tagi → dodaj tag",
                 prepare: async (modalPage) => {
-                  const drawer = modalPage.locator("#btnDrawerToggle");
-                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  // lewy panel: widok tagów (przycisk przy wyszukiwarce albo w pasku na telefonie)
+                  await modalPage.locator('[data-left-view="tags"]:visible').first().click();
                   await modalPage.locator("#btnAddTag").click();
                 },
               },
@@ -1372,8 +1372,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL3",
                 actionLabel: "Tagi → dodaj tag → wybierz kolor",
                 prepare: async (modalPage) => {
-                  const drawer = modalPage.locator("#btnDrawerToggle");
-                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  // lewy panel: widok tagów (przycisk przy wyszukiwarce albo w pasku na telefonie)
+                  await modalPage.locator('[data-left-view="tags"]:visible').first().click();
                   await modalPage.locator("#btnAddTag").click();
                   await modalPage.locator("#tagsEditColorTile").click();
                 },

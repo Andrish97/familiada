@@ -16,22 +16,19 @@
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
-  "important": 6,
-  "colorLiteral": 142,
-  "rootTokens": 11,
-  "mediaWidth": 4,
-  "zIndexLiteral": 10,
-  "sharedDuplicate": 19,
-  "unusedClass": 15
+  "important": 12,
+  "colorLiteral": 169,
+  "rootTokens": 12,
+  "mediaWidth": 9,
+  "zIndexLiteral": 9,
+  "sharedDuplicate": 21,
+  "unusedClass": 17
  },
  "web/bases/explorer/index.html": {
   "inlineStyleHtml": 13
  },
- "web/bases/explorer/js/actions.js": {
-  "inlineStyleJs": 42
- },
  "web/bases/explorer/js/context-menu.js": {
-  "inlineStyleJs": 4
+  "inlineStyleJs": 6
  },
  "web/bases/explorer/js/export-modal.js": {
   "inlineStyleJs": 6
@@ -43,10 +40,25 @@
   "inlineStyleJs": 2
  },
  "web/bases/explorer/js/render.js": {
-  "inlineStyleJs": 29
+  "inlineStyleJs": 9
  },
  "web/bases/explorer/js/tags-modal.js": {
   "inlineStyleJs": 13
+ },
+ "web/bases/explorer/js/ui/marquee.js": {
+  "inlineStyleJs": 1
+ },
+ "web/bases/explorer/js/ui/move-modal.js": {
+  "inlineStyleJs": 3
+ },
+ "web/bases/explorer/js/ui/search.js": {
+  "inlineStyleJs": 2
+ },
+ "web/bases/explorer/js/ui/sheet-guard.js": {
+  "inlineStyleJs": 1
+ },
+ "web/bases/explorer/js/ui/tree-row.js": {
+  "inlineStyleJs": 1
  },
  "web/bases/index.html": {
   "inlineStyleHtml": 13
@@ -145,7 +157,7 @@
   "rootTokens": 5,
   "mediaWidth": 7,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 15
+  "sharedDuplicate": 16
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
@@ -367,7 +379,7 @@
   "colorLiteral": 192,
   "mediaWidth": 23,
   "zIndexLiteral": 18,
-  "sharedDuplicate": 34,
+  "sharedDuplicate": 35,
   "unusedClass": 12
  },
  "web/shared/css/blocking-overlay.css": {

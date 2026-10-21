@@ -1,76 +1,99 @@
 // base-explorerjs/page.js
-// Init strony menadżera bazy (warstwa 2)
+// Start strony menedżera bazy: użytkownik, baza, rola, blokada współdzielona,
+// pierwsze wczytanie (data/store.js), narysowanie (render.js) i podpięcie
+// wejść (ui/*). Logika akcji: actions/registry.js + commands.js.
 
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T13091";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T13091";
-import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T13091";
-import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T13091";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T13091";
-import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-21T13091";
-import { renderAll } from "./render.js?v=v2026-10-21T13091";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T13380";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T13380";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-21T13380";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T13380";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T13380";
+import { createState, setRole, goTo } from "./state.js?v=v2026-10-21T13380";
+import { reload } from "./data/store.js?v=v2026-10-21T13380";
+import { renderAll, renderToolbar, renderList, isNarrow } from "./render.js?v=v2026-10-21T13380";
+import { createHistory } from "./history.js?v=v2026-10-21T13380";
+import { getBaseMeta, getBaseRole } from "./repo.js?v=v2026-10-21T13380";
+import { openFolder, openTrash } from "./commands.js?v=v2026-10-21T13380";
+import { wireToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T13380";
+import { wireList } from "./ui/list.js?v=v2026-10-21T13380";
+import { wireTree } from "./ui/tree.js?v=v2026-10-21T13380";
+import { wireLeft } from "./ui/left.js?v=v2026-10-21T13380";
+import { wireDnd } from "./ui/dnd.js?v=v2026-10-21T13380";
+import { wireSearch } from "./ui/search.js?v=v2026-10-21T13380";
+import { guardRoutedSheet } from "./ui/sheet-guard.js?v=v2026-10-21T13380";
+import { wireLeftView } from "./ui/left-view.js?v=v2026-10-21T13380";
+import { wireKeyboard } from "./ui/keyboard.js?v=v2026-10-21T13380";
 
-import {
-  getBaseMeta,
-  getBaseRole,
-  listCategories,
-  listTags,
-  listAllQuestions,
-} from "./repo.js?v=v2026-10-21T13091";
-import { wireActions } from "./actions.js?v=v2026-10-21T13091";
-import { initDrawer } from "./mobile.js?v=v2026-10-21T13091";
-
-
-/* ================= DOM ================= */
 const baseNameEl = document.getElementById("baseName");
 
-/* ================= Helpers ================= */
-function getBaseIdFromUrl() {
-  const params = new URLSearchParams(location.search);
-  return params.get("id");
+function skeletonReady() {
+  document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+    .forEach((step) => step.classList.add("skel-step-ready"));
 }
 
-/* ================= Init ================= */
+function topbarReady(name) {
+  if (baseNameEl) baseNameEl.textContent = name;
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
+}
+
+// Miejsce z adresu: ?folder=<id> albo ?trash=1 (kosz tylko dla edytujących).
+function initialPlace(state) {
+  const params = new URLSearchParams(location.search);
+  const folderId = params.get("folder");
+  if (folderId && state.d.folderById.has(folderId)) return folderId;
+  if (params.get("trash") === "1" && state.canEdit) return "trash";
+  return null;
+}
+
+// Ścieżka nad listą: klik w element = przejście tam.
+function wireBreadcrumbs(state) {
+  document.getElementById("breadcrumbs")?.addEventListener("click", async (e) => {
+    const crumb = e.target.closest(".crumb[data-kind]");
+    if (!crumb) return;
+    const { kind, id } = crumb.dataset;
+    if (kind === "trash") await openTrash(state);
+    else await openFolder(state, kind === "crumb" ? id : null);
+  });
+}
+
 (async function init() {
   const i18nP = initI18n({ withSwitcher: true });
   const userP = initPage("baseExplorer", {
     ready: i18nP,
-    // Nazwa bazy w topbarze jest znana dopiero po pobraniu metadanych.
+    // nazwa bazy w topbarze jest znana dopiero po pobraniu metadanych
     deferTopbarReady: true,
-  }); // auth startuje równolegle z i18n
+  });
   await i18nP;
-  document.documentElement.classList.remove('page-loading');
+  document.documentElement.classList.remove("page-loading");
 
   const user = await userP;
   if (!user) return; // initPage przekierował na logowanie
 
-  // base id z URL
-  const baseId = getBaseIdFromUrl();
+  const baseId = new URLSearchParams(location.search).get("id");
   if (!baseId) {
-    if (baseNameEl) baseNameEl.textContent = "";
-    document.querySelector(".topbar")?.classList.add("topbar-ready");
+    topbarReady("");
     void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
     location.href = backHref("baseExplorer");
     return;
   }
 
-  // ===== state =====
   const state = createState({ baseId, role: "viewer" });
+  state.user = user;
   state.userId = user.id;
+  // cofanie / ponawianie w pamięci karty; zmiana historii odświeża pasek
+  state.history = createHistory({ onChange: () => renderToolbar(state) });
 
   try {
-    // ===== meta + rola =====
     state.baseMeta = await getBaseMeta(baseId);
-    if (baseNameEl) baseNameEl.textContent = state.baseMeta?.name || t("baseExplorer.defaults.baseName");
-    document.querySelector(".topbar")?.classList.add("topbar-ready");
+    topbarReady(state.baseMeta?.name || t("baseExplorer.defaults.baseName"));
 
     const r = await getBaseRole(baseId, user.id);
     setRole(state, r.role);
 
-    // Eksplorator trzyma base:B współdzielenie (obecność -- współpracownicy
-    // mogą mieć bazę otwartą naraz). Trzymanie wyłączne (zmiana nazwy / usuwanie
-    // całej bazy) zatrzymuje wejście i odnowienie pełnoekranowym komunikatem;
-    // odebrany dostęp daje `forbidden` przy odnowieniu. Czytelnik (viewer) nie
-    // trzyma nic -- nie edytuje, więc nie przeszkadza zmianie całej bazy.
+    // Menedżer trzyma base:B współdzielenie (współpracownicy mogą mieć bazę
+    // otwartą naraz). Trzymanie wyłączne (zmiana nazwy / usuwanie całej bazy)
+    // zatrzymuje wejście pełnoekranowym komunikatem; odebrany dostęp daje
+    // `forbidden` przy odnowieniu. Czytelnik nie trzyma nic.
     if (state.canEdit) {
       const lock = await guardResourceLocks(
         [{ type: "base", id: baseId, mode: "shared", message: t("resourceLock.baseChangingMessage") }],
@@ -84,65 +107,40 @@ function getBaseIdFromUrl() {
       if (!lock.ok) return;
     }
 
-    // ===== dane do renderu (etap 1: prosto, wszystko) =====
-    const [cats, tags, qs] = await Promise.all([
-      listCategories(baseId),
-      listTags(baseId),
-      listAllQuestions(baseId),
-    ]);
-
-    state.categories = cats;
-    pruneTreeOpen(state.treeOpen, cats);
-    state.tags = tags;
-    state.questions = qs;
-
-    const initialFolderId = new URLSearchParams(location.search).get("folder");
-    if (initialFolderId && cats.some((cat) => cat.id === initialFolderId)) {
-      state.view = VIEW.FOLDER;
-      state.folderId = initialFolderId;
-    }
+    await reload(state);
+    const place = initialPlace(state);
+    if (place) goTo(state, place);
+    state._syncUrl = true;
 
     renderAll(state);
 
-    // ===== mobile =====
-    initDrawer();
+    // przyciski widoków lewego panelu powstają w szkielecie paska (renderToolbar)
+    wireLeftView(state);
 
-    // ===== akcje UI (klik folder, search, selekcja) =====
-    const api = wireActions({ state });
-    state._syncFolderUrl = true;
+    wireToolbarButtons(document.getElementById("toolbar"), state);
+    wireSearch(state);
+    wireList(state);
+    wireTree(state);
+    wireLeft(state);
+    wireDnd(state);
+    wireBreadcrumbs(state);
+    for (const id of ["tagsOverlay", "exportOverlay", "questionOverlay"]) guardRoutedSheet(document.getElementById(id));
+    wireKeyboard(state);
+    skeletonReady();
 
-    window.addEventListener("i18n:lang", async () => {
-      await api.refreshList();
+    window.addEventListener("i18n:lang", () => renderAll(state));
+    // telefon ↔ komputer (obrót, zmiana okna): inne szerokości kolumn
+    let narrow = isNarrow();
+    window.addEventListener("resize", () => {
+      if (isNarrow() === narrow) return;
+      narrow = isNarrow();
+      renderList(state);
     });
-
-    // ustaw cache all-questions dla widoku ALL
-    state._allQuestions = qs;
-    state._viewQuestions = qs;
-
-    // refresh (żeby search/filter działały od razu spójnie)
-    await api.refreshList();
-    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
-      .forEach((step) => step.classList.add("skel-step-ready"));
-
   } catch (e) {
     console.error(e);
-    // Przy błędzie pokaż działające Wstecz, ale bez nazwy zastępczej udającej
-    // nazwę bazy.
-    if (baseNameEl) baseNameEl.textContent = "";
-    document.querySelector(".topbar")?.classList.add("topbar-ready");
-
-    // brak dostępu – wracamy do baz
-    if (e?.code === "NO_ACCESS") {
-      document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
-        .forEach((step) => step.classList.add("skel-step-ready"));
-      void alertModal({ text: t("baseExplorer.errors.noAccess") });
-      //location.href = "../bases";
-      return;
-    }
-
-    void alertModal({ text: t("baseExplorer.errors.loadFailed") });
-    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
-      .forEach((step) => step.classList.add("skel-step-ready"));
-    //location.href = "../bases";
+    // działające Wstecz, ale bez nazwy zastępczej udającej nazwę bazy
+    topbarReady("");
+    skeletonReady();
+    void alertModal({ text: t(e?.code === "NO_ACCESS" ? "baseExplorer.errors.noAccess" : "baseExplorer.errors.loadFailed") });
   }
 })();
