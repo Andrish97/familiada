@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict co2ltNezGytnYdLzjmw9fdB2SWQGIRJmWYSgPOmsDkFaGzOFALQg7dPuFV8D1uF
+\restrict eiZCbx3GYEkEA6AUkCsg2pCg9eLhes9Htq2PudKdveSu0obhvoG1Ks9LKpo9xsu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10266,12 +10266,14 @@ $$;
 --
 
 CREATE FUNCTION "public"."get_app_rating_stats"() RETURNS TABLE("avg_stars" numeric, "total_count" bigint)
-    LANGUAGE "sql" STABLE
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
     AS $$
-    SELECT 
-        COALESCE(ROUND(AVG(stars), 1), 0.0) as avg_stars,
-        COUNT(*) as total_count
-    FROM public.app_ratings;
+  SELECT
+    COALESCE(ROUND(AVG(r.stars), 1), 0.0) AS avg_stars,
+    COUNT(*) AS total_count
+  FROM public.app_ratings r
+  WHERE NOT EXISTS (SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id = r.user_id);
 $$;
 
 
@@ -10759,6 +10761,7 @@ CREATE FUNCTION "public"."get_ratings_admin"() RETURNS TABLE("id" "uuid", "user_
     p.email
   FROM public.app_ratings r
   LEFT JOIN public.profiles p ON p.id = r.user_id
+  WHERE NOT EXISTS (SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id = r.user_id)
   ORDER BY r.created_at DESC;
 $$;
 
@@ -27057,5 +27060,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict co2ltNezGytnYdLzjmw9fdB2SWQGIRJmWYSgPOmsDkFaGzOFALQg7dPuFV8D1uF
+\unrestrict eiZCbx3GYEkEA6AUkCsg2pCg9eLhes9Htq2PudKdveSu0obhvoG1Ks9LKpo9xsu
 
