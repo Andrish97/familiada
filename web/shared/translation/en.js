@@ -3748,7 +3748,7 @@ const en = {
     "invite": "Invite",
     "handle": "Email or username",
     "email": "Email address",
-    "go": "Go →",
+    "go": "Go",
     "sent": "Invitation saved.",
     "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
     "accountCreated": "Has an account — go to Friends.",

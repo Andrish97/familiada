@@ -3759,7 +3759,7 @@ const pl = {
     "invite": "Zaproś",
     "handle": "E-mail lub nazwa użytkownika",
     "email": "Adres e-mail",
-    "go": "Przejdź →",
+    "go": "Przejdź",
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
     "accountCreated": "Ma konto — przejdź do Znajomych.",
