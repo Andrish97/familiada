@@ -1,0 +1,19 @@
+-- E21: raporty nocnej naprawy (e21_repair_runs) jako liczby i daty.
+SELECT r.id, r.ran_at,
+       (r.report->>'questions_truncated')::int AS pytania_skrocone,
+       (r.report->>'answers_cleaned')::int AS odpowiedzi_oczyszczone,
+       (r.report->>'base_questions_truncated')::int AS bazy_pytania_skrocone,
+       (r.report->>'base_questions_answers_fixed')::int AS bazy_pytania_z_odp_poprawionymi,
+       (r.report->>'demo_base_questions_mapped')::int AS bazy_demo_z_mapy_298,
+       (r.report->>'demo_prepared_games')::int AS demo_preparowane,
+       (r.report->>'demo_prepared_answers_removed')::int AS demo_usuniete_odp,
+       (r.report->>'demo_points_polls_filled')::int AS demo_punktowe_dopelnione,
+       (r.report->>'demo_text_polls_filled')::int AS demo_tekstowe_dopelnione,
+       (r.report->>'demo_skipped_active_control')::int AS demo_pominiete_control,
+       jsonb_array_length(r.report->'skipped_active_control_games') AS gry_pominiete_control,
+       (r.report->>'questions_over_100_left')::int AS zostalo_pytan_ponad_100,
+       (r.report->>'answers_invalid_left')::int AS zostalo_odp_niedozwolonych,
+       (r.report->>'questions_constraint')::boolean AS ograniczenie_pytan,
+       (r.report->>'answers_constraint')::boolean AS ograniczenie_znakow
+FROM public.e21_repair_runs r
+ORDER BY r.id

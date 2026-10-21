@@ -19,7 +19,7 @@
 | E0–E12, E15–E19N, C2-DIAG, E1 | zrobione (nie ruszać) |
 | E14 sprzątanie | zrobione (2026-10-18, 368 + 388–390, `db-migrate.yml` 39115618243); w tabeli Kolejki poprawione 2026-10-20 |
 | E20 kompaktowy telefon / wygląd | **w toku — ta sesja (pakiet poniżej)** |
-| E21 reguły gry | w toku — wdrożone; czeka na wynik nocnej naprawy (inna sesja) |
+| E21 reguły gry | **zrobione** (inna sesja, 2026-10-21 02:50 UTC — szczegóły niżej, „E21 — podsumowanie”) |
 | E13 instrukcja | ostatni etap, po wszystkim |
 
 ## Bieżący krok: pakiet wyglądu na branchu → zielone e2e → Pages → kontrola
@@ -119,3 +119,14 @@ E2E na branchu (spec | przebieg | wynik):
 
 Przy trafieniu na limit: zapisać tu krok i czas odnowienia (bez komunikatu:
 +5 h od błędu), budziki co ≤3600 s do odnowienia +5 min z tym samym promptem.
+
+## E21 — podsumowanie (z `PROGRESS.md` drugiej sesji, scalone 2026-10-21)
+
+Status E21: ZAKOŃCZONE (2026-10-21 02:50 UTC). Plan: `docs/reguly-gier-transfer-plan.md`
+§5 (14 kroków, wszystkie ✅: migracje 403–414, nocna naprawa danych 01:30 UTC,
+ograniczenia `questions_text_len` i `answers_text_chars`, e2e `39535133821` ✓).
+Znany problem stamtąd — ucinanie tekstu odpowiedzi w podliczaniu na telefonie —
+rozwiązany w tym pakiecie (zwarte wiersze, `45c7a34`). Pozostałe uwagi:
+środowisko GitHub `maintenance` i sekret `MAINTENANCE_TOTP_SECRET` nieużywane
+(do skasowania przez użytkownika); `AGENTS.md` ma regułę o mapie nawigacji,
+której brak w `CLAUDE.md`.
