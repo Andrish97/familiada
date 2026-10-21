@@ -215,7 +215,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     expect(Object.keys(sendBody).sort()).toEqual(["items", "lang"]);
     expect(sendBody.items[0]).toMatchObject({ action: "base:share" });
     expect(sendMail[0].request).not.toContain("@");
-    // Po migracji 455 (produkcja): także RPC udostępnienia i panel bez adresu odbiorcy.
+    // Po migracji 456 (produkcja): także RPC udostępnienia i panel bez adresu odbiorcy.
     if (process.env.GITHUB_REF_NAME === "main") {
       for (const r of ownerTraffic) expect(r.text.toLowerCase(), r.url).not.toContain(recipient.toLowerCase());
     }

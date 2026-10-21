@@ -150,7 +150,7 @@ test("P2 Worker: /_api/auth/* odmawia bez ujawniania adresu, tylko JSON z www", 
   expect(getReq.status()).toBe(405);
 });
 
-// Baza (migracja 455): zamiana nazwy na e-mail, stan adresu i tokeny wypisania
+// Baza (migracja 456): zamiana nazwy na e-mail, stan adresu i tokeny wypisania
 // niedostępne z przeglądarki; strona potwierdzenia nie zdradza stanu konta.
 test("P2 baza: RPC nazwa->e-mail i stan adresu niedostępne anonimowo, auth-email-status usunięta", async ({ request }) => {
   const headers = anonHeaders();

@@ -1,4 +1,4 @@
--- Bezpieczeństwo (audyt E24, paczka P2: B7, B8, N5; 2026-10-21).
+-- Bezpieczeństwo (audyt E24, paczka P2: B7, B8, N5; 2026-10-22).
 --
 -- B7: nazwa użytkownika -> e-mail tylko po stronie serwera. Logowanie i reset
 --     hasła po nazwie idą przez Worker (/_api/auth/login, /_api/auth/reset),
