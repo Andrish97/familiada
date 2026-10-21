@@ -20,7 +20,7 @@
 | E14 sprzątanie | zrobione (2026-10-18, 368 + 388–390, `db-migrate.yml` 39115618243); w tabeli Kolejki poprawione 2026-10-20 |
 | E20 kompaktowy telefon / wygląd | zrobione — wdrożone `1012638`, kontrola 13/13 |
 | E21 reguły gry | **zrobione** (inna sesja, 2026-10-21 02:50 UTC — szczegóły niżej, „E21 — podsumowanie”) |
-| E13 indeks, zrzuty, wydajność, instrukcja | **ZAKOŃCZONE 2026-10-21** — instrukcja `c7aec78`, wydajność `7774db2` (szczegóły: Dziennik) |
+| E13 indeks, zrzuty, wydajność, instrukcja | **W TOKU** — indeks, zrzuty i wydajność zrobione (wydajność `7774db2`); nowy podręcznik pisze druga sesja, jeszcze niewdrożony |
 
 ## Bieżący krok: pakiet wyglądu na branchu → zielone e2e → Pages → kontrola
 
