@@ -3070,7 +3070,8 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
     // (nie ten sam user/sesja co operator) -- dowód, że token grantu
     // URL-u wystarcza, bez żadnego logowania.
-    const recipientContext = await controlContext(browser, );
+    // Prowadzący wymaga ekranu dotykowego (blokada urządzenia) — kontekst z dotykiem.
+    const recipientContext = await controlContext(browser, { hasTouch: true });
     contexts.push(recipientContext);
     const recipientPage = await recipientContext.newPage();
     await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
@@ -3667,7 +3668,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
   await loginAsTestUser(page, context, { username: accountPool[0] });
   const recipientContext = await controlContext(browser);
   const recipient = await recipientContext.newPage();
-  const anonymous = await controlContext(browser);
+  const anonymous = await controlContext(browser, { hasTouch: true }); // Prowadzący wymaga dotyku
   let game = null, peer = null, oldFlag = null;
   try {
     await loginAsTestUser(recipient, recipientContext, { username: accountPool[1] });
