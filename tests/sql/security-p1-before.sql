@@ -1,4 +1,4 @@
--- Stan produkcji przed 452 (lokalnie): bucket user-logos i polityka publicznego
+-- Stan produkcji przed 453 (lokalnie): bucket user-logos i polityka publicznego
 -- SELECT z migracji 178/179; storage.foldername jak w Supabase.
 \set ON_ERROR_STOP 1
 create or replace function storage.foldername(name text) returns text[] language sql immutable

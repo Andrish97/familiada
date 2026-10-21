@@ -219,9 +219,9 @@ test('N4: storage-cleanup wymaga nagłówka pochodnego od MAIL_WORKER_SECRET (zg
   assert.match(fn, /const CLEANUP_CONTEXT = "storage-cleanup";/);
   assert.match(fn, /x-internal-secret/);
   assert.doesNotMatch(fn, /Access-Control-Allow-Origin/);
-  const sql = readFileSync(new URL('supabase/migrations/2026-10-21_451_storage_cleanup_internal_secret.sql', ROOT), 'utf8');
+  const sql = readFileSync(new URL('supabase/migrations/2026-10-21_452_storage_cleanup_internal_secret.sql', ROOT), 'utf8');
   assert.match(sql, /extensions\.hmac\('storage-cleanup', v_secret, 'sha256'\)/);
-  // Ten sam wektor sprawdza tests/sql/security-p1-451-453.sql (pgcrypto).
+  // Ten sam wektor sprawdza tests/sql/security-p1-452-454.sql (pgcrypto).
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('test-secret'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('storage-cleanup')));
   const hex = Array.from(sig, (b) => b.toString(16).padStart(2, '0')).join('');
