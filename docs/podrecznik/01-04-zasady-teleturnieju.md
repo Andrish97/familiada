@@ -186,6 +186,6 @@ może zakończyć finał od razu, bez odsłaniania pozostałych pytań (→ 17.4
 - Jeśli nie — rodzina dostaje pieniądze zebrane w grze: **liczbę punktów mnożoną przez 3**.
 
 **W serwisie:** ekran końcowy może pokazać logo, punkty albo kwotę nagrody (→ 16.6). Kwotę
-nagrody głównej i mnożnik ustawiasz sam (domyślnie 25 000 i ×3). Kwota liczy się jak
-w teleturnieju: punkty drużyny z rund razy mnożnik, a gdy finaliści osiągną cel — do tego
+nagrody głównej i mnożnik ustawiasz sam (domyślnie 25 000 i ×3). Kwota to punkty
+zwycięskiej drużyny z rund razy mnożnik, a gdy finaliści osiągną cel — do tego
 nagroda główna. Punkty zdobyte w finale decydują tylko o tym, czy cel został osiągnięty.

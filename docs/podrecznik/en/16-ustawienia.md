@@ -105,7 +105,7 @@ an invalid value: after [Save], the field goes back to its previous value.
 
 The last two settings are shown when the game has a final and the end screen shows the prize amount.
 The amount on the end screen is the winning team's points from the rounds multiplied by
-the "Prize multiplier", and once the final target is reached — increased by the main prize amount, as in the game show (→ 4.4). In a tie, the end
+the "Prize multiplier", and once the final target is reached — increased by the main prize amount (→ 4.4). In a tie, the end
 screen shows the logo.
 
 ## 16.7 Saving and using the settings

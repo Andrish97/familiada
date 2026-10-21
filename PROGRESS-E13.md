@@ -48,6 +48,8 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
 
 ## Znane problemy
 
+- **Zasada treści (decyzja użytkownika 2026-10-21, przez drugą sesję; `docs/wdrozenia.md` „Zasady działania”):** opisywać tylko, jak jest teraz — bez „jak w teleturnieju/regulaminie” przy opisie działania serwisu, bez wzmianek o wcześniejszym działaniu i bez tłumaczenia się z poprawek. Sprawdzić całość przy ponownej weryfikacji (porównania w Części I wymagane planem zostają, ale opisują teleturniej i serwis osobno).
+
 - **Zależność od drugiej sesji (`claude/new-session-ay1h9t`):** podręcznik opisuje docelowe działanie wg decyzji użytkownika — nagroda jak w regulaminie TVP (punkty z rund × mnożnik + kwota główna po osiągnięciu celu; rozdz. 4.4, 16.6) i potwierdzenie przed „Eksportuj do bazy” przy otwartej/zatrzymanej ankiecie (6.7). Kod robi tamta sesja; przed wdrożeniem podręcznika sprawdzić, że jest na `main` (`web/shared/js/gameplay/endScreen.js` — `resolveFinalEndScreen({roundsPoints, finalPoints, hitTarget})`, migracja 440, `gameSettings.game.prizeHint`, `games.transferDropsVotes.baseText`). Po wznowieniu dopisać w 4.4/16.6 przykład z tamtej sesji: 276 pkt z rund i cel osiągnięty → 276×3+25 000 = 25 828; bez celu → 828.
 
 - E20 (wygląd telefonu) wciąż w toku w innej sesji — po jego wdrożeniu przejrzeć szkice pod kątem nazw i układu ekranów.

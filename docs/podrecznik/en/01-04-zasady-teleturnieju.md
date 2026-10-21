@@ -186,6 +186,6 @@ can end the final right away, without revealing the remaining questions (→ 17.
 - If not — the family gets the money collected during the game: **the number of points multiplied by 3**.
 
 **In the app:** the end screen can show the logo, the points or the prize amount (→ 16.6). You set
-the grand prize amount and the multiplier yourself (default 25,000 and ×3). The amount is calculated as in the game show:
-the team's points from the rounds times the multiplier, plus the grand prize when the finalists reach the
+the grand prize amount and the multiplier yourself (default 25,000 and ×3). The amount is
+the winning team's points from the rounds times the multiplier, plus the grand prize when the finalists reach the
 target. The points scored in the final only decide whether the target was reached.

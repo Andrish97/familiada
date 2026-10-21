@@ -105,7 +105,7 @@ wartości serwis nie zapisze: po [Zapisz] pole wróci do poprzedniej wartości.
 
 Ostatnie dwa ustawienia są widoczne, gdy gra ma finał i ekran końcowy pokazuje kwotę nagrody.
 Kwota na ekranie końcowym to punkty zwycięskiej drużyny z rund pomnożone przez „Mnożnik
-nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną, jak w teleturnieju (→ 4.4). Przy remisie ekran
+nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną (→ 4.4). Przy remisie ekran
 końcowy pokazuje logo.
 
 ## 16.7 Zapis i użycie ustawień
