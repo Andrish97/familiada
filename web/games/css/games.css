@@ -599,6 +599,9 @@ body.games-body > main.wrap{
 .games-bottom.has-more-end{ mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
 .games-bottom.has-more-start{ mask-image: linear-gradient(to right, transparent, #000 28px); }
 .games-bottom.has-more-start.has-more-end{ mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+/* Maska tworzy osobną warstwę — rozwinięte menu filtra/sortowania (position:
+   fixed) trafiało pod siatkę kafli. Przy otwartym menu bez wygaszenia. */
+.games-bottom:has(.ui-select.open){ mask-image: none; }
 .games-bottom.is-compact-icons .only-desktop{ display:none !important; }
 .games-bottom.is-compact-icons .games-bottom-right .btn,
 .games-bottom.is-compact-icons .list-filter .ui-select-btn,
