@@ -14,6 +14,12 @@ const FONT_SIZE = 134;
 let fontPromise;
 let fabricPromise;
 
+/** Kolor lica logo: domyślny DOT to wartość ustawienia, nie widoczny kolor
+ * logo -- dopóki gracz go nie zmieni, logo (napis, piksele, źródło) jest złote. */
+export function logoFaceColor(dot) {
+  return String(dot || "").toLowerCase() === DEFAULT_DOT_COLOR ? DEFAULT_LOGO_FACE : dot;
+}
+
 function canvasOf(width, height) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -405,7 +411,7 @@ async function renderDrawLogo(logo, dot) {
 
 export async function renderLogoSource(logo, dot) {
   const mode = logo?.payload?.source?.mode;
-  const logoDot = String(dot || "").toLowerCase() === DEFAULT_DOT_COLOR ? DEFAULT_LOGO_FACE : dot;
+  const logoDot = logoFaceColor(dot);
   try {
     if (mode === "TEXT") return renderTextLogo(logo.payload.source.text, logoDot, { fillWidth: true });
     if (mode === "IMAGE") return await renderImageLogo(logo.payload.source);
