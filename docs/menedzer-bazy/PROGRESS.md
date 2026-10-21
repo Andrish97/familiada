@@ -77,6 +77,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9g. Poprawki po przeglądzie kodu: Enter w „Przenieś do” (Anuluj z fokusem anuluje, wybór spoza listy nie obowiązuje, jeden wynik — Enter go wybiera), `ui/sheet-guard.js` (okno z `?dialog=` w adresie lub z „Dalej” zamyka się zamiast wisieć puste), fokus po zamknięciu okien, lupa na telefonie, szuflada zamykana przy oknach (`explorer:close-drawer`), cykle w wynikach szukania. Strażnik także dla okien tagów, „Utwórz grę” i pytania (ten sam błąd był w nich przed E22: `?dialog=tagsOverlay` w adresie pokazywał puste okno bez działających przycisków; test sprawdzony — bez poprawki pada). Pełny lokalny e2e 86/86.
 
+- [x] 9h. Tabletki tagów w wyszukiwarce całe w kolorze tagu i cieńsze (tekst: wyższy kontrast WCAG, `chipTextColor` w `render.js`). Komplet zrzutów komputer / tablet / telefon: `docs/menedzer-bazy/img/urzadzenia/` (sceny panelu i „Szukaj” także na tablecie).
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

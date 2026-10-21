@@ -3,13 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T08095";
-import { computeListing } from "./data/listing.js?v=v2026-10-21T08095";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T08095";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T08095";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T08095";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T08095";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T08095";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-21T12351";
+import { computeListing } from "./data/listing.js?v=v2026-10-21T12351";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-21T12351";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12351";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T12351";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-21T12351";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-21T12351";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -98,6 +98,18 @@ export function renderSelection(state) {
   renderToolbar(state);
 }
 
+// Tabletka tagu w wyszukiwarce jest cała w kolorze tagu (decyzja użytkownika
+// 2026-10-21); kolor tekstu: ten z wyższym kontrastem do tła.
+export function chipTextColor(color) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(color || "").trim());
+  if (!m) return "#fff";
+  const n = parseInt(m[1], 16);
+  const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const L = 0.2126 * lin(n >> 16) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  // wyższy kontrast (WCAG): biały (L=1) albo ciemny #14161f (L≈0.0085)
+  return (1.05 / (L + 0.05)) >= ((L + 0.05) / 0.0585) ? "#fff" : "#14161f";
+}
+
 /* ================= Pasek narzędzi ================= */
 
 // Widoki lewego panelu (decyzja użytkownika 2026-10-21): jeden naraz, na
@@ -145,7 +157,7 @@ export function renderToolbar(state) {
     const ids = (state.query.tagIds || []).filter((id) => byId.has(id));
     const html = ids.map((id) => {
       const tg = byId.get(id);
-      return `<span class="chip" data-tag-id="${esc(id)}" style="--chip:${esc(tg.color || "rgba(255,255,255,.35)")}" data-tooltip="${esc(t("baseExplorer.search.removeTag"))}">#${esc(tg.name)}</span>`;
+      return `<span class="chip" data-tag-id="${esc(id)}" style="--chip:${esc(tg.color || "#5b6070")};--chip-fg:${chipTextColor(tg.color)}" data-tooltip="${esc(t("baseExplorer.search.removeTag"))}">#${esc(tg.name)}</span>`;
     }).join("");
     if (chipsEl.dataset.html !== html) { chipsEl.innerHTML = html; chipsEl.dataset.html = html; }
   }

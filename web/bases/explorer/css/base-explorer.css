@@ -2454,3 +2454,18 @@ tr.row.is-drop-after td:last-child::after {
   background: rgba(255,255,255,.04);
   box-shadow: none;
 }
+
+/* Tabletki tagów w wyszukiwarce: całe w kolorze tagu, cieńsze (2026-10-21);
+   kolor tekstu dobiera render.js (chipTextColor). */
+#searchChips .chip {
+  padding: 2px 9px;
+  border: 0;
+  background: var(--chip, #5b6070);
+  color: var(--chip-fg, #fff);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+}
+#searchChips .chip::before { display: none; }
+#searchChips .chip:hover { filter: brightness(1.1); }

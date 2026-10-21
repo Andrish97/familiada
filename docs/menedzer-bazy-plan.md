@@ -42,6 +42,8 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     w prawo i w jednej linii (tabletki przewijane w poziomie); nowa ikona
     przycisku proponowanych kategorii; plakietki liczników w obrębie
     przycisku (nie wchodzą pod pasek wyszukiwania).
+  - **Tabletki w wyszukiwarce (2026-10-21, użytkownik):** całe w kolorze
+    tagu i cieńsze; kolor tekstu dobierany do kontrastu.
   - **Do decyzji (zastąpione wyżej) — odgracanie lewego panelu na komputerze** (makiety
     `menedzer-bazy/img/propozycja-*.png`, stan dziś `lewy-dzis-komputer.png`):
     - **A (rekomendacja):** lewy panel = samo drzewo (z koszem) na pełną
