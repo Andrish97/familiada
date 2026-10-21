@@ -3016,12 +3016,12 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
     await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
     await page.locator("#shareDeviceEmail").fill(recipient);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("już udostępniono", { timeout: 10000 });
+    await expect(page.locator(".app-toast-text")).toContainText("już udostępniono", { timeout: 10000 });
     const messageShot = testInfo.outputPath("shot-control-share-message.png");
     await page.screenshot({ path: messageShot, fullPage: true });
     await testInfo.attach("control-share-message", { path: messageShot, contentType: "image/png" });
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
-    await expect(page.locator("#shareDeviceMsg")).toBeHidden({ timeout: 5000 });
+    await expect(page.locator(".app-toast-text")).toBeHidden({ timeout: 5000 });
     // Zniknięcie komunikatu nie odblokowuje duplikatu udostępnienia.
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
     const readyShot = testInfo.outputPath("shot-control-share-ready.png");
@@ -3724,7 +3724,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
+    await expect(page.locator(".app-toast-text")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
     expect(await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"buzzer",p_lookup:email})).toMatchObject({ok:false,error:"notifications_disabled"});
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
@@ -3756,7 +3756,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     await choice.check();
     expect((await rpc(page,"friends_remove",{p_id:fresh.id})).ok).toBe(true);
     await page.locator("#btnShareDeviceFriends").click();
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba nie jest już na liście znajomych");
+    await expect(page.locator(".app-toast-text")).toContainText("Ta osoba nie jest już na liście znajomych");
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_id===peer.id)).toBe(false);
   } finally {
     try {
