@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict plZy6bar5JfsAwBI1AiEkVl8JA0kEZOf9yjboegsYTeKzAPkPwvoJoLaLj0sOfT
+\restrict co2ltNezGytnYdLzjmw9fdB2SWQGIRJmWYSgPOmsDkFaGzOFALQg7dPuFV8D1uF
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1101,10 +1101,10 @@ END $$;
 
 
 --
--- Name: _game_poll_reset("uuid"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: _game_poll_clear("uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."_game_poll_reset"("p_game_id" "uuid") RETURNS "text"
+CREATE FUNCTION "public"."_game_poll_clear"("p_game_id" "uuid", "p_zero_points" boolean) RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -1122,12 +1122,27 @@ BEGIN
          share_key_poll = v_key, poll_share_updated_at = now(), updated_at = now()
    WHERE id = p_game_id;
 
-  UPDATE public.answers a
-     SET fixed_points = 0
-    FROM public.questions q
-   WHERE q.id = a.question_id AND q.game_id = p_game_id AND a.fixed_points <> 0;
+  IF p_zero_points THEN
+    UPDATE public.answers a
+       SET fixed_points = 0
+      FROM public.questions q
+     WHERE q.id = a.question_id AND q.game_id = p_game_id AND a.fixed_points <> 0;
+  END IF;
 
   RETURN v_key;
+END $$;
+
+
+--
+-- Name: _game_poll_reset("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_poll_reset"("p_game_id" "uuid") RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN public._game_poll_clear(p_game_id, true);
 END $$;
 
 
@@ -8596,10 +8611,10 @@ $$;
 
 
 --
--- Name: game_change_type("uuid", "text", boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: game_change_type("uuid", "text", boolean, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_change_type"("p_game_id" "uuid", "p_type" "text", "p_reset" boolean DEFAULT false) RETURNS "jsonb"
+CREATE FUNCTION "public"."game_change_type"("p_game_id" "uuid", "p_type" "text", "p_reset" boolean DEFAULT false, "p_keep" boolean DEFAULT false) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -8610,6 +8625,7 @@ declare
   v_removed int := 0;
   v_cleared int := 0;
   v_reset boolean := false;
+  v_keep boolean := false;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -8636,7 +8652,15 @@ begin
     if not coalesce(p_reset, false) then
       return jsonb_build_object('ok', false, 'error', 'needs_reset');
     end if;
-    perform public._game_poll_reset(g.id);
+    -- Wyniki zamkniętej ankiety: zachowanie tylko przy zmianie na typ, który je wykorzysta.
+    v_keep := coalesce(p_keep, false) and p_type <> g.type and p_type <> 'poll_text';
+    perform public._game_poll_clear(g.id, not (v_keep and p_type = 'prepared'));
+    -- Tekstowa: odpowiedzi pochodzą z ankiety -- bez zachowania zostają same pytania.
+    if not v_keep and g.type = 'poll_text' and p_type <> g.type then
+      delete from public.answers a using public.questions q
+       where q.id = a.question_id and q.game_id = g.id;
+      get diagnostics v_removed = row_count;
+    end if;
     v_reset := true;
   end if;
 
@@ -8661,7 +8685,7 @@ begin
    where id = g.id;
 
   return jsonb_build_object('ok', true, 'changed', true, 'type', p_type, 'reset', v_reset,
-                            'removed_answers', v_removed, 'cleared_points', v_cleared);
+                            'kept', v_keep, 'removed_answers', v_removed, 'cleared_points', v_cleared);
 end;
 $$;
 
@@ -27033,5 +27057,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict plZy6bar5JfsAwBI1AiEkVl8JA0kEZOf9yjboegsYTeKzAPkPwvoJoLaLj0sOfT
+\unrestrict co2ltNezGytnYdLzjmw9fdB2SWQGIRJmWYSgPOmsDkFaGzOFALQg7dPuFV8D1uF
 
