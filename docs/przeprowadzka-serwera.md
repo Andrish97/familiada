@@ -68,7 +68,7 @@ Zacznij od planu etapów i spisu ze starego serwera (tylko odczyt). Pisz po pols
 
 ## Etapy (uzgodnione 2026-10-21, sesja przeprowadzki)
 
-Stan: P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `bootstrap/bootstrap.sh`, `inventory/old-server.sh`, workflow `bootstrap.yml` i `inventory-old.yml`). P1 zrobione 2026-10-21 (klucz właściciela z Termuxa; sekrety `INSTALL_SSH_KEY`, `NEW_SERVER_HOST`, `NEW_SERVER_KNOWN_HOSTS` w familiada-server). P3 warstwa systemowa zrobiona (`bootstrap.yml` apply: Docker, Caddy, swap 4 GB, ufw, fail2ban, konta `andrish97` i `deploy`, `/srv/familiada`, SSH tylko kluczem bez root). **Następne: P2 spis starego serwera.**
+Stan (stary serwer: `aarch64`, Termux ma dostęp `andrish97@`). P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `bootstrap/bootstrap.sh`, `inventory/old-server.sh`, workflow `bootstrap.yml` i `inventory-old.yml`). P1 zrobione 2026-10-21 (klucz właściciela z Termuxa; sekrety `INSTALL_SSH_KEY`, `NEW_SERVER_HOST`, `NEW_SERVER_KNOWN_HOSTS` w familiada-server). P3 warstwa systemowa zrobiona (`bootstrap.yml` apply: Docker, Caddy, swap 4 GB, ufw, fail2ban, konta `andrish97` i `deploy`, `/srv/familiada`, SSH tylko kluczem bez root). **Następne: P2 spis starego serwera.**
 
 | Etap | Co | Kto |
 |---|---|---|
@@ -100,4 +100,4 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
   - migracje: blokada przed równoległym uruchomieniem, zrzut bazy przed migracją do `/srv/familiada/backups/`, log jak dziś (`supabase/migration_logs/latest.log`);
   - workflow w repo familiada zmieniamy dopiero przy przełączeniu (P6), z sekretami `SERVER_*` wskazującymi nowy serwer i konto `deploy`.
 - **Adresy (decyzja właściciela 2026-10-21):** `api.familiada.online` — API Supabase (jak dziś); `supabase.familiada.online` — Supabase Studio; `panel.familiada.online` — już za Cloudflare Access (zostaje); Cockpit i Portainer — **każdy pod osobnym adresem** za Access (propozycja: `panel.` = Cockpit, `docker.` = Portainer). Próba generalna na odpowiednikach z `2` (`api2.`, `supabase2.`, `leads2.`, `www2.`, …) — zamiast wcześniejszego `supabase2.` jako API.
-- **`settings.` do zmiany nazwy** (to już nie tylko ustawienia, a panel administracyjny). Nowa nazwa — do decyzji właściciela (propozycja: `admin.`). Osobny etap po przełączeniu serwera, żeby nie mieszać dwóch zmian naraz.
+- **`settings.` → `admin.familiada.online`** (potwierdzone przez właściciela 2026-10-21; to już panel administracyjny, nie tylko ustawienia). Osobny etap po przełączeniu serwera, żeby nie mieszać dwóch zmian naraz.
