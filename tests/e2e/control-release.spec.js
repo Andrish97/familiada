@@ -1,6 +1,12 @@
 const {test,expect}=require('./helpers/production-test');
 const {loginAsPooledTestUser}=require('./helpers/login');
 const {generateE2EToken}=require('./helpers/e2e-token');
+const {serveBranchCode}=require('./helpers/branch-code');
+
+// Testy podręcznika sprawdzają kod brancha (strona manual + tłumaczenia).
+test.beforeEach(async({context},testInfo)=>{
+ if(/manual/.test(testInfo.title)&&process.env.TEST_BRANCH_CODE!=='0') await serveBranchCode(context,{pages:['manual']});
+});
 
 test('release: canonical routes serve the current app and preserve connection parameters',async({context})=>{
   const scripts={control:'app.js','control/display':'main.js','control/host':'main.js','control/buzzer':'main.js','games/settings':'game-settings.js'};
