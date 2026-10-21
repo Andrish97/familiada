@@ -240,7 +240,9 @@ const path = require("node:path");
 const areaDir = path.join(__dirname, "scenes");
 if (fs.existsSync(areaDir)) {
   for (const file of fs.readdirSync(areaDir).filter((f) => f.endsWith(".cjs")).sort()) {
-    module.exports.push(...require(path.join(areaDir, file)));
+    // Błąd w jednym pliku obszaru nie może wyłączyć pozostałych scen.
+    try { module.exports.push(...require(path.join(areaDir, file))); }
+    catch (e) { console.error(`[scenes] pominięty ${file}: ${e.message}`); }
   }
 }
 
