@@ -1,8 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-21T22370";
-import { t } from "../../translation/translation.js?v=v2026-10-21T22370";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-21T22370";
-import { startTicker } from "./background-ticker.js?v=v2026-10-21T22370";
-import { icon } from "./icons.js?v=v2026-10-21T22370";
+import { sb } from "./supabase.js?v=v2026-10-21T22375";
+import { t } from "../../translation/translation.js?v=v2026-10-21T22375";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-21T22375";
+import { startTicker } from "./background-ticker.js?v=v2026-10-21T22375";
+import { icon } from "./icons.js?v=v2026-10-21T22375";
 
 
 const HEARTBEAT_MS = 3_000;
