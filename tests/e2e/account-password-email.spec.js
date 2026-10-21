@@ -3,7 +3,7 @@ const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs");
 const { generateE2EToken } = require("./helpers/e2e-token");
-const { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits } = require("./helpers/mailbox");
 const { loginAsTestUser, withE2EBypass } = require("./helpers/login");
 
 const PASSWORD_EMAIL = "test11@familiada.online";
@@ -240,6 +240,8 @@ async function releaseEmailCooldown(page) {
 }
 
 async function startEmailChangeTest(testInfo) {
+  // Przydział dostawców poczty bywa wyczerpany przez wcześniejsze przebiegi -- wtedy maile nie wychodzą.
+  await resetMailProviderLimits();
   await restoreTestAccount("test12");
   await clearMailbox(PROFILE_EMAIL);
   await clearMailbox(PROFILE_NEW_EMAIL);
