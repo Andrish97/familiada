@@ -169,7 +169,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.waitForLoadState("networkidle");
 
       await page.locator("#mineGrid .addCard").click();
-      const overlay = page.locator(".uni-modal");
+      const overlay = page.locator(".uni-modal:visible");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
       await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
@@ -271,7 +271,7 @@ test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na te
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.locator(".x").click();
 
-      const uniModal = page.locator(".uni-modal");
+      const uniModal = page.locator(".uni-modal:visible");
       await expect(uniModal).toBeVisible({ timeout: 5000 });
 
       // Mały dialog: NIE zajmuje pełnej szerokości viewportu (390px), i

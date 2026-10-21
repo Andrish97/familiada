@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07223");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-21T07255");
 
 
 /* css/base.css */
@@ -2450,6 +2450,15 @@ body{
 .empty-state a{ color:var(--gold); }
 .empty-state--tile{ width:auto; min-height:130px; border-radius:18px; }
 .empty-state[hidden]{ display:none; }
+/* Przycisk obok pola ma wysokość pola (decyzja użytkownika 2026-10-21):
+   wiersze „pole + przycisk” rozciągają przycisk do wysokości pola. */
+:is(.account-field-row, .contacts-invite-row, .baseShareLookup, .connect-device-enter-code-row) > .btn{
+  align-self: stretch;
+  height: auto;
+  min-height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
 /* Okna udostępniania (Baza, urządzenie): pole adresu z przyciskiem w jednym wierszu. */
 .baseShareLookup{ display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 10px; }
 .baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
