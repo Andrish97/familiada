@@ -68,7 +68,7 @@ Zacznij od planu etapów i spisu ze starego serwera (tylko odczyt). Pisz po pols
 
 ## Etapy (uzgodnione 2026-10-21, sesja przeprowadzki)
 
-Stan: **P0 — w toku** (właściciel zakłada prywatne repo).
+Stan: P0 zrobione 2026-10-21 (repo `Andrish97/familiada-server`, szkielet: `bootstrap/bootstrap.sh`, `inventory/old-server.sh`, workflow `bootstrap.yml` i `inventory-old.yml`). **P1 — w toku** (właściciel: klucze z Termuxa, sekrety).
 
 | Etap | Co | Kto |
 |---|---|---|
