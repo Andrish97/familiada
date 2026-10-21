@@ -53,6 +53,7 @@ export function initDrawer({ onChange } = {}) {
 
   overlay.addEventListener("click", close);
   document.addEventListener("modal-sheet:enter", close);
+  document.addEventListener("explorer:close-drawer", close); // okna menedżera także bez trybu od dołu
 
   // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
   // NIE zamyka drawera automatycznie -- lista po prawej i tak aktualizuje

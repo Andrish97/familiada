@@ -10,11 +10,12 @@
 // na czas edycji przenosimy to samo pole, tabletki i podpowiedzi — dlatego
 // nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T07594";
-import { renderAll } from "../render.js?v=v2026-10-21T07594";
-import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T07594";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T07594";
-import { isNarrow } from "../render.js?v=v2026-10-21T07594";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-21T08050";
+import { renderAll } from "../render.js?v=v2026-10-21T08050";
+import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../data/listing.js?v=v2026-10-21T08050";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-21T08050";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-21T08050";
+import { isNarrow } from "../render.js?v=v2026-10-21T08050";
 
 const TEXT_DELAY_MS = 200;
 const MAX_SUGGESTIONS = 8;
@@ -183,7 +184,8 @@ export function wireSearch(state) {
       e.preventDefault();
       const el = inp();
       const any = !!el?.value.trim() || state.query.text || state.query.tagIds.length || state.query.types.length;
-      if (!any) { el?.focus(); return; }
+      // telefon: lupa otwiera okno „Szukaj” (pole w pasku to tylko podgląd)
+      if (!any) { if (isNarrow() && !sheet.isOpen()) sheet.open(); else el?.focus(); return; }
       clearTimeout(textTimer);
       if (el) el.value = "";
       hideSuggestions();
@@ -224,6 +226,9 @@ function wireSearchSheet(state, { clear, commit }) {
     const suggest = document.getElementById("searchSuggest");
     if (!overlay || !body || !box || open) return;
     open = true;
+    // szuflada lewego panelu (mobile.js) — także przy 601–900 px z myszą,
+    // gdzie okno nie przechodzi w tryb od dołu i nie wysyła modal-sheet:enter
+    document.dispatchEvent(new CustomEvent("explorer:close-drawer"));
     home = { parent: box.parentElement, next: box.nextSibling };
     body.append(box);
     if (suggest) body.append(suggest);
@@ -247,8 +252,9 @@ function wireSearchSheet(state, { clear, commit }) {
       home.parent.insertBefore(box, home.next?.parentNode === home.parent ? home.next : null);
       if (suggest) home.parent.append(suggest);
     }
-    document.getElementById("searchText")?.blur();
     renderAll(state);
+    // fokus na przycisku w pasku (pole w pasku to podgląd, bez klawiatury)
+    document.getElementById("searchSubmitBtn")?.focus({ preventScroll: true });
   }
 
   document.getElementById("searchSheetDone")?.addEventListener("click", hide);
@@ -264,5 +270,6 @@ function wireSearchSheet(state, { clear, commit }) {
   });
   window.matchMedia?.("(max-width: 900px)").addEventListener?.("change", (e) => { if (!e.matches) hide(); });
 
+  guardRoutedSheet(overlay, () => open);
   return { open: show, close: hide, isOpen: () => open };
 }

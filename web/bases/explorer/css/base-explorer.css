@@ -2403,9 +2403,11 @@ tr.row.is-drop-after td:last-child::after {
 }
 .modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
 .moveList > .list-empty { padding: 14px; opacity: .7; }
-/* stopka okien Filtry i Przenieś do: jak .tagsFoot (odstęp i linia nad przyciskami) */
+/* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
+   i linia nad przyciskami); w oknie od dołu stopkę układa base.css
+   (.sheet-modal-actions), jak w pozostałych oknach. */
 .move-modal > .modal-actions,
-.filters-modal > .modal-actions {
+.search-modal > .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -2451,12 +2453,4 @@ tr.row.is-drop-after td:last-child::after {
   box-sizing: border-box;
   background: rgba(255,255,255,.04);
   box-shadow: none;
-}
-.search-modal > .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,.12);
 }

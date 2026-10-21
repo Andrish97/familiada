@@ -3713,6 +3713,68 @@ test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () =
   });
 });
 
+test.describe("base-explorer: Przenieś do — klawiatura i adres (E22 przegląd)", () => {
+  test("Enter na Anuluj anuluje, Enter w szukaniu bez wyboru nic nie robi, przy jednym wyniku przenosi; ?dialog= w adresie nie zostawia pustego okna", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MOVEKEY-${Date.now()}`);
+
+    try {
+      const a = await createCategory(page, { baseId, name: "Alfa", ord: 1 });
+      await createCategory(page, { baseId, name: "Beta", ord: 2 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Klawiatura", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(qRow).toBeVisible({ timeout: 15000 });
+      const openMove = async () => {
+        await qRow.click({ button: "right" });
+        await page.locator('.context-menu .cm-item[data-action="item.moveTo"]').click();
+        await expect(page.locator("#moveOverlay")).toBeVisible();
+      };
+
+      // fokus w polu szukania; Enter na „Anuluj” anuluje
+      await openMove();
+      await expect(page.locator("#moveSearch")).toBeFocused();
+      await page.locator(`#moveList .moveRow[data-id="${a}"]`).click();
+      await page.locator("#moveCancel").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      expect((await getQuestionRow(page, qid))?.category_id ?? null).toBeNull();
+
+      // fraza bez trafień: Enter nic nie robi (wybór spoza listy nie obowiązuje)
+      await openMove();
+      await page.locator(`#moveList .moveRow[data-id="${a}"]`).click();
+      await page.locator("#moveSearch").fill("zzz");
+      await expect(page.locator("#moveOk")).toBeDisabled();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeVisible();
+
+      // jeden wynik: Enter przenosi do niego
+      await page.locator("#moveSearch").fill("alf");
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect.poll(async () => (await getQuestionRow(page, qid))?.category_id).toBe(a);
+
+      // telefon: wejście z adresu ?dialog=moveOverlay nie zostawia pustego okna
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${BASE_URL}?id=${baseId}&dialog=moveOverlay`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#moveOverlay")).toBeHidden({ timeout: 5000 });
+      await expect.poll(() => page.evaluate(() => new URL(location.href).searchParams.get("dialog"))).toBeNull();
+
+      // to samo dla okna „Szukaj”: pole zostaje w pasku, okno się nie wiesza
+      await page.goto(`${BASE_URL}?id=${baseId}&dialog=searchOverlay`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#searchOverlay")).toBeHidden({ timeout: 5000 });
+      await expect(page.locator("#toolbar #searchBox")).toBeVisible();
+      await page.locator("#searchBox").click();
+      await expect(page.locator("#searchSheetBody #searchText")).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
 test.describe("base-explorer: widoki lewego panelu jak radio (E22 etap 9)", () => {
   test("telefon: drzewo / tagi / kategorie otwierają panel z jednym widokiem; tag filtruje listę, plakietka liczy filtry", async ({ page, context }) => {
     test.setTimeout(60_000);
