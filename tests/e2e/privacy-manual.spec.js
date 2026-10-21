@@ -114,7 +114,7 @@ test("manual: pomoc kontekstowa (karta#kotwica), odnośniki między kartami, ram
     await page.locator('[data-tab="rules"][role="tab"]').click();
     await page.locator('#tab-rules a.m-ref[href^="#r16"]').first().click();
     await expect(page.locator("#tab-settings")).toBeVisible();
-    await expect(page).toHaveURL(/[?&]tab=settings(?:&|$)/);
+    await expect(page).toHaveURL(/[?&]tab=settings(?:&[^#]*)?#r16/); // karta w ?tab=, rozdział w #kotwicy
 
     // Prowadzenie gry: ramki ekranu prowadzącego; Ustawienia gry: Logo prowadzącego (Piksele/Źródło).
     await page.locator('[data-tab="control"][role="tab"]').click();
