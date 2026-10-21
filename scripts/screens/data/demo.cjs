@@ -247,8 +247,6 @@ function buildDb(lang, extras = {}) {
     tasks_list: tasks,
     resource_copy_inbox: [],
     snake_log: { ok: true, best: 23, games: 7 },
-    // Panel admina — statystyki (kadr admin-stats-snake pokazuje sekcję węża).
-    get_admin_stats: null, get_retention_stats: null, stats_excluded_list: [],
     // Control: wszystkie urządzenia na miejscu (migracja 397).
     control_devices_snapshot: `fn:() => ({ ok: true, server_time: new Date().toISOString(), devices: Object.fromEntries(["display", "host", "buzzer"].map((k) => [k, { primary_online: true, audio_unlocked: true, visibility: "visible", focused: true, waiting_count: 0, last_seen_at: new Date().toISOString(), meta: { page_visibility: "visible" } }])) })`,
     // Kosz menedżera bazy (migracja 428): foldery spoza głównej bazy demo
