@@ -553,16 +553,17 @@ Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści nale�
 
 ## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21)
 
-- **Nagroda w finale:** regulamin TVP (wg planu) mnoży wygraną ×3 tylko przy nieosiągniętym celu;
-  serwis (`endScreen.js`) zawsze mnoży sumę rund i finału, a po osiągnięciu celu dodaje kwotę główną.
-  Podręcznik opisuje oba sposoby osobno (rozdz. 4.4) — czy serwis ma pozostać tak, jak jest?
+- **Nagroda w finale** — decyzja 2026-10-21: jak w regulaminie. Cel osiągnięty: punkty zwycięskiej
+  drużyny z rund + kwota główna; nieosiągnięty: punkty z rund × mnożnik. Punkty z finału decydują
+  tylko o celu. Wyjaśnienie pod polami nagrody w Ustawieniach gry (`gameSettings.game.prizeHint`).
 - Regulamin TVP nie był dostępny przez sieć agenta (PDF z s.tvp.pl zablokowany) — rozdz. 1–4 oparte
   na faktach z planu; szczegóły pojedynku (kto pierwszy naciska) opisane ogólnie.
-- **Zmiana typu (7.8):** okno pokazuje jednozdaniowy skutek dla typu, bez podsumowania, które
-  pytania/odpowiedzi/punkty zostaną; bieżącego typu nie da się wybrać. Podręcznik opisuje stan kodu.
+- **Zmiana typu (7.8):** okno pokazuje przy każdym typie, co zostanie, a co zostanie usunięte
+  (np. „Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.”); bieżący typ jest wyłączony.
+  Sprawdzone 2026-10-21 — zgodne z planem (wcześniejszy zapis o braku podsumowania był błędny).
 - **Wysyłanie gry znajomemu:** kod pozwala wysłać tylko szkic (blokuje też otwartą/zatrzymaną ankietę).
-- **„Eksportuj do bazy”** przy otwartej/zatrzymanej ankiecie nie pyta o potwierdzenie (eksport do pliku
-  i powielanie pytają) — do decyzji, czy ujednolicić.
+- **„Eksportuj do bazy”** — decyzja 2026-10-21: ujednolicone; przy otwartej/zatrzymanej ankiecie pyta
+  „Bez bieżących głosów” jak eksport do pliku i powielanie.
 - **Eksplorator baz (dla sesji ujednolicającej Eksplorator):** osoba „Tylko podgląd” nie utworzy gry
   z bazy (przycisk „Utwórz grę” aktywny, ale nic nie robi); Ctrl+Shift+N tworzy pytanie zamiast folderu
   (warunek Ctrl+N przed Ctrl+Shift+N w `actions.js`); Delete w polu wyszukiwania może usuwać

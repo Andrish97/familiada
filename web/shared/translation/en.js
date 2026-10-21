@@ -1480,6 +1480,7 @@ const en = {
     transferDropsVotes: {
       title: "Without current votes",
       text: "The poll is open or stopped. The copy will be a draft of the same type — current votes will not be kept.",
+      baseText: "The poll is open or stopped. The questions and answers will go to the base without the current votes.",
       ok: "Continue",
       cancel: "Cancel",
     },
