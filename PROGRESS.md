@@ -18,9 +18,9 @@
 |---|---|
 | E0–E12, E15–E19N, C2-DIAG, E1 | zrobione (nie ruszać) |
 | E14 sprzątanie | zrobione (2026-10-18, 368 + 388–390, `db-migrate.yml` 39115618243); w tabeli Kolejki poprawione 2026-10-20 |
-| E20 kompaktowy telefon / wygląd | **w toku — ta sesja (pakiet poniżej)** |
+| E20 kompaktowy telefon / wygląd | zrobione — wdrożone `1012638`, kontrola 13/13 |
 | E21 reguły gry | **zrobione** (inna sesja, 2026-10-21 02:50 UTC — szczegóły niżej, „E21 — podsumowanie”) |
-| E13 instrukcja | ostatni etap, po wszystkim |
+| E13 indeks, zrzuty, wydajność, instrukcja | **ZAKOŃCZONE 2026-10-21** — instrukcja `c7aec78`, wydajność `7774db2` (szczegóły: Dziennik) |
 
 ## Bieżący krok: pakiet wyglądu na branchu → zielone e2e → Pages → kontrola
 
@@ -142,7 +142,12 @@ E2E na branchu (spec | przebieg | wynik):
 - Wdrożone na `main` (`1012638`), kontrola produkcji 13/13 ✓ (Dziennik).
   Dalej: E13 (indeks → zrzuty indeksu → wydajność → instrukcja).
 - E13: 13.1 indeks — poprawki nazw (`c526b68` i nast.), 13.2 zrzuty — automat
-  `screens.yml`, 13.3 wydajność — czeka na limit PSI; 13.4 instrukcja — w toku.
+  `screens.yml`, 13.3 wydajność — `lighthouse.yml`, telefon `/` 70→78
+  (LCP 6,5→4,8 s), wdrożone `7774db2`; 13.4 instrukcja — 11 kart, 19 rozdziałów
+  PL/EN/UK, wdrożona `c7aec78`, kontrola produkcji zielona.
+- Czeka na decyzję użytkownika: koniec `docs/podrecznik-plan.md` (nagroda
+  finału, okno zmiany typu, „Eksportuj do bazy”, błędy Eksploratora dla
+  sesji Eksploratora); dalsza wydajność (dzielenie `base.css`/budowanie JS).
 
 ## Dalej
 
