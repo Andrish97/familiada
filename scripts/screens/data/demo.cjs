@@ -334,7 +334,11 @@ function buildDb(lang, extras = {}) {
       return { ...row };
     }`,
     game_state_set_ui_lang: `fn:(args, db) => ({ ...(db.tables.game_state.find((r) => r.game_id === args.p_game_id) || {}) })`,
-    control_device_shares_list: [], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
+    control_device_shares_list: [], control_device_share_preflight: { ok: true, mail_allowed: true }, market_my_submissions: [
+      { id: id("mkt-sent-1"), title: "Rodzinny pojedynek", lang: "pl", status: "published", library_count: 42, avg_rating: 4.6, rating_count: 12 },
+      { id: id("mkt-sent-2"), title: "Wesele Ani i Tomka", lang: "pl", status: "pending", library_count: 0 },
+      { id: id("mkt-sent-3"), title: "Pubowy quiz czwartkowy", lang: "pl", status: "rejected", library_count: 0, moderation_note: "Za mało pytań w rundzie finałowej." },
+    ], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
     control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },

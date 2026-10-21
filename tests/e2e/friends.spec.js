@@ -363,7 +363,9 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       const invite = owner.page.locator('[data-contact-tab="invite"]');
       const received = owner.page.locator('[data-contact-tab="received"]');
       await expect(invite).toHaveAttribute("aria-selected", "true");
-      expect((await invite.boundingBox()).height).toBe(36);
+      // Pasek wypustek ma 36 px; aktywna wypustka zachodzi o 1 px na kartę (jeden kawałek z kartą).
+      expect(Math.round((await owner.page.locator("#contactsTabs").boundingBox()).height)).toBe(36);
+      expect(Math.round((await invite.boundingBox()).height)).toBe(37);
       await expect(owner.page.locator("#contactsInvite")).toBeVisible();
       await expect(owner.page.locator("#contactsReceived")).toBeHidden();
       await expect(received.locator(".badge")).toHaveText("1");

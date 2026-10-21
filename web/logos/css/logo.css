@@ -1012,30 +1012,12 @@ body.games-body.logo-body > main.logoWrap{
   width: 100%;
 }
 
-.logo-tabs-card .tab-label.active{
-  color: #f9fafb;
-}
-
-.logo-tabs-card .tab-label.active::after{
-  display: none !important;
-}
-
-.logo-tabs-card:has(#tabLogoText.active) .slot-logo-text .tab-corner-left,
-.logo-tabs-card:has(#tabLogoImage.active) .slot-logo-image .tab-corner-right{
-  display: none;
-}
-
 .logo-tabs-card:has(#tabLogoText.active) .logoCard{
   border-top-left-radius: 0;
 }
 
 .logo-tabs-card:has(#tabLogoImage.active) .logoCard{
   border-top-right-radius: 0;
-}
-
-.logo-tabs-card:has(#tabLogoText.active) .slot-logo-image .tab-label::after,
-.logo-tabs-card:has(#tabLogoImage.active) .slot-logo-draw .tab-label::after{
-  display: block;
 }
 
 /* karta listy: nie rośnie poza viewport */

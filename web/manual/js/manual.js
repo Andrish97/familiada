@@ -2,14 +2,12 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12563";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T12563";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T12563";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T12563";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12563";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12563";
-
-import { decorateManualControls } from "./controls.js?v=v2026-10-21T12563";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T13051";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T13051";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T13051";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T13051";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T13051";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T13051";
 
 
 async function initManualI18n() {
@@ -22,6 +20,27 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: true });
+}
+
+// Treść podręcznika w osobnych modułach (nie w tłumaczeniach wszystkich stron).
+const CONTENT = {
+  pl: async () => (await import("../content/pl.js?v=v2026-10-21T13051")).default,
+  en: async () => (await import("../content/en.js?v=v2026-10-21T13051")).default,
+  uk: async () => (await import("../content/uk.js?v=v2026-10-21T13051")).default,
+};
+let contentLang = "";
+
+async function renderContent(lang) {
+  const load = CONTENT[lang] || CONTENT.pl;
+  const content = await load();
+  if (lang !== (getUiLang() || "pl")) return false; // w międzyczasie zmieniono język
+  contentLang = lang;
+  for (const [tab, panel] of Object.entries(pages)) {
+    const doc = panel.querySelector(".m-doc");
+    if (doc) doc.innerHTML = content[tab] || "";
+    buildToc(panel);
+  }
+  return true;
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -60,8 +79,70 @@ function setActive(name, { updateUrl = true } = {}) {
     el?.classList.toggle("active", active);
     if (el) el.hidden = !active;
   });
-  if (updateUrl) setTab(name, DEFAULT_MANUAL_TAB);
+  if (updateUrl) {
+    setTab(name, DEFAULT_MANUAL_TAB);
+    // Kotwica dotyczy poprzedniej karty — po zmianie karty znika z adresu.
+    if (location.hash) replaceAnchor("");
+  }
   updateMobileTabSubtitle(name);
+}
+
+// Spis treści karty z nagłówków rozdziałów (h2) i podrozdziałów (h3).
+function buildToc(panel) {
+  const doc = panel.querySelector(".m-doc");
+  if (!doc) return;
+  panel.querySelector(".m-toc")?.remove();
+  const heads = Array.from(doc.querySelectorAll("h2.m-ch[id], h3.m-h2[id]"));
+  if (heads.length < 2) return;
+  const nav = document.createElement("nav");
+  nav.className = "m-toc";
+  const title = document.createElement("p");
+  title.className = "m-toc-title";
+  title.textContent = t("manual.toc");
+  const root = document.createElement("ol");
+  let sub = null;
+  for (const h of heads) {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = `#${h.id}`;
+    a.textContent = h.textContent.trim();
+    li.appendChild(a);
+    if (h.tagName === "H2") { root.appendChild(li); sub = null; continue; }
+    if (!sub) {
+      sub = document.createElement("ol");
+      (root.lastElementChild || root).appendChild(sub);
+    }
+    sub.appendChild(li);
+  }
+  nav.append(title, root);
+  doc.before(nav);
+}
+
+function replaceAnchor(id) {
+  history.replaceState(history.state, "", `${location.pathname}${location.search}${id ? `#${id}` : ""}`);
+}
+
+// Kotwica w podręczniku: przełącza kartę z danym rozdziałem i przewija do niego.
+function goToAnchor(id, { smooth = true, updateUrl = true } = {}) {
+  const target = id ? document.getElementById(id) : null;
+  const panel = target?.closest(".tab-panel[data-tab]");
+  if (!target || !panel) return false;
+  if (!panel.classList.contains("active")) setActive(panel.dataset.tab);
+  if (updateUrl) replaceAnchor(id);
+  target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  target.classList.remove("m-flash");
+  void target.offsetWidth;
+  target.classList.add("m-flash");
+  return true;
+}
+
+function wireRefs() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.('a[href^="#"]');
+    if (!link || !link.closest(".tab-page")) return;
+    const id = decodeURIComponent(link.getAttribute("href").slice(1));
+    if (goToAnchor(id)) event.preventDefault();
+  });
 }
 
 function wireTabs() {
@@ -101,8 +182,12 @@ async function init() {
   });
   await i18nP;
 
-  decorateManualControls(document, document.documentElement.lang);
+  await renderContent(getUiLang() || "pl").catch((err) => console.error("[manual] treść:", err));
   wireTabs();
+  wireRefs();
+  // Pomoc kontekstowa: ?tab= wybiera kartę, #kotwica wskazuje rozdział w niej.
+  const anchor = decodeURIComponent(location.hash.slice(1));
+  if (anchor) requestAnimationFrame(() => goToAnchor(anchor, { smooth: false, updateUrl: false }));
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
@@ -110,5 +195,7 @@ void init();
 
 
 window.addEventListener("i18n:lang", () => {
-  decorateManualControls(document, document.documentElement.lang);
+  const lang = getUiLang() || "pl";
+  if (lang !== contentLang) void renderContent(lang);
+  else Object.values(pages).forEach(buildToc);
 });

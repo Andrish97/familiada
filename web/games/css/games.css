@@ -12,16 +12,6 @@
   --radius: 16px;
   --tab-width: 220px;
   /* wspólne wymiary list (gry, bazy, logo) — docs/ujednolicenie-wygladu.md, 1 */
-  --tab-height: 36px;
-  --tab-extra: 1px;
-  --corner-bottom: 0px;
-  --corner-shift: 1px;
-  --border-fudge: 2px;
-
-  --page-bg: var(--bg);
-  --surface: #111827;
-  --inactive-text: rgba(255,255,255,.70);
-  --border-color: var(--line2);
 }
 
 /* --- BODY / MAIN: viewport-locked + internal layout --- */
@@ -145,221 +135,6 @@ body.games-body > main.wrap{
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-/* =========================================================
-   TABS CARD (games)
-========================================================= */
-.tabs-card{
-  width: 100%;
-  margin: 8px auto 0;
-  position: relative;
-
-  /* 🔑 najważniejsze: tabs-card musi być flex-kolumną */
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.tabs-strip{
-  flex: 0 0 auto;
-
-  display: flex;
-  height: var(--tab-height);
-  align-items: stretch;
-  background: var(--page-bg);
-  position: relative;
-  z-index: 1;
-}
-
-.tab-label,
-.tab-slot{
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
-  content: attr(data-copy-count);
-  position: absolute;
-  top: 2px;
-  right: 8px;
-  z-index: 4;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--gold, #e6b84c);
-  color: #171717;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
-#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){ padding-right:32px; }
-
-#tabs-root .tab-slot,
-.tab-slot{
-  width: auto;
-  min-width: 0;
-  flex: 1 1 max-content;
-  align-items: stretch;
-}
-
-.tab-label{
-  border: 0;
-  background: transparent;
-  color: var(--inactive-text);
-
-  width: 100%;
-  height: var(--tab-height);
-  line-height: var(--tab-height);
-
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-
-  cursor: pointer;
-  white-space: nowrap;
-  align-items: center;
-
-  padding: 0;
-  margin: 0;
-}
-
-.tab-label.active{ color: #f9fafb; }
-
-.tab-label::after{
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 1px;
-  background: rgba(0,0,0,.35);
-  display: none;
-}
-.tab-label.active::after{ display: none !important; }
-
-.tab-label::before{
-  content: "";
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  top: 14%;
-  bottom: 14%;
-  border-radius: calc(var(--radius)*.9);
-  background: rgba(255,255,255,.18);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .15s;
-}
-/* Tylko mysz: na dotyku hover „przykleja się” po tapnięciu i zostawał szary
-   prostokąt (zwłaszcza na „Gry Społeczności”, która przed aktywacją czeka
-   na pobranie listy) — jak w bases.css. */
-@media (hover: hover) and (pointer: fine){
-  .tab-label:not(.active):hover{ color: #fff; }
-  .tab-label:not(.active):hover::before{ opacity: 1; }
-}
-
-.tab-wrapper{
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-  z-index: 2;
-  display: none;
-}
-
-/* Twoje warunki pokazywania wrappera */
-.tab-slot:has(.tab-label.active) .tab-wrapper,
-/* Separatory między nieaktywnymi zakładkami (lewa krawędź zakładki N gdy N-1 też nieaktywna) */
-.tabs-card:has(#tabPollText.active)   .slot-prepared   .tab-label::after,
-.tabs-card:has(#tabPollText.active)   .slot-market      .tab-label::after,
-.tabs-card:has(#tabPollPoints.active) .slot-market      .tab-label::after,
-.tabs-card:has(#tabPrepared.active)   .slot-pollPoints  .tab-label::after,
-.tabs-card:has(#tabMarket.active)     .slot-pollPoints  .tab-label::after,
-.tabs-card:has(#tabMarket.active)     .slot-prepared    .tab-label::after{
-  display: block;
-}
-
-.tab-active,
-.tab-corner::before{
-  border: 1px solid var(--border-color);
-}
-
-.tab-active{
-  height: calc(var(--tab-height) + var(--tab-extra));
-  width: 100%;
-  line-height: var(--tab-height);
-  text-align: center;
-
-  background: var(--surface);
-  border-bottom: none;
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #f9fafb;
-
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
-}
-
-.tab-corner{
-  position: absolute;
-  bottom: var(--corner-bottom);
-  width: var(--radius);
-  height: var(--radius);
-  overflow: hidden;
-  background-color: transparent;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.tab-corner-left{
-  left: 0;
-  transform: translateX(calc(-100% + var(--corner-shift)));
-  background-image: radial-gradient(circle at 0% 0%, transparent var(--radius), var(--surface) var(--radius));
-}
-
-.tab-corner-right{
-  right: 0;
-  transform: translateX(calc(100% - var(--corner-shift)));
-  background-image: radial-gradient(circle at 100% 0%, transparent var(--radius), var(--surface) var(--radius));
-}
-
-.tab-corner::before{
-  content: "";
-  position: absolute;
-  width: calc(2 * var(--radius));
-  height: calc(2 * var(--radius));
-  border-radius: 50%;
-  background: transparent;
-}
-
-.tab-corner-left::before{
-  top: calc(-1 * var(--radius) - var(--border-fudge));
-  left: calc(-1 * var(--radius) - var(--border-fudge));
-}
-.tab-corner-right::before{
-  top: calc(-1 * var(--radius) - var(--border-fudge));
-  right: calc(-1 * var(--radius) - var(--border-fudge));
-}
-
-.tabs-card:has(#tabPollText.active) .slot-pollText .tab-corner-left,
-.tabs-card:has(#tabMarket.active) .slot-market .tab-corner-right{
-  display: none;
 }
 
 /* =========================================================
@@ -644,47 +419,6 @@ body.games-body > main.wrap{
    MOBILE
 ========================================================= */
 @media (max-width: 600px){
-  :root{
-    --tab-height: 56px;
-    --tab-extra: 2px;
-  }
-
-  .tabs-strip{
-    display: flex;
-    gap: 0;
-  }
-
-  /* Krótkie nazwy zakładek na mobilkach */
-  .tabs-strip .only-desktop { display: none !important; }
-  .tabs-strip .only-mobile  { display: inline !important; }
-
-  .tab-slot{
-    width: auto;
-    flex: 1 1 max-content;
-    justify-content: center;
-  }
-
-  .tab-active,
-  .tab-label{
-    line-height: var(--tab-height);
-  }
-
-  .tab-label{
-    height: var(--tab-height);
-    z-index: 2;
-  }
-
-  .tab-active{
-    height: calc(var(--tab-height) + var(--tab-extra));
-    color: transparent; /* jak było */
-  }
-
-  .tab-label.active::after,
-  .tab-label::after{
-    display: none !important;
-  }
-
-  .tab-wrapper{ z-index: 1; }
 
   .grid{
     grid-template-columns: minmax(0, 1fr);
@@ -809,10 +543,10 @@ body.games-body > main.wrap{
   align-items: center;
   gap: 6px;
 }
-.list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;box-sizing:border-box;padding:0 5px 0 10px;margin:0}
+.list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;margin:0}
 .list-search .searchText{height:100%;padding:0 4px}
 .list-search .btn{ padding: 0; min-height: 36px; }
-.list-search-open{ display: inline-flex; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
+.list-search-open{ display: none; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
 .list-search-open .ico{width:18px;height:18px}
 .list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
 @media (max-width: 600px){
@@ -840,25 +574,13 @@ body.games-body > main.wrap{
   .list-search .searchBox{ display:none; }
   .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 }
-.list-empty{
-  min-height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px;
-  border: 1px solid rgba(255,255,255,.22);
-  border-radius: 18px;
-  background: #070b16;
-  opacity: .76;
-  text-align: center;
-  cursor: default;
-}
+.list-empty{ cursor: default; }
 .logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
 .list-empty[hidden]{ display: none; }
 
-/* Układ wspólny dla Gier, Baz i Logo. Najpierw pełny pojedynczy rząd; klasy
-   włącza pomiar naturalnej szerokości z list-header-layout.js dopiero wtedy,
-   gdy wszystkie kontrolki faktycznie przekraczają szerokość paska. */
+/* Układ wspólny dla Gier, Baz i Logo: zawsze jeden rząd. Gdy kontrolki nie
+   mieszczą się nawet jako ikony, list-header-layout.js włącza .is-scroll —
+   pasek przewija się w bok, a wygaszona krawędź pokazuje, że jest więcej. */
 .games-bottom.is-single-row > .games-bottom-left,
 .games-bottom.is-single-row > .games-bottom-right{
   flex: 0 0 auto;
@@ -866,17 +588,20 @@ body.games-body > main.wrap{
   width: max-content;
   max-width: none;
 }
-.games-bottom.is-balanced-wrap > .games-bottom-left,
-.games-bottom.is-balanced-wrap > .games-bottom-right{
-  display: flex;
-  flex-wrap: wrap;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  align-content: start;
+.games-bottom.is-scroll{
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
-.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-content: flex-start; }
-.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-content: flex-end; }
+.games-bottom.is-scroll::-webkit-scrollbar{ display: none; }
+.games-bottom.has-more-end{ mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.games-bottom.has-more-start{ mask-image: linear-gradient(to right, transparent, #000 28px); }
+.games-bottom.has-more-start.has-more-end{ mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+/* Maska tworzy osobną warstwę — rozwinięte menu filtra/sortowania (position:
+   fixed) trafiało pod siatkę kafli. Przy otwartym menu bez wygaszenia. */
+.games-bottom:has(.ui-select.open){ mask-image: none; }
 .games-bottom.is-compact-icons .only-desktop{ display:none !important; }
 .games-bottom.is-compact-icons .games-bottom-right .btn,
 .games-bottom.is-compact-icons .list-filter .ui-select-btn,
@@ -907,6 +632,7 @@ body.games-body > main.wrap{
   background:transparent;
 }
 .games-bottom.is-compact-icons .list-search .searchBox{ display:none !important; }
+.games-bottom.is-compact-icons .list-search .list-search-open{ display:inline-flex; }
 .games-bottom.is-compact-icons .list-filter .ui-select-label,
 .games-bottom.is-compact-icons .list-filter .ui-select-caret,
 .games-bottom.is-compact-icons .list-sort .ui-select-label,
@@ -938,3 +664,18 @@ body.games-body > main.wrap{
 .change-type-option input { margin: 0; accent-color: var(--gold); }
 .change-type-name { font-weight: 900; }
 .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
+/* Grupy prawie się stykają: przy sobie, rozdzielone cienką kreską. */
+.games-bottom.has-group-sep{ justify-content: flex-start; }
+.games-bottom.has-group-sep > .games-bottom-right{
+  position: relative;
+  padding-left: 9px;
+}
+.games-bottom.has-group-sep > .games-bottom-right::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 1px;
+  background: rgba(255,255,255,.22);
+}

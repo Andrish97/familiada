@@ -73,8 +73,9 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   if (args.verbose) page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log(`    [${m.type()}] ${m.text().slice(0, 300)}`); });
-  const sep = scene.path.includes("?") ? "&" : "?";
-  const target = `${scene.path}${sep}lang=${lang}`;
+  const [pathOnly, hash = ""] = scene.path.split("#");
+  const sep = pathOnly.includes("?") ? "&" : "?";
+  const target = `${pathOnly}${sep}lang=${lang}${hash ? `#${hash}` : ""}`;
   await page.goto(scene.frame ? `${origin}/__screens__/frame.html?src=${encodeURIComponent(target)}` : `${origin}${target}`, { waitUntil: "domcontentloaded" });
   // W ramce czekamy i robimy kroki na stronie wewnątrz, zrzut -- całego okna.
   const view = scene.frame ? await (await page.waitForSelector("#screensFrame")).contentFrame() : page;

@@ -403,19 +403,6 @@
   background: #ffd766;
 }
 
-
-.navItem.tab-label:not(.active):hover {
-    color: #fff
-}
-
-.tab-slot:has(.navItem.tab-label.active) .tab-wrapper {
-    display: block
-}
-
-.control-tabs-card:has(#navDevices.active) .slot-devices .tab-corner-left,.control-tabs-card:has(#navFinal.active) .slot-final .tab-corner-right {
-    display: none
-}
-
 @media (max-width:1100px) {
     .cards2 {
         grid-template-columns: 1fr
@@ -584,146 +571,8 @@
     margin-top: 4px
 }
 
-.tabsBar {
-    margin-bottom: 0
-}
-
-.tabs-strip {
-    display: flex;
-    height: var(--tab-height);
-    align-items: stretch;
-    background: var(--page-bg);
-    position: relative;
-    z-index: 1
-}
-
-.navItem.tab-label,.tab-slot {
-    position: relative;
-    justify-content: center
-}
-
-.tab-slot {
-    width: auto;
-    min-width: 0;
-    flex: 1 1 max-content;
-    display: flex;
-    align-items: stretch
-}
-
-.navItem.tab-label {
-    border: 0;
-    background: 0 0;
-    color: var(--inactive-text);
-    width: 100%;
-    height: var(--tab-height);
-    line-height: var(--tab-height);
-    font-size: var(--tab-label-font-size,12px);
-    font-weight: 900;
-    letter-spacing: var(--tab-label-letter-spacing,.08em);
-    text-transform: uppercase;
-    cursor: pointer;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 14px;
-    margin: 0;
-    z-index: 2
-}
-
-.navItem.tab-label .ico {
-    font-size: 16px;
-    margin-right: 6px
-}
-
-.navItem.tab-label .navLabel {
-    line-height: 1
-}
-
-.navItem.tab-label:disabled {
-    opacity: .45;
-    cursor: not-allowed
-}
-
-.navItem.tab-label.active {
-    color: #f9fafb
-}
-
-.tab-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    pointer-events: none;
-    z-index: 1;
+.cardPanel.hidden {
     display: none
-}
-
-.tab-active,.tab-corner::before {
-    border: 1px solid var(--border-color)
-}
-
-.tab-active {
-    height: calc(var(--tab-height) + var(--tab-extra));
-    width: 100%;
-    background: var(--surface);
-    border-bottom: none;
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: var(--radius);
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative
-}
-
-.cardPanel.hidden,.tab-active .ico,.tab-active .navLabel {
-    display: none
-}
-
-.tab-corner {
-    position: absolute;
-    bottom: 0;
-    width: var(--radius);
-    height: var(--radius);
-    overflow: hidden;
-    background-color: transparent;
-    z-index: 3;
-    pointer-events: none
-}
-
-.tab-corner-left {
-    left: 0;
-    transform: translateX(calc(-100% + 1px));
-    background-image: radial-gradient(circle at 0% 0%,transparent var(--radius),var(--surface) var(--radius))
-}
-
-.tab-corner-right {
-    right: 0;
-    transform: translateX(calc(100% - 1px));
-    background-image: radial-gradient(circle at 100% 0%,transparent var(--radius),var(--surface) var(--radius))
-}
-
-.tab-corner::before {
-    content: "";
-    position: absolute;
-    width: calc(2*var(--radius));
-    height: calc(2*var(--radius));
-    border-radius: 50%;
-    background: 0 0
-}
-
-.tab-corner-left::before {
-    top: calc(-1*var(--radius) - 2px);
-    left: calc(-1*var(--radius) - 2px)
-}
-
-.tab-corner-right::before {
-    top: calc(-1*var(--radius) - 2px);
-    right: calc(-1*var(--radius) - 2px)
 }
 
 .tabsFoot {
@@ -1903,23 +1752,17 @@
 /* =========================================================
    SHARE MODAL (Udostępnianie urządzeń)
 ========================================================= */
+/* Jak okno odbiorców ankiety i udostępniania Bazy (.share-uni, 720 px). */
 .shareModal {
-  max-width: 520px;
-  width: calc(100% - 32px);
-  padding: 20px;
+  max-width: 720px;
+  width: min(720px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .shareModal > .mHead { margin-bottom: 0; }
-.shareModal > .shareSection { margin: 0; padding: 12px; flex: 0 0 auto; }
+.shareModal > .uni-body > .shareSection { margin: 0; padding: 12px; flex: 0 0 auto; }
 .shareModal .shareSectionTitle { line-height: 1.3; }
-.shareModal .importRow { margin-top: 10px; gap: 10px; }
-.shareModal .importRow > .btn,
-.shareModal .shareSectionActions > .btn { min-width: 40px; height: 40px; }
-.shareModal .shareList { display: grid; gap: 8px; margin-top: 9px; }
-.shareModal .shareRow { gap: 10px; padding: 9px 10px; }
 .shareModal .shareMain { min-width: 0; }
 .shareModal .shareEmail { overflow-wrap: anywhere; white-space: normal; }
 .shareModal .shareDeviceFriendRow { cursor: pointer; }
@@ -1998,7 +1841,6 @@
   gap: 10px;
   justify-content: space-between;
 }
-
 
 .device-row-opt {
   border-top: 1px solid rgba(255,255,255,.1);
@@ -2172,20 +2014,6 @@
   opacity: .85;
 }
 
-.logoGridEmpty {
-  width: 100%;
-}
-/* Share modal: input stretches, button pushed right */
-#shareDeviceOverlay .importRow {
-  flex-wrap: nowrap;
-}
-#shareDeviceOverlay .importRow .inp {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-#shareDeviceOverlay .importRow .btn {
-  flex: 0 0 auto;
-}
 
 /* --- Dodatkowe poprawki czytelności --- */
 #roundQuestion, .qPrompt {

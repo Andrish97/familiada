@@ -24,7 +24,7 @@
 }
 
 @media (max-width: 720px), (max-width: 980px) and (orientation: landscape){
-  .contacts-invite-row #btnInvite{ box-sizing: border-box; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; flex: 0 0 36px; display: inline-flex; align-items: center; justify-content: center; }
+  .contacts-invite-row #btnInvite{ box-sizing: border-box; width: 40px; min-width: 40px; height: auto; min-height: 0; padding: 0; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; }
   .contacts-invite-row .contacts-invite-label{ display: none; }
   .contacts-invite-row .contacts-invite-icon{ display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
 }
@@ -37,8 +37,6 @@
   .contacts-tabs > .tabs-strip{ display: flex; }
   .contacts-tabs .tab-slot{ width: 100%; }
   .contacts-tabs .tab-label{ z-index: 3; }
-  .contacts-tabs .tab-slot:first-child .tab-corner-left,
-  .contacts-tabs .tab-slot:last-child .tab-corner-right{ display: none; }
   .contacts-tabs:has([data-contact-tab="invite"].active) #contactsInvite{ border-top-left-radius: 0; }
   .contacts-tabs:has([data-contact-tab="received"].active) #contactsReceived{ border-top-right-radius: 0; }
 }

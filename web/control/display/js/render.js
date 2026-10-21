@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12563";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T13051";
 
 // control/display/js/render.js
 //
@@ -25,9 +25,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T1256
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-21T12563";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-21T12563";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-21T12563";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-21T13051";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-21T13051";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-21T13051";
 
 import {
   ROUND_INTRO_ANIM,
@@ -37,7 +37,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-21T12563";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-21T13051";
 
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
@@ -324,8 +324,10 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     paintTotals(row);
     const winnerTeam = row.detail.final.winnerTeam;
     const totals = row.detail.rounds.totals || { A: 0, B: 0 };
+    const finalPoints = row.detail.final.runtime.sum || 0;
     const screen = resolveFinalEndScreen(row.detail.settings, {
-      totalPointsAll: (totals[winnerTeam] || 0) + (row.detail.locks.gameEnded ? 0 : row.detail.final.runtime.sum || 0),
+      roundsPoints: (totals[winnerTeam] || 0) - (row.detail.locks.gameEnded ? finalPoints : 0),
+      finalPoints,
       hitTarget: !!row.detail.final.runtime.reached200,
     });
     if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });

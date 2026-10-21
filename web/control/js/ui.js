@@ -16,15 +16,15 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-21T12563";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T12563";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-21T12563";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-21T12563";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T12563";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T12563";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-21T13051";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T13051";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-21T13051";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-21T13051";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T13051";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T13051";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-21T12563";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-21T12563";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-21T13051";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-21T13051";
 
 
 const $ = (id) => document.getElementById(id);
@@ -198,11 +198,14 @@ export function createUI({ root, emit }) {
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
-      // Dwie stałe linie we wszystkich kaflach (zgłoszone: większe przyciski
-      // zawijały się nierówno): kod, Kopiuj, Udostępnij / akcje urządzenia.
+      // Dwie stałe linie w siatce równych kolumn (decyzja 2026-10-21: mniej
+      // przycisków, równe szerokości): kod (kliknięcie kopiuje), Udostępnij /
+      // akcje urządzenia.
       const codeLine = [
-        h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
-        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
+        h("button", { class: "btn device-connect-code", type: "button", title: t("common.copy"), "aria-label": `${t("common.copy")} ${code || ""}`.trim(), onclick: () => emit("devices.copyCode", kind) }, [
+          h("span", { class: "device-connect-code-val", text: code || "——————" }),
+          iconNode("copy"),
+        ]),
       ];
       const row2 = [];
       if (withQr) {

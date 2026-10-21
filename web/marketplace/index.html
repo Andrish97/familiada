@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-21T12563"/>
+  <meta name="app-version" content="v2026-10-21T13051"/>
 
 
   <meta charset="UTF-8"/>
@@ -27,15 +27,16 @@
   <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
 
   <base href="/"/>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-21T12563"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T12563"/>
-  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-21T12563"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T13051"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T13051" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T13051"/>
+  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-21T13051"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T12563" defer></script>
-  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-21T12563" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T12563" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T13051" defer></script>
+  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-21T13051" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T13051" defer></script>
 
 </head>
 <body class="mkt-body skel-body">
@@ -44,8 +45,6 @@
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnGoGames" type="button" data-i18n-icon="arrow-left">Wstecz</button>
-      <button class="btn" id="btnBackBrowse" type="button" hidden
-              data-i18n="marketplace.btnBackBrowse" data-i18n-icon="arrow-left">Przeglądaj</button>
     </div>
     <div class="topbar-section topbar-section-2">
     </div>
@@ -74,13 +73,18 @@
         </div>
       </div>
 
+      <div class="card mkt-games-card">
       <div class="mkt-search-bar">
         <div class="mkt-search-field">
-          <input class="inp mkt-search-input" id="searchInput" type="text" enterkeyhint="search"
+          <label class="searchBox searchBox--field mkt-search-box">
+          <i class="ico" data-icon="search" aria-hidden="true"></i>
+          <input class="searchText mkt-search-input" id="searchInput" type="text" enterkeyhint="search"
             data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier"
             data-i18n-placeholder="marketplace.searchPlaceholder"
             placeholder="Szukaj gry…"
             autocomplete="off"/>
+          <button class="searchClear" id="btnSearchClear" type="button" hidden data-i18n-title="marketplace.searchClear" data-i18n-aria-label="marketplace.searchClear"><i class="ico" data-icon="close" aria-hidden="true"></i></button>
+          </label>
           <button class="btn mkt-search-button" id="btnSearchFocus" type="button" data-i18n-title="marketplace.searchLabel" data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier" title="Szukaj gier"><i class="ico" data-icon="search" aria-hidden="true"></i></button>
         </div>
         <div class="ui-select mkt-filter" id="langFilter">
@@ -101,30 +105,32 @@
           <div class="ui-select-menu" role="listbox"></div>
         </div>
       </div>
-
       <div class="mkt-grid" id="browseGrid" data-skel-step></div>
       <div class="mkt-load-more-wrap" id="loadMoreWrap" hidden>
         <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore" data-i18n-icon="arrow-down">Pokaż więcej</button>
       </div>
       <div class="hint mkt-info" id="browseInfo"></div>
+      </div>
     </section>
 
     <!-- ======================================================
-         WIDOK: MOJE WYSŁANE
+         OKNO: MOJE WYSŁANE (decyzja 2026-10-21 — okno zamiast karty)
     ====================================================== -->
-    <section id="viewMine" hidden>
-      <div class="mkt-head">
-        <div>
-          <h1 class="mkt-title" data-i18n="marketplace.mySent.title">Moje wysłane gry</h1>
+    <div class="overlay modal--sheet" id="mySentOverlay" style="display:none;">
+      <div class="modal share-uni mySentModal" role="dialog" aria-modal="true" aria-labelledby="mySentTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="mySentTitle" data-i18n="marketplace.mySent.title">Moje wysłane gry</div>
+          <button class="btn sm" id="btnMySentClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
-        <div class="actions mkt-head-actions">
+        <div class="uni-body">
+          <div id="mySentList"></div>
+          <div class="hint mkt-info" id="mySentInfo"></div>
+        </div>
+        <div class="uni-foot modal-actions">
           <button class="btn sm gold" id="btnSubmitNew" type="button" data-i18n="marketplace.mySent.btnAdd" data-i18n-icon="plus">Dodaj nową do Gier Społeczności</button>
         </div>
       </div>
-
-      <div id="mySentList"></div>
-      <div class="hint mkt-info" id="mySentInfo"></div>
-    </section>
+    </div>
 
     <!-- ======================================================
          MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
@@ -226,7 +232,7 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T12563"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T13051"></script>
 
 </body>
 </html>

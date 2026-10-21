@@ -61,7 +61,7 @@ test("kontakty: wspólne karty, stan w mapie i wypustki CSS Gier", () => {
     assert.deepEqual(PAGES[id].tabs, ["invite", "received"]);
     assert.ok(PAGES[id].state.includes("tab"));
     assert.match(read(`web/${id}/index.html`), /games\/css\/games.css/);
-    assert.match(read(`web/${id}/index.html`), /tab-corner-left/);
+    assert.match(read(`web/${id}/index.html`), /class="tab-label/);
   }
   const src = read("web/shared/js/core/contacts-page.js");
   assert.match(src, /tabFromUrl\(/); assert.match(src, /setTab\(/);

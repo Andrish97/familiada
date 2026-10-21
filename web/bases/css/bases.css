@@ -13,12 +13,12 @@
    SHARE MODAL + tile badges
 ========================================================= */
 
-.modal.shareModal{ width: min(820px, 94vw); max-height: 90dvh; overflow-y: auto; }
+.modal.shareModal{ width: min(820px, 94vw); }
+/* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
+.modal-actions > .baseShareRoleSlot{ order: -1; margin-right: auto; }
 .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
 .baseShareSections .shareSection{ margin-top: 0; }
-.baseShareLookup{ display: flex; flex-wrap: nowrap; align-items: stretch; gap: 8px; margin-top: 10px; }
-.baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
-.baseShareLookup .btn{ height: 40px; }
+.modal-actions > .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
 .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
 .baseShareRoleShort{ display:none; }
@@ -39,8 +39,6 @@
      kafel mieści się w jednym rzędzie jak pozostałe listy */
   .shareRow--compact .shareRowActions .baseShareRole .baseShareRoleLabel{ display: none; }
 }
-.baseShareFooter{ display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
-.baseShareFooter > .btn{ height: 40px; }
 #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
 #baseDeclinesHost .shareSection{ margin-top: 8px; }
 #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
@@ -60,8 +58,7 @@
 
 /* =========================================================
    KARTA Z WYPUSTKAMI (wszystkie szerokości)
-   Kształt wypustek jak w games.css (.tab-active + .tab-corner), ale 2 × 50%.
-   Tekst jest na .tab-label (nad wypustką), .tab-active jest tylko tłem.
+   Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
 ========================================================= */
 
 .tabs-card.hub-tabs.bases-tabs-card{
@@ -92,18 +89,6 @@
   wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
   wypustce i tylko dla urządzeń z myszą.
 */
-.bases-tabs-card .tab-label::before{ opacity: 0 !important; }
-@media (hover: hover) and (pointer: fine){
-  .bases-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
-}
-
-.bases-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
-.bases-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
-.bases-tabs-card .tab-active{ z-index: 1; }
-
-/* skrajne wypustki: bez zewnętrznego zaokrąglenia */
-.bases-tabs-card:has(.slot-mine.active) .slot-mine .tab-corner-left,
-.bases-tabs-card:has(.slot-shared.active) .slot-shared .tab-corner-right{ display: none; }
 
 /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
 .bases-card{

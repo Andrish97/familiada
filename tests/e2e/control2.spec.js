@@ -1599,11 +1599,11 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     expect(earlyFinalSessions).toHaveLength(1);
     expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 276, team_a_score: 476, final_points: 200 });
     expect(earlyFinalSessions[0].stats_detail.end_reason).toBe("final_target");
-    expect(earlyFinalSessions[0].stats_detail.prize).toBe(26428);
+    expect(earlyFinalSessions[0].stats_detail.prize).toBe(25828); // regulamin: 276 z rund × 3 + 25000 (cel osiągnięty)
     expect(earlyFinalSessions[0].stats_detail.final.mapping1.filter(row => row.revealedPoints)).toHaveLength(4);
     expect(earlyFinalSessions[0].stats_detail.final.mapping2.filter(row => row.revealedPoints)).toHaveLength(0);
     await attachStatistics(testInfo, "early-final", earlyFinalSessions);
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26428);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(25828);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await expect(finishBtn).toBeEnabled({ timeout: 150000 });
@@ -2213,7 +2213,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await waitForSfxKeysAnyOrder(page, ["show_outro"], 15000);
     expect(await getSfxKeys(page)).not.toContain("round_transition");
     expect(await getSfxKeys(page)).not.toContain("reveal");
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1233);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(828);
     const finalSessions = await readControl2Sessions(page, game.id);
     expect(finalSessions).toHaveLength(1);
     expect(finalSessions[0]).toMatchObject({ status: "final", final_points: 135 });
@@ -2221,7 +2221,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(finalSessions[0].stats_detail.final.mapping1).toHaveLength(5);
     expect(finalSessions[0].stats_detail.final.mapping2).toHaveLength(5);
     expect(finalSessions[0].stats_detail.end_reason).toBe("final_complete");
-    expect(finalSessions[0].stats_detail.prize).toBe(1233);
+    expect(finalSessions[0].stats_detail.prize).toBe(828); // regulamin: 276 z rund × 3 (cel nieosiągnięty)
     await attachStatistics(testInfo, "full-final", finalSessions);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
@@ -3000,7 +3000,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
     // Regresja CSS: brak klamry wcześniej zagnieżdżał te reguły pod finałem.
     await expect(page.locator('[data-device="host"]')).toHaveCSS("border-top-style", "solid");
-    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "520px");
+    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "720px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
     await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     await page.locator("#shareDeviceEmail").fill(recipient.split("@")[0]);
@@ -3015,13 +3015,21 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 
     // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
     await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
+    page.on("response", async (res) => {
+      if (!res.url().includes("/rpc/control_device_share_preflight_by_lookup")) return;
+      const data = await res.json().catch(() => null);
+      const row = Array.isArray(data) ? data[0] : data;
+      // tylko flagi (repo publiczne: bez adresów i nazw)
+      const flags = row && typeof row === "object" ? Object.fromEntries(Object.entries(row).filter(([, v]) => typeof v === "boolean" || v === null)) : row;
+      console.log(`[e2e-diag] preflight_by_lookup ${res.status()} ${JSON.stringify(flags)} err=${row?.error || ""}`);
+    });
     await page.locator("#shareDeviceEmail").fill(recipient);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("już udostępniono", { timeout: 10000 });
+    await expect(page.locator(".app-toast-text")).toContainText("już udostępniono", { timeout: 10000 });
     const messageShot = testInfo.outputPath("shot-control-share-message.png");
     await page.screenshot({ path: messageShot, fullPage: true });
     await testInfo.attach("control-share-message", { path: messageShot, contentType: "image/png" });
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
-    await expect(page.locator("#shareDeviceMsg")).toBeHidden({ timeout: 5000 });
+    await expect(page.locator(".app-toast-text")).toBeHidden({ timeout: 5000 });
     // Zniknięcie komunikatu nie odblokowuje duplikatu udostępnienia.
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
     const readyShot = testInfo.outputPath("shot-control-share-ready.png");
@@ -3062,7 +3070,8 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
     // (nie ten sam user/sesja co operator) -- dowód, że token grantu
     // URL-u wystarcza, bez żadnego logowania.
-    const recipientContext = await controlContext(browser, );
+    // Prowadzący wymaga ekranu dotykowego (blokada urządzenia) — kontekst z dotykiem.
+    const recipientContext = await controlContext(browser, { hasTouch: true });
     contexts.push(recipientContext);
     const recipientPage = await recipientContext.newPage();
     await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
@@ -3659,7 +3668,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
   await loginAsTestUser(page, context, { username: accountPool[0] });
   const recipientContext = await controlContext(browser);
   const recipient = await recipientContext.newPage();
-  const anonymous = await controlContext(browser);
+  const anonymous = await controlContext(browser, { hasTouch: true }); // Prowadzący wymaga dotyku
   let game = null, peer = null, oldFlag = null;
   try {
     await loginAsTestUser(recipient, recipientContext, { username: accountPool[1] });
@@ -3724,7 +3733,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
+    await expect(page.locator(".app-toast-text")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
     expect(await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"buzzer",p_lookup:email})).toMatchObject({ok:false,error:"notifications_disabled"});
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
@@ -3756,7 +3765,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     await choice.check();
     expect((await rpc(page,"friends_remove",{p_id:fresh.id})).ok).toBe(true);
     await page.locator("#btnShareDeviceFriends").click();
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba nie jest już na liście znajomych");
+    await expect(page.locator(".app-toast-text")).toContainText("Ta osoba nie jest już na liście znajomych");
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_id===peer.id)).toBe(false);
   } finally {
     try {

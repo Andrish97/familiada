@@ -132,15 +132,10 @@
 .polls-tabs-card .slot-recipients{ display: none; }
 .pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
-.polls-tabs-card .tab-label::before{ opacity: 0 !important; }
-@media (hover: hover) and (pointer: fine){
-  .polls-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
+/* Ukryta wypustka „Odbiorcy” (komputer) nie liczy się jako sąsiad separatora. */
+@media (min-width: 981px){
+  .polls-tabs-card .slot-recipients + .slot-results .tab-label::after{ display: none; }
 }
-.polls-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
-.polls-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
-.polls-tabs-card .tab-active{ z-index: 1; }
-.polls-tabs-card:has(.slot-share.active) .slot-share .tab-corner-left,
-.polls-tabs-card:has(.slot-results.active) .slot-results .tab-corner-right{ display: none; }
 /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
 .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
 .polls-tabs-card .tab-slot.is-disabled .tab-label::before{ opacity: 0 !important; }
@@ -166,15 +161,6 @@
   min-height: 0;
   overflow: hidden;
 }
-.pollsEmpty{
-  margin: auto;
-  padding: 24px 12px;
-  text-align: center;
-  opacity: .75;
-  font-size: 14px;
-  line-height: 1.4;
-}
-.pollsEmpty a{ color: var(--gold); }
 
 /* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
 .shareCols{

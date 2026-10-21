@@ -1,4 +1,4 @@
-import { iconText } from "./icons.js?v=v2026-10-21T12563";
+import { iconText } from "./icons.js?v=v2026-10-21T13051";
 
 
 export function initUiSelect(root, { options = [], value = "", placeholder = "â€”", onChange, disabled = false } = {}) {
@@ -120,6 +120,15 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
     if (!root.contains(e.target)) close();
   };
 
+  // Menu ma position: fixed â€” przewiniÄ™cie paska lub listy z przyciskiem
+  // zostawiÅ‚oby je w starym miejscu. Przewijanie samego menu go nie zamyka.
+  const handleScroll = (e) => {
+    if (destroyed || !root.classList.contains("open")) return;
+    const target = e.target;
+    if (target === menu || menu.contains?.(target)) return;
+    if (target === document || target.contains?.(root)) close();
+  };
+
   const handleKeydown = (e) => {
     if (destroyed) return;
     if (e.key === "Escape" && btn.getAttribute("aria-expanded") === "true") { e.preventDefault(); close(); }
@@ -139,6 +148,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
 
   document.addEventListener("click", handleDocClick);
   document.addEventListener("keydown", handleKeydown);
+  document.addEventListener("scroll", handleScroll, true);
 
   setOptions(options);
   setValue(value, { silent: true });
@@ -153,6 +163,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
       destroyed = true;
       document.removeEventListener("click", handleDocClick);
       document.removeEventListener("keydown", handleKeydown);
+      document.removeEventListener("scroll", handleScroll, true);
     },
   };
 }
