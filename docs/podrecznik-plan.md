@@ -543,6 +543,9 @@ Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu man
 - **Oznaczenia**: przycisk `span.m-btn` (z ikoną aplikacji, jeśli ją ma), strona/widok `span.m-page`,
   odnośnik do rozdziału `a.m-ref`, wartość/plik `span.m-code`, klawisz `kbd.m-kbd`.
   Zgadywanie przycisków po liście etykiet (`controls.js`) usunięte.
+- **Treść** w `web/manual/content/{pl,en,uk}.js` (klucz = karta), ładowana tylko przez `/manual/`;
+  w tłumaczeniach zostają tytuły kart i „Spis treści” (wydajność E13.3: −320 KB na każdej stronie).
+  Test `tests/unit/controlRelease.test.js` pilnuje tej samej struktury (id, odnośniki, przyciski) w 3 językach.
 
 ## Następny etap pracy
 
