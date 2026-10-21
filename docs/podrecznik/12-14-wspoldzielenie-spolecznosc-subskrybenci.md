@@ -98,7 +98,7 @@ dopiero od trzech ocen.
 2. Gra pojawi się w *Moich grach*, w zakładce „Gry Społeczności”.
 3. Zaznacz ją i wybierz [Graj] (→ 17). Możesz też zmienić jej [Ustawienia gry] (→ 16).
 
-Gry ze Społeczności nie można edytować, zmieniać jej rodzaju, powielać, eksportować ani
+Takiej gry nie można edytować, zmieniać jej rodzaju, powielać, eksportować ani
 wysyłać.
 
 Aby usunąć grę z biblioteki, wybierz [Usuń z moich gier] w szczegółach albo ikonę kosza na
@@ -114,7 +114,7 @@ nadal ją mają.
    [Wyślij do Gier Społeczności].
 
 Zgłosić możesz swoją grę, która jest **gotowa do rozegrania** (→ 7.6): grę preparowaną albo
-grę z zamkniętą ankietą. Gier demo i gier ze Społeczności zgłosić się nie da. Jedna gra może
+grę z zamkniętą ankietą. Gier demo i gier dodanych z Gier Społeczności zgłosić się nie da. Jedna gra może
 mieć jedno zgłoszenie naraz.
 
 Zgłoszenie to **zapis gry z chwili wysłania** — późniejsze zmiany w Twojej grze go nie
@@ -143,7 +143,7 @@ zapraszać ją do ankiet. Subskrybent:
 
 - dostaje od Ciebie wiadomości e-mail o ankietach i udostępnionych urządzeniach,
 - odpowiada w ankietach i podłącza urządzenia bez logowania,
-- zarządza swoimi wiadomościami na stronie *Moje powiadomienia* (→ 14.5).
+- zarządza swoimi wiadomościami na stronie *Moje powiadomienia*.
 
 Osoby z kontem dodajesz jako znajomych (→ 10). Gdy subskrybent założy konto, przy jego adresie
 pojawi się „Ma konto — przejdź do Znajomych.”, a Ty dostaniesz od niego propozycję znajomości.
@@ -199,10 +199,10 @@ w *Ustawieniach konta* (→ 5.8).
 - **Subskrypcje** — od kogo możesz dostawać ankiety. Oczekujące przyjmiesz [Akceptuj] lub
   odrzucisz [Odrzuć]; z aktywnej zrezygnujesz [Wypisz się] — ta osoba będzie mogła zaprosić
   Cię ponownie dopiero po 30 dniach.
-- **Zadania** — ankiety, na które czekają na Twój głos ([Zagłosuj], [Odrzuć] → 15.3), i udostępnione
-  Ci urządzenia ([Podłącz urządzenie] → 17.1).
+- **Zadania** — ankiety, które czekają na Twój głos: [Zagłosuj] albo [Odrzuć] (→ 15.3), oraz
+  udostępnione Ci urządzenia: [Podłącz urządzenie] (→ 17.1).
 - **„Powiadomienia są włączone”** — [Zrezygnuj] wyłącza wszystkie wiadomości: anuluje subskrypcje,
   oczekujące ankiety i udostępnione urządzenia, a nikt nie będzie mógł Cię zaprosić. Gdy
   przywrócisz powiadomienia, dawne zaproszenia nie wrócą.
 
-Odwiedziny strony wygasają po godzinie bezczynności — potem wejdź ponownie przez odnośnik.
+Dostęp do strony wygasa po godzinie bezczynności — potem wejdź ponownie przez odnośnik.

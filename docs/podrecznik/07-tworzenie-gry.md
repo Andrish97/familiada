@@ -55,7 +55,7 @@ Aby gra preparowana była gotowa:
 - suma punktów w pytaniu może wynosić **najwyżej 100** — nie musi być równa 100.
 
 Wartości niespełniające tych warunków serwis zapisze, ale oznaczy na czerwono, a gra nie
-będzie gotowa. Jak punkty liczą się w rozgrywce → 3.
+będzie gotowa. Jak punkty liczą się w rozgrywce (→ 3.2).
 
 ## 7.5 Zapisywanie i edycja gry po rozpoczęciu ankiety
 
@@ -70,7 +70,7 @@ Puste pytanie lub odpowiedź zapisze się jako „Pytanie 1”, „ODP 1” itd.
 **Gra z ankietą:**
 
 - Gdy ankieta jest **otwarta** albo **zatrzymana**, edycja jest zablokowana. Aby edytować,
-  przerwij ankietę (zebrane głosy przepadną → 15.5).
+  przerwij ankietę (→ 15.5) — zebrane głosy przepadną.
 - Gdy ankieta jest **zamknięta**, przy próbie edycji serwis zapyta: „Zresetować ankietę?”.
   Po wybraniu [Resetuj] usunięte zostaną głosy, odpowiedzi ankietowanych oraz linki i kody QR
   do ankiety; pytania i odpowiedzi zostaną, punkty zostaną wyzerowane, a gra wróci do szkicu.
@@ -132,7 +132,7 @@ kopia. Jeśli chcesz zachować obecną wersję, najpierw użyj [Powiel] (→ 6.6
 
 - Gry z ankietą **otwartą lub zatrzymaną** nie można w tej chwili zmienić.
 - Przy ankiecie **zamkniętej** serwis najpierw zapyta o jej wyzerowanie (→ 7.5).
-- Gier ze Społeczności nie można zmieniać.
+- Gier z zakładki Gry Społeczności nie można zmieniać.
 
 W oknie „Zmień typ gry” każdy rodzaj ma opis skutków — sprawdź go przed wyborem [Zmień]:
 

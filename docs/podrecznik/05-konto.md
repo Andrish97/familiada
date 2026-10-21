@@ -16,12 +16,12 @@ i [Przypomnij hasło].
 
 Konto jest potrzebne do współpracy z innymi osobami. Tylko z kontem możesz:
 
-- mieć znajomych i subskrybentów oraz otrzymywać zadania (→ 10, 14, 15.4),
-- powielać gry i logo oraz wysyłać ich kopie znajomym (→ 6.6, 11),
+- mieć znajomych (→ 10) i subskrybentów (→ 14) oraz otrzymywać zadania (→ 15.4),
+- powielać gry i logo (→ 6.6) oraz wysyłać ich kopie znajomym (→ 11),
 - udostępniać bazy pytań (→ 12),
 - wysyłać zaproszenia do ankiety (→ 15.2),
 - udostępniać urządzenia do rozgrywki (→ 17.1),
-- zgłaszać i oceniać Gry Społeczności (→ 13).
+- zgłaszać i oceniać gry w publicznym katalogu (→ 13).
 
 Gdy jako gość otworzysz stronę dostępną tylko dla kont, zobaczysz komunikat
 „Niedostępne w koncie gościa”.
@@ -172,4 +172,5 @@ Zostają:
 - Twoje odpowiedzi w cudzych ankietach — bez powiązania z Tobą,
 - gry, które opublikowałeś w Grach Społeczności — bez Twojej nazwy jako autora.
 
-Jeśli chcesz zachować swoje materiały, przed usunięciem wyeksportuj je do plików (→ 6.7, 8.5, 9.1).
+Jeśli chcesz zachować swoje materiały, przed usunięciem wyeksportuj do plików gry (→ 6.7),
+logo (→ 8.5) i bazy pytań (→ 9.1).

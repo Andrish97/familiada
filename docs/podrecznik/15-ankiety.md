@@ -53,7 +53,7 @@ możesz wysłać [Przypomnij] — najwyżej dwa razy. [Usuń udostępnienie] wyc
 Oba sposoby możesz łączyć — głosy liczą się razem.
 
 Subskrybent bez konta może przejrzeć swoje zaproszenia i z nich zrezygnować na stronie
-*Moje powiadomienia* (→ 14.5).
+*Moje powiadomienia*.
 
 ## 15.3 Oddawanie głosu
 
@@ -71,7 +71,7 @@ Głosujący otwiera ankietę z odnośnika, kodu QR, wiadomości e-mail albo zada
 
 Osoba zaproszona imiennie głosuje tak samo; jej status u ankietującego zmieni się na
 „zagłosował”. Osoba bez konta może otworzyć ankietę z wiadomości albo ze strony
-*Moje powiadomienia* (→ 14.5).
+*Moje powiadomienia*.
 
 ## 15.4 Zadania i zaproszenia do głosowania
 
@@ -82,7 +82,7 @@ Zadanie to zaproszenie do ankiety, które dostałeś od znajomego. Znajdziesz je
   rezygnuje z udziału (ankieta zniknie z listy),
 - „Zrobione” — ankiety, w których już głosowałeś (zwinięte, widoczne przez 5 dni).
 
-Osoby bez konta mają swoje zadania na stronie *Moje powiadomienia* (→ 14.5).
+Osoby bez konta mają swoje zadania na stronie *Moje powiadomienia*.
 
 ## 15.5 Prowadzenie głosowania
 
@@ -137,5 +137,5 @@ na „Ankieta”.
 
 - [Uruchom ponownie] otwiera nową ankietę dla tej samej gry — dotychczasowe głosy i wyniki
   zostaną usunięte.
-- Edycja gry lub zmiana jej rodzaju także usuwa wyniki (po potwierdzeniu, → 7.5, 7.8).
+- Edycja gry (→ 7.5) lub zmiana jej rodzaju (→ 7.8) także usuwa wyniki — po potwierdzeniu.
 - Aby zachować wynik i jednocześnie zebrać nową ankietę, najpierw powiel grę (→ 6.6).

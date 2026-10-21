@@ -8,7 +8,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 
 - **Nie przyszła wiadomość z potwierdzeniem konta** → wiadomość trafiła do spamu albo adres ma
   literówkę → sprawdź folder spam; spróbuj założyć konto ponownie i wybierz [Wyślij ponownie]
-  (raz na godzinę) (→ 5.2).
+  — można to zrobić raz na godzinę (→ 5.2).
 - **„Potwierdź e-mail (link w skrzynce)” przy logowaniu** → konto nie zostało potwierdzone →
   kliknij odnośnik z wiadomości „FAMILIADA — Potwierdzenie konta”.
 - **„Zły e-mail lub hasło.”** → błędne hasło albo adres → sprawdź wielkość liter w haśle; możesz
@@ -41,7 +41,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 - **„Ten element bazy jest właśnie edytowany…”** → ktoś inny edytuje ten element → poczekaj
   chwilę i spróbuj ponownie (→ 12.5).
 - **[Wyślij] jest nieaktywne** → gra ma ankietę (wysłać można tylko szkic), pochodzi z Gier
-  Społeczności lub z materiałów demo, albo nie masz znajomych → zob. 11.2.
+  Społeczności lub z materiałów demo, albo nie masz znajomych → sprawdź, co można wysłać (→ 11.2).
 
 ## 19.3 Problemy z ankietami i głosowaniem
 
@@ -146,11 +146,11 @@ Po wysłaniu dostaniesz numer zgłoszenia. Aby szybciej rozwiązać problem, nap
 
 ## 20.3 Pojęcia związane z grą i urządzeniami
 
-- **Baza pytań** — biblioteka pytań do wielokrotnego użytku (→ 9).
+- **Baza pytań** — biblioteka pytań do wielokrotnego użytku.
 - **Ekran prowadzącego (Prowadzący)** — urządzenie z pytaniem i wszystkimi odpowiedziami dla osoby
   czytającej pytania (→ 17.1).
 - **Gra preparowana** — gra z odpowiedziami i punktami wpisanymi ręcznie, bez ankiety (→ 7.1).
-- **Gry Społeczności** — publiczny katalog gotowych gier (→ 13).
+- **Gry Społeczności** — publiczny katalog gotowych gier.
 - **Logo** — napis lub obraz pokazywany podczas gry (→ 8).
 - **Panel sterowania** — strona operatora, z której prowadzi się grę (→ 17).
 - **Przycisk do pojedynku** — telefon z przyciskami A i B dla zawodników (→ 17.1).

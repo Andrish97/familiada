@@ -12,7 +12,7 @@ tak odpowiedziało najwięcej ankietowanych.
 
 Rodziny stoją naprzeciwko siebie, a między nimi — prowadzący. Każda rodzina ma swoją „głowę”,
 która zaczyna rozgrywkę. W kolejnych rundach drużyny odkrywają odpowiedzi ukryte na tablicy
-i zbierają punkty. Pomyłki oznaczają się na tablicy znakiem X, a po trzech pomyłkach szansę
+i zbierają punkty. Każda pomyłka to znak X na tablicy, a po trzech pomyłkach szansę
 dostaje przeciwnik. W kolejnych rundach punkty mają większą wartość.
 
 Gra trwa, dopóki jedna z rodzin nie zdobędzie łącznie 300 punktów. Zwycięska rodzina wybiera
@@ -45,7 +45,7 @@ z bardzo rozproszonymi odpowiedziami odpadają.
 
 Drużyna próbuje odgadnąć odpowiedzi z tablicy. Odpowiedź, która jest na tablicy, zostaje
 odkryta, a jej punkty trafiają do puli rundy. Odpowiedź spoza tablicy jest pomyłką.
-Jak przebiega to w rundzie → 3.
+Szczegóły (→ 3).
 
 ## 2.4 Jak serwis wykorzystuje wyniki ankiety
 
@@ -78,7 +78,7 @@ właściwych punktach.
 Rundy rozgrywa się jedna po drugiej, aż któraś rodzina zdobędzie łącznie **300 punktów**.
 Zwykle wystarczają trzy rundy, ale gra trwa dalej, jeśli nikt nie osiągnął progu.
 
-**W serwisie:** próg ustawiasz sam (domyślnie 300 → 16.6). Liczba rund nie jest stała —
+**W serwisie:** próg ustawiasz sam w ustawieniach gry (→ 16.6); domyślnie to 300. Liczba rund nie jest stała —
 zależy od tego, kiedy któraś drużyna osiągnie próg, i od liczby przygotowanych pytań.
 
 ## 3.2 Punktacja i mnożnik rundy
@@ -147,7 +147,7 @@ Serwis sprawdza próg po rozliczeniu każdej rundy. Gdy któraś drużyna go osi
 Gra kończy się bez finału także wtedy, gdy **zabraknie pytań**, zanim któraś drużyna
 osiągnie próg.
 
-Jak panel sterowania prowadzi operatora przez te etapy → 17.
+Jak panel sterowania prowadzi operatora przez te etapy (→ 17).
 
 # 4. Finał teleturnieju
 
@@ -176,7 +176,7 @@ Punkty obu finalistów się sumują. W finale **nie ma mnożnika** — liczą si
 
 Celem finalistów jest razem **co najmniej 200 punktów**.
 
-**W serwisie:** cel ustawiasz sam (domyślnie 200 → 16.6). Gdy finaliści go osiągną, operator
+**W serwisie:** cel ustawiasz sam w ustawieniach gry (→ 16.6); domyślnie to 200. Gdy finaliści go osiągną, operator
 może zakończyć finał od razu, bez odsłaniania pozostałych pytań (→ 17.4).
 
 ## 4.4 Nagroda główna i rozliczenie wyniku

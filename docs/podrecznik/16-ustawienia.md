@@ -83,7 +83,7 @@ z Twojej listy rund; po [Losuj ponownie] poprzednie pytania finałowe wracają n
 ### 16.5.3 Pytania do rund
 
 Przy trybie „Kolejność” w sekcji „Pytania — Rundy” ułóż kolejność pytań przeciąganiem (albo
-strzałkami) — lista zawiera wszystkie pytania poza finałowymi. Rundy wykorzystają je po kolei; pytania finałowe są tu pominięte.
+strzałkami) — lista zawiera wszystkie pytania poza finałowymi. Rundy wykorzystają je po kolei.
 Przy trybie „Losowe” serwis potasuje pytania przed grą — kolejność zobaczysz w podsumowaniu
 (→ 17.2). Wylosowane pytania finałowe nie trafią do rund.
 

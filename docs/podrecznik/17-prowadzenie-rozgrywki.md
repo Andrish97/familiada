@@ -2,9 +2,9 @@
 
 Rozgrywkę prowadzi **operator** w *Panelu sterowania*. Pozostałe urządzenia pokazują grę
 uczestnikom i prowadzącemu. Ten rozdział opisuje je razem — etap po etapie: co robi operator
-i co w tym czasie dzieje się na pozostałych ekranach. Zasady rund i finału → 3 i 4.
+i co w tym czasie dzieje się na pozostałych ekranach. Zasady rund (→ 3) i finału (→ 4).
 
-## 17.1 Interfejsy i podłączanie urządzeń
+## 17.1 Urządzenia i ich podłączanie
 
 | Urządzenie | Rola | Gdzie zwykle działa |
 |---|---|---|
@@ -45,7 +45,7 @@ szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 [Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
 nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
-e-mail i na stronie *Moje powiadomienia* (→ 14.5). Na liście udostępnionych telefon i tablet
+e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
 **Bez części urządzeń:**
@@ -182,7 +182,7 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 - Dopóki jest czas, prowadzący może wracać do pominiętych pytań.
 - Ocena i odsłanianie — jak u gracza 1. Prowadzący widzi dodatkowo odpowiedź gracza 1 na to samo pytanie.
 
-**Koniec finału.** Gdy finaliści osiągną cel (domyślnie 200 → 4.3), dalsza ocena jest blokowana,
+**Koniec finału.** Gdy finaliści osiągną cel — domyślnie 200 punktów (→ 4.3) — dalsza ocena jest blokowana,
 a przycisk zmienia się na [Zakończ finał] — operator sam wybiera moment zakończenia. Jeśli celu
 nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
 

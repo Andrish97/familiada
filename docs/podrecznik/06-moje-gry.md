@@ -4,7 +4,7 @@
 
 *Moje gry* to strona, na którą trafiasz po zalogowaniu i od której zaczyna się większość
 pracy. Z górnego paska przejdziesz stąd do pozostałych części serwisu: baz pytań, logo,
-Gier Społeczności (→ 13), znajomych, subskrybentów, zadań i podłączania urządzeń. Liczniki przy
+Gier Społeczności, znajomych, subskrybentów, zadań i podłączania urządzeń. Liczniki przy
 przyciskach pokazują sprawy, które czekają na Ciebie: zaproszenia, otrzymane kopie, zadania
 i udostępnione urządzenia. Na węższym ekranie część przycisków jest w menu [Więcej].
 
@@ -16,7 +16,7 @@ Strona jest biblioteką Twoich gier, także kopii otrzymanych od znajomych. Gry 
 na zakładki:
 
 - **Ankieta tekstowa**, **Punktacja**, **Preparowana** — gry danego rodzaju (→ 7.1),
-- **Gry Społeczności** — gry dodane z publicznego katalogu (→ 13).
+- **Gry Społeczności** — gry dodane z publicznego katalogu.
 
 Na telefonie zakładki mają krótsze nazwy: „Tekst”, „Punkty”, „Prepar.” i „Społeczność”.
 
@@ -116,8 +116,8 @@ Co trafia do kopii:
 | Ankieta otwarta lub zatrzymana | Szkic bez zebranych głosów (serwis uprzedzi o tym w oknie „Bez bieżących głosów”). |
 | Ankieta zamknięta | Gra gotowa, z wynikiem ankiety. |
 
-Znajomemu możesz wysłać szkic ankiety oraz grę preparowaną; ankiety otwartej, zatrzymanej
-ani zamkniętej wysłać się nie da.
+Znajomemu możesz wysłać grę preparowaną oraz grę z ankietą, dopóki jest szkicem. Gry z ankietą
+otwartą, zatrzymaną ani zamkniętą wysłać się nie da.
 
 Powielanie i wysyłanie wymaga konta (→ 5.1). To co innego niż dodanie gry z Gier
 Społeczności (→ 13.4).
@@ -145,7 +145,7 @@ wymagać uzupełnienia — braki zobaczysz pod jej nazwą (→ 6.2).
 > rozgrywki.
 
 **Eksport do bazy pytań.** [Eksportuj do bazy] kopiuje pytania i odpowiedzi gry do wybranej
-bazy pytań (→ 9). W głównym folderze bazy powstaje folder nazwany jak gra. Możesz wybrać
+bazy pytań. W głównym folderze bazy powstaje folder nazwany jak gra. Możesz wybrać
 swoją bazę albo bazę udostępnioną Ci z prawem edycji (→ 12.4). Jeśli nie masz takiej bazy,
 okno pokaże „Brak baz do wyboru.” — najpierw utwórz bazę (→ 9.1).
 

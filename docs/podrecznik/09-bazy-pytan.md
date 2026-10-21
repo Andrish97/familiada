@@ -43,7 +43,7 @@ albo w drzewie folderów.
 | [Kopiuj], [Wytnij], [Wklej] | przenosi lub kopiuje zaznaczenie do innego folderu |
 | [Duplikuj] | tworzy kopię obok oryginału |
 | [Usuń] | usuwa zaznaczenie — po potwierdzeniu, bez możliwości cofnięcia |
-| [Utwórz grę] | tworzy grę z zaznaczonych pytań (→ 9.8) |
+| [Utwórz grę] | tworzy grę z zaznaczonych pytań |
 | [Odśwież widok] | pokazuje najnowszy stan bazy |
 
 **Przeciąganie.** Przeciągnij zaznaczenie na folder, aby je przenieść. Z wciśniętym Ctrl

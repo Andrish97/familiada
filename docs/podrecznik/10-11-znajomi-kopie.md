@@ -51,8 +51,8 @@ Aby usunąć znajomego, wybierz [Usuń] i potwierdź. Wtedy:
 - osoba znika z listy i trafia do „Odrzuconych przeze mnie” — przez 30 dni możesz to
   cofnąć [Cofnij odmowę],
 - oczekujące zaproszenia do ankiet i do baz pytań między wami zostają anulowane,
-- **bazy i urządzenia, które już udostępniłeś, zostają** — dostęp do nich cofnij osobno
-  (→ 12.5, 17.1),
+- **bazy i urządzenia, które już udostępniłeś, zostają** — dostęp do baz (→ 12.5) i urządzeń
+  (→ 17.1) cofnij osobno,
 - kopie gier i logo, które już wysłałeś, zostają u tej osoby — wysyłki nie da się cofnąć (→ 11).
 
 ## 10.5 Co umożliwia znajomość
@@ -60,7 +60,7 @@ Aby usunąć znajomego, wybierz [Usuń] i potwierdź. Wtedy:
 Ze znajomymi możesz:
 
 - zapraszać ich do ankiet (→ 15.2),
-- wysyłać im kopie gier i logo (→ 11) — tylko znajomym,
+- wysyłać im kopie gier i logo — tylko znajomym,
 - szybko wybierać ich z listy przy udostępnianiu baz (→ 12.2) i urządzeń (→ 17.1).
 
 Bazę i urządzenie możesz udostępnić także osobie spoza znajomych, wpisując jej adres e-mail
@@ -77,7 +77,7 @@ Czym wysyłka różni się od innych sposobów przekazania:
 
 - [Powiel] tworzy kopię dla Ciebie (→ 6.6),
 - eksport do pliku daje plik, który możesz przekazać komukolwiek (→ 6.7),
-- Gry Społeczności to publiczny katalog dla wszystkich (→ 13).
+- Gry Społeczności to publiczny katalog dla wszystkich.
 
 Wysyłanie wymaga konta i co najmniej jednego znajomego.
 
