@@ -98,14 +98,14 @@ The "Game settings" section:
 | "Finale target (pts)" | 200 | How many points the finalists must score together (→ 4.3). Shown when the final is turned on. |
 | "End screen mode" | "Logo" | What the end screen shows: "Logo", "Points" or "Prize amount" (only with a final). |
 | "Main prize amount" | 25 000 | The prize for reaching the final target. |
-| "Prize multiplier (after finale)" | 3 | What the winning team's points are multiplied by to calculate the amount. |
+| "Prize multiplier (after finale)" | 3 | What the winning team's points from the rounds are multiplied by to calculate the amount. |
 
 Multipliers and amounts are positive whole numbers — for example, 0.5 won't work. The app won't save
 an invalid value: after [Save], the field goes back to its previous value.
 
 The last two settings are shown when the game has a final and the end screen shows the prize amount.
-The amount on the end screen is the winning team's points (from the rounds and the final) multiplied by
-the "Prize multiplier", and once the final target is reached — increased by the main prize amount. In a tie, the end
+The amount on the end screen is the winning team's points from the rounds multiplied by
+the "Prize multiplier", and once the final target is reached — increased by the main prize amount, as in the game show (→ 4.4). In a tie, the end
 screen shows the logo.
 
 ## 16.7 Saving and using the settings

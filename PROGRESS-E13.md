@@ -48,6 +48,8 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
 
 ## Znane problemy
 
+- **Zależność od drugiej sesji (`claude/new-session-ay1h9t`):** podręcznik opisuje docelowe działanie wg decyzji użytkownika — nagroda jak w regulaminie TVP (punkty z rund × mnożnik + kwota główna po osiągnięciu celu; rozdz. 4.4, 16.6) i potwierdzenie przed „Eksportuj do bazy” przy otwartej/zatrzymanej ankiecie (6.7). Kod robi tamta sesja; przed wdrożeniem podręcznika sprawdzić, że jest na `main` (`web/shared/js/gameplay/endScreen.js`, `games.js`).
+
 - E20 (wygląd telefonu) wciąż w toku w innej sesji — po jego wdrożeniu przejrzeć szkice pod kątem nazw i układu ekranów.
 - Push na `main` wymaga zgody użytkownika (uprawnienia sesji: „Production Deploy”).
 

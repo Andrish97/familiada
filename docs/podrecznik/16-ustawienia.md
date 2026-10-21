@@ -98,14 +98,14 @@ Sekcja „Ustawienia gry”:
 | „Cel finału (pkt)” | 200 | Ile punktów muszą razem zdobyć finaliści (→ 4.3). Widoczne przy włączonym finale. |
 | „Tryb ekranu po zakończeniu” | „Logo” | Co pokaże ekran końcowy: „Logo”, „Punkty” albo „Kwota nagrody” (tylko z finałem). |
 | „Kwota główna nagrody” | 25 000 | Nagroda za osiągnięcie celu finału. |
-| „Mnożnik nagrody (po finale)” | 3 | Przez ile mnoży się punkty zwycięskiej drużyny przy wyliczaniu kwoty. |
+| „Mnożnik nagrody (po finale)” | 3 | Przez ile mnoży się punkty zwycięskiej drużyny z rund przy wyliczaniu kwoty. |
 
 Mnożniki i kwoty to dodatnie liczby całkowite — na przykład 0,5 nie zadziała. Nieprawidłowej
 wartości serwis nie zapisze: po [Zapisz] pole wróci do poprzedniej wartości.
 
 Ostatnie dwa ustawienia są widoczne, gdy gra ma finał i ekran końcowy pokazuje kwotę nagrody.
-Kwota na ekranie końcowym to punkty zwycięskiej drużyny (z rund i finału) pomnożone przez
-„Mnożnik nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną. Przy remisie ekran
+Kwota na ekranie końcowym to punkty zwycięskiej drużyny z rund pomnożone przez „Mnożnik
+nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną, jak w teleturnieju (→ 4.4). Przy remisie ekran
 końcowy pokazuje logo.
 
 ## 16.7 Zapis i użycie ustawień
