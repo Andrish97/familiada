@@ -228,6 +228,27 @@ Dotyczy: udostępnianie bazy, ankiety (karta Udostępnianie), Subskrypcje
 (subskrybenci / subskrypcje), udostępnianie urządzeń w Control (jeśli jest lista
 osób).
 
+**Kilka sekcji w jednej karcie — podział wysokości** (decyzja właściciela
+2026-10-21; Znajomi: Znajomi · Propozycje · Odrzucone oraz Zaproś + wysłane,
+Subskrybenci obie karty). Karta wypełnia obszar pracy, a jej wysokość dzielą
+sekcje:
+
+- rozwinięte sekcje z listą dostają **po równo** wolne miejsce (dwie — po
+  połowie, trzy — po jednej trzeciej); każda lista przewija się wewnątrz swojej
+  sekcji (wygaszone krawędzie, A15);
+- sekcja z mniejszą liczbą wierszy niż jej część **kurczy się do treści**,
+  a resztę przejmują pozostałe; wolne miejsce zostaje pod ostatnią sekcją;
+- sekcja zwinięta („Odrzucone”) zajmuje tylko nagłówek, pusta — zwarty pusty
+  stan (A13), formularz dodawania — swoją wysokość; tych nigdy nie ściskamy.
+
+Tak samo na telefonie i komputerze. Sam CSS (`contacts.css`): karta to siatka
+z wierszami `minmax(auto, max-content)`, sekcja z listą ma `overflow: hidden`
+(minimum 0), sekcja zwinięta/pusta i formularz `overflow: visible` (minimum =
+treść). Okna z dwiema listami (udostępnianie bazy i urządzenia, wybór
+odbiorców ankiety) mają już stały podział po połowie na arkuszu telefonu.
+Zrzuty: sceny `people-friends-half`, `people-friends-half-declined`,
+`people-subscribers-half`, `people-subscribers-half-invite`.
+
 ## A7. Oznaczenia i liczniki
 
 - `.tag` (`base.css:1362-1388`) — **stała informacja o obiekcie** (typ, stan,

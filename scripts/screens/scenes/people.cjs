@@ -95,6 +95,27 @@ function patchRpc(db, name, fn, data = null) {
   const prev = typeof old === "string" && old.startsWith("fn:") ? old.slice(3) : `() => (${JSON.stringify(old ?? null)})`;
   db.rpc[name] = `fn:(args, db) => (${fn})((${prev})(args, db), args, ${JSON.stringify(data)})`;
 }
+// Podział wysokości karty między sekcje (decyzja 2026-10-21): wielu znajomych,
+// 2 propozycje (otrzymane zaproszenia) i 2 odrzucone; subskrybenci i wysłane
+// zaproszenia też powielone, żeby listy wychodziły poza połowę karty.
+const MANY_DECLINED = [
+  { id: "00000000-0000-4000-8800-000000000091", label: "marek_wisniewski", email: "marek.w@example.test", friend_user_id: "00000000-0000-4000-8810-000000000091", direction: "incoming", status: "declined", created_at: "2026-10-12T10:00:00Z", resend_available_at: "2026-10-12T10:00:00Z", email_enabled: true },
+  { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: "zosia.k@example.test", friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
+];
+const manyContacts = (db) => patchRpc(db, "contacts_list", (prev, args, declined) => {
+  const copy = (r, k, i) => ({ ...r, id: r.id.slice(0, -4) + String(9000 + k * 100 + i), friend_user_id: r.friend_user_id ? r.friend_user_id.slice(0, -4) + String(9000 + k * 100 + i) : null });
+  if (args.p_kind === "friends") {
+    const base = prev.filter((r) => r.direction === "friend");
+    const extra = [];
+    for (let k = 1; k <= 3; k++) base.forEach((r, i) => extra.push({ ...copy(r, k, i), label: `${r.label}_${k + 1}`, email: `${k + 1}.${r.email}` }));
+    return [...prev, ...extra, ...declined];
+  }
+  const extra = [];
+  for (let k = 1; k <= 3; k++) prev.forEach((r, i) => extra.push({ ...copy(r, k, i), email: `${k + 1}.${r.email}`, label: `${k + 1}.${r.label}` }));
+  return [...prev, ...extra];
+}, MANY_DECLINED);
+const openDeclined = async (view) => { await view.locator('[data-section="declined"] .rowsSectionHead:visible').first().click(); await view.waitForTimeout(400); };
+
 const futureRows = (keys, minutes) => `fn:() => ${JSON.stringify(keys)}.map((action_key, i) => ({ action_key, next_allowed_at: new Date(Date.now() + (${JSON.stringify(minutes)}[i] || 30) * 60e3).toISOString() }))`;
 
 // Konto gościa (anonimowe logowanie z is_guest).
@@ -120,6 +141,8 @@ module.exports = [
       { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: "zosia.k@example.test", friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
     ]),
     steps: [async (view) => { const head = view.locator('[data-section="declined"] .rowsSectionHead').first(); await head.scrollIntoViewIfNeeded(); await head.click(); await view.waitForTimeout(400); await view.locator('[data-section="declined"] .shareRow').first().scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "people-friends-half", category: C, title: "Znajomi — zakładka Znajomi: wiele osób, 2 propozycje, odrzucone zwinięte (sekcje dzielą wysokość karty)", path: "/friends/?tab=received", devices: ["phone", "desktop"], sources: FRIENDS, ready: contactsReady, db: manyContacts },
+  { id: "people-friends-half-declined", category: C, title: "Znajomi — zakładka Znajomi: wiele osób, 2 propozycje, odrzucone rozwinięte (trzy sekcje dzielą wysokość)", path: "/friends/?tab=received", devices: ["phone", "desktop"], sources: FRIENDS, ready: contactsReady, db: manyContacts, steps: [openDeclined] },
   { id: "people-friends-empty", category: C, title: "Znajomi — pusta lista (brak znajomych i zaproszeń)", path: "/friends/", sources: FRIENDS, ready: "#contactsHost.skel-step-ready",
     db: (db) => { patchRpc(db, "contacts_list", (prev, args) => (args.p_kind === "friends" ? [] : prev)); db.rpc.badges_get = { friends_pending: 0 }; } },
   { id: "people-friends-empty-received", category: C, title: "Znajomi — pusta zakładka Znajomi na telefonie", path: "/friends/?tab=received", devices: ["phone"], sources: FRIENDS, ready: "#contactsHost.skel-step-ready",
@@ -150,6 +173,8 @@ module.exports = [
 
   // ================= Subskrybenci =================
   { id: "people-subscribers-received", category: C, title: "Subskrybenci — zakładka Subskrybenci na telefonie (aktywni)", path: "/subscribers/?tab=received", devices: ["phone"], sources: SUBS, ready: contactsReady },
+  { id: "people-subscribers-half", category: C, title: "Subskrybenci — wiele subskrybentów i wysłanych zaproszeń (sekcje dzielą wysokość karty)", path: "/subscribers/?tab=received", devices: ["phone", "desktop"], sources: SUBS, ready: contactsReady, db: manyContacts },
+  { id: "people-subscribers-half-invite", category: C, title: "Subskrybenci — zakładka Zaproś: formularz i długa lista wysłanych zaproszeń", path: "/subscribers/", devices: ["phone"], sources: SUBS, ready: contactsReady, db: manyContacts },
   { id: "people-subscribers-empty", category: C, title: "Subskrybenci — pusta lista (brak subskrybentów i zaproszeń)", path: "/subscribers/", sources: SUBS, ready: "#contactsHost.skel-step-ready",
     db: (db) => patchRpc(db, "contacts_list", (prev, args) => (args.p_kind === "friends" ? prev : [])) },
   { id: "people-subscribers-empty-received", category: C, title: "Subskrybenci — pusta zakładka Subskrybenci na telefonie", path: "/subscribers/?tab=received", devices: ["phone"], sources: SUBS, ready: "#contactsHost.skel-step-ready",
