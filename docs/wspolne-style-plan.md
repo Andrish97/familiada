@@ -20,6 +20,22 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
   zostaje (`control/buzzer`, `control/host`, `control/display`,
   `connect/tv`, `shared/css/tv-layout.css`, `snake`).
 
+- **Kierunek (decyzja użytkownika 2026-10-21, po analizie):** to nie
+  sprzątanie, tylko **ujednolicenie na maksa**. Kolejność:
+  1. **nowy silnik stylów napisany od zera** (wspólne pliki, tokeny,
+     komponenty, układy),
+  2. **ujednolicenie wszystkich wspólnych mechanizmów i modułów JS**, które
+     da się ujednolicić,
+  3. **ostrożne przepinanie strona po stronie**; stary CSS usuwany dopiero
+     po przepięciu wszystkich stron.
+- **Progi szerokości (decyzja użytkownika 2026-10-21):** wspólne, ale
+  **więcej progów** — strony, które potrzebują więcej miejsca, korzystają
+  z wyższego progu z tej samej wspólnej skali (bez własnych wartości).
+- **Style z HTML (decyzja użytkownika 2026-10-21):** atrybuty `style=`
+  i bloki `<style>` wyciągnąć i uporządkować (do silnika albo pliku strony).
+- **Analiza:** kontynuować i spisywać; implementacja silnika dopiero po
+  zatwierdzeniu projektu.
+
 ## Stan wyjściowy (pomiar 2026-10-21)
 
 - 35 plików CSS, 18,5 tys. linii; największe: `base.css` 3380,

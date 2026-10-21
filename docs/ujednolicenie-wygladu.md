@@ -33,6 +33,9 @@ podliczania jako stan bieżącej operacji.
   i nadpisań per strona. Plan i pomiar: [`wspolne-style-plan.md`](wspolne-style-plan.md).
 - Zakres: panel Control w pełni wspólny; buzzer, host, wyświetlacz/TV i snake
   odrębne — tylko wspólne tokeny i okna/komunikaty, własny wygląd rozgrywki.
+- Kierunek (2026-10-21): nowy silnik stylów od zera → ujednolicenie wspólnych
+  mechanizmów JS → przepinanie strona po stronie. Progi wspólne, ale więcej
+  progów. Style z HTML wyciągnąć. Szczegóły: `wspolne-style-plan.md`.
 
 ## Decyzje — zamknięcie E20 i reszta E18 (2026-10-20)
 
