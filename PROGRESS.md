@@ -121,7 +121,16 @@ E2E na branchu (spec | przebieg | wynik):
   okna odbiorców (`7457f35`). Marginesy: już równe (18 px) — bez zmian.
 - Pokazane użytkownikowi do decyzji: makieta Społeczności z wypustkami
   „Przeglądaj | Moje wysłane”; warianty Zadania/Connect (szerokość).
-- E2E paczki na branchu: kolejka `pk.sh` (12 speców) w toku.
+- E2E paczki na branchu: kolejka `pk.sh` (12 speców) w toku. Padły
+  nieaktualne testy (#shareMsg/#shareDeviceMsg od E16, `.uni-modal` łapał
+  ukryte okno udostępniania, równe szerokości z przyciskiem roli) —
+  poprawione (`9b0…`, `5604ef0`); do powtórki po kolejce: mobile-sheet-modals,
+  base-refusals, control2 --grep udostępnianie, control2 --grep control358.
+- Druga runda uwag (2026-10-21): okno koloru jak kolor tagów E22 (`b7b0f36`),
+  przycisk obok pola = wysokość pola (`5604ef0`), udostępnianie w Control jak
+  w Bazach (`7ac1165`), Społeczność: Moje wysłane w oknie + podkarta
+  wyszukiwania (`8327276`). Wypustki: pokazane makiety A (ten sam wygląd
+  z jednego elementu) i B (pigułki) — czeka na wybór użytkownika.
 
 ## Dalej
 
