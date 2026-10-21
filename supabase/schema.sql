@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ypWnJ7oXeVKrci0pcEwcoyaPbdIWk9sUNShb2HytIS2s5Kg72eZdLOaXxZhc5Na
+\restrict 98SxsvUB6AjSAW29veOHQmfXrzs2rijzZvo2o0Gw5CbxZKxhxkvPOy5IUBKkCfR
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -18627,7 +18627,9 @@ BEGIN
       ELSE 'questions_exhausted' END;
     info:=info || jsonb_build_object('end_reason',reason,'end_screen',d #> '{settings,endScreenMode}');
     IF played_final AND d #>> '{settings,endScreenMode}'='money' THEN
-      info:=info || jsonb_build_object('prize', (greatest(ra,rb)+fp)*coalesce((d #>> '{settings,finalPrizeMultiplier}')::integer,3)
+      -- Regulamin TVP (Dział V pkt 21–22): punkty z rund × mnożnik, przy osiągniętym celu
+      -- + kwota główna. Punkty finału decydują tylko o celu.
+      info:=info || jsonb_build_object('prize', greatest(ra,rb) * coalesce((d #>> '{settings,finalPrizeMultiplier}')::integer,3)
         + CASE WHEN coalesce((d #>> '{final,runtime,reached200}')::boolean,false)
           THEN coalesce((d #>> '{settings,mainPrizeAmount}')::integer,25000) ELSE 0 END);
     END IF;
@@ -18971,6 +18973,7 @@ CREATE TABLE "public"."answers" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "answers_ord_range" CHECK ((("ord" >= 1) AND ("ord" <= 6))),
     CONSTRAINT "answers_pts_non_negative" CHECK (("fixed_points" >= 0)),
+    CONSTRAINT "answers_text_chars" CHECK (("cardinality"("public"."fam_answer_invalid_chars"("text")) = 0)),
     CONSTRAINT "answers_text_len" CHECK ((("char_length"("text") >= 1) AND ("char_length"("text") <= 17)))
 );
 
@@ -20162,7 +20165,7 @@ CREATE TABLE "public"."questions" (
     "text" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "questions_ord_positive" CHECK (("ord" >= 1)),
-    CONSTRAINT "questions_text_len" CHECK ((("char_length"("text") >= 1) AND ("char_length"("text") <= 200)))
+    CONSTRAINT "questions_text_len" CHECK ((("char_length"("text") >= 1) AND ("char_length"("text") <= 100)))
 );
 
 
@@ -25992,5 +25995,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ypWnJ7oXeVKrci0pcEwcoyaPbdIWk9sUNShb2HytIS2s5Kg72eZdLOaXxZhc5Na
+\unrestrict 98SxsvUB6AjSAW29veOHQmfXrzs2rijzZvo2o0Gw5CbxZKxhxkvPOy5IUBKkCfR
 
