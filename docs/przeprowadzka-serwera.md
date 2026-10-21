@@ -51,6 +51,15 @@ Zasady:
 Zacznij od planu etapów i spisu ze starego serwera (tylko odczyt). Pisz po polsku, prowadź mnie krok po kroku, jestem laikiem.
 ```
 
+## Decyzje właściciela (2026-10-21)
+
+- Nowy serwer: Contabo, Ubuntu 24.04, x86_64, 7,8 GB RAM, 96 GB dysku. Utworzone już: konto `andrish97` (sudo), swap 4 GB (do potwierdzenia).
+- **Czysto i powtarzalnie:** cała konfiguracja serwera (Docker, Caddy, Supabase z przypiętymi wersjami, Lead Finder, zapora, swap, użytkownicy) w osobnym PRYWATNYM repo (np. `familiada-server`) jako skrypt idempotentny „postaw serwer od zera”. Właściciel nie przepisuje poleceń — skrypt uruchamia automat GitHuba; poprawki tylko w skrypcie, nie ręcznie na serwerze.
+- **Tymczasowy dostęp root dla automatu** tylko na czas instalacji (osobny sekret w GitHubie), potem usunięty; zostaje konto `deploy` z minimalnymi uprawnieniami. Na końcu: logowanie SSH tylko kluczem, bez logowania na root, zapora (22/80/443).
+- **Nowszy Supabase:** aktualna stabilna wersja self-hosted (przypięte wersje obrazów). Baza przez zrzut wczytany do nowszego Postgresa; sprawdzić rozszerzenia (vector, pg_net, Vault/pgsodium), GoTrue i Edge Runtime.
+- **Próba generalna na adresach testowych:** `supabase2.`, `leads2.`, `www2.`, `settings2.familiada.online` (DNS w Cloudflare na nowy serwer, testowy wariant Workera z adresem supabase2, Cloudflare Access także dla settings2, przekierowania logowania w GoTrue). E2E na tych adresach. Na kopii testowej WYŁĄCZONA wysyłka poczty i crony (prawdziwe adresy użytkowników!). Po przełączeniu adresy `*2` i testowy Worker usunąć.
+- Klucz Lead Findera w Caddy ma pochodzić z jednego źródła (np. zmienna z .env), nie z osobnej kopii w Caddyfile.
+
 ## Wnioski z 2026-10-21 (rotacja kluczy)
 
 - Klucz `LEAD_FINDER_API_KEY` jest też w `/etc/caddy/Caddyfile` (blok `leads.familiada.online`) — przy zmianie klucza zmienić także tam.
