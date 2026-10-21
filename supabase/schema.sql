@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PNlDpuRIcJQAIKR6NS6KVC1OTwZvGfS92i5Y4TVnGmxyfFtq4dL2AT5Js3OfHhs
+\restrict aPxQJaLnM90aBses2GPWzITqv6cFLhafHakdCJ0iyYrlIpHytmNWjHxfJN58bXC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3275,6 +3275,18 @@ BEGIN
     RETURN NEXT;
   END LOOP;
 END;
+$$;
+
+
+--
+-- Name: _public_username("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_public_username"("p_id" "uuid") RETURNS "text"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT username FROM public.profiles WHERE id = p_id
 $$;
 
 
@@ -13657,7 +13669,7 @@ CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "
     mg.avg_rating, mg.rating_count,
     (SELECT r.stars FROM public.market_game_ratings r
       WHERE r.market_game_id = mg.id AND r.user_id = auth.uid()) AS user_stars,
-    COALESCE(pr.username, '') AS author_username,
+    COALESCE(public._public_username(mg.author_user_id), '') AS author_username,
     mg.created_at,
     CASE WHEN auth.uid() IS NULL THEN false
          ELSE EXISTS (SELECT 1 FROM public.user_market_library uml
@@ -13665,7 +13677,6 @@ CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "
     END AS in_library,
     mg.origin::text AS origin
   FROM public.market_games mg
-  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = 'published'
     AND (p_search = '' OR mg.title ILIKE '%' || p_search || '%' OR mg.description ILIKE '%' || p_search || '%')
   ORDER BY
@@ -13711,10 +13722,9 @@ CREATE FUNCTION "public"."market_find_similar_embeddings"("p_lang" "text", "p_em
     mg.title,
     mg.origin::text AS origin,
     mg.status,
-    COALESCE(pr.username, '') AS author_username,
+    COALESCE(public._public_username(mg.author_user_id), '') AS author_username,
     (1 - (mg.embedding <=> p_embedding))::double precision AS similarity
   FROM public.market_games mg
-  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.lang = p_lang
     AND mg.status IN ('published', 'pending')
     AND mg.embedding IS NOT NULL
@@ -13737,10 +13747,9 @@ CREATE FUNCTION "public"."market_find_similar_questions"("p_lang" "text", "p_que
     mg.title,
     mg.origin::text AS origin,
     mg.status,
-    COALESCE(pr.username, '') AS author_username,
+    COALESCE(public._public_username(mg.author_user_id), '') AS author_username,
     similarity(mg.questions_text, p_questions_text)::real AS similarity
   FROM public.market_games mg
-  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.lang = p_lang
     AND mg.status IN ('published', 'pending')
     AND similarity(mg.questions_text, p_questions_text) >= p_threshold
@@ -13790,7 +13799,7 @@ CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" 
     mg.avg_rating, mg.rating_count,
     (SELECT r.stars FROM public.market_game_ratings r
       WHERE r.market_game_id = mg.id AND r.user_id = auth.uid()) AS user_stars,
-    COALESCE(pr.username, '') AS author_username,
+    COALESCE(public._public_username(mg.author_user_id), '') AS author_username,
     mg.status, mg.payload,
     CASE WHEN auth.uid() IS NULL THEN false
          ELSE EXISTS (SELECT 1 FROM public.user_market_library uml
@@ -13799,7 +13808,6 @@ CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" 
     mg.origin::text AS origin,
     mg.slug
   FROM public.market_games mg
-  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.id = p_id;
 $$;
 
@@ -14941,6 +14949,21 @@ BEGIN
  -- Account mail-off affects mail only; accesses retain their own decisions.
  RETURN jsonb_build_object('ok',true);
 END $$;
+
+
+--
+-- Name: poll_go_owner_email_match("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_go_owner_email_match"("p_owner_id" "uuid", "p_email" "text") RETURNS "text"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT coalesce(nullif(username, ''), email)
+  FROM public.profiles
+  WHERE id = p_owner_id
+    AND lower(btrim(email)) = lower(btrim(coalesce(p_email, '')))
+$$;
 
 
 --
@@ -19944,6 +19967,22 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
+$$;
+
+
+--
+-- Name: username_taken("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."username_taken"("p_username" "text") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE lower(username) = lower(btrim(coalesce(p_username, '')))
+      AND id IS DISTINCT FROM auth.uid()
+  )
 $$;
 
 
@@ -25584,27 +25623,6 @@ ALTER TABLE ONLY "public"."user_market_library"
 
 
 --
--- Name: game_gen_queue Allow public insert to queue; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Allow public insert to queue" ON "public"."game_gen_queue" FOR INSERT TO "authenticated", "anon" WITH CHECK (true);
-
-
---
--- Name: game_gen_queue Allow public read access to queue; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Allow public read access to queue" ON "public"."game_gen_queue" FOR SELECT TO "authenticated", "anon" USING (true);
-
-
---
--- Name: app_ratings Anyone can view ratings; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Anyone can view ratings" ON "public"."app_ratings" FOR SELECT USING (true);
-
-
---
 -- Name: message_attachments No public access; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -25682,13 +25700,6 @@ CREATE POLICY "answers_owner_write" ON "public"."answers" TO "authenticated" USI
 
 
 --
--- Name: device_connect_codes anyone can read device_connect_codes; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "anyone can read device_connect_codes" ON "public"."device_connect_codes" FOR SELECT USING (true);
-
-
---
 -- Name: app_config; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -25706,6 +25717,13 @@ CREATE POLICY "app_config_no_access" ON "public"."app_config" USING (false);
 --
 
 ALTER TABLE "public"."app_ratings" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: app_ratings app_ratings_select_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "app_ratings_select_own" ON "public"."app_ratings" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
 
 --
 -- Name: base_share_tasks; Type: ROW SECURITY; Schema: public; Owner: -
@@ -26554,13 +26572,6 @@ CREATE POLICY "profiles_insert_own" ON "public"."profiles" FOR INSERT WITH CHECK
 
 
 --
--- Name: profiles profiles_select_authenticated; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "profiles_select_authenticated" ON "public"."profiles" FOR SELECT TO "authenticated" USING (true);
-
-
---
 -- Name: profiles profiles_select_own; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -27060,5 +27071,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PNlDpuRIcJQAIKR6NS6KVC1OTwZvGfS92i5Y4TVnGmxyfFtq4dL2AT5Js3OfHhs
+\unrestrict aPxQJaLnM90aBses2GPWzITqv6cFLhafHakdCJ0iyYrlIpHytmNWjHxfJN58bXC
 
