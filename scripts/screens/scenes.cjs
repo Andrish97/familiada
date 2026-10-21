@@ -293,6 +293,26 @@ module.exports = [
     steps: [async (view, { device }) => { if (device !== "phone") { await view.setViewportSize({ width: 1180, height: 760 }); await view.waitForTimeout(500); await view.locator("#btnMore").click(); await view.waitForTimeout(300); } else { await view.locator(".topbar-menu-toggle").click(); await view.waitForTimeout(400); } }] },
   { id: "admin-market-pending", category: "Dodatkowe", title: "Panel admina — Gry Społeczności, licznik „Do zatwierdzenia”", path: "/settings/", sources: ["web/settings/"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop"],
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
+  // Audyt E24 (P1): podgląd maila bez skryptów (Ś6), lead-finder przez Worker (Ś2), obejście przerwy 12 h (Ś7).
+  { id: "admin-mail-html", category: "Dodatkowe", title: "Panel admina — poczta: treść HTML maila (bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabReports").click());
+      await view.locator(".mail-thread-item").first().click();
+      await view.locator(".mail-msg-html-frame").first().waitFor();
+      await view.waitForTimeout(800);
+    }] },
+  { id: "admin-mail-preview", category: "Dodatkowe", title: "Panel admina — poczta: pełny podgląd maila (dwuklik, bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabReports").click());
+      await view.locator(".mail-thread-item").first().click();
+      await view.locator(".mail-msg-central").first().dispatchEvent("dblclick");
+      await view.locator(".compose-preview-wrapper iframe").waitFor();
+      await view.waitForTimeout(800);
+    }] },
+  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — kontakty marketingowe: zlecenie lead-findera (przez Worker)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop"],
+    steps: [async (view) => { await view.locator("#btnMore").click().catch(() => {}); await view.getByText("Kontakty Marketingowe").last().click(); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "")); await view.waitForTimeout(500); }] },
+  { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
   { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },

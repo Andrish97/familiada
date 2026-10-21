@@ -3085,6 +3085,10 @@ function showAttachmentPreview(url, filename) {
   </div>`;
 }
 
+// Podgląd maili (także przychodzących): bez skryptów i bez wspólnego
+// origin (audyt E24, Ś6). Linki otwierają się w nowej karcie jak zwykle.
+const MAIL_FRAME_SANDBOX = "allow-popups allow-popups-to-escape-sandbox";
+
 function renderSimpleMessageContent(bubble, msg) {
   const bodyEl = document.createElement("div");
   const htmlSrc = msg.body_html;
@@ -3092,7 +3096,7 @@ function renderSimpleMessageContent(bubble, msg) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
@@ -3168,7 +3172,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
@@ -3189,7 +3193,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
     const frame = document.createElement("iframe");
     frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     frame.srcdoc = emailHtml;
 
     // Create wrapper with dark background (matches email theme #050914)
@@ -3472,7 +3476,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
-      frame.sandbox = "allow-scripts allow-popups";
+      frame.sandbox = MAIL_FRAME_SANDBOX;
         const wrappedHtml = buildStoredMailHtml(msg);
       frame.srcdoc = wrappedHtml;
       bodyEl.appendChild(frame);
@@ -3493,7 +3497,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
 
       const frame = document.createElement("iframe");
       frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
-      frame.sandbox = "allow-scripts allow-popups";
+      frame.sandbox = MAIL_FRAME_SANDBOX;
       frame.srcdoc = emailHtml;
 
       // Create wrapper with dark background (matches email theme #050914)
@@ -4493,7 +4497,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;display:block";
-  frame.sandbox = "allow-scripts allow-popups";
+  frame.sandbox = MAIL_FRAME_SANDBOX;
   frame.srcdoc = emailHtml;
   
   // Create wrapper with dark background (matches email theme #050914)
@@ -6795,23 +6799,16 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-21T19311");
 
-  const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
-  let mcToken = null;
 
-  async function mcGetToken() {
-    if (mcToken) return mcToken;
-    try {
-      const res = await fetch("/_admin_api/config/lead-finder-token");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok && data.token) {
-          mcToken = data.token;
-          return mcToken;
-        }
-      }
-    } catch(e) {}
-    return null;
+  // Lead-finder przez Worker (/_admin_api/leads/*): klucz usługi zostaje po
+  // stronie serwera (audyt E24, Ś2). Zwraca odpowiedź usługi (JSON).
+  async function mcLeads(path, method = "GET") {
+    const res = await adminFetch(`/leads/${path}`, { method });
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error(data?.detail || data?.error || `HTTP ${res.status}`);
+    return data || {};
   }
   let mcFilterUsedValue = "";
   let mcSearchValue = "";
@@ -6865,14 +6862,7 @@ function wireEvents() {
 
   async function mcLoadRuns() {
     try {
-      const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) {
-        mcState.status = "idle";
-        mcUpdateButtons();
-        return;
-      }
-      const data = await res.json();
+      const data = await mcLeads("search-runs/status");
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
       mcUpdateButtons();
@@ -6887,12 +6877,9 @@ function wireEvents() {
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
     actionBtn.disabled = true;
     try {
-      const tk = await mcGetToken();
       mcState.logs = [];
       mcRenderLogs();
-      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await mcLeads(`search-runs?target_count=${count}`, "POST");
       actionBtn.innerHTML = iconText("check", "Wyszukiwanie uruchomione");
       setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
@@ -6915,17 +6902,14 @@ function wireEvents() {
     }
 
     try {
-      const tk = await mcGetToken();
       if (mcState.status === "running") {
         actionBtn.innerHTML = iconText("pause", "Wstrzymywanie…");
-        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) throw new Error("Nie udało się wstrzymać zlecenia");
+        await mcLeads(`search-runs/${mcState.logRun}/pause`, "POST").catch(() => { throw new Error("Nie udało się wstrzymać zlecenia"); });
         mcState.status = "paused";
         mcStopLogAutoRefresh();
       } else {
         actionBtn.innerHTML = iconText("play", "Wznawianie…");
-        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) throw new Error("Nie udało się wznowić zlecenia");
+        await mcLeads(`search-runs/${mcState.logRun}/resume`, "POST").catch(() => { throw new Error("Nie udało się wznowić zlecenia"); });
         mcState.status = "running";
         mcStartLogAutoRefresh();
       }
@@ -6943,8 +6927,7 @@ function wireEvents() {
     actionBtn.disabled = true;
     cancelBtn.disabled = true;
     
-    const tk = await mcGetToken();
-    await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    await mcLeads(`search-runs/${mcState.logRun}/cancel`, "POST").catch(() => {});
     mcState.status = "idle";
     mcUpdateButtons();
     mcStopLogAutoRefresh();
@@ -7300,13 +7283,11 @@ function wireEvents() {
     if (mcState.logTimer) return;
     mcState.logTimer = setInterval(async () => {
       try {
-        const tk = await mcGetToken();
-        const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) {
+        let data;
+        try { data = await mcLeads("search-runs/status"); } catch {
           mcStopLogAutoRefresh();
           return;
         }
-        const data = await res.json();
         mcState.status = data.status || "idle";
         mcState.logRun = data.run_id;
         mcUpdateButtons();

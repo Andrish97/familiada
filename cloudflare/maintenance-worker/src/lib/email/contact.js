@@ -129,7 +129,7 @@ async function claimAppendSlot(env, key, max) {
 
 // Zgłoszenie i adres, do którego należy: adres z pierwszej wiadomości
 // zgłoszenia (formularz: nadawca; zgłoszenie założone przez admina: odbiorca).
-async function findTicketOwner(env, ticket) {
+export async function findTicketOwner(env, ticket) {
   const clean = ticket.replace(/^TICKET-/, "");
   const variants = Array.from(new Set([ticket, `TICKET-${clean}`]));
   const list = variants.map((v) => `"${v.replace(/["\\]/g, "")}"`).join(",");
