@@ -1,6 +1,6 @@
 # PROGRESS — E21 (reguły gier, transfer, naprawa danych)
 
-**Status:** W TOKU — czeka na nocną naprawę danych (krok 12, `pg_cron` 01:30 UTC 2026-10-21).
+**Status:** ZAKOŃCZONE (2026-10-21, 02:50 UTC).
 
 **Plan (źródło prawdy):** [`docs/reguly-gier-transfer-plan.md`](docs/reguly-gier-transfer-plan.md) §5 „Plan prac — kolejność wdrożenia” (14 kroków).
 Szczegóły i numery przebiegów: Dziennik w [`docs/wdrozenia.md`](docs/wdrozenia.md).
@@ -25,25 +25,14 @@ Szczegóły i numery przebiegów: Dziennik w [`docs/wdrozenia.md`](docs/wdrozeni
 | 9 | Transfer | ✅ 406 |
 | 10 | Marketplace | ✅ 404, 406 |
 | 11 | Szablony demo | ✅ 409 (log 15:39 UTC), dopasowanie kopii po treści 413 |
-| 12 | Nocna naprawa danych | ⏳ 407 + 409 + 411 + 413, `pg_cron` 01:30 UTC — teksty „ładnie” (granica słowa, mapa 298 dla baz demo), nieedytowane kopie demo jak obecna wersja, `rules_state` |
-| 13 | Ograniczenia bazy | ⏳ zakłada naprawa (`questions_text_len`, `answers_text_chars`); 5 odpowiedzi z emotek → słowa (412), więc nic już nie blokuje |
-| 14 | Kontrola i zamknięcie | ⏳ po kroku 12 |
+| 12 | Nocna naprawa danych | ✅ 2026-10-21 01:30 UTC, raport `e21_repair_runs` #1: pytania gier 11 / baz 24 skrócone, bazy demo 364 pytania (mapa 298), demo preparowane 119 (476 odp. <4 pkt), ankiety demo dopełnione 140 + 141, pominięte 0, zostało 0 |
+| 13 | Ograniczenia bazy | ✅ `questions_text_len` i `answers_text_chars` założone przez naprawę |
+| 14 | Kontrola i zamknięcie | ✅ odczyty kontrolne (0 pytań >100, 0 odp. >17 w bazach demo, kopie demo jak szablon), e2e `39535133821` ✓ |
 
 ## Co dalej
 
-1. Po 01:30 UTC: `scripts/agent-tools/gh-run.sh db-read.yml sql_file=scripts/db-read/e21-repair-report.sql` — raport naprawy (liczby).
-   Oczekiwane: `zostalo_pytan_ponad_100` = 0, `zostalo_odp_niedozwolonych` = 0, oba ograniczenia `t`; kopie demo poprawione (gry pominięte przez Control wracają kolejnej nocy).
-2. Odczyty kontrolne: `e21-demo-copies-state.sql`, `e21-demo-bases-state.sql`, `e21-long-questions-cut.sql` (powinny pokazać 0 problemów).
-3. E2E kontrolne na produkcji: `e2e/e21-rules.spec.js`.
-4. Wpis w Dzienniku, krok 14 → ✅, status „ZAKOŃCZONE”.
-
-## Limit wykorzystania
-
-- Użytkownik (2026-10-20, 23:35 UTC): limit odnawia się o **4:40**. Założenie: czas polski (CEST, UTC+2) → **02:40 UTC**; zapas na wypadek UTC → 04:40 UTC.
-- Wznowienia w sesji (ten sam prompt: przeczytać PROGRESS.md, git status, kroki 12–14):
-  - **02:45 UTC** (`trig_01Y1whFtYtheRkLCKbiDP71E`, 5 min po resecie wg czasu polskiego; wcześniej 02:15 — przesunięte, żeby nie trafić w limit),
-  - **04:45 UTC** (`trig_015iSh7JMLcEy7z32FsEm4wK`, zapas; przy statusie „ZAKOŃCZONE” tylko krótka informacja).
-- Naprawa danych idzie sama w bazie (`pg_cron` 01:30 UTC) — limit agenta jej nie dotyczy.
+Nic w E21. Kolejne etapy — kolejka w `docs/wdrozenia.md`.
+13 otwartych ankiet demo ma <10 pełnych ankiet (6 z prawdziwymi głosami, 7 z ponownie otwartym/zatrzymanym uruchomieniem) — zmiany użytkowników, celowo bez ingerencji.
 
 ## Znane problemy
 
