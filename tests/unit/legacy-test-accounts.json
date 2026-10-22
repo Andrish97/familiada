@@ -16,7 +16,6 @@
   "e21-rules.spec.js": 4,
   "editor.spec.js": 50,
   "friends.spec.js": 15,
-  "frontend-navigation.spec.js": 6,
   "game-deletion.spec.js": 1,
   "game-settings.spec.js": 20,
   "game-state-realtime-spike.spec.js": 2,
@@ -47,7 +46,6 @@
   "poll-share.spec.js": 25,
   "poll-voting.spec.js": 7,
   "polls-layout.spec.js": 1,
-  "polls.spec.js": 6,
   "privacy-manual.spec.js": 6,
   "rating-system.spec.js": 2,
   "recipient-account-cascade.spec.js": 9,
@@ -58,7 +56,6 @@
   "restore-demo.spec.js": 1,
   "snake.spec.js": 1,
   "subscribers.spec.js": 7,
-  "tasks.spec.js": 5,
   "test-account-restore.spec.js": 2
  }
 }

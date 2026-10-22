@@ -1,10 +1,11 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { pathToFileURL } = require("url");
 const path = require("path");
-const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
+const { loginAsGuest } = require("./helpers/login");
 
 const { serveBranchCode } = require("./helpers/branch-code");
-test.use({ serviceWorkers: "block" });
+// E25: jedno konto standard na workera (needs/lease, tests/README.md „Test accounts”).
+test.use({ serviceWorkers: "block", needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logos", "marketplace", "account"] });
 });
@@ -19,8 +20,8 @@ for (const path of ["/connect", "/connect/"]) {
   });
 }
 
-test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ page }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ page, accounts, loginAs }) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const target = "/connect/?lang=en#connect";
   await page.goto(`/manual/?lang=en&ret=${encodeURIComponent(target)}`, { waitUntil: "networkidle" });
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
@@ -30,8 +31,8 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
   expect(new URL(page.url()).hash).toBe("#connect");
 });
 
-test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page, accounts, loginAs }) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   await page.goto("/bases/", { waitUntil: "networkidle" });
   await page.locator("#btnFriends").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/friends/");
@@ -48,8 +49,8 @@ test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
-test("zalogowany: znajomi wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("zalogowany: znajomi wracają do gier bez doklejania folderu", async ({ page, accounts, loginAs }) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   await page.goto("/friends/", { waitUntil: "networkidle" });
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
@@ -63,8 +64,7 @@ test("zalogowany: znajomi wracają do gier bez doklejania folderu", async ({ pag
 // telefonu są schowane, pozostałe (poza custom — te sprawdzają coś przed
 // przejściem i wymagają wybranej gry) przechodzą na cel z poprawnym ?ret=,
 // a „Wstecz” na celu wraca na stronę wyjściową.
-// Konta: gość z loginAsGuest, konto z puli (loginAsPooledTestUser; test9/10
-// wyłączone — EXCLUDED_TEST_ACCOUNTS w helpers/login.js).
+// Konta: gość z loginAsGuest, konto wypożyczone (accounts.standard[0]).
 // ---------------------------------------------------------------------------
 
 // Klik programowy: przycisk topbaru bywa w „Więcej” (komputer) albo w ☰
@@ -97,7 +97,7 @@ const MAP_LIST = [
 ];
 
 for (const map of MAP_LIST) {
-  test(`mapa ${map.id} (${map.role}, ${map.profile.orientation} ${map.profile.viewportWidth}×${map.profile.viewportHeight}): przyciski, cele i „Wstecz”`, async ({ page }, testInfo) => {
+  test(`mapa ${map.id} (${map.role}, ${map.profile.orientation} ${map.profile.viewportWidth}×${map.profile.viewportHeight}): przyciski, cele i „Wstecz”`, async ({ page, accounts, loginAs }) => {
     test.setTimeout(240000);
     const { PAGES, buttonVisible, pageRoles } = await loadNav("../../web/shared/js/core/nav-map.js");
     await page.setViewportSize({ width: map.profile.viewportWidth, height: map.profile.viewportHeight });
@@ -119,7 +119,7 @@ for (const map of MAP_LIST) {
     }
 
     if (map.role === "guest") await loginAsGuest(page, page.context());
-    else await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+    else await loginAs(page, page.context(), accounts.standard[0]);
 
     let clicked = 0;
     for (const [id, p] of Object.entries(PAGES)) {
@@ -164,11 +164,11 @@ for (const map of MAP_LIST) {
 // na komputerze (próg wysokości 580 px, decyzja 2026-10-22) -- skróty sprawdzamy
 // w widokach, w których strony działają.
 for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => name !== "phoneLandscape")) {
-  test(`kontakty: skróty i ikony na stronach — ${device}`, async ({page}, testInfo) => {
+  test(`kontakty: skróty i ikony na stronach — ${device}`, async ({ page, accounts, loginAs }, testInfo) => {
     test.setTimeout(120000);
     // VIEWPORTS opisuje profil (viewportWidth/viewportHeight), nie rozmiar Playwrighta.
     await page.setViewportSize({ width: viewport.viewportWidth, height: viewport.viewportHeight });
-    await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+    await loginAs(page, page.context(), accounts.standard[0]);
     const origins = [
       ["/games/", ["btnFriends", "btnSubscribers"]],
       ["/bases/", ["btnFriends"]],
@@ -207,12 +207,12 @@ for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => na
 }
 
 // Freeze navigation after the tap so the previous page's final frame can be inspected.
-test("tablet: hamburger closes before navigating without touch filter layers", async ({ browser }, testInfo) => {
+test("tablet: hamburger closes before navigating without touch filter layers", async ({ browser, accounts, loginAs }, testInfo) => {
   const context = await browser.newContext({ viewport: { width: 800, height: 1280 }, isMobile: true, hasTouch: true });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "friends"] });
   const page = await context.newPage();
   try {
-    await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+    await loginAs(page, context, accounts.standard[0]);
     await page.goto("/games/", { waitUntil: "networkidle" });
     await page.locator('.topbar-menu-toggle').tap();
     const panel = page.locator('.topbar-mobile-overlay');

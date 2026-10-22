@@ -4,7 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --force-devices (urządzenia z --devices także dla scen z własną listą)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --force-devices (urządzenia z --devices także dla scen z własną listą)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -33,6 +33,8 @@ const DEVICES = {
   "tablet-landscape-short": { width: 1200, height: 560, scale: 1, mobile: true, screen: { width: 1280, height: 800 } },
   "desktop-short": { width: 1400, height: 550, scale: 1, mobile: false },
   "desktop-1400": { width: 1400, height: 900, scale: 1, mobile: false },
+  // Dotykowy tablet z niskim oknem 1400×550 (Host i Przycisk wymagają dotyku).
+  "tablet-short-1400": { width: 1400, height: 550, scale: 1, mobile: true, screen: { width: 1440, height: 900 } },
 };
 // --viewport=1280x580 -- dodatkowe urządzenie „viewport” (komputer) o podanym rozmiarze.
 if (args.viewport) {

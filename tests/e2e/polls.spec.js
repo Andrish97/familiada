@@ -32,13 +32,14 @@
 // sadzimy bezpośrednio przez API (nie testujemy tu kreatora pytań),
 // dokładnie tak jak w game-deletion.spec.js dla samej gry.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, instrumentPage } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
+const { instrumentPage } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Strona ankiety (/polls/) i wspólny kod front-endu z brancha — nowa strona
 // (E11c) testowana przed wdrożeniem; baza i reszta stron z produkcji.
-test.use({ serviceWorkers: "block" });
+// E25: jedno wypożyczone konto standard (właściciel ankiet).
+test.use({ serviceWorkers: "block", needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["polls"] });
 });
@@ -47,8 +48,8 @@ const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
 const REAL_UI_VOTERS = 1; // jedno prawdziwe kliknięcie na typ ankiety wystarczy — reszta (99) głosuje bezpośrednim RPC, patrz komentarz na górze pliku
 
-test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczyt", async ({ page, context }) => {
-  await loginAsTestUser(page, context);
+test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczyt", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   const fixture = await seedPollGame(page, "poll_text");
   let allowPollRetry = false;
   await page.route("**/rest/v1/games?*", async (route) => {
@@ -357,10 +358,10 @@ function textItemsForVoter(questions, answerForOrd) {
   });
 }
 
-test("ankieta punktowa i tekstowa: głosy, Zatrzymaj, Wznów, Podlicz", async ({ page, context, browser }) => {
+test("ankieta punktowa i tekstowa: głosy, Zatrzymaj, Wznów, Podlicz", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(300_000);
 
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   // --- Ankieta punktowa ---
   mark("start points seed");
@@ -463,10 +464,10 @@ test("ankieta punktowa i tekstowa: głosy, Zatrzymaj, Wznów, Podlicz", async ({
   }
 });
 
-test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w trybie podliczania", async ({ page, context }) => {
+test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w trybie podliczania", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(240_000);
 
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   mark("merge-test: start seed");
   const game = await seedPollGame(page, "poll_text");
@@ -620,8 +621,8 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w trybie podli
 // gdyby poll-qr.js czytał stan tylko raz przy starcie, ten test by nie
 // złapał regresji do starego, komendowego zachowania: musi minąć
 // POLL_LANG_INTERVAL_MS, żeby zmiana faktycznie dotarła.
-test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urządzenia przez pollowanie stanu", async ({ page, context, browser }) => {
-  await loginAsTestUser(page, context);
+test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urządzenia przez pollowanie stanu", async ({ page, context, browser, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
 
   const pollGame = await seedPollGame(page, "poll_text");
   const qrContext = await browser.newContext();
@@ -685,10 +686,10 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
 
 // ===== 4. Cofnij / Ponów i wyjście z podliczania bez zatwierdzenia =====
 
-test("ankieta tekstowa: cofnij/ponów dla edycji tekstu w trybie podliczania", async ({ page, context }) => {
+test("ankieta tekstowa: cofnij/ponów dla edycji tekstu w trybie podliczania", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(180_000);
 
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   mark("undo-test: start seed");
   const game = await seedPollGame(page, "poll_text");
@@ -754,10 +755,10 @@ test("ankieta tekstowa: cofnij/ponów dla edycji tekstu w trybie podliczania", a
   }
 });
 
-test("ankieta tekstowa: wyjście z podliczania bez zatwierdzenia zostawia ankietę zatrzymaną, poprawki wracają", async ({ page, context }) => {
+test("ankieta tekstowa: wyjście z podliczania bez zatwierdzenia zostawia ankietę zatrzymaną, poprawki wracają", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(180_000);
 
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   mark("leave-test: start seed");
   const game = await seedPollGame(page, "poll_text");

@@ -2,7 +2,7 @@
 // Próg wysokości viewportu (decyzja użytkownika 2026-10-22): strony robocze
 // w poziomie poniżej 580 px dostają „Obróć urządzenie” (dotykowy tablet, gdy
 // pion pomoże) albo „Za małe okno” (komputer, strona 980 px, Wyświetlacz). Guard działa przed logowaniem, więc spec nie potrzebuje kont.
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const SITE = "https://www.familiada.online";
@@ -11,7 +11,7 @@ const TABLET = { viewport: { width: 1200, height: 560 }, screen: { width: 1280, 
 
 async function newContext(browser, options) {
   const context = await browser.newContext({ serviceWorkers: "block", ...options });
-  if (branch) await serveBranchCode(context, { pages: ["games", "control"] });
+  if (branch) await serveBranchCode(context, { pages: ["games", "control", "snake"] });
   return context;
 }
 
@@ -84,3 +84,24 @@ test("tablet w poziomie z niskim viewportem: Control (980 px) to „Za małe okn
     await context.close();
   }
 });
+
+// Wyjątki (decyzja użytkownika 2026-10-22): Host, Przycisk i Snake nie mają
+// progu wysokości -- przy tym samym niskim oknie zostają bez blokady.
+for (const [label, url, options] of [
+  ["Host (tablet 1200×560)", "/control/host/", TABLET],
+  ["Przycisk (tablet 1200×560)", "/control/buzzer/", TABLET],
+  ["Snake (komputer 1400×550)", "/snake/", { viewport: { width: 1400, height: 550 } }],
+]) {
+  test(`bez progu wysokości: ${label}`, async ({ browser }, testInfo) => {
+    const context = await newContext(browser, options);
+    const page = await context.newPage();
+    try {
+      await page.goto(`${SITE}${url}?lang=pl`, { waitUntil: "domcontentloaded" });
+      await expect.poll(() => guardState(page)).toBe("ok");
+      await expect(page.locator("#pageGuard")).toBeHidden();
+      await page.screenshot({ path: testInfo.outputPath(`shot-guard-height-none-${url.replace(/\W+/g, "-")}.png`) });
+    } finally {
+      await context.close();
+    }
+  });
+}

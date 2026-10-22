@@ -28,8 +28,8 @@ node scripts/screens/run.cjs --list                # lista scen
 node scripts/screens/run.cjs --changed --dry       # tylko pokaż, które sceny by poszły
 ```
 
-Opcje: `--lang=pl|en|uk|all` (domyślnie `pl`), `--devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400`
-(niskie widoki guarda wysokości: tablet 1200×560 przy ekranie 1280×800, komputer 1400×550; `--viewport=1280x580` dodaje urządzenie `viewport` o dowolnym rozmiarze, `--force-devices` stosuje `--devices` także do scen z własną listą)
+Opcje: `--lang=pl|en|uk|all` (domyślnie `pl`), `--devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400`
+(niskie widoki guarda wysokości: tablet 1200×560 przy ekranie 1280×800, komputer 1400×550, dotykowy tablet 1400×550 dla Prowadzącego i Przycisku; `--viewport=1280x580` dodaje urządzenie `viewport` o dowolnym rozmiarze, `--force-devices` stosuje `--devices` także do scen z własną listą)
 (domyślnie `desktop,phone` = 1440×900 i 390×844), `--base=<ref>`, `--out=<katalog>`,
 `--verbose` (ostrzeżenia i błędy konsoli strony), `--strict` (kod ≠ 0 przy problemach).
 
