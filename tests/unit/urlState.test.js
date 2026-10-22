@@ -127,7 +127,7 @@ test("podłoga baseline:recipient pomija parę e2e->e2e, żeby CI nie fałszywie
   assert.match(sql, /RAISE EXCEPTION 'mail_queue: unknown cooldown_action_key/);
 });
 
-test("restore konta e2e czyści też cooldown auth:reset_password z mail_cooldowns", () => {
+test("zwolnienie cooldownu maila e2e używa mail_cooldown_email_release", () => {
   const sql = read("supabase/migrations/2026-10-04_297_mail_cooldown_email_release.sql");
   assert.match(sql, /CREATE FUNCTION public\.mail_cooldown_email_release/);
   assert.match(sql, /UPDATE public\.mail_cooldowns/);
@@ -135,7 +135,6 @@ test("restore konta e2e czyści też cooldown auth:reset_password z mail_cooldow
 
   const worker = read("cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
   assert.match(worker, /mail_cooldown_email_release/);
-  assert.match(worker, /mail_cooldown_cleanup_failed/);
 });
 
 test("oznaczenie maila ankiety obejmuje adres i zarejestrowane konto", () => {

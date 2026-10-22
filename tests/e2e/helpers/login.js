@@ -270,13 +270,13 @@ async function loginAsGuest(page, context, opts = {}) {
   await clearE2EBypass(context);
 }
 
-// test9/test10 są wyłączone całkowicie (testy drugiej sesji) i nie wolno ich
-// wskazywać. test4/test5 wróciły do zwykłej puli (2026-10-10 — praca
-// użytkownika na nich zakończona). Równoległe przebiegi: każdy z rozłącznym
+// test9/test10 znów dostępne (decyzja użytkownika 2026-10-22); zwykła pula
+// (TEST_ACCOUNT_COUNT = 8) ich nie obejmuje, wybiera się je jawnie przez
+// TEST_ACCOUNT_NUMBERS. test4/test5 wróciły do zwykłej puli (2026-10-10). Równoległe przebiegi: każdy z rozłącznym
 // zestawem kont przez TEST_ACCOUNT_NUMBERS (workflow input `test_accounts`).
 const RESERVED_TEST_ACCOUNTS = [];
-const EXCLUDED_TEST_ACCOUNTS = [9, 10];
-const NEVER_USE_TEST_ACCOUNTS = [9, 10];
+const EXCLUDED_TEST_ACCOUNTS = [];
+const NEVER_USE_TEST_ACCOUNTS = [];
 
 // Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
 // nie wchodziły sobie w drogę):
@@ -324,7 +324,7 @@ function getTestAccountPool() {
   if (selected) {
     const numbers = selected.split(",").map((value) => Number(value.trim()));
     if (numbers.some((n) => !Number.isInteger(n) || n < 1 || n > 10 || NEVER_USE_TEST_ACCOUNTS.includes(n))) {
-      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–8; test9/test10 są wyłączone");
+      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–10");
     }
     const uniqueNumbers = [...new Set(numbers)];
     return uniqueNumbers.map((n) => `test${n}@${TEST_ACCOUNT_DOMAIN}`);

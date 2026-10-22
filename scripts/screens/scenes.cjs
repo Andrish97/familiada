@@ -319,6 +319,9 @@ module.exports = [
     steps: [async (view) => { await view.locator(".lang-floating .lang-btn").click(); await view.locator(".lang-menu:not([hidden])").waitFor(); await view.waitForTimeout(200); }] },
   { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#snakeTop tr").first().waitFor(); await view.locator("#snakeFunnel").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.
+  { id: "admin-stats-exclusions", category: "Dodatkowe", title: "Panel admina — wykluczenia ze statystyk (role kont testowych)", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+    steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#excludedList .excluded-summary").waitFor(); await view.locator("#excludedList").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   // Liczniki powiadomień na zakładkach (Poczta Familiada 5, Gry Społeczności 4); węższe okno -- suma na „Więcej”.
   { id: "admin-badges", category: "Dodatkowe", title: "Panel admina — liczniki powiadomień na zakładkach i „Więcej”", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/topbar-controller.js"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop", "phone"],
     steps: [async (view, { device }) => { if (device !== "phone") { await view.setViewportSize({ width: 1180, height: 760 }); await view.waitForTimeout(500); await view.locator("#btnMore").click(); await view.waitForTimeout(300); } else { await view.locator(".topbar-menu-toggle").click(); await view.waitForTimeout(400); } }] },

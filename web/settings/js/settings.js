@@ -14,17 +14,17 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T19285";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T19285";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T19285";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T19285";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T19285";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T19285";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T19285";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T19285";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T19285";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T19285";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T19285";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T21564";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T21564";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T21564";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T21564";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T21564";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T21564";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T21564";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T21564";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T21564";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T21564";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T21564";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -35,15 +35,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T19285";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T21564";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T19285";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T19285";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T19285";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T19285"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T21564";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T21564";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T21564";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T21564"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T19285";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T21564";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1072,9 +1072,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T19285"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T19285"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T19285"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T21564"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T21564"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T21564"/>
 
   <style>
     body{margin:0;padding:0}
@@ -1312,6 +1312,18 @@ function renderExcludedList(users) {
     return;
   }
   el.replaceChildren();
+  // E25: rola konta testowego z powodu wykluczenia (test:<rola>), podsumowanie według ról
+  const roles={ standard:"zwykłe", disposable:"jednorazowe", dedicated:"przypisane do czynności" };
+  const label=(user)=>user.reason === "test_guest" ? "Gość testowy"
+    : String(user.reason || "").startsWith("test:") ? `Konto testowe · ${roles[user.reason.slice(5)] || user.reason.slice(5)}` : "Konto testowe";
+  const counts=new Map();
+  for (const user of users) {
+    const key=user.automatic ? label(user) : "Ręcznie";
+    counts.set(key,(counts.get(key)||0)+1);
+  }
+  const summary=document.createElement("div");summary.className="stat-sub excluded-summary";
+  summary.textContent=[...counts].map(([key,count])=>`${key}: ${count}`).join(" · ");
+  el.append(summary);
   for (const user of users) {
     const row=document.createElement("div");row.className="activity-row excluded-account-row";
     const text=document.createElement("div");text.className="excluded-account-copy";
@@ -1319,7 +1331,7 @@ function renderExcludedList(users) {
     row.append(text);
     if (user.automatic) {
       const badge=document.createElement("span");badge.className="stat-sub";
-      badge.textContent=user.reason === "test_guest" ? " · Gość testowy — wykluczenie automatyczne" : " · Konto testowe — wykluczenie automatyczne";
+      badge.textContent=` · ${label(user)} — wykluczenie automatyczne`;
       text.append(badge);
     } else {
       const button=document.createElement("button");button.className="btn xs";button.type="button";button.textContent="Usuń";
@@ -6797,7 +6809,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T19285");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T21564");
 
   const MC_PAGE_SIZE = 50;
 
