@@ -338,6 +338,12 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   activeBack = typeof onBack === "function" ? onBack : null;
   if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, onBack, keepBackBtnText } });
 
+  // Przeglądarki bez overflow:clip (css/base.css): focus() pola w oknie
+  // przewija tło-kontener i panel skacze na górę -- cofamy to przewinięcie.
+  if (overlayEl && !overlayEl.dataset.sheetScrollGuard) {
+    overlayEl.dataset.sheetScrollGuard = "1";
+    overlayEl.addEventListener("scroll", () => { if (overlayEl.scrollTop) overlayEl.scrollTop = 0; });
+  }
   overlayEl?.style.removeProperty("--sheet-drag");
   overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling");
   applyPresentation(true);

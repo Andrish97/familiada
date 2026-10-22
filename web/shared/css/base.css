@@ -1170,7 +1170,12 @@ main:has(> .footer){
         align-items: center;
         padding: 0 !important;
         background: var(--modal-scrim, rgba(0,0,0,.55)) !important;
+        /* clip, nie hidden: focus() pola w oknie (kontakt, nazwa, Szukaj)
+           przewijał tło-kontener do wysuwanego jeszcze panelu -- panel
+           skakał od razu na górę zamiast wjechać od dołu (zgłoszenie
+           właściciela 2026-10-22). clip nie daje się przewinąć. */
         overflow: hidden;
+        overflow: clip;
         animation: sheetScrimIn .28s ease both;
     }
     body.sheet-open .modal--sheet.sheet-active.sheet-closing {
@@ -1200,6 +1205,7 @@ main:has(> .footer){
         display: flex;
         flex-direction: column;
         overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
+        overflow: clip;
         transform: translateY(var(--sheet-drag, 0px));
         animation: sheetUp .34s cubic-bezier(.2,.8,.2,1) both;
         will-change: transform;
