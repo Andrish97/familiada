@@ -2,6 +2,7 @@ import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T012
 import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T01235";
 import { icon, iconText } from "./icons.js?v=v2026-10-22T01235";
 import { getTurnstileToken } from "./turnstile.js?v=v2026-10-22T01235";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-22T01235";
 
 
 let modalEl = null;
@@ -387,8 +388,9 @@ function ensureContactEntryPoint() {
 if (typeof document !== "undefined") {
   window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
   window.addEventListener('i18n:lang', applyLabels);
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureContactEntryPoint, { once: true });
-  else ensureContactEntryPoint();
+  const ensureFooterEntryPoints = () => { ensureContactEntryPoint(); ensureSupportEntryPoint(); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureFooterEntryPoints, { once: true });
+  else ensureFooterEntryPoints();
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-contact-modal], .btn-contact-footer")) openContactModal();
   });

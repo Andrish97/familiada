@@ -83,6 +83,7 @@ export const ICONS = Object.freeze({
   megaphone: "/assets/icons/communication/megaphone.svg?v=v2026-10-22T01235",
   reply: "/assets/icons/communication/reply.svg?v=v2026-10-22T01235",
   bell: "/assets/icons/communication/bell.svg?v=v2026-10-22T01235",
+  coffee: "/assets/icons/communication/coffee.svg?v=v2026-10-22T01235",
 
   // Urządzenia
   gamepad: "/assets/icons/devices/gamepad.svg?v=v2026-10-22T01235",

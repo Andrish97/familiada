@@ -172,6 +172,15 @@ const pl = {
       privacy: "Prywatność",
     },
   },
+  support: {
+    footerBtn: "Postaw kawę",
+    title: "Postaw kawę",
+    lead: "Familiada jest i zostanie bezpłatna — wszystkie funkcje są dostępne dla każdego.",
+    text: "Jeśli lubisz z niej korzystać i chcesz wesprzeć dalszy rozwój, możesz postawić twórcy kawę. To dobrowolny gest: nie daje dodatkowych funkcji ani korzyści, ale bardzo cieszy i motywuje do dalszej pracy. Dziękuję!",
+    external: "Link otworzy zewnętrzny serwis {host} w nowej karcie.",
+    go: "Postaw kawę",
+    close: "Zamknij",
+  },
   contact: {
     modal: {
       title: "Napisz do nas",

@@ -611,6 +611,17 @@ main:has(> .footer){
     text-decoration: none;
 }
 .btn-contact-footer:hover { filter: brightness(1.08); }
+/* „Postaw kawę” obok Kontaktu (support-modal.js); na telefonie sama filiżanka. */
+.footer-actions{ display:inline-flex; align-items:center; justify-content:flex-end; gap:12px; }
+.btn-support-footer{ display:inline-flex; align-items:center; gap:4px; background:none; border:none; padding:0; color:var(--gold); font:inherit; font-weight:900; cursor:pointer; }
+.btn-support-footer:hover{ filter: brightness(1.08); }
+.btn-support-footer .ico{ width:1.25em; height:1.25em; flex:0 0 auto; }
+.modal.uni-modal.support-modal{ width:min(520px, calc(100vw - 32px)); }
+.support-modal-body{ display:grid; gap:10px; text-align:center; }
+.support-modal-icon{ justify-self:center; font-size:44px; line-height:1; color:var(--gold); }
+.support-modal-body p{ margin:0; line-height:1.5; }
+.support-modal-lead{ font-weight:800; }
+.support-modal-note{ font-size:12px; opacity:.65; }
 
 .orientation-suggestion{position:fixed;z-index:9;top:calc(var(--topbar-h, 0px) + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--line2);border-radius:12px;background:#111827;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:12px;pointer-events:none}
 .orientation-suggestion .btn{pointer-events:auto}
@@ -626,6 +637,8 @@ main:has(> .footer){
     .footer::before{
         top: 6px;
     }
+    .btn-support-footer .support-footer-label{ display:none; }
+    .btn-support-footer .ico{ width:1.45em; height:1.45em; }
 }
 
 .no-footer-line .footer::before{
@@ -1318,6 +1331,7 @@ main:has(> .footer){
 
     /* W trybie strony stopka zostaje, ale Kontakt nie należy do widoku modala. */
     body.sheet-open .footer .btn-contact-footer,
+    body.sheet-open .footer .btn-support-footer,
     body.sheet-open .contact-footer-entry {
         display: none !important;
     }
