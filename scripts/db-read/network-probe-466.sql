@@ -1,4 +1,4 @@
--- Migracja 466: funkcje pomiaru łącza istnieją i są dostępne dla anon/authenticated;
+-- Migracja 466: funkcje pomiaru łącza istnieją i są dostępne dla anon/authenticated,
 -- liczba zapisanych pomiarów (wszystkie, z ostatniej godziny i z werdyktem „wolno”).
 SELECT has_function_privilege('anon', 'public.control2_net_ping()', 'execute') AS ping_anon,
        has_function_privilege('anon', 'public.control2_network_probe_event(uuid,text,text,jsonb,uuid,bigint)', 'execute') AS probe_anon,
