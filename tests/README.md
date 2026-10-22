@@ -219,6 +219,13 @@ tylko ubywało: przepisany plik usuń z `unit/legacy-test-accounts.json`.
 | `restoreTestAccount(...)` | niepotrzebne — konto odtwarzane przy każdym lease |
 | `@mailbox`, kolejka „pojedynczo” | `resources: ["mail"]`; Control/wyświetlacz `resources: ["heavy"]` |
 
+**Poczta na `testN@` nie dochodzi** (reguły Cloudflare usunięte 2026-10-22) —
+spec z `waitForEmail`/`clearMailbox` na starym adresie trzeba przepisać, zanim
+znów przejdzie. Fikstury z adresatem: `e2e_registered_subscriber_fixture(p_recipient_user_id, p_remove)`,
+`e2e_subscriber_mail_flag(p_email, p_reset)`; Worker: `queueMailTemplateFixtures(items, recipient)`,
+`clearMailCenterCapabilities(recipient)`, `restoreMailCenterPreference(stamp, recipient)` —
+`recipient` = `accounts.noaccount[i].email`.
+
 Konta są czyszczone przy wypożyczeniu — spec sam przygotowuje swoje dane
 (bez polegania na danych zostawionych na test1…). Fikstury SQL/Worker
 z test8/test14 na stałe (np. `e2e_registered_subscriber_fixture`,

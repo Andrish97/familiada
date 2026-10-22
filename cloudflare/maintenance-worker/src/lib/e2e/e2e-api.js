@@ -17,6 +17,12 @@ export function normalizeE2ERecipient(value) {
   return E2E_EMAIL_RE.test(recipient) || isE2EPlusAddress(recipient) ? recipient : null;
 }
 
+// Skrzynka bez konta (E25): e2e+noaccountNN@familiada.online.
+function noaccountRecipient(value) {
+  const recipient = String(value || "").trim().toLowerCase();
+  return /^e2e\+noaccount[0-9]{2}@familiada\.online$/.test(recipient) ? recipient : null;
+}
+
 // Adres e2e+ (E25) -- tylko dla przebiegu, który go wypożyczył (nagłówek X-E2E-Run).
 async function leaseGuard(env, request, recipient) {
   if (!isE2EPlusAddress(recipient) || (await e2eRunOwns(env, request, recipient))) return null;
@@ -119,16 +125,25 @@ export async function handleE2EApi(request, env, url) {
     if (stamp !== null && (typeof stamp !== "string" || stamp.length > 40 || !Number.isFinite(Date.parse(stamp)))) {
       return json({ ok: false, error: "invalid_preference_fixture" }, 400);
     }
-    // Restore precisely the prior test14 flag; no source resurrection/budget reset.
-    const result = await supabaseRequest(env, "/rest/v1/email_unsub_tokens?email=eq.test14%40familiada.online", {
+    // E25: wypożyczona skrzynka bez konta (e2e+noaccountNN). Restore precisely
+    // the prior flag; no source resurrection/budget reset.
+    const recipient = noaccountRecipient(body?.recipient);
+    if (!recipient) return json({ ok: false, error: "invalid_recipient" }, 400);
+    const preferenceDenied = await leaseGuard(env, request, recipient);
+    if (preferenceDenied) return preferenceDenied;
+    const result = await supabaseRequest(env, `/rest/v1/email_unsub_tokens?email=eq.${encodeURIComponent(recipient)}`, {
       method: "PATCH", body: { suppressed_at: stamp },
     });
     return json({ ok: result.ok }, result.ok ? 200 : 502);
   }
 
   if (url.pathname === "/_e2e_api/mail-center-capabilities" && request.method === "DELETE") {
-    // Only the anonymous test mailbox; never touch preferences or source budgets.
-    const result = await supabaseRequest(env, "/rest/v1/mail_center_links?email=eq.test14%40familiada.online", { method: "DELETE" });
+    // Only the leased mailbox without account; never touch preferences or source budgets.
+    const recipient = noaccountRecipient(url.searchParams.get("recipient"));
+    if (!recipient) return json({ ok: false, error: "invalid_recipient" }, 400);
+    const capabilitiesDenied = await leaseGuard(env, request, recipient);
+    if (capabilitiesDenied) return capabilitiesDenied;
+    const result = await supabaseRequest(env, `/rest/v1/mail_center_links?email=eq.${encodeURIComponent(recipient)}`, { method: "DELETE" });
     return json({ ok: result.ok }, result.ok ? 200 : 502);
   }
 
@@ -137,7 +152,8 @@ export async function handleE2EApi(request, env, url) {
   if (url.pathname === "/_e2e_api/mail-template-fixtures" && request.method === "POST") {
     let body;
     try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
-    if (body?.recipient !== "test14@familiada.online" || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 15) {
+    const recipient = noaccountRecipient(body?.recipient);
+    if (!recipient || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 15) {
       return json({ ok: false, error: "invalid_fixture_batch" }, 400);
     }
     const validSubject = /^E2E-PKT6-\d{10,16}-(?:(?:pl|en|uk)-(?:confirmation|reply|compose|manual)|marketing-(?:invitation|newsletter|custom))$/;
@@ -145,9 +161,11 @@ export async function handleE2EApi(request, env, url) {
       || typeof item.html !== "string" || !item.html || item.html.length > 64000)) {
       return json({ ok: false, error: "invalid_fixture_document" }, 400);
     }
-    const rows = body.items.map(item => ({ created_by: null, to_email: "test14@familiada.online",
+    const fixturesDenied = await leaseGuard(env, request, recipient);
+    if (fixturesDenied) return fixturesDenied;
+    const rows = body.items.map(item => ({ created_by: null, to_email: recipient,
       subject: item.subject, html: item.html, status: "pending", not_before: new Date().toISOString(), attempts: 0,
-      cooldown_action_key: "admin:marketing", cooldown_target_key: "e2e-template:test14",
+      cooldown_action_key: "admin:marketing", cooldown_target_key: `e2e-template:${recipient}`,
       meta: { e2e_template_fixture: true } }));
     const result = await supabaseRequest(env, "/rest/v1/mail_queue?select=id", {
       method: "POST", headers: { Prefer: "return=representation" }, body: rows,

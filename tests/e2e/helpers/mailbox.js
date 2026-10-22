@@ -93,21 +93,22 @@ async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-async function queueMailTemplateFixtures(items) {
+// E25: recipient = wypożyczona skrzynka bez konta (accounts.noaccount[i].email).
+async function queueMailTemplateFixtures(items, recipient) {
   return api("/mail-template-fixtures", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: "test14@familiada.online", items: items.map(({ subject, html }) => ({ subject, html })) }),
+    body: JSON.stringify({ recipient, items: items.map(({ subject, html }) => ({ subject, html })) }),
   });
 }
 
-async function clearMailCenterCapabilities() {
-  return api("/mail-center-capabilities", { method: "DELETE" });
+async function clearMailCenterCapabilities(recipient) {
+  return api(`/mail-center-capabilities?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
 }
 
-async function restoreMailCenterPreference(suppressedAt) {
+async function restoreMailCenterPreference(suppressedAt, recipient) {
   return api("/mail-center-preference", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ suppressed_at: suppressedAt }),
+    body: JSON.stringify({ suppressed_at: suppressedAt, recipient }),
   });
 }
 
