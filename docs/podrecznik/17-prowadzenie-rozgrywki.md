@@ -206,10 +206,10 @@ wyniku przeciwników pojawia się zegar, a suma finału — na górze.
 Prowadzący widzi „FINAŁ RUNDA 1 — ODLICZANIE 12s” i pięć pytań ze statusem: „wpisano”, „brak”
 albo (u drugiego gracza) „powtórzenie”. Literówki możesz poprawić także po upływie czasu.
 
-Wyświetlacz ma na odpowiedź 11 miejsc. Litery, które się nie zmieszczą, są pomarańczowe i podkreślone
-kropkami — w polach wpisywania, na przyciskach odpowiedzi przy ocenie i pod [Pokaż odpowiedź]. Słowo
+Wyświetlacz ma na odpowiedź 11 miejsc. Litery, które się nie zmieszczą, są pomarańczowe i przekreślone — w polach wpisywania, na przyciskach odpowiedzi przy ocenie i pod [Pokaż odpowiedź]. Słowo
 ucięte w środku Wyświetlacz kończy kropką, np. „Kawa z mlekiem” → „Kawa z ml.”. Znaki, których
-Wyświetlacz nie pokazuje (np. emotki), są w czerwonym prostokącie — na tablicy zostają pominięte.
+Wyświetlacz nie pokazuje (np. emotki), są w przekreślonej czerwonej ramce — na tablicy zostają pominięte
+bez pustego miejsca.
 
 ![Gracz 1 — wpisywanie odpowiedzi w czasie odliczania](zrzut:play-control-final-p1-timer)
 ![Ekran prowadzącego — odliczanie i statusy pytań](zrzut:play-host-final-p1@tablet-landscape)

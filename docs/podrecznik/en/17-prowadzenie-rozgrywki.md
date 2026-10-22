@@ -206,10 +206,10 @@ in place of the opponents' score, and the final total — at the top.
 The host sees "FINAL ROUND 1 — COUNTDOWN 12s" and the five questions with a status: "entered", "missing"
 or (for the second player) "repeat". You can also fix typos after the time runs out.
 
-The Display has 11 places for an answer. Letters that do not fit are orange with a dotted underline —
+The Display has 11 places for an answer. Letters that do not fit are orange and struck through —
 in the entry fields, on the answer buttons while scoring and under [Show answer]. A word cut in the
 middle ends with a full stop on the Display, e.g. "Tea with milk" → "Tea with m.". Characters the
-Display cannot show (e.g. emoji) are in a red box — the board skips them.
+Display cannot show (e.g. emoji) are in a struck-through red box — the board skips them without leaving a gap.
 
 ![Player 1 — entering answers during the countdown](zrzut:play-control-final-p1-timer)
 ![Host screen — countdown and question statuses](zrzut:play-host-final-p1@tablet-landscape)
