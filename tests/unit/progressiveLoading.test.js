@@ -23,7 +23,7 @@ test('strony bez initPage używają wspólnego guarda orientacji', () => {
     assert.match(source, /from .*device-guard\.js/);
     assert.match(source, /guardViewportWidth\(\{ minWidth: 0 \}\)/);
   }
-  assert.match(pollQr, /guardViewportWidth\(\{ minWidth: 980, minScreenShortSide: 800/);
+  assert.match(pollQr, /guardViewportWidth\(\{ minWidth: 980, minHeight: MIN_WORK_HEIGHT, minScreenShortSide: 800/);
   assert.match(deviceGuard, /profile\.formFactor === "phone" && profile\.orientation === "landscape"/);
   assert.match(deviceGuard, /if \(state !== "ok"\)[\s\S]*?hidePageGuard\(\)/);
   assert.match(deviceGuard, /visualViewport\?\.addEventListener\("resize", refresh/);

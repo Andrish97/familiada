@@ -86,6 +86,7 @@ async function launch() {
 async function newContext(browser, db, lang, device) {
   const context = await browser.newContext({
     viewport: { width: device.width, height: device.height }, deviceScaleFactor: device.scale,
+    ...(device.screen ? { screen: device.screen } : {}),
     isMobile: device.mobile, hasTouch: device.mobile, locale: { pl: "pl-PL", en: "en-GB", uk: "uk-UA" }[lang],
     timezoneId: "Europe/Warsaw", serviceWorkers: "block",
   });

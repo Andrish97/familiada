@@ -10,7 +10,7 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-22T21510";
 import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-22T21510";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-22T21510";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T21510";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T21510";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T21510";
 import { createScene } from "./scene.js?v=v2026-10-22T21510";
 import { createQRController } from "./qr.js?v=v2026-10-22T21510";
@@ -309,7 +309,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const preview = params.get("preview") === "1";
   const controlTestFrame = window.parent !== window
     && window.frameElement?.dataset.controlTestMode === "true";
-  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
+  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({ minWidth: 980, minHeight: MIN_WORK_HEIGHT, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
   document.documentElement.removeAttribute("data-device-guard-pending");
   if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
 

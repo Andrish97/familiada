@@ -160,7 +160,10 @@ for (const map of MAP_LIST) {
   });
 }
 
-for (const [device, viewport] of Object.entries(VIEWPORTS)) {
+// Telefon w poziomie (844×390) to dziś blokada: obrót na telefonie, „Za małe okno”
+// na komputerze (próg wysokości 580 px, decyzja 2026-10-22) -- skróty sprawdzamy
+// w widokach, w których strony działają.
+for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => name !== "phoneLandscape")) {
   test(`kontakty: skróty i ikony na stronach — ${device}`, async ({page}, testInfo) => {
     test.setTimeout(120000);
     await page.setViewportSize(viewport);
