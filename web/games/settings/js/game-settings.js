@@ -1,32 +1,32 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-22T01235";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T01235";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-22T01235";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T01235";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-22T01235";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-22T01235";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-22T01235";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T01235";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-22T01235";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-22T01235";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-22T01235";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-22T01235";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-22T01364";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T01364";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-22T01364";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T01364";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-22T01364";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-22T01364";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-22T01364";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T01364";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-22T01364";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-22T01364";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-22T01364";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-22T01364";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-22T01235";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-22T01364";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-22T01235";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T01235";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T01235";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-22T01235";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T01235";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-22T01235";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-22T01364";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T01364";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T01364";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-22T01364";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T01364";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-22T01364";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();

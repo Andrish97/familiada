@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-22T01235";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T01235";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T01235";
+import { icon } from "./icons.js?v=v2026-10-22T01364";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T01364";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T01364";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -146,7 +146,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T01235";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T01364";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
