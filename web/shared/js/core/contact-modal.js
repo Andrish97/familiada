@@ -89,40 +89,40 @@ function buildModalHtml() {
         <div class="mTitle" id="cModalTitle"></div>
         <button class="btn sm" id="cModalX" type="button" aria-label="Zamknij">${icon("close")}</button>
       </div>
-      <div id="cModalForm" class="uni-body">
-        <div class="field">
-          <label class="field-label" id="cModalEmailLabel"></label>
-          <input class="inp" id="cModalEmail" type="email" autocomplete="email" style="width:100%;box-sizing:border-box"/>
+      <div id="cModalForm" class="uni-body contact-form">
+        <div class="contact-field">
+          <label class="contact-label" id="cModalEmailLabel" for="cModalEmail"></label>
+          <input class="inp" id="cModalEmail" type="email" autocomplete="email"/>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalTicketLabel"></label>
-          <input class="inp" id="cModalTicket" type="text" style="width:100%;box-sizing:border-box" autocomplete="off"/>
+        <div class="contact-field">
+          <label class="contact-label" id="cModalTicketLabel" for="cModalTicket"></label>
+          <input class="inp" id="cModalTicket" type="text" autocomplete="off"/>
         </div>
-        <div class="field" id="cModalSubjectField">
-          <label class="field-label" id="cModalSubjectLabel"></label>
-          <input class="inp" id="cModalSubject" type="text" style="width:100%;box-sizing:border-box"/>
+        <div class="contact-field" id="cModalSubjectField">
+          <label class="contact-label" id="cModalSubjectLabel" for="cModalSubject"></label>
+          <input class="inp" id="cModalSubject" type="text"/>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalMessageLabel"></label>
-          <textarea class="inp" id="cModalMessage" rows="7" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+        <div class="contact-field">
+          <label class="contact-label" id="cModalMessageLabel" for="cModalMessage"></label>
+          <textarea class="inp" id="cModalMessage" rows="7"></textarea>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalAttachLabel"></label>
-          <input type="file" id="cModalAttachments" multiple style="display:none"/>
-          <label for="cModalAttachments" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.65);cursor:pointer;user-select:none">
+        <div class="contact-field">
+          <div class="contact-label" id="cModalAttachLabel"></div>
+          <input type="file" id="cModalAttachments" multiple hidden/>
+          <label for="cModalAttachments" class="btn sm contact-attach-btn">
             ${icon("paperclip")}
             <span id="cModalAttachBtnLabel"></span>
           </label>
-          <div id="cModalAttachHint" style="font-size:11px;opacity:.4;margin-top:3px"></div>
-          <div id="cModalFileList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+          <div id="cModalAttachHint" class="contact-hint"></div>
+          <div id="cModalFileList" class="contact-files"></div>
         </div>
-        <div id="cModalCaptcha" hidden></div>
-        <div id="cModalError" style="font-size:13px;color:#ff6b6b;display:none"></div>
+        <div id="cModalCaptcha" class="contact-captcha" hidden></div>
+        <div id="cModalError" class="contact-error" style="display:none" role="alert"></div>
       </div>
-      <div id="cModalSuccess" class="uni-body" style="display:none;text-align:center;padding:16px 0">
-        <div style="font-size:32px;margin-bottom:8px;color:#6ee7a8">${icon("check")}</div>
-        <div style="font-size:15px;font-weight:700" id="cModalSuccessTitle"></div>
-        <div style="margin-top:6px;font-size:13px;opacity:.7" id="cModalSuccessTicket"></div>
+      <div id="cModalSuccess" class="uni-body contact-success" style="display:none">
+        <div class="contact-success-icon">${icon("check")}</div>
+        <div class="contact-success-title" id="cModalSuccessTitle"></div>
+        <div class="contact-success-ticket" id="cModalSuccessTicket"></div>
       </div>
       <div id="cModalFormActions" class="uni-foot modal-actions">
         <button class="btn sm" id="cModalClose" type="button"></button>
@@ -198,7 +198,7 @@ function ensureModal() {
     // Nazwa pliku jako tekst (nazwa może zawierać znaczniki HTML).
     list.replaceChildren(...files.map(f => {
       const chip = document.createElement("span");
-      chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)";
+      chip.className = "contact-file";
       chip.textContent = f.name;
       return chip;
     }));
