@@ -99,6 +99,18 @@ Decyzje:
     i panelu; do tego `navigator.connection` (typ sieci, jakość, RTT,
     przepustowość), gdy przeglądarka podaje. Migracje 466–467, moduł
     `web/shared/js/core/network-probe.js`.
+13. **Tryb lokalny: Control jako źródło prawdy, świadomy wybór gracza
+    (kierunek, decyzja użytkownika 2026-10-22).** Analiza „przyspieszacza
+    lokalnego” (Control wysyła stan także przez WebRTC w sieci lokalnej,
+    baza nadal źródłem prawdy) wykazała, że przy słabym internecie
+    komórkowym (np. hotspot w górach) pomaga mało: skraca tylko drogę
+    Control → urządzenie, a gra dalej czeka na zapis do bazy, potwierdzenia
+    Wyświetlacza, gotowość Przycisku i sygnał życia urządzeń. Kierunek:
+    osobny tryb, który operator **świadomie włącza**; wtedy Control pełni
+    rolę bazy (stan, blokady, naciśnięcia Przycisku, potwierdzenia,
+    obecność urządzeń przez sieć lokalną), a do bazy trafia kopia w tle.
+    Tryb zwykły bez zmian. Zakres i pytania otwarte — do rozpisania przed
+    wdrożeniem; bez kodu do czasu zatwierdzenia zakresu.
 
 ## Cel
 
