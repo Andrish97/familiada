@@ -79,37 +79,8 @@ function extractHttpLinks(email) {
   return [...new Set(source.match(/https?:\/\/[^\s"'<>]+/g) || [])];
 }
 
-async function restoreTestAccount(account) {
-  const password = process.env.TEST_PASSWORD;
-  if (!password) throw new Error("Brak TEST_PASSWORD");
-  return api("/accounts/restore", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ account, password }),
-  });
-}
-
 async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-// E25: recipient = wypożyczona skrzynka bez konta (accounts.noaccount[i].email).
-async function queueMailTemplateFixtures(items, recipient) {
-  return api("/mail-template-fixtures", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient, items: items.map(({ subject, html }) => ({ subject, html })) }),
-  });
-}
-
-async function clearMailCenterCapabilities(recipient) {
-  return api(`/mail-center-capabilities?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
-}
-
-async function restoreMailCenterPreference(suppressedAt, recipient) {
-  return api("/mail-center-preference", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ suppressed_at: suppressedAt, recipient }),
-  });
-}
-
-module.exports = { releaseMailCooldown, restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };

@@ -225,8 +225,9 @@ Worker nie ma już `/_e2e_api/accounts/restore` ani endpointów centrum maili/sz
 pod test14.
 **Poczta na `testN@` nie dochodzi** (reguły Cloudflare usunięte 2026-10-22) —
 spec z `waitForEmail`/`clearMailbox` na starym adresie trzeba przepisać, zanim
-znów przejdzie. Fikstury SQL z adresatem: `e2e_registered_subscriber_fixture(p_recipient_user_id, p_remove)`,
-`e2e_subscriber_mail_flag(p_email, p_reset)`.
+znów przejdzie. Skrzynka jest uniwersalna (`helpers/mailbox.js`: `clearMailbox`, `waitForEmail`,
+`readMailDelivery`, `releaseMailCooldown`, `resetMailProviderLimits`, `extractHttpLinks`)
+— dowolny wypożyczony adres `e2e+`; fikstur przypisanych do kont nie ma (464).
 
 Konta są czyszczone przy wypożyczeniu — spec sam przygotowuje swoje dane
 (bez polegania na danych zostawionych na test1…). Fikstury SQL/Worker
