@@ -55,6 +55,7 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
   3. Ustawienia gry działają na telefonie (tylko pionowo; poziomo „Obróć urządzenie”); w Moich grach na telefonie „Ustawienia gry” widoczne, „Graj” ukryte; w Ustawieniach poniżej 980 px brak „Graj”. Telefon: Finał — „dotknij pytania, żeby je dodać lub usunąć”, Rundy — strzałki; okno koloru od dołu. Poprawić 6.4 i 16.1.
   4. Przycisk „Wstecz” na telefonie (≤600 px) — sama strzałka (7.2 i inne).
   6. Logo: zmiana nazwy dwuklikiem / podwójnym stuknięciem (bez przytrzymania) — poprawić 8.5; podpowiedź jak w Bazach „Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.” (Przytrzymanie w Eksploratorze baz = menu kontekstowe — bez zmian.)
+  7. (main 2026-10-22, migracja 458) Gość może powielać własne gry, bazy i logo; wysyłanie nadal tylko konto — poprawić 6.6 („Powielanie i wysyłanie wymaga konta”) i odpowiedniki w 8/9.
   5. Szkic ankiety: udostępnianie zablokowane do uruchomienia (Anonimowo/Odbiorcy wyszarzone, przycisk „Uruchom”); zamknięta — zakładki udostępniania zablokowane (15.1/15.2).
 
 - **Zasada treści (decyzja użytkownika 2026-10-21, przez drugą sesję; `docs/wdrozenia.md` „Zasady działania”):** opisywać tylko, jak jest teraz — bez „jak w teleturnieju/regulaminie” przy opisie działania serwisu, bez wzmianek o wcześniejszym działaniu i bez tłumaczenia się z poprawek. Sprawdzić całość przy ponownej weryfikacji (porównania w Części I wymagane planem zostają, ale opisują teleturniej i serwis osobno).
