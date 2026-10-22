@@ -148,6 +148,22 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
    do `stats_detail.events`, usunięte ucinanie 500/grę i stary odczyt
    `get_control2_display_events`.
 
+## Wynik etapu 0 (2026-10-22, db-read 39871943993)
+
+`scripts/db-read/session-diag-volume.sql`, ostatnie 30 dni (z sesjami testów e2e):
+
+- 124 sesje Control 2 w 45 grach (47 w ostatnich 7 dniach).
+- Zdarzenia Control w sesji: średnio 13,5, p95 = **100 (limit)**, maks. 100;
+  **9 sesji (7%) uciętych** do ostatnich 100 — początek ich przebiegu przepadł.
+- Zdarzenia urządzeń w sesji: średnio 9,7, p95 31, maks. 226; 64 sesje bez
+  żadnego zdarzenia urządzeń (część sprzed logowania urządzeń — najstarszy
+  wpis 2026-10-14). Limit 500/grę jeszcze nie został osiągnięty.
+- Tabela urządzeń: 1204 wiersze, średnio 359 B na zdarzenie.
+
+Wniosek: limit 3000 na sesję ma duży zapas (najdłuższa sesja ~330 zdarzeń
+łącznie); objętość przy 90 dniach to pojedyncze MB — bez ryzyka dla bazy.
+Obecny limit 100 w Control realnie ucina co ~14. sesję.
+
 ## Pytania do decyzji
 
 1. Retencja szczegółowych zdarzeń: 90 / 180 / 365 dni? (Podsumowanie żyje
