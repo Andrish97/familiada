@@ -980,6 +980,7 @@ async function main() {
         if (!presenceUnavailable) {
           presenceFailureStartedAt = Date.now();
           presenceFailureSource = errorSource || "status_read";
+          sessionTelemetry.probeNetworkNow();
           void sessionTelemetry.report({
             kind: "diagnostic", category: "connectivity",
             message: "Control utracił możliwość odczytu statusu urządzeń; akcje gry są chwilowo blokowane.",

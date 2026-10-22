@@ -322,6 +322,9 @@ module.exports = [
   // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.
   { id: "admin-stats-exclusions", category: "Dodatkowe", title: "Panel admina — wykluczenia ze statystyk (role kont testowych)", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#excludedList .excluded-summary").waitFor(); await view.locator("#excludedList").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  // Migracja 466: pomiar łącza urządzeń w przebiegu rozgrywki.
+  { id: "admin-stats-network-probe", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki z pomiarem łącza", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+    steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().click(); await view.locator(".stats-session-run-details").waitFor(); await view.waitForTimeout(400); }] },
   // Liczniki powiadomień na zakładkach (Poczta Familiada 5, Gry Społeczności 4); węższe okno -- suma na „Więcej”.
   { id: "admin-badges", category: "Dodatkowe", title: "Panel admina — liczniki powiadomień na zakładkach i „Więcej”", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/topbar-controller.js"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop", "phone"],
     steps: [async (view, { device }) => { if (device !== "phone") { await view.setViewportSize({ width: 1180, height: 760 }); await view.waitForTimeout(500); await view.locator("#btnMore").click(); await view.waitForTimeout(300); } else { await view.locator(".topbar-menu-toggle").click(); await view.waitForTimeout(400); } }] },

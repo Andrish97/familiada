@@ -13,7 +13,8 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-22T22183";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-22T22183";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-22T22183";
 import { rt } from "./realtime.js?v=v2026-10-22T22183";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-22T22183";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-22T22183";
@@ -45,6 +46,22 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let diagnosticQueue = Promise.resolve();
   let lastRenderedRev = -1;
   let sync;
+  // Pomiar łącza w trakcie gry (migracja 466): tylko start, spowolnienie
+  // i powrót do normy; zapis jak diagnostyka — nigdy nie blokuje gry.
+  const network = createNetworkMonitor({
+    probe: () => measureNetwork({
+      pingUrl: `${SUPABASE_URL}/_ping`,
+      rpc: (signal) => sb().rpc("control2_net_ping").abortSignal(signal),
+    }),
+    send: (phase, data) => {
+      if (!active || !sessionStarted) return;
+      const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const event = { event_id: eventId, phase, visibility: document.visibilityState === "hidden" ? "hidden" : "visible", ...data };
+      sb().rpc("control2_network_probe_event", {
+        p_game_id: gameId, p_device_type: deviceType, p_key: key, p_event: event, ...getLeaseArgs(),
+      }).abortSignal(AbortSignal.timeout(4000)).then(() => {}, () => {});
+    },
+  });
 
   function transportContext() {
     return {
@@ -82,6 +99,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function noteReadStatus(result) {
     if (!sessionStarted) return;
     if (!result.ok) {
+      network.probeNow();
       if (readIncidentOpen) return;
       readIncidentOpen = true;
       sendDiagnostic("state_sync", "read_error", "rpc_fallback", {
@@ -101,6 +119,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     const started = row?.detail?.locks?.gameStarted === true && row?.detail?.locks?.gameEnded !== true;
     if (started && !sessionStarted) {
       sessionStarted = true;
+      network.start();
       transportSnapshotLogged = true;
       if (directConnected) {
         sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
@@ -117,6 +136,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       }
     } else if (!started && sessionStarted) {
       sessionStarted = false;
+      network.stop();
       transportSnapshotLogged = false;
       directIncidentAt = null;
       directIncident = null;
@@ -379,6 +399,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!active) return;
     active = false;
     sessionStarted = false;
+    network.stop();
     directIncidentAt = null;
     directIncident = null;
     readIncidentOpen = false;

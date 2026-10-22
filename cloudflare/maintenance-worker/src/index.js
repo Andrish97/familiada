@@ -158,6 +158,11 @@ async function handleFetch(request, env, ctx) {
     host === "panel2.familiada.online" ||
     host === "docker2.familiada.online"
   ) {
+    // Pomiar łącza urządzeń (migracja 466): odpowiedź prosto z Cloudflare,
+    // bez serwera — porównywana z czasem lekkiego RPC control2_net_ping.
+    if ((host === "api.familiada.online" || host === "api2.familiada.online") && url.pathname === "/_ping") {
+      return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" } });
+    }
     // NIE dodawaj tu cf.resolveOverride wskazującego z powrotem na ten sam
     // `host` — to nie jest "wymuszenie użycia rekordu DNS", tylko każe
     // temu subrequestowi z Workera ponownie wejść w edge Cloudflare dla

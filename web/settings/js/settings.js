@@ -5666,6 +5666,36 @@ function buildSessionRunDetails(r) {
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
       }
+      if (event.category === "device_network") {
+        // Pomiar łącza (migracja 466): Cloudflare = samo łącze urządzenia,
+        // serwer = Cloudflare + nasz serwer i baza; różnica to czas systemu.
+        const ms = value => Number.isFinite(Number(value)) ? `${Math.round(Number(value))} ms` : "?";
+        const pair = (edge, db, edgeFailed, dbFailed) => {
+          const server = Number.isFinite(Number(edge)) && Number.isFinite(Number(db)) && !edgeFailed && !dbFailed
+            ? ` (sam serwer ~${Math.max(0, Math.round(Number(db) - Number(edge)))} ms)` : "";
+          return `do Cloudflare ${edgeFailed ? "brak odpowiedzi" : ms(edge)} · do serwera ${dbFailed ? "brak odpowiedzi" : ms(db)}${server}`;
+        };
+        const link = [
+          metrics.connection_type && metrics.connection_type !== "unknown" ? `sieć ${metrics.connection_type}` : "",
+          metrics.effective_type ? `jakość ${metrics.effective_type}` : "",
+          metrics.browser_rtt_ms != null ? `RTT przeglądarki ${metrics.browser_rtt_ms} ms` : "",
+          metrics.downlink_mbps != null ? `${String(metrics.downlink_mbps).replace(".", ",")} Mb/s` : "",
+          metrics.online === false ? "przeglądarka zgłaszała brak sieci" : "",
+        ].filter(Boolean).join(", ");
+        const linkText = link ? ` · ${link}` : "";
+        if (metrics.phase === "baseline") return { title: `Pomiar łącza na starcie: ${devices}`, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        if (metrics.phase === "slow") {
+          const title = metrics.verdict === "server" ? `Wolny serwer (łącze sprawne): ${devices}` : `Wolne łącze urządzenia: ${devices}`;
+          return { title, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        }
+        if (metrics.phase === "recovered") {
+          const counts = [
+            metrics.device_network_samples ? `łącze ${metrics.device_network_samples}×` : "",
+            metrics.server_samples ? `serwer ${metrics.server_samples}×` : "",
+          ].filter(Boolean).join(", ");
+          return { title: `Łącze wróciło do normy: ${devices}`, detail: `Spowolnienie trwało ${formatDuration(metrics.duration_ms)}${counts ? ` (wolne pomiary: ${counts})` : ""} · najgorzej: do Cloudflare ${ms(metrics.max_edge_ms)}, do serwera ${ms(metrics.max_db_ms)}` };
+        }
+      }
       if (event.category === "device_transport") {
         const duration = metrics.duration_ms != null ? ` · przerwa ${formatDuration(metrics.duration_ms)}` : "";
         const catchups = Number(metrics.catchup_count) > 0
