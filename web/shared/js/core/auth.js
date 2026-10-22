@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-21T23580";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-21T23580";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-21T23580";
+import { icon } from "./icons.js?v=v2026-10-22T00022";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T00022";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T00022";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -142,7 +142,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-21T23580";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T00022";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -495,12 +495,13 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
   if (error) throw new Error(niceAuthError(error));
 }
 
-export async function getEmailStatus(email) {
+export async function getEmailStatus(email, captchaToken = null) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!normalized || !normalized.includes("@")) throw new Error(t("index.errInvalidEmail"));
 
-  const { status, data } = await authApi("email-status", { email: normalized });
+  const { status, data } = await authApi("email-status", { email: normalized, ...(captchaToken ? { captcha_token: captchaToken } : {}) });
   if (status === 429) throw new Error(t("auth.tooManyRequests"));
+  if (data.error === "captcha_failed") throw authApiError(status, data.error);
   if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
 
   const statusRaw = String(data.status || "").trim().toLowerCase();
@@ -512,12 +513,14 @@ export async function getEmailStatus(email) {
 
 // Ponowne wysłanie potwierdzenia: rezerwacja cooldownu na serwerze.
 // { allowed, nextAllowedAtMs } -- bez informacji o stanie konta.
-export async function prepareConfirmationResend(email, intent) {
+export async function prepareConfirmationResend(email, intent, captchaToken = null) {
   const { status, data } = await authApi("resend-prepare", {
     email: String(email || "").trim().toLowerCase(),
     intent: intent === "guest_migrate" ? "guest_migrate" : "signup",
+    ...(captchaToken ? { captcha_token: captchaToken } : {}),
   });
   if (status === 429) throw new Error(t("auth.tooManyRequests"));
+  if (data.error === "captcha_failed") throw authApiError(status, data.error);
   if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
   return { allowed: !!data.allowed, nextAllowedAtMs: data.next_allowed_at ? Date.parse(data.next_allowed_at) || 0 : 0 };
 }

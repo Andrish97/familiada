@@ -174,8 +174,10 @@ function buildDb(lang, extras = {}) {
   const friends = [
     ...p.friends.accepted.map(([l, e]) => friend(l, e, "friend", "active")),
     ...c.friends.slice(0, 3).map(([l, e]) => friend(l, e, "friend", "active")),
-    ...p.friends.incoming.map(([l, e]) => friend(l, e, "incoming", "pending")),
-    ...p.friends.outgoing.map(([l, e, s]) => friend(l, e, "outgoing", s)),
+    // Przed przyjęciem znajomości bez adresu drugiej strony (migracja 457);
+    // pierwsze wysłane zaproszenie -- na adres wpisany przez użytkownika.
+    ...p.friends.incoming.map(([l]) => friend(l, null, "incoming", "pending")),
+    ...p.friends.outgoing.map(([l, e, s], i) => friend(l, i === 0 ? e : null, "outgoing", s)),
   ];
   let sn = 0;
   const sub = (email, status) => ({ id: id("8900", ++sn), email, label: email, status, friend_user_id: sn <= 2 ? id("8910", sn) : null, created_at: daysAgo(sn * 3), resend_available_at: daysAgo(1), email_enabled: true });

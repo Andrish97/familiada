@@ -5,9 +5,9 @@ import { handleAuthLogin, handleAuthReset, handleAuthEmailStatus, handleAuthRese
 import { handleContactSubmit, SUBMIT_MAX_PER_IP } from '../../cloudflare/maintenance-worker/src/lib/email/contact.js';
 
 function kv() { const m = new Map(); return { m, get: async (k) => m.get(k) ?? null, put: async (k, v) => { m.set(k, v); } }; }
-const env = () => ({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'svc', SUPABASE_ANON_KEY: 'anon', MAINT_KV: kv() });
-const req = (path, body, { ip = '1.2.3.4', origin = 'https://www.familiada.online', type = 'application/json' } = {}) =>
-  new Request('https://www.familiada.online' + path, { method: 'POST', headers: { 'Content-Type': type, 'CF-Connecting-IP': ip, ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(body) });
+const env = () => ({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'svc', SUPABASE_ANON_KEY: 'anon', TURNSTILE_SECRET_KEY: 'real-secret', E2E_BYPASS_SECRET: 'e2e-secret', MAINT_KV: kv() });
+const req = (path, body, { ip = '1.2.3.4', origin = 'https://www.familiada.online', type = 'application/json', headers = {} } = {}) =>
+  new Request('https://www.familiada.online' + path, { method: 'POST', headers: { 'Content-Type': type, 'CF-Connecting-IP': ip, ...(origin ? { Origin: origin } : {}), ...headers }, body: JSON.stringify(body && typeof body === 'object' && !('captcha_token' in body) ? { ...body, captcha_token: 'ok-token' } : body) });
 const ok = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 
 // Baza: alicja -> alicja@example.com; hasło "dobre". GoTrue: token / recover.
@@ -15,7 +15,7 @@ function mockBackend() {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = new URL(url);
-    const body = init.body ? JSON.parse(init.body) : null;
+    const body = typeof init.body === 'string' ? JSON.parse(init.body) : null;
     calls.push({ path: u.pathname, search: u.search, body, headers: Object.fromEntries(new Headers(init.headers)) });
     if (u.pathname === '/rest/v1/rpc/profile_login_to_email') return ok(body.p_login.toLowerCase() === 'alicja' ? 'alicja@example.com' : null);
     if (u.pathname === '/rest/v1/rpc/mail_cooldown_email_reserve') return ok([{ ok: true, next_allowed_at: '2030-01-01T00:00:00Z' }]);
@@ -29,6 +29,12 @@ function mockBackend() {
       }
       return ok({ code: 400, error_code: 'invalid_credentials', msg: 'Invalid login credentials' }, 400);
     }
+    if (u.hostname === 'challenges.cloudflare.com') {
+      const secret = init.body.get('secret'), response = init.body.get('response');
+      calls.push({ path: 'siteverify', secret, response });
+      const pass = secret === '1x0000000000000000000000000000000AA' || (secret === 'real-secret' && response === 'ok-token');
+      return ok({ success: pass, hostname: secret === 'real-secret' ? 'www.familiada.online' : 'example.com' });
+    }
     if (u.pathname === '/auth/v1/recover') return ok({});
     throw new Error('unexpected ' + u.pathname);
   };
@@ -39,7 +45,7 @@ test('auth/login: nazwa -> sesja, bez adresu e-mail w odpowiedzi; GoTrue kluczem
   const prev = globalThis.fetch;
   try {
     const calls = mockBackend();
-    const res = await handleAuthLogin(req('/_api/auth/login', { login: 'Alicja', password: 'dobre', captcha_token: 'tok' }), env());
+    const res = await handleAuthLogin(req('/_api/auth/login', { login: 'Alicja', password: 'dobre', captcha_token: 'ok-token' }), env());
     assert.equal(res.status, 200);
     const text = await res.text();
     assert.ok(!text.includes('@'), 'odpowiedź nie zawiera e-maila');
@@ -47,7 +53,7 @@ test('auth/login: nazwa -> sesja, bez adresu e-mail w odpowiedzi; GoTrue kluczem
     const token = calls.find(c => c.path === '/auth/v1/token');
     assert.equal(token.search, '?grant_type=password');
     assert.equal(token.headers.authorization, 'Bearer anon');
-    assert.deepEqual(token.body.gotrue_meta_security, { captcha_token: 'tok' });
+    assert.deepEqual(token.body.gotrue_meta_security, { captcha_token: 'ok-token' });
   } finally { globalThis.fetch = prev; }
 });
 
@@ -154,4 +160,47 @@ test('Worker: trasy /_api/auth/* przed bramką; przy przerwie technicznej 503 be
     const blocked = await worker.fetch(req('/_api/auth/email-status', { email: 'a@example.com' }), env(), ctx);
     assert.equal(blocked.status, 503);
   } finally { globalThis.fetch = prev; setStateCache({ enabled: false, mode: 'off' }); }
+});
+
+import { createHmac, randomUUID } from 'node:crypto';
+const e2eToken = (secret) => { const p = Buffer.from(JSON.stringify({ iat: Date.now() - 1000, nonce: randomUUID() })).toString('base64'); return `${p}.${createHmac('sha256', secret).update(p).digest('hex')}`; };
+
+test('Turnstile: bez tokenu / zły token = captcha_failed, bez sekretu = odmowa (fail closed), e2e = testowy klucz', async () => {
+  const prev = globalThis.fetch;
+  try {
+    const calls = mockBackend();
+    for (const [path, body] of [['/_api/auth/login', { login: 'alicja', password: 'dobre' }], ['/_api/auth/email-status', { email: 'a@example.com' }],
+      ['/_api/auth/resend-prepare', { email: 'a@example.com' }], ['/_api/auth/reset', { login: 'alicja' }]]) {
+      const handler = { '/_api/auth/login': handleAuthLogin, '/_api/auth/email-status': handleAuthEmailStatus, '/_api/auth/resend-prepare': handleAuthResendPrepare, '/_api/auth/reset': handleAuthReset }[path];
+      for (const token of [undefined, 'zly-token']) {
+        const res = await handler(req(path, { ...body, captcha_token: token }), env());
+        assert.equal(res.status, 400, path); assert.equal((await res.json()).error, 'captcha_failed');
+      }
+      const noSecret = { ...env(), TURNSTILE_SECRET_KEY: '' };
+      const closed = await handler(req(path, body), noSecret);
+      assert.equal(closed.status, 503, path); assert.equal((await closed.json()).error, 'captcha_unavailable');
+    }
+    assert.ok(!calls.some(c => c.path === '/auth/v1/token'), 'bez captchy nie ma logowania');
+    // Testy e2e: podpisany nagłówek -> oficjalny testowy klucz (token testowy przechodzi), bez sekretu produkcyjnego też.
+    const e = { ...env(), TURNSTILE_SECRET_KEY: '' };
+    const res = await handleAuthLogin(req('/_api/auth/login', { login: 'alicja', password: 'dobre', captcha_token: 'XXXX.DUMMY.TOKEN.XXXX' }, { headers: { 'X-E2E-Token': e2eToken('e2e-secret') } }), e);
+    assert.equal(res.status, 200);
+    assert.equal(calls.filter(c => c.path === 'siteverify').at(-1).secret, '1x0000000000000000000000000000000AA');
+    // Fałszywy nagłówek e2e nie daje testowego klucza.
+    const forged = await handleAuthLogin(req('/_api/auth/login', { login: 'alicja', password: 'dobre', captcha_token: 'XXXX.DUMMY.TOKEN.XXXX' }, { headers: { 'X-E2E-Token': e2eToken('inny') } }), env());
+    assert.equal(forged.status, 400);
+  } finally { globalThis.fetch = prev; }
+});
+
+test('Turnstile: formularz kontaktu i dopisanie do zgłoszenia wymagają tokenu', async () => {
+  const prev = globalThis.fetch;
+  try {
+    const calls = mockBackend();
+    const res = await handleContactSubmit(req('/_api/contact', { email: 'a@example.com', subject: 'S', message: 'Treść', captcha_token: '' }), env());
+    assert.equal(res.status, 400);
+    assert.ok(!calls.some(c => c.path.endsWith('save_form_message')));
+    const { handleContactAppend } = await import('../../cloudflare/maintenance-worker/src/lib/email/contact.js');
+    const app = await handleContactAppend(req('/_api/contact/append', { email: 'a@example.com', ticket: 'TICKET-1', message: 'Treść', captcha_token: 'zly' }), env());
+    assert.equal(app.status, 400);
+  } finally { globalThis.fetch = prev; }
 });

@@ -2,8 +2,8 @@
 // "poll:share" i przydział maila przed wysyłką; treść buduje funkcja Edge
 // send-mail z szablonów serwera. Tu: wysyłka po tokenach i oznaczenie
 // zaproszeń jako wysłanych.
-import { sb } from "./supabase.js?v=v2026-10-21T23580";
-import { sendNotificationMails, goLinkToken } from "./notify-mail.js?v=v2026-10-21T23580";
+import { sb } from "./supabase.js?v=v2026-10-22T00022";
+import { sendNotificationMails, goLinkToken } from "./notify-mail.js?v=v2026-10-22T00022";
 
 /**
  * Wysyła maile dla elementów `mail` zwróconych przez poll_share_send /
