@@ -215,6 +215,9 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     expect(secondLink).not.toBe(firstLink);
 
     await page.locator("#migrateCancel").click();
+    // Podpowiedź znika optymistycznie przed odpowiedzią serwera -- czekamy na
+    // komunikat po zakończonym anulowaniu, inaczej link wyprzedza anulowanie.
+    await expect(page.locator("#appToast")).toContainText("Migracja anulowana", { timeout: 20000 });
     await expect(page.locator("#migratePendingHint")).toBeHidden({ timeout: 15000 });
     await expect.poll(() => getGuestState(page), { timeout: 15000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
 
