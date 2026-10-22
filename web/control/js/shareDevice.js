@@ -1,16 +1,15 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T23542";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T23542";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T23542";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T23542";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T23542";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T23542";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00134";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-22T00134";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-22T00134";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00134";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-22T00134";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T00134";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T23542";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-22T00134";
 
-const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 function deviceTypeLabel(type) {
   if (type === "host") return t("control.shareDeviceModal.typeHost") || "Prowadzący";
@@ -29,45 +28,10 @@ function shareErrorMessage(code) {
   return t(`control.shareDeviceModal.${keys[code] || "failed"}`);
 }
 
-function buildMailHtml({ title, body, actionLabel, actionUrl, isRegistered }) {
-  const accountUrl = new URL("/account/", location.origin);
-  accountUrl.searchParams.set("lang", getUiLang());
-  return renderMailDocument({ lang: getUiLang(), title, body, actionLabel, actionUrl,
-    subtitle: t("sharingMail.deviceSubtitle"),
-    linkHint: t("pollsHubSubscriptions.mail.linkHint"), autoNote: t("pollsHubSubscriptions.mail.autoNote"),
-    footerText: isRegistered ? t("pollGo.mailAccountSettings") : "",
-    footerLinks: isRegistered ? [{ url: accountUrl.href, label: t("pollGo.mailAccountSettingsLink") }] : [] });
-}
-
-async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, shareKey, cooldownTargetKey, isRegistered }) {
-  const { data } = await sb().auth.getSession();
-  const token = data?.session?.access_token;
-  if (!token) throw new Error(t("pollsHubSubscriptions.errors.mailSession"));
-  const typeLabel = deviceTypeLabel(deviceType);
-  const subject = t("control.shareDeviceModal.mailSubject", { type: typeLabel }) || `Udostępniono urządzenie: ${typeLabel}`;
-  const body = t("control.shareDeviceModal.mailBody", { owner: ownerLabel, type: typeLabel, game: gameName || "—" }) ||
-    `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}.`;
-
-  const link = new URL(`/go/?d=${deviceType}&id=${gameId}&key=${shareKey}`, location.origin);
-  link.searchParams.set("lang", getUiLang());
-  const actionUrl = link.href;
-
-  const html = buildMailHtml({
-    title: subject,
-    body,
-    actionLabel: t("control.shareDeviceModal.openDevice") || `Otwórz: ${typeLabel}`,
-    actionUrl, isRegistered,
-  });
-  // Serwerowy RPC udostępnienia zarezerwował cooldown przed kolejką.
-  const response = await fetch(MAIL_FUNCTION_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, html, cooldownActionKey: "device:share", cooldownTargetKey }),
-  });
-  if (!response.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
-  const payload = await response.json();
-  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
-  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
+// Mail z udostępnieniem urządzenia: treść i odbiorcę buduje send-mail z bazy
+// (przydział powiadomienia z RPC); tu tylko token udostępnienia.
+async function sendShareEmail(token) {
+  return sendNotificationMail({ action: "device:share", token });
 }
 
 export function createShareDevice({ currentUser, game, onBadgesChanged }) {
@@ -288,16 +252,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       return res?.mail_disabled ? "disabled" : false;
     }
 
-    const queued = await sendShareEmail({
-      to: res.mail_to,
-      ownerLabel: currentUser?.username || currentUser?.email || "—",
-      deviceType: _deviceType,
-      gameId: game.id,
-      gameName: game.name,
-      shareKey: res.token,
-      cooldownTargetKey: res.cooldown_target_key,
-      isRegistered: !!res.recipient_id,
-    });
+    const queued = await sendShareEmail(res.token);
     return queued ? true : "disabled";
   }
 

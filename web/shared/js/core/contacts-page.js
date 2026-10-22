@@ -1,16 +1,17 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-21T23542";
-import { initPage } from "./page-init.js?v=v2026-10-21T23542";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-21T23542";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-21T23542";
-import { toast } from "./toast.js?v=v2026-10-21T23542";
-import { iconText } from "./icons.js?v=v2026-10-21T23542";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-21T23542";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-21T23542";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-21T23542";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-21T23542";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-21T23542";
-import "./contact-modal.js?v=v2026-10-21T23542";
+import { sb } from "./supabase.js?v=v2026-10-22T00134";
+import { initPage } from "./page-init.js?v=v2026-10-22T00134";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-22T00134";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-22T00134";
+import { toast } from "./toast.js?v=v2026-10-22T00134";
+import { iconText } from "./icons.js?v=v2026-10-22T00134";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-22T00134";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-22T00134";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-22T00134";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-22T00134";
+import { goLinkToken } from "./notify-mail.js?v=v2026-10-22T00134";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-22T00134";
+import "./contact-modal.js?v=v2026-10-22T00134";
 
 
 export async function initContactsPage(pageId) {
@@ -62,7 +63,6 @@ export async function initContactsPage(pageId) {
   }
   mobile.addEventListener("change", applyTab);
   applyTab();
-  const ownerLabel = user.user_metadata?.username || user.email || "Familiada";
 
   async function call(name, args) {
     const { data, error } = await sb().rpc(name, args);
@@ -103,8 +103,9 @@ export async function initContactsPage(pageId) {
         if (!await confirmModal({ text: t(`contacts.confirm.${!friends && kind === "remove" ? "removeSubscriber" : kind}`) })) return;
       }
       const data = await call(friends ? `friends_${kind}` : kind === "resend" ? "polls_hub_subscriber_resend" : "polls_hub_subscriber_remove", { p_id: row.id });
-      if (kind === "resend" && data.to && data.link) {
-        const queued = await sendInviteMail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token, kind: friends ? "friend" : "subscriber", reminder: true, actionKey: friends ? "friend:resend" : "poll:resend" });
+      const resendToken = kind === "resend" ? goLinkToken(data.link, friends ? "f" : "s") : "";
+      if (resendToken) {
+        const queued = await sendInviteMail({ token: resendToken, kind: friends ? "friend" : "subscriber", reminder: true, actionKey: friends ? "friend:resend" : "poll:resend" });
         toast(t(queued ? "contacts.sent" : "control.shareDeviceModal.friendMailDisabled"));
       }
       await refresh();
@@ -210,12 +211,15 @@ export async function initContactsPage(pageId) {
     try {
       const data = await call(friends ? "friends_invite" : "subscribers_invite", friends ? { p_handle: input.value } : { p_email: input.value });
       let mail = null;
-      if (friends && data.mail_allowed) mail = { to: data.to, link: `/go/?f=${data.token}`, actionKey: "friend:invite" };
-      if (!friends && !data.already) mail = await call("polls_hub_subscriber_resend", { p_id: data.id });
+      if (friends && data.mail_allowed) mail = { token: data.token, actionKey: "friend:invite" };
+      if (!friends && !data.already) {
+        const resent = await call("polls_hub_subscriber_resend", { p_id: data.id });
+        if (resent?.mail_allowed) mail = { token: goLinkToken(resent.link, "s") };
+      }
       await refresh();
       let mailSkipped = false;
-      if (mail?.to && mail.link) {
-        try { mailSkipped = !await sendInviteMail({ ...mail, ownerLabel, unsubToken: mail.unsub_token, kind: friends ? "friend" : "subscriber" }); }
+      if (mail?.token) {
+        try { mailSkipped = !await sendInviteMail({ ...mail, kind: friends ? "friend" : "subscriber" }); }
         catch (error) { console.warn("[contacts] mail:", error); toast(t("contacts.mailFailed"), { kind: "error" }); return; }
       }
       input.value = "";

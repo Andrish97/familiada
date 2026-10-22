@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-21T23542";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-21T23542";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-21T23542";
+import { icon } from "./icons.js?v=v2026-10-22T00134";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T00134";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T00134";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -108,25 +108,41 @@ function classifyAuthError(error) {
   return { status, code, rawMessage, kind };
 }
 
-async function loginToEmail(login) {
-  const v = String(login || "").trim();
-  if (!v) return "";
-
-  // jeśli wygląda jak email - zwracamy od razu
-  if (v.includes("@")) return v.toLowerCase();
-
-  // username -> email przez RPC
-  const { data, error } = await sb().rpc("profile_login_to_email", { p_login: v });
-  if (error) throw new Error(niceAuthError(error));
-
-  return String(data || "").trim().toLowerCase();
+// Logowanie, reset hasła i stan adresu przy rejestracji po stronie Workera
+// (audyt E24, B7/B8): nazwa użytkownika -> e-mail tylko na serwerze.
+async function authApi(path, body) {
+  let res;
+  try {
+    res = await fetch(`/_api/auth/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw Object.assign(new Error(t("auth.loginFailed")), { status: 0 });
+  }
+  let data = null;
+  try { data = await res.json(); } catch {}
+  return { status: res.status, data: data || {} };
 }
 
-export async function resolveLoginToEmail(loginOrEmail) {
-  return await loginToEmail(loginOrEmail);
+// Błąd Workera w kształcie błędu GoTrue (te same komunikaty i ścieżki captcha).
+function authApiError(status, code) {
+  const raw = {
+    invalid_credentials: "Invalid login credentials",
+    email_not_confirmed: "Email not confirmed",
+    captcha_failed: "captcha verification process failed",
+    rate_limited: "Too many requests",
+  }[code] || "";
+  const err = new Error(raw ? niceAuthError({ message: raw, status }) : t("auth.loginFailed"));
+  err.status = status;
+  err.errorCode = code === "captcha_failed" ? "captcha_failed" : code || "";
+  err.rawMessage = raw;
+  err.errorKind = code === "invalid_credentials" ? "invalid_login" : code === "captcha_failed" ? "security" : status >= 500 ? "network" : "unknown";
+  return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-21T23542";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T00134";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -417,33 +433,40 @@ export async function discardCurrentGuestAccount() {
   }
 }
 
+async function signInWithUsername(username, password, captchaToken) {
+  const { status, data } = await authApi("login", { login: username, password, ...(captchaToken ? { captcha_token: captchaToken } : {}) });
+  if (status !== 200 || !data.ok || !data.session?.access_token) throw authApiError(status, data.error);
+  const { data: set, error } = await sb().auth.setSession({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+  });
+  if (error) throw new Error(niceAuthError(error));
+  return set?.user || set?.session?.user || null;
+}
+
 export async function signIn(login, password, captchaToken = null) {
-  const email = await loginToEmail(login);
-  if (!email) {
-    const raw = String(login || "");
-    const unknownEmail = raw.includes("@");
-    const err = new Error(unknownEmail ? t("auth.unknownEmail") : t("auth.unknownUsername"));
-    err.status = 400;
-    err.errorCode = unknownEmail ? "unknown_email" : "unknown_username";
-    err.rawMessage = err.message;
-    throw err;
+  const value = String(login || "").trim();
+  if (!value) throw Object.assign(new Error(t("auth.unknownUsername")), { status: 400, errorCode: "unknown_username" });
+
+  let user;
+  if (value.includes("@")) {
+    const payload = { email: value.toLowerCase(), password };
+    if (captchaToken) payload.options = { captchaToken };
+
+    const { data, error } = await sb().auth.signInWithPassword(payload);
+    if (error) {
+      const classified = classifyAuthError(error);
+      const wrapped = new Error(niceAuthError(error));
+      wrapped.status = classified.status;
+      wrapped.errorCode = classified.code;
+      wrapped.rawMessage = classified.rawMessage;
+      wrapped.errorKind = classified.kind;
+      throw wrapped;
+    }
+    user = data.user;
+  } else {
+    user = await signInWithUsername(value, password, captchaToken);
   }
-
-  const payload = { email, password };
-  if (captchaToken) payload.options = { captchaToken };
-
-  const { data, error } = await sb().auth.signInWithPassword(payload);
-  if (error) {
-    const classified = classifyAuthError(error);
-    const wrapped = new Error(niceAuthError(error));
-    wrapped.status = classified.status;
-    wrapped.errorCode = classified.code;
-    wrapped.rawMessage = classified.rawMessage;
-    wrapped.errorKind = classified.kind;
-    throw wrapped;
-  }
-
-  const user = data.user;
   if (!user) throw new Error(t("auth.loginFailed"));
 
   if (!user.email_confirmed_at) {
@@ -476,32 +499,27 @@ export async function getEmailStatus(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!normalized || !normalized.includes("@")) throw new Error(t("index.errInvalidEmail"));
 
-  let statusRaw = "";
-  let intentRaw = "";
+  const { status, data } = await authApi("email-status", { email: normalized });
+  if (status === 429) throw new Error(t("auth.tooManyRequests"));
+  if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
 
-  // Preferred path: RPC (DB + cooldown state). Fallback: edge function.
-  try {
-    const { data, error } = await sb().rpc("email_get_status", { p_email: normalized });
-    if (!error && Array.isArray(data) && data.length) {
-      statusRaw = String(data[0]?.status || "").trim().toLowerCase();
-      intentRaw = String(data[0]?.intent || "").trim().toLowerCase();
-    }
-  } catch {}
+  const statusRaw = String(data.status || "").trim().toLowerCase();
+  return {
+    status: statusRaw === "confirmed" || statusRaw === "pending" ? statusRaw : "none",
+    intent: data.intent === "guest_migrate" ? "guest_migrate" : "signup",
+  };
+}
 
-  if (!statusRaw) {
-    const { data, error } = await sb().functions.invoke("auth-email-status", {
-      body: { email: normalized },
-    });
-    if (error) throw new Error(niceAuthError(error));
-    if (!data?.ok) throw new Error(String(data?.error || t("index.statusError")));
-    statusRaw = String(data?.status || "").trim().toLowerCase();
-    intentRaw = String(data?.intent || "").trim().toLowerCase();
-  }
-
-  const status = statusRaw === "confirmed" || statusRaw === "pending" ? statusRaw : "none";
-  const intent = intentRaw === "guest_migrate" ? "guest_migrate" : "signup";
-
-  return { status, intent };
+// Ponowne wysłanie potwierdzenia: rezerwacja cooldownu na serwerze.
+// { allowed, nextAllowedAtMs } -- bez informacji o stanie konta.
+export async function prepareConfirmationResend(email, intent) {
+  const { status, data } = await authApi("resend-prepare", {
+    email: String(email || "").trim().toLowerCase(),
+    intent: intent === "guest_migrate" ? "guest_migrate" : "signup",
+  });
+  if (status === 429) throw new Error(t("auth.tooManyRequests"));
+  if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
+  return { allowed: !!data.allowed, nextAllowedAtMs: data.next_allowed_at ? Date.parse(data.next_allowed_at) || 0 : 0 };
 }
 
 export async function getPendingIntent(email) {
@@ -523,9 +541,9 @@ export async function signOut() {
   clearGuestLocalMarker();
 }
 
-export async function resetPassword(loginOrEmail, redirectTo, language, resolvedEmail = null, captchaToken = null) {
-  const email = (resolvedEmail || await loginToEmail(loginOrEmail))?.toLowerCase?.() || "";
-  if (!email) throw new Error(t("index.errResetMissingLogin"));
+export async function resetPassword(email, redirectTo, language, captchaToken = null) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized.includes("@")) throw new Error(t("index.errResetMissingLogin"));
 
   const resetRedirectTo = redirectTo || buildAuthRedirect("/login/reset/", language);
 
@@ -533,10 +551,24 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   if (language) options.data = { language };
   if (captchaToken) options.captchaToken = captchaToken;
 
-  const { error } = await sb().auth.resetPasswordForEmail(email, options);
+  const { error } = await sb().auth.resetPasswordForEmail(normalized, options);
   if (error) throw new Error(niceAuthError(error));
 
-  return email; // ✅ ważne: login.js zapisze cooldown per konkretny email
+  return normalized; // login.js zapisze cooldown per konkretny email
+}
+
+// Reset po nazwie użytkownika: Worker rozwiązuje nazwę, rezerwuje cooldown
+// i wysyła link; adres e-mail nie wraca do przeglądarki.
+// { sent, nextAllowedAtMs }
+export async function resetPasswordByUsername(username, language, captchaToken = null) {
+  const { status, data } = await authApi("reset", {
+    login: String(username || "").trim(),
+    lang: language,
+    ...(captchaToken ? { captcha_token: captchaToken } : {}),
+  });
+  if (status === 404) throw new Error(t("index.errResetMissingLogin"));
+  if (status !== 200 || !data.ok) throw authApiError(status, data.error);
+  return { sent: !!data.sent, nextAllowedAtMs: data.next_allowed_at ? Date.parse(data.next_allowed_at) || 0 : 0 };
 }
 
 export async function updateUserLanguage(language) {

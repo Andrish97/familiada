@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-21T23542";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T23542";
-import { toast } from "./toast.js?v=v2026-10-21T23542";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-21T23542";
-import { icon, iconText } from "./icons.js?v=v2026-10-21T23542";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T23542";
-import { attachListTools } from "./share-sections.js?v=v2026-10-21T23542";
+import { sb } from "./supabase.js?v=v2026-10-22T00134";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-22T00134";
+import { toast } from "./toast.js?v=v2026-10-22T00134";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-22T00134";
+import { icon, iconText } from "./icons.js?v=v2026-10-22T00134";
+import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T00134";
+import { attachListTools } from "./share-sections.js?v=v2026-10-22T00134";
 
 
 const attempts = new Map();
@@ -150,19 +150,9 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
             if (!response.ok || !result.ok) throw new Error(result.error || "copy_failed");
             attempts.delete(key);
 
-            const recipientEmail = result.mail_to || friends.find(row => row.user_id === recipient_id)?.email;
-            if (result.mail_allowed && result.go_token && recipientEmail) {
+            if (result.mail_allowed && result.go_token) {
               try {
-                const sent = await sendResourceCopyMail({
-                  to: recipientEmail,
-                  link: `/go/?c=${encodeURIComponent(result.go_token)}`,
-                  ownerLabel: sessionData.session.user.user_metadata?.username || sessionData.session.user.email || "Familiada",
-                  name: source.name || "",
-                  kind,
-                  ownerId: sessionData.session.user.id,
-                  recipientId: recipient_id,
-                  sourceId: source.id,
-                });
+                const sent = await sendResourceCopyMail({ token: result.go_token });
                 if (!sent) throw new Error("mail_not_sent");
               } catch (mailError) {
                 console.warn("[resource-copy-mail] email delivery failed:", mailError);
