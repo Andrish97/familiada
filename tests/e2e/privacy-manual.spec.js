@@ -1,5 +1,5 @@
 const { test, expect } = require("./helpers/production-test");
-const { serveBranchCode } = require("./helpers/branch-code");
+const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
 const { loginAsTestUser } = require("./helpers/login");
 
 const ORIGIN = "https://www.familiada.online";
@@ -161,6 +161,8 @@ test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego p
 
 test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca na logowanie", async ({ page, context }) => {
   await serveBranchCode(context, { pages: ["privacy", "manual", "login"] });
+  // HTML logowania zwykle idzie z Workera (Turnstile); tu bez logowania — bierzemy go z brancha.
+  if (process.env.TEST_BRANCH_CODE !== "0") await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
   await page.goto(`${ORIGIN}/login/?lang=en`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#btnManual")).toHaveAttribute("href", /^\/manual\/\?ch=5&ret=%2Flogin%2F&lang=en$/);
   await page.locator("#btnManual").click();
