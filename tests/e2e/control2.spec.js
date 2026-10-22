@@ -699,7 +699,10 @@ async function readControl2Sessions(page, gameId) {
       .select("id,status,ended_at,rounds_played,rounds_score_a,rounds_score_b,team_a_score,team_b_score,final_points,stats_detail")
       .eq("game_id", gid).eq("control_version", 2).order("started_at");
     if (error) throw new Error("read production statistics: " + error.message);
-    return data;
+    // Zdarzenia sesji są w osobnej tabeli (migracja 468), nie w stats_detail.
+    const events = await window.__sbClient.rpc("control2_owner_session_events", { p_game_id: gid });
+    if (events.error) throw new Error("read session events: " + events.error.message);
+    return data.map(row => ({ ...row, stats_detail: { ...row.stats_detail, events: events.data?.[row.id] || [] } }));
   }, gameId);
 }
 
