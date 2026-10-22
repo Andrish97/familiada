@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nlaq7YiD4zf8hyR8DdUf0ulQijjc5jDETzTKaqKVfbHm77FWoGQenxlUFXLsvxd
+\restrict DWBeo1Ea2IjDqhQohoph5jGEb95d5f5u7jI8VHEBrTEuXgtFupX6Zht4GktPDIk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8125,56 +8125,6 @@ $$;
 
 
 --
--- Name: e2e_registered_subscriber_fixture(boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."e2e_registered_subscriber_fixture"("p_remove" boolean DEFAULT false) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
-    AS $_$
-DECLARE uid uuid:=auth.uid(); caller text; recipient uuid; sid uuid;
-BEGIN
- SELECT lower(email) INTO caller FROM auth.users WHERE id=uid;
- IF caller IS NULL OR (caller !~ '^test[1-7]@familiada[.]online$' AND NOT public._e2e_account_email(caller)) THEN
-   RETURN jsonb_build_object('ok',false,'err','test accounts required'); END IF;
- SELECT id INTO recipient FROM auth.users WHERE lower(email)='test8@familiada.online';
- IF NOT coalesce(p_remove,false) AND (recipient IS NULL OR NOT EXISTS(
-   SELECT 1 FROM public.profiles WHERE id=recipient AND NOT is_guest)) THEN
-   RETURN jsonb_build_object('ok',false,'err','recipient test account missing'); END IF;
- DELETE FROM public.poll_subscriptions WHERE owner_id=uid
- AND (registered_user_id=recipient OR public._norm_email(subscriber_email)='test8@familiada.online');
- IF coalesce(p_remove,false) THEN RETURN jsonb_build_object('ok',true,'removed',true); END IF;
- INSERT INTO public.poll_subscriptions(owner_id,subscriber_email,status,accepted_at)
- VALUES(uid,'test8@familiada.online','active',now()) RETURNING id INTO sid;
- RETURN jsonb_build_object('ok',true,'id',sid,'recipient_user_id',recipient);
-END; $_$;
-
-
---
--- Name: e2e_registered_subscriber_fixture("uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."e2e_registered_subscriber_fixture"("p_recipient_user_id" "uuid", "p_remove" boolean DEFAULT false) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
-    AS $$
-DECLARE uid uuid := auth.uid(); caller text; recipient_email text; sid uuid;
-BEGIN
-  SELECT lower(email) INTO caller FROM auth.users WHERE id = uid;
-  SELECT lower(email) INTO recipient_email FROM auth.users WHERE id = p_recipient_user_id;
-  IF NOT public._e2e_account_email(caller) OR NOT public._e2e_account_email(recipient_email) OR uid = p_recipient_user_id THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'e2e accounts required');
-  END IF;
-  DELETE FROM public.poll_subscriptions WHERE owner_id = uid
-    AND (registered_user_id = p_recipient_user_id OR public._norm_email(subscriber_email) = recipient_email);
-  IF coalesce(p_remove, false) THEN RETURN jsonb_build_object('ok', true, 'removed', true); END IF;
-  INSERT INTO public.poll_subscriptions(owner_id, subscriber_email, status, accepted_at)
-  VALUES (uid, recipient_email, 'active', now()) RETURNING id INTO sid;
-  RETURN jsonb_build_object('ok', true, 'id', sid, 'recipient_user_id', p_recipient_user_id);
-END; $$;
-
-
---
 -- Name: e2e_reset_identity("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8329,54 +8279,6 @@ BEGIN
   DELETE FROM public.email_cooldowns WHERE email_hash=md5(v_email);
   RETURN jsonb_build_object('ok',true);
 END; $_$;
-
-
---
--- Name: e2e_subscriber_mail_flag(boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."e2e_subscriber_mail_flag"("p_reset" boolean DEFAULT false) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
-    AS $_$
-DECLARE caller text; stamp timestamptz;
-BEGIN
- SELECT lower(email) INTO caller FROM auth.users WHERE id=auth.uid();
- IF caller IS NULL OR (caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(caller)) THEN
-   RETURN jsonb_build_object('ok',false,'err','test accounts required');
- END IF;
- SELECT suppressed_at INTO stamp FROM public.email_unsub_tokens
- WHERE public._norm_email(email)='test14@familiada.online';
- IF coalesce(p_reset,false) THEN
-   UPDATE public.email_unsub_tokens SET suppressed_at=NULL
-   WHERE public._norm_email(email)='test14@familiada.online';
- END IF;
- RETURN jsonb_build_object('ok',true,'previous_suppressed_at',stamp,
-   'suppressed_at',CASE WHEN coalesce(p_reset,false) THEN NULL ELSE stamp END);
-END; $_$;
-
-
---
--- Name: e2e_subscriber_mail_flag("text", boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."e2e_subscriber_mail_flag"("p_email" "text", "p_reset" boolean DEFAULT false) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
-    AS $$
-DECLARE caller text; v_email text := public._norm_email(p_email); stamp timestamptz;
-BEGIN
-  SELECT lower(email) INTO caller FROM auth.users WHERE id = auth.uid();
-  IF NOT public._e2e_account_email(caller) OR coalesce((public.e2e_identity(v_email)).role, '') <> 'noaccount' THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'e2e accounts required');
-  END IF;
-  SELECT suppressed_at INTO stamp FROM public.email_unsub_tokens WHERE public._norm_email(email) = v_email;
-  IF coalesce(p_reset, false) THEN
-    UPDATE public.email_unsub_tokens SET suppressed_at = NULL WHERE public._norm_email(email) = v_email;
-  END IF;
-  RETURN jsonb_build_object('ok', true, 'previous_suppressed_at', stamp,
-    'suppressed_at', CASE WHEN coalesce(p_reset, false) THEN NULL ELSE stamp END);
-END; $$;
 
 
 --
@@ -27720,5 +27622,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nlaq7YiD4zf8hyR8DdUf0ulQijjc5jDETzTKaqKVfbHm77FWoGQenxlUFXLsvxd
+\unrestrict DWBeo1Ea2IjDqhQohoph5jGEb95d5f5u7jI8VHEBrTEuXgtFupX6Zht4GktPDIk
 
