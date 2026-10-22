@@ -270,6 +270,8 @@ module.exports = [
       d.final.runtime.map2 = [match(q[0], 1, done), match(q[1], 0, done), { ...emptyMap(), mode: "MANUAL", kind: "SKIP", repeat: true }, emptyMap(), emptyMap()];
       d.final.runtime.sum += q[0].answers[1].fixed_points + q[1].answers[0].fixed_points;
     }) },
+  { id: "play-control-final-p2-timer", category: CAT, title: "Control — finał, gracz 2: wpisywanie w trakcie odliczania 20 s (powtórzenie w pytaniu 3)", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-entryrow", devices: DESKTOP, settle: 800,
+    db: state((row, d, lang) => { S.finaleP2(row, d, lang); row.step = "f_p2_entry"; d.final.runtime.p2[3] = { text: "" }; d.final.runtime.timer = { running: true, phase: "P2", endsAt: Date.now() + 60e3, usedP1: true, usedP2: true }; }) },
   { id: "play-control-final-end", category: CAT, title: "Control — koniec finału przed odsłonięciem (suma finału)", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-intro", devices: DESKTOP, settle: 1000,
     db: state((row, d, lang) => { S.finaleP2Done(row, d, lang); row.step = "f_end"; d.settings.endScreenMode = "money"; }) },
 
@@ -302,6 +304,10 @@ module.exports = [
     steps: [previewStep("round", (row, d) => { S.duel(row, d); d.rounds.duel.currentTeam = "A"; row.control_team = "A"; }, { numbers: () => ({ left: "000", right: "000", top: "000" }) })] },
   { id: "play-display-steal", category: CAT, title: "Wyświetlacz — przejęcie: trzy X drużyny B, duży X drużyny A", path: "/control/display/?preview=1", sources: DISPLAY, ready: docReady, settle: 3500, size: { width: 1600, height: 900 },
     steps: [previewStep("round", (row, d) => S.stealLost(row, d), { numbers: (row, d) => ({ left: pad(d.rounds.totals.A), right: pad(d.rounds.totals.B), top: pad(d.rounds.bankPts) }) })] },
+  { id: "play-display-play", category: CAT, title: "Wyświetlacz — rozgrywka: odsłonięte odpowiedzi, pula i jeden X", path: "/control/display/?preview=1", sources: DISPLAY, ready: docReady, settle: 3500, size: { width: 1600, height: 900 },
+    steps: [previewStep("round", (row, d) => S.play(row, d), { numbers: (row, d) => ({ left: pad(d.rounds.totals.A), right: pad(d.rounds.totals.B), top: pad(d.rounds.bankPts) }) })] },
+  { id: "play-display-final-p1", category: CAT, title: "Wyświetlacz — finał po graczu 1: odpowiedzi i suma", path: "/control/display/?preview=1", sources: DISPLAY, ready: docReady, settle: 3500, size: { width: 1600, height: 900 },
+    steps: [previewStep("finale", (row, d, lang) => { S.finaleP1Done(row, d, lang); row.step = "f_p1_map_q5"; }, { numbers: (row, d) => ({ left: pad(d.rounds.totals.A), right: "", top: pad(d.final.runtime.sum) }) })] },
   { id: "play-display-final", category: CAT, title: "Wyświetlacz — plansza finału: odpowiedzi gracza 1 i 2", path: "/control/display/?preview=1", sources: DISPLAY, ready: docReady, settle: 3500, size: { width: 1600, height: 900 },
     steps: [previewStep("finale", (row, d, lang) => { S.finaleP2Done(row, d, lang); row.step = "f_p2_map_q5"; }, { numbers: (row, d) => ({ left: pad(d.rounds.totals.A), right: "", top: pad(d.final.runtime.sum) }) })] },
   { id: "play-display-end-money", category: CAT, title: "Wyświetlacz — koniec gry: wygrana kwota", path: "/control/display/?preview=1", sources: [...DISPLAY, "web/shared/js/gameplay/endScreen.js"], ready: docReady, settle: 3500, size: { width: 1600, height: 900 },
@@ -324,6 +330,15 @@ module.exports = [
     steps: [previewStep("finale", (row, d, lang) => { S.finaleP2(row, d, lang); row.step = "f_p2_map_q3"; d.host.covered = false; }, { frame: true, settle: 1200 })] },
   { id: "play-host-final-map", category: CAT, title: "Prowadzący — finał, gracz 1: dopasowanie odpowiedzi do listy", path: "/control/host/?preview=1", sources: HOST, frame: true, ready: docReady, devices: ["tablet"],
     steps: [previewStep("finale", (row, d, lang) => { S.finaleP1Done(row, d, lang); row.step = "f_p1_map_q2"; d.host.covered = false; }, { frame: true, settle: 1200 })] },
+
+  { id: "play-host-duel-open", category: CAT, title: "Prowadzący — pojedynek: zasłona odsunięta (pytanie i odpowiedzi)", path: "/control/host/?preview=1", sources: HOST, frame: true, ready: docReady, devices: ["tablet", "phone-landscape"],
+    steps: [previewStep("round", (row, d) => { S.duel(row, d); d.host.covered = false; }, { frame: true, settle: 1200 })] },
+  { id: "play-host-reveal", category: CAT, title: "Prowadzący — odsłanianie pozostałych odpowiedzi po rundzie", path: "/control/host/?preview=1", sources: HOST, frame: true, ready: docReady, devices: ["tablet"],
+    steps: [previewStep("round", (row, d) => { S.reveal(row, d); d.host.covered = false; }, { frame: true, settle: 1200 })] },
+  { id: "play-host-final-p2", category: CAT, title: "Prowadzący — finał, gracz 2: odliczanie, powtórzenie i odpowiedzi gracza 1", path: "/control/host/?preview=1", sources: HOST, frame: true, ready: docReady, devices: ["tablet", "phone-landscape"],
+    steps: [previewStep("finale", (row, d, lang) => { S.finaleP2(row, d, lang); row.step = "f_p2_entry"; d.final.runtime.p2[3] = { text: "" }; d.final.runtime.timer = { running: true, phase: "P2", endsAt: Date.now() + 14e3, usedP1: true, usedP2: true }; d.host.covered = false; }, { frame: true, settle: 1200 })] },
+  { id: "play-host-end", category: CAT, title: "Prowadzący — po zakończeniu gry (ekran wyczyszczony)", path: "/control/host/?preview=1", sources: HOST, frame: true, ready: docReady, devices: ["tablet"],
+    steps: [previewStep("finale", (row, d, lang) => { S.finaleP2Done(row, d, lang); row.step = "f_end"; d.locks.gameEnded = true; d.host.covered = false; }, { frame: true, settle: 1200 })] },
 
   // ======================= Przycisk (urządzenie z kluczem) =======================
   { id: "play-buzzer-off", category: CAT, title: "Przycisk — przed pojedynkiem (wyłączony)", path: BUZZER_URL, sources: BUZZER, gameState: "devices", ready: "#offScreen.skel-step-ready", devices: BUZZER_DEVICES,

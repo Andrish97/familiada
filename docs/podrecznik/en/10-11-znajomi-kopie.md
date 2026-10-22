@@ -16,6 +16,8 @@ emails from you about polls and shared devices (→ 14.1).
    — the app does not suggest names.
 3. Choose [Invite].
 
+![Friends](zrzut:friends)
+
 The invitation appears in the "Pending and declined" section. If the invited person has
 notifications turned on, they get an email with an "Open invitation" button.
 
@@ -23,7 +25,8 @@ If there is no account for that address, the app tells you so and offers to add 
 as a subscriber (→ 14.2). It also works the other way round: if you enter the address of a person with an
 account on the *Subscribers* page, the app offers to invite them as a friend.
 
-![Friends](zrzut:friends)
+![Invitation sent](zrzut:people-friends-invite-sent)
+![An address without an account — go to Subscribers](zrzut:people-friends-invite-email-only)
 
 ## 10.3 Handling invitations and their statuses
 
@@ -33,10 +36,15 @@ account on the *Subscribers* page, the app offers to invite them as a friend.
 - [Decline] — the invitation moves to the collapsed "Declined by me" section. For
   30 days you can bring it back with the [Undo decline] button and then accept it.
 
+![Proposals in the “Friends” tab (phone)](zrzut:people-friends-received@phone)
+![Declined proposals](zrzut:people-friends-declined)
+
 **Sent invitations** are in the "Invitations" tab, in the "Pending and declined" section:
 
 - pending — you can [Resend] them (once the required waiting time has passed) or [Withdraw] them,
 - declined — you can only [Withdraw] them.
+
+![Sent invitations — countdown to resending](zrzut:people-friends-resend-cooldown)
 
 After an invitation is declined, neither of the two people can invite the other for 30 days.
 Invitation emails are sent no more often than every 5 days and at most twice in 30 days.
@@ -44,7 +52,7 @@ Invitation emails are sent no more often than every 5 days and at most twice in 
 On a computer, both tabs are shown side by side; on a phone, you switch between them at the top.
 The counters next to the tabs show pending invitations.
 
-![Sent invitations — countdown to resending](zrzut:people-friends-resend-cooldown)
+![Both tabs side by side on a computer](zrzut:people-friends-half@desktop)
 
 ## 10.4 Managing your friends list
 
@@ -58,6 +66,8 @@ To remove a friend, choose [Remove] and confirm. Then:
 - **bases and devices you have already shared stay shared** — revoke access to bases (→ 12.5) and devices
   (→ 17.1) separately,
 - copies of games and logos you have already sent stay with that person — a sent copy cannot be taken back (→ 11).
+
+![Removing a friend](zrzut:people-friends-confirm-remove)
 
 ## 10.5 What a friendship lets you do
 
@@ -91,6 +101,8 @@ Sending requires an account and at least one friend.
 2. In the "Send to friends" window, select friends.
 3. Choose [Send]. The app confirms: "Sent to friends: …".
 
+![Send to friends](zrzut:games-send-tools)
+
 The copy keeps the game type and all its content. You can send:
 
 - a prepared game — in any state,
@@ -100,14 +112,14 @@ The copy keeps the game type and all its content. You can send:
 You cannot send games added from Community Games, demo materials, or a game that is currently
 open in the editor or in settings.
 
-![Sending a copy of a game and the sending history](zrzut:games-send-history)
+![No friends](zrzut:games-send-no-friends)
 
 ## 11.3 Sending a logo
 
 On the *My logos* page, select a logo, choose [Send] and continue as for a game. Your friend
 can use the logo they receive in their own games (→ 8.5). Demo logos cannot be sent.
 
-![Sending a copy of a logo](zrzut:logos-market-logos-send)
+![Sending a logo](zrzut:logos-market-logos-send)
 
 ## 11.4 Receiving copies
 
@@ -121,10 +133,12 @@ The copy waits in the "Received copies" section — with its name and a "From: �
   the "Received" filter.
 - [Decline] — the copy disappears. The same person cannot send it to you again for 30 days.
 
+![Received game copies](zrzut:games-received-copies)
+![Received logo copies](zrzut:logos-market-logos-received)
+![A copy to accept — preview only](zrzut:games-received-selected)
+
 A copy you do not accept within **5 days** disappears. While it waits for your decision, it cannot
 be edited, duplicated or deleted.
-
-![Received copies in the game list](zrzut:games-received-copies)
 
 ## 11.5 Send history
 

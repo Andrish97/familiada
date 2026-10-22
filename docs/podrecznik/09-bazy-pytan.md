@@ -14,9 +14,10 @@ zaprosili Cię inni (→ 12). Filtr nad listą pokaże bazy według roli: Moja, 
   `.fambase` i [Import] z pliku.
 - Nazwę bazy zmienisz dwuklikiem, a bazę usuniesz ikoną kosza — tylko w swoich bazach.
 
-Pytania z gry przeniesiesz do bazy przyciskiem [Eksportuj do bazy] w *Moich grach* (→ 6.7).
-
 ![Bazy pytań](zrzut:bases)
+![Nowa baza](zrzut:bases-name-create)
+
+Pytania z gry przeniesiesz do bazy przyciskiem [Eksportuj do bazy] w *Moich grach* (→ 6.7).
 
 ## 9.2 Eksplorator bazy
 
@@ -27,14 +28,17 @@ Otwarta baza działa podobnie do eksploratora plików na komputerze:
 - **pośrodku** — zawartość bieżącego folderu: foldery i pytania,
 - **na górze** — pasek narzędzi i pole wyszukiwania.
 
+![Eksplorator bazy](zrzut:base-explorer)
+![Na telefonie drzewo folderów jest w panelu z boku](zrzut:base-explorer-drawer@phone)
+
 Kliknij element, aby go zaznaczyć. Aby zaznaczyć kilka, przytrzymaj Ctrl (na Macu ⌘);
 Shift zaznacza zakres. Możesz też zaznaczyć elementy ramką, przeciągając od pustego miejsca.
 Prawy przycisk myszy (na dotyku — przytrzymanie) otwiera menu z czynnościami dla zaznaczenia.
 
+![Menu z czynnościami](zrzut:base-explorer-menu)
+
 Folder otwierasz dwuklikiem lub klawiszem Enter, a wracasz o poziom wyżej klawiszem Backspace
 albo w drzewie folderów.
-
-![Eksplorator bazy](zrzut:base-explorer)
 
 ## 9.3 Narzędzia do pracy z pytaniami i folderami
 
@@ -50,15 +54,17 @@ albo w drzewie folderów.
 | [Utwórz grę] | tworzy grę z zaznaczonych pytań |
 | [Odśwież widok] | pokazuje najnowszy stan bazy |
 
+![Przenieś do…](zrzut:base-explorer-move)
+![Przenieś do… — wyszukiwanie folderu](zrzut:base-explorer-move-search)
+
 **Przeciąganie.** Przeciągnij zaznaczenie na folder, aby je przenieść. Z wciśniętym Ctrl
 (na Macu Option) elementy zostaną skopiowane — folder razem z zawartością. Upuszczenie na pustym
 tle przenosi elementy do „Folderu głównego”. Przeciągnięcie na tag w lewym panelu przypisuje
 ten tag.
 
-Usunięcie folderu usuwa także wszystko, co jest w środku.
-
-![Menu kontekstowe](zrzut:base-explorer-menu)
 ![Kosz](zrzut:base-explorer-trash)
+
+Usunięcie folderu usuwa także wszystko, co jest w środku.
 
 ## 9.4 Foldery i tagi
 
@@ -77,6 +83,11 @@ rund czy wydarzeń.
 - Kliknij tag w lewym panelu, aby zobaczyć tylko pytania z tym tagiem. Kilka zaznaczonych tagów
   pokazuje pytania, które mają je wszystkie.
 
+![Okno tagów](zrzut:base-explorer-tags)
+![Dodawanie tagu](zrzut:base-explorer-tags-edit)
+![Kolor tagu](zrzut:base-explorer-tags-color)
+![Tagi w lewym panelu](zrzut:base-explorer-left-tags)
+
 „Pasujące kategorie” pod tagami serwis tworzy sam — pokazują pytania, które już spełniają
 warunki danego rodzaju gry (→ 7.6):
 
@@ -85,8 +96,7 @@ warunki danego rodzaju gry (→ 7.6):
 - **preparowane** — mają od 3 do 6 odpowiedzi z punktami (każda co najmniej 4, suma najwyżej
   100), więc nadają się do gry preparowanej.
 
-![Tagi zaznaczonego pytania](zrzut:base-explorer-tags)
-![Lewy panel — widok tagów](zrzut:base-explorer-left-tags)
+![Pasujące kategorie](zrzut:base-explorer-left-types)
 
 ## 9.5 Wyszukiwanie i przeglądanie pytań
 
@@ -98,7 +108,9 @@ Gdy wyszukujesz albo filtrujesz po tagu, lista pokazuje wyniki z całej bazy, a 
 folderu — w tym widoku nie można wklejać ani wycinać. Aby wrócić do folderów, wyczyść pole
 wyszukiwania albo odznacz tagi.
 
-![Wyszukiwanie z filtrem tagu](zrzut:base-explorer-search-filters)
+![Wyszukiwanie z tagiem](zrzut:base-explorer-search-filters)
+![Wyniki filtra w całej bazie](zrzut:base-explorer-filter)
+![Wyszukiwanie na telefonie](zrzut:base-explorer-search-sheet@phone)
 
 ## 9.6 Skróty klawiszowe
 
@@ -132,10 +144,10 @@ Kliknij dwukrotnie pytanie albo wybierz [Edytuj pytanie]. W oknie „Pytanie”:
 - [+ Odpowiedź] — do 6 odpowiedzi, każda do 17 znaków,
 - „Punkty” — opcjonalnie, od 0 do 100 przy każdej odpowiedzi; suma najwyżej 100.
 
+![Okno pytania](zrzut:base-explorer-question-modal)
+
 W bazie punkty nie są wymagane — przydadzą się, jeśli z pytania powstanie gra preparowana.
 Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisujesz osobno (→ 9.4).
-
-![Edycja pytania](zrzut:base-explorer-question-modal)
 
 ## 9.8 Tworzenie gry z wybranych pytań
 
@@ -148,6 +160,8 @@ Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisu
    „Gotowa po utworzeniu.” albo „Utworzy się szkic. Do gotowości brakuje: …”.
 5. Zatwierdź. Gra pojawi się w *Moich grach*.
 
+![Eksport gry — braki widoczne przy pytaniach](zrzut:base-explorer-create-game)
+
 Gra powstaje dokładnie z wybranych pytań — serwis nie dobiera brakujących. Nie musi spełniać
 warunków gotowości: możesz utworzyć niekompletny szkic i uzupełnić go w edytorze (→ 7.6).
 
@@ -156,5 +170,3 @@ punktacja — pytania i odpowiedzi bez punktów (punkty wynikną z ankiety), a g
 pytania, odpowiedzi i punkty.
 
 Gry nie utworzysz z bazy, do której masz dostęp tylko do odczytu (→ 12.4).
-
-![Tworzenie gry z wybranych pytań](zrzut:base-explorer-create-game)

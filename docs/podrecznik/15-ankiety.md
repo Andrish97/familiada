@@ -11,6 +11,10 @@ Zanim uruchomisz ankietę, gra musi mieć **co najmniej 10 pytań**, a w grze �
 1. W *Moich grach* zaznacz grę i wybierz [Ankieta].
 2. Wybierz [Uruchom] — albo [Uruchom i wyślij zaproszenia], jeśli dodałeś już odbiorców (→ 15.2).
 
+![Szkic ankiety](zrzut:polls-draft-points)
+![Szkic — za mało pytań](zrzut:polls-draft-text-blocked)
+![Uruchomienie ankiety](zrzut:polls-open-confirm)
+
 Od tej chwili ankieta jest **otwarta**: głosujący mogą odpowiadać, a gry nie można edytować
 (→ 7.5).
 
@@ -20,8 +24,6 @@ Od tej chwili ankieta jest **otwarta**: głosujący mogą odpowiadać, a gry nie
 | Otwarta | Trwa zbieranie odpowiedzi. |
 | Zatrzymana | Zbieranie jest wstrzymane; możesz je wznowić albo podliczyć głosy. |
 | Gotowa | Ankieta jest zamknięta, a gra gotowa do rozegrania. |
-
-![Szkic ankiety — udostępnianie po uruchomieniu](zrzut:polls-draft-points)
 
 ## 15.2 Wybór sposobu głosowania
 
@@ -34,6 +36,9 @@ Na karcie „Udostępnianie” są dwa sposoby:
 
 Głosujący są anonimowi — widzisz tylko liczbę głosów. W jednej przeglądarce można zagłosować raz.
 
+![Udostępnianie — link i kod QR](zrzut:poll-share)
+![Powiększony kod QR](zrzut:polls-qr-vote-modal)
+
 **Kod QR na telewizorze lub rzutniku.** [QR na wyświetlaczu] pokazuje 6-cyfrowy kod ekranu
 „Wyświetlacz QR” — to kod do podłączenia ekranu, a nie do głosowania. Na telewizorze otwórz
 familiada.online → [Podłącz urządzenie] i wpisz kod (logowanie nie jest potrzebne). Ekran pokaże
@@ -41,6 +46,9 @@ duży kod QR do głosowania, który uczestnicy skanują telefonami. [Otwórz] ot
 bieżącym urządzeniu (np. żeby przesłać go przez HDMI), a [Kopiuj] kopiuje kod. Ekran ma przycisk
 pełnego ekranu, a po zamknięciu ankiety pokazuje „Ankieta została zamknięta”. Przycisk działa
 dopiero po uruchomieniu ankiety.
+
+![QR na wyświetlaczu — kod podłączenia ekranu](zrzut:polls-qr-display-modal)
+![Wyświetlacz QR z kodem do głosowania](zrzut:polls-vote-qr)
 
 **Odbiorcy** — imienne zaproszenia dla znajomych (→ 10) i subskrybentów (→ 14):
 
@@ -52,12 +60,13 @@ Przy każdym odbiorcy widać status: czeka, otwarto, zagłosował albo odrzucił
 podsumowanie „Zaproszeni · Zagłosowali · Odrzucili”. Osobom, które jeszcze nie odpowiedziały,
 możesz wysłać [Przypomnij] — najwyżej dwa razy. [Usuń udostępnienie] wycofuje zaproszenie.
 
+![Dodaj odbiorców](zrzut:poll-recipients-tools)
+![Statusy odbiorców](zrzut:polls-open-recipients-tab@phone)
+
 Oba sposoby możesz łączyć — głosy liczą się razem.
 
 Subskrybent bez konta może przejrzeć swoje zaproszenia i z nich zrezygnować na stronie
 *Moje powiadomienia*.
-
-![Udostępnianie ankiety](zrzut:poll-share)
 
 ## 15.3 Oddawanie głosu
 
@@ -73,12 +82,14 @@ Głosujący otwiera ankietę z odnośnika, kodu QR, wiadomości e-mail albo zada
   policzony.
 - Na końcu pojawia się „Dziękujemy za udział!”.
 
+![Głosowanie w ankiecie „Punktacja”](zrzut:poll-vote-mobile@phone)
+![Głosowanie tekstowe — licznik znaków](zrzut:polls-vote-text-typing@phone)
+![Dziękujemy za udział!](zrzut:polls-vote-text-thanks@phone)
+![Ankieta zatrzymana](zrzut:polls-vote-text-stopped@phone)
+
 Osoba zaproszona imiennie głosuje tak samo; jej status u ankietującego zmieni się na
 „zagłosował”. Osoba bez konta może otworzyć ankietę z wiadomości albo ze strony
 *Moje powiadomienia*.
-
-![Głosowanie punktowe na telefonie](zrzut:poll-vote-mobile@phone)
-![Głosowanie tekstowe — licznik znaków](zrzut:polls-vote-text-typing@phone)
 
 ## 15.4 Zadania i zaproszenia do głosowania
 
@@ -89,9 +100,10 @@ Zadanie to zaproszenie do ankiety, które dostałeś od znajomego. Znajdziesz je
   rezygnuje z udziału (ankieta zniknie z listy),
 - „Zrobione” — ankiety, w których już głosowałeś (zwinięte, widoczne przez 5 dni).
 
-Osoby bez konta mają swoje zadania na stronie *Moje powiadomienia*.
-
 ![Zadania](zrzut:tasks)
+![Zrobione](zrzut:tasks-done-open)
+
+Osoby bez konta mają swoje zadania na stronie *Moje powiadomienia*.
 
 ## 15.5 Prowadzenie głosowania
 
@@ -103,7 +115,10 @@ Na karcie „Głosy” widać postęp: liczbę oddanych głosów i — przy zapr
 - [Podlicz głosy] — dostępne, gdy ankieta jest zatrzymana (→ 15.6).
 - [Przerwij] — kończy ankietę i przywraca szkic. **Wszystkie głosy przepadną.**
 
-![Głosy w ankiecie tekstowej](zrzut:polls-text)
+![Karta „Głosy”](zrzut:polls-text)
+![Zatrzymanie ankiety](zrzut:polls-stop-confirm)
+![Ankieta zatrzymana — Podlicz głosy](zrzut:polls-stopped)
+![Przerwanie ankiety](zrzut:polls-abort-confirm)
 
 ## 15.6 Podliczanie i opracowywanie odpowiedzi
 
@@ -134,14 +149,19 @@ pokazuje, czy pytanie spełnia warunki. Gdy na granicy szóstki kilka odpowiedzi
 głosów, serwis pokaże remis — [Zmień wybór w remisie] zmienia, które z nich trafią na tablicę.
 Poprawki zapisują się na bieżąco, więc możesz przerwać i wrócić później.
 
+![Łączenie odpowiedzi](zrzut:polls-tally-text-merge)
+![Po połączeniu — warunki spełnione](zrzut:polls-tally-text-merged)
+![Remis na granicy szóstki](zrzut:polls-tally-tie)
+
 **Ankieta „Punktacja”** — odpowiedzi są stałe; zobaczysz tylko podgląd punktów (odpowiedzi poniżej
 4 punktów są wyszarzone).
+
+![Podliczanie ankiety „Punktacja”](zrzut:polls-tally-points)
 
 Gdy wszystko się zgadza, wybierz [Zatwierdź]. Zobaczysz „Głosy podliczone. Gra gotowa.”.
 [Wyjdź z podliczania] wraca do zatrzymanej ankiety bez zamykania.
 
-![Podliczanie — scalanie odpowiedzi](zrzut:polls-tally-text-merge)
-![Podliczanie ankiety punktowej](zrzut:polls-tally-points)
+![Zatwierdzenie podliczenia](zrzut:polls-tally-text-approve)
 
 ## 15.7 Wyniki i wykorzystanie ich w grze
 
@@ -149,9 +169,10 @@ Po zatwierdzeniu ankieta jest zamknięta, a gra ma status GOTOWA — możesz ją
 przyciskiem [Graj] (→ 17). Wyniki obejrzysz w [Podgląd] w *Moich grach*, przełączając widok
 na „Ankieta”.
 
+![Gotowa ankieta — ostateczne punkty](zrzut:polls-ready-text)
+![Wyniki w podglądzie gry](zrzut:games-preview-poll)
+
 - [Uruchom ponownie] otwiera nową ankietę dla tej samej gry — dotychczasowe głosy i wyniki
   zostaną usunięte.
 - Edycja gry (→ 7.5) lub zmiana jej rodzaju (→ 7.8) także usuwa wyniki — po potwierdzeniu.
 - Aby zachować wynik i jednocześnie zebrać nową ankietę, najpierw powiel grę (→ 6.6).
-
-![Gotowa ankieta — ostateczne punkty](zrzut:polls-ready-text)

@@ -12,6 +12,8 @@ You create a game in the tab for its type on the *My games* page (→ 6.3). Ther
 
 You can change the game type later (→ 7.8).
 
+![A new game in the chosen tab](zrzut:games-new)
+
 ## 7.2 The game editor
 
 Select a game on the list and choose [Edit]. The editor consists of:
@@ -29,7 +31,8 @@ On a narrower screen, the editor shows either the question list or the selected 
 to the list with the [Back] button.
 
 ![Game editor](zrzut:game-editor)
-![Game editor on a phone](zrzut:games-editor-list-phone@phone)
+![Editor on a phone — question list](zrzut:games-editor-list-phone@phone)
+![Editor on a phone — the question in a bottom sheet](zrzut:game-editor-question-sheet@phone)
 
 ## 7.3 Questions and answers
 
@@ -46,6 +49,9 @@ answers as well.
 
 You can also prepare questions and answers in a question base and create a game from them (→ 9.8).
 
+![Characters the Display cannot show and hints at the answers](zrzut:game-editor-answer-rules)
+![Deleting a question](zrzut:games-editor-delete-question)
+
 ## 7.4 Answer scoring
 
 - **Points** — there is no points column. The points will come from the poll (→ 15.6).
@@ -60,7 +66,8 @@ For a prepared game to be ready:
 The app will save values that do not meet these conditions, but it will mark them in red, and the game will not
 be ready. How points count during a game (→ 3.2).
 
-![Points in a question adding up to more than 100](zrzut:games-editor-prepared-sum)
+![Points — answers without points](zrzut:games-editor-poll-points)
+![Prepared — points adding up to more than 100](zrzut:games-editor-prepared-sum)
 
 ## 7.5 Saving and editing a game after the poll has started
 
@@ -84,6 +91,8 @@ A game also cannot be edited while it is open somewhere else or while it is bein
 played — the app will show the reason.
 
 ![Editing locked — the poll is open](zrzut:games-editor-locked-poll)
+![The game is open elsewhere](zrzut:games-editor-locked-busy)
+![Reset the poll?](zrzut:games-editor-reset-after-poll)
 
 ## 7.6 Game readiness conditions
 
@@ -102,6 +111,7 @@ In games with a poll, meeting the conditions lets you start the poll. You can pl
 has been counted and closed (→ 15.6, 15.7).
 
 ![Readiness conditions with missing items](zrzut:games-editor-prepared-missing)
+![Text poll — questions only](zrzut:games-editor-poll-text)
 
 ## 7.7 Importing questions from a text file
 
@@ -127,6 +137,9 @@ third answer / 20
 
 The window shows a preview: the number of questions and answers, and the first questions.
 
+![Import from a text file — live preview](zrzut:games-editor-txt-import-preview)
+![An error in the text](zrzut:games-editor-txt-import-error)
+
 > Note: import **replaces** all the existing content of the game. The app will ask you to confirm.
 
 Texts that are too long will be shortened (question to 100, answer to 17 characters), and if there are more than
@@ -134,7 +147,7 @@ Texts that are too long will be shortened (question to 100, answer to 17 charact
 loaded. If the file contains characters the Display cannot show, or an answer before
 the first question, the app will point to the error and change nothing.
 
-![Importing questions from a text file — live preview](zrzut:games-editor-txt-import-preview)
+![Confirming the replacement of questions](zrzut:games-editor-txt-import-confirm)
 
 ## 7.8 Changing the type of an existing game
 
@@ -147,6 +160,9 @@ a copy. If you want to keep the current version, use [Duplicate] first (→ 6.6)
 
 In the "Change game type" window, each type has a description of what will happen — check it before choosing [Change]:
 
+![Change type](zrzut:games-change-type)
+![Changing the type after a closed poll](zrzut:games-change-type-closed-text)
+
 | New type | What happens to the content |
 |---|---|
 | Standard poll | Questions stay. Answers and points are removed. |
@@ -155,5 +171,3 @@ In the "Change game type" window, each type has a description of what will happe
 
 From a standard poll only the questions carry over — you need to enter the answers. After the change, the game is
 always a draft.
-
-![Changing the type of a game after a closed poll](zrzut:games-change-type-closed-text)

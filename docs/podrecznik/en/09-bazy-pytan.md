@@ -14,9 +14,10 @@ invited you to (→ 12). The filter above the list shows bases by role: Mine, Ed
   `.fambase` file and [Import] from a file are also available.
 - You rename a base by double-clicking it, and delete it with the trash icon — only in your own bases.
 
-You can move questions from a game to a base with the [Export to base] button in *My games* (→ 6.7).
-
 ![Question bases](zrzut:bases)
+![New base](zrzut:bases-name-create)
+
+You can move questions from a game to a base with the [Export to base] button in *My games* (→ 6.7).
 
 ## 9.2 The base explorer
 
@@ -27,14 +28,17 @@ An open base works much like a file explorer on a computer:
 - **in the middle** — the contents of the current folder: folders and questions,
 - **at the top** — the toolbar and the search field.
 
+![Base explorer](zrzut:base-explorer)
+![On a phone the folder tree is in a side panel](zrzut:base-explorer-drawer@phone)
+
 Click an item to select it. To select several, hold Ctrl (⌘ on a Mac);
 Shift selects a range. You can also select items with a frame by dragging from an empty spot.
 The right mouse button (on touch screens — press and hold) opens a menu with actions for the selection.
 
+![The actions menu](zrzut:base-explorer-menu)
+
 You open a folder by double-clicking it or with the Enter key, and go up a level with the Backspace key
 or in the folder tree.
-
-![Base explorer](zrzut:base-explorer)
 
 ## 9.3 Tools for working with questions and folders
 
@@ -50,15 +54,17 @@ or in the folder tree.
 | [Create game] | creates a game from the selected questions |
 | [Refresh view] | shows the latest state of the base |
 
+![Move to…](zrzut:base-explorer-move)
+![Move to… — searching for a folder](zrzut:base-explorer-move-search)
+
 **Dragging.** Drag the selection onto a folder to move it. With Ctrl held down
 (Option on a Mac) the items will be copied — a folder together with its contents. Dropping onto an empty
 background moves the items to the "Root folder". Dragging onto a tag in the left panel assigns
 that tag.
 
-Deleting a folder also deletes everything inside it.
-
-![Context menu](zrzut:base-explorer-menu)
 ![Trash](zrzut:base-explorer-trash)
+
+Deleting a folder also deletes everything inside it.
 
 ## 9.4 Folders and tags
 
@@ -77,6 +83,11 @@ round or event.
 - Click a tag in the left panel to see only the questions with that tag. Several selected tags
   show the questions that have all of them.
 
+![Tags window](zrzut:base-explorer-tags)
+![Adding a tag](zrzut:base-explorer-tags-edit)
+![Tag colour](zrzut:base-explorer-tags-color)
+![Tags in the left panel](zrzut:base-explorer-left-tags)
+
 The "Matching categories" under the tags are created by the app itself — they show the questions that already meet
 the conditions of a given game type (→ 7.6):
 
@@ -85,8 +96,7 @@ the conditions of a given game type (→ 7.6):
 - **prepared** — they have from 3 to 6 answers with points (each at least 4, a total of at most
   100), so they are suitable for a prepared game.
 
-![Tags of the selected question](zrzut:base-explorer-tags)
-![Left panel — tag view](zrzut:base-explorer-left-tags)
+![Matching categories](zrzut:base-explorer-left-types)
 
 ## 9.5 Searching and browsing questions
 
@@ -98,7 +108,9 @@ When you search or filter by tag, the list shows results from the whole base, no
 of a folder — in this view you cannot paste or cut. To go back to the folders, clear the search
 field or deselect the tags.
 
-![Search with a tag filter](zrzut:base-explorer-search-filters)
+![Search with a tag](zrzut:base-explorer-search-filters)
+![Filter results from the whole base](zrzut:base-explorer-filter)
+![Search on a phone](zrzut:base-explorer-search-sheet@phone)
 
 ## 9.6 Keyboard shortcuts
 
@@ -132,10 +144,10 @@ Double-click a question or choose [Edit question]. In the "Question" window:
 - [+ Answer] — up to 6 answers, each up to 17 characters,
 - "Points" — optional, from 0 to 100 for each answer; a total of at most 100.
 
+![The question window](zrzut:base-explorer-question-modal)
+
 Points are not required in a base — they come in handy if the question becomes part of a prepared game.
 The same limits and characters apply in the game editor (→ 7.3, 7.4). You assign tags separately (→ 9.4).
-
-![Editing a question](zrzut:base-explorer-question-modal)
 
 ## 9.8 Creating a game from selected questions
 
@@ -148,6 +160,8 @@ The same limits and characters apply in the game editor (→ 7.3, 7.4). You assi
    "Ready once created." or "A draft will be created. Missing for ready: …".
 5. Confirm. The game will appear in *My games*.
 
+![Game export — missing items shown at the questions](zrzut:base-explorer-create-game)
+
 The game is created from exactly the selected questions — the app does not add missing ones. It does not have to meet
 the readiness conditions: you can create an incomplete draft and complete it in the editor (→ 7.6).
 
@@ -156,5 +170,3 @@ scored — questions and answers without points (the points will come from the p
 questions, answers and points.
 
 You cannot create a game from a base you only have read-only access to (→ 12.4).
-
-![Creating a game from selected questions](zrzut:base-explorer-create-game)

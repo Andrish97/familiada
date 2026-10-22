@@ -15,10 +15,10 @@ Bazę udostępnia jej właściciel; potrzebne jest do tego konto (→ 5.1).
 3. Wpisz adres e-mail lub nazwę użytkownika i wybierz [Udostępnij] — albo zaznacz osoby na liście
    „Znajomi” i wybierz [Udostępnij zaznaczonym].
 
+![Udostępnij bazę](zrzut:bases-share-tools)
+
 Zaproszona osoba nie musi być Twoim znajomym, ale musi mieć konto. Jeśli ma włączone
 powiadomienia, dostanie wiadomość e-mail z odnośnikiem.
-
-![Udostępnianie bazy](zrzut:bases-share-tools)
 
 ## 12.3 Przyjmowanie zaproszenia i otwieranie bazy
 
@@ -28,9 +28,10 @@ Zaproszenie zobaczysz na stronie *Bazy pytań*, w zakładce „Udostępnione” 
 - [Przyjmij] — baza zostaje w zakładce „Udostępnione”; otworzysz ją przyciskiem [Przeglądaj].
 - [Odrzuć] — zaproszenie znika. Odrzucenie możesz cofnąć w sekcji odrzuconych.
 
-Nieprzyjęte zaproszenie wygasa po **5 dniach**.
-
 ![Zaproszenia do baz w zakładce „Udostępnione”](zrzut:bases-shared-proposed)
+![Odrzucone zaproszenia](zrzut:bases-shared-declined-open)
+
+Nieprzyjęte zaproszenie wygasa po **5 dniach**.
 
 ## 12.4 Poziomy dostępu
 
@@ -39,6 +40,8 @@ Nieprzyjęte zaproszenie wygasa po **5 dniach**.
 | Właściciel | „Moja” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
 | Edycja | „EDYCJA” | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
 | Odczyt | „ODCZYT” | przeglądać bazę i eksportować ją do pliku |
+
+![Bazy udostępnione — oznaczenia dostępu](zrzut:bases-share-long-name)
 
 Osoba z dostępem do odczytu nie utworzy gry bezpośrednio z bazy. Może wyeksportować bazę
 do pliku, zaimportować ją jako własną (→ 9.1) i tam utworzyć grę.
@@ -81,13 +84,16 @@ Na stronie *Gry Społeczności*:
 - „Język” — Wszystkie, polski, angielski albo ukraiński,
 - „Sortowanie” — Polecane, Najlepiej oceniane, Najczęściej dodawane, Najnowsze, Tytuł A–Z.
 
+![Gry Społeczności](zrzut:marketplace)
+![Filtr języka](zrzut:logos-market-market-filter)
+
 Kolejne gry wyświetli [Pokaż więcej].
 
 Karta gry pokazuje język, tytuł, autora („od: …”) albo złote oznaczenie „Familiada” dla gier
 przygotowanych przez serwis, opis, liczbę dodań i średnią ocen (albo „Brak ocen”). Oznaczenie
 „W Twoich grach” mówi, że gra jest już w Twojej bibliotece.
 
-![Gry Społeczności](zrzut:marketplace)
+![Brak wyników wyszukiwania](zrzut:logos-market-market-search-empty)
 
 ## 13.3 Szczegóły i oceny gry
 
@@ -99,6 +105,7 @@ zmienić ocenę. Nie można ocenić własnej gry. W polecanych serwis bierze pod
 dopiero od trzech ocen.
 
 ![Szczegóły gry z oceną](zrzut:logos-market-market-detail)
+![Szczegóły bez konta — bez oceniania](zrzut:logos-market-market-guest-detail)
 
 ## 13.4 Dodawanie gry do biblioteki i rozgrywanie
 
@@ -108,6 +115,9 @@ dopiero od trzech ocen.
 
 Takiej gry nie można edytować, zmieniać jej rodzaju, powielać, eksportować ani
 wysyłać.
+
+![Gra w zakładce Gry Społeczności](zrzut:games-market)
+![Podgląd gry z biblioteki](zrzut:games-market-preview)
 
 Aby usunąć grę z biblioteki, wybierz [Usuń z moich gier] w szczegółach albo ikonę kosza na
 kafelku („Usuń z biblioteki”). Usuwasz tylko swoją kopię — inni, którzy dodali tę grę,
@@ -121,6 +131,9 @@ nadal ją mają.
 3. Zaznacz „Rozumiem, że po wysłaniu zapis gry jest nieedytowalny.” i wybierz
    [Wyślij do Gier Społeczności].
 
+![Zgłaszanie gry](zrzut:logos-market-market-submit)
+![Brak gier gotowych do wysłania](zrzut:logos-market-market-submit-none)
+
 Zgłosić możesz swoją grę, która jest **gotowa do rozegrania** (→ 7.6): grę preparowaną albo
 grę z zamkniętą ankietą. Gier demo i gier dodanych z Gier Społeczności zgłosić się nie da. Jedna gra może
 mieć jedno zgłoszenie naraz.
@@ -128,8 +141,6 @@ mieć jedno zgłoszenie naraz.
 Zgłoszenie to **zapis gry z chwili wysłania** — późniejsze zmiany w Twojej grze go nie
 zmienią. Gra z zamkniętej ankiety trafia do katalogu jako gra z gotowymi odpowiedziami
 i punktami.
-
-![Zgłaszanie gry](zrzut:logos-market-market-submit)
 
 ## 13.6 Status zgłoszenia i wycofanie gry
 
@@ -141,10 +152,12 @@ W „Moich wysłanych” widać status zgłoszenia:
 | Opublikowana | Gra jest w katalogu. |
 | Odrzucona | Gra nie została przyjęta; powód widać przy zgłoszeniu („Powód: …”). Odrzucone zgłoszenie znika po 5 dniach; grę możesz poprawić i zgłosić ponownie. |
 
+![Moje wysłane — statusy](zrzut:logos-market-market-my-sent-all)
+
 Opublikowaną grę możesz [Wycofaj]. Zniknie z katalogu dla kolejnych osób, ale ci, którzy
 już ją dodali, nadal ją mają — z oznaczeniem „Wycofana”.
 
-![Moje wysłane — statusy zgłoszeń](zrzut:logos-market-market-my-sent-all)
+![Wycofanie gry](zrzut:logos-market-market-withdraw)
 
 # 14. Subskrybenci i powiadomienia e-mail
 
@@ -169,11 +182,12 @@ Na podany adres przyjdzie wiadomość „Zaproszenie do subskrypcji od użytkown
 „Zobacz zaproszenie”. Odbiorca przyjmuje albo odrzuca zaproszenie na stronie, na którą prowadzi
 wiadomość.
 
+![Subskrybenci](zrzut:subscribers)
+![Adres z kontem — przejście do Znajomych](zrzut:people-subscribers-has-account)
+
 Nie zaprosisz adresu, który należy do konta (serwis zaproponuje znajomość), ani adresu, którego
 właściciel zrezygnował ze wszystkich wiadomości. Wiadomości z zaproszeniem wysyłane są nie częściej
 niż co 5 dni i najwyżej dwa razy na 30 dni; po odrzuceniu możesz zaprosić ponownie dopiero po 30 dniach.
-
-![Subskrybenci](zrzut:subscribers)
 
 ## 14.3 Lista i status subskrybentów
 
@@ -181,8 +195,14 @@ niż co 5 dni i najwyżej dwa razy na 30 dni; po odrzuceniu możesz zaprosić po
   odpowiedź; „Odrzucono” — odbiorca odmówił (widoczne przez 5 dni).
 - Zakładka „Subskrybenci”: osoby, które przyjęły zaproszenie.
 
+![Subskrybenci i zaproszenia](zrzut:people-subscribers-half@desktop)
+![Filtr stanu zaproszeń](zrzut:subscribers-filter)
+
 Przy oczekującym zaproszeniu możesz [Wyślij ponownie]. [Usuń] kończy subskrypcję i usuwa
 oczekujące zaproszenia tej osoby do Twoich ankiet.
+
+![Odliczanie do ponownej wysyłki](zrzut:people-subscribers-resend-cooldown)
+![Usuwanie subskrybenta](zrzut:people-subscribers-confirm-remove)
 
 ## 14.4 Powiadomienia o ankietach
 
@@ -205,6 +225,10 @@ To strona dla odbiorcy wiadomości, także bez konta.
   wiadomość z jednorazowym odnośnikiem ważnym 15 minut; po kliknięciu wybierz
   [Otwórz moje powiadomienia].
 
+![Wejście na stronę — wpisz adres](zrzut:people-mails-entry)
+![Link wysłany](zrzut:people-mails-sent)
+![Adres z kontem — zaloguj się](zrzut:people-mails-registered)
+
 Jeśli adres należy do konta, serwis poprosi o zalogowanie — powiadomienia ustawisz wtedy
 w *Ustawieniach konta* (→ 5.8).
 
@@ -219,6 +243,8 @@ w *Ustawieniach konta* (→ 5.8).
   oczekujące ankiety i udostępnione urządzenia, a nikt nie będzie mógł Cię zaprosić. Gdy
   przywrócisz powiadomienia, dawne zaproszenia nie wrócą.
 
-Dostęp do strony wygasa po godzinie bezczynności — potem wejdź ponownie przez odnośnik.
+![Subskrypcje i zadania](zrzut:mails-tools)
+![Zadania — ankiety i urządzenia](zrzut:people-mails-items)
+![Rezygnacja ze wszystkich powiadomień](zrzut:people-mails-resign-confirm)
 
-![Moje powiadomienia — subskrypcje i zadania](zrzut:mails-tools)
+Dostęp do strony wygasa po godzinie bezczynności — potem wejdź ponownie przez odnośnik.

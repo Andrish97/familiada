@@ -10,6 +10,7 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00340"
 import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00340";
 import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00340";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-22T00340";
 import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-22T00340";
 import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00340";
 
@@ -165,6 +166,8 @@ function wireCarousels(root) {
     box.addEventListener("keydown", (ev) => {
       if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") { ev.preventDefault(); go(index() + (ev.key === "ArrowLeft" ? -1 : 1)); }
     });
+    // Palec w bok przechodzi o jeden widok (przewijanie strony w pionie zostaje).
+    onSwipe(track, (dir) => go(index() + dir));
     track.addEventListener("scroll", () => requestAnimationFrame(mark), { passive: true });
     mark();
   }

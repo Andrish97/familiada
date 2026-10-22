@@ -12,6 +12,8 @@ Grę tworzysz w zakładce jej rodzaju na stronie *Moje gry* (→ 6.3). Są trzy 
 
 Rodzaj gry możesz później zmienić (→ 7.8).
 
+![Nowa gra w wybranej zakładce](zrzut:games-new)
+
 ## 7.2 Edytor gry
 
 Zaznacz grę na liście i wybierz [Edytuj]. Edytor składa się z:
@@ -29,7 +31,8 @@ Na węższym ekranie edytor pokazuje na zmianę listę pytań albo wybrane pytan
 wracasz przyciskiem [Wstecz].
 
 ![Edytor gry](zrzut:game-editor)
-![Edytor gry na telefonie](zrzut:games-editor-list-phone@phone)
+![Edytor na telefonie — lista pytań](zrzut:games-editor-list-phone@phone)
+![Edytor na telefonie — pytanie w oknie od dołu](zrzut:game-editor-question-sheet@phone)
 
 ## 7.3 Pytania i odpowiedzi
 
@@ -46,6 +49,9 @@ także odpowiedzi.
 
 Pytania i odpowiedzi możesz też przygotować w bazie pytań i utworzyć z nich grę (→ 9.8).
 
+![Znaki spoza Wyświetlacza i podpowiedzi przy odpowiedziach](zrzut:game-editor-answer-rules)
+![Usuwanie pytania](zrzut:games-editor-delete-question)
+
 ## 7.4 Punktacja odpowiedzi
 
 - **Punktacja** — kolumny punktów nie ma. Punkty wynikną z ankiety (→ 15.6).
@@ -60,7 +66,8 @@ Aby gra preparowana była gotowa:
 Wartości niespełniające tych warunków serwis zapisze, ale oznaczy na czerwono, a gra nie
 będzie gotowa. Jak punkty liczą się w rozgrywce (→ 3.2).
 
-![Suma punktów w pytaniu ponad 100](zrzut:games-editor-prepared-sum)
+![Punktacja — odpowiedzi bez punktów](zrzut:games-editor-poll-points)
+![Preparowana — suma punktów ponad 100](zrzut:games-editor-prepared-sum)
 
 ## 7.5 Zapisywanie i edycja gry po rozpoczęciu ankiety
 
@@ -84,6 +91,8 @@ Gry nie można edytować także wtedy, gdy jest otwarta w innym miejscu albo trw
 rozgrywka — serwis pokaże powód.
 
 ![Edycja zablokowana — ankieta otwarta](zrzut:games-editor-locked-poll)
+![Gra otwarta w innym miejscu](zrzut:games-editor-locked-busy)
+![Zresetować ankietę?](zrzut:games-editor-reset-after-poll)
 
 ## 7.6 Warunki gotowości gry
 
@@ -102,6 +111,7 @@ W grach z ankietą spełnienie warunków pozwala uruchomić ankietę. Grę rozeg
 podliczeniu i zamknięciu (→ 15.6, 15.7).
 
 ![Warunki gotowości z brakami](zrzut:games-editor-prepared-missing)
+![Ankieta tekstowa — same pytania](zrzut:games-editor-poll-text)
 
 ## 7.7 Import pytań z pliku tekstowego
 
@@ -127,6 +137,9 @@ odpowiedź trzecia / 20
 
 W oknie widać podgląd: liczbę pytań i odpowiedzi oraz pierwsze pytania.
 
+![Import z pliku tekstowego — podgląd na żywo](zrzut:games-editor-txt-import-preview)
+![Błąd w treści](zrzut:games-editor-txt-import-error)
+
 > Uwaga: import **zastępuje** całą dotychczasową zawartość gry. Serwis poprosi o potwierdzenie.
 
 Zbyt długie teksty zostaną skrócone (pytanie do 100, odpowiedź do 17 znaków), a z więcej niż
@@ -134,7 +147,7 @@ Zbyt długie teksty zostaną skrócone (pytanie do 100, odpowiedź do 17 znaków
 wczytywane. Jeśli plik zawiera znaki, których nie pokaże Wyświetlacz, albo odpowiedź przed
 pierwszym pytaniem, serwis wskaże miejsce błędu i nic nie zmieni.
 
-![Import pytań z pliku tekstowego — podgląd na żywo](zrzut:games-editor-txt-import-preview)
+![Potwierdzenie zastąpienia pytań](zrzut:games-editor-txt-import-confirm)
 
 ## 7.8 Zmiana typu istniejącej gry
 
@@ -147,6 +160,9 @@ kopia. Jeśli chcesz zachować obecną wersję, najpierw użyj [Powiel] (→ 6.6
 
 W oknie „Zmień typ gry” każdy rodzaj ma opis skutków — sprawdź go przed wyborem [Zmień]:
 
+![Zmień typ](zrzut:games-change-type)
+![Zmiana typu po zamkniętej ankiecie](zrzut:games-change-type-closed-text)
+
 | Nowy rodzaj | Co się stanie z zawartością |
 |---|---|
 | Ankieta tekstowa | Pytania zostaną. Odpowiedzi i punkty zostaną usunięte. |
@@ -155,5 +171,3 @@ W oknie „Zmień typ gry” każdy rodzaj ma opis skutków — sprawdź go prze
 
 Z ankiety tekstowej przechodzą tylko pytania — odpowiedzi trzeba wpisać. Po zmianie gra jest
 zawsze szkicem.
-
-![Zmiana typu gry po zamkniętej ankiecie](zrzut:games-change-type-closed-text)

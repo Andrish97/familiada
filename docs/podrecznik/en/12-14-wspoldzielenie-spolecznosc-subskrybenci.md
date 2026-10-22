@@ -15,10 +15,10 @@ A base is shared by its owner; this requires an account (→ 5.1).
 3. Enter an email address or username and choose [Share] — or select people in the
    "Friends" list and choose [Share with selected].
 
+![Share a base](zrzut:bases-share-tools)
+
 The invited person does not have to be your friend, but they must have an account. If they have
 notifications turned on, they get an email with a link.
-
-![Sharing a base](zrzut:bases-share-tools)
 
 ## 12.3 Accepting an invitation and opening a base
 
@@ -28,9 +28,10 @@ You will see the invitation on the *Question bases* page, in the "Shared" tab �
 - [Accept] — the base stays in the "Shared" tab; you open it with the [Browse] button.
 - [Decline] — the invitation disappears. You can undo the decline in the declined section.
 
-An invitation that is not accepted expires after **5 days**.
-
 ![Base invitations in the “Shared” tab](zrzut:bases-shared-proposed)
+![Declined invitations](zrzut:bases-shared-declined-open)
+
+An invitation that is not accepted expires after **5 days**.
 
 ## 12.4 Access levels
 
@@ -39,6 +40,8 @@ An invitation that is not accepted expires after **5 days**.
 | Owner | "Mine" | everything: edit, share, rename, [Duplicate] and delete the base |
 | Edit | "EDIT" | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
 | Read | "READ" | browse the base and export it to a file |
+
+![Shared bases — access labels](zrzut:bases-share-long-name)
 
 A person with read access cannot create a game directly from the base. They can export the base
 to a file, import it as their own (→ 9.1) and create a game there.
@@ -81,13 +84,16 @@ On the *Community Games* page:
 - "Language" — All, Polish, English or Ukrainian,
 - "Sort" — Recommended, Top rated, Most added, Newest, Title A–Z.
 
+![Community Games](zrzut:marketplace)
+![Language filter](zrzut:logos-market-market-filter)
+
 [Load more] shows more games.
 
 A game card shows the language, the title, the author ("by: …") or a gold "Familiada" label for games
 prepared by the app, the description, how many times it was added and the average rating (or "No ratings yet"). The
 "In your games" label means the game is already in your library.
 
-![Community Games](zrzut:marketplace)
+![No search results](zrzut:logos-market-market-search-empty)
 
 ## 13.3 Game details and ratings
 
@@ -99,6 +105,7 @@ later. You cannot rate your own game. For recommendations, the app only takes th
 once a game has three ratings.
 
 ![Game details with a rating](zrzut:logos-market-market-detail)
+![Details without an account — no rating](zrzut:logos-market-market-guest-detail)
 
 ## 13.4 Adding a game to your library and playing it
 
@@ -108,6 +115,9 @@ once a game has three ratings.
 
 Such a game cannot be edited, have its type changed, be duplicated, exported or
 sent.
+
+![A game in the Community Games tab](zrzut:games-market)
+![Preview of a library game](zrzut:games-market-preview)
 
 To remove a game from your library, choose [Remove from my games] in the details, or the bin icon on
 the tile ("Remove from library"). You only remove your own copy — other people who added this game
@@ -121,6 +131,9 @@ still have it.
 3. Tick "I understand the snapshot is immutable after submission." and choose
    [Submit to Community Games].
 
+![Submitting a game](zrzut:logos-market-market-submit)
+![No games ready to submit](zrzut:logos-market-market-submit-none)
+
 You can submit your own game that is **ready to play** (→ 7.6): a prepared game or
 a game with a closed poll. Demo games and games added from Community Games cannot be submitted. A game can
 have only one submission at a time.
@@ -128,8 +141,6 @@ have only one submission at a time.
 A submission is **a snapshot of the game at the moment you send it** — later changes to your game will not
 change it. A game from a closed poll goes into the catalogue as a game with ready-made answers
 and points.
-
-![Submitting a game](zrzut:logos-market-market-submit)
 
 ## 13.6 Submission status and withdrawing a game
 
@@ -141,10 +152,12 @@ In "My submissions" you can see the status of each submission:
 | Published | The game is in the catalogue. |
 | Rejected | The game was not accepted; the reason is shown with the submission ("Reason: …"). A rejected submission disappears after 5 days; you can improve the game and submit it again. |
 
+![My submissions — statuses](zrzut:logos-market-market-my-sent-all)
+
 You can [Withdraw] a published game. It disappears from the catalogue for new people, but those who
 have already added it still have it — with a "Withdrawn" label.
 
-![My submissions — submission statuses](zrzut:logos-market-market-my-sent-all)
+![Withdrawing a game](zrzut:logos-market-market-withdraw)
 
 # 14. Subscribers and email notifications
 
@@ -169,11 +182,12 @@ An email "Subscription invitation from …" with a "View invitation" button
 is sent to that address. The recipient accepts or declines the invitation on the page the email
 leads to.
 
+![Subscribers](zrzut:subscribers)
+![An address with an account — go to Friends](zrzut:people-subscribers-has-account)
+
 You cannot invite an address that belongs to an account (the app will suggest a friendship instead), or an address whose
 owner has opted out of all emails. Invitation emails are sent no more often
 than every 5 days and at most twice in 30 days; after a decline, you can invite again only after 30 days.
-
-![Subscribers](zrzut:subscribers)
 
 ## 14.3 Subscriber list and statuses
 
@@ -181,8 +195,14 @@ than every 5 days and at most twice in 30 days; after a decline, you can invite 
   an answer; "Declined" — the recipient said no (shown for 5 days).
 - "Subscribers" tab: people who have accepted the invitation.
 
+![Subscribers and invitations](zrzut:people-subscribers-half@desktop)
+![Invitation status filter](zrzut:subscribers-filter)
+
 For a pending invitation you can [Resend]. [Remove] ends the subscription and deletes
 that person's pending invitations to your polls.
+
+![Countdown to resending](zrzut:people-subscribers-resend-cooldown)
+![Removing a subscriber](zrzut:people-subscribers-confirm-remove)
 
 ## 14.4 Poll notifications
 
@@ -205,6 +225,10 @@ This page is for people who receive the emails, including those without an accou
   an email with a one-time link valid for 15 minutes; after clicking it, choose
   [Open my notifications].
 
+![Entering the page — type your address](zrzut:people-mails-entry)
+![Link sent](zrzut:people-mails-sent)
+![An address with an account — log in](zrzut:people-mails-registered)
+
 If the address belongs to an account, the app asks you to sign in — you then set your notifications
 in *Account settings* (→ 5.8).
 
@@ -219,6 +243,8 @@ in *Account settings* (→ 5.8).
   pending polls and shared devices, and nobody will be able to invite you. If you
   turn notifications back on, the old invitations will not come back.
 
-Access to the page expires after an hour of inactivity — after that, come back in through the link.
+![Subscriptions and tasks](zrzut:mails-tools)
+![Tasks — polls and devices](zrzut:people-mails-items)
+![Opting out of all notifications](zrzut:people-mails-resign-confirm)
 
-![My notifications — subscriptions and tasks](zrzut:mails-tools)
+Access to the page expires after an hour of inactivity — after that, come back in through the link.

@@ -21,6 +21,8 @@ sprawnego przechodzenia między rozmową z uczestnikami a obsługą panelu.
 Pierwszy krok to *Urządzenia*. Na górnym pasku panelu kropki pokazują, które urządzenia są
 połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępniania także w trakcie gry.
 
+![Krok „Urządzenia” — kody, Otwórz, Kod QR i kropki połączeń](zrzut:control-devices)
+
 **Wyświetlacz** jest zawsze potrzebny — bez niego nie przejdziesz dalej.
 
 - **Drugi monitor lub projektor przy komputerze.** Włącz rozszerzony pulpit (Windows: Win+P,
@@ -33,6 +35,8 @@ połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępni
   Logowanie na telewizorze nie jest potrzebne.
 - **Inne urządzenie.** Otwórz familiada.online → [Podłącz urządzenie] → [Podłącz kodem] i wpisz kod.
 
+![Strona dla telewizora — kod Wyświetlacza](zrzut:play-connect-tv)
+
 > Uwaga: Wyświetlacz musi być widoczny przez całą grę. Gdy jego okno lub karta są w tle,
 > przeglądarka może wstrzymać animacje i aktualizację tablicy.
 
@@ -42,17 +46,25 @@ nazwę gry i jej właściciela — sprawdź je i zatwierdź. Na telefonie i tabl
 [Skanuj QR] (skanowanie aparatem; jeśli przeglądarka tego nie obsługuje, użyj aparatu systemowego). [QR na wyświetlaczu] pokazuje kody na Wyświetlaczu, żeby ekipa mogła je
 szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 
+![Kod QR Prowadzącego w panelu](zrzut:play-control-qr-modal)
+![Strona *Podłącz urządzenie*](zrzut:connect-device)
+![Po wpisaniu kodu — nazwa gry i właściciel do sprawdzenia](zrzut:play-connect-confirm)
+
 [Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
 nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
 e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
+![Udostępnianie urządzenia innej osobie](zrzut:play-control-share-device-list)
+
 **Bez części urządzeń:**
 
 - „Nie używaj tabletu prowadzącego” — grasz bez ekranu prowadzącego; prowadzący czyta z panelu.
 - „Przycisk fizyczny” — używasz własnych przycisków albo zgłoszeń z ręki; w pojedynku operator
   sam wskazuje drużynę, która była pierwsza.
+
+![Przycisk fizyczny zamiast telefonu; Prowadzący jeszcze niepodłączony](zrzut:play-control-devices-mixed)
 
 **Tryb testowy** pokazuje Wyświetlacz, Prowadzącego i Przycisk w jednym oknie, obok panelu — do
 próby gry na jednym komputerze (wymaga dużego okna). Do prawdziwej rozgrywki używaj osobnych
@@ -65,15 +77,16 @@ z punktami, pytania finału albo szczegóły oceny odpowiedzi. Druga część by
 i w górę, aby zasłonić; w poziomie — w prawo i w lewo. Odsłonięcie widzi tylko prowadzący.
 Po każdej zmianie etapu zasłona może wrócić.
 
+![Ekran prowadzącego — dolna część pod zasłoną](zrzut:play-host-duel@tablet)
+![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet)
+
 **Rozłączenie urządzenia.** Gdy wymagane urządzenie przestanie odpowiadać, po kilku sekundach
 panel pokaże, które urządzenia się rozłączyły, i wstrzyma grę. Sprawdź internet i ekran
 urządzenia; w razie potrzeby podłącz je ponownie przyciskami na górnym pasku. Gra odblokuje się
 sama, gdy urządzenia wrócą. Wcześniej zatwierdzone czynności pozostają zapisane, a uruchomiony
 zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 
-![Urządzenia w panelu sterowania](zrzut:control-devices)
-![Kod QR do podłączenia urządzenia](zrzut:play-control-qr-modal)
-![Podłącz urządzenie](zrzut:connect-device)
+![Rozłączone urządzenia — gra wstrzymana](zrzut:play-control-device-lost)
 
 ## 17.2 Przygotowanie i rozpoczęcie gry
 
@@ -95,6 +108,11 @@ zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
    [Rozpocznij grę] odtwarza intro i wejście logo na Wyświetlaczu. Potem wybierz
    [Rozpocznij rundę].
 
+![Dźwięk z Wyświetlacza — trzeba go odblokować na Wyświetlaczu](zrzut:play-control-devices-sound-display)
+![Podsumowanie ustawień](zrzut:control-summary)
+![Rozpoczęcie gry](zrzut:play-control-intro)
+![Wyświetlacz po rozpoczęciu — logo i nazwy drużyn](zrzut:play-display-logo)
+
 Przeglądarka może wyciszyć dźwięk Wyświetlacza po jego przeładowaniu albo uśpieniu telewizora —
 wtedy przycisk [Odblokuj dźwięk] pojawi się ponownie, a panel poczeka na jego naciśnięcie.
 
@@ -105,15 +123,9 @@ X, przyjęcie zgłoszenia, oddanie kontroli — wymagają **dwóch kliknięć**:
 kafelek, drugie zatwierdza. Wyszarzone przyciski są chwilowo niedostępne, np. w czasie dźwięku
 lub animacji — poczekaj, aż panel je odblokuje.
 
-![Podsumowanie przed rozpoczęciem gry](zrzut:control-summary)
-![Rozpoczęcie gry](zrzut:play-control-intro)
+![Pierwsze kliknięcie zaznacza, drugie zatwierdza](zrzut:play-control-duel-armed)
 
 ## 17.3 Prowadzenie rund
-
-![*Panel sterowania* — operator prowadzi rundę](zrzut:control-round)
-![Wyświetlacz — pojedynek: lampka drużyny, która nacisnęła pierwsza](zrzut:play-display-duel)
-![Ekran prowadzącego — pytanie pod zasłoną](zrzut:play-host-duel@tablet)
-![Przycisk — gotowy do naciśnięcia](zrzut:play-buzzer-on@tablet)
 
 **Pojedynek.**
 
@@ -126,6 +138,13 @@ lub animacji — poczekaj, aż panel je odblokuje.
    najwyżej punktowana odpowiedź wygrywa od razu; w przeciwnym razie odpowiada druga drużyna
    i wygrywa wyższa odpowiedź (przy remisie — pierwsza). Gdy obie odpowiedzi są spoza tablicy,
    pojedynek rozgrywa kolejna para zawodników. Wyświetlacz pokazuje, która drużyna gra.
+
+![Start rundy](zrzut:play-control-round-start)
+![Przycisk — gotowy do naciśnięcia](zrzut:play-buzzer-on@tablet)
+![Przycisk — drużyna A nacisnęła pierwsza](zrzut:play-buzzer-pushed@tablet)
+![Panel — kto był pierwszy: Zatwierdź: {drużyna} albo Ponów naciśnięcie](zrzut:play-control-duel)
+![Przycisk fizyczny — operator wybiera drużynę](zrzut:play-control-duel-physical)
+![Wyświetlacz — lampka drużyny, która nacisnęła](zrzut:play-display-duel)
 
 **Rozgrywka drużyny** („RUNDA 1 — ROZGRYWKA” u prowadzącego).
 
@@ -140,9 +159,18 @@ lub animacji — poczekaj, aż panel je odblokuje.
 Prowadzący widzi pytanie i wszystkie odpowiedzi z punktami, np. „2) Rower (24)” — zielony
 wiersz to odpowiedź już pokazana publiczności. Pulę, X i wyniki drużyn sprawdza na Wyświetlaczu.
 
+![Rozgrywka — zaznaczona odpowiedź, licznik X i Oddaj kontrolę](zrzut:play-control-play-pass)
+![Odliczanie 3 s](zrzut:play-control-timer3)
+![Wyświetlacz — odsłonięte odpowiedzi, pula i X](zrzut:play-display-play)
+![Ekran prowadzącego — pokazane odpowiedzi na zielono](zrzut:play-host-play@tablet)
+
 **Kradzież** („RUNDA 1 — KRADZIEŻ”). Po trzech błędach przeciwnicy podają jedną odpowiedź:
 operator zaznacza ją albo daje X. Trafienie przenosi pulę do przeciwników, pudło zostawia ją
 drużynie grającej.
+
+![Kradzież — panel](zrzut:play-control-steal)
+![Kradzież — Wyświetlacz](zrzut:play-display-steal)
+![Kradzież — ekran prowadzącego](zrzut:play-host-steal@tablet)
 
 **Koniec rundy.** [Zakończ rundę] przyznaje pulę pomnożoną przez mnożnik rundy. Potem możesz
 odsłonić pozostałe odpowiedzi dla publiczności („RUNDA 1 — ODSŁANIANIE”) — nie dają już punktów.
@@ -150,18 +178,20 @@ Następnie wybierz [Przejdź do następnej rundy], [Przejdź do finału] albo
 [Przejdź do zakończenia gry]. Gdy gra się kończy (próg bez finału albo brak pytań), pozostałych
 odpowiedzi się nie odsłania (→ 3.6, 3.7).
 
+![Zakończ rundę](zrzut:play-control-round-end)
+![Odsłanianie pozostałych odpowiedzi](zrzut:play-control-reveal)
+![Odsłanianie — ekran prowadzącego](zrzut:play-host-reveal@tablet)
+
 > Uwaga: dobierz liczbę pytań i próg punktów tak, aby pytania nie skończyły się przed
 > planowanym finałem — sam brak pytań nie prowadzi do finału.
-
-![Kradzież — panel sterowania](zrzut:play-control-steal)
-![Kradzież — Wyświetlacz](zrzut:play-display-steal)
-![Kradzież — ekran prowadzącego](zrzut:play-host-steal@tablet)
 
 ## 17.4 Prowadzenie finału
 
 **Przygotowanie.** Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika
 (→ 4.1). [Rozpocznij finał] otwiera tablicę finału: wynik zwycięskiej drużyny zostaje, w miejscu
 wyniku przeciwników pojawia się zegar, a suma finału — na górze.
+
+![Rozpoczęcie finału](zrzut:play-control-final-start)
 
 **Gracz 1 — wpisywanie.**
 
@@ -176,6 +206,9 @@ wyniku przeciwników pojawia się zegar, a suma finału — na górze.
 Prowadzący widzi „FINAŁ RUNDA 1 — ODLICZANIE 12s” i pięć pytań ze statusem: „wpisano”, „brak”
 albo (u drugiego gracza) „powtórzenie”. Literówki możesz poprawić także po upływie czasu.
 
+![Gracz 1 — wpisywanie odpowiedzi w czasie odliczania](zrzut:play-control-final-p1-timer)
+![Ekran prowadzącego — odliczanie i statusy pytań](zrzut:play-host-final-p1@tablet)
+
 **Gracz 1 — ocena i odsłanianie.** Dla każdego pytania porównaj wpis z listą odpowiedzi:
 
 - wybierz pasującą odpowiedź z listy,
@@ -188,6 +221,11 @@ stan dopasowania i pełną listę odpowiedzi z punktami. Po odsłonięciu odpowi
 
 Wyświetlacz mieści w finale do 11 znaków odpowiedzi — dłuższe są skracane tylko na tablicy.
 
+![Ocena — odpowiedź dopasowana do listy](zrzut:play-control-final-p1-map)
+![Ocena — odpowiedzi nie ma na liście](zrzut:play-control-final-p1-map-miss)
+![Ocena — ekran prowadzącego](zrzut:play-host-final-map@tablet)
+![Wyświetlacz po graczu 1](zrzut:play-display-final-p1)
+
 **Gracz 2.** [Rozpocznij 2 rundę] — wraca drugi zawodnik; odpowiedzi pierwszego są znów na
 Wyświetlaczu, więc drugi zawodnik odwraca się od tablicy. Operator widzi je przy polach, co
 pomaga rozpoznać powtórzenie. Zegar ma 20 s.
@@ -198,13 +236,18 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 - Dopóki jest czas, prowadzący może wracać do pominiętych pytań.
 - Ocena i odsłanianie — jak u gracza 1. Prowadzący widzi dodatkowo odpowiedź gracza 1 na to samo pytanie.
 
+![Przejście do gracza 2](zrzut:play-control-final-p2-start)
+![Gracz 2 — wpisywanie, odpowiedzi gracza 1 przy polach i Powtórzenie](zrzut:play-control-final-p2-timer)
+![Gracz 2 — ekran prowadzącego](zrzut:play-host-final-p2@tablet)
+![Gracz 2 — ocena przy powtórzeniu](zrzut:play-control-final-p2-repeat-map)
+![Gracz 2 — ekran prowadzącego przy ocenie](zrzut:play-host-final-p2-repeat@tablet)
+![Wyświetlacz — odpowiedzi obu graczy](zrzut:play-display-final)
+
 **Koniec finału.** Gdy finaliści osiągną cel — domyślnie 200 punktów (→ 4.3) — dalsza ocena jest blokowana,
 a przycisk zmienia się na [Zakończ finał] — operator sam wybiera moment zakończenia. Jeśli celu
 nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
 
-![Finał — dopasowanie odpowiedzi](zrzut:play-control-final-p1-map)
-![Finał — ekran prowadzącego](zrzut:play-host-final-p1@tablet)
-![Finał — Wyświetlacz](zrzut:play-display-final)
+![Cel osiągnięty — Zakończ finał](zrzut:play-control-final-end)
 
 ## 17.5 Zakończenie gry
 
@@ -214,14 +257,20 @@ nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
   [Zakończ grę] odtwarza muzykę zakończenia. Przy ustawieniu kwoty nagrody gra bez finału pokazuje
   punkty, a przy remisie — logo.
 
+![Ekran końcowy — kwota nagrody](zrzut:play-display-end-money)
+![Ekran końcowy — punkty (gra bez finału)](zrzut:play-display-end-points)
+![Ekran końcowy — logo (remis)](zrzut:play-display-end-logo)
+![Panel przed Zakończ grę](zrzut:play-control-game-end-points)
+
 Ekran prowadzącego jest wtedy czyszczony. Na koniec wybierz [Zacznij od nowa] albo
 [Wróć do moich gier].
 
 Zawsze kończ grę w panelu. Jeśli go zamkniesz w trakcie, gra pozostanie w toku i zablokuje zmianę
 ustawień (→ 16.1). Logo na ekranie prowadzącego zależy od ustawienia „Logo prowadzącego” (→ 16.3).
 
-![Gra zakończona](zrzut:play-control-game-ended)
-![Ekran końcowy — wygrana kwota](zrzut:play-display-end-money)
+![Gra zakończona — Zacznij od nowa albo Wróć do moich gier](zrzut:play-control-game-ended)
+![Ekran prowadzącego po zakończeniu](zrzut:play-host-end@tablet)
+![Wyjście z panelu w trakcie gry](zrzut:play-control-leave-confirm)
 
 ## 17.6 Skróty klawiszowe panelu
 

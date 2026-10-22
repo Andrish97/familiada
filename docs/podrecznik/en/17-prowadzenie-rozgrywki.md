@@ -21,6 +21,8 @@ smooth switching between talking to the players and working the panel.
 The first step is *Devices*. In the panel's top bar, dots show which devices are
 connected; the device buttons let you get back to their codes and sharing, also during the game.
 
+![The “Devices” step — codes, Open, QR Code and connection dots](zrzut:control-devices)
+
 The **Display** is always needed — you cannot continue without it.
 
 - **A second monitor or projector next to the computer.** Turn on the extended desktop (Windows: Win+P,
@@ -33,6 +35,8 @@ The **Display** is always needed — you cannot continue without it.
   You do not need to sign in on the TV.
 - **Another device.** Open familiada.online → [Connect device] → [Connect by code] and enter the code.
 
+![The TV page — the Display code](zrzut:play-connect-tv)
+
 > Note: the Display must stay visible for the whole game. When its window or tab is in the background,
 > the browser may pause the animations and the board updates.
 
@@ -42,17 +46,25 @@ the game's name and its owner — check them and confirm. On a phone and tablet 
 [Scan QR] (scanning with the camera; if your browser doesn't support it, use the system camera app). [QR on display] shows the codes on the Display, so the crew can quickly
 scan them from the room. It is best to use two separate devices.
 
+![The Host QR code in the panel](zrzut:play-control-qr-modal)
+![The *Connect a device* page](zrzut:connect-device)
+![After entering the code — the game name and owner to check](zrzut:play-connect-confirm)
+
 [Copy] copies the code, and [Share] sends the device to another person — enter their email address or
 username, or choose a friend. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
 email and on the *My notifications* page. In the shared list, a phone and a tablet
 show the Host and the Buzzer, and a computer shows the Display. Sharing devices requires an account.
 
+![Sharing a device with another person](zrzut:play-control-share-device-list)
+
 **Without some of the devices:**
 
 - "No host tablet" — you play without a host screen; the host reads from the panel.
 - "Physical buzzer" — you use your own buttons or raised hands; in the duel the operator
   marks the team that was first.
+
+![A physical buzzer instead of a phone; the Host not connected yet](zrzut:play-control-devices-mixed)
 
 **Test mode** shows the Display, the Host and the Buzzer in one window, next to the panel — for
 trying out a game on one computer (it needs a large window). For a real game, use separate
@@ -65,15 +77,16 @@ with points, the final questions or the details of answer scoring. The second pa
 and up to cover it; in landscape — right and left. Only the host sees what is uncovered.
 After each change of stage, the cover may come back.
 
+![Host screen — the lower part under the cover](zrzut:play-host-duel@tablet)
+![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet)
+
 **A device disconnects.** When a required device stops responding, after a few seconds
 the panel shows which devices have disconnected and pauses the game. Check the internet and the device's
 screen; if needed, connect it again with the buttons in the top bar. The game unlocks
 on its own when the devices are back. Actions confirmed earlier stay saved, and a running
 timer keeps counting down. Common causes and fixes → 19.5.
 
-![Devices in the control panel](zrzut:control-devices)
-![QR code for connecting a device](zrzut:play-control-qr-modal)
-![Connect a device](zrzut:connect-device)
+![Disconnected devices — the game is paused](zrzut:play-control-device-lost)
 
 ## 17.2 Preparing and starting the game
 
@@ -95,6 +108,11 @@ timer keeps counting down. Common causes and fixes → 19.5.
    [Start game] plays the intro and the logo entrance on the Display. Then choose
    [Start] to begin the round.
 
+![Sound from the Display — it must be unlocked on the Display](zrzut:play-control-devices-sound-display)
+![Settings summary](zrzut:control-summary)
+![Starting the game](zrzut:play-control-intro)
+![The Display after the start — logo and team names](zrzut:play-display-logo)
+
 The browser may mute the Display's sound after it is reloaded or the TV goes to sleep —
 then the [Unlock sound] button appears again, and the panel waits until it is pressed.
 
@@ -105,15 +123,9 @@ an X, accepting a buzz, passing control — need **two clicks**: the first selec
 tile, the second confirms. Greyed-out buttons are temporarily unavailable, e.g. while a sound
 or animation plays — wait until the panel unlocks them.
 
-![Summary before starting the game](zrzut:control-summary)
-![Starting the game](zrzut:play-control-intro)
+![The first click selects, the second confirms](zrzut:play-control-duel-armed)
 
 ## 17.3 Running the rounds
-
-![*Control panel* — the operator runs the round](zrzut:control-round)
-![Display — the duel: the lamp of the team that pressed first](zrzut:play-display-duel)
-![Host screen — the question under the cover](zrzut:play-host-duel@tablet)
-![Buzzer — ready to press](zrzut:play-buzzer-on@tablet)
 
 **The duel.**
 
@@ -126,6 +138,13 @@ or animation plays — wait until the panel unlocks them.
    the top-scoring answer wins straight away; otherwise the other team answers
    and the higher answer wins (in a tie — the first one). If both answers are off the board,
    the next pair of players plays the duel. The Display shows which team is playing.
+
+![Start of a round](zrzut:play-control-round-start)
+![Buzzer — ready to press](zrzut:play-buzzer-on@tablet)
+![Buzzer — team A pressed first](zrzut:play-buzzer-pushed@tablet)
+![Panel — who was first: confirm or repeat the press](zrzut:play-control-duel)
+![Physical buzzer — the operator chooses the team](zrzut:play-control-duel-physical)
+![Display — the lamp of the team that pressed](zrzut:play-display-duel)
 
 **The team's turn** ("ROUND 1 — PLAY" on the host screen).
 
@@ -140,9 +159,18 @@ or animation plays — wait until the panel unlocks them.
 The host sees the question and all the answers with points, e.g. "2) Bike (24)" — a green
 row is an answer already shown to the audience. The host checks the pool, the X's and the team scores on the Display.
 
+![Team's turn — a selected answer, the X counter and Pass control](zrzut:play-control-play-pass)
+![The 3-second countdown](zrzut:play-control-timer3)
+![Display — revealed answers, the pool and X](zrzut:play-display-play)
+![Host screen — answers already shown in green](zrzut:play-host-play@tablet)
+
 **Steal** ("ROUND 1 — STEAL"). After three mistakes, the opponents give one answer:
 the operator marks it or gives an X. A hit moves the pool to the opponents, a miss leaves it with the
 playing team.
+
+![Steal — panel](zrzut:play-control-steal)
+![Steal — Display](zrzut:play-display-steal)
+![Steal — host screen](zrzut:play-host-steal@tablet)
 
 **End of the round.** [End round] awards the pool multiplied by the round multiplier. Then you can
 reveal the remaining answers for the audience ("ROUND 1 — REVEAL") — they no longer give points.
@@ -150,18 +178,20 @@ Then choose [Go to next round], [Go to the final] or
 [Go to end of game]. When the game is ending (threshold without a final or no questions left), the remaining
 answers are not revealed (→ 3.6, 3.7).
 
+![End round](zrzut:play-control-round-end)
+![Revealing the remaining answers](zrzut:play-control-reveal)
+![Revealing — host screen](zrzut:play-host-reveal@tablet)
+
 > Note: choose the number of questions and the points threshold so that the questions do not run out before
 > the planned final — running out of questions alone does not lead to the final.
-
-![Steal — control panel](zrzut:play-control-steal)
-![Steal — Display](zrzut:play-display-steal)
-![Steal — host screen](zrzut:play-host-steal@tablet)
 
 ## 17.4 Running the final
 
 **Preparation.** Prepare a waiting spot and headphones with music for the second player
 (→ 4.1). [Start] the final to open the final board: the winning team's score stays, a timer appears
 in place of the opponents' score, and the final total — at the top.
+
+![Starting the final](zrzut:play-control-final-start)
 
 **Player 1 — entering answers.**
 
@@ -176,6 +206,9 @@ in place of the opponents' score, and the final total — at the top.
 The host sees "FINAL ROUND 1 — COUNTDOWN 12s" and the five questions with a status: "entered", "missing"
 or (for the second player) "repeat". You can also fix typos after the time runs out.
 
+![Player 1 — entering answers during the countdown](zrzut:play-control-final-p1-timer)
+![Host screen — countdown and question statuses](zrzut:play-host-final-p1@tablet)
+
 **Player 1 — scoring and revealing.** For each question, compare the entry with the list of answers:
 
 - choose the matching answer from the list,
@@ -188,6 +221,11 @@ the matching status and the full list of answers with points. Once revealed, ans
 
 In the final, the Display fits up to 11 characters of an answer — longer ones are shortened only on the board.
 
+![Scoring — an answer matched to the list](zrzut:play-control-final-p1-map)
+![Scoring — the answer is not on the list](zrzut:play-control-final-p1-map-miss)
+![Scoring — host screen](zrzut:play-host-final-map@tablet)
+![The Display after player 1](zrzut:play-display-final-p1)
+
 **Player 2.** [Start] the second round of the final — the second player comes back; the first player's answers are
 on the Display again, so the second player turns away from the board. The operator sees them next to the fields, which
 helps spot a repeat. The timer is 20 s.
@@ -198,13 +236,18 @@ helps spot a repeat. The timer is 20 s.
 - As long as there is time, the host can go back to skipped questions.
 - Scoring and revealing — as for player 1. The host also sees player 1's answer to the same question.
 
+![Moving on to player 2](zrzut:play-control-final-p2-start)
+![Player 2 — entering answers, player 1's answers next to the fields and Repeat](zrzut:play-control-final-p2-timer)
+![Player 2 — host screen](zrzut:play-host-final-p2@tablet)
+![Player 2 — scoring with a repeat](zrzut:play-control-final-p2-repeat-map)
+![Player 2 — host screen while scoring](zrzut:play-host-final-p2-repeat@tablet)
+![Display — answers of both players](zrzut:play-display-final)
+
 **End of the final.** When the finalists reach the target — 200 points by default (→ 4.3) — further scoring is blocked,
 and the button changes to [Finish final] — the operator chooses when to finish. If the target
 was not reached, [Finish final] appears after player 2's last points.
 
-![Final — matching answers](zrzut:play-control-final-p1-map)
-![Final — host screen](zrzut:play-host-final-p1@tablet)
-![Final — Display](zrzut:play-display-final)
+![Target reached — Finish final](zrzut:play-control-final-end)
 
 ## 17.5 Ending the game
 
@@ -214,14 +257,20 @@ was not reached, [Finish final] appears after player 2's last points.
   [Finish game] plays the ending music. With the prize amount setting, a game without a final shows
   the points, and in a tie — the logo.
 
+![End screen — prize amount](zrzut:play-display-end-money)
+![End screen — points (game without a final)](zrzut:play-display-end-points)
+![End screen — logo (tie)](zrzut:play-display-end-logo)
+![Panel before Finish game](zrzut:play-control-game-end-points)
+
 The host screen is then cleared. Finally, choose [Start over] or
 [Back to my games].
 
 Always end the game in the panel. If you close it in the middle, the game stays in progress and blocks changes to
 the settings (→ 16.1). The logo on the host screen depends on the "Host logo" setting (→ 16.3).
 
-![Game ended](zrzut:play-control-game-ended)
-![End screen — prize amount](zrzut:play-display-end-money)
+![Game ended — start again or go back to my games](zrzut:play-control-game-ended)
+![Host screen after the end](zrzut:play-host-end@tablet)
+![Leaving the panel during a game](zrzut:play-control-leave-confirm)
 
 ## 17.6 Panel keyboard shortcuts
 

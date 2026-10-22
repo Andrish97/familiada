@@ -6,6 +6,7 @@ const {
   testAccountUsername,
 } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { touchSwipe } = require("./helpers/touch-swipe");
 
 const INDEX_URL = "https://www.familiada.online/";
 
@@ -201,4 +202,25 @@ test("fałszywa lub nieprawidłowa sesja nie daje dostępu", async ({ page, cont
   await openIndex(page);
   await page.waitForTimeout(1_500);
   await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?.*)?$/);
+});
+
+test("telefon — przesunięcie palcem zmienia kadr w kaflu, nie otwiera podglądu", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  try {
+    await serveBranchCode(context, { pages: ["index"] });
+    await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+    const page = await context.newPage();
+    await openIndex(page);
+    const shot = page.locator(".tile-shot").first();
+    await shot.scrollIntoViewIfNeeded();
+    const img = shot.locator(".shot-img");
+    const before = await img.getAttribute("data-shot");
+    await touchSwipe(page, shot, { dx: -180 });
+    await expect(img).not.toHaveAttribute("data-shot", before);
+    await touchSwipe(page, shot, { dx: 180 });
+    await expect(img).toHaveAttribute("data-shot", before);
+    await expect(page.locator("#imgvOverlay.is-open")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
 });

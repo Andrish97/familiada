@@ -14,6 +14,8 @@ Z serwisu można korzystać na dwa sposoby:
 Na stronie *Logowanie* są przyciski [Zaloguj], [Załóż konto], [Wejdź jako gość]
 i [Przypomnij hasło].
 
+![Strona logowania](zrzut:people-login)
+
 Konto jest potrzebne do współpracy z innymi osobami. Tylko z kontem możesz:
 
 - mieć znajomych (→ 10) i subskrybentów (→ 14) oraz otrzymywać zadania (→ 15.4),
@@ -26,7 +28,7 @@ Konto jest potrzebne do współpracy z innymi osobami. Tylko z kontem możesz:
 Gdy jako gość otworzysz stronę dostępną tylko dla kont, zobaczysz komunikat
 „Niedostępne w koncie gościa”.
 
-![Logowanie — konto albo wejście jako gość](zrzut:people-login)
+![Strona dostępna tylko dla kont — widok gościa](zrzut:people-friends-guest)
 
 ## 5.2 Rejestracja i potwierdzenie adresu e-mail
 
@@ -35,6 +37,10 @@ Gdy jako gość otworzysz stronę dostępną tylko dla kont, zobaczysz komunikat
 3. Zatwierdź. Na podany adres przyjdzie wiadomość „FAMILIADA — Potwierdzenie konta”.
 4. Kliknij w niej [POTWIERDŹ KONTO]. Zobaczysz „Gotowe! Konto potwierdzone.” i przejdziesz
    do *Moich gier*.
+
+![Zakładanie konta — zasady hasła](zrzut:people-login-register-weak)
+![Link aktywacyjny wysłany](zrzut:people-login-register-sent)
+![Konto potwierdzone](zrzut:people-confirm-done)
 
 Dopóki nie potwierdzisz adresu, nie zalogujesz się — serwis przypomni: „Potwierdź e-mail
 (link w skrzynce)”.
@@ -48,8 +54,8 @@ Nazwa użytkownika powstaje automatycznie z adresu e-mail; możesz ją zmienić 
 - *Adres jest już zarejestrowany* — serwis wyświetli „Konto już istnieje. Przełączam na
   logowanie.” Zaloguj się albo odzyskaj hasło (→ 5.7).
 
-![Zakładanie konta — zasady hasła](zrzut:people-login-register-weak)
-![Link aktywacyjny wysłany](zrzut:people-login-register-sent)
+![Konto czeka na potwierdzenie — wysłać link ponownie?](zrzut:people-login-email-pending)
+![Adres jest już zarejestrowany](zrzut:people-login-email-registered)
 
 ## 5.3 Logowanie i wylogowanie
 
@@ -59,12 +65,16 @@ znaczenia) oraz hasło i wybierz [Zaloguj]. Po zalogowaniu przejdziesz do *Moich
 Pozostajesz zalogowany w tej przeglądarce, dopóki się nie wylogujesz. Aby się wylogować,
 kliknij swoją nazwę w prawym górnym rogu i wybierz [Wyloguj].
 
+![Błędne hasło](zrzut:people-login-wrong-password)
+
 Jeśli otworzysz link z wiadomości (na przykład do zadania, zaproszenia do znajomych albo
 udostępnionej bazy), a nie jesteś zalogowany, po zalogowaniu wrócisz do tego miejsca.
 
 > Uwaga: jeśli w tej przeglądarce korzystasz z konta gościa, zalogowanie na inne konto
 > usunie dane gościa. Serwis zapyta o to w oknie „Aktywna sesja gościa”. Aby zachować dane,
 > najpierw zapisz konto gościa jako zwykłe konto (→ 5.4).
+
+![Logowanie przy aktywnej sesji gościa](zrzut:people-login-guest-loss)
 
 ## 5.4 Konto gościa i zapisanie danych
 
@@ -75,6 +85,9 @@ Wybierz [Wejdź jako gość] na stronie *Logowanie*. Konto gościa:
 - nie ma funkcji współpracy wymienionych wyżej (→ 5.1).
 
 Serwis co jakiś czas przypomina, że konto gościa zostanie usunięte, i proponuje [Migruj teraz].
+
+![Konto gościa — zachęta do zapisania danych](zrzut:people-account-guest)
+![Jak zapisać dane gościa](zrzut:people-account-guest-info)
 
 **Jak zachować dane gościa** — zamień konto gościa na zwykłe konto. Gry, bazy pytań,
 logo i inne pliki zostaną zachowane.
@@ -87,11 +100,12 @@ logo i inne pliki zostaną zachowane.
 3. Kliknij link w wiadomości „FAMILIADA — Potwierdź migrację”. Od tej chwili korzystasz
    ze zwykłego konta.
 
-Do czasu kliknięcia linku nadal korzystasz z konta gościa. Wiadomość można wysłać ponownie
-raz na godzinę.
+![Załóż konto z sesji gościa — przenieść dane?](zrzut:people-login-guest-migrate)
+![Link potwierdzający wysłany](zrzut:people-account-guest-migrate-sent)
 
-![Konto gościa — zachęta do zapisania danych](zrzut:people-account-guest)
-![Zakładanie konta z sesji gościa — przeniesienie danych](zrzut:people-login-guest-migrate)
+Do czasu kliknięcia linku nadal korzystasz z konta gościa. W *Ustawieniach konta* możesz
+[Wyślij ponownie] wiadomość (raz na godzinę) albo [Anuluj] zamianę — po anulowaniu link
+z wiadomości przestaje działać, a dane zostają na koncie gościa.
 
 ## 5.5 Nazwa użytkownika i profil
 
@@ -111,7 +125,8 @@ i wybierz [Zapisz nazwę]. Nazwę można zmieniać raz na godzinę.
 Jeśli Twoje konto nie ma jeszcze stałej nazwy (na przykład po zapisaniu konta gościa bez
 nazwy), przy logowaniu zobaczysz ekran „Pierwsze logowanie” z prośbą o jej ustawienie.
 
-![Pierwsze logowanie — wybór nazwy użytkownika](zrzut:people-login-setup-username)
+![Pierwsze logowanie — ustaw nazwę użytkownika](zrzut:people-login-setup-username)
+![Nazwa użytkownika zapisana](zrzut:people-account-username-saved)
 
 ## 5.6 Zmiana adresu e-mail i hasła
 
@@ -120,6 +135,8 @@ nazwy), przy logowaniu zobaczysz ekran „Pierwsze logowanie” z prośbą o jej
 Dzięki temu nikt nie przejmie konta, znając tylko jeden z adresów. Do czasu potwierdzenia
 logujesz się dotychczasowym adresem. Możesz też [Wyślij ponownie] albo [Anuluj zmianę].
 Zmianę można rozpocząć raz na godzinę.
+
+![Zmiana e-maila w toku — Wyślij ponownie i Anuluj zmianę](zrzut:people-account-email-pending)
 
 Jeśli nie masz już dostępu do starego adresu, zmiana nie zostanie potwierdzona. Możesz wtedy
 wyeksportować gry, bazy i logo do plików, usunąć konto, założyć nowe i zaimportować pliki
@@ -134,7 +151,8 @@ wyeksportować gry, bazy i logo do plików, usunąć konto, założyć nowe i za
 
 Nowe hasło musi różnić się od poprzedniego. Hasło można zmieniać raz na godzinę.
 
-![Zmiana adresu e-mail w toku](zrzut:people-account-email-pending)
+![Za słabe hasło](zrzut:people-account-password-weak)
+![Zmiany możliwe raz na godzinę — odliczanie](zrzut:people-account-cooldowns)
 
 ## 5.7 Odzyskiwanie dostępu i zabezpieczenia
 
@@ -144,6 +162,10 @@ Jeśli nie pamiętasz hasła:
    [Przypomnij hasło].
 2. Kliknij [USTAW NOWE HASŁO] w wiadomości „FAMILIADA — Reset hasła”.
 3. Wpisz nowe hasło dwukrotnie i wybierz [Zapisz hasło]. Wrócisz do logowania.
+
+![Link do resetu hasła wysłany](zrzut:people-login-forgot-sent)
+![Nowe hasło](zrzut:people-reset-form)
+![Hasło zapisane](zrzut:people-reset-saved)
 
 Kolejną wiadomość z linkiem możesz zamówić dopiero po godzinie — serwis pokaże, ile
 czasu zostało.
@@ -161,10 +183,12 @@ W *Ustawieniach konta* znajdziesz także:
 - **Twoja ocena systemu** — podgląd oceny i komentarza, które wystawiłeś serwisowi.
 - **Materiały Demo** — [Przywróć pliki demo] dodaje przykładowe gry, bazy pytań i logo.
 
+![Ustawienia konta](zrzut:account)
+![Wyłączenie powiadomień e-mail](zrzut:people-account-notif-confirm)
+![Przywrócenie materiałów demo](zrzut:people-account-demo-confirm)
+
 > Uwaga: przywrócenie zastępuje dotychczasowe materiały demo, także te, które zmieniłeś.
 > Jeśli chcesz zachować zmiany, najpierw powiel taką grę, bazę lub logo.
-
-![Ustawienia konta](zrzut:account)
 
 ## 5.9 Usunięcie konta
 
@@ -172,6 +196,9 @@ W *Ustawieniach konta*, w sekcji „Usuń konto”, wpisz swoje hasło i wybierz
 [Usuń konto i dane]. Konto gościa usuwa się bez hasła, po potwierdzeniu w oknie.
 
 > Uwaga: usunięcia nie da się cofnąć.
+
+![Usuwanie konta — wymagane hasło](zrzut:people-account-delete-wrong)
+![Usuwanie konta gościa](zrzut:people-account-guest-delete)
 
 Usuwane są:
 

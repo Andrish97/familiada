@@ -14,6 +14,8 @@ You can use the app in two ways:
 The *Login* page has the buttons [Log in], [Create account], [Continue as guest]
 and [Forgot password].
 
+![The login page](zrzut:people-login)
+
 You need an account to work with other people. Only with an account can you:
 
 - have friends (→ 10) and subscribers (→ 14) and receive tasks (→ 15.4),
@@ -26,7 +28,7 @@ You need an account to work with other people. Only with an account can you:
 If you open a page that is only available to accounts while you are a guest, you will see the message
 "Not available for guest account".
 
-![Login — an account or entering as a guest](zrzut:people-login)
+![A page for accounts only — guest view](zrzut:people-friends-guest)
 
 ## 5.2 Registration and email confirmation
 
@@ -35,6 +37,10 @@ If you open a page that is only available to accounts while you are a guest, you
 3. Confirm. You will receive the message "FAMILIADA — Confirm your account" at that address.
 4. Click [CONFIRM ACCOUNT] in it. You will see "Done! Account confirmed." and go
    to *My games*.
+
+![Creating an account — password rules](zrzut:people-login-register-weak)
+![Activation link sent](zrzut:people-login-register-sent)
+![Account confirmed](zrzut:people-confirm-done)
 
 Until you confirm your address, you cannot log in — the app will remind you: "Confirm your email
 (link in inbox)."
@@ -48,8 +54,8 @@ Your username is created automatically from your email address; you can change i
 - *The address is already registered* — the app will show "This account already exists. Switching to
   login." Log in or recover your password (→ 5.7).
 
-![Creating an account — password rules](zrzut:people-login-register-weak)
-![Activation link sent](zrzut:people-login-register-sent)
+![The account awaits confirmation — send the link again?](zrzut:people-login-email-pending)
+![The address is already registered](zrzut:people-login-email-registered)
 
 ## 5.3 Logging in and out
 
@@ -59,12 +65,16 @@ matter) and your password, and choose [Log in]. After logging in, you go to *My 
 You stay logged in in this browser until you log out. To log out,
 click your name in the top right corner and choose [Log out].
 
+![Wrong password](zrzut:people-login-wrong-password)
+
 If you open a link from a message (for example to a task, a friend invitation or a
 shared base) while you are not logged in, you will return to that place after logging in.
 
 > Note: if you use a guest account in this browser, logging in to another account
 > will delete the guest data. The app will ask about this in the "Active guest session" window. To keep your data,
 > first save the guest account as a regular account (→ 5.4).
+
+![Logging in during an active guest session](zrzut:people-login-guest-loss)
 
 ## 5.4 Guest account and saving your data
 
@@ -75,6 +85,9 @@ Choose [Continue as guest] on the *Login* page. A guest account:
 - does not have the collaboration features listed above (→ 5.1).
 
 From time to time the app reminds you that the guest account will be deleted and offers [Migrate now].
+
+![Guest account — prompt to keep your data](zrzut:people-account-guest)
+![How to keep guest data](zrzut:people-account-guest-info)
 
 **How to keep your guest data** — turn the guest account into a regular account. Games, question bases,
 logos and other files will be kept.
@@ -87,11 +100,12 @@ logos and other files will be kept.
 3. Click the link in the message "FAMILIADA — Confirm migration". From then on you use
    a regular account.
 
-Until you click the link, you keep using the guest account. The message can be resent
-once an hour.
+![Create an account from a guest session — move the data?](zrzut:people-login-guest-migrate)
+![Confirmation link sent](zrzut:people-account-guest-migrate-sent)
 
-![Guest account — prompt to keep your data](zrzut:people-account-guest)
-![Creating an account from a guest session — moving the data](zrzut:people-login-guest-migrate)
+Until you click the link, you keep using the guest account. In *Account settings* you can
+[Resend] the message (once an hour) or [Cancel] the change — after cancelling, the link
+in the message stops working and the data stays on the guest account.
 
 ## 5.5 Username and profile
 
@@ -111,7 +125,8 @@ and choose [Save name]. You can change your name once an hour.
 If your account does not have a permanent name yet (for example after saving a guest account without
 a name), you will see the "First login" screen asking you to set one when you log in.
 
-![First login — choosing a username](zrzut:people-login-setup-username)
+![First login — set a username](zrzut:people-login-setup-username)
+![Username saved](zrzut:people-account-username-saved)
 
 ## 5.6 Changing your email address and password
 
@@ -120,6 +135,8 @@ a name), you will see the "First login" screen asking you to set one when you lo
 This way nobody can take over your account knowing only one of the addresses. Until you confirm,
 you log in with your current address. You can also [Resend] or [Cancel change].
 You can start a change once an hour.
+
+![E-mail change in progress — resend or cancel](zrzut:people-account-email-pending)
 
 If you no longer have access to the old address, the change will not be confirmed. In that case you can
 export your games, bases and logos to files, delete the account, create a new one and import the files
@@ -134,7 +151,8 @@ export your games, bases and logos to files, delete the account, create a new on
 
 The new password must be different from the previous one. You can change your password once an hour.
 
-![E-mail change in progress](zrzut:people-account-email-pending)
+![Password too weak](zrzut:people-account-password-weak)
+![Changes once an hour — countdown](zrzut:people-account-cooldowns)
 
 ## 5.7 Recovering access and security
 
@@ -144,6 +162,10 @@ If you forgot your password:
    [Forgot password].
 2. Click [SET NEW PASSWORD] in the message "FAMILIADA — Password reset".
 3. Enter the new password twice and choose [Save password]. You will return to the login page.
+
+![Password reset link sent](zrzut:people-login-forgot-sent)
+![New password](zrzut:people-reset-form)
+![Password saved](zrzut:people-reset-saved)
 
 You can request another message with a link only after an hour — the app will show how much
 time is left.
@@ -161,10 +183,12 @@ In *Account settings* you will also find:
 - **Your rating** — a preview of the rating and comment you gave the app.
 - **Demo Materials** — [Restore demo files] adds sample games, question bases and logos.
 
+![Account settings](zrzut:account)
+![Turning off e-mail notifications](zrzut:people-account-notif-confirm)
+![Restoring demo materials](zrzut:people-account-demo-confirm)
+
 > Note: restoring replaces your existing demo materials, including the ones you changed.
 > If you want to keep your changes, duplicate that game, base or logo first.
-
-![Account settings](zrzut:account)
 
 ## 5.9 Deleting your account
 
@@ -172,6 +196,9 @@ In *Account settings*, in the "Delete account" section, enter your password and 
 [Delete account and data]. A guest account is deleted without a password, after confirming in a window.
 
 > Note: deleting cannot be undone.
+
+![Deleting the account — password required](zrzut:people-account-delete-wrong)
+![Deleting a guest account](zrzut:people-account-guest-delete)
 
 What gets deleted:
 

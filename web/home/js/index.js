@@ -6,6 +6,7 @@ import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00340";
 import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
 import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-22T00340";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-22T00340";
 
 
 async function redirectIfSession() {
@@ -316,6 +317,8 @@ function initShotCarousels() {
       return dot;
     });
     shot.append(nav(-1, "prev", "arrow-left"), nav(1, "next", "arrow-right"), dots);
+    // Na dotyku kadry zmienia też przesunięcie palcem w bok.
+    onSwipe(shot, (dir) => go(index + dir));
 
     const render = () => {
       const id = ids[index];

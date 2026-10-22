@@ -7,10 +7,14 @@ in *My games* or with [Change settings] in the summary in the control panel (→
 
 *Game settings* are not available on a phone — use a tablet or a computer.
 
+![Game settings](zrzut:game-settings)
+
 Prepare the settings **before the game starts**. While the game is open in the control panel,
 you cannot change its settings. If you closed the panel during a game, the app shows "Game in progress" with a choice:
 [Go back] or [End game and open settings] — the second option ends the game, and you will have to connect
 the devices again.
+
+![Game in progress](zrzut:play-settings-ingame)
 
 The settings are divided into sections: "Teams", "Display", "Sound", "Questions — Settings",
 "Questions — Finale", "Questions — Rounds" and "Game settings".
@@ -23,6 +27,7 @@ is limited to what fits on the Display; characters the Display cannot show will 
 be accepted.
 
 ![Teams](zrzut:play-settings-teams)
+![A name longer than the Display](zrzut:game-settings-team-limit)
 
 ## 16.3 Display
 
@@ -38,10 +43,11 @@ be accepted.
 
   The Display always shows the logo made of dots, because it is a dot screen.
 
-"Display preview" and "Host preview" show the effect of your changes as you make them.
-
 ![Appearance](zrzut:appearance)
 ![Colour window](zrzut:game-settings-color)
+![Host logo — “Pixels”](zrzut:game-settings-display-pixel)
+
+"Display preview" and "Host preview" show the effect of your changes as you make them.
 
 ## 16.4 Sound
 
@@ -55,6 +61,9 @@ A custom file can be up to 120 seconds long for the outro, up to 30 seconds for 
 and up to 5 seconds for the other sounds. If you choose "Custom", you must add a file — otherwise
 the settings cannot be saved.
 
+![Sound](zrzut:sound)
+![Custom sounds](zrzut:game-settings-sound-custom)
+
 Custom files are saved in the app together with the game when you choose [Save] — they will work on any
 device where you start this game.
 
@@ -62,8 +71,6 @@ device where you start this game.
 > "Sound" section delete the files right away, even if you don't save your changes afterwards. [Restore defaults]
 > also brings back the "Classic" variant and 100% volume. Deleted files cannot be recovered —
 > you have to upload them again.
-
-![Sound](zrzut:sound)
 
 ## 16.5 Questions
 
@@ -78,16 +85,19 @@ These sections decide which questions go into the final and in what order the ro
 - **"Rounds question order mode"** — "Random" or "Order" (you set it yourself in the
   "Questions — Rounds" section).
 
+![Question settings](zrzut:play-settings-questions)
+
 ### 16.5.2 Final questions
 
 With manual selection, tick **exactly 5** final questions — with any other number, the settings cannot
 be saved. Final questions are not used in the rounds.
 
+![Choosing the final questions](zrzut:play-settings-finale)
+![The final needs 5 questions](zrzut:play-settings-final-need5)
+
 With a random draw, you will see the set in the summary before the game starts, where you can choose
 [Reshuffle] (→ 17.2). With a random final and "Order" mode, the final first takes 5 questions
 from your rounds list; after [Reshuffle], the previous final questions go back to the end of the list.
-
-![Choosing the final questions](zrzut:play-settings-finale)
 
 ### 16.5.3 Round questions
 
@@ -111,15 +121,18 @@ The "Game settings" section:
 | "Main prize amount" | 25 000 | The prize for reaching the final target. |
 | "Prize multiplier (after finale)" | 3 | What the winning team's points from the rounds are multiplied by to calculate the amount. |
 
+![The “Game settings” section](zrzut:play-settings-game)
+
 Multipliers and amounts are positive whole numbers — for example, 0.5 won't work. The app won't save
 an invalid value: after [Save], the field goes back to its previous value.
+
+![An invalid value](zrzut:game-settings-game-invalid)
 
 The last two settings are shown when the game has a final and the end screen shows the prize amount.
 The amount on the end screen is the winning team's points from the rounds multiplied by
 the "Prize multiplier", and once the final target is reached — increased by the main prize amount (→ 4.4). In a tie, the end
 screen shows the logo.
 
-![Game settings — multipliers, threshold and end screen](zrzut:play-settings-game)
 ![Prize amount after the final](zrzut:game-settings-prize)
 
 ## 16.7 Saving and using the settings
@@ -129,7 +142,9 @@ screen shows the logo.
 - [Restore defaults] in the top bar restores all settings (and also removes custom sounds);
   the "Display", "Sound" and "Game settings" sections also let you restore just that section.
 - If the settings were changed in the meantime in another window, the app warns you before saving.
+
+![Unsaved changes](zrzut:play-settings-unsaved)
+![Restore defaults](zrzut:play-settings-reset-all)
+
 - [Play] takes you straight to the control panel (→ 17). The game must be ready to play
   (→ 7.6).
-
-![Unsaved changes when leaving](zrzut:play-settings-unsaved)

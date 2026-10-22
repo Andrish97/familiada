@@ -12,6 +12,8 @@ If your browser supports it, the top bar also shows an [Install Familiada|downlo
 Familiada to your phone's home screen or your desktop. This is especially handy on a phone used
 as a buzzer and on the host's tablet (→ 17.1).
 
+![My games — the “Prepared” tab](zrzut:games)
+
 The page is the library of your games, including copies received from friends. Games are divided
 into tabs:
 
@@ -20,7 +22,7 @@ into tabs:
 
 On a phone the tabs have shorter names: "Poll", "Points", "Prep." and "Community".
 
-![*My games* — the "Prepared" tab](zrzut:games)
+![The Community Games tab](zrzut:games-market)
 
 ## 6.2 The game list and game statuses
 
@@ -33,6 +35,10 @@ Each game is a tile with its name and status:
 | STOPPED | Collecting answers is paused. The "to be counted" badge reminds you that you can count the votes (→ 15.6). |
 | READY | The game is ready to play. |
 
+![Statuses and the blocking reason on the tile](zrzut:games-prepared-states)
+![An open poll — number of votes](zrzut:games-poll-text-open)
+![A stopped poll — “to be tallied”](zrzut:games-poll-points-stopped)
+
 A prepared game has no poll, so its status is only DRAFT or READY — READY when it meets
 all the conditions (→ 7.6).
 
@@ -42,11 +48,13 @@ Under the game name, the app shows what is missing for the next step, for exampl
 
 A copy received from a friend is marked "From: {name}".
 
+![A copy from a friend — “From: …”](zrzut:games-prepared-received)
+
 Above the list you can choose a filter: DRAFT, OPEN, STOPPED, READY or "Received"
 (only copies from friends). The list refreshes by itself.
 
-![Game statuses and the blocking reason on the tile](zrzut:games-prepared-states)
-![Game status filter](zrzut:games-filter-menu)
+![Status filter](zrzut:games-filter-menu)
+![Sorting](zrzut:games-sort-menu)
 
 ## 6.3 Creating and selecting a game
 
@@ -54,12 +62,12 @@ Above the list you can choose a filter: DRAFT, OPEN, STOPPED, READY or "Received
 2. Click the [+ New game] tile.
 3. Enter a name (up to 80 characters) and choose [Save].
 
+![New game — name](zrzut:games-new-poll-text)
+
 The new game appears on the list as a draft and is selected right away. To add questions,
 choose [Edit] (→ 7.2).
 
 Clicking a tile selects the game — only then do the action buttons become active.
-
-![Creating a new game](zrzut:games-new-poll-text)
 
 ## 6.4 Actions on the selected game
 
@@ -72,6 +80,8 @@ Once a game is selected, the top bar offers:
 | [Edit] | Opens the question and answer editor (→ 7.2). |
 | [Preview] | Shows the questions and answers without editing. For a game with a poll, you can switch the view to the poll results. |
 | [Poll] | Opens this game's poll (→ 15). A prepared game has no poll. |
+
+![A selected game — action buttons on the top bar](zrzut:games-prepared-not-ready)
 
 On the bottom bar: [Duplicate], [Change type], [Export to file], [Export to base],
 [Import] and [Send]. On a phone these buttons are shown as icons only.
@@ -86,6 +96,9 @@ press and hold it on a phone) to see the reason. The most important rules:
 - [Poll] — to start it, the game must have at least 10 questions; in a "Points" game
   also from 3 to 6 answers in each question.
 
+![Game preview](zrzut:games-preview)
+![Preview of a poll game — Game · Poll switch](zrzut:games-preview-poll)
+
 [Change type] changes the same game — it does not create a copy. Details → 7.8.
 
 On a phone and in a narrow browser window the [Play] and [Game settings] buttons are hidden —
@@ -94,15 +107,18 @@ open the *Control panel* and *Game settings* on a computer or tablet.
 In the **Community Games** tab only [Play], [Preview] and [Game settings] are available.
 These games cannot be edited, duplicated, exported or sent (→ 13.4).
 
-![A selected game that is not ready — playing disabled](zrzut:games-prepared-not-ready)
-
 ## 6.5 Renaming and deleting a game
 
 **Renaming** — double-click the game tile (on a phone, tap it twice),
 enter the new name and confirm.
 
+![Renaming](zrzut:games-rename)
+
 **Deleting** — click the trash icon on the tile and confirm. If the game has an open or
 stopped poll, the app will warn you: "The poll will be aborted." — the collected votes will be lost.
+
+![Deleting a game](zrzut:games-delete)
+![Deleting a game with an open poll](zrzut:games-delete-open-poll)
 
 A game that is open somewhere else (in the editor, settings, poll or in another browser
 tab) cannot be deleted or renamed at that moment. The app will then show
@@ -110,13 +126,12 @@ tab) cannot be deleted or renamed at that moment. The app will then show
 
 In the Community Games tab, the trash icon means [Remove from library] (→ 13.4).
 
-![Renaming a game](zrzut:games-rename)
-![Deleting a game with an open poll](zrzut:games-delete-open-poll)
-
 ## 6.6 Duplicating games and sending copies
 
 - [Duplicate] creates a copy of the game in your library, named "{name} copy".
 - [Send] gives a copy of the game to a friend (→ 11).
+
+![The copy selected in the list](zrzut:games-duplicate-done)
 
 Each copy is independent: changes to the copy do not change the original and vice versa.
 
@@ -128,13 +143,13 @@ What goes into the copy:
 | Poll open or stopped | A draft without the collected votes (the app will warn you about this in the "Without current votes" window). |
 | Poll closed | A ready game, with the poll result. |
 
+![The “Without current votes” window](zrzut:games-duplicate-votes)
+
 You can send a friend a prepared game or a game with a poll, as long as it is a draft. Games with
 an open, stopped or closed poll cannot be sent.
 
 Duplicating and sending require an account (→ 5.1). This is different from adding a game from Community
 Games (→ 13.4).
-
-![Duplicating an open poll — without the current votes](zrzut:games-duplicate-votes)
 
 ## 6.7 Importing and exporting
 
@@ -146,10 +161,16 @@ with the `.famgame` extension, which you can keep or move to another account.
 - For an open or stopped poll, the app will warn you that the collected votes will not go
   into the file — after import it will be a draft.
 
+![Export to a file](zrzut:games-export-progress)
+![Exporting an open poll — without votes](zrzut:games-export-votes)
+
 **Import from file.** Choose [Import] and pick a `.famgame` (or `.json`) file. Before
 confirming, you will see the name, the game type and the number of questions, as well as notes, for example when the poll
 result in the file is incomplete and the game will be added to the library as a draft. Import always creates
 a new game — it does not change existing ones.
+
+![Import — file preview](zrzut:games-import-preview)
+![Import — the file is not a game](zrzut:games-import-error)
 
 During import, texts that are too long are shortened (question to 100 characters, answer to 17),
 and if there are more than 6 answers, the 6 highest-scoring ones stay. An imported game may
@@ -164,7 +185,7 @@ your own base or a base shared with you with edit rights (→ 12.4). If you don'
 the window shows "No bases found." — create a base first (→ 9.1). For an open or stopped poll, the app
 first warns you that the collected votes won't be copied to the base.
 
-Don't edit the contents of `.famgame` files by hand — importing such a file may fail.
+![Export to a base — choosing the base](zrzut:games-export-base)
+![No bases to choose](zrzut:games-export-base-empty)
 
-![Importing a game with a file preview](zrzut:games-import-preview)
-![Export to a question base](zrzut:games-export-base)
+Don't edit the contents of `.famgame` files by hand — importing such a file may fail.

@@ -16,6 +16,8 @@ wiadomości e-mail o ankietach i udostępnionych urządzeniach (→ 14.1).
    tej osoby — serwis nie podpowiada nazw.
 3. Wybierz [Zaproś].
 
+![Znajomi](zrzut:friends)
+
 Zaproszenie pojawi się w sekcji „Oczekujące i odrzucone”. Jeśli zapraszana osoba ma włączone
 powiadomienia, dostanie wiadomość e-mail z przyciskiem „Otwórz zaproszenie”.
 
@@ -23,7 +25,8 @@ Jeśli pod podanym adresem nie ma konta, serwis to podpowie i zaproponuje dodani
 jako subskrybenta (→ 14.2). Działa to też w drugą stronę: gdy na stronie *Subskrybenci* wpiszesz
 adres osoby z kontem, serwis zaproponuje zaproszenie do znajomych.
 
-![Znajomi](zrzut:friends)
+![Zaproszenie wysłane](zrzut:people-friends-invite-sent)
+![Adres bez konta — przejście do Subskrybentów](zrzut:people-friends-invite-email-only)
 
 ## 10.3 Obsługa zaproszeń i ich statusów
 
@@ -33,10 +36,15 @@ adres osoby z kontem, serwis zaproponuje zaproszenie do znajomych.
 - [Odrzuć] — zaproszenie przechodzi do zwiniętej sekcji „Odrzucone przeze mnie”. Przez
   30 dni możesz je przywrócić przyciskiem [Cofnij odmowę], a potem przyjąć.
 
+![Propozycje w zakładce „Znajomi” (telefon)](zrzut:people-friends-received@phone)
+![Odrzucone propozycje](zrzut:people-friends-declined)
+
 **Wysłane zaproszenia** są w zakładce „Zaproszenia”, w sekcji „Oczekujące i odrzucone”:
 
 - oczekujące — możesz je [Wyślij ponownie] (gdy minie wymagany odstęp) albo [Cofnij],
 - odrzucone — możesz je tylko [Cofnij].
+
+![Wysłane zaproszenia — odliczanie do ponownej wysyłki](zrzut:people-friends-resend-cooldown)
 
 Po odrzuceniu zaproszenia żadna z dwóch osób nie może zaprosić drugiej przez 30 dni.
 Wiadomości z zaproszeniem wysyłane są nie częściej niż co 5 dni i najwyżej dwa razy na 30 dni.
@@ -44,7 +52,7 @@ Wiadomości z zaproszeniem wysyłane są nie częściej niż co 5 dni i najwyże
 Na komputerze obie zakładki są widoczne obok siebie; na telefonie przełączasz je u góry.
 Liczniki przy zakładkach pokazują oczekujące zaproszenia.
 
-![Wysłane zaproszenia — odliczanie do ponownej wysyłki](zrzut:people-friends-resend-cooldown)
+![Obie zakładki obok siebie na komputerze](zrzut:people-friends-half@desktop)
 
 ## 10.4 Zarządzanie listą znajomych
 
@@ -58,6 +66,8 @@ Aby usunąć znajomego, wybierz [Usuń] i potwierdź. Wtedy:
 - **bazy i urządzenia, które już udostępniłeś, zostają** — dostęp do baz (→ 12.5) i urządzeń
   (→ 17.1) cofnij osobno,
 - kopie gier i logo, które już wysłałeś, zostają u tej osoby — wysyłki nie da się cofnąć (→ 11).
+
+![Usuwanie znajomego](zrzut:people-friends-confirm-remove)
 
 ## 10.5 Co umożliwia znajomość
 
@@ -91,6 +101,8 @@ Wysyłanie wymaga konta i co najmniej jednego znajomego.
 2. W oknie „Wyślij znajomym” zaznacz znajomych.
 3. Wybierz [Wyślij]. Serwis potwierdzi: „Wysłano do znajomych: …”.
 
+![Wyślij znajomym](zrzut:games-send-tools)
+
 Kopia zachowuje rodzaj gry i całą treść. Wysłać można:
 
 - grę preparowaną — w każdym stanie,
@@ -100,14 +112,14 @@ Kopia zachowuje rodzaj gry i całą treść. Wysłać można:
 Nie można wysłać gier dodanych z Gier Społeczności, materiałów demo ani gry, która jest właśnie
 otwarta w edytorze lub ustawieniach.
 
-![Wysyłanie kopii gry i historia wysyłek](zrzut:games-send-history)
+![Brak znajomych](zrzut:games-send-no-friends)
 
 ## 11.3 Wysyłanie logo
 
 Na stronie *Moje loga* zaznacz logo, wybierz [Wyślij] i postępuj jak przy grze. Znajomy
 może użyć otrzymanego logo we własnych grach (→ 8.5). Logo demo nie można wysłać.
 
-![Wysyłanie kopii logo](zrzut:logos-market-logos-send)
+![Wysyłanie logo](zrzut:logos-market-logos-send)
 
 ## 11.4 Odbieranie kopii
 
@@ -121,10 +133,12 @@ Kopia czeka w sekcji „Otrzymane kopie” — z nazwą i oznaczeniem „Od: …
   filtrem „Otrzymano”.
 - [Odrzuć] — kopia znika. Ta sama osoba nie wyśle Ci jej ponownie przez 30 dni.
 
+![Otrzymane kopie gier](zrzut:games-received-copies)
+![Otrzymane kopie logo](zrzut:logos-market-logos-received)
+![Kopia do przyjęcia — tylko podgląd](zrzut:games-received-selected)
+
 Kopia, której nie przyjmiesz w ciągu **5 dni**, znika. Dopóki czeka na decyzję, nie można jej
 edytować, powielać ani usuwać.
-
-![Otrzymane kopie na liście gier](zrzut:games-received-copies)
 
 ## 11.5 Historia wysyłek
 

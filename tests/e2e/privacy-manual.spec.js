@@ -1,6 +1,7 @@
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
 const { loginAsTestUser } = require("./helpers/login");
+const { touchSwipe } = require("./helpers/touch-swipe");
 
 const ORIGIN = "https://www.familiada.online";
 
@@ -175,15 +176,38 @@ test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca 
 test("manual: zrzuty — karuzela widoków (strzałki, kropki) i powiększenie", async ({ page }) => {
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17#s-17-3`, { waitUntil: "domcontentloaded" });
   const carousel = page.locator("#s-17-3 ~ .m-carousel").first();
-  await expect(carousel.locator(".m-carousel-dot")).toHaveCount(4);
-  await expect(carousel.locator(".m-carousel-dot").nth(0)).toHaveClass(/active/);
+  const dots = carousel.locator(".m-carousel-dot");
+  await expect(dots.first()).toBeVisible();
+  const n = await dots.count();
+  expect(n).toBeGreaterThanOrEqual(3);
+  await expect(dots.nth(0)).toHaveClass(/active/);
   await carousel.locator('[data-step="1"]').click();
-  await expect(carousel.locator(".m-carousel-dot").nth(1)).toHaveClass(/active/);
-  await carousel.locator(".m-carousel-dot").nth(3).click();
-  await expect(carousel.locator(".m-carousel-dot").nth(3)).toHaveClass(/active/);
-  await expect.poll(() => carousel.locator("img").nth(3).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
-  await carousel.locator(".m-shot-zoom").nth(3).click();
+  await expect(dots.nth(1)).toHaveClass(/active/);
+  await dots.nth(n - 1).click();
+  await expect(dots.nth(n - 1)).toHaveClass(/active/);
+  await expect.poll(() => carousel.locator("img").nth(n - 1).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+  await carousel.locator(".m-shot-zoom").nth(n - 1).click();
   await expect(page.locator("#imgvOverlay.is-open .imgv-img")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator("#imgvOverlay")).toBeHidden();
+});
+
+test("manual: telefon — przesunięcie palcem zmienia widok karuzeli, nie otwiera podglądu", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  try {
+    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
+    const page = await context.newPage();
+    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17#s-17-3`, { waitUntil: "domcontentloaded" });
+    const carousel = page.locator("#s-17-3 ~ .m-carousel").first();
+    const dots = carousel.locator(".m-carousel-dot");
+    await carousel.scrollIntoViewIfNeeded();
+    await expect(dots.nth(0)).toHaveClass(/active/);
+    await touchSwipe(page, carousel.locator(".m-carousel-track"), { dx: -180 });
+    await expect(dots.nth(1)).toHaveClass(/active/);
+    await touchSwipe(page, carousel.locator(".m-carousel-track"), { dx: 180 });
+    await expect(dots.nth(0)).toHaveClass(/active/);
+    await expect(page.locator("#imgvOverlay.is-open")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
 });

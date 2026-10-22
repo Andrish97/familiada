@@ -11,6 +11,10 @@ Before you start a poll, the game must have **at least 10 questions**, and in a 
 1. In *My games*, select the game and choose [Poll].
 2. Choose [Start] — or [Start and send invitations], if you have already added recipients (→ 15.2).
 
+![Poll draft](zrzut:polls-draft-points)
+![Draft — too few questions](zrzut:polls-draft-text-blocked)
+![Launching the poll](zrzut:polls-open-confirm)
+
 From this moment the poll is **open**: voters can answer, and the game cannot be edited
 (→ 7.5).
 
@@ -20,8 +24,6 @@ From this moment the poll is **open**: voters can answer, and the game cannot be
 | Open | Answers are being collected. |
 | Stopped | Collecting is paused; you can resume it or count the votes. |
 | Ready | The poll is closed and the game is ready to play. |
-
-![Poll draft — sharing after launch](zrzut:polls-draft-points)
 
 ## 15.2 Choosing how people vote
 
@@ -34,6 +36,9 @@ The "Sharing" card offers two ways:
 
 Voters are anonymous — you only see the number of votes. People can vote once per browser.
 
+![Sharing — link and QR code](zrzut:poll-share)
+![Enlarged QR code](zrzut:polls-qr-vote-modal)
+
 **QR code on a TV or projector.** [QR on display] shows the 6-digit code of the "QR Display"
 screen — it is a code for connecting the screen, not for voting. On the TV, open
 familiada.online → [Connect device] and enter the code (no login needed). The screen shows
@@ -41,6 +46,9 @@ a large voting QR code that participants scan with their phones. [Open] opens th
 the current device (for example, to send it over HDMI), and [Copy] copies the code. The screen has
 a full-screen button, and once the poll is closed it shows "The poll has been closed". The button works
 only after the poll has been started.
+
+![QR on the display — the screen connection code](zrzut:polls-qr-display-modal)
+![The QR display with the voting code](zrzut:polls-vote-qr)
 
 **Recipients** — personal invitations for friends (→ 10) and subscribers (→ 14):
 
@@ -52,12 +60,13 @@ Each recipient has a status: waiting, opened, voted or declined, and above the l
 a summary "Invited · Voted · Declined". You can send [Remind] to people who have not answered yet
 — at most twice. [Remove sharing] withdraws the invitation.
 
+![Add recipients](zrzut:poll-recipients-tools)
+![Recipient statuses](zrzut:polls-open-recipients-tab@phone)
+
 You can combine both ways — the votes are counted together.
 
 A subscriber without an account can view their invitations and opt out of them on the
 *My notifications* page.
-
-![Sharing a poll](zrzut:poll-share)
 
 ## 15.3 Voting
 
@@ -73,12 +82,14 @@ A voter opens the poll from the link, the QR code, an email or a task.
   counted.
 - At the end, "Thanks for participating!" appears.
 
+![Voting in a “Points” poll](zrzut:poll-vote-mobile@phone)
+![Text voting — character counter](zrzut:polls-vote-text-typing@phone)
+![Thank you for taking part!](zrzut:polls-vote-text-thanks@phone)
+![The poll is stopped](zrzut:polls-vote-text-stopped@phone)
+
 A person invited by name votes in the same way; their status for the poll owner changes to
 "voted". A person without an account can open the poll from the email or from the
 *My notifications* page.
-
-![Points voting on a phone](zrzut:poll-vote-mobile@phone)
-![Text voting — character counter](zrzut:polls-vote-text-typing@phone)
 
 ## 15.4 Tasks and voting invitations
 
@@ -89,9 +100,10 @@ A task is a poll invitation you got from a friend. You will find tasks on the
   means you will not take part (the poll disappears from the list),
 - "Done" — polls you have already voted in (collapsed, shown for 5 days).
 
-People without an account have their tasks on the *My notifications* page.
-
 ![Tasks](zrzut:tasks)
+![Done](zrzut:tasks-done-open)
+
+People without an account have their tasks on the *My notifications* page.
 
 ## 15.5 Running the vote
 
@@ -103,7 +115,10 @@ The "Votes" card shows progress: the number of votes cast and — for invitation
 - [Count votes] — available when the poll is stopped (→ 15.6).
 - [Abort] — ends the poll and returns it to a draft. **All votes will be lost.**
 
-![Votes in a text poll](zrzut:polls-text)
+![The “Votes” card](zrzut:polls-text)
+![Stopping the poll](zrzut:polls-stop-confirm)
+![A stopped poll — tally the votes](zrzut:polls-stopped)
+![Aborting the poll](zrzut:polls-abort-confirm)
 
 ## 15.6 Counting and tidying up the answers
 
@@ -134,14 +149,19 @@ shows whether a question meets the conditions. When several answers at the top-s
 votes, the app shows a tie — [Change tie choice] changes which of them go onto the board.
 Your corrections are saved as you go, so you can stop and come back later.
 
+![Merging answers](zrzut:polls-tally-text-merge)
+![After merging — conditions met](zrzut:polls-tally-text-merged)
+![A tie at the sixth place](zrzut:polls-tally-tie)
+
 **"Points" poll** — the answers are fixed; you only see a preview of the points (answers below
 4 points are greyed out).
+
+![Tallying a “Points” poll](zrzut:polls-tally-points)
 
 When everything is right, choose [Approve]. You will see "Votes counted. Game ready.".
 [Leave counting] goes back to the stopped poll without closing it.
 
-![Tallying — merging answers](zrzut:polls-tally-text-merge)
-![Tallying a points poll](zrzut:polls-tally-points)
+![Approving the tally](zrzut:polls-tally-text-approve)
 
 ## 15.7 Results and using them in the game
 
@@ -149,9 +169,10 @@ After approval, the poll is closed and the game has the READY status — you can
 with the [Play] button (→ 17). You can view the results in [Preview] in *My games* by switching the view
 to "Poll".
 
+![A finished poll — final points](zrzut:polls-ready-text)
+![Results in the game preview](zrzut:games-preview-poll)
+
 - [Restart] opens a new poll for the same game — the existing votes and results
   will be deleted.
 - Editing the game (→ 7.5) or changing its type (→ 7.8) also deletes the results — after you confirm.
 - To keep the result and collect a new poll at the same time, duplicate the game first (→ 6.6).
-
-![A finished poll — final points](zrzut:polls-ready-text)
