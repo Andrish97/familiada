@@ -1,4 +1,4 @@
-import { hasDisplayGlyph } from "./fonts.js?v=v2026-10-22T17500";
+import { hasDisplayGlyph } from "./fonts.js?v=v2026-10-22T18363";
 
 // Długie pola Wyświetlacza (long1/long2 -- nazwy drużyn): 95 kolumn kropek.
 // Znaki rysujemy proporcjonalnie: każdy zajmuje tylko kolumny ze swoimi
@@ -67,7 +67,9 @@ export function dropUnsupported(text, glyphs) {
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     if (/\s/.test(ch) || hasDisplayGlyph(glyphs, ch)) { out += ch; continue; }
-    if (chars[i + 1] === " ") i++;
+    // Spację za pominiętym znakiem pomijaj tylko, gdy powieliłaby spację
+    // (albo stałaby na początku): „Kawa 😀 z” → „Kawa z”, „Kawa😀 z” → „Kawa z”.
+    if (chars[i + 1] === " " && (!out || /\s$/.test(out))) i++;
   }
   return out;
 }

@@ -13,13 +13,13 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-22T17500";
-import { rt } from "./realtime.js?v=v2026-10-22T17500";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-22T17500";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-22T17500";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-22T18363";
+import { rt } from "./realtime.js?v=v2026-10-22T18363";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-22T18363";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-22T18363";
 
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
   let active = false;
   let pollTimer = null;
   let directChannel = null;
@@ -354,7 +354,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", resync);
     window.addEventListener("online", resync);
-    // Siatka bezpieczeństwa na zgubiony dzwonek.
+    // Siatka bezpieczeństwa na zgubiony dzwonek. Działa tylko, gdy kanał
+    // bezpośredni leży — co 1,5 s, bo przy 5 s Wyświetlacz dostał START_ROUND
+    // z 4,4 s opóźnieniem po CHANNEL_ERROR (test produkcyjny 2026-10-22).
     if (pollMs > 0) pollTimer = setInterval(() => {
       if (active && !directConnected) fetchGuarded("rpc_poll");
     }, pollMs);

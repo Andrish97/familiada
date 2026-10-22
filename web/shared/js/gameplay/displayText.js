@@ -27,7 +27,8 @@ export function splitDisplayText(value, capacity) {
 }
 
 // Fragmenty tekstu do podświetlenia w Control: "bad" — znak spoza fontu
-// Wyświetlacza (pomijany razem z jedną spacją za nim, jak dropUnsupported),
+// Wyświetlacza (pomijany; jak dropUnsupported — spacja za nim też, gdy
+// powieliłaby spację; ta spacja to "skip" — pomijana, ale bez oznaczenia),
 // "kept" — litery widoczne na Wyświetlaczu, "cut" — litery, które odpadną
 // przy skracaniu. isSupported(ch) — czy font ma znak (null: wszystkie).
 export function displayTextSegments(value, capacity, isSupported = null) {
@@ -38,7 +39,8 @@ export function displayTextSegments(value, capacity, isSupported = null) {
     const ch = chars[i];
     if (!isSupported || /\s/.test(ch) || isSupported(ch)) { kinds[i] = "ok"; supportedIdx.push(i); continue; }
     kinds[i] = "bad";
-    if (chars[i + 1] === " ") kinds[++i] = "skip";
+    const prev = supportedIdx.length ? chars[supportedIdx.at(-1)] : null;
+    if (chars[i + 1] === " " && (prev === null || /\s/.test(prev))) kinds[++i] = "skip";
   }
   const supported = supportedIdx.map((i) => chars[i]).join("");
   const { kept } = splitDisplayText(supported, capacity);
@@ -46,7 +48,7 @@ export function displayTextSegments(value, capacity, isSupported = null) {
   supportedIdx.forEach((orig, j) => { kinds[orig] = j < keptCount ? "kept" : "cut"; });
   const segments = [];
   chars.forEach((ch, i) => {
-    const kind = kinds[i] === "skip" ? "bad" : kinds[i];
+    const kind = kinds[i];
     const last = segments.at(-1);
     if (last && last.kind === kind && kind !== "bad") last.text += ch;
     else segments.push({ kind, text: ch });

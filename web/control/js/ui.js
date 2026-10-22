@@ -16,18 +16,18 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-22T17500";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T17500";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-22T17500";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-22T17500";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-22T17500";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T17500";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-22T18363";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T18363";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-22T18363";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-22T18363";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-22T18363";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T18363";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-22T17500";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-22T17500";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-22T17500";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-22T17500";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-22T17500";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-22T18363";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-22T18363";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-22T18363";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-22T18363";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-22T18363";
 
 
 const $ = (id) => document.getElementById(id);
@@ -765,9 +765,13 @@ export function createUI({ root, emit }) {
   loadFont5x7().then((glyphs) => { displayGlyphs = glyphs; emit("ui.rerender"); }).catch(() => {});
   const isDisplayable = (ch) => hasDisplayGlyph(displayGlyphs, ch);
   function clipNodes(text) {
-    return displayTextSegments(text, FINAL_TEXT_CAPACITY, displayGlyphs ? isDisplayable : null).map((seg) =>
-      seg.kind === "kept" ? document.createTextNode(seg.text)
-        : h("span", { class: seg.kind === "bad" ? "c2-clip-bad" : "c2-clip-cut", text: seg.text }));
+    // Spacje w odcinanej części zostają bez przekreślenia (wyglądałyby jak „-”).
+    return displayTextSegments(text, FINAL_TEXT_CAPACITY, displayGlyphs ? isDisplayable : null).flatMap((seg) => {
+      if (seg.kind === "kept" || seg.kind === "skip") return [document.createTextNode(seg.text)];
+      if (seg.kind === "bad") return [h("span", { class: "c2-clip-bad", text: seg.text })];
+      return seg.text.split(/(\s+)/).filter(Boolean).map((part) =>
+        /^\s/.test(part) ? document.createTextNode(part) : h("span", { class: "c2-clip-cut", text: part }));
+    });
   }
   // Pole tekstowe nie koloruje części tekstu, więc pod przezroczystym
   // tekstem pola leży warstwa z tymi samymi literami w kolorach.
