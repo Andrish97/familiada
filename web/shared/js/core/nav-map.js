@@ -112,7 +112,7 @@ export const PAGES = {
     from: ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "control", "gameSettings", "marketplace", "connectDevice", "manual", "privacy"],
     manual: "5",
   },
-  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], state: ["ch"], buttons: {
+  manual:        { path: "/manual/",            access: "public",  parent: "games", from: [], state: ["ch"], buttons: {
     btnLegal: { to: "privacy" },
   } },
   mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },

@@ -1048,6 +1048,7 @@ const en = {
     next: "Next chapter",
     chapter: "Chapter",
     sections: "In this chapter",
+    backTo: "Back to: {title}",
     demo: {
       modalTitle: "Restore demo files?",
       modalText: "Sample starter materials will be added.",

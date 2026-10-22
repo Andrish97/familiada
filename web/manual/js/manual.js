@@ -16,6 +16,8 @@ const CONTENT = {
   uk: () => import("../content/uk.js?v=v2026-10-22T00131"),
 };
 export const CHAPTER_PARAM = "ch";
+// Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
+export const FROM_PARAM = "from";
 
 const article = document.getElementById("manualArticle");
 const content = document.getElementById("manualContent");
@@ -28,14 +30,34 @@ let manual = null;
 let current = null;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const chapterHref = (id, hash = "") => {
+const chapterHref = (id, hash = "", from = null) => {
   const u = new URL(location.href);
   if (id) u.searchParams.set(CHAPTER_PARAM, id); else u.searchParams.delete(CHAPTER_PARAM);
+  if (from) u.searchParams.set(FROM_PARAM, from); else u.searchParams.delete(FROM_PARAM);
   u.hash = hash;
   return u.pathname + u.search + u.hash;
 };
+let returnTo = null;
 const findChapter = (id) => manual?.chapters.find((c) => c.id === id) || null;
 const partOf = (id) => manual?.parts.find((p) => p.chapters.includes(id)) || null;
+const titleOf = (id) => {
+  const ch = findChapter(String(id).split(".")[0]);
+  if (!ch) return "";
+  if (!String(id).includes(".")) return ch.title;
+  return ch.sections.find((s) => s.id === id)?.title || ch.title;
+};
+const hrefFor = (id) => {
+  const chId = String(id).split(".")[0];
+  return chapterHref(chId, String(id).includes(".") ? `#${sectionId(id)}` : "");
+};
+// Podrozdział, w którym leży element (ostatni nagłówek przed nim), albo bieżący rozdział.
+function sectionOf(el) {
+  let found = current;
+  for (const h of article.querySelectorAll(".m-doc .m-h2, .m-doc .m-h3")) {
+    if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) found = h.id.replace(/^s-/, "").replace(/-/g, ".");
+  }
+  return found;
+}
 
 async function initManualI18n() {
   const params = new URLSearchParams(location.search);
@@ -94,7 +116,11 @@ function renderChapter(ch) {
   const pager = (c, cls, label) => c
     ? `<a class="m-pager-link ${cls}" href="${chapterHref(c.id)}" data-ch="${esc(c.id)}"><span class="m-pager-label">${esc(label)}</span><span class="m-pager-title">${esc(c.title)}</span></a>`
     : `<span class="m-pager-link ${cls} is-empty"></span>`;
+  const back = returnTo && titleOf(returnTo)
+    ? `<div class="m-return-bar"><a class="m-return" href="${hrefFor(returnTo)}" data-return="1"><i data-icon="arrow-left"></i><span>${esc(t("manual.backTo", { title: titleOf(returnTo) }))}</span></a></div>`
+    : "";
   article.innerHTML = `
+    ${back}
     <header class="m-head">
       ${part ? `<div class="m-crumb">${esc(part.title)}</div>` : ""}
       <h1 class="m-title">${esc(ch.title)}</h1>
@@ -126,16 +152,18 @@ function markSection() {
   for (const a of toc.querySelectorAll(".m-side-sub")) a.classList.toggle("current", sectionId(a.dataset.sec) === currentId);
 }
 
-function show(id, hash = "", { updateUrl = true, smooth = false } = {}) {
+function show(id, hash = "", { updateUrl = true, smooth = false, from = null } = {}) {
   const ch = id ? findChapter(id) : null;
   current = ch ? ch.id : null;
+  returnTo = ch && from && titleOf(from) ? from : null;
   if (ch) renderChapter(ch); else renderStart();
+  article.classList.toggle("has-return", !!returnTo);
   renderToc();
   currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
   hydrateIcons(article);
   setTocOpen(false);
   if (updateUrl) {
-    const next = chapterHref(current, ch ? hash : "");
+    const next = chapterHref(current, ch ? hash : "", returnTo);
     if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, "", next);
   }
   scrollToHash(ch ? hash : "", smooth);
@@ -156,13 +184,16 @@ function wireNavigation() {
     if (url.origin !== location.origin || url.pathname !== location.pathname) return;
     ev.preventDefault();
     const id = url.searchParams.get(CHAPTER_PARAM) || (url.search ? null : current);
-    if (id === current && url.hash) {
-      history.replaceState(history.state, "", chapterHref(current, url.hash));
+    // Odnośnik w treści zapamiętuje miejsce wyjścia; spis treści, pager i „Wróć” — nie.
+    const from = a.classList.contains("m-ref") ? sectionOf(a) : null;
+    if (id === current && url.hash && !from) {
+      history.replaceState(history.state, "", chapterHref(current, url.hash, a.dataset.return ? null : returnTo));
+      if (a.dataset.return) { returnTo = null; article.querySelector(".m-return-bar")?.remove(); article.classList.remove("has-return"); }
       setTocOpen(false);
       scrollToHash(url.hash, true);
       return;
     }
-    show(id, url.hash);
+    show(id, url.hash, { from });
   });
   tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
   tocBackdrop.addEventListener("click", () => setTocOpen(false));
@@ -174,7 +205,7 @@ function wireNavigation() {
 async function renderForLang() {
   manual = await loadContent(getUiLang());
   const params = new URLSearchParams(location.search);
-  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true });
+  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM) });
 }
 
 /* ================= Init ================= */

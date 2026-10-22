@@ -107,6 +107,34 @@
 /* Lista podrozdziałów w nagłówku rozdziału — tylko gdy pasek boczny jest schowany (telefon, tablet). */
 .m-head .m-sections { display: none; }
 
+/* ---------- powrót po odnośniku (osobny od topbara) ---------- */
+
+.m-return-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: -24px -32px 14px;
+    padding: 10px 32px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+}
+.m-return {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255,234,166,.35);
+    border-radius: 999px;
+    background: #14171d;
+    color: var(--gold);
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+}
+.m-return:hover { background: #1b1f27; }
+.m-return .ico { width: 1em; height: 1em; }
+
 /* ---------- nagłówek rozdziału ---------- */
 
 .m-head { margin: 0 0 18px; }
@@ -193,6 +221,7 @@
 .m-doc { line-height: 1.65; }
 
 .m-h2, .m-h3 { scroll-margin-top: 16px; }
+.has-return .m-h2, .has-return .m-h3 { scroll-margin-top: 76px; }
 
 .m-h2 {
     margin: 32px 0 10px;
@@ -216,12 +245,23 @@
 
 .m-doc a { color: var(--gold); text-underline-offset: 3px; }
 
-/* odnośnik do rozdziału lub podrozdziału */
+/* odnośnik do rozdziału lub podrozdziału — chip ze strzałką */
 .m-ref {
-    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px 0 6px;
+    border-radius: 999px;
+    background: rgba(255,234,166,.1);
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1.6;
     text-decoration: none;
-    border-bottom: 1px dotted rgba(255,234,166,.6);
+    vertical-align: middle;
+    transition: background .15s;
 }
+.m-ref:hover { background: rgba(255,234,166,.2); }
+.m-ref .ico { width: .85em; height: .85em; flex-shrink: 0; opacity: .8; }
 
 /* nazwa strony lub widoku */
 .m-page {
@@ -230,20 +270,21 @@
     color: #cfe8ff;
 }
 
-/* przycisk serwisu */
+/* przycisk serwisu — ta sama wysokość z ikoną i bez (vertical-align: middle dla obu) */
 .m-control {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 1px 9px;
+    min-height: 1.6em;
+    padding: 0 9px;
     border: 1px solid rgba(255,234,166,.3);
     border-radius: 10px;
     background: rgba(255,234,166,.08);
     color: var(--gold);
     font-weight: 800;
-    line-height: 1.5;
+    line-height: 1.2;
     white-space: nowrap;
-    vertical-align: baseline;
+    vertical-align: middle;
 }
 
 .m-control .ico { width: 1em; height: 1em; flex-shrink: 0; }
@@ -266,15 +307,31 @@
     color: rgba(255,255,255,.92);
 }
 
+/* ramki: zwykła, ostrzeżenie („Uwaga”), podpowiedź („Wskazówka”) */
 .m-note {
-    margin: 14px 0;
-    padding: 12px 14px;
-    border: 1px solid rgba(255,234,166,.28);
-    border-radius: 14px;
-    background: rgba(255,234,166,.08);
+    margin: 16px 0;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.03);
 }
-
 .m-note > :last-child { margin-bottom: 0; }
+.m-warn { border-color: rgba(255,140,120,.35); border-left-color: #ff8c78; background: rgba(255,120,100,.07); }
+.m-tip  { border-color: rgba(113,185,207,.35); border-left-color: #71b9cf; background: rgba(113,185,207,.07); }
+.m-box-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.m-warn .m-box-title { color: #ffb4a6; }
+.m-tip .m-box-title { color: #9cd5e5; }
+.m-box-title .ico { width: 1.1em; height: 1.1em; }
 
 .m-table-wrap {
     overflow-x: auto;
@@ -370,6 +427,7 @@
     }
     .m-side.is-open { transform: translateX(0); visibility: visible; }
     .m-head .m-sections { display: block; }
+    .m-return-bar { margin: -20px calc(-1 * var(--page-pad-right)) 14px calc(-1 * var(--page-pad-left)); padding: 8px var(--page-pad-right) 8px var(--page-pad-left); }
     .m-content { grid-column: 1; grid-row: 2; padding: 20px var(--page-pad-right) 0 var(--page-pad-left); }
 }
 

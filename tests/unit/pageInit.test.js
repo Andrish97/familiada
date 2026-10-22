@@ -84,12 +84,12 @@ test("strona publiczna: getUser bez przekierowania, null dla niezalogowanego", a
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
 });
 
-test("niezalogowany nie dostaje przycisku „Wskazówki” (instrukcja jest dla konta)", async () => {
+test("niezalogowany też dostaje przycisk podręcznika (podręcznik jest publiczny)", async () => {
   const { deps } = makeDeps({ user: null });
   loc.pathname = "/marketplace/";
   await initPage("marketplace", { deps });
-  assert.equal(els.btnManual.hidden, true);
-  assert.equal(els.btnManual.listeners.click, undefined);
+  assert.notEqual(els.btnManual.hidden, true);
+  assert.ok(els.btnManual.listeners.click);
 });
 
 test("#btnBack: handleSheetBack idzie pierwsze, potem przejście na backHref z mapy", async () => {

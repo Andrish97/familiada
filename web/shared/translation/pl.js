@@ -1061,6 +1061,7 @@ const pl = {
     next: "Następny rozdział",
     chapter: "Rozdział",
     sections: "W tym rozdziale",
+    backTo: "Wróć do: {title}",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
       modalText: "Zostaną dodane przykładowe materiały startowe.",
