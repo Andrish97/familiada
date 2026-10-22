@@ -739,10 +739,8 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChan
   if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
-  if (btnDuplicate) {
-    btnDuplicate.hidden = guest;
-    btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canDuplicate || guest;
-  }
+  // Gość może powielać własne gry; wysyłać kopii nie może (decyzja 2026-10-22).
+  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canDuplicate;
   if (btnSendCopy) {
     btnSendCopy.hidden = guest;
     btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canSend || guest;

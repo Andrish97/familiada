@@ -273,8 +273,8 @@ function updateListButtons() {
   el.btnPreview.disabled = !has;
   el.btnEdit.disabled = !has || proposed;
   el.btnExport.disabled = !has || proposed;
-  el.btnDuplicate.hidden = guest;
-  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || proposed || guest;
+  // Gość może powielać własne logo; wysyłać kopii nie może (decyzja 2026-10-22).
+  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || proposed;
   el.btnSendCopy.hidden = guest;
   el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || proposed || guest;
 }
