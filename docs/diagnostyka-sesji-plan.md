@@ -173,4 +173,5 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
   - pyt. 3: klasa urządzenia i rodzina przeglądarki — **zapisywać**
     (zgrubnie, bez wersji i danych identyfikujących);
   - pyt. 4: limit **3000** zdarzeń na sesję;
-  - pyt. 1 (retencja) — wyjaśnione ponownie, czeka na odpowiedź.
+  - pyt. 1: szczegółowe zdarzenia trzymane **90 dni** od zakończenia sesji;
+    podsumowanie sesji bez limitu.
