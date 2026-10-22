@@ -47,6 +47,13 @@ test("displayTextSegments: znaki spoza fontu osobno, reszta jak na Wyświetlaczu
     { kind: "kept", text: "Kawa " }, { kind: "bad", text: "😀" }, { kind: "skip", text: " " },
     { kind: "kept", text: "z ml" }, { kind: "cut", text: "ekiem" },
   ]);
+  // Spacja za emotką zostaje, gdy nie powieli spacji.
+  assert.deepEqual(displayTextSegments("Kawa😀 z", 11, ok), [
+    { kind: "kept", text: "Kawa" }, { kind: "bad", text: "😀" }, { kind: "kept", text: " z" },
+  ]);
+  assert.deepEqual(displayTextSegments("😀 Kawa", 11, ok), [
+    { kind: "bad", text: "😀" }, { kind: "skip", text: " " }, { kind: "kept", text: "Kawa" },
+  ]);
   assert.deepEqual(displayTextSegments("Sombrero", 11, ok), [{ kind: "kept", text: "Sombrero" }]);
   assert.deepEqual(displayTextSegments("10€", 11, ok), [{ kind: "kept", text: "10" }, { kind: "bad", text: "€" }]);
 });

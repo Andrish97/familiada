@@ -27,8 +27,8 @@ export function splitDisplayText(value, capacity) {
 }
 
 // Fragmenty tekstu do podświetlenia w Control: "bad" — znak spoza fontu
-// Wyświetlacza (pomijany razem z jedną spacją za nim, jak dropUnsupported;
-// ta spacja to "skip" — też pomijana, ale bez oznaczenia),
+// Wyświetlacza (pomijany; jak dropUnsupported — spacja za nim też, gdy
+// powieliłaby spację; ta spacja to "skip" — pomijana, ale bez oznaczenia),
 // "kept" — litery widoczne na Wyświetlaczu, "cut" — litery, które odpadną
 // przy skracaniu. isSupported(ch) — czy font ma znak (null: wszystkie).
 export function displayTextSegments(value, capacity, isSupported = null) {
@@ -39,7 +39,8 @@ export function displayTextSegments(value, capacity, isSupported = null) {
     const ch = chars[i];
     if (!isSupported || /\s/.test(ch) || isSupported(ch)) { kinds[i] = "ok"; supportedIdx.push(i); continue; }
     kinds[i] = "bad";
-    if (chars[i + 1] === " ") kinds[++i] = "skip";
+    const prev = supportedIdx.length ? chars[supportedIdx.at(-1)] : null;
+    if (chars[i + 1] === " " && (prev === null || /\s/.test(prev))) kinds[++i] = "skip";
   }
   const supported = supportedIdx.map((i) => chars[i]).join("");
   const { kept } = splitDisplayText(supported, capacity);
