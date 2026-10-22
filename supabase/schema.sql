@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 02zpZz8XpKOE9ahcBMJokEK0URerpYHt7BuFQxAhsFgYAs62zGgK32KLFIumrCb
+\restrict po2KTEU1etO5UqdmspJTMKGy94qfl1kxyA7ClOutA99DUZGVHPxEUCh18zRlCRg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4752,6 +4752,12 @@ BEGIN
 
   q := format('UPDATE auth.users SET %s WHERE id = $1', array_to_string(sets, ', '));
   EXECUTE q USING p_user_id;
+
+  -- Nowszy GoTrue trzyma tokeny także w auth.one_time_tokens; bez tego link
+  -- z maila działał po anulowaniu (migracja gościa).
+  IF to_regclass('auth.one_time_tokens') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM auth.one_time_tokens WHERE user_id = $1 AND token_type::text LIKE ''email_change%''' USING p_user_id;
+  END IF;
 
   RETURN true;
 END;
@@ -27036,5 +27042,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 02zpZz8XpKOE9ahcBMJokEK0URerpYHt7BuFQxAhsFgYAs62zGgK32KLFIumrCb
+\unrestrict po2KTEU1etO5UqdmspJTMKGy94qfl1kxyA7ClOutA99DUZGVHPxEUCh18zRlCRg
 
