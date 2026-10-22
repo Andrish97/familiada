@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 844B3kM1S8BJTuTqihT2Znazl9CrxjEJvhhCmo0rKc0xSo67bPBldQMNSECTDQV
+\restrict XenDvAeYIcJyIg4VYa5uIMMaVg82V4wHbif9i4aD172itsvQ88X1HQs1KxA07fV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -750,6 +750,154 @@ BEGIN
  END IF;
  IF TG_OP='DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
 END $$;
+
+
+--
+-- Name: _delete_user_data("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_delete_user_data"("p_user_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $_$
+declare
+  v_emails text[];
+  v_email text;
+  fk record;
+begin
+  if p_user_id is null then
+    raise exception 'p_user_id is required';
+  end if;
+
+  -- 312: e-maile konta (małymi literami) -- po nich czyścimy dane bez user_id
+  select coalesce(array_agg(distinct e), array[]::text[]) into v_emails
+  from (
+    select lower(trim(u.email)) as e from auth.users u where u.id = p_user_id
+    union
+    select lower(trim(p.email)) from public.profiles p where p.id = p_user_id
+  ) x
+  where e is not null and e <> '';
+
+  -- Serialize against snapshot/write jobs before inspecting the inbox.
+  perform 1 from auth.users where id = p_user_id for update;
+
+  --366: remove only this recipient inbox before pending resource guards.
+  -- Sent copies already belong to their recipients and remain independent.
+  delete from public.resource_copy_offers where recipient_id = p_user_id;
+
+  -- 312: usunięcie konta jest nadrzędne -- nie sprawdza blokad (edit_locks);
+  -- blokady trzymane przez to konto i na jego zasobach znikają.
+  delete from public.edit_locks where holder_user_id = p_user_id;
+  delete from public.edit_locks
+   where (resource_type = 'game' and resource_id in (select id from public.games where owner_id = p_user_id))
+      or (resource_type = 'base' and resource_id in (select id from public.question_bases where owner_id = p_user_id))
+      or (resource_type = 'logo' and resource_id in (select id from public.user_logos where user_id = p_user_id));
+
+  -- 312: głosy w cudzych ankietach zostają anonimowe (bez powiązania z kontem);
+  -- głosy w własnych grach znikają razem z grami niżej.
+  update public.poll_text_entries set voter_user_id = null where voter_user_id = p_user_id;
+  update public.poll_votes set voter_user_id = null where voter_user_id = p_user_id;
+
+  delete from public.friendships where requester_id=p_user_id OR addressee_id=p_user_id;
+  delete from public.shared_devices where recipient_id=p_user_id;
+
+  delete from public.poll_subscriptions where registered_user_id = p_user_id;
+  delete from public.poll_subscriptions where owner_id = p_user_id;
+
+  delete from public.poll_tasks where recipient_user_id = p_user_id;
+  delete from public.poll_tasks where owner_id = p_user_id;
+
+  -- 312: zaproszenia do baz (po user_id i po e-mailu)
+  delete from public.base_share_tasks where recipient_user_id = p_user_id;
+  delete from public.base_share_tasks where owner_id = p_user_id;
+
+  delete from public.question_base_shares where user_id = p_user_id;
+  delete from public.question_bases where owner_id = p_user_id;
+
+  -- 312: gry (maile ankietowe właściciela znikają niżej przez created_by)
+  delete from public.shared_devices where game_id in (select id from public.games where owner_id = p_user_id);
+  delete from public.games where owner_id = p_user_id;
+
+  delete from public.user_flags where user_id = p_user_id;
+  delete from public.user_logos where user_id = p_user_id;
+
+  -- 312: wszystko powiązane z e-mailem konta
+  delete from public.mail_queue where created_by = p_user_id;
+  delete from public.mail_function_logs where actor_user_id = p_user_id;
+  delete from public.email_intents where user_id = p_user_id;
+  delete from public.contact_reports where user_id = p_user_id;
+  delete from public.mail_cooldowns
+   where position(p_user_id::text in target_key) > 0;
+
+  foreach v_email in array v_emails loop
+    delete from public.shared_devices where lower(trim(recipient_email))=v_email;
+    delete from public.poll_subscriptions where lower(subscriber_email) = v_email;
+    delete from public.poll_tasks where lower(recipient_email) = v_email;
+    delete from public.base_share_tasks where lower(recipient_email) = v_email;
+    delete from public.mail_queue where lower(trim(to_email)) = v_email;
+    delete from public.mail_function_logs where lower(recipient_email) = v_email;
+    delete from public.email_unsub_tokens where lower(email) = v_email;
+    delete from public.email_intents where lower(email) = v_email;
+    delete from public.email_cooldowns where email_hash = md5(v_email);
+    delete from public.mail_cooldowns where position(md5(v_email) in target_key) > 0;
+    delete from public.contact_reports where lower(email) = v_email;
+  end loop;
+
+
+  -- 460: ogólny przebieg po kluczach obcych do kont -- to, co przy usuwaniu
+  -- konta zrobiłaby kaskada (ON DELETE CASCADE / SET NULL), tutaj jawnie,
+  -- żeby czyszczenie bez usuwania profilu (e2e_reset_identity) było pełne.
+  -- Nowa tabela z kluczem do profiles/auth.users jest objęta automatycznie.
+  for fk in
+    select c.conrelid::regclass as tbl, a.attname as col, c.confdeltype as act
+    from pg_constraint c
+    join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+    where c.contype = 'f' and array_length(c.conkey, 1) = 1
+      and c.confrelid in ('public.profiles'::regclass, 'auth.users'::regclass)
+      and c.conrelid not in ('public.profiles'::regclass,
+                             'public.reserved_username_accounts'::regclass,
+                             'public.stats_excluded_users'::regclass,
+                             'public.e2e_identities'::regclass)
+      and c.confdeltype in ('c', 'n')
+    order by c.conrelid::regclass::text, a.attname
+  loop
+    if fk.act = 'c' then
+      execute format('delete from %s where %I = $1', fk.tbl, fk.col) using p_user_id;
+    else
+      execute format('update %s set %I = null where %I = $1', fk.tbl, fk.col, fk.col) using p_user_id;
+    end if;
+  end loop;
+end;
+$_$;
+
+
+--
+-- Name: _e2e_reset_email("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_e2e_reset_email"("p_email" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare v text := lower(btrim(p_email));
+begin
+  delete from public.shared_devices where lower(trim(recipient_email)) = v;
+  delete from public.control_device_shares where lower(trim(recipient_email)) = v;
+  delete from public.friendships where lower(trim(requested_email)) = v;
+  delete from public.poll_subscriptions where lower(subscriber_email) = v;
+  delete from public.poll_tasks where lower(recipient_email) = v;
+  delete from public.base_share_tasks where lower(recipient_email) = v;
+  delete from public.mail_queue where lower(trim(to_email)) = v;
+  delete from public.mail_notification_allocations where lower(trim(to_email)) = v;
+  delete from public.mail_function_logs where lower(recipient_email) = v;
+  delete from public.mail_center_links where lower(email) = v;
+  delete from public.email_unsub_tokens where lower(email) = v;
+  delete from public.email_intents where lower(email) = v;
+  delete from public.email_cooldowns where email_hash = md5(v);
+  delete from public.mail_cooldowns where position(md5(v) in target_key) > 0;
+  delete from public.e2e_emails where recipient = v;
+end;
+$$;
 
 
 --
@@ -7144,91 +7292,10 @@ CREATE FUNCTION "public"."delete_user_everything"("p_user_id" "uuid") RETURNS "v
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-declare
-  v_emails text[];
-  v_email text;
 begin
-  if p_user_id is null then
-    raise exception 'p_user_id is required';
-  end if;
-
-  -- 312: e-maile konta (małymi literami) -- po nich czyścimy dane bez user_id
-  select coalesce(array_agg(distinct e), array[]::text[]) into v_emails
-  from (
-    select lower(trim(u.email)) as e from auth.users u where u.id = p_user_id
-    union
-    select lower(trim(p.email)) from public.profiles p where p.id = p_user_id
-  ) x
-  where e is not null and e <> '';
-
-  -- Serialize against snapshot/write jobs before inspecting the inbox.
-  perform 1 from auth.users where id = p_user_id for update;
-
-  --366: remove only this recipient inbox before pending resource guards.
-  -- Sent copies already belong to their recipients and remain independent.
-  delete from public.resource_copy_offers where recipient_id = p_user_id;
-
-  -- 312: usunięcie konta jest nadrzędne -- nie sprawdza blokad (edit_locks);
-  -- blokady trzymane przez to konto i na jego zasobach znikają.
-  delete from public.edit_locks where holder_user_id = p_user_id;
-  delete from public.edit_locks
-   where (resource_type = 'game' and resource_id in (select id from public.games where owner_id = p_user_id))
-      or (resource_type = 'base' and resource_id in (select id from public.question_bases where owner_id = p_user_id))
-      or (resource_type = 'logo' and resource_id in (select id from public.user_logos where user_id = p_user_id));
-
-  -- 312: głosy w cudzych ankietach zostają anonimowe (bez powiązania z kontem);
-  -- głosy w własnych grach znikają razem z grami niżej.
-  update public.poll_text_entries set voter_user_id = null where voter_user_id = p_user_id;
-  update public.poll_votes set voter_user_id = null where voter_user_id = p_user_id;
-
-  delete from public.friendships where requester_id=p_user_id OR addressee_id=p_user_id;
-  delete from public.shared_devices where recipient_id=p_user_id;
-
-  delete from public.poll_subscriptions where registered_user_id = p_user_id;
-  delete from public.poll_subscriptions where owner_id = p_user_id;
-
-  delete from public.poll_tasks where recipient_user_id = p_user_id;
-  delete from public.poll_tasks where owner_id = p_user_id;
-
-  -- 312: zaproszenia do baz (po user_id i po e-mailu)
-  delete from public.base_share_tasks where recipient_user_id = p_user_id;
-  delete from public.base_share_tasks where owner_id = p_user_id;
-
-  delete from public.question_base_shares where user_id = p_user_id;
-  delete from public.question_bases where owner_id = p_user_id;
-
-  -- 312: gry (maile ankietowe właściciela znikają niżej przez created_by)
-  delete from public.shared_devices where game_id in (select id from public.games where owner_id = p_user_id);
-  delete from public.games where owner_id = p_user_id;
-
-  delete from public.user_flags where user_id = p_user_id;
-  delete from public.user_logos where user_id = p_user_id;
-
-  -- 312: wszystko powiązane z e-mailem konta
-  delete from public.mail_queue where created_by = p_user_id;
-  delete from public.mail_function_logs where actor_user_id = p_user_id;
-  delete from public.email_intents where user_id = p_user_id;
-  delete from public.contact_reports where user_id = p_user_id;
-  delete from public.mail_cooldowns
-   where position(p_user_id::text in target_key) > 0;
-
-  foreach v_email in array v_emails loop
-    delete from public.shared_devices where lower(trim(recipient_email))=v_email;
-    delete from public.poll_subscriptions where lower(subscriber_email) = v_email;
-    delete from public.poll_tasks where lower(recipient_email) = v_email;
-    delete from public.base_share_tasks where lower(recipient_email) = v_email;
-    delete from public.mail_queue where lower(trim(to_email)) = v_email;
-    delete from public.mail_function_logs where lower(recipient_email) = v_email;
-    delete from public.email_unsub_tokens where lower(email) = v_email;
-    delete from public.email_intents where lower(email) = v_email;
-    delete from public.email_cooldowns where email_hash = md5(v_email);
-    delete from public.mail_cooldowns where position(md5(v_email) in target_key) > 0;
-    delete from public.contact_reports where lower(email) = v_email;
-  end loop;
-
+  perform public._delete_user_data(p_user_id);
   -- profile first (also cascades by FK from auth.users if still present)
   delete from public.profiles where id = p_user_id;
-
   -- final auth user hard delete
   delete from auth.users where id = p_user_id;
 end;
@@ -7617,6 +7684,272 @@ $_$;
 
 
 --
+-- Name: e2e_identities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."e2e_identities" (
+    "name" "text" NOT NULL,
+    "role" "text" NOT NULL,
+    "email" "text",
+    "user_id" "uuid",
+    "purpose" "text",
+    "purpose_note" "text",
+    "assigned_at" timestamp with time zone,
+    "quarantined_at" timestamp with time zone,
+    "quarantine_reason" "text",
+    "last_leased_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "e2e_identities_check" CHECK ((("role" = 'resource'::"text") = ("email" IS NULL))),
+    CONSTRAINT "e2e_identities_check1" CHECK ((("role" = ANY (ARRAY['dedicated'::"text", 'resource'::"text"])) OR ("purpose" IS NULL))),
+    CONSTRAINT "e2e_identities_check2" CHECK ((("role" <> 'resource'::"text") OR ("purpose" IS NOT NULL))),
+    CONSTRAINT "e2e_identities_check3" CHECK ((("role" <> ALL (ARRAY['noaccount'::"text", 'resource'::"text"])) OR ("user_id" IS NULL))),
+    CONSTRAINT "e2e_identities_email_check" CHECK ((("email" IS NULL) OR ("email" ~ '^e2e\+[a-z]+[0-9]{2}@familiada\.online$'::"text"))),
+    CONSTRAINT "e2e_identities_name_check" CHECK (("name" ~ '^(e2e|resource)\.[a-z]+[0-9]{2}$'::"text")),
+    CONSTRAINT "e2e_identities_purpose_check" CHECK ((("purpose" IS NULL) OR ("purpose" ~ '^[a-z0-9][a-z0-9-]{1,40}$'::"text"))),
+    CONSTRAINT "e2e_identities_role_check" CHECK (("role" = ANY (ARRAY['standard'::"text", 'noaccount'::"text", 'disposable'::"text", 'dedicated'::"text", 'resource'::"text"])))
+);
+
+
+--
+-- Name: TABLE "e2e_identities"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE "public"."e2e_identities" IS 'E25: jedno źródło kont testowych. purpose: dla dedicated przypisanie na stałe do czynności (NULL = wolne), dla resource rodzaj zasobu (mail/heavy).';
+
+
+--
+-- Name: e2e_identity("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_identity"("p_email" "text") RETURNS "public"."e2e_identities"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT i.* FROM public.e2e_identities i
+  WHERE i.email = regexp_replace(lower(btrim(p_email)), '^(e2e\+[a-z]+[0-9]{2})\.new@', '\1@')
+    AND (lower(btrim(p_email)) = i.email OR (i.role = 'disposable' AND lower(btrim(p_email)) ~ '^e2e\+[a-z]+[0-9]{2}\.new@'));
+$$;
+
+
+--
+-- Name: e2e_identity_bind("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_identity_bind"("p_name" "text", "p_user_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  update public.e2e_identities set user_id = p_user_id
+   where name = p_name and role in ('standard','disposable','dedicated');
+  if not found then raise exception 'e2e_identity_bind: % is not an account identity', p_name; end if;
+end;
+$$;
+
+
+--
+-- Name: e2e_lease("text", "text", "jsonb", integer, "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_lease"("p_run_id" "text", "p_worker" "text", "p_needs" "jsonb", "p_ttl_seconds" integer DEFAULT 1200, "p_label" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_role text;
+  v_need int;
+  v_kind text;
+  v_name text;
+  v_picked text[] := array[]::text[];
+  v_role_picked text[];
+  v_err text;
+  v_ok boolean;
+begin
+  if coalesce(btrim(p_run_id), '') = '' then
+    return jsonb_build_object('ok', false, 'error', 'run_id_required');
+  end if;
+  if p_ttl_seconds is null or p_ttl_seconds < 60 or p_ttl_seconds > 7200 then
+    return jsonb_build_object('ok', false, 'error', 'invalid_ttl');
+  end if;
+  delete from public.e2e_leases where expires_at < now();
+
+  -- tanie sprawdzenie dostępności, zanim cokolwiek zostanie wyczyszczone
+  foreach v_role in array array['standard','noaccount','disposable'] loop
+    v_need := coalesce((p_needs->>v_role)::int, 0);
+    if v_need < 0 or v_need > 50 then
+      return jsonb_build_object('ok', false, 'error', 'invalid_need', 'role', v_role);
+    end if;
+    if v_need > (select count(*) from public.e2e_identities i
+                 where i.role = v_role and i.quarantined_at is null
+                   and not exists (select 1 from public.e2e_leases l where l.name = i.name)) then
+      return jsonb_build_object('ok', false, 'error', 'busy', 'role', v_role,
+                                'holders', public.e2e_lease_holders());
+    end if;
+  end loop;
+  for v_kind in select jsonb_array_elements_text(coalesce(p_needs->'resources', '[]'::jsonb)) loop
+    if not exists (select 1 from public.e2e_identities i where i.role = 'resource' and i.purpose = v_kind
+                   and not exists (select 1 from public.e2e_leases l where l.name = i.name)) then
+      return jsonb_build_object('ok', false, 'error',
+        case when exists (select 1 from public.e2e_identities where role = 'resource' and purpose = v_kind)
+             then 'busy' else 'unknown_resource' end,
+        'resource', v_kind, 'holders', public.e2e_lease_holders());
+    end if;
+  end loop;
+
+  -- konta wymienne
+  foreach v_role in array array['standard','noaccount','disposable'] loop
+    v_need := coalesce((p_needs->>v_role)::int, 0);
+    v_role_picked := array[]::text[];
+    while coalesce(array_length(v_role_picked, 1), 0) < v_need loop
+      select i.name into v_name from public.e2e_identities i
+      where i.role = v_role and i.quarantined_at is null
+        and not exists (select 1 from public.e2e_leases l where l.name = i.name)
+        and i.name <> all(v_picked || v_role_picked)
+      order by i.last_leased_at nulls first, i.name
+      limit 1 for update skip locked;
+      if v_name is null then
+        return jsonb_build_object('ok', false, 'error', 'busy', 'role', v_role,
+                                  'holders', public.e2e_lease_holders());
+      end if;
+      v_ok := true;
+      begin
+        perform public.e2e_reset_identity(v_name);
+      exception when others then
+        get stacked diagnostics v_err = message_text;
+        v_ok := false;
+      end;
+      if v_ok then
+        v_role_picked := v_role_picked || v_name;
+      else
+        update public.e2e_identities set quarantined_at = now(), quarantine_reason = left(v_err, 500)
+         where name = v_name;
+        v_picked := v_picked || v_name;  -- nie wybierać ponownie w tym wywołaniu
+      end if;
+      v_name := null;
+    end loop;
+    v_picked := v_picked || v_role_picked;
+  end loop;
+  -- odsiać kwarantannowane z listy wybranych
+  v_picked := array(select x from unnest(v_picked) x
+                    where exists (select 1 from public.e2e_identities i where i.name = x and i.quarantined_at is null));
+
+  -- konta przypisane do czynności
+  for v_kind in select jsonb_array_elements_text(
+      case jsonb_typeof(p_needs->'dedicated') when 'array' then p_needs->'dedicated'
+           when 'string' then jsonb_build_array(p_needs->'dedicated') else '[]'::jsonb end) loop
+    select i.name into v_name from public.e2e_identities i
+     where i.role = 'dedicated' and i.purpose = v_kind;
+    if v_name is null then
+      return jsonb_build_object('ok', false, 'error', 'dedicated_unassigned', 'purpose', v_kind);
+    end if;
+    if exists (select 1 from public.e2e_identities where name = v_name and quarantined_at is not null) then
+      return jsonb_build_object('ok', false, 'error', 'quarantined', 'name', v_name);
+    end if;
+    perform 1 from public.e2e_identities where name = v_name for update skip locked;
+    if not found or exists (select 1 from public.e2e_leases where name = v_name) then
+      return jsonb_build_object('ok', false, 'error', 'busy', 'purpose', v_kind,
+                                'holders', public.e2e_lease_holders());
+    end if;
+    begin
+      perform public.e2e_reset_identity(v_name);
+    exception when others then
+      get stacked diagnostics v_err = message_text;
+      update public.e2e_identities set quarantined_at = now(), quarantine_reason = left(v_err, 500)
+       where name = v_name;
+      return jsonb_build_object('ok', false, 'error', 'quarantined', 'name', v_name, 'reason', v_err);
+    end;
+    v_picked := v_picked || v_name;
+    v_name := null;
+  end loop;
+
+  -- zasoby wspólne
+  for v_kind in select jsonb_array_elements_text(coalesce(p_needs->'resources', '[]'::jsonb)) loop
+    select i.name into v_name from public.e2e_identities i
+     where i.role = 'resource' and i.purpose = v_kind
+       and not exists (select 1 from public.e2e_leases l where l.name = i.name)
+       and i.name <> all(v_picked)
+     order by i.name limit 1 for update skip locked;
+    if v_name is null then
+      if not exists (select 1 from public.e2e_identities where role = 'resource' and purpose = v_kind) then
+        return jsonb_build_object('ok', false, 'error', 'unknown_resource', 'resource', v_kind);
+      end if;
+      return jsonb_build_object('ok', false, 'error', 'busy', 'resource', v_kind,
+                                'holders', public.e2e_lease_holders());
+    end if;
+    v_picked := v_picked || v_name;
+    v_name := null;
+  end loop;
+
+  insert into public.e2e_leases(name, run_id, worker, label, expires_at)
+  select x, p_run_id, coalesce(p_worker, ''), p_label, now() + make_interval(secs => p_ttl_seconds)
+  from unnest(v_picked) x;
+  update public.e2e_identities set last_leased_at = now() where name = any(v_picked);
+
+  return jsonb_build_object('ok', true, 'identities', coalesce((
+    select jsonb_agg(jsonb_build_object('name', i.name, 'role', i.role, 'email', i.email,
+                     'user_id', i.user_id, 'purpose', i.purpose) order by i.role, i.name)
+    from public.e2e_identities i where i.name = any(v_picked)), '[]'::jsonb));
+end;
+$$;
+
+
+--
+-- Name: e2e_lease_holders(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_lease_holders"() RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT coalesce(jsonb_agg(jsonb_build_object('run_id', run_id, 'label', label, 'count', cnt,
+         'since', since, 'expires_at', exp) ORDER BY since), '[]'::jsonb)
+  FROM (SELECT run_id, max(label) AS label, count(*) AS cnt, min(leased_at) AS since, max(expires_at) AS exp
+        FROM public.e2e_leases WHERE expires_at >= now() GROUP BY run_id) x;
+$$;
+
+
+--
+-- Name: e2e_lease_owns("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_lease_owns"("p_run_id" "text", "p_email" "text") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (SELECT 1 FROM public.e2e_leases l JOIN public.e2e_identity(p_email) i ON i.name = l.name
+                 WHERE l.run_id = p_run_id AND l.expires_at >= now());
+$$;
+
+
+--
+-- Name: e2e_lease_release("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_lease_release"("p_run_id" "text", "p_worker" "text" DEFAULT NULL::"text") RETURNS integer
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  WITH d AS (DELETE FROM public.e2e_leases WHERE run_id = p_run_id
+             AND (p_worker IS NULL OR worker = p_worker) RETURNING 1)
+  SELECT count(*)::int FROM d;
+$$;
+
+
+--
+-- Name: e2e_lease_renew("text", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_lease_renew"("p_run_id" "text", "p_ttl_seconds" integer DEFAULT 1200) RETURNS integer
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  WITH u AS (UPDATE public.e2e_leases SET expires_at = now() + make_interval(secs => least(greatest(p_ttl_seconds, 60), 7200))
+             WHERE run_id = p_run_id AND expires_at >= now() RETURNING 1)
+  SELECT count(*)::int FROM u;
+$$;
+
+
+--
 -- Name: e2e_marketplace_cleanup("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7745,6 +8078,29 @@ $_$;
 
 
 --
+-- Name: e2e_quarantine_retry("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_quarantine_retry"("p_name" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare v_err text;
+begin
+  begin
+    perform public.e2e_reset_identity(p_name);
+  exception when others then
+    get stacked diagnostics v_err = message_text;
+    update public.e2e_identities set quarantine_reason = left(v_err, 500) where name = p_name;
+    return jsonb_build_object('ok', false, 'error', v_err);
+  end;
+  update public.e2e_identities set quarantined_at = null, quarantine_reason = null where name = p_name;
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
 -- Name: e2e_registered_subscriber_fixture(boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7768,6 +8124,70 @@ BEGIN
  VALUES(uid,'test8@familiada.online','active',now()) RETURNING id INTO sid;
  RETURN jsonb_build_object('ok',true,'id',sid,'recipient_user_id',recipient);
 END; $_$;
+
+
+--
+-- Name: e2e_reset_identity("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_reset_identity"("p_name" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $_$
+declare
+  i public.e2e_identities;
+  fk record;
+  n bigint;
+begin
+  select * into i from public.e2e_identities where name = p_name;
+  if not found then raise exception 'e2e_reset: unknown %', p_name; end if;
+  if i.role = 'resource' then return; end if;
+
+  if i.role = 'dedicated' then
+    -- dane zostają; tylko blokady, sesje Control, cooldowny i skrzynka
+    if i.user_id is not null then
+      delete from public.edit_locks where holder_user_id = i.user_id;
+      delete from public.control_runtime_sessions where owner_id = i.user_id;
+      delete from public.mail_cooldowns where position(i.user_id::text in target_key) > 0;
+      delete from public.user_cooldowns where user_id = i.user_id;
+    end if;
+    delete from public.e2e_emails where recipient = i.email;
+    return;
+  end if;
+
+  if i.role in ('standard','disposable') and i.user_id is not null then
+    delete from public.market_games where author_user_id = i.user_id;
+    perform public._delete_user_data(i.user_id);
+    -- sprawdzenie: żadnych wierszy w tabelach z kluczem do konta
+    for fk in
+      select c.conrelid::regclass as tbl, a.attname as col
+      from pg_constraint c
+      join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+      where c.contype = 'f' and array_length(c.conkey, 1) = 1
+        and c.confrelid in ('public.profiles'::regclass, 'auth.users'::regclass)
+        and c.conrelid not in ('public.profiles'::regclass,
+                               'public.reserved_username_accounts'::regclass,
+                               'public.stats_excluded_users'::regclass,
+                               'public.e2e_identities'::regclass)
+    loop
+      execute format('select count(*) from %s where %I = $1', fk.tbl, fk.col) into n using i.user_id;
+      if n > 0 then
+        raise exception 'e2e_reset: % rows left in %.%', n, fk.tbl, fk.col;
+      end if;
+    end loop;
+    if exists (select 1 from public.edit_locks where holder_user_id = i.user_id) then
+      raise exception 'e2e_reset: edit_locks left';
+    end if;
+    -- konto zostaje: zwykłe flagi wracają (jak przy założeniu konta)
+    insert into public.user_flags(user_id) values (i.user_id) on conflict (user_id) do nothing;
+  end if;
+
+  perform public._e2e_reset_email(i.email);
+  if i.role = 'disposable' then
+    perform public._e2e_reset_email(replace(i.email, '@', '.new@'));
+  end if;
+end;
+$_$;
 
 
 --
@@ -17343,6 +17763,25 @@ $$;
 
 
 --
+-- Name: profiles_block_noaccount_identity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."profiles_block_noaccount_identity"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NEW.email IS NOT NULL AND lower(btrim(NEW.email)) ~ '^e2e\+' AND NOT EXISTS (
+    SELECT 1 FROM public.e2e_identities i
+    WHERE i.role IN ('standard','disposable','dedicated') AND lower(btrim(NEW.email)) = i.email
+  ) THEN
+    RAISE EXCEPTION 'e2e address without account identity: %', NEW.email USING ERRCODE='23514';
+  END IF;
+  RETURN NEW;
+END $$;
+
+
+--
 -- Name: profiles_reserve_test_username(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -17358,6 +17797,12 @@ BEGIN
  IF reason='test' AND btrim(NEW.username) ~* '^test[0-9]+$' AND EXISTS (
  SELECT 1 FROM auth.users u WHERE u.id=NEW.id
  AND lower(u.email)=lower(btrim(NEW.username))||'@familiada.online'
+ ) THEN RETURN NEW; END IF;
+ -- 460: e2e.<role><NN> tylko dla konta o adresie tej tożsamości
+ IF reason='test' AND EXISTS (
+ SELECT 1 FROM public.e2e_identities i JOIN auth.users u ON u.id=NEW.id
+ WHERE i.name=lower(btrim(NEW.username)) AND i.role IN ('standard','disposable','dedicated')
+ AND lower(u.email) IN (i.email, replace(i.email,'@','.new@'))
  ) THEN RETURN NEW; END IF;
  IF EXISTS(SELECT 1 FROM public.reserved_username_accounts a WHERE a.user_id=NEW.id AND a.username=lower(btrim(NEW.username))) THEN RETURN NEW; END IF;
  RAISE EXCEPTION 'username unavailable' USING ERRCODE='23505';
@@ -20402,7 +20847,7 @@ CREATE TABLE "public"."e2e_emails" (
     "body_html" "text",
     "received_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "expires_at" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
-    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^test([1-9]|1[0-5])@familiada\.online$'::"text"))
+    CONSTRAINT "e2e_emails_recipient_check" CHECK ((("recipient" ~ '^test([1-9]|1[0-5]|17)@familiada\.online$'::"text") OR ("recipient" ~ '^e2e\+[a-z]+[0-9]{2}(\.new)?@familiada\.online$'::"text")))
 );
 
 
@@ -20411,6 +20856,23 @@ CREATE TABLE "public"."e2e_emails" (
 --
 
 COMMENT ON TABLE "public"."e2e_emails" IS 'Krotkozyjaca skrzynka testow E2E; brak dostepu anon/authenticated, TTL 24h.';
+
+
+--
+-- Name: e2e_leases; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."e2e_leases" (
+    "name" "text" NOT NULL,
+    "run_id" "text" NOT NULL,
+    "worker" "text" DEFAULT ''::"text" NOT NULL,
+    "label" "text",
+    "leased_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone NOT NULL,
+    CONSTRAINT "e2e_leases_label_check" CHECK ((("label" IS NULL) OR ("length"("label") <= 200))),
+    CONSTRAINT "e2e_leases_run_id_check" CHECK ((("length"("run_id") >= 1) AND ("length"("run_id") <= 100))),
+    CONSTRAINT "e2e_leases_worker_check" CHECK (("length"("worker") <= 100))
+);
 
 
 --
@@ -21601,12 +22063,15 @@ CREATE VIEW "public"."stats_exclusions_effective" AS
             "p"."created_at",
                 CASE
                     WHEN (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") THEN 'test_guest'::"text"
+                    WHEN ("i"."role" IS NOT NULL) THEN ('test:'::"text" || "i"."role")
+                    WHEN (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) THEN ('test:'::"text" || ("u"."raw_app_meta_data" ->> 'e2e_role'::"text"))
                     ELSE 'test_account'::"text"
                 END AS "case",
             1
-           FROM ("public"."profiles" "p"
+           FROM (("public"."profiles" "p"
              JOIN "auth"."users" "u" ON (("u"."id" = "p"."id")))
-          WHERE (("lower"(("u"."email")::"text") ~ '^test[0-9]+@familiada[.]online$'::"text") OR (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text"))) "x"
+             LEFT JOIN "public"."e2e_identities" "i" ON (("i"."user_id" = "u"."id")))
+          WHERE (("lower"(("u"."email")::"text") ~ '^test[0-9]+@familiada[.]online$'::"text") OR (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") OR (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) OR ("i"."user_id" IS NOT NULL))) "x"
   ORDER BY "user_id", "priority";
 
 
@@ -21939,6 +22404,38 @@ ALTER TABLE ONLY "public"."e21_repair_runs"
 
 ALTER TABLE ONLY "public"."e2e_emails"
     ADD CONSTRAINT "e2e_emails_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: e2e_identities e2e_identities_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_identities"
+    ADD CONSTRAINT "e2e_identities_email_key" UNIQUE ("email");
+
+
+--
+-- Name: e2e_identities e2e_identities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_identities"
+    ADD CONSTRAINT "e2e_identities_pkey" PRIMARY KEY ("name");
+
+
+--
+-- Name: e2e_identities e2e_identities_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_identities"
+    ADD CONSTRAINT "e2e_identities_user_id_key" UNIQUE ("user_id");
+
+
+--
+-- Name: e2e_leases e2e_leases_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_leases"
+    ADD CONSTRAINT "e2e_leases_pkey" PRIMARY KEY ("name");
 
 
 --
@@ -22877,6 +23374,13 @@ CREATE INDEX "e2e_emails_expires_idx" ON "public"."e2e_emails" USING "btree" ("e
 --
 
 CREATE INDEX "e2e_emails_recipient_received_idx" ON "public"."e2e_emails" USING "btree" ("recipient", "received_at" DESC);
+
+
+--
+-- Name: e2e_leases_run_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "e2e_leases_run_idx" ON "public"."e2e_leases" USING "btree" ("run_id");
 
 
 --
@@ -23993,6 +24497,13 @@ CREATE TRIGGER "poll_tasks_cleanup_partial_votes" BEFORE DELETE OR UPDATE OF "st
 
 
 --
+-- Name: profiles profiles_block_noaccount_identity; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "profiles_block_noaccount_identity" BEFORE INSERT ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."profiles_block_noaccount_identity"();
+
+
+--
 -- Name: profiles profiles_reserve_test_username; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -24724,6 +25235,22 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: e2e_identities e2e_identities_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_identities"
+    ADD CONSTRAINT "e2e_identities_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: e2e_leases e2e_leases_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_leases"
+    ADD CONSTRAINT "e2e_leases_name_fkey" FOREIGN KEY ("name") REFERENCES "public"."e2e_identities"("name") ON DELETE CASCADE;
 
 
 --
@@ -25898,6 +26425,18 @@ CREATE POLICY "display_completion_owner" ON "public"."game_state_display_complet
 ALTER TABLE "public"."e2e_emails" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: e2e_identities; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."e2e_identities" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: e2e_leases; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."e2e_leases" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: edit_locks; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -27068,5 +27607,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 844B3kM1S8BJTuTqihT2Znazl9CrxjEJvhhCmo0rKc0xSo67bPBldQMNSECTDQV
+\unrestrict XenDvAeYIcJyIg4VYa5uIMMaVg82V4wHbif9i4aD172itsvQ88X1HQs1KxA07fV
 
