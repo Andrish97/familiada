@@ -174,7 +174,7 @@ test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca 
 
 test("manual: zrzuty — karuzela widoków (strzałki, kropki) i powiększenie", async ({ page }) => {
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17#s-17-3`, { waitUntil: "domcontentloaded" });
-  const carousel = page.locator(".m-carousel").first();
+  const carousel = page.locator("#s-17-3 ~ .m-carousel").first();
   await expect(carousel.locator(".m-carousel-dot")).toHaveCount(4);
   await expect(carousel.locator(".m-carousel-dot").nth(0)).toHaveClass(/active/);
   await carousel.locator('[data-step="1"]').click();
