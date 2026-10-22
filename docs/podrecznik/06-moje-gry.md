@@ -148,7 +148,7 @@ Co trafia do kopii:
 Znajomemu możesz wysłać grę preparowaną oraz grę z ankietą, dopóki jest szkicem. Gry z ankietą
 otwartą, zatrzymaną ani zamkniętą wysłać się nie da.
 
-Powielanie i wysyłanie wymaga konta (→ 5.1). To co innego niż dodanie gry z Gier
+Powielać możesz także jako gość; wysyłanie wymaga konta (→ 5.1). To co innego niż dodanie gry z Gier
 Społeczności (→ 13.4).
 
 ## 6.7 Importowanie i eksportowanie

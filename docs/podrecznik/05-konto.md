@@ -12,14 +12,16 @@ Z serwisu można korzystać na dwa sposoby:
   i logo oraz prowadzić rozgrywkę, ale dane są dostępne tylko w tej przeglądarce (→ 5.4).
 
 Na stronie *Logowanie* są przyciski [Zaloguj], [Załóż konto], [Wejdź jako gość]
-i [Przypomnij hasło].
+i [Przypomnij hasło]. Gdy w tej przeglądarce jest już konto gościa, pod formularzem widać
+„Aktywna sesja gościa: …”, a zamiast [Wejdź jako gość] jest [Wróć do konta gościa] — wraca
+do tego samego konta gościa, nie zakłada nowego.
 
 ![Strona logowania](zrzut:people-login)
 
 Konto jest potrzebne do współpracy z innymi osobami. Tylko z kontem możesz:
 
 - mieć znajomych (→ 10) i subskrybentów (→ 14) oraz otrzymywać zadania (→ 15.4),
-- powielać gry i logo (→ 6.6) oraz wysyłać ich kopie znajomym (→ 11),
+- wysyłać kopie gier i logo znajomym (→ 11) — powielać je możesz także jako gość (→ 6.6),
 - udostępniać bazy pytań (→ 12),
 - wysyłać zaproszenia do ankiety (→ 15.2),
 - udostępniać urządzenia do rozgrywki (→ 17.1),
@@ -93,19 +95,22 @@ Serwis co jakiś czas przypomina, że konto gościa zostanie usunięte, i propon
 logo i inne pliki zostaną zachowane.
 
 1. Otwórz *Ustawienia konta* (kliknij swoją nazwę w prawym górnym rogu) i znajdź sekcję
-   „Zapisz swoje dane”. Możesz też wybrać [Załóż konto] na stronie *Logowanie* i potwierdzić
-   [Tak, przenieś dane].
+   „Zapisz swoje dane”. Możesz też na stronie *Logowanie* wybrać [Załóż konto], wpisać dane
+   i w oknie „Przenieść konto gościa?” wybrać [Tak, przenieś dane].
 2. Wpisz adres e-mail, hasło i — opcjonalnie — nazwę użytkownika, a następnie wybierz
    [Migruj konto].
-3. Kliknij link w wiadomości „FAMILIADA — Potwierdź migrację”. Od tej chwili korzystasz
-   ze zwykłego konta.
+3. Kliknij link w wiadomości „FAMILIADA — Potwierdź migrację” — także na tym samym
+   urządzeniu. Od tej chwili korzystasz ze zwykłego konta; jeśli trzeba, ustaw nazwę (→ 5.5).
 
 ![Załóż konto z sesji gościa — przenieść dane?](zrzut:people-login-guest-migrate)
 ![Link potwierdzający wysłany](zrzut:people-account-guest-migrate-sent)
 
-Do czasu kliknięcia linku nadal korzystasz z konta gościa. W *Ustawieniach konta* możesz
+Do czasu kliknięcia linku nadal korzystasz z konta gościa — po wysłaniu wiadomości (także
+ze strony *Logowanie*) zostajesz w nim i przechodzisz do *Ustawień konta*. Tam możesz
 [Wyślij ponownie] wiadomość (raz na godzinę) albo [Anuluj] zamianę — po anulowaniu link
-z wiadomości przestaje działać, a dane zostają na koncie gościa.
+z wiadomości przestaje działać, a dane zostają na koncie gościa. Ponowne wysłanie działa
+tylko z tego konta gościa: przy próbie rejestracji tego adresu na innym urządzeniu serwis
+poprosi o powrót na urządzenie, na którym zaczęto zamianę.
 
 ## 5.5 Nazwa użytkownika i profil
 
@@ -130,17 +135,27 @@ nazwy), przy logowaniu zobaczysz ekran „Pierwsze logowanie” z prośbą o jej
 
 ## 5.6 Zmiana adresu e-mail i hasła
 
-**Adres e-mail.** W *Ustawieniach konta*, w sekcji „E-mail”, wpisz nowy adres i wybierz
-[Zmień e-mail]. Wiadomości z linkiem przyjdą **na obecny i na nowy adres** — potwierdź oba.
-Dzięki temu nikt nie przejmie konta, znając tylko jeden z adresów. Do czasu potwierdzenia
-logujesz się dotychczasowym adresem. Możesz też [Wyślij ponownie] albo [Anuluj zmianę].
-Zmianę można rozpocząć raz na godzinę.
+**Adres e-mail.** W *Ustawieniach konta*, w sekcji „E-mail”, wpisz nowy adres, w polu
+„Powtórz nowy e-mail” wpisz go jeszcze raz i wybierz [Zmień e-mail]. Jeśli adresy się różnią,
+zobaczysz „Adresy e-mail nie są takie same.” i nic nie zostanie wysłane.
+
+Na nowy adres przyjdzie wiadomość z linkiem — kliknij go, aby dokończyć zmianę; link działa
+tylko raz. Na dotychczasowy adres przyjdzie samo powiadomienie, bez linku, z nowym adresem
+i przyciskiem [Zaloguj się]. Do kliknięcia linku logujesz się dotychczasowym adresem, a po
+potwierdzeniu — już tylko nowym.
 
 ![Zmiana e-maila w toku — Wyślij ponownie i Anuluj zmianę](zrzut:people-account-email-pending)
 
-Jeśli nie masz już dostępu do starego adresu, zmiana nie zostanie potwierdzona. Możesz wtedy
-wyeksportować gry, bazy i logo do plików, usunąć konto, założyć nowe i zaimportować pliki
-(→ 6.7).
+W czasie oczekiwania [Wyślij ponownie] wysyła nowy link na nowy adres, a poprzedni przestaje
+działać. [Anuluj zmianę] przerywa zmianę: wysłany link przestaje działać, a po jego otwarciu
+zobaczysz „Zmiana adresu e-mail została anulowana.”. Anulować możesz też na innym urządzeniu,
+na którym jesteś zalogowany. Zmianę i ponowną wysyłkę możesz wykonać raz na godzinę, a między
+dwiema wiadomościami musi minąć co najmniej minuta — wcześniej zobaczysz „Możesz wysłać
+ponownie za …”.
+
+> Uwaga: jeśli przyjdzie powiadomienie o zmianie adresu, której nie zlecałeś, zaloguj się,
+> w *Ustawieniach konta* wybierz [Anuluj zmianę], zmień hasło i zgłoś to na
+> kontakt@familiada.online.
 
 **Hasło.** W sekcji „Hasło” wpisz nowe hasło i wybierz [Zmień hasło]. Hasło musi mieć:
 

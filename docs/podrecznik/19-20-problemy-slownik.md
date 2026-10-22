@@ -15,6 +15,10 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   też logować się nazwą użytkownika; w razie potrzeby [Przypomnij hasło] (→ 5.7).
 - **Nie mogę ponownie zamówić resetu hasła** → kolejną wiadomość można zamówić po godzinie →
   poczekaj na koniec odliczania i sprawdź spam.
+- **Zmiana adresu e-mail nie kończy się** → czeka na kliknięcie linku z wiadomości na nowy adres →
+  do tego czasu logujesz się dotychczasowym; sprawdź spam albo wybierz [Wyślij ponownie] w *Ustawieniach konta* (raz na godzinę); zmianę możesz też anulować (→ 5.6).
+- **Wiadomość o zmianie adresu, której nie zlecałeś** → ktoś mógł poznać Twoje hasło → zaloguj się,
+  wybierz [Anuluj zmianę] w *Ustawieniach konta*, zmień hasło i zgłoś to na kontakt@familiada.online (→ 5.6).
 - **Pojawia się „Potwierdź, że jesteś człowiekiem”** → kilka nieudanych prób logowania → wybierz
   [Kontynuuj] i zaloguj się ponownie.
 - **Zniknęły dane z konta gościa** → konto gościa działa tylko w jednej przeglądarce i jest

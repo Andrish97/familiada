@@ -12,14 +12,16 @@ You can use the app in two ways:
   and logos and run games, but your data is only available in this browser (→ 5.4).
 
 The *Login* page has the buttons [Log in], [Create account], [Continue as guest]
-and [Forgot password].
+and [Forgot password]. When this browser already has a guest account, the form shows
+"Guest session active: …", and instead of [Continue as guest] there is [Back to guest account] —
+it returns to the same guest account and does not create a new one.
 
 ![The login page](zrzut:people-login)
 
 You need an account to work with other people. Only with an account can you:
 
 - have friends (→ 10) and subscribers (→ 14) and receive tasks (→ 15.4),
-- duplicate games and logos (→ 6.6) and send copies of them to friends (→ 11),
+- send copies of games and logos to friends (→ 11) — you can duplicate them as a guest too (→ 6.6),
 - share question bases (→ 12),
 - send poll invitations (→ 15.2),
 - share devices for a game (→ 17.1),
@@ -93,19 +95,22 @@ From time to time the app reminds you that the guest account will be deleted and
 logos and other files will be kept.
 
 1. Open *Account settings* (click your name in the top right corner) and find the
-   "Save your data" section. You can also choose [Create account] on the *Login* page and confirm with
-   [Yes, migrate data].
+   "Save your data" section. You can also choose [Create account] on the *Login* page, enter your details
+   and in the "Migrate guest account?" window choose [Yes, migrate data].
 2. Enter your email address, password and — optionally — a username, then choose
    [Migrate account].
-3. Click the link in the message "FAMILIADA — Confirm migration". From then on you use
-   a regular account.
+3. Click the link in the message "FAMILIADA — Confirm migration" — on the same device too.
+   From then on you use a regular account; if needed, set a username (→ 5.5).
 
 ![Create an account from a guest session — move the data?](zrzut:people-login-guest-migrate)
 ![Confirmation link sent](zrzut:people-account-guest-migrate-sent)
 
-Until you click the link, you keep using the guest account. In *Account settings* you can
+Until you click the link, you keep using the guest account — after the message is sent (also
+from the *Login* page) you stay in it and go to *Account settings*. There you can
 [Resend] the message (once an hour) or [Cancel] the change — after cancelling, the link
-in the message stops working and the data stays on the guest account.
+in the message stops working and the data stays on the guest account. Resending works only
+from that guest account: if you try to register this address on another device, the app
+asks you to go back to the device where the change was started.
 
 ## 5.5 Username and profile
 
@@ -130,17 +135,27 @@ a name), you will see the "First login" screen asking you to set one when you lo
 
 ## 5.6 Changing your email address and password
 
-**Email address.** In *Account settings*, in the "Email" section, enter the new address and choose
-[Change email]. Messages with a link will arrive **at both the current and the new address** — confirm both.
-This way nobody can take over your account knowing only one of the addresses. Until you confirm,
-you log in with your current address. You can also [Resend] or [Cancel change].
-You can start a change once an hour.
+**Email address.** In *Account settings*, in the "Email" section, enter the new address, type it again
+in the "Repeat new email" field and choose [Change email]. If the addresses differ,
+you will see "Email addresses don't match." and nothing is sent.
+
+A message with a link arrives at the new address — click it to finish the change; the link works
+only once. The current address gets only a notice, without a link, with the new address
+and a [Log in] button. Until you click the link you log in with your current address, and after
+confirming — only with the new one.
 
 ![E-mail change in progress — resend or cancel](zrzut:people-account-email-pending)
 
-If you no longer have access to the old address, the change will not be confirmed. In that case you can
-export your games, bases and logos to files, delete the account, create a new one and import the files
-(→ 6.7).
+While you wait, [Resend] sends a new link to the new address, and the previous one stops
+working. [Cancel change] stops the change: the sent link stops working, and when it is opened you
+will see "Email address change was cancelled.". You can also cancel on another device
+where you are logged in. You can make a change and resend once an hour, and at least a minute
+must pass between two messages — before that you will see "You can resend
+in …".
+
+> Note: if you get a notice about an address change you did not request, log in,
+> choose [Cancel change] in *Account settings*, change your password and report it to
+> kontakt@familiada.online.
 
 **Password.** In the "Password" section, enter the new password and choose [Change password]. The password must have:
 

@@ -148,7 +148,7 @@ What goes into the copy:
 You can send a friend a prepared game or a game with a poll, as long as it is a draft. Games with
 an open, stopped or closed poll cannot be sent.
 
-Duplicating and sending require an account (→ 5.1). This is different from adding a game from Community
+You can duplicate as a guest too; sending requires an account (→ 5.1). This is different from adding a game from Community
 Games (→ 13.4).
 
 ## 6.7 Importing and exporting

@@ -15,6 +15,10 @@ Each item: **symptom** → possible cause → what to do.
   also sign in with your username; if needed, use [Forgot password] (→ 5.7).
 - **I cannot request another password reset** → you can request another email after an hour →
   wait for the countdown to finish and check your spam folder.
+- **An email address change does not finish** → it waits for the link in the message sent to the new address →
+  until then you log in with the current one; check spam or choose [Resend] in *Account settings* (once an hour); you can also cancel the change (→ 5.6).
+- **A notice about an address change you did not request** → someone may know your password → log in,
+  choose [Cancel change] in *Account settings*, change your password and report it to kontakt@familiada.online (→ 5.6).
 - **"Confirm you are human" appears** → several failed sign-in attempts → choose
   [Continue] and sign in again.
 - **The data from a guest account is gone** → a guest account works only in one browser and is
