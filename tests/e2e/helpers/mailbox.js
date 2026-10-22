@@ -1,11 +1,13 @@
 const { generateE2EToken } = require("./e2e-token");
+const { RUN_ID } = require("./e2e-lease-client");
 
 const API_BASE = "https://www.familiada.online/_e2e_api";
 
 function authHeaders(extra = {}) {
   const secret = process.env.E2E_BYPASS_SECRET;
   if (!secret) throw new Error("Brak E2E_BYPASS_SECRET");
-  return { "X-E2E-Token": generateE2EToken(secret), ...extra };
+  // X-E2E-Run: skrzynki e2e+ (E25) tylko dla przebiegu, który je wypożyczył.
+  return { "X-E2E-Token": generateE2EToken(secret), "X-E2E-Run": RUN_ID, ...extra };
 }
 
 async function api(path, options = {}) {
