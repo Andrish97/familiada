@@ -62,6 +62,7 @@ test('native logo Storage copy: actual bytes, lost-response retry after source d
   throw error;
  }finally{
   globalThis.fetch=originalFetch;
-  await page.evaluate(async files=>{const {error}=await window.__sbClient.storage.from('user-logos').remove(files);if(error)throw error;},files);
+  // Nowsze Storage (1.81) odrzuca remove([]); pusta lista = nic do sprzątania.
+  if(files.length)await page.evaluate(async files=>{const {error}=await window.__sbClient.storage.from('user-logos').remove(files);if(error)throw error;},files);
  }
 });
