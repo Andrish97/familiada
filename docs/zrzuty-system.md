@@ -3,8 +3,10 @@
 Zrzuty **prawdziwych stron** z `web/` na bogatych danych demo, w trzech
 językach, bez kont, bez bazy i bez ręcznego klikania. Kod: `scripts/screens/`.
 Zastąpił dawny panel zrzutów w panelu admina (usunięty 2026-10-20; zakładka
-„Zrzuty strony” w `/settings/` ma już tylko odnośniki: uruchomienie workflow,
-galeria, strona główna).
+„Zrzuty strony” z samymi odnośnikami usunięta 2026-10-22 — decyzja użytkownika).
+Uruchamianie: workflow „Zrzuty stron” w GitHub Actions; galeria: gałąź
+`screens-gallery`. Użytkownik demo jest jeden: `user` w `data/panel.cjs`
+(także zrzuty linków z e-maila w `scenes/people.cjs`).
 
 ## Zasada działania
 
