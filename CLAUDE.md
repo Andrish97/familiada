@@ -126,8 +126,9 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   samym etapie (przewodnik: `tests/README.md` „Jak przepisać stary spec”);
   zapadka `unit/legacyTestAccounts.test.js` — przepisany plik usunąć
   z `unit/legacy-test-accounts.json`. Spece ze starymi kontami: jeden przebieg
-  naraz jak dotąd. Reguły Cloudflare `testN@` usunięte (2026-10-22): poczta
-  na `testN@` nie dochodzi — spece z pocztą przepisać na `e2e+` przed przebiegiem.
+  naraz jak dotąd. Konta `test1`…`test17` i reguły Cloudflare `testN@`
+  usunięte (2026-10-22, migracja 463) — spece ze starymi kontami nie przejdą
+  przed przepisaniem. Speców e2e nie poprawiać bez polecenia użytkownika.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko

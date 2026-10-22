@@ -216,15 +216,17 @@ tylko ubywało: przepisany plik usuń z `unit/legacy-test-accounts.json`.
 | `"test14@familiada.online"` | `accounts.noaccount[0].email` |
 | test11/test12(+13)/test15 | `accounts.disposable[0]` (adres zapasowy: `email.replace("@", ".new@")`) |
 | `clearMailbox("testN@…")` / `waitForEmail({ recipient })` | `mailbox.clear(identity)` / `mailbox.waitFor(identity, { … })` |
-| `restoreTestAccount(...)` | niepotrzebne — konto odtwarzane przy każdym lease |
+| `restoreTestAccount(...)` | usunięte — konto `disposable` odtwarzane przy każdym lease |
 | `@mailbox`, kolejka „pojedynczo” | `resources: ["mail"]`; Control/wyświetlacz `resources: ["heavy"]` |
 
+**Konta `test1`…`test17` usunięte (2026-10-22, migracja 463)**, reguły poczty `testN@`
+też — spece ze starymi kontami nie przejdą, dopóki nie zostaną przepisane.
+Worker nie ma już `/_e2e_api/accounts/restore` ani endpointów centrum maili/szablonów
+pod test14.
 **Poczta na `testN@` nie dochodzi** (reguły Cloudflare usunięte 2026-10-22) —
 spec z `waitForEmail`/`clearMailbox` na starym adresie trzeba przepisać, zanim
-znów przejdzie. Fikstury z adresatem: `e2e_registered_subscriber_fixture(p_recipient_user_id, p_remove)`,
-`e2e_subscriber_mail_flag(p_email, p_reset)`; Worker: `queueMailTemplateFixtures(items, recipient)`,
-`clearMailCenterCapabilities(recipient)`, `restoreMailCenterPreference(stamp, recipient)` —
-`recipient` = `accounts.noaccount[i].email`.
+znów przejdzie. Fikstury SQL z adresatem: `e2e_registered_subscriber_fixture(p_recipient_user_id, p_remove)`,
+`e2e_subscriber_mail_flag(p_email, p_reset)`.
 
 Konta są czyszczone przy wypożyczeniu — spec sam przygotowuje swoje dane
 (bez polegania na danych zostawionych na test1…). Fikstury SQL/Worker

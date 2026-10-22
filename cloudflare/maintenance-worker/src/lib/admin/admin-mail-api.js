@@ -11,10 +11,10 @@ const DEFAULT_MAIL_SETTINGS = {
 };
 
 
-// E25: panel admina bez maili testowych (adresy testN@ i e2e+ w familiada.online);
+// E25: panel admina bez maili testowych (adresy e2e+ w familiada.online);
 // diagnostyka testów ma własne /_e2e_api/mail-delivery.
 function hideTestRecipients(column) {
-  return `&or=(${column}.is.null,and(${column}.not.like.e2e%2B*,${column}.not.like.test*@familiada.online))`;
+  return `&or=(${column}.is.null,${column}.not.like.e2e%2B*)`;
 }
 
 export async function handleAdminMailApi(request, env, url) {
