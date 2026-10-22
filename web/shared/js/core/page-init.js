@@ -29,11 +29,11 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-22T00462";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-22T00462";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-22T00462";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-22T00462";
-import "./scroll-fade.js?v=v2026-10-22T00462"; // wygaszona krawędź przewijanych list (wszystkie strony)
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-22T00504";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-22T00504";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-22T00504";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-22T00504";
+import "./scroll-fade.js?v=v2026-10-22T00504"; // wygaszona krawędź przewijanych list (wszystkie strony)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
@@ -45,10 +45,10 @@ if (globalThis.matchMedia?.(TOUCH_ONLY)?.matches) {
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-22T00462"),
-    import("./topbar-controller.js?v=v2026-10-22T00462"),
-    import("./modal-sheet.js?v=v2026-10-22T00462"),
-    import("./device-guard.js?v=v2026-10-22T00462"),
+    import("./auth.js?v=v2026-10-22T00504"),
+    import("./topbar-controller.js?v=v2026-10-22T00504"),
+    import("./modal-sheet.js?v=v2026-10-22T00504"),
+    import("./device-guard.js?v=v2026-10-22T00504"),
 
   ]);
   return {
@@ -66,10 +66,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-22T00462");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-22T00504");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-22T00462");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-22T00504");
     await initRatingSystem(user);
   }
 }
@@ -213,7 +213,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-22T00462")
+      void import("./nav-contact-badges.js?v=v2026-10-22T00504")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
