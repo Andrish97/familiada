@@ -82,7 +82,7 @@ A voter opens the poll from the link, the QR code, an email or a task.
   counted.
 - At the end, "Thanks for participating!" appears.
 
-![Voting in a “Points” poll](zrzut:poll-vote-mobile@phone)
+![Voting in a “Points” poll](zrzut:polls-vote-points-progress@phone)
 ![Text voting — character counter](zrzut:polls-vote-text-typing@phone)
 ![Thank you for taking part!](zrzut:polls-vote-text-thanks@phone)
 ![The poll is stopped](zrzut:polls-vote-text-stopped@phone)

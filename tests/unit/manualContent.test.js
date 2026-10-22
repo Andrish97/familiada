@@ -86,7 +86,7 @@ test("zrzuty w treści mają scenę w scripts/screens i opublikowany plik", asyn
   const ids = new Set(scenes.map((s) => s.id));
   for (const lang of LANGS) {
     const manual = await load(lang);
-    const shots = manual.chapters.flatMap((c) => [...c.html.matchAll(/src="\/manual\/(img\/([a-z]+)\/([a-z0-9-]+)-(desktop|phone|tablet)\.webp)"/g)]);
+    const shots = manual.chapters.flatMap((c) => [...c.html.matchAll(/src="\/manual\/(img\/([a-z]+)\/([a-z0-9-]+)-(desktop|phone-landscape|tablet-landscape|phone|tablet)\.webp)"/g)]);
     for (const [, file, shotLang, scene] of shots) {
       assert.equal(shotLang, lang, `${file}: zrzut w innym języku niż treść`);
       assert.ok(ids.has(scene), `${file}: brak sceny ${scene} w scripts/screens/scenes.cjs`);

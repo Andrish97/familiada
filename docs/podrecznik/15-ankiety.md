@@ -82,7 +82,7 @@ Głosujący otwiera ankietę z odnośnika, kodu QR, wiadomości e-mail albo zada
   policzony.
 - Na końcu pojawia się „Dziękujemy za udział!”.
 
-![Głosowanie w ankiecie „Punktacja”](zrzut:poll-vote-mobile@phone)
+![Głosowanie w ankiecie „Punktacja”](zrzut:polls-vote-points-progress@phone)
 ![Głosowanie tekstowe — licznik znaków](zrzut:polls-vote-text-typing@phone)
 ![Dziękujemy za udział!](zrzut:polls-vote-text-thanks@phone)
 ![Ankieta zatrzymana](zrzut:polls-vote-text-stopped@phone)

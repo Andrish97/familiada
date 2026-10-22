@@ -49,10 +49,11 @@ const pageName = (name) => {
     : `<span class="m-page">${name}</span>`;
 };
 
-// Zrzut ekranu w treści: „![Podpis](zrzut:scena)” albo „…(zrzut:scena@phone)” — scena z
+// Zrzut ekranu w treści: „![Podpis](zrzut:scena)” albo „…(zrzut:scena@phone)” (phone, tablet,
+// phone-landscape, tablet-landscape — w ramce urządzenia, ten sam rozmiar co desktop) — scena z
 // scripts/screens/scenes.cjs, plik publikuje scripts/screens/publish-manual.cjs. Kilka takich linii
 // pod rząd to karuzela (np. widoki urządzeń przy prowadzeniu rozgrywki).
-export const SHOT_RE = /^!\[([^\]]*)\]\(zrzut:([a-z0-9-]+)(?:@(desktop|phone|tablet))?\)\s*$/;
+export const SHOT_RE = /^!\[([^\]]*)\]\(zrzut:([a-z0-9-]+)(?:@(desktop|phone-landscape|tablet-landscape|phone|tablet))?\)\s*$/;
 export const shotPath = (lang, scene, device = "desktop") => `img/${lang}/${scene}-${device}.webp`;
 let LANG = "pl";
 // Wymiary opublikowanego webp (nagłówek VP8 / VP8L / VP8X) — width/height w <img>, żeby

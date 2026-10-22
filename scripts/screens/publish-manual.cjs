@@ -11,7 +11,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { execSync } = require("node:child_process");
-const { repo, launch } = require("./lib.cjs");
+const { repo, launch, composeDevice } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
 
 const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
@@ -27,7 +27,7 @@ function usedShots() {
   const shots = new Map();
   for (const name of fs.readdirSync(CONTENT).filter((f) => f.endsWith(".js"))) {
     const text = fs.readFileSync(path.join(CONTENT, name), "utf8");
-    for (const m of text.matchAll(/\/manual\/(img\/(pl|en|uk)\/([a-z0-9-]+)-(desktop|phone|tablet)\.webp)/g)) {
+    for (const m of text.matchAll(/\/manual\/(img\/(pl|en|uk)\/([a-z0-9-]+)-(desktop|phone-landscape|tablet-landscape|phone|tablet)\.webp)/g)) {
       shots.set(m[1], { file: m[1], lang: m[2], scene: m[3], device: m[4] });
     }
   }
@@ -76,7 +76,12 @@ async function toWebp(page, png, maxWidth, quality) {
       if (!src) { missing.push(`${shot.scene}/${shot.lang}-${shot.device}`); continue; }
       const dest = path.join(repo, "web/manual", shot.file);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.writeFileSync(dest, await toWebp(page, fs.readFileSync(src), MAX_WIDTH, 0.82));
+      // Telefon i tablet w ramce urządzenia (iPhone / iPad, pionowo lub poziomo), na tle 1400×875
+      // jak zrzut z komputera; scena z własną ramką (deviceFrame) i sceny „size” zostają bez zmian.
+      const scene = scenes.find((s) => s.id === shot.scene);
+      let png = fs.readFileSync(src);
+      if (shot.device !== "desktop" && !scene?.deviceFrame) png = await composeDevice(browser, png, { kind: shot.device.startsWith("phone") ? "iphone" : "ipad" });
+      fs.writeFileSync(dest, await toWebp(page, png, MAX_WIDTH, 0.82));
       written++;
     }
   } finally {

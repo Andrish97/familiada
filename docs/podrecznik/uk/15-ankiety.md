@@ -82,7 +82,7 @@ familiada.online → [Підключити пристрій] і введіть �
   буде враховано.
 - Наприкінці з'являється «Дякуємо за участь!».
 
-![Голосування в опитуванні «Бали»](zrzut:poll-vote-mobile@phone)
+![Голосування в опитуванні «Бали»](zrzut:polls-vote-points-progress@phone)
 ![Текстове голосування — лічильник символів](zrzut:polls-vote-text-typing@phone)
 ![Дякуємо за участь!](zrzut:polls-vote-text-thanks@phone)
 ![Опитування зупинено](zrzut:polls-vote-text-stopped@phone)

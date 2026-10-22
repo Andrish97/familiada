@@ -174,7 +174,7 @@ jobs:
           [ -n "$LAST" ] && BASE="$LAST"
           if [ -n "$ALL" ]; then pick=$(node scripts/screens/publish-manual.cjs --list); else pick=$(node scripts/screens/publish-manual.cjs --list --base="$BASE"); fi
           [ -n "$pick" ] || { echo "Brak zrzutów Wskazówek do odświeżenia."; exit 0; }
-          node scripts/screens/run.cjs --scenes="$pick" --lang=all --devices=desktop,tablet,phone --out=help-out || true
+          node scripts/screens/run.cjs --scenes="$pick" --lang=all --devices=desktop,phone,phone-landscape,tablet,tablet-landscape --out=help-out || true
           node scripts/screens/publish-manual.cjs --out=help-out
           # Treść ma wymiary obrazów (width/height) — po nowych zrzutach generuje się od nowa.
           node scripts/manual/build-content.mjs

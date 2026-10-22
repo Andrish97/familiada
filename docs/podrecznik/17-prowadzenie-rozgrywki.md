@@ -77,8 +77,8 @@ z punktami, pytania finału albo szczegóły oceny odpowiedzi. Druga część by
 i w górę, aby zasłonić; w poziomie — w prawo i w lewo. Odsłonięcie widzi tylko prowadzący.
 Po każdej zmianie etapu zasłona może wrócić.
 
-![Ekran prowadzącego — dolna część pod zasłoną](zrzut:play-host-duel@tablet)
-![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet)
+![Ekran prowadzącego — dolna część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
+![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet-landscape)
 
 **Rozłączenie urządzenia.** Gdy wymagane urządzenie przestanie odpowiadać, po kilku sekundach
 panel pokaże, które urządzenia się rozłączyły, i wstrzyma grę. Sprawdź internet i ekran
@@ -140,8 +140,8 @@ lub animacji — poczekaj, aż panel je odblokuje.
    pojedynek rozgrywa kolejna para zawodników. Wyświetlacz pokazuje, która drużyna gra.
 
 ![Start rundy](zrzut:play-control-round-start)
-![Przycisk — gotowy do naciśnięcia](zrzut:play-buzzer-on@tablet)
-![Przycisk — drużyna A nacisnęła pierwsza](zrzut:play-buzzer-pushed@tablet)
+![Przycisk — gotowy do naciśnięcia](zrzut:play-buzzer-on@phone-landscape)
+![Przycisk — drużyna A nacisnęła pierwsza](zrzut:play-buzzer-pushed@phone-landscape)
 ![Panel — kto był pierwszy: Zatwierdź: {drużyna} albo Ponów naciśnięcie](zrzut:play-control-duel)
 ![Przycisk fizyczny — operator wybiera drużynę](zrzut:play-control-duel-physical)
 ![Wyświetlacz — lampka drużyny, która nacisnęła](zrzut:play-display-duel)
@@ -162,7 +162,7 @@ wiersz to odpowiedź już pokazana publiczności. Pulę, X i wyniki drużyn spra
 ![Rozgrywka — zaznaczona odpowiedź, licznik X i Oddaj kontrolę](zrzut:play-control-play-pass)
 ![Odliczanie 3 s](zrzut:play-control-timer3)
 ![Wyświetlacz — odsłonięte odpowiedzi, pula i X](zrzut:play-display-play)
-![Ekran prowadzącego — pokazane odpowiedzi na zielono](zrzut:play-host-play@tablet)
+![Ekran prowadzącego — pokazane odpowiedzi na zielono](zrzut:play-host-play@tablet-landscape)
 
 **Kradzież** („RUNDA 1 — KRADZIEŻ”). Po trzech błędach przeciwnicy podają jedną odpowiedź:
 operator zaznacza ją albo daje X. Trafienie przenosi pulę do przeciwników, pudło zostawia ją
@@ -170,7 +170,7 @@ drużynie grającej.
 
 ![Kradzież — panel](zrzut:play-control-steal)
 ![Kradzież — Wyświetlacz](zrzut:play-display-steal)
-![Kradzież — ekran prowadzącego](zrzut:play-host-steal@tablet)
+![Kradzież — ekran prowadzącego](zrzut:play-host-steal@tablet-landscape)
 
 **Koniec rundy.** [Zakończ rundę] przyznaje pulę pomnożoną przez mnożnik rundy. Potem możesz
 odsłonić pozostałe odpowiedzi dla publiczności („RUNDA 1 — ODSŁANIANIE”) — nie dają już punktów.
@@ -180,7 +180,7 @@ odpowiedzi się nie odsłania (→ 3.6, 3.7).
 
 ![Zakończ rundę](zrzut:play-control-round-end)
 ![Odsłanianie pozostałych odpowiedzi](zrzut:play-control-reveal)
-![Odsłanianie — ekran prowadzącego](zrzut:play-host-reveal@tablet)
+![Odsłanianie — ekran prowadzącego](zrzut:play-host-reveal@tablet-landscape)
 
 > Uwaga: dobierz liczbę pytań i próg punktów tak, aby pytania nie skończyły się przed
 > planowanym finałem — sam brak pytań nie prowadzi do finału.
@@ -207,7 +207,7 @@ Prowadzący widzi „FINAŁ RUNDA 1 — ODLICZANIE 12s” i pięć pytań ze sta
 albo (u drugiego gracza) „powtórzenie”. Literówki możesz poprawić także po upływie czasu.
 
 ![Gracz 1 — wpisywanie odpowiedzi w czasie odliczania](zrzut:play-control-final-p1-timer)
-![Ekran prowadzącego — odliczanie i statusy pytań](zrzut:play-host-final-p1@tablet)
+![Ekran prowadzącego — odliczanie i statusy pytań](zrzut:play-host-final-p1@tablet-landscape)
 
 **Gracz 1 — ocena i odsłanianie.** Dla każdego pytania porównaj wpis z listą odpowiedzi:
 
@@ -223,7 +223,7 @@ Wyświetlacz mieści w finale do 11 znaków odpowiedzi — dłuższe są skracan
 
 ![Ocena — odpowiedź dopasowana do listy](zrzut:play-control-final-p1-map)
 ![Ocena — odpowiedzi nie ma na liście](zrzut:play-control-final-p1-map-miss)
-![Ocena — ekran prowadzącego](zrzut:play-host-final-map@tablet)
+![Ocena — ekran prowadzącego](zrzut:play-host-final-map@tablet-landscape)
 ![Wyświetlacz po graczu 1](zrzut:play-display-final-p1)
 
 **Gracz 2.** [Rozpocznij 2 rundę] — wraca drugi zawodnik; odpowiedzi pierwszego są znów na
@@ -238,9 +238,9 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 
 ![Przejście do gracza 2](zrzut:play-control-final-p2-start)
 ![Gracz 2 — wpisywanie, odpowiedzi gracza 1 przy polach i Powtórzenie](zrzut:play-control-final-p2-timer)
-![Gracz 2 — ekran prowadzącego](zrzut:play-host-final-p2@tablet)
+![Gracz 2 — ekran prowadzącego](zrzut:play-host-final-p2@tablet-landscape)
 ![Gracz 2 — ocena przy powtórzeniu](zrzut:play-control-final-p2-repeat-map)
-![Gracz 2 — ekran prowadzącego przy ocenie](zrzut:play-host-final-p2-repeat@tablet)
+![Gracz 2 — ekran prowadzącego przy ocenie](zrzut:play-host-final-p2-repeat@tablet-landscape)
 ![Wyświetlacz — odpowiedzi obu graczy](zrzut:play-display-final)
 
 **Koniec finału.** Gdy finaliści osiągną cel — domyślnie 200 punktów (→ 4.3) — dalsza ocena jest blokowana,
@@ -269,7 +269,7 @@ Zawsze kończ grę w panelu. Jeśli go zamkniesz w trakcie, gra pozostanie w tok
 ustawień (→ 16.1). Logo na ekranie prowadzącego zależy od ustawienia „Logo prowadzącego” (→ 16.3).
 
 ![Gra zakończona — Zacznij od nowa albo Wróć do moich gier](zrzut:play-control-game-ended)
-![Ekran prowadzącego po zakończeniu](zrzut:play-host-end@tablet)
+![Ekran prowadzącego po zakończeniu](zrzut:play-host-end@tablet-landscape)
 ![Wyjście z panelu w trakcie gry](zrzut:play-control-leave-confirm)
 
 ## 17.6 Skróty klawiszowe panelu

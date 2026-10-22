@@ -519,10 +519,9 @@ mark.m-hit {
     background: #000;
     cursor: zoom-in;
 }
+/* zrzut telefonu/tabletu ma już ramkę urządzenia na przezroczystym tle */
+.m-shot:not(.m-shot-desktop) .m-shot-zoom { border: 0; border-radius: 0; background: transparent; }
 .m-shot img { display: block; width: 100%; height: auto; }
-.m-shot-tablet .m-shot-zoom, .m-shot-phone .m-shot-zoom { width: auto; max-width: 100%; margin: 0 auto; }
-.m-shot-tablet img { max-height: min(420px, 62vw); width: auto; max-width: 100%; }
-.m-shot-phone img { max-height: 520px; width: auto; max-width: 100%; }
 .m-shot figcaption { margin-top: 8px; font-size: .82rem; text-align: center; color: rgba(255,255,255,.65); }
 
 .m-carousel { margin: 18px 0; outline: none; }

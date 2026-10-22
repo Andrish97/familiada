@@ -77,8 +77,8 @@ with points, the final questions or the details of answer scoring. The second pa
 and up to cover it; in landscape — right and left. Only the host sees what is uncovered.
 After each change of stage, the cover may come back.
 
-![Host screen — the lower part under the cover](zrzut:play-host-duel@tablet)
-![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet)
+![Host screen — the lower part under the cover](zrzut:play-host-duel@tablet-landscape)
+![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet-landscape)
 
 **A device disconnects.** When a required device stops responding, after a few seconds
 the panel shows which devices have disconnected and pauses the game. Check the internet and the device's
@@ -140,8 +140,8 @@ or animation plays — wait until the panel unlocks them.
    the next pair of players plays the duel. The Display shows which team is playing.
 
 ![Start of a round](zrzut:play-control-round-start)
-![Buzzer — ready to press](zrzut:play-buzzer-on@tablet)
-![Buzzer — team A pressed first](zrzut:play-buzzer-pushed@tablet)
+![Buzzer — ready to press](zrzut:play-buzzer-on@phone-landscape)
+![Buzzer — team A pressed first](zrzut:play-buzzer-pushed@phone-landscape)
 ![Panel — who was first: confirm or repeat the press](zrzut:play-control-duel)
 ![Physical buzzer — the operator chooses the team](zrzut:play-control-duel-physical)
 ![Display — the lamp of the team that pressed](zrzut:play-display-duel)
@@ -162,7 +162,7 @@ row is an answer already shown to the audience. The host checks the pool, the X'
 ![Team's turn — a selected answer, the X counter and Pass control](zrzut:play-control-play-pass)
 ![The 3-second countdown](zrzut:play-control-timer3)
 ![Display — revealed answers, the pool and X](zrzut:play-display-play)
-![Host screen — answers already shown in green](zrzut:play-host-play@tablet)
+![Host screen — answers already shown in green](zrzut:play-host-play@tablet-landscape)
 
 **Steal** ("ROUND 1 — STEAL"). After three mistakes, the opponents give one answer:
 the operator marks it or gives an X. A hit moves the pool to the opponents, a miss leaves it with the
@@ -170,7 +170,7 @@ playing team.
 
 ![Steal — panel](zrzut:play-control-steal)
 ![Steal — Display](zrzut:play-display-steal)
-![Steal — host screen](zrzut:play-host-steal@tablet)
+![Steal — host screen](zrzut:play-host-steal@tablet-landscape)
 
 **End of the round.** [End round] awards the pool multiplied by the round multiplier. Then you can
 reveal the remaining answers for the audience ("ROUND 1 — REVEAL") — they no longer give points.
@@ -180,7 +180,7 @@ answers are not revealed (→ 3.6, 3.7).
 
 ![End round](zrzut:play-control-round-end)
 ![Revealing the remaining answers](zrzut:play-control-reveal)
-![Revealing — host screen](zrzut:play-host-reveal@tablet)
+![Revealing — host screen](zrzut:play-host-reveal@tablet-landscape)
 
 > Note: choose the number of questions and the points threshold so that the questions do not run out before
 > the planned final — running out of questions alone does not lead to the final.
@@ -207,7 +207,7 @@ The host sees "FINAL ROUND 1 — COUNTDOWN 12s" and the five questions with a st
 or (for the second player) "repeat". You can also fix typos after the time runs out.
 
 ![Player 1 — entering answers during the countdown](zrzut:play-control-final-p1-timer)
-![Host screen — countdown and question statuses](zrzut:play-host-final-p1@tablet)
+![Host screen — countdown and question statuses](zrzut:play-host-final-p1@tablet-landscape)
 
 **Player 1 — scoring and revealing.** For each question, compare the entry with the list of answers:
 
@@ -223,7 +223,7 @@ In the final, the Display fits up to 11 characters of an answer — longer ones 
 
 ![Scoring — an answer matched to the list](zrzut:play-control-final-p1-map)
 ![Scoring — the answer is not on the list](zrzut:play-control-final-p1-map-miss)
-![Scoring — host screen](zrzut:play-host-final-map@tablet)
+![Scoring — host screen](zrzut:play-host-final-map@tablet-landscape)
 ![The Display after player 1](zrzut:play-display-final-p1)
 
 **Player 2.** [Start] the second round of the final — the second player comes back; the first player's answers are
@@ -238,9 +238,9 @@ helps spot a repeat. The timer is 20 s.
 
 ![Moving on to player 2](zrzut:play-control-final-p2-start)
 ![Player 2 — entering answers, player 1's answers next to the fields and Repeat](zrzut:play-control-final-p2-timer)
-![Player 2 — host screen](zrzut:play-host-final-p2@tablet)
+![Player 2 — host screen](zrzut:play-host-final-p2@tablet-landscape)
 ![Player 2 — scoring with a repeat](zrzut:play-control-final-p2-repeat-map)
-![Player 2 — host screen while scoring](zrzut:play-host-final-p2-repeat@tablet)
+![Player 2 — host screen while scoring](zrzut:play-host-final-p2-repeat@tablet-landscape)
 ![Display — answers of both players](zrzut:play-display-final)
 
 **End of the final.** When the finalists reach the target — 200 points by default (→ 4.3) — further scoring is blocked,
@@ -269,7 +269,7 @@ Always end the game in the panel. If you close it in the middle, the game stays 
 the settings (→ 16.1). The logo on the host screen depends on the "Host logo" setting (→ 16.3).
 
 ![Game ended — start again or go back to my games](zrzut:play-control-game-ended)
-![Host screen after the end](zrzut:play-host-end@tablet)
+![Host screen after the end](zrzut:play-host-end@tablet-landscape)
 ![Leaving the panel during a game](zrzut:play-control-leave-confirm)
 
 ## 17.6 Panel keyboard shortcuts
