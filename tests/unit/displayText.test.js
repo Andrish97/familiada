@@ -27,3 +27,26 @@ test("a cut word loses one or two trailing vowels in Polish, English and Ukraini
   }
   assert.equal(clipDisplayText("BBBBBBBBBBzz", 11), "BBBBBBBBBB.");
 });
+
+test("splitDisplayText: litery widoczne na Wyświetlaczu i te, które odpadną", async () => {
+  const { splitDisplayText } = await import("../../web/shared/js/gameplay/displayText.js");
+  assert.deepEqual(splitDisplayText("Sombrero", 11), { kept: "Sombrero", cut: "", shown: "Sombrero", clipped: false });
+  // cięcie w słowie: 10 znaków, bez końcowej samogłoski, kropka
+  assert.deepEqual(splitDisplayText("W Marcepanie", 11), { kept: "W Marcepan", cut: "ie", shown: "W Marcepan.", clipped: true });
+  // 12. znak to spacja: pełne 11 znaków bez kropki
+  assert.deepEqual(splitDisplayText("brak dez. u part.", 11), { kept: "brak dez. u", cut: " part.", shown: "brak dez. u", clipped: true });
+  const s = splitDisplayText("W Murzasichlu", 11);
+  assert.equal(s.kept + s.cut, "W Murzasichlu");
+  assert.equal(s.shown, s.kept + ".");
+});
+
+test("displayTextSegments: znaki spoza fontu osobno, reszta jak na Wyświetlaczu", async () => {
+  const { displayTextSegments } = await import("../../web/shared/js/gameplay/displayText.js");
+  const ok = (ch) => ch !== "😀" && ch !== "€";
+  assert.deepEqual(displayTextSegments("Kawa 😀 z mlekiem", 11, ok), [
+    { kind: "kept", text: "Kawa " }, { kind: "bad", text: "😀" }, { kind: "bad", text: " " },
+    { kind: "kept", text: "z ml" }, { kind: "cut", text: "ekiem" },
+  ]);
+  assert.deepEqual(displayTextSegments("Sombrero", 11, ok), [{ kind: "kept", text: "Sombrero" }]);
+  assert.deepEqual(displayTextSegments("10€", 11, ok), [{ kind: "kept", text: "10" }, { kind: "bad", text: "€" }]);
+});

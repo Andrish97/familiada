@@ -25,6 +25,9 @@ import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T1750
 
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-22T17500";
 import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-22T17500";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-22T17500";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-22T17500";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-22T17500";
 
 
 const $ = (id) => document.getElementById(id);
@@ -753,6 +756,32 @@ export function createUI({ root, emit }) {
   const THIRD = (i) => `${i * 2 + 1} / ${i * 2 + 3}`; // i=0,1,2 — 1 jednostka
   const HALF = (i) => `${i * 3 + 1} / ${i * 3 + 4}`;  // i=0,1   — 1,5 jednostki
 
+  // Finał: Wyświetlacz ma 11 miejsc na odpowiedź. Litery, które przy
+  // skracaniu odpadną, mają inny kolor (decyzja użytkownika 2026-10-22).
+  // Znaki spoza fontu Wyświetlacz pomija — w Control są w czerwonym
+  // prostokącie. Font wczytywany raz; do tego czasu bez zaznaczania.
+  const FINAL_TEXT_CAPACITY = 11;
+  let displayGlyphs = null;
+  loadFont5x7().then((glyphs) => { displayGlyphs = glyphs; emit("ui.rerender"); }).catch(() => {});
+  const isDisplayable = (ch) => hasDisplayGlyph(displayGlyphs, ch);
+  function clipNodes(text) {
+    return displayTextSegments(text, FINAL_TEXT_CAPACITY, displayGlyphs ? isDisplayable : null).map((seg) =>
+      seg.kind === "kept" ? document.createTextNode(seg.text)
+        : h("span", { class: seg.kind === "bad" ? "c2-clip-bad" : "c2-clip-cut", text: seg.text }));
+  }
+  // Pole tekstowe nie koloruje części tekstu, więc pod przezroczystym
+  // tekstem pola leży warstwa z tymi samymi literami w kolorach.
+  function clipField(inp) {
+    const mirror = h("div", { class: "c2-clip-mirror", "aria-hidden": "true" }, clipNodes(inp.value));
+    const sync = () => {
+      mirror.replaceChildren(...clipNodes(inp.value));
+      mirror.scrollLeft = inp.scrollLeft;
+    };
+    // addEventListener, nie on(): on() ustawia oninput i nadpisałoby zapis.
+    for (const type of ["input", "scroll", "keyup", "select", "focus", "blur"]) inp.addEventListener(type, sync);
+    return h("div", { class: "c2-clip-field" }, [inp, mirror]);
+  }
+
   function tile(content, { row, col, shortcut, cls = "", onclick, disabled = false } = {}) {
     const el = h("button", {
       class: `c2-tile ${cls}`.trim(),
@@ -1462,10 +1491,10 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-entrytile-q", text: question?.text || t("control.finalUi.questionLabel", { n: i + 1 }) }),
           h("div", { class: "c2-entrytile-p1ans" }, [document.createTextNode(t("control.finalUi.p2HintP1Prefix")), h("b", { text: resolveP1AnswerShown(state, i) })]),
         ]),
-        h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
+        h("div", { class: "c2-entrytile c2-entrytile-input" }, [clipField(inp)]),
       ] : [
         h("div", { class: "c2-entrytile" }, [h("div", { class: "c2-entrytile-q", text: question?.text || t("control.finalUi.questionLabel", { n: i + 1 }) })]),
-        h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
+        h("div", { class: "c2-entrytile c2-entrytile-input" }, [clipField(inp)]),
       ];
       if (round === 2) {
         const repeat = row.repeat === true;
@@ -1632,7 +1661,7 @@ export function createUI({ root, emit }) {
     bindShortcut(inp, "i", () => inp.focus());
     const wpisanoTile = h("div", { class: "c2-mapinput", "data-i": idx }, [
       h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
-      h("div", { class: "c2-entrytile-input" }, [inp]),
+      h("div", { class: "c2-entrytile-input" }, [clipField(inp)]),
     ]);
     wpisanoTile.style.gridRow = "1";
 
@@ -1662,7 +1691,7 @@ export function createUI({ root, emit }) {
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode(t("control.finalRevealAnswerLabel")),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || t("control.dash")) : preview.text }),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true" }, clipNodes(row.revealedAnswer ? (row.outText || t("control.dash")) : preview.text)),
       ]),
       {
         row: 6, col: HALF(0), cls: "c2-tile-primary",
@@ -1692,6 +1721,7 @@ export function createUI({ root, emit }) {
     const matchOptions = (question?.answers || []).slice(0, 6).map((a) => ({
       key: `map-match:${round}:${idx}:${a.id}`,
       text: `${a.text} (${a.fixed_points})`,
+      content: h("span", {}, [...clipNodes(a.text), document.createTextNode(` (${a.fixed_points})`)]),
       active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
       disabled: locked || !hasTyped || revealLocked(),
       onclick: () => {

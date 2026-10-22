@@ -495,6 +495,18 @@
     }
     .c2-entrytile-input input:focus { border-color:rgba(122,178,255,.65); background:rgba(122,178,255,.1); }
     .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color:#fff; }
+    /* Finał: litery, które Wyświetlacz obetnie (11 miejsc), w innym kolorze.
+       Pole ma przezroczysty tekst, a warstwa .c2-clip-mirror pod nim pokazuje
+       te same litery w kolorach (pole tekstowe nie koloruje części tekstu). */
+    .c2-clip-cut { color:#ff9e7a; text-decoration:underline dotted; text-underline-offset:.15em; }
+    .c2-clip-bad { outline:1.5px solid #ff6b6b; outline-offset:-1px; border-radius:2px; color:#ffb3b3; }
+    .c2-clip-field { position:relative; display:flex; flex:1; min-width:0; min-height:0; align-self:stretch; }
+    .c2-clip-field input { color:transparent; caret-color:#bcd9ff; }
+    .c2-clip-field input:disabled { color:transparent; }
+    .c2-clip-mirror { position:absolute; inset:0; box-sizing:border-box; padding:8px 12px; border:1px solid transparent;
+      display:flex; align-items:center; overflow:hidden; white-space:pre; pointer-events:none;
+      color:#bcd9ff; font-size:.95em; font-weight:700; }
+    .c2-entrytile-input input:disabled + .c2-clip-mirror { opacity:.6; }
     /* "Powtórzenie" — przycisk (nie checkbox), czerwony odcień jak stare
        control/js/gameFinal.js's ".btn.sm.danger" (P2_BTN_REPEAT_ON/OFF).
        Reużywana TA SAMA klasa na "Dźwięk powtórzenia" (renderFinalP2Start) —
