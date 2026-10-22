@@ -9,6 +9,7 @@ import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/tran
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
 import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
 import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00131";
 
 const CONTENT = {
@@ -211,6 +212,15 @@ function wireNavigation() {
   document.addEventListener("click", (ev) => {
     const a = ev.target.closest?.("a[href]");
     if (!a || !a.closest(".m-layout") || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
+    // Nazwa strony serwisu (*Moje gry*): najpierw adres podręcznika wskazuje bieżący podrozdział,
+    // potem linkTo() niesie go w ?ret=, więc „←” na stronie docelowej wraca w to samo miejsce.
+    if (a.dataset.page) {
+      ev.preventDefault();
+      const sec = sectionOf(a);
+      history.replaceState(history.state, "", chapterHref(current, sec && sec.includes(".") ? `#${sectionId(sec)}` : "", returnTo));
+      location.href = linkTo(a.dataset.page);
+      return;
+    }
     const url = new URL(a.getAttribute("href"), location.href);
     if (url.origin !== location.origin || url.pathname !== location.pathname) return;
     ev.preventDefault();

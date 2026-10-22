@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { buildAll, refHref } from "../../scripts/manual/build-content.mjs";
+import { buildAll, refHref, PAGE_LINKS } from "../../scripts/manual/build-content.mjs";
 import { PAGES } from "../../web/shared/js/core/nav-map.js";
 
 const LANGS = ["pl", "en", "uk"].filter((l) => fs.existsSync(new URL(`../../web/manual/content/${l}.js`, import.meta.url)));
@@ -63,5 +63,19 @@ test("treść nie zawiera surowych znaczników Markdown", async () => {
       const text = c.html.replace(/<pre[\s\S]*?<\/pre>/g, "").replace(/<[^>]+>/g, "");
       assert.doesNotMatch(text, /\*\*|^#{1,3}\s|\]\(http/m, `${lang} rozdz. ${c.id}`);
     }
+  }
+});
+
+test("nazwy stron w treści prowadzą do stron z mapy, a ich „←” wraca do podręcznika", async () => {
+  for (const [id, link] of Object.entries(PAGE_LINKS)) {
+    assert.ok(PAGES[id], `${id}: brak w nav-map`);
+    assert.equal(PAGES[id].path, link.path, `${id}: inna ścieżka niż w nav-map`);
+    assert.ok(PAGES[id].from === "*" || PAGES[id].from.includes("manual"), `${id}: brak "manual" w from`);
+  }
+  for (const lang of LANGS) {
+    const manual = await load(lang);
+    const used = new Set(manual.chapters.flatMap((c) => [...c.html.matchAll(/data-page="([^"]+)"/g)].map((m) => m[1])));
+    assert.ok(used.size >= 5, `${lang}: za mało odnośników do stron (${used.size})`);
+    for (const id of used) assert.ok(PAGE_LINKS[id], `${lang}: nieznana strona ${id}`);
   }
 });

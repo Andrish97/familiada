@@ -80,8 +80,9 @@ test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik 
 
   await page.locator('.m-doc a.m-ref[href="?ch=7#s-7-1"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
-  await expect(page).toHaveURL(/[?&]ch=7#s-7-1$/);
+  await expect(page).toHaveURL(/[?&]ch=7&from=6\.1#s-7-1$/);
   await expect(page.locator("#s-7-1")).toBeInViewport();
+  await expect(page.locator(".m-return")).toBeVisible();
 
   await page.locator(".m-pager-link.next").click();
   await expect(page).toHaveURL(/[?&]ch=8(?:&|#|$)/);
@@ -143,4 +144,17 @@ test("manual: wyszukiwanie — wyniki na żywo, wybór otwiera podrozdział z za
   await page.locator("#manualSearch .m-search-hit").first().click();
   await expect(page.locator("#manualToc")).toBeHidden();
   await expect(page.locator(".m-doc mark.m-hit").first()).toBeInViewport();
+});
+
+test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego podrozdziału", async ({ page, context }) => {
+  await serveBranchCode(context, { pages: ["privacy", "manual", "bases"] });
+  await loginAsTestUser(page, context);
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=12#s-12-2`, { waitUntil: "domcontentloaded" });
+  await page.locator('#s-12-2 ~ * a.m-go[data-page="bases"]').first().click();
+  await page.waitForURL(/\/bases\/\?ret=/);
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+  await expect(page.locator("#btnBack")).toContainText("Podręcznik");
+  await page.locator("#btnBack").click();
+  await page.waitForURL(/\/manual\/\?ch=12#s-12-2$/);
+  await expect(page.locator("#s-12-2")).toBeInViewport();
 });

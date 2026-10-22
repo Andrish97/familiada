@@ -58,7 +58,7 @@ export const PAGES = {
   login:         { path: "/login/",             access: "public", parent: "home" },
   loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
   loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
-  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "6", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
+  games:         { path: "/games/",             access: "guest",  parent: null, from: ["manual"], manual: "6", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
     btnMarketplace:      { to: "marketplace" },
     btnLogoEditor:       { to: "logoEditor" },
     btnConnectDevice:    { to: "connectDevice", roles: ["user"] },
@@ -76,15 +76,15 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
     btnSubscribers: { to: "subscribers", roles: ["user"] },
   }, locks: [{ type: "game", id: "id" }] },
-  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "bases", "polls", "logoEditor", "control"], manual: "10", tabs: ["invite", "received"], state: ["f", "tab"] },
-  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "polls"], manual: "14", tabs: ["invite", "received"], state: ["tab"] },
-  tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "15.4", state: ["t"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
+  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "bases", "polls", "logoEditor", "control", "manual"], manual: "10", tabs: ["invite", "received"], state: ["f", "tab"] },
+  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "polls", "manual"], manual: "14", tabs: ["invite", "received"], state: ["tab"] },
+  tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games", "manual"], manual: "15.4", state: ["t"] },
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer", "manual"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "9.2", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "moveOverlay", "searchOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
-  logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "8", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"], buttons: {
+  logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games", "manual"], manual: "8", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
   } },
   logoText:      { path: "/logos/editor/text/",        access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "8.2", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
@@ -96,8 +96,8 @@ export const PAGES = {
   gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "16", state: ["id"], buttons: {
     btnPlay: { to: "control", minViewportWidth: 980, custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games"], manual: "13", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
-  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "17.1", state: ["share"] },
+  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games", "manual"], manual: "13", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
+  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games", "manual"], manual: "17.1", state: ["share"] },
   connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
   controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
   controlHost:   { path: "/control/host/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok hosta sterowania otwierany przez połączone urządzenie." },

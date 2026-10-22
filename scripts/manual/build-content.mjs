@@ -27,6 +27,28 @@ const PART_OF = (n) => (n <= 4 ? 0 : n <= 17 ? 1 : 2);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 export const sectionAnchor = (num) => `s-${String(num).replace(/\./g, "-")}`;
 const chapterOf = (num) => String(num).split(".")[0];
+// Nazwy stron w treści (*Moje gry*), które stają się odnośnikami do serwisu: nazwa → id strony
+// w nav-map (PAGES). Tylko strony bez wymaganego id zasobu; „←” na stronie docelowej wraca
+// do miejsca w podręczniku (manual w from celu — pilnuje test).
+export const PAGE_LINKS = {
+  games: { path: "/games/", names: ["Moje gry", "Moich grach", "Moich gier", "My games", "Мої ігри", "Моїх іграх", "Моїх ігор"] },
+  bases: { path: "/bases/", names: ["Bazy pytań", "Question bases", "Бази питань"] },
+  logoEditor: { path: "/logos/", names: ["Moje loga", "Moich log", "My logos", "Мої логотипи", "Моїх логотипів"] },
+  friends: { path: "/friends/", names: ["Znajomi", "Friends", "Друзі"] },
+  subscribers: { path: "/subscribers/", names: ["Subskrybenci", "Subscribers", "Підписники"] },
+  tasks: { path: "/tasks/", names: ["Zadania", "Zadaniach", "Tasks", "Завдання", "Завданнях"] },
+  marketplace: { path: "/marketplace/", names: ["Gry Społeczności", "Community Games", "Ігри Спільноти"] },
+  connectDevice: { path: "/connect/", names: ["Podłącz urządzenie", "Connect a device", "Підключити пристрій"] },
+  account: { path: "/account/", names: ["Ustawienia konta", "Ustawieniach konta", "Account settings", "Налаштування акаунта", "Налаштуваннях акаунта"] },
+};
+const PAGE_BY_NAME = new Map(Object.entries(PAGE_LINKS).flatMap(([id, p]) => p.names.map((n) => [n, id])));
+const pageName = (name) => {
+  const id = PAGE_BY_NAME.get(name);
+  return id
+    ? `<a class="m-page m-go" href="${PAGE_LINKS[id].path}" data-page="${id}">${name}</a>`
+    : `<span class="m-page">${name}</span>`;
+};
+
 export const refHref = (num) => (String(num).includes(".") ? `?ch=${chapterOf(num)}#${sectionAnchor(num)}` : `?ch=${num}`);
 
 /* ---------- ikony przycisków z prawdziwych stron serwisu ---------- */
@@ -106,7 +128,7 @@ function inline(text, icons, titles = new Map()) {
   s = s.replace(new RegExp(`(→|zob\\.|see|див\\.)\\s+${REF_LIST}`, "g"), (_, lead, list) => keep(lead === "→" ? refs(list) : `${esc(lead)} ${refs(list)}`));
   s = esc(s);
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  s = s.replace(/(^|[\s(„"])\*([^*\s][^*]*?)\*(?=[\s).,:;!?”"]|$)/g, '$1<span class="m-page">$2</span>');
+  s = s.replace(/(^|[\s(„"])\*([^*\s][^*]*?)\*(?=[\s).,:;!?”"]|$)/g, (_, lead, name) => `${lead}${pageName(name)}`);
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => slots[Number(i)]);
 }
 
