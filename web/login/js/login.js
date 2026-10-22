@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T00134";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T00242";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-22T00134";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00134";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00134";
+} from "../../shared/js/core/auth.js?v=v2026-10-22T00242";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00242";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00242";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00134";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00134";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00134";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00134";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T00134";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00134";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00134";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00242";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00242";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00242";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00242";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T00242";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00242";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00242";
 
 
 const $ = (s) => document.querySelector(s);
@@ -123,20 +123,38 @@ function getLoginCaptchaPolicy(loginOrEmail) {
   };
 }
 
+// Token Turnstile jest jednorazowy (Worker weryfikuje go po stronie serwera):
+// pobrany z pamięci podręcznej token od razu z niej znika.
+async function takeSilentCaptchaToken() {
+  const token = await getSilentCaptchaToken();
+  setCachedSilentCaptchaToken("");
+  return token;
+}
+
 async function getCaptchaPromptForLogin(loginOrEmail) {
   if (!captchaSiteKey) return null;
   const policy = getLoginCaptchaPolicy(loginOrEmail);
   if (policy.requireCaptcha) return await askCaptchaToken();
-  const silent = await getSilentCaptchaToken();
+  const silent = await takeSilentCaptchaToken();
   if (silent) return silent;
   return await askCaptchaToken();
 }
 
 async function getCaptchaTokenOrPrompt() {
   if (!captchaSiteKey) return null;
-  const silent = await getSilentCaptchaToken();
+  const silent = await takeSilentCaptchaToken();
   if (silent) return silent;
   return await askCaptchaToken();
+}
+
+// Wywołanie Workera z tokenem; odrzucony token -> widoczne wyzwanie i jedna ponowna próba.
+async function withCaptcha(call) {
+  try {
+    return await call(await getCaptchaTokenOrPrompt());
+  } catch (e) {
+    if (!isCaptchaError(e)) throw e;
+    return await call(await askCaptchaToken());
+  }
 }
 
 function getCaptchaLang() {
@@ -645,7 +663,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   if (!ok) return true;
 
   const intent = pendingIntent === "guest_migrate" ? "guest_migrate" : "signup";
-  const { allowed: reserveOk, nextAllowedAtMs } = await prepareConfirmationResend(emailAddr, intent);
+  const { allowed: reserveOk, nextAllowedAtMs } = await withCaptcha((token) => prepareConfirmationResend(emailAddr, intent, token));
 
   if (!reserveOk) {
     const left = (nextAllowedAtMs || 0) - Date.now();
@@ -890,7 +908,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
 
-        const statusInfo = await getEmailStatus(mail);
+        const statusInfo = await withCaptcha((token) => getEmailStatus(mail, token));
         if (statusInfo.status === "confirmed") {
           void alertModal({ text: t("index.emailAlreadyRegistered") });
           mode = "login";

@@ -99,8 +99,8 @@ function patchRpc(db, name, fn, data = null) {
 // 2 propozycje (otrzymane zaproszenia) i 2 odrzucone; subskrybenci i wysłane
 // zaproszenia też powielone, żeby listy wychodziły poza połowę karty.
 const MANY_DECLINED = [
-  { id: "00000000-0000-4000-8800-000000000091", label: "marek_wisniewski", email: "marek.w@example.test", friend_user_id: "00000000-0000-4000-8810-000000000091", direction: "incoming", status: "declined", created_at: "2026-10-12T10:00:00Z", resend_available_at: "2026-10-12T10:00:00Z", email_enabled: true },
-  { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: "zosia.k@example.test", friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
+  { id: "00000000-0000-4000-8800-000000000091", label: "marek_wisniewski", email: null, friend_user_id: "00000000-0000-4000-8810-000000000091", direction: "incoming", status: "declined", created_at: "2026-10-12T10:00:00Z", resend_available_at: "2026-10-12T10:00:00Z", email_enabled: true },
+  { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: null, friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
 ];
 const manyContacts = (db) => patchRpc(db, "contacts_list", (prev, args, declined) => {
   const copy = (r, k, i) => ({ ...r, id: r.id.slice(0, -4) + String(9000 + k * 100 + i), friend_user_id: r.friend_user_id ? r.friend_user_id.slice(0, -4) + String(9000 + k * 100 + i) : null });
@@ -137,8 +137,8 @@ module.exports = [
   { id: "people-friends-received", category: C, title: "Znajomi — zakładka Znajomi na telefonie (lista i zaproszenia otrzymane)", path: "/friends/?tab=received", devices: ["phone"], sources: FRIENDS, ready: contactsReady },
   { id: "people-friends-declined", category: C, title: "Znajomi — rozwinięta sekcja odrzuconych zaproszeń", path: "/friends/?tab=received", sources: FRIENDS, ready: contactsReady,
     db: (db) => patchRpc(db, "contacts_list", (prev, args, extra) => (args.p_kind === "friends" ? [...prev, ...extra] : prev), [
-      { id: "00000000-0000-4000-8800-000000000091", label: "marek_wisniewski", email: "marek.w@example.test", friend_user_id: "00000000-0000-4000-8810-000000000091", direction: "incoming", status: "declined", created_at: "2026-10-12T10:00:00Z", resend_available_at: "2026-10-12T10:00:00Z", email_enabled: true },
-      { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: "zosia.k@example.test", friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
+      { id: "00000000-0000-4000-8800-000000000091", label: "marek_wisniewski", email: null, friend_user_id: "00000000-0000-4000-8810-000000000091", direction: "incoming", status: "declined", created_at: "2026-10-12T10:00:00Z", resend_available_at: "2026-10-12T10:00:00Z", email_enabled: true },
+      { id: "00000000-0000-4000-8800-000000000092", label: "zosia_k", email: null, friend_user_id: "00000000-0000-4000-8810-000000000092", direction: "incoming", status: "declined", created_at: "2026-10-08T10:00:00Z", resend_available_at: "2026-10-08T10:00:00Z", email_enabled: true },
     ]),
     steps: [async (view) => { const head = view.locator('[data-section="declined"] .rowsSectionHead').first(); await head.scrollIntoViewIfNeeded(); await head.click(); await view.waitForTimeout(400); await view.locator('[data-section="declined"] .shareRow').first().scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
   { id: "people-friends-half", category: C, title: "Znajomi — zakładka Znajomi: wiele osób, 2 propozycje, odrzucone zwinięte (sekcje dzielą wysokość karty)", path: "/friends/?tab=received", devices: ["phone", "desktop"], sources: FRIENDS, ready: contactsReady, db: manyContacts },

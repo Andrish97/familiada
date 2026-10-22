@@ -132,12 +132,13 @@ const anonHeaders = () => {
 
 // Worker: logowanie po nazwie -- nieznana nazwa = ten sam błąd co złe hasło,
 // bez adresu e-mail; tylko JSON z własnej strony.
-test("P2 Worker: /_api/auth/* odmawia bez ujawniania adresu, tylko JSON z www", async ({ request }) => {
+test("P2 Worker: /_api/auth/* odmawia bez tokenu Turnstile i bez ujawniania adresu, tylko JSON z www", async ({ request }) => {
   const login = await request.post(`${WWW}/_api/auth/login`, { data: { login: `e2e_nikt_${Date.now().toString(36)}`, password: "x" }, headers: { Origin: WWW } });
   const text = await login.text();
   log("auth/login unknown", login.status());
-  expect([400, 429]).toContain(login.status());
-  if (login.status() === 400) expect(JSON.parse(text)).toEqual({ ok: false, error: "invalid_credentials" });
+  // Bez tokenu Turnstile (żądanie spoza strony) -- odmowa przed jakimkolwiek sprawdzeniem konta.
+  expect(login.status()).toBe(400);
+  expect(JSON.parse(text)).toEqual({ ok: false, error: "captcha_failed" });
   expect(text).not.toContain("@");
   const foreign = await request.post(`${WWW}/_api/auth/login`, { data: { login: "x", password: "x" }, headers: { Origin: "https://evil.example" } });
   log("auth/login foreign origin", foreign.status());
@@ -171,4 +172,14 @@ test("P2 baza: RPC nazwa->e-mail i stan adresu niedostępne anonimowo, auth-emai
   const edge = await request.post(`${API}/functions/v1/auth-email-status`, { data: { email: "e2e@example.com" }, headers });
   log("edge auth-email-status", edge.status());
   expect(edge.status()).toBeGreaterThanOrEqual(400);
+});
+
+// Formularz kontaktu: bez tokenu Turnstile odmowa (nic nie trafia do skrzynki zgłoszeń).
+test("P2 Worker: formularz kontaktu bez tokenu Turnstile = 400", async ({ request }) => {
+  for (const path of ["/_api/contact", "/_api/contact/append"]) {
+    const res = await request.post(`${WWW}${path}`, { data: { email: "e2e-captcha@example.invalid", subject: "e2e", message: "e2e bez tokenu", ticket: "TICKET-0000-0000" }, headers: { Origin: WWW } });
+    log(`${path} no captcha`, res.status());
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error).toBe("captcha_failed");
+  }
 });

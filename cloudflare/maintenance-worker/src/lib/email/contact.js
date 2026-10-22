@@ -7,6 +7,12 @@ import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notificatio
 import { htmlToPlainTextPreview } from "./html-to-text.js";
 import { normalizeLang } from "../core/utils.js";
 import { sha256Hex, clientIp, claimSlots } from "../core/rate-limit.js";
+import { verifyTurnstile, CAPTCHA_STATUS } from "../auth/turnstile.js";
+
+async function captchaRefusal(request, env, body) {
+  const check = await verifyTurnstile(request, env, body?.captcha_token);
+  return check.ok ? null : json({ ok: false, error: check.error }, CAPTCHA_STATUS[check.error] || 400);
+}
 
 // Formularz kontaktu (okno 1 h): na adres IP i łącznie dla całej strony.
 // Limit na adres e-mail jest w bazie (save_form_message, rate_limited_email).
@@ -20,6 +26,8 @@ export async function handleContactSubmit(request, env) {
   if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
 
   const { email, subject, message, lang = "pl", attachments: formAttachments = [] } = body;
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
 
   const allowed = await claimSlots(env, [
     { key: `contact_submit_ip:${await sha256Hex(clientIp(request))}`, max: SUBMIT_MAX_PER_IP, windowS: SUBMIT_WINDOW_S },
@@ -162,6 +170,8 @@ export async function handleContactAppend(request, env) {
   if (!ticket || typeof ticket !== "string") return json({ ok: false, error: "missing_ticket" }, 422);
   if (!message || String(message).trim().length < 2) return json({ ok: false, error: "invalid_message" }, 422);
 
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
   const emailNorm = email.trim().toLowerCase();
   const ticketStr = ticket.trim().slice(0, 64);
   const ipHash = await sha256Hex(request.headers.get("CF-Connecting-IP") || "unknown");

@@ -7,6 +7,7 @@
 import { json } from "../core/http.js";
 import { supabaseRpc, normalizeRpcValue } from "../core/supabase.js";
 import { sha256Hex, clientIp, limitReached, countAttempt, claimSlots } from "../core/rate-limit.js";
+import { verifyTurnstile, CAPTCHA_STATUS } from "./turnstile.js";
 
 const SITE_ORIGIN = "https://www.familiada.online";
 const LANGS = ["pl", "en", "uk"];
@@ -55,6 +56,12 @@ async function readAuthBody(request) {
 
 function normLogin(value) {
   return String(value || "").trim();
+}
+
+// Każde wywołanie wymaga świeżego tokenu Turnstile (token jest jednorazowy).
+async function captchaRefusal(request, env, body) {
+  const check = await verifyTurnstile(request, env, body.captcha_token);
+  return check.ok ? null : json({ ok: false, error: check.error }, CAPTCHA_STATUS[check.error] || 400);
 }
 
 function captchaMeta(body) {
@@ -109,6 +116,8 @@ export async function handleAuthLogin(request, env) {
   if (!login || login.length > 320 || !password || password.length > 1024) {
     return json({ ok: false, error: "invalid_credentials" }, 400);
   }
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
 
   const ipKey = `auth_login_ip:${await sha256Hex(clientIp(request))}`;
   const idKey = `auth_login_id:${await sha256Hex(login.toLowerCase())}`;
@@ -154,6 +163,8 @@ export async function handleAuthReset(request, env) {
   const login = normLogin(body.login);
   if (!login || login.length > 320) return json({ ok: false, error: "unknown_user" }, 404);
   const lang = LANGS.includes(body.lang) ? body.lang : "pl";
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
 
   const allowed = await claimSlots(env, [
     { key: `auth_reset_ip:${await sha256Hex(clientIp(request))}`, max: RESET_MAX_PER_IP, windowS: RESET_WINDOW_S },
@@ -198,6 +209,8 @@ export async function handleAuthEmailStatus(request, env) {
   if (body instanceof Response) return body;
   const email = emailFrom(body);
   if (!email) return json({ ok: false, error: "invalid_email" }, 400);
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
   const allowed = await claimSlots(env, [
     { key: `auth_status_ip:${await sha256Hex(clientIp(request))}`, max: STATUS_MAX_PER_IP, windowS: STATUS_WINDOW_S },
     { key: `auth_status_em:${await sha256Hex(email)}`, max: STATUS_MAX_PER_EMAIL, windowS: STATUS_WINDOW_S },
@@ -218,6 +231,8 @@ export async function handleAuthResendPrepare(request, env) {
   const email = emailFrom(body);
   if (!email) return json({ ok: false, error: "invalid_email" }, 400);
   const intent = body.intent === "guest_migrate" ? "guest_migrate" : "signup";
+  const refused = await captchaRefusal(request, env, body);
+  if (refused) return refused;
   const allowed = await claimSlots(env, [
     { key: `auth_resend_ip:${await sha256Hex(clientIp(request))}`, max: RESEND_MAX_PER_IP, windowS: STATUS_WINDOW_S },
     { key: `auth_resend_em:${await sha256Hex(email)}`, max: RESEND_MAX_PER_EMAIL, windowS: STATUS_WINDOW_S },
