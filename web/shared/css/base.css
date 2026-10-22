@@ -870,9 +870,33 @@ main:has(> .footer){
     white-space: nowrap;
     box-sizing: border-box
 }
+/* Turnstile (size:"flexible") w wierszu na całą szerokość, jak pola. Dopóki
+   nie ma wyzwania (data-turnstile="pending"), wiersz nie zajmuje miejsca
+   (także odstępu kolumny); wyzwanie wjeżdża płynnie. */
 .contact-captcha {
     display: flex;
+    flex-direction: column;
     min-width: 0
+}
+.contact-captcha > * {
+    width: 100%;
+    min-width: 0
+}
+.contact-captcha[data-turnstile="pending"] {
+    height: 0;
+    margin-top: -14px;
+    overflow: hidden;
+    visibility: hidden
+}
+.contact-captcha[data-turnstile="visible"] {
+    animation: contact-captcha-in .22s ease-out
+}
+@keyframes contact-captcha-in {
+    from { opacity: 0; transform: translateY(6px) }
+    to { opacity: 1; transform: none }
+}
+@media (prefers-reduced-motion: reduce) {
+    .contact-captcha[data-turnstile="visible"] { animation: none }
 }
 .contact-captcha[hidden] { display: none }
 .contact-error {

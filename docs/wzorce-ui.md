@@ -328,6 +328,17 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
   `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),
   w Control małe okno wyśrodkowane.
+- **Główna akcja okna formularzowego zawsze widoczna (uwaga właściciela
+  2026-10-22, okno kontaktu):** w arkuszu na telefonie „Anuluj” + złoty
+  przycisk główny (ikona + pełne słowo, np. „Wyślij”) w pasku akcji przy
+  tytule; na komputerze w `.uni-foot`. W trakcie zapisu/wysyłki przycisk
+  zostaje z tą samą ikoną i etykietą, tylko `disabled` + `aria-busy` — nigdy
+  sam „…” (wygląda jak menu „więcej”) ani dłuższy tekst, który przestawia
+  nagłówek arkusza.
+- **Turnstile w formularzu:** `size: "flexible"` w wierszu na całą szerokość
+  pól (`.contact-captcha`); dopóki nie ma wyzwania, wiersz nie zajmuje miejsca
+  (`data-turnstile="pending"`), wyzwanie wjeżdża płynnie i przewija się do
+  widoku (`turnstile.js`, `before-interactive-callback`).
 
 ## A11. Przyciski
 
