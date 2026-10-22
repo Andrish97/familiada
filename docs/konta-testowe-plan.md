@@ -19,6 +19,7 @@ Zasady dla speców: `tests/README.md`, sekcja „Test accounts”.
 | 2026-10-22 | Nazewnictwo po angielsku (międzynarodowe) — konta, role, zasoby, API. |
 | 2026-10-22 | Zamiast roli `gallery` — **pula kont `dedicated`**: konta ogólne z nazwy (`e2e.dedicated01`…), przypisywane na stałe do konkretnej czynności (workflow, spec) w rejestrze przypisań. Widać, które są wolne; czynność, która musi zawsze używać tego samego konta i trzymać na nim dane, bierze wolne konto; gdy pula się skończy — prośba do użytkownika o dodanie konta (użytkownik). |
 | 2026-10-22 | **Czyszczenie przy każdym lease i kwarantanna** (użytkownik: „pasuje”): test padający po zmianie systemu nie może zostawić popsutego konta następnemu. Każdy lease zaczyna się od wyczyszczenia konta; konto, którego nie da się wyczyścić, idzie do kwarantanny i nie jest wydawane. §3a. |
+| 2026-10-22 | API: `test.use({ needs: { standard, noaccount, disposable, dedicated, resources } })` **na górze pliku** (opcja workera — Playwright nie pozwala w `describe`); wynik w fixture `accounts`. Wdrożone: migracja 460 (log OK 20:21:40), Worker (39848422458), harness + spec wzorcowy `e2e/e2e-lease.spec.js` (39848761419 ✓ 4/4). |
 
 **Do potwierdzenia:** liczności puli (propozycja: `standard` 40, `noaccount` 10, `disposable` 6, `dedicated` 6).
 
@@ -68,7 +69,7 @@ ustawienia, historia). Wszystko inne — `standard`.
 1. wybrać wolne konto z tabeli;
 2. migracja: `UPDATE e2e_identities SET purpose='<purpose>', purpose_note=…, assigned_at=now() WHERE name='e2e.dedicatedNN' AND purpose IS NULL`;
 3. wiersz w tabeli `tests/README.md`;
-4. spec/workflow: `test.use({ accounts: { dedicated: "<purpose>" } })`.
+4. spec/workflow: `test.use({ needs: { dedicated: "<purpose>" } })`.
 
 **Brak wolnych:** agent prosi użytkownika o dodanie konta (powód,
 czynność); po zgodzie migracja dodaje `e2e.dedicatedNN` (Worker zakłada
@@ -100,7 +101,9 @@ Spec bez deklaracji zasobu go nie zajmuje.
 ```js
 const { test, expect } = require("./helpers/e2e-test");
 
-test.use({ accounts: { standard: 2, noaccount: 1 }, resources: ["mail"] });
+// na górze pliku -- opcja workera Playwrighta: jedna deklaracja na plik
+// (suma potrzeb wszystkich testów pliku; w describe nie wolno)
+test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } });
 
 test("base invite", async ({ page, context, accounts, loginAs, mailbox }) => {
   const [owner, recipient] = accounts.standard;
@@ -195,7 +198,7 @@ sprawdzić, czy test pada też na `main`.
 
 ### Scenariusze → deklaracja
 
-| Scenariusz | `accounts` | `resources` |
+| Scenariusz | `needs` (role) | `needs.resources` |
 |---|---|---|
 | Jedna osoba, własne dane (gry, bazy, logo, edytor, ustawienia, ankiety) | `{ standard: 1 }` | — |
 | Udostępnianie, współedycja, zadania, kopie Gier/Logo, znajomi | `{ standard: 2 }` (lub 3) | — |

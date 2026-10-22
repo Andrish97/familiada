@@ -173,7 +173,7 @@ zmienna w teście, nie nazwa konta.
 Konta ogólne z nazwy; przeznaczenie tylko z tej tabeli (źródło prawdy:
 `e2e_identities.purpose`). Brać, gdy czynność musi **zawsze** używać tego
 samego konta i trzymać na nim dane. Przypisanie: wolne konto → migracja
-`purpose` → wiersz tutaj → `accounts: { dedicated: "<purpose>" }`. Brak
+`purpose` → wiersz tutaj → `needs: { dedicated: "<purpose>" }`. Brak
 wolnych → poprosić użytkownika o dodanie konta. Szczegóły: plan §1a.
 
 | Account | Purpose | Kto używa | Dane na koncie |
@@ -186,10 +186,12 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
 
 ### Rules for specs
 
-1. Spec **deklaruje potrzeby**:
-   `test.use({ accounts: { standard: 2, noaccount: 1 }, resources: ["mail"] })`
+1. Spec **deklaruje potrzeby na górze pliku** (jedna deklaracja na plik —
+   suma potrzeb jego testów; w `describe` Playwright nie pozwala):
+   `const { test, expect } = require("./helpers/e2e-test");`
+   `test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } })`
    i bierze konta z fixture: `const [owner, recipient] = accounts.standard`.
-   Nigdy adres, nazwa ani numer wpisane w specu.
+   Nigdy adres, nazwa ani numer wpisane w specu. Wzór: `e2e/e2e-lease.spec.js`.
 2. Logowanie tylko `loginAs(page, context, identity)` / `loginAsGuest`.
 3. Poczta tylko przez `mailbox` i tylko na wypożyczonych tożsamościach.
 4. Destrukcyjne operacje na koncie — wyłącznie `disposable`; trwałe dane jednej czynności — wyłącznie przypisany `dedicated`.
@@ -199,6 +201,26 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
 8. Nowa rola lub zasób — najpierw plan i ta sekcja, potem
    `e2e_identities` (migracja). Nic nie dopisywać tylko w specu.
 
+### Jak przepisać stary spec (pakiet E — dedykowani agenci)
+
+| Było | Jest |
+|---|---|
+| `require("@playwright/test")` | `require("./helpers/e2e-test")` |
+| `loginAsTestUser(page, context)` (test1) | `loginAs(page, context, accounts.standard[0])` |
+| `testAccountUsername(n)` / `loginAsPooledTestUser(…, testInfo.parallelIndex)` | kolejne `accounts.standard[i]` (każdy worker ma własny komplet) |
+| test7/test8 jako odbiorca z pocztą | `accounts.standard[1]` + `resources: ["mail"]` |
+| `"test14@familiada.online"` | `accounts.noaccount[0].email` |
+| test11/test12(+13)/test15 | `accounts.disposable[0]` (adres zapasowy: `email.replace("@", ".new@")`) |
+| `clearMailbox("testN@…")` / `waitForEmail({ recipient })` | `mailbox.clear(identity)` / `mailbox.waitFor(identity, { … })` |
+| `restoreTestAccount(...)` | niepotrzebne — konto odtwarzane przy każdym lease |
+| `@mailbox`, kolejka „pojedynczo” | `resources: ["mail"]`; Control/wyświetlacz `resources: ["heavy"]` |
+
+Konta są czyszczone przy wypożyczeniu — spec sam przygotowuje swoje dane
+(bez polegania na danych zostawionych na test1…). Fikstury SQL/Worker
+z test8/test14 na stałe (np. `e2e_registered_subscriber_fixture`,
+`/_e2e_api/mail-center-*`) wymagają wersji z adresatem w parametrze —
+zgłosić w Dzienniku, zanim spec zostanie przepisany (pakiet F).
+
 ### Rules for runs
 
 - Każdy worker wypożycza (lease) swój komplet na wyłączność; brak wolnych
@@ -207,6 +229,8 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
   blokady, sesje i skrzynka, dane zostają), więc padający test nie psuje
   kont następnym. Konto, którego nie da się wyczyścić, trafia do
   **kwarantanny** i nie jest wydawane (plan §3a).
+- `scripts/agent-tools/e2e-seq.sh`: grupa samych speców z `helpers/e2e-test`
+  startuje od razu; grupa ze starym specem czeka jak dotąd.
 - Przebiegi równoległe dozwolone bez umawiania się — ogranicza je tylko
   lease (konta i zasoby).
 - `TEST_WORKERS` (`--workers`) zostaje niskie (patrz „Pułapki”: run #122).

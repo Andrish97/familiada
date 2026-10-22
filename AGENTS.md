@@ -124,7 +124,8 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   `noaccount`, `disposable`, `dedicated`, `guest`; zasoby `mail`, `heavy`.
   `dedicated` = konto przypisane na stałe do jednej czynności (rejestr w
   `tests/README.md` „Dedicated accounts”); brak wolnych → prośba do użytkownika.
-  Spec deklaruje potrzeby (`test.use({ accounts, resources })`), worker
+  Spec deklaruje potrzeby (`test.use({ needs })` na górze pliku, wzór
+  `tests/e2e/e2e-lease.spec.js`), worker
   wypożycza (lease) konta na wyłączność — równoległe przebiegi bez umawiania
   się. Nazwy `e2e.<role><NN>`, e-mail `e2e+<role><NN>@familiada.online`
   (jedna reguła Cloudflare `e2e@` + Subaddressing). Nazewnictwo po angielsku.
