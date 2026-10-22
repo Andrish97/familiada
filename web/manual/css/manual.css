@@ -211,9 +211,12 @@ mark.m-hit {
 
 .m-title {
     margin: 0 0 12px;
-    font-size: 28px;
+    font-size: 26px;
     line-height: 1.2;
     font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--gold);
 }
 
 .m-lead {
@@ -263,7 +266,8 @@ mark.m-hit {
     background: var(--card2);
 }
 
-.m-part-title { margin: 0 0 10px; font-size: 18px; font-weight: 900; }
+.m-part-title { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--gold); }
+.m-part-card .m-p a { color: var(--gold); text-underline-offset: 3px; }
 
 .m-part-chapters {
     list-style: none;
@@ -290,6 +294,7 @@ mark.m-hit {
     border-top: 1px solid var(--line);
     font-size: 20px;
     font-weight: 900;
+    color: var(--gold);
 }
 
 .m-doc > .m-h2:first-child { margin-top: 8px; padding-top: 0; border-top: 0; }
@@ -328,13 +333,13 @@ mark.m-hit {
 .m-page {
     font-style: normal;
     font-weight: 800;
-    color: #cfe8ff;
+    color: #fff;
 }
 
 /* nazwa strony serwisu jako odnośnik — „←” na tej stronie wraca do podręcznika */
 .m-doc a.m-go {
-    color: #cfe8ff;
-    text-decoration: underline dotted rgba(207,232,255,.5);
+    color: var(--gold);
+    text-decoration: underline dotted rgba(255,234,166,.55);
     text-underline-offset: 3px;
 }
 .m-doc a.m-go:hover { color: #fff; text-decoration-style: solid; }
