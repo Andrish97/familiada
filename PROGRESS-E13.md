@@ -51,6 +51,8 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
 
 ## Znane problemy
 
+- **`manual.css` (2026-10-22, poprawka drugiej sesji `63845ebfd4`):** blokada przewijania (`height: 100dvh; overflow: hidden`) tylko dla `.manual-body:has(.m-layout)` — polityka prywatności ma tę samą klasę `body` i musi się przewijać; nie przywracać reguły dla całego `.manual-body` (test regresji w `privacy-manual.spec.js`).
+
 - **Zapowiedziane zmiany z drugiej sesji (2026-10-21 15:26 UTC) — sprawdzić w kodzie przy ponownej weryfikacji, opisać bez „wcześniej…”:**
   1. „Zmień typ” przy zamkniętej ankiecie (6.4, 7.8): bez pytania „Zresetować ankietę?”; okno „Zmień typ gry” jest potwierdzeniem („Ankieta jest zamknięta. Głosy, linki i kody QR ankiety zostaną usunięte, a gra wróci do szkicu wybranego typu.”) + pole (domyślnie **niezaznaczone** — poprawka 15:40 UTC; domyślnie usuwane jest wszystko z ankiety, zostają dane użytkownika sprzed ankiety: pytania, a w Punktacji jego odpowiedzi; wynik ankiety zostaje tylko po zaznaczeniu „Zachowaj …”): Punktacja→Preparowana „Zachowaj punkty z ankiety”; Tekstowa→Preparowana „Zachowaj odpowiedzi i punkty z ankiety”; Tekstowa→Punktacja „Zachowaj odpowiedzi z ankiety”; →Tekstowa bez opcji. „Edytuj” nadal z resetem (7.5).
   2. Nowy status „DO URUCHOMIENIA” (niebieski) dla szkicu ankiety spełniającego warunki — tabela statusów i filtr (6.2).

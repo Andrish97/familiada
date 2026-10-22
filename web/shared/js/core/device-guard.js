@@ -9,7 +9,7 @@
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-22T07485";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-22T21510";
 
 
 export const PHONE_MAX_SHORT_SIDE = 700;
@@ -92,8 +92,9 @@ function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, mi
   if (requirePhoneLandscape && profile.formFactor === "phone" && profile.orientation === "portrait") return "rotate";
   // W widoku dzielonym tabletu viewport może zajmować tylko górną lub boczną
   // część ekranu. Taki obszar nie powinien być traktowany jak pełny tablet;
-  // telefon w landscape pozostaje osobną regułą powyżej.
-  if (profile.formFactor === "tablet") {
+  // telefon w landscape pozostaje osobną regułą powyżej. Strona bez progu
+  // szerokości (minWidth 0, np. Wskazówki, listy) działa w każdym widoku.
+  if (minWidth > 0 && profile.formFactor === "tablet") {
     const shortSide = profile.screenShortSide;
     const splitHeight = profile.viewportHeight < shortSide * 0.7;
     const splitWidth = profile.orientation === "landscape"

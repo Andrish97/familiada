@@ -83,3 +83,14 @@ test('Host i Buzzer dopuszczają telefon w poziomie, a strona TV rozpoznaje tele
   const tv = load({ screenWidth: 1920, screenHeight: 1080, userAgent: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.5)' });
   assert.equal(tv.getDeviceProfile().formFactor, 'tv');
 });
+
+test('podzielony ekran tabletu blokuje tylko strony z progiem szerokości', () => {
+  // iPad 820×1180 w poziomie, połowa ekranu (ok. 590 px szerokości).
+  const side = load({ screenWidth: 1180, screenHeight: 820, width: 590, height: 820, touch: true });
+  assert.equal(side.deviceGuardState(0), 'ok');
+  assert.equal(side.deviceGuardState(640), 'narrow');
+  // Podział góra/dół w pionie: pełna szerokość, niska wysokość.
+  const top = load({ screenWidth: 820, screenHeight: 1180, width: 820, height: 560, touch: true });
+  assert.equal(top.deviceGuardState(0), 'ok');
+  assert.equal(top.deviceGuardState(700), 'narrow');
+});

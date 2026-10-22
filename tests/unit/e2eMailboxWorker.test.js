@@ -15,7 +15,7 @@ const SECRET = "unit-test-e2e-secret";
 test("Diagnostyka dostarczenia wymaga tokenu i adresu testowego w krótkim oknie", async () => {
   const after = encodeURIComponent(new Date().toISOString());
   for (const [recipient, headers, status] of [
-    ["test1@familiada.online", {}, 401],
+    ["e2e+standard01@familiada.online", {}, 401],
     ["real@example.com", { "X-E2E-Token": token() }, 400],
   ]) {
     const response = await worker.fetch(new Request(`https://www.familiada.online/_e2e_api/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${after}`, { headers }), env(), {});
@@ -39,7 +39,7 @@ function env() {
 
 test("E2E mailbox odrzuca brak podpisanego tokenu", async () => {
   const response = await worker.fetch(
-    new Request("https://www.familiada.online/_e2e_api/emails?recipient=test1%40familiada.online&after=2026-09-30T10:00:00Z"),
+    new Request("https://www.familiada.online/_e2e_api/emails?recipient=e2e%2Bstandard01%40familiada.online&after=2026-09-30T10:00:00Z"),
     env(),
     {}
   );
@@ -49,7 +49,7 @@ test("E2E mailbox odrzuca brak podpisanego tokenu", async () => {
 test("E2E mailbox dopuszcza tylko przygotowane konta testowe i ograniczone okno czasu", async () => {
   const headers = { "X-E2E-Token": token() };
   const badRecipient = await worker.fetch(
-    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test16%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`, { headers }),
+    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test1%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`, { headers }),
     env(),
     {}
   );
@@ -57,18 +57,19 @@ test("E2E mailbox dopuszcza tylko przygotowane konta testowe i ograniczone okno 
 
   const oldDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const oldWindow = await worker.fetch(
-    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test1%40familiada.online&after=${encodeURIComponent(oldDate)}`, { headers: { "X-E2E-Token": token() } }),
+    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=e2e%2Bstandard01%40familiada.online&after=${encodeURIComponent(oldDate)}`, { headers: { "X-E2E-Token": token() } }),
     env(),
     {}
   );
   assert.equal(oldWindow.status, 400);
 });
 
-for (const recipient of ["test1@familiada.online", "test14@familiada.online", "test15@familiada.online", "test17@familiada.online"]) {
+for (const recipient of ["e2e+standard01@familiada.online", "e2e+noaccount01@familiada.online", "e2e+disposable01.new@familiada.online", "e2e+dedicated01@familiada.online"]) {
 test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, async (t) => {
   const calls = [];
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
+    if (String(url).includes("/rpc/e2e_identity")) return Response.json({ name: "e2e.identity01" });
     calls.push({ url: String(url), options });
     return new Response(JSON.stringify([{ id: "mail-id" }]), { status: 201, headers: { "Content-Type": "application/json" } });
   };
@@ -94,131 +95,28 @@ test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, a
 
 }
 
-test("restore konta jest ograniczony do jawnie wskazanych kont testowych", async () => {
-  const response = await worker.fetch(
-    new Request("https://www.familiada.online/_e2e_api/accounts/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-E2E-Token": token() },
-      body: JSON.stringify({ account: "test10", password: "ValidPassword123!" }),
-    }),
-    env(),
-    {}
-  );
-  assert.equal(response.status, 400);
-  assert.deepEqual(await response.json(), { ok: false, error: "invalid_restore_request" });
-});
-
 const { normalizeE2ERecipient } = await import("../../cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
-test("allowlista adresów obejmuje zwykłe konta, skrzynkę bez konta i dedykowane 17", () => {
-  for (let n=1;n<=15;n++) assert.equal(normalizeE2ERecipient(` TEST${n}@FAMILIADA.ONLINE `), `test${n}@familiada.online`);
-  assert.equal(normalizeE2ERecipient(" TEST17@FAMILIADA.ONLINE "), "test17@familiada.online");
-  for (const value of ["test0@familiada.online","test16@familiada.online","test014@familiada.online","test14@example.com","real@familiada.online","test14@familiada.online.attacker.net",null]) {
+test("adresy testowe to wyłącznie e2e+<rola><NN> (E25)", () => {
+  assert.equal(normalizeE2ERecipient(" E2E+Standard07@FAMILIADA.ONLINE "), "e2e+standard07@familiada.online");
+  assert.equal(normalizeE2ERecipient("e2e+disposable01.new@familiada.online"), "e2e+disposable01.new@familiada.online");
+  for (const value of ["test1@familiada.online","test14@familiada.online","e2e@familiada.online","e2e+x@familiada.online","e2e+standard01@example.com","real@familiada.online","e2e+standard01@familiada.online.attacker.net",null]) {
     assert.equal(normalizeE2ERecipient(value),null);
   }
 });
-test("test14 może odczytać i wyczyścić skrzynkę oraz diagnostykę wyłącznie z tokenem E2E", async (t) => {
+test("skrzynka e2e+ i diagnostyka tylko z tokenem E2E i wypożyczeniem", async (t) => {
   const originalFetch=globalThis.fetch;
   const calls=[];
-  globalThis.fetch=async (url,options={})=>{calls.push({url:String(url),method:options.method});return new Response(JSON.stringify([]),{status:200,headers:{"Content-Type":"application/json"}});};
+  globalThis.fetch=async (url,options={})=>{if(String(url).includes("/rpc/e2e_lease_owns"))return Response.json(true);calls.push({url:String(url),method:options.method});return new Response(JSON.stringify([]),{status:200,headers:{"Content-Type":"application/json"}});};
   t.after(()=>{globalThis.fetch=originalFetch;});
   for(const [endpoint,method] of [["emails","GET"],["emails","DELETE"],["mail-delivery","GET"]]) {
-    const url=`https://www.familiada.online/_e2e_api/${endpoint}?recipient=test14%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`;
+    const url=`https://www.familiada.online/_e2e_api/${endpoint}?recipient=e2e%2Bnoaccount01%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`;
     const blocked=await worker.fetch(new Request(url,{method}),env(),{});
     assert.equal(blocked.status,401);
-    const response=await worker.fetch(new Request(url,{method,headers:{"X-E2E-Token":token()}}),env(),{});
+    const response=await worker.fetch(new Request(url,{method,headers:{"X-E2E-Token":token(),"X-E2E-Run":"run-1"}}),env(),{});
     assert.equal(response.status,200);
   }
   assert.equal(calls.length,4);
-  assert.ok(calls.every(call=>call.url.includes('test14%40familiada.online')));
-});
-
-async function restoreFixture(account, users, { createStatus = 200, createdEmail = account + "@familiada.online", excluded = true } = {}) {
-  const calls = [];
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (input, options = {}) => {
-    const url = new URL(String(input));
-    const method = options.method || "GET";
-    const body = options.body ? JSON.parse(options.body) : null;
-    calls.push({ path: url.pathname, method, body });
-    if (url.pathname === "/auth/v1/admin/users" && method === "GET") return Response.json({ users });
-    if (url.pathname === "/auth/v1/admin/users" && method === "POST") {
-      if (createStatus !== 200) return Response.json({ message: "create failed" }, { status: createStatus });
-      return Response.json({ id: "created-" + account, email: createdEmail, user_metadata: body.user_metadata });
-    }
-    if (url.pathname === "/rest/v1/stats_exclusions_effective") return Response.json(excluded ? [{ reason: "test_account" }] : []);
-    return Response.json({});
-  };
-  try {
-    const response = await worker.fetch(new Request("https://www.familiada.online/_e2e_api/accounts/restore", {
-      method: "POST", headers: { "Content-Type": "application/json", "X-E2E-Token": token() },
-      body: JSON.stringify({ account, password: "ValidPassword123!" }),
-    }), env(), {});
-    return { status: response.status, data: await response.json(), calls };
-  } finally { globalThis.fetch = originalFetch; }
-}
-
-test("restore tworzy brakujące11/12/15/17 z potwierdzonym adresem i nazwą", async () => {
-  for (const account of ["test11", "test12", "test15", "test17"]) {
-    const result = await restoreFixture(account, []);
-    assert.equal(result.status, 200);
-    assert.equal(result.data.created, true);
-    if (account === "test15") assert.equal(result.data.admin_excluded, true);
-    assert.equal(result.data.user_id, "created-" + account);
-    const create = result.calls.find(call => call.path === "/auth/v1/admin/users" && call.method === "POST");
-    assert.deepEqual(create.body, { email: account + "@familiada.online", password: "ValidPassword123!", email_confirm: true, user_metadata: { username: account, is_guest: false } });
-  }
-});
-
-test("restore zachowuje tożsamość istniejących11/12/15/17 bez tworzenia kolejnego", async () => {
-  for (const account of ["test11", "test12", "test15", "test17"]) {
-    const result = await restoreFixture(account, [{ id: account, email: account + "@familiada.online" }]);
-    assert.equal(result.status, 200);
-    assert.equal(result.data.created, false);
-    assert.equal(result.data.user_id, account);
-    assert.equal(result.calls.filter(call => call.method === "POST" && call.path === "/auth/v1/admin/users").length, 0);
-  }
-});
-
-test("restore nie wybiera spośród dwóch pasujących kont11/12", async () => {
-  for (const account of ["test11", "test12"]) {
-    const result = await restoreFixture(account, [{ id: "one", email: account + "@familiada.online" }, { id: "two", email: account === "test12" ? "test13@familiada.online" : "test11@familiada.online" }]);
-    assert.equal(result.status, 409);
-    assert.equal(result.data.error, "test_account_not_unique");
-    assert.equal(result.calls.length, 1);
-  }
-});
-
-test("restore odrzuca8/9/10/14 i adres zamiast nazwy przed zapytaniem do auth", async () => {
-  for (const account of ["test8", "test9", "test10", "test14", "test11@familiada.online", "test7"]) {
-    const result = await restoreFixture(account, []);
-    assert.equal(result.status, 400);
-    assert.equal(result.calls.length, 0);
-  }
-});
-
-test("restore nie kontynuuje po błędzie tworzenia lub odpowiedzi innego konta", async () => {
-  for (const account of ["test11", "test12"]) for (const options of [{ createStatus: 503 }, { createdEmail: "other@example.invalid" }]) {
-    const result = await restoreFixture(account, [], options);
-    assert.equal(result.status, options.createStatus || 502);
-    assert.equal(result.calls.length, 2);
-  }
-});
-
-test("restore zachowuje nazwę11 i odzyskuje12 z alternatywnego adresu13", async () => {
-  for (const account of ["test11", "test12"]) {
-    const result = await restoreFixture(account, [{ id: account, email: account === "test12" ? "test13@familiada.online" : "test11@familiada.online", user_metadata: { username: "custom11" } }]);
-    assert.equal(result.status, 200);
-    assert.deepEqual(result.data, { ok: true, account, user_id: account, email: account + "@familiada.online", created: false });
-    const update = result.calls.find(call => call.method === "PUT");
-    assert.equal(update.body.user_metadata.username, account === "test11" ? "custom11" : "test12");
-    assert.equal(result.calls.filter(call => call.path === "/auth/v1/admin/users" && call.method === "POST").length, 0);
-  }
-});
-
-test("restore15 wymaga potwierdzonego wyjątku admina", async () => {
-  const result = await restoreFixture("test15", [], { excluded: false });
-  assert.equal(result.status, 502);
-  assert.equal(result.data.error, "admin_exclusion_missing");
+  assert.ok(calls.every(call=>call.url.includes('e2e%2Bnoaccount01%40familiada.online')));
 });
 
 const TECHNICAL_FROM = 'bounce+948a5050-c564-11f1-8b41-16423a433ff6_vt1@bounce-zem.familiada.online';
@@ -241,10 +139,10 @@ for (const recipient of ['admin@familiada.online', 'unknown@familiada.online']) 
 test('technical sender still delivers to every exact test mailbox', async (t) => {
   const calls = [];
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url, options) => { calls.push({ url: String(url), body: JSON.parse(options.body) }); return Response.json([{ id: 'fixture' }]); };
+  globalThis.fetch = async (url, options) => { if (String(url).includes('/rpc/e2e_identity')) return Response.json({ name: 'e2e.identity01' }); calls.push({ url: String(url), body: JSON.parse(options.body) }); return Response.json([{ id: 'fixture' }]); };
   t.after(() => { globalThis.fetch = originalFetch; });
-  for (let n = 1; n <= 15; n++) {
-    const to = `test${n}@familiada.online`;
+  const addresses = ['standard01', 'standard40', 'noaccount10', 'disposable06', 'disposable06.new', 'dedicated01'].map((id) => `e2e+${id}@familiada.online`);
+  for (const to of addresses) {
     await worker.email({ from: TECHNICAL_FROM, to, headers: new Headers({ subject: 'Invitation' }),
       raw: new Blob(['Content-Type: text/plain\r\n\r\nFixture']).stream(),
       async forward() { assert.fail('test mail forwarded'); },
@@ -252,7 +150,7 @@ test('technical sender still delivers to every exact test mailbox', async (t) =>
     assert.equal(calls.at(-1).body.recipient, to);
     assert.match(calls.at(-1).url, /\/e2e_emails$/);
   }
-  assert.equal(calls.length, 15);
+  assert.equal(calls.length, addresses.length);
 });
 test('ordinary replies and similar domains retain the real inbox path', async (t) => {
   const calls = [];
@@ -274,12 +172,12 @@ test('ordinary replies and similar domains retain the real inbox path', async (t
 test("zwolnienie blokady maila: tylko z tokenem, adres testowy i dozwolony klucz", async (t) => {
   const originalFetch = globalThis.fetch;
   const calls = [];
-  globalThis.fetch = async (url, options = {}) => { calls.push({ url: String(url), body: options.body ? JSON.parse(options.body) : null }); return Response.json(true); };
+  globalThis.fetch = async (url, options = {}) => { if (String(url).includes("/rpc/e2e_lease_owns")) return Response.json(true); calls.push({ url: String(url), body: options.body ? JSON.parse(options.body) : null }); return Response.json(true); };
   t.after(() => { globalThis.fetch = originalFetch; });
   const send = (body, withToken = true) => worker.fetch(new Request("https://www.familiada.online/_e2e_api/mail-cooldowns/release", {
-    method: "POST", headers: { "Content-Type": "application/json", ...(withToken ? { "X-E2E-Token": token() } : {}) }, body: JSON.stringify(body),
+    method: "POST", headers: { "Content-Type": "application/json", "X-E2E-Run": "run-1", ...(withToken ? { "X-E2E-Token": token() } : {}) }, body: JSON.stringify(body),
   }), env(), {});
-  const ok = { recipient: "test14@familiada.online", action_key: "auth:guest_upgrade_email" };
+  const ok = { recipient: "e2e+noaccount01@familiada.online", action_key: "auth:guest_upgrade_email" };
   assert.equal((await send(ok, false)).status, 401);
   assert.equal((await send({ ...ok, recipient: "real@example.com" })).status, 400);
   assert.equal((await send({ ...ok, action_key: "account:email" })).status, 400);
@@ -287,5 +185,5 @@ test("zwolnienie blokady maila: tylko z tokenem, adres testowy i dozwolony klucz
   assert.equal((await send(ok)).status, 200);
   assert.equal(calls.length, 1);
   assert.match(calls[0].url, /\/rest\/v1\/rpc\/mail_cooldown_email_release$/);
-  assert.deepEqual(calls[0].body, { p_email: "test14@familiada.online", p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200 });
+  assert.deepEqual(calls[0].body, { p_email: "e2e+noaccount01@familiada.online", p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200 });
 });

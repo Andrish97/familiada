@@ -313,3 +313,29 @@ test("manual: telefon — „Wróć do: …” w pasku ze „Spis treści” po 
   await expect(page.locator(".m-article h1")).toContainText("Moje gry");
   await expect(back).toBeHidden();
 });
+
+test("manual: podzielony ekran tabletu — Wskazówki działają, nakładka blokady ma wspólny styl", async ({ browser }) => {
+  // iPad w poziomie, połowa ekranu: strona bez progu szerokości nie jest blokowana.
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 590, height: 820 }, screen: { width: 1180, height: 820 }, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["manual"] });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${ORIGIN}/manual/?ch=6`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".m-doc .m-h2").first()).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-device-guard", "ok");
+    await expect(page.locator("#pageGuard")).toHaveCount(0);
+    // Strona z progiem (np. wąż 640 px) w tym samym widoku dostaje „Za wąskie okno”, ze stylem.
+    const state = await page.evaluate(async () => {
+      const m = await import("/shared/js/core/device-guard.js");
+      const s = m.deviceGuardState(640);
+      m.showDeviceGuard(s, "/");
+      return s;
+    });
+    expect(state).toBe("narrow");
+    const overlay = page.locator("#pageGuard.blocking-overlay");
+    await expect(overlay).toBeVisible();
+    expect(await overlay.evaluate((el) => getComputedStyle(el).position)).toBe("fixed");
+  } finally {
+    await context.close();
+  }
+});

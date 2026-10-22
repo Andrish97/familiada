@@ -24,14 +24,14 @@
 // matematyki animacji/fontów od zera nie dałoby żadnej korzyści, tylko
 // ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
 
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-22T07485";
-import { LONG_GAP, layoutLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-22T07485";
-import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-22T07485";
-import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-22T07485";
-import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-22T07485";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T07485";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T07485";
-import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-22T07485";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-22T21510";
+import { LONG_GAP, layoutLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-22T21510";
+import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-22T21510";
+import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-22T21510";
+import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-22T21510";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T21510";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T21510";
+import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-22T21510";
 
 
 export async function createScene() {
@@ -227,13 +227,16 @@ export async function createScene() {
   const field = (name, c1, r1, len) => ({ name, c1, r1, c2: c1 + len - 1, r2: r1 });
 
   const writeField = (GLYPHS, big, f, text, color) => {
-    const s = (text ?? "").toString().toUpperCase();
+    // Pełne znaki Unicode (emotka to jeden znak, nie dwie połówki UTF-16).
+    const s = Array.from((text ?? "").toString().toUpperCase());
     const len = f.c2 - f.c1 + 1;
     for (let i = 0; i < len; i++) putCharAt(GLYPHS, big, f.c1 + i, f.r1, s[i] ?? " ", color);
   };
 
   const alignRight = (val, width) => { const s = (val ?? "").toString(); if (!s.length) return " ".repeat(width); return s.length >= width ? s.slice(-width) : " ".repeat(width - s.length) + s; };
-  const clipText = clipDisplayText;
+  // Znaki spoza fontu są pomijane (z jedną spacją za nimi), zanim tekst
+  // zostanie skrócony — bez pustych miejsc (decyzja użytkownika 2026-10-22).
+  const clipText = (text, capacity) => clipDisplayText(dropUnsupported(text, GLYPHS), capacity);
 
   const updateField = async (GLYPHS, big, f, text, { out = null, in: inn = null, color = LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };

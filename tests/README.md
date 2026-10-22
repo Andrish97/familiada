@@ -66,12 +66,12 @@ osobno.
 
 **Tylko te dwa sekrety w ogóle.** Nie ma sekretu na nazwy użytkowników —
 wszystkie konta testowe to wzorzec **`test1@familiada.online`,
-`test2@familiada.online`, ... `test10@familiada.online`**
+`test2@familiada.online`, ...** — pełna lista i role w sekcji "Test accounts"
 (`testAccountUsername(n)` w `e2e/helpers/login.js`) — domena jest stałą
 w kodzie, nie sekretem, bo produkcja to zawsze `familiada.online`, a sam
 login bez prawdziwego hasła niczego nie odsłania. Domyślne konto (gdy
 test nie podaje jawnego `username`) to `test1@familiada.online`. Patrz
-sekcja "Pula kont testX" niżej — trzeba realnie założyć te konta na
+sekcja "Test accounts" niżej — trzeba realnie założyć te konta na
 produkcji, tyle ile faktycznie jest używane.
 
 **Cloudflare Worker** (`familiada`, `cloudflare/maintenance-worker`):
@@ -139,7 +139,7 @@ dotychczasowy pełny zestaw.
 - `--grep "fragment nazwy testu"` — tylko pasujące testy.
 
 Puste pole = wszystkie testy, w równoległych grupach (job `e2e-grouped`,
-patrz sekcja "Pula kont testX" niżej). Filtr trafia w osobny job
+patrz sekcja "Test accounts" niżej). Filtr trafia w osobny job
 (`e2e-custom-filter`) — **jeden silnik testów, jedna komenda wszędzie**:
 ten sam `playwright.config.js`, ta sama
 `playwright test <pliki/filtr> --workers="$TEST_WORKERS"` w KAŻDEJ
@@ -147,64 +147,107 @@ grupie `e2e-grouped` i w `e2e-custom-filter` — bez żadnego "jeśli to ten
 plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 `npx playwright test e2e/nazwa-testu.spec.js`.
 
-## Pula kont testX (`test1@familiada.online` … `test10@…`)
+## Test accounts
 
-`test17@familiada.online` jest dedykowane ręcznemu workflow galerii E20 i nie
-należy do puli zwykłych workerów. Workflow odtwarza je z tym samym sekretem
-`TEST_PASSWORD`, zachowuje stałe ID oraz używa własnych, oznaczonych danych.
-Skrzynka test17 jest dostępna wyłącznie w tym workflow; nie czyści on całej
-skrzynki, tylko odczytuje wiadomości potrzebne do zrzutów.
+Pełny mechanizm, decyzje i pakiety wdrożenia: [`docs/konta-testowe-plan.md`](../docs/konta-testowe-plan.md)
+(E25). Stare zasady (`test1`…`test17`, `testAccountUsername`,
+`loginAsPooledTestUser`, `test_accounts`) są **wycofane** — kod jeszcze ich
+używa do końca E25, ale **nie dopisywać nowych użyć**; spece przepisują
+dedykowani agenci (pakiet E planu).
 
-> **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker zapisuje maile w prywatnej skrzynce `e2e_emails`, dostępnej przez podpisane API testowe tak jak test1–test13), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
->
-> **Zwykła pula pomija** test9 i test10 (druga sesja — całkowicie wykluczone). test4/test5 wróciły do puli 2026-10-10.
->
-> **Równoległe przebiegi** (lżejsze testy): dozwolone, gdy każdy przebieg dostaje **rozłączny zestaw kont** przez wejście workflow `test_accounts` (np. `1,2,3` i `4,5,6`) i spece logują się wyłącznie przez pulę (`loginAsPooledTestUser`). Spece z kontami przypisanymi na stałe (`testAccountUsername(n)`, `loginAsTestUser` z domyślnym test1) albo z `@mailbox` (`clearMailbox` czyści całą skrzynkę) — tylko pojedynczo, gdy nic innego nie biegnie.
+### Roles
 
-Każdy plik/filtr testów **może** korzystać ze zwykłej puli kont
-testowych — login `test<N>@familiada.online` (`testAccountUsername(n)` w
-`e2e/helpers/login.js`, domena stała w kodzie, nie sekret), wspólne
-`TEST_PASSWORD`. **Brak sztywnego podziału między plikami** —
-który dokładnie numer trafia do którego testu decyduje kod TEGO pliku, nie
-jakaś globalna alokacja:
+| Role | Name / e-mail | Account | Do czego |
+|---|---|---|---|
+| `standard` | `e2e.standard01` / `e2e+standard01@familiada.online` | tak | wszystko zwyczajne: własne dane, udostępnianie, znajomi, poczta do zalogowanego |
+| `noaccount` | `e2e+noaccount01@familiada.online` | **nigdy** | odbiorca bez konta |
+| `disposable` | `e2e.disposable01` (+ `e2e+disposable01.new@`) | tak, odtwarzane przy każdym lease | usuwanie konta, hasło, zmiana e-maila, profil |
+| `dedicated` | `e2e.dedicated01` | tak, dane zostają | przypisane na stałe do jednej czynności (tabela niżej) |
+| `guest` | tworzony w teście | tymczasowe | `loginAsGuest`, usuwany na końcu |
 
-1. **Testy interakcji między kontami** — scenariusz z dwoma (albo więcej)
-   naprawdę różnymi, jednocześnie zalogowanymi użytkownikami (np. editor +
-   viewer na współdzielonej bazie). Przykład: `base-explorer.spec.js` i
-   `bases.spec.js` logują pierwszą stronę jako `testAccountUsername(1)`
-   (`test1@…`), drugą jako `testAccountUsername(2)` (`test2@…`).
-2. **Równoległe workery jednego pliku** — gdy jeden plik ma tyle testów,
-   że warto dać mu prawdziwą równoległość Playwrighta (`--workers=N`), a
-   nie tylko szeregową kolejkę. Jedyny dziś taki plik to `control2.spec.js`
-   (16 testów, pełne rozgrywki przez 4 urządzenia, realne wygaśnięcie
-   timerów finału ~15-20s): `loginAsPooledTestUser(page, context,
-   testInfo.parallelIndex)` wybiera `test1@…`, `test2@…`, ... z całej puli
-   po indeksie workera — każdy równoległy worker loguje się na **inne**
-   konto, więc nikt nie czeka w kolejce za cudzym logowaniem.
+Numer w roli nic nie znaczy. Rola w scenariuszu (owner, recipient…) to
+zmienna w teście, nie nazwa konta.
 
-Konta test4 i test5 są zarezerwowane: testy równoległe nie dostają ich
-automatycznie. W razie potrzeby izolowanego przebiegu wybiera się je jawnie
-wejściem workflow `test_accounts=4,5`; wtedy `loginAsPooledTestUser` przydziela
-je workerom po indeksie. Nie przypisujemy tych kont na stałe do testów.
-test9 i test10 są wyłączone bez wyjątków.
+### Dedicated accounts
 
-Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
-`test1@familiada.online` — reszta testów (game-deletion, editor,
-cross-resource-locks, ...) loguje się właśnie na nie i idzie szeregowo w
-swojej grupie.
+Konta ogólne z nazwy; przeznaczenie tylko z tej tabeli (źródło prawdy:
+`e2e_identities.purpose`). Brać, gdy czynność musi **zawsze** używać tego
+samego konta i trzymać na nim dane. Przypisanie: wolne konto → migracja
+`purpose` → wiersz tutaj → `needs: { dedicated: "<purpose>" }`. Brak
+wolnych → poprosić użytkownika o dodanie konta. Szczegóły: plan §1a.
 
-**Dwie osobne, jawne (NIE sekretne) liczby w `env:` na górze
-`.github/workflows/e2e-tests.yml`** — celowo NIE jedna:
-- `TEST_ACCOUNT_COUNT` — górny numer zwykłej puli (`test1@…`…`testN@…`);
-  konta zarezerwowane są pomijane. Załóż na produkcji tyle kont, ile wynosi
-  ta liczba — samo istnienie konta niczego nie kosztuje.
-- `TEST_ACCOUNT_NUMBERS` — opcjonalna, jawna pula dla odizolowanego przebiegu;
-  workflow przyjmuje ją jako `test_accounts` (np. `4,5`). Nie używaj jej
-  równolegle z innym testem korzystającym z tych kont.
-- `TEST_WORKERS` — ile z tych kont **faktycznie działa naraz** (przekazywane
-  jako `--workers`). **Musi zostać niskie** (patrz "Pułapki" niżej) —
-  podnoś ostrożnie, po jednym, sprawdzając realny wynik przebiegu, nie z
-  góry na maksa.
+| Account | Purpose | Kto używa | Dane na koncie |
+|---|---|---|---|
+| `e2e.dedicated01` | `e20-gallery` | galeria E20 (`e20-gallery.spec.js`, `e2e-tests.yml`) | dane do zrzutów |
+| `e2e.dedicated02`–`06` | — wolne | | |
+
+Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
+`heavy` (1 naraz — Control, wyświetlacz).
+
+### Rules for specs
+
+1. Spec **deklaruje potrzeby na górze pliku** (jedna deklaracja na plik —
+   suma potrzeb jego testów; w `describe` Playwright nie pozwala):
+   `const { test, expect } = require("./helpers/e2e-test");`
+   `test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } })`
+   i bierze konta z fixture: `const [owner, recipient] = accounts.standard`.
+   Nigdy adres, nazwa ani numer wpisane w specu. Wzór: `e2e/e2e-lease.spec.js`.
+2. Logowanie tylko `loginAs(page, context, identity)` / `loginAsGuest`.
+3. Poczta tylko przez `mailbox` i tylko na wypożyczonych tożsamościach.
+4. Destrukcyjne operacje na koncie — wyłącznie `disposable`; trwałe dane jednej czynności — wyłącznie przypisany `dedicated`.
+5. Na `noaccount` i `*.new` nie logować się i nie zakładać konta.
+6. Spec, który wysyła maile, deklaruje `mail`; Control/wyświetlacz — `heavy`.
+7. Gość — test sam usuwa konto gościa na końcu.
+8. Nowa rola lub zasób — najpierw plan i ta sekcja, potem
+   `e2e_identities` (migracja). Nic nie dopisywać tylko w specu.
+
+### Jak przepisać stary spec (stopniowo — przy każdej zmianie speca)
+
+Kto zmienia spec ze starymi kontami, przepisuje go w tym samym etapie.
+Zapadka `unit/legacyTestAccounts.test.js` pilnuje, żeby użyć starych kont
+tylko ubywało: przepisany plik usuń z `unit/legacy-test-accounts.json`.
+
+| Było | Jest |
+|---|---|
+| `require("@playwright/test")` | `require("./helpers/e2e-test")` |
+| `loginAsTestUser(page, context)` (test1) | `loginAs(page, context, accounts.standard[0])` |
+| `testAccountUsername(n)` / `loginAsPooledTestUser(…, testInfo.parallelIndex)` | kolejne `accounts.standard[i]` (każdy worker ma własny komplet) |
+| test7/test8 jako odbiorca z pocztą | `accounts.standard[1]` + `resources: ["mail"]` |
+| `"test14@familiada.online"` | `accounts.noaccount[0].email` |
+| test11/test12(+13)/test15 | `accounts.disposable[0]` (adres zapasowy: `email.replace("@", ".new@")`) |
+| `clearMailbox("testN@…")` / `waitForEmail({ recipient })` | `mailbox.clear(identity)` / `mailbox.waitFor(identity, { … })` |
+| `restoreTestAccount(...)` | usunięte — konto `disposable` odtwarzane przy każdym lease |
+| `@mailbox`, kolejka „pojedynczo” | `resources: ["mail"]`; Control/wyświetlacz `resources: ["heavy"]` |
+
+**Konta `test1`…`test17` usunięte (2026-10-22, migracja 463)**, reguły poczty `testN@`
+też — spece ze starymi kontami nie przejdą, dopóki nie zostaną przepisane.
+Worker nie ma już `/_e2e_api/accounts/restore` ani endpointów centrum maili/szablonów
+pod test14.
+**Poczta na `testN@` nie dochodzi** (reguły Cloudflare usunięte 2026-10-22) —
+spec z `waitForEmail`/`clearMailbox` na starym adresie trzeba przepisać, zanim
+znów przejdzie. Skrzynka jest uniwersalna (`helpers/mailbox.js`: `clearMailbox`, `waitForEmail`,
+`readMailDelivery`, `releaseMailCooldown`, `resetMailProviderLimits`, `extractHttpLinks`)
+— dowolny wypożyczony adres `e2e+`; fikstur przypisanych do kont nie ma (464).
+
+Konta są czyszczone przy wypożyczeniu — spec sam przygotowuje swoje dane
+(bez polegania na danych zostawionych na test1…). Fikstury SQL/Worker
+z test8/test14 na stałe (np. `e2e_registered_subscriber_fixture`,
+`/_e2e_api/mail-center-*`) wymagają wersji z adresatem w parametrze —
+zgłosić w Dzienniku, zanim spec zostanie przepisany (pakiet F).
+
+### Rules for runs
+
+- Każdy worker wypożycza (lease) swój komplet na wyłączność; brak wolnych
+  kont → czeka do ~10 min, potem pada z listą posiadaczy.
+- Każde konto jest **czyszczone przy wypożyczeniu** (`dedicated` — tylko
+  blokady, sesje i skrzynka, dane zostają), więc padający test nie psuje
+  kont następnym. Konto, którego nie da się wyczyścić, trafia do
+  **kwarantanny** i nie jest wydawane (plan §3a).
+- `scripts/agent-tools/e2e-seq.sh`: grupa samych speców z `helpers/e2e-test`
+  startuje od razu; grupa ze starym specem czeka jak dotąd.
+- Przebiegi równoległe dozwolone bez umawiania się — ogranicza je tylko
+  lease (konta i zasoby).
+- `TEST_WORKERS` (`--workers`) zostaje niskie (patrz „Pułapki”: run #122).
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
@@ -239,7 +282,7 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   `workers: 1` jako lokalną wartość domyślną; w CI zawsze nadpisuje to
   jawne `--workers="$TEST_WORKERS"`. Plik, który chce realnej
   równoległości, musi więc sam przypisywać KAŻDEMU workerowi inne konto z
-  puli (patrz `loginAsPooledTestUser`, sekcja "Pula kont testX" wyżej) —
+  puli (patrz `loginAsPooledTestUser`, sekcja "Test accounts" wyżej) —
   inaczej wszystkie workery i tak trafią na to samo domyślne `test1@…` i
   wróci ten sam wyścig.
 - **Za wysoki `TEST_WORKERS` przeciąża runnera, nie przyspiesza.** Run #122
@@ -251,9 +294,7 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   renderować strony w czasie, na jaki czekał Playwright — stąd masowe
   `element is not stable`/`element is not enabled` (setki powtórzeń, nie
   pojedyncze) i timeouty, **nie błąd logiki testów**. Dlatego
-  `TEST_ACCOUNT_COUNT` (rozmiar puli) i `TEST_WORKERS` (realna
-  równoległość) to dwie osobne zmienne — pierwsza może być wysoka, druga
-  musi być niska (patrz sekcja "Pula kont testX" wyżej). Podnoś
+  `TEST_WORKERS` (realna równoległość) musi być niska. Podnoś
   `TEST_WORKERS` po jednym i sprawdzaj wynik, zamiast zakładać, że więcej
   kont = można dać `--workers` na maksa.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
@@ -327,15 +368,15 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
   Zwraca login n-tego konta z puli testX (`test<n>@familiada.online`,
   domena stała w kodzie). Użyj razem z `loginAsTestUser(page, context,
   { username: testAccountUsername(2) })` w testach interakcji między
-  kontami — patrz sekcja "Pula kont testX" wyżej (`base-explorer.spec.js`/
+  kontami — patrz sekcja "Test accounts" wyżej (`base-explorer.spec.js`/
   `bases.spec.js` już tak robią, dla `test1`/`test2`).
 - `getTestAccountPool()` / `loginAsPooledTestUser(page, context,
-  workerIndex)` — pula `test1@…`, `test2@…`, ... `testN@…` (rozmiar =
-  `TEST_ACCOUNT_COUNT`) do prawdziwej równoległości wewnątrz jednego pliku;
+  workerIndex)` — **wycofane** (konta testN usunięte, workflow bez
+  `TEST_ACCOUNT_COUNT`/`test_accounts`) — dawna pula do równoległości wewnątrz jednego pliku;
   `loginAsPooledTestUser` wybiera konto po `workerIndex` (przekaż
   `testInfo.parallelIndex`). Używane dziś przez `control2.spec.js`, ale
   nie jest do niego przywiązane — każdy plik może po to sięgnąć, patrz
-  sekcja "Pula kont testX" wyżej.
+  sekcja "Test accounts" wyżej.
 
   **Każdy test używający `loginAsGuest` musi na końcu sam usunąć to
   konto** (przez prawdziwy UI flow — `#deleteAccount` +
@@ -353,20 +394,3 @@ Pliki aplikacji są w `web/`: strona `<nazwa>/index.html`, jej skrypty w
 `<nazwa>/js/`, wspólne moduły w `shared/js/`. Publiczne adresy zasobów
 odpowiadają ścieżkom względem `web/`. Skrypt wersjonowania obejmuje tylko
 frontend. Scenariusze E2E pozostają testami produkcyjnymi.
-
-### Dedykowane konta testowe
-
-Do usuwania używać15, poza zwykłą pulą.11 testuje hasło,12 profil i zmianę
-adresu na13;14 pozostaje skrzynką bez konta,9/10 wyłączone.
-`restoreTestAccount("test15")` tworzy brakujące konto z potwierdzonym
-adresem i `TEST_PASSWORD`; istniejące konto zachowuje ID. Sprawdza też
-automatyczny wyjątek admina. Odtwarzać przed testem i w `finally`, potem
-sprawdzać logowanie w świeżym kontekście. Dane i dawne dostępy nie wracają.
-`test-account-restore.spec.js` sprawdza11/12/15; `recipient-account-cascade.spec.js`
-usunięcie15 przez UI, rzeczywiste maile, oba typy głosów i stare linki.
-Skrzynka15 wymaga reguły Cloudflare kierującej ją do Workera `familiada`.
-Punktowo, jeden przebieg naraz, bez retry. Nie logować haseł ani tokenów.
-
-`test17` jest stałym kontem galerii E20, poza testami konta15 i zwykłą pulą.
-Odtworzenie odbywa się przez chroniony endpoint Workera przy użyciu wspólnego
-`TEST_PASSWORD`; nie usuwa zasobów galerii ani całej poczty.

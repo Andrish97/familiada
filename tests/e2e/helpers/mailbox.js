@@ -1,11 +1,13 @@
 const { generateE2EToken } = require("./e2e-token");
+const { RUN_ID } = require("./e2e-lease-client");
 
 const API_BASE = "https://www.familiada.online/_e2e_api";
 
 function authHeaders(extra = {}) {
   const secret = process.env.E2E_BYPASS_SECRET;
   if (!secret) throw new Error("Brak E2E_BYPASS_SECRET");
-  return { "X-E2E-Token": generateE2EToken(secret), ...extra };
+  // X-E2E-Run: skrzynki e2e+ (E25) tylko dla przebiegu, który je wypożyczył.
+  return { "X-E2E-Token": generateE2EToken(secret), "X-E2E-Run": RUN_ID, ...extra };
 }
 
 async function api(path, options = {}) {
@@ -77,36 +79,8 @@ function extractHttpLinks(email) {
   return [...new Set(source.match(/https?:\/\/[^\s"'<>]+/g) || [])];
 }
 
-async function restoreTestAccount(account) {
-  const password = process.env.TEST_PASSWORD;
-  if (!password) throw new Error("Brak TEST_PASSWORD");
-  return api("/accounts/restore", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ account, password }),
-  });
-}
-
 async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-async function queueMailTemplateFixtures(items) {
-  return api("/mail-template-fixtures", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient: "test14@familiada.online", items: items.map(({ subject, html }) => ({ subject, html })) }),
-  });
-}
-
-async function clearMailCenterCapabilities() {
-  return api("/mail-center-capabilities", { method: "DELETE" });
-}
-
-async function restoreMailCenterPreference(suppressedAt) {
-  return api("/mail-center-preference", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ suppressed_at: suppressedAt }),
-  });
-}
-
-module.exports = { releaseMailCooldown, restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };

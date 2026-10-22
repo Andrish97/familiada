@@ -16,6 +16,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
   Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
+  Test accounts — role i lease (E25): `docs/konta-testowe-plan.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
@@ -49,11 +50,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - **Nie powtarzać zielonych:** spec zielony na danym kodzie nie jest puszczany
   ponownie, jeśli późniejsze zmiany (scalenie, poprawka) nie dotknęły plików,
   które testuje. Przed kolejnym przebiegiem porównać diff z plikami speca.
-- **Równolegle tylko na rozłącznych kontach:** dwa przebiegi naraz wyłącznie
-  z rozłącznym `test_accounts` i bez `@mailbox`; przy pracy innej sesji
-  na tych samych kontach/skrzynkach — nie równolegle.
-- Powód ograniczeń: wspólne skrzynki testowe, limity wysyłki i cooldowny poczty,
-  konta na stałe i mały serwer bazy — równoległe przebiegi dają fałszywe błędy.
+- **Równoległe przebiegi:** spece z wypożyczaniem kont (`helpers/e2e-test`)
+  idą równolegle bez umawiania się — konta, skrzynki i zasoby `mail`/`heavy`
+  rozdziela lease; workflow nie przydziela kont.
+- Powód zasobów `mail`/`heavy`: wspólne limity wysyłki i mały serwer bazy.
 
 ## Wygląd (decyzja 2026-10-10)
 
@@ -108,18 +108,26 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe test9@ i test10@ — NIE UŻYWAĆ** (testy drugiej sesji;
-  `EXCLUDED_TEST_ACCOUNTS` w `tests/e2e/helpers/login.js`). Pula e2e:
-  test1–test8 (test4/test5 wróciły do puli 2026-10-10).
-- **Równoległe przebiegi e2e**: domyślnie jeden naraz. Lżejsze przebiegi
-  wolno puszczać równolegle, gdy każdy dostaje **rozłączny zestaw kont**
-  (wejście workflow `test_accounts`, np. `1,2,3` i `4,5,6`) i spece logują się
-  tylko przez pulę. Spece z kontami na stałe albo `@mailbox` — pojedynczo
-  (szczegóły: `tests/README.md`, „Pula kont”).
-- **test15@familiada.online — dedykowane usuwanie konta**, poza zwykłą pulą. Odtwarzać przed testem i w `finally`, sprawdzać logowanie oraz automatyczny wyjątek admina. Konta11/12 (adres13 dla12) zostają do testów hasła/profilu/e-maila.
-- **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
-  inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
-  bez konta). Nie zakładać na nim konta.
+- **Test accounts (decyzja użytkownika 2026-10-22, E25):** role `standard`,
+  `noaccount`, `disposable`, `dedicated`, `guest`; zasoby `mail`, `heavy`.
+  `dedicated` = konto przypisane na stałe do jednej czynności (rejestr w
+  `tests/README.md` „Dedicated accounts”); brak wolnych → prośba do użytkownika.
+  Spec deklaruje potrzeby (`test.use({ needs })` na górze pliku, wzór
+  `tests/e2e/e2e-lease.spec.js`), worker
+  wypożycza (lease) konta na wyłączność — równoległe przebiegi bez umawiania
+  się. Nazwy `e2e.<role><NN>`, e-mail `e2e+<role><NN>@familiada.online`
+  (jedna reguła Cloudflare `e2e@` + Subaddressing). Nazewnictwo po angielsku.
+  Stare zasady (`test1`…`test17`, `testAccountUsername`, pula, `test_accounts`)
+  wycofane — nie dopisywać nowych użyć. Zasady: `tests/README.md`
+  „Test accounts”; plan i pakiety: `docs/konta-testowe-plan.md`.
+- **Przepisywanie speców stopniowo (decyzja użytkownika 2026-10-22):** kto
+  zmienia spec ze starymi kontami, przepisuje go na `helpers/e2e-test` w tym
+  samym etapie (przewodnik: `tests/README.md` „Jak przepisać stary spec”);
+  zapadka `unit/legacyTestAccounts.test.js` — przepisany plik usunąć
+  z `unit/legacy-test-accounts.json`. Spece ze starymi kontami: jeden przebieg
+  naraz jak dotąd. Konta `test1`…`test17` i reguły Cloudflare `testN@`
+  usunięte (2026-10-22, migracja 463) — spece ze starymi kontami nie przejdą
+  przed przepisaniem. Speców e2e nie poprawiać bez polecenia użytkownika.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
