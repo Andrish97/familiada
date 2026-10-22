@@ -277,6 +277,8 @@ jobs:
           E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
           E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
+          # Spec może wypożyczać zasoby tylko dla wybranych testów (np. poczta w control2).
+          E2E_SPEC_FILTER: ${{ inputs.spec_filter }}
         run: |
           if [ "$IS_E20_GALLERY" = "1" ]; then
             npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0 --max-failures=1
