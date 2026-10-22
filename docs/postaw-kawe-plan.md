@@ -136,6 +136,8 @@ ani korzyści; uwagi i pomysły przez Kontakt (19.6).
 
 ## Kolejność wdrożenia (cykl z CLAUDE.md)
 
+**Decyzja użytkownika 2026-10-22: wdrożenie na `main` dopiero PO wdrożeniu nowych Wskazówek** (sesja E13 `session_01N23BfpARMDFL5do9fQ2PQv`, branch `ccr-ab64ea01-znmxxs`, rozdz. 21 u niej). Sesja Wskazówek ma dać znać po wdrożeniu; wtedy scalić `main`, e2e (jeśli scalenie dotknęło plików speca), Pages, kontrola.
+
 1. Link od użytkownika → `SUPPORT_URL`.
 2. Kroki 2–3 na branchu, unit, zrzuty (390/1400 px).
 3. E2E z kodu brancha (`serveBranchCode`) — nowy spec `support-modal.spec.js`:
