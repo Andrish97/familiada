@@ -166,7 +166,8 @@ for (const map of MAP_LIST) {
 for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => name !== "phoneLandscape")) {
   test(`kontakty: skróty i ikony na stronach — ${device}`, async ({page}, testInfo) => {
     test.setTimeout(120000);
-    await page.setViewportSize(viewport);
+    // VIEWPORTS opisuje profil (viewportWidth/viewportHeight), nie rozmiar Playwrighta.
+    await page.setViewportSize({ width: viewport.viewportWidth, height: viewport.viewportHeight });
     await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
     const origins = [
       ["/games/", ["btnFriends", "btnSubscribers"]],
