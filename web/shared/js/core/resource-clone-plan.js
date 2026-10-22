@@ -1,9 +1,9 @@
 // Definition preparation shared by duplicate-to-self and send-to-friend.
 // Authorization, demo provenance and the persisted request ID are server data.
-import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-22T03254';
-import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-22T03254';
-import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-22T03254';
-import { parseLogoPackage } from '../../../logos/js/package.js?v=v2026-10-22T03254';
+import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-22T03261';
+import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-22T03261';
+import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-22T03261';
+import { parseLogoPackage } from '../../../logos/js/package.js?v=v2026-10-22T03261';
 
 
 export function duplicateResourceName(name, names, suffix, maxLength = 80) {
