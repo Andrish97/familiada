@@ -1,181 +1,225 @@
-# Konta testowe — tory, skrzynki bez konta, zasady (E25)
+# Test accounts — role, lease, automatyczne wykluczenia (E25)
 
-Cel: więcej kont testowych i jasny podział, żeby kilka agentów mogło
-puszczać e2e naraz bez czekania na siebie. Zasady obowiązujące **dziś**
-i docelowe (po E25) opisuje `tests/README.md`, sekcja „Konta testowe”.
-Ten dokument: decyzje, stan obecny, schemat docelowy, kroki wdrożenia.
+Plan uzgodniony z użytkownikiem 2026-10-22. Treść po polsku, **wszystkie
+nazwy (konta, role, zasoby, tabele, funkcje, pola) po angielsku**.
+Zasady dla speców: `tests/README.md`, sekcja „Test accounts”.
 
 ## Decyzje
 
 | Data | Decyzja |
 |---|---|
-| 2026-10-22 | Zwiększyć pulę kont i podzielić ją tak, żeby różne agenty nie czekały na siebie (użytkownik). |
-| 2026-10-22 | Przerobić dokument o testach: warunki przypisywania i używania kont testowych (użytkownik). |
-| 2026-10-22 | Skrzynki bez konta dostają **inny identyfikator** niż `testN` (użytkownik): `bezkontaN` (adres `e2e+bezkontaN@familiada.online`, patrz decyzja o poczcie niżej). Liczba w adresie = numer toru. `testN` zawsze oznacza konto, `bezkontaN` — samą skrzynkę. |
-| 2026-10-22 | Podział na **tory** (komplet rozłącznych kont + własna skrzynka bez konta). Na start 4 tory, w tym obecny (propozycja agenta przyjęta do planu). |
+| 2026-10-22 | Zwiększyć pulę kont i podzielić ją tak, żeby agenty nie czekały na siebie. |
+| 2026-10-22 | Przerobić zasady przypisywania i używania kont testowych. |
+| 2026-10-22 | Skrzynki bez konta mają inny identyfikator niż konta → rola `noaccount`. |
+| 2026-10-22 | Bez dopisywania adresów w Cloudflare → jedna reguła `e2e@` + Subaddressing. |
+| 2026-10-22 | **Kilka ról, nie osobne nazwy dla każdego konta.** Rola mówi, do czego konto służy; numer w roli nic nie znaczy (konta w roli są wymienne). |
+| 2026-10-22 | Jeden mechanizm dla wszystkich scenariuszy: spec deklaruje potrzeby, worker **wypożycza** (lease) konta i zasoby na wyłączność. |
+| 2026-10-22 | Automatyczne wykluczanie kont testowych w panelu admina do poprawy (pewne źródło oznaczenia, rola w panelu, pełny przegląd statystyk). |
+| 2026-10-22 | **Stare reguły całkowicie do usunięcia** — `test1`…`test17`, `testAccountUsername`, `loginAsPooledTestUser`, `TEST_ACCOUNT_COUNT`, `test_accounts`, wyrażenia `test[0-9]…`, reguły Cloudflare dla pojedynczych adresów. Bez mapy przejściowej i bez aliasów. Spece przepisują dedykowani agenci (pakiety niżej). |
+| 2026-10-22 | Nazewnictwo po angielsku (międzynarodowe) — konta, role, zasoby, API. |
 
-| 2026-10-22 | **Poczta bez dopisywania reguł** (użytkownik: „jak nie dodawać za każdym razem maili w Cloudflare”; mechanizm zaproponowany przez agenta): jedna reguła Cloudflare `e2e@familiada.online` → Worker `familiada` + włączony *Subaddressing*; wszystkie nowe skrzynki testowe to `e2e+<id>@familiada.online`. Szczegóły: „Poczta testowa — jedna reguła”. |
+**Do potwierdzenia:** liczności puli (propozycja: 40 / 10 / 6 / 2).
 
-**Do potwierdzenia przez użytkownika:** liczba torów (w planie 4);
-konta specjalne (hasło, profil, usuwanie) na razie tylko w torze 1.
+## 1. Role
 
-## Poczta testowa — jedna reguła
+| Role | Name / e-mail | Account | Do czego | Nie wolno |
+|---|---|---|---|---|
+| `standard` | `e2e.standard01` / `e2e+standard01@familiada.online` | tak | wszystko zwyczajne: własne gry, bazy, logo, ankiety, Control; udostępnianie, współedycja, zadania, kopie, znajomi; poczta do zalogowanego | usuwać konto, zmieniać hasło, e-mail, nazwę |
+| `noaccount` | — / `e2e+noaccount01@familiada.online` | **nigdy** (baza blokuje) | odbiorca bez konta: subskrybent tylko e-mail, urządzenie na e-mail, zaproszenie bez konta | logować się, zakładać konto |
+| `disposable` | `e2e.disposable01` / `e2e+disposable01@` (+ `e2e+disposable01.new@` jako nowy adres) | tak, **odtwarzane przy każdym lease** | usuwanie konta i kaskady, zmiana i reset hasła, zmiana e-maila, profil | — (stan po teście nieistotny) |
+| `gallery` | `e2e.gallery01` / `e2e+gallery01@` | tak, stałe dane | tylko zrzuty galerii E20 (odczyt) | zmieniać dane |
+| `guest` | tworzony w teście (`loginAsGuest`) | tak, tymczasowe | ograniczenia gościa, migracja gościa | zostawiać po teście |
 
-**Ustawienie jednorazowe (użytkownik, panel Cloudflare):**
-1. Email Routing → Settings → **Subaddressing: włączone**.
-2. Routing rules → Custom address `e2e@familiada.online` → akcja
-   *Send to a Worker* → `familiada`.
+Zasady nazw:
+- każda tożsamość testowa zaczyna się od `e2e`;
+- e-mail = nazwa z kropką zamienioną na `+` (`e2e.standard07` → `e2e+standard07@familiada.online`);
+- numer dwucyfrowy, bez znaczenia; limit nazwy 3–20 znaków `[a-zA-Z0-9_.-]`
+  (najdłuższa `e2e.disposable01` = 16);
+- rola w scenariuszu (owner, recipient, invitee…) to **zmienna w teście**,
+  nie nazwa konta.
 
-Od tej chwili każdy adres `e2e+<cokolwiek>@familiada.online` trafia do
-Workera tą jedną regułą (Cloudflare dopasowuje `user+detail@` do reguły
-`user@`, część `+detail` zostaje w `message.to`). Nowy tor, nowa skrzynka
-bez konta, nowe konto specjalne — **bez zmian w Cloudflare**.
+Liczności (propozycja): `standard` 40, `noaccount` 10, `disposable` 6,
+`gallery` 2. Rachunek: typowy spec ≤ 3 konta × 4 workery = 12 → 3 przebiegi
+naraz z zapasem.
 
-**Adresy:**
-- konto toru: e-mail `e2e+t{L}{k}@familiada.online`, nazwa użytkownika
-  `test{L}{k}` (np. `e2e+t23@…` / `test23`). Spece logują się **nazwą
-  użytkownika** (logowanie przyjmuje nazwę zamiast e-maila), a adres
-  służy tylko do poczty;
-- skrzynka bez konta: `e2e+bezkonta{L}@familiada.online` — inny
-  identyfikator, z samego adresu widać, że konta nie ma;
-- istniejące test1–test17 zostają przy swoich regułach (bez przenoszenia
-  kont); `bezkonta1` (tor 1) to już `e2e+bezkonta1@…`, więc test14
-  i jego reguła odchodzą po przejściu.
+## 2. Zasoby (shared resources)
 
-**Worker:** adres testowy = obecne `testN@` **albo**
-`^e2e\+(t[2-9][1-8]|bezkonta[1-9])@familiada\.online$` → zapis do
-`e2e_emails` (nigdy do skrzynki admina, Telegrama ani przekierowania).
-Inna część po `+` → odrzucenie (`message.setReject`), żeby spam na
-`e2e+losowe@` nie zaśmiecał niczego. Gdyby `message.to` przyszło bez
-`+detail` (starsza wersja dokumentacji Cloudflare tak to opisywała),
-Worker czyta adresata z nagłówka `To` — rozstrzyga to jeden mail
-kontrolny po włączeniu (krok 4).
+Ograniczenia wspólne mimo rozłącznych kont — ten sam mechanizm lease,
+jako „wirtualne konta” roli `resource`:
 
-**Sprawdzone w kodzie:** `_norm_email` = `lower(btrim)` (plus nie jest
-wycinany, adresy się nie zlewają); walidacja e-maila w `auth.js` tylko
-wymaga `@`; wyjątek statystyk i rezerwacja nazw działają po nazwie
-`test[0-9]+` — dla nowych adresów `e2e+…` wyjątek statystyk trzeba dopisać
-(funkcja `e2e_test_address`).
-
-**Dlaczego nie catch-all:** dziś każdy mail spoza adresów testowych idzie
-do skrzynki admina, na przekierowanie i do Telegrama. Catch-all na Worker
-wpuściłby tam spam na dowolne adresy domeny albo wymagał listy
-prawdziwych adresów do odrzucania — zmiana produkcyjnej poczty. Reguła
-`e2e@` jest dodająca i odizolowana.
-
-## Stan obecny (2026-10-22) — dlaczego agenty czekają
-
-1. Spece mają konta wpisane na stałe: `testAccountUsername(1)` (m.in.
-   base-explorer, games, bases, editor, mobile-sheet-modals), domyślne
-   `loginAsTestUser` = test1 (editor, game-settings, cross-resource-locks,
-   polls, privacy-manual), test7/test8 (friends, poll-share, subscribers,
-   control2, recipient-account-cascade). Wejście `test_accounts` zmienia
-   wyłącznie konta z puli — tych speców nie rozdziela.
-2. Pula bez `test_accounts` zaczyna od test1, więc spece z puli trafiają
-   na to samo konto co spece z test1 na stałe.
-3. Jedna skrzynka bez konta (`test14`) dla ok. 9 speców; `clearMailbox`
-   czyści ją całą.
-4. Zakresy adresów rozsiane i niespójne:
-   - Worker `e2e-api.js`: `E2E_EMAIL_RE = test([1-9]|1[0-5]|17)`,
-     `mail-trigger` odrzuca test9/test10, test14 na stałe w kilku
-     endpointach;
-   - `e2e_emails` CHECK: `test([1-9]|1[0-5])` (brak test17, choć Worker go
-     przyjmuje — do sprawdzenia, czy zapis poczty test17 się udaje);
-   - funkcje SQL z własnymi zakresami: `e2e_friendships_cleanup`,
-     `e2e_poll_mail_budget_cleanup`, `e2e_poll_subscriptions_cleanup`,
-     `e2e_registered_subscriber_fixture` (test1–7 → test8),
-     `e2e_shared_devices_cleanup`, `e2e_subscriber_email_cleanup`
-     (test14/test15), `e2e_subscriber_mail_flag` (test14), trigger
-     `mail_queue_cooldown_guard` (`test([1-9]|1[0-3])`);
-   - `login.js`: `TEST_ACCOUNT_NUMBERS` tylko 1–10.
-5. `e2e-seq.sh` czeka, aż na GitHubie nie biegnie **żaden** przebieg e2e.
-
-Działa już ogólnie (`test[0-9]+`): automatyczny wyjątek statystyk
-(`stats_exclusions_effective`), rezerwacja nazw (`profiles_reserve_test_username`),
-`e2e_storage_cleanup_peek`, `e2e_marketplace_cleanup` (tylko zasoby wołającego).
-
-## Schemat docelowy
-
-### Tory
-
-| Tor | Konta (sloty 1–8) | Skrzynka bez konta | Konta specjalne |
-|---|---|---|---|
-| 1 | test1–test8 (obecne adresy `testN@`) | `e2e+bezkonta1@` (zastępuje test14) | test11, test12+13, test15, test17 |
-| 2 | test21–test28 (`e2e+t21@`…`e2e+t28@`) | `e2e+bezkonta2@` | — |
-| 3 | test31–test38 (`e2e+t31@`…) | `e2e+bezkonta3@` | — |
-| 4 | test41–test48 (`e2e+t41@`…) | `e2e+bezkonta4@` | — |
-
-Slot `k` toru `L`: nazwa użytkownika tor 1 → `test{k}`, tor ≥ 2 →
-`test{L}{k}`; e-mail tor 1 → `test{k}@`, tor ≥ 2 → `e2e+t{L}{k}@`.
-Numery test9, test10, test14, test16, test18–20, test29–30, test39–40,
-test49–50 **nie są przydzielane** (test9/test10: rezerwa bez skrzynki
-do ręcznych przebiegów; test14 wycofany po przejściu na `bezkonta1`).
-
-### Role slotów (takie same w każdym torze)
-
-| Slot | Rola | Skrzynka |
+| Resource | Sztuk | Kiedy deklarować |
 |---|---|---|
-| 1 | konto główne (domyślne `loginAsTestUser`), operator Control | nie |
-| 2 | drugi użytkownik: właściciel/edytor przy udostępnieniu | nie |
-| 3 | trzeci użytkownik: odbiorca udostępnienia (zadania, logo) | nie |
-| 4, 5 | wolne — workery puli (`loginAsPooledTestUser`) | nie |
-| 6 | edytor logo (pula logo), użytkownik bez maili | nie |
-| 7 | zalogowany odbiorca z pocztą (bazy, udostępnianie urządzenia, subskrypcje) | tak |
-| 8 | zaproszony / odbiorca maili (subskrypcje, znajomi, poll-share) | tak |
-| bez konta | odbiorca bez konta (subskrybent tylko e-mail, urządzenie na e-mail) | tak |
+| `mail` | 2 | spec wysyła lub czeka na maile (wspólne limity dostawcy, `resetMailProviderLimits`) |
+| `heavy` | 1 | Control, wyświetlacz, wiele kontekstów przeglądarki (mały serwer bazy) |
 
-### Jedno źródło listy adresów
+Spec bez deklaracji zasobu go nie zajmuje.
 
-- JS: `tests/e2e/helpers/test-accounts.js` — tory, sloty, role,
-  `laneAccount(slot)`, `laneNoAccountEmail()`, `specialAccount(name)`;
-  bieżący tor z `TEST_LANE`. `testAccountUsername(n)` = slot `n`
-  bieżącego toru (spece z `testAccountUsername` działają w każdym torze
-  bez zmian).
-- SQL: `public.e2e_test_address(p_email) → (lane, slot, kind)` (kind:
-  `account` / `no_account` / `special`); wszystkie funkcje `e2e_*`
-  i `mail_queue_cooldown_guard` korzystają z niej zamiast własnych
-  wyrażeń; odbiorca „slot 8 / bez konta” wyliczany z toru wołającego.
-  CHECK `e2e_emails` = adres ze skrzynką według tej funkcji.
-- Worker: jedna stała z listą (generowana z pliku JS albo kopia
-  pilnowana testem unit, jak `notification-mail-texts.js`).
-- Blokada: trigger odrzuca założenie konta na `e2e+bezkonta*@familiada.online`.
+## 3. Mechanizm lease
 
-### Przebiegi
+### Deklaracja w specu
 
-- Workflow `e2e-tests.yml`: wejście `lane` (1–4), `run-name` z torem
-  (`e2e tor N …`), `TEST_LANE` w środowisku. `test_accounts` zostaje
-  tylko do podziału puli wewnątrz toru.
-- `e2e-seq.sh`: wybiera wolny tor (przebiegi w toku po `run-name`),
-  czeka tylko gdy wszystkie zajęte. Nie używać `concurrency` GitHuba do
-  kolejki (jeden oczekujący na grupę; nowszy anuluje starszy).
-- Spece z kontami specjalnymi: tag `@specjalne`, tylko tor 1 (helper
-  rzuca błąd w innym torze).
-- Wspólne mimo torów: serwer bazy (ciężkie spece — control2,
-  wyświetlacz — jeden naraz globalnie), limity dostawcy poczty
-  (`resetMailProviderLimits` globalny; `@mailbox` najwyżej 2 tory naraz),
-  łącznie najwyżej 3 przebiegi naraz na start.
+```js
+const { test, expect } = require("./helpers/e2e-test");
 
-## Kroki wdrożenia (E25)
+test.use({ accounts: { standard: 2, noaccount: 1 }, resources: ["mail"] });
 
-1. **Pomocnik JS** `test-accounts.js` + przepięcie speców z adresami na
-   stałe (`test14@`, `test8@`, `test1@`, `test9@`, `LOGO_E2E_ACCOUNTS`,
-   `mailbox.js`) na role toru; tor 1 = dzisiejsze adresy, więc bez zmian
-   zachowania. Unit + punktowe e2e w torze 1.
-2. **Migracja dodająca**: `e2e_test_address`, nowe adresy w CHECK
-   `e2e_emails` (stare zostają), trigger blokujący konta `bezkonta*`.
-   Lokalny Postgres + test SQL → `main` → log.
-3. **Worker**: rozpoznawanie `e2e+<id>@` (odrzucenie nieznanych `id`), lista adresów z jednego źródła, endpoint `restore` zakłada
-   konta torów (potwierdzony adres, `TEST_PASSWORD`, stałe ID), endpointy
-   z test14 → skrzynka bez konta toru.
-4. **Cloudflare Email Routing** (użytkownik, jeden raz): Subaddressing
-   + reguła `e2e@` → Worker. Jeden mail kontrolny na `e2e+bezkonta2@`
-   (czy `message.to` zawiera `+detail`). Później żadnych reguł.
-5. **Migracja zmieniająca** funkcje `e2e_*` na `e2e_test_address` (razem
-   z kodem; test lokalny, wdrożenie razem, od razu testy kontrolne).
-6. **Założenie kont** torów 2–4 przez Worker; logowanie każdego konta.
-7. **Workflow + `e2e-seq.sh`**: wejście `lane`, wybór wolnego toru.
-8. **Przejście tor 1 z test14 na `bezkonta1`**, potem test14 wycofany.
-9. Testy kontrolne: spece z rolami 7/8/bez konta (subscribers, friends,
-   poll-share, bases) w torach 1 i 2 równolegle; wpis w Dzienniku.
-10. Dokumentacja: `tests/README.md` (część „po E25” staje się obowiązującą),
-    CLAUDE.md, AGENTS.md.
+test("base invite", async ({ page, context, accounts, loginAs, mailbox }) => {
+  const [owner, recipient] = accounts.standard;
+  const [outsider] = accounts.noaccount;
+  await loginAs(page, context, owner);
+  // ...invite recipient.email and outsider.email
+  const mail = await mailbox.waitFor(outsider, { subject: /zaproszenie/i, after });
+});
+```
+
+### Przebieg
+
+1. Fixture **worker-scoped** `accounts` (`tests/e2e/helpers/e2e-test.js`,
+   `test.extend`) przy starcie workera woła Worker `POST /_e2e_api/lease`
+   `{ run_id, worker, needs: { standard: 2, noaccount: 1, resource: ["mail"] }, ttl }`.
+2. Worker (klucz serwisowy) woła RPC `e2e_lease` — atomowo,
+   `FOR UPDATE SKIP LOCKED`; zwraca **cały komplet albo nic** (`busy`).
+3. `busy` → fixture odpytuje co 15 s do ~10 min, potem pada z listą
+   posiadaczy (`run_id`, od kiedy, spec).
+4. W trakcie: `POST /_e2e_api/lease/renew` co 5 min; TTL 20 min.
+5. Koniec workera: `POST /_e2e_api/lease/release`. Przerwany przebieg —
+   TTL zwalnia sam.
+6. Równoległe workery jednego speca dostają różne komplety automatycznie
+   (każdy wypożycza swój).
+
+`run_id` = `GITHUB_RUN_ID` + `GITHUB_RUN_ATTEMPT` (lokalnie losowy).
+
+### Przy lease
+
+- `standard`: sprawdzenie logowania nie jest potrzebne; Worker zwraca
+  `{ name, email, user_id }` i potwierdza `admin_excluded = true`.
+- `disposable`: Worker **odtwarza** konto do znanego stanu — zakłada
+  brakujące, ustawia `TEST_PASSWORD`, e-mail, nazwę, potwierdzony adres,
+  `app_metadata.e2e_role`, czyści skrzynki (`.` i `.new`).
+- `noaccount`: Worker czyści skrzynkę (adres wypożyczony na wyłączność).
+- `gallery`: bez zmian danych.
+
+### Poczta w teście
+
+- `mailbox.waitFor(identity, …)`, `mailbox.clear(identity)` — tylko dla
+  tożsamości wypożyczonych przez ten `run_id` (Worker sprawdza lease;
+  cudza skrzynka → 403).
+- Fikstury SQL dostają adresata **parametrem** (dziś stałe test8/test14);
+  walidacja: wołający i adresat to tożsamości `e2e` (`e2e_identity(email)`),
+  a nie wyrażenia `test[1-8]`.
+
+### Scenariusze → deklaracja
+
+| Scenariusz | `accounts` | `resources` |
+|---|---|---|
+| Jedna osoba, własne dane (gry, bazy, logo, edytor, ustawienia, ankiety) | `{ standard: 1 }` | — |
+| Udostępnianie, współedycja, zadania, kopie Gier/Logo, znajomi | `{ standard: 2 }` (lub 3) | — |
+| Zaproszenie / subskrypcja zalogowanego z mailem | `{ standard: 2 }` | `mail` |
+| Odbiorca bez konta (subskrybent e-mail, urządzenie na e-mail) | `{ standard: 1, noaccount: 1 }` | `mail` |
+| Usuwanie konta i kaskady | `{ disposable: 1, standard: 1 }` (druga strona) | `mail` |
+| Hasło, zmiana e-maila, profil | `{ disposable: 1 }` | `mail` |
+| Control 2, wyświetlacz, gra na wielu urządzeniach | `{ standard: 1 }` | `heavy` |
+| Równoległe workery jednego speca | jak wyżej — każdy worker osobno | — |
+| Galeria E20 | `{ gallery: 1 }` | — |
+| Gość | nic (`loginAsGuest`), usunięcie na końcu | — |
+
+## 4. Poczta — jedna reguła Cloudflare
+
+Raz (użytkownik, panel Cloudflare):
+1. Email Routing → Settings → **Subaddressing: on**.
+2. Routing rule: `e2e@familiada.online` → *Send to a Worker* → `familiada`.
+
+Każdy `e2e+…@familiada.online` trafia tą regułą do Workera. Worker:
+adres z `e2e_identities` (z wariantem `.new` dla `disposable`) → zapis do
+`e2e_emails`; inne `e2e+…` → `message.setReject`. Nic testowego nie idzie
+do skrzynki admina, Telegrama ani na przekierowanie. Gdyby `message.to`
+przyszło bez `+detail`, adresat z nagłówka `To` (rozstrzyga mail kontrolny).
+
+Sprawdzone w kodzie: `_norm_email` = `lower(btrim)` (plus zostaje);
+`auth.js` wymaga tylko `@`; logowanie przyjmuje nazwę użytkownika.
+Catch-all odrzucony — obca poczta idzie dziś do admina i Telegrama.
+
+## 5. Automatyczne wykluczenia w panelu admina
+
+**Dziś:** `stats_exclusions_effective` (migracja 304) — e-mail
+`^test[0-9]+@familiada.online` albo `is_test_guest`, plus ręczne
+`stats_excluded_users`; panel (`web/settings/js/settings.js` ~1320) zna
+tylko „Konto testowe” / „Gość testowy”.
+
+**Docelowo:**
+1. **Pewne oznaczenie:** Worker przy zakładaniu/odtwarzaniu ustawia
+   `app_metadata.e2e_role` (klucz serwisowy; użytkownik nie zmieni — jak
+   `is_test_guest`). Drugie źródło: `e2e_identities.user_id`.
+2. **Widok:** wykluczone, gdy `e2e_role` jest ustawione **lub** konto jest
+   w `e2e_identities` **lub** `is_test_guest`; `reason` = `test:standard`,
+   `test:disposable`, `test:gallery`, `test:guest`; `manual` bez zmian.
+   Wzorzec `test[0-9]+` usunięty.
+3. **Panel:** napis z rolą („Test account · standard — automatic”),
+   wierszy automatycznych nie da się usunąć, licznik według ról.
+4. **Pełność:** przegląd wszystkich funkcji statystyk i list admina (dziś
+   objęte: `get_admin_stats*`, `get_retention_stats`, `get_stats_detail`,
+   `get_admin_poll_*`, `get_admin_snake_stats`, oceny z 442,
+   `get_maintenance_activity`, `agent_mail_window_counts`; sprawdzić
+   statystyki Control 2 (369), `sync_market_game_rating_stats`,
+   marketplace). Test unit — zapadka na `schema.sql`: każda funkcja
+   `get_admin_*` / `*_stats*` odwołuje się do widoku.
+5. **Kontrola:** lease zwraca `admin_excluded` dla każdego konta; fixture
+   pada, gdy konto nie jest wykluczone. `scripts/db-read/e2e-exclusions.sql`:
+   liczba kont `e2e` bez wykluczenia = 0.
+
+## 6. Baza — obiekty
+
+- `e2e_identities(name pk, role, email unique, user_id null, created_at)`
+  — jedno źródło listy (role: `standard`, `noaccount`, `disposable`,
+  `gallery`, `resource`).
+- `e2e_leases(name pk → e2e_identities, run_id, worker, label, leased_at, expires_at)`.
+- RPC (tylko `service_role`): `e2e_lease(p_run_id, p_worker, p_needs jsonb, p_ttl interval, p_label)`,
+  `e2e_lease_renew(p_run_id)`, `e2e_lease_release(p_run_id, p_worker)`,
+  `e2e_lease_holders()` (diagnostyka), `e2e_identity(p_email)`.
+- `reserved_username_prefixes`: prefiks `e2e` (kind `test`); trigger
+  `profiles_reserve_test_username` dopuszcza nazwę `e2e.*` tylko dla
+  `user_id` z `e2e_identities`.
+- Blokada rejestracji na adres roli `noaccount` i `*.new`.
+- CHECK `e2e_emails.recipient` → adres z `e2e_identities` (funkcja).
+- Fikstury `e2e_*` i `mail_queue_cooldown_guard` przez `e2e_identity`.
+
+Worker: lista tożsamości generowana z tabeli (endpoint provisioning) —
+bez kopii wyrażeń w kodzie.
+
+## 7. Co znika (bez aliasów)
+
+- konta `test1`…`test17` (usunięte z danymi po uruchomieniu nowej puli),
+  reguły Cloudflare dla pojedynczych adresów;
+- `testAccountUsername`, `getTestAccountPool`, `loginAsPooledTestUser`,
+  domyślne konto w `loginAsTestUser`, `RESERVED/EXCLUDED/NEVER_USE_TEST_ACCOUNTS`,
+  `LOGO_E2E_ACCOUNTS`, `restoreTestAccount("test11")` itd.;
+- `TEST_ACCOUNT_COUNT`, `TEST_ACCOUNT_NUMBERS`, wejście `test_accounts`,
+  `E20_GALLERY_ACCOUNTS`, globalne czekanie w `e2e-seq.sh`;
+- wszystkie `test[0-9]…` / `test14` / `test8` w Workerze i SQL;
+- reguły w CLAUDE.md o kontach na stałe, test14, test15, test9/10.
+
+## 8. Pakiety pracy (dla agentów)
+
+Zależności: A → B → C → E; D po A; F na końcu. Cloudflare (użytkownik)
+przed testami B.
+
+| Pakiet | Zakres | Gotowe, gdy |
+|---|---|---|
+| **A. DB** | migracja dodająca: tabele, RPC lease, `e2e_identity`, prefiks, blokada `noaccount`, nowy widok wykluczeń (stary wzorzec jeszcze obok) | test SQL lokalnie: dwa równoległe `e2e_lease` nie dostają tego samego konta, TTL zwalnia, `noaccount` nie da się zarejestrować; log migracji |
+| **B. Worker** | `/_e2e_api/lease*`, provisioning i odtwarzanie wg roli z `e2e_role`, poczta `e2e+`, dostęp do skrzynki tylko z lease | unit Workera; mail kontrolny na `e2e+noaccount01@`; konta założone, `admin_excluded` dla każdego |
+| **C. Harness** | `e2e-test.js` (`accounts`, `resources`, `loginAs`, `mailbox`), workflow bez `test_accounts`, `e2e-seq.sh` bez globalnego czekania | spec próbny z `standard: 2, noaccount: 1` zielony; dwa przebiegi naraz zielone |
+| **D. Admin** | widok bez `test[0-9]+`, panel z rolą, przegląd funkcji statystyk, zapadka unit, `db-read` | 0 kont `e2e` bez wykluczenia; zrzut panelu |
+| **E. Spece** | przepięcie speców na deklaracje, grupami (osobni agenci): E1 Gry/edytor/ustawienia/Control; E2 Bazy/Eksplorator/zadania; E3 Logo/kopie; E4 Ankiety/Go; E5 Poczta/subskrybenci/znajomi/centrum maili; E6 Konto/usuwanie/hasło/goście; E7 galeria E20 | każda grupa zielona punktowo; brak użyć starych helperów (lint/unit) |
+| **F. Sprzątanie** | usunięcie starych helperów, wzorców SQL/Worker, kont `test1`…`test17`, starych reguł Cloudflare (użytkownik); dokumenty | unit pilnuje braku `test[0-9]+@familiada` w repo; wpis w Dzienniku |
+
+Każdy pakiet według cyklu z CLAUDE.md (lokalny Postgres → branch na
+produkcyjnej bazie → Pages → testy kontrolne → Dziennik).
+
+## 9. Weryfikacja całości
+
+- Lokalny Postgres: współbieżne `e2e_lease`, TTL, blokada `noaccount`,
+  widok wykluczeń.
+- Unit: zapadka wykluczeń, brak starych wzorców, `noConflictMarkers`.
+- E2E: dwa przebiegi naraz (np. grupa E2 i E5) na różnych lease — oba
+  zielone; `disposable` w usuwaniu konta; Control z `heavy`.
+- `db-read`: 0 kont `e2e` bez wykluczenia; panel admina pokazuje role.

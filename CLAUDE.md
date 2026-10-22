@@ -16,7 +16,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
   Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
-  Konta testowe i tory (E25): `docs/konta-testowe-plan.md`.
+  Test accounts — role i lease (E25): `docs/konta-testowe-plan.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
@@ -109,22 +109,17 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe — zasady przypisywania i używania:** `tests/README.md`,
-  sekcja „Konta testowe” (rodzaje adresów, role kont, warunki przypisywania,
-  warunki przebiegów). Konto wybierać po roli (`testAccountUsername(n)`, pula),
-  nigdy wpisanym adresem. Zwykła pula test1–test8; test9/test10 tylko jawnie
-  przez `test_accounts` (bez skrzynki). Konta specjalne: test11 hasło,
-  test12 profil (+ adres test13), test15 usuwanie (odtwarzać przed testem
-  i w `finally`, sprawdzać logowanie i wyjątek admina), test17 galeria E20.
-- **Skrzynki bez konta** — dziś `test14@familiada.online` (nie zakładać
-  konta). Decyzja użytkownika 2026-10-22: dostają inny identyfikator
-  `e2e+bezkontaN@familiada.online` (E25); `test…` zawsze oznacza konto.
-  Nowe skrzynki testowe tylko jako `e2e+<id>@` (jedna reguła Cloudflare
-  `e2e@` + subaddressing) — bez dopisywania reguł w Cloudflare.
-- **Równoległe przebiegi e2e**: dziś domyślnie jeden naraz; równolegle tylko
-  rozłączne `test_accounts` ze specami logującymi się przez pulę, bez
-  `@mailbox`. Docelowo tory (rozłączne komplety kont, E25):
-  `docs/konta-testowe-plan.md`.
+- **Test accounts (decyzja użytkownika 2026-10-22, E25):** role `standard`,
+  `noaccount`, `disposable`, `gallery`, `guest`; zasoby `mail`, `heavy`.
+  Spec deklaruje potrzeby (`test.use({ accounts, resources })`), worker
+  wypożycza (lease) konta na wyłączność — równoległe przebiegi bez umawiania
+  się. Nazwy `e2e.<role><NN>`, e-mail `e2e+<role><NN>@familiada.online`
+  (jedna reguła Cloudflare `e2e@` + Subaddressing). Nazewnictwo po angielsku.
+  Stare zasady (`test1`…`test17`, `testAccountUsername`, pula, `test_accounts`)
+  wycofane — nie dopisywać nowych użyć. Zasady: `tests/README.md`
+  „Test accounts”; plan i pakiety: `docs/konta-testowe-plan.md`.
+- **Do końca E25** (stary kod jeszcze działa): jeden przebieg e2e naraz;
+  na test14 nie zakładać konta.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
