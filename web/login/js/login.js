@@ -1000,6 +1000,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Sesja gościa zostaje: do potwierdzenia linku gość dalej korzysta
             // z konta, a w Ustawieniach konta ma „Wyślij ponownie” i „Anuluj”.
+            // Ustawienia konta czytają oczekującą zmianę z tokenu sesji.
+            try { await sb().auth.refreshSession(); } catch {}
             setStatus(t("index.statusCheckEmail"));
             await alertModal({ text: t("index.guestMigrateConfirmEmail", { email: mail }) });
             location.href = withLangParam(PAGES.account.path);
