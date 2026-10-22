@@ -44,3 +44,38 @@ test("diagnostyka: stan auth po zamianie konta gościa (A w toku, B anulowana) @
   await guestWithMigration(browser, true);
   await clearMailbox(MAILBOX);
 });
+
+test("diagnostyka: odpowiedź guest_cancel_migration @mailbox", async ({ browser }) => {
+  test.setTimeout(180_000);
+  await resetMailProviderLimits();
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  await serveBranchCode(context, { pages: ["account"] });
+  const page = await context.newPage();
+  await loginAsGuest(page, context);
+  try {
+    await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#btnMigrate")).toBeVisible({ timeout: 30000 });
+    await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email");
+    await clearMailbox(MAILBOX);
+    const after = new Date(Date.now() - 2_000).toISOString();
+    await page.locator("#migrateEmail").fill(MAILBOX);
+    await page.locator("#migratePass1").fill("E2eTest123!");
+    await page.locator("#migratePass2").fill("E2eTest123!");
+    await page.locator("#btnMigrate").click();
+    await expect(page.locator("#migratePendingHint")).toBeVisible({ timeout: 20000 });
+    await waitForEmail({ recipient: MAILBOX, after });
+    const result = await page.evaluate(async () => {
+      const sb = window.__sbClient;
+      const { data: u } = await sb.auth.getUser();
+      const before = { anon: u.user.is_anonymous, confirmedAt: !!u.user.email_confirmed_at, hasEmail: !!u.user.email, newEmail: !!u.user.new_email };
+      const { data, error } = await sb.rpc("guest_cancel_migration");
+      const again = await sb.rpc("guest_cancel_migration");
+      return { id: u.user.id, before, data, error: error ? { code: error.code, message: error.message } : null, again: again.data ?? again.error?.message };
+    });
+    console.log("[e2e-diag] guest_cancel_migration:", JSON.stringify(result));
+  } finally {
+    await page.evaluate(async () => { await window.__sbClient.functions.invoke("delete-account"); }).catch(() => {});
+    await clearMailbox(MAILBOX);
+    await context.close();
+  }
+});
