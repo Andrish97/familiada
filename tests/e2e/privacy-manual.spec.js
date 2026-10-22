@@ -63,7 +63,7 @@ test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", a
     await expect(page.locator(".m-part-card")).toHaveCount(3);
     await expect(page.locator(".m-part-title").first()).toContainText(item.part);
     await expect(page.locator("#manualToc")).toHaveAttribute("aria-label", item.toc);
-    await expect(page.locator("#manualToc .m-side-item:not(.m-side-sub)")).toHaveCount(19);
+    await expect(page.locator("#manualToc .m-side-item:not(.m-side-sub)")).toHaveCount(20);
   }
 });
 
