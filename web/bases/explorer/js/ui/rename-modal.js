@@ -2,8 +2,8 @@
 // Okno zmiany nazwy folderu / treści pytania — wspólne promptModal
 // (shared/js/core/modal.js), jak w Grach, Bazach i Logo. Pusta nazwa = anuluj.
 
-import { promptModal } from "../../../../shared/js/core/modal.js?v=v2026-10-22T01364";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-22T01364";
+import { promptModal } from "../../../../shared/js/core/modal.js?v=v2026-10-22T02382";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-22T02382";
 
 export async function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   const v = await promptModal({
