@@ -121,3 +121,26 @@ test("manual: telefon — spis treści pod przyciskiem", async ({ page, context 
   await expect(page.locator(".m-article h1")).toContainText("Ankiety");
   await expect(page.locator("#manualToc")).toBeHidden();
 });
+
+test("manual: wyszukiwanie — wyniki na żywo, wybór otwiera podrozdział z zaznaczeniem", async ({ page }) => {
+  await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
+  const input = page.locator("#manualSearch .searchText");
+  await input.fill("kradzież");
+  await expect(page.locator("#manualSearch .m-search-hit").first()).toBeVisible();
+  await input.press("Enter");
+  await expect(page).toHaveURL(/[?&]ch=\d+#s-[\d-]+$/);
+  await expect(page.locator(".m-doc mark.m-hit").first()).toBeInViewport();
+
+  await input.fill("qqzzxx");
+  await expect(page.locator("#manualSearch .m-search-empty")).toBeVisible();
+  await page.locator("#manualSearch .searchClear").click();
+  await expect(page.locator("#manualSearch .m-search-results")).toBeHidden();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("#manualSearchToggle").click();
+  await expect(input).toBeFocused();
+  await input.fill("mnożnik");
+  await page.locator("#manualSearch .m-search-hit").first().click();
+  await expect(page.locator("#manualToc")).toBeHidden();
+  await expect(page.locator(".m-doc mark.m-hit").first()).toBeInViewport();
+});

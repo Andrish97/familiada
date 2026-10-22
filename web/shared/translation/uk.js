@@ -1050,6 +1050,9 @@ const uk = {
     chapter: "Розділ",
     sections: "У цьому розділі",
     backTo: "Повернутися до: {title}",
+    search: "Пошук у посібнику",
+    searchClear: "Очистити",
+    searchEmpty: "Немає результатів.",
     demo: {
       modalTitle: "Відновити демо-файли?",
       modalText: "Буде додано приклади стартових матеріалів.",

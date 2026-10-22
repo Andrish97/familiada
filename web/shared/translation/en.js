@@ -1049,6 +1049,9 @@ const en = {
     chapter: "Chapter",
     sections: "In this chapter",
     backTo: "Back to: {title}",
+    search: "Search the guide",
+    searchClear: "Clear",
+    searchEmpty: "No results.",
     demo: {
       modalTitle: "Restore demo files?",
       modalText: "Sample starter materials will be added.",

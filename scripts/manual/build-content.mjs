@@ -97,12 +97,13 @@ function inline(text, icons, titles = new Map()) {
     return keep(`<span class="m-control">${iconHtml}${esc(label)}</span>`);
   });
   // odnośniki: „→ 7.3”, „→ 10, 14, 15.4”, „→ 3 i 4”, „zob. 19.5”
-  s = s.replace(/(→|zob\.|see|див\.)\s+(\d+(?:\.\d+)*(?:(?:,\s*|\s+(?:i|and|і|та)\s+)\d+(?:\.\d+)*)*)/g, (_, lead, list) => {
-    const parts = list.split(/(,\s*|\s+(?:i|and|і|та)\s+)/);
-    // Numer jest tylko adresem — czytelnik widzi tytuł rozdziału/podrozdziału.
-    const html = parts.map((p) => (/^\d/.test(p) ? `<a class="m-ref" href="${refHref(p)}">${esc(titles.get(p) || p)}</a>` : esc(p))).join("");
-    return keep(`${esc(lead)} ${html}`);
-  });
+  // „(→ 7.3)” → sam odnośnik-chip (bez nawiasu i strzałki); „zob. 19.5” → „zob.” + chip.
+  // Numer jest tylko adresem — czytelnik widzi tytuł rozdziału/podrozdziału.
+  const REF_LIST = "(\\d+(?:\\.\\d+)*(?:(?:,\\s*|\\s+(?:i|and|і|та)\\s+)\\d+(?:\\.\\d+)*)*)";
+  const refs = (list) => list.split(/(,\s*|\s+(?:i|and|і|та)\s+)/)
+    .map((p) => (/^\d/.test(p) ? `<a class="m-ref" href="${refHref(p)}"><i data-icon="arrow-right"></i>${esc(titles.get(p) || p)}</a>` : esc(p))).join("");
+  s = s.replace(new RegExp(`\\(\\s*→\\s+${REF_LIST}\\s*\\)`, "g"), (_, list) => keep(refs(list)));
+  s = s.replace(new RegExp(`(→|zob\\.|see|див\\.)\\s+${REF_LIST}`, "g"), (_, lead, list) => keep(lead === "→" ? refs(list) : `${esc(lead)} ${refs(list)}`));
   s = esc(s);
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|[\s(„"])\*([^*\s][^*]*?)\*(?=[\s).,:;!?”"]|$)/g, '$1<span class="m-page">$2</span>');
@@ -131,7 +132,16 @@ function renderBlocks(lines, icons) {
     if (/^>\s?/.test(line)) {
       const body = [];
       for (; i < lines.length && /^>\s?/.test(lines[i]); i++) body.push(lines[i].replace(/^>\s?/, ""));
-      out.push(`<div class="m-note">${renderBlocks(body, icons)}</div>`);
+      // Ramki: „Uwaga:” (ostrzeżenie) albo „Wskazówka:” (podpowiedź); etykieta staje się nagłówkiem ramki.
+      const head = body[0] || "";
+      const warn = head.match(/^(Uwaga|Note|Увага):\s*/);
+      const tip = head.match(/^(Wskazówka|Tip|Порада):\s*/);
+      const kind = warn ? "warn" : tip ? "tip" : "note";
+      const label = (warn || tip)?.[1];
+      if (label) { const rest = head.slice((warn || tip)[0].length); body[0] = rest.charAt(0).toLocaleUpperCase() + rest.slice(1); }
+      const icon = kind === "warn" ? "warning" : kind === "tip" ? "info" : "";
+      const title = label ? `<div class="m-box-title">${icon ? `<i data-icon="${icon}"></i>` : ""}${esc(label)}</div>` : "";
+      out.push(`<div class="m-note m-${kind}">${title}${renderBlocks(body, icons)}</div>`);
       continue;
     }
     if (isTable(line)) {

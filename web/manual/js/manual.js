@@ -9,6 +9,7 @@ import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/tran
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
 import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00131";
 
 const CONTENT = {
   pl: () => import("../content/pl.js?v=v2026-10-22T00131"),
@@ -28,6 +29,8 @@ const currentLabel = document.getElementById("manualCurrent");
 
 let manual = null;
 let current = null;
+let searchIndexEntries = [];
+let tocList = null;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const chapterHref = (id, hash = "", from = null) => {
@@ -77,7 +80,7 @@ const sectionId = (id) => `s-${id.replace(/\./g, "-")}`;
 // Lewy pasek jak w Ustawieniach gry: części jako etykiety, rozdziały jako pozycje,
 // podrozdziały otwartego rozdziału jako wcięte pozycje. Bez numerów — numer jest tylko adresem.
 function renderToc() {
-  toc.innerHTML = manual.parts.map((part) => `
+  tocList.innerHTML = manual.parts.map((part) => `
     <div class="m-side-part">${esc(part.title)}</div>
     ${part.chapters.map((id) => {
       const ch = findChapter(id);
@@ -149,7 +152,35 @@ function markSection() {
   const top = content.getBoundingClientRect().top + 24;
   let currentId = heads[0]?.id || "";
   for (const h of heads) if (h.getBoundingClientRect().top <= top) currentId = h.id;
-  for (const a of toc.querySelectorAll(".m-side-sub")) a.classList.toggle("current", sectionId(a.dataset.sec) === currentId);
+  for (const a of tocList.querySelectorAll(".m-side-sub")) a.classList.toggle("current", sectionId(a.dataset.sec) === currentId);
+}
+
+// Wyszukiwarka nad spisem treści: wybór wyniku otwiera podrozdział i zaznacza trafienia
+// (zaznaczenie znika przy następnym przejściu).
+function wireSearch() {
+  toc.innerHTML = `<div class="m-search" id="manualSearch"></div><div class="m-side-list"></div>`;
+  tocList = toc.querySelector(".m-side-list");
+  hydrateIcons(document.querySelector(".m-actionbar"));
+  initManualSearch(toc.querySelector("#manualSearch"), () => searchIndexEntries, (entry, query) => {
+    show(entry.ch, entry.id === entry.ch ? "" : `#${sectionId(entry.id)}`);
+    const scope = entry.id === entry.ch ? article.querySelector(".m-doc") : sectionScope(sectionId(entry.id));
+    for (const el of scope) highlight(el, query);
+    const first = article.querySelector("mark.m-hit");
+    if (first) first.scrollIntoView({ block: "center" });
+  });
+}
+
+// Elementy podrozdziału: nagłówek i wszystko do następnego nagłówka tego samego lub wyższego poziomu.
+function sectionScope(id) {
+  const head = document.getElementById(id);
+  if (!head) return [];
+  const level = Number(head.tagName[1]);
+  const out = [head];
+  for (let el = head.nextElementSibling; el; el = el.nextElementSibling) {
+    if (/^H[1-6]$/.test(el.tagName) && Number(el.tagName[1]) <= level) break;
+    out.push(el);
+  }
+  return out;
 }
 
 function show(id, hash = "", { updateUrl = true, smooth = false, from = null } = {}) {
@@ -196,6 +227,10 @@ function wireNavigation() {
     show(id, url.hash, { from });
   });
   tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
+  document.getElementById("manualSearchToggle")?.addEventListener("click", () => {
+    setTocOpen(true);
+    toc.querySelector(".searchText")?.focus();
+  });
   tocBackdrop.addEventListener("click", () => setTocOpen(false));
   document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
   let raf = 0;
@@ -204,6 +239,7 @@ function wireNavigation() {
 
 async function renderForLang() {
   manual = await loadContent(getUiLang());
+  searchIndexEntries = buildIndex(manual);
   const params = new URLSearchParams(location.search);
   show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM) });
 }
@@ -217,6 +253,7 @@ async function init() {
     console.warn("[manual] initPage nieaktywny:", err);
   });
   await i18nP;
+  wireSearch();
   wireNavigation();
   try {
     await renderForLang();

@@ -1062,6 +1062,9 @@ const pl = {
     chapter: "Rozdział",
     sections: "W tym rozdziale",
     backTo: "Wróć do: {title}",
+    search: "Szukaj w podręczniku",
+    searchClear: "Wyczyść",
+    searchEmpty: "Brak wyników.",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
       modalText: "Zostaną dodane przykładowe materiały startowe.",
