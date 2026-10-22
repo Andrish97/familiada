@@ -36,6 +36,8 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 
 ## Co dalej
 
+- **Po wdrożeniu Wskazówek na main (Pages):** wysłać wiadomość (send_message) do sesji „Postaw kawę” `session_012D37DPE13zMHg5pCbcM3Vt` — ona dopiero wtedy scala main i wdraża kawę (FAQ i ikona `coffee` są u niej; rozdział 21 jest we Wskazówkach).
+
 Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`.
 1. Gdy użytkownik zgodzi się na wdrożenie: push na `main`, Pages, kontrola `e2e/base-explorer.spec.js --grep E13` na produkcji → 1a ✅.
 2. Krok 5: strona `/manual/` z rozdziałami (układ, style przycisków/stron/odnośników, mapa pomocy kontekstowej), EN/UK, `privacy-manual`, zrzuty. Najlepiej po wdrożeniu E20 (inna sesja) — wtedy też przegląd szkiców pod nazwy i układ.

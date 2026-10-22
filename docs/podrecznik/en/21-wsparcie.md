@@ -10,11 +10,11 @@ There are no paid versions and no features reserved for a few.
 
 If you enjoy using Familiada and would like to support its further development, you can buy
 the creator a coffee. You will find the cup [Buy me a coffee|coffee] in the footer of the service
-pages, next to the [Contact] button.
+pages, next to the [Contact] button (an icon only — the name shows in a tooltip).
 
-1. Click the cup. The "Buy me a coffee" window with a short explanation opens.
+1. Click the cup. The "Buy me a coffee" window with a short explanation opens (on a phone, from the bottom).
 2. Choose a coffee: **Small coffee** (5 zł), **Medium coffee** (15 zł) or **Large coffee** (25 zł).
-3. Click [Buy a coffee|check]. The external service `buycoffee.to` opens in a new tab
+3. Click [Buy a coffee|check] (or [Cancel]). The external service `buycoffee.to` opens in a new tab
    with that coffee selected, where you choose the payment method.
 
 > Note: support is voluntary and gives no extra features or benefits in the
