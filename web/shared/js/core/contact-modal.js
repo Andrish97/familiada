@@ -1,6 +1,7 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-21T22122";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T22122";
-import { icon, iconText } from "./icons.js?v=v2026-10-21T22122";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T00242";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T00242";
+import { icon, iconText } from "./icons.js?v=v2026-10-22T00242";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-22T00242";
 
 
 let modalEl = null;
@@ -115,6 +116,7 @@ function buildModalHtml() {
           <div id="cModalAttachHint" style="font-size:11px;opacity:.4;margin-top:3px"></div>
           <div id="cModalFileList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
         </div>
+        <div id="cModalCaptcha" hidden></div>
         <div id="cModalError" style="font-size:13px;color:#ff6b6b;display:none"></div>
       </div>
       <div id="cModalSuccess" class="uni-body" style="display:none;text-align:center;padding:16px 0">
@@ -207,7 +209,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-21T22122");
+    const { sb } = await import("./supabase.js?v=v2026-10-22T00242");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -310,22 +312,34 @@ async function submitContact() {
       }
     }
 
+    // Weryfikacja Turnstile po stronie Workera (token jednorazowy).
+    let captcha_token;
+    try {
+      captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang });
+    } catch {
+      showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
+      return;
+    }
     let res;
     if (ticket) {
       res = await fetch("/_api/contact/append", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, ticket, message, lang, attachments }),
+        body: JSON.stringify({ email, ticket, message, lang, attachments, captcha_token }),
       });
     } else {
       res = await fetch("/_api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang, attachments }),
+        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang, attachments, captcha_token }),
       });
     }
 
     if (res.status === 429) { showErr(t("privacy.contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
+    if (res.status === 400 || res.status === 503) {
+      const failed = await res.clone().json().catch(() => ({}));
+      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
+    }
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "send_failed");

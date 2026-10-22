@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
+\restrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -854,6 +854,7 @@ CREATE TABLE "public"."friendships" (
     "decision_user_id" "uuid" NOT NULL,
     "cancelled_at" timestamp with time zone,
     "source_subscription_id" "uuid",
+    "requested_email" "text",
     CONSTRAINT "friendships_decision_party_check" CHECK ((("decision_user_id" = "requester_id") OR ("decision_user_id" = "addressee_id"))),
     CONSTRAINT "friendships_distinct_chk" CHECK (("requester_id" <> "addressee_id")),
     CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'declined'::"text"])))
@@ -3550,7 +3551,7 @@ BEGIN
   p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
   (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
  PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
- IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND (p_action='duplicate' OR public._poll_identity_regular(u.id,to_jsonb(u))))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
  SELECT * INTO item FROM public.resource_clone_jobs WHERE actor_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
  IF FOUND THEN
   IF item.source_id<>p_source OR item.resource_kind<>p_kind OR item.action<>p_action THEN RAISE EXCEPTION 'request_conflict'; END IF;
@@ -3644,7 +3645,7 @@ DECLARE item public.resource_clone_jobs; target uuid; result jsonb; hash text; r
 BEGIN
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor;
  IF NOT FOUND OR item.action<>'duplicate' THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor FOR NO KEY UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job FOR UPDATE NOWAIT;
  name_key:=CASE WHEN item.resource_kind='logo' THEN ARRAY['name'] ELSE ARRAY[item.resource_kind,'name'] END;
@@ -3831,7 +3832,7 @@ CREATE FUNCTION "public"."_resource_clone_read"("p_actor" "uuid", "p_kind" "text
 DECLARE root jsonb; snapshot jsonb; templates jsonb; inherited_demo boolean;
 BEGIN
  IF p_actor IS NULL OR p_kind IS NULL OR p_kind NOT IN('game','base','logo') OR p_source IS NULL THEN RAISE EXCEPTION 'invalid_copy_source'; END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor FOR NO KEY UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
  -- Parent locks prevent new child FK insertions while reading the definition.
  IF p_kind='game' THEN
@@ -3938,7 +3939,7 @@ BEGIN
   p_kind IS NULL OR p_action IS NULL OR p_demo IS NULL OR p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
   (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
  PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
- IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND (p_action='duplicate' OR public._poll_identity_regular(u.id,to_jsonb(u))))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
  hash:=encode(sha256(convert_to(p_definition::text,'UTF8')),'hex');
  SELECT * INTO receipt FROM public.resource_clone_receipts WHERE creator_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
  IF FOUND THEN
@@ -4536,6 +4537,35 @@ $$;
 
 
 --
+-- Name: agent_mail_window_counts(timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."agent_mail_window_counts"("p_from" timestamp with time zone, "p_to" timestamp with time zone) RETURNS TABLE("przydzialy" bigint, "przydzialy_zuzyte" bigint, "przydzialy_niezuzyte" bigint, "przydzialy_niezuzyte_bez_testowych" bigint, "kolejka_powiadomien" bigint, "kolejka_wyslane" bigint, "kolejka_bledy" bigint, "kolejka_oczekujace" bigint, "kolejka_inne" bigint)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  WITH w AS (
+    SELECT p_from AS f, least(p_to, p_from + interval '1 day') AS t
+  ), a AS (
+    SELECT al.* FROM public.mail_notification_allocations al, w WHERE al.created_at >= w.f AND al.created_at < w.t
+  ), q AS (
+    SELECT mq.* FROM public.mail_queue mq, w WHERE mq.created_at >= w.f AND mq.created_at < w.t
+  )
+  SELECT
+    (SELECT count(*) FROM a),
+    (SELECT count(*) FROM a WHERE consumed_at IS NOT NULL),
+    (SELECT count(*) FROM a WHERE consumed_at IS NULL),
+    (SELECT count(*) FROM a WHERE consumed_at IS NULL
+       AND owner_id NOT IN (SELECT user_id FROM public.stats_exclusions_effective)),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status = 'sent'),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status = 'failed'),
+    (SELECT count(*) FROM q WHERE created_by IS NOT NULL AND status IN ('pending', 'sending')),
+    (SELECT count(*) FROM q WHERE created_by IS NULL);
+$$;
+
+
+--
 -- Name: answers_rules_state_stmt(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4723,6 +4753,12 @@ BEGIN
 
   q := format('UPDATE auth.users SET %s WHERE id = $1', array_to_string(sets, ', '));
   EXECUTE q USING p_user_id;
+
+  -- Nowszy GoTrue trzyma tokeny także w auth.one_time_tokens; bez tego link
+  -- z maila działał po anulowaniu (migracja gościa).
+  IF to_regclass('auth.one_time_tokens') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM auth.one_time_tokens WHERE user_id = $1 AND token_type::text LIKE ''email_change%''' USING p_user_id;
+  END IF;
 
   RETURN true;
 END;
@@ -4942,7 +4978,9 @@ BEGIN
     RETURN;
   END IF;
 
-  RETURN QUERY SELECT * FROM public._base_share_create(p_base_id, v_recipient, p_role, false, CASE WHEN position('@' in v_lookup)>0 THEN v_lookup END);
+  RETURN QUERY SELECT r.ok, r.err, NULL::text, CASE WHEN r.mail_to IS NOT NULL THEN r.mail_link END,
+    r.base_name, r.owner_label, r.cooldown_until, r.recipient_id
+  FROM public._base_share_create(p_base_id, v_recipient, p_role, false, CASE WHEN position('@' in v_lookup)>0 THEN v_lookup END) r;
 END;
 $$;
 
@@ -4955,7 +4993,9 @@ CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_u
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$ BEGIN
- RETURN QUERY SELECT * FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,false);
+ RETURN QUERY SELECT r.ok, r.err, NULL::text, CASE WHEN r.mail_to IS NOT NULL THEN r.mail_link END,
+   r.base_name, r.owner_label, r.cooldown_until, r.recipient_id
+ FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,false) r;
  END $$;
 
 
@@ -5034,21 +5074,24 @@ BEGIN
  AND NOT EXISTS(SELECT 1 FROM public.base_share_tasks t WHERE t.base_id=p_base_id AND t.recipient_user_id=f.user_id
   AND t.status IN ('pending','opened') AND t.cancelled_at IS NULL
   AND coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')>now());
- SELECT coalesce(jsonb_agg(jsonb_build_object('task_id',t.id,'recipient_user_id',t.recipient_user_id,
-  'label',coalesce(nullif(p.username,''),t.recipient_email),'email',t.recipient_email,'role',t.role,'status',t.status,
-  'is_friend',public.are_friends(uid,t.recipient_user_id),'email_enabled',public._contact_mail_enabled(p.email),
-  'declined_at',t.declined_at,'expires_at',coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days'),
-  'cooldown_until',CASE WHEN t.status='declined' THEN public._base_share_refusal_until(p_base_id,t.recipient_user_id)
+ SELECT coalesce(jsonb_agg(jsonb_build_object('task_id',x.id,'recipient_user_id',x.recipient_user_id,
+  'label',coalesce(nullif(x.username,''),CASE WHEN x.friend THEN x.recipient_email END),
+  'email',CASE WHEN x.friend THEN x.recipient_email END,'role',x.role,'status',x.status,
+  'is_friend',x.friend,'email_enabled',public._contact_mail_enabled(x.profile_email),
+  'declined_at',x.declined_at,'expires_at',coalesce(x.declined_at+interval '30 days',x.created_at+interval '5 days'),
+  'cooldown_until',CASE WHEN x.status='declined' THEN public._base_share_refusal_until(p_base_id,x.recipient_user_id)
     ELSE (SELECT max(c.next_allowed_at) FROM public.mail_cooldowns c WHERE c.action_key='base:share' AND c.next_allowed_at>now()
-     AND c.target_key='pair:'||uid||':'||t.recipient_user_id||':base:'||p_base_id) END)
- ORDER BY t.created_at DESC),'[]'::jsonb) INTO outgoing
- FROM public.base_share_tasks t JOIN public.profiles p ON p.id=t.recipient_user_id
- WHERE t.base_id=p_base_id AND t.owner_id=uid AND t.cancelled_at IS NULL
- AND ((t.status IN ('pending','opened') AND coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')>now())
- OR (t.status='declined' AND t.declined_at>now()-interval '5 days'));
- SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',s.user_id,'label',coalesce(nullif(p.username,''),p.email),
-  'email',p.email,'role',s.role,'status','done','is_friend',public.are_friends(uid,s.user_id)) ORDER BY p.username),'[]'::jsonb) INTO active
- FROM public.question_base_shares s JOIN public.profiles p ON p.id=s.user_id WHERE s.base_id=p_base_id;
+     AND c.target_key='pair:'||uid||':'||x.recipient_user_id||':base:'||p_base_id) END)
+ ORDER BY x.created_at DESC),'[]'::jsonb) INTO outgoing
+ FROM (SELECT t.*, p.username, p.email AS profile_email, public.are_friends(uid,t.recipient_user_id) AS friend
+  FROM public.base_share_tasks t JOIN public.profiles p ON p.id=t.recipient_user_id
+  WHERE t.base_id=p_base_id AND t.owner_id=uid AND t.cancelled_at IS NULL
+  AND ((t.status IN ('pending','opened') AND coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')>now())
+  OR (t.status='declined' AND t.declined_at>now()-interval '5 days'))) x;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',x.user_id,'label',coalesce(nullif(x.username,''),CASE WHEN x.friend THEN x.email END),
+  'email',CASE WHEN x.friend THEN x.email END,'role',x.role,'status','done','is_friend',x.friend) ORDER BY x.username),'[]'::jsonb) INTO active
+ FROM (SELECT s.user_id, s.role, p.username, p.email, public.are_friends(uid,s.user_id) AS friend
+  FROM public.question_base_shares s JOIN public.profiles p ON p.id=s.user_id WHERE s.base_id=p_base_id) x;
  RETURN jsonb_build_object('ok',true,'friends',friends,'outgoing',outgoing,'active',active);
 END; $$;
 
@@ -5067,7 +5110,7 @@ BEGIN
   BEGIN
  result:=public._mail_original361_base_share_resend(p_task_id);
  IF result->>'ok'='true' AND result->>'mail_allowed'='true' THEN PERFORM public._mail_allocate_notification('base',p_task_id,'base:share'); END IF;
- RETURN result;
+ RETURN result - 'mail_to';
   EXCEPTION WHEN lock_not_available THEN
    IF attempt=1000 THEN RAISE; END IF;
   END;
@@ -5099,7 +5142,9 @@ CREATE FUNCTION "public"."base_share_to_friend"("p_base_id" "uuid", "p_recipient
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$ BEGIN
- RETURN QUERY SELECT * FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,true);
+ RETURN QUERY SELECT r.ok, r.err, NULL::text, CASE WHEN r.mail_to IS NOT NULL THEN r.mail_link END,
+   r.base_name, r.owner_label, r.cooldown_until, r.recipient_id
+ FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,true) r;
  END $$;
 
 
@@ -5447,7 +5492,10 @@ BEGIN
     ELSE
       SELECT declined_at INTO v_declined_at FROM public.poll_subscriptions WHERE id=(v_row->>'id')::uuid;
     END IF;
-    v_enabled:=public._contact_mail_enabled(v_row->>'email')
+    -- Znajomi: adres drugiej strony bywa ukryty (friends_list) -- flaga
+    -- powiadomień liczona z prawdziwego adresu konta.
+    v_enabled:=public._contact_mail_enabled(CASE WHEN p_kind='friends'
+      THEN (SELECT public._norm_email(u.email) FROM auth.users u WHERE u.id=(v_row->>'user_id')::uuid) ELSE v_row->>'email' END)
       AND (p_kind<>'subscribers' OR v_row->>'friend_user_id' IS NULL);
     IF v_row->>'status'='pending' AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
       IF p_kind='friends' THEN
@@ -6120,13 +6168,13 @@ CREATE FUNCTION "public"."control_device_share_create"("p_game_id" "uuid", "p_de
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE result jsonb; item jsonb;
+DECLARE result jsonb;
 BEGIN
  FOR attempt IN 1..1000 LOOP
   BEGIN
  result:=public._mail_original361_control_device_share_create(p_game_id,p_device_type,p_recipient_user_id,p_recipient_email);
  IF result->>'ok'='true' THEN IF result->>'created'='true' AND result->>'mail_allowed'='true' THEN PERFORM public._mail_allocate_notification('device',(result->>'share_id')::uuid,'device:share'); END IF; END IF;
- RETURN result;
+ RETURN result - 'mail_to';
   EXCEPTION WHEN lock_not_available THEN
    IF attempt=1000 THEN RAISE; END IF;
   END;
@@ -6318,7 +6366,8 @@ BEGIN
   END IF;
   RETURN QUERY
   SELECT sh.id, sh.recipient_id, p.username,
-    (CASE WHEN sh.recipient_id IS NULL THEN sh.recipient_email ELSE u.email END)::text,
+    (CASE WHEN sh.recipient_id IS NULL THEN sh.recipient_email
+      WHEN public.are_friends(v_uid,sh.recipient_id) THEN u.email END)::text,
     CASE WHEN sh.recipient_id IS NULL THEN 'mail'
       WHEN public.are_friends(v_uid,sh.recipient_id) THEN 'friend' ELSE 'account' END,
     sh.token,sh.created_at,
@@ -8363,7 +8412,11 @@ BEGIN
   BEGIN
  result:=public._mail_original361_friends_invite(p_handle);
  IF result->>'ok'='true' AND result->>'mail_allowed'='true' AND result->>'id' IS NOT NULL THEN PERFORM public._mail_allocate_notification('friend',(result->>'id')::uuid,'friend:invite'); END IF;
- RETURN result;
+ IF result->>'ok'='true' AND result->>'id' IS NOT NULL AND position('@' in trim(coalesce(p_handle,'')))>1 THEN
+  UPDATE public.friendships SET requested_email=lower(trim(p_handle))
+   WHERE id=(result->>'id')::uuid AND requester_id=auth.uid();
+ END IF;
+ RETURN result - 'to';
   EXCEPTION WHEN lock_not_available THEN
    IF attempt=1000 THEN RAISE; END IF;
   END;
@@ -8385,15 +8438,24 @@ BEGIN
  SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
  IF NOT public._account_is_registered(uid,identity) THEN RETURN; END IF;
  RETURN QUERY
- SELECT f.id,p.id,coalesce(nullif(p.username,''),public._norm_email(u.email)),public._norm_email(u.email),f.status,
-   CASE WHEN f.status='active' THEN 'friend' WHEN f.decision_user_id=uid THEN 'incoming' ELSE 'outgoing' END,
-   f.created_at,f.accepted_at,f.email_sent_at,f.email_send_count
- FROM public.friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=uid THEN f.addressee_id ELSE f.requester_id END
- JOIN auth.users u ON u.id=p.id
- WHERE f.cancelled_at IS NULL AND (f.requester_id=uid OR f.addressee_id=uid)
-   AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
-     AND (f.decision_user_id=uid OR f.declined_at>now()-interval '5 days')))
- ORDER BY f.created_at DESC;
+ SELECT x.id,x.user_id,coalesce(nullif(x.username,''),x.shown_email),x.shown_email,x.status,x.direction,
+   x.created_at,x.accepted_at,x.email_sent_at,x.email_send_count
+ FROM (
+  SELECT f.id,p.id AS user_id,p.username,f.status,
+   CASE WHEN f.status='active' THEN 'friend' WHEN f.decision_user_id=uid THEN 'incoming' ELSE 'outgoing' END AS direction,
+   f.created_at,f.accepted_at,f.email_sent_at,f.email_send_count,
+   CASE WHEN f.status='active' THEN public._norm_email(u.email)
+     WHEN f.requester_id=uid THEN coalesce(public._norm_email(f.requested_email),
+       (SELECT public._norm_email(s.subscriber_email) FROM public.poll_subscriptions s
+         WHERE s.id=f.source_subscription_id AND s.owner_id=uid))
+   END AS shown_email
+  FROM public.friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=uid THEN f.addressee_id ELSE f.requester_id END
+  JOIN auth.users u ON u.id=p.id
+  WHERE f.cancelled_at IS NULL AND (f.requester_id=uid OR f.addressee_id=uid)
+    AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
+      AND (f.decision_user_id=uid OR f.declined_at>now()-interval '5 days')))
+ ) x
+ ORDER BY x.created_at DESC;
 END $$;
 
 
@@ -8453,7 +8515,7 @@ BEGIN
   BEGIN
  result:=public._mail_original361_friends_resend(p_id);
  IF result->>'ok'='true' AND result->>'to' IS NOT NULL THEN PERFORM public._mail_allocate_notification('friend',p_id,'friend:resend'); END IF;
- RETURN result;
+ RETURN result - 'to';
   EXCEPTION WHEN lock_not_available THEN
    IF attempt=1000 THEN RAISE; END IF;
   END;
@@ -10388,7 +10450,8 @@ CREATE FUNCTION "public"."get_email_intent_status"("p_email" "text") RETURNS "te
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  SELECT status FROM public.email_intents WHERE email = lower(p_email) LIMIT 1;
+  SELECT 'expired'::text FROM public.email_intents
+  WHERE email = lower(p_email) AND status = 'expired' LIMIT 1;
 $$;
 
 
@@ -26996,5 +27059,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zNg2xyyUkgQ15P2c3RZWBfuLgqhaFigelfjvAoqgAQ73AO6iF9M0fMi8M6dllFo
+\unrestrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
 

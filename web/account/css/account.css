@@ -104,6 +104,13 @@
   box-sizing: border-box;
 }
 .account-actions .pending-actions:not([hidden]){ display: contents; }
+/* E-mail: pole „Powtórz nowy e-mail” w grupie #emailActions, którą skrypt
+   ukrywa przy oczekującej zmianie -- wtedy znika też „Zmień e-mail”,
+   a w wierszu akcji zostaje para Anuluj / Wyślij ponownie. */
+.account-field-group{ display: contents; }
+.account-field-group[hidden]{ display: none; }
+.account-field-group > .inp{ width: 100%; }
+#emailActions[hidden] ~ .account-actions > #saveEmail{ display: none; }
 @media (max-width: 600px) {
   .account-actions{ flex-wrap: nowrap; }
   .account-actions .btn{ flex: 1 1 0; min-width: 0; }

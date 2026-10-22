@@ -261,6 +261,12 @@ async function loginAsGuest(page, context, opts = {}) {
     return response.ok;
   },token);
   if (!marked) throw new Error('Failed to mark test guest');
+  // Jednorazowe okno informacji dla gościa (guest-info-modal.js) blokuje
+  // ładowanie strony do kliknięcia OK; jak suppress oceny -- oznacz jako widziane.
+  await page.evaluate(async () => {
+    const { data } = await window.__sbClient.auth.getUser();
+    if (data?.user?.id) localStorage.setItem(`fam:guest:info_shown:${data.user.id}`, '1');
+  });
   await clearE2EBypass(context);
 }
 
