@@ -129,24 +129,38 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
    dziennie, zdarzenia w `control2_device_events` na sesję (średnia, p95,
    maks.), ile sesji straciło zdarzenia przez limit 100/500. Ustala limit
    i retencję.
-1. **Baza (migracja dodająca, zgodna wstecz)**: tabele z pkt 1–2,
-   `game_sessions.runtime_session_id`, funkcja zapisu, istniejące RPC
-   i wyzwalacz piszą **także** do nowej tabeli (stare magazyny bez zmian),
-   przeniesienie istniejących danych (oba magazyny → nowa tabela, z
-   przypisaniem do sesji tam, gdzie się da), cron retencji, GRANT dla
-   `agent_reader` (tylko liczby). Test SQL na lokalnym Postgresie: zapis,
-   limit na sesję, izolacja sesji tej samej gry, deduplikacja, kaskada przy
-   usunięciu gry, uprawnienia (anon/klucz urządzenia/właściciel/admin).
-   Push na `main`, log migracji, testy kontrolne statystyk Control.
+1. **Baza: przełączenie zapisu (bez podwójnych magazynów)**. Nowe tabele
+   z pkt 1–2, `game_sessions.runtime_session_id`, funkcja zapisu. Istniejące
+   RPC (te same sygnatury — działający front i otwarte karty dalej działają)
+   i wyzwalacz blokad piszą **tylko** do nowej tabeli: koniec ucinania
+   100/sesję i 500/grę od razu. `error_count` liczony z nowej tabeli.
+   Przeniesienie istniejących danych z obu magazynów do nowej tabeli.
+   Odczyt dla panelu z nowej tabeli (Worker `admin-api.js` przestaje sklejać
+   `stats_detail.events` z `control2_device_events`) — migracja i Worker
+   wdrażane razem. Cron retencji, GRANT dla `agent_reader`. Test SQL na
+   lokalnym Postgresie: zapis, limit na sesję, izolacja sesji tej samej gry,
+   deduplikacja, zachowanie po usunięciu gry, uprawnienia; kontrola
+   produkcji: statystyki Control 2 i panel admina.
 2. **Nowe sygnały** (front urządzeń i Control + rozszerzenie list
    dozwolonych): e2e z kodem brancha na produkcyjnej bazie (statystyki
    Control 2, ukrycie karty, przeładowanie), potem Pages i kontrola.
 3. **Panel admina**: endpoint logu sesji, podsumowania w liście, moduł
    sugestii z testami unit, sekcja w oknie przebiegu, zestawienie zbiorcze;
    sceny zrzutów (przebieg z sugestiami, zestawienie), e2e panelu punktowo.
-4. **Sprzątanie** (osobna migracja po wdrożeniu 3): Control przestaje pisać
-   do `stats_detail.events`, usunięte ucinanie 500/grę i stary odczyt
-   `get_control2_display_events`.
+4. **Usunięcie starych mechanizmów** (migracja po wdrożeniu frontu z
+   etapów 2–3, gdy żadna strona ich nie woła):
+   - tabela `control2_device_events` (dane przeniesione w etapie 1) i jej
+     ucinanie 500/grę + 30 dni w pięciu funkcjach i wyzwalaczu;
+   - klucz `stats_detail.events` w `game_sessions` (wyczyszczony po
+     przeniesieniu) i logika ucinania w `control2_session_ping`;
+   - osobne RPC: `control2_display_event` (Wyświetlacz, `display/js/main.js:66`),
+     `control2_control_visibility_event`, `control2_network_probe_event`,
+     `control2_device_transport_event`, `control2_session_ping` w części
+     zdarzeń → jedno RPC dla urządzeń i jedno dla Control (front przepięty
+     w etapie 2);
+   - `get_control2_display_events`, klucze zgodności `device_event_log`/
+     `display_event_log` w Workerze i panelu;
+   - GRANT 467 dla `agent_reader` na starą tabelę.
 
 ## Wynik etapu 0 (2026-10-22, db-read 39871943993)
 
@@ -191,3 +205,6 @@ Obecny limit 100 w Control realnie ucina co ~14. sesję.
   - pyt. 4: limit **3000** zdarzeń na sesję;
   - pyt. 1: szczegółowe zdarzenia trzymane **90 dni** od zakończenia sesji;
     podsumowanie sesji bez limitu.
+- 2026-10-22: stare mechanizmy logowania usunąć, nie utrzymywać obok
+  nowych (użytkownik). Etap 1 przełącza zapis tylko na nową tabelę; etap 4
+  usuwa stare tabele, RPC i klucze, gdy front już ich nie używa.
