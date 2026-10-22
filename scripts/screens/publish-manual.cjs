@@ -5,14 +5,14 @@
 //   node scripts/screens/publish-manual.cjs --list      -- sceny do zrzucenia (lista dla --scenes=)
 //   node scripts/screens/run.cjs --scenes=$(node scripts/screens/publish-manual.cjs --list) --lang=all \
 //     && node scripts/screens/publish-manual.cjs
-//   node scripts/screens/publish-manual.cjs --list --base=<ref>  -- tylko sceny do odświeżenia: kod sceny
-//     zmieniony od <ref> (wspólny kod/dane zrzutów — wszystkie) albo brak pliku (workflow screens.yml)
+//   node scripts/screens/publish-manual.cjs --list --base=<ref>  -- tylko sceny do odświeżenia: zmiany od <ref>
+//     wg changes.cjs (jak run.cjs --changed) albo brak pliku (workflow screens.yml)
 //   opcje: --out=<katalog wyniku run.cjs> (domyślnie scripts/screens/out), --strict (wymaga kompletu)
 const fs = require("node:fs");
 const path = require("node:path");
-const { execSync } = require("node:child_process");
 const { repo, launch, composeDevice } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
+const { selectChanged } = require("./changes.cjs");
 
 const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
   const [key, ...rest] = arg.replace(/^--/, "").split("=");
@@ -56,11 +56,12 @@ async function toWebp(page, png, maxWidth, quality) {
   if (args.list) {
     let used = [...new Set(shots.map((s) => s.scene))];
     if (args.base) {
-      let files = [];
-      try { files = execSync(`git diff --name-only ${args.base}...HEAD`, { cwd: repo, encoding: "utf8" }).split("\n").filter(Boolean); } catch { files = null; }
-      const global = !files || files.some((f) => /^web\/(shared|assets)\//.test(f) || /^scripts\/screens\/(fake-supabase|lib\.cjs|data\/|scenes)/.test(f));
+      // Te same zasady co run.cjs --changed (changes.cjs) + zrzuty, których brak w web/manual/img.
+      const { all, scenes: picked, reason } = selectChanged(scenes.filter((s) => used.includes(s.id)), args.base);
+      console.error(`[publish-manual] ${reason}`);
+      const ids = new Set(picked.map((s) => s.id));
       const missing = new Set(shots.filter((s) => !fs.existsSync(path.join(repo, "web/manual", s.file))).map((s) => s.scene));
-      used = used.filter((id) => global || missing.has(id) || (scenes.find((s) => s.id === id)?.sources || []).some((src) => files.some((f) => f.startsWith(src))));
+      used = used.filter((id) => all || ids.has(id) || missing.has(id));
     }
     console.log(used.join(","));
     return;

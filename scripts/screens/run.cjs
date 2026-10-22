@@ -44,12 +44,7 @@ if (args.viewport) {
 const LANGS = ["pl", "en", "uk"];
 
 // ---------- wybór scen ----------
-function changedFiles(base) {
-  const run = (cmd) => { try { return execSync(cmd, { cwd: repo, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); } catch { return ""; } };
-  const committed = run(`git diff --name-only ${base}...HEAD`);
-  const working = run("git status --porcelain").split("\n").map((l) => l.slice(3).trim()).join("\n");
-  return [...new Set(`${committed}\n${working}`.split("\n").map((s) => s.trim()).filter(Boolean))];
-}
+const { selectChanged } = require("./changes.cjs");
 function pickScenes() {
   if (args.all) return scenes;
   if (args.scenes) {
@@ -59,16 +54,9 @@ function pickScenes() {
     return scenes.filter((s) => ids.includes(s.id));
   }
   if (args.changed) {
-    const base = args.base || "origin/main";
-    const files = changedFiles(base);
-    // Zmiana wspólnego kodu albo samych danych/silnika zrzutów dotyczy wszystkich stron.
-    const global = files.filter((f) => /^web\/(shared|assets)\//.test(f) || /^scripts\/screens\/(fake-supabase|lib\.cjs|data\/)/.test(f));
-    if (global.length) {
-      console.log(`Zmienione pliki wspólne (${global.slice(0, 5).join(", ")}${global.length > 5 ? " …" : ""}) -- wszystkie sceny.`);
-      return scenes;
-    }
-    const picked = scenes.filter((s) => files.some((f) => s.sources.some((src) => f.startsWith(src))));
-    console.log(`Zmienione pliki: ${files.length}, sceny: ${picked.map((s) => s.id).join(", ") || "brak"}`);
+    // Tylko sceny, na które zmiana może wpłynąć (changes.cjs: bez samych ?v=, wspólny kod -- strony, które go wczytują).
+    const { all, scenes: picked, reason } = selectChanged(scenes, args.base || "origin/main");
+    console.log(`${reason} -- sceny: ${all ? "wszystkie" : picked.map((s) => s.id).join(", ") || "brak"}`);
     return picked;
   }
   throw new Error("Podaj --changed, --scenes=… albo --all (--list pokazuje sceny).");
