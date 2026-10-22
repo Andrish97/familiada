@@ -123,3 +123,14 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Pauza na prośbę właściciela** (inne przebiegi w toku). Wznowienie od kroku 1 P5 (certyfikat origin), potem DNS + Access. Nic nie działa w tle.
 - **Supabase bez samoczynnych aktualizacji:** wersja przypięta w `familiada-server/supabase/UPSTREAM_REF` (`397cc79`, obrazy z 2026-10-16). Aktualizacja = świadoma zmiana tego pliku → `check` → próba (restore na kopii) → dopiero potem produkcja. Ewentualnie później automat, który tylko *zgłasza* nowszą wersję.
 - **Zamrożenie schematu bazy** (potwierdzone przez właściciela 2026-10-22: w czasie przenoszenia nie wprowadza zmian): od ostatniej próby generalnej z e2e do testów kontrolnych po przełączeniu — bez nowych migracji na `main`. Dane mogą się zmieniać (świeży zrzut przy przełączeniu).
+
+## Próba generalna — dziennik (2026-10-22)
+
+- Certyfikat origin przeniesiony (kopia właściciela → `transfer.yml` 39802659907), Caddy z certyfikatem, dane odświeżone (`restore rehearsal` 39802874616: 188 kont, crony 0/13).
+- DNS `api2/supabase2/leads2/panel2/docker2` (proxied) + Access dla `supabase2/panel2/docker2` — właściciel.
+- Worker zwracał 404 dla nieznanych hostów → Worker przepuszcza `docker.` i adresy `*2` (commit 26062421, wdrożony, test `workerServiceHosts.test.js`). Z internetu: api2 401 (bez klucza — poprawnie), leads2 200, supabase2/panel2/docker2 302/307 (Access).
+- e2e na `api_origin=https://api2.familiada.online`:
+  - na `main` spece z `serveBranchCode` biegną na produkcji (warunek `GITHUB_REF_NAME!=='main'`) — przebieg 39824301942 nie dotknął nowej bazy (licznik `activity`: 0 zmian). Próby e2e puszczać **z brancha**.
+  - CSP z Workera (E24) blokował `api2` w przeglądarce → pomocnik testów podmienia adres także w CSP stron z produkcji.
+  - przebieg 39827319635 (branch): ruch do `api2` potwierdzony; `poll-go` zielony na nowym serwerze; `resource-duplicate` 401 z `/_api/resource-duplicate` (Worker rozmawia ze starym serwerem); `logo-storage-copy` — w sprzątaniu `remove([])` odrzucane przez Storage 1.81 (poprawione w specu; kod aplikacji ma już strażniki pustej listy).
+- **Wniosek:** od E24 logowanie i część funkcji (`/_api/auth`, `/_api/resource-duplicate`, `/_api/resource-send`, poczta, panel admina) idą przez Workera do `api.familiada.online`. Pełna próba wymaga testowego wariantu Workera z `SUPABASE_URL=https://api2.familiada.online` (pierwotny plan właściciela) — do decyzji.
