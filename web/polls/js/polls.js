@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-22T00131";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00131";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00131";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00131";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00131";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-22T00340";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00340";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00340";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00340";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00340";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00340";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T00131";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-22T00131";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-22T00131";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-22T00131";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-22T00131";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T00131";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-22T00131";
-import { createTally } from "./poll-tally.js?v=v2026-10-22T00131";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T00340";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00340";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T00340";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-22T00340";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-22T00340";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-22T00340";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00340";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-22T00340";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T00340";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-22T00340";
+import { createTally } from "./poll-tally.js?v=v2026-10-22T00340";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00131";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00340";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -725,7 +725,7 @@ async function sendInvitesCore() {
     throw new Error(rpcErrText(error, data));
   }
 
-  const res = await sendPollInviteMails({ mailItems: data?.mail, pollName: game.name, currentUser });
+  const res = await sendPollInviteMails({ mailItems: data?.mail });
   selectedSubIds.clear();
   selectedFriendIds.clear();
 
@@ -884,7 +884,7 @@ async function remindShare(tk, sub) {
       return;
     }
     if (data.mail_allowed === false) { setMsg(t("pollSharePanel.mailDisabled")); return; }
-    const res = await sendPollInviteMails({ mailItems: data.mail, pollName: game.name, currentUser, reminder: true });
+    const res = await sendPollInviteMails({ mailItems: data.mail, reminder: true });
     if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
     else setMsg(t(res.skipped ? "pollSharePanel.mailDisabled" : "polls.share.reminded"));
     // Po akcji ponownie pobieramy rzeczywiste zegary i flagi z bazy.

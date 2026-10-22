@@ -5,17 +5,17 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00131";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T00340";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00340";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00340";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00340";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00340";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-22T00131"),
-  en: () => import("../content/en.js?v=v2026-10-22T00131"),
-  uk: () => import("../content/uk.js?v=v2026-10-22T00131"),
+  pl: () => import("../content/pl.js?v=v2026-10-22T00340"),
+  en: () => import("../content/en.js?v=v2026-10-22T00340"),
+  uk: () => import("../content/uk.js?v=v2026-10-22T00340"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").

@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { mailQueueResult } from "../_shared/mail-queue-results.js";
-import { notificationReference } from "../_shared/notification-reference.js";
 import { md5Hex } from "../_shared/md5.js";
 import { parseNotificationItem, parseMailLang, prepareNotificationRow } from "../_shared/notification-send.js";
 
@@ -21,10 +19,6 @@ const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 function json(obj: any, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-
-function htmlToText(html: string): string {
-  return html.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 500);
 }
 
 // Goście (konta anonimowe) nie wysyłają żadnych maili.
@@ -66,7 +60,8 @@ function insertError(error: any): string {
   return "insert_failed";
 }
 
-// Maile powiadomień z szablonów serwera: { lang, items: [{ action, token, reminder? }] }.
+// Maile powiadomień wyłącznie z szablonów serwera (audyt E24):
+// { lang, items: [{ action, token, reminder? }] }.
 async function sendNotificationItems(body: any, user: any, batchMax: number) {
   const lang = parseMailLang(body.lang);
   const rawItems = Array.isArray(body.items) ? body.items : [];
@@ -96,8 +91,6 @@ async function sendNotificationItems(body: any, user: any, batchMax: number) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
 
-  let uid: string | null = null;
-
   try {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -105,7 +98,6 @@ serve(async (req) => {
 
     const { data: userData, error: authError } = await sbAnon.auth.getUser(token);
     if (authError || !userData?.user) return json({ ok: false, error: "Invalid JWT" }, 401);
-    uid = userData.user.id;
     if (await isGuest(userData.user)) return json({ ok: false, error: "guest_forbidden" }, 403);
 
     const raw = await req.text();
@@ -118,60 +110,8 @@ serve(async (req) => {
     const settings = await sbAdmin.from("mail_settings").select("delay_ms,batch_max").eq("id", 1).maybeSingle();
     const batchMax = Math.min(500, Math.max(1, Number(settings?.data?.batch_max) || 100));
 
-    if (body.lang !== undefined) return await sendNotificationItems(body, userData.user, batchMax);
-
-    // Dawny tryb (HTML od klienta) -- tylko do wdrożenia nowej strony; usuwany
-    // w następnym kroku paczki P2.
-    const topActionKey = body.cooldownActionKey ? String(body.cooldownActionKey).trim() : "";
-    const topTargetKey = body.cooldownTargetKey ? String(body.cooldownTargetKey).trim() : "";
-
-    const items = Array.isArray(body.items) ? body.items : [body];
-    const validItems: any[] = items.filter((x: any) => x?.to && x?.subject && x?.html).map((x: any) => ({
-      to: String(x.to).trim(),
-      subject: String(x.subject).trim(),
-      html: String(x.html).trim(),
-      cooldownActionKey: x.cooldownActionKey ? String(x.cooldownActionKey).trim() : topActionKey,
-      cooldownTargetKey: x.cooldownTargetKey ? String(x.cooldownTargetKey).trim() : topTargetKey,
-    }));
-
-    if (!validItems.length) return json({ ok: false, error: "No valid emails" }, 400);
-    if (validItems.some((it: any) => !it.cooldownActionKey || !it.cooldownTargetKey)) {
-      return json({ ok: false, error: "Missing cooldownActionKey/cooldownTargetKey" }, 400);
-    }
-    try {
-      for (const item of validItems) item.reference = notificationReference(item.html, item.cooldownActionKey);
-    } catch { return json({ ok: false, error: "invalid_notification_reference" }, 400); }
-
-    const toQueue = validItems.slice(0, batchMax);
-
-    const rows = toQueue.map((it: any) => ({
-      created_by: uid,
-      to_email: it.to,
-      subject: it.subject,
-      html: it.html,
-      text: htmlToText(it.html),
-      status: "pending",
-      not_before: new Date().toISOString(),
-      attempts: 0,
-      cooldown_action_key: it.cooldownActionKey,
-      cooldown_target_key: it.cooldownTargetKey,
-      notification_source_kind: it.reference.kind,
-      notification_source_token: it.reference.token,
-      meta: { notification_reference: it.reference },
-    }));
-
-    const { data: inserted, error } = await sbAdmin.from("mail_queue").insert(rows).select("to_email");
-    if (error) {
-      // Trigger w bazie (migracja 289) odrzuca nierozpoznany action_key i
-      // wiersze wciąż w cooldownie (baseline:recipient) wyjątkiem -- to
-      // jedyne miejsce, gdzie to się realnie materializuje dla klienta.
-      if (String(error.message || "").includes("cooldown_active")) {
-        return json({ ok: false, error: "cooldown" }, 429);
-      }
-      throw error;
-    }
-
-    return json(mailQueueResult(validItems, inserted, toQueue.length));
+    // Tylko szablony serwera: przeglądarka nie przekazuje treści ani odbiorcy.
+    return await sendNotificationItems(body, userData.user, batchMax);
   } catch (e) {
     return json({ ok: false, error: String(e) }, 500);
   }

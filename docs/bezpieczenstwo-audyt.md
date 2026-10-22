@@ -19,8 +19,8 @@ Skala ważności: **KRYTYCZNE** (dane/operacje dowolnych kont bez logowania),
 | B4 | KRYTYCZNE | 25 funkcji SECURITY DEFINER bez sprawdzania użytkownika wykonywalnych przez anon, m.in. `delete_user_everything(uuid)` (usunięcie danych dowolnego konta), `auth_clear_email_change`, `storage_list_objects` (lista plików dowolnego bucketu), `mail_cron_set`, `reset_email_limits`, `save_attachment`, `seed_demo_for_user`, kolejka leadów i limity AI | 448: tylko service_role; e2e resetuje limity przez `/_e2e_api/mail-limits/reset` | wdrożone 19:32 (447–449) |
 | B5 | ŚREDNIE | Storage: ręczne polityki dla authenticated bez warunku na bucket (INSERT/UPDATE/DELETE własnych plików w dowolnym buckecie, w tym publicznym `homepage-screenshots`) oraz zakładanie bucketów przez zalogowanych | 449: usunięte; zostają polityki per bucket | wdrożone 19:32 (447–449) |
 | B6 | NISKIE | Widok `stats_exclusions_effective` (prawa właściciela, omija RLS) dostępny dla anon — lista UUID wykluczonych kont | 446: tylko service_role | wdrożone |
-| B7 | WYSOKIE | `profile_login_to_email(login)` (anon): każdy pozna e-mail dowolnej nazwy użytkownika. Potrzebne do logowania nazwą (Supabase loguje e-mailem) i do udostępniania baz po nazwie | Do decyzji: logowanie nazwą przez Worker (zwraca sesję, nie e-mail) + udostępnianie po nazwie bez ujawniania e-maila | otwarte |
-| B8 | ŚREDNIE | `email_get_status`, `get_email_intent_status`, `email_resend_prepare` (anon): sprawdzenie, czy e-mail ma konto (enumeracja kont) | Do decyzji (część przepływu rejestracji) | otwarte |
+| B7 | WYSOKIE | `profile_login_to_email(login)` (anon): każdy pozna e-mail dowolnej nazwy użytkownika. Potrzebne do logowania nazwą (Supabase loguje e-mailem) i do udostępniania baz po nazwie | Logowanie i reset hasła nazwą przez Worker (`/_api/auth/login`, `/_api/auth/reset`: sesja GoTrue kluczem anon, ta sama odpowiedź dla nieznanej nazwy i złego hasła, limity KV na IP i login). 456: `profile_login_to_email` i wewnętrzne funkcje zwracające adres tylko `service_role`; RPC udostępnień (bazy, znajomi, urządzenia) bez adresu odbiorcy; panel bazy i lista urządzeń Control pokazują adres tylko znajomym; maile z szablonów serwera (Ś7/send-mail) | wdrożone 2026-10-21 (P2) |
+| B8 | ŚREDNIE | `email_get_status`, `get_email_intent_status`, `email_resend_prepare` (anon): sprawdzenie, czy e-mail ma konto (enumeracja kont) | Stan adresu przy rejestracji i ponowne potwierdzenie przez Worker (`/_api/auth/email-status`, `/_api/auth/resend-prepare`: limity 30/h na IP i 10/h na adres; odpowiedź resend bez stanu konta). 456: obie funkcje tylko `service_role`; `get_email_intent_status` zwraca tylko „expired”. Rejestracja nadal mówi „konto istnieje” (UX bez zmian) — pełna ochrona wymaga weryfikacji Turnstile w Workerze (sekret `TURNSTILE_SECRET_KEY`, niżej) | wdrożone 2026-10-21 (P2, bez Turnstile) |
 | B9 | NISKIE | `user-logos`: publiczny SELECT obejmuje listowanie — widać foldery (UUID kont) i nazwy plików logo | 453: SELECT tylko właściciel folderu (`user-logos-select-own`), bucket publiczny (obrazy publicznym URL-em); wgrywanie/usuwanie i kopie logo sprawdzone e2e | wdrożone 2026-10-21 (`84820b2`, P1) |
 
 Sprawdzone bez uwag: pozostałe tabele `public` mają RLS (po 446 żadna tabela
@@ -60,14 +60,14 @@ lead-finder `deploy-lead-finder.yml` — wszystkie po pushu na `main`.
 | N2 | NISKIE | `mail-worker`: przy pustym `MAIL_WORKER_SECRET` otwarty dla wszystkich; sekret także z `Bearer`/`?secret=`, porównanie zwykłe, pełny URL w logu | Tylko nagłówek `x-mail-worker-secret` (tak wysyła `invoke_mail_worker*` z Vault — bez zmiany bazy), stałoczasowo, brak sekretu = 403, w logu sama ścieżka | wdrożone 2026-10-21 (`72622e7`) |
 | N3 | NISKIE | Brak nagłówków bezpieczeństwa stron (CSP, `X-Content-Type-Options`, `Referrer-Policy`) z Workera | Worker (`security-headers.js`) dla HTML www/apex/settings/nieznanych subdomen: `nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN`, `Permissions-Policy`, CSP `frame-ancestors 'self'` + `Content-Security-Policy-Report-Only` (źródła z `web/`). Uwaga: reguła nagłówków strefy Cloudflare (poza repo) nadpisuje egzekwowaną CSP własną wartością (bez `frame-ancestors`, z niepotrzebnym już `leads.familiada.online`) — osadzanie blokuje `X-Frame-Options` | wdrożone 2026-10-21 (`84820b2`, P1) |
 | N4 | NISKIE | Funkcja Edge `storage-cleanup` bez uwierzytelnienia (każdy może uruchomić przetwarzanie kolejki usuwania; usuwa tylko pozycje z kolejki) | Nagłówek `X-Internal-Secret` = hex(HMAC-SHA256(`MAIL_WORKER_SECRET`, "storage-cleanup")) — bez nowego sekretu (baza liczy z Vault `mail_worker_secret`, migracja 452), bez CORS; wartość pochodna nie otwiera mail-worker | wdrożone 2026-10-21 (`84820b2`, P1) |
-| N5 | NISKIE | Funkcja Edge `auth-email-status`: sprawdzenie, czy e-mail ma konto (enumeracja; razem z B8) | Do decyzji razem z B8 | otwarte – decyzja |
+| N5 | NISKIE | Funkcja Edge `auth-email-status`: sprawdzenie, czy e-mail ma konto (enumeracja; razem z B8) | Funkcja usunięta (stan adresu tylko przez Worker z limitami) | wdrożone 2026-10-21 (P2) |
 | N6 | NISKIE | Poczta przychodząca (`inbound-email.js`): mail z `[TICKET-…]` w temacie dopina się do zgłoszenia bez sprawdzenia nadawcy (odpowiednik Ś3 dla kanału e-mail) | `ticketForSender`: dopięcie tylko, gdy nadawca (koperta) = adres zgłoszenia (ta sama reguła co `contact/append`), inaczej skrzynka bez zgłoszenia | wdrożone 2026-10-21 (`84820b2`, P1) |
 | N7 | NISKIE | Formularz kontaktu: nazwa wybranego pliku wstawiana przez `innerHTML` (self-XSS) | Elementy DOM z `textContent` | wdrożone 2026-10-21 (`72622e7`) |
 
 Uwaga do numeracji Ś2, Ś6, Ś7, N3–N6: opisy spisane przy wdrażaniu
 poprawek (2026-10-21) na podstawie przeglądu kodu.
 
-Zostają otwarte B7, B8 i N5 (sekcja „Wyniki — baza”).
+B7, B8 i N5 — paczka P2 (niżej).
 
 ## Wymagane przed wdrożeniem
 
@@ -174,3 +174,58 @@ Kolejność wdrożenia:
   (stare ciasteczko nieważne; nowe ważne 12 h); opcjonalnie poprawić regułę
   nagłówków CSP w Cloudflare (dodać `frame-ancestors 'self'`, usunąć
   `leads.familiada.online` z `connect-src`) albo ją usunąć.
+
+## Paczka P2 (2026-10-21/22) — B7, B8, N5, formularz kontaktu, send-mail
+
+Zgoda właściciela. Krok A (zaplecze, zgodne wstecz) `cce88c9dd6`, poprawka
+startu send-mail `3533a5c520`, krok B (strona + migracja 456) — SHA w Dzienniku.
+
+- **B7 logowanie nazwą:** Worker `/_api/auth/login` (nazwa → e-mail kluczem
+  serwisowym, `token?grant_type=password` kluczem anon z tokenem captcha jak
+  z przeglądarki, przeglądarka dostaje tylko sesję → `setSession`); ta sama
+  odpowiedź `invalid_credentials` dla nieznanej nazwy i złego hasła; limity KV
+  nieudanych prób: 10/15 min na login, 30/15 min na IP (skróty SHA-256).
+  Reset hasła nazwą: `/_api/auth/reset` (cooldown w bazie + `/recover`).
+  Logowanie adresem e-mail bez zmian (bezpośrednio GoTrue).
+- **B7 udostępnianie:** RPC udostępnień baz, zaproszeń do znajomych i urządzeń
+  nie zwracają adresu odbiorcy; panel udostępnień bazy i lista urządzeń
+  w Control pokazują adres tylko znajomym. **Do dalszej decyzji:** lista
+  Znajomych (`friends_list`/`contacts_list`) nadal pokazuje adres przy
+  oczekujących zaproszeniach (w obie strony) — osobna zmiana UX.
+- **B8/N5:** `/_api/auth/email-status` (30/h IP, 10/h adres) i
+  `/_api/auth/resend-prepare` (10/h IP, 5/h adres; bez stanu konta w
+  odpowiedzi); funkcje bazy tylko `service_role`; `auth-email-status` usunięta;
+  `get_email_intent_status` zwraca tylko „expired”.
+- **Formularz kontaktu:** `/_api/contact` 5/h na IP i 100/h łącznie (KV), poza
+  istniejącym limitem na adres w `save_form_message`.
+- **send-mail:** wyłącznie `{ lang, items: [{ action, token, reminder }] }`;
+  odbiorca, nazwy, linki i klucze cooldownu z przydziału
+  `mail_notification_allocations` i tabel źródłowych; HTML i adres od klienta
+  odrzucane (400); goście (anonimowi / `is_guest`) — 403. Szablony:
+  `supabase/functions/_shared/notification-mail.js`, teksty kopiowane
+  z `web/shared/translation/*.js` skryptem
+  `node scripts/sync-notification-mail-texts.mjs` (test jednostkowy pilnuje
+  zgodności i identyczności dokumentu z dawnym mailem z przeglądarki).
+  Jedyna zmiana treści: przycisk maila urządzenia ma nazwę typu
+  („Otwórz: Prowadzący”; wcześniej dosłownie „{type}”).
+- **Incydent:** po kroku A funkcja send-mail nie startowała (import
+  `std/crypto` z WASM) 22:37–22:51 UTC (wdrożenia Edge 39687748087 → 39689329023) — maile powiadomień nie wychodziły (przeglądarka pokazywała „nie udało się wysłać”);
+  naprawa `3533a5c520` (MD5 w czystym JS), sprawdzone e2e 39689434179.
+- **Turnstile (krok C, 2026-10-22):** sekret ustawiony przez właściciela;
+  Worker weryfikuje token (`siteverify`, nazwa hosta familiada) dla
+  `/_api/auth/login|reset|email-status|resend-prepare`, `/_api/contact`
+  i `/_api/contact/append`; brak sekretu = 503 (odmowa). Strona logowania
+  bierze świeży token na każde wywołanie, okno kontaktu ma widżet
+  „interaction-only”. Testy e2e z podpisanym `X-E2E-Token` są weryfikowane
+  oficjalnym testowym kluczem Cloudflare.
+- **Znajomi (457):** przy zaproszeniach (oczekujących i odrzuconych, w obie
+  strony) bez adresu drugiej strony; zapraszający widzi tylko adres, który sam
+  wpisał (`friendships.requested_email`) albo adres ze swojej listy
+  subskrybentów; po przyjęciu znajomości adres widoczny.
+- **Turnstile — stan sprzed kroku C:** weryfikacja tokenu po stronie Workera
+  (logowanie, rejestracja, stan adresu, formularz kontaktu) potrzebuje sekretu
+  Workera **`TURNSTILE_SECRET_KEY`** (klucz tajny widżetu dla sitekey
+  `0x4AAAAAACgSBNCEZ9064to_`; Cloudflare → Turnstile). Nie wdrożono.
+  Uwaga: testy e2e logują się z testowym sitekey (token „dummy”), co działa
+  tylko wtedy, gdy GoTrue nie weryfikuje captchy — captcha w Supabase Auth
+  jest więc najpewniej wyłączona i Turnstile działa dziś tylko w przeglądarce.

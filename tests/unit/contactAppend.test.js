@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { handleContactAppend } from '../../cloudflare/maintenance-worker/src/lib/email/contact.js';
 
 function kv() { const m = new Map(); return { get: async (k) => m.get(k) ?? null, put: async (k, v) => { m.set(k, v); } }; }
-const env = () => ({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'svc', MAINT_KV: kv() });
-const req = (body, ip = '1.2.3.4') => new Request('https://www.familiada.online/_api/contact/append', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip }, body: JSON.stringify(body) });
+const env = () => ({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'svc', TURNSTILE_SECRET_KEY: 'real-secret', MAINT_KV: kv() });
+const req = (body, ip = '1.2.3.4') => new Request('https://www.familiada.online/_api/contact/append', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip }, body: JSON.stringify({ captcha_token: 'ok-token', ...body }) });
 
 function mockDb({ report = { id: 'r1', ticket_number: 'TICKET-2026-0001' }, first = { direction: 'inbound', from_email: 'owner@example.com', to_email: null } } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = new URL(url);
+    if (u.hostname === 'challenges.cloudflare.com') return new Response(JSON.stringify({ success: init.body.get('response') === 'ok-token', hostname: 'www.familiada.online' }));
     calls.push(u.pathname);
     const ok = (data) => new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } });
     if (u.pathname === '/rest/v1/reports') return ok(report ? [report] : []);
