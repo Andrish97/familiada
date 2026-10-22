@@ -385,6 +385,8 @@ module.exports = [
     steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
   { id: "support-footer-home", guest: true, category: "Dodatkowe", title: "Strona główna — stopka z Postaw kawę", path: "/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
     steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "home-faq-support", guest: true, category: "Dodatkowe", title: "Strona główna — FAQ: Wsparcie projektu", path: "/", sources: ["web/index.html", ...page("home"), "web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { const q = view.locator('[data-i18n="home.faq.q31.q"]'); await q.scrollIntoViewIfNeeded(); await q.click(); await view.locator('[data-i18n="home.faq.cat6"]').scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "support-modal", category: "Dodatkowe", title: "Okno Postaw kawę", path: "/games/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
     steps: [async (view) => { await view.locator(".btn-support-footer").click(); await view.locator(".support-modal").waitFor({ state: "visible" }); await view.waitForTimeout(300); }] },
   { id: "manual", category: "Podręcznik", title: "Podręcznik — Zasady gry", path: "/manual/?tab=rules", sources: page("manual"), ready: "#tab-rules .m-toc" },

@@ -336,7 +336,8 @@ const pl = {
       cat2: "Przygotowanie i ankieta",
       cat3: "Sprzęt i wymagania",
       cat4: "Rozgrywka na żywo",
-      q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać ankiety i prowadzić rozgrywkę bez żadnych opłat." },
+      cat6: "Wsparcie projektu",
+      q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna — i tak zostanie. Możesz tworzyć gry, zbierać ankiety i prowadzić rozgrywkę bez żadnych opłat." },
       q2:  { q: "Czy trzeba instalować aplikację?", a: "Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji." },
       q3:  { q: "W jakich językach działa system?", a: "Interfejs jest dostępny po polsku, angielsku i ukraińsku. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru." },
       q4:  { q: "Czy trzeba zakładać konto?", a: "Nie. W trybie gościa możesz tworzyć gry, zbierać odpowiedzi i prowadzić rozgrywkę. Udostępnianie baz, subskrypcje i funkcje społecznościowe wymagają konta zarejestrowanego. Rejestracja odbywa się przez e-mail i hasło — bez logowania przez Google." },
@@ -364,6 +365,8 @@ const pl = {
       q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W Ustawieniach gry możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
       q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w sekcji Odbiorcy ankiety widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
+      q31: { q: "Jak mogę wesprzeć Familiadę?", a: "Jeśli lubisz korzystać z Familiady, możesz postawić twórcy kawę — filiżanka jest w stopce każdej strony. To dobrowolny gest, który pomaga rozwijać serwis." },
+      q32: { q: "Czy wsparcie daje dodatkowe funkcje?", a: "Nie. Wszystkie funkcje są dostępne dla każdego bez opłat. Wsparcie niczego nie odblokowuje — jest po prostu podziękowaniem." },
     },
     footer: {
       left: "© {year} Familiada — system do gry na żywo",

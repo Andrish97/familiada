@@ -5,7 +5,7 @@ import { choiceModal } from "./modal.js?v=v2026-10-22T01235";
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu) otwiera okno z wyjaśnieniem i linkiem.
 // Pusty adres = brak przycisku w stopce.
-export const SUPPORT_URL = "";
+export const SUPPORT_URL = "https://buycoffee.to/familiada.online";
 
 function supportHost() {
   try { return new URL(SUPPORT_URL).host.replace(/^www\./, ""); } catch { return ""; }
@@ -59,6 +59,8 @@ export function openSupportModal() {
 /** Dokłada filiżankę obok przycisku Kontakt w zwykłej stopce strony. */
 export function ensureSupportEntryPoint() {
   if (!SUPPORT_URL || document.body?.hasAttribute("data-device-screen")) return;
+  // Inne wejścia do okna (np. odpowiedź w FAQ strony głównej) czekają ukryte na adres.
+  document.querySelectorAll("[data-support-modal][hidden]").forEach((el) => { el.hidden = false; });
   if (document.querySelector(".btn-support-footer")) return;
   const contact = document.querySelector(".footer:not(.contact-footer-entry--floating) .btn-contact-footer");
   if (!contact) return;
@@ -86,6 +88,6 @@ export function ensureSupportEntryPoint() {
 
 if (typeof document !== "undefined") {
   document.addEventListener("click", (e) => {
-    if (e.target.closest(".btn-support-footer")) openSupportModal();
+    if (e.target.closest(".btn-support-footer, [data-support-modal]")) openSupportModal();
   });
 }
