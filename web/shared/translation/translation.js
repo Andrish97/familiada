@@ -271,7 +271,9 @@ async function injectLanguageSwitcher() {
 
   container.appendChild(btn);
 
-  const topbarLangSection = document.querySelector(".topbar .topbar-section-3");
+  // Miejsce przełącznika: sekcja 3 topbara albo grupa [data-lang-slot] na stronach
+  // bez topbara (logowanie) — wtedy stoi obok „i” po prawej, jak na stronach aplikacji.
+  const topbarLangSection = document.querySelector(".topbar .topbar-section-3") || document.querySelector("[data-lang-slot]");
   if (topbarLangSection) {
     topbarLangSection.appendChild(container);
   } else {
