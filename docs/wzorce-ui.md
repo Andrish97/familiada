@@ -342,6 +342,19 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 
 Etykiety: pełne słowa, bez skrótów typu „Imp”, „Exp.bz”, „Podgl.”.
 
+**Karty formularzy (decyzja 2026-10-21, Ustawienia konta):** w karcie z polami
+(nazwa, e-mail, hasło, usuwanie konta, zapis danych gościa, ocena, demo)
+pola stoją jedno pod drugim na całą szerokość karty (bez ucinania
+podpowiedzi), a przyciski w osobnym wierszu akcji `.account-actions` **na dole
+karty** (`margin-top:auto` — karty jednego rzędu siatki mają przyciski na tej
+samej linii). Komputer: przyciski po prawej, szerokość według treści;
+telefon (≤ 600 px): wiersz akcji na całą szerokość — jeden przycisk na całą
+szerokość, dwa po równo (drugorzędny po lewej, złoty/główny po prawej).
+Przyciski mają wysokość pola (40 px). Teksty pomocnicze nad polem, nie pod
+przyciskami. Zasada „przycisk obok pola = wysokość pola” zostaje dla
+pojedynczych wierszy wyszukiwania/zaproszeń (Znajomi „Zaproś”, okna
+udostępniania, kod urządzenia) — nie dla kart formularzy.
+
 ## A12. Odstępy
 
 - **15 px** marginesu bocznego strony (`.wrap` na ≤ 980 px, `base.css:1166`),

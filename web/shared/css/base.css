@@ -2493,7 +2493,7 @@ body{
 .empty-state[hidden]{ display:none; }
 /* Przycisk obok pola ma wysokość pola (decyzja użytkownika 2026-10-21):
    wiersze „pole + przycisk” rozciągają przycisk do wysokości pola. */
-:is(.account-field-row, .contacts-invite-row, .baseShareLookup, .connect-device-enter-code-row) > .btn{
+:is(.contacts-invite-row, .baseShareLookup, .connect-device-enter-code-row) > .btn{
   align-self: stretch;
   height: auto;
   min-height: 40px;

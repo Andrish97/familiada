@@ -37,6 +37,23 @@ Migracje zmieniające zachowanie — razem z kodem, który ich wymaga (pkt 2
 na branchu przed migracją jest wtedy niemożliwy: przetestować na lokalnym
 Postgresie, wdrożyć razem i od razu testy kontrolne).
 
+**Szybsze e2e (decyzja użytkownika 2026-10-22):**
+- **Kilka speców w jednym przebiegu:** `spec_filter` trafia wprost do
+  `npx playwright test`, więc podawaj kilka plików oddzielonych spacją
+  (np. `spec_filter="e2e/a.spec.js e2e/b.spec.js"`) z `max_failures` > 1, żeby
+  jeden błąd nie zatrzymał reszty — oszczędza przygotowanie maszyny na każdym
+  przebiegu. Razem idą spece bez skrzynek (`@mailbox`) i bez kont na stałe;
+  spece ze skrzynkami, kontami na stałe (test11/12/15) i ciężkie (Control,
+  wyświetlacz) — osobno.
+- **Nie powtarzać zielonych:** spec zielony na danym kodzie nie jest puszczany
+  ponownie, jeśli późniejsze zmiany (scalenie, poprawka) nie dotknęły plików,
+  które testuje. Przed kolejnym przebiegiem porównać diff z plikami speca.
+- **Równolegle tylko na rozłącznych kontach:** dwa przebiegi naraz wyłącznie
+  z rozłącznym `test_accounts` i bez `@mailbox`; przy pracy innej sesji
+  na tych samych kontach/skrzynkach — nie równolegle.
+- Powód ograniczeń: wspólne skrzynki testowe, limity wysyłki i cooldowny poczty,
+  konta na stałe i mały serwer bazy — równoległe przebiegi dają fałszywe błędy.
+
 ## Wygląd (decyzja 2026-10-10)
 
 - Zasady: **symetria, równowaga i spójność** — elementy podobne funkcjonalnie
@@ -131,6 +148,11 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+- **Teksty maili (decyzja użytkownika 2026-10-21):** jedno źródło — tłumaczenia strony
+  `web/shared/translation/{pl,en,uk}.js`. Maile powiadomień składa serwer (funkcja Edge
+  `send-mail`) z kopii `supabase/functions/_shared/notification-mail-texts.js`, generowanej
+  przez `node scripts/sync-notification-mail-texts.mjs` (nie edytować ręcznie; test
+  `notificationMail.test.js` pilnuje zgodności).
 
 ## Stan i wznawianie
 
