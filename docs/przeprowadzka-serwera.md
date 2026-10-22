@@ -137,3 +137,22 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Portainer od razu pod `docker.familiada.online`** (decyzja właściciela 2026-10-22: nowy adres, bez etapu `docker2`). Caddy na nowym serwerze obsługuje `docker.` także w trybie próby.
 - e2e (branch, `api2`) przebieg 39829329491: zielone `logo-draw-delete`, `rating-system`, `account-rating`, `game-transfer-format`; `logo-storage-copy` czerwony — Storage 1.81 odrzuca klucze przy pustym `GLOBAL_S3_BUCKET` („must be a relative path”). Naprawa w familiada-server: `env-adapt.py` ustawia `GLOBAL_S3_BUCKET=familiada`, `restore.sh` przenosi `storage-single-tenant/` do `familiada/`. Po ponownym wczytaniu (39830375178): `logo-storage-copy` zielony (39830781551), stare pliki ze wszystkich 3 bucketów czytelne (HTTP 200, `storage-layout` 39831358460).
 - **Decyzja (2026-10-22): bez testowego Workera** — funkcje Workera z bazą (`/_api/auth`, powielanie/wysyłanie zasobów, poczta, panel admina, kontakt) testowane w przerwie technicznej zaraz po przełączeniu; w razie błędu powrót DNS na stary serwer. Worker bez zmian (logowanie przez Workera chroni adresy użytkowników — E24).
+
+## Lista kontrolna przełączenia (P6) — obowiązkowe w dniu migracji
+
+Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapamiętaj”.
+
+1. Właściciel włącza przerwę techniczną; `maintenance.yml` potwierdza.
+2. `transfer.yml` — świeży zrzut (przy włączonej przerwie, żeby nic się nie zmieniało).
+3. `server.yml restore production` — automatycznie robi to, co wyszło w próbie:
+   - `.env` przez `env-adapt.py`: **`GLOBAL_S3_BUCKET=familiada`** (pusty psuje Storage 1.81), `COMPOSE_FILE` z override, `IMGPROXY_AUTO_WEBP`;
+   - **pliki Storage przeniesione z `storage-single-tenant/` do `familiada/`**;
+   - **`fix-owners.sql`** (właściciele obiektów auth/storage), inaczej GoTrue/Storage nie migrują;
+   - klucz Vault (pgsodium) ze starego serwera;
+   - crony **zostają włączone** (tryb production), adresy bez `2`.
+   - Sprawdzić: `storage-layout` (3× HTTP 200), `restore check` (Vault 4/4, crony 13/13 aktywne).
+4. `server.yml apps production` — Caddy z adresami bez `2` (+ `docker.`).
+5. DNS w Cloudflare: `api`, `supabase`, `leads`, `panel` → nowy serwer (właściciel lub automat).
+6. **Testy funkcji Workera z bazą** (nie dało się w próbie): logowanie przez `/_api/auth`, powielanie i wysyłanie zasobów, poczta (skrzynki testowe), panel admina, kontakt + punktowe e2e z próby.
+7. Sekrety `SERVER_*` w repo familiada → nowy serwer, konto `deploy`; workflow wdrożeń na nowe skrypty.
+8. Przy błędzie: DNS z powrotem na stary serwer (dane na starym nietknięte do końca przerwy).
