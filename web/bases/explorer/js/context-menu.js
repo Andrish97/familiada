@@ -1,522 +1,256 @@
 // base-explorerjs/context-menu.js
+// Menu kontekstowe (PPM / przytrzymanie). Pozycje pochodzą z rejestru akcji
+// (registry.js: menu + menuGroup), dostępność i wykonanie z tego samego
+// kontekstu co pasek i skróty.
+// Na komputerze menu przy kursorze; na telefonie i tablecie dotykowym okno
+// od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
+// shared/css/base.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
+// pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
+import { selectionSetSingle } from "./state.js?v=v2026-10-22T00131";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-22T00131";
+import { buildContext } from "./actions/context.js?v=v2026-10-22T00131";
+import { runAction } from "./actions/run.js?v=v2026-10-22T00131";
+import { formatShortcut } from "./platform.js?v=v2026-10-22T00131";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T00131";
+import { renderSelection } from "./render.js?v=v2026-10-22T00131";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-22T00131";
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-21T12475";
+// Ten sam warunek co okna od dołu (SHEET_MQ w modal-sheet.js).
+const SHEET_QUERY = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
+const CLOSE_MS = 230;
+// Palec puszczony po przytrzymaniu daje „klik” bez wciśnięcia w menu —
+// pozycja wykonuje się tylko po wciśnięciu, które zaczęło się w menu
+// (albo z klawiatury: klik bez wciśnięcia, detail === 0).
+let pressedInside = false;
+let wired = false;
+// Zdarzenie „scroll” przychodzi w następnej klatce — przewinięcie sprzed
+// otwarcia (np. panel przewinięty do klikniętego wiersza) nie zamyka menu.
+const SCROLL_GRACE_MS = 250;
+let openedAt = 0;
+let closingTimer = null;
 
-import {
-  createFolderHere,
-  createQuestionHere,
-  deleteSelected,
-  renameSelectedPrompt,
-  copySelectedToClipboard,
-  cutSelectedToClipboard,
-  pasteClipboardHere,
-  deleteTags,
-  duplicateSelected,
-  canDeleteHere,
-} from "./actions.js?v=v2026-10-21T12475";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T12475";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12475";
-import { renderAll } from "./render.js?v=v2026-10-21T12475";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T12475";
+const isSheet = () => window.matchMedia?.(SHEET_QUERY).matches;
+const menuEl = () => document.getElementById("contextMenu");
 
-
-
-const IS_MAC = navigator.platform.toLowerCase().includes("mac");
-function kbd(win, mac) {
-  return IS_MAC ? mac : win;
-}
-function fmtShortcut(sc) {
-  if (!sc) return "";
-  if (typeof sc === "string") return sc;
-  if (typeof sc === "object") return kbd(sc.win || "", sc.mac || "");
-  return "";
-}
-
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
-
-export function hideContextMenu() {
-  const cm = document.getElementById("contextMenu");
-  if (!cm) return;
-  cm.hidden = true;
-  cm.innerHTML = "";
-}
-
-function isEditor(state) {
-  return state?.role === "owner" || state?.role === "editor";
+function backdrop() {
+  let el = document.getElementById("contextMenuBackdrop");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "contextMenuBackdrop";
+    el.className = "context-menu-backdrop";
+    el.hidden = true;
+    menuEl()?.before(el);
+  }
+  return el;
 }
 
-function isReadOnlyView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
+export function isContextMenuOpen() {
+  const cm = menuEl();
+  return !!cm && !cm.hidden;
 }
 
-function countRealSelected(state) {
-  const keys = Array.from(state?.selection?.keys || []);
-  return keys.filter(k => typeof k === "string" && (k.startsWith("c:") || k.startsWith("q:"))).length;
+function hideNow() {
+  clearTimeout(closingTimer);
+  closingTimer = null;
+  const cm = menuEl();
+  if (cm) {
+    cm.hidden = true;
+    cm.innerHTML = "";
+    cm.classList.remove("is-sheet", "is-closing", "is-dragging", "is-settling");
+    cm.style.removeProperty("--cm-drag");
+  }
+  const bd = document.getElementById("contextMenuBackdrop");
+  if (bd) { bd.hidden = true; bd.classList.remove("is-closing"); }
 }
 
-function pushSep(items) {
-  if (!items.length) return;
-  if (items[items.length - 1]?.sep) return;
-  items.push({ sep: true });
+// animate: arkusz zjeżdża w dół, tło gaśnie (tło łapie też „klik” po
+// dotknięciu, więc nie trafia on w wiersz pod spodem)
+export function hideContextMenu({ animate = false } = {}) {
+  const cm = menuEl();
+  if (!cm || cm.hidden) return;
+  if (!animate || !cm.classList.contains("is-sheet")) { hideNow(); return; }
+  if (closingTimer) return;
+  cm.classList.add("is-closing");
+  document.getElementById("contextMenuBackdrop")?.classList.add("is-closing");
+  closingTimer = setTimeout(hideNow, CLOSE_MS);
+}
+
+// Zamykanie: dotknięcie / klik poza menu, przewinięcie, zmiana rozmiaru.
+function wireClose() {
+  if (wired) return;
+  wired = true;
+  document.addEventListener("pointerdown", (e) => {
+    if (!isContextMenuOpen()) return;
+    if (e.target.closest?.("#contextMenu")) return;
+    hideContextMenu({ animate: true });
+  }, true);
+  // arkusz dopasowuje się sam; zmiana rozmiaru zamyka tylko menu przy kursorze
+  window.addEventListener("resize", () => { if (!menuEl()?.classList.contains("is-sheet")) hideContextMenu(); });
+  document.addEventListener("scroll", (e) => {
+    if (e.target?.closest?.("#contextMenu")) return; // przewijanie samego arkusza
+    if (performance.now() - openedAt < SCROLL_GRACE_MS) return;
+    hideContextMenu({ animate: true });
+  }, true);
+  window.addEventListener("blur", () => hideContextMenu());
+}
+
+// Pasek u góry arkusza: stuknięcie albo przeciągnięcie w dół zamyka
+// (jak sheetHandle w modal-sheet.js).
+function sheetHandle(cm) {
+  const handle = document.createElement("button");
+  handle.type = "button";
+  handle.className = "cm-handle";
+  handle.setAttribute("aria-label", t("common.modal.closeLabel"));
+  let startY = null, lastY = 0, lastT = 0, velocity = 0, moved = false;
+  const setDrag = (px) => cm.style.setProperty("--cm-drag", `${Math.max(0, px)}px`);
+  handle.addEventListener("pointerdown", (e) => {
+    startY = e.clientY; lastY = e.clientY; lastT = e.timeStamp; velocity = 0; moved = false;
+    handle.setPointerCapture?.(e.pointerId);
+    cm.classList.add("is-dragging");
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (startY === null) return;
+    const dy = e.clientY - startY;
+    if (Math.abs(dy) > 4) moved = true;
+    velocity = (e.clientY - lastY) / Math.max(1, e.timeStamp - lastT);
+    lastY = e.clientY; lastT = e.timeStamp;
+    setDrag(dy);
+  });
+  const end = () => {
+    if (startY === null) return;
+    const dy = lastY - startY;
+    startY = null;
+    cm.classList.remove("is-dragging");
+    const limit = Math.min(160, cm.offsetHeight * 0.25);
+    if (!moved || dy > limit || velocity > 0.6) { hideContextMenu({ animate: true }); return; }
+    cm.classList.add("is-settling");
+    setDrag(0);
+    setTimeout(() => cm.classList.remove("is-settling"), 240);
+  };
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+  return handle;
 }
 
 function itemHtml(item, idx) {
-  if (item?.sep) {
-    return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
-  }
-
-  const { label, disabled, danger, shortcut, icon: iconName } = item;
-
-  const cls = [
-    "cm-item",
-    disabled ? "disabled" : "",
-    danger ? "danger" : "",
-  ].filter(Boolean).join(" ");
-
-  const right = fmtShortcut(shortcut);
-  const rightHtml = right ? `<span class="cm-kbd">${right}</span>` : "";
-  
-  return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>
-    ${iconName ? icon(iconName) : ""}
-    <span>${label}</span>
-    ${rightHtml}
+  if (item.sep) return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
+  const cls = ["cm-item", item.disabled ? "disabled" : "", item.danger ? "danger" : ""].filter(Boolean).join(" ");
+  const kbd = item.shortcut ? `<span class="cm-kbd">${item.shortcut}</span>` : "";
+  const why = item.disabled && item.reason ? ` title="${item.reason}"` : "";
+  return `<button type="button" role="menuitem" class="${cls}" data-idx="${idx}"${item.id ? ` data-action="${item.id}"` : ""}${item.disabled ? " aria-disabled=\"true\"" : ""}${why}>
+    ${item.icon ? icon(item.icon) : ""}<span>${item.label}</span>${kbd}
   </button>`;
 }
 
-function renderMenu(cm, items) {
-  cm.innerHTML = items.map((it, i) => itemHtml(it, i)).join("");
-
-  // bind po data-idx
-  const btns = Array.from(cm.querySelectorAll(".cm-item[data-idx]"));
-  for (const btn of btns) {
-    const idx = Number(btn.dataset.idx);
-    const it = items[idx];
-    if (!it || it.disabled || !it.action) continue;
-
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      hideContextMenu();
-      await it.action();
-    });
-  }
-}
-
-function positionMenu(cm, x, y) {
-  // Najpierw pokaż poza ekranem żeby zmierzyć wymiary
+function place(cm, x, y) {
   cm.style.left = "-9999px";
   cm.style.top = "-9999px";
   cm.hidden = false;
-
   const pad = 8;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const rect = cm.getBoundingClientRect();
-
-  const left = clamp(x, pad, vw - rect.width - pad);
-  const top  = clamp(y, pad, vh - rect.height - pad);
-
+  const r = cm.getBoundingClientRect();
+  const left = Math.max(pad, Math.min(x, window.innerWidth - r.width - pad));
+  const top = Math.max(pad, Math.min(y, window.innerHeight - r.height - pad));
   cm.style.left = `${left}px`;
-  cm.style.top  = `${top}px`;
+  cm.style.top = `${top}px`;
 }
 
-export async function showContextMenu({ state, x, y, target }) {
+// Jak w Eksploratorze: menu na niezaznaczonym wierszu najpierw go zaznacza
+// (w tym panelu), na wierszu z zaznaczenia zostawia zaznaczenie.
+function selectTargetFirst(state, target) {
+  const prefix = { cat: "c:", q: "q:", trash: "t:" }[target?.kind];
+  if (!prefix || !target.id) return false;
+  const key = prefix + target.id;
+  const pane = target.pane || "list";
+  if (state.selection.pane === pane && state.selection.keys.has(key)) return false;
+  selectionSetSingle(state, key, pane);
+  return true;
+}
+
+function menuItems(ctx) {
+  const kind = ctx.target?.kind;
+  const items = [];
+  for (const group of MENU_GROUPS) {
+    let added = false;
+    for (const a of ACTIONS) {
+      if (a.menuGroup !== group || !a.menu?.includes(kind)) continue;
+      const st = actionState(a, ctx);
+      if (!st.visible) continue;
+      if (!added && items.length) items.push({ sep: true });
+      added = true;
+      items.push({
+        id: a.id,
+        label: t(a.label(ctx)),
+        icon: a.icon,
+        danger: !!a.danger,
+        shortcut: a.shortcut ? formatShortcut(a.shortcut) : "",
+        disabled: !st.enabled,
+        reason: st.reason ? t(st.reason) : "",
+      });
+    }
+  }
+  return items;
+}
+
+// Klawiatura w otwartym menu: strzałki / Home / End po dostępnych
+// pozycjach, Enter i spacja wykonują (przycisk), Tab zamyka.
+function onMenuKeydown(e) {
+  const cm = e.currentTarget;
+  const items = [...cm.querySelectorAll(".cm-item:not(.disabled)")];
+  if (!items.length) return;
+  const i = items.indexOf(document.activeElement);
+  let next = null;
+  if (e.key === "ArrowDown") next = items[(i + 1) % items.length];
+  else if (e.key === "ArrowUp") next = items[(i - 1 + items.length) % items.length];
+  else if (e.key === "Home") next = items[0];
+  else if (e.key === "End") next = items[items.length - 1];
+  else if (e.key === "Tab") { e.preventDefault(); hideContextMenu(); return; }
+  if (!next) return;
+  e.preventDefault();
+  e.stopPropagation();
+  next.focus({ preventScroll: false });
+}
+
+// fromKeyboard: otwarte klawiszem (Shift+F10 / klawisz menu) — fokus od
+// razu na pierwszej dostępnej pozycji.
+export async function showContextMenu({ state, x, y, target, fromKeyboard = false }) {
   const cm = document.getElementById("contextMenu");
   if (!cm) return;
+  wireClose();
+  hideNow();
 
-  const editor = isEditor(state);
-  const readOnlyView = isReadOnlyView(state);
+  if (selectTargetFirst(state, target)) renderSelection(state);
 
-  const items = [];
+  const ctx = buildContext(state, { source: "menu", target });
+  const items = menuItems(ctx);
+  if (!items.length) return;
 
-  /* =========================================================
-     TAGI (lewy panel): target.kind = "tags-bg" | "tag"
-     Grupy:
-       - Widok
-       - Zarządzanie tagami
-       - (placeholder) operacje niszczące
-  ========================================================= */
-  if (target.kind === "tags-bg" || target.kind === "tag" || target.kind === "meta") {
-  
-    // Explorer-style: PPM na niezaznaczonym elemencie lewego panelu => najpierw single-select
-    if (target.id) {
-      let justSelected = false;
+  cm.setAttribute("role", "menu");
+  cm.innerHTML = items.map(itemHtml).join("");
+  cm.onclick = async (e) => {
+    const btn = e.target.closest(".cm-item[data-idx]");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!pressedInside && e.detail !== 0) return;
+    const it = items[Number(btn.dataset.idx)];
+    if (!it || it.disabled) return;
+    hideContextMenu();
+    await runAction(it.id, ctx);
+  };
+  pressedInside = false;
+  openedAt = performance.now();
+  cm.onpointerdown = () => { pressedInside = true; };
+  cm.onkeydown = onMenuKeydown;
 
-      if (target.kind === "tag") {
-        const tid = target.id;
-        if (!state?.tagSelection?.ids?.has?.(tid)) {
-          if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-          state.tagSelection.ids.clear();
-          state.tagSelection.ids.add(tid);
-          state.tagSelection.anchorId = tid;
-          justSelected = true;
-        }
-      }
-
-      if (target.kind === "meta") {
-        const mid = target.id;
-        if (!state?.metaSelection?.ids?.has?.(mid)) {
-          if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
-          state.metaSelection.ids.clear();
-          state.metaSelection.ids.add(mid);
-          state.metaSelection.anchorId = mid;
-          justSelected = true;
-        }
-      }
-
-      // widoczne podświetlenie w panelu tagów, tak samo jak przy cat/q niżej
-      if (justSelected) renderAll(state);
-    }
-  
-    const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
-    const selectedMetaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
-  
-    // META (stałe): tylko “Pokaż”, reszta wyszarzona
-    if (target.kind === "meta") {
-      items.push({
-        label: t("baseExplorer.menu.show"),
-        icon: "eye",
-        disabled: selectedMetaIds.length === 0,
-        action: async () => {
-          // wejście w VIEW.META (zachowaj browse location jak przy TAG)
-          if (state.view !== VIEW.META) rememberBrowseLocation(state);
-  
-          state.view = VIEW.META;
-  
-          // META view u Ciebie dopuszcza dodatkowy filtr tagami (state.tagIds)
-          state.tagIds = selectedTagIds;
-  
-          await state._api?.refreshList?.();
-        }
-      });
-  
-      pushSep(items);
-  
-      items.push({ label: t("baseExplorer.menu.addTag"), icon: "plus", disabled: true });
-      items.push({ label: t("baseExplorer.menu.editTag"), icon: "pencil", disabled: true });
-      pushSep(items);
-      items.push({ label: t("baseExplorer.menu.delete"), icon: "trash", disabled: true, danger: true });
-  
-      renderMenu(cm, items);
-      positionMenu(cm, x, y);
-      return;
-    }
-
-    // --- Widok ---
-    items.push({
-      label: t("baseExplorer.menu.show"),
-      icon: "eye",
-      disabled: selectedTagIds.length === 0,
-      action: async () => {
-        await state._api?.openTagView?.(selectedTagIds);
-      }
-    });
-
-    pushSep(items);
-
-    // --- Zarządzanie tagami ---
-    items.push({
-      label: t("baseExplorer.menu.addTag"),
-      icon: "plus",
-      disabled: !editor,
-      action: async () => {
-        const ok = await state._api?.openTagModal?.({ mode: "create" });
-        if (ok) {
-          await state._api?.refreshTags?.();
-          await state._api?.refreshList?.();
-        }
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.editTag"),
-      icon: "pencil",
-      disabled: !editor || selectedTagIds.length !== 1,
-      action: async () => {
-        const tagId = selectedTagIds[0];
-        const ok = await state._api?.openTagModal?.({ mode: "edit", tagId });
-        if (ok) {
-          await state._api?.refreshTags?.();
-          await state._api?.refreshList?.();
-        }
-      }
-    });
-
-    // placeholdery na przyszłość (PPM tagów)
-    pushSep(items);
-    
-    items.push({
-      label: (selectedTagIds.length === 1)
-        ? t("baseExplorer.menu.deleteTag")
-        : t("baseExplorer.menu.deleteTags"),
-      icon: "trash",
-      disabled: !editor || selectedTagIds.length === 0,
-      danger: true,
-      action: async () => {
-        try {
-          await deleteTags(state, selectedTagIds);
-        } catch (e) {
-          console.error(e);
-          void alertModal({ text: t("baseExplorer.errors.deleteTagsFailed") });
-        }
-      }
-    });
-
-    renderMenu(cm, items);
-    positionMenu(cm, x, y);
-    return;
+  if (isSheet()) {
+    cm.classList.add("is-sheet");
+    cm.style.left = "";
+    cm.style.top = "";
+    cm.prepend(sheetHandle(cm));
+    backdrop().hidden = false;
+    cm.hidden = false;
+  } else {
+    place(cm, x, y);
   }
-
-  /* =========================================================
-     LISTA / DRZEWO: target.kind = "root" | "cat" | "q"
-     Grupy:
-       - Tworzenie (dla root)
-       - Schowek
-       - Tagi
-       - Nawigacja / tworzenie w folderze (dla cat)
-       - Edycja
-       - Niebezpieczne
-  ========================================================= */
-
-  // Explorer-style: PPM/long-press na NIEZAZNACZONYM elemencie listy/drzewa
-  // => najpierw single-select, PRZED policzeniem selectedRealCount (analogicznie
-  // do tagów wyżej). Bez tego menu budowało disabled na starej selekcji sprzed
-  // kliknięcia -- "Zmień nazwę"/"Usuń"/... same lazy-select'owały cel w środku
-  // swojej action(), ale przycisk był już wyszarzony (renderMenu() w ogóle nie
-  // podpina click handlera do disabled), więc ten kod nigdy się nie wykonywał.
-  // PPM na elemencie który JEST już częścią wielo-zaznaczenia zostawia je bez
-  // zmian (jak w prawdziwym Explorerze).
-  if ((target.kind === "cat" || target.kind === "q") && target.id) {
-    const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-    if (!state.selection?.keys?.has?.(key)) {
-      selectionSetSingle(state, key);
-      // widoczne podświetlenie wiersza (lista i/lub drzewo) + toolbar --
-      // bez tego zaznaczenie w state byłoby poprawne "po cichu", ale wiersz
-      // wyglądałby na dalej odznaczony do najbliższego, niepowiązanego rerendera.
-      renderAll(state);
-    }
-  }
-
-  // ile realnie zaznaczono (bez "root")
-  const selectedRealCount = countRealSelected(state);
-
-  // ROOT (puste tło listy itp.)
-  if (target.kind === "root") {
-    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-    const categoryId = parentId;
-
-    // --- Tworzenie ---
-    items.push({
-      label: t("baseExplorer.menu.newFolder"),
-      icon: "folder-plus",
-      shortcut: { win: "Ctrl+Shift+N", mac: "⌘⇧N" },
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createFolderHere(state, { parentId });
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.newQuestion"),
-      icon: "file-plus",
-      shortcut: { win: "Ctrl+N", mac: "⌘N" },
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createQuestionHere(state, { categoryId });
-      }
-    });
-
-    pushSep(items);
-  }
-
-  // SCHOWEK (dla cat/q/root)
-  const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  const pasteDisabled = readOnlyView || !canPaste || (!editor && state.clipboard?.mode === "cut");
-
-  // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
-  items.push({
-    label: t("baseExplorer.menu.copy"),
-    icon: "copy",
-    shortcut: { win: "Ctrl+C", mac: "⌘C" },
-    disabled: !editor || selectedRealCount === 0,
-    action: async () => { copySelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.cut"),
-    icon: "cut",
-    shortcut: { win:"Ctrl+X", mac:"⌘X" },
-    disabled: !editor || readOnlyView || selectedRealCount === 0,
-    action: async () => { cutSelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.paste"),
-    icon: "paste",
-    shortcut: { win:"Ctrl+V", mac:"⌘V" },
-    disabled: pasteDisabled || !editor,
-    action: async () => {
-      if (readOnlyView) return;
-      await pasteClipboardHere(state);
-    }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.duplicate"),
-    icon: "duplicate",
-    shortcut: { win:"Ctrl+D", mac:"⌘D" },
-    disabled: !editor || readOnlyView || selectedRealCount === 0,
-    action: async () => {
-      try {
-        await duplicateSelected(state);
-      } catch (e) {
-        console.error(e);
-        void alertModal({ text: t("baseExplorer.errors.duplicateFailed") });
-      }
-    }
-  });
-
-  // jeśli jesteśmy na elemencie cat/q, dokładamy grupę TAGI
-  if (target.kind === "cat" || target.kind === "q") {
-    pushSep(items);
-
-    items.push({
-      label: t("baseExplorer.menu.tags"),
-      icon: "tag",
-      shortcut: { win:"Ctrl+T", mac:"⌘T" },
-      disabled: !editor, // viewer ogląda
-      action: async () => {
-        await state._api?.openAssignTagsModal?.();
-      }
-    });
-  }
-
-  // FOLDER (cat): nawigacja + tworzenie w środku
-  if (target.kind === "cat") {
-    pushSep(items);
-
-    // --- Nawigacja ---
-    items.push({
-      label: t("baseExplorer.menu.openFolder"),
-      icon: "folder",
-      shortcut: { win: "Enter", mac: "⏎" },
-      disabled: false,
-      action: async () => {
-        setViewFolder(state, target.id);
-        state.selection?.keys?.clear?.();
-        await state._api?.refreshList?.();
-      }
-    });
-
-    pushSep(items);
-
-    // --- Tworzenie w folderze ---
-    items.push({
-      label: t("baseExplorer.menu.newFolderIn"),
-      icon: "folder-plus",
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createFolderHere(state, { parentId: target.id });
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.newQuestionIn"),
-      icon: "file-plus",
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createQuestionHere(state, { categoryId: target.id });
-      }
-    });
-  }
-
-  // EDYCJA (cat/q)
-  if (target.kind === "cat" || target.kind === "q") {
-    pushSep(items);
-
-    // --- Edytuj pytanie ---
-    // Bez readOnlyView: edycja treści konkretnego pytania (po id) nie zależy
-    // od "gdzie" jesteś, w przeciwieństwie do tworzenia/przenoszenia -- ta sama
-    // zasada co już przy "Tagi" (editTags) niżej. Toolbar/Ctrl+E i tak nigdy
-    // tego nie blokowały; to menu kontekstowe miało zbędne dodatkowe ograniczenie.
-    items.push({
-      label: t("baseExplorer.menu.editQuestion"),
-      icon: "edit-paper",
-      shortcut: { win:"Ctrl+E", mac:"⌘E" },
-      disabled: !editor || selectedRealCount !== 1 || target.kind !== "q",
-      action: async () => {
-        const qid = target.id;
-        await state._api?.openQuestionModal?.(qid);
-      }
-    });
-
-    items.push({
-      label: target.kind === "cat"
-        ? t("baseExplorer.menu.rename")
-        : t("baseExplorer.menu.renameQuestion"),
-      icon: "pencil",
-      shortcut: { win:"F2", mac:"F2" },
-      disabled: !editor || readOnlyView || selectedRealCount !== 1,
-      action: async () => {
-        await renameSelectedPrompt(state);
-      }
-    });
-
-    pushSep(items);
-
-    // --- Utwórz grę ---
-    items.push({
-      label: t("baseExplorer.menu.createGame"),
-      icon: "gamepad",
-      shortcut: { win:"Ctrl+G", mac:"⌘G" },
-      // Spójnie z toolbarem (render.js: hasQuestionInSel || hasFolderInSel) --
-      // PPM na SAMYM folderze (bez żadnego "q:" w selekcji) musiało dawać
-      // wyszarzone "Utwórz grę", mimo że selectionToQuestionIds() poniżej i tak
-      // rozwija foldery do pytań. Blokowało to dokładnie "tworzenie gry z
-      // folderu" przez menu kontekstowe.
-      disabled: !editor || readOnlyView || selectedRealCount === 0,
-      action: async () => {
-        const qIds = await state._api?.selectionToQuestionIds?.();
-        if (!qIds?.length) return;
-        state._api?.openExportModal?.({ preselectIds: qIds });
-      }
-    });
-
-    // NIEBEZPIECZNE
-    pushSep(items);
-    
-    items.push({
-      label: (state.view === VIEW.TAG)
-        ? t("baseExplorer.menu.deleteTags")
-        : t("baseExplorer.menu.delete"),
-      icon: "trash",
-      shortcut: { win:"Delete", mac:"Fn⌫" },
-      danger: true,
-      // TAG ma własną ścieżkę (zdejmowanie tagów, nie kasowanie) więc nie
-      // podlega canDeleteHere; poza TAG-iem musi się zgadzać z tym, co
-      // faktycznie blokuje toolbar/Delete -- inaczej PPM->Usuń w widoku
-      // META realnie kasuje element, mimo że reszta UI to blokuje.
-      disabled: selectedRealCount === 0 || (state.view !== VIEW.TAG && !canDeleteHere(state)),
-      action: async () => {
-        try {
-          if (state.view === VIEW.TAG) {
-            await state._api?.untagSelectedInTagView?.();
-          } else {
-            await deleteSelected(state);
-          }
-        } catch (e) {
-          console.error(e);
-          void alertModal({ text: t("baseExplorer.errors.operationFailed") });
-        }
-      }
-    });
-  }
-
-  // sprzątanie: nie zostaw separatora na końcu
-  while (items.length && items[items.length - 1]?.sep) items.pop();
-
-  renderMenu(cm, items);
-  positionMenu(cm, x, y);
+  if (fromKeyboard) cm.querySelector(".cm-item:not(.disabled)")?.focus({ preventScroll: true });
 }

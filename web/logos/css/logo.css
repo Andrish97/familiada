@@ -106,6 +106,8 @@
 /* Edycja wymaga miejsca; próg zależy od viewportu, a nie od formatu urządzenia. */
 .le-compact #btnEdit,
 .le-compact .le-edit-only{ display: none !important; }
+html:not(.le-compact) .le-compact-only{ display: none !important; }
+.le-compact #grid > .empty-state{ grid-column: 1 / -1; }
 .logoX:hover{
   border-color: var(--gold);
   --btn-tint: rgba(0,0,0,.32);
@@ -124,6 +126,14 @@
   text-overflow: ellipsis;
 }
 .logoMeta{ opacity: .75; font-size: 12px; }
+/* Kafel propozycji (proposed-tile.js): ✓/✕ w rogu obok nazwy, oznaczenia
+   w jednej linii pod nimi na całą szerokość (długie „Od: …” z wielokropkiem);
+   podgląd o tyle niższy, żeby kafel miał tę samą wysokość co pozostałe. */
+.grid .logoTile[data-proposed] .logoTileTop{ display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: start; }
+.grid .logoTileTop > .tileTags{ grid-column: 1 / -1; margin-top: 0; padding-top: 0; flex-wrap: nowrap; overflow: hidden; }
+.grid .logoTileTop .tileTags .tag{ display: block; flex: 0 0 auto; line-height: 20px; white-space: nowrap; }
+.grid .logoTile[data-proposed] .logoPrev{ min-height: 0; padding: 6px; }
+.grid .logoTile[data-proposed] .logoPrev canvas{ height: 120px; }
 
 .logoPrev{
   flex:1;
@@ -1032,8 +1042,8 @@ body.games-body.logo-body > main.logoWrap{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable; /* nie zabiera dodatkowej szerokości kaflom na małym ekranie */
-  padding-right: 2px;
+  /* bez scrollbar-gutter: stała rezerwa na pasek przewijania odsuwała kafle
+     od prawej krawędzi — marginesy mają być symetryczne jak w Grach i Bazach */
 }
 
 /* stopka pod kartą nie może wypychać wysokości */
@@ -1145,11 +1155,3 @@ body.games-body.logo-body > main.logoWrap{
   border-radius: 6px;
 }
 
-.resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
-.resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
-.resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}
-.resource-copy-inbox-row>strong{min-width:0;overflow-wrap:anywhere}
-.resource-copy-inbox-row>span{font-size:12px;opacity:.72;margin-right:auto}
-.resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
-.resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
-@media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}

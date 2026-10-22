@@ -13,10 +13,10 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-21T12475";
-import { rt } from "./realtime.js?v=v2026-10-21T12475";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-21T12475";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-21T12475";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-22T00131";
+import { rt } from "./realtime.js?v=v2026-10-22T00131";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-22T00131";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-22T00131";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
@@ -416,6 +416,15 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
       trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
     });
+    // Kanał zgłasza SUBSCRIBED, ale nie dostarcza zmian (statystyki
+    // 2026-10-21: Prowadzący nadrabiał co ~6 s każdą zmianę). Dopóki
+    // directConnected=true, dzwonek i odpytywanie są wyłączone, więc bez
+    // odbudowy kanału każda kolejna zmiana czekałaby na heartbeat.
+    if (directConnected) {
+      noteDirectFailure("STALE");
+      resync();
+      return;
+    }
     void fetchGuarded("rpc_fallback");
   }
 

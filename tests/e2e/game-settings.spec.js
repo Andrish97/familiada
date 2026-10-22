@@ -633,7 +633,7 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
   }
 });
 
-test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje zapisanej wartości", async ({ page, context }) => {
+test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrzymany, w bazie poprzednia wartość", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -649,15 +649,21 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await saveAndWait(page);
 
     await page.locator("#gsMultipliers").fill("abc, xyz");
-    await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
+    await expect(page.locator("#gsMultipliersMsg")).toBeVisible();
+    await expect(page.locator("#gsMultipliers")).toHaveClass(/\bis-invalid\b/);
+    await page.locator("#gsFinalTarget").fill("481");
+    await expect(page.locator("#gsFinalTargetMsg")).toContainText("480");
 
-    await saveAndWait(page);
-    await expect(page.locator("#gsMultipliers")).toHaveValue("1, 2, 3, 4, 5");
+    // Zapis wstrzymany oknem; wpisane wartości zostają w polach.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator(".uni-modal")).toContainText("niepoprawne");
+    await page.locator(".uni-foot .btn").first().click();
+    await expect(page.locator("#gsMultipliers")).toHaveValue("abc, xyz");
 
     const game = await getGameRow(page, gameId);
     expect(
       game.settings.game.advanced.roundMultipliers,
-      "parsowanie zwracające 0 poprawnych liczb nie powinno nadpisać poprzedniej wartości"
+      "niepoprawna wartość nie może trafić do bazy"
     ).toEqual([1, 2, 3, 4, 5]);
   } finally {
     await deleteGame(page, gameId);
@@ -777,4 +783,52 @@ test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu be
     expect(game.settings.sound.filenames[key]).toBe("cloud.mp3");
     expect(game.settings.teams.teamA).toBe("Zachowany dźwięk");
   } finally { await deleteGame(page, gameId); }
+});
+
+// Telefon (decyzja 2026-10-21): Ustawienia gry działają na telefonie. W Moich
+// grach widać „Ustawienia gry” bez „Graj” (Control na telefonie niedostępny);
+// w Ustawieniach brak „Graj”, powrót to sama strzałka, sekcje nie wystają
+// poza ekran, a zapis działa.
+test.describe("ustawienia gry: telefon", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test("ustawienia gry: telefon — wejście z Moich gier, bez Graj, sekcje mieszczą się, zapis działa", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context);
+    const name = `E2E-SETTINGS-PHONE-${Date.now()}`;
+    const gameId = await createGame(page, { name });
+    try {
+      await page.goto("https://www.familiada.online/games/?tab=prepared", { waitUntil: "domcontentloaded" });
+      const tile = page.locator("#grid .card", { has: page.locator(".name", { hasText: name }) });
+      await tile.tap();
+      await expect(page.locator("#btnPlay")).toBeHidden();
+      await expect(page.locator("#btnSettings")).toBeVisible();
+      await page.locator("#btnSettings").tap();
+      await page.waitForURL(/\/games\/settings\/?\?id=/);
+      await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#pageGuard, .page-guard")).toHaveCount(0);
+      await expect(page.locator(".gs-actionbar #btnPlay")).toBeHidden();
+      // powrót: sama strzałka (tekst tylko dla czytnika ekranu)
+      const backFont = await page.locator("#btnBack").evaluate((el) => getComputedStyle(el).fontSize);
+      expect(backFont).toBe("0px");
+
+      const overflow = () => page.evaluate(() => [...document.querySelectorAll("#gsContentInner *")]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && el.getClientRects().length).length);
+      for (const cat of ["sound", "display", "questions", "game"]) {
+        await page.locator("#gsSidebarToggle").tap();
+        await page.locator(`.gs-sidebar-item[data-cat="${cat}"]`).tap();
+        await expect(page.locator("#gsSidebar")).not.toHaveClass(/is-open/);
+        await page.waitForTimeout(400);
+        expect(await overflow(), `sekcja ${cat} wystaje poza ekran`).toBe(0);
+      }
+
+      await page.locator("#gsSidebarToggle").tap();
+      await page.locator('.gs-sidebar-item[data-cat="teams"]').tap();
+      await page.locator("#gsTeamA").fill("Telefon A");
+      await saveAndWait(page);
+      expect((await getGameRow(page, gameId)).settings.teams.teamA).toBe("Telefon A");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
 });

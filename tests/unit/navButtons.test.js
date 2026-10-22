@@ -46,7 +46,9 @@ test("wymagania szerokości stron są jawne i odróżniają edytory od Control",
   assert.equal(PAGES.logoDraw.minViewportWidth, 700);
   assert.equal(PAGES.logoImage.minViewportWidth, 700);
   assert.equal(PAGES.control.minViewportWidth, 980);
-  assert.equal(PAGES.gameSettings.minViewportWidth, 600);
+  // Ustawienia gry działają także na telefonie (decyzja 2026-10-21); bez progu szerokości.
+  assert.equal(PAGES.gameSettings.minViewportWidth, undefined);
+  assert.equal(PAGES.gameSettings.deviceGuard, undefined);
   for (const page of Object.values(PAGES)) {
     if (page.minViewportWidth) assert.ok(Number.isFinite(page.minViewportWidth));
   }
@@ -118,7 +120,7 @@ test("kod strony nie podpina ręcznie przejść z mapy (bez dublowania initPage)
 
 test("w kodzie stron nie ma twardych przejść na adresy z mapy", () => {
   const files = [
-    "bases/explorer/js/actions.js", "account/js/account.js", "games/js/games.js",
+    "bases/explorer/js/commands.js", "account/js/account.js", "games/js/games.js",
     "bases/js/bases.js", "manual/js/manual.js", "games/settings/js/game-settings.js",
   ];
   for (const f of files) {
@@ -195,7 +197,8 @@ test("strony, które wołają guardResourceLock(s), mają locks w mapie", () => 
 test("mapy: telefon nie ma stron i przycisków wide, komputer ma", () => {
   const phone = mapGraph({ role: "user", phone: true });
   const desktop = mapGraph({ role: "user", phone: false });
-  assert.ok(!phone.nodes.includes("control") && !phone.nodes.includes("gameSettings"));
+  assert.ok(!phone.nodes.includes("control") && phone.nodes.includes("gameSettings"));
+  assert.ok(phone.buttons.some((b) => b.from === "games" && b.to === "gameSettings"));
   assert.ok(!phone.buttons.some((b) => b.label.startsWith("btnPlay")));
   assert.ok(desktop.buttons.some((b) => b.from === "games" && b.to === "control"));
   const guest = mapGraph({ role: "guest", phone: false });

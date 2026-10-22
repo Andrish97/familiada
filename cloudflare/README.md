@@ -42,24 +42,34 @@ Nie wymaga to przekierowania przeglądarki. Linki aplikacji używają `/nazwa/`.
 - `GET  /_admin_api/state` → current state
 - `POST /_admin_api/state` → update state
 - `POST /_admin_api/off` → shortcut to disable maintenance
-- `POST /_admin_api/bypass` → set bypass cookie (ADMIN_BYPASS_TOKEN)
+- `POST /_admin_api/bypass` → set bypass cookie: podpisany token `v1.<ważność>.<HMAC>` (klucz `ADMIN_BYPASS_TOKEN`), ważny 12 h
 - `POST /_admin_api/bypass_off` → clear bypass cookie
 - `GET  /_admin_api/mail/settings` → mail settings + cron status
 - `POST /_admin_api/mail/settings` → update mail settings (+ optional cron update)
 - `GET  /_admin_api/mail/queue` → mail queue rows (pending/sending/failed)
 - `POST /_admin_api/mail/queue/run` → optional requeue + invoke mail worker
 - `GET  /_admin_api/mail/logs` → function logs (`send-email`, `send-mail`, `mail-worker`)
+- `GET  /_admin_api/leads/search-runs/status`, `POST /_admin_api/leads/search-runs?target_count=N`, `POST /_admin_api/leads/search-runs/<uuid>/{pause,resume,cancel}` → pośrednik do lead-findera; klucz `LEAD_FINDER_API_KEY` dokłada Worker (nie trafia do przeglądarki)
+
+### Nagłówki stron
+Worker dodaje do odpowiedzi HTML (www, apex, settings, nieznane subdomeny; bez usług panel/supabase/api/leads): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, `Content-Security-Policy: frame-ancestors 'self'`, `Permissions-Policy` i `Content-Security-Policy-Report-Only` (lista źródeł w `src/lib/core/security-headers.js`).
 
 ### Cloudflare Access
 Recommended setup:
 - Protect `settings.familiada.online` with Cloudflare Access policy.
 - Restrict access in Access policy (for example: only your account).
-- Worker authorizes by Cloudflare Access headers (`Cf-Access-Authenticated-User-Email` or `CF-Access-Jwt-Assertion`).
+- Worker verifies the signed `Cf-Access-Jwt-Assertion` token (RS256, JWKS z `https://<CF_ACCESS_TEAM_DOMAIN>/cdn-cgi/access/certs`, `aud` = `CF_ACCESS_AUD`, `iss`, `exp`). Bez tych zmiennych API panelu zwraca 401 (bez fallbacku).
+- Zmiany (`POST/PUT/DELETE`) tylko z `Origin: https://settings.familiada.online` i jako `application/json` (wyjątek: `/_admin_api/attachments/upload` multipart) — ochrona CSRF.
+- `workers_dev = false` i `preview_urls = false` w `wrangler.toml`: Worker dostępny tylko przez trasy domeny.
 
 ### Worker vars/secrets
 - `SUPABASE_URL` (var) → base URL to Supabase (`https://api.familiada.online`)
 - `SUPABASE_SERVICE_ROLE_KEY` (secret) → required for `/_admin_api/mail/*`
-- `ADMIN_BYPASS_TOKEN` (secret) → bypass cookie token
+- `ADMIN_BYPASS_TOKEN` (secret) → klucz HMAC ciasteczka obejścia (sama wartość nie trafia do przeglądarki; zmiana unieważnia wydane ciasteczka)
+- `CF_ACCESS_TEAM_DOMAIN` (var/secret) → np. `<zespół>.cloudflareaccess.com`
+- `CF_ACCESS_AUD` (var/secret) → tag AUD aplikacji Access dla `settings.familiada.online` (można kilka po przecinku)
+- `GENERATE_GAME_SECRET` (secret) → nagłówek `X-Internal-Secret` do funkcji Edge `generate-game` (proxy `/_admin_api/generator/*`); ta sama wartość w env funkcji i w Vault (`generate_game_secret`)
+- `LEAD_FINDER_API_KEY` (secret) → klucz API usługi lead-finder (ta sama wartość w env usługi i w Caddyfile); używany tylko przez pośrednik `/_admin_api/leads/*`
 
 Example:
 - `wrangler secret put SUPABASE_SERVICE_ROLE_KEY`

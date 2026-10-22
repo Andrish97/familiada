@@ -1,22 +1,24 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T12475";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T12475";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T12475";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T12475";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T12475";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T12475";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12475";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T12475";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12475";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T12475";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12475";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T12475";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T12475";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00131";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00131";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-22T00131";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-22T00131";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T00131";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00131";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00131";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-22T00131";
 
 
 
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
+const emailRepeatInput = document.getElementById("email2");
+const emailActions = document.getElementById("emailActions");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
 const deletePassword = document.getElementById("deletePassword");
@@ -328,11 +330,12 @@ async function handleMigrateResend() {
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: migratePendingEmail,
-      options: { emailRedirectTo: redirect.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka. auth.resend szuka konta po obecnym
+    // adresie, więc z nowym adresem kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: migratePendingEmail },
+      { emailRedirectTo: redirect.toString() }
+    );
     if (error) throw error;
 
     setStatus(t("account.statusMigrateResent"));
@@ -414,7 +417,8 @@ function setEmailPendingUi(nextPendingEmail) {
   const hasPending = !!pendingEmail && pendingEmail !== currentEmail;
 
   if (emailPendingActions) emailPendingActions.hidden = !hasPending;
-  if (saveEmail) saveEmail.hidden = hasPending;
+  if (emailActions) emailActions.hidden = hasPending;
+  if (emailRepeatInput) emailRepeatInput.value = "";
 
   if (emailPendingHint) {
     emailPendingHint.hidden = !hasPending;
@@ -493,16 +497,11 @@ function startEmailStateWatcher() {
   emailStateTimer = setInterval(tick, 30_000);
 }
 
-async function ensureUsernameAvailable(username, userId) {
-  const { data, error } = await sb()
-    .from("profiles")
-    .select("id")
-    .ilike("username", username)
-    .neq("id", userId)
-    .limit(1)
-    .maybeSingle();
+// Cudze profile nie są czytelne (migracja 445) -- zajętość nazwy sprawdza RPC.
+async function ensureUsernameAvailable(username) {
+  const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
   if (error) throw error;
-  if (data?.id) throw new Error(t("index.errUsernameTaken"));
+  if (taken) throw new Error(t("index.errUsernameTaken"));
 }
 
 async function loadUserRating(userId) {
@@ -605,7 +604,8 @@ async function loadProfile(user) {
       document.getElementById("emailNotifSection"),
       document.getElementById("ratingSection"),
       document.getElementById("demoSection"),
-      deletePassword,
+      // pole hasła siedzi w .pass-wrap razem z przyciskiem „pokaż hasło”
+      deletePassword?.closest(".pass-wrap") || deletePassword,
     ]);
     const deleteHintEl = document.getElementById("deleteHint");
     if (deleteHintEl) deleteHintEl.textContent = t("account.deleteHintGuest");
@@ -645,7 +645,7 @@ async function handleUsernameSave() {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
-    await ensureUsernameAvailable(username, userData.user.id);
+    await ensureUsernameAvailable(username);
 
     await reserveCooldownOrThrow(CD.username);
     reserved = true;
@@ -685,6 +685,9 @@ async function handleEmailSave() {
 
     const normalizedMail = mail.toLowerCase();
     if (normalizedMail === currentEmail.toLowerCase()) throw new Error(t("account.errEmailSameAsCurrent"));
+    // Potwierdza tylko nowy adres, więc literówka = link w cudzej skrzynce.
+    const repeated = String(emailRepeatInput?.value || "").trim().toLowerCase();
+    if (repeated !== normalizedMail) throw new Error(t("account.errEmailMismatch"));
 
     const language = getUiLang();
 
@@ -738,11 +741,12 @@ async function handleEmailResend() {
     reserved = true;
 
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: pendingEmail,
-      options: { emailRedirectTo: confirmUrl.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka (nowy token, nowy mail). auth.resend
+    // szuka konta po obecnym adresie, więc z nowym kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: pendingEmail },
+      { emailRedirectTo: confirmUrl.toString() }
+    );
     if (error) throw error;
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
@@ -894,7 +898,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // cooldown: server state (cross-device)
   bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
-  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange] });
+  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, emailRepeatInput, saveEmail, resendEmailChange] });
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
@@ -924,6 +928,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   emailInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    emailRepeatInput?.focus();
+  });
+
+  emailRepeatInput?.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     saveEmail?.click();

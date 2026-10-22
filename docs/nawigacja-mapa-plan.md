@@ -748,6 +748,7 @@ flowchart LR
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logos/"]
+  gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
@@ -768,6 +769,7 @@ flowchart LR
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnBases| bases
+  games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
   bases -->|btnBrowse*| baseExplorer
@@ -892,6 +894,7 @@ flowchart LR
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logos/"]
+  gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
@@ -923,6 +926,7 @@ flowchart LR
   games -->|btnSubscribers| subscribers
   games -->|btnTasks| tasks
   games -->|btnBases| bases
+  games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
   polls -->|btnFriends| friends

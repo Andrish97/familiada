@@ -228,16 +228,7 @@ function deviceCss(device) {
         }
         await page.waitForTimeout(500);
         if (pageName === 'games' && device.name === 'iphone-portrait') {
-          await page.locator('.slot-prepared').evaluate((tab) => {
-            tab.setAttribute('data-copy-count', '9');
-            for (const label of [tab.querySelector('.tab-label')].filter(Boolean)) {
-              const badge = document.createElement('span');
-              badge.className = 'tab-copy-count';
-              badge.setAttribute('aria-hidden', 'true');
-              badge.textContent = '9';
-              label.append(badge);
-            }
-          });
+          await page.locator('.slot-prepared .tab-label > .badge').evaluate((badge) => { badge.textContent = '9'; });
         }
         const frame = deviceCss(device);
         await page.addStyleTag({ content: frame.css });

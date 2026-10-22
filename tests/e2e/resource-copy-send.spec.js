@@ -47,10 +47,16 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   const logoSend=await sendFromUi(page,'logos','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
   const logoMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.parse(gameMail.received_at)+1).toISOString(),subject:/kopię|copy/i,timeout:120000});
   expect(extractHttpLinks(logoMail).some(value=>new URL(value).searchParams.has('c'))).toBeTruthy();
-  await recipientPage.goto('https://www.familiada.online/logos/');await expect(recipientPage.locator('#receivedCopies')).toContainText(logo.name,{timeout:20000});
-  const logoRow=recipientPage.locator('#receivedCopies .resource-copy-inbox-row').filter({hasText:logo.name});
-  await logoRow.locator('button').filter({hasText:/akceptuj|accept/i}).click();
-  await expect(recipientPage.locator('#receivedCopies')).toBeHidden({timeout:20000});
+  // Otrzymana kopia = kafel propozycji zaraz po kaflu tworzenia (jak zaproszenie do bazy): ✓/✕ zamiast kosza.
+  await recipientPage.goto('https://www.familiada.online/logos/');
+  const logoTile=recipientPage.locator('#grid .logoTile[data-proposed="1"]').filter({hasText:logo.name});
+  await expect(logoTile).toBeVisible({timeout:20000});
+  await expect(recipientPage.locator('#grid > :first-child')).toHaveClass(/addCard/);
+  await expect(recipientPage.locator('#grid > .logoTile').first()).toHaveAttribute('data-proposed','1');
+  await expect(logoTile.locator('.logoX')).toHaveCount(0);
+  await logoTile.locator('[data-accept]').click();
+  await expect(recipientPage.locator('#grid .logoTile[data-proposed="1"]').filter({hasText:logo.name})).toHaveCount(0,{timeout:20000});
+  await expect(recipientPage.locator('#grid .logoTile').filter({hasText:logo.name}).locator('.logoX')).toBeVisible();
   const logoCopy=await recipientPage.evaluate(async name=>{const {data,error}=await window.__sbClient.from('user_logos').select('id,received_from_label').eq('name',name).single();if(error)throw error;return data;},logo.name);receivedLogos.push(logoCopy.id);expect(logoCopy.received_from_label).toBeTruthy();
  }finally{
   if(recipientPage&&recipientId){await cleanCopyFixtures(recipientPage).catch(()=>{});for(const id of receivedGames)await recipientPage.evaluate(async id=>{await window.__sbClient.from('games').delete().eq('id',id);},id).catch(()=>{});for(const id of receivedLogos)await recipientPage.evaluate(async id=>{await window.__sbClient.from('user_logos').delete().eq('id',id);},id).catch(()=>{});if(previousFlag!==undefined)await setMailFlag(recipientPage,recipientId,previousFlag).catch(()=>{});await page.evaluate(async id=>{await window.__sbClient.rpc('e2e_friendships_cleanup',{p_other_user_id:id});},recipientId).catch(()=>{});}

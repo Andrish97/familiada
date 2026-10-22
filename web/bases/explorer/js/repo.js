@@ -1,7 +1,7 @@
 // base-explorerjs/repo.js
 // Repozytorium danych (Supabase) dla menadżera bazy pytań.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T12475";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00131";
 
 
 /**
@@ -55,21 +55,6 @@ export async function getBaseRole(baseId, userId) {
 }
 
 /**
- * Kategorie (foldery) w bazie.
- * Zwraca listę: [{ id, base_id, parent_id, name, ord }]
- */
-export async function listCategories(baseId) {
-  const { data, error } = await sb()
-    .from("qb_categories")
-    .select("id,base_id,parent_id,name,ord, created_at,updated_at")
-    .eq("base_id", baseId)
-    .order("ord", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-/**
  * Tagi w bazie.
  * Zwraca listę: [{ id, base_id, name, color, ord }]
  */
@@ -85,126 +70,42 @@ export async function listTags(baseId) {
 }
 
 /**
- * Pytania w folderze (category_id), albo "bez folderu" (categoryId = null).
- * Zwraca listę: [{ id, base_id, category_id, ord, payload, created_at, updated_at }]
- *
- * Uwaga: w etapie 1 pobieramy prosto po folderze; search i sort robimy lokalnie w UI.
+ * Jedno pytanie, świeżo z bazy (okno pytania).
  */
-export async function listQuestionsByCategory(baseId, categoryId) {
-  let q = sb()
-    .from("qb_questions")
-    .select("id,base_id,category_id,ord,payload,created_at,updated_at")
-    .eq("base_id", baseId);
-
-  if (categoryId === null) {
-    q = q.is("category_id", null);
-  } else {
-    q = q.eq("category_id", categoryId);
-  }
-
-  const { data, error } = await q.order("ord", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-/**
- * Pytania dla widoku "Wszystkie" (bez ograniczenia do folderu).
- * Zwraca listę jak wyżej.
- */
-export async function listAllQuestions(baseId) {
+export async function getQuestion(id) {
   const { data, error } = await sb()
     .from("qb_questions")
-    .select("id,base_id,category_id,ord,payload,created_at,updated_at")
-    .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+    .select("id,base_id,category_id,ord,payload,updated_at")
+    .eq("id", id)
+    .single();
 
   if (error) throw error;
-  return data || [];
+  return data;
 }
 
 /**
- * Powiązania tagów dla zestawu pytań.
- * Zwraca listę: [{ question_id, tag_id }]
+ * Cała baza do magazynu menedżera (data/store.js): foldery, tagi, pytania
+ * z treścią i przypisania tagów — jedną funkcją SQL (migracja 430), jedno
+ * zapytanie zamiast stron po 1000 wierszy (duża baza wczytywała się
+ * kilkanaście sekund). RLS jak przy zwykłych odczytach.
  */
-export async function listQuestionTags(questionIds) {
-  const ids = Array.isArray(questionIds) ? questionIds.filter(Boolean) : [];
+export async function loadBaseContent(baseId) {
+  const { data, error } = await sb().rpc("qb_base_content", { p_base_id: baseId });
+  if (error) throw error;
+  return {
+    categories: data?.categories || [],
+    tags: data?.tags || [],
+    questions: data?.questions || [],
+    questionTags: data?.questionTags || [],
+  };
+}
+
+// Przypisania tagów wskazanych pytań (okno tagów) — lista id w treści
+// zapytania (migracja 430), bez limitów adresu i 1000 wierszy.
+export async function listQuestionTagLinks(baseId, questionIds) {
+  const ids = [...new Set((questionIds || []).filter(Boolean))];
   if (!ids.length) return [];
-
-  const { data, error } = await sb()
-    .from("qb_question_tags")
-    .select("question_id,tag_id")
-    .in("question_id", ids);
-
+  const { data, error } = await sb().rpc("qb_question_tag_links", { p_base_id: baseId, p_question_ids: ids });
   if (error) throw error;
   return data || [];
-}
-
-/**
- * Pytania z danym tagiem.
- * (Na start wersja prosta: najpierw bierzemy question_id z mapy tagów, potem dociągamy pytania.)
- */
-export async function listQuestionsByTag(baseId, tagId) {
-  const { data: links, error: lErr } = await sb()
-    .from("qb_question_tags")
-    .select("question_id")
-    .eq("tag_id", tagId);
-
-  if (lErr) throw lErr;
-
-  const qIds = (links || []).map((x) => x.question_id).filter(Boolean);
-  if (!qIds.length) return [];
-
-  const { data: qs, error: qErr } = await sb()
-    .from("qb_questions")
-    .select("id,base_id,category_id,ord,payload,created_at,updated_at")
-    .eq("base_id", baseId)
-    .in("id", qIds)
-    .order("ord", { ascending: true });
-
-  if (qErr) throw qErr;
-  return qs || [];
-}
-
-/**
- * Powiązania tagów dla zestawu folderów.
- * Zwraca listę: [{ category_id, tag_id }]
- */
-export async function listCategoryTags(categoryIds) {
-  const ids = Array.isArray(categoryIds) ? categoryIds.filter(Boolean) : [];
-  if (!ids.length) return [];
-
-  const { data, error } = await sb()
-    .from("qb_category_tags")
-    .select("category_id,tag_id")
-    .in("category_id", ids);
-
-  if (error) throw error;
-  return data || [];
-}
-
-/**
- * Foldery z danym tagiem.
- * (prosto: linki, potem foldery)
- */
-export async function listCategoriesByTag(baseId, tagId) {
-  const { data: links, error: lErr } = await sb()
-    .from("qb_category_tags")
-    .select("category_id")
-    .eq("tag_id", tagId);
-
-  if (lErr) throw lErr;
-
-  const cIds = (links || []).map(x => x.category_id).filter(Boolean);
-  if (!cIds.length) return [];
-
-  const { data: cats, error: cErr } = await sb()
-    .from("qb_categories")
-    .select("id,base_id,parent_id,name,ord,created_at,updated_at")
-    .eq("base_id", baseId)
-    .in("id", cIds)
-    .order("ord", { ascending: true });
-
-  if (cErr) throw cErr;
-  return cats || [];
 }

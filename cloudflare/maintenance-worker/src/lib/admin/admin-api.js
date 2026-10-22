@@ -1,6 +1,6 @@
 // src/lib/admin-api.js -- /_admin_api/* core dispatcher (auth, state, bypass, stats).
 import { json } from "../core/http.js";
-import { isAdminAuthorized, readJson, setAdminBypassCookieForAllDomains, clearAdminBypassCookieForAllDomains } from "./admin-auth.js";
+import { isAdminAuthorized, adminWriteAllowed, readJson, setAdminBypassCookieForAllDomains, clearAdminBypassCookieForAllDomains } from "./admin-auth.js";
 import { clampInt } from "../core/utils.js";
 import { supabaseRpc, summarizeSupabaseError } from "../core/supabase.js";
 import { getState, validateState, invalidateStateCache } from "../core/state.js";
@@ -9,12 +9,18 @@ import { handleAdminMarketplaceApi } from "./admin-marketplace-api.js";
 import { handleAdminMarketingApi } from "./admin-marketing-api.js";
 import { handleAdminMessagesApi } from "./admin-messages-api.js";
 import { handleAdminConfigApi } from "./admin-config-api.js";
+import { handleAdminGeneratorApi } from "./admin-generator-api.js";
+import { handleAdminLeadsApi } from "./admin-leads-api.js";
 
 export async function handleAdminApi(request, env) {
   const url = new URL(request.url);
 
+  if (!adminWriteAllowed(request, url)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   if (url.pathname === "/_admin_api/me") {
-    const ok = await isAdminAuthorized(request);
+    const ok = await isAdminAuthorized(request, env);
     return new Response(ok ? "OK" : "Unauthorized", { status: ok ? 200 : 401 });
   }
 
@@ -25,11 +31,11 @@ export async function handleAdminApi(request, env) {
     if (!env.ADMIN_BYPASS_TOKEN) {
       return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
     }
-    const authorized = await isAdminAuthorized(request);
+    const authorized = await isAdminAuthorized(request, env);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass ON", {
       headers: {
-        "Set-Cookie": setAdminBypassCookieForAllDomains(env),
+        "Set-Cookie": await setAdminBypassCookieForAllDomains(env),
         "Cache-Control": "no-store"
       }
     });
@@ -39,7 +45,7 @@ export async function handleAdminApi(request, env) {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
-    const authorized = await isAdminAuthorized(request);
+    const authorized = await isAdminAuthorized(request, env);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass OFF", {
       headers: {
@@ -49,7 +55,7 @@ export async function handleAdminApi(request, env) {
     });
   }
 
-  const authorized = await isAdminAuthorized(request);
+  const authorized = await isAdminAuthorized(request, env);
   if (!authorized) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -107,6 +113,56 @@ export async function handleAdminApi(request, env) {
     return json({ ok: true, rows });
   }
 
+  // Statystyki, oceny i wykluczenia ze statystyk: tylko kluczem serwisowym
+  // (funkcje w bazie bez EXECUTE dla anon/authenticated -- migracja 444).
+  if (url.pathname === "/_admin_api/stats/overview") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_admin_stats", {});
+    if (!res.ok) return json({ ok: false, error: "stats_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, stats: res.data || {} });
+  }
+
+  if (url.pathname === "/_admin_api/stats/retention") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_retention_stats", {});
+    if (!res.ok) return json({ ok: false, error: "retention_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, stats: res.data || {} });
+  }
+
+  if (url.pathname === "/_admin_api/ratings") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_ratings_admin", {});
+    if (!res.ok) return json({ ok: false, error: "ratings_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  if (url.pathname === "/_admin_api/stats/excluded") {
+    if (request.method === "GET") {
+      const res = await supabaseRpc(env, "stats_excluded_list", {});
+      if (!res.ok) return json({ ok: false, error: "excluded_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+      return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+    }
+    if (request.method === "POST") {
+      const body = await readJson(request);
+      const username = String(body?.username || "").trim();
+      if (!username) return json({ ok: false, error: "missing_username" }, 400);
+      const res = await supabaseRpc(env, "stats_exclude_user", { p_username: username });
+      if (!res.ok) return json({ ok: false, error: "exclude_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+      return json({ ok: true, result: res.data || {} });
+    }
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  if (url.pathname === "/_admin_api/stats/excluded/remove") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    const body = await readJson(request);
+    const userId = String(body?.user_id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(userId)) return json({ ok: false, error: "invalid_user_id" }, 400);
+    const res = await supabaseRpc(env, "stats_unexclude_user", { p_user_id: userId });
+    if (!res.ok) return json({ ok: false, error: "unexclude_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
   if (url.pathname === "/_admin_api/stats/polls") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
     const res = await supabaseRpc(env, "get_admin_poll_stats", {});
@@ -143,6 +199,14 @@ export async function handleAdminApi(request, env) {
 
   if (url.pathname.startsWith("/_admin_api/reports")) {
     return handleAdminMessagesApi(request, env, url);
+  }
+
+  if (url.pathname.startsWith("/_admin_api/generator/")) {
+    return handleAdminGeneratorApi(request, env, url);
+  }
+
+  if (url.pathname.startsWith("/_admin_api/leads/")) {
+    return handleAdminLeadsApi(request, env, url);
   }
 
   if (url.pathname.startsWith("/_admin_api/config/")) {

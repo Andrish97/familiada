@@ -18,15 +18,14 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T12475";
-import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-21T12475";
-import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-21T12475";
-import { loadJson } from "../../../shared/js/display/fonts.js?v=v2026-10-21T12475";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00131";
+import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-22T00131";
+import { logoFaceColor, renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-22T00131";
+import { loadJson } from "../../../shared/js/display/fonts.js?v=v2026-10-22T00131";
 
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // web/js/gameplay/gameStateShape.js's default
-const DEFAULT_LOGO_FACE = "#fc0";
 // Logo domyślne ma te same dwa tryby co niestandardowe (decyzja 2026-10-20):
 // "source" — napis FAMILIADA, "pixel" — siatka z logo_familiada.json
 // (to samo logo, które pokazuje Wyświetlacz).
@@ -46,7 +45,8 @@ async function renderDefaultLogo(el, dotColor, shouldPaint = () => true, mode = 
     if (!shouldPaint()) return;
     if (logo) return renderCustomLogo(el, logo, dotColor, shouldPaint, "pixel");
   }
-  const wordmark = await renderTextLogo("FAMILIADA", dotColor);
+  // Ten sam kolor co w trybie "pixel" (logoFaceColor), nie surowy DOT.
+  const wordmark = await renderTextLogo("FAMILIADA", logoFaceColor(dotColor));
   if (!shouldPaint()) return;
   wordmark.setAttribute("aria-label", "FAMILIADA");
   wordmark.style.cssText = "width:100%;height:100%;object-fit:contain;display:block";
@@ -89,9 +89,7 @@ function drawSolidGrid(canvas, bits150, colorHex, bounds) {
 }
 
 async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true, mode = "pixel") {
-  // The default DOT sentinel is a setting default, not the visible logo color.
-  // Keep the logo gold until a player changes DOT explicitly.
-  const logoDot = String(dotColor).toLowerCase() === DEFAULT_DOT_COLOR ? DEFAULT_LOGO_FACE : dotColor;
+  const logoDot = logoFaceColor(dotColor);
   if (mode === "source") {
     const sourceRender = await renderLogoSource(logo, dotColor);
     if (!shouldPaint()) return;

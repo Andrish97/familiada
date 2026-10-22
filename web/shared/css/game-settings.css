@@ -835,3 +835,55 @@
 
 /* Licznik znaków nazwy drużyny na Wyświetlaczu; znaki bez glifu -- ostrzeżenie. */
 .gs-team-measure.is-warn { opacity: 1; color: #ffb3b3; }
+
+/* ===== TELEFON (decyzja 2026-10-21: Ustawienia gry także na telefonie) =====
+   Dźwięk: nazwa nad kontrolkami, lista dźwięków na całą szerokość;
+   kolory 2×2; logo w dwóch równych kolumnach; listy finału bez pustego
+   miejsca; pytania rund w dwóch liniach zamiast wielokropka. */
+@media (max-width: 600px) {
+  /* Komunikat paska (np. „Niezapisane zmiany”) w osobnej linii pod przyciskami. */
+  .gs-actionbar { flex-wrap: wrap; row-gap: 6px; }
+  .gs-actionbar-msg { order: 10; flex-basis: 100%; }
+  .sfx-vol, .sound-volume-slider { width: 72px; }
+
+  .colorRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .colorItem { justify-content: space-between; min-width: 0; padding: 8px 10px; }
+  .colorItem .lbl2 { white-space: normal; min-width: 0; line-height: 1.2; }
+
+  .gs-logo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gs-logo-tile { min-width: 0; }
+  .gs-logo-prev { width: 100%; height: auto; aspect-ratio: 120 / 56; }
+  .gs-logo-prev canvas { width: 100%; height: 100%; }
+  .gs-logo-name { max-width: 100%; }
+
+  .finalCol { min-height: 0; }
+  .finalCol .qList { min-height: 60px; }
+  .roundsOrderText, .qRow .txt {
+    white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.3;
+  }
+}
+
+/* Dźwięk: kolumna pliku o stałej szerokości — wiersz z własnym plikiem albo
+   „Wybierz plik” nie przesuwa listy, podglądu ani suwaka (kolumny równe). */
+.sfx-row { grid-template-columns: minmax(130px, 1fr) 160px 30px 180px 170px; }
+.sfx-row .sfx-variant-select { width: 100%; }
+.sfx-file-wrap { min-width: 0; justify-content: flex-end; }
+.sfx-file-tag { min-width: 0; max-width: 100%; }
+.sfx-file-name { max-width: none; min-width: 0; flex: 1; }
+
+/* Tablet w pionie i telefon: nazwa nad kontrolkami, plik na całą szerokość. */
+@media (max-width: 900px) {
+  .sfx-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 8px; padding: 10px 0; }
+  .sfx-row-desc, .sfx-file-wrap { grid-column: 1 / -1; }
+  .sfx-file-wrap { justify-content: flex-start; }
+  .sfx-file-wrap:not(:has(.sfx-file-tag, .sfx-add-btn:not([hidden]))) { display: none; }
+  .sfx-file-tag { flex: 1; }
+}
+
+/* Ustawienia gry: błąd pola od razu przy polu, podpowiedź progów z pytań. */
+.inp.is-invalid { border-color: #ff8080; box-shadow: 0 0 0 1px rgba(255,128,128,.45); }
+.gs-field-msg { display: none; margin-top: 6px; font-size: 12px; line-height: 1.35; color: #ffb3b3; }
+.gs-field-msg.is-error { display: block; }
+.gs-field-suggest { margin-top: 6px; font-size: 12px; line-height: 1.35; opacity: .75; }
+.gs-field-suggest:empty { display: none; }
+.gs-field-suggest.is-warn { opacity: 1; color: #ffd27a; }

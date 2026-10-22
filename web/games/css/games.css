@@ -111,12 +111,11 @@ body.games-body > main.wrap{
 }
 .actions .btn{ white-space: nowrap; }
 
+/* „Graj” | „Ustawienia gry”: „Graj” znika poniżej progu Control (nav-map),
+   „Ustawienia gry” zostaje także na telefonie — wtedy sam, z pełnym zaokrągleniem. */
 .btn-group{
-  display: none;
+  display: inline-flex;
   align-items: stretch;
-}
-@media (min-width: 981px){
-  .btn-group{ display: inline-flex; }
 }
 .btn-group > .btn:not(:last-child){
   border-top-right-radius: 0;
@@ -127,6 +126,7 @@ body.games-body > main.wrap{
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
+.btn-group > .btn[hidden] + .btn{ border-radius: 14px; }
 
 /* --- GAMES SHELL: wypełnia resztę ekranu --- */
 .games-shell{
@@ -195,7 +195,12 @@ body.games-body > main.wrap{
    tak jak same kafle (decyzja 2026-10-20) -- Gry, Bazy, Logo. */
 .games-shell .grid:not(.subsGrid){
   border-radius: var(--radius);
-  padding: 0;
+  /* Luz na obwódkę zaznaczenia (box-shadow 2 px) i uniesienie kafla przy
+     najechaniu (2 px): bez niego krawędź przewijania ucinała górę obwódki
+     kafli z pierwszego rzędu. Ujemny margines oddaje ten luz, więc kafle
+     stoją dokładnie tam, gdzie bez niego (wyrównanie z paskiem i stopką). */
+  padding: 4px;
+  margin: -4px;
 }
 .games-shell .grid.logoGridBig{ border-radius: var(--radius-lg, var(--radius)); }
 
@@ -640,14 +645,6 @@ body.games-body > main.wrap{
 .games-bottom.is-compact-icons .games-bottom-right .btn .ico,
 .games-bottom.is-compact-icons .list-filter .ui-select-icon .ico,
 .games-bottom.is-compact-icons .list-sort .ui-select-icon .ico{ width:18px;height:18px; }
-.resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
-.resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
-.resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}
-.resource-copy-inbox-row>strong{min-width:0;overflow-wrap:anywhere}
-.resource-copy-inbox-row>span{font-size:12px;opacity:.72;margin-right:auto}
-.resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
-.resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
-@media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}
 
 /* E21: informacje o normalizacji importu (odzyskany typ, wynik bez zamknięcia) */
 .import-note { margin-top: 6px; font-size: .8rem; color: #ffd86e; }
@@ -659,11 +656,14 @@ body.games-body > main.wrap{
   padding: 10px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; cursor: pointer;
 }
 .change-type-option:hover { background: rgba(255,255,255,.04); }
-.change-type-option:has(input:checked) { border-color: var(--gold); background: rgba(243,198,75,.08); }
-.change-type-option:has(input:disabled) { cursor: default; opacity: .55; }
+.change-type-option:has(input[type="radio"]:checked) { border-color: var(--gold); background: rgba(243,198,75,.08); }
+.change-type-option:has(input[type="radio"]:disabled) { cursor: default; opacity: .55; }
 .change-type-option input { margin: 0; accent-color: var(--gold); }
 .change-type-name { font-weight: 900; }
 .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
+/* Zamknięta ankieta: „Zachowaj …” tylko pod wybranym typem. */
+.change-type-keep { grid-column: 2; display: none; align-items: center; gap: 8px; margin-top: 6px; font-size: .9rem; font-weight: 700; }
+.change-type-option:has(input[type="radio"]:checked) .change-type-keep { display: flex; }
 /* Grupy prawie się stykają: przy sobie, rozdzielone cienką kreską. */
 .games-bottom.has-group-sep{ justify-content: flex-start; }
 .games-bottom.has-group-sep > .games-bottom-right{

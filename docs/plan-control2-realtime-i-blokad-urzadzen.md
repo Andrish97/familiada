@@ -75,6 +75,18 @@ Decyzje:
      `logo_familiada.json`) i „Źródło” (napis FAMILIADA). Bez ustawienia
      domyślny tryb to „Źródło”; gry z zapisanym `hostLogoMode: "pixel"`
      zostają przy pikselach.
+10. **Domyślnie gra z finałem i ekranem kwoty (decyzja użytkownika
+    2026-10-21).** Bez zapisanego ustawienia: „Czy gra zawiera finał?” = Tak,
+    ekran końcowy = Kwota nagrody (`gameStateShape.js`, Ustawienia gry,
+    `resolveEndScreenMode`). Dotyczy też istniejących gier bez zapisu
+    (produkcja: 365 gier preparowanych bez `hasFinal`, 639 bez
+    `endScreenMode`); jawnie zapisane wartości bez zmian.
+11. **Ustawienia gry pilnują wartości (decyzja użytkownika 2026-10-21).**
+    Błędne wartości ustawień zaawansowanych widać od razu przy polu, a zapis
+    jest wstrzymany (bez cichego powrotu). Cel finału 1–480 (5 pytań ×
+    najwyżej 96 = dwie najlepsze odpowiedzi, trzecia ≥ 4 pkt; wcześniej 920). Progi wyliczone
+    z pytań (finał: dwie najlepsze odpowiedzi 5 pytań; rundy: punkty pytań ×
+    mnożniki) są podpowiedzią, nie blokadą (`advanced-limits.js`).
 
 ## Cel
 

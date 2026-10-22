@@ -5,6 +5,21 @@ E19/E19C zamknięte. Następnie E19N→E14→E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
 
+### Otrzymana kopia jako kafel propozycji — decyzje 2026-10-21
+
+- Oczekująca kopia gry/logo jest **kaflem propozycji** na samej górze siatki
+  swojej zakładki — dokładnie jak zaproszenie do bazy w Bazach (wspólny
+  `shared/js/core/proposed-tile.js`): „PROPOZYCJA” + „OD: …”, ✓/✕ w prawym
+  górnym rogu w miejscu kosza. Ramka „Otrzymane kopie” nad siatką usunięta;
+  bez osobnego kafla/okna „Otrzymane”.
+- **Odrzucona kopia przepada** (zachowanie bez zmian): bez sekcji „Odrzucone
+  przeze mnie” i bez cofania odmowy w Grach/Logo, bez migracji. Cofanie odmowy
+  zostaje tylko w Bazach (udostępnienie do wspólnej pracy) i Znajomych.
+- Zaznaczona propozycja: tylko podgląd; edycja, eksport, powielanie, wysyłanie
+  po przyjęciu (✓).
+- Licznik czekających kopii na wypustce: `.badge` w linii obok etykiety
+  (wzorzec A3 w `docs/wzorce-ui.md`).
+
 ### Wspólne powielanie i wysyłanie — decyzje2026-10-13
 
 Jeden mechanizm klonowania definicji i potrzebnych plików obsługuje

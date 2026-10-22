@@ -22,21 +22,36 @@ async function clearMailbox(recipient) {
   await api(`/emails?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
 }
 
-async function resetMailProviderLimits(page) {
-  await page.evaluate(async () => {
-    const { error } = await window.__sbClient.rpc("reset_email_limits");
-    if (error) throw new Error(`reset_email_limits: ${error.message}`);
+// "Minęła godzina" dla blokady wysyłki per adres testowy (np. auth:guest_upgrade_email).
+async function releaseMailCooldown(recipient, actionKey) {
+  await api("/mail-cooldowns/release", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipient, action_key: actionKey }),
   });
+}
+
+async function resetMailProviderLimits() {
+  await api("/mail-limits/reset", { method: "POST" });
   console.log("[e2e-mail] provider limits reset before delivery test");
 }
 
-async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigger = true }) {
+// accept(row) — opcjonalny dodatkowy filtr (np. pominięcie spóźnionej kopii maila z poprzedniego testu).
+async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigger = true, accept }) {
   let triggered = !trigger;
   const startedAt = Date.now();
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
-    const data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
-    const email = (data.emails || []).find((row) => !subject || subject.test(row.subject || ""));
+    // Pojedyncze zerwane połączenie (ECONNRESET) nie przerywa czekania -- kolejne odpytanie za 2 s.
+    let data;
+    try {
+      data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
+    } catch (error) {
+      if (!/fetch failed/i.test(String(error?.message))) throw error;
+      console.log("[e2e-mail] odpytanie skrzynki nieudane, ponawiam:", error.cause?.code || error.message);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      continue;
+    }
+    const email = (data.emails || []).find((row) => (!subject || subject.test(row.subject || "")) && (!accept || accept(row)));
     if (email) {
       console.log("[e2e-mail] received", JSON.stringify({ recipient, elapsedMs: Date.now() - startedAt, receivedAt: email.received_at }));
       return email;
@@ -94,4 +109,4 @@ async function restoreMailCenterPreference(suppressedAt) {
   });
 }
 
-module.exports = { restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

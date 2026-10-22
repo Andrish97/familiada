@@ -285,10 +285,10 @@ test("przyciski wymagające szerokości reagują na viewport i zmianę orientacj
   gamesButtons();
   const phone = makeDeps({ viewportWidth: 390, formFactor: "phone" });
   await initPage("games", { deps: phone.deps });
-  for (const id of ["btnPlay", "btnSettings"]) {
-    assert.equal(els[id].hidden, true, id);
-    assert.equal(els[id].style.display, "none", id);
-  }
+  assert.equal(els.btnPlay.hidden, true);
+  assert.equal(els.btnPlay.style.display, "none");
+  // Ustawienia gry działają na telefonie (decyzja 2026-10-21) — przycisk widoczny.
+  assert.equal(els.btnSettings.hidden, false);
   assert.equal(els.btnEdit.hidden, false);
   assert.equal(els.btnMarketplace.hidden, false);
 

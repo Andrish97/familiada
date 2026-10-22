@@ -151,6 +151,10 @@ function buildDb(lang, extras = {}) {
   c.bases.tags.forEach(([name, color], i) => tables.qb_tags.push({ id: id("8500", i + 1), base_id: mainBase, name, color, ord: i + 1, created_at: daysAgo(30) }));
   const folders = [...new Set([...p.folders, ...c.bases.folders.slice(0, 5)])];
   folders.forEach((name, i) => tables.qb_categories.push({ id: id("8600", i + 1), base_id: mainBase, parent_id: null, name, ord: i + 1, created_at: daysAgo(30), updated_at: daysAgo(30) }));
+  // podfoldery (drzewo w oknie „Przenieś do”): folder 4 > Śniadania, Desery > Na słodko
+  const [sub1, sub2, sub3] = c.bases.subfolders;
+  [[90, 4, sub1, 1], [91, 4, sub2, 2], [92, 91, sub3, 1]].forEach(([n, parent, name, ord]) =>
+    tables.qb_categories.push({ id: id("8600", n), base_id: mainBase, parent_id: id("8600", parent), name, ord, created_at: daysAgo(30), updated_at: daysAgo(30) }));
   // Pytania z panelu w pierwszych folderach, dalej pula content.cjs.
   const baseQuestions = [...p.gameQuestions.slice(1, 7), ...c.questions];
   baseQuestions.forEach(([text, answers], i) => {
@@ -243,12 +247,38 @@ function buildDb(lang, extras = {}) {
     tasks_list: tasks,
     resource_copy_inbox: [],
     snake_log: { ok: true, best: 23, games: 7 },
-    // Panel admina — statystyki (kadr admin-stats-snake pokazuje sekcję węża).
-    get_admin_stats: null, get_retention_stats: null, stats_excluded_list: [],
+    // Migracja 445: zajętość nazwy i e-mail właściciela zaproszenia przez RPC.
+    username_taken: false, poll_go_owner_email_match: null,
     // Control: wszystkie urządzenia na miejscu (migracja 397).
     control_devices_snapshot: `fn:() => ({ ok: true, server_time: new Date().toISOString(), devices: Object.fromEntries(["display", "host", "buzzer"].map((k) => [k, { primary_online: true, audio_unlocked: true, visibility: "visible", focused: true, waiting_count: 0, last_seen_at: new Date().toISOString(), meta: { page_visibility: "visible" } }])) })`,
+    // Kosz menedżera bazy (migracja 428): foldery spoza głównej bazy demo
+    // i pytanie z panelu, różny wiek wpisów (licznik dni, ostrzeżenie ≤ 3).
+    qb_trash_list: `fn:() => ${JSON.stringify([
+      [c.bases.folders[5], "folder", 2, 4, 1], [p.gameQuestions[0][0], "question", 12, 1, 0], [c.bases.folders[6], "folder", 27, 7, 2],
+    ].map(([label, kind, age, nq, nf], i) => ({ id: id("8800", i + 1), kind, label, item_id: id("8801", i + 1), origin_id: null, n_questions: nq, n_folders: nf, age })))}
+      .map(({ age, ...it }) => ({ ...it, deleted_at: new Date(Date.now() - age * 864e5 - 36e5).toISOString(), expires_at: new Date(Date.now() + (30 - age) * 864e5 - 36e5).toISOString() }))`,
+    // E22 (430): cała zawartość bazy menedżera jednym zapytaniem
+    qb_base_content: `fn:(args, db) => {
+      const id = args.p_base_id;
+      const byOrd = (a, b) => (a.ord || 0) - (b.ord || 0) || String(a.id).localeCompare(String(b.id));
+      const questions = db.tables.qb_questions.filter((q) => q.base_id === id).sort(byOrd);
+      const qids = new Set(questions.map((q) => q.id));
+      return {
+        categories: db.tables.qb_categories.filter((c) => c.base_id === id).sort(byOrd),
+        tags: db.tables.qb_tags.filter((t) => t.base_id === id).sort(byOrd),
+        questions,
+        questionTags: db.tables.qb_question_tags.filter((l) => qids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id })),
+      };
+    }`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
+    // E22 (431): blokady zbiorcze
+    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true },
+    // E22 (430): przypisania tagów wskazanych pytań (okno tagów)
+    qb_question_tag_links: `fn:(args, db) => {
+      const ids = new Set(args.p_question_ids || []);
+      return db.tables.qb_question_tags.filter((l) => ids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id }));
+    }`,
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
     badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [
@@ -331,6 +361,7 @@ function buildDb(lang, extras = {}) {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
       "question_base_shares.question_bases": { local: "base_id", one: true },
+      "qb_question_tags.qb_questions": { local: "question_id", one: true },
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
@@ -348,6 +379,26 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/messages?filter=inbox*": { ok: true, rows: [1, 2, 3, 4].map((n) => ({ id: `m${n}`, direction: "inbound", is_read: n === 4, report_id: null, subject: `Pytanie ${n}`, created_at: "2026-10-20T10:00:00Z" })) },
       "/_admin_api/reports?status=all*": { ok: true, rows: [{ id: "r1", status: "open" }, { id: "r2", status: "open" }, { id: "r3", status: "closed" }] },
       "/_admin_api/marketplace/list?status=pending*": { ok: true, rows: ["Rodzinny quiz", "Wieczór filmowy", "Szkolna Familiada", "Kuchnia świata", "Gra producenta"].map((title, i) => ({ id: `mk${i}`, title, lang: "pl", status: "pending", origin: i === 4 ? "producer" : "user", author_username: "ania.k", created_at: "2026-10-19T18:00:00Z", library_count: 0 })) },
+      // Poczta: treść HTML maila w podglądzie (iframe sandbox bez skryptów --
+      // skrypt i onerror z treści nie mogą nic zmienić; audyt E24, Ś6).
+      "/_admin_api/messages/read*": { ok: true },
+      "/_admin_api/messages?filter=all*": { ok: true, rows: [] },
+      "/_admin_api/messages/detail*": { ok: true, message: { id: "m1", direction: "inbound", source: "email", is_read: true, lang: "pl",
+        from_email: "anna.nowak@example.com", to_email: "kontakt@familiada.online", subject: "Pytanie 1", created_at: "2026-10-20T10:00:00Z",
+        body: "Dzień dobry, mam pytanie o finał.",
+        body_html: '<p>Dzień dobry,</p><p>mam pytanie o <b>finał</b> — czy można zmienić czas odpowiedzi?</p><p><a href="https://www.familiada.online/manual/" target="_blank">Podręcznik</a></p><script>document.body.innerHTML = "<h1 style=\'color:red\'>SKRYPT Z MAILA DZIAŁA</h1>";</script><img src="x:" onerror="document.body.style.background=\'red\'">' } },
+      "/_admin_api/attachments?message_id=*": { ok: true, attachments: [] },
+      // Kontakty marketingowe: stan zlecenia lead-findera przez Worker (Ś2).
+      "/_admin_api/leads/search-runs/status": { status: "paused", run_id: "0f1e2d3c-4b5a-4987-8654-3210fedcba98", verified: 12, errors: 0 },
+      "/_admin_api/marketing/contacts?*": { ok: true, total: 2, rows: [
+        { id: "c1", email: "biuro@przedszkole-example.test", name: "Przedszkole Słoneczko", city: "Kraków", used: false, added_at: "2026-10-19T09:00:00Z" },
+        { id: "c2", email: "dom.kultury@example.test", name: "Dom Kultury", city: "Gdańsk", used: true, added_at: "2026-10-18T09:00:00Z" },
+      ] },
+      "/_admin_api/marketing/logs": { ok: true, rows: [
+        { created_at: "2026-10-20T10:01:00Z", level: "info", message: "Zlecenie wstrzymane" },
+        { created_at: "2026-10-20T10:00:00Z", level: "success", message: "Zweryfikowano kontakt" },
+      ] },
+      "/_admin_api/marketing/ai-providers": { ok: true, rows: [] },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },

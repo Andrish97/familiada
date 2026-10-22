@@ -6,9 +6,10 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T12475";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-21T12475";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T12475";
+import { t } from "../../translation/translation.js?v=v2026-10-22T00131";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-22T00131";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-22T00131";
+import "./scroll-fade.js?v=v2026-10-22T00131"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -117,7 +118,8 @@ export function attachListTools(heading, list, key) {
   searchBtn.type = "button";
   searchBtn.className = "btn listTools-search";
   tools.append(sortEl, filterEl, searchBtn);
-  const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions']");
+  // przed akcjami zaznaczania i przed strzałką zwijania (ona zawsze na końcu linii)
+  const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions'], :scope > .rowsSectionCaret");
   if (bulk) heading.insertBefore(tools, bulk); else heading.append(tools);
   const empty = document.createElement("div");
   empty.className = "shareEmpty listToolsEmpty empty-state";
@@ -308,6 +310,16 @@ export function shareRowEl(row) {
   return el;
 }
 
+/** Strzałka zwijania sekcji: osobno na końcu linii nagłówka (za narzędziami
+ *  listy); klik działa jak przycisk nagłówka, który niesie stan dla czytników. */
+function sectionCaret(onClick) {
+  const caret = document.createElement("span");
+  caret.className = "rowsSectionCaret";
+  caret.setAttribute("aria-hidden", "true");
+  caret.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
+  return caret;
+}
+
 /** Wspólna sekcja także dla pustej listy i formularza dodawania odbiorcy. */
 export function shareSectionEl({ key, title, rows = [], emptyText = "", collapsed, onToggle }) {
   const section = document.createElement("section");
@@ -326,18 +338,21 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
     list.append(empty);
   }
   if (typeof collapsed === "boolean") {
+    // Jedna linia: [tytuł + licznik] … narzędzia listy … strzałka (na końcu).
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "rowsSectionHead";
     list.id = `share-list-${key}`;
+    toggle.innerHTML = `<span class="rowsSectionTitle">${esc(title)}</span><span class="rowsSectionCount">${rows.length}</span>`;
+    const caret = sectionCaret(() => toggle.click());
     const update = () => {
       toggle.setAttribute("aria-expanded", String(!collapsed));
       toggle.setAttribute("aria-controls", list.id);
-      toggle.innerHTML = `<span class="rowsSectionTitle">${esc(title)}</span><span class="rowsSectionCount">${rows.length}</span><span class="rowsSectionCaret" aria-hidden="true">${icon(collapsed ? "caret-down" : "caret-up")}</span>`;
+      caret.innerHTML = icon(collapsed ? "caret-down" : "caret-up");
       list.hidden = collapsed;
     };
     toggle.addEventListener("click", () => { collapsed = !collapsed; update(); onToggle?.(collapsed); });
-    heading.replaceChildren(toggle);
+    heading.replaceChildren(toggle, caret);
     update();
   }
   section.append(heading, list);
@@ -461,7 +476,9 @@ export function renderRowSections(host, sections, opts = {}) {
       head.type = "button";
       head.setAttribute("aria-expanded", collapsed ? "false" : "true");
     }
-    head.innerHTML = `<span class="rowsSectionTitle">${esc(s.title)}</span><span class="rowsSectionCount">${s.rows.length}</span>${collapsible ? `<span class="rowsSectionCaret" aria-hidden="true">${icon(collapsed ? "caret-down" : "caret-up")}</span>` : ""}`;
+    head.innerHTML = `<span class="rowsSectionTitle">${esc(s.title)}</span><span class="rowsSectionCount">${s.rows.length}</span>`;
+    const caret = collapsible ? sectionCaret(() => head.click()) : null;
+    if (caret) caret.innerHTML = icon(collapsed ? "caret-down" : "caret-up");
     const list = document.createElement("div");
     list.className = "rowsList";
     list.hidden = collapsed;
@@ -472,12 +489,13 @@ export function renderRowSections(host, sections, opts = {}) {
         list.hidden = now;
         state[s.key] = now;
         head.setAttribute("aria-expanded", now ? "false" : "true");
-        head.querySelector(".rowsSectionCaret").innerHTML = icon(now ? "caret-down" : "caret-up");
+        caret.innerHTML = icon(now ? "caret-down" : "caret-up");
       });
     }
     const headRow = document.createElement("div");
     headRow.className = "rowsSectionHeadRow";
     headRow.append(head);
+    if (caret) headRow.append(caret);
     sec.append(headRow, list);
     attachListTools(headRow, list, `rows-${s.key}`);
     frag.append(sec);

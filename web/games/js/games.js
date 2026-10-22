@@ -1,23 +1,24 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-21T12475";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-21T12475";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T12475";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-21T12475";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-21T12475";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T12475";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T12475";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T12475";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12475";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T12475";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T12475";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T12475";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12475";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T12475";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-21T12475";
+import { changeGameType } from "./change-type.js?v=v2026-10-22T00131";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-22T00131";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-22T00131";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-22T00131";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-22T00131";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-22T00131";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00131";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-22T00131";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00131";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00131";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T00131";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T00131";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-22T00131";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-21T12475";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T12475";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T12475";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T12475";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-22T00131";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-22T00131";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-22T00131";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T00131";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -25,10 +26,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-21T12475";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-21T12475';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-22T00131";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-22T00131';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12475";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
 
 import {
   TYPES,
@@ -37,13 +38,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-21T12475";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T12475";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T12475";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T12475";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T12475";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T12475";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T12475";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-22T00131";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-22T00131";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-22T00131";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-22T00131";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-22T00131";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-22T00131";
 
 
 const MSG = {
@@ -62,6 +63,7 @@ const MSG = {
   badgeVotes: (n) => t("games.badges.votes", { n }),
   badgeToTally: () => t("games.badges.toTally"),
   statusReady: () => t("games.status.ready"),
+  statusToOpen: () => t("games.status.toOpen"),
   newGamePollText: () => t("games.newGame.pollText"),
   newGamePollPoints: () => t("games.newGame.pollPoints"),
   newGamePrepared: () => t("games.newGame.prepared"),
@@ -186,6 +188,7 @@ const importProgMsg = document.getElementById("importProgMsg");
 /* ================= STATE ================= */
 let currentUser = null;
 let gamesAll = [];
+let copyOffers = new Map(); // otrzymane kopie czekające na decyzję: id gry → oferta
 let selectedId = null;
 let marketGamesAll = [];
 let selectedMarketId = null;
@@ -707,18 +710,20 @@ function typeLabel(uiType) {
   return String(uiType || t("control.dash")).toUpperCase();
 }
 
-// Klucz stanu kafla (draft/open/stopped/ready) — wspólny dla etykiety i filtra.
+// Klucz stanu kafla (draft/toOpen/open/stopped/ready) — wspólny dla etykiety i filtra.
 function statusKey(st, g) {
   // Preparowana ma zawsze stan „draft” — gotowa do gry to nie szkic.
   return gameStateKey(st, {
     isPrepared: !!g && uiTypeFromRow(g) === TYPES.PREPARED,
     playOk: !!g && !!rulesFromState(g.rules_state)?.play?.ok,
+    openOk: !!g && !!rulesFromState(g.rules_state)?.poll_open?.ok,
   });
 }
 
 function statusLabel(st, g) {
   const k = statusKey(st, g);
   if (k === "ready") return MSG.statusReady();
+  if (k === "toOpen") return MSG.statusToOpen();
   if (k === "open") return MSG.statusOpen();
   if (k === "stopped") return MSG.statusStopped();
   return MSG.statusDraft();
@@ -742,8 +747,6 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChan
     btnSendCopy.hidden = guest;
     btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canSend || guest;
   }
-  const receivedCopies = document.getElementById("receivedCopies");
-  if (receivedCopies && guest) receivedCopies.hidden = true;
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
@@ -776,7 +779,6 @@ function setActiveTab(type, { updateUrl = true } = {}) {
 
   render();
   updateActionState();
-  void refreshResourceCopyInbox({kind:"game",variant:type===TYPES.MARKET?null:type,host:document.getElementById("receivedCopies"),onChanged:refresh});
 }
 
 /* ================= DB ================= */
@@ -890,16 +892,46 @@ function pollBadge(g) {
   return null;
 }
 
-// Kolor oznaczenia stanu: szkic wyciszony, otwarta niebieska, zatrzymana złota, gotowa zielona.
+// Kolor oznaczenia stanu: szkic wyciszony, do uruchomienia i otwarta niebieska,
+// zatrzymana złota, gotowa zielona.
 function statusTagClass(g) {
-  const label = statusLabel(g.status, g);
-  if (label === MSG.statusReady()) return "tag--ok";
-  if (g.status === STATUS.POLL_OPEN) return "tag--info";
+  const k = statusKey(g.status, g);
+  if (k === "ready") return "tag--ok";
+  if (k === "toOpen" || k === "open") return "tag--info";
   if (g.status === STATUS.POLL_STOPPED) return "tag--gold";
   return "tag--muted";
 }
 
+// Otrzymana kopia czekająca na decyzję: kafel propozycji jak zaproszenie do
+// bazy (proposed-tile.js) — „Propozycja” + „Od: X”, ✓/✕ zamiast kosza.
+function cardProposed(g, offer) {
+  const el = document.createElement("div");
+  el.className = "card tile";
+  el.dataset.gameId = g.id;
+  el.dataset.proposed = "1";
+  el.dataset.created = g.created_at || "";
+  el.dataset.updated = g.updated_at || "";
+  el.dataset.received = g.created_at || "";
+  el.dataset.status = statusKey(g.status, g);
+  el.innerHTML = `
+    ${proposedActionsHtml()}
+    <div class="name"></div>
+    <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
+  `;
+  el.querySelector(".name").textContent = g.name || offer.name || t("control.dash");
+  el.addEventListener("click", () => selectGame(g.id));
+  bindProposedActions(el, {
+    accept: () => decideResourceCopy(offer.id, "accept"),
+    decline: () => decideResourceCopy(offer.id, "decline"),
+    onFail: () => alertModal({ text: t("resourceSend.errors.decisionFailed") }),
+    onDone: refresh,
+  });
+  return el;
+}
+
 function cardGame(g) {
+  const offer = copyOffers.get(g.id);
+  if (offer) return cardProposed(g, offer);
   const el = document.createElement("div");
   el.className = "card tile";
   el.dataset.gameId = g.id;
@@ -1004,9 +1036,12 @@ function render() {
 
   const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
+  // Kafel „Nowa gra” zawsze pierwszy, zaraz po nim propozycje (otrzymane
+  // kopie), potem reszta gier.
   grid.appendChild(cardAdd(activeTab));
 
-  for (const g of games) {
+  const proposed = games.filter(g => copyOffers.has(g.id));
+  for (const g of [...proposed, ...games.filter(g => !copyOffers.has(g.id))]) {
     const el = cardGame(g);
     if (g.id === selectedId) el.classList.add("selected");
     grid.appendChild(el);
@@ -1156,6 +1191,13 @@ async function updateActionState() {
     setButtonReasons(null);
     return;
   }
+  // Kopia czekająca na decyzję: tylko podgląd; resztę odblokowuje przyjęcie (✓ na kafelku).
+  if (copyOffers.has(sel.id)) {
+    setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
+    if (btnSettings) btnSettings.disabled = true;
+    setButtonReasons(null);
+    return;
+  }
 
   try {
     const v = await selectionRules(sel);
@@ -1186,11 +1228,11 @@ async function updateActionState() {
 /* ================= Import/Export ================= */
 // Otwarta/zatrzymana ankieta przechodzi do pliku/kopii jako szkic -- bieżące
 // głosy nie zostaną zachowane (E21); bez zgody nic się nie dzieje.
-async function confirmTransferDropsVotes(g) {
+async function confirmTransferDropsVotes(g, { toBase = false } = {}) {
   if (!gameTransferDropsVotes(g)) return true;
   return confirmModal({
     title: t("games.transferDropsVotes.title"),
-    text: t("games.transferDropsVotes.text"),
+    text: t(toBase ? "games.transferDropsVotes.baseText" : "games.transferDropsVotes.text"),
     okText: t("games.transferDropsVotes.ok"),
     cancelText: t("games.transferDropsVotes.cancel"),
   });
@@ -1207,8 +1249,9 @@ async function readFileAsText(file) {
 
 /* ================= Main ================= */
 async function refresh() {
-  const [games] = await Promise.all([listGames(), loadPollVoteCounts()]);
+  const [games, , offers] = await Promise.all([listGames(), loadPollVoteCounts(), loadResourceCopyOffers("game")]);
   gamesAll = games;
+  copyOffers = offers;
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 
@@ -1219,7 +1262,6 @@ async function refresh() {
 
   render();
   await updateActionState();
-  await refreshResourceCopyInbox({kind:"game",variant:activeTab===TYPES.MARKET?null:activeTab,host:document.getElementById("receivedCopies"),onChanged:refresh});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1237,7 +1279,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     filter: {
       param: "status", attr: "status",
       options: [
-        ...["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+        ...["draft", "toOpen", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
         { value: "received", labelKey: "resourceSend.receivedFilter", matches: (tile) => !!tile.dataset.received },
       ],
       allKey: "common.filterAll", ariaKey: "games.filter.label",
@@ -1759,6 +1801,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnExportBase?.addEventListener("click", async () => {
     if (!selectedId) return;
+    if (!(await confirmTransferDropsVotes(gamesAll.find((g) => g.id === selectedId), { toBase: true }))) return;
 
     try {
       setExportBaseMsg("");
@@ -1904,7 +1947,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span><span style="opacity:.6">${t("games.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
           </div>
           ${notes.map((note) => `<div class="import-note">${escapeHtml(note)}</div>`).join("")}
-          <div style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
+          <div class="scroll-fade" style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
         importPreview.style.display = "grid";
       }
       if (btnImportJson) btnImportJson.disabled = false;

@@ -17,7 +17,8 @@ from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI, HTTPException
+import hmac
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright
@@ -691,15 +692,33 @@ async def run_worker(run_id, target):
     finally:
         await asyncio.sleep(5); task_status = "idle"
 
+LEAD_FINDER_API_KEY = os.getenv("LEAD_FINDER_API_KEY", "").strip()
+ADMIN_ORIGIN = "https://settings.familiada.online"
+
+def require_api_key(authorization: Optional[str] = Header(default=None)):
+    # Ten sam klucz co sekret Workera LEAD_FINDER_API_KEY (panel pobiera go
+    # przez /_admin_api/config/lead-finder-token). Bez klucza w env: odmowa.
+    if not LEAD_FINDER_API_KEY:
+        raise HTTPException(503, "API niekonfigurowane")
+    expected = f"Bearer {LEAD_FINDER_API_KEY}"
+    given = authorization or ""
+    if not hmac.compare_digest(given.encode("utf-8"), expected.encode("utf-8")):
+        raise HTTPException(401, "Brak autoryzacji")
+
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[ADMIN_ORIGIN],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 @app.on_event("startup")
 async def startup_event():
     # Pobierz skrypt Readability raz przy starcie
     await get_readability_js()
 
-@app.post("/api/search-runs")
+@app.post("/api/search-runs", dependencies=[Depends(require_api_key)])
 async def start(target_count: int = 50):
     global task_run_id, task_status
     if task_status != "idle": raise HTTPException(400, f"System zajęty ({task_status})")
@@ -707,10 +726,10 @@ async def start(target_count: int = 50):
     asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
 
-@app.get("/api/search-runs/status")
+@app.get("/api/search-runs/status", dependencies=[Depends(require_api_key)])
 async def status(): return {"status": task_status, "run_id": task_run_id, "verified": verified_in_run, "errors": critical_errors_in_run}
 
-@app.post("/api/search-runs/{run_id}/pause")
+@app.post("/api/search-runs/{run_id}/pause", dependencies=[Depends(require_api_key)])
 async def pause(run_id: str):
     global task_status
     if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
@@ -718,7 +737,7 @@ async def pause(run_id: str):
     task_status = "paused"
     return {"ok": True, "status": task_status}
 
-@app.post("/api/search-runs/{run_id}/resume")
+@app.post("/api/search-runs/{run_id}/resume", dependencies=[Depends(require_api_key)])
 async def resume(run_id: str):
     global task_status
     if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
@@ -726,7 +745,7 @@ async def resume(run_id: str):
     task_status = "running"
     return {"ok": True, "status": task_status}
 
-@app.post("/api/search-runs/{run_id}/cancel")
+@app.post("/api/search-runs/{run_id}/cancel", dependencies=[Depends(require_api_key)])
 async def cancel(run_id: str):
     global task_status
     if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")

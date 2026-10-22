@@ -616,6 +616,37 @@ test.describe("games: audyt -- eksport do bazy", () => {
       await deleteGamesByName(page, gameName);
     }
   });
+
+  test("otwarta ankieta: eksport do bazy najpierw ostrzega o bieżących głosach (jak eksport do pliku)", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-TOBASE-OPEN-${Date.now()}`;
+    try {
+      await page.evaluate(async (name) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { data: g, error } = await sb.from("games").insert({ name, owner_id: u.user.id, type: "poll_points", status: "draft" }).select("id").single();
+        if (error) throw new Error(error.message);
+        const { data: qs } = await sb.from("questions").insert(Array.from({ length: 10 }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` }))).select("id");
+        await sb.from("answers").insert(qs.flatMap((q) => [1, 2, 3].map((j) => ({ question_id: q.id, ord: j, text: `O${j}`, fixed_points: 0 }))));
+        const { error: openErr } = await sb.from("games").update({ status: "poll_open" }).eq("id", g.id);
+        if (openErr) throw new Error(openErr.message);
+      }, name);
+      await openGames(page, "?tab=poll_points");
+      await tileByName(page, name).click();
+      await expect(page.locator("#btnExportBase")).toBeEnabled({ timeout: 10000 });
+      await page.locator("#btnExportBase").click();
+      const warn = page.locator(".uni-modal:visible");
+      await expect(warn).toContainText("Do bazy trafią pytania i odpowiedzi bez bieżących głosów");
+      await warn.locator(".uni-foot button", { hasText: "Anuluj" }).click();
+      await expect(page.locator("#exportBaseOverlay")).toBeHidden();
+      await page.locator("#btnExportBase").click();
+      await page.locator(".uni-modal:visible .uni-foot button", { hasText: "Kontynuuj" }).click();
+      await expect(page.locator("#exportBaseOverlay")).toBeVisible();
+    } finally {
+      await deleteGamesByName(page, name);
+    }
+  });
 });
 
 /* ================= 4) Gry ze Społeczności ================= */
@@ -773,6 +804,38 @@ test.describe("games: audyt -- game_validate", () => {
       expect(res.missing).toMatchObject({ ok: false, error: "not_found" });
     } finally {
       for (const n of names) await deleteGamesByName(page, n);
+    }
+  });
+
+  test("szkic ankiety spełniający warunki ma stan „do uruchomienia” (także w filtrze)", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const stamp = Date.now();
+    const ready = `E2E-GM-TOOPEN-${stamp}`;
+    const short = `E2E-GM-TOOPEN9-${stamp}`;
+    try {
+      await page.evaluate(async ({ ready, short }) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        for (const [name, qn] of [[ready, 10], [short, 9]]) {
+          const { data: g, error } = await sb.from("games").insert({ name, owner_id: u.user.id, type: "poll_text", status: "draft" }).select("id").single();
+          if (error) throw new Error(error.message);
+          await sb.from("questions").insert(Array.from({ length: qn }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` })));
+        }
+      }, { ready, short });
+      await openGames(page, "?tab=poll_text&lang=pl");
+      await expect(tileByName(page, ready).locator(".cardStatus")).toHaveText(/do uruchomienia/i, { timeout: 15000 });
+      await expect(tileByName(page, ready).locator(".rules")).toHaveText("");
+      await expect(tileByName(page, short).locator(".cardStatus")).toHaveText(/szkic/i);
+      await expect(tileByName(page, short).locator(".rules")).toContainText(/10/);
+      await page.locator(".list-filter .ui-select-btn").click();
+      await page.locator(".list-filter .ui-select-menu [data-value='toOpen']").click();
+      await expect(page).toHaveURL(/status=toOpen/);
+      await expect(tileByName(page, ready)).toBeVisible();
+      await expect(tileByName(page, short)).toBeHidden();
+    } finally {
+      await deleteGamesByName(page, ready);
+      await deleteGamesByName(page, short);
     }
   });
 

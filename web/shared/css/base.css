@@ -21,13 +21,18 @@
     font-size: var(--tab-label-font-size);
     letter-spacing: var(--tab-label-letter-spacing);
 }
+/* Równe kolumny: licznik pojawiający się na wypustce nie zmienia szerokości
+   żadnej z nich (decyzja 2026-10-21). */
 .tabs-strip > .tab-slot{
     width: auto;
     min-width: 0;
-    flex: 1 1 max-content;
+    flex: 1 1 0;
 }
+/* Licznik na wypustce: zwykły .badge w etykiecie, w jednej linii obok tekstu
+   — tak samo na aktywnej i nieaktywnej wypustce, na każdej stronie
+   (Moje gry, Moje loga, Bazy, Znajomi, Subskrybenci, Centrum maili). */
 .tabs-strip .tab-label > .badge{
-    min-width: 30px;
+    margin-left: 6px;
 }
 .tabs-strip .tab-label > .badge:empty{
     display: none;
@@ -1448,6 +1453,29 @@ main:has(> .footer){
 }
 .topbar-sheet-back > svg.ico { display: block; }
 
+/* Telefon (decyzja 2026-10-21): przycisk powrotu w górnym pasku to sama
+   strzałka. Tekst zostaje w przycisku (nazwa dla czytnika ekranu), znika
+   tylko wizualnie; dotyczy też „Wstecz” okien w trybie arkusza. */
+@media (max-width: 600px) {
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) {
+        font-size: 0;
+        line-height: 0;
+        gap: 0;
+        min-width: 40px;
+        padding-inline: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+    /* Arkuszowy „Wstecz” zostaje ukryty, dopóki okno go nie aktywuje. */
+    .topbar :is(#btnBack, #backToGames, #btnGoGames):not([hidden]) { display: inline-flex; }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > svg.ico {
+        display: block;
+        width: 18px;
+        height: 18px;
+    }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > .badge { font-size: 11px; }
+}
+
 /* ===== UI Select (custom dropdown) ===== */
 .ui-select {
     position: relative;
@@ -1488,6 +1516,8 @@ main:has(> .footer){
     top: calc(100% + 6px);
     left: 0;
     right: 0;
+    /* przycisk z samą ikoną (telefon) — menu szerokie na etykiety, nie na ikonę */
+    min-width: max-content;
     z-index: 60;
     background: #050914; /* kryjące — patrz uwaga przy .topbar */
     border: 1px solid var(--line);
@@ -2778,7 +2808,7 @@ body{
 
 /* Rząd oznaczeń na kafelku: stan + plakietka ankiety — równa wysokość,
    stały odstęp, zawijanie całymi oznaczeniami (nie w środku tekstu). */
-.grid .tile .tileTags{
+.grid :is(.tile, .logoTile) .tileTags{
   margin-top: auto; /* rząd oznaczeń zawsze przy dole kafla, równo w całej siatce */
   padding-top: 8px;
   display: flex;
@@ -2786,12 +2816,24 @@ body{
   align-items: center;
   gap: 6px;
 }
-.grid .tile .tileTags .tag{
+.grid :is(.tile, .logoTile) .tileTags .tag{
   height: 22px;
   padding: 0 8px;
   font-size: 10.5px;
   letter-spacing: .06em;
   text-transform: uppercase;
+}
+/* Rząd z „Od: …” (kafel propozycji, udostępniona baza) zostaje w jednej
+   linii: „Od” skraca się wielokropkiem, ikona roli nie spada pod spód —
+   kafel ma wysokość zwykłego (2026-10-21). */
+.grid :is(.tile, .logoTile) .tileTags:has(> .tag[data-kind="from"]){ flex-wrap: nowrap; min-width: 0; }
+.grid :is(.tile, .logoTile) .tileTags > .tag[data-kind="from"]{
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
 }
 .grid .tile .tileTags .pollBadge--tally{
   border-color: rgba(255,234,166,.8);
@@ -2827,6 +2869,11 @@ body{
   box-shadow:
     0 0 0 2px rgba(255,234,166,.55),
     0 10px 22px rgba(0,0,0,.35);
+}
+/* Ekran dotykowy: :hover zostaje po stuknięciu, więc bez uniesienia kafla
+   (inaczej po zaznaczeniu kafel zostawał przesunięty o 1-2 px w górę). */
+@media (hover: none){
+  .grid :is(.tile, .addCard, .logoTile):hover{ transform: none; }
 }
 .grid .tile .x{ appearance: none; -webkit-appearance: none; }
 .grid .tile .x.x-bell{ right: 46px; }
@@ -2864,7 +2911,11 @@ body{
 .listToolsHead .shareBulkAction{ width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 10px; }
 .listToolsHead .shareBulkAction .ico{ width: 18px; height: 18px; }
 .listToolsHead .shareBulkActions{ gap: 6px; }
-.rowsSectionHeadRow > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; }
+/* Zwijana sekcja: przycisk nagłówka (tytuł + licznik) … narzędzia … strzałka —
+   jedna linia tej samej wysokości co nagłówek zwykłej sekcji z narzędziami. */
+:is(.rowsSectionHeadRow, .listToolsHead) > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; padding: 0; }
+.listToolsHead:has(> .rowsSectionCaret){ flex-wrap: nowrap; min-height: 36px; }
+.listToolsHead > .rowsSectionCaret{ flex: 0 0 auto; margin-left: 0; cursor: pointer; }
 .listTools{ display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
 .listTools[hidden], .listTools > [hidden]{ display: none; }
 .listTools .btn, .listTools .ui-select-btn{ width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: 10px; }
@@ -2910,9 +2961,13 @@ body{
 .shareRowActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 .shareRowActions .btn:disabled{ opacity: .4; cursor: not-allowed; }
 .shareRow--compact{ min-height: 64px; box-sizing: border-box; }
-.shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+/* Wiersz kontaktu: nazwa (+ znaczniki) w pierwszej linii, e-mail / notatka
+   zawsze w osobnej linii pod spodem — niezależnie od długości tekstu; wszystkie
+   wiersze tej samej wysokości (decyzja 2026-10-21). */
+.shareRow--compact .shareMain{ display: grid; grid-template-columns: minmax(0, max-content) auto; justify-content: start; align-items: center; align-content: center; gap: 4px 6px; }
+.shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
 .shareRow--compact .shareTags{ margin-top: 0; }
-.shareRow--compact .shareNote{ max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shareRow--compact .shareNote{ grid-column: 1 / -1; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shareRow--compact .shareRowActions{ align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
 .shareRow--compact .shareRowActions .btn{ width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .shareRowActions .shareActionCountdown{ flex-direction: column; gap: 3px; }
@@ -2929,7 +2984,14 @@ body{
 /* szerokości bez zmian; tylko przycisk z licznikiem rośnie o tekst licznika */
 .shareRow--compact .shareRowActions .shareActionCountdown:has(.shareCountdown:not([hidden])){ width: auto; padding: 4px 6px; gap: 2px; }
 .shareRow--compact .shareRowActions .shareCountdown{ min-width: 0; }
-.grid .tile .tileMiniActions{ display: flex; gap: 6px; padding-top: 8px; }
+/* Kafel propozycji (proposed-tile.js): zaproszenie do bazy i otrzymana kopia
+   gry/logo. ✓/✕ obok siebie w prawym górnym rogu, w miejscu kosza i tej samej
+   wielkości (32 px); oznaczenia „Propozycja” + „Od: X” na dole jak w zwykłym kaflu. */
+.tileMiniActions{ display: flex; gap: 6px; flex: 0 0 auto; }
+.tileMiniActions .btn{ width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+.tileMiniActions .btn .ico{ width: 16px; height: 16px; }
+.grid .tile .tileMiniActions{ position: absolute; top: 8px; right: 8px; }
+.grid .tile[data-proposed] :is(.name, .rules){ padding-right: 78px; }
 
 
 /* =========================================================
@@ -2987,10 +3049,6 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
 @media (max-width: 720px){
-  /* Nazwa, znaczniki i e-mail w jednej linii, gdy się mieszczą; następny
-     element schodzi pod spód dopiero przy braku miejsca (decyzja 2026-10-20). */
-  .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
-  .shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
   .shareRow--compact .shareRowActions{ gap: 4px; }
   .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ width: 36px; min-width: 36px; min-height: 40px; padding: 4px; }
   .shareRow--compact{ gap: 8px; padding: 8px; }
@@ -3011,6 +3069,31 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .shareList--scroll:not([hidden]){ display: flex; flex-direction: column; }
 .shareList--scroll > *{ flex-shrink: 0; }
+/* Wygaszona krawędź przewijanych list (scroll-fade.js, decyzja 2026-10-21):
+   element schowany pod krawędzią zanika na 32 px zamiast ostrego cięcia —
+   tylko gdy za krawędzią coś jest (.has-more-above / .has-more-below).
+   Dwie warstwy maski: odwrócony gradient w obszarze wewnętrznym (padding-box)
+   „wycięty” (exclude) z pełnej warstwy — ramka listy (.qList, .moveList)
+   zostaje cała, zanika tylko treść. --scroll-fade-top: wysokość
+   przyklejonego nagłówka tabeli, pod którym zaczyna się górna maska. */
+.scroll-fade.has-more-above,
+.scroll-fade.has-more-below{
+  --sf-size: var(--scroll-fade-size, 32px);
+  --sf-top: var(--scroll-fade-top, 0px);
+  mask-image:
+    linear-gradient(to bottom,
+      transparent var(--sf-top), var(--sf-a, transparent) var(--sf-top),
+      transparent calc(var(--sf-top) + var(--sf-size)),
+      transparent calc(100% - var(--sf-size)), var(--sf-b, transparent)),
+    linear-gradient(#000 0 0);
+  mask-origin: padding-box, border-box;
+  mask-clip: border-box;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+.scroll-fade.has-more-above{ --sf-a: #000; }
+.scroll-fade.has-more-below{ --sf-b: #000; }
 /* to samo przycinanie dla list w kartach (Connect: udostępnione urządzenia) */
 #sharedDevicesList{ border-radius: 12px; }
 
@@ -3205,33 +3288,11 @@ button.rowsSectionHead{ cursor: pointer; }
   justify-content: center;
 }
 
-.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
-  content: attr(data-copy-count);
-  position: absolute;
-  top: 2px;
-  right: 8px;
-  z-index: 4;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--gold, #e6b84c);
-  color: #171717;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
-#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) .tab-label{ padding-right:32px; }
-
 #tabs-root .tab-slot,
 .tab-slot{
   width: auto;
   min-width: 0;
-  flex: 1 1 max-content;
+  flex: 1 1 0;
   align-items: stretch;
 }
 

@@ -119,6 +119,14 @@ Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
   (`manual.css`) zostają, ale mechanizm adresu jak wyżej (`?tab=`).
 - Lewe menu w Ustawieniach gry (`.gs-nav`) to nawigacja sekcji, nie karty —
   zostaje (strona tylko na tablet / komputer).
+- **Licznik na wypustce (decyzja 2026-10-21):** zwykły `.badge` jako ostatni
+  element `.tab-label`, w jednej linii obok tekstu — jak „Udostępnione 1”
+  w Bazach i karty Znajomych. Tak samo na aktywnej i nieaktywnej wypustce, na
+  każdej stronie z kartami (Moje gry, Moje loga, Bazy, Znajomi, Subskrybenci,
+  Centrum maili) i na telefonie. Bez pseudo-elementu w rogu wypustki (dawne
+  `.tab-slot[data-copy-count]::after`) i bez rezerwowania `padding-right`.
+  Szerokości wypustek stałe: równe kolumny (`flex: 1 1 0` w `base.css`, bez
+  nadpisań na stronach), więc pojawienie się licznika niczego nie przesuwa.
 
 ## A4. Paski akcji [WZÓR: ujednolicenie 1, E17c, ankiety-refaktor 1]
 
@@ -155,13 +163,57 @@ Wspólne wymiary: promień 18 px, ramka `rgba(255,255,255,.22)`, tło `#070b16` 
 Lista Logo i Marketplace używa tej samej bazowej powierzchni i odstępu
 wewnętrznego 14 px; większy kafel Logo zachowuje wysokość wymaganą przez podgląd.
 Siatka `.grid`: `repeat(auto-fill, minmax(230px,1fr))`, odstęp 14 px — jedna
-minimalna szerokość dla wszystkich list. Kafel „+” (`.addCard`): zawsze ten sam
+minimalna szerokość dla wszystkich list. Przewijana siatka (Gry, Bazy, Logo) ma
+`padding:4px` oddany ujemnym `margin:-4px` — luz na poświatę zaznaczenia i
+uniesienie przy najechaniu (bez niego krawędź przewijania ucinała górę
+obwódki); na ekranie dotykowym (`hover:none`) kafel się nie unosi (2026-10-21).
+Krawędź przewijanej siatki jest **wygaszona** (maska 32 px, wspólny
+`scroll-fade.js` — A15; `list-search.js` podpina siatki) tylko wtedy, gdy za nią są kafle — bez ostrego cięcia kafla
+nad dolnym paskiem czy sekcją „Odrzucone” w Bazach; ten sam sygnał „jest więcej”
+co w przewijanym dolnym pasku (2026-10-21). Bez `scrollbar-gutter` — kafle mają
+symetryczne marginesy jak w Grach i Bazach (Logo wyrównane 2026-10-21). Kafle
+zasobów nie pokazują daty (Logo bez „20.10.2026, 14:00”; kolejność z serwera wg
+`updated_at`). Kafel „+” (`.addCard`): zawsze ten sam
 kod — `.plus` + `.txt` (nazwa akcji) + opcjonalnie `.sub` (typ); jedna wysokość
 z sąsiednimi kaflami. Kolor stanu **nie** koloruje całego kafla (sekcje wg stanu
 zamiast kolorów, E17c pkt 5; dziś wyjątek `.card.proposed`, A9).
 
 Kafel subskrybenta: inicjał w kółku + nazwa / e-mail, `.cardTags` ze stanem,
 dzwonek i kosz jako `.x` (E17c pkt 4; do oceny po wdrożeniu).
+
+**Kafel propozycji (decyzja 2026-10-21)** — `shared/js/core/proposed-tile.js`,
+jeden kod dla zaproszenia do bazy (Bazy → Udostępnione) i otrzymanej kopii gry
+lub logo (Moje gry, Moje loga). Zwykły kafel siatki, **zaraz po kaflu „+”**
+(„+” zawsze pierwszy, potem propozycje, potem reszta; `list-search.js` pilnuje
+tej kolejności przy sortowaniu — poprawka właściciela 2026-10-21). Układ
+jak zwykły kafel: nazwa u góry, **✓ (złoty) i ✕ obok siebie w prawym górnym
+rogu** w miejscu kosza (32 × 32 px, `.tileMiniActions`), oznaczenia
+„PROPOZYCJA” (`tag--warn`) + „OD: …” (`tag--info`; w Bazach jeszcze ikona roli)
+na dole **zawsze w jednej linii** — „OD: …” skraca się wielokropkiem, ikona roli
+nie spada pod spód (`.tileTags:has(> [data-kind=from])`), ta sama wysokość kafla.
+Kafel Logo: oznaczenia pod nazwą na całą szerokość, podgląd niższy o tyle, żeby
+kafel miał wysokość pozostałych. Zaznaczona propozycja ma tylko podgląd (reszta
+akcji po przyjęciu). Odrzucona kopia gry/logo **przepada** — bez sekcji
+odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone” w Bazach
+(położenie u dołu bez zmian). Tytuł zwijanej sekcji odrzuconych wszędzie
+(Bazy, Znajomi, Subskrybenci) to krótkie „Odrzucone” / „Declined” / „Відхилені”
+— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Sekcja wysłanych
+zaproszeń (Znajomi → Zaproś, Subskrybenci → Zaproszenia) to krótkie „Oczekujące” /
+„Pending” / „Очікують” — odrzucone zaproszenia w tej sekcji rozpoznaje
+oznaczenie „Odrzucono” w wierszu; nagłówek z narzędziami w jednej linii na
+390 px (`contacts.sections.outgoing`, decyzja właściciela 2026-10-21).
+
+**Wiersz kontaktu `.shareRow--compact`** (Znajomi, Subskrybenci, okna
+udostępniania i wyboru odbiorców, Odrzucone; decyzja właściciela 2026-10-21):
+pierwsza linia — nazwa (wielokropek) i obok oznaczenia; e-mail / notatka
+**zawsze w osobnej linii pod nazwą**, niezależnie od długości tekstu (siatka
+`.shareMain`, `.shareNote` na całą szerokość). Wszystkie wiersze tej samej
+wysokości (`min-height: 64px`). Dawna ramka „Otrzymane kopie”
+(`.resource-copy-inbox`) usunięta.
+
+**✕ czy kosz (decyzja 2026-10-21):** kosz tylko dla **własnych** zasobów
+(usunięcie). ✕ = „zniknie z mojej listy” — tak samo dla odrzucenia propozycji
+i „Usuń z listy” na udostępnionej bazie; bez osobnej ikony.
 
 **Aktualizacja Zadania / mobile (2026-10-11):** Zadania używają wierszy
 `rowEl`, z ikoną rodzaju zasobu po lewej (`avatarIcon`) i delikatnym akcentem
@@ -187,6 +239,27 @@ Dotyczy: udostępnianie bazy, ankiety (karta Udostępnianie), Subskrypcje
 (subskrybenci / subskrypcje), udostępnianie urządzeń w Control (jeśli jest lista
 osób).
 
+**Kilka sekcji w jednej karcie — podział wysokości** (decyzja właściciela
+2026-10-21; Znajomi: Znajomi · Propozycje · Odrzucone oraz Zaproś + wysłane,
+Subskrybenci obie karty). Karta wypełnia obszar pracy, a jej wysokość dzielą
+sekcje:
+
+- rozwinięte sekcje z listą dostają **po równo** wolne miejsce (dwie — po
+  połowie, trzy — po jednej trzeciej); każda lista przewija się wewnątrz swojej
+  sekcji (wygaszone krawędzie, A15);
+- sekcja z mniejszą liczbą wierszy niż jej część **kurczy się do treści**,
+  a resztę przejmują pozostałe; wolne miejsce zostaje pod ostatnią sekcją;
+- sekcja zwinięta („Odrzucone”) zajmuje tylko nagłówek, pusta — zwarty pusty
+  stan (A13), formularz dodawania — swoją wysokość; tych nigdy nie ściskamy.
+
+Tak samo na telefonie i komputerze. Sam CSS (`contacts.css`): karta to siatka
+z wierszami `minmax(auto, max-content)`, sekcja z listą ma `overflow: hidden`
+(minimum 0), sekcja zwinięta/pusta i formularz `overflow: visible` (minimum =
+treść). Okna z dwiema listami (udostępnianie bazy i urządzenia, wybór
+odbiorców ankiety) mają już stały podział po połowie na arkuszu telefonu.
+Zrzuty: sceny `people-friends-half`, `people-friends-half-declined`,
+`people-subscribers-half`, `people-subscribers-half-invite`.
+
 ## A7. Oznaczenia i liczniki
 
 - `.tag` (`base.css:1362-1388`) — **stała informacja o obiekcie** (typ, stan,
@@ -197,6 +270,15 @@ osób).
   klas pigułek (`.mkt-added-badge`, `.chip` poza etykietami użytkownika).
 - `.badge` (`base.css:1328`) — **licznik do obsłużenia** (kółko z liczbą na
   przycisku / karcie: zaproszenia, powiadomienia). Nie używać do tekstu.
+- **Zwijana sekcja listy** (`shareSectionEl({collapsed})`, `renderRowSections`;
+  „Odrzucone przeze mnie” w Bazach/Znajomych, „Zrobione” w Zadaniach, decyzja
+  2026-10-21): jedna linia — przycisk nagłówka (tytuł + licznik) … narzędzia
+  listy (sortowanie, szukanie) … strzałka zwijania **na końcu**; wysokość jak
+  nagłówek zwykłej sekcji z narzędziami (36 px). Narzędzia znikają, gdy sekcja
+  zwinięta lub pusta.
+- **Linia pod nazwą odrzuconej pozycji** (Bazy, jak w Zadaniach):
+  „od X · odrzucono D · zniknie za N dni” (odmiana liczby wg języka,
+  `Intl.PluralRules`). Znajomi/Subskrybenci nie mają terminu w danych — bez zmian.
 - `.chip` (menedżer bazy, `base-explorer.css:264`) — etykieta kolorowana przez
   **użytkownika** (`--chip`); zostaje jako osobny byt, nie jako `.tag`.
 - `.conn-status` (Control) — stan połączenia na żywo; osobny, większy.
@@ -286,6 +368,41 @@ Pusta lista = kafel „+” (`.addCard`) + `.empty-state` pod nim z tekstem „B
   nie karta Preparowana).
 - Jedna nazwa na stronę: „Ustawienia gry” (decyzja), a nie „Ustawienia
   rozgrywki”; „Wstecz” tylko jako atrybut dostępności, w UI nazwa strony.
+
+## A15. Przewijane listy — wygaszona krawędź [decyzja właściciela 2026-10-21]
+
+Każda przewijana lista w aplikacji ma **ten sam** sygnał „jest więcej”: element
+schowany pod krawędzią zanika na 32 px zamiast ostrego cięcia. Dolna krawędź —
+gdy pod spodem są jeszcze elementy; górna — gdy lista jest przewinięta w dół.
+Gdy treść się mieści, maski nie ma (obwódka fokusu pierwszego i ostatniego
+elementu zostaje cała).
+
+- **Jeden kod:** `shared/js/core/scroll-fade.js` (klasy `.has-more-above` /
+  `.has-more-below` na kontenerze) + reguła `.scroll-fade` w `base.css`.
+  Moduł ładuje się na każdej stronie (`page-init.js`, `share-sections.js`,
+  panel admina `settings.js`) i sam podpina kontenery z rejestru
+  `SCROLL_FADE_SELECTOR` — także dorysowane później (okna, przerysowane listy).
+- **Nowa lista:** dopisz selektor do rejestru albo daj kontenerowi klasę
+  `.scroll-fade` w znaczniku; strona może też wywołać `scrollFade(el)`.
+  Maska działa tylko na kontenerze z `overflow-y: auto/scroll` — element bez
+  przewijania nigdy jej nie dostaje.
+- **Ramka zostaje:** maska wygasza tylko wnętrze (padding-box), ramka listy
+  (`.qList`, `.moveList`) jest cała. Przyklejony nagłówek tabeli
+  (Eksplorator, panel admina) nie zanika — górna maska zaczyna się pod nim.
+- **Bez maski:** okna z własnym tłem (`.modal`) i menu rozwijane — wygasza się
+  lista w oknie albo ciało arkusza, nie karta.
+- **Wydajność:** pasywne nasłuchy przewijania, `ResizeObserver`, jeden
+  `MutationObserver` na treść; przeliczenie najwyżej raz na klatkę
+  (`requestAnimationFrame`).
+- **Objęte listy:** siatki Gier/Baz/Logo; listy `.shareList` (Znajomi,
+  Subskrybenci, okna udostępniania i wyboru odbiorców, Wyślij kopię, poczta,
+  Connect); Zadania; Eksplorator (tabela, drzewo, tagi, kategorie, Przenieś do,
+  listy tagów i eksportu, kolory); edytor gry i edycja pytania (`.listShell`,
+  `.qf-listShell`); Ustawienia gry i Control (`.qList`, obszar i podsumowanie
+  Control); podglądy pytań (Gry, Społeczność, panel admina); wyniki ankiety;
+  lista czcionek i obrazów Logo; ciało arkusza i okien `uni-modal`; listy
+  panelu admina (poczta, generator, tabele, logi, oceniający).
+- Zrzuty: sceny `fade-*` (`scripts/screens/scenes/scroll-fade.cjs`).
 
 ---
 

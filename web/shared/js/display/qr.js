@@ -1,10 +1,9 @@
-const mkQR = (url, size = 420) => {
-  const u = new URL("https://api.qrserver.com/v1/create-qr-code/");
-  u.searchParams.set("size", `${size}x${size}`);
-  u.searchParams.set("data", url);
-  u.searchParams.set("margin", "10");
-  return u.toString();
-};
+import { qrDataUrl } from "../core/qr-code.js?v=v2026-10-22T00131";
+
+// QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
+// wcześniej przez chwilę widać było samą białą ramkę <img>. Cichą strefę
+// daje biały padding .qr-img, w SVG tylko 1 moduł zapasu.
+const mkQR = (url) => qrDataUrl(url, { margin: 1 });
 
 export const createQRController = ({ qrScreen, gameScreen, hostCard, buzzerCard, hostImg, buzzerImg, hostCodeEl, buzzerCodeEl }) => {
   let hostUrl = "";

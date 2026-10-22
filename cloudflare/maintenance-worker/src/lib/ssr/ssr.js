@@ -184,11 +184,11 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
     "url": canonicalUrl,
     "inLanguage": lang,
     "mainEntity": faqEntities
-  });
+  }).replace(/</g, "\\u003c"); // treść gry nie może zamknąć <script> (np. "</script>")
 
   const questionsHtml = questions.map((q, i) => {
     const answersHtml = (q.answers || []).map(a =>
-      `<li><span class="pts">${a.fixed_points}</span> ${escapeHtml(a.text)}</li>`
+      `<li><span class="pts">${escapeHtml(String(a.fixed_points ?? ""))}</span> ${escapeHtml(a.text)}</li>`
     ).join("\n");
     return `
     <section class="question">

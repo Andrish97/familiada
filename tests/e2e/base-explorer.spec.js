@@ -367,6 +367,14 @@ async function renameInput(page) {
   return input;
 }
 
+// Lewy panel pokazuje jeden widok (drzewo / tagi / kategorie, E22 etap 9):
+// przycisk widoku przy wyszukiwarce (komputer) albo w pasku (telefon).
+async function showLeftView(page, view) {
+  const btn = page.locator(`[data-left-view="${view}"]:visible`).first();
+  if ((await btn.getAttribute("aria-pressed")) !== "true") await btn.click();
+  await expect(btn).toHaveAttribute("aria-pressed", "true");
+}
+
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
 
   test("eksport ('Utwórz grę') faktycznie tworzy grę zamiast rzucać błąd", async ({ page, context }) => {
@@ -510,9 +518,9 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       // renameModal.close() (który chowa .uni-modal) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
       // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
-      // "modal się schował" nie gwarantuje, że PATCH już doleciał do bazy.
+      // "modal się schował" nie gwarantuje, że zapis (rpc) już doleciał do bazy.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
         page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
       await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
@@ -756,7 +764,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await input.fill("Zmienione przez PPM");
 
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
         page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
       await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
@@ -772,7 +780,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     // Zgłoszenie użytkownika: na dotyku tapnięcie w kropkę meta ("preparowane"/
     // "punktowane"/"typowe") pokazuje chmurkę, ale ta nigdy nie znika -- zostaje
     // przyklejona w miejscu tapnięcia niezależnie od tego, gdzie klika się
-    // później. Przyczyna: #dot-tooltip w actions.js chowa się WYŁĄCZNIE na
+    // później. Przyczyna (dawniej): #dot-tooltip w actions.js chowa się WYŁĄCZNIE na
     // "mouseout" konkretnej kropki -- prawdziwe urządzenia dotykowe nie
     // generują "mouseout" po odsunięciu palca ani "mousemove" po drodze
     // (tylko syntetyczny "mouseover" przy samym tapnięciu), więc chmurka
@@ -853,9 +861,9 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1046,6 +1054,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      await showLeftView(page, "tags");
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
@@ -1090,7 +1099,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     }
   });
 
-  test("wyszukiwanie po #tagu (chip) pokazuje tylko oznaczone pytania", async ({ page, context }) => {
+  test("tekst z pola i tag z lewego panelu filtrują razem; X czyści oba (bez tabletek w polu)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -1098,23 +1107,89 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
     try {
       const tagId = await createTag(page, { baseId, name: "e2e-searchtag" });
-      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane pytanie", answers: [] } });
-      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zwykłe pytanie", answers: [] } });
-      await assignTag(page, { questionId: qTagged, tagId });
+      const qTaggedA = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane kot", answers: [] } });
+      const qTaggedB = await createQuestion(page, { baseId, ord: 2, payload: { text: "Otagowane pies", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 3, payload: { text: "Zwykłe kot", answers: [] } });
+      await assignTag(page, { questionId: qTaggedA, tagId });
+      await assignTag(page, { questionId: qTaggedB, tagId });
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
-
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+      const rowOf = (id) => page.locator(`#list .row[data-id="${id}"]`);
 
-      // Konwersja "#tag" -> chip dzieje się w handlerze keydown (Spacja/Enter/przecinek),
-      // nie w handlerze input -- .fill() same w sobie by tego nie wyzwoliło.
-      await page.locator("#searchText").fill("#e2e-searchtag");
-      await page.locator("#searchText").press("Space");
-      await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
+      // tag z lewego panelu
+      await showLeftView(page, "tags");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await expect(rowOf(qPlain)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTaggedA)).toBeVisible();
+      await expect(rowOf(qTaggedB)).toBeVisible();
 
-      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
-      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+      // + tekst: oba warunki naraz
+      await page.locator("#searchText").fill("kot");
+      await expect(rowOf(qTaggedB)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTaggedA)).toBeVisible();
+      await expect(rowOf(qPlain)).toHaveCount(0);
+      await expect(page.locator("#searchBox .chip")).toHaveCount(0);
+
+      // X czyści tekst i filtr
+      await page.locator("#searchSubmitBtn").click();
+      await expect(page.locator("#searchText")).toHaveValue("");
+      await expect(rowOf(qPlain)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`)).not.toHaveClass(/is-selected/);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("telefon: okno Szukaj — tekst z klawiatury ekranowej filtruje razem z tagiem z panelu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TAGMOBILE-${Date.now()}`);
+
+    try {
+      const tagId = await createTag(page, { baseId, name: "Łatwe" });
+      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane żółw", answers: [] } });
+      const qTagged2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "Otagowane kot", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 3, payload: { text: "Zwykłe żółw", answers: [] } });
+      await assignTag(page, { questionId: qTagged, tagId });
+      await assignTag(page, { questionId: qTagged2, tagId });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+      const rowOf = (id) => page.locator(`#list .row[data-id="${id}"]`);
+
+      // tag z panelu (przycisk tagów w pasku), panel zamknięty tym samym przyciskiem
+      await showLeftView(page, "tags");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await page.locator('.left-view-tabs [data-left-view="tags"]').click();
+      await expect(rowOf(qPlain)).toHaveCount(0, { timeout: 10000 });
+
+      // przycisk „Szukaj” w pasku otwiera okno z polem (na telefonie w pasku nie ma pola)
+      await expect(page.locator("#toolbar #searchBox")).toBeHidden();
+      await page.locator("#btnSearchSheet").click();
+      await expect(page.locator("#searchOverlay")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#searchSheetBody #searchText")).toBeFocused();
+
+      // klawiatura ekranowa: same zdarzenia input; bez polskich znaków też pasuje
+      await page.keyboard.insertText("zolw");
+      await expect(rowOf(qTagged2)).toHaveCount(0, { timeout: 10000 });
+      await expect(rowOf(qTagged)).toBeVisible();
+
+      // „Gotowe” zamyka okno, pole wraca do paska z tekstem, przycisk świeci
+      await page.locator("#searchSheetDone").click();
+      await expect(page.locator("#searchOverlay")).toBeHidden();
+      await expect(page.locator("#toolbar #searchText")).toHaveValue("zolw");
+      await expect(page.locator("#btnSearchSheet")).toHaveClass(/is-active/);
+
+      // „Wyczyść” w oknie zdejmuje tekst i filtr tagu
+      await page.locator("#btnSearchSheet").click();
+      await page.locator("#searchSheetClear").click();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#searchOverlay")).toBeHidden();
+      await expect(rowOf(qPlain)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("#toolbar #searchBox")).toBeAttached(); // pole wróciło do (schowanego na telefonie) paska
+      await expect(page.locator("#btnSearchSheet")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }
@@ -1331,11 +1406,12 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         page.locator("#list tbody tr .title-text").allTextContents()
           .then((arr) => arr.map((s) => s.trim()));
 
-      // domyślnie (name/asc) pytanie "A-pytanie" jest przed folderem "Z-folder"
-      await expect.poll(titles).toEqual(["A-pytanie", "Z-folder"]);
-
+      // foldery zawsze przed pytaniami (decyzja 2026-10-20) -- przy każdym
+      // sortowaniu, także po nazwie i w obu kierunkach
+      await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
+      await page.locator(".list-head .h-main").click();
+      await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
       await page.locator(".list-head .h-type").click();
-      // po typie: folder zawsze przed pytaniem, mimo że nazwą jest "później" alfabetycznie
       await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
     } finally {
       await deleteBase(page, baseId);
@@ -1576,7 +1652,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // asynchronicznie po kliknięciu -- run #77 złapał to jako flaky
       // (sprawdzenie DB, zanim żądanie realnie doleciało)
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "DELETE"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_delete_items")),
         page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
 
@@ -1635,11 +1711,12 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
 
-      await page.locator(".list-head .h-date").click();
-      await expect.poll(titles).toEqual(["Najstarsze", "Środkowe", "Najnowsze"]);
-
+      // pierwszy klik w Datę: najnowsze na górze (jak w Eksploratorze), drugi odwraca
       await page.locator(".list-head .h-date").click();
       await expect.poll(titles).toEqual(["Najnowsze", "Środkowe", "Najstarsze"]);
+
+      await page.locator(".list-head .h-date").click();
+      await expect.poll(titles).toEqual(["Najstarsze", "Środkowe", "Najnowsze"]);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -1676,9 +1753,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1719,9 +1796,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1759,9 +1836,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1796,7 +1873,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(qText).toHaveValue("A".repeat(100), { timeout: 5000 });
 
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -2268,8 +2345,31 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     }
   });
 
-  // „baza z mniej niż 10 pytaniami pokazuje błąd” usunięty: od E21 eksport
-  // poniżej 10 pytań jest dozwolony (test „E21: poniżej 10 pytań…” wyżej).
+  test("E21: jedno zaznaczone pytanie — okno otwiera się z tym jednym pytaniem, Utwórz dostępne (szkic)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XM-TOOFEW-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Jedyne pytanie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "createGame", "Control+g");
+
+      // E21: liczba pytań nie blokuje, braki pokazuje podsumowanie
+      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#xCountVal")).toHaveText("1");
+      await expect(page.locator("#xCreate")).toBeEnabled();
+      await expect(page.locator("#xSummary")).toContainText("co najmniej 10 pytań");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
 });
 
 /* ================= 5) współdzielenie i uprawnienia (dwóch RÓŻNYCH użytkowników) =================
@@ -2329,7 +2429,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       // sprzed chwili (bez odpowiedzi editora)
       await page.locator("#qText").fill("Wersja finalna właściciela");
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -2771,6 +2871,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
+      await showLeftView(page, "tags");
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
@@ -3140,29 +3241,774 @@ test.describe("base-explorer: skróty i uprawnienia (E13)", () => {
     }
   });
 
-  test("viewer: „Utwórz grę” na pasku nieaktywne przy zaznaczonym pytaniu", async ({ page, context, browser }) => {
+});
+
+/* ================= Kosz i skróty (E22) ================= */
+
+async function listTrashRows(page, baseId) {
+  return await page.evaluate(async (id) => {
+    const { data, error } = await window.__sbClient.from("qb_trash").select("id,kind,item_id").eq("base_id", id);
+    if (error) throw new Error(error.message);
+    return data || [];
+  }, baseId);
+}
+
+async function confirmUniModal(page) {
+  await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+  await page.locator(".uni-modal .uni-foot .btn.gold").click();
+  await expect(page.locator(".uni-modal")).toHaveCount(0, { timeout: 5000 });
+}
+
+test.describe("base-explorer: kosz (E22)", () => {
+  // Kosz to folder w drzewie, pod wszystkimi folderami (decyzja 2026-10-20):
+  // otwiera się jak folder, „Usuń” w nim usuwa trwale, „Przywróć” w pasku
+  // po zaznaczeniu, „Opróżnij kosz” w pasku.
+  const trashTreeRow = (page) => page.locator('#tree .row[data-kind="trash"]');
+  const trashRows = (page) => page.locator('#list .row[data-kind="trash"]');
+
+  test("usunięty folder z pytaniem trafia do kosza, przywrócenie odtwarza folder z pytaniem", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TRASH-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Do kosza", ord: 1 });
+      const qid = await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "W koszu", answers: [{ text: "A", fixed_points: 3 }] } });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await expect(trashTreeRow(page)).toBeVisible({ timeout: 15000 });
+      // w drzewie zwykły wiersz, bez plakietki z liczbą
+      await expect(trashTreeRow(page).locator(".badge")).toHaveCount(0);
+
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await catRow.click();
+      await page.keyboard.press("Delete");
+      await expect(page.locator(".uni-modal .mSub")).toContainText("kosza", { timeout: 5000 });
+      await confirmUniModal(page);
+      await expect(catRow).toBeHidden({ timeout: 10000 });
+
+      await trashTreeRow(page).dblclick();
+      await expect(page).toHaveURL(/[?&]trash=1/);
+      await expect(trashRows(page)).toHaveCount(1, { timeout: 10000 });
+      await expect(trashRows(page)).toContainText("Do kosza");
+      await expect(trashRows(page)).toContainText("za ");
+
+      // „Przywróć” pojawia się w pasku i działa po zaznaczeniu
+      const restoreBtn = page.locator('#toolbar button[data-act="restore"]');
+      await expect(restoreBtn).toBeVisible();
+      await expect(restoreBtn).toBeDisabled();
+      await trashRows(page).first().click();
+      await expect(restoreBtn).toBeEnabled();
+      await restoreBtn.click();
+      await expect(page.locator("#list .list-empty")).toBeVisible({ timeout: 10000 });
+
+      await page.locator('#breadcrumbs .crumb[data-kind="root"]').click();
+      await expect(restoreBtn).toBeHidden();
+      await expect(catRow).toBeVisible({ timeout: 10000 });
+      const q = await getQuestionRow(page, qid);
+      expect(q?.category_id, "pytanie wraca do swojego folderu z tym samym id").toBe(catId);
+      expect(q?.payload?.answers?.length).toBe(1);
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("w koszu Usuń usuwa trwale, Opróżnij kosz czyści całość", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-PURGE-${Date.now()}`);
+
+    try {
+      const q1 = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pierwsze", answers: [] } });
+      const q2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "Drugie", answers: [] } });
+      const q3 = await createQuestion(page, { baseId, ord: 3, payload: { text: "Trzecie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // trzy pytania naraz (Ctrl+A) = trzy wpisy w koszu
+      await expect(page.locator(`#list .row[data-kind="q"][data-id="${q3}"]`)).toBeVisible({ timeout: 15000 });
+      await page.locator(`#list .row[data-kind="q"][data-id="${q1}"]`).click();
+      await page.keyboard.press("Control+a");
+      await expect(page.locator("#list .row.is-selected")).toHaveCount(3);
+      await page.keyboard.press("Delete");
+      await confirmUniModal(page);
+      await expect(page.locator(`#list .row[data-kind="q"]`)).toHaveCount(0, { timeout: 10000 });
+
+      await trashTreeRow(page).dblclick();
+      await expect(trashRows(page)).toHaveCount(3, { timeout: 10000 });
+
+      await trashRows(page).filter({ hasText: "Drugie" }).click();
+      await page.keyboard.press("Delete");
+      await expect(page.locator(".uni-modal .mSub")).toContainText("trwale", { timeout: 5000 });
+      await confirmUniModal(page);
+      await expect(trashRows(page)).toHaveCount(2, { timeout: 10000 });
+      expect(await getQuestionRow(page, q2)).toBeNull();
+
+      await page.locator('#toolbar button[data-act="emptyTrash"]').click();
+      await confirmUniModal(page);
+      await expect(page.locator("#list .list-empty")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#toolbar button[data-act="emptyTrash"]')).toBeDisabled();
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Delete w polu treści otwartego okna pytania nie usuwa zaznaczenia", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-DELKEY-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Treść", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+      await page.locator("#qText").press("Home");
+      await page.locator("#qText").press("Delete");
+
+      await expect(page.locator("#qText")).toHaveValue("reść");
+      await expect(page.locator(".uni-modal")).toHaveCount(0);
+      expect(await getQuestionRow(page, qid)).not.toBeNull();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
+  test("usunięcie: Ctrl+Z przywraca z kosza, Ctrl+Y usuwa ponownie", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDODEL-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do cofnięcia", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const undoBtn = page.locator('#toolbar button[data-act="undo"]');
+      const redoBtn = page.locator('#toolbar button[data-act="redo"]');
+      await expect(undoBtn).toBeDisabled({ timeout: 15000 });
+      await expect(redoBtn).toBeDisabled();
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await page.keyboard.press("Delete");
+      await confirmUniModal(page);
+      await expect(row).toBeHidden({ timeout: 10000 });
+      await expect(undoBtn).toBeEnabled();
+
+      await page.keyboard.press("Control+z");
+      await expect(row).toBeVisible({ timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+      await expect(redoBtn).toBeEnabled();
+
+      await page.keyboard.press("Control+y");
+      await expect(row).toBeHidden({ timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(1);
+
+      // Ctrl+Shift+Z to też „Ponów”: najpierw cofnij, potem ponów drugim skrótem
+      await page.keyboard.press("Control+z");
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await page.keyboard.press("Control+Shift+z");
+      await expect(row).toBeHidden({ timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("przeniesienie (wytnij + wklej) i zmiana nazwy cofają się po kolei przyciskiem w pasku", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDOMOVE-${Date.now()}`);
+
+    try {
+      const target = await createCategory(page, { baseId, name: "Cel", ord: 1 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Wędrowiec", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${target}"]`);
+      await qRow.click();
+      await pressToolbarShortcut(page, "cut", "Control+x");
+      // „Wklej” z menu folderu wkleja do niego (pasek wkleja do bieżącego)
+      await catRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /^\s*Wklej/ }).click();
+      await expect(qRow).toBeHidden({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id).toBe(target);
+
+      // zmiana nazwy folderu (F2)
+      await catRow.click();
+      await pressToolbarShortcut(page, "rename", "F2");
+      await page.locator(".uni-modal .uni-inp").fill("Nowa nazwa");
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(catRow).toContainText("Nowa nazwa", { timeout: 10000 });
+
+      const undoBtn = page.locator('#toolbar button[data-act="undo"]');
+      await undoBtn.click();
+      await expect(catRow).toContainText("Cel", { timeout: 10000 });
+      await undoBtn.click();
+      await expect(qRow).toBeVisible({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id ?? null).toBeNull();
+      await expect(undoBtn).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("cofnięte utworzenie folderu: ponowienie przywraca ten sam folder, nowa akcja czyści go z kosza", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDONEW-${Date.now()}`);
+
+    try {
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await pressToolbarShortcut(page, "newFolder", "Control+Shift+n");
+      const folderRows = page.locator('#list .row[data-kind="cat"]');
+      await expect(folderRows).toHaveCount(1, { timeout: 10000 });
+      const id = await folderRows.first().getAttribute("data-id");
+
+      await page.keyboard.press("Control+z");
+      await expect(folderRows).toHaveCount(0, { timeout: 10000 });
+      await page.keyboard.press("Control+y");
+      await expect(page.locator(`#list .row[data-kind="cat"][data-id="${id}"]`)).toBeVisible({ timeout: 10000 });
+
+      // cofnij jeszcze raz i zrób coś nowego: ponowienie przepada, wpis kosza znika
+      await page.keyboard.press("Control+z");
+      await expect(folderRows).toHaveCount(0, { timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(1);
+      await pressToolbarShortcut(page, "newQuestion", "Control+n");
+      await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(1, { timeout: 10000 });
+      await expect.poll(() => listTrashRows(page, baseId).then((r) => r.length), { timeout: 10000 }).toBe(0);
+      await expect(page.locator('#toolbar button[data-act="redo"]')).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: cofanie a blokady (E22)", () => {
+  test("cofnięcie na elemencie zajętym w innej karcie: komunikat, krok zostaje w historii; po zwolnieniu działa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDOLOCK-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Stara", ord: 1 });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await catRow.click();
+      await pressToolbarShortcut(page, "rename", "F2");
+      await page.locator(".uni-modal .uni-inp").fill("Nowa");
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(catRow).toContainText("Nowa", { timeout: 10000 });
+
+      // folder edytowany w innej karcie (inna blokada)
+      const lock = await acquireLockDirect(page, "base_folder", catId);
+      expect(lock.ok).toBe(true);
+      await page.keyboard.press("Control+z");
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await confirmUniModal(page);
+      await expect(catRow).toContainText("Nowa");
+      await expect(page.locator('#toolbar button[data-act="undo"]')).toBeEnabled();
+
+      await releaseLockDirect(page, "base_folder", catId, lock.tabId);
+      await page.keyboard.press("Control+z");
+      await expect(catRow).toContainText("Stara", { timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: menu kontekstowe na telefonie (okno od dołu)", () => {
+  test("menu otwiera się od dołu jak inne okna; pasek i tło je zamykają", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-SHEETMENU-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+
+      const menu = page.locator("#contextMenu");
+      await row.click({ button: "right" });
+      await expect(menu).toHaveClass(/is-sheet/);
+      await expect(page.locator("#contextMenuBackdrop")).toBeVisible();
+      await expect(menu.locator(".cm-handle")).toBeVisible();
+      // po animacji wysuwania: przyklejone do dołu, na pełną szerokość
+      await expect.poll(async () => { const b = await menu.boundingBox(); return Math.round(b.y + b.height); }).toBe(844);
+      expect(Math.round((await menu.boundingBox()).width)).toBe(390);
+
+      await menu.locator(".cm-handle").click();
+      await expect(menu).toBeHidden({ timeout: 2000 });
+      await expect(page.locator("#contextMenuBackdrop")).toBeHidden();
+
+      await row.click({ button: "right" });
+      await expect(menu).toBeVisible();
+      await page.mouse.click(195, 100); // tło nad oknem
+      await expect(menu).toBeHidden({ timeout: 2000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: menu kontekstowe z klawiatury (E22)", () => {
+  test("Shift+F10 otwiera menu zaznaczenia z fokusem; strzałki, End i Enter działają, skróty strony nie przechwytują klawiszy", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-KBMENU-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Klawiatura", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+
+      await page.keyboard.press("Shift+F10");
+      const menu = page.locator("#contextMenu");
+      await expect(menu).toBeVisible();
+      const focused = () => page.evaluate(() => document.activeElement?.textContent?.trim() || "");
+      await expect.poll(focused).toContain("Kopiuj"); // pierwsza pozycja
+      await page.keyboard.press("ArrowDown");
+      await expect.poll(focused).toContain("Wytnij");
+      await page.keyboard.press("ArrowUp");
+      await page.keyboard.press("ArrowUp"); // z pierwszej na ostatnią
+      await expect.poll(focused).toContain("Usuń");
+      await page.keyboard.press("Home");
+      await expect.poll(focused).toContain("Kopiuj");
+      await page.keyboard.press("End");
+      await page.keyboard.press("Enter");
+      await expect(menu).toBeHidden();
+      // Enter wykonał „Usuń” (potwierdzenie), a nie skrót strony „Otwórz”
+      await expect(page.locator(".uni-modal .mSub")).toContainText("kosza", { timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await expect(page.locator(".uni-modal")).toHaveCount(0, { timeout: 5000 });
+      await expect(row).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: zaznaczanie ramką (E22)", () => {
+  test("ramka myszą od pustego miejsca zaznacza trafione wiersze i zostaje po puszczeniu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MARQUEE-${Date.now()}`);
+
+    try {
+      for (let i = 1; i <= 5; i++) await createQuestion(page, { baseId, ord: i, payload: { text: `Pytanie ${i}`, answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const rows = page.locator('#list tbody .row[data-kind="q"]');
+      await expect(rows).toHaveCount(5, { timeout: 15000 });
+
+      // od pustego miejsca pod ostatnim wierszem w górę do środka 3. wiersza
+      const last = await rows.nth(4).boundingBox();
+      const third = await rows.nth(2).boundingBox();
+      const x = last.x + 60;
+      await page.mouse.move(x, last.y + last.height + 20);
+      await page.mouse.down();
+      await page.mouse.move(x, last.y + last.height / 2, { steps: 4 });
+      await page.mouse.move(x, third.y + third.height / 2, { steps: 6 });
+      await page.mouse.up();
+
+      await expect(page.locator("#list tbody .row.is-selected")).toHaveCount(3);
+      await expect(rows.nth(0)).not.toHaveClass(/is-selected/);
+      await expect(rows.nth(2)).toHaveClass(/is-selected/);
+      await expect(page.locator("#list .marquee")).toHaveCount(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: polskie litery w tagach (E22, decyzja 6)", () => {
+  test("tag „Łatwe” powstaje w oknie tagów, „latwe” to duplikat, tag filtruje z panelu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-PLTAG-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Z tagiem", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await pressToolbarShortcut(page, "editTags", "Control+t");
+      await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#tagsAddNew").click();
+      await page.locator("#tagsEditName").fill("Łatwe");
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsL1")).toBeVisible({ timeout: 5000 });
+      await page.locator('#tagsAssignList input[type="checkbox"][data-tag-id]').first().click();
+      await page.locator("#tagsL1Save").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+      expect(await getQuestionTagIds(page, qid)).toHaveLength(1);
+
+      // „latwe” = „Łatwe” (porównanie jak wyszukiwarka): odmowa
+      await showLeftView(page, "tags");
+      await page.locator("#btnAddTag").click();
+      await expect(page.locator("#tagsL2")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsEditName").fill("latwe");
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsEditErr")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsL2Close").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+
+      // tag „Łatwe” w panelu (jeden, bez duplikatu) filtruje listę
+      const tagRows = page.locator('#tags .row[data-kind="tag"]');
+      await expect(tagRows).toHaveCount(1);
+      await tagRows.first().click();
+      await expect(row).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: warstwy okna tagów — Anuluj (E22 etap 9)", () => {
+  test("Anuluj w kolorze przywraca poprzedni kolor, Anuluj w tagu wraca do listy, Zapisz nic nie zmienia bez wyboru", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TAGBACK-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Bez tagu", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editTags", "Control+t");
+      await expect(page.locator("#tagsL1")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#tagsAddNew").click();
+      await expect(page.locator("#tagsL2")).toBeVisible({ timeout: 5000 });
+      const dot = page.locator("#tagsEditColorDot");
+      const before = await dot.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+      await page.locator("#tagsEditColorTile").click();
+      await expect(page.locator("#tagsL3")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsColorHex").fill("#ff0000");
+      await expect.poll(() => dot.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(255, 0, 0)");
+      await page.locator("#tagsL3Back").click();
+      await expect(page.locator("#tagsL2")).toBeVisible();
+      await expect.poll(() => dot.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(before);
+
+      await page.locator("#tagsL2Back").click();
+      await expect(page.locator("#tagsL1")).toBeVisible();
+      await expect(page.locator("#tagsOverlay")).toBeVisible();
+      await page.locator("#tagsL1Close").click();
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+      expect(await getQuestionTagIds(page, qid)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () => {
+  test("przeniesienie przez wyszukiwanie w oknie z drzewem; folder nie może trafić sam do siebie; kopia przez drzewo", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MOVETO-${Date.now()}`);
+
+    try {
+      const a = await createCategory(page, { baseId, name: "Alfa", ord: 1 });
+      const b = await createCategory(page, { baseId, name: "Beta", ord: 2 });
+      const b1 = await createCategory(page, { baseId, parentId: b, name: "Głęboki", ord: 1 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do przeniesienia", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // pytanie → „Przenieś do…” → szukaj „gleb” (bez polskich znaków) → Przenieś tutaj
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await qRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await expect(page.locator("#moveOverlay")).toBeVisible();
+      await page.locator("#moveSearch").fill("gleb");
+      await page.locator(`#moveList .moveRow[data-id="${b1}"]`).click();
+      await expect(page.locator(`#moveList .moveRow[data-id="${b1}"] .movePath`)).toContainText("Beta");
+      await page.locator("#moveOk").click();
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect(qRow).toBeHidden({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id).toBe(b1);
+
+      // folder Beta: w oknie Beta i Głęboki są wyszarzone
+      const bRow = page.locator(`#list .row[data-kind="cat"][data-id="${b}"]`);
+      await bRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await expect(page.locator(`#moveList .moveRow[data-id="${b}"]`)).toHaveClass(/is-blocked/);
+      await page.locator(`#moveList .moveRow[data-id="${b}"]`).click({ force: true });
+      await expect(page.locator("#moveOk")).toBeDisabled();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+
+      // kopia folderu Alfa do Beta przez drzewo (dwuklik zatwierdza)
+      const aRow = page.locator(`#list .row[data-kind="cat"][data-id="${a}"]`);
+      await aRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Kopiuj do/ }).click();
+      await page.locator(`#moveList .moveRow[data-id="${b}"]`).dblclick();
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect(aRow).toBeVisible(); // oryginał zostaje
+      await bRow.dblclick();
+      await expect(page.locator('#list .row[data-kind="cat"]', { hasText: "Alfa" })).toHaveCount(1, { timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: Przenieś do — klawiatura i adres (E22 przegląd)", () => {
+  test("Enter na Anuluj anuluje, Enter w szukaniu bez wyboru nic nie robi, przy jednym wyniku przenosi; ?dialog= w adresie nie zostawia pustego okna", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-MOVEKEY-${Date.now()}`);
+
+    try {
+      const a = await createCategory(page, { baseId, name: "Alfa", ord: 1 });
+      await createCategory(page, { baseId, name: "Beta", ord: 2 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Klawiatura", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(qRow).toBeVisible({ timeout: 15000 });
+      const openMove = async () => {
+        await qRow.click({ button: "right" });
+        await page.locator('.context-menu .cm-item[data-action="item.moveTo"]').click();
+        await expect(page.locator("#moveOverlay")).toBeVisible();
+      };
+
+      // fokus w polu szukania; Enter na „Anuluj” anuluje
+      await openMove();
+      await expect(page.locator("#moveSearch")).toBeFocused();
+      await page.locator(`#moveList .moveRow[data-id="${a}"]`).click();
+      await page.locator("#moveCancel").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      expect((await getQuestionRow(page, qid))?.category_id ?? null).toBeNull();
+
+      // fraza bez trafień: Enter nic nie robi (wybór spoza listy nie obowiązuje)
+      await openMove();
+      await page.locator(`#moveList .moveRow[data-id="${a}"]`).click();
+      await page.locator("#moveSearch").fill("zzz");
+      await expect(page.locator("#moveOk")).toBeDisabled();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeVisible();
+
+      // jeden wynik: Enter przenosi do niego
+      await page.locator("#moveSearch").fill("alf");
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#moveOverlay")).toBeHidden();
+      await expect.poll(async () => (await getQuestionRow(page, qid))?.category_id).toBe(a);
+
+      // telefon: wejście z adresu ?dialog=moveOverlay nie zostawia pustego okna
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${BASE_URL}?id=${baseId}&dialog=moveOverlay`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#moveOverlay")).toBeHidden({ timeout: 5000 });
+      await expect.poll(() => page.evaluate(() => new URL(location.href).searchParams.get("dialog"))).toBeNull();
+
+      // starsze okna menedżera z adresu też się nie wieszają puste
+      for (const dialog of ["tagsOverlay", "exportOverlay", "questionOverlay"]) {
+        await page.goto(`${BASE_URL}?id=${baseId}&dialog=${dialog}`, { waitUntil: "domcontentloaded" });
+        await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+        await expect(page.locator(`#${dialog}`)).toBeHidden({ timeout: 5000 });
+      }
+
+      // to samo dla okna „Szukaj”: pole zostaje w pasku, okno się nie wiesza
+      await page.goto(`${BASE_URL}?id=${baseId}&dialog=searchOverlay`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#list .row").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#searchOverlay")).toBeHidden({ timeout: 5000 });
+      await expect(page.locator("#toolbar #searchBox")).toBeAttached(); // pole wróciło do (schowanego na telefonie) paska
+      await expect(page.locator("#btnSearchSheet")).toBeVisible();
+      await page.locator("#btnSearchSheet").click();
+      await expect(page.locator("#searchSheetBody #searchText")).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: widoki lewego panelu jak radio (E22 etap 9)", () => {
+  test("telefon: drzewo / tagi / kategorie otwierają panel z jednym widokiem; tag filtruje listę, plakietka liczy filtry", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-LEFTVIEW-${Date.now()}`);
+
+    try {
+      const tagId = await createTag(page, { baseId, name: "filtr" });
+      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Z tagiem", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Bez tagu", answers: [] } });
+      await assignTag(page, { questionId: qTagged, tagId });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+
+      const tabs = page.locator(".left-view-tabs");
+      const btn = (v) => tabs.locator(`[data-left-view="${v}"]`);
+      await expect(tabs.locator("[data-left-view]")).toHaveCount(3);
+
+      // drzewo: panel z samym drzewem
+      await btn("tree").click();
+      await expect(page.locator("#explorerLeft")).toHaveClass(/is-open/);
+      await expect(page.locator("#tree")).toBeVisible();
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await expect(btn("tree")).toHaveAttribute("aria-pressed", "true");
+
+      // tagi: ten sam panel, inny widok (radio)
+      await btn("tags").click();
+      await expect(page.locator("#tree")).toBeHidden();
+      await expect(page.locator("#tags")).toBeVisible();
+      await expect(page.locator("#matchedCategories")).toBeHidden();
+      await expect(btn("tree")).toHaveAttribute("aria-pressed", "false");
+      await expect(btn("tags")).toHaveAttribute("aria-pressed", "true");
+      await page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`).click();
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+      await expect(btn("tags").locator(".badge")).toHaveText("1");
+
+      // kategorie
+      await btn("types").click();
+      await expect(page.locator("#matchedCategories")).toBeVisible();
+      await expect(page.locator("#tags")).toBeHidden();
+
+      // ponowne stuknięcie zamyka panel; żaden przycisk nie świeci
+      await btn("types").click();
+      await expect(page.locator("#explorerLeft")).not.toHaveClass(/is-open/);
+      await expect(tabs.locator('[aria-pressed="true"]')).toHaveCount(0);
+      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("komputer: Tagi i Kategorie przy wyszukiwarce przełączają lewy panel, ponowny klik wraca do drzewa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-LEFTVIEW-D-${Date.now()}`);
+
+    try {
+      await createTag(page, { baseId, name: "filtr" });
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#tree")).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await expect(page.locator(".left-view-tabs")).toBeHidden();
+
+      const tags = page.locator('.search-row [data-left-view="tags"]');
+      const types = page.locator('.search-row [data-left-view="types"]');
+      await tags.click();
+      await expect(page.locator("#tags")).toBeVisible();
+      await expect(page.locator("#tree")).toBeHidden();
+      await expect(tags).toHaveAttribute("aria-pressed", "true");
+
+      await types.click();
+      await expect(page.locator("#matchedCategories")).toBeVisible();
+      await expect(page.locator("#tags")).toBeHidden();
+      await expect(tags).toHaveAttribute("aria-pressed", "false");
+      await expect(types).toHaveAttribute("aria-pressed", "true");
+
+      await types.click();
+      await expect(page.locator("#tree")).toBeVisible();
+      await expect(page.locator("#leftFilters")).toBeHidden();
+      await expect(types).toHaveAttribute("aria-pressed", "false");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: zgłoszenia 2026-10-21 (podgląd, Ctrl+Shift+N, tłumaczenia)", () => {
+  test("viewer: Utwórz grę otwiera okno i tworzy grę z pytań cudzej bazy", async ({ page, context, browser }) => {
     test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-    const baseId = await createBase(page, `E2E-XB-E13VIEW-${Date.now()}`);
+    const baseId = await createBase(page, `E2E-XB-VIEWGAME-${Date.now()}`);
     let context2 = null;
 
     try {
-      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "PodgladE13", answers: [] } });
-      context2 = await browser.newContext({ serviceWorkers: "block" });
-      if (useBranch()) await serveBranchCode(context2, { pages: ["bases/explorer"] });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Dla podglądu", answers: [{ text: "A", fixed_points: 0 }] } });
+      context2 = await browser.newContext();
+      // drugi użytkownik też na kodzie brancha (inaczej testowałby obecną produkcję)
+      if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context2, { pages: ["bases/explorer"] });
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await page2.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
       await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
 
+      const diag = [];
+      page2.on("console", (m) => { if (m.type() === "error") diag.push(m.text().slice(0, 200)); });
+      page2.on("pageerror", (e) => diag.push(String(e.message).slice(0, 200)));
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
-      await page2.waitForLoadState("networkidle");
-      const row = page2.locator(`#list .row[data-id="${qid}"]`);
+      const row = page2.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await expect(page2.locator('#toolbar button[data-act="createGame"]')).toBeDisabled({ timeout: 5000 });
+      const btn = page2.locator('#toolbar button[data-act="createGame"]');
+      await expect(btn).toBeEnabled();
+      await btn.click();
+      await expect(page2.locator("#exportOverlay"), `[e2e-diag] ${diag.join(" | ")}`).toBeVisible({ timeout: 5000 });
+      await page2.locator("#xName").fill(`E2E-VIEWGAME-${Date.now()}`);
+      await page2.locator("#xCreate").click();
+      await expect(page2.locator("#exportOverlay")).toBeHidden({ timeout: 15000 });
     } finally {
       if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Ctrl+Shift+N tworzy folder, Ctrl+N pytanie; po angielsku nazwy „New folder” / „New question” i kopia „(copy)”", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-NEWKEYS-${Date.now()}`);
+
+    try {
+      await page.goto(`${BASE_URL}?id=${baseId}&lang=en`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
+      const catNames = () => page.evaluate(async (baseId) => {
+        const { data } = await window.__sbClient.from("qb_categories").select("name").eq("base_id", baseId);
+        return (data || []).map((r) => r.name).sort();
+      }, baseId);
+      const qTexts = () => page.evaluate(async (baseId) => {
+        const { data } = await window.__sbClient.from("qb_questions").select("payload").eq("base_id", baseId);
+        return (data || []).map((r) => r.payload?.text).sort();
+      }, baseId);
+
+      await page.locator("#list").click({ position: { x: 5, y: 5 } }).catch(() => {});
+      await page.keyboard.press("Control+Shift+KeyN");
+      await expect.poll(catNames).toEqual(["New folder"]);
+      expect(await qTexts()).toEqual([]);
+
+      await page.keyboard.press("Control+KeyN");
+      await expect.poll(qTexts).toEqual(["New question"]);
+      expect(await catNames()).toEqual(["New folder"]);
+
+      // duplikat folderu: „New folder (copy)”
+      const folderRow = page.locator('#list .row[data-kind="cat"]').first();
+      await folderRow.click();
+      await page.keyboard.press("Control+KeyD");
+      await expect.poll(catNames).toEqual(["New folder", "New folder (copy)"]);
+    } finally {
       await deleteBase(page, baseId);
     }
   });

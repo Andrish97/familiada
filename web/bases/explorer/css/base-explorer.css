@@ -257,39 +257,6 @@ input,textarea {
     background: rgba(120,160,255,.1)
 }
 
-#tree .row.tree-row {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    min-height: 32px;
-    border-bottom: 1px solid rgba(255,255,255,.08)
-}
-
-#tree .row.tree-row:hover {
-    background: rgba(255,255,255,.04)
-}
-
-#tree .row.tree-row .col-meta,#tree .row.tree-row .col-num {
-    display: none!important
-}
-
-#tree .row.tree-row .col-main {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 6px
-}
-
-#tree .tree-toggle {
-    color: inherit;
-    fill: currentColor;
-    flex: 0 0 18px
-}
-
-#tree .tree-toggle:hover {
-    opacity: .75
-}
-
 #tree .treeList {
     padding-bottom: 30px;
     scroll-padding-bottom: 30px
@@ -316,13 +283,6 @@ input,textarea {
     flex-wrap: wrap;
 }
 
-.searchChips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center
-}
-
 .searchText {
     flex: 1 1 140px;
     min-width: 140px;
@@ -333,30 +293,10 @@ input,textarea {
 .search-submit .ico{width:18px;height:18px}
 .search-submit.is-active{color:var(--gold);border-color:var(--gold);background:rgba(255,215,0,.12)}
 
-.chip,.tag-dots {
+.tag-dots {
     display: inline-flex;
     align-items: center;
     gap: 6px
-}
-
-.chip {
-    padding: 5px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.14);
-    --btn-tint: rgba(255,255,255,.06);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    user-select: none;
-    white-space: nowrap
-}
-
-.chip::before {
-    content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--chip, rgba(255,255,255,.35));
-    display: inline-block
 }
 
 .tag-dots {
@@ -420,6 +360,10 @@ input,textarea {
     position: fixed;
     z-index: 9999;
     min-width: 220px;
+    /* niskie okno: menu nie wychodzi poza ekran, przewija się */
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 6px;
     border-radius: 12px;
     background: #141414; /* kryjące — patrz uwaga przy .lang-menu w base.css */
@@ -675,15 +619,6 @@ input,textarea {
 .drop-pulse {
     animation: dropPulse 420ms ease-out;
     border-radius: 10px
-}
-
-.chip {
-    transition: transform 140ms ease,opacity 140ms ease
-}
-
-.chip--enter {
-    opacity: 0;
-    transform: translateY(-2px) scale(.98)
 }
 
 .tags-modal {
@@ -1084,12 +1019,6 @@ tr.row.is-drop-after td:last-child::after {
     background: rgba(255,255,255,.55);
 }
 
-/* ── z-index for tooltips ── */
-.meta-dot,.tag-dot {
-    position: relative;
-    z-index: 5;
-}
-
 .tbGroup,.toolbar {
     display: flex;
     align-items: center
@@ -1111,6 +1040,29 @@ tr.row.is-drop-after td:last-child::after {
 
 .tbGroup {
     gap: 6px
+}
+
+/* Komputer: wyszukiwarka szersza niż lewy panel (decyzja użytkownika
+   2026-10-21 — przy wielu tabletkach robiło się ciasno), przyciski za nią. */
+@media (min-width: 901px) {
+    .toolbar {
+        display: grid;
+        grid-template-columns: 520px minmax(0, 1fr);
+        column-gap: 0;
+    }
+    .search-row {
+        width: auto;
+        min-width: 0;
+        /* jak lewy panel: 12px odstępu + 1px linii przed prawą częścią */
+        padding-right: 13px;
+    }
+    .toolbar-btns-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding-left: 12px;
+    }
 }
 
 .tbSep {
@@ -1416,12 +1368,6 @@ tr.row.is-drop-after td:last-child::after {
    przewija się sama lista, "Zapisz" zostaje widoczne */
 .qAnswersBlock .qf-listShell {
     max-height: min(540px, 48vh)
-}
-
-/* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */
-.row:has(.meta-dot[data-tip]:hover),
-.row:has(.tag-dot[data-tip]:hover){
-  z-index: 10;
 }
 
 .explorer .explorer-left .left-sep{
@@ -2065,3 +2011,383 @@ tr.row.is-drop-after td:last-child::after {
   flex: 0 0 1px;
   margin: 0 2px;
 }
+
+/* ===== Przebudowa E22: style dawniej wpisane w HTML (render.js) ===== */
+.tree-row { cursor: pointer; position: relative; } /* position: linie przed/za przy przeciąganiu */
+#matchedCategories .row,
+#tags .row[data-kind=tag] {
+    padding: 6px 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+}
+#matchedCategories .row { opacity: .85; }
+#matchedCategories .row.is-selected { opacity: 1; }
+#btnAddTag { width: 100%; margin-top: 10px; }
+.list-empty { opacity: .75; padding: 16px; }
+.crumb { cursor: pointer; }
+.crumb-sep { opacity: .5; padding: 0 6px; }
+.crumb-results { margin-left: 10px; opacity: .7; }
+.type-label { opacity: .85; margin-right: 6px; }
+.row.is-cut { opacity: .55; }
+.list-head th[data-sort-key] { cursor: pointer; }
+
+.search-row { position: relative; }
+
+/* ===== Menu kontekstowe na telefonie i tablecie dotykowym: okno od dołu =====
+   Ten sam wygląd co pozostałe okna od dołu (shared/css/base.css, „Okno od
+   dołu”): przyciemnione tło, panel #121524 z rogami 28 px i linią u góry,
+   pasek do przeciągania 44×5, wysuwanie / zjazd z animacją, safe area;
+   na tablecie węższy panel z bocznymi krawędziami. Warunek jak SHEET_QUERY
+   w context-menu.js. */
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: var(--modal-scrim, rgba(0,0,0,.55));
+  animation: cmScrimIn .28s ease both;
+}
+.context-menu-backdrop[hidden] { display: none; }
+.context-menu-backdrop.is-closing { animation: cmScrimOut .24s ease both; }
+
+.context-menu.is-sheet {
+  left: 0 !important;
+  right: 0;
+  top: auto !important;
+  bottom: 0;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 760px;
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px 28px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line, rgba(255,255,255,.14));
+  background: #121524;
+  box-shadow: 0 -18px 60px rgba(0,0,0,.6);
+  padding: 32px calc(16px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  transform: translateY(var(--cm-drag, 0px));
+  animation: cmSheetUp .34s cubic-bezier(.2,.8,.2,1) both;
+  will-change: transform;
+}
+.context-menu.is-sheet.is-dragging { animation: none; transition: none; }
+.context-menu.is-sheet.is-settling { animation: none; transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+.context-menu.is-sheet.is-closing { animation: cmSheetDown .24s ease-in both; }
+
+.context-menu .cm-handle { display: none; }
+.context-menu.is-sheet .cm-handle {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 140px; height: 30px;
+  padding: 0; border: 0; background: none;
+  cursor: grab; touch-action: none;
+  display: grid; place-items: center;
+}
+.context-menu.is-sheet .cm-handle::before {
+  content: "";
+  width: 44px; height: 5px; border-radius: 999px;
+  background: rgba(255,255,255,.28);
+}
+
+/* pozycje jak na telefonie: większe, bez skrótów klawiszowych */
+.context-menu.is-sheet .cm-item { padding: 14px 12px; font-size: 15px; }
+.context-menu.is-sheet .cm-item:hover { background: rgba(255,255,255,.06); }
+.context-menu.is-sheet .cm-kbd { display: none; }
+
+@media (min-width: 601px) {
+  .context-menu.is-sheet {
+    border: 1px solid var(--line, rgba(255,255,255,.14));
+    border-bottom: 0;
+  }
+}
+
+@keyframes cmSheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--cm-drag, 0px)); } }
+@keyframes cmSheetDown { from { transform: translateY(var(--cm-drag, 0px)); } to { transform: translateY(100%); } }
+@keyframes cmScrimIn { from { background-color: rgba(0,0,0,0); } }
+@keyframes cmScrimOut { to { background-color: rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) {
+  .context-menu.is-sheet, .context-menu.is-sheet.is-closing, .context-menu-backdrop { animation-duration: 1ms !important; }
+}
+
+/* ===== Okna wg wzorców z main (E22 etap 9, 2026-10-21) =====
+   Listy w oknach bez wewnętrznej ramki (przycinanie z zaokrągleniem),
+   wiersze jako kafle jak .shareRow (promień 12, --card2, --line2). */
+.tagsPickList,
+.tags-modal .tagsPickList {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+}
+.tags-modal .tags-row {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tags-row:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+.xPickList,
+.export-modal .xPickList {
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+}
+.xPickItem { border-radius: 12px; }
+/* Okno od dołu: nagłówek warstwy okna tagów leży na panelu okna (#121524),
+   nie na tle strony — bez ciemnego paska pod tytułem. */
+.modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
+  position: static;
+  background: transparent !important;
+}
+
+/* Warstwy „Tag” i „Kolor” jak sekcje okien z main (.shareSection / karta
+   w edytorze gry): treść w karcie z podpisem, kafel koloru jako wiersz,
+   podgląd koloru bez cienia, „Anuluj” obok „Zapisz” (2026-10-21). */
+.tags-modal .tagsCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tagsCardLbl { font-weight: 800; }
+.tags-modal .tagsColorTile {
+  justify-content: flex-start;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--card2, rgba(255,255,255,.03));
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.tags-modal .tagsColorTile:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+.tags-modal .tagsColorDot { width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto; }
+.tags-modal .tagsColorLbl { flex: 1 1 auto; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 700; }
+.tags-modal .tagsColorGo { opacity: .7; }
+.tags-modal .colorTopRow.tagsCard {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+.tags-modal .colorPreview { flex: 0 0 auto; width: 72px; height: 72px; border-radius: 14px; box-shadow: none; }
+.tags-modal .colorHexField { flex: 1 1 auto; min-width: 0; }
+.tags-modal .colorHexField .inp { width: 100%; }
+.tags-modal .sliders {
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+/* Okno od dołu: podpowiedź warstwy („Zaznaczenie…”, „Dodaj nowy tag.”)
+   pod tytułem, nad przyciskami — jak w „Utwórz grę”. */
+.modal--sheet.sheet-active .tags-modal .tags-layer > :is(.mSub, .tagsAssignInfo) {
+  order: 0 !important; /* base.css: :not(.tagsHead):not(.tagsFoot) { order: 2 } */
+  margin: -2px 0 10px;
+}
+.modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { margin-bottom: 6px !important; }
+
+/* ===== Widoki lewego panelu (ui/left-view.js, decyzja 2026-10-21) =====
+   Jeden widok naraz na pełną wysokość: drzewo, tagi albo proponowane
+   kategorie (#explorerLeft[data-view]). Przyciski jak radio: komputer —
+   Tagi/Kategorie przy wyszukiwarce, telefon — drzewo/tagi/kategorie. */
+.explorer-left > .left-sep,
+.left-filters > .left-sep { display: none; }
+.explorer-left:not([data-view="tags"]):not([data-view="types"]) > .left-filters,
+.explorer-left[data-view="tags"] > .tree,
+.explorer-left[data-view="types"] > .tree,
+.explorer-left[data-view="tags"] .left-filters > .matched-categories,
+.explorer-left[data-view="types"] .left-filters > .tags { display: none; }
+.explorer-left > .tree,
+.explorer-left > .left-filters { flex: 1 1 auto; min-height: 0; }
+.left-filters { display: flex; flex-direction: column; }
+.left-filters > .matched-categories,
+.left-filters > .tags { flex: 1 1 auto; }
+/* Tagi i kategorie w panelu — wiersze jak w drzewie (wysokość, bez linii,
+   zaznaczenie jak na liście); pole wyszukiwania bez zbędnego marginesu,
+   bo obok stoją przyciski widoków. */
+#matchedCategories .row,
+#tags .row[data-kind=tag] {
+  min-height: 30px;
+  margin: 0;
+  padding: 1px 10px;
+  border: 0;
+  border-radius: 0;
+}
+/* Zaznaczenie na całą szerokość panelu, jak wiersze listy po prawej:
+   kontenery bez bocznego paddingu, wcięcie (10 px) mają nagłówki i wiersze. */
+.explorer-left > .tree,
+.left-filters > .tags,
+.left-filters > .matched-categories { padding-left: 0; padding-right: 0; border-radius: 0; }
+.explorer-left .left-panel-heading { padding: 0 10px; }
+.explorer-left .left-panel-empty { padding: 0 10px; }
+.explorer-left #btnAddTag { width: calc(100% - 20px); margin: 4px 10px 8px; }
+@media (pointer: coarse) {
+  #matchedCategories .row,
+  #tags .row[data-kind=tag] { min-height: 36px; }
+}
+@media (min-width: 901px) {
+  .search-row .searchBox { margin-right: 0; }
+}
+.left-view-btn { position: relative; }
+/* plakietka w rogu przycisku (nie wystaje pod pasek wyszukiwania, który ją
+   przycinał), mniejsza od zwykłej .badge */
+.left-view-btn .badge {
+  position: absolute; top: 1px; right: 1px; margin: 0;
+  min-width: 14px; height: 14px; padding: 0 3px; font-size: 9px;
+  background: #2a2614; pointer-events: none;
+}
+.left-view-btn .badge:empty { display: none; }
+.left-view-btn.is-active,
+.tbBtn.left-view-btn.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
+.left-view-tabs { gap: 6px; align-items: center; }
+@media (max-width: 900px) {
+  .desktop-only { display: none !important; }
+  /* panel na telefonie: kryjące tło jak okna od dołu */
+  .explorer-left { background: #121524; }
+}
+
+/* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
+.move-modal { width: min(560px, 94vw); }
+.moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.moveSearch { flex: 0 0 auto; margin-right: 0; width: 100%; box-sizing: border-box; } /* .searchBox z paska ma margin-right */
+.moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
+/* ===== Drzewo folderów — jeden wygląd (lewy panel i okno „Przenieś do”,
+   ui/tree-row.js, decyzja użytkownika 2026-10-21) =====
+   Wiersze bez ramek, wcięcie co --step, linie prowadzące (.tree-guides)
+   pod strzałkami przodków, folder otwarty/zamknięty, kropki, liczba pytań.
+   Zaznaczenie jak na liście po prawej (tr.row.is-selected): niebieskie tło
+   i obrys; bieżący folder — samo tło (decyzja 2026-10-21). */
+.treeList,
+.moveList { --step: 20px; --pad0: 10px; display: grid; align-content: start; gap: 0; }
+.row.tree-row,
+.tree-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 30px;
+  margin: 0; /* base.css: .row { margin: 10px 0; flex-wrap: wrap } */
+  flex-wrap: nowrap;
+  padding: 1px 10px 1px calc(var(--pad0, 10px) + var(--depth, 0) * var(--step));
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.tree-guides { position: absolute; inset: 0; pointer-events: none; }
+/* linia pod strzałką przodka na poziomie --k: │ przez cały wiersz, ├ z odnogą
+   w połowie, └ do połowy z odnogą (ostatnie dziecko) */
+.tree-g {
+  position: absolute;
+  top: 0;
+  left: calc(var(--pad0) + var(--step) / 2 + var(--k) * var(--step));
+  width: 1px;
+  height: 100%;
+  background: var(--line2, rgba(255,255,255,.14));
+}
+.tree-g-end { height: 50%; }
+.tree-g-tee::after,
+.tree-g-end::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: calc(var(--step) / 2 - 2px);
+  height: 1px;
+  background: inherit;
+}
+.tree-g-tee::after { top: 50%; }
+.tree-g-end::after { top: 100%; }
+.row.tree-row:hover,
+.tree-row:hover { background: rgba(255,255,255,.05); }
+.tree-row.is-root { font-weight: 700; }
+.row.tree-row.is-current,
+.tree-row.is-current,
+.row.tree-row.is-selected,
+.tree-row.is-selected { background: rgba(120,160,255,.1); }
+.row.tree-row.is-selected,
+.tree-row.is-selected { outline: 2px solid rgba(120,160,255,.55); outline-offset: -2px; }
+.tree-row.is-blocked { opacity: .4; cursor: not-allowed; }
+.tree-row.is-blocked:hover { background: none; }
+.tree-toggle,
+.tree-toggle-space { position: relative; flex: 0 0 var(--step); width: var(--step); height: 22px; }
+.tree-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
+}
+.tree-toggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.tree-toggle .ico { width: 14px; height: 14px; }
+.tree-ico { display: inline-flex; flex: 0 0 auto; opacity: .9; }
+.tree-row .list-ico { width: 16px; height: 16px; }
+.tree-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+@media (pointer: coarse) { .row.tree-row, .tree-row { min-height: 36px; } }
+.tree-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
+.tree-dots { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.tree-count {
+  flex: 0 0 auto;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  font-size: 11px;
+  font-weight: 400;
+  text-align: center;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+}
+/* Okno: drzewo w jednej karcie (jak .shareSection); wyniki wyszukiwania bez wcięć. */
+.moveList {
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+}
+.modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
+.moveList > .list-empty { padding: 14px; opacity: .7; }
+/* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
+   i linia nad przyciskami); w oknie od dołu stopkę układa base.css
+   (.sheet-modal-actions), jak w pozostałych oknach. */
+.move-modal > .modal-actions,
+.search-modal > .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+/* ===== Wyszukiwarka (2026-10-21) =====
+   Samo pole tekstowe (filtry tagów i kategorii są w lewym panelu), wygląd
+   jak pole w oknie „Przenieś do”: lupa w środku po lewej, „X” po prawej, gdy
+   tekst albo filtry są włączone. Telefon: w pasku sam przycisk „Szukaj”
+   (#btnSearchSheet) — pole jest w oknie (ui/search.js przenosi je z paska). */
+.searchBox { margin-right: 0; }
+.toolbar .searchBox { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; min-width: 0; min-height: 36px; box-sizing: border-box; }
+.searchBoxIco { width: 16px; height: 16px; flex: 0 0 16px; opacity: .6; }
+.searchBox .searchText { flex: 1 1 auto; min-width: 0; }
+.searchClear {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  padding: 0; border: 0; border-radius: 8px;
+  background: none; color: inherit; cursor: pointer; opacity: .7;
+}
+.searchClear:hover { opacity: 1; background: rgba(255,255,255,.08); }
+.searchClear .ico { width: 14px; height: 14px; }
+.searchClear[hidden] { display: none; }
+#btnSearchSheet.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
+@media (max-width: 900px) {
+  .toolbar > .search-row { display: none; }
+}
+.search-modal { width: min(560px, 94vw); }
+.searchSheetBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.searchSheetBody .searchBox { margin: 0; flex: 0 0 auto; width: 100%; box-sizing: border-box; }
+.searchSheetBody .searchText { flex: 1 1 auto; min-width: 0; }

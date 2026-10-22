@@ -5,15 +5,15 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-21T12475";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12475";
-import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-21T12475";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12475";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
+import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-21T12475"),
-  en: () => import("../content/en.js?v=v2026-10-21T12475"),
-  uk: () => import("../content/uk.js?v=v2026-10-21T12475"),
+  pl: () => import("../content/pl.js?v=v2026-10-22T00131"),
+  en: () => import("../content/en.js?v=v2026-10-22T00131"),
+  uk: () => import("../content/uk.js?v=v2026-10-22T00131"),
 };
 export const CHAPTER_PARAM = "ch";
 

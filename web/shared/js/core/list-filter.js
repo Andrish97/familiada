@@ -27,9 +27,10 @@ export function matchesFilter(tileValue, filterValue) {
 }
 
 /** Klucz stanu gry: draft / open / stopped / ready (jak etykieta kafla). */
-export function gameStateKey(status, { isPrepared = false, playOk = false } = {}) {
+export function gameStateKey(status, { isPrepared = false, playOk = false, openOk = false } = {}) {
   const s = status || "draft";
   if (s === "draft" && isPrepared && playOk) return "ready";
+  if (s === "draft" && !isPrepared && openOk) return "toOpen";
   if (s === "poll_open") return "open";
   if (s === "poll_stopped") return "stopped";
   if (s === "ready") return "ready";

@@ -1,54 +1,44 @@
-import {sb} from './supabase.js?v=v2026-10-21T12475';
-import {t} from '../../translation/translation.js?v=v2026-10-21T12475';
-import {iconText} from './icons.js?v=v2026-10-21T12475';
+// Otrzymane kopie gier i logo (resource_copy_*): dane do kafli propozycji
+// (proposed-tile.js) i liczniki na wypustkach. Kopia czekająca na decyzję
+// jest już wierszem games/user_logos odbiorcy — strona rysuje ją jak
+// zaproszenie do bazy, zaraz po kaflu „+”, z ✓/✕ zamiast kosza.
+import {sb} from './supabase.js?v=v2026-10-22T00131';
 
 
-export async function refreshResourceCopyInbox({kind,variant,host,onChanged}){
- if(!host)return;
- await refreshResourceCopyBadges();
- const {data,error}=await sb().rpc('resource_copy_inbox',{p_kind:kind});
- if(error||data?.ok!==true){host.hidden=true;return;}
- const logoVariant={TEXT:'GLYPH_30x10',DRAW:'PIX_150x70',IMAGE:'PIX_150x70'}[variant];
- const items=(data.items||[]).filter(item=>!variant||(kind==='logo'?item.variant===logoVariant&&item.logo_mode===(variant==='TEXT'?'TEXT':variant):item.variant===variant));host.replaceChildren();host.hidden=!items.length;
- if(!items.length)return;
- const title=document.createElement('h3');title.textContent=t('resourceSend.received');host.append(title);
- for(const item of items){
-  const row=document.createElement('div');row.className='resource-copy-inbox-row';
-  const name=document.createElement('strong');name.textContent=item.name;
-  const from=document.createElement('span');from.textContent=t('resourceSend.from',{name:item.sender_label});
-  const actions=document.createElement('div');actions.className='resource-copy-inbox-actions';
-  const errorNode=document.createElement('span');errorNode.className='resource-copy-inbox-error';errorNode.setAttribute('role','status');
-  const accept=document.createElement('button');accept.type='button';accept.className='btn sm gold';accept.innerHTML=iconText('check',t('resourceSend.accept'));
-  const decline=document.createElement('button');decline.type='button';decline.className='btn sm';decline.innerHTML=iconText('close',t('resourceSend.decline'));
-  const decide=async(decision,button)=>{
-   if(button.disabled)return;accept.disabled=decline.disabled=true;
-   try{
-    const result=await sb().rpc('resource_copy_decide',{p_offer:item.id,p_decision:decision});
-    if(result.error||result.data?.ok!==true){errorNode.textContent=t('resourceSend.errors.decisionFailed');accept.disabled=decline.disabled=false;return;}
-    await onChanged?.();
-   }catch{errorNode.textContent=t('resourceSend.errors.decisionFailed');accept.disabled=decline.disabled=false;}
-  };
-  accept.addEventListener('click',()=>void decide('accept',accept));
-  decline.addEventListener('click',()=>void decide('decline',decline));
-  actions.append(accept,decline);row.append(name,from,actions,errorNode);host.append(row);
- }
+/** Czekające kopie danego rodzaju: Map(id gry/logo → oferta). Pusta dla gościa i przy błędzie. */
+export async function loadResourceCopyOffers(kind){
+ void refreshResourceCopyBadges();
+ try{
+  const {data,error}=await sb().rpc('resource_copy_inbox',{p_kind:kind});
+  if(error||data?.ok!==true)return new Map();
+  const key=kind==='logo'?'logo_id':'game_id';
+  return new Map((data.items||[]).filter(item=>item[key]).map(item=>[item[key],item]));
+ }catch{return new Map();}
 }
 
+/** Przyjęcie/odrzucenie kopii; true = zapisane. Odrzucona kopia przepada. */
+export async function decideResourceCopy(offerId,decision){
+ const {data,error}=await sb().rpc('resource_copy_decide',{p_offer:offerId,p_decision:decision});
+ return !error&&data?.ok===true;
+}
+
+// Liczniki czekających kopii: .badge w etykiecie wypustki (jak „Udostępnione”
+// w Bazach i karty Znajomych) i licznik przycisku drugiej strony w topbarze.
 export async function refreshResourceCopyBadges(){
  const slots=[...document.querySelectorAll('[data-copy-kind][data-copy-variant]')];if(!slots.length)return;
+ const put=(el,n)=>{if(el)el.textContent=n>99?'99+':(n>0?String(n):'');};
  try{
   const {data,error}=await sb().rpc('resource_copy_badges');if(error||data?.ok!==true)throw error||new Error('badge_load_failed');
   const counts=data.items||[];
   const total=kind=>counts.filter(item=>item.kind===kind).reduce((sum,item)=>sum+Number(item.count||0),0);
   for(const slot of slots){
    const n=counts.filter(item=>item.kind===slot.dataset.copyKind&&item.variant===slot.dataset.copyVariant&&(!slot.dataset.copyMode||item.mode===slot.dataset.copyMode)).reduce((sum,item)=>sum+Number(item.count||0),0);
-   slot.dataset.copyCount=n?String(n>99?99:n):'';
+   put(slot.querySelector('.badge'),n);
   }
   const pageKind=location.pathname.startsWith('/logos/')?'logo':'game';
-  const navBadge=document.getElementById(pageKind==='logo'?'gamesCopiesNavBadge':'logoCopiesNavBadge');
-  if(navBadge)navBadge.textContent=total(pageKind==='logo'?'game':'logo')>99?'99+':String(total(pageKind==='logo'?'game':'logo')||'');
+  put(document.getElementById(pageKind==='logo'?'gamesCopiesNavBadge':'logoCopiesNavBadge'),total(pageKind==='logo'?'game':'logo'));
  }catch{
-  for(const slot of slots)slot.dataset.copyCount='';
-  for(const id of ['gamesCopiesNavBadge','logoCopiesNavBadge']){const badge=document.getElementById(id);if(badge)badge.textContent='';}
+  for(const slot of slots)put(slot.querySelector('.badge'),0);
+  for(const id of ['gamesCopiesNavBadge','logoCopiesNavBadge'])put(document.getElementById(id),0);
  }
 }

@@ -79,7 +79,7 @@ test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({
     await open(owner.page);
     await invite(owner.page, "test14@familiada.online");
     await expect(owner.page.locator(".uni-modal")).toContainText("możesz dodać tę osobę jako subskrybenta");
-    const link = owner.page.getByRole("link", { name: "Przejdź →" });
+    const link = owner.page.getByRole("link", { name: "Przejdź", exact: true });
     await expect(link).toHaveAttribute("href", /\/subscribers\//);
     await link.click();
     await expect(owner.page).toHaveURL(/\/subscribers\//);
@@ -184,7 +184,7 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(incoming).toBeHidden();
       await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-collapsed-${width}.png`), fullPage: true });
       await toggle.click();
-      // sekcja „Odrzucone przeze mnie” — stan jest w tytule, wiersz nie powtarza znacznika
+      // sekcja „Odrzucone” — stan jest w tytule, wiersz nie powtarza znacznika
       await expect(incoming).toBeVisible();
       await expect(incoming.locator('[data-act="accept"]')).toHaveCount(0);
       await expect(incoming.locator('[data-act="undo_reject"]')).toBeEnabled();
@@ -222,7 +222,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(incoming).toHaveCount(0);
     await recipient.page.locator('.rowsSection--declined button.rowsSectionHead').click();
     const refusal = recipient.page.locator(`.rowsSection--declined [data-id="${id}"]`);
-    // stan jest w tytule sekcji „Odrzucone przeze mnie”, wiersz go nie powtarza
+    // stan jest w tytule sekcji „Odrzucone”, wiersz go nie powtarza
     await expect(refusal).toBeVisible();
     await expect(refusal.locator('[data-act="undo_reject"]')).toBeEnabled();
     await owner.page.reload();
@@ -399,7 +399,8 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       await owner.page.reload();
       await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 390, height: 844 });
-      await received.focus(); await received.press("ArrowLeft");
+      // Po zmianie szerokości układ zakładek się przebudowuje -- klawisz dopiero przy fokusie.
+      await received.focus(); await expect(received).toBeFocused(); await received.press("ArrowLeft");
       await expect(invite).toHaveAttribute("aria-selected", "true");
       expect(new URL(owner.page.url()).searchParams.has("tab")).toBe(false);
       await owner.page.locator("#inviteInput").fill("saved@example.net");

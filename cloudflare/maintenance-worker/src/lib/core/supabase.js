@@ -39,7 +39,7 @@ export async function supabaseRequest(env, path, { method = "GET", body, headers
       }
     }
 
-    const result = { ok: res.ok, status: res.status, data, text };
+    const result = { ok: res.ok, status: res.status, data, text, contentRange: res.headers.get("content-range") };
     if (!res.ok) {
       result.error = summarizeSupabaseError(result);
     }

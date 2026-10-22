@@ -1,6 +1,6 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-21T12475";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T12475";
-import { icon, iconText } from "./icons.js?v=v2026-10-21T12475";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T00131";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T00131";
+import { icon, iconText } from "./icons.js?v=v2026-10-22T00131";
 
 
 let modalEl = null;
@@ -193,9 +193,13 @@ function ensureModal() {
     const list = document.getElementById("cModalFileList");
     if (!list) return;
     const files = Array.from(e.target.files || []);
-    list.innerHTML = files.map(f =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)">${f.name}</span>`
-    ).join("");
+    // Nazwa pliku jako tekst (nazwa może zawierać znaczniki HTML).
+    list.replaceChildren(...files.map(f => {
+      const chip = document.createElement("span");
+      chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)";
+      chip.textContent = f.name;
+      return chip;
+    }));
   });
 
   window.addEventListener("i18n:lang", applyLabels);
@@ -203,7 +207,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-21T12475");
+    const { sb } = await import("./supabase.js?v=v2026-10-22T00131");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;

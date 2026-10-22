@@ -10,19 +10,21 @@ Settings panel (admin)
 - GET /_admin_api/mail/queue
 - POST /_admin_api/mail/queue/run
 - GET /_admin_api/mail/logs
+- GET /_admin_api/stats/overview, /stats/retention, /ratings, /stats/excluded
+- POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T12475";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T12475";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T12475";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12475";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T12475";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T12475";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T12475";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T12475";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T12475";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-21T12475";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-21T12475";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T00131";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T00131";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00131";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T00131";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00131";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T00131";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T00131";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T00131";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T00131";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +35,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-21T12475";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T00131";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-21T12475";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-21T12475";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-21T12475";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T00131";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T00131";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T00131";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T00131"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-21T12475";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T00131";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -332,6 +335,24 @@ async function apiFetch(path, options = {}) {
     cache: "no-store",
   });
   return res;
+}
+
+// Dane panelu z Workera (Cloudflare Access + klucz serwisowy po stronie
+// serwera); funkcje bazy nie są dostępne publicznym kluczem.
+async function adminGet(path, key) {
+  const res = await apiFetch(`${API_BASE}${path}`, { method: "GET" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "błąd");
+  return key ? data[key] : data;
+}
+
+async function adminPost(path, body, key) {
+  const res = await apiFetch(`${API_BASE}${path}`, { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "błąd");
+  return key ? data[key] : data;
 }
 
 async function checkMe() {
@@ -1051,9 +1072,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T12475"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T12475"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-21T12475"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T00131"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T00131"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T00131"/>
 
   <style>
     body{margin:0;padding:0}
@@ -1097,8 +1118,7 @@ function closeMaintenancePreview() {
 async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
-    const { data, error } = await sb().rpc("get_admin_stats");
-    if (error) throw error;
+    const data = await adminGet("/stats/overview", "stats");
 
     if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
     if (els.statUsersGrowth) els.statUsersGrowth.textContent = `Dziś: ${data.users.new_today} | 7 dni: ${data.users.new_7d} | 30 dni: ${data.users.new_30d}`;
@@ -1311,9 +1331,7 @@ function renderExcludedList(users) {
 
 async function loadExcludedUsers() {
   try {
-    const { data, error } = await sb().rpc("stats_excluded_list");
-    if (error) throw error;
-    renderExcludedList(Array.isArray(data) ? data : []);
+    renderExcludedList((await adminGet("/stats/excluded", "rows")) || []);
   } catch (e) {
     console.error("[settings] loadExcludedUsers error:", e);
   }
@@ -1326,8 +1344,7 @@ async function addExcludedUser() {
   if (!username || !msg) return;
   msg.textContent = "";
   try {
-    const { data, error } = await sb().rpc("stats_exclude_user", { p_username: username });
-    if (error) throw error;
+    const data = await adminPost("/stats/excluded", { username }, "result");
     if (!data.ok) {
       msg.style.color = "#ff5722";
       msg.textContent = data.err === "not_found" ? "Nie znaleziono użytkownika." : data.err;
@@ -1345,8 +1362,7 @@ async function addExcludedUser() {
 
 async function removeExcludedUser(userId) {
   try {
-    const { error } = await sb().rpc("stats_unexclude_user", { p_user_id: userId });
-    if (error) throw error;
+    await adminPost("/stats/excluded/remove", { user_id: userId });
     await loadExcludedUsers();
   } catch (e) {
     console.error("[settings] removeExcludedUser error:", e);
@@ -1355,8 +1371,7 @@ async function removeExcludedUser(userId) {
 
 async function loadRetentionStats() {
   try {
-    const { data, error } = await sb().rpc("get_retention_stats");
-    if (error) throw error;
+    const data = await adminGet("/stats/retention", "stats");
     if (!data?.funnel) throw new Error("get_retention_stats: unexpected response shape: " + JSON.stringify(data));
     renderRetentionTable(data);
     renderSegmentBars(data.segments, data.funnel.registered);
@@ -1381,11 +1396,7 @@ async function loadRatings({ silent = false } = {}) {
     }
 
     // Load detailed ratings
-    const { data, error } = await sb().rpc("get_ratings_admin");
-
-    if (error) throw error;
-
-    const rows = Array.isArray(data) ? data : [];
+    const rows = (await adminGet("/ratings", "rows")) || [];
     if (rows.length === 0) {
       if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:.5">Brak ocen.</td></tr>';
       return;
@@ -2026,9 +2037,10 @@ function renderAiProviderOrder() {
       status.textContent = "Wyłączony";
       status.style.color = "#ff4d4d";
     } else if (cooldown && cooldown > now) {
-      const diff = Math.ceil((cooldown - now) / 1000);
-      const hours = Math.floor(diff / 3600);
-      const mins = Math.ceil((diff % 3600) / 60);
+      // pełne minuty w górę, potem podział (3 h nie daje „2h 60m”)
+      const totalMins = Math.ceil((cooldown - now) / 60000);
+      const hours = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
       status.textContent = `Zablokowany (Quota) - jeszcze ${hours}h ${mins}m`;
       status.style.color = "#ffa500";
     } else {
@@ -2066,10 +2078,7 @@ function renderAiProviderOrder() {
 async function saveAiProviderOrder() {
   try {
     // Aktualizuj priorytety dla wszystkich modeli w bazie
-    const updates = aiProviders.map((p, idx) => 
-      sb().from('marketing_ai_providers').update({ priority: idx }).eq('name', p.name)
-    );
-    await Promise.all(updates);
+    await adminPost("/marketing/ai-providers/order", { names: aiProviders.map((p) => p.name) });
     showToast(`Kolejność AI zapisana.`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
@@ -2078,12 +2087,7 @@ async function saveAiProviderOrder() {
 
 async function loadAiProviderOrder() {
   try {
-    const { data, error } = await sb()
-      .from('marketing_ai_providers')
-      .select('*')
-      .order('priority', { ascending: true });
-    
-    if (error) throw error;
+    const data = await adminGet("/marketing/ai-providers", "rows");
     if (data) {
       aiProviders = data;
       renderAiProviderOrder();
@@ -2569,13 +2573,13 @@ async function openRatersModal(gameId, title) {
       body.textContent = "Brak ocen.";
       return;
     }
-    body.innerHTML = `<table class="mail-table"><thead><tr>
-      <th>Użytkownik</th><th>Ocena</th><th>Data</th>
+    // Dwie kolumny (data pod nazwą) — mieszczą się także na telefonie.
+    body.innerHTML = `<table class="mail-table" style="min-width:0"><thead><tr>
+      <th>Użytkownik</th><th>Ocena</th>
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
-        <td>${escSetting(r.username || "?")}</td>
-        <td>${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
-        <td>${new Date(r.rated_at).toLocaleString()}</td>
+        <td>${escSetting(r.username || "?")}<div style="opacity:.6;font-size:12px">${new Date(r.rated_at).toLocaleString()}</div></td>
+        <td style="white-space:nowrap">${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
       </tr>`
     ).join("")}</tbody></table>`;
   } catch (err) {
@@ -2757,10 +2761,11 @@ function extractHtmlPreviewText(html) {
   // element.textContent includes the raw text of <style>/<script> children
   // (they're just text nodes to the DOM) - strip them first so CSS source
   // like "P {margin-top:0;...}" doesn't leak into the preview.
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  tmp.querySelectorAll("style, script").forEach((el) => el.remove());
-  return (tmp.textContent || tmp.innerText || "").trim();
+  // DOMParser tworzy dokument nieaktywny: obrazy się nie ładują, a atrybuty
+  // typu onerror nie wykonują się (innerHTML na elemencie odpiętym — tak).
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  doc.querySelectorAll("style, script").forEach((el) => el.remove());
+  return (doc.body?.textContent || "").trim();
 }
 
 function renderMailList(rows) {
@@ -3080,6 +3085,10 @@ function showAttachmentPreview(url, filename) {
   </div>`;
 }
 
+// Podgląd maili (także przychodzących): bez skryptów i bez wspólnego
+// origin (audyt E24, Ś6). Linki otwierają się w nowej karcie jak zwykle.
+const MAIL_FRAME_SANDBOX = "allow-popups allow-popups-to-escape-sandbox";
+
 function renderSimpleMessageContent(bubble, msg) {
   const bodyEl = document.createElement("div");
   const htmlSrc = msg.body_html;
@@ -3087,7 +3096,7 @@ function renderSimpleMessageContent(bubble, msg) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
@@ -3163,7 +3172,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
@@ -3184,7 +3193,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
     const frame = document.createElement("iframe");
     frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
-    frame.sandbox = "allow-scripts allow-popups";
+    frame.sandbox = MAIL_FRAME_SANDBOX;
     frame.srcdoc = emailHtml;
 
     // Create wrapper with dark background (matches email theme #050914)
@@ -3467,7 +3476,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
-      frame.sandbox = "allow-scripts allow-popups";
+      frame.sandbox = MAIL_FRAME_SANDBOX;
         const wrappedHtml = buildStoredMailHtml(msg);
       frame.srcdoc = wrappedHtml;
       bodyEl.appendChild(frame);
@@ -3488,7 +3497,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
 
       const frame = document.createElement("iframe");
       frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
-      frame.sandbox = "allow-scripts allow-popups";
+      frame.sandbox = MAIL_FRAME_SANDBOX;
       frame.srcdoc = emailHtml;
 
       // Create wrapper with dark background (matches email theme #050914)
@@ -4488,7 +4497,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;display:block";
-  frame.sandbox = "allow-scripts allow-popups";
+  frame.sandbox = MAIL_FRAME_SANDBOX;
   frame.srcdoc = emailHtml;
   
   // Create wrapper with dark background (matches email theme #050914)
@@ -4662,8 +4671,15 @@ async function cleanupTrash() {
   }
 }
 
+// Zmiany (nie-GET) Worker przyjmuje tylko jako JSON z Origin panelu (CSRF);
+// FormData (załączniki) ustawia własny typ multipart.
 function adminFetch(path, init = {}) {
-  return fetch(`/_admin_api${path}`, init);
+  const method = String(init.method || "GET").toUpperCase();
+  const headers = new Headers(init.headers || {});
+  if (method !== "GET" && method !== "HEAD" && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(`/_admin_api${path}`, { ...init, headers });
 }
 
 function escSetting(str) {
@@ -5651,7 +5667,7 @@ function buildSessionRunDetails(r) {
         const visibility = metrics.start_visibility === "hidden" ? " · karta była w tle" : metrics.start_visibility === "visible" ? " · karta była widoczna" : "";
         const background = Number(metrics.hidden_duration_ms) > 0 ? `, w tym ${formatDuration(metrics.hidden_duration_ms)} w tle` : "";
         const network = metrics.start_online === false ? " · przeglądarka zgłaszała brak sieci" : "";
-        const cause = metrics.first_status ? ` · status ${metrics.first_status}` : "";
+        const cause = metrics.first_status === "STALE" ? " · kanał milczał mimo połączenia (wykrył heartbeat), odbudowany" : metrics.first_status ? ` · status ${metrics.first_status}` : "";
         return { title: `Przerwa kanału: ${devices}`, detail: `${duration}${cause}${catchups}${visibility}${background}${network}${metrics.was_discarded ? " · karta została odtworzona po odrzuceniu" : ""}`.trim() };
       }
       if (event.category === "device_state_sync") {
@@ -5807,7 +5823,7 @@ const ADVANCED_SETTINGS_DEFAULTS = {
   roundMultipliers: [1, 1, 1, 2, 3],
   finalMinPoints: 300,
   finalTarget: 200,
-  endScreenMode: "logo",
+  endScreenMode: "money",
   finalPrizeMultiplier: 3,
   mainPrizeAmount: 25000,
 };
@@ -6031,6 +6047,7 @@ async function openStatsDetailModal(type) {
 
   const tableWrap = document.createElement("div");
   tableWrap.style.cssText = "min-height:60px;overflow-y:auto;flex:1";
+  tableWrap.className = "scroll-fade";
   tableWrap.textContent = "Ładowanie…";
 
   const pageWrap = document.createElement("div");
@@ -6780,26 +6797,18 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-21T12475");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T00131");
 
-  const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
-  let mcToken = null;
-  let mcRealtimeChannel = null;
 
-  async function mcGetToken() {
-    if (mcToken) return mcToken;
-    try {
-      const res = await fetch("/_admin_api/config/lead-finder-token");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok && data.token) {
-          mcToken = data.token;
-          return mcToken;
-        }
-      }
-    } catch(e) {}
-    return null;
+  // Lead-finder przez Worker (/_admin_api/leads/*): klucz usługi zostaje po
+  // stronie serwera (audyt E24, Ś2). Zwraca odpowiedź usługi (JSON).
+  async function mcLeads(path, method = "GET") {
+    const res = await adminFetch(`/leads/${path}`, { method });
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error(data?.detail || data?.error || `HTTP ${res.status}`);
+    return data || {};
   }
   let mcFilterUsedValue = "";
   let mcSearchValue = "";
@@ -6853,14 +6862,7 @@ function wireEvents() {
 
   async function mcLoadRuns() {
     try {
-      const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) {
-        mcState.status = "idle";
-        mcUpdateButtons();
-        return;
-      }
-      const data = await res.json();
+      const data = await mcLeads("search-runs/status");
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
       mcUpdateButtons();
@@ -6875,12 +6877,9 @@ function wireEvents() {
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
     actionBtn.disabled = true;
     try {
-      const tk = await mcGetToken();
       mcState.logs = [];
       mcRenderLogs();
-      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await mcLeads(`search-runs?target_count=${count}`, "POST");
       actionBtn.innerHTML = iconText("check", "Wyszukiwanie uruchomione");
       setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
@@ -6903,17 +6902,14 @@ function wireEvents() {
     }
 
     try {
-      const tk = await mcGetToken();
       if (mcState.status === "running") {
         actionBtn.innerHTML = iconText("pause", "Wstrzymywanie…");
-        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) throw new Error("Nie udało się wstrzymać zlecenia");
+        await mcLeads(`search-runs/${mcState.logRun}/pause`, "POST").catch(() => { throw new Error("Nie udało się wstrzymać zlecenia"); });
         mcState.status = "paused";
         mcStopLogAutoRefresh();
       } else {
         actionBtn.innerHTML = iconText("play", "Wznawianie…");
-        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) throw new Error("Nie udało się wznowić zlecenia");
+        await mcLeads(`search-runs/${mcState.logRun}/resume`, "POST").catch(() => { throw new Error("Nie udało się wznowić zlecenia"); });
         mcState.status = "running";
         mcStartLogAutoRefresh();
       }
@@ -6931,8 +6927,7 @@ function wireEvents() {
     actionBtn.disabled = true;
     cancelBtn.disabled = true;
     
-    const tk = await mcGetToken();
-    await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    await mcLeads(`search-runs/${mcState.logRun}/cancel`, "POST").catch(() => {});
     mcState.status = "idle";
     mcUpdateButtons();
     mcStopLogAutoRefresh();
@@ -6943,20 +6938,13 @@ function wireEvents() {
     const tbody = document.getElementById("mcTableBody");
     console.log('[MC] mcLoadContacts called, page:', mcState.page, 'panel hidden:', document.getElementById("marketingContactsPanel")?.hidden);
     try {
-      let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
-      const fUsed = mcFilterUsedValue;
-      if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
+      const q = new URLSearchParams({ page: String(mcState.page), sort: mcState.sortCol, dir: mcState.sortDir });
+      if (mcFilterUsedValue !== "") q.set("used", mcFilterUsedValue);
       const search = mcSearchValue.trim();
-      if (search) {
-        const esc = search.replace(/[\\,()%_]/g, '\\$&');
-        query = query.or(`title.ilike.%${esc}%,email.ilike.%${esc}%,url.ilike.%${esc}%`);
-      }
-      const from = (mcState.page - 1) * MC_PAGE_SIZE;
-      const to = from + MC_PAGE_SIZE - 1;
-      const { data, error, count } = await query.order(mcState.sortCol, {ascending: mcState.sortDir === 'asc'}).range(from, to);
-      if (error) throw error;
-      mcState.contacts = data || [];
-      mcRenderContacts(count || 0);
+      if (search) q.set("search", search);
+      const { rows, total } = await adminGet(`/marketing/contacts?${q}`);
+      mcState.contacts = rows || [];
+      mcRenderContacts(total || 0);
       mcUpdateSortHeaders();
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
@@ -7201,13 +7189,6 @@ function wireEvents() {
 
   function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
-  window.mcUpdate = async function(id, field, value) {
-    try {
-      const { error } = await sb().from("marketing_verified_contacts").update({[field]:value}).eq("id", id);
-      if (error) throw error;
-    } catch(e) { mcLoadContacts(); }
-  };
-
   function mcUpdateSelectionInfo() {
     const info = document.getElementById("mcSelectionInfo");
     const urlBtn = document.getElementById("mcVisitUrlBtn");
@@ -7252,8 +7233,7 @@ function wireEvents() {
       if (!selected.length) return;
       const allUsed = selected.every(c => c.is_used);
       const ids = selected.map(c => c.id);
-      const { error } = await sb().from("marketing_verified_contacts").update({is_used: !allUsed}).in("id", ids);
-      if (error) throw error;
+      await adminPost("/marketing/contacts/used", { ids, used: !allUsed });
       mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
@@ -7265,8 +7245,7 @@ function wireEvents() {
     if (!await confirmModal({ text: `Usunąć ${rows.size} kontaktów?` })) return;
     try {
       const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-      const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
-      if (error) throw error;
+      await adminPost("/marketing/contacts/delete", { ids });
       mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
@@ -7282,73 +7261,12 @@ function wireEvents() {
   async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
     try {
-      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: false}).limit(200);
-      if (error) throw error;
+      const data = await adminGet("/marketing/logs", "rows");
       // Odwróć, aby najstarsze były na górze, najnowsze na dole (chronologicznie)
       mcState.logs = (data || []).reverse();
       mcRenderLogs();
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
-  async function mcClearLogs() {
-    try {
-      const { error } = await sb().rpc('clear_marketing_logs');
-      if (error) throw error;
-      mcState.logs = [];
-      mcRenderLogs();
-    } catch(e) { console.warn('[MC] Clear logs error:', e); }
-  }
-  
-  function mcInitRealtime() {
-    mcDestroyRealtime();
-    try {
-      const channelName = 'marketing-search-logs-changes';
-      mcRealtimeChannel = sb().channel(channelName);
-      mcRealtimeChannel
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'marketing_search_logs'
-          },
-          (payload) => {
-            if (payload.new) {
-              mcState.logs.push(payload.new);
-              if (mcState.logs.length > 200) mcState.logs.shift();
-              mcRenderLogs();
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'marketing_verified_contacts'
-          },
-          () => {
-            if (mcState.page === 1) mcLoadContacts();
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[MC] Realtime subscribed');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.warn('[MC] Realtime channel error');
-          }
-        });
-    } catch(e) {
-      console.warn('[MC] Realtime init error:', e);
-    }
-  }
-  
-  function mcDestroyRealtime() {
-    if (mcRealtimeChannel) {
-      sb().removeChannel(mcRealtimeChannel);
-      mcRealtimeChannel = null;
-    }
-  }
-
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
     if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
@@ -7363,32 +7281,29 @@ function wireEvents() {
 
   function mcStartLogAutoRefresh() {
     if (mcState.logTimer) return;
-    mcInitRealtime();
     mcState.logTimer = setInterval(async () => {
       try {
-        const tk = await mcGetToken();
-        const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
-        if (!res.ok) {
+        let data;
+        try { data = await mcLeads("search-runs/status"); } catch {
           mcStopLogAutoRefresh();
           return;
         }
-        const data = await res.json();
         mcState.status = data.status || "idle";
         mcState.logRun = data.run_id;
         mcUpdateButtons();
+        if (mcState.page === 1) mcLoadContacts();
         if (mcState.status !== "running") {
           mcStopLogAutoRefresh();
         }
       } catch(e) {}
     }, 3000);
-    // Polling fallback for logs (every 2s)
+    // Logi co 2 s (tabela tylko przez Worker, bez Realtime)
     mcState.logPollTimer = setInterval(() => mcLoadLogs(), 2000);
   }
 
   function mcStopLogAutoRefresh() {
     if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }
     if (mcState.logPollTimer) { clearInterval(mcState.logPollTimer); mcState.logPollTimer = null; }
-    mcDestroyRealtime();
   }
 
   // Init MC events

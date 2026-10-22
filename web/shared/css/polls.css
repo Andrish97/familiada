@@ -128,7 +128,6 @@
   overflow: hidden;
 }
 .polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
-.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 max-content; min-width: 0; }
 .polls-tabs-card .slot-recipients{ display: none; }
 .pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
@@ -505,3 +504,7 @@
   .app-toast{ bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 .poll-load-retry{ display:flex; justify-content:center; margin: 0 0 12px; }
+
+/* Szkic: udostępnianie widoczne, ale zablokowane do uruchomienia ankiety. */
+.shareCols.is-locked > .pollSec{ opacity: .55; }
+.shareCols.is-locked > .pollSec :is(button, a, input){ pointer-events: none; }

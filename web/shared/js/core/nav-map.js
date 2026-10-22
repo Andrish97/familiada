@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-21T12475";
-import { iconText } from "./icons.js?v=v2026-10-21T12475";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-22T00131";
+import { iconText } from "./icons.js?v=v2026-10-22T00131";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -67,7 +67,7 @@ export const PAGES = {
     btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
     btnPlay:             { to: "control", minViewportWidth: 980, custom: true },
-    btnSettings:         { to: "gameSettings", minViewportWidth: 980, custom: true },
+    btnSettings:         { to: "gameSettings", custom: true },
     btnEdit:             { to: "editor", custom: true },
     btnPoll:             { to: "polls", custom: true },
   } },
@@ -83,7 +83,7 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
-  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "9.2", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
+  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "9.2", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "moveOverlay", "searchOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
   logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "8", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
   } },
@@ -93,8 +93,8 @@ export const PAGES = {
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "17", minViewportWidth: 980, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnFriends: { to: "friends", roles: ["user"], custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "16", minViewportWidth: 600, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
-    btnPlay: { to: "control", custom: true },
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "16", state: ["id"], buttons: {
+    btnPlay: { to: "control", minViewportWidth: 980, custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games"], manual: "13", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "17.1", state: ["share"] },

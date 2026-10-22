@@ -9,6 +9,7 @@ export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, 
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
 const E2E_EMAIL_RE = /^test([1-9]|1[0-5]|17)@familiada\.online$/;
+const E2E_RELEASABLE_MAIL_COOLDOWNS = new Set(["auth:guest_upgrade_email"]);
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
@@ -141,6 +142,27 @@ export async function handleE2EApi(request, env, url) {
     });
     if (!result.ok) return json({ ok: false, error: "fixture_queue_failed" }, 502);
     return json({ ok: true, queued: Array.isArray(result.data) ? result.data.length : 0 });
+  }
+
+  // Reset dziennych limitów dostawców poczty przed testami dostarczania
+  // (reset_email_limits tylko dla klucza serwisowego, migracja 448).
+  if (url.pathname === "/_e2e_api/mail-limits/reset" && request.method === "POST") {
+    const result = await supabaseRpc(env, "reset_email_limits", {});
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
+  // "Minęła godzina" dla blokady wysyłki per adres testowy (mail_cooldowns;
+  // mail_cooldown_email_release tylko dla klucza serwisowego, migracja 448).
+  if (url.pathname === "/_e2e_api/mail-cooldowns/release" && request.method === "POST") {
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    const recipient = normalizeE2ERecipient(body?.recipient);
+    const actionKey = String(body?.action_key || "");
+    if (!recipient || !E2E_RELEASABLE_MAIL_COOLDOWNS.has(actionKey)) return json({ ok: false, error: "invalid_release" }, 400);
+    const result = await supabaseRpc(env, "mail_cooldown_email_release", {
+      p_email: recipient, p_action_key: actionKey, p_max_age_seconds: 7200,
+    });
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
   }
 
   if (url.pathname === "/_e2e_api/mark-test-guest" && request.method === "POST") {

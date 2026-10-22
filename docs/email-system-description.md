@@ -91,7 +91,9 @@ https://familiada.online/reset.html?token_hash=<HASH>&type=recovery&lang=<pl|en|
 
 **Edge Function:** `send-email` — invoked via Supabase Auth webhook. Supabase may fire `email_change`, `email_change_current`, or `email_change_new` depending on whether "Secure email change" is enabled.
 
-**Content:** Confirmation link sent to **both** the old address (to confirm the owner initiated the change) and the new address (to verify ownership of the new mailbox). The change is applied only after both links are clicked (when secure email change is on).
+**Content (decision 2026-10-21, secure email change OFF — `GOTRUE_MAILER_SECURE_EMAIL_CHANGE_ENABLED=false`):** GoTrue issues one token; the confirmation link goes **only to the new address** and the change is applied once it is clicked. The old address gets a notice without a confirmation link (`authEmail.emailChangeNotice`: the new address, a login button, and "if this wasn't you — log in, cancel the change in account settings, change your password, report to kontakt@familiada.online"). Not sent for guest migration. A failure to send the notice is logged (`email_change_notice_failed`) and does not block the change.
+
+With secure email change ON (two tokens: `token_hash` + `token_hash_new`) both addresses get a confirmation link and both must be clicked; `send-email` handles either mode.
 
 **Confirmation link format:**
 ```

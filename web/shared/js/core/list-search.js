@@ -8,11 +8,12 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-21T12475";
-import { promptModal } from "./modal.js?v=v2026-10-21T12475";
-import { icon } from "./icons.js?v=v2026-10-21T12475";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-21T12475";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-21T12475";
+import { t } from "../../translation/translation.js?v=v2026-10-22T00131";
+import { promptModal } from "./modal.js?v=v2026-10-22T00131";
+import { icon } from "./icons.js?v=v2026-10-22T00131";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-22T00131";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-22T00131";
+import { scrollFade } from "./scroll-fade.js?v=v2026-10-22T00131";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -120,19 +121,25 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     window.addEventListener("i18n:lang", () => { ariaS(); apiS.setOptions(optsS()); apply(); });
   }
 
-  // Układa kafle (bez .addCard, który zostaje pierwszy) wg wybranego sortowania.
-  // Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
+  // Układa kafle wg wybranego sortowania: kafel „+” (.addCard) zawsze
+  // pierwszy, zaraz po nim kafle propozycji (data-proposed, proposed-tile.js),
+  // potem reszta. Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
   const sortGrid = (grid) => {
     if (!sort) return;
-    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && !el.classList.contains("list-empty") && el.parentElement === grid);
-    if (tiles.length < 2 || tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
+    const own = [...grid.children].filter((el) => (el.matches(tile) || el.classList.contains("addCard")) && !el.classList.contains("list-empty"));
+    const tiles = own.filter((el) => !el.classList.contains("addCard"));
+    if (tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
     const cmp = sortValue === "name" ? (a, b) => nm(a).localeCompare(nm(b), "pl")
       : sortValue === "created" ? (a, b) => stamp(b, "created") - stamp(a, "created")
       : (a, b) => stamp(b, "updated") - stamp(a, "updated");
-    const sorted = [...tiles].sort(cmp);
-    if (sorted.every((el, i) => el === tiles[i])) return;
+    const sorted = [
+      ...own.filter((el) => el.classList.contains("addCard")),
+      ...tiles.filter((el) => el.dataset.proposed === "1").sort(cmp),
+      ...tiles.filter((el) => el.dataset.proposed !== "1").sort(cmp),
+    ];
+    if (sorted.every((el, i) => el === own[i])) return;
     for (const el of sorted) grid.appendChild(el);
   };
 
@@ -222,6 +229,9 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     if (listChanged && (input.value || filterValue || sortValue || sort)) apply();
   });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
+
+  // Wygaszona krawędź przewijanej siatki — wspólny kod list (scroll-fade.js).
+  for (const grid of document.querySelectorAll(grids)) scrollFade(grid);
   window.addEventListener("i18n:lang", () => { label(); apply(); });
   if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
   if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);

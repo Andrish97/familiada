@@ -33,7 +33,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { loginAsTestUser, instrumentPage } = require("./helpers/login");
 const { installDisplayPerformance, startRunnerPerformance, collectDisplayPerformance } = require("./helpers/display-performance.cjs");
-const { waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online";
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
@@ -2267,15 +2267,8 @@ async function main() {
     // migracji (2026-04-23_email_providers_limits.sql), więc jest wołalna
     // z tego samego, zwykłego klienta co restoreDemoGame().
     if (scenariosToRun.some((scenario) => scenario.file.startsWith("08-"))) {
-      const resetCtx = await browser.newContext({ baseURL: BASE_URL });
-      const resetPage = await resetCtx.newPage();
-      await loginAsTestUser(resetPage, resetCtx);
-      const resetResult = await resetPage.evaluate(async () => {
-        const { error } = await window.__sbClient.rpc("reset_email_limits");
-        return { error: error?.message || null };
-      });
-      console.log("[record] reset_email_limits:", resetResult.error ? `FAILED (${resetResult.error})` : "OK");
-      await resetCtx.close().catch(() => {});
+      const resetError = await resetMailProviderLimits().then(() => null, (e) => e.message);
+      console.log("[record] reset_email_limits:", resetError ? `FAILED (${resetError})` : "OK");
     }
 
     for (const scenario of scenariosToRun) {

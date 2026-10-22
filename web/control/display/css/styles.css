@@ -79,6 +79,7 @@ body {
 .qr-img {
     width: min(420px,38vw);
     height: auto;
+    aspect-ratio: 1; /* kwadrat od razu, zanim obraz się zdekoduje (bez białego paska) */
     image-rendering: pixelated;
     border-radius: 18px;
     background: #fff;
