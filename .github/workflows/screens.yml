@@ -44,7 +44,9 @@ permissions:
 # Na main przebieg nie jest przerywany kolejnym pushem (kolejny czeka; z kilku
 # czekających zostaje najnowszy) -- inaczej przy częstych pushach kilku sesji
 # długie odświeżanie zrzutów nigdy się nie kończyło. Porównanie z ostatnim
-# commitem „Refresh …” w krokach niżej nie gubi zmian z pominiętych przebiegów.
+# commitem zmieniającym zrzuty (kroki niżej) nie gubi zmian z pominiętych przebiegów;
+# które sceny -- scripts/screens/changes.cjs (bez samych wersji ?v=, wspólny kod
+# tylko dla stron, które go wczytują).
 concurrency:
   group: screens-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -52,7 +54,7 @@ concurrency:
 jobs:
   screens:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -144,7 +146,8 @@ jobs:
         run: |
           # Porównanie z ostatnim odświeżeniem kadrów, nie z poprzednim pushem:
           # przebieg anulowany przez kolejny push (concurrency) nie gubi zmian.
-          LAST=$(git log -1 --format=%H --grep="^Refresh homepage screenshots" HEAD 2>/dev/null || true)
+          # Ostatni commit, który zmienił kadry (CI albo ręcznie) -- od niego liczą się zmiany.
+          LAST=$(git log -1 --format=%H HEAD -- web/assets/img/pl/shots web/assets/img/en/shots web/assets/img/uk/shots 2>/dev/null || true)
           [ -n "$LAST" ] && BASE="$LAST"
           if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
           node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
@@ -174,8 +177,8 @@ jobs:
           ALL: ${{ inputs.help && '1' || '' }}
         run: |
           git pull --rebase origin main || true
-          LAST=$(git log -1 --format=%H --grep="^Refresh help screenshots" HEAD 2>/dev/null || true)
-          # Bez wcześniejszego odświeżenia -- wszystkie użyte zrzuty (a nie tylko ostatni push).
+          # Ostatni commit, który zmienił zrzuty Wskazówek (CI albo ręcznie) -- od niego liczą się zmiany.
+          LAST=$(git log -1 --format=%H HEAD -- web/manual/img 2>/dev/null || true)
           if [ -n "$LAST" ]; then BASE="$LAST"; else ALL=1; fi
           if [ -n "$ALL" ]; then pick=$(node scripts/screens/publish-manual.cjs --list); else pick=$(node scripts/screens/publish-manual.cjs --list --base="$BASE"); fi
           [ -n "$pick" ] || { echo "Brak zrzutów Wskazówek do odświeżenia."; exit 0; }
