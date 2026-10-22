@@ -197,10 +197,12 @@ test("manual: telefon — przesunięcie palcem zmienia widok karuzeli, nie otwie
   try {
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
     const page = await context.newPage();
-    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17#s-17-3`, { waitUntil: "domcontentloaded" });
+    // Bez kotwicy w adresie: przewinięcie do podrozdziału przy wczytywaniu zrzutów nie rusza strony w trakcie gestu.
+    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17`, { waitUntil: "domcontentloaded" });
     const carousel = page.locator("#s-17-3 ~ .m-carousel").first();
     const dots = carousel.locator(".m-carousel-dot");
     await carousel.scrollIntoViewIfNeeded();
+    await expect.poll(() => carousel.locator("img").first().evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
     await expect(dots.nth(0)).toHaveClass(/active/);
     await touchSwipe(page, carousel.locator(".m-carousel-track"), { dx: -180 });
     await expect(dots.nth(1)).toHaveClass(/active/);
