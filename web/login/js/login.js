@@ -320,7 +320,8 @@ async function getSilentCaptchaToken() {
         } else {
         widgetId = captcha.render(mount, {
           sitekey: captchaSiteKey,
-          theme: "auto",
+          theme: "dark",
+          language: getCaptchaLang(),
           size: "flexible",
           appearance: "interaction-only",
           execution: "render",
@@ -400,7 +401,8 @@ async function askCaptchaToken() {
     })
     : captcha.render(mount, {
       sitekey: captchaSiteKey,
-      theme: "auto",
+      theme: "dark",
+      language: getCaptchaLang(),
       size: "normal",
       callback: (value) => {
         token = String(value || "");
