@@ -30,6 +30,7 @@
 }
 
 .m-actionbar { display: none; }
+.m-actionbar-return { display: none; }
 .m-search-toggle { display: none; }
 
 .m-side {
@@ -169,7 +170,7 @@ mark.m-hit {
 
 .m-return-bar {
     position: sticky;
-    top: 0;
+    top: -24px; /* przyklejony do krawędzi, nie pod odstępem treści (bez szczeliny nad paskiem) */
     z-index: 5;
     margin: -24px -32px 14px;
     padding: 10px 32px;
@@ -495,7 +496,26 @@ mark.m-hit {
     .m-search { background: #111827; }
     .m-search-toggle { display: inline-flex; margin-left: auto; flex: 0 0 auto; }
     .m-head .m-sections { display: block; }
-    .m-return-bar { margin: -20px calc(-1 * var(--page-pad-right)) 14px calc(-1 * var(--page-pad-left)); padding: 8px var(--page-pad-right) 8px var(--page-pad-left); }
+    /* „Wróć do: …” mieści się w pasku ze „Spis treści” — zamiast tytułu rozdziału. */
+    .m-return-bar { display: none; }
+    .m-layout.has-return .m-actionbar-title { display: none; }
+    .has-return .m-h2, .has-return .m-h3 { scroll-margin-top: 0; }
+    .m-layout.has-return .m-actionbar-return:not([hidden]) {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        padding: 6px 12px;
+        border: 1px solid rgba(255,234,166,.35);
+        border-radius: 999px;
+        background: #14171d;
+        color: var(--gold);
+        font-weight: 800;
+        font-size: 13px;
+        text-decoration: none;
+    }
+    .m-actionbar-return span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .m-actionbar-return .ico { flex: 0 0 auto; width: 1em; height: 1em; }
     .m-content { grid-column: 1; grid-row: 2; padding: 20px var(--page-pad-right) 0 var(--page-pad-left); }
 }
 

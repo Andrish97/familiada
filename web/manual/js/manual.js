@@ -5,19 +5,19 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T03261";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T03261";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T03261";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T03261";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T03261";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-22T03261";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-22T03261";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T03261";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T07402";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T07402";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T07402";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T07402";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T07402";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-22T07402";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-22T07402";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T07402";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-22T03261"),
-  en: () => import("../content/en.js?v=v2026-10-22T03261"),
-  uk: () => import("../content/uk.js?v=v2026-10-22T03261"),
+  pl: () => import("../content/pl.js?v=v2026-10-22T07402"),
+  en: () => import("../content/en.js?v=v2026-10-22T07402"),
+  uk: () => import("../content/uk.js?v=v2026-10-22T07402"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
@@ -29,6 +29,8 @@ const toc = document.getElementById("manualToc");
 const tocToggle = document.getElementById("manualTocToggle");
 const tocBackdrop = document.getElementById("manualTocBackdrop");
 const currentLabel = document.getElementById("manualCurrent");
+const returnBar = document.getElementById("manualReturnBar");
+const layout = document.querySelector(".m-layout");
 
 let manual = null;
 let current = null;
@@ -245,12 +247,25 @@ function sectionScope(id) {
   return out;
 }
 
+// „Wróć do: …”: w treści (komputer) i w pasku ze „Spis treści” (telefon, tablet).
+function syncReturn() {
+  const on = !!(returnTo && titleOf(returnTo));
+  article.classList.toggle("has-return", on);
+  layout?.classList.toggle("has-return", on);
+  if (!returnBar) return;
+  returnBar.hidden = !on;
+  if (on) {
+    returnBar.setAttribute("href", hrefFor(returnTo));
+    returnBar.innerHTML = `${icon("arrow-left")}<span>${esc(t("manual.backTo", { title: titleOf(returnTo) }))}</span>`;
+  }
+}
+
 function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false } = {}) {
   const ch = id ? findChapter(id) : null;
   current = ch ? ch.id : null;
   returnTo = ch && from && titleOf(from) ? from : null;
   if (ch) renderChapter(ch); else renderStart();
-  article.classList.toggle("has-return", !!returnTo);
+  syncReturn();
   renderToc();
   currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
   hydrateIcons(article);
@@ -294,7 +309,7 @@ function wireNavigation() {
     const from = a.classList.contains("m-ref") ? sectionOf(a) : null;
     if (id === current && url.hash && !from) {
       history.replaceState(history.state, "", chapterHref(current, url.hash, a.dataset.return ? null : returnTo));
-      if (a.dataset.return) { returnTo = null; article.querySelector(".m-return-bar")?.remove(); article.classList.remove("has-return"); }
+      if (a.dataset.return) { returnTo = null; article.querySelector(".m-return-bar")?.remove(); syncReturn(); }
       setTocOpen(false);
       scrollToHash(url.hash, true);
       return;

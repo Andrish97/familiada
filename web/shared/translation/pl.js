@@ -358,8 +358,7 @@ const pl = {
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
     },
     footer: {
-      left: "© {year} Familiada — system do gry na żywo",
-      privacy: "Polityka prywatności",
+      left: "© {year} Familiada — system do gry na żywo"
     },
   },
   auth: {

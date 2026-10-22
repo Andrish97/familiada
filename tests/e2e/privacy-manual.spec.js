@@ -255,3 +255,17 @@ test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, ob
     await context.close();
   }
 });
+
+test("manual: telefon — „Wróć do: …” w pasku ze „Spis treści” po odnośniku w treści", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
+  await page.locator('.m-doc a.m-ref[href="?ch=7#s-7-1"]').first().click();
+  await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
+  const back = page.locator("#manualReturnBar");
+  await expect(back).toBeVisible();
+  await expect(back).toContainText("Wróć do:");
+  await expect(page.locator(".m-return-bar")).toBeHidden();
+  await back.click();
+  await expect(page.locator(".m-article h1")).toContainText("Moje gry");
+  await expect(back).toBeHidden();
+});

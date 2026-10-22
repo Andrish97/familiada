@@ -345,8 +345,7 @@ const en = {
       q30: { q: "How can I share materials with friends?", a: "It depends on the item: send a game or logo as a copy, share a question base with a selected role, or share a device for use during a game." },
     },
     footer: {
-      left: "© {year} Familiada — live game system",
-      privacy: "Privacy policy",
+      left: "© {year} Familiada — live game system"
     },
   },
   auth: {
