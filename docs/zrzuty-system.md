@@ -54,12 +54,31 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
    **Na `main`** dodatkowo: zmienione kadry strony głównej są odświeżane
    (`publish-homepage.cjs`), zapisywane commitem `Refresh homepage screenshots`
    i workflow wywołuje wdrożenie Pages — strona główna i og:image same się
-   aktualizują.
+   aktualizują. Tak samo zrzuty Wskazówek (`web/manual/img`, commit
+   `Refresh help screenshots`).
 3. **Ręcznie z telefonu**: Actions → „Zrzuty stron” → Run workflow
    (`changed`, `all` albo lista scen).
 
-`--changed` wybiera sceny po prefiksach plików w `sources` sceny. Zmiana w
-`web/shared/`, `web/assets/`, danych demo albo atrapie oznacza wszystkie sceny.
+### Które sceny po zmianie (`changes.cjs`, decyzja użytkownika 2026-10-22)
+
+Wspólne dla `run.cjs --changed` (galeria, kadry strony głównej) i
+`publish-manual.cjs --list --base` (Wskazówki): przeliczane są tylko sceny,
+na których wygląd zmiana może wpłynąć.
+
+- Plik różniący się tylko znacznikami wersji (`?v=…`, meta `app-version`) — bez
+  wpływu; wyniki zrzutów (`web/assets/img/*/shots`, `og`, `web/manual/img`) też.
+- Wspólny kod (`web/shared/js`, `css`, `translation`) — sceny stron, które go
+  wczytują, także pośrednio (graf z importów, `<script>`, `<link>`, ścieżek
+  `.js/.css/.json` w kodzie). Np. `image-viewer.js` → Wskazówki i strona główna.
+- Zmiana pliku scen (`scenes.cjs`, `scenes/<obszar>.cjs`) — sceny z tego pliku.
+- Wszystkie sceny: dane demo (`data/`), atrapa (`fake-supabase.js`), `lib.cjs`,
+  fonty i dane wyświetlacza (`web/shared/fonts|data`), `web/assets/`.
+- Commit bez zmian w wyglądzie (wydajność, łącze, dokumentacja) — zero scen.
+
+Na `main` punkt odniesienia to ostatni commit, który zmienił dane zrzuty
+(`web/manual/img` albo kadry strony głównej) — przebiegi pominięte przez kolejkę
+(`concurrency` bez przerywania na `main`) nie gubią zmian. Test:
+`tests/unit/screensChanges.test.js`.
 
 ## Sceny (`scenes.cjs`)
 
