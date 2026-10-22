@@ -149,7 +149,14 @@ async function handleFetch(request, env, ctx) {
   if (
     host === "panel.familiada.online" ||
     host === "supabase.familiada.online" ||
-    host === "api.familiada.online"
+    host === "api.familiada.online" ||
+    host === "docker.familiada.online" ||
+    // Próba generalna przeprowadzki serwera (docs/przeprowadzka-serwera.md):
+    // adresy *2 wskazują nowy serwer. Usunąć po przełączeniu (P7).
+    host === "api2.familiada.online" ||
+    host === "supabase2.familiada.online" ||
+    host === "panel2.familiada.online" ||
+    host === "docker2.familiada.online"
   ) {
     // NIE dodawaj tu cf.resolveOverride wskazującego z powrotem na ten sam
     // `host` — to nie jest "wymuszenie użycia rekordu DNS", tylko każe
@@ -166,7 +173,7 @@ async function handleFetch(request, env, ctx) {
   }
 
   // Lead Finder - passthrough for settings frontend communication
-  if (host === "leads.familiada.online") {
+  if (host === "leads.familiada.online" || host === "leads2.familiada.online") {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
