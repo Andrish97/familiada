@@ -179,9 +179,8 @@ const en = {
     text: "If you enjoy using it and would like to support further development, you can buy the creator a coffee. It is a voluntary gesture: it gives no extra features or benefits, but it is truly appreciated and keeps the work going. Thank you!",
     external: "The link opens the external service {host} in a new tab.",
     go: "Buy a coffee",
-    pick: "Choose a coffee:",
-    sizeLabel: "Buy a coffee for {amount}",
-    close: "Close",
+    pick: "Choose a coffee",
+    size: { small: "Small coffee", medium: "Medium coffee", large: "Large coffee" },
   },
   contact: {
     modal: {

@@ -1,10 +1,10 @@
 import { t } from "../../translation/translation.js?v=v2026-10-22T01235";
 import { icon } from "./icons.js?v=v2026-10-22T01235";
-import { choiceModal } from "./modal.js?v=v2026-10-22T01235";
+import { confirmModal } from "./modal.js?v=v2026-10-22T01235";
 
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu, bez napisu) otwiera okno z wyjaśnieniem
-// i wyborem kawy (linki do buycoffee.to).
+// i wyborem kawy; złoty przycisk otwiera buycoffee.to z wybraną kawą.
 // Pusty adres = brak przycisku w stopce.
 export const SUPPORT_URL = "https://buycoffee.to/familiada.online";
 
@@ -36,47 +36,43 @@ function applyButtonLabels(button) {
   button.dataset.tooltip = text;
 }
 
+// Okno jak inne okna wyboru (np. „Zmień typ” w Moich grach): tekst, lista opcji
+// z radiem, na dole Anuluj i złoty przycisk, który otwiera wybraną kawę.
 export function openSupportModal() {
   if (!SUPPORT_URL) return Promise.resolve(false);
-  const body = document.createElement("div");
-  body.className = "support-modal-body";
-  body.innerHTML = `<div class="support-modal-icon">${icon("coffee")}</div>`;
-  for (const [key, cls] of [["support.lead", "support-modal-lead"], ["support.text", "support-modal-text"]]) {
-    const p = document.createElement("p");
-    p.className = cls;
-    p.textContent = t(key);
-    body.append(p);
-  }
-  const pick = document.createElement("p");
-  pick.className = "support-modal-pick";
-  pick.textContent = t("support.pick");
-  const sizes = document.createElement("div");
-  sizes.className = "support-sizes";
-  SUPPORT_SIZES.forEach(({ size, amount }) => {
-    const link = document.createElement("a");
-    link.className = `support-size support-size--${size}`;
-    link.href = supportSizeUrl(size);
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.innerHTML = `${icon("coffee")}<span></span>`;
-    link.querySelector("span").textContent = amount;
-    link.setAttribute("aria-label", t("support.sizeLabel", { amount }));
-    sizes.append(link);
+  const box = document.createElement("div");
+  box.className = "support-sizes";
+  box.setAttribute("role", "radiogroup");
+  box.setAttribute("aria-label", t("support.pick"));
+  SUPPORT_SIZES.forEach(({ size, amount }, i) => {
+    const option = document.createElement("label");
+    option.className = `support-size support-size--${size}`;
+    option.innerHTML = `<input type="radio" name="supportSize"><span class="support-size-ico">${icon("coffee")}</span><span class="support-size-name"></span><span class="support-size-amount"></span>`;
+    const input = option.querySelector("input");
+    input.value = size;
+    input.checked = i === 0;
+    option.querySelector(".support-size-name").textContent = t(`support.size.${size}`);
+    option.querySelector(".support-size-amount").textContent = amount;
+    box.append(option);
   });
   const note = document.createElement("p");
   note.className = "support-modal-note";
   note.textContent = t("support.external", { host: supportHost() });
-  body.append(pick, sizes, note);
+  box.append(note);
 
-  return choiceModal({
+  return confirmModal({
     title: t("support.title"),
-    body,
+    text: `${t("support.lead")}\n\n${t("support.text")}`,
+    body: box,
+    okText: t("support.go"),
+    cancelText: t("common.cancel"),
     modalClass: "support-modal",
-    buttons: [{ value: "close", text: t("support.close"), icon: "close" }],
-    // Po wyborze kawy karta buycoffee.to otwiera się z linku, a okno się zamyka.
-    onReady: ({ closeBtn }) => sizes.addEventListener("click", (e) => {
-      if (e.target.closest(".support-size")) setTimeout(() => closeBtn.click(), 0);
-    }),
+    onOk: () => {
+      // Otwarcie w tym samym kliknięciu, żeby przeglądarka nie blokowała karty.
+      const size = box.querySelector('input[name="supportSize"]:checked')?.value || SUPPORT_SIZES[0].size;
+      window.open(supportSizeUrl(size), "_blank", "noopener");
+      return true;
+    },
   });
 }
 

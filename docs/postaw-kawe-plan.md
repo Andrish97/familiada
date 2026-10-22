@@ -19,10 +19,10 @@ FAQ wdraża ta sesja; podręcznik — treść poniżej, wdraża druga sesja (dec
 - Ikona `coffee` (`web/assets/icons/communication/coffee.svg`, rejestr w `icons.js`).
 - `web/shared/js/core/support-modal.js`: `SUPPORT_URL` (pusty = brak przycisku),
   `ensureSupportEntryPoint()` (wołane z `contact-modal.js`, grupa `.footer-actions`
-  z Kontaktem), `openSupportModal()` (`choiceModal`: wyjaśnienie, wybór kawy,
-  notka o zewnętrznym serwisie, przycisk Zamknij).
+  z Kontaktem), `openSupportModal()` (`confirmModal`: wyjaśnienie, wybór kawy,
+  notka o zewnętrznym serwisie, Anuluj / Postaw kawę).
 - Stopka: sama filiżanka na każdym urządzeniu, bez napisu (decyzja użytkownika 2026-10-22); opis w dymku i `aria-label`.
-- Okno: wybór kawy jak w widżecie buycoffee.to — trzy kafle 5/15/25 zł (`SUPPORT_SIZES`, linki `?coffeeSize=small|medium|large`, nowa karta, okno się zamyka); bez obrazków i skryptów z buycoffee.to. Kwoty muszą zgadzać się z profilem.
+- Okno we wspólnym stylu (decyzja użytkownika 2026-10-22, wzorzec „Zmień typ”): `confirmModal`, tekst w `.mSub`, lista opcji z radiem Mała/Średnia/Duża kawa 5/15/25 zł (`SUPPORT_SIZES`), Anuluj + złoty „Postaw kawę” → nowa karta `?coffeeSize=small|medium|large` (jak widżet buycoffee.to, bez jego obrazków i skryptów). Kwoty muszą zgadzać się z profilem.
 - Teksty `support.*` PL/EN/UK; sceny `support-footer`, `support-footer-home`, `support-modal`.
 
 ## Krok 2 — FAQ na stronie głównej (zrobione na branchu)
@@ -70,12 +70,13 @@ w `icons.js`, więc `<i class="ico" data-icon="coffee"></i>` działa w treści.
    `{ id: "manual-support", category: "Podręcznik", title: "Podręcznik — O projekcie i wsparcie (rozdz. 21)", path: "/manual/?tab=help#r21", sources: page("manual"), ready: "#tab-help .m-toc", settle: 800 }`.
 5. Napisy muszą zgadzać się z aplikacją: filiżanka w stopce nie ma napisu (dymek
    `support.footerBtn`: „Postaw kawę” / „Buy me a coffee” / „Пригостити кавою”),
-   w oknie trzy kafle z kwotą (5 zł / 15 zł / 25 zł, nagłówek `support.pick`), Kontakt —
+   w oknie lista opcji `support.size.*` (Mała/Średnia/Duża kawa — 5/15/25 zł) i złoty
+   `support.go` („Postaw kawę” / „Buy a coffee” / „Пригостити кавою”), Kontakt —
    `common.contactBtn`.
 
 **Opis rozdziału:** krótki, bez nacisku. 21.1 — serwis jest i zostanie bezpłatny, wszystkie
 funkcje dla każdego (gość i konto zarejestrowane), bez płatnych wersji. 21.2 — gdzie jest
-przycisk (sama filiżanka w stopce obok Kontaktu), dwa kroki (okno → wybór kawy → nowa karta
+przycisk (sama filiżanka w stopce obok Kontaktu), trzy kroki (okno → wybór kawy → „Postaw kawę” → nowa karta
 `buycoffee.to`, tam kwota i płatność), notka: wsparcie dobrowolne, bez żadnych funkcji
 ani korzyści; uwagi i pomysły przez Kontakt (19.6).
 
@@ -91,7 +92,8 @@ ani korzyści; uwagi i pomysły przez Kontakt (19.6).
 <p class="m-p">Jeśli lubisz korzystać z Familiady i chcesz wesprzeć jej dalszy rozwój, możesz postawić twórcy kawę. Filiżankę <span class="m-btn"><i class="ico" data-icon="coffee"></i></span> znajdziesz w stopce stron serwisu, obok przycisku <span class="m-btn">Kontakt</span>.</p>
 <ol class="m-ol">
 <li>Kliknij filiżankę <span class="m-btn"><i class="ico" data-icon="coffee"></i></span>. Otworzy się okno <span class="m-page">Postaw kawę</span> z krótkim wyjaśnieniem.</li>
-<li>W części <span class="m-strong">Wybierz kawę</span> kliknij kwotę: <span class="m-btn">5 zł</span>, <span class="m-btn">15 zł</span> albo <span class="m-btn">25 zł</span>. W nowej karcie otworzy się zewnętrzny serwis <span class="m-code">buycoffee.to</span> z wybraną kawą, w którym wybierasz sposób płatności.</li>
+<li>Wybierz kawę: <span class="m-strong">Mała kawa</span> (5 zł), <span class="m-strong">Średnia kawa</span> (15 zł) albo <span class="m-strong">Duża kawa</span> (25 zł).</li>
+<li>Kliknij <span class="m-btn"><i class="ico" data-icon="check"></i>Postaw kawę</span>. W nowej karcie otworzy się zewnętrzny serwis <span class="m-code">buycoffee.to</span> z wybraną kawą, w którym wybierasz sposób płatności.</li>
 </ol>
 <div class="m-note"><p class="m-p">Wsparcie jest dobrowolne i nie daje żadnych dodatkowych funkcji ani korzyści w serwisie — jest po prostu podziękowaniem. Uwagi i pomysły na rozwój możesz przesłać przez formularz kontaktu (<a class="m-ref" href="#r19-6">rozdział 19.6</a>).</p></div>
 ```
@@ -108,7 +110,8 @@ ani korzyści; uwagi i pomysły przez Kontakt (19.6).
 <p class="m-p">If you enjoy using Familiada and would like to support its further development, you can buy the creator a coffee. You will find the cup <span class="m-btn"><i class="ico" data-icon="coffee"></i></span> in the footer of the service pages, next to the <span class="m-btn">Contact</span> button.</p>
 <ol class="m-ol">
 <li>Click the cup <span class="m-btn"><i class="ico" data-icon="coffee"></i></span>. The <span class="m-page">Buy me a coffee</span> window with a short explanation opens.</li>
-<li>Under <span class="m-strong">Choose a coffee</span>, click an amount: <span class="m-btn">5 zł</span>, <span class="m-btn">15 zł</span> or <span class="m-btn">25 zł</span>. The external service <span class="m-code">buycoffee.to</span> opens in a new tab with that coffee selected, where you choose the payment method.</li>
+<li>Choose a coffee: <span class="m-strong">Small coffee</span> (5 zł), <span class="m-strong">Medium coffee</span> (15 zł) or <span class="m-strong">Large coffee</span> (25 zł).</li>
+<li>Click <span class="m-btn"><i class="ico" data-icon="check"></i>Buy a coffee</span>. The external service <span class="m-code">buycoffee.to</span> opens in a new tab with that coffee selected, where you choose the payment method.</li>
 </ol>
 <div class="m-note"><p class="m-p">Support is voluntary and gives no extra features or benefits in the service — it is simply a thank-you. You can send feedback and ideas through the contact form (<a class="m-ref" href="#r19-6">chapter 19.6</a>).</p></div>
 ```
@@ -125,7 +128,8 @@ ani korzyści; uwagi i pomysły przez Kontakt (19.6).
 <p class="m-p">Якщо вам подобається користуватися Familiada і ви хочете підтримати її подальший розвиток, можете пригостити автора кавою. Чашку <span class="m-btn"><i class="ico" data-icon="coffee"></i></span> ви знайдете у футері сторінок сервісу, поруч із кнопкою <span class="m-btn">Контакт</span>.</p>
 <ol class="m-ol">
 <li>Натисніть чашку <span class="m-btn"><i class="ico" data-icon="coffee"></i></span>. Відкриється вікно <span class="m-page">Пригостити кавою</span> з коротким поясненням.</li>
-<li>У частині <span class="m-strong">Оберіть каву</span> натисніть суму: <span class="m-btn">5 zł</span>, <span class="m-btn">15 zł</span> або <span class="m-btn">25 zł</span>. У новій вкладці відкриється зовнішній сервіс <span class="m-code">buycoffee.to</span> з обраною кавою, де ви обираєте спосіб оплати.</li>
+<li>Оберіть каву: <span class="m-strong">Мала кава</span> (5 zł), <span class="m-strong">Середня кава</span> (15 zł) або <span class="m-strong">Велика кава</span> (25 zł).</li>
+<li>Натисніть <span class="m-btn"><i class="ico" data-icon="check"></i>Пригостити кавою</span>. У новій вкладці відкриється зовнішній сервіс <span class="m-code">buycoffee.to</span> з обраною кавою, де ви обираєте спосіб оплати.</li>
 </ol>
 <div class="m-note"><p class="m-p">Підтримка добровільна і не дає жодних додаткових функцій чи переваг у сервісі — це просто подяка. Зауваження та ідеї можна надіслати через форму контакту (<a class="m-ref" href="#r19-6">розділ 19.6</a>).</p></div>
 ```
