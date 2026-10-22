@@ -1,6 +1,7 @@
 import { t } from "../../translation/translation.js?v=v2026-10-22T01235";
 import { icon } from "./icons.js?v=v2026-10-22T01235";
 import { confirmModal } from "./modal.js?v=v2026-10-22T01235";
+import { isSheetViewport } from "./modal-sheet.js?v=v2026-10-22T01235";
 
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu, bez napisu) otwiera okno z wyjaśnieniem
@@ -67,6 +68,8 @@ export function openSupportModal() {
     okText: t("support.go"),
     cancelText: t("common.cancel"),
     modalClass: "support-modal",
+    // telefon / tablet dotykowy: roletka od dołu, jak inne okna
+    sheet: isSheetViewport() ? {} : null,
     onOk: () => {
       // Otwarcie w tym samym kliknięciu, żeby przeglądarka nie blokowała karty.
       const size = box.querySelector('input[name="supportSize"]:checked')?.value || SUPPORT_SIZES[0].size;

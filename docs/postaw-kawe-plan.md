@@ -22,7 +22,7 @@ FAQ wdraża ta sesja; podręcznik — treść poniżej, wdraża druga sesja (dec
   z Kontaktem), `openSupportModal()` (`confirmModal`: wyjaśnienie, wybór kawy,
   notka o zewnętrznym serwisie, Anuluj / Postaw kawę).
 - Stopka: sama filiżanka na każdym urządzeniu, bez napisu (decyzja użytkownika 2026-10-22); opis w dymku i `aria-label`.
-- Okno we wspólnym stylu (decyzja użytkownika 2026-10-22, wzorzec „Zmień typ”): `confirmModal`, tekst w `.mSub`, lista opcji z radiem Mała/Średnia/Duża kawa 5/15/25 zł (`SUPPORT_SIZES`), Anuluj + złoty „Postaw kawę” → nowa karta `?coffeeSize=small|medium|large` (jak widżet buycoffee.to, bez jego obrazków i skryptów). Kwoty muszą zgadzać się z profilem.
+- Okno we wspólnym stylu (decyzja użytkownika 2026-10-22, wzorzec „Zmień typ”): `confirmModal`, tekst w `.mSub`, lista opcji z radiem Mała/Średnia/Duża kawa 5/15/25 zł (`SUPPORT_SIZES`), Anuluj + złoty „Postaw kawę” (na telefonie roletka od dołu, `sheet`) → nowa karta `?coffeeSize=small|medium|large` (jak widżet buycoffee.to, bez jego obrazków i skryptów). Kwoty muszą zgadzać się z profilem.
 - Teksty `support.*` PL/EN/UK; sceny `support-footer`, `support-footer-home`, `support-modal`.
 
 ## Krok 2 — FAQ na stronie głównej (zrobione na branchu)
