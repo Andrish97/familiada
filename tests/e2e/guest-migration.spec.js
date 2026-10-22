@@ -171,6 +171,16 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
   }
 });
 
+// "Minęła godzina" dla blokady per adres (mail_cooldowns, klucz jak w account.js).
+async function releaseMigrateCooldown(page, email) {
+  await page.evaluate(async (address) => {
+    const { error } = await window.__sbClient.rpc("mail_cooldown_email_release", {
+      p_email: address, p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200,
+    });
+    if (error) throw new Error("mail_cooldown_email_release: " + error.message);
+  }, email);
+}
+
 // Skrzynka test14 nie ma konta: link nie jest klikany, zmiana anulowana, gość usunięty,
 // więc żadne konto na tym adresie nie powstaje. Spec z @mailbox -- uruchamiać pojedynczo.
 test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, anulowanie unieważnia link @mailbox", async ({ page, context, browser }) => {
@@ -185,6 +195,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#migrateSection")).toBeVisible({ timeout: 30000 });
     await expect(page.locator("#btnMigrate")).toBeVisible();
+    await releaseMigrateCooldown(page, MAILBOX); // blokada z poprzedniego przebiegu
     const after = new Date(Date.now() - 2_000).toISOString();
     await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
     await page.locator("#migrateEmail").fill(MAILBOX);
@@ -200,12 +211,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     expect(firstLink, "link migracji").toBeTruthy();
 
     // "Minęła godzina" dla blokady per adres i odstęp GoTrue (60 s na użytkownika).
-    await page.evaluate(async (email) => {
-      const { error } = await window.__sbClient.rpc("mail_cooldown_email_release", {
-        p_email: email, p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200,
-      });
-      if (error) throw new Error("mail_cooldown_email_release: " + error.message);
-    }, MAILBOX);
+    await releaseMigrateCooldown(page, MAILBOX);
     const wait = sentAt + 65_000 - Date.now();
     if (wait > 0) await page.waitForTimeout(wait);
 
