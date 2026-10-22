@@ -1065,6 +1065,9 @@ const pl = {
     search: "Szukaj w podręczniku",
     searchClear: "Wyczyść",
     searchEmpty: "Brak wyników.",
+    shotPrev: "Poprzedni widok",
+    shotNext: "Następny widok",
+    shotN: "Widok {n} z {total}",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
       modalText: "Zostaną dodane przykładowe materiały startowe.",

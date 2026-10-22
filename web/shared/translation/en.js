@@ -1052,6 +1052,9 @@ const en = {
     search: "Search the guide",
     searchClear: "Clear",
     searchEmpty: "No results.",
+    shotPrev: "Previous view",
+    shotNext: "Next view",
+    shotN: "View {n} of {total}",
     demo: {
       modalTitle: "Restore demo files?",
       modalText: "Sample starter materials will be added.",

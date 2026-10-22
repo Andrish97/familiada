@@ -1053,6 +1053,9 @@ const uk = {
     search: "Пошук у посібнику",
     searchClear: "Очистити",
     searchEmpty: "Немає результатів.",
+    shotPrev: "Попередній вигляд",
+    shotNext: "Наступний вигляд",
+    shotN: "Вигляд {n} з {total}",
     demo: {
       modalTitle: "Відновити демо-файли?",
       modalText: "Буде додано приклади стартових матеріалів.",

@@ -49,6 +49,18 @@ const pageName = (name) => {
     : `<span class="m-page">${name}</span>`;
 };
 
+// Zrzut ekranu w treści: „![Podpis](zrzut:scena)” albo „…(zrzut:scena@phone)” — scena z
+// scripts/screens/scenes.cjs, plik publikuje scripts/screens/publish-manual.cjs. Kilka takich linii
+// pod rząd to karuzela (np. widoki urządzeń przy prowadzeniu rozgrywki).
+export const SHOT_RE = /^!\[([^\]]*)\]\(zrzut:([a-z0-9-]+)(?:@(desktop|phone|tablet))?\)\s*$/;
+export const shotPath = (lang, scene, device = "desktop") => `img/${lang}/${scene}-${device}.webp`;
+let LANG = "pl";
+const shotFigure = (line) => {
+  const [, caption, scene, device = "desktop"] = line.match(SHOT_RE);
+  const alt = esc(caption);
+  return `<figure class="m-shot m-shot-${device}"><button class="m-shot-zoom" type="button" data-zoom="1"><img src="/manual/${shotPath(LANG, scene, device)}" alt="${alt}" loading="lazy" decoding="async"></button>${caption ? `<figcaption>${inline(caption, new Map(), TITLES)}</figcaption>` : ""}</figure>`;
+};
+
 export const refHref = (num) => (String(num).includes(".") ? `?ch=${chapterOf(num)}#${sectionAnchor(num)}` : `?ch=${num}`);
 
 /* ---------- ikony przycisków z prawdziwych stron serwisu ---------- */
@@ -166,6 +178,12 @@ function renderBlocks(lines, icons) {
       out.push(`<div class="m-note m-${kind}">${title}${renderBlocks(body, icons)}</div>`);
       continue;
     }
+    if (SHOT_RE.test(line)) {
+      const shots = [];
+      for (; i < lines.length && SHOT_RE.test(lines[i]); i++) shots.push(shotFigure(lines[i]));
+      out.push(shots.length === 1 ? shots[0] : `<div class="m-carousel" tabindex="0"><div class="m-carousel-track">${shots.join("")}</div></div>`);
+      continue;
+    }
     if (isTable(line)) {
       const rows = [];
       for (; i < lines.length && isTable(lines[i]); i++) rows.push(lines[i]);
@@ -182,7 +200,7 @@ function renderBlocks(lines, icons) {
       continue;
     }
     const para = [];
-    for (; i < lines.length && lines[i].trim() && !isTable(lines[i]) && !isList(lines[i]) && !/^(```|>|#)/.test(lines[i]); i++) para.push(lines[i].trim());
+    for (; i < lines.length && lines[i].trim() && !isTable(lines[i]) && !isList(lines[i]) && !SHOT_RE.test(lines[i]) && !/^(```|>|#)/.test(lines[i]); i++) para.push(lines[i].trim());
     out.push(`<p class="m-p">${inline(para.join(" "), icons, TITLES)}</p>`);
   }
   return out.join("\n");
@@ -305,6 +323,7 @@ export async function buildAll() {
     const sources = readSources(dir);
     if (!sources) continue;
     const icons = buildIconMap(await loadTranslation(lang));
+    LANG = lang;
     const data = parseManual(sources, icons);
     results[lang] = "// Wygenerowane przez scripts/manual/build-content.mjs z docs/podrecznik — nie edytować ręcznie.\n"
       + `const manual = ${JSON.stringify(data, null, 1)};\n\nexport default manual;\n`;

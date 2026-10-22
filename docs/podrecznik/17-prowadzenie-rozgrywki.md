@@ -103,6 +103,11 @@ lub animacji — poczekaj, aż panel je odblokuje.
 
 ## 17.3 Prowadzenie rund
 
+![*Panel sterowania* — operator prowadzi rundę](zrzut:control-round)
+![Wyświetlacz — pojedynek: lampka drużyny, która nacisnęła pierwsza](zrzut:play-display-duel)
+![Ekran prowadzącego — pytanie pod zasłoną](zrzut:play-host-duel@tablet)
+![Przycisk — gotowy do naciśnięcia](zrzut:play-buzzer-on@tablet)
+
 **Pojedynek.**
 
 1. Po [Rozpocznij rundę] na ekranie prowadzącego pojawia się „RUNDA 1 — PRZYCISK”. Pytanie jest

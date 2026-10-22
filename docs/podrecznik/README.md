@@ -9,7 +9,9 @@ Oznaczenia w szkicach (na stronie dostaną własne style):
 - `[Przycisk]` — nazwa przycisku dokładnie jak w serwisie,
 - *Strona* — nazwa strony lub widoku (kursywa),
 - (→ 7.3) — odnośnik do rozdziału lub podrozdziału; czytelnik widzi tytuł celu, nie numer (numery są tylko w źródle),
-- `> Uwaga:` — informacja ważna dla skutków decyzji.
+- `> Uwaga:` — informacja ważna dla skutków decyzji (ramka ostrzeżenia); `> Wskazówka:` — podpowiedź (ramka informacji),
+- *Strona* z listy `PAGE_LINKS` w `scripts/manual/build-content.mjs` (np. *Moje gry*, *Bazy pytań*) staje się odnośnikiem do tej strony; „←” na niej wraca do miejsca w podręczniku,
+- `![Podpis](zrzut:scena)` albo `![Podpis](zrzut:scena@tablet)` (`desktop` domyślnie, `phone`, `tablet`) — zrzut ekranu ze sceny `scripts/screens/scenes.cjs`; kilka takich linii pod rząd to karuzela. Pliki: `node scripts/screens/run.cjs --scenes=$(node scripts/screens/publish-manual.cjs --list) --lang=all --devices=desktop,tablet,phone && node scripts/screens/publish-manual.cjs` (→ `web/manual/img/<język>/`).
 
 Zasady treści (decyzja 2026-10-11): bez słownictwa technicznego, te same nazwy co
 w serwisie, tylko informacje, które wpływają na użytkownika.

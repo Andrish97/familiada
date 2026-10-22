@@ -171,3 +171,19 @@ test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca 
   await page.locator("#btnBack").click();
   await page.waitForURL(/\/login\/\?lang=en$/);
 });
+
+test("manual: zrzuty — karuzela widoków (strzałki, kropki) i powiększenie", async ({ page }) => {
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17#s-17-3`, { waitUntil: "domcontentloaded" });
+  const carousel = page.locator(".m-carousel").first();
+  await expect(carousel.locator(".m-carousel-dot")).toHaveCount(4);
+  await expect(carousel.locator(".m-carousel-dot").nth(0)).toHaveClass(/active/);
+  await carousel.locator('[data-step="1"]').click();
+  await expect(carousel.locator(".m-carousel-dot").nth(1)).toHaveClass(/active/);
+  await carousel.locator(".m-carousel-dot").nth(3).click();
+  await expect(carousel.locator(".m-carousel-dot").nth(3)).toHaveClass(/active/);
+  await expect.poll(() => carousel.locator("img").nth(3).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+  await carousel.locator(".m-shot-zoom").nth(3).click();
+  await expect(page.locator(".m-lightbox img")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".m-lightbox")).toHaveCount(0);
+});

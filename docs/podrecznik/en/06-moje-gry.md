@@ -20,6 +20,8 @@ into tabs:
 
 On a phone the tabs have shorter names: "Poll", "Points", "Prep." and "Community".
 
+![*My games* — the "Prepared" tab](zrzut:games)
+
 ## 6.2 The game list and game statuses
 
 Each game is a tile with its name and status:

@@ -79,3 +79,18 @@ test("nazwy stron w treści prowadzą do stron z mapy, a ich „←” wraca do 
     for (const id of used) assert.ok(PAGE_LINKS[id], `${lang}: nieznana strona ${id}`);
   }
 });
+
+test("zrzuty w treści mają scenę w scripts/screens i opublikowany plik", async () => {
+  const { createRequire } = await import("node:module");
+  const scenes = createRequire(import.meta.url)("../../scripts/screens/scenes.cjs");
+  const ids = new Set(scenes.map((s) => s.id));
+  for (const lang of LANGS) {
+    const manual = await load(lang);
+    const shots = manual.chapters.flatMap((c) => [...c.html.matchAll(/src="\/manual\/(img\/([a-z]+)\/([a-z0-9-]+)-(desktop|phone|tablet)\.webp)"/g)]);
+    for (const [, file, shotLang, scene] of shots) {
+      assert.equal(shotLang, lang, `${file}: zrzut w innym języku niż treść`);
+      assert.ok(ids.has(scene), `${file}: brak sceny ${scene} w scripts/screens/scenes.cjs`);
+      assert.ok(fs.existsSync(new URL(`../../web/manual/${file}`, import.meta.url)), `${file}: uruchom scripts/screens/publish-manual.cjs`);
+    }
+  }
+});

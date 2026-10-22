@@ -20,6 +20,8 @@ na zakładki:
 
 Na telefonie zakładki mają krótsze nazwy: „Tekst”, „Punkty”, „Prepar.” i „Społeczność”.
 
+![*Moje gry* — zakładka „Preparowana”](zrzut:games)
+
 ## 6.2 Lista gier i ich statusy
 
 Każda gra to kafelek z nazwą i statusem:

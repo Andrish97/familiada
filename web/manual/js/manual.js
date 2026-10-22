@@ -7,7 +7,7 @@
 
 import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-22T00131";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00131";
-import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T00131";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00131";
 import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
 import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00131";
@@ -140,6 +140,50 @@ function renderChapter(ch) {
     </nav>`;
 }
 
+// Karuzela widoków: przewijanie z przyciąganiem (przesunięcie palcem na telefonie),
+// strzałki, kropki i klawisze ←/→, gdy karuzela ma fokus.
+function wireCarousels(root) {
+  for (const box of root.querySelectorAll(".m-carousel")) {
+    const track = box.querySelector(".m-carousel-track");
+    const slides = [...track.children];
+    const nav = document.createElement("div");
+    nav.className = "m-carousel-nav";
+    nav.innerHTML = `<button class="btn sm icon-btn" type="button" data-step="-1" aria-label="${esc(t("manual.shotPrev"))}" title="${esc(t("manual.shotPrev"))}">${icon("arrow-left")}</button>
+      <div class="m-carousel-dots">${slides.map((_, i) => `<button class="m-carousel-dot" type="button" data-i="${i}" aria-label="${esc(t("manual.shotN", { n: i + 1, total: slides.length }))}"></button>`).join("")}</div>
+      <button class="btn sm icon-btn" type="button" data-step="1" aria-label="${esc(t("manual.shotNext"))}" title="${esc(t("manual.shotNext"))}">${icon("arrow-right")}</button>`;
+    box.append(nav);
+    const dots = [...nav.querySelectorAll(".m-carousel-dot")];
+    const index = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    const go = (i) => track.scrollTo({ left: ((i + slides.length) % slides.length) * track.clientWidth, behavior: "smooth" });
+    const mark = () => dots.forEach((d, k) => d.classList.toggle("active", k === index()));
+    nav.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button");
+      if (!b) return;
+      go(b.dataset.i != null ? Number(b.dataset.i) : index() + Number(b.dataset.step));
+    });
+    box.addEventListener("keydown", (ev) => {
+      if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") { ev.preventDefault(); go(index() + (ev.key === "ArrowLeft" ? -1 : 1)); }
+    });
+    track.addEventListener("scroll", () => requestAnimationFrame(mark), { passive: true });
+    mark();
+  }
+}
+
+// Powiększenie zrzutu: pełny obraz na ciemnym tle, zamyka kliknięcie albo Esc.
+function openShot(img) {
+  const box = document.createElement("button");
+  box.type = "button";
+  box.className = "m-lightbox";
+  box.setAttribute("aria-label", img.alt);
+  box.innerHTML = `<img src="${esc(img.currentSrc || img.src)}" alt="${esc(img.alt)}">`;
+  const close = () => { box.remove(); document.removeEventListener("keydown", onKey, true); };
+  const onKey = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
+  box.addEventListener("click", close);
+  document.addEventListener("keydown", onKey, true);
+  document.body.append(box);
+  box.focus();
+}
+
 function scrollToHash(hash, smooth = false) {
   const el = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
   if (el) el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
@@ -193,6 +237,7 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null } =
   renderToc();
   currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
   hydrateIcons(article);
+  wireCarousels(article);
   setTocOpen(false);
   if (updateUrl) {
     const next = chapterHref(current, ch ? hash : "", returnTo);
@@ -210,6 +255,8 @@ function setTocOpen(open) {
 function wireNavigation() {
   // Odnośniki wewnątrz podręcznika (spis, karty części, „→ 7.3”, poprzedni/następny).
   document.addEventListener("click", (ev) => {
+    const zoom = ev.target.closest?.(".m-shot-zoom");
+    if (zoom) { openShot(zoom.querySelector("img")); return; }
     const a = ev.target.closest?.("a[href]");
     if (!a || !a.closest(".m-layout") || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
     // Nazwa strony serwisu (*Moje gry*): najpierw adres podręcznika wskazuje bieżący podrozdział,

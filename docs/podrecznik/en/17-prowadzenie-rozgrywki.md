@@ -103,6 +103,11 @@ or animation plays — wait until the panel unlocks them.
 
 ## 17.3 Running the rounds
 
+![*Control panel* — the operator runs the round](zrzut:control-round)
+![Display — the duel: the lamp of the team that pressed first](zrzut:play-display-duel)
+![Host screen — the question under the cover](zrzut:play-host-duel@tablet)
+![Buzzer — ready to press](zrzut:play-buzzer-on@tablet)
+
 **The duel.**
 
 1. After [Start], "ROUND 1 — BUZZER" appears on the host screen. The question is

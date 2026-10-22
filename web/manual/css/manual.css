@@ -506,3 +506,57 @@ mark.m-hit {
     .m-pager-link.next { text-align: left; }
     .m-control { white-space: normal; }
 }
+
+/* ---------- zrzuty ekranu i karuzela widoków ---------- */
+.m-shot { margin: 18px 0; }
+.m-shot-zoom {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    cursor: zoom-in;
+}
+.m-shot img { display: block; width: 100%; height: auto; }
+.m-shot-tablet .m-shot-zoom, .m-shot-phone .m-shot-zoom { width: auto; max-width: 100%; margin: 0 auto; }
+.m-shot-tablet img { max-height: min(420px, 62vw); width: auto; max-width: 100%; }
+.m-shot-phone img { max-height: 520px; width: auto; max-width: 100%; }
+.m-shot figcaption { margin-top: 8px; font-size: .82rem; text-align: center; color: rgba(255,255,255,.65); }
+
+.m-carousel { margin: 18px 0; outline: none; }
+.m-carousel-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    align-items: flex-start;
+    gap: 16px;
+}
+.m-carousel-track::-webkit-scrollbar { display: none; }
+.m-carousel .m-shot { flex: 0 0 100%; margin: 0; scroll-snap-align: center; }
+.m-carousel .m-shot img { max-height: min(420px, 62vw); width: auto; max-width: 100%; margin: 0 auto; }
+.m-carousel .m-shot-zoom { width: auto; max-width: 100%; margin: 0 auto; }
+.m-carousel-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.m-carousel-dots { display: flex; gap: 6px; }
+.m-carousel-dot {
+    width: 8px; height: 8px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    cursor: pointer;
+}
+.m-carousel-dot.active { background: var(--gold); }
+
+.m-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    border: 0;
+    background: rgba(0,0,0,.88);
+    cursor: zoom-out;
+}
+.m-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
