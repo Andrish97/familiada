@@ -44,7 +44,7 @@ test("displayTextSegments: znaki spoza fontu osobno, reszta jak na Wyświetlaczu
   const { displayTextSegments } = await import("../../web/shared/js/gameplay/displayText.js");
   const ok = (ch) => ch !== "😀" && ch !== "€";
   assert.deepEqual(displayTextSegments("Kawa 😀 z mlekiem", 11, ok), [
-    { kind: "kept", text: "Kawa " }, { kind: "bad", text: "😀" }, { kind: "bad", text: " " },
+    { kind: "kept", text: "Kawa " }, { kind: "bad", text: "😀" }, { kind: "skip", text: " " },
     { kind: "kept", text: "z ml" }, { kind: "cut", text: "ekiem" },
   ]);
   assert.deepEqual(displayTextSegments("Sombrero", 11, ok), [{ kind: "kept", text: "Sombrero" }]);
