@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XenDvAeYIcJyIg4VYa5uIMMaVg82V4wHbif9i4aD172itsvQ88X1HQs1KxA07fV
+\restrict 5SieuKH8YTNhT5SaUXgpjlEG3fsyOf9h1gWEG9HamqRY0gZoTeN92R3jArx7gWT
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12426,6 +12426,35 @@ $$;
 
 
 --
+-- Name: is_test_email("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."is_test_email"("p_email" "text") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+  SELECT coalesce(
+    lower(btrim(p_email)) ~ '^(test[0-9]+|e2e\+[a-z0-9.]+)@familiada\.online$'
+    OR EXISTS (SELECT 1 FROM public.profiles p
+               WHERE lower(p.email) = lower(btrim(p_email)) AND public.is_test_user(p.id)),
+    false);
+$_$;
+
+
+--
+-- Name: is_test_user("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."is_test_user"("p_user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT p_user_id IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id = p_user_id AND e.reason <> 'manual');
+$$;
+
+
+--
 -- Name: leave_shared_base("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -12539,6 +12568,7 @@ BEGIN
       FROM public.messages m
       LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.direction = 'inbound' AND m.deleted_at IS NULL
+        AND NOT public.is_test_email(CASE WHEN m.direction = 'inbound' THEN m.from_email ELSE m.to_email END)
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -12554,6 +12584,7 @@ BEGIN
       FROM public.messages m
       LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.direction = 'outbound' AND m.deleted_at IS NULL
+        AND NOT public.is_test_email(CASE WHEN m.direction = 'inbound' THEN m.from_email ELSE m.to_email END)
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -12569,6 +12600,7 @@ BEGIN
       FROM public.messages m
       LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.is_marketing = true AND m.deleted_at IS NULL
+        AND NOT public.is_test_email(CASE WHEN m.direction = 'inbound' THEN m.from_email ELSE m.to_email END)
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -12584,6 +12616,7 @@ BEGIN
       FROM public.messages m
       LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NOT NULL
+        AND NOT public.is_test_email(CASE WHEN m.direction = 'inbound' THEN m.from_email ELSE m.to_email END)
       ORDER BY m.deleted_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -12613,6 +12646,7 @@ BEGIN
       FROM public.messages m
       LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NULL
+        AND NOT public.is_test_email(CASE WHEN m.direction = 'inbound' THEN m.from_email ELSE m.to_email END)
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
   END IF;
@@ -12641,7 +12675,9 @@ BEGIN
       MAX(m.created_at)  AS last_message_at
     FROM public.reports r
     LEFT JOIN public.messages m ON m.report_id = r.id AND m.deleted_at IS NULL
-    WHERE p_status = 'all' OR r.status = p_status
+    WHERE (p_status = 'all' OR r.status = p_status)
+      AND NOT EXISTS (SELECT 1 FROM public.messages t
+                      WHERE t.report_id = r.id AND t.direction = 'inbound' AND public.is_test_email(t.from_email))
     GROUP BY r.id
     ORDER BY COALESCE(MAX(m.created_at), r.created_at) DESC
     LIMIT p_limit OFFSET p_offset;
@@ -14010,6 +14046,7 @@ CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = p_status::public.market_game_status
+    AND NOT public.is_test_user(mg.author_user_id)
   ORDER BY mg.created_at ASC;
 $$;
 
@@ -19966,8 +20003,10 @@ BEGIN
   v_id := COALESCE(NEW.market_game_id, OLD.market_game_id);
   UPDATE public.market_games
   SET
-    rating_count = (SELECT COUNT(*) FROM public.market_game_ratings WHERE market_game_id = v_id),
-    avg_rating   = COALESCE((SELECT ROUND(AVG(stars::numeric), 2) FROM public.market_game_ratings WHERE market_game_id = v_id), 0)
+    rating_count = (SELECT COUNT(*) FROM public.market_game_ratings r
+                    WHERE r.market_game_id = v_id AND NOT public.is_test_user(r.user_id)),
+    avg_rating   = COALESCE((SELECT ROUND(AVG(r.stars::numeric), 2) FROM public.market_game_ratings r
+                    WHERE r.market_game_id = v_id AND NOT public.is_test_user(r.user_id)), 0)
   WHERE id = v_id;
   RETURN NULL;
 END;
@@ -27607,5 +27646,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XenDvAeYIcJyIg4VYa5uIMMaVg82V4wHbif9i4aD172itsvQ88X1HQs1KxA07fV
+\unrestrict 5SieuKH8YTNhT5SaUXgpjlEG3fsyOf9h1gWEG9HamqRY0gZoTeN92R3jArx7gWT
 
