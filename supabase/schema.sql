@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DWBeo1Ea2IjDqhQohoph5jGEb95d5f5u7jI8VHEBrTEuXgtFupX6Zht4GktPDIk
+\restrict R1CUYnpLmUAUS8nTbdmDOHhLHMoKXDW9FRkSWvtqyDoNl2AbUfYeJ0FTIMTacTj
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7672,7 +7672,7 @@ $$;
 CREATE FUNCTION "public"."e2e_friendships_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE
   v_uid uuid := auth.uid();
   v_caller_email text;
@@ -7684,8 +7684,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
-     OR (v_other_email !~ '^test([1-9]|1[0-3]|15)@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
+     OR NOT public._e2e_account_email(v_caller_email)
+     OR NOT public._e2e_account_email(v_other_email) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -7704,7 +7704,7 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
 END;
-$_$;
+$$;
 
 
 --
@@ -7980,7 +7980,7 @@ $$;
 CREATE FUNCTION "public"."e2e_marketplace_cleanup"("p_prefix" "text" DEFAULT 'E2E-MKT-'::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 declare
   v_uid uuid := auth.uid();
   v_email text;
@@ -7990,7 +7990,7 @@ declare
 begin
   select lower(email) into v_email from auth.users where id = v_uid;
   if v_uid is null
-     or (v_email !~ '^test[0-9]+@familiada[.]online$' AND NOT public._e2e_account_email(v_email))
+     or NOT public._e2e_account_email(v_email)
      or p_prefix not like 'E2E-MKT-%' then
     return jsonb_build_object('ok', false, 'error', 'test account and E2E-MKT- prefix required');
   end if;
@@ -8020,7 +8020,7 @@ begin
     'ratings_deleted', v_ratings
   );
 end;
-$_$;
+$$;
 
 
 --
@@ -8030,16 +8030,16 @@ $_$;
 CREATE FUNCTION "public"."e2e_poll_mail_budget_cleanup"("p_recipient_email" "text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE uid uuid:=auth.uid(); caller text; recipient text:=public._norm_email(p_recipient_email); n integer;
 BEGIN
  SELECT public._norm_email(email) INTO caller FROM auth.users WHERE id=uid;
- IF uid IS NULL OR caller IS NULL OR (caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(caller))
- OR recipient IS NULL OR (recipient !~ '^test([1-8]|11|12|14|15)@familiada[.]online$' AND NOT public._e2e_any_email(recipient)) THEN
+ IF uid IS NULL OR caller IS NULL OR NOT public._e2e_account_email(caller)
+ OR recipient IS NULL OR NOT public._e2e_any_email(recipient) THEN
   RETURN jsonb_build_object('ok',false,'err','test_accounts_required'); END IF;
  DELETE FROM public.poll_mail_budget_events WHERE owner_id=uid AND recipient_key=md5(recipient);
  GET DIAGNOSTICS n=ROW_COUNT; RETURN jsonb_build_object('ok',true,'deleted',n);
-END; $_$;
+END; $$;
 
 
 --
@@ -8049,7 +8049,7 @@ END; $_$;
 CREATE FUNCTION "public"."e2e_poll_subscriptions_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE
   v_uid uuid := auth.uid();
   v_caller_email text;
@@ -8063,8 +8063,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
-     OR (v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
+     OR NOT public._e2e_account_email(v_caller_email)
+     OR NOT public._e2e_account_email(v_other_email) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -8098,7 +8098,7 @@ BEGIN
     'mail_cooldowns_deleted', v_mail_cooldowns_deleted
   );
 END;
-$_$;
+$$;
 
 
 --
@@ -8195,7 +8195,7 @@ $_$;
 CREATE FUNCTION "public"."e2e_shared_devices_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE
   v_uid uuid := auth.uid();
   v_caller_email text;
@@ -8207,8 +8207,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
-     OR (v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
+     OR NOT public._e2e_account_email(v_caller_email)
+     OR NOT public._e2e_account_email(v_other_email) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -8229,7 +8229,7 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
 END;
-$_$;
+$$;
 
 
 --
@@ -8239,12 +8239,12 @@ $_$;
 CREATE FUNCTION "public"."e2e_storage_cleanup_peek"("p_owner_id" "uuid") RETURNS TABLE("bucket" "text", "path" "text", "attempts" integer, "last_error" "text", "created_at" timestamp with time zone, "claimed_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth'
-    AS $_$
+    AS $$
 declare
   v_email text;
 begin
   select u.email into v_email from auth.users u where u.id = auth.uid();
-  if v_email is null or (v_email !~ '^test[0-9]+@familiada[.]online$' AND NOT public._e2e_account_email(v_email)) then
+  if v_email is null or NOT public._e2e_account_email(v_email) then
     raise exception 'e2e_only';
   end if;
   return query
@@ -8252,7 +8252,7 @@ begin
   from public.storage_cleanup_queue q
   where q.owner_id = p_owner_id and q.path like (auth.uid()::text || '%');
 end;
-$_$;
+$$;
 
 
 --
@@ -8262,12 +8262,12 @@ $_$;
 CREATE FUNCTION "public"."e2e_subscriber_email_cleanup"("p_email" "text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE v_uid uuid:=auth.uid(); v_caller text; v_email text:=lower(trim(p_email));
 BEGIN
   SELECT lower(email) INTO v_caller FROM auth.users WHERE id=v_uid;
-  IF v_caller IS NULL OR (v_caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(v_caller))
-    OR (v_email NOT IN ('test14@familiada.online','test15@familiada.online') AND NOT public._e2e_any_email(v_email)) OR v_email IS NULL THEN
+  IF v_caller IS NULL OR NOT public._e2e_account_email(v_caller)
+    OR NOT public._e2e_any_email(v_email) OR v_email IS NULL THEN
     RETURN jsonb_build_object('ok',false,'err','test accounts required');
   END IF;
   DELETE FROM public.poll_tasks WHERE owner_id=v_uid AND lower(recipient_email)=v_email;
@@ -8278,7 +8278,7 @@ BEGIN
     AND target_key='pair:'||v_uid::text||':'||md5(v_email);
   DELETE FROM public.email_cooldowns WHERE email_hash=md5(v_email);
   RETURN jsonb_build_object('ok',true);
-END; $_$;
+END; $$;
 
 
 --
@@ -12407,7 +12407,7 @@ CREATE FUNCTION "public"."is_test_email"("p_email" "text") RETURNS boolean
     SET "search_path" TO 'public', 'pg_temp'
     AS $_$
   SELECT coalesce(
-    lower(btrim(p_email)) ~ '^(test[0-9]+|e2e\+[a-z0-9.]+)@familiada\.online$'
+    lower(btrim(p_email)) ~ '^e2e\+[a-z0-9.]+@familiada\.online$'
     OR EXISTS (SELECT 1 FROM public.profiles p
                WHERE lower(p.email) = lower(btrim(p_email)) AND public.is_test_user(p.id)),
     false);
@@ -13511,7 +13511,7 @@ END $$;
 CREATE FUNCTION "public"."mail_queue_cooldown_guard"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
-    AS $_$
+    AS $$
 DECLARE
   v_enforce boolean;
   v_ok boolean;
@@ -13533,11 +13533,8 @@ BEGIN
       SELECT lower(email) INTO v_sender_email FROM auth.users WHERE id = NEW.created_by;
     END IF;
 
-    v_both_e2e := v_sender_email ~ '^test([1-9]|1[0-3])@familiada[.]online$'
-      AND lower(trim(NEW.to_email)) ~ '^test([1-9]|1[0-3])@familiada[.]online$';
-    -- 462: także para tożsamości e2e (konto e2e -> dowolny adres e2e+)
-    v_both_e2e := coalesce(v_both_e2e, false)
-      OR (public._e2e_account_email(v_sender_email) AND public._e2e_any_email(NEW.to_email));
+    -- E25: para tożsamości e2e (konto e2e -> dowolny adres e2e+)
+    v_both_e2e := public._e2e_account_email(v_sender_email) AND public._e2e_any_email(NEW.to_email);
 
     IF NOT v_both_e2e THEN
       -- Nieprzekraczalna podłoga, niezależna od action_key — to jest to, co
@@ -13560,7 +13557,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$_$;
+$$;
 
 
 --
@@ -17801,16 +17798,12 @@ END $$;
 CREATE FUNCTION "public"."profiles_reserve_test_username"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
 DECLARE reason text;
 BEGIN
  IF TG_OP='UPDATE' AND NEW.username IS NOT DISTINCT FROM OLD.username THEN RETURN NEW; END IF;
  reason:=public.reserved_username_reason(NEW.username);
  IF reason IS NULL THEN RETURN NEW; END IF;
- IF reason='test' AND btrim(NEW.username) ~* '^test[0-9]+$' AND EXISTS (
- SELECT 1 FROM auth.users u WHERE u.id=NEW.id
- AND lower(u.email)=lower(btrim(NEW.username))||'@familiada.online'
- ) THEN RETURN NEW; END IF;
  -- 460: e2e.<role><NN> tylko dla konta o adresie tej tożsamości
  IF reason='test' AND EXISTS (
  SELECT 1 FROM public.e2e_identities i JOIN auth.users u ON u.id=NEW.id
@@ -17820,7 +17813,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM public.reserved_username_accounts a WHERE a.user_id=NEW.id AND a.username=lower(btrim(NEW.username))) THEN RETURN NEW; END IF;
  RAISE EXCEPTION 'username unavailable' USING ERRCODE='23505';
  RETURN NEW;
-END $_$;
+END $$;
 
 
 --
@@ -20862,7 +20855,7 @@ CREATE TABLE "public"."e2e_emails" (
     "body_html" "text",
     "received_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "expires_at" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
-    CONSTRAINT "e2e_emails_recipient_check" CHECK ((("recipient" ~ '^test([1-9]|1[0-5]|17)@familiada\.online$'::"text") OR ("recipient" ~ '^e2e\+[a-z]+[0-9]{2}(\.new)?@familiada\.online$'::"text")))
+    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^e2e\+[a-z]+[0-9]{2}(\.new)?@familiada\.online$'::"text"))
 );
 
 
@@ -22079,14 +22072,13 @@ CREATE VIEW "public"."stats_exclusions_effective" AS
                 CASE
                     WHEN (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") THEN 'test_guest'::"text"
                     WHEN ("i"."role" IS NOT NULL) THEN ('test:'::"text" || "i"."role")
-                    WHEN (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) THEN ('test:'::"text" || ("u"."raw_app_meta_data" ->> 'e2e_role'::"text"))
-                    ELSE 'test_account'::"text"
+                    ELSE ('test:'::"text" || ("u"."raw_app_meta_data" ->> 'e2e_role'::"text"))
                 END AS "case",
             1
            FROM (("public"."profiles" "p"
              JOIN "auth"."users" "u" ON (("u"."id" = "p"."id")))
              LEFT JOIN "public"."e2e_identities" "i" ON (("i"."user_id" = "u"."id")))
-          WHERE (("lower"(("u"."email")::"text") ~ '^test[0-9]+@familiada[.]online$'::"text") OR (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") OR (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) OR ("i"."user_id" IS NOT NULL))) "x"
+          WHERE ((COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") OR (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) OR ("i"."user_id" IS NOT NULL))) "x"
   ORDER BY "user_id", "priority";
 
 
@@ -27622,5 +27614,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DWBeo1Ea2IjDqhQohoph5jGEb95d5f5u7jI8VHEBrTEuXgtFupX6Zht4GktPDIk
+\unrestrict R1CUYnpLmUAUS8nTbdmDOHhLHMoKXDW9FRkSWvtqyDoNl2AbUfYeJ0FTIMTacTj
 
