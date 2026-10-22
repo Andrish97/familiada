@@ -204,6 +204,12 @@ test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca 
   if (process.env.TEST_BRANCH_CODE !== "0") await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
   await page.goto(`${ORIGIN}/login/?lang=en`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#btnManual")).toHaveAttribute("href", /^\/manual\/\?ch=5&ret=%2Flogin%2F&lang=en$/);
+  // „i” po prawej, tuż przed przyciskiem języka (jak sekcja 3 topbara stron aplikacji).
+  await expect(page.locator(".login-top-right #btnManual + .lang-switcher .lang-btn")).toBeVisible();
+  const [info, lang] = await Promise.all([page.locator("#btnManual").boundingBox(), page.locator(".lang-btn").boundingBox()]);
+  expect(Math.round(lang.x - (info.x + info.width))).toBe(8);
+  expect(Math.round(info.y)).toBe(Math.round(lang.y));
+  expect(info.x).toBeGreaterThan(page.viewportSize().width / 2);
   await page.locator("#btnManual").click();
   await page.waitForURL(/\/manual\/\?ch=5/);
   await expect(page.locator(".m-article h1")).toBeVisible();
