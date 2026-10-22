@@ -23,6 +23,9 @@ async function openIndex(page, suffix = "") {
   await page.goto(INDEX_URL + suffix, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).not.toHaveClass(/page-loading/, { timeout: 15_000 });
   await expect(page.locator(".hero-card h1")).toBeVisible();
+  // Pasek etapów pokazuje się dopiero gotowy: z liniami między punktami i pod topbarem.
+  await expect(page.locator("#pipeline.is-ready")).toBeVisible();
+  await expect(page.locator("#pipeline .pipeline-line")).toHaveCount(3);
 }
 
 async function dumpIndexDiagnostics(page) {
@@ -223,4 +226,13 @@ test("telefon — przesunięcie palcem zmienia kadr w kaflu, nie otwiera podglą
   } finally {
     await context.close();
   }
+});
+
+test("pasek etapów jest niewidoczny, dopóki nie jest gotowy", async ({ page }) => {
+  // Opóźniony skrypt strony: przed jego wykonaniem pasek nie może się pokazać.
+  await page.route(/\/home\/js\/index\.js/, async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.fallback(); });
+  await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#pipeline")).toBeHidden();
+  await expect(page.locator("#pipeline.is-ready")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#pipeline .pipeline-line")).toHaveCount(3);
 });

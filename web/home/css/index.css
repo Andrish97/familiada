@@ -70,6 +70,10 @@ body.home-body {
   border-bottom: 1px solid var(--line);
 }
 
+/* do pełnej gotowości (js/index.js initPipeline) pasek jest niewidoczny, miejsce zostaje */
+.pipeline-wrap:not(.is-ready) { visibility: hidden; opacity: 0; }
+.pipeline-wrap.is-ready { visibility: visible; opacity: 1; transition: opacity .25s ease; }
+
 /* [przycisk] [linia] [przycisk] [linia] [przycisk] ... */
 .pipeline {
   display: flex;

@@ -12,7 +12,7 @@ You can use the app in two ways:
   and logos and run games, but your data is only available in this browser (→ 5.4).
 
 The *Login* page has the buttons [Log in], [Create account], [Continue as guest]
-and [Forgot password]. When this browser already has a guest account, the form shows
+and [Forgot password]. When this browser has an active guest account, the form shows
 "Guest session active: …", and instead of [Continue as guest] there is [Back to guest account] —
 it returns to the same guest account and does not create a new one.
 

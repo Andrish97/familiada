@@ -12,7 +12,7 @@ Z serwisu można korzystać na dwa sposoby:
   i logo oraz prowadzić rozgrywkę, ale dane są dostępne tylko w tej przeglądarce (→ 5.4).
 
 Na stronie *Logowanie* są przyciski [Zaloguj], [Załóż konto], [Wejdź jako gość]
-i [Przypomnij hasło]. Gdy w tej przeglądarce jest już konto gościa, pod formularzem widać
+i [Przypomnij hasło]. Gdy w tej przeglądarce działa konto gościa, pod formularzem widać
 „Aktywna sesja gościa: …”, a zamiast [Wejdź jako gość] jest [Wróć do konta gościa] — wraca
 do tego samego konta gościa, nie zakłada nowego.
 
@@ -142,7 +142,7 @@ zobaczysz „Adresy e-mail nie są takie same.” i nic nie zostanie wysłane.
 Na nowy adres przyjdzie wiadomość z linkiem — kliknij go, aby dokończyć zmianę; link działa
 tylko raz. Na dotychczasowy adres przyjdzie samo powiadomienie, bez linku, z nowym adresem
 i przyciskiem [Zaloguj się]. Do kliknięcia linku logujesz się dotychczasowym adresem, a po
-potwierdzeniu — już tylko nowym.
+potwierdzeniu — tylko nowym.
 
 ![Zmiana e-maila w toku — Wyślij ponownie i Anuluj zmianę](zrzut:people-account-email-pending)
 

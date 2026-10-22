@@ -266,6 +266,10 @@ function initPipeline() {
   }
 
   update();
+  // Pasek pokazuje się dopiero gotowy: linie, pozycja pod topbarem, tłumaczenia, czcionki
+  // i bieżący etap — bez doskakiwania w trakcie wczytywania strony.
+  const fontsReady = document.fonts?.ready ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve();
+  void fontsReady.then(() => requestAnimationFrame(() => { update(); requestAnimationFrame(() => wrap.classList.add("is-ready")); }));
 }
 
 /* ---------- FAQ: strzałka rozwijania (ta sama co w listach) ---------- */
