@@ -165,3 +165,12 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
 - 2026-10-22: logi i statystyki per sesja, dłuższe przechowywanie, trwałe
   najważniejsze zdarzenia, nowe sygnały; najpierw baza, potem skrypt
   podsumowania (użytkownik).
+- 2026-10-22 (odpowiedzi użytkownika):
+  - pyt. 2: po usunięciu gry (i konta) diagnostyka **zostaje dla statystyk**
+    — bez powiązania z grą (`game_id` → `NULL`) i bez treści gry (pytania,
+    nazwy drużyn zostają tylko w `game_sessions`, które znikają z grą);
+    dopisać do `usuwanie-danych.md` przy wdrożeniu;
+  - pyt. 3: klasa urządzenia i rodzina przeglądarki — **zapisywać**
+    (zgrubnie, bez wersji i danych identyfikujących);
+  - pyt. 4: limit **3000** zdarzeń na sesję;
+  - pyt. 1 (retencja) — wyjaśnione ponownie, czeka na odpowiedź.
