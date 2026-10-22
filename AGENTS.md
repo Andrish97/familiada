@@ -129,7 +129,9 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   i w `finally`, sprawdzać logowanie i wyjątek admina), test17 galeria E20.
 - **Skrzynki bez konta** — dziś `test14@familiada.online` (nie zakładać
   konta). Decyzja użytkownika 2026-10-22: dostają inny identyfikator
-  `bezkontaN@familiada.online` (E25); `testN` zawsze oznacza konto.
+  `e2e+bezkontaN@familiada.online` (E25); `test…` zawsze oznacza konto.
+  Nowe skrzynki testowe tylko jako `e2e+<id>@` (jedna reguła Cloudflare
+  `e2e@` + subaddressing) — bez dopisywania reguł w Cloudflare.
 - **Równoległe przebiegi e2e**: dziś domyślnie jeden naraz; równolegle tylko
   rozłączne `test_accounts` ze specami logującymi się przez pulę, bez
   `@mailbox`. Docelowo tory (rozłączne komplety kont, E25):

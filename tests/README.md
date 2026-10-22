@@ -169,9 +169,13 @@ z jednym hasłem `TEST_PASSWORD`.
 | Usuwanie konta | test15 | tak, odtwarzane | tak | `account-deletion`, `recipient-account-cascade`, `poll-*-identity` |
 | Galeria E20 | test17 | tak, odtwarzane | tak (tylko odczyt) | wyłącznie workflow galerii E20 |
 
-Po E25 skrzynki bez konta mają **inny identyfikator**: `bezkontaN@familiada.online`
-(N = numer toru). `testN` zawsze oznacza konto, `bezkontaN` — samą skrzynkę;
-test14 zostaje wycofany i nie jest przydzielany ponownie.
+Po E25 nowe skrzynki używają jednej reguły Cloudflare (`e2e@` + subaddressing,
+bez dopisywania reguł): konta torów mają e-mail `e2e+t{L}{k}@familiada.online`
+i nazwę użytkownika `test{L}{k}` (logowanie nazwą), skrzynki bez konta —
+**inny identyfikator** `e2e+bezkontaN@familiada.online` (N = numer toru).
+`test…` zawsze oznacza konto, `bezkonta…` — samą skrzynkę; test14 zostaje
+wycofany i nie jest przydzielany ponownie. Szczegóły:
+`docs/konta-testowe-plan.md`, „Poczta testowa — jedna reguła”.
 
 ### Role kont zwykłej puli
 
@@ -211,8 +215,9 @@ indeks 0 to test1 — to samo konto, którego używają spece z test1 na stałe.
 6. Gość (`loginAsGuest`) — każdy test sam usuwa konto gościa na końcu
    (patrz „Tryby logowania”).
 7. Nowy adres lub nowa rola: najpierw wpis w tej sekcji i w
-   `docs/konta-testowe-plan.md`, potem kod (Worker, migracja z zakresem
-   adresów, reguła poczty w Cloudflare). Nie dopisywać adresu tylko w specu.
+   `docs/konta-testowe-plan.md`, potem kod (jedno źródło listy adresów:
+   JS, SQL, Worker). Po E25 nowe skrzynki to `e2e+<id>@` — bez nowych
+   reguł w Cloudflare. Nie dopisywać adresu tylko w specu.
 
 ### Warunki używania (przebiegi)
 
@@ -230,10 +235,10 @@ indeks 0 to test1 — to samo konto, którego używają spece z test1 na stałe.
 
 | Tor | Konta (role 1–8) | Skrzynka bez konta | Konta specjalne |
 |---|---|---|---|
-| 1 | test1–test8 | `bezkonta1` | test11, test12+13, test15, test17 |
-| 2 | test21–test28 | `bezkonta2` | — |
-| 3 | test31–test38 | `bezkonta3` | — |
-| 4 | test41–test48 | `bezkonta4` | — |
+| 1 | test1–test8 | `e2e+bezkonta1@` | test11, test12+13, test15, test17 |
+| 2 | test21–test28 (`e2e+t21@`…) | `e2e+bezkonta2@` | — |
+| 3 | test31–test38 (`e2e+t31@`…) | `e2e+bezkonta3@` | — |
+| 4 | test41–test48 (`e2e+t41@`…) | `e2e+bezkonta4@` | — |
 
 - Przebieg = jeden tor (wejście workflow `lane`); `testAccountUsername(n)`
   zwraca rolę `n` bieżącego toru, więc spece działają w każdym torze bez zmian.
