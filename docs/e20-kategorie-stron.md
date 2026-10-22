@@ -199,3 +199,10 @@ komunikaty guarda urządzenia: „Obróć urządzenie”, gdy obrót pomoże, al
 albo widok za wąski (`narrow`), bo telefonu nie da się poszerzyć ani wymienić
 ekranu. Tablety, komputery i TV bez zmian. Kod: `phoneGuardState` w
 `web/shared/js/core/device-guard.js`.
+
+**Podzielony ekran tabletu (2026-10-22):** wykrywanie split view dotyczy tylko
+stron z progiem szerokości (`minViewportWidth` > 0: Control, wąż, ustawienia,
+edytory logo). Strony bez progu (Wskazówki, listy, strona główna) działają
+w każdym widoku, zgodnie z krokiem 4 (viewport ma wymaganą szerokość).
+Nakładka blokady wymaga `blocking-overlay.css` na każdej stronie z guardem
+(test `guardOverlayCss.test.js`).
