@@ -70,6 +70,57 @@ Przeszkody:
 - Nakład: duży — druga ścieżka całego silnika gry (dziś logika bezpieczeństwa
   i lease siedzi w SQL), osobne testy, ryzyko rozjazdu z trybem online.
 
+## Nakład wariantu A (badanie 2026-10-22)
+
+Fakty z kodu:
+- Control po zapisie ma pełny, potwierdzony wiersz (`store.js` `commitNow` →
+  `applyRow(row)` → `ringDoorbell`) — wystarczy go wysłać dalej.
+- `game_state_get` zwraca **ten sam pełny wiersz** każdemu typowi urządzenia
+  (bez przycinania) — Control nie musi niczego liczyć osobno dla urządzeń.
+- Urządzenia już stosują wiersze po rewizji (`createRowSync.applyRow`, starszy
+  rev odrzucany) — wiersz z WebRTC wchodzi tą samą drogą, bez nowych reguł.
+- Rozmiar wiersza (`scripts/db-read/game-state-size.sql`, 59 gier z 30 dni):
+  średnio 1,5 KB, p95 8,3 KB, max 9,7 KB — jedna wiadomość DataChannel.
+- Brak prywatnych kanałów Realtime; sygnalizację lepiej zrobić przez bazę
+  (tabela + RPC z autoryzacją lease urządzeń / właściciela gry), jak reszta
+  protokołu urządzeń. Zestawienie połączenia raz — kilka sekund nie szkodzi.
+
+Zakres (etap A1 — dostarczanie stanu):
+1. **Migracja**: tabela sygnałów (oferta Control dla konkretnej instancji
+   urządzenia `connection_id`/`epoch`, odpowiedź urządzenia), RPC zapisu/odczytu,
+   sprzątanie; test SQL. Oferty bez „trickle ICE” (komplet kandydatów w SDP).
+2. **Moduł `p2p-link.js`** (wspólny): Control — połączenie do każdej głównej
+   instancji urządzenia, urządzenie — odpowiedź; tylko kandydaci lokalni
+   (bez STUN/TURN — połączenie albo jest w LAN, albo go nie ma), ponawianie
+   po zerwaniu i zmianie lease, zamknięcie przy końcu gry.
+3. **Control**: po potwierdzonym zapisie wysyła wiersz do połączonych urządzeń
+   (obok dzwonka). **Urządzenia**: wiersz z kanału → `applyRow`; baza
+   i `postgres_changes` bez zmian (potwierdzenie i zapas).
+4. **Potwierdzenie planszy Wyświetlacza** (`game_state_display_complete`)
+   także lokalnie do Control — inaczej Control i tak czeka na sygnał
+   przez wolne łącze Wyświetlacza (to był dokładnie przypadek z 22.10).
+   Zapis do bazy zostaje.
+5. **Widoczność**: znaczek „lokalnie” w kaflu urządzenia, diagnostyka
+   (połączono/zerwano, ile stanów doszło lokalnie pierwsze i o ile szybciej)
+   w statystykach i eksporcie.
+6. **Testy**: unit modułu; e2e — wszystkie przeglądarki CI na jednej maszynie,
+   więc połączenie lokalne zestawia się naprawdę (Chromium z wyłączonym
+   ukrywaniem adresów przez mDNS); przypadek „brak połączenia lokalnego” =
+   dzisiejsze zachowanie.
+
+Poza zakresem A1: naciśnięcie Przycisku (rozstrzyga baza — bez zmian), gra
+bez internetu (wariant B).
+
+Szacunek: ok. 700–1000 linii kodu + migracja; 2–3 sesje pracy z testami
+i wdrożeniem. Ryzyka: telewizory (WebRTC w przeglądarkach TV), sieci
+blokujące ruch między urządzeniami lub multicast (mDNS) — wtedy po prostu
+działa jak dziś; Safari/iOS w tle zrywa połączenia (ponawianie).
+
+Zysk: urządzenie dostaje stan zaraz po zapisie Control (ms w LAN) zamiast
+zapis → Realtime → internet urządzenia; Control szybciej dostaje
+potwierdzenie planszy. Nie skraca samego zapisu z Control (jego łącze
+nadal się liczy).
+
 ## Rekomendacja
 
 1. Najpierw zebrać dane z pomiaru łącza (466): jeśli spowolnienia to głównie
