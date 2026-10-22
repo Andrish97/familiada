@@ -181,10 +181,29 @@ function openShot(img) {
   viewer.open(img.currentSrc || img.src, img.alt, img);
 }
 
+// Zrzuty wczytują się leniwie i mogą zepchnąć cel przewinięcia — przez chwilę po przewinięciu
+// każdy wczytany obraz poprawia pozycję, chyba że czytelnik sam przewinie (kółko, dotyk, klawisze).
+let keepCancel = null;
+function keepInView(el, block) {
+  keepCancel?.();
+  const until = Date.now() + 4000;
+  const again = () => { if (Date.now() < until && el.isConnected) el.scrollIntoView({ block }); };
+  const imgs = [...article.querySelectorAll("img")].filter((img) => !img.complete);
+  imgs.forEach((img) => img.addEventListener("load", again, { once: true }));
+  const stop = () => keepCancel?.();
+  const events = ["wheel", "touchstart", "keydown"];
+  events.forEach((e) => content.addEventListener(e, stop, { once: true, passive: true }));
+  keepCancel = () => {
+    imgs.forEach((img) => img.removeEventListener("load", again));
+    events.forEach((e) => content.removeEventListener(e, stop));
+    keepCancel = null;
+  };
+}
+
 function scrollToHash(hash, smooth = false) {
   const el = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
-  if (el) el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
-  else content.scrollTo({ top: 0 });
+  if (el) { el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" }); keepInView(el, "start"); }
+  else { keepCancel?.(); content.scrollTo({ top: 0 }); }
   markSection();
 }
 
@@ -208,7 +227,7 @@ function wireSearch() {
     const scope = entry.id === entry.ch ? article.querySelector(".m-doc") : sectionScope(sectionId(entry.id));
     for (const el of scope) highlight(el, query);
     const first = article.querySelector("mark.m-hit");
-    if (first) first.scrollIntoView({ block: "center" });
+    if (first) { first.scrollIntoView({ block: "center" }); keepInView(first, "center"); }
   });
 }
 
