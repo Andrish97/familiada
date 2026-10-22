@@ -3,10 +3,10 @@
 // z tytułem, na telefonie okno od dołu z przybliżaniem palcami (pinch-zoom.js).
 // Zamyka [×], Esc, kliknięcie tła albo „Wstecz” na górnym pasku (backBtn).
 
-import { t } from "../../translation/translation.js?v=v2026-10-22T18453";
-import { icon } from "./icons.js?v=v2026-10-22T18453";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-22T18453";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-22T18453";
+import { t } from "../../translation/translation.js?v=v2026-10-22T20230";
+import { icon } from "./icons.js?v=v2026-10-22T20230";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-22T20230";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-22T20230";
 
 /**
  * @param {{ mount?: HTMLElement|null, before?: Node|null, backBtn?: HTMLElement|null }} opts
