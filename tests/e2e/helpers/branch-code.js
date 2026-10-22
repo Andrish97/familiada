@@ -15,6 +15,10 @@ const path = require("path");
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
+// Próba generalna przeprowadzki serwera: E2E_API_ORIGIN (np.
+// https://api2.familiada.online) podmienia adres API w kodzie z brancha.
+const PROD_API_ORIGIN = "https://api.familiada.online";
+const API_ORIGIN = (process.env.E2E_API_ORIGIN || "").replace(/\/+$/, "");
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
 const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/", "snake/"];
 
@@ -87,6 +91,9 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
     // konserwacji dla testu; bez nich fallback zachowuje zwykłe żądanie sieciowe.
     if (!file) return route.fallback();
     let body = fs.readFileSync(file);
+    if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && [".js", ".html"].includes(path.extname(file))) {
+      body = body.toString("utf8").split(PROD_API_ORIGIN).join(API_ORIGIN);
+    }
     if (safeAreaInsets && path.extname(file) === ".css") {
       body = body.toString("utf8").replace(/env\(\s*safe-area-inset-(top|right|bottom|left)(?:\s*,\s*[^)]+)?\s*\)/g,
         (_match, side) => `var(--e20-safe-area-inset-${side}, 0px)`);
