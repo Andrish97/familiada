@@ -119,9 +119,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe test9@ i test10@ — NIE UŻYWAĆ** (testy drugiej sesji;
-  `EXCLUDED_TEST_ACCOUNTS` w `tests/e2e/helpers/login.js`). Pula e2e:
-  test1–test8 (test4/test5 wróciły do puli 2026-10-10).
+- **Konta testowe test1–test10** (decyzja użytkownika 2026-10-22: test9/test10
+  znów dostępne). Zwykła pula e2e (`TEST_ACCOUNT_COUNT`): test1–test8;
+  test9 i test10 wybierać jawnie przez `test_accounts` (np. `9,10` dla
+  równoległego przebiegu).
 - **Równoległe przebiegi e2e**: domyślnie jeden naraz. Lżejsze przebiegi
   wolno puszczać równolegle, gdy każdy dostaje **rozłączny zestaw kont**
   (wejście workflow `test_accounts`, np. `1,2,3` i `4,5,6`) i spece logują się

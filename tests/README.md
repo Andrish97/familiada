@@ -157,7 +157,7 @@ skrzynki, tylko odczytuje wiadomości potrzebne do zrzutów.
 
 > **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker zapisuje maile w prywatnej skrzynce `e2e_emails`, dostępnej przez podpisane API testowe tak jak test1–test13), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
 >
-> **Zwykła pula pomija** test9 i test10 (druga sesja — całkowicie wykluczone). test4/test5 wróciły do puli 2026-10-10.
+> **Zwykła pula** to test1–test8 (`TEST_ACCOUNT_COUNT`). test9 i test10 są znów dostępne (2026-10-22) — wybiera się je jawnie przez `test_accounts` (np. `9,10`). test4/test5 wróciły do puli 2026-10-10.
 >
 > **Równoległe przebiegi** (lżejsze testy): dozwolone, gdy każdy przebieg dostaje **rozłączny zestaw kont** przez wejście workflow `test_accounts` (np. `1,2,3` i `4,5,6`) i spece logują się wyłącznie przez pulę (`loginAsPooledTestUser`). Spece z kontami przypisanymi na stałe (`testAccountUsername(n)`, `loginAsTestUser` z domyślnym test1) albo z `@mailbox` (`clearMailbox` czyści całą skrzynkę) — tylko pojedynczo, gdy nic innego nie biegnie.
 
@@ -186,7 +186,7 @@ Konta test4 i test5 są zarezerwowane: testy równoległe nie dostają ich
 automatycznie. W razie potrzeby izolowanego przebiegu wybiera się je jawnie
 wejściem workflow `test_accounts=4,5`; wtedy `loginAsPooledTestUser` przydziela
 je workerom po indeksie. Nie przypisujemy tych kont na stałe do testów.
-test9 i test10 są wyłączone bez wyjątków.
+test9 i test10 wybiera się jawnie przez `test_accounts`.
 
 Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
 `test1@familiada.online` — reszta testów (game-deletion, editor,
