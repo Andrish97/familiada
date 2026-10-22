@@ -65,16 +65,15 @@ test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczy
 
   try {
     await page.setViewportSize({ width: 390, height: 844 });
-    const navigation = page.goto(`https://www.familiada.online/polls?id=${fixture.gameId}`);
-    await expect(page.locator("#pollLoadMessage")).toHaveText("Wczytuję ankietę…");
-    await navigation;
-    await expect(page.locator("#pollLoadState")).toBeVisible();
-    await expect(page.locator("#pollLoadMessage")).toHaveText(/Nie udało się wczytać ankiety/, { timeout: 20000 });
+    // Ładowanie: szkielet strony; błąd: dymek + „Ponów” (jak w Zadaniach, bez
+    // osobnego komunikatu w treści -- dawne #pollLoadState/#pollLoadMessage usunięte).
+    await page.goto(`https://www.familiada.online/polls?id=${fixture.gameId}`);
+    await expect(page.locator(".app-toast-text")).toHaveText(/Nie udało się wczytać ankiety/, { timeout: 20000 });
     await expect(page.locator("#pollLoadRetry")).toBeVisible();
     await page.screenshot({ path: "test-results/shot-e20-polls-error-390.png", fullPage: true });
     allowPollRetry = true;
     await page.locator("#pollLoadRetry").click();
-    await expect(page.locator("#pollLoadState")).toBeHidden();
+    await expect(page.locator("#pollLoadRetryWrap")).toBeHidden();
     await expect(page.locator("#pollBar")).toBeVisible();
     await expect(page.locator("#cardMain")).toBeVisible();
     await page.setViewportSize({ width: 1400, height: 900 });
