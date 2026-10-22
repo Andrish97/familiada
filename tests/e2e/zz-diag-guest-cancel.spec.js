@@ -79,3 +79,34 @@ test("diagnostyka: odpowiedź guest_cancel_migration @mailbox", async ({ browser
     await context.close();
   }
 });
+
+test("diagnostyka: gość D po potwierdzonym anulowaniu (zostaje do zapytania) @mailbox", async ({ browser }) => {
+  test.setTimeout(180_000);
+  await resetMailProviderLimits();
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  await serveBranchCode(context, { pages: ["account"] });
+  const page = await context.newPage();
+  await loginAsGuest(page, context);
+  await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#btnMigrate")).toBeVisible({ timeout: 30000 });
+  await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email");
+  await clearMailbox(MAILBOX);
+  const after = new Date(Date.now() - 2_000).toISOString();
+  await page.locator("#migrateEmail").fill(MAILBOX);
+  await page.locator("#migratePass1").fill("E2eTest123!");
+  await page.locator("#migratePass2").fill("E2eTest123!");
+  await page.locator("#btnMigrate").click();
+  await expect(page.locator("#migratePendingHint")).toBeVisible({ timeout: 20000 });
+  const mail = await waitForEmail({ recipient: MAILBOX, after });
+  const tokenHash = new URL(extractHttpLinks(mail).find((l) => /token_hash=/.test(l))).searchParams.get("token_hash") || "";
+  const result = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.rpc("guest_cancel_migration");
+    const { data: u } = await sb.auth.getUser();
+    return { id: u.user.id, cancel: data ?? error?.message, newEmailAfter: !!u.user.new_email };
+  });
+  await page.waitForTimeout(3000);
+  console.log(`[e2e-diag] gosc D: id=${result.id} token_hash_8=${tokenHash.slice(0, 8)} cancel=${JSON.stringify(result.cancel)} new_email_po=${result.newEmailAfter} czas=${new Date().toISOString()}`);
+  await clearMailbox(MAILBOX);
+  await context.close();
+});
