@@ -84,12 +84,12 @@ test("strona publiczna: getUser bez przekierowania, null dla niezalogowanego", a
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
 });
 
-test("niezalogowany nie dostaje przycisku „Wskazówki” (instrukcja jest dla konta)", async () => {
+test("niezalogowany też dostaje przycisk podręcznika (podręcznik jest publiczny)", async () => {
   const { deps } = makeDeps({ user: null });
   loc.pathname = "/marketplace/";
   await initPage("marketplace", { deps });
-  assert.equal(els.btnManual.hidden, true);
-  assert.equal(els.btnManual.listeners.click, undefined);
+  assert.notEqual(els.btnManual.hidden, true);
+  assert.ok(els.btnManual.listeners.click);
 });
 
 test("#btnBack: handleSheetBack idzie pierwsze, potem przejście na backHref z mapy", async () => {
@@ -130,7 +130,7 @@ test("#btnManual prowadzi do instrukcji z kotwicą ze strony i ret", async () =>
   loc.search = "?id=7&lang=pl";
   await initPage("polls", { deps });
   await els.btnManual.click();
-  assert.equal(loc.href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7#r15");
+  assert.equal(loc.href, "/manual/?ch=15&ret=%2Fpolls%2F%3Fid%3D7");
 });
 
 test("onManual dostaje adres instrukcji", async () => {
@@ -138,7 +138,7 @@ test("onManual dostaje adres instrukcji", async () => {
   let got = null;
   await initPage("editor", { deps, onManual: async (href) => { got = href; } });
   await els.btnManual.click();
-  assert.match(got, /^\/manual\/\?tab=games&ret=.*#r7$/);
+  assert.match(got, /^\/manual\/\?ch=7&ret=/);
 });
 
 test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {

@@ -441,8 +441,8 @@ test("finalizacja rundy: próg osiągnięty ale hasFinal!==true -> r_gameEnd zam
   assert.equal(store.state.step, "r_gameEnd");
 });
 
-test("finalizacja rundy: pula pytań wyczerpana -> r_gameEnd nawet bez osiągniętego progu", async () => {
-  const { store, dispatch } = makeEngine();
+test("finalizacja rundy (bez finału): pula pytań wyczerpana -> r_gameEnd nawet bez osiągniętego progu", async () => {
+  const { store, dispatch } = makeEngine({ settings: { ...DEFAULT_SETTINGS, hasFinal: false } });
   // pula ma 3 pytania — rozgrywamy wszystkie bez osiągania progu (domyślny finalMinPoints=300)
   for (let i = 0; i < 3; i++) {
     await dispatch({ type: "START_ROUND" });

@@ -1,10 +1,10 @@
 const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-10-21T19311')).default,
-  en: async () => (await import('./en.js?v=v2026-10-21T19311')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-21T19311')).default,
+  pl: async () => (await import('./pl.js?v=v2026-10-22T07485')).default,
+  en: async () => (await import('./en.js?v=v2026-10-22T07485')).default,
+  uk: async () => (await import('./uk.js?v=v2026-10-22T07485')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-21T19311";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-22T07485";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
@@ -271,7 +271,9 @@ async function injectLanguageSwitcher() {
 
   container.appendChild(btn);
 
-  const topbarLangSection = document.querySelector(".topbar .topbar-section-3");
+  // Miejsce przełącznika: sekcja 3 topbara albo grupa [data-lang-slot] na stronach
+  // bez topbara (logowanie) — wtedy stoi obok „i” po prawej, jak na stronach aplikacji.
+  const topbarLangSection = document.querySelector(".topbar .topbar-section-3") || document.querySelector("[data-lang-slot]");
   if (topbarLangSection) {
     topbarLangSection.appendChild(container);
   } else {

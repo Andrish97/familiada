@@ -76,11 +76,11 @@ test("linkTo bez ret, gdy bieżąca strona nie jest na liście from celu", () =>
   assert.equal(href, "/games/editor/?id=1");
 });
 
-test("linkTo: karta instrukcji w ?tab=, hash zostaje kotwicą w karcie", () => {
-  const href = linkTo("manual", { tab: "polls" }, ctx("/polls/?id=7"));
-  assert.equal(href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7");
-  const anchor = linkTo("manual", { tab: "polls", hash: "x" }, ctx("/polls/?id=7"));
-  assert.ok(anchor.endsWith("#x"));
+test("linkTo: rozdział podręcznika w ?ch=, podrozdział jako #s-…", () => {
+  const href = linkTo("manual", { ch: "15" }, ctx("/polls/?id=7"));
+  assert.equal(href, "/manual/?ch=15&ret=%2Fpolls%2F%3Fid%3D7");
+  const anchor = linkTo("manual", { ch: "15", hash: "s-15-4" }, ctx("/polls/?id=7"));
+  assert.ok(anchor.endsWith("#s-15-4"));
 });
 
 test("ret niesie kartę: powrót z podstrony wraca na tę samą kartę", () => {
@@ -88,7 +88,7 @@ test("ret niesie kartę: powrót z podstrony wraca na tę samą kartę", () => {
   assert.equal(backHref("baseExplorer", ctx(bases)), "/bases/?tab=shared");
   const subs = linkTo("friends", {}, ctx("/games/?tab=poll_text"));
   assert.equal(backHref("friends", ctx(subs)), "/games/?tab=poll_text");
-  const manual = linkTo("manual", { tab: "bases" }, ctx("/bases/?tab=shared"));
+  const manual = linkTo("manual", { ch: "9" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("manual", ctx(manual)), "/bases/?tab=shared");
 });
 
@@ -99,7 +99,7 @@ test("karty w mapie: tabs jest listą niepustych nazw, a state je wymienia", () 
     assert.equal(new Set(p.tabs).size, p.tabs.length, `${id}.tabs bez powtórzeń`);
     assert.ok(p.state?.includes("tab"), `${id}.state ma tab`);
   }
-  for (const id of ["games", "bases", "polls", "logoEditor", "manual"]) {
+  for (const id of ["games", "bases", "polls", "logoEditor"]) {
     assert.ok(PAGES[id].tabs, `${id} ma karty`);
   }
 });
@@ -107,7 +107,7 @@ test("karty w mapie: tabs jest listą niepustych nazw, a state je wymienia", () 
 test("łańcuch powrotów: games -> friends -> polls -> manual i z powrotem", () => {
   const subs = linkTo("friends", {}, ctx("/games/"));
   const polls = linkTo("polls", { id: 7 }, ctx(subs));
-  const manual = linkTo("manual", { tab: "polls" }, ctx(polls));
+  const manual = linkTo("manual", { ch: "15" }, ctx(polls));
 
   const b1 = backTarget("manual", ctx(manual));
   assert.equal(b1.pageId, "polls");
@@ -235,7 +235,7 @@ test("strony publiczne: niezalogowany wraca na landing", () => {
 });
 
 test("instrukcja i prywatność: powrót przez wszystkie kroki", () => {
-  const manual = linkTo("manual", { tab: "polls" }, ctx("/polls/?id=7&ret=%2Fgames%2F"));
+  const manual = linkTo("manual", { ch: "15" }, ctx("/polls/?id=7&ret=%2Fgames%2F"));
   const privacy = linkTo("privacy", {}, ctx(manual));
   const b1 = backTarget("privacy", ctx(privacy));
   assert.equal(b1.pageId, "manual");

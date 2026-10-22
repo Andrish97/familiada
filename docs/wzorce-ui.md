@@ -102,6 +102,14 @@ idzie (znalezisko T1).
 
 Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
 
+**„i” (Wskazówki) przy języku po prawej [decyzja właściciela 2026-10-22]:**
+przycisk „i” stoi zawsze po prawej, tuż przed przełącznikiem języka (odstęp 8 px,
+ta sama wysokość 37 px), jak w sekcji 3 topbara stron aplikacji (np. Moje gry:
+„i” + język + konto/menu). Strony bez topbara (logowanie) mają po lewej tylko
+powrót, a po prawej grupę `.login-top-right` z atrybutem `data-lang-slot` —
+`translation.js` wstawia do niej przełącznik języka (bez `.lang-floating`).
+Nowa strona bez topbara z „i” = ta sama grupa `data-lang-slot`, nigdy „i” po lewej.
+
 ## A3. Karty (zakładki) — jeden mechanizm [WZÓR: nawigacja-mapa-plan „Karty”]
 
 - Wygląd: **jeden** komponent `.tabs-card` (`.tabs-strip` > `.tab-slot` >
@@ -197,7 +205,18 @@ akcji po przyjęciu). Odrzucona kopia gry/logo **przepada** — bez sekcji
 odrzuconych i bez cofania; zaproszenie do bazy wraca z paska „Odrzucone” w Bazach
 (położenie u dołu bez zmian). Tytuł zwijanej sekcji odrzuconych wszędzie
 (Bazy, Znajomi, Subskrybenci) to krótkie „Odrzucone” / „Declined” / „Відхилені”
-— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Dawna ramka „Otrzymane kopie”
+— nagłówek mieści się w jednej linii na 390 px (2026-10-21). Sekcja wysłanych
+zaproszeń (Znajomi → Zaproś, Subskrybenci → Zaproszenia) to krótkie „Oczekujące” /
+„Pending” / „Очікують” — odrzucone zaproszenia w tej sekcji rozpoznaje
+oznaczenie „Odrzucono” w wierszu; nagłówek z narzędziami w jednej linii na
+390 px (`contacts.sections.outgoing`, decyzja właściciela 2026-10-21).
+
+**Wiersz kontaktu `.shareRow--compact`** (Znajomi, Subskrybenci, okna
+udostępniania i wyboru odbiorców, Odrzucone; decyzja właściciela 2026-10-21):
+pierwsza linia — nazwa (wielokropek) i obok oznaczenia; e-mail / notatka
+**zawsze w osobnej linii pod nazwą**, niezależnie od długości tekstu (siatka
+`.shareMain`, `.shareNote` na całą szerokość). Wszystkie wiersze tej samej
+wysokości (`min-height: 64px`). Dawna ramka „Otrzymane kopie”
 (`.resource-copy-inbox`) usunięta.
 
 **✕ czy kosz (decyzja 2026-10-21):** kosz tylko dla **własnych** zasobów
@@ -317,6 +336,17 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
   `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),
   w Control małe okno wyśrodkowane.
+- **Główna akcja okna formularzowego zawsze widoczna (uwaga właściciela
+  2026-10-22, okno kontaktu):** w arkuszu na telefonie „Anuluj” + złoty
+  przycisk główny (ikona + pełne słowo, np. „Wyślij”) w pasku akcji przy
+  tytule; na komputerze w `.uni-foot`. W trakcie zapisu/wysyłki przycisk
+  zostaje z tą samą ikoną i etykietą, tylko `disabled` + `aria-busy` — nigdy
+  sam „…” (wygląda jak menu „więcej”) ani dłuższy tekst, który przestawia
+  nagłówek arkusza.
+- **Turnstile w formularzu:** `size: "flexible"` w wierszu na całą szerokość
+  pól (`.contact-captcha`); dopóki nie ma wyzwania, wiersz nie zajmuje miejsca
+  (`data-turnstile="pending"`), wyzwanie wjeżdża płynnie i przewija się do
+  widoku (`turnstile.js`, `before-interactive-callback`).
 
 ## A11. Przyciski
 
@@ -330,6 +360,19 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 | Zakazane | `.btn.ghost` (menedżer bazy), `.btn.green` (nieużywane), `.btn-sm` (Control), `.tbtn` (pasek rysowania logo, własna rodzina) | |
 
 Etykiety: pełne słowa, bez skrótów typu „Imp”, „Exp.bz”, „Podgl.”.
+
+**Karty formularzy (decyzja 2026-10-21, Ustawienia konta):** w karcie z polami
+(nazwa, e-mail, hasło, usuwanie konta, zapis danych gościa, ocena, demo)
+pola stoją jedno pod drugim na całą szerokość karty (bez ucinania
+podpowiedzi), a przyciski w osobnym wierszu akcji `.account-actions` **na dole
+karty** (`margin-top:auto` — karty jednego rzędu siatki mają przyciski na tej
+samej linii). Komputer: przyciski po prawej, szerokość według treści;
+telefon (≤ 600 px): wiersz akcji na całą szerokość — jeden przycisk na całą
+szerokość, dwa po równo (drugorzędny po lewej, złoty/główny po prawej).
+Przyciski mają wysokość pola (40 px). Teksty pomocnicze nad polem, nie pod
+przyciskami. Zasada „przycisk obok pola = wysokość pola” zostaje dla
+pojedynczych wierszy wyszukiwania/zaproszeń (Znajomi „Zaproś”, okna
+udostępniania, kod urządzenia) — nie dla kart formularzy.
 
 ## A12. Odstępy
 

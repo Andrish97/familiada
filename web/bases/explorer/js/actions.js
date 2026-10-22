@@ -12,13 +12,13 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-21T19311";
+} from "./state.js?v=v2026-10-22T07485";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-21T19311";
-import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-21T19311";
-import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-21T19311";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-22T07485";
+import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-22T07485";
+import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-22T07485";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-21T19311";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-22T07485";
 
 
 import {
@@ -27,19 +27,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-21T19311";
+} from "./repo.js?v=v2026-10-22T07485";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-21T19311";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-21T19311";
-import { initExportModal } from "./export-modal.js?v=v2026-10-21T19311";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-21T19311";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T19311";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T19311";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T19311";
-import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T19311";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T19311";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T19311";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-21T19311";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-22T07485";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-22T07485";
+import { initExportModal } from "./export-modal.js?v=v2026-10-22T07485";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-22T07485";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T07485";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T07485";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T07485";
+import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T07485";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T07485";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T07485";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-22T07485";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -4578,6 +4578,11 @@ export function wireActions({ state }) {
       return;
     }
   
+    // Pisanie w polu (wyszukiwarka, okno pytania) nie usuwa zaznaczonych elementów.
+    const activeEl = document.activeElement;
+    const activeTag = String(activeEl?.tagName || "").toLowerCase();
+    if (activeTag === "input" || activeTag === "textarea" || activeTag === "select" || activeEl?.isContentEditable) return;
+
     if (e.key === "Delete") {
       // C: SEARCH – blokada
       if (!canDeleteHere(state)) {
@@ -4691,8 +4696,8 @@ export function wireActions({ state }) {
         return;
       }
 
-      // Ctrl+N / Cmd+N = nowe pytanie
-      if (mod && (e.key === "n" || e.key === "N")) {
+      // Ctrl+N / Cmd+N = nowe pytanie (z Shift — nowy folder, niżej)
+      if (mod && !e.shiftKey && (e.key === "n" || e.key === "N")) {
 
         if (!canMutateHere(state)) return;
         e.preventDefault();

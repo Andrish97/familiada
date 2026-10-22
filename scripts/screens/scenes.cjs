@@ -56,10 +56,25 @@ const openModal = (selector, modal = ".overlay:visible") => async (view) => {
   await view.locator(modal).first().waitFor({ state: "visible", timeout: 5000 });
   await view.waitForTimeout(250);
 };
+// Podręcznik: na telefonie pole jest w wysuwanym spisie treści — otwiera je przycisk z lupą.
+const manualSearch = (query) => async (view) => {
+  const toggle = view.locator("#manualSearchToggle");
+  if (await toggle.isVisible()) await toggle.click();
+  await view.locator("#manualSearch .searchText").fill(query);
+  await view.locator("#manualSearch .m-search-hit").first().waitFor({ timeout: 5000 });
+  await view.waitForTimeout(250);
+};
 const scrollPreview = async (view) => {
   await view.locator('.gs-logo-tile[data-logo-id="default"]').click();
   await view.locator("#gsLivePreviewWrap").scrollIntoViewIfNeeded();
   await view.waitForTimeout(1500);
+};
+// Zalogowany gość: znacznik is_guest w metadanych, okno informacji gościa już widziane.
+const asGuest = (db) => {
+  db.user = { ...db.user, is_anonymous: true, email: null, user_metadata: { ...db.user.user_metadata, is_guest: true } };
+  db.localStorage = { ...(db.localStorage || {}), [`fam:guest:info_shown:${db.user.id}`]: "1" };
+  db.rpc.guest_is_expired = false;
+  db.rpc.guest_touch = null;
 };
 const selectTile = (selector) => async (view) => {
   await view.locator(selector).first().click();
@@ -135,6 +150,17 @@ module.exports = [
     }] },
   { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 800,
     steps: [gsCat("display"), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
+  { id: "game-settings-questions", category: "Dodatkowe", title: "Ustawienia gry — pytania (finał)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
+    steps: [clickTab('.gs-sidebar-item[data-cat="questions"]')] },
+  { id: "game-settings-game", category: "Dodatkowe", title: "Ustawienia gry — rozgrywka (ekran końcowy)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
+    steps: [clickTab('.gs-sidebar-item[data-cat="game"]')] },
+  { id: "game-settings-game-invalid", category: "Dodatkowe", title: "Ustawienia gry — błędna wartość i podpowiedzi progów", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
+    steps: [clickTab('.gs-sidebar-item[data-cat="game"]'), async (view) => {
+      await view.locator("#gsFinalTarget").fill("500");
+      await view.locator("#gsFinalMinPts").fill("5000");
+      await view.locator("#gsMultipliers").fill("1, 0, 2");
+      await view.waitForTimeout(800);
+    }] },
   { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
     steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "game-settings-phone-landscape", category: "Dodatkowe", title: "Ustawienia gry — telefon w poziomie: prośba o obrót (działa tylko w pionie)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/device-guard.js"], ready: () => !!document.querySelector("#pageGuard, .page-guard"), devices: ["phone-landscape"], settle: 600 },
@@ -152,11 +178,16 @@ module.exports = [
       await view.locator(".sfx-row").nth(1).locator(".ui-select-item").last().click();
       await view.waitForTimeout(300);
     }] },
+  // Gość (konto anonimowe): Powiel dostępne, Wyślij ukryte (decyzja 2026-10-22).
+  { id: "games-guest", category: "Dodatkowe", title: "Moje gry — gość: pasek akcji (Powiel, bez Wyślij)", path: "/games/", sources: page("games"), ready: "#grid .card", db: asGuest, steps: [selectTile("#grid .card:not(.addCard)")] },
+  { id: "logos-guest", category: "Dodatkowe", title: "Biblioteka logo — gość: pasek akcji (Powiel, bez Wyślij)", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", db: asGuest, steps: [selectTile(".logoTile")] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
   { id: "logo-image", category: "Dodatkowe", title: "Edytor logo — obraz", path: `/logos/editor/image/?id=${id("8300", 47)}`, sources: ["web/logos/editor/image/", "web/logos/js/editor-image.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], settle: 1500 },
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
+  // Logowanie: „←” po lewej, „i” i język po prawej (jak sekcja 3 topbara stron aplikacji).
+  { id: "login", guest: true, category: "Dodatkowe", title: "Logowanie — górne przyciski (powrót; „i” i język po prawej)", path: "/login/", sources: ["web/login/", "web/shared/translation/translation.js"], ready: "#btnPrimary" },
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
   // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
@@ -293,8 +324,46 @@ module.exports = [
     steps: [async (view, { device }) => { if (device !== "phone") { await view.setViewportSize({ width: 1180, height: 760 }); await view.waitForTimeout(500); await view.locator("#btnMore").click(); await view.waitForTimeout(300); } else { await view.locator(".topbar-menu-toggle").click(); await view.waitForTimeout(400); } }] },
   { id: "admin-market-pending", category: "Dodatkowe", title: "Panel admina — Gry Społeczności, licznik „Do zatwierdzenia”", path: "/settings/", sources: ["web/settings/"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop"],
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
+  // Audyt E24 (P1): podgląd maila bez skryptów (Ś6), lead-finder przez Worker (Ś2), obejście przerwy 12 h (Ś7).
+  { id: "admin-mail-html", category: "Dodatkowe", title: "Panel admina — poczta: treść HTML maila (bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabReports").click());
+      await view.locator(".mail-thread-item").first().click();
+      await view.locator(".mail-msg-html-frame").first().waitFor();
+      await view.waitForTimeout(800);
+    }] },
+  { id: "admin-mail-preview", category: "Dodatkowe", title: "Panel admina — poczta: pełny podgląd maila (dwuklik, bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabReports").click());
+      await view.locator(".mail-thread-item").first().click();
+      await view.locator(".mail-msg-central").first().dispatchEvent("dblclick");
+      await view.locator(".compose-preview-wrapper iframe").waitFor();
+      await view.waitForTimeout(800);
+    }] },
+  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — kontakty marketingowe: zlecenie lead-findera (przez Worker)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop"],
+    steps: [async (view) => { await view.locator("#btnMore").click().catch(() => {}); await view.getByText("Kontakty Marketingowe").last().click(); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "")); await view.waitForTimeout(500); }] },
+  { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
+  { id: "privacy", category: "Dodatkowe", title: "Polityka prywatności — początek", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2" },
+  { id: "privacy-scrolled", category: "Dodatkowe", title: "Polityka prywatności — po przewinięciu (cała strona się przewija)", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator(".m-doc .m-h2").nth(5).scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  { id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
+  { id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: ".m-return" },
+  { id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
+  { id: "manual-shots", category: "Dodatkowe", title: "Podręcznik — karuzela widoków przy prowadzeniu rundy", path: "/manual/?ch=17#s-17-3", sources: [...page("manual"), "web/manual/content/", "web/manual/img/"], ready: ".m-carousel-nav", steps: [async (view) => { await view.locator(".m-carousel img").first().evaluate((img) => img.decode()); await view.waitForTimeout(300); }] },
+  { id: "manual-shot-zoom", category: "Dodatkowe", title: "Wskazówki — podgląd zrzutu (jak na stronie głównej; telefon: okno od dołu z przybliżaniem)", path: "/manual/?ch=6#s-6-1", sources: [...page("manual"), "web/manual/content/", "web/manual/img/", "web/shared/js/core/image-viewer.js", "web/shared/css/image-viewer.css"], ready: ".m-shot-zoom img", steps: [async (view) => { await view.locator(".m-shot-zoom").first().click(); await view.locator("#imgvOverlay.is-open .imgv-img").evaluate((img) => img.decode()); await view.waitForTimeout(400); }] },
+  { id: "manual-support", category: "Dodatkowe", title: "Wskazówki — O projekcie i wsparcie (rozdz. 21)", path: "/manual/?ch=21", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-search", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie (wyniki na żywo)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież")] },
+  { id: "manual-search-hit", category: "Dodatkowe", title: "Podręcznik — wybrany wynik z zaznaczonymi trafieniami", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież"), async (view) => { await view.locator("#manualSearch .searchText").press("Enter"); await view.locator("mark.m-hit").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  // Karty formularzy: zmiana e-maila w toku (Anuluj zmianę + Wyślij ponownie), hasło, usuwanie konta — cała strona.
+  { id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, new_email: "nowy.adres@example.com" }; },
+    ready: () => !document.getElementById("emailPendingActions")?.hidden },
+  { id: "account-guest", category: "Dodatkowe", title: "Konto gościa — zapis danych (migracja) i usuwanie konta", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, is_anonymous: true, email: null, user_metadata: { ...db.user.user_metadata, is_guest: true } }; db.rpc.guest_is_expired = false; db.rpc.guest_touch = null; },
+    ready: "main", steps: [async (view) => { await view.getByRole("button", { name: /Rozumiem|Got it|Зрозуміло/ }).click({ timeout: 5000 }).catch(() => {}); await view.waitForFunction(() => !document.getElementById("migrateSection")?.hidden, null, { timeout: 5000 }).catch(() => {}); await view.waitForTimeout(400); }] },
   { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },
   { id: "bases-name-create", category: "Dodatkowe", title: "Bazy — okno nazwy nowej bazy (wspólne promptModal)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/modal.js"], ready: "#mineGrid > *:nth-child(2)", steps: [openModal("#mineGrid .addCard", ".uni-modal")] },
   { id: "logos-name-create", devices: ["desktop"], category: "Dodatkowe", title: "Logo — okno nazwy nowego logo (wspólne promptModal)", path: "/logos/", sources: [...page("logos"), "web/shared/js/core/modal.js"], ready: ".logoTile", steps: [openModal("#grid .addCard", ".uni-modal")] },
@@ -332,6 +401,15 @@ module.exports = [
     steps: [async (view) => { await view.locator("body").press("ArrowUp"); await view.waitForTimeout(450); await view.locator("body").press("ArrowRight"); await view.waitForTimeout(1500); }] },
   { id: "home-viewer", guest: true, category: "Dodatkowe", title: "Strona główna — podgląd kadru z przybliżaniem", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(3); await shot.scrollIntoViewIfNeeded(); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-img").click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.waitForTimeout(600); }] },
+  // „Postaw kawę”: filiżanka obok Kontaktu w stopce i okno z wyjaśnieniem (support-modal.js).
+  { id: "support-footer", category: "Dodatkowe", title: "Stopka — Postaw kawę obok Kontaktu", path: "/games/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "support-footer-home", guest: true, category: "Dodatkowe", title: "Strona główna — stopka z Postaw kawę", path: "/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "home-faq-support", guest: true, category: "Dodatkowe", title: "Strona główna — FAQ: Wsparcie projektu", path: "/", sources: ["web/index.html", ...page("home"), "web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { const q = view.locator('[data-i18n="home.faq.q31.q"]'); await q.scrollIntoViewIfNeeded(); await q.click(); await view.locator('[data-i18n="home.faq.cat6"]').scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  { id: "support-modal", category: "Dodatkowe", title: "Okno Postaw kawę", path: "/games/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".btn-support-footer").click(); await view.locator(".support-modal").waitFor({ state: "visible" }); await view.waitForTimeout(300); }] },
   { id: "manual", category: "Podręcznik", title: "Podręcznik — Zasady gry", path: "/manual/?tab=rules", sources: page("manual"), ready: "#tab-rules .m-toc" },
   { id: "manual-games", category: "Podręcznik", title: "Podręcznik — Gry (rozdz. 7.6)", path: "/manual/?tab=games#r7-6", sources: page("manual"), ready: "#tab-games .m-toc", settle: 800 },
   { id: "manual-control", category: "Podręcznik", title: "Podręcznik — Prowadzenie gry", path: "/manual/?tab=control", sources: page("manual"), ready: "#tab-control .m-toc" },

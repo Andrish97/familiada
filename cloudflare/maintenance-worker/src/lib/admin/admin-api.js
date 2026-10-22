@@ -10,6 +10,7 @@ import { handleAdminMarketingApi } from "./admin-marketing-api.js";
 import { handleAdminMessagesApi } from "./admin-messages-api.js";
 import { handleAdminConfigApi } from "./admin-config-api.js";
 import { handleAdminGeneratorApi } from "./admin-generator-api.js";
+import { handleAdminLeadsApi } from "./admin-leads-api.js";
 
 export async function handleAdminApi(request, env) {
   const url = new URL(request.url);
@@ -34,7 +35,7 @@ export async function handleAdminApi(request, env) {
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass ON", {
       headers: {
-        "Set-Cookie": setAdminBypassCookieForAllDomains(env),
+        "Set-Cookie": await setAdminBypassCookieForAllDomains(env),
         "Cache-Control": "no-store"
       }
     });
@@ -202,6 +203,10 @@ export async function handleAdminApi(request, env) {
 
   if (url.pathname.startsWith("/_admin_api/generator/")) {
     return handleAdminGeneratorApi(request, env, url);
+  }
+
+  if (url.pathname.startsWith("/_admin_api/leads/")) {
+    return handleAdminLeadsApi(request, env, url);
   }
 
   if (url.pathname.startsWith("/_admin_api/config/")) {

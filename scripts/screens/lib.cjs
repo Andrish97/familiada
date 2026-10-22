@@ -166,4 +166,55 @@ async function composeIPhone(browser, screen, outputWidth = 1440, outputHeight =
   return Buffer.from(data.split(",")[1], "base64");
 }
 
-module.exports = { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone };
+// Ramka urządzenia dla zrzutów Wskazówek: iPhone albo iPad, pionowo lub poziomo (z proporcji
+// zrzutu), wyśrodkowana na przezroczystym tle outputWidth × outputHeight — każdy zrzut
+// telefonu i tabletu ma wtedy ten sam rozmiar co zrzut z komputera.
+async function composeDevice(browser, screen, { kind = "iphone", outputWidth = 1400, outputHeight = 875, pad = 18 } = {}) {
+  const page = await browser.newPage({ deviceScaleFactor: 1 });
+  const data = await page.evaluate(async ({ src, kind, W, H, pad }) => {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const iphone = kind === "iphone";
+    const sw = img.width, sh = img.height, short = Math.min(sw, sh);
+    const k = iphone ? 0.05 : 0.055;            // ramka jako część krótszego boku ekranu
+    const s = Math.min((W - 2 * pad) / (sw + 2 * k * short), (H - 2 * pad) / (sh + 2 * k * short));
+    const w = sw * s, h = sh * s, b = k * short * s;
+    const dw = w + 2 * b, dh = h + 2 * b, dx = (W - dw) / 2, dy = (H - dh) / 2;
+    const r = Math.min(dw, dh) * (iphone ? 0.16 : 0.07);
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    const rounded = (x, y, ww, hh, rr) => { ctx.beginPath(); ctx.roundRect(x, y, ww, hh, Math.max(0, Math.min(rr, ww / 2, hh / 2))); };
+    ctx.save(); ctx.shadowColor = "#0009"; ctx.shadowBlur = 22;
+    rounded(dx, dy, dw, dh, r); ctx.fillStyle = "#cfd2d8"; ctx.fill(); ctx.restore();
+    const edge = 2.5;
+    rounded(dx + edge, dy + edge, dw - 2 * edge, dh - 2 * edge, r - edge); ctx.fillStyle = "#07080b"; ctx.fill();
+    const sx = dx + b, sy = dy + b;
+    ctx.save(); rounded(sx, sy, w, h, iphone ? r - b : r * 0.45); ctx.clip();
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, sx, sy, w, h);
+    ctx.restore();
+    const portrait = h >= w;
+    if (iphone) {
+      // wyspa z aparatem na krótszym boku (góra w pionie, lewo w poziomie)
+      const len = Math.min(w, h) * 0.3, th = Math.min(w, h) * 0.075;
+      ctx.fillStyle = "#020203";
+      if (portrait) rounded(sx + (w - len) / 2, sy + th * 0.45, len, th, th / 2);
+      else rounded(sx + th * 0.45, sy + (h - len) / 2, th, len, th / 2);
+      ctx.fill();
+    } else {
+      // aparat iPada na środku ramki (krótszy bok w pionie, dłuższy w poziomie)
+      ctx.fillStyle = "#1c1f26";
+      ctx.beginPath();
+      if (portrait) ctx.arc(dx + dw / 2, dy + b / 2, b * 0.16, 0, Math.PI * 2);
+      else ctx.arc(dx + b / 2, dy + dh / 2, b * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return canvas.toDataURL("image/png");
+  }, { src: `data:image/png;base64,${screen.toString("base64")}`, kind, W: outputWidth, H: outputHeight, pad });
+  await page.close();
+  return Buffer.from(data.split(",")[1], "base64");
+}
+
+module.exports = { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone, composeDevice };

@@ -67,7 +67,7 @@ async function cancelPendingEmail(page) {
 }
 
 test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie ReferenceError", async ({ page, context }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(200_000);
 
   await loginAsTestUser(page, context);
 
@@ -99,6 +99,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
 
     const migrateEmail = `e2e-resend-${Date.now()}@example.invalid`;
     await page.fill("#email", migrateEmail);
+    await page.fill("#email2", migrateEmail);
     await page.locator("#saveEmail").click();
 
     // handleEmailSave() czyta stan pending zaraz po sukcesie przez
@@ -110,7 +111,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // wewnętrzną, klientową rasą, poczekaj aż akcja się zakończy (status) i
     // odśwież stronę na czysto -- świeży load i tak sam wywoła
     // refreshAuthEmailState().
-    await expect(page.locator("#appToast")).toContainText("Wysłano linki potwierdzające", { timeout: 20000 });
+    await expect(page.locator("#appToast")).toContainText("Wysłano link potwierdzający", { timeout: 20000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
@@ -123,6 +124,16 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
+    await expect(page.locator("#resendEmailChange")).toBeEnabled({ timeout: 15000 });
+    // GoTrue: najwyżej jeden mail auth na minutę dla użytkownika -- najpierw
+    // komunikat po polsku, potem (po odczekaniu) prawdziwe ponowne wysłanie.
+    await page.locator("#resendEmailChange").click();
+    await expect(page.locator("#appToast")).toContainText("Możesz wysłać ponownie za", { timeout: 15000 });
+    await page.locator("#appToast").click();
+    await releaseEmailCooldown(page);
+    await page.waitForTimeout(62_000);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
     await expect(page.locator("#resendEmailChange")).toBeEnabled({ timeout: 15000 });
     await page.locator("#resendEmailChange").click();
 

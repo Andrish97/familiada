@@ -174,8 +174,10 @@ function buildDb(lang, extras = {}) {
   const friends = [
     ...p.friends.accepted.map(([l, e]) => friend(l, e, "friend", "active")),
     ...c.friends.slice(0, 3).map(([l, e]) => friend(l, e, "friend", "active")),
-    ...p.friends.incoming.map(([l, e]) => friend(l, e, "incoming", "pending")),
-    ...p.friends.outgoing.map(([l, e, s]) => friend(l, e, "outgoing", s)),
+    // Przed przyjęciem znajomości bez adresu drugiej strony (migracja 457);
+    // pierwsze wysłane zaproszenie -- na adres wpisany przez użytkownika.
+    ...p.friends.incoming.map(([l]) => friend(l, null, "incoming", "pending")),
+    ...p.friends.outgoing.map(([l, e, s], i) => friend(l, i === 0 ? e : null, "outgoing", s)),
   ];
   let sn = 0;
   const sub = (email, status) => ({ id: id("8900", ++sn), email, label: email, status, friend_user_id: sn <= 2 ? id("8910", sn) : null, created_at: daysAgo(sn * 3), resend_available_at: daysAgo(1), email_enabled: true });
@@ -379,6 +381,26 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/messages?filter=inbox*": { ok: true, rows: [1, 2, 3, 4].map((n) => ({ id: `m${n}`, direction: "inbound", is_read: n === 4, report_id: null, subject: `Pytanie ${n}`, created_at: "2026-10-20T10:00:00Z" })) },
       "/_admin_api/reports?status=all*": { ok: true, rows: [{ id: "r1", status: "open" }, { id: "r2", status: "open" }, { id: "r3", status: "closed" }] },
       "/_admin_api/marketplace/list?status=pending*": { ok: true, rows: ["Rodzinny quiz", "Wieczór filmowy", "Szkolna Familiada", "Kuchnia świata", "Gra producenta"].map((title, i) => ({ id: `mk${i}`, title, lang: "pl", status: "pending", origin: i === 4 ? "producer" : "user", author_username: "ania.k", created_at: "2026-10-19T18:00:00Z", library_count: 0 })) },
+      // Poczta: treść HTML maila w podglądzie (iframe sandbox bez skryptów --
+      // skrypt i onerror z treści nie mogą nic zmienić; audyt E24, Ś6).
+      "/_admin_api/messages/read*": { ok: true },
+      "/_admin_api/messages?filter=all*": { ok: true, rows: [] },
+      "/_admin_api/messages/detail*": { ok: true, message: { id: "m1", direction: "inbound", source: "email", is_read: true, lang: "pl",
+        from_email: "anna.nowak@example.com", to_email: "kontakt@familiada.online", subject: "Pytanie 1", created_at: "2026-10-20T10:00:00Z",
+        body: "Dzień dobry, mam pytanie o finał.",
+        body_html: '<p>Dzień dobry,</p><p>mam pytanie o <b>finał</b> — czy można zmienić czas odpowiedzi?</p><p><a href="https://www.familiada.online/manual/" target="_blank">Podręcznik</a></p><script>document.body.innerHTML = "<h1 style=\'color:red\'>SKRYPT Z MAILA DZIAŁA</h1>";</script><img src="x:" onerror="document.body.style.background=\'red\'">' } },
+      "/_admin_api/attachments?message_id=*": { ok: true, attachments: [] },
+      // Kontakty marketingowe: stan zlecenia lead-findera przez Worker (Ś2).
+      "/_admin_api/leads/search-runs/status": { status: "paused", run_id: "0f1e2d3c-4b5a-4987-8654-3210fedcba98", verified: 12, errors: 0 },
+      "/_admin_api/marketing/contacts?*": { ok: true, total: 2, rows: [
+        { id: "c1", email: "biuro@przedszkole-example.test", name: "Przedszkole Słoneczko", city: "Kraków", used: false, added_at: "2026-10-19T09:00:00Z" },
+        { id: "c2", email: "dom.kultury@example.test", name: "Dom Kultury", city: "Gdańsk", used: true, added_at: "2026-10-18T09:00:00Z" },
+      ] },
+      "/_admin_api/marketing/logs": { ok: true, rows: [
+        { created_at: "2026-10-20T10:01:00Z", level: "info", message: "Zlecenie wstrzymane" },
+        { created_at: "2026-10-20T10:00:00Z", level: "success", message: "Zweryfikowano kontakt" },
+      ] },
+      "/_admin_api/marketing/ai-providers": { ok: true, rows: [] },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },

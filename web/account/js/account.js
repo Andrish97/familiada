@@ -1,22 +1,24 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T19311";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-21T19311";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-21T19311";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-21T19311";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T19311";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-21T19311";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T19311";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T19311";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T19311";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T19311";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T19311";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T19311";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-21T19311";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T07485";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T07485";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-22T07485";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-22T07485";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-22T07485";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-22T07485";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T07485";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T07485";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T07485";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T07485";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T07485";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T07485";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-22T07485";
 
 
 
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
+const emailRepeatInput = document.getElementById("email2");
+const emailActions = document.getElementById("emailActions");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
 const deletePassword = document.getElementById("deletePassword");
@@ -250,8 +252,12 @@ function setMigratePendingUi(pendingEmail) {
 
 async function refreshMigrateState() {
   try {
-    const st = await fetchEmailChangeStatus();
-    setMigratePendingUi(st?.pending_email || "");
+    // Z serwera (getUser), nie z tokenu sesji: token po wysłaniu linku bywa
+    // nieaktualny -- "Anuluj" uznawał wtedy, że nie ma czego anulować, i link
+    // z maila dalej przenosił konto (jak w refreshAuthEmailState).
+    const { data, error } = await sb().auth.getUser();
+    if (error) throw error;
+    setMigratePendingUi(extractPendingEmail(data?.user));
   } catch (e) {
     console.warn("[migrate] refreshMigrateState failed:", e);
   }
@@ -328,11 +334,12 @@ async function handleMigrateResend() {
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: migratePendingEmail,
-      options: { emailRedirectTo: redirect.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka. auth.resend szuka konta po obecnym
+    // adresie, więc z nowym adresem kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: migratePendingEmail },
+      { emailRedirectTo: redirect.toString() }
+    );
     if (error) throw error;
 
     setStatus(t("account.statusMigrateResent"));
@@ -414,7 +421,8 @@ function setEmailPendingUi(nextPendingEmail) {
   const hasPending = !!pendingEmail && pendingEmail !== currentEmail;
 
   if (emailPendingActions) emailPendingActions.hidden = !hasPending;
-  if (saveEmail) saveEmail.hidden = hasPending;
+  if (emailActions) emailActions.hidden = hasPending;
+  if (emailRepeatInput) emailRepeatInput.value = "";
 
   if (emailPendingHint) {
     emailPendingHint.hidden = !hasPending;
@@ -439,27 +447,6 @@ function setEmailPendingUi(nextPendingEmail) {
   tickCooldowns();
 }
 
-
-async function fetchEmailChangeStatus() {
-  try {
-    const { data: sess } = await sb().auth.getSession();
-    const token = sess?.session?.access_token;
-    if (!token) return null;
-
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-
-    const email = String(payload.email || "").toLowerCase();
-    const meta = payload.user_metadata || {};
-    const metaPending = String(meta.familiada_email_change_pending || "").trim().toLowerCase();
-    const pending_email = metaPending && metaPending !== email ? metaPending : "";
-    return { ok: true, email, pending_email, is_pending: !!pending_email };
-  } catch (e) {
-    console.warn("[email-change-status] failed:", e);
-    return null;
-  }
-}
 
 async function refreshAuthEmailState() {
   try {
@@ -681,6 +668,9 @@ async function handleEmailSave() {
 
     const normalizedMail = mail.toLowerCase();
     if (normalizedMail === currentEmail.toLowerCase()) throw new Error(t("account.errEmailSameAsCurrent"));
+    // Potwierdza tylko nowy adres, więc literówka = link w cudzej skrzynce.
+    const repeated = String(emailRepeatInput?.value || "").trim().toLowerCase();
+    if (repeated !== normalizedMail) throw new Error(t("account.errEmailMismatch"));
 
     const language = getUiLang();
 
@@ -734,11 +724,12 @@ async function handleEmailResend() {
     reserved = true;
 
 
-    const { error } = await sb().auth.resend({
-      type: "email_change",
-      email: pendingEmail,
-      options: { emailRedirectTo: confirmUrl.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka (nowy token, nowy mail). auth.resend
+    // szuka konta po obecnym adresie, więc z nowym kończył się "sukcesem" bez maila.
+    const { error } = await sb().auth.updateUser(
+      { email: pendingEmail },
+      { emailRedirectTo: confirmUrl.toString() }
+    );
     if (error) throw error;
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
@@ -785,7 +776,7 @@ async function handleEmailCancel() {
     });
     if (metaErr) throw metaErr;
 
-    // 3. Refresh JWT so fetchEmailChangeStatus reads updated metadata
+    // 3. Odświeżenie sesji (token z aktualnymi metadanymi dla innych stron)
     await sb().auth.refreshSession();
 
     setStatus(t("account.statusEmailCancelled"));
@@ -890,7 +881,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // cooldown: server state (cross-device)
   bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
-  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange] });
+  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, emailRepeatInput, saveEmail, resendEmailChange] });
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
@@ -920,6 +911,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   emailInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    emailRepeatInput?.focus();
+  });
+
+  emailRepeatInput?.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     saveEmail?.click();

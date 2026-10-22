@@ -46,6 +46,7 @@ const { test, expect } = require("@playwright/test");
 const { loginAsGuest } = require("./helpers/login");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, releaseMailCooldown } = require("./helpers/mailbox");
 
 const TEST_PASSWORD = "E2eTest123!";
 const LOGIN_URL = "https://www.familiada.online/login";
@@ -170,6 +171,81 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
   }
 });
 
+// Skrzynka test14 nie ma konta: link nie jest klikany, zmiana anulowana, gość usunięty,
+// więc żadne konto na tym adresie nie powstaje. Spec z @mailbox -- uruchamiać pojedynczo.
+test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, anulowanie unieważnia link @mailbox", async ({ page, context, browser }) => {
+  test.setTimeout(240_000);
+  const MAILBOX = "test14@familiada.online";
+  await resetMailProviderLimits();
+  await clearMailbox(MAILBOX);
+  await loginAsGuest(page, context);
+  const isConfirmLink = (link) => /\/login\/confirm\/\?token_hash=/.test(link);
+
+  try {
+    await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#migrateSection")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator("#btnMigrate")).toBeVisible();
+    await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email"); // blokada z poprzedniego przebiegu
+    const after = new Date(Date.now() - 2_000).toISOString();
+    await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
+    await page.locator("#migrateEmail").fill(MAILBOX);
+    await page.locator("#migratePass1").fill(TEST_PASSWORD);
+    await page.locator("#migratePass2").fill(TEST_PASSWORD);
+    await page.locator("#btnMigrate").click();
+    await expect(page.locator("#migratePendingHint")).toBeVisible({ timeout: 15000 });
+    const sentAt = Date.now();
+
+    const first = await waitForEmail({ recipient: MAILBOX, after });
+    expect(first.body_html || "").toContain('content="authEmail.guestMigrate@pl"');
+    const firstLink = extractHttpLinks(first).find(isConfirmLink);
+    expect(firstLink, "link migracji").toBeTruthy();
+
+    // "Minęła godzina" dla blokady per adres i odstęp GoTrue (60 s na użytkownika).
+    await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email");
+    const wait = sentAt + 65_000 - Date.now();
+    if (wait > 0) await page.waitForTimeout(wait);
+
+    const resendAfter = new Date(Date.now() - 1_000).toISOString();
+    await page.locator("#migrateResend").click();
+    await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 20000 });
+    await expect(page.locator("#appToast")).not.toHaveClass(/error/);
+    const resent = await waitForEmail({ recipient: MAILBOX, after: resendAfter });
+    const secondLink = extractHttpLinks(resent).find(isConfirmLink);
+    expect(secondLink, "link po ponownym wyslaniu").toBeTruthy();
+    expect(secondLink).not.toBe(firstLink);
+
+    await page.locator("#migrateCancel").click();
+    // Podpowiedź znika optymistycznie przed odpowiedzią serwera -- czekamy na
+    // komunikat po zakończonym anulowaniu, inaczej link wyprzedza anulowanie.
+    await expect(page.locator("#appToast")).toContainText("Migracja anulowana", { timeout: 20000 });
+    await expect(page.locator("#migratePendingHint")).toBeHidden({ timeout: 15000 });
+    await expect.poll(() => getGuestState(page), { timeout: 15000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
+
+    // Po anulowaniu link z maila nie przenosi konta.
+    const linkContext = await browser.newContext({ serviceWorkers: "block" });
+    await serveBranchCode(linkContext, { pages: ["login/confirm"] });
+    const linkPage = await linkContext.newPage();
+    await linkPage.goto(secondLink, { waitUntil: "domcontentloaded" });
+    await expect(linkPage.locator("#status")).toContainText(/anulowana/i, { timeout: 20000 });
+    console.log("[e2e-diag] link migracji po anulowaniu:", (await linkPage.locator("#status").textContent())?.trim());
+    await linkContext.close();
+    await expect.poll(() => getGuestState(page), { timeout: 10000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
+  } catch (error) {
+    console.log("[e2e-diag] migracja: blad w tresci testu:", error.message.split("\n")[0], "url:", page.url());
+    throw error;
+  } finally {
+    try {
+      if (!/\/account/.test(page.url())) await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
+      await page.locator("#deleteAccount").click({ timeout: 30000 });
+      await page.getByRole("button", { name: "Usuń", exact: true }).click();
+      await page.waitForURL(/login/, { timeout: 20000 });
+    } catch (cleanupError) {
+      console.log("[e2e-diag] migracja: sprzatanie goscia nieudane:", cleanupError.message.split("\n")[0]);
+    }
+    await clearMailbox(MAILBOX);
+  }
+});
+
 test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa): is_guest zostaje true po submit", async ({ page, context, request }) => {
   test.setTimeout(60_000);
 
@@ -197,6 +273,8 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
     await reapplyE2EBypass(context);
     await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
+    // Przy aktywnej sesji gościa przycisk wraca do niej, nie zakłada nowego gościa.
+    await expect(page.locator("#btnGuest")).toContainText("Wróć do konta gościa");
 
     await page.click("#btnToggle"); // Załóż konto -> mode=register
     const migrateEmail = `e2e-login-migrate-${Date.now()}@example.invalid`;
@@ -210,15 +288,20 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
 
     // Sukces: status "Sprawdź e-mail…", potem alertModal z dalszą instrukcją.
     await expect(page.locator("#status")).toContainText("Sprawdź e-mail", { timeout: 20000 });
-    await page.getByRole("button", { name: "OK", exact: true }).click().catch(() => {});
+    await page.getByRole("button", { name: "OK", exact: true }).click();
+
+    // Sesja gościa zostaje; Ustawienia konta pokazują oczekującą zamianę
+    // z „Wyślij ponownie” i „Anuluj”.
+    await page.waitForURL(/\/account\//, { timeout: 20000 });
+    await expect(page.locator("#migratePendingHint")).toContainText(migrateEmail, { timeout: 20000 });
+    await expect(page.locator("#migratePendingActions")).toBeVisible();
 
     // Kluczowa właściwość (ta sama co w teście /account powyżej): dopóki
     // e-mail nie jest potwierdzony, konto MUSI zostać gościem. Przed
     // 2026-09-29 login.js wołał tu convertGuestToRegistered(), który
     // flipował profiles.is_guest na false NATYCHMIAST — dokładnie ten stary
-    // bug z komentarza przy migracji 249. Zapytanie idzie bezpośrednio przez
-    // REST, bo login.js po sukcesie realnie robi signOut() (przeglądarka
-    // traci sesję).
+    // bug z komentarza przy migracji 249. Zapytanie bezpośrednio przez REST
+    // tokenem gościa sprzed migracji.
     const res = await request.get(
       `${authInfo.supabaseUrl}/rest/v1/profiles?id=eq.${authInfo.userId}&select=is_guest`,
       { headers: { Authorization: `Bearer ${authInfo.accessToken}`, apikey: authInfo.anonKey } }
@@ -227,8 +310,7 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
     const rows = await res.json();
     expect(rows?.[0]?.is_guest, "profiles.is_guest powinno zostać true dopóki e-mail niepotwierdzony").toBe(true);
   } finally {
-    // Przeglądarka jest już wylogowana (login.js robi signOut() po sukcesie),
-    // więc sprzątanie idzie bezpośrednio przez tę samą edge function co
+    // Sprzątanie bezpośrednio przez tę samą edge function co
     // account-deletion.spec.js, z tym samym (wciąż ważnym) tokenem gościa —
     // konto zostało gościem (is_guest=true), więc delete-account je usuwa.
     await request.post(`${authInfo.supabaseUrl}/functions/v1/delete-account`, {

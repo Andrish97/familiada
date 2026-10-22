@@ -1,31 +1,32 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-21T19311";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T19311";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T19311";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T19311";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T19311";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-21T19311";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-21T19311";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T19311";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-21T19311";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-21T19311";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-21T19311";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-21T19311";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-22T07485";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T07485";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-22T07485";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T07485";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-22T07485";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-22T07485";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-22T07485";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T07485";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-22T07485";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-22T07485";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-22T07485";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-22T07485";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-21T19311";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-22T07485";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-21T19311";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T19311";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T19311";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T19311";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-21T19311";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-22T07485";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T07485";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T07485";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-22T07485";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T07485";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-22T07485";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -45,14 +46,14 @@ const DEFAULT_SETTINGS = {
     hostLogoMode: "source",
   },
   game: {
-    hasFinal: null,
+    hasFinal: true,
     finalQuestionsMode: "random",
     roundsQuestionsMode: "random",
     advanced: {
       roundMultipliers: [1, 1, 1, 2, 3],
       finalMinPoints: 300,
       finalTarget: 200,
-      endScreenMode: "logo",
+      endScreenMode: "money",
       finalPrizeMultiplier: 3,
       mainPrizeAmount: 25000,
     },
@@ -263,11 +264,13 @@ async function saveAll() {
         }
       }
 
-      for (const [id, value] of invalidInputs) {
-        const input = document.getElementById(id);
-        if (input) input.value = value;
+      // Niepoprawne pola Ustawień gry: zapis wstrzymany z informacją,
+      // zamiast po cichu wracać do poprzednich wartości (zgłoszone 2026-10-21).
+      if (invalidInputs.size) {
+        await alertModal({ text: t("gameSettings.game.saveInvalid") });
+        setActiveCat("game");
+        return;
       }
-      invalidInputs.clear();
 
       // Uzupełnij filenames w sound settings (do streszczenia w Control)
       await _syncSoundFilenames();
@@ -1531,10 +1534,67 @@ function initDragSort(listEl, getItems, setItems, reRender) {
 }
 
 // --- USTAWIENIA GRY ---
+// Pole z niepoprawną wartością pokazuje to, co wpisano (z komunikatem),
+// a nie po cichu poprzednią wartość.
+function fieldValue(id, fallback) {
+  return invalidInputs.has(id) ? invalidInputs.get(id) : String(fallback);
+}
+
+// Punkty odpowiedzi pytań gry — do podpowiedzi progów (cache wg listy pytań).
+let answerPointsCache = { key: "", map: null, promise: null };
+async function loadAnswerPoints() {
+  const ids = allQuestions.map((q) => q.id);
+  const key = ids.join(",");
+  if (answerPointsCache.key === key && answerPointsCache.map) return answerPointsCache.map;
+  if (answerPointsCache.key === key && answerPointsCache.promise) return answerPointsCache.promise;
+  const promise = (async () => {
+    const map = new Map(ids.map((id) => [String(id), []]));
+    if (ids.length) {
+      const { data, error } = await sb().from("answers").select("question_id,fixed_points").in("question_id", ids);
+      if (error) throw error;
+      for (const row of data || []) map.get(String(row.question_id))?.push(Number(row.fixed_points) || 0);
+    }
+    answerPointsCache = { key, map, promise: null };
+    return map;
+  })();
+  answerPointsCache = { key, map: null, promise };
+  return promise;
+}
+
+// Podpowiedzi (nie blokują zapisu): najwyższy możliwy wynik finału i rund
+// przy obecnych pytaniach, mnożnikach i trybach wyboru pytań.
+async function showAdvancedSuggestions() {
+  const targetHint = document.getElementById("gsFinalTargetSuggest");
+  const minHint = document.getElementById("gsFinalMinPtsSuggest");
+  if (!targetHint && !minHint) return;
+  let points;
+  try { points = await loadAnswerPoints(); } catch (error) { console.warn("[game-settings] answer points:", error); return; }
+  if (!document.getElementById("gsFinalTargetSuggest")) return;
+  const g = localSettings.game;
+  const adv = g.advanced;
+  const pts = (q) => points.get(String(q.id)) || [];
+  const finalPicked = g.finalQuestionsMode === "pick" ? (localSettings.questions.final || []) : [];
+  const finalIds = new Set(finalPicked.map((q) => String(q.id)));
+  const finalCandidates = g.finalQuestionsMode === "pick" ? finalPicked : allQuestions;
+  const finalMax = g.hasFinal === true ? finalMaxPoints(finalCandidates.map(pts)) : null;
+  const roundsOrdered = g.roundsQuestionsMode === "pick";
+  const roundsList = roundsOrdered ? (localSettings.questions.rounds || []) : allQuestions.filter((q) => !finalIds.has(String(q.id)));
+  const roundsMax = roundsMaxPoints(roundsList.map(pts), adv.roundMultipliers, { ordered: roundsOrdered });
+  const paint = (el, max, value, okKey, warnKey) => {
+    if (!el) return;
+    if (max == null) { el.textContent = ""; el.classList.remove("is-warn"); return; }
+    const over = Number.isFinite(value) && value > max;
+    el.textContent = t(over ? warnKey : okKey, { max });
+    el.classList.toggle("is-warn", over);
+  };
+  paint(targetHint, finalMax, adv.finalTarget, "gameSettings.game.finalTargetSuggest", "gameSettings.game.finalTargetAbove");
+  paint(minHint, roundsList.length ? roundsMax : null, adv.finalMinPoints, "gameSettings.game.finalMinPointsSuggest", "gameSettings.game.finalMinPointsAbove");
+}
+
 function renderGame() {
   const adv = localSettings.game.advanced;
   const hasFinal = localSettings.game.hasFinal === true;
-  const endMode = adv.endScreenMode || "logo";
+  const endMode = adv.endScreenMode || "money";
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
@@ -1543,20 +1603,25 @@ function renderGame() {
         <div class="sectionTitle">${t("gameSettings.game.roundsScoreSection")}</div>
         <div class="setting-item">
           <div class="lbl2">${t("gameSettings.game.roundMultipliers")}</div>
-          <input class="inp" id="gsMultipliers" value="${escAttr(adv.roundMultipliers.join(", "))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
+          <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
           <div class="gs-hint">${t("gameSettings.game.roundMultipliersHint")}</div>
+          <div class="gs-field-msg" id="gsMultipliersMsg" role="alert"></div>
         </div>
       </div>
       <div class="sectionBlock">
         <div class="sectionTitle">${t("gameSettings.game.finaleSection")}</div>
         <div class="setting-item">
           <div class="lbl2">${t("gameSettings.game.finalMinPoints")}</div>
-          <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${adv.finalMinPoints}" style="margin-top:6px;max-width:160px"/>
+          <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}" style="margin-top:6px;max-width:160px"/>
           <div class="gs-hint">${t("gameSettings.game.finalMinPointsHint")}</div>
+          <div class="gs-field-msg" id="gsFinalMinPtsMsg" role="alert"></div>
+          <div class="gs-field-suggest" id="gsFinalMinPtsSuggest"></div>
         </div>
         <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
           <div class="lbl2">${t("gameSettings.game.finalTarget")}</div>
-          <input class="inp" id="gsFinalTarget" type="number" min="50" max="999" value="${adv.finalTarget}" style="margin-top:6px;max-width:160px"/>
+          <input class="inp" id="gsFinalTarget" type="number" min="1" max="${ADVANCED_LIMITS.finalTarget.max}" value="${escAttr(fieldValue("gsFinalTarget", adv.finalTarget))}" style="margin-top:6px;max-width:160px"/>
+          <div class="gs-field-msg" id="gsFinalTargetMsg" role="alert"></div>
+          <div class="gs-field-suggest" id="gsFinalTargetSuggest"></div>
         </div>
       </div>
       <div class="sectionBlock">
@@ -1578,11 +1643,13 @@ function renderGame() {
         <div class="setting-item" id="gsPrizeSettingsRow" style="display:${hasFinal && endMode === "money" ? "grid" : "none"};grid-template-columns:1fr 1fr;gap:14px">
           <div>
             <div class="lbl2">${t("gameSettings.game.prizeAmount")}</div>
-            <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${adv.mainPrizeAmount}" style="margin-top:6px"/>
+            <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${escAttr(fieldValue("gsMainPrize", adv.mainPrizeAmount))}" style="margin-top:6px"/>
+            <div class="gs-field-msg" id="gsMainPrizeMsg" role="alert"></div>
           </div>
           <div>
             <div class="lbl2">${t("gameSettings.game.prizeMultiplier")}</div>
-            <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${adv.finalPrizeMultiplier}" style="margin-top:6px"/>
+            <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}" style="margin-top:6px"/>
+            <div class="gs-field-msg" id="gsPrizeMultiplierMsg" role="alert"></div>
           </div>
           <div class="gs-hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
         </div>
@@ -1593,32 +1660,55 @@ function renderGame() {
     </div>
   `;
 
-  function updateNumberInput(event, key, minimum, maximum = Infinity) {
-    const input = event.target;
-    const value = Number(input.value);
-    if (input.value.trim() && Number.isInteger(value) && value >= minimum) {
-      localSettings.game.advanced[key] = Math.min(value, maximum);
-      invalidInputs.delete(input.id);
-    } else {
-      invalidInputs.set(input.id, String(localSettings.game.advanced[key]));
-    }
-    markDirty();
+  // Każda zmiana pola jest sprawdzana od razu: poprawna wartość trafia do
+  // ustawień, niepoprawna zostaje w polu z komunikatem i wstrzymuje zapis.
+  const numberFields = [
+    ["gsFinalMinPts", "finalMinPoints"],
+    ["gsFinalTarget", "finalTarget"],
+    ["gsMainPrize", "mainPrizeAmount"],
+    ["gsPrizeMultiplier", "finalPrizeMultiplier"],
+  ];
+  function setFieldError(id, message) {
+    const input = document.getElementById(id);
+    const msg = document.getElementById(`${id}Msg`);
+    input?.classList.toggle("is-invalid", !!message);
+    if (input) input.setAttribute("aria-invalid", message ? "true" : "false");
+    if (msg) { msg.textContent = message || ""; msg.classList.toggle("is-error", !!message); }
   }
-
-  document.getElementById("gsMultipliers")?.addEventListener("change", e => {
-    const tokens = e.target.value.trim().split(/[,\s]+/);
-    const parts = tokens.map(Number);
-    if (tokens.every(token => /^\d+$/.test(token)) && parts.every(n => Number.isSafeInteger(n) && n > 0)) {
-      localSettings.game.advanced.roundMultipliers = parts;
-      invalidInputs.delete(e.target.id);
+  function checkNumberField(id, key) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const limits = ADVANCED_LIMITS[key];
+    const value = parseIntInRange(input.value, limits);
+    if (value == null) {
+      invalidInputs.set(id, input.value);
+      setFieldError(id, t("gameSettings.game.invalidNumber", { min: limits.min, max: limits.max }));
     } else {
-      invalidInputs.set(e.target.id, localSettings.game.advanced.roundMultipliers.join(", "));
+      localSettings.game.advanced[key] = value;
+      invalidInputs.delete(id);
+      setFieldError(id, "");
     }
-    markDirty();
-  });
-
-  document.getElementById("gsFinalMinPts")?.addEventListener("change", e => updateNumberInput(e, "finalMinPoints", 0));
-  document.getElementById("gsFinalTarget")?.addEventListener("change", e => updateNumberInput(e, "finalTarget", 1));
+  }
+  function checkMultipliers() {
+    const input = document.getElementById("gsMultipliers");
+    if (!input) return;
+    const parts = parseMultipliers(input.value);
+    if (!parts) {
+      invalidInputs.set(input.id, input.value);
+      setFieldError(input.id, t("gameSettings.game.invalidMultipliers"));
+    } else {
+      localSettings.game.advanced.roundMultipliers = parts;
+      invalidInputs.delete(input.id);
+      setFieldError(input.id, "");
+    }
+  }
+  for (const [id, key] of numberFields) {
+    document.getElementById(id)?.addEventListener("input", () => { checkNumberField(id, key); markDirty(); void showAdvancedSuggestions(); });
+    if (invalidInputs.has(id)) checkNumberField(id, key);
+  }
+  document.getElementById("gsMultipliers")?.addEventListener("input", () => { checkMultipliers(); markDirty(); void showAdvancedSuggestions(); });
+  if (invalidInputs.has("gsMultipliers")) checkMultipliers();
+  void showAdvancedSuggestions();
 
   content.querySelectorAll("[name='gsEndMode']").forEach(radio => {
     radio.addEventListener("change", () => {
@@ -1631,12 +1721,11 @@ function renderGame() {
     });
   });
 
-  document.getElementById("gsMainPrize")?.addEventListener("change", e => updateNumberInput(e, "mainPrizeAmount", 1, 99999));
-  document.getElementById("gsPrizeMultiplier")?.addEventListener("change", e => updateNumberInput(e, "finalPrizeMultiplier", 1));
 
   document.getElementById("btnGameReset")?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia gry?" })) return;
     localSettings.game.advanced = { ...DEFAULT_SETTINGS.game.advanced };
+    for (const id of ["gsMultipliers", "gsFinalMinPts", "gsFinalTarget", "gsMainPrize", "gsPrizeMultiplier"]) invalidInputs.delete(id);
     markDirty();
     renderGame();
   });

@@ -4,7 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -27,6 +27,7 @@ const DEVICES = {
   phone: { width: 390, height: 844, scale: 2, mobile: true },
   tablet: { width: 820, height: 1180, scale: 2, mobile: true },
   "phone-landscape": { width: 844, height: 390, scale: 2, mobile: true },
+  "tablet-landscape": { width: 1180, height: 820, scale: 2, mobile: true },
 };
 const LANGS = ["pl", "en", "uk"];
 

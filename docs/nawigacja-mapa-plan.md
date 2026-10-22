@@ -625,14 +625,17 @@ flowchart LR
   pollVotePoints["/polls/vote/points/"]
   pollVoteText["/polls/vote/text/"]
   pollVoteQr["/polls/vote/qr/"]
+  manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
+  manual -->|btnLegal| privacy
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
   connectTv -.->|↩| connectDevice
+  manual -.->|↩| home
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
@@ -656,14 +659,17 @@ flowchart LR
   pollVotePoints["/polls/vote/points/"]
   pollVoteText["/polls/vote/text/"]
   pollVoteQr["/polls/vote/qr/"]
+  manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
+  manual -->|btnLegal| privacy
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
   connectTv -.->|↩| connectDevice
+  manual -.->|↩| home
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```

@@ -1,6 +1,8 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-21T19311";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-21T19311";
-import { icon, iconText } from "./icons.js?v=v2026-10-21T19311";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T07485";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T07485";
+import { icon, iconText } from "./icons.js?v=v2026-10-22T07485";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-22T07485";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-22T07485";
 
 
 let modalEl = null;
@@ -88,39 +90,40 @@ function buildModalHtml() {
         <div class="mTitle" id="cModalTitle"></div>
         <button class="btn sm" id="cModalX" type="button" aria-label="Zamknij">${icon("close")}</button>
       </div>
-      <div id="cModalForm" class="uni-body">
-        <div class="field">
-          <label class="field-label" id="cModalEmailLabel"></label>
-          <input class="inp" id="cModalEmail" type="email" autocomplete="email" style="width:100%;box-sizing:border-box"/>
+      <div id="cModalForm" class="uni-body contact-form">
+        <div class="contact-field">
+          <label class="contact-label" id="cModalEmailLabel" for="cModalEmail"></label>
+          <input class="inp" id="cModalEmail" type="email" autocomplete="email"/>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalTicketLabel"></label>
-          <input class="inp" id="cModalTicket" type="text" style="width:100%;box-sizing:border-box" autocomplete="off"/>
+        <div class="contact-field">
+          <label class="contact-label" id="cModalTicketLabel" for="cModalTicket"></label>
+          <input class="inp" id="cModalTicket" type="text" autocomplete="off"/>
         </div>
-        <div class="field" id="cModalSubjectField">
-          <label class="field-label" id="cModalSubjectLabel"></label>
-          <input class="inp" id="cModalSubject" type="text" style="width:100%;box-sizing:border-box"/>
+        <div class="contact-field" id="cModalSubjectField">
+          <label class="contact-label" id="cModalSubjectLabel" for="cModalSubject"></label>
+          <input class="inp" id="cModalSubject" type="text"/>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalMessageLabel"></label>
-          <textarea class="inp" id="cModalMessage" rows="7" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+        <div class="contact-field">
+          <label class="contact-label" id="cModalMessageLabel" for="cModalMessage"></label>
+          <textarea class="inp" id="cModalMessage" rows="7"></textarea>
         </div>
-        <div class="field">
-          <label class="field-label" id="cModalAttachLabel"></label>
-          <input type="file" id="cModalAttachments" multiple style="display:none"/>
-          <label for="cModalAttachments" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.65);cursor:pointer;user-select:none">
+        <div class="contact-field">
+          <div class="contact-label" id="cModalAttachLabel"></div>
+          <input type="file" id="cModalAttachments" multiple hidden/>
+          <label for="cModalAttachments" class="btn sm contact-attach-btn">
             ${icon("paperclip")}
             <span id="cModalAttachBtnLabel"></span>
           </label>
-          <div id="cModalAttachHint" style="font-size:11px;opacity:.4;margin-top:3px"></div>
-          <div id="cModalFileList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+          <div id="cModalAttachHint" class="contact-hint"></div>
+          <div id="cModalFileList" class="contact-files"></div>
         </div>
-        <div id="cModalError" style="font-size:13px;color:#ff6b6b;display:none"></div>
+        <div id="cModalCaptcha" class="contact-captcha" hidden></div>
+        <div id="cModalError" class="contact-error" style="display:none" role="alert"></div>
       </div>
-      <div id="cModalSuccess" class="uni-body" style="display:none;text-align:center;padding:16px 0">
-        <div style="font-size:32px;margin-bottom:8px;color:#6ee7a8">${icon("check")}</div>
-        <div style="font-size:15px;font-weight:700" id="cModalSuccessTitle"></div>
-        <div style="margin-top:6px;font-size:13px;opacity:.7" id="cModalSuccessTicket"></div>
+      <div id="cModalSuccess" class="uni-body contact-success" style="display:none">
+        <div class="contact-success-icon">${icon("check")}</div>
+        <div class="contact-success-title" id="cModalSuccessTitle"></div>
+        <div class="contact-success-ticket" id="cModalSuccessTicket"></div>
       </div>
       <div id="cModalFormActions" class="uni-foot modal-actions">
         <button class="btn sm" id="cModalClose" type="button"></button>
@@ -154,6 +157,19 @@ function applyLabels() {
   modalEl?.querySelector('.contact-modal-topbar')?.toggleAttribute('hidden', !isSheetViewport() || usedSheetMode);
   const ticketInp = document.getElementById("cModalTicket");
   if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
+}
+
+// W trakcie wysyłki (także gdy czeka na wyzwanie Turnstile) „Wyślij” zostaje
+// z ikoną i etykietą, tylko wyłączony -- dawny sam „…” wyglądał jak menu
+// „więcej” i chował główną akcję (uwaga właściciela 2026-10-22); ta sama
+// szerokość, więc nagłówek arkusza nie przeskakuje.
+function setSubmitBusy(busy) {
+  isSubmitting = busy;
+  const btn = document.getElementById("cModalSubmit");
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) btn.setAttribute("aria-busy", "true");
+  else btn.removeAttribute("aria-busy");
 }
 
 function ensureModal() {
@@ -196,7 +212,7 @@ function ensureModal() {
     // Nazwa pliku jako tekst (nazwa może zawierać znaczniki HTML).
     list.replaceChildren(...files.map(f => {
       const chip = document.createElement("span");
-      chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)";
+      chip.className = "contact-file";
       chip.textContent = f.name;
       return chip;
     }));
@@ -207,7 +223,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-21T19311");
+    const { sb } = await import("./supabase.js?v=v2026-10-22T07485");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -288,9 +304,7 @@ async function submitContact() {
   if (!message || message.length < 5) { showErr(t("contact.modal.errMessage") || "Wiadomość jest za krótka."); return; }
   if (!ticket && !subject)            { showErr(t("contact.modal.errSubject") || "Podaj temat."); return; }
 
-  isSubmitting = true;
-  const btn = document.getElementById("cModalSubmit");
-  if (btn) { btn.disabled = true; btn.textContent = "…"; }
+  setSubmitBusy(true);
   if (errEl) { errEl.style.display = "none"; }
 
   try {
@@ -310,22 +324,34 @@ async function submitContact() {
       }
     }
 
+    // Weryfikacja Turnstile po stronie Workera (token jednorazowy).
+    let captcha_token;
+    try {
+      captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang, size: "flexible" });
+    } catch {
+      showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
+      return;
+    }
     let res;
     if (ticket) {
       res = await fetch("/_api/contact/append", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, ticket, message, lang, attachments }),
+        body: JSON.stringify({ email, ticket, message, lang, attachments, captcha_token }),
       });
     } else {
       res = await fetch("/_api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang, attachments }),
+        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang, attachments, captcha_token }),
       });
     }
 
     if (res.status === 429) { showErr(t("privacy.contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
+    if (res.status === 400 || res.status === 503) {
+      const failed = await res.clone().json().catch(() => ({}));
+      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
+    }
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "send_failed");
@@ -346,8 +372,7 @@ async function submitContact() {
   } catch (err) {
     showErr(String(err?.message || err));
   } finally {
-    isSubmitting = false;
-    if (btn) { btn.disabled = false; applyLabels(); }
+    setSubmitBusy(false);
   }
 }
 
@@ -373,8 +398,9 @@ function ensureContactEntryPoint() {
 if (typeof document !== "undefined") {
   window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
   window.addEventListener('i18n:lang', applyLabels);
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureContactEntryPoint, { once: true });
-  else ensureContactEntryPoint();
+  const ensureFooterEntryPoints = () => { ensureContactEntryPoint(); ensureSupportEntryPoint(); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureFooterEntryPoints, { once: true });
+  else ensureFooterEntryPoints();
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-contact-modal], .btn-contact-footer")) openContactModal();
   });
