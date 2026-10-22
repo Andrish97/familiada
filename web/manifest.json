@@ -11,25 +11,25 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-22T03331",
+      "src": "/assets/img/icon-1024.png?v=v2026-10-22T07242",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-22T03331",
+      "src": "/assets/img/icon-1024.png?v=v2026-10-22T07242",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-22T03331",
+      "src": "/assets/img/icon-1024.png?v=v2026-10-22T07242",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-22T03331",
+      "src": "/assets/img/icon-1024.png?v=v2026-10-22T07242",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
