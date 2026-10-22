@@ -61,11 +61,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - **Nie powtarzać zielonych:** spec zielony na danym kodzie nie jest puszczany
   ponownie, jeśli późniejsze zmiany (scalenie, poprawka) nie dotknęły plików,
   które testuje. Przed kolejnym przebiegiem porównać diff z plikami speca.
-- **Równolegle tylko na rozłącznych kontach:** dwa przebiegi naraz wyłącznie
-  z rozłącznym `test_accounts` i bez `@mailbox`; przy pracy innej sesji
-  na tych samych kontach/skrzynkach — nie równolegle.
-- Powód ograniczeń: wspólne skrzynki testowe, limity wysyłki i cooldowny poczty,
-  konta na stałe i mały serwer bazy — równoległe przebiegi dają fałszywe błędy.
+- **Równoległe przebiegi:** spece z wypożyczaniem kont (`helpers/e2e-test`)
+  idą równolegle bez umawiania się — konta, skrzynki i zasoby `mail`/`heavy`
+  rozdziela lease; workflow nie przydziela kont.
+- Powód zasobów `mail`/`heavy`: wspólne limity wysyłki i mały serwer bazy.
 
 ## Wygląd (decyzja 2026-10-10)
 

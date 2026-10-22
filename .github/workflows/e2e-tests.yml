@@ -23,10 +23,6 @@ on:
         description: 'Opcjonalnie: adres API zamiast https://api.familiada.online (próba generalna przeprowadzki, np. https://api2.familiada.online). Działa w spekach z serveBranchCode.'
         required: false
         default: ""
-      test_accounts:
-        description: 'Opcjonalna, odizolowana pula kont, np. 4,5. Pusta wartość używa zwykłej puli bez kont zarezerwowanych.'
-        required: false
-        default: ""
       e20_gallery_pages:
         description: 'Opcjonalnie: ID stron galerii E20 rozdzielone przecinkami. Puste = wszystkie strony.'
         required: false
@@ -74,48 +70,33 @@ on:
 # e2e-custom-filter, bez podziału na grupy niżej) -- to zdecydowanie
 # najczęstszy sposób odpalania.
 #
-# TYLKO DWA SEKRETY W OGÓLE: E2E_BYPASS_SECRET (omija Turnstile) i
-# TEST_PASSWORD (wspólne hasło wszystkich kont testowych). Loginy kont
-# testowych to zawsze wzorzec test<N>@familiada.online -- domena jest
-# stałą w kodzie (e2e/helpers/login.js), nie sekretem, bo produkcja to
-# zawsze ta sama domena i sam login bez prawdziwego hasła niczego nie
-# odsłania. Zero sekretu z listą loginów, zero osobnego konta "głównego".
+# TYLKO DWA SEKRETY W OGÓLE: E2E_BYPASS_SECRET (omija Turnstile, podpisuje
+# /_e2e_api/*) i TEST_PASSWORD (wspólne hasło kont testowych).
+#
+# KONTA TESTOWE (E25, docs/konta-testowe-plan.md): spec deklaruje potrzeby
+# (test.use({ needs }) z e2e/helpers/e2e-test.js), każdy worker Playwrighta
+# wypożycza (lease) przez Worker komplet tożsamości e2e na wyłączność i oddaje
+# go po zakończeniu. Workflow nie przydziela kont i nie zna ich liczby --
+# równoległe przebiegi rozdziela samo wypożyczanie.
 #
 # JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
 # ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
-# e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten plik, to
-# inaczej". Zwykła pula kont test1@…...test8@… (test9/test10 tylko jawnie
-# przez `test_accounts`). Równoległe lżejsze przebiegi: każdy z rozłącznym zestawem
-# kont przez wejście `test_accounts` (np. 1,2,3 i 4,5,6).
-# TEST_ACCOUNT_COUNT określa górny numer zwykłej puli — patrz
-# getTestAccountPool w e2e/helpers/login.js. Pula jest
-# dostępna w CAŁOŚCI każdemu filtrowi/grupie, bez sztywnego podziału
-# między plikami — który dokładnie numer trafia do którego testu decyduje
-# kod TEGO pliku (np. control2.spec.js woła loginAsPooledTestUser z
-# testInfo.parallelIndex; base-explorer.spec.js/bases.spec.js jawnie
-# wybierają testAccountUsername(1)/(2) na dwa jednocześnie zalogowane
-# konta w tym samym teście).
+# e2e-grouped i w e2e-custom-filter.
 #
 # WAŻNE, znalezione na własnej skórze (run #122, 12/16 testów control2
-# failed, 57 minut): TEST_ACCOUNT_COUNT (rozmiar puli kont) i TEST_WORKERS
-# (realna liczba RÓWNOLEGŁYCH workerów Playwrighta) to CELOWO DWIE RÓŻNE
-# liczby, nie jedna. Runner GitHub Actions (ubuntu-latest) ma ograniczoną
+# failed, 57 minut): TEST_WORKERS (realna liczba RÓWNOLEGŁYCH workerów
+# Playwrighta) musi zostać niski. Runner GitHub Actions (ubuntu-latest) ma ograniczoną
 # liczbę rdzeni, a każdy POJEDYNCZY test control2.spec.js sam otwiera do 4
 # kontekstów przeglądarki naraz (Control+Display+Host+Buzzer) -- przy
 # --workers=10 to do 40 jednoczesnych instancji Chromium na jednej
 # maszynie. Runner fizycznie nie nadążał renderować strony w czasie, na
 # jaki czekał Playwright -- stąd masowe "element is not stable"/"element
-# is not enabled" i timeouty, NIE błąd logiki testów. TEST_ACCOUNT_COUNT
-# może bezpiecznie zostać wysoki (więcej kont w pogotowiu na przyszłość,
-# np. mocniejszy runner) -- to TEST_WORKERS reguluje faktyczne obciążenie
-# i musi zostać niski. Podnoś TEST_WORKERS ostrożnie, po jednym, sprawdzając
+# is not enabled" i timeouty, NIE błąd logiki testów. TEST_WORKERS reguluje
+# faktyczne obciążenie. Podnoś TEST_WORKERS ostrożnie, po jednym, sprawdzając
 # realny wynik, nie zgadując.
 #
-# Reszta testów (game-deletion, editor, cross-resource-locks, ...) używa
-# domyślnego loginAsTestUser bez jawnego username -> zawsze test1, więc
-# idzie szeregowo w swojej grupie (workers:1 z playwright.config.js jest
-# używane tylko lokalnie/poza CI — w CI workers zawsze nadpisuje ten
-# jeden, wspólny --workers).
+# workers:1 z playwright.config.js jest używane tylko lokalnie/poza CI —
+# w CI workers zawsze nadpisuje ten jeden, wspólny --workers.
 # Podniesione 2 -> 4 na wyraźną prośbę (2026-09-17), żeby skrócić czas
 # przebiegu -- 4 workery x do 4 kontekstów/test = do 16 jednoczesnych
 # Chromium, wciąż wyraźnie poniżej 40, które przeciążyło runner w run #122.
@@ -134,8 +115,6 @@ on:
 # górę bez kolejnego czystego przebiegu na obecnej wartości.
 env:
   TEST_BRANCH_CODE: ${{ github.ref_name != 'main' && '1' || '0' }}
-  TEST_ACCOUNT_COUNT: "8"
-  TEST_ACCOUNT_NUMBERS: ${{ inputs.test_accounts || '' }}
   E2E_API_ORIGIN: ${{ inputs.api_origin || '' }}
   TEST_WORKERS: ${{ inputs.workers || '4' }}
 

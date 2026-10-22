@@ -294,9 +294,7 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   renderować strony w czasie, na jaki czekał Playwright — stąd masowe
   `element is not stable`/`element is not enabled` (setki powtórzeń, nie
   pojedyncze) i timeouty, **nie błąd logiki testów**. Dlatego
-  `TEST_ACCOUNT_COUNT` (rozmiar puli) i `TEST_WORKERS` (realna
-  równoległość) to dwie osobne zmienne — pierwsza może być wysoka, druga
-  musi być niska (patrz sekcja "Test accounts" wyżej). Podnoś
+  `TEST_WORKERS` (realna równoległość) musi być niska. Podnoś
   `TEST_WORKERS` po jednym i sprawdzaj wynik, zamiast zakładać, że więcej
   kont = można dać `--workers` na maksa.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
@@ -373,8 +371,8 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
   kontami — patrz sekcja "Test accounts" wyżej (`base-explorer.spec.js`/
   `bases.spec.js` już tak robią, dla `test1`/`test2`).
 - `getTestAccountPool()` / `loginAsPooledTestUser(page, context,
-  workerIndex)` — pula `test1@…`, `test2@…`, ... `testN@…` (rozmiar =
-  `TEST_ACCOUNT_COUNT`) do prawdziwej równoległości wewnątrz jednego pliku;
+  workerIndex)` — **wycofane** (konta testN usunięte, workflow bez
+  `TEST_ACCOUNT_COUNT`/`test_accounts`) — dawna pula do równoległości wewnątrz jednego pliku;
   `loginAsPooledTestUser` wybiera konto po `workerIndex` (przekaż
   `testInfo.parallelIndex`). Używane dziś przez `control2.spec.js`, ale
   nie jest do niego przywiązane — każdy plik może po to sięgnąć, patrz
