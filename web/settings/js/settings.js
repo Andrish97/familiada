@@ -14,17 +14,17 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T22084";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T22084";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T22084";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T22084";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22084";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22084";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T22084";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T22084";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T22084";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T22084";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T22084";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T22183";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T22183";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T22183";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T22183";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22183";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22183";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T22183";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T22183";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T22183";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T22183";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T22183";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -35,15 +35,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T22084";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T22183";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T22084";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T22084";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T22084";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T22084"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T22183";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T22183";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T22183";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T22183"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T22084";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T22183";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -129,7 +129,6 @@ const els = {
   toolsDropdown: document.getElementById("toolsDropdown"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
-  btnTabScreenshots: document.getElementById("btnTabScreenshots"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   btnTabRatings: document.getElementById("btnTabRatings"),
   btnTabStats: document.getElementById("btnTabStats"),
@@ -146,7 +145,6 @@ const els = {
   reportsPanel: document.getElementById("reportsPanel"),
   marketingPanel: document.getElementById("marketingPanel"),
   marketingContactsPanel: document.getElementById("marketingContactsPanel"),
-  homepageScreenshotsPanel: document.getElementById("homepageScreenshotsPanel"),
   btnTabMarketing: document.getElementById("btnTabMarketing"),
   btnTabMarketingContacts: document.getElementById("btnTabMarketingContacts"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
@@ -1072,9 +1070,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22084"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22084"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T22084"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22183"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22183"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T22183"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5205,7 +5203,7 @@ function closeTools() {
 // Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
 const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
-  "reports", "marketing", "marketingContacts", "homepageScreenshots",
+  "reports", "marketing", "marketingContacts",
 ];
 const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
@@ -5229,7 +5227,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
-  const btnScreenshots = document.getElementById("btnTabScreenshots");
   const tools = document.getElementById("btnTools");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
@@ -5241,7 +5238,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
-  if (btnScreenshots) btnScreenshots.classList.toggle("active", tab === "homepageScreenshots");
   if (tools) tools.classList.toggle("active", tab === "tools");
 
   // Hide/show panels
@@ -5254,7 +5250,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
-  if (els.homepageScreenshotsPanel) els.homepageScreenshotsPanel.hidden = tab !== "homepageScreenshots";
 
   // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
@@ -5294,7 +5289,6 @@ function activateSettingsTabFromUrl() {
     reports: els.btnTabReports,
     marketing: els.btnTabMarketing,
     marketingContacts: els.btnTabMarketingContacts,
-    homepageScreenshots: els.btnTabScreenshots,
   };
   const button = buttons[tab];
   if (button) button.click();
@@ -6610,13 +6604,6 @@ function wireEvents() {
     });
   }
 
-  if (els.btnTabScreenshots) {
-    els.btnTabScreenshots.addEventListener("click", () => {
-      if (activeTab === "tools") closeTools();
-      setActiveTab("homepageScreenshots");
-    });
-  }
-
   wireMarketplaceEvents();
   wireReportsEvents();
   startAdminBadges();
@@ -6809,7 +6796,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T22084");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T22183");
 
   const MC_PAGE_SIZE = 50;
 

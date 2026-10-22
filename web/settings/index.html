@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-22T22084"/>
+  <meta name="app-version" content="v2026-10-22T22183"/>
 
 
   <meta charset="UTF-8"/>
@@ -16,23 +16,23 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-22T22084"/>
-  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-22T22084" crossorigin="use-credentials"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-22T22183"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-22T22183" crossorigin="use-credentials"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22084" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22084"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-22T22084"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-22T22084"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22183" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22183"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-22T22183"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-22T22183"/>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-22T22084" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-22T22084" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-22T22084" defer></script>
-  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-22T22084" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-22T22084" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-22T22183" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-22T22183" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-22T22183" defer></script>
+  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-22T22183" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-22T22183" defer></script>
 
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
@@ -53,7 +53,6 @@
       <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
-      <button class="btn sm tab-btn" id="btnTabScreenshots" type="button">Zrzuty strony</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button"><span>Poczta Familiada</span><span class="badge" id="tabBadgeReports" aria-hidden="true"></span></button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
@@ -76,20 +75,6 @@
     </div>
   </header>
   <main class="wrap" data-skel-step>
-    <section class="settings-panel homepage-screenshots-panel" id="homepageScreenshotsPanel" hidden>
-      <div class="settings-card">
-        <div class="panel-head">
-          <div class="panel-title">Zrzuty stron</div>
-          <div class="panel-sub">System scripts/screens — bez kont i bazy</div>
-        </div>
-        <p class="field-hint">Zrzuty robi automatycznie system <code>scripts/screens/</code> (prawdziwe strony na danych demo, PL/EN/UK) po każdej zmianie stron. Kadry strony głównej i obraz podglądu linku odświeżają się same po wdrożeniu na <code>main</code>. Instrukcja: <code>docs/zrzuty-system.md</code>.</p>
-        <div class="homepage-screenshots-links">
-          <a class="btn sm gold" href="https://github.com/Andrish97/familiada/actions/workflows/screens.yml" target="_blank" rel="noopener">Uruchom zrzuty (GitHub Actions)</a>
-          <a class="btn sm" href="https://github.com/Andrish97/familiada/tree/screens-gallery" target="_blank" rel="noopener">Galeria zrzutów</a>
-          <a class="btn sm" href="/?lang=pl" target="_blank" rel="noopener">Strona główna</a>
-        </div>
-      </div>
-    </section>
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>
       <div class="settings-card">
         <div class="panel-head">

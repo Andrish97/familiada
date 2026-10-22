@@ -3,7 +3,6 @@
 // dla języków, żeby ta sama gra miała w każdym języku ten sam układ.
 module.exports = {
   pl: {
-    user: { username: "Jan Kowalski", email: "jan.kowalski@example.test" },
     questions: [
       ["Co zabierasz na piknik?", [["Koc", 34], ["Kanapki", 24], ["Owoce", 16], ["Napoje", 12], ["Kosz", 8], ["Piłkę", 6]]],
       ["Wymień popularne imię psa", [["Burek", 38], ["Azor", 22], ["Reksio", 17], ["Max", 12], ["Luna", 11]]],
@@ -47,7 +46,6 @@ module.exports = {
     teams: ["Kowalscy", "Nowakowie"],
   },
   en: {
-    user: { username: "John Smith", email: "john.smith@example.test" },
     questions: [
       ["Something you take on a picnic", [["Blanket", 34], ["Sandwiches", 24], ["Fruit", 16], ["Drinks", 12], ["Basket", 8], ["Ball", 6]]],
       ["Name a popular dog's name", [["Max", 38], ["Buddy", 22], ["Bella", 17], ["Charlie", 12], ["Luna", 11]]],
@@ -91,7 +89,6 @@ module.exports = {
     teams: ["The Smiths", "The Greens"],
   },
   uk: {
-    user: { username: "Іван Коваленко", email: "ivan.kovalenko@example.test" },
     questions: [
       ["Що ви берете на пікнік?", [["Ковдру", 34], ["Бутерброди", 24], ["Фрукти", 16], ["Напої", 12], ["Кошик", 8], ["М'яч", 6]]],
       ["Назвіть популярну кличку собаки", [["Бобік", 38], ["Рекс", 22], ["Барсик", 17], ["Макс", 12], ["Луна", 11]]],

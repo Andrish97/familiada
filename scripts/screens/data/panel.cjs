@@ -3,6 +3,7 @@
 // wpisy list i stany rozgrywki pochodzą stąd; content.cjs tylko dopełnia listy.
 // Ta sama gra, drużyny i pytanie występują we wszystkich powiązanych kadrach.
 //
+// Użytkownik demo (user) jest tylko tutaj -- ten sam na wszystkich zrzutach.
 // Pytanie gry: [tekst, [[odpowiedź, punkty], ...]]; pytanie ankiety: [tekst, [[odpowiedź, głosy], ...]].
 module.exports = {
   pl: {

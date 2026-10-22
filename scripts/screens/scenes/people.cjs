@@ -10,6 +10,7 @@
 //   - Cloudflare Turnstile (captcha logowania) -- atrapa skryptu, która od razu
 //     oddaje token; bez niej żadne wysłanie formularza logowania nie przejdzie.
 const { USER_ID } = require("../data/demo.cjs");
+const panel = require("../data/panel.cjs");
 
 const page = (dir) => [`web/${dir}/index.html`, `web/${dir}/js/`, `web/${dir}/css/`];
 const CONTACTS = ["web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js", "web/shared/css/contacts.css"];
@@ -34,7 +35,9 @@ const openModal = (selector, modal = MODAL) => async (view) => {
 };
 const waitFor = (selector) => async (view) => { await view.locator(selector).first().waitFor({ state: "visible", timeout: 8000 }); await view.waitForTimeout(250); };
 const toastShown = async (view) => { await view.locator("#appToast.show").waitFor({ timeout: 8000 }); await view.waitForTimeout(350); };
-const fill = (pairs) => async (view) => { for (const [sel, value] of pairs) await view.locator(sel).first().fill(value); };
+// Wartość może zależeć od języka sceny: (lang) => tekst (np. e-mail użytkownika demo).
+const fill = (pairs) => async (view, { lang } = {}) => { for (const [sel, value] of pairs) await view.locator(sel).first().fill(typeof value === "function" ? value(lang) : value); };
+const USER_EMAIL = (lang) => panel[lang].user.email;
 const textIn = (selector, minLength = 1) => async (view) => {
   await view.waitForFunction(([s, n]) => (document.querySelector(s)?.textContent || "").trim().length >= n, [selector, minLength], { timeout: 8000 });
   await view.waitForTimeout(200);
@@ -79,7 +82,7 @@ function via(scene, { auth = null, turnstile = true } = {}) {
   const { path: target, ready } = scene;
   return { ...scene, path: BLANK, ready: "#screensFrame", steps: [async (view, { page, lang }) => {
     if (turnstile) await page.route(/^https:\/\/challenges\.cloudflare\.com\//, (route) => route.fulfill({ contentType: "text/javascript", body: TURNSTILE }));
-    if (auth) await page.addInitScript(patchAuth, auth);
+    if (auth) await page.addInitScript(patchAuth, typeof auth === "function" ? auth(lang) : auth);
     const url = new URL(target, page.url());
     url.searchParams.set("lang", lang);
     await page.goto(url.href, { waitUntil: "domcontentloaded" });
@@ -128,8 +131,9 @@ function asGuest(db, { infoShown = true } = {}) {
   db.localStorage = { ...(db.localStorage || {}) };
   if (infoShown) db.localStorage[`fam:guest:info_shown:${USER_ID}`] = "1";
 }
-// Użytkownik zwrócony przez link z e-maila (reset hasła, potwierdzenie konta).
-const LINK_USER = { id: USER_ID, email: "jan.kowalski@example.com", email_confirmed_at: "2026-04-03T10:00:00Z", user_metadata: { username: "Jan Kowalski" } };
+// Użytkownik zwrócony przez link z e-maila (reset hasła, potwierdzenie konta) --
+// ten sam użytkownik demo co na pozostałych zrzutach (panel.cjs), w języku sceny.
+const linkAuth = (lang) => ({ exchangeCodeForSession: { user: { id: USER_ID, email: panel[lang].user.email, email_confirmed_at: "2026-04-03T10:00:00Z", user_metadata: { username: panel[lang].user.username } } } });
 const nowPlus = (minutes) => new Date(Date.now() + minutes * 60e3).toISOString();
 
 module.exports = [
@@ -210,7 +214,7 @@ module.exports = [
     db: (db) => { db.http["/_api/mail/session"] = { ok: false, error: "no_session" }; db.http["/_api/mail/request"] = { ok: true, cooldown_seconds: 60 }; },
     steps: [fill([["#mailInput", "anna.nowak@example.com"]]), click("#mailForm button[type=submit]"), wait(600)] },
   { id: "people-mails-registered", category: C, title: "Centrum maili — adres z kontem: zaloguj się", path: "/mails/", guest: true, sources: MAILS, ready: "#mailActions:not([hidden])",
-    db: (db) => { db.http["/_api/mail/session"] = { ok: false, error: "requires_login", email: "jan.kowalski@example.com" }; } },
+    db: (db, lang) => { db.http["/_api/mail/session"] = { ok: false, error: "requires_login", email: USER_EMAIL(lang) }; } },
   { id: "people-mails-expired", category: C, title: "Centrum maili — link wygasł", path: "/mails/", guest: true, sources: MAILS, ready: "#mailForm:not([hidden])",
     db: (db) => { db.http["/_api/mail/session"] = { ok: false, error: "expired_session" }; } },
   { id: "people-mails-confirm", category: C, title: "Centrum maili — potwierdzenie adresu z linku (Otwórz centrum)", path: "/mails/?m=screensAccessToken", guest: true, sources: MAILS, ready: "#mailActions:not([hidden])",
@@ -260,7 +264,7 @@ module.exports = [
     { id: "people-login-missing", guest: true, title: "Logowanie — brak loginu lub hasła (błąd)",
       steps: [textIn("#status", 3), click("#btnPrimary"), textIn("#err")] },
     { id: "people-login-wrong-password", guest: true, title: "Logowanie — błędne hasło", auth: { signInWithPassword: { error: "Invalid login credentials" } },
-      steps: [textIn("#status", 3), fill([["#email", "jan.kowalski@example.com"], ["#pass", "ZleHaslo#1"]]), click("#btnPrimary"), textIn("#err")] },
+      steps: [textIn("#status", 3), fill([["#email", USER_EMAIL], ["#pass", "ZleHaslo#1"]]), click("#btnPrimary"), textIn("#err")] },
     { id: "people-login-unknown-user", guest: true, title: "Logowanie — nieznana nazwa użytkownika",
       db: (db) => { (db.http ||= {})["/_api/auth/login"] = { ok: false, error: "invalid_credentials" }; },
       steps: [textIn("#status", 3), fill([["#email", "nieznany_gracz"], ["#pass", "Haslo#2026"]]), click("#btnPrimary"), textIn("#err")] },
@@ -276,7 +280,7 @@ module.exports = [
         async (view) => { await view.waitForFunction(() => !document.getElementById("btnPrimary").disabled, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
     { id: "people-login-email-registered", guest: true, title: "Rejestracja — adres już zarejestrowany (okno)",
       db: (db) => { (db.http ||= {})["/_api/auth/email-status"] = { ok: true, status: "confirmed", intent: "signup" }; },
-      steps: [textIn("#status", 3), click("#btnToggle"), fill([["#email", "jan.kowalski@example.com"], ["#pass", "Familiada#2026"], ["#pass2", "Familiada#2026"]]), openModal("#btnPrimary")] },
+      steps: [textIn("#status", 3), click("#btnToggle"), fill([["#email", USER_EMAIL], ["#pass", "Familiada#2026"], ["#pass2", "Familiada#2026"]]), openModal("#btnPrimary")] },
     { id: "people-login-email-pending", guest: true, title: "Rejestracja — konto czeka na potwierdzenie (wysłać link ponownie?)",
       db: (db) => { (db.http ||= {})["/_api/auth/email-status"] = { ok: true, status: "pending", intent: "signup" }; },
       steps: [textIn("#status", 3), click("#btnToggle"), fill([["#email", "nowy@example.test"], ["#pass", "Familiada#2026"], ["#pass2", "Familiada#2026"]]), openModal("#btnPrimary")] },
@@ -284,7 +288,7 @@ module.exports = [
       steps: [textIn("#status", 3), click("#btnForgot"), textIn("#err")] },
     { id: "people-login-forgot-sent", guest: true, title: "Przypomnienie hasła — link wysłany (odliczanie)", auth: { resetPasswordForEmail: {} },
       db: (db) => { db.rpc.mail_cooldown_email_reserve = `fn:() => [{ ok: true, next_allowed_at: new Date(Date.now() + 3600e3).toISOString() }]`; },
-      steps: [textIn("#status", 3), fill([["#email", "jan.kowalski@example.com"]]), wait(600), click("#btnForgot"), waitFor("#forgotCooldown:not([hidden])")] },
+      steps: [textIn("#status", 3), fill([["#email", USER_EMAIL]]), wait(600), click("#btnForgot"), waitFor("#forgotCooldown:not([hidden])")] },
     { id: "people-login-forgot-username", guest: true, title: "Przypomnienie hasła po nazwie użytkownika — link wysłany (odliczanie)",
       db: (db) => { (db.http ||= {})["/_api/auth/reset"] = { ok: true, sent: true, next_allowed_at: new Date(Date.now() + 3600e3).toISOString() }; },
       steps: [textIn("#status", 3), fill([["#email", "jan_kowalski"]]), click("#btnForgot"), waitFor("#forgotCooldown:not([hidden])")] },
@@ -292,7 +296,7 @@ module.exports = [
     { id: "people-login-force-auth", title: "Logowanie z konta gościa — informacja o zalogowaniu (okno)", path: "/login/?force_auth=1", ready: MODAL, db: (db) => asGuest(db) },
     { id: "people-login-guest-session", title: "Logowanie — trwa sesja gościa (status)", db: (db) => asGuest(db), steps: [textIn("#status", 10)] },
     { id: "people-login-guest-loss", title: "Logowanie z sesją gościa — ostrzeżenie o utracie danych gościa", db: (db) => asGuest(db),
-      steps: [textIn("#status", 10), fill([["#email", "jan.kowalski@example.com"], ["#pass", "Familiada#2026"]]), openModal("#btnPrimary")] },
+      steps: [textIn("#status", 10), fill([["#email", USER_EMAIL], ["#pass", "Familiada#2026"]]), openModal("#btnPrimary")] },
     { id: "people-login-guest-migrate", title: "Rejestracja z sesji gościa — przenieść dane gościa? (okno)",
       db: (db) => { asGuest(db); (db.http ||= {})["/_api/auth/email-status"] = { ok: true, status: "none", intent: "signup" }; },
       steps: [textIn("#status", 10), click("#btnToggle"), fill([["#email", "ola@example.test"], ["#pass", "Familiada#2026"], ["#pass2", "Familiada#2026"]]), openModal("#btnPrimary")] },
@@ -307,13 +311,13 @@ module.exports = [
   // ================= Reset hasła =================
   { id: "people-reset-missing", guest: true, category: C, title: "Reset hasła — brak kodu w linku", path: "/login/reset/", sources: RESET, ready: "#back[style*='inline-flex']" },
   via({ id: "people-reset-form", guest: true, category: C, title: "Reset hasła — formularz nowego hasła", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form" },
-    { turnstile: false, auth: { exchangeCodeForSession: { user: LINK_USER } } }),
+    { turnstile: false, auth: linkAuth }),
   via({ id: "people-reset-mismatch", guest: true, category: C, title: "Reset hasła — hasła różnią się (błąd)", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form",
     steps: [fill([["#p1", "Familiada#2026"], ["#p2", "Familiada#2025"]]), click("#save"), textIn("#err")] },
-  { turnstile: false, auth: { exchangeCodeForSession: { user: LINK_USER } } }),
+  { turnstile: false, auth: linkAuth }),
   via({ id: "people-reset-saved", guest: true, category: C, title: "Reset hasła — hasło zapisane", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form", settle: 50,
     steps: [fill([["#p1", "Familiada#2026"], ["#p2", "Familiada#2026"]]), click("#save"), waitFor("#back")] },
-  { turnstile: false, auth: { exchangeCodeForSession: { user: LINK_USER } } }),
+  { turnstile: false, auth: linkAuth }),
   via({ id: "people-reset-failed", guest: true, category: C, title: "Reset hasła — link nieważny lub wygasł", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#back[style*='inline-flex']" },
     { turnstile: false, auth: { exchangeCodeForSession: { error: "Email link is invalid or has expired", status: 403 } } }),
   { id: "people-reset-session-switch", category: C, title: "Reset hasła — zalogowany na innym koncie (okno przełączenia)", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: MODAL },
@@ -325,7 +329,7 @@ module.exports = [
   { id: "people-confirm-first-link", guest: true, category: C, title: "Zmiana e-maila — pierwszy link potwierdzony, czeka drugi", path: "/login/confirm/?message=Confirmation+link+accepted.+Please+proceed+to+confirm+link+sent+to+the+other+email", sources: CONFIRM, ready: "#back[style*='inline-flex']" },
   // Po „konto aktywne” strona sama przechodzi dalej po 0,7 s -- zrzut od razu (settle).
   via({ id: "people-confirm-done", guest: true, category: C, title: "Potwierdzenie konta — konto aktywne (Przejdź do panelu)", path: "/login/confirm/?code=screensConfirmCode", sources: CONFIRM, ready: "#go[style*='inline-flex']", settle: 50 },
-    { turnstile: false, auth: { exchangeCodeForSession: { user: LINK_USER } } }),
+    { turnstile: false, auth: linkAuth }),
   via({ id: "people-confirm-email-change-cancelled", guest: true, category: C, title: "Zmiana e-maila — zmiana anulowana (link nieaktualny)", path: "/login/confirm/?token_hash=screensHash&type=email_change&to=jan.nowy%40example.com", sources: CONFIRM, ready: "#back[style*='inline-flex']",
     db: (db) => { db.rpc.get_email_intent_status = "expired"; } },
   { turnstile: false, auth: { verifyOtp: { error: "Token has expired or is invalid", status: 403 } } }),
