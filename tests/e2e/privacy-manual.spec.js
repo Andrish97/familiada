@@ -224,3 +224,11 @@ test("manual: telefon — „Spis treści” działa od razu, także gdy treść
   await expect(page.locator("#manualToc a.m-side-item").first()).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#manualToc")).toBeVisible();
 });
+
+test("manual: wyszukiwanie wpisane w trakcie wczytywania treści dostaje wyniki po wczytaniu", async ({ page }) => {
+  await page.route(/\/manual\/content\/pl\.js/, async (route) => { await new Promise((r) => setTimeout(r, 2500)); await route.fallback(); });
+  await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
+  const input = page.locator("#manualSearch .searchText");
+  await input.fill("kradzież");
+  await expect(page.locator("#manualSearch .m-search-hit").first()).toBeVisible({ timeout: 15_000 });
+});

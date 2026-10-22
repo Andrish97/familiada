@@ -33,6 +33,7 @@ const currentLabel = document.getElementById("manualCurrent");
 let manual = null;
 let current = null;
 let searchIndexEntries = [];
+let search = null;
 let tocList = null;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -222,7 +223,7 @@ function wireSearch() {
   toc.innerHTML = `<div class="m-search" id="manualSearch"></div><div class="m-side-list"></div>`;
   tocList = toc.querySelector(".m-side-list");
   hydrateIcons(document.querySelector(".m-actionbar"));
-  initManualSearch(toc.querySelector("#manualSearch"), () => searchIndexEntries, (entry, query) => {
+  search = initManualSearch(toc.querySelector("#manualSearch"), () => searchIndexEntries, (entry, query) => {
     show(entry.ch, entry.id === entry.ch ? "" : `#${sectionId(entry.id)}`);
     const scope = entry.id === entry.ch ? article.querySelector(".m-doc") : sectionScope(sectionId(entry.id));
     for (const el of scope) highlight(el, query);
@@ -307,6 +308,8 @@ function wireNavigation() {
 async function renderForLang() {
   manual = await loadContent(getUiLang());
   searchIndexEntries = buildIndex(manual);
+  // Tekst wpisany, zanim treść się wczytała, dostaje wyniki od razu po zbudowaniu indeksu.
+  if (search?.input.value) search.refresh();
   const params = new URLSearchParams(location.search);
   show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true });
 }
