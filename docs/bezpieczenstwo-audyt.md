@@ -211,7 +211,18 @@ startu send-mail `3533a5c520`, krok B (strona + migracja 456) — SHA w Dziennik
 - **Incydent:** po kroku A funkcja send-mail nie startowała (import
   `std/crypto` z WASM) 22:37–22:51 UTC (wdrożenia Edge 39687748087 → 39689329023) — maile powiadomień nie wychodziły (przeglądarka pokazywała „nie udało się wysłać”);
   naprawa `3533a5c520` (MD5 w czystym JS), sprawdzone e2e 39689434179.
-- **Turnstile — wymaga właściciela:** weryfikacja tokenu po stronie Workera
+- **Turnstile (krok C, 2026-10-22):** sekret ustawiony przez właściciela;
+  Worker weryfikuje token (`siteverify`, nazwa hosta familiada) dla
+  `/_api/auth/login|reset|email-status|resend-prepare`, `/_api/contact`
+  i `/_api/contact/append`; brak sekretu = 503 (odmowa). Strona logowania
+  bierze świeży token na każde wywołanie, okno kontaktu ma widżet
+  „interaction-only”. Testy e2e z podpisanym `X-E2E-Token` są weryfikowane
+  oficjalnym testowym kluczem Cloudflare.
+- **Znajomi (457):** przy zaproszeniach (oczekujących i odrzuconych, w obie
+  strony) bez adresu drugiej strony; zapraszający widzi tylko adres, który sam
+  wpisał (`friendships.requested_email`) albo adres ze swojej listy
+  subskrybentów; po przyjęciu znajomości adres widoczny.
+- **Turnstile — stan sprzed kroku C:** weryfikacja tokenu po stronie Workera
   (logowanie, rejestracja, stan adresu, formularz kontaktu) potrzebuje sekretu
   Workera **`TURNSTILE_SECRET_KEY`** (klucz tajny widżetu dla sitekey
   `0x4AAAAAACgSBNCEZ9064to_`; Cloudflare → Turnstile). Nie wdrożono.
