@@ -14,17 +14,17 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T22513";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T22513";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T22513";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T22513";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22513";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22513";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T22513";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T22513";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T22513";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T22513";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T22513";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T22514";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T22514";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T22514";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T22514";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22514";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22514";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T22514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T22514";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T22514";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T22514";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T22514";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -35,15 +35,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T22513";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T22514";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T22513";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T22513";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T22513";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T22513"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T22514";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T22514";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T22514";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T22514"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T22513";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T22514";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1070,9 +1070,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22513"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22513"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T22513"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22514"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22514"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T22514"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5666,6 +5666,36 @@ function buildSessionRunDetails(r) {
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
       }
+      if (event.category === "device_network") {
+        // Pomiar łącza (migracja 466): Cloudflare = samo łącze urządzenia,
+        // serwer = Cloudflare + nasz serwer i baza; różnica to czas systemu.
+        const ms = value => Number.isFinite(Number(value)) ? `${Math.round(Number(value))} ms` : "?";
+        const pair = (edge, db, edgeFailed, dbFailed) => {
+          const server = Number.isFinite(Number(edge)) && Number.isFinite(Number(db)) && !edgeFailed && !dbFailed
+            ? ` (sam serwer ~${Math.max(0, Math.round(Number(db) - Number(edge)))} ms)` : "";
+          return `do Cloudflare ${edgeFailed ? "brak odpowiedzi" : ms(edge)} · do serwera ${dbFailed ? "brak odpowiedzi" : ms(db)}${server}`;
+        };
+        const link = [
+          metrics.connection_type && metrics.connection_type !== "unknown" ? `sieć ${metrics.connection_type}` : "",
+          metrics.effective_type ? `jakość ${metrics.effective_type}` : "",
+          metrics.browser_rtt_ms != null ? `RTT przeglądarki ${metrics.browser_rtt_ms} ms` : "",
+          metrics.downlink_mbps != null ? `${String(metrics.downlink_mbps).replace(".", ",")} Mb/s` : "",
+          metrics.online === false ? "przeglądarka zgłaszała brak sieci" : "",
+        ].filter(Boolean).join(", ");
+        const linkText = link ? ` · ${link}` : "";
+        if (metrics.phase === "baseline") return { title: `Pomiar łącza na starcie: ${devices}`, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        if (metrics.phase === "slow") {
+          const title = metrics.verdict === "server" ? `Wolny serwer (łącze sprawne): ${devices}` : `Wolne łącze urządzenia: ${devices}`;
+          return { title, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        }
+        if (metrics.phase === "recovered") {
+          const counts = [
+            metrics.device_network_samples ? `łącze ${metrics.device_network_samples}×` : "",
+            metrics.server_samples ? `serwer ${metrics.server_samples}×` : "",
+          ].filter(Boolean).join(", ");
+          return { title: `Łącze wróciło do normy: ${devices}`, detail: `Spowolnienie trwało ${formatDuration(metrics.duration_ms)}${counts ? ` (wolne pomiary: ${counts})` : ""} · najgorzej: do Cloudflare ${ms(metrics.max_edge_ms)}, do serwera ${ms(metrics.max_db_ms)}` };
+        }
+      }
       if (event.category === "device_transport") {
         const duration = metrics.duration_ms != null ? ` · przerwa ${formatDuration(metrics.duration_ms)}` : "";
         const catchups = Number(metrics.catchup_count) > 0
@@ -6796,7 +6826,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T22513");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T22514");
 
   const MC_PAGE_SIZE = 50;
 

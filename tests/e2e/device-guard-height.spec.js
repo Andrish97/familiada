@@ -90,13 +90,14 @@ test("tablet w poziomie z niskim viewportem: Control (980 px) to „Za małe okn
 for (const [label, url, options] of [
   ["Host (tablet 1200×560)", "/control/host/", TABLET],
   ["Przycisk (tablet 1200×560)", "/control/buzzer/", TABLET],
-  ["Snake (komputer 1400×550)", "/snake/", { viewport: { width: 1400, height: 550 } }],
+  // Wąż startuje tylko z identyfikatorem demo (inaczej strona 404) -- jak w scenach zrzutów.
+  ["Snake (komputer 1400×550)", "/snake/?qr=00000000-0000-4000-8000-000000000103", { viewport: { width: 1400, height: 550 } }],
 ]) {
   test(`bez progu wysokości: ${label}`, async ({ browser }, testInfo) => {
     const context = await newContext(browser, options);
     const page = await context.newPage();
     try {
-      await page.goto(`${SITE}${url}?lang=pl`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${SITE}${url}${url.includes("?") ? "&" : "?"}lang=pl`, { waitUntil: "domcontentloaded" });
       await expect.poll(() => guardState(page)).toBe("ok");
       await expect(page.locator("#pageGuard")).toBeHidden();
       await page.screenshot({ path: testInfo.outputPath(`shot-guard-height-none-${url.replace(/\W+/g, "-")}.png`) });

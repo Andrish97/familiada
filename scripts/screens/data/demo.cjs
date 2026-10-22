@@ -417,6 +417,24 @@ function buildDb(lang, extras = {}) {
         { user_id: "00000000-0000-4000-8000-0000000000f1", username: "guest_3fa9c2d1", email: "", reason: "test_guest", automatic: true, added_at: "2026-10-22T20:31:00Z" },
         { user_id: "00000000-0000-4000-8000-0000000000aa", username: "wlasciciel", email: "admin@example.com", reason: "manual", automatic: false, added_at: "2026-10-01T09:00:00Z" },
       ] },
+      // Migracja 466: przebieg rozgrywki z pomiarami łącza (start, spowolnienie, powrót).
+      "/_admin_api/stats/detail?type=gameplay*": { ok: true, rows: [{
+        game_name: "Quiz rodzinny", owner: "jan.kowalski", control_version: 2, status: "playing", effective_status: "playing",
+        started_at: "2026-10-22T21:00:00Z", ended_at: null, rounds_played: 2, rounds_score_a: 62, rounds_score_b: 100,
+        team_a_score: 62, team_b_score: 100, final_step: null, final_points: null, winner_team: null, error_count: 0,
+        stats_detail: { last_step: "r_play", teams: { teamA: "Drużyna A", teamB: "Drużyna B" }, events: [
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:05Z", devices: ["display"], message: "Pomiar łącza na starcie gry.",
+            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 48, db_ms: 131, connection_type: "wifi", effective_type: "4g", browser_rtt_ms: 50, downlink_mbps: 9.6 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:06Z", devices: ["control"], message: "Pomiar łącza na starcie gry.",
+            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 39, db_ms: 118 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:23:31Z", devices: ["display"], message: "Wolne łącze urządzenia (już do Cloudflare).",
+            metrics: { source: "probe", phase: "slow", verdict: "device_network", edge_ms: 2140, db_ms: 2390, connection_type: "wifi", effective_type: "3g", browser_rtt_ms: 900, downlink_mbps: 0.8 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:24:40Z", devices: ["display"], message: "Łącze i odpowiedź serwera wróciły do normy.",
+            metrics: { source: "probe", phase: "recovered", verdict: "device_network", duration_ms: 69000, samples: 12, device_network_samples: 12, server_samples: 0, max_edge_ms: 4810, max_db_ms: 5000, edge_ms: 61, db_ms: 140 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:40:02Z", devices: ["control"], message: "Wolna odpowiedź serwera przy sprawnym łączu urządzenia.",
+            metrics: { source: "probe", phase: "slow", verdict: "server", edge_ms: 44, db_ms: 2730 } },
+        ] },
+      }] },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },

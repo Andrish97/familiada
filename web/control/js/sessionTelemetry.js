@@ -1,6 +1,7 @@
 // Wyniki zapisuje baza przy zmianach game_state. Front zgłasza tylko
 // aktywność i lokalne obserwacje; telemetryka nie blokuje akcji gry.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22513";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-22T22514";
+import { createNetworkMonitor, measureNetwork } from "../../shared/js/core/network-probe.js?v=v2026-10-22T22514";
 
 
 export function createSessionTelemetry(gameId, getState, subscribe = () => () => {}) {
@@ -71,7 +72,31 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     }
   }
 
+  // Pomiar łącza Control w trakcie gry (migracja 466) — jak na urządzeniach.
+  let networkActive = false;
+  const network = createNetworkMonitor({
+    probe: () => measureNetwork({
+      pingUrl: `${SUPABASE_URL}/_ping`,
+      rpc: (signal) => sb().rpc("control2_net_ping").abortSignal(signal),
+    }),
+    send: (phase, data) => {
+      if (!networkActive) return;
+      const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const event = { event_id: eventId, phase, visibility: document.hidden ? "hidden" : "visible", ...data };
+      sb().rpc("control2_network_probe_event", {
+        p_game_id: gameId, p_device_type: "control", p_key: null, p_event: event,
+      }).abortSignal(AbortSignal.timeout(4000)).then(() => {}, () => {});
+    },
+  });
+  function syncNetwork(state) {
+    const next = !!state?.locks?.gameStarted && !state?.locks?.gameEnded;
+    if (next === networkActive) return;
+    networkActive = next;
+    if (next) network.start(); else network.stop();
+  }
+
   function syncVisibilityActive(state = getState()) {
+    syncNetwork(state);
     const next = isVisibilityActive(state);
     visibilityActive = next;
     if (next && !previousActive) queueVisibility("initial");
@@ -105,7 +130,10 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
   document.addEventListener("visibilitychange", visibilityChanged);
   return {
     report,
+    probeNetworkNow() { network.probeNow(); },
     stop() {
+      networkActive = false;
+      network.stop();
       clearInterval(timer);
       clearTimeout(visibilityRetryTimer);
       unsubscribe?.();

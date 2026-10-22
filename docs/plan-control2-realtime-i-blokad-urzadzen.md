@@ -87,6 +87,18 @@ Decyzje:
     najwyżej 96 = dwie najlepsze odpowiedzi, trzecia ≥ 4 pkt; wcześniej 920). Progi wyliczone
     z pytań (finał: dwie najlepsze odpowiedzi 5 pytań; rundy: punkty pytań ×
     mnożniki) są podpowiedzią, nie blokadą (`advanced-limits.js`).
+12. **Pomiar łącza urządzeń w diagnostyce (decyzja użytkownika 2026-10-22).**
+    Cel: odróżnić łącze użytkownika od problemów systemu. Każde urządzenie
+    i Control w trakcie gry co 30 s (w spowolnieniu co 5 s, karta w tle nie
+    mierzy) mierzy dwa czasy: `GET api.familiada.online/_ping` (odpowiada
+    Worker Cloudflare bez serwera) i RPC `control2_net_ping` (Cloudflare +
+    serwer + baza). Wolny pierwszy (≥ 1 s) = łącze urządzenia; szybki pierwszy
+    i różnica ≥ 1 s = serwer. Zapis tylko: pomiar na starcie, początek
+    spowolnienia z werdyktem, powrót do normy (po 2 dobrych pomiarach) —
+    `control2_network_probe_event`, kategoria `device_network` w eksporcie
+    i panelu; do tego `navigator.connection` (typ sieci, jakość, RTT,
+    przepustowość), gdy przeglądarka podaje. Migracje 466–467, moduł
+    `web/shared/js/core/network-probe.js`.
 
 ## Cel
 
