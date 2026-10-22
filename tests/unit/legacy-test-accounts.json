@@ -10,7 +10,6 @@
   "base-explorer.spec.js": 203,
   "base-refusals.spec.js": 7,
   "bases.spec.js": 44,
-  "control-release.spec.js": 1,
   "cross-resource-locks.spec.js": 16,
   "e21-rules.spec.js": 4,
   "editor.spec.js": 50,
