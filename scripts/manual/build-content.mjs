@@ -55,10 +55,23 @@ const pageName = (name) => {
 export const SHOT_RE = /^!\[([^\]]*)\]\(zrzut:([a-z0-9-]+)(?:@(desktop|phone|tablet))?\)\s*$/;
 export const shotPath = (lang, scene, device = "desktop") => `img/${lang}/${scene}-${device}.webp`;
 let LANG = "pl";
+// Wymiary opublikowanego webp (nagłówek VP8 / VP8L / VP8X) — width/height w <img>, żeby
+// wczytywane później zrzuty nie przesuwały treści (np. po przewinięciu do trafienia wyszukiwania).
+function webpSize(file) {
+  if (!fs.existsSync(file)) return null;
+  const b = fs.readFileSync(file);
+  const kind = b.toString("ascii", 12, 16);
+  if (kind === "VP8 ") return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+  if (kind === "VP8L") { const v = b.readUInt32LE(21); return { w: (v & 0x3fff) + 1, h: ((v >> 14) & 0x3fff) + 1 }; }
+  if (kind === "VP8X") return { w: b.readUIntLE(24, 3) + 1, h: b.readUIntLE(27, 3) + 1 };
+  return null;
+}
 const shotFigure = (line) => {
   const [, caption, scene, device = "desktop"] = line.match(SHOT_RE);
   const alt = esc(caption.replace(/[*`]/g, ""));
-  return `<figure class="m-shot m-shot-${device}"><button class="m-shot-zoom" type="button" data-zoom="1"><img src="/manual/${shotPath(LANG, scene, device)}" alt="${alt}" loading="lazy" decoding="async"></button>${caption ? `<figcaption>${inline(caption, new Map(), TITLES)}</figcaption>` : ""}</figure>`;
+  const size = webpSize(path.join(ROOT, "web/manual", shotPath(LANG, scene, device)));
+  const dims = size ? ` width="${size.w}" height="${size.h}"` : "";
+  return `<figure class="m-shot m-shot-${device}"><button class="m-shot-zoom" type="button" data-zoom="1"><img src="/manual/${shotPath(LANG, scene, device)}" alt="${alt}"${dims} loading="lazy" decoding="async"></button>${caption ? `<figcaption>${inline(caption, new Map(), TITLES)}</figcaption>` : ""}</figure>`;
 };
 
 export const refHref = (num) => (String(num).includes(".") ? `?ch=${chapterOf(num)}#${sectionAnchor(num)}` : `?ch=${num}`);

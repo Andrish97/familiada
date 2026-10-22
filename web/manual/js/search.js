@@ -152,7 +152,10 @@ export function initManualSearch(host, getEntries, onPick) {
 export function highlight(root, query) {
   const words = norm(query).split(/\s+/).filter((w) => w.length > 1);
   if (!root || !words.length) return null;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  // Podpisów zrzutów nie zaznaczamy — bywają na niewidocznym slajdzie karuzeli.
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement?.closest(".m-shot") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
   let first = null;
