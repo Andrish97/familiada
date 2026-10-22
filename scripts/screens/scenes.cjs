@@ -345,6 +345,8 @@ module.exports = [
   { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
+  { id: "privacy", category: "Dodatkowe", title: "Polityka prywatności — początek", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2" },
+  { id: "privacy-scrolled", category: "Dodatkowe", title: "Polityka prywatności — po przewinięciu (cała strona się przewija)", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator(".m-doc .m-h2").nth(5).scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
   { id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
   { id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: ".m-return" },

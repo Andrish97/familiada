@@ -11,9 +11,11 @@
 
 .topbar-close-slot { display: none; }
 
-/* ---------- układ (jak Ustawienia gry: stały pasek po lewej, przewijana treść) ---------- */
+/* ---------- układ (jak Ustawienia gry: stały pasek po lewej, przewijana treść) ----------
+   Tylko strona z .m-layout (Podręcznik). Polityka prywatności też ma .manual-body,
+   ale bez .m-layout — u niej przewija się cała strona (blokada body ją zamrażała). */
 
-.manual-body {
+.manual-body:has(.m-layout) {
     display: flex;
     flex-direction: column;
     height: 100dvh;
