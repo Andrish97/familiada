@@ -92,6 +92,9 @@
 .account-field-row > .pass-wrap{ flex: 1 1 180px; min-width: 0; }
 .account-field-row > .btn{ flex: 0 0 auto; margin-left: auto; }
 .account-field-row[hidden]{ display: none; }
+/* Pole "powtórz" (e-mail, hasło): pod pierwszym polem na całą szerokość, przycisk pod spodem. */
+.account-field-row.account-field-stack{ display: grid; grid-template-columns: 1fr; }
+.account-field-stack > .btn{ width: 100%; margin-left: 0; justify-content: center; }
 .account-actions{ display: grid; justify-items: end; gap: 10px; }
 #demoRestoreBtn{ justify-self: end; }
 
