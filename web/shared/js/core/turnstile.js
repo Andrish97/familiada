@@ -54,6 +54,8 @@ export async function getTurnstileToken(host, { lang = "pl", size } = {}) {
     widgetId = turnstile.render(mount, {
       sitekey: document.body?.dataset?.captchaSiteKey || SITE_KEY,
       appearance: "interaction-only",
+      // Strona jest zawsze ciemna („auto” brało jasny motyw z systemu).
+      theme: "dark",
       language: lang,
       ...(size ? { size } : {}),
       callback: (token) => finish(resolve, token),
