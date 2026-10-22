@@ -18,6 +18,7 @@ Zasady dla speców: `tests/README.md`, sekcja „Test accounts”.
 | 2026-10-22 | **Stare reguły całkowicie do usunięcia** — `test1`…`test17`, `testAccountUsername`, `loginAsPooledTestUser`, `TEST_ACCOUNT_COUNT`, `test_accounts`, wyrażenia `test[0-9]…`, reguły Cloudflare dla pojedynczych adresów. Bez mapy przejściowej i bez aliasów. Spece przepisują dedykowani agenci (pakiety niżej). |
 | 2026-10-22 | Nazewnictwo po angielsku (międzynarodowe) — konta, role, zasoby, API. |
 | 2026-10-22 | Zamiast roli `gallery` — **pula kont `dedicated`**: konta ogólne z nazwy (`e2e.dedicated01`…), przypisywane na stałe do konkretnej czynności (workflow, spec) w rejestrze przypisań. Widać, które są wolne; czynność, która musi zawsze używać tego samego konta i trzymać na nim dane, bierze wolne konto; gdy pula się skończy — prośba do użytkownika o dodanie konta (użytkownik). |
+| 2026-10-22 | **Czyszczenie przy każdym lease i kwarantanna** (użytkownik: „pasuje”): test padający po zmianie systemu nie może zostawić popsutego konta następnemu. Każdy lease zaczyna się od wyczyszczenia konta; konto, którego nie da się wyczyścić, idzie do kwarantanny i nie jest wydawane. §3a. |
 
 **Do potwierdzenia:** liczności puli (propozycja: `standard` 40, `noaccount` 10, `disposable` 6, `dedicated` 6).
 
@@ -129,6 +130,7 @@ test("base invite", async ({ page, context, accounts, loginAs, mailbox }) => {
 
 ### Przy lease
 
+- Każda rola najpierw przechodzi czyszczenie (§3a).
 - `standard`: sprawdzenie logowania nie jest potrzebne; Worker zwraca
   `{ name, email, user_id }` i potwierdza `admin_excluded = true`.
 - `disposable`: Worker **odtwarza** konto do znanego stanu — zakłada
@@ -139,6 +141,48 @@ test("base invite", async ({ page, context, accounts, loginAs, mailbox }) => {
   bierze konto przypisane tej czynności; dane zostają, Worker odnawia tylko
   hasło, potwierdzony adres i `e2e_role`. Dwa przebiegi tej samej czynności
   nie biegną naraz (konto wypożyczone na wyłączność).
+
+### 3a. Czyszczenie przy lease i kwarantanna
+
+Po co: ktoś zmienił system, test jest nieaktualny i pada w połowie —
+zostawia niedokończone gry, blokady edycji, sesje Control, udostępnienia,
+znajomych, subskrypcje, cooldowny poczty. Następny test nie może tego
+dostać.
+
+**Czyszczenie** (RPC `e2e_reset_identity(p_name)`, woła je `e2e_lease`
+przed wydaniem konta):
+
+| Role | Co się dzieje |
+|---|---|
+| `standard` | usunięcie **wszystkich danych konta** (gry, bazy, logo, ankiety, udostępnienia, znajomi, urządzenia, subskrypcje, zadania, oferty kopii, blokady, sesje Control), cooldowny i budżety poczty, skrzynka; konto, ID, hasło i wykluczenie zostają |
+| `disposable` | jak `standard` + odtworzenie konta (założenie brakującego, hasło, e-mail, nazwa, `e2e_role`), skrzynki `.` i `.new` |
+| `noaccount` | skrzynka, wpisy subskrybenta e-mail, linki centrum maili, cooldowny dla adresu |
+| `dedicated` | **dane zostają**; tylko blokady edycji, sesje Control, cooldowny, skrzynka |
+
+Część „usuń dane konta” to **ta sama funkcja co przy usuwaniu konta**:
+z `delete_user_everything` wydzielić `_delete_user_data(p_user_id)`
+(bez usunięcia samego konta) i wołać ją z obu miejsc. Nowa tabela dopisana
+do usuwania konta (E12) jest więc automatycznie czyszczona przy lease.
+
+**Kwarantanna:** czyszczenie rzuci błąd albo po nim zostaną dane
+(sprawdzenie liczników po resecie) → `e2e_identities.quarantined_at`,
+`quarantine_reason`; konto **nie jest wydawane** nikomu. Lease bierze
+inne wolne konto; jeśli nie ma — test pada z komunikatem
+„konto X w kwarantannie: <powód>”. Zdjęcie kwarantanny: po poprawce
+czyszczenia ponowne `e2e_reset_identity` (endpoint Workera
+`/_e2e_api/quarantine/retry`), sukces = konto wraca do puli.
+`db-read`: liczba kont w kwarantannie (powinna być 0).
+
+**Pilnowanie:** test unit (zapadka na `schema.sql`) — każda tabela
+z kolumną wskazującą użytkownika (`owner_id`, `user_id`, `*_user_id`,
+FK do `profiles`/`auth.users`) jest obsłużona w `_delete_user_data`
+albo wpisana na jawną listę wyjątków z powodem.
+
+**Nieaktualny test** sam w sobie nikomu nie przeszkadza: zwalnia konta
+(teardown biegnie także po błędzie; przy awarii — TTL), następny dostaje
+czyste konto. Poprawia go autor zmiany systemu (zmiana zachowania strony
+= poprawka jej testów w tym samym etapie); gdy autor nieznany — najpierw
+sprawdzić, czy test pada też na `main`.
 
 ### Poczta w teście
 
@@ -217,7 +261,9 @@ tylko „Konto testowe” / „Gość testowy”.
 - `e2e_leases(name pk → e2e_identities, run_id, worker, label, leased_at, expires_at)`.
 - RPC (tylko `service_role`): `e2e_lease(p_run_id, p_worker, p_needs jsonb, p_ttl interval, p_label)`,
   `e2e_lease_renew(p_run_id)`, `e2e_lease_release(p_run_id, p_worker)`,
-  `e2e_lease_holders()` (diagnostyka), `e2e_identity(p_email)`.
+  `e2e_lease_holders()` (diagnostyka), `e2e_identity(p_email)`,
+  `e2e_reset_identity(p_name)`, `_delete_user_data(p_user_id)` (wydzielone
+  z `delete_user_everything`); kolumny `quarantined_at`, `quarantine_reason`.
 - `reserved_username_prefixes`: prefiks `e2e` (kind `test`); trigger
   `profiles_reserve_test_username` dopuszcza nazwę `e2e.*` tylko dla
   `user_id` z `e2e_identities`.
@@ -247,7 +293,7 @@ przed testami B.
 
 | Pakiet | Zakres | Gotowe, gdy |
 |---|---|---|
-| **A. DB** | migracja dodająca: tabele, RPC lease, `e2e_identity`, prefiks, blokada `noaccount`, nowy widok wykluczeń (stary wzorzec jeszcze obok) | test SQL lokalnie: dwa równoległe `e2e_lease` nie dostają tego samego konta, TTL zwalnia, `noaccount` nie da się zarejestrować; log migracji |
+| **A. DB** | migracja dodająca: tabele, RPC lease, `e2e_identity`, `e2e_reset_identity` + `_delete_user_data`, kwarantanna, zapadka tabel użytkownika, prefiks, blokada `noaccount`, nowy widok wykluczeń (stary wzorzec jeszcze obok) | test SQL lokalnie: dwa równoległe `e2e_lease` nie dostają tego samego konta, TTL zwalnia, `noaccount` nie da się zarejestrować; log migracji |
 | **B. Worker** | `/_e2e_api/lease*`, provisioning i odtwarzanie wg roli z `e2e_role`, poczta `e2e+`, dostęp do skrzynki tylko z lease | unit Workera; mail kontrolny na `e2e+noaccount01@`; konta założone, `admin_excluded` dla każdego |
 | **C. Harness** | `e2e-test.js` (`accounts`, `resources`, `loginAs`, `mailbox`), workflow bez `test_accounts`, `e2e-seq.sh` bez globalnego czekania | spec próbny z `standard: 2, noaccount: 1` zielony; dwa przebiegi naraz zielone |
 | **D. Admin** | widok bez `test[0-9]+`, panel z rolą, przegląd funkcji statystyk, zapadka unit, `db-read` | 0 kont `e2e` bez wykluczenia; zrzut panelu |

@@ -203,6 +203,10 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
 
 - Każdy worker wypożycza (lease) swój komplet na wyłączność; brak wolnych
   kont → czeka do ~10 min, potem pada z listą posiadaczy.
+- Każde konto jest **czyszczone przy wypożyczeniu** (`dedicated` — tylko
+  blokady, sesje i skrzynka, dane zostają), więc padający test nie psuje
+  kont następnym. Konto, którego nie da się wyczyścić, trafia do
+  **kwarantanny** i nie jest wydawane (plan §3a).
 - Przebiegi równoległe dozwolone bez umawiania się — ogranicza je tylko
   lease (konta i zasoby).
 - `TEST_WORKERS` (`--workers`) zostaje niskie (patrz „Pułapki”: run #122).
