@@ -19,6 +19,10 @@ on:
         description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
         required: false
         default: "4"
+      api_origin:
+        description: 'Opcjonalnie: adres API zamiast https://api.familiada.online (próba generalna przeprowadzki, np. https://api2.familiada.online). Działa w spekach z serveBranchCode.'
+        required: false
+        default: ""
       test_accounts:
         description: 'Opcjonalna, odizolowana pula kont, np. 4,5. Pusta wartość używa zwykłej puli bez kont zarezerwowanych.'
         required: false
@@ -132,6 +136,7 @@ env:
   TEST_BRANCH_CODE: ${{ github.ref_name != 'main' && '1' || '0' }}
   TEST_ACCOUNT_COUNT: "8"
   TEST_ACCOUNT_NUMBERS: ${{ inputs.test_accounts || '' }}
+  E2E_API_ORIGIN: ${{ inputs.api_origin || '' }}
   TEST_WORKERS: ${{ inputs.workers || '4' }}
 
 jobs:
