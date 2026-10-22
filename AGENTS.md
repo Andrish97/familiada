@@ -16,6 +16,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
   Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
+  Konta testowe i tory (E25): `docs/konta-testowe-plan.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 - **Kompletna mapa stron i nawigacji (decyzja 2026-10-17):** dodanie,
   usunięcie, zmiana adresu albo zachowania dowolnej strony wymaga równoczesnej
@@ -119,19 +120,20 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe test1–test10** (decyzja użytkownika 2026-10-22: test9/test10
-  znów dostępne). Zwykła pula e2e (`TEST_ACCOUNT_COUNT`): test1–test8;
-  test9 i test10 wybierać jawnie przez `test_accounts` (np. `9,10` dla
-  równoległego przebiegu).
-- **Równoległe przebiegi e2e**: domyślnie jeden naraz. Lżejsze przebiegi
-  wolno puszczać równolegle, gdy każdy dostaje **rozłączny zestaw kont**
-  (wejście workflow `test_accounts`, np. `1,2,3` i `4,5,6`) i spece logują się
-  tylko przez pulę. Spece z kontami na stałe albo `@mailbox` — pojedynczo
-  (szczegóły: `tests/README.md`, „Pula kont”).
-- **test15@familiada.online — dedykowane usuwanie konta**, poza zwykłą pulą. Odtwarzać przed testem i w `finally`, sprawdzać logowanie oraz automatyczny wyjątek admina. Konta11/12 (adres13 dla12) zostają do testów hasła/profilu/e-maila.
-- **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
-  inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
-  bez konta). Nie zakładać na nim konta.
+- **Konta testowe — zasady przypisywania i używania:** `tests/README.md`,
+  sekcja „Konta testowe” (rodzaje adresów, role kont, warunki przypisywania,
+  warunki przebiegów). Konto wybierać po roli (`testAccountUsername(n)`, pula),
+  nigdy wpisanym adresem. Zwykła pula test1–test8; test9/test10 tylko jawnie
+  przez `test_accounts` (bez skrzynki). Konta specjalne: test11 hasło,
+  test12 profil (+ adres test13), test15 usuwanie (odtwarzać przed testem
+  i w `finally`, sprawdzać logowanie i wyjątek admina), test17 galeria E20.
+- **Skrzynki bez konta** — dziś `test14@familiada.online` (nie zakładać
+  konta). Decyzja użytkownika 2026-10-22: dostają inny identyfikator
+  `bezkontaN@familiada.online` (E25); `testN` zawsze oznacza konto.
+- **Równoległe przebiegi e2e**: dziś domyślnie jeden naraz; równolegle tylko
+  rozłączne `test_accounts` ze specami logującymi się przez pulę, bez
+  `@mailbox`. Docelowo tory (rozłączne komplety kont, E25):
+  `docs/konta-testowe-plan.md`.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
