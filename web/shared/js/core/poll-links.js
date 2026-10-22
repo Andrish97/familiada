@@ -17,9 +17,19 @@ export function validAnonymousPollParams(params){
   && !['d','t','s','f','b','u','m','action'].some(key=>params.has(key))
   && ['p','id','key','lang'].every(key=>params.getAll(key).length<=1);
 }
-// Ankiety z kadrów strony głównej (dane demo zrzutów, scripts/screens/) mają
+// Zrzuty ekranu (dane demo, scripts/screens/: strona główna, Wskazówki) mają
 // identyfikatory 00000000-0000-4000-8000-…, których baza nigdy nie nadaje.
-// Kod QR z takiego kadru prowadzi do ukrytej gry w węża (/snake/).
-export function isScreenshotPollId(id){
+// Każdy kod QR z kadru -- ankieta, urządzenie, QR na Wyświetlaczu -- prowadzi
+// przez /go/ do ukrytej gry w węża (/snake/).
+export function isScreenshotId(id){
  return /^00000000-0000-4000-8000-[0-9a-f]{12}$/i.test(String(id||''));
+}
+// Adres węża dla linku /go/ z kadru (null: zwykły link).
+export function screenshotSnakeUrl(params,base){
+ const id=params.get('id');
+ if(!isScreenshotId(id))return null;
+ const url=new URL('/snake/',base);url.searchParams.set('qr',id);
+ const lang=params.get('lang');
+ if(['pl','en','uk'].includes(lang))url.searchParams.set('lang',lang);
+ return url.toString();
 }

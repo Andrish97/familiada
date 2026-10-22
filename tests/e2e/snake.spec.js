@@ -143,3 +143,13 @@ test("wąż: bez linku z kodu QR /snake/ to zwykłe 404", async ({ page }) => {
     await expect(page.locator("#snakeFrame")).toHaveCount(0);
   }
 });
+
+test("każdy kod QR z kadrów (urządzenie, QR na Wyświetlaczu) prowadzi do węża", async ({ page }) => {
+  const host = `${SITE}/go/?d=host&id=00000000-0000-4000-8000-000000000100&key=screensDeviceKey&lang=pl`;
+  const display = `${SITE}/go/?d=qr&id=${DEMO_ID}&key=poll103KEY&lang=en`;
+  for (const [url, expected] of [[host, /\/snake\/\?qr=00000000-0000-4000-8000-000000000100&lang=pl$/], [display, new RegExp(`/snake/\\?qr=${DEMO_ID}&lang=en$`)]]) {
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(expected, { timeout: 30_000 });
+    await expect(page.locator("#snakeFrame")).toHaveAttribute("data-mode", /intro|play/, { timeout: 30_000 });
+  }
+});
