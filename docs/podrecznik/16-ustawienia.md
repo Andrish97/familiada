@@ -22,6 +22,8 @@ pojawią się na Wyświetlaczu, na ekranie prowadzącego i w panelu sterowania. 
 jest ograniczona do tego, co mieści Wyświetlacz; znaki, których Wyświetlacz nie pokaże, nie
 zostaną przyjęte.
 
+![Drużyny](zrzut:play-settings-teams)
+
 ## 16.3 Wygląd
 
 - **Kolory** — kolor drużyny A, kolor drużyny B, tło i kolor kropki (świecących punktów
@@ -37,6 +39,9 @@ zostaną przyjęte.
   Wyświetlacz zawsze pokazuje logo z kropek, bo jest ekranem kropkowym.
 
 „Podgląd wyświetlacza” i „Podgląd prowadzącego” pokazują efekt zmian na bieżąco.
+
+![Wygląd](zrzut:appearance)
+![Okno koloru](zrzut:game-settings-color)
 
 ## 16.4 Dźwięk
 
@@ -57,6 +62,8 @@ urządzeniu, na którym uruchomisz tę grę.
 > „Dźwięk” usuwają pliki od razu, nawet jeśli potem nie zapiszesz zmian. [Przywróć domyślne]
 > przywraca też wariant „Klasyczny” i głośność 100%. Usuniętych plików nie da się odzyskać —
 > trzeba je wgrać ponownie.
+
+![Dźwięk](zrzut:sound)
 
 ## 16.5 Pytania
 
@@ -80,12 +87,16 @@ Przy losowaniu zestaw zobaczysz w podsumowaniu przed rozpoczęciem gry, gdzie mo
 [Losuj ponownie] (→ 17.2). Przy losowym finale i trybie „Kolejność” finał najpierw zabiera 5 pytań
 z Twojej listy rund; po [Losuj ponownie] poprzednie pytania finałowe wracają na koniec listy.
 
+![Wybór pytań finałowych](zrzut:play-settings-finale)
+
 ### 16.5.3 Pytania do rund
 
 Przy trybie „Kolejność” w sekcji „Pytania — Rundy” ułóż kolejność pytań przeciąganiem (albo
 strzałkami) — lista zawiera wszystkie pytania poza finałowymi. Rundy wykorzystają je po kolei.
 Przy trybie „Losowe” serwis potasuje pytania przed grą — kolejność zobaczysz w podsumowaniu
 (→ 17.2). Wylosowane pytania finałowe nie trafią do rund.
+
+![Kolejność pytań rund](zrzut:play-settings-rounds)
 
 ## 16.6 Dodatkowe ustawienia
 
@@ -108,6 +119,9 @@ Kwota na ekranie końcowym to punkty zwycięskiej drużyny z rund pomnożone prz
 nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną (→ 4.4). Przy remisie ekran
 końcowy pokazuje logo.
 
+![Ustawienia gry — mnożniki, próg i ekran końcowy](zrzut:play-settings-game)
+![Kwota nagrody po finale](zrzut:game-settings-prize)
+
 ## 16.7 Zapis i użycie ustawień
 
 - Zmiany zapisujesz przyciskiem [Zapisz]. Dopóki tego nie zrobisz, serwis pokazuje „Niezapisane
@@ -117,3 +131,5 @@ końcowy pokazuje logo.
 - Jeśli ustawienia zmieniono w międzyczasie w innym oknie, serwis o tym uprzedzi przed zapisem.
 - [Graj] przechodzi od razu do panelu sterowania (→ 17). Gra musi być gotowa do rozegrania
   (→ 7.6).
+
+![Niezapisane zmiany przy wyjściu](zrzut:play-settings-unsaved)

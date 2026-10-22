@@ -45,6 +45,9 @@ A copy received from a friend is marked "From: {name}".
 Above the list you can choose a filter: DRAFT, OPEN, STOPPED, READY or "Received"
 (only copies from friends). The list refreshes by itself.
 
+![Game statuses and the blocking reason on the tile](zrzut:games-prepared-states)
+![Game status filter](zrzut:games-filter-menu)
+
 ## 6.3 Creating and selecting a game
 
 1. Choose the tab with the type of game you want to create (differences → 7.1).
@@ -55,6 +58,8 @@ The new game appears on the list as a draft and is selected right away. To add q
 choose [Edit] (→ 7.2).
 
 Clicking a tile selects the game — only then do the action buttons become active.
+
+![Creating a new game](zrzut:games-new-poll-text)
 
 ## 6.4 Actions on the selected game
 
@@ -89,6 +94,8 @@ open the *Control panel* and *Game settings* on a computer or tablet.
 In the **Community Games** tab only [Play], [Preview] and [Game settings] are available.
 These games cannot be edited, duplicated, exported or sent (→ 13.4).
 
+![A selected game that is not ready — playing disabled](zrzut:games-prepared-not-ready)
+
 ## 6.5 Renaming and deleting a game
 
 **Renaming** — double-click the game tile (on a phone, tap it twice),
@@ -102,6 +109,9 @@ tab) cannot be deleted or renamed at that moment. The app will then show
 "This game is open elsewhere." Close that window and try again.
 
 In the Community Games tab, the trash icon means [Remove from library] (→ 13.4).
+
+![Renaming a game](zrzut:games-rename)
+![Deleting a game with an open poll](zrzut:games-delete-open-poll)
 
 ## 6.6 Duplicating games and sending copies
 
@@ -123,6 +133,8 @@ an open, stopped or closed poll cannot be sent.
 
 Duplicating and sending require an account (→ 5.1). This is different from adding a game from Community
 Games (→ 13.4).
+
+![Duplicating an open poll — without the current votes](zrzut:games-duplicate-votes)
 
 ## 6.7 Importing and exporting
 
@@ -153,3 +165,6 @@ the window shows "No bases found." — create a base first (→ 9.1). For an ope
 first warns you that the collected votes won't be copied to the base.
 
 Don't edit the contents of `.famgame` files by hand — importing such a file may fail.
+
+![Importing a game with a file preview](zrzut:games-import-preview)
+![Export to a question base](zrzut:games-export-base)

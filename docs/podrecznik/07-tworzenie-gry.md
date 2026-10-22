@@ -28,6 +28,9 @@ kafelku i potwierdź — usuniesz pytanie razem z odpowiedziami.
 Na węższym ekranie edytor pokazuje na zmianę listę pytań albo wybrane pytanie; do listy
 wracasz przyciskiem [Wstecz].
 
+![Edytor gry](zrzut:game-editor)
+![Edytor gry na telefonie](zrzut:games-editor-list-phone@phone)
+
 ## 7.3 Pytania i odpowiedzi
 
 - **Pytanie** może mieć do **100 znaków**.
@@ -57,6 +60,8 @@ Aby gra preparowana była gotowa:
 Wartości niespełniające tych warunków serwis zapisze, ale oznaczy na czerwono, a gra nie
 będzie gotowa. Jak punkty liczą się w rozgrywce (→ 3.2).
 
+![Suma punktów w pytaniu ponad 100](zrzut:games-editor-prepared-sum)
+
 ## 7.5 Zapisywanie i edycja gry po rozpoczęciu ankiety
 
 Edytor zapisuje zmiany sam — nie ma przycisku „Zapisz”:
@@ -78,6 +83,8 @@ Puste pytanie lub odpowiedź zapisze się jako „Pytanie 1”, „ODP 1” itd.
 Gry nie można edytować także wtedy, gdy jest otwarta w innym miejscu albo trwa jej
 rozgrywka — serwis pokaże powód.
 
+![Edycja zablokowana — ankieta otwarta](zrzut:games-editor-locked-poll)
+
 ## 7.6 Warunki gotowości gry
 
 Lista warunków w edytorze („Ankietę uruchomisz, gdy:” albo „Gra będzie gotowa, gdy:”)
@@ -93,6 +100,8 @@ z numerami pytań, których to dotyczy).
 
 W grach z ankietą spełnienie warunków pozwala uruchomić ankietę. Grę rozegrasz dopiero po jej
 podliczeniu i zamknięciu (→ 15.6, 15.7).
+
+![Warunki gotowości z brakami](zrzut:games-editor-prepared-missing)
 
 ## 7.7 Import pytań z pliku tekstowego
 
@@ -125,6 +134,8 @@ Zbyt długie teksty zostaną skrócone (pytanie do 100, odpowiedź do 17 znaków
 wczytywane. Jeśli plik zawiera znaki, których nie pokaże Wyświetlacz, albo odpowiedź przed
 pierwszym pytaniem, serwis wskaże miejsce błędu i nic nie zmieni.
 
+![Import pytań z pliku tekstowego — podgląd na żywo](zrzut:games-editor-txt-import-preview)
+
 ## 7.8 Zmiana typu istniejącej gry
 
 Zaznacz grę w *Moich grach* i wybierz [Zmień typ]. Zmienia się **ta sama gra** — to nie
@@ -144,3 +155,5 @@ W oknie „Zmień typ gry” każdy rodzaj ma opis skutków — sprawdź go prze
 
 Z ankiety tekstowej przechodzą tylko pytania — odpowiedzi trzeba wpisać. Po zmianie gra jest
 zawsze szkicem.
+
+![Zmiana typu gry po zamkniętej ankiecie](zrzut:games-change-type-closed-text)

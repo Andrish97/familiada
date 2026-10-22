@@ -45,6 +45,9 @@ Kopia otrzymana od znajomego ma oznaczenie „Od: {nazwa}”.
 Nad listą możesz wybrać filtr: SZKIC, OTWARTA, ZATRZYMANA, GOTOWA albo „Otrzymano”
 (tylko kopie od znajomych). Lista odświeża się sama.
 
+![Statusy gier i powód blokady na kafelku](zrzut:games-prepared-states)
+![Filtr stanu gier](zrzut:games-filter-menu)
+
 ## 6.3 Utworzenie i wybór gry
 
 1. Wybierz zakładkę z rodzajem gry, który chcesz utworzyć (różnice → 7.1).
@@ -55,6 +58,8 @@ Nowa gra pojawi się na liście jako szkic i zostanie od razu zaznaczona. Aby do
 wybierz [Edytuj] (→ 7.2).
 
 Kliknięcie kafelka zaznacza grę — dopiero wtedy włączają się przyciski działań.
+
+![Tworzenie nowej gry](zrzut:games-new-poll-text)
 
 ## 6.4 Działania na wybranej grze
 
@@ -89,6 +94,8 @@ Na telefonie i w wąskim oknie przeglądarki przyciski [Graj] i [Ustawienia gry]
 W zakładce **Gry Społeczności** dostępne są tylko [Graj], [Podgląd] i [Ustawienia gry].
 Takich gier nie można edytować, powielać, eksportować ani wysyłać (→ 13.4).
 
+![Zaznaczona gra niegotowa — granie nieaktywne](zrzut:games-prepared-not-ready)
+
 ## 6.5 Zmiana nazwy i usuwanie gry
 
 **Zmiana nazwy** — kliknij dwukrotnie kafelek gry (na telefonie stuknij dwa razy),
@@ -102,6 +109,9 @@ przeglądarki) nie można w tej chwili usunąć ani zmienić jej nazwy. Serwis p
 „Ta gra jest otwarta gdzie indziej.” Zamknij tamto okno i spróbuj ponownie.
 
 W zakładce Gry Społeczności kosz oznacza [Usuń z biblioteki] (→ 13.4).
+
+![Zmiana nazwy gry](zrzut:games-rename)
+![Usuwanie gry z otwartą ankietą](zrzut:games-delete-open-poll)
 
 ## 6.6 Powielanie i wysyłanie kopii gier
 
@@ -123,6 +133,8 @@ otwartą, zatrzymaną ani zamkniętą wysłać się nie da.
 
 Powielanie i wysyłanie wymaga konta (→ 5.1). To co innego niż dodanie gry z Gier
 Społeczności (→ 13.4).
+
+![Powielanie otwartej ankiety — bez bieżących głosów](zrzut:games-duplicate-votes)
 
 ## 6.7 Importowanie i eksportowanie
 
@@ -153,3 +165,6 @@ okno pokaże „Brak baz do wyboru.” — najpierw utwórz bazę (→ 9.1). Prz
 zatrzymanej serwis najpierw uprzedzi, że zebrane głosy nie trafią do bazy.
 
 Nie zmieniaj ręcznie zawartości plików `.famgame` — import takiego pliku może się nie udać.
+
+![Import gry z podglądem pliku](zrzut:games-import-preview)
+![Eksport do bazy pytań](zrzut:games-export-base)

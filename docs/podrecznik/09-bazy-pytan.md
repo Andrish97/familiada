@@ -16,6 +16,8 @@ zaprosili Cię inni (→ 12). Filtr nad listą pokaże bazy według roli: Moja, 
 
 Pytania z gry przeniesiesz do bazy przyciskiem [Eksportuj do bazy] w *Moich grach* (→ 6.7).
 
+![Bazy pytań](zrzut:bases)
+
 ## 9.2 Eksplorator bazy
 
 Otwarta baza działa podobnie do eksploratora plików na komputerze:
@@ -31,6 +33,8 @@ Prawy przycisk myszy (na dotyku — przytrzymanie) otwiera menu z czynnościami 
 
 Folder otwierasz dwuklikiem lub klawiszem Enter, a wracasz o poziom wyżej klawiszem Backspace
 albo w drzewie folderów.
+
+![Eksplorator bazy](zrzut:base-explorer)
 
 ## 9.3 Narzędzia do pracy z pytaniami i folderami
 
@@ -52,6 +56,9 @@ tle przenosi elementy do „Folderu głównego”. Przeciągnięcie na tag w lew
 ten tag.
 
 Usunięcie folderu usuwa także wszystko, co jest w środku.
+
+![Menu kontekstowe](zrzut:base-explorer-menu)
+![Kosz](zrzut:base-explorer-trash)
 
 ## 9.4 Foldery i tagi
 
@@ -78,6 +85,9 @@ warunki danego rodzaju gry (→ 7.6):
 - **preparowane** — mają od 3 do 6 odpowiedzi z punktami (każda co najmniej 4, suma najwyżej
   100), więc nadają się do gry preparowanej.
 
+![Tagi zaznaczonego pytania](zrzut:base-explorer-tags)
+![Lewy panel — widok tagów](zrzut:base-explorer-left-tags)
+
 ## 9.5 Wyszukiwanie i przeglądanie pytań
 
 Wpisz tekst w pole „Szukaj...”. Serwis znajdzie pytania i foldery, których treść lub nazwa
@@ -87,6 +97,8 @@ Wpisz `#nazwa_tagu`, aby dodać do wyszukiwania tag.
 Gdy wyszukujesz albo filtrujesz po tagu, lista pokazuje wyniki z całej bazy, a nie zawartość
 folderu — w tym widoku nie można wklejać ani wycinać. Aby wrócić do folderów, wyczyść pole
 wyszukiwania albo odznacz tagi.
+
+![Wyszukiwanie z filtrem tagu](zrzut:base-explorer-search-filters)
 
 ## 9.6 Skróty klawiszowe
 
@@ -123,6 +135,8 @@ Kliknij dwukrotnie pytanie albo wybierz [Edytuj pytanie]. W oknie „Pytanie”:
 W bazie punkty nie są wymagane — przydadzą się, jeśli z pytania powstanie gra preparowana.
 Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisujesz osobno (→ 9.4).
 
+![Edycja pytania](zrzut:base-explorer-question-modal)
+
 ## 9.8 Tworzenie gry z wybranych pytań
 
 1. Zaznacz pytania lub foldery i wybierz [Utwórz grę].
@@ -142,3 +156,5 @@ punktacja — pytania i odpowiedzi bez punktów (punkty wynikną z ankiety), a g
 pytania, odpowiedzi i punkty.
 
 Gry nie utworzysz z bazy, do której masz dostęp tylko do odczytu (→ 12.4).
+
+![Tworzenie gry z wybranych pytań](zrzut:base-explorer-create-game)

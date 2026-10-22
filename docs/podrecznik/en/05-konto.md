@@ -26,6 +26,8 @@ You need an account to work with other people. Only with an account can you:
 If you open a page that is only available to accounts while you are a guest, you will see the message
 "Not available for guest account".
 
+![Login — an account or entering as a guest](zrzut:people-login)
+
 ## 5.2 Registration and email confirmation
 
 1. On the *Login* page, choose [Create account].
@@ -45,6 +47,9 @@ Your username is created automatically from your email address; you can change i
   the app will offer [Resend]. You can resend once an hour.
 - *The address is already registered* — the app will show "This account already exists. Switching to
   login." Log in or recover your password (→ 5.7).
+
+![Creating an account — password rules](zrzut:people-login-register-weak)
+![Activation link sent](zrzut:people-login-register-sent)
 
 ## 5.3 Logging in and out
 
@@ -85,6 +90,9 @@ logos and other files will be kept.
 Until you click the link, you keep using the guest account. The message can be resent
 once an hour.
 
+![Guest account — prompt to keep your data](zrzut:people-account-guest)
+![Creating an account from a guest session — moving the data](zrzut:people-login-guest-migrate)
+
 ## 5.5 Username and profile
 
 Your username is shown in the top right corner, and also to friends and subscribers —
@@ -102,6 +110,8 @@ and choose [Save name]. You can change your name once an hour.
 
 If your account does not have a permanent name yet (for example after saving a guest account without
 a name), you will see the "First login" screen asking you to set one when you log in.
+
+![First login — choosing a username](zrzut:people-login-setup-username)
 
 ## 5.6 Changing your email address and password
 
@@ -123,6 +133,8 @@ export your games, bases and logos to files, delete the account, create a new on
 - a special character (for example `!` or `#`).
 
 The new password must be different from the previous one. You can change your password once an hour.
+
+![E-mail change in progress](zrzut:people-account-email-pending)
 
 ## 5.7 Recovering access and security
 
@@ -151,6 +163,8 @@ In *Account settings* you will also find:
 
 > Note: restoring replaces your existing demo materials, including the ones you changed.
 > If you want to keep your changes, duplicate that game, base or logo first.
+
+![Account settings](zrzut:account)
 
 ## 5.9 Deleting your account
 

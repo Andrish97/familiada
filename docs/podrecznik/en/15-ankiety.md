@@ -21,6 +21,8 @@ From this moment the poll is **open**: voters can answer, and the game cannot be
 | Stopped | Collecting is paused; you can resume it or count the votes. |
 | Ready | The poll is closed and the game is ready to play. |
 
+![Poll draft — sharing after launch](zrzut:polls-draft-points)
+
 ## 15.2 Choosing how people vote
 
 The "Sharing" card offers two ways:
@@ -55,6 +57,8 @@ You can combine both ways — the votes are counted together.
 A subscriber without an account can view their invitations and opt out of them on the
 *My notifications* page.
 
+![Sharing a poll](zrzut:poll-share)
+
 ## 15.3 Voting
 
 A voter opens the poll from the link, the QR code, an email or a task.
@@ -73,6 +77,9 @@ A person invited by name votes in the same way; their status for the poll owner 
 "voted". A person without an account can open the poll from the email or from the
 *My notifications* page.
 
+![Points voting on a phone](zrzut:poll-vote-mobile@phone)
+![Text voting — character counter](zrzut:polls-vote-text-typing@phone)
+
 ## 15.4 Tasks and voting invitations
 
 A task is a poll invitation you got from a friend. You will find tasks on the
@@ -84,6 +91,8 @@ A task is a poll invitation you got from a friend. You will find tasks on the
 
 People without an account have their tasks on the *My notifications* page.
 
+![Tasks](zrzut:tasks)
+
 ## 15.5 Running the vote
 
 The "Votes" card shows progress: the number of votes cast and — for invitations — the recipients' statuses.
@@ -93,6 +102,8 @@ The "Votes" card shows progress: the number of votes cast and — for invitation
 - [Resume voting] — opens collecting again.
 - [Count votes] — available when the poll is stopped (→ 15.6).
 - [Abort] — ends the poll and returns it to a draft. **All votes will be lost.**
+
+![Votes in a text poll](zrzut:polls-text)
 
 ## 15.6 Counting and tidying up the answers
 
@@ -129,6 +140,9 @@ Your corrections are saved as you go, so you can stop and come back later.
 When everything is right, choose [Approve]. You will see "Votes counted. Game ready.".
 [Leave counting] goes back to the stopped poll without closing it.
 
+![Tallying — merging answers](zrzut:polls-tally-text-merge)
+![Tallying a points poll](zrzut:polls-tally-points)
+
 ## 15.7 Results and using them in the game
 
 After approval, the poll is closed and the game has the READY status — you can play it
@@ -139,3 +153,5 @@ to "Poll".
   will be deleted.
 - Editing the game (→ 7.5) or changing its type (→ 7.8) also deletes the results — after you confirm.
 - To keep the result and collect a new poll at the same time, duplicate the game first (→ 6.6).
+
+![A finished poll — final points](zrzut:polls-ready-text)

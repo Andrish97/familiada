@@ -21,6 +21,8 @@ Od tej chwili ankieta jest **otwarta**: głosujący mogą odpowiadać, a gry nie
 | Zatrzymana | Zbieranie jest wstrzymane; możesz je wznowić albo podliczyć głosy. |
 | Gotowa | Ankieta jest zamknięta, a gra gotowa do rozegrania. |
 
+![Szkic ankiety — udostępnianie po uruchomieniu](zrzut:polls-draft-points)
+
 ## 15.2 Wybór sposobu głosowania
 
 Na karcie „Udostępnianie” są dwa sposoby:
@@ -55,6 +57,8 @@ Oba sposoby możesz łączyć — głosy liczą się razem.
 Subskrybent bez konta może przejrzeć swoje zaproszenia i z nich zrezygnować na stronie
 *Moje powiadomienia*.
 
+![Udostępnianie ankiety](zrzut:poll-share)
+
 ## 15.3 Oddawanie głosu
 
 Głosujący otwiera ankietę z odnośnika, kodu QR, wiadomości e-mail albo zadania.
@@ -73,6 +77,9 @@ Osoba zaproszona imiennie głosuje tak samo; jej status u ankietującego zmieni 
 „zagłosował”. Osoba bez konta może otworzyć ankietę z wiadomości albo ze strony
 *Moje powiadomienia*.
 
+![Głosowanie punktowe na telefonie](zrzut:poll-vote-mobile@phone)
+![Głosowanie tekstowe — licznik znaków](zrzut:polls-vote-text-typing@phone)
+
 ## 15.4 Zadania i zaproszenia do głosowania
 
 Zadanie to zaproszenie do ankiety, które dostałeś od znajomego. Znajdziesz je na stronie
@@ -84,6 +91,8 @@ Zadanie to zaproszenie do ankiety, które dostałeś od znajomego. Znajdziesz je
 
 Osoby bez konta mają swoje zadania na stronie *Moje powiadomienia*.
 
+![Zadania](zrzut:tasks)
+
 ## 15.5 Prowadzenie głosowania
 
 Na karcie „Głosy” widać postęp: liczbę oddanych głosów i — przy zaproszeniach — statusy odbiorców.
@@ -93,6 +102,8 @@ Na karcie „Głosy” widać postęp: liczbę oddanych głosów i — przy zapr
 - [Wznów głosowanie] — ponownie otwiera zbieranie.
 - [Podlicz głosy] — dostępne, gdy ankieta jest zatrzymana (→ 15.6).
 - [Przerwij] — kończy ankietę i przywraca szkic. **Wszystkie głosy przepadną.**
+
+![Głosy w ankiecie tekstowej](zrzut:polls-text)
 
 ## 15.6 Podliczanie i opracowywanie odpowiedzi
 
@@ -129,6 +140,9 @@ Poprawki zapisują się na bieżąco, więc możesz przerwać i wrócić późni
 Gdy wszystko się zgadza, wybierz [Zatwierdź]. Zobaczysz „Głosy podliczone. Gra gotowa.”.
 [Wyjdź z podliczania] wraca do zatrzymanej ankiety bez zamykania.
 
+![Podliczanie — scalanie odpowiedzi](zrzut:polls-tally-text-merge)
+![Podliczanie ankiety punktowej](zrzut:polls-tally-points)
+
 ## 15.7 Wyniki i wykorzystanie ich w grze
 
 Po zatwierdzeniu ankieta jest zamknięta, a gra ma status GOTOWA — możesz ją rozegrać
@@ -139,3 +153,5 @@ na „Ankieta”.
   zostaną usunięte.
 - Edycja gry (→ 7.5) lub zmiana jej rodzaju (→ 7.8) także usuwa wyniki — po potwierdzeniu.
 - Aby zachować wynik i jednocześnie zebrać nową ankietę, najpierw powiel grę (→ 6.6).
+
+![Gotowa ankieta — ostateczne punkty](zrzut:polls-ready-text)

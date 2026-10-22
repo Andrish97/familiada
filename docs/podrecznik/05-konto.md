@@ -26,6 +26,8 @@ Konto jest potrzebne do współpracy z innymi osobami. Tylko z kontem możesz:
 Gdy jako gość otworzysz stronę dostępną tylko dla kont, zobaczysz komunikat
 „Niedostępne w koncie gościa”.
 
+![Logowanie — konto albo wejście jako gość](zrzut:people-login)
+
 ## 5.2 Rejestracja i potwierdzenie adresu e-mail
 
 1. Na stronie *Logowanie* wybierz [Załóż konto].
@@ -45,6 +47,9 @@ Nazwa użytkownika powstaje automatycznie z adresu e-mail; możesz ją zmienić 
   serwis zaproponuje [Wyślij ponownie]. Ponowna wysyłka jest możliwa raz na godzinę.
 - *Adres jest już zarejestrowany* — serwis wyświetli „Konto już istnieje. Przełączam na
   logowanie.” Zaloguj się albo odzyskaj hasło (→ 5.7).
+
+![Zakładanie konta — zasady hasła](zrzut:people-login-register-weak)
+![Link aktywacyjny wysłany](zrzut:people-login-register-sent)
 
 ## 5.3 Logowanie i wylogowanie
 
@@ -85,6 +90,9 @@ logo i inne pliki zostaną zachowane.
 Do czasu kliknięcia linku nadal korzystasz z konta gościa. Wiadomość można wysłać ponownie
 raz na godzinę.
 
+![Konto gościa — zachęta do zapisania danych](zrzut:people-account-guest)
+![Zakładanie konta z sesji gościa — przeniesienie danych](zrzut:people-login-guest-migrate)
+
 ## 5.5 Nazwa użytkownika i profil
 
 Nazwa użytkownika jest widoczna w prawym górnym rogu, a także dla znajomych i subskrybentów —
@@ -102,6 +110,8 @@ i wybierz [Zapisz nazwę]. Nazwę można zmieniać raz na godzinę.
 
 Jeśli Twoje konto nie ma jeszcze stałej nazwy (na przykład po zapisaniu konta gościa bez
 nazwy), przy logowaniu zobaczysz ekran „Pierwsze logowanie” z prośbą o jej ustawienie.
+
+![Pierwsze logowanie — wybór nazwy użytkownika](zrzut:people-login-setup-username)
 
 ## 5.6 Zmiana adresu e-mail i hasła
 
@@ -123,6 +133,8 @@ wyeksportować gry, bazy i logo do plików, usunąć konto, założyć nowe i za
 - znak specjalny (na przykład `!` lub `#`).
 
 Nowe hasło musi różnić się od poprzedniego. Hasło można zmieniać raz na godzinę.
+
+![Zmiana adresu e-mail w toku](zrzut:people-account-email-pending)
 
 ## 5.7 Odzyskiwanie dostępu i zabezpieczenia
 
@@ -151,6 +163,8 @@ W *Ustawieniach konta* znajdziesz także:
 
 > Uwaga: przywrócenie zastępuje dotychczasowe materiały demo, także te, które zmieniłeś.
 > Jeśli chcesz zachować zmiany, najpierw powiel taką grę, bazę lub logo.
+
+![Ustawienia konta](zrzut:account)
 
 ## 5.9 Usunięcie konta
 

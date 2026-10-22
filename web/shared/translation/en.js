@@ -46,6 +46,7 @@ const en = {
   "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Log in again.","decisionFailed":"Could not save your decision. Try again."}
 },
   common: {
+    imageViewer: { title: "Preview" },
     save: "Save",
     sort: {
       label: "Sort",
@@ -273,7 +274,7 @@ const en = {
       ctaConnectTitle: "Connect a device to a game",
       note: "Start as a guest, or log in to return to your saved materials.",
     },
-    imageViewer: { title: "Preview", open: "Enlarge image: {title}", prev: "Previous image", next: "Next image", counter: "{n} of {total}" },
+    imageViewer: { open: "Enlarge image: {title}", prev: "Previous image", next: "Next image", counter: "{n} of {total}" },
     shots: {
       games: "My games", "game-editor": "Game editor", bases: "Question bases", "base-explorer": "Base manager",
       friends: "Friends", subscribers: "Subscribers", tasks: "Tasks", "poll-share": "Sharing a poll", "poll-vote-mobile": "Voting on a phone", "poll-results": "Poll votes and results",

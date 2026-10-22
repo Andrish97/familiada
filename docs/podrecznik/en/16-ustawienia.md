@@ -22,6 +22,8 @@ appear on the Display, on the host screen and in the control panel. The length o
 is limited to what fits on the Display; characters the Display cannot show will not
 be accepted.
 
+![Teams](zrzut:play-settings-teams)
+
 ## 16.3 Display
 
 - **Colors** — the Team A color, the Team B color, the background and the dot color (the glowing points of
@@ -37,6 +39,9 @@ be accepted.
   The Display always shows the logo made of dots, because it is a dot screen.
 
 "Display preview" and "Host preview" show the effect of your changes as you make them.
+
+![Appearance](zrzut:appearance)
+![Colour window](zrzut:game-settings-color)
 
 ## 16.4 Sound
 
@@ -57,6 +62,8 @@ device where you start this game.
 > "Sound" section delete the files right away, even if you don't save your changes afterwards. [Restore defaults]
 > also brings back the "Classic" variant and 100% volume. Deleted files cannot be recovered —
 > you have to upload them again.
+
+![Sound](zrzut:sound)
 
 ## 16.5 Questions
 
@@ -80,12 +87,16 @@ With a random draw, you will see the set in the summary before the game starts, 
 [Reshuffle] (→ 17.2). With a random final and "Order" mode, the final first takes 5 questions
 from your rounds list; after [Reshuffle], the previous final questions go back to the end of the list.
 
+![Choosing the final questions](zrzut:play-settings-finale)
+
 ### 16.5.3 Round questions
 
 In "Order" mode, in the "Questions — Rounds" section, arrange the order of the questions by dragging (or
 with the arrows) — the list contains all questions except the final ones. The rounds use them one after another.
 In "Random" mode, the app shuffles the questions before the game — you will see the order in the summary
 (→ 17.2). Final questions that were drawn will not be used in the rounds.
+
+![Order of round questions](zrzut:play-settings-rounds)
 
 ## 16.6 Additional settings
 
@@ -108,6 +119,9 @@ The amount on the end screen is the winning team's points from the rounds multip
 the "Prize multiplier", and once the final target is reached — increased by the main prize amount (→ 4.4). In a tie, the end
 screen shows the logo.
 
+![Game settings — multipliers, threshold and end screen](zrzut:play-settings-game)
+![Prize amount after the final](zrzut:game-settings-prize)
+
 ## 16.7 Saving and using the settings
 
 - You save your changes with the [Save] button. Until you do, the app shows "Unsaved
@@ -117,3 +131,5 @@ screen shows the logo.
 - If the settings were changed in the meantime in another window, the app warns you before saving.
 - [Play] takes you straight to the control panel (→ 17). The game must be ready to play
   (→ 7.6).
+
+![Unsaved changes when leaving](zrzut:play-settings-unsaved)

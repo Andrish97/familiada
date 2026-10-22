@@ -183,7 +183,7 @@ test("manual: zrzuty — karuzela widoków (strzałki, kropki) i powiększenie",
   await expect(carousel.locator(".m-carousel-dot").nth(3)).toHaveClass(/active/);
   await expect.poll(() => carousel.locator("img").nth(3).evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
   await carousel.locator(".m-shot-zoom").nth(3).click();
-  await expect(page.locator(".m-lightbox img")).toBeVisible();
+  await expect(page.locator("#imgvOverlay.is-open .imgv-img")).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.locator(".m-lightbox")).toHaveCount(0);
+  await expect(page.locator("#imgvOverlay")).toBeHidden();
 });

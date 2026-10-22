@@ -10,6 +10,7 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T00340"
 import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00340";
 import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00340";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-22T00340";
 import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-22T00340";
 
 const CONTENT = {
@@ -169,19 +170,12 @@ function wireCarousels(root) {
   }
 }
 
-// Powiększenie zrzutu: pełny obraz na ciemnym tle, zamyka kliknięcie albo Esc.
+// Powiększenie zrzutu: to samo okno co na stronie głównej (na telefonie od dołu,
+// z przybliżaniem palcami).
+let viewer = null;
 function openShot(img) {
-  const box = document.createElement("button");
-  box.type = "button";
-  box.className = "m-lightbox";
-  box.setAttribute("aria-label", img.alt);
-  box.innerHTML = `<img src="${esc(img.currentSrc || img.src)}" alt="${esc(img.alt)}">`;
-  const close = () => { box.remove(); document.removeEventListener("keydown", onKey, true); };
-  const onKey = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
-  box.addEventListener("click", close);
-  document.addEventListener("keydown", onKey, true);
-  document.body.append(box);
-  box.focus();
+  viewer ||= createImageViewer({ backBtn: document.getElementById("btnImageViewerBack") });
+  viewer.open(img.currentSrc || img.src, img.alt, img);
 }
 
 function scrollToHash(hash, smooth = false) {

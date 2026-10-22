@@ -28,6 +28,9 @@ tile and confirm — you will delete the question together with its answers.
 On a narrower screen, the editor shows either the question list or the selected question; you go back
 to the list with the [Back] button.
 
+![Game editor](zrzut:game-editor)
+![Game editor on a phone](zrzut:games-editor-list-phone@phone)
+
 ## 7.3 Questions and answers
 
 - A **question** can have up to **100 characters**.
@@ -57,6 +60,8 @@ For a prepared game to be ready:
 The app will save values that do not meet these conditions, but it will mark them in red, and the game will not
 be ready. How points count during a game (→ 3.2).
 
+![Points in a question adding up to more than 100](zrzut:games-editor-prepared-sum)
+
 ## 7.5 Saving and editing a game after the poll has started
 
 The editor saves your changes by itself — there is no "Save" button:
@@ -78,6 +83,8 @@ An empty question or answer will be saved as "Question 1", "ANS 1" and so on.
 A game also cannot be edited while it is open somewhere else or while it is being
 played — the app will show the reason.
 
+![Editing locked — the poll is open](zrzut:games-editor-locked-poll)
+
 ## 7.6 Game readiness conditions
 
 The list of conditions in the editor ("You can start the poll when:" or "The game is ready when:")
@@ -93,6 +100,8 @@ with the numbers of the questions concerned).
 
 In games with a poll, meeting the conditions lets you start the poll. You can play the game only after the poll
 has been counted and closed (→ 15.6, 15.7).
+
+![Readiness conditions with missing items](zrzut:games-editor-prepared-missing)
 
 ## 7.7 Importing questions from a text file
 
@@ -125,6 +134,8 @@ Texts that are too long will be shortened (question to 100, answer to 17 charact
 loaded. If the file contains characters the Display cannot show, or an answer before
 the first question, the app will point to the error and change nothing.
 
+![Importing questions from a text file — live preview](zrzut:games-editor-txt-import-preview)
+
 ## 7.8 Changing the type of an existing game
 
 Select the game in *My games* and choose [Change type]. **The same game** changes — it is not
@@ -144,3 +155,5 @@ In the "Change game type" window, each type has a description of what will happe
 
 From a standard poll only the questions carry over — you need to enter the answers. After the change, the game is
 always a draft.
+
+![Changing the type of a game after a closed poll](zrzut:games-change-type-closed-text)

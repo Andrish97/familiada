@@ -23,6 +23,8 @@ Jeśli pod podanym adresem nie ma konta, serwis to podpowie i zaproponuje dodani
 jako subskrybenta (→ 14.2). Działa to też w drugą stronę: gdy na stronie *Subskrybenci* wpiszesz
 adres osoby z kontem, serwis zaproponuje zaproszenie do znajomych.
 
+![Znajomi](zrzut:friends)
+
 ## 10.3 Obsługa zaproszeń i ich statusów
 
 **Otrzymane zaproszenia** są w zakładce „Znajomi”, w sekcji „Propozycje”:
@@ -41,6 +43,8 @@ Wiadomości z zaproszeniem wysyłane są nie częściej niż co 5 dni i najwyże
 
 Na komputerze obie zakładki są widoczne obok siebie; na telefonie przełączasz je u góry.
 Liczniki przy zakładkach pokazują oczekujące zaproszenia.
+
+![Wysłane zaproszenia — odliczanie do ponownej wysyłki](zrzut:people-friends-resend-cooldown)
 
 ## 10.4 Zarządzanie listą znajomych
 
@@ -96,10 +100,14 @@ Kopia zachowuje rodzaj gry i całą treść. Wysłać można:
 Nie można wysłać gier dodanych z Gier Społeczności, materiałów demo ani gry, która jest właśnie
 otwarta w edytorze lub ustawieniach.
 
+![Wysyłanie kopii gry i historia wysyłek](zrzut:games-send-history)
+
 ## 11.3 Wysyłanie logo
 
 Na stronie *Moje loga* zaznacz logo, wybierz [Wyślij] i postępuj jak przy grze. Znajomy
 może użyć otrzymanego logo we własnych grach (→ 8.5). Logo demo nie można wysłać.
+
+![Wysyłanie kopii logo](zrzut:logos-market-logos-send)
 
 ## 11.4 Odbieranie kopii
 
@@ -115,6 +123,8 @@ Kopia czeka w sekcji „Otrzymane kopie” — z nazwą i oznaczeniem „Od: …
 
 Kopia, której nie przyjmiesz w ciągu **5 dni**, znika. Dopóki czeka na decyzję, nie można jej
 edytować, powielać ani usuwać.
+
+![Otrzymane kopie na liście gier](zrzut:games-received-copies)
 
 ## 11.5 Historia wysyłek
 

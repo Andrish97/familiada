@@ -71,6 +71,10 @@ urządzenia; w razie potrzeby podłącz je ponownie przyciskami na górnym pasku
 sama, gdy urządzenia wrócą. Wcześniej zatwierdzone czynności pozostają zapisane, a uruchomiony
 zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 
+![Urządzenia w panelu sterowania](zrzut:control-devices)
+![Kod QR do podłączenia urządzenia](zrzut:play-control-qr-modal)
+![Podłącz urządzenie](zrzut:connect-device)
+
 ## 17.2 Przygotowanie i rozpoczęcie gry
 
 1. **Urządzenia.** Podłącz urządzenia (→ 17.1). Na karcie „Dźwięk” wybierz, skąd ma płynąć
@@ -100,6 +104,9 @@ od kroku (np. [Przejdź do finału]). Czynności, które zmieniają wynik — od
 X, przyjęcie zgłoszenia, oddanie kontroli — wymagają **dwóch kliknięć**: pierwsze zaznacza
 kafelek, drugie zatwierdza. Wyszarzone przyciski są chwilowo niedostępne, np. w czasie dźwięku
 lub animacji — poczekaj, aż panel je odblokuje.
+
+![Podsumowanie przed rozpoczęciem gry](zrzut:control-summary)
+![Rozpoczęcie gry](zrzut:play-control-intro)
 
 ## 17.3 Prowadzenie rund
 
@@ -146,6 +153,10 @@ odpowiedzi się nie odsłania (→ 3.6, 3.7).
 > Uwaga: dobierz liczbę pytań i próg punktów tak, aby pytania nie skończyły się przed
 > planowanym finałem — sam brak pytań nie prowadzi do finału.
 
+![Kradzież — panel sterowania](zrzut:play-control-steal)
+![Kradzież — Wyświetlacz](zrzut:play-display-steal)
+![Kradzież — ekran prowadzącego](zrzut:play-host-steal@tablet)
+
 ## 17.4 Prowadzenie finału
 
 **Przygotowanie.** Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika
@@ -191,6 +202,10 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 a przycisk zmienia się na [Zakończ finał] — operator sam wybiera moment zakończenia. Jeśli celu
 nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
 
+![Finał — dopasowanie odpowiedzi](zrzut:play-control-final-p1-map)
+![Finał — ekran prowadzącego](zrzut:play-host-final-p1@tablet)
+![Finał — Wyświetlacz](zrzut:play-display-final)
+
 ## 17.5 Zakończenie gry
 
 - **Po finale** — [Zakończ finał] pokazuje ekran końcowy: logo, punkty albo kwotę nagrody
@@ -204,6 +219,9 @@ Ekran prowadzącego jest wtedy czyszczony. Na koniec wybierz [Zacznij od nowa] a
 
 Zawsze kończ grę w panelu. Jeśli go zamkniesz w trakcie, gra pozostanie w toku i zablokuje zmianę
 ustawień (→ 16.1). Logo na ekranie prowadzącego zależy od ustawienia „Logo prowadzącego” (→ 16.3).
+
+![Gra zakończona](zrzut:play-control-game-ended)
+![Ekran końcowy — wygrana kwota](zrzut:play-display-end-money)
 
 ## 17.6 Skróty klawiszowe panelu
 

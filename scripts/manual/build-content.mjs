@@ -57,7 +57,7 @@ export const shotPath = (lang, scene, device = "desktop") => `img/${lang}/${scen
 let LANG = "pl";
 const shotFigure = (line) => {
   const [, caption, scene, device = "desktop"] = line.match(SHOT_RE);
-  const alt = esc(caption);
+  const alt = esc(caption.replace(/[*`]/g, ""));
   return `<figure class="m-shot m-shot-${device}"><button class="m-shot-zoom" type="button" data-zoom="1"><img src="/manual/${shotPath(LANG, scene, device)}" alt="${alt}" loading="lazy" decoding="async"></button>${caption ? `<figcaption>${inline(caption, new Map(), TITLES)}</figcaption>` : ""}</figure>`;
 };
 

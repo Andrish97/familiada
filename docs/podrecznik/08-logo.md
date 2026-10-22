@@ -16,6 +16,8 @@ kontrast — cienkie linie i drobne szczegóły zwykle znikają. Efekt sprawdzaj
 > Uwaga: logo tworzy się na komputerze lub tablecie. Na telefonie listę logo można
 > przeglądać, ale edytor jest niedostępny.
 
+![Biblioteka logo](zrzut:logos)
+
 ## 8.2 Tworzenie logo tekstowego
 
 1. Na stronie *Moje loga* kliknij kafelek „Nowe logo tekstowe”, wpisz nazwę logo i zatwierdź.
@@ -27,6 +29,9 @@ których można użyć. Napis za szeroki albo z niedozwolonymi znakami nie zosta
 serwis wskaże problem.
 
 Jeśli chcesz napis innym krojem pisma albo z dodatkami, użyj logo rysunkowego (→ 8.3).
+
+![Edytor logo tekstowego](zrzut:logo-text)
+![Lista dozwolonych znaków](zrzut:logos-market-text-chars)
 
 ## 8.3 Rysowanie logo
 
@@ -63,6 +68,9 @@ Przydatne skróty i zasady:
 
 Skróty klawiszowe nie działają podczas wpisywania tekstu.
 
+![Edytor rysunku](zrzut:logo-draw)
+![Kształty w edytorze rysunku](zrzut:logos-market-draw-shapes)
+
 ## 8.4 Tworzenie logo z obrazu
 
 1. Kliknij kafelek „Nowe logo z obrazu” i wybierz [Wybierz obraz] — plik JPG, PNG, GIF
@@ -74,6 +82,8 @@ Skróty klawiszowe nie działają podczas wpisywania tekstu.
 
 Obraz zostanie zamieniony na kropki Wyświetlacza. Na ekranie prowadzącego może się pojawić
 w oryginalnej postaci (→ 8.5).
+
+![Edytor logo z obrazu](zrzut:logo-image)
 
 ## 8.5 Zapisywanie, wybór i wyświetlanie logo
 
@@ -102,3 +112,5 @@ Logo pojawia się na początku gry i na końcu, jeśli tak ustawisz ekran końco
 panelu sterowania ani ustawień gry, a podczas rozgrywki lub przy otwartych ustawieniach gry
 nie edytujesz ani nie usuniesz logo. Serwis wskaże powód — zakończ jedną czynność i wróć
 do drugiej.
+
+![Podgląd logo na Wyświetlaczu](zrzut:logos-market-logos-preview)

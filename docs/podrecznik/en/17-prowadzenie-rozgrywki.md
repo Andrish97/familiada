@@ -71,6 +71,10 @@ screen; if needed, connect it again with the buttons in the top bar. The game un
 on its own when the devices are back. Actions confirmed earlier stay saved, and a running
 timer keeps counting down. Common causes and fixes → 19.5.
 
+![Devices in the control panel](zrzut:control-devices)
+![QR code for connecting a device](zrzut:play-control-qr-modal)
+![Connect a device](zrzut:connect-device)
+
 ## 17.2 Preparing and starting the game
 
 1. **Devices.** Connect the devices (→ 17.1). On the "Sound" card, choose where the sound should
@@ -100,6 +104,9 @@ on the step (e.g. [Go to the final]). Actions that change the score — revealin
 an X, accepting a buzz, passing control — need **two clicks**: the first selects the
 tile, the second confirms. Greyed-out buttons are temporarily unavailable, e.g. while a sound
 or animation plays — wait until the panel unlocks them.
+
+![Summary before starting the game](zrzut:control-summary)
+![Starting the game](zrzut:play-control-intro)
 
 ## 17.3 Running the rounds
 
@@ -146,6 +153,10 @@ answers are not revealed (→ 3.6, 3.7).
 > Note: choose the number of questions and the points threshold so that the questions do not run out before
 > the planned final — running out of questions alone does not lead to the final.
 
+![Steal — control panel](zrzut:play-control-steal)
+![Steal — Display](zrzut:play-display-steal)
+![Steal — host screen](zrzut:play-host-steal@tablet)
+
 ## 17.4 Running the final
 
 **Preparation.** Prepare a waiting spot and headphones with music for the second player
@@ -191,6 +202,10 @@ helps spot a repeat. The timer is 20 s.
 and the button changes to [Finish final] — the operator chooses when to finish. If the target
 was not reached, [Finish final] appears after player 2's last points.
 
+![Final — matching answers](zrzut:play-control-final-p1-map)
+![Final — host screen](zrzut:play-host-final-p1@tablet)
+![Final — Display](zrzut:play-display-final)
+
 ## 17.5 Ending the game
 
 - **After the final** — [Finish final] shows the end screen: the logo, the points or the prize amount
@@ -204,6 +219,9 @@ The host screen is then cleared. Finally, choose [Start over] or
 
 Always end the game in the panel. If you close it in the middle, the game stays in progress and blocks changes to
 the settings (→ 16.1). The logo on the host screen depends on the "Host logo" setting (→ 16.3).
+
+![Game ended](zrzut:play-control-game-ended)
+![End screen — prize amount](zrzut:play-display-end-money)
 
 ## 17.6 Panel keyboard shortcuts
 

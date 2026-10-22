@@ -46,6 +46,7 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    imageViewer: { title: "Podgląd" },
     save: "Zapisz",
     sort: {
       label: "Sortowanie",
@@ -286,7 +287,7 @@ const pl = {
       ctaConnectTitle: "Podłącz urządzenie do rozgrywki",
       note: "Możesz zacząć jako gość albo zalogować się, by wracać do swoich materiałów.",
     },
-    imageViewer: { title: "Podgląd", open: "Powiększ obraz: {title}", prev: "Poprzedni obraz", next: "Następny obraz", counter: "{n} z {total}" },
+    imageViewer: { open: "Powiększ obraz: {title}", prev: "Poprzedni obraz", next: "Następny obraz", counter: "{n} z {total}" },
     shots: {
       games: "Moje gry", "game-editor": "Edycja gry", bases: "Bazy pytań", "base-explorer": "Eksplorator bazy",
       friends: "Znajomi", subscribers: "Subskrybenci", tasks: "Zadania", "poll-share": "Udostępnianie ankiety", "poll-vote-mobile": "Głosowanie na telefonie", "poll-results": "Głosy i wyniki ankiety",

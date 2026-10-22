@@ -18,6 +18,8 @@ Bazę udostępnia jej właściciel; potrzebne jest do tego konto (→ 5.1).
 Zaproszona osoba nie musi być Twoim znajomym, ale musi mieć konto. Jeśli ma włączone
 powiadomienia, dostanie wiadomość e-mail z odnośnikiem.
 
+![Udostępnianie bazy](zrzut:bases-share-tools)
+
 ## 12.3 Przyjmowanie zaproszenia i otwieranie bazy
 
 Zaproszenie zobaczysz na stronie *Bazy pytań*, w zakładce „Udostępnione” — jako kafelek
@@ -27,6 +29,8 @@ Zaproszenie zobaczysz na stronie *Bazy pytań*, w zakładce „Udostępnione” 
 - [Odrzuć] — zaproszenie znika. Odrzucenie możesz cofnąć w sekcji odrzuconych.
 
 Nieprzyjęte zaproszenie wygasa po **5 dniach**.
+
+![Zaproszenia do baz w zakładce „Udostępnione”](zrzut:bases-shared-proposed)
 
 ## 12.4 Poziomy dostępu
 
@@ -83,6 +87,8 @@ Karta gry pokazuje język, tytuł, autora („od: …”) albo złote oznaczenie
 przygotowanych przez serwis, opis, liczbę dodań i średnią ocen (albo „Brak ocen”). Oznaczenie
 „W Twoich grach” mówi, że gra jest już w Twojej bibliotece.
 
+![Gry Społeczności](zrzut:marketplace)
+
 ## 13.3 Szczegóły i oceny gry
 
 Kliknij kartę, aby otworzyć szczegóły: opis i wszystkie pytania z odpowiedziami i punktami.
@@ -91,6 +97,8 @@ Możesz je przejrzeć przed dodaniem gry.
 Zalogowany użytkownik może ocenić grę w skali od 1 do 5 gwiazdek („Oceń tę grę:”) i później
 zmienić ocenę. Nie można ocenić własnej gry. W polecanych serwis bierze pod uwagę średnią
 dopiero od trzech ocen.
+
+![Szczegóły gry z oceną](zrzut:logos-market-market-detail)
 
 ## 13.4 Dodawanie gry do biblioteki i rozgrywanie
 
@@ -121,6 +129,8 @@ Zgłoszenie to **zapis gry z chwili wysłania** — późniejsze zmiany w Twojej
 zmienią. Gra z zamkniętej ankiety trafia do katalogu jako gra z gotowymi odpowiedziami
 i punktami.
 
+![Zgłaszanie gry](zrzut:logos-market-market-submit)
+
 ## 13.6 Status zgłoszenia i wycofanie gry
 
 W „Moich wysłanych” widać status zgłoszenia:
@@ -133,6 +143,8 @@ W „Moich wysłanych” widać status zgłoszenia:
 
 Opublikowaną grę możesz [Wycofaj]. Zniknie z katalogu dla kolejnych osób, ale ci, którzy
 już ją dodali, nadal ją mają — z oznaczeniem „Wycofana”.
+
+![Moje wysłane — statusy zgłoszeń](zrzut:logos-market-market-my-sent-all)
 
 # 14. Subskrybenci i powiadomienia e-mail
 
@@ -160,6 +172,8 @@ wiadomość.
 Nie zaprosisz adresu, który należy do konta (serwis zaproponuje znajomość), ani adresu, którego
 właściciel zrezygnował ze wszystkich wiadomości. Wiadomości z zaproszeniem wysyłane są nie częściej
 niż co 5 dni i najwyżej dwa razy na 30 dni; po odrzuceniu możesz zaprosić ponownie dopiero po 30 dniach.
+
+![Subskrybenci](zrzut:subscribers)
 
 ## 14.3 Lista i status subskrybentów
 
@@ -206,3 +220,5 @@ w *Ustawieniach konta* (→ 5.8).
   przywrócisz powiadomienia, dawne zaproszenia nie wrócą.
 
 Dostęp do strony wygasa po godzinie bezczynności — potem wejdź ponownie przez odnośnik.
+
+![Moje powiadomienia — subskrypcje i zadania](zrzut:mails-tools)

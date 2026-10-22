@@ -16,6 +16,8 @@ thin lines and small details usually disappear. Check the result with the [Previ
 > Note: logos are created on a computer or tablet. On a phone you can
 > browse the list of logos, but the editor is not available.
 
+![Logo library](zrzut:logos)
+
 ## 8.2 Creating a text logo
 
 1. On the *My logos* page, click the "New text logo" tile, enter a name for the logo and confirm.
@@ -27,6 +29,9 @@ you can use. A caption that is too wide or contains characters that are not allo
 the app will point out the problem.
 
 If you want the caption in a different typeface or with extras, use a drawn logo (→ 8.3).
+
+![Text logo editor](zrzut:logo-text)
+![List of allowed characters](zrzut:logos-market-text-chars)
 
 ## 8.3 Drawing a logo
 
@@ -63,6 +68,9 @@ Useful shortcuts and rules:
 
 Keyboard shortcuts do not work while you are typing text.
 
+![Drawing editor](zrzut:logo-draw)
+![Shapes in the drawing editor](zrzut:logos-market-draw-shapes)
+
 ## 8.4 Creating a logo from an image
 
 1. Click the "New logo from image" tile and choose [Choose image] — a JPG, PNG, GIF
@@ -74,6 +82,8 @@ Keyboard shortcuts do not work while you are typing text.
 
 The image will be turned into Display dots. On the host screen it can appear
 in its original form (→ 8.5).
+
+![Image logo editor](zrzut:logo-image)
 
 ## 8.5 Saving, choosing and displaying a logo
 
@@ -102,3 +112,5 @@ The logo appears at the start of the game, and at the end if you set the end scr
 the control panel or game settings, and during a game or while game settings are open
 you cannot edit or delete a logo. The app will show the reason — finish one activity and go back
 to the other.
+
+![Logo preview on the Display](zrzut:logos-market-logos-preview)

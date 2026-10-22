@@ -16,6 +16,8 @@ invited you to (→ 12). The filter above the list shows bases by role: Mine, Ed
 
 You can move questions from a game to a base with the [Export to base] button in *My games* (→ 6.7).
 
+![Question bases](zrzut:bases)
+
 ## 9.2 The base explorer
 
 An open base works much like a file explorer on a computer:
@@ -31,6 +33,8 @@ The right mouse button (on touch screens — press and hold) opens a menu with a
 
 You open a folder by double-clicking it or with the Enter key, and go up a level with the Backspace key
 or in the folder tree.
+
+![Base explorer](zrzut:base-explorer)
 
 ## 9.3 Tools for working with questions and folders
 
@@ -52,6 +56,9 @@ background moves the items to the "Root folder". Dragging onto a tag in the left
 that tag.
 
 Deleting a folder also deletes everything inside it.
+
+![Context menu](zrzut:base-explorer-menu)
+![Trash](zrzut:base-explorer-trash)
 
 ## 9.4 Folders and tags
 
@@ -78,6 +85,9 @@ the conditions of a given game type (→ 7.6):
 - **prepared** — they have from 3 to 6 answers with points (each at least 4, a total of at most
   100), so they are suitable for a prepared game.
 
+![Tags of the selected question](zrzut:base-explorer-tags)
+![Left panel — tag view](zrzut:base-explorer-left-tags)
+
 ## 9.5 Searching and browsing questions
 
 Type text in the "Search..." field. The app will find questions and folders whose text or name
@@ -87,6 +97,8 @@ Type `#tag_name` to add a tag to the search.
 When you search or filter by tag, the list shows results from the whole base, not the contents
 of a folder — in this view you cannot paste or cut. To go back to the folders, clear the search
 field or deselect the tags.
+
+![Search with a tag filter](zrzut:base-explorer-search-filters)
 
 ## 9.6 Keyboard shortcuts
 
@@ -123,6 +135,8 @@ Double-click a question or choose [Edit question]. In the "Question" window:
 Points are not required in a base — they come in handy if the question becomes part of a prepared game.
 The same limits and characters apply in the game editor (→ 7.3, 7.4). You assign tags separately (→ 9.4).
 
+![Editing a question](zrzut:base-explorer-question-modal)
+
 ## 9.8 Creating a game from selected questions
 
 1. Select questions or folders and choose [Create game].
@@ -142,3 +156,5 @@ scored — questions and answers without points (the points will come from the p
 questions, answers and points.
 
 You cannot create a game from a base you only have read-only access to (→ 12.4).
+
+![Creating a game from selected questions](zrzut:base-explorer-create-game)

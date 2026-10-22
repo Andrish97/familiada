@@ -547,16 +547,3 @@ mark.m-hit {
     cursor: pointer;
 }
 .m-carousel-dot.active { background: var(--gold); }
-
-.m-lightbox {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    display: grid;
-    place-items: center;
-    padding: 16px;
-    border: 0;
-    background: rgba(0,0,0,.88);
-    cursor: zoom-out;
-}
-.m-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }

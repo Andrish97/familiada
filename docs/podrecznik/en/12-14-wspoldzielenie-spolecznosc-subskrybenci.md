@@ -18,6 +18,8 @@ A base is shared by its owner; this requires an account (→ 5.1).
 The invited person does not have to be your friend, but they must have an account. If they have
 notifications turned on, they get an email with a link.
 
+![Sharing a base](zrzut:bases-share-tools)
+
 ## 12.3 Accepting an invitation and opening a base
 
 You will see the invitation on the *Question bases* page, in the "Shared" tab — as a
@@ -27,6 +29,8 @@ You will see the invitation on the *Question bases* page, in the "Shared" tab �
 - [Decline] — the invitation disappears. You can undo the decline in the declined section.
 
 An invitation that is not accepted expires after **5 days**.
+
+![Base invitations in the “Shared” tab](zrzut:bases-shared-proposed)
 
 ## 12.4 Access levels
 
@@ -83,6 +87,8 @@ A game card shows the language, the title, the author ("by: …") or a gold "Fam
 prepared by the app, the description, how many times it was added and the average rating (or "No ratings yet"). The
 "In your games" label means the game is already in your library.
 
+![Community Games](zrzut:marketplace)
+
 ## 13.3 Game details and ratings
 
 Click a card to open the details: the description and all the questions with their answers and points.
@@ -91,6 +97,8 @@ You can look through them before adding the game.
 A signed-in user can rate a game from 1 to 5 stars ("Rate this game:") and change the rating
 later. You cannot rate your own game. For recommendations, the app only takes the average into account
 once a game has three ratings.
+
+![Game details with a rating](zrzut:logos-market-market-detail)
 
 ## 13.4 Adding a game to your library and playing it
 
@@ -121,6 +129,8 @@ A submission is **a snapshot of the game at the moment you send it** — later c
 change it. A game from a closed poll goes into the catalogue as a game with ready-made answers
 and points.
 
+![Submitting a game](zrzut:logos-market-market-submit)
+
 ## 13.6 Submission status and withdrawing a game
 
 In "My submissions" you can see the status of each submission:
@@ -133,6 +143,8 @@ In "My submissions" you can see the status of each submission:
 
 You can [Withdraw] a published game. It disappears from the catalogue for new people, but those who
 have already added it still have it — with a "Withdrawn" label.
+
+![My submissions — submission statuses](zrzut:logos-market-market-my-sent-all)
 
 # 14. Subscribers and email notifications
 
@@ -160,6 +172,8 @@ leads to.
 You cannot invite an address that belongs to an account (the app will suggest a friendship instead), or an address whose
 owner has opted out of all emails. Invitation emails are sent no more often
 than every 5 days and at most twice in 30 days; after a decline, you can invite again only after 30 days.
+
+![Subscribers](zrzut:subscribers)
 
 ## 14.3 Subscriber list and statuses
 
@@ -206,3 +220,5 @@ in *Account settings* (→ 5.8).
   turn notifications back on, the old invitations will not come back.
 
 Access to the page expires after an hour of inactivity — after that, come back in through the link.
+
+![My notifications — subscriptions and tasks](zrzut:mails-tools)
