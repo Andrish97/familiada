@@ -28,7 +28,8 @@ test("manual: rozdział w ?ch=, podrozdział w #s-…, zmiana przez replaceState
   assert.match(source, /CHAPTER_PARAM = "ch"/);
   assert.match(source, /history\.replaceState/);
   assert.doesNotMatch(source, /history\.pushState|hashchange|sessionStorage/);
-  assert.match(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ ch, hash:/);
+  assert.match(read("shared/js/core/page-init.js"), /manualHref\(id\)/);
+  assert.match(read("shared/js/core/nav-map.js"), /linkTo\("manual", \{ ch, hash:/);
 })
 
 test("strona główna odzwierciedla przewijaną sekcję w hash", () => {

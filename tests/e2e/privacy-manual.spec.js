@@ -158,3 +158,14 @@ test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego p
   await page.waitForURL(/\/manual\/\?ch=12#s-12-2$/);
   await expect(page.locator("#s-12-2")).toBeInViewport();
 });
+
+test("manual: przycisk na logowaniu otwiera rozdział o koncie, „←” wraca na logowanie", async ({ page, context }) => {
+  await serveBranchCode(context, { pages: ["privacy", "manual", "login"] });
+  await page.goto(`${ORIGIN}/login/?lang=en`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#btnManual")).toHaveAttribute("href", /^\/manual\/\?ch=5&ret=%2Flogin%2F&lang=en$/);
+  await page.locator("#btnManual").click();
+  await page.waitForURL(/\/manual\/\?ch=5/);
+  await expect(page.locator(".m-article h1")).toBeVisible();
+  await page.locator("#btnBack").click();
+  await page.waitForURL(/\/login\/\?lang=en$/);
+});

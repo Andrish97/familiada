@@ -6,6 +6,7 @@ import { toast } from '../../shared/js/core/toast.js?v=v2026-10-22T00131';
 import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-22T00131';
 import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-22T00131';
 import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-22T00131';
+import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-22T00131';
 
 
 const $ = id => document.getElementById(id);
@@ -170,6 +171,11 @@ window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar
 document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 
 await initI18n({ withSwitcher: true });
+// Podręcznik bez ?ret= — adres tej strony niesie token dostępu (?m=).
+const btnManual = document.getElementById('btnManual');
+const syncManual = () => btnManual?.setAttribute('href', manualHref('mailCenter'));
+syncManual();
+window.addEventListener('i18n:lang', syncManual);
 document.querySelector('.topbar').classList.add('topbar-ready');
 document.getElementById('mailEntry')?.classList.add('skel-step-ready');
 try {

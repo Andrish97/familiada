@@ -25,7 +25,7 @@ import {
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00131";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00131";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
 import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00131";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00131";
 import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00131";
@@ -809,6 +809,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Podręcznik: adres z mapy (ret wraca na logowanie, język z bieżącej strony).
+  const btnManual = document.getElementById("btnManual");
+  const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
+  syncManual();
+  window.addEventListener("i18n:lang", syncManual);
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();

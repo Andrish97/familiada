@@ -635,6 +635,7 @@ flowchart LR
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
   connectTv -.->|↩| connectDevice
+  manual -.->|↩| home
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
@@ -668,6 +669,7 @@ flowchart LR
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
   connectTv -.->|↩| connectDevice
+  manual -.->|↩| home
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```

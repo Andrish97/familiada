@@ -8,7 +8,7 @@
 //               guest  — wymaga sesji (konto albo gość), inaczej loginUrl(),
 //               user   — tylko konto; gość dostaje wspólną nakładkę (page-overlay.js),
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
-//               #btnManual (linkTo("manual", { ch, hash }) z wpis.manual), konto, topbar-ready,
+//               #btnManual (manualHref() z wpis.manual), konto, topbar-ready,
 //   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
 //               albo zbyt wąskiego viewportu są chowane i aktualizowane po obrocie,
 //               pozostałe dostają przejście przez linkTo() — chyba że opis ma
@@ -29,7 +29,7 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-22T00131";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-22T00131";
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-22T00131";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-22T00131";
 import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-22T00131";
@@ -101,13 +101,10 @@ function wireBack(id, user, opts, d) {
 function wireManual(id, user, opts) {
   const btn = elementOf(opts.manual, "btnManual");
   if (!btn) return;
-  const anchor = PAGES[id].manual;
   // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
   if (!user && PAGES.manual.access !== "public") { btn.hidden = true; btn.style.display = "none"; return; }
   btn.addEventListener("click", async (ev) => {
-    const section = String(anchor || "");
-    const ch = section.split(".")[0] || null;
-    const href = linkTo("manual", { ch, hash: section.includes(".") ? `s-${section.replace(/\./g, "-")}` : null });
+    const href = manualHref(id);
     if (opts.onManual) { await opts.onManual(href, ev); return; }
     location.href = href;
   });

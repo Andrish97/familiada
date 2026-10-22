@@ -55,7 +55,7 @@ export function buttonBlocked(spec) {
 
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
-  login:         { path: "/login/",             access: "public", parent: "home" },
+  login:         { path: "/login/",             access: "public", parent: "home", manual: "5" },
   loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
   loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
   games:         { path: "/games/",             access: "guest",  parent: null, from: ["manual"], manual: "6", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
@@ -112,10 +112,10 @@ export const PAGES = {
     from: ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "control", "gameSettings", "marketplace", "connectDevice", "manual", "privacy"],
     manual: "5",
   },
-  manual:        { path: "/manual/",            access: "public",  parent: "games", from: [], state: ["ch"], buttons: {
+  manual:        { path: "/manual/",            access: "public",  parent: "games", parentAnon: "home", from: [], state: ["ch"], buttons: {
     btnLegal: { to: "privacy" },
   } },
-  mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
+  mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], manual: "14.5", tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
   notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument serwowany przez fallback 404; rzeczywisty nieznany URL pozostaje w pasku adresu." },
   maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Strona serwisowa zwracana przez bramkę Maintenance zamiast żądanej strony." },
@@ -145,7 +145,8 @@ for (const pageId of new Set(Object.values(GLOBAL_DIALOGS).flat())) {
 
 // Z instrukcji i prywatności wracamy na każdą stronę z topbarem; do samej
 // instrukcji, prywatności, landingu i logowania nie.
-const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login", "mailCenter"]);
+// mailCenter poza powrotami: jego adres niesie token dostępu (?m=), który nie może trafić do ?ret=.
+const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "mailCenter"]);
 PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id) && PAGES[id].kind !== "standalone");
 
 export const ROLES = ["anon", "guest", "user"];
@@ -342,6 +343,13 @@ export function backTarget(pageId, ctx) {
   }
   applyLang(u, c.lang);
   return { pageId: parentId, href: rel(u) };
+}
+
+/** Adres podręcznika w miejscu PAGES[pageId].manual (np. "9.2" → /manual/?ch=9#s-9-2), z ret wg mapy. */
+export function manualHref(pageId, ctx) {
+  const section = String(page(pageId).manual || "");
+  const ch = section.split(".")[0] || null;
+  return linkTo("manual", { ch, hash: section.includes(".") ? `s-${section.replace(/\./g, "-")}` : null }, ctx);
 }
 
 export function backHref(pageId, ctx) {
