@@ -102,6 +102,14 @@ idzie (znalezisko T1).
 
 Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
 
+**„i” (Wskazówki) przy języku po prawej [decyzja właściciela 2026-10-22]:**
+przycisk „i” stoi zawsze po prawej, tuż przed przełącznikiem języka (odstęp 8 px,
+ta sama wysokość 37 px), jak w sekcji 3 topbara stron aplikacji (np. Moje gry:
+„i” + język + konto/menu). Strony bez topbara (logowanie) mają po lewej tylko
+powrót, a po prawej grupę `.login-top-right` z atrybutem `data-lang-slot` —
+`translation.js` wstawia do niej przełącznik języka (bez `.lang-floating`).
+Nowa strona bez topbara z „i” = ta sama grupa `data-lang-slot`, nigdy „i” po lewej.
+
 ## A3. Karty (zakładki) — jeden mechanizm [WZÓR: nawigacja-mapa-plan „Karty”]
 
 - Wygląd: **jeden** komponent `.tabs-card` (`.tabs-strip` > `.tab-slot` >
