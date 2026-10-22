@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T00242";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T00394";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00242";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-22T00242";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-22T00242";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-22T00242";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T00242";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-22T00242";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-22T00242";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00394";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-22T00394";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-22T00394";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-22T00394";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T00394";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-22T00394";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-22T00394";
 
 
 const status = document.getElementById("status");
@@ -56,6 +56,12 @@ async function requireNoActiveSessionBeforeAuthFlow() {
   } catch {}
 
   if (!currentUser) return true;
+
+  // Link zmiany adresu (albo migracji gościa) tego samego konta, otwarty w jego
+  // sesji: nic nie przełączamy -- usunięcie gościa skasowałoby przenoszone konto.
+  const pendingTo = String(currentUser.user_metadata?.familiada_email_change_pending || "").trim().toLowerCase();
+  const linkTo = String(qp("to") || "").trim().toLowerCase();
+  if ((qp("type") || hp("type")) === "email_change" && pendingTo && pendingTo === linkTo) return true;
 
   const who =
     currentUser.user_metadata?.username ||
