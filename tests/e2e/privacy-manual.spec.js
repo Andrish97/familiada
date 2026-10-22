@@ -48,6 +48,44 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
   await expect(page.locator("#s-15-4")).toBeVisible();
 });
 
+// Regresja 2026-10-22: blokada body z układu Podręcznika (.manual-body) zamrażała politykę.
+test("privacy: treść przewija się palcem na telefonie i kółkiem na komputerze", async ({ browser }) => {
+  const scrolled = (page) => page.evaluate(() => document.scrollingElement.scrollTop);
+  for (const device of [
+    { name: "telefon", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+    { name: "komputer", viewport: { width: 1400, height: 900 } },
+  ]) {
+    const { name, ...opts } = device;
+    const context = await browser.newContext({ ...opts, serviceWorkers: "block" });
+    try {
+      if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
+      const page = await context.newPage();
+      await page.goto(`${ORIGIN}/privacy?lang=pl`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("html")).not.toHaveClass(/page-loading/);
+      const last = page.locator(".m-doc h2").last();
+      await expect(last).not.toBeInViewport();
+      if (opts.hasTouch) {
+        const cdp = await context.newCDPSession(page);
+        // Przesunięcie palcem w górę (zdarzenia dotyku jak w touchSwipe).
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 195, y: 700 }] });
+        for (let i = 1; i <= 10; i++) {
+          await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 195, y: 700 - i * 50 }] });
+        }
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await cdp.detach();
+      } else {
+        await page.mouse.move(700, 500);
+        await page.mouse.wheel(0, 1500);
+      }
+      await expect.poll(() => scrolled(page), { message: `przewinięcie (${name})` }).toBeGreaterThan(500);
+      await page.keyboard.press("End");
+      await expect(last).toBeInViewport();
+    } finally {
+      await context.close();
+    }
+  }
+});
+
 test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", async ({ page, context }) => {
   await loginAsTestUser(page, context);
   const cases = [
