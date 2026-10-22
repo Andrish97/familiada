@@ -409,6 +409,10 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   const { data, error } = await sb().auth.updateUser(payload, options);
   if (error) throw new Error(niceAuthError(error));
 
+  // Stan 'pending' w email_intents: po ewentualnym anulowaniu ('expired')
+  // strona potwierdzenia rozpozna anulowaną zamianę, a nowa zamiana go zeruje.
+  try { await sb().rpc("initiate_email_change_intent", { p_new_email: mail }); } catch {}
+
   return data?.user || null;
 }
 
