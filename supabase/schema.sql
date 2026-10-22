@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5SieuKH8YTNhT5SaUXgpjlEG3fsyOf9h1gWEG9HamqRY0gZoTeN92R3jArx7gWT
+\restrict dx7sZtPLHDtUEoOzFQJCwa1YrWJfy5Qg6lyui0fbldcyU6GpGi5p1cQ4z1KLx7U
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -869,6 +869,30 @@ begin
   end loop;
 end;
 $_$;
+
+
+--
+-- Name: _e2e_account_email("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_e2e_account_email"("p_email" "text") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT coalesce((public.e2e_identity(p_email)).role IN ('standard','disposable','dedicated'), false);
+$$;
+
+
+--
+-- Name: _e2e_any_email("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_e2e_any_email"("p_email" "text") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT coalesce((public.e2e_identity(p_email)).role IN ('standard','noaccount','disposable','dedicated'), false);
+$$;
 
 
 --
@@ -7660,8 +7684,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
-     OR v_other_email !~ '^test([1-9]|1[0-3]|15)@familiada[.]online$' THEN
+     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
+     OR (v_other_email !~ '^test([1-9]|1[0-3]|15)@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -7966,7 +7990,7 @@ declare
 begin
   select lower(email) into v_email from auth.users where id = v_uid;
   if v_uid is null
-     or v_email !~ '^test[0-9]+@familiada[.]online$'
+     or (v_email !~ '^test[0-9]+@familiada[.]online$' AND NOT public._e2e_account_email(v_email))
      or p_prefix not like 'E2E-MKT-%' then
     return jsonb_build_object('ok', false, 'error', 'test account and E2E-MKT- prefix required');
   end if;
@@ -8010,8 +8034,8 @@ CREATE FUNCTION "public"."e2e_poll_mail_budget_cleanup"("p_recipient_email" "tex
 DECLARE uid uuid:=auth.uid(); caller text; recipient text:=public._norm_email(p_recipient_email); n integer;
 BEGIN
  SELECT public._norm_email(email) INTO caller FROM auth.users WHERE id=uid;
- IF uid IS NULL OR caller IS NULL OR caller !~ '^test[1-8]@familiada[.]online$'
- OR recipient IS NULL OR recipient !~ '^test([1-8]|11|12|14|15)@familiada[.]online$' THEN
+ IF uid IS NULL OR caller IS NULL OR (caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(caller))
+ OR recipient IS NULL OR (recipient !~ '^test([1-8]|11|12|14|15)@familiada[.]online$' AND NOT public._e2e_any_email(recipient)) THEN
   RETURN jsonb_build_object('ok',false,'err','test_accounts_required'); END IF;
  DELETE FROM public.poll_mail_budget_events WHERE owner_id=uid AND recipient_key=md5(recipient);
  GET DIAGNOSTICS n=ROW_COUNT; RETURN jsonb_build_object('ok',true,'deleted',n);
@@ -8039,8 +8063,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
-     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
+     OR (v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -8111,7 +8135,7 @@ CREATE FUNCTION "public"."e2e_registered_subscriber_fixture"("p_remove" boolean 
 DECLARE uid uuid:=auth.uid(); caller text; recipient uuid; sid uuid;
 BEGIN
  SELECT lower(email) INTO caller FROM auth.users WHERE id=uid;
- IF caller IS NULL OR caller !~ '^test[1-7]@familiada[.]online$' THEN
+ IF caller IS NULL OR (caller !~ '^test[1-7]@familiada[.]online$' AND NOT public._e2e_account_email(caller)) THEN
    RETURN jsonb_build_object('ok',false,'err','test accounts required'); END IF;
  SELECT id INTO recipient FROM auth.users WHERE lower(email)='test8@familiada.online';
  IF NOT coalesce(p_remove,false) AND (recipient IS NULL OR NOT EXISTS(
@@ -8124,6 +8148,30 @@ BEGIN
  VALUES(uid,'test8@familiada.online','active',now()) RETURNING id INTO sid;
  RETURN jsonb_build_object('ok',true,'id',sid,'recipient_user_id',recipient);
 END; $_$;
+
+
+--
+-- Name: e2e_registered_subscriber_fixture("uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_registered_subscriber_fixture"("p_recipient_user_id" "uuid", "p_remove" boolean DEFAULT false) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE uid uuid := auth.uid(); caller text; recipient_email text; sid uuid;
+BEGIN
+  SELECT lower(email) INTO caller FROM auth.users WHERE id = uid;
+  SELECT lower(email) INTO recipient_email FROM auth.users WHERE id = p_recipient_user_id;
+  IF NOT public._e2e_account_email(caller) OR NOT public._e2e_account_email(recipient_email) OR uid = p_recipient_user_id THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'e2e accounts required');
+  END IF;
+  DELETE FROM public.poll_subscriptions WHERE owner_id = uid
+    AND (registered_user_id = p_recipient_user_id OR public._norm_email(subscriber_email) = recipient_email);
+  IF coalesce(p_remove, false) THEN RETURN jsonb_build_object('ok', true, 'removed', true); END IF;
+  INSERT INTO public.poll_subscriptions(owner_id, subscriber_email, status, accepted_at)
+  VALUES (uid, recipient_email, 'active', now()) RETURNING id INTO sid;
+  RETURN jsonb_build_object('ok', true, 'id', sid, 'recipient_user_id', p_recipient_user_id);
+END; $$;
 
 
 --
@@ -8209,8 +8257,8 @@ BEGIN
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
   IF v_uid IS NULL
-     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
-     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+     OR (v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_caller_email))
+     OR (v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' AND NOT public._e2e_account_email(v_other_email)) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -8246,7 +8294,7 @@ declare
   v_email text;
 begin
   select u.email into v_email from auth.users u where u.id = auth.uid();
-  if v_email is null or v_email !~ '^test[0-9]+@familiada[.]online$' then
+  if v_email is null or (v_email !~ '^test[0-9]+@familiada[.]online$' AND NOT public._e2e_account_email(v_email)) then
     raise exception 'e2e_only';
   end if;
   return query
@@ -8268,8 +8316,8 @@ CREATE FUNCTION "public"."e2e_subscriber_email_cleanup"("p_email" "text") RETURN
 DECLARE v_uid uuid:=auth.uid(); v_caller text; v_email text:=lower(trim(p_email));
 BEGIN
   SELECT lower(email) INTO v_caller FROM auth.users WHERE id=v_uid;
-  IF v_caller IS NULL OR v_caller !~ '^test[1-8]@familiada[.]online$'
-    OR v_email NOT IN ('test14@familiada.online','test15@familiada.online') OR v_email IS NULL THEN
+  IF v_caller IS NULL OR (v_caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(v_caller))
+    OR (v_email NOT IN ('test14@familiada.online','test15@familiada.online') AND NOT public._e2e_any_email(v_email)) OR v_email IS NULL THEN
     RETURN jsonb_build_object('ok',false,'err','test accounts required');
   END IF;
   DELETE FROM public.poll_tasks WHERE owner_id=v_uid AND lower(recipient_email)=v_email;
@@ -8294,7 +8342,7 @@ CREATE FUNCTION "public"."e2e_subscriber_mail_flag"("p_reset" boolean DEFAULT fa
 DECLARE caller text; stamp timestamptz;
 BEGIN
  SELECT lower(email) INTO caller FROM auth.users WHERE id=auth.uid();
- IF caller IS NULL OR caller !~ '^test[1-8]@familiada[.]online$' THEN
+ IF caller IS NULL OR (caller !~ '^test[1-8]@familiada[.]online$' AND NOT public._e2e_account_email(caller)) THEN
    RETURN jsonb_build_object('ok',false,'err','test accounts required');
  END IF;
  SELECT suppressed_at INTO stamp FROM public.email_unsub_tokens
@@ -8306,6 +8354,29 @@ BEGIN
  RETURN jsonb_build_object('ok',true,'previous_suppressed_at',stamp,
    'suppressed_at',CASE WHEN coalesce(p_reset,false) THEN NULL ELSE stamp END);
 END; $_$;
+
+
+--
+-- Name: e2e_subscriber_mail_flag("text", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_subscriber_mail_flag"("p_email" "text", "p_reset" boolean DEFAULT false) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE caller text; v_email text := public._norm_email(p_email); stamp timestamptz;
+BEGIN
+  SELECT lower(email) INTO caller FROM auth.users WHERE id = auth.uid();
+  IF NOT public._e2e_account_email(caller) OR coalesce((public.e2e_identity(v_email)).role, '') <> 'noaccount' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'e2e accounts required');
+  END IF;
+  SELECT suppressed_at INTO stamp FROM public.email_unsub_tokens WHERE public._norm_email(email) = v_email;
+  IF coalesce(p_reset, false) THEN
+    UPDATE public.email_unsub_tokens SET suppressed_at = NULL WHERE public._norm_email(email) = v_email;
+  END IF;
+  RETURN jsonb_build_object('ok', true, 'previous_suppressed_at', stamp,
+    'suppressed_at', CASE WHEN coalesce(p_reset, false) THEN NULL ELSE stamp END);
+END; $$;
 
 
 --
@@ -13562,6 +13633,9 @@ BEGIN
 
     v_both_e2e := v_sender_email ~ '^test([1-9]|1[0-3])@familiada[.]online$'
       AND lower(trim(NEW.to_email)) ~ '^test([1-9]|1[0-3])@familiada[.]online$';
+    -- 462: także para tożsamości e2e (konto e2e -> dowolny adres e2e+)
+    v_both_e2e := coalesce(v_both_e2e, false)
+      OR (public._e2e_account_email(v_sender_email) AND public._e2e_any_email(NEW.to_email));
 
     IF NOT v_both_e2e THEN
       -- Nieprzekraczalna podłoga, niezależna od action_key — to jest to, co
@@ -27646,5 +27720,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5SieuKH8YTNhT5SaUXgpjlEG3fsyOf9h1gWEG9HamqRY0gZoTeN92R3jArx7gWT
+\unrestrict dx7sZtPLHDtUEoOzFQJCwa1YrWJfy5Qg6lyui0fbldcyU6GpGi5p1cQ4z1KLx7U
 
