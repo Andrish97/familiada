@@ -1,12 +1,13 @@
 const { test, expect } = require("./helpers/production-test");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { loginAsTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const L = require("./helpers/logo-editor");
 
 const ORIGIN = "https://www.familiada.online";
 test.use({ serviceWorkers: "block" });
+// E25: jedno wypożyczone konto (logo tworzone i usuwane w teście).
+test.use({ needs: { standard: 1 } });
 test.setTimeout(300_000);
 
 const auditPage = `<!doctype html><meta charset="utf-8"><title>Porównanie Fabric / Host SVG</title>
@@ -20,9 +21,9 @@ function makeShapeSource(canvasInfo) {
   return new Function(`return (${source})`)();
 }
 
-test("DRAW: każda figura i nakładanie warstw — Canvas Fabric kontra przezroczysty SVG Hosta", async ({ page, context }, testInfo) => {
+test("DRAW: każda figura i nakładanie warstw — Canvas Fabric kontra przezroczysty SVG Hosta", async ({ page, context, accounts, loginAs }, testInfo) => {
   await serveBranchCode(context, { pages: ["logos", "host"] });
-  await loginAsTestUser(page, context, { username: "test9@familiada.online" });
+  await loginAs(page, context, accounts.standard[0]);
   const name = `E2E-SVG-FABRIC-${Date.now()}`;
   let logoId;
   try {

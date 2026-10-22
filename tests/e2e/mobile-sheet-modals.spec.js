@@ -12,9 +12,10 @@
 // kontrakt CSS/HTML przez bezpośrednią manipulację DOM, nie pełny
 // przepływ UI (patrz komentarz przy tej sekcji niżej).
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
+
+test.use({ needs: { standard: 1 } });
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
@@ -121,9 +122,9 @@ test.beforeEach(async ({ context }) => {
 test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal udostępniania na telefonie zastępuje treść strony (sheet), nie jest małym okienkiem", async ({ page, context }) => {
+  test("modal udostępniania na telefonie zastępuje treść strony (sheet), nie jest małym okienkiem", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
 
     const name = `E2E-BS-SHEET-SHARE-${Date.now()}`;
@@ -157,10 +158,10 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 
   // Proste okno z jednym polem jest zwykłym okienkiem także na telefonie
   // (modal--keep-dialog, decyzja 2026-10-20): treść strony zostaje pod spodem.
-  test("modal nazwy (tworzenie) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
+  test("modal nazwy (tworzenie) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     let baseId = null;
 
@@ -193,9 +194,9 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modala", () => {
   test.use({ viewport: MOBILE_VIEWPORT, serviceWorkers: "block" });
 
-  test("okno od dołu: topbar bez przejęcia, pasek i Wstecz przeglądarki zamykają, adres ?dialog= odtwarza okno", async ({ page, context }) => {
+  test("okno od dołu: topbar bez przejęcia, pasek i Wstecz przeglądarki zamykają, adres ?dialog= odtwarza okno", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
 
     const name = `E2E-BS-SHEET-BACKBTN-${Date.now()}`;
@@ -255,9 +256,9 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
 test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na telefonie", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("potwierdzenie usunięcia bazy renderuje się jako mały, wyśrodkowany dialog, nie jako sheet", async ({ page, context }) => {
+  test("potwierdzenie usunięcia bazy renderuje się jako mały, wyśrodkowany dialog, nie jako sheet", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-UNIMODAL-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -352,9 +353,9 @@ async function createTag(page, { baseId, name, ord }) {
 test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => {
   test.use({ viewport: MOBILE_VIEWPORT, serviceWorkers: "block" });
 
-  test("modal tagów na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal tagów na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
 
     const baseId = await createBase(page, `E2E-XB-SHEET-TAGS-${Date.now()}`);
@@ -428,9 +429,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal eksportu na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal eksportu na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
 
     const baseId = await createBase(page, `E2E-XB-SHEET-EXPORT-${Date.now()}`);
@@ -499,9 +500,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal edycji pytania na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal edycji pytania na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const baseId = await createBase(page, `E2E-XB-SHEET-QUESTION-${Date.now()}`);
 
@@ -530,9 +531,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal zmiany nazwy (renameModal) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
+  test("modal zmiany nazwy (renameModal) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const baseId = await createBase(page, `E2E-XB-SHEET-RENAME-${Date.now()}`);
 
@@ -577,9 +578,9 @@ const GAMES_URL = "https://www.familiada.online/games";
 test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal eksportu do bazy na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal eksportu do bazy na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BLD-SHEET-EXPORT-${Date.now()}`;
     const gameId = await createGameDirect(page, { name, type: "prepared", status: "ready" });
@@ -621,9 +622,9 @@ test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
 
   // Decyzja 2026-10-21: zamiast zawijania w rzędy pasek zostaje jednym
   // rzędem i przewija się w bok; wystaje grupa z większą liczbą przycisków.
-  test("jeden rząd, przewijanie w prawo, menu filtra zamyka się przy przewinięciu", async ({ page, context }) => {
+  test("jeden rząd, przewijanie w prawo, menu filtra zamyka się przy przewinięciu", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
     await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
     const bar = page.locator(".games-bottom:not(.toolbar-measure-box)");
@@ -653,9 +654,9 @@ test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
 test.describe("games/editor: pytanie na telefonie w oknie od dołu", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("kliknięcie pytania otwiera roletkę z edycją; pasek zamyka i zapisuje treść", async ({ page, context }) => {
+  test("kliknięcie pytania otwiera roletkę z edycją; pasek zamyka i zapisuje treść", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-EDITOR-SHEET-${Date.now()}`;
     const gameId = await createGameDirect(page, { name, type: "prepared", status: "draft" });
     try {
@@ -695,9 +696,9 @@ const MARKETPLACE_URL = "https://www.familiada.online/marketplace";
 test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal zgłoszenia gry na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal zgłoszenia gry na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-MKT-SHEET-SUBMIT-${Date.now()}`;
     const gameId = await createGameDirect(page, { name, type: "prepared", status: "ready" });
@@ -739,9 +740,9 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
   // zamiast zaśmiecać marketplace trwałym wpisem testowym, sprawdzamy sam
   // kontrakt CSS/HTML (to, co robi enterModalSheet()/show()) bezpośrednio
   // przez DOM, analogicznie do sekcji settings.html niżej w tym pliku.
-  test("modal szczegółów gry (#gameDetailOverlay) w trybie sheet wypełnia viewport i chowa resztę main.wrap", async ({ page, context }) => {
+  test("modal szczegółów gry (#gameDetailOverlay) w trybie sheet wypełnia viewport i chowa resztę main.wrap", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     await page.goto(MARKETPLACE_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -811,9 +812,9 @@ async function deleteLogoDirect(page, logoId) {
 test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal zmiany nazwy logo na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
+  test("modal zmiany nazwy logo na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-LE-SHEET-RENAME-${Date.now()}`;
     const logoId = await createLogoDirect(page, name);
@@ -840,9 +841,9 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     }
   });
 
-  test("modal importu logo na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal importu logo na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     await page.goto(LOGO_EDITOR_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -867,9 +868,9 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
   });
 
-  test("modal podglądu logo (#previewOverlay) na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal podglądu logo (#previewOverlay) na telefonie zastępuje treść strony (sheet)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-LE-SHEET-PREVIEW-${Date.now()}`;
     const logoId = await createLogoDirect(page, name);
@@ -906,7 +907,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
    marketplace (#marketRejectOverlay).
    UWAGA WAŻNA (do zweryfikowania przez kogoś z realnym dostępem admina):
    settings.html siedzi za Cloudflare Access. Istniejący helper logowania
-   (loginAsTestUser/E2E_BYPASS_SECRET) omija WYŁĄCZNIE Turnstile na
+   (loginAs/E2E_BYPASS_SECRET) omija WYŁĄCZNIE Turnstile na
    stronie /login dla zwykłych kont Supabase, nie ma NIC wspólnego z
    Cloudflare Access przed panelem admina -- w tym repo nie ma dotąd
    żadnego mechanizmu e2e do autoryzacji Cloudflare Access, więc nawigacja
@@ -1099,9 +1100,9 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 test.describe("contact-modal: mobile sheet modal (wspólny dla wielu stron)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal kontaktu z bases.html na telefonie zastępuje treść strony i chowa przycisk kontaktu w stopce", async ({ page, context }) => {
+  test("modal kontaktu z bases.html na telefonie zastępuje treść strony i chowa przycisk kontaktu w stopce", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     await page.goto(BASES_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");

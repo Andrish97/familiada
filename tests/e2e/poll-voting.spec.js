@@ -12,15 +12,17 @@
 // - brak odbloknięcia przycisków w poll-points na error
 // - niejasne optional chaining w poll-text
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["polls/vote/text", "polls/vote/points"] });
 });
-const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
+const { instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page, type) {
   return await page.evaluate(async (pollType) => {
@@ -120,9 +122,9 @@ async function mockPollState(page, state, type) {
 test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("poll-points: głosowanie w ankiecie punktowej", async ({ page, context }, testInfo) => {
+  test("poll-points: głosowanie w ankiecie punktowej", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page, "poll_points");
 
       const url = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -170,9 +172,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: głosowanie w ankiecie tekstowej", async ({ page, context }, testInfo) => {
+  test("poll-text: głosowanie w ankiecie tekstowej", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page, "poll_text");
 
 
@@ -221,9 +223,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: stara flaga ukończenia nie blokuje nowego anonimowego formularza", async ({ page, context }, testInfo) => {
+  test("poll-text: stara flaga ukończenia nie blokuje nowego anonimowego formularza", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page, "poll_text");
 
 
@@ -274,9 +276,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: limit 17 znaków w polu tekstowym", async ({ page, context }, testInfo) => {
+  test("poll-text: limit 17 znaków w polu tekstowym", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page, "poll_text");
 
 
@@ -320,9 +322,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
   });
 
   for (const [pollType, dir] of [["poll_text", "polls/vote/text"], ["poll_points", "polls/vote/points"]]) {
-    test(`${dir}: ankieta zakończona → "Ankieta zakończona"`, async ({ page, context }, testInfo) => {
+    test(`${dir}: ankieta zakończona → "Ankieta zakończona"`, async ({ page, context, accounts, loginAs }, testInfo) => {
       try {
-        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        await loginAs(page, context, accounts.standard[0]);
         const game = await createPollGame(page, pollType);
         await mockPollState(page, "ended", pollType);
 
@@ -342,9 +344,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
     // Prawdziwy stan z bazy: właściciel zatrzymuje ankietę (poll_stop), ten sam link
     // pokazuje „Ankieta jest zatrzymana” i nie pozwala głosować.
-    test(`${dir}: ankieta zatrzymana → "Ankieta jest zatrzymana", bez głosowania`, async ({ page, context }, testInfo) => {
+    test(`${dir}: ankieta zatrzymana → "Ankieta jest zatrzymana", bez głosowania`, async ({ page, context, accounts, loginAs }, testInfo) => {
       try {
-        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        await loginAs(page, context, accounts.standard[0]);
         const game = await createPollGame(page, pollType);
         const stopErr = await page.evaluate(async (gid) => {
           const { error } = await window.__sbClient.rpc("poll_stop", { p_game_id: gid });
@@ -366,9 +368,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       }
     });
 
-    test(`${dir}: link sprzed ponownego uruchomienia → "Ten link wygasł"`, async ({ page, context }, testInfo) => {
+    test(`${dir}: link sprzed ponownego uruchomienia → "Ten link wygasł"`, async ({ page, context, accounts, loginAs }, testInfo) => {
       try {
-        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        await loginAs(page, context, accounts.standard[0]);
         const game = await createPollGame(page, pollType);
         const newKey = await relaunchPoll(page, game.gameId);
         expect(newKey).not.toBe(game.shareKey);

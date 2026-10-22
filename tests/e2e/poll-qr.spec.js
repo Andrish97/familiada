@@ -12,15 +12,17 @@
 // - czyszczenie interval przy unload
 // - sprawdzenie statusu gry w device mode
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["polls/vote/qr", "polls/vote/text", "polls/vote/points", "polls"] });
 });
-const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
+const { instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page) {
   return await page.evaluate(async () => {
@@ -81,10 +83,10 @@ async function deleteGame(page, gameId) {
 test.describe("poll-qr.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("wyświetla QR z przekazanego URL", async ({ page, context }, testInfo) => {
+  test("wyświetla QR z przekazanego URL", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -112,10 +114,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("device mode: generuje QR z ?id=&key=", async ({ page, context }, testInfo) => {
+  test("device mode: generuje QR z ?id=&key=", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
 
@@ -149,10 +151,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: zły klucz w device mode", async ({ page, context }, testInfo) => {
+  test("obsługuje błąd: zły klucz w device mode", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
 
@@ -178,10 +180,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context }, testInfo) => {
+  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       // Cofnij do draft — poll-qr.js pokazuje wtedy "Ten link wygasł"
@@ -210,9 +212,9 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("ekran QR przełącza się na 'Ankieta została zamknięta' po zamknięciu", async ({ page, context }, testInfo) => {
+  test("ekran QR przełącza się na 'Ankieta została zamknięta' po zamknięciu", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       // Zamknięcie wymaga głosów (game_poll_close_check) — stan "ready" dla tego
@@ -247,9 +249,9 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("ekran QR po ponownym uruchomieniu pokazuje 'Ten link wygasł'", async ({ page, context }, testInfo) => {
+  test("ekran QR po ponownym uruchomieniu pokazuje 'Ten link wygasł'", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const pollQrUrl = new URL("/polls/vote/qr/", "https://www.familiada.online/");
@@ -280,10 +282,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context }, testInfo) => {
+  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -314,10 +316,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context }, testInfo) => {
+  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
 
 
       // Podaj bardzo długi URL, żeby sprawdzić timeout
@@ -347,10 +349,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("zmiana języka zmienia tekst i QR", async ({ page, context }, testInfo) => {
+  test("zmiana języka zmienia tekst i QR", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -373,7 +375,7 @@ test.describe("poll-qr.js audyt", () => {
 
       // Teraz zmień poll_qr_lang na angielski przez polls.js — bez ponownego
       // logowania: pollsPage współdzieli `context` (i jego cookies) z `page`,
-      // które już zalogowało test7 wyżej, więc sesja jest już aktywna.
+      // które już zalogowało właściciela wyżej, więc sesja jest już aktywna.
       const pollsPage = await context.newPage();
       instrumentPage(pollsPage);
 

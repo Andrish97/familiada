@@ -1,15 +1,16 @@
-// Treści wszystkich wariantów kontaktu i ręcznej wiadomości: prawdziwy SMTP
-// do test14 bez tworzenia konta. Szablony uruchamiane z kodu repozytorium.
-const { test, expect } = require('@playwright/test');
+// Treści wszystkich wariantów kontaktu i ręcznej wiadomości oraz szablonów
+// marketingowych. Szablony uruchamiane z kodu repozytorium.
+// E25: Worker nie ma już /_e2e_api/mail-template-fixtures (fikstura pod stary
+// adres bez konta), więc dokumenty sprawdzamy po złożeniu, bez wysyłki SMTP.
+const { test, expect } = require('./helpers/e2e-test');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { loginAsPooledTestUser } = require('./helpers/login');
-const { queueMailTemplateFixtures, clearMailbox, waitForEmail, resetMailProviderLimits } = require('./helpers/mailbox');
 const { expectMailDocument } = require('./helpers/mail-document');
 const ROOT = path.resolve(__dirname, '../..');
-const EMAIL = 'test14@familiada.online';
 test.use({ serviceWorkers: 'block' });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 async function templates() {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, options) => {
@@ -42,9 +43,8 @@ async function templates() {
     return items;
   } finally { globalThis.fetch = originalFetch; }
 }
-test('mail content: contact/manual PL/EN/UK and marketing templates delivered', async ({ page, context }) => {
+test('mail content: contact/manual PL/EN/UK and marketing templates rendered', async ({ page, context }) => {
   test.setTimeout(240000);
-  await loginAsPooledTestUser(page, context, 0);
   const items = await templates();
   const invitation = items.find(item => item.subject.endsWith('marketing-invitation'));
   const images = [...invitation.html.matchAll(/<img src="([^"]+)"/g)].map(match => match[1]);
@@ -54,35 +54,26 @@ test('mail content: contact/manual PL/EN/UK and marketing templates delivered', 
     expect(response.status(), `marketing image ${url}`).toBe(200);
     expect(response.headers()['content-type']).toContain('image/webp');
   }
-  await clearMailbox(EMAIL); await resetMailProviderLimits(page);
-  const after = new Date().toISOString();
-  try {
-    const result = await queueMailTemplateFixtures(items);
-    expect(result.queued).toBe(items.length);
-    const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const received = await Promise.all(items.map(item => waitForEmail({ recipient: EMAIL, after, subject: new RegExp(`^${escapeRegex(item.subject)}$`), timeout: 180000 })));
-    for (let n = 0; n < items.length; n++) {
-      const item = items[n], email = received[n];
-      expect(email.subject).toBe(item.subject);
-      expectMailDocument(email, { lang: item.lang });
-      const containsText = await page.evaluate(({html,expected}) => new DOMParser().parseFromString(html, 'text/html').body.textContent.includes(expected), { html: email.body_html, expected: item.expected });
-      expect(containsText, `rendered text ${item.subject}`).toBe(true);
-      expect(email.body_html).not.toContain('<Example>');
-      if (item.type === 'manual') {
-        expect(email.body_html).toContain('<strong>Formatted body</strong>');
-        expect(email.body_html).not.toContain('#quote');
-      }
+  for (const item of items) {
+    const email = { subject: item.subject, body_html: item.html };
+    expectMailDocument(email, { lang: item.lang });
+    const containsText = await page.evaluate(({html,expected}) => new DOMParser().parseFromString(html, 'text/html').body.textContent.includes(expected), { html: email.body_html, expected: item.expected });
+    expect(containsText, `rendered text ${item.subject}`).toBe(true);
+    expect(email.body_html).not.toContain('<Example>');
+    if (item.type === 'manual') {
+      expect(email.body_html).toContain('<strong>Formatted body</strong>');
+      expect(email.body_html).not.toContain('#quote');
     }
-  } finally { await clearMailbox(EMAIL); }
+  }
 });
 
-test('mail preview: stored full document, rich fragment and plain text use browser modules', async ({ page, context }) => {
+test('mail preview: stored full document, rich fragment and plain text use browser modules', async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90000);
   if (process.env.GITHUB_REF_NAME !== 'main' && process.env.TEST_BRANCH_CODE !== '0') {
     const { serveBranchCode } = require('./helpers/branch-code');
     await serveBranchCode(context, { pages: ['settings'] });
   }
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const result = await page.evaluate(async () => {
     const { buildStoredMailHtml } = await import('/shared/js/core/stored-mail.js');
     const { renderMailDocument } = await import('/shared/js/core/mail-document.js');

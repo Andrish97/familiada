@@ -1,11 +1,13 @@
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, loginAsGuest, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
+const { loginAsGuest } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const URL = "https://www.familiada.online/marketplace";
 const PREFIX = "E2E-MKT-";
 
 test.use({ serviceWorkers: "block" });
+// E25: jedno wypożyczone konto zwykłe (czyszczone przy wypożyczeniu).
+test.use({ needs: { standard: 1 } });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ context }) => {
@@ -199,8 +201,8 @@ test("wolny prawdziwy backend: siatka ukryta do pierwszej odpowiedzi, nieistniej
   await expect(page.locator("#gameDetailOverlay")).toBeHidden();
 });
 
-test("konto: dodanie jest atomowe i idempotentne, kopia ma poprawny typ i zawartość", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("konto: dodanie jest atomowe i idempotentne, kopia ma poprawny typ i zawartość", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   await cleanup(page);
   const game = await publishedGame(page);
@@ -241,8 +243,8 @@ test("konto: dodanie jest atomowe i idempotentne, kopia ma poprawny typ i zawart
   }
 });
 
-test("konto: ocenę można zmienić, a UI i baza pokazują nową wartość", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("konto: ocenę można zmienić, a UI i baza pokazują nową wartość", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   await cleanup(page);
   const game = await publishedGame(page);
@@ -287,9 +289,9 @@ test("gość może dodać i usunąć kopię, ale nie ocenia ani nie wysyła gry"
   }
 });
 
-test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", async ({ page, context }) => {
+test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   await cleanup(page);
   const name = `${PREFIX}${Date.now()}`;
@@ -341,8 +343,8 @@ test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", asyn
   }
 });
 
-test("backend nie ujawnia listy oceniających anonimowi ani zwykłemu użytkownikowi", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("backend nie ujawnia listy oceniających anonimowi ani zwykłemu użytkownikowi", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   const game = await publishedGame(page);
   const rows = await rpc(page, "market_game_raters", { p_market_game_id: game.id });

@@ -1,10 +1,12 @@
 const { test, expect } = require("./helpers/production-test");
-const { loginAsTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const L = require("./helpers/logo-editor");
 
 const ORIGIN = "https://www.familiada.online";
 test.use({ serviceWorkers: "block" });
+// E25: każdy worker ma własne wypożyczone konto, więc oba warianty mogą biec
+// równolegle bez wspólnych danych.
+test.use({ needs: { standard: 1 } });
 test.describe.configure({ mode: "parallel" });
 
 const previewHarness = `<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Test DRAW Host/Display</title><style>
@@ -13,8 +15,8 @@ const previewHarness = `<!doctype html><html lang="pl"><meta charset="utf-8"><me
 const ready=new Set();addEventListener('message',e=>{if(e.origin!==location.origin||!['familiada:preview-ready','familiada:host-preview-ready'].includes(e.data?.type))return;ready.add(e.source);if(ready.size===2)window.previewReady=true});window.applyRow=async row=>{for(const id of ['display','host'])document.getElementById(id).contentWindow.postMessage({type:'familiada:preview-row',row},location.origin);await new Promise(resolve=>setTimeout(resolve,1600))};
 </script></html>`;
 
-async function cleanupPreviousDrawRows(page, accountNumber) {
-  const prefix = `E2E-HOST-DRAW-${accountNumber}-`;
+async function cleanupPreviousDrawRows(page, variant) {
+  const prefix = `E2E-HOST-DRAW-${variant}-`;
   await page.evaluate(async namePrefix => {
     const sb = window.__sbClient;
     const { data, error } = await sb.from("user_logos").select("id,payload->source->>hostRasterUrl").like("name", `${namePrefix}%`);
@@ -31,18 +33,16 @@ async function cleanupPreviousDrawRows(page, accountNumber) {
   }, prefix);
 }
 
-async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
+async function runDrawRoundTrip(page, context, loginAs, identity, variant, testInfo) {
   test.setTimeout(120_000);
   await serveBranchCode(context, { pages: ["logos", "host", "display"] });
-  // This dedicated spec has explicit permission to use test9/test10. They
-  // remain excluded from the shared account pool and general E2E suites.
-  await loginAsTestUser(page, context, { username: `test${accountNumber}@familiada.online` });
-  const name = `E2E-HOST-DRAW-${accountNumber}-${Date.now()}`;
+  await loginAs(page, context, identity);
+  const name = `E2E-HOST-DRAW-${variant}-${Date.now()}`;
   let logoId = null;
   try {
     // A prior interrupted run may have stopped before its finally cleanup.
-    // The account-specific prefix is reserved for this spec only.
-    await cleanupPreviousDrawRows(page, accountNumber);
+    // The variant-specific prefix is reserved for this spec only.
+    await cleanupPreviousDrawRows(page, variant);
     // Insert only the empty DRAW row, then exercise the real editor. The
     // list's create action is guarded while an account has an active game or
     // settings lock; that guard is covered by the existing logo E2E.
@@ -129,7 +129,7 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     });
     expect(pixels).toEqual({ whiteShowsDot: true, blackCutsWhite: true, whiteOnTopRestoresDot: true, outsideRemainsClear: true });
     await expect.poll(() => page.frameLocator("#display").locator("#displays").locator("*").count()).toBeGreaterThan(0);
-    await page.screenshot({ path: testInfo.outputPath(`host-draw-account-${accountNumber}.png`), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath(`host-draw-variant-${variant}.png`), fullPage: true });
   } finally {
     // Zwolnij blokadę edytora przed skasowaniem wyłącznie utworzonego logo.
     await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" }).catch(() => {});
@@ -143,10 +143,10 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
   }
 }
 
-test("DRAW: zapis z edytora i odtworzenie warstw na Hostcie obok Display (konto test9)", async ({ page, context }, testInfo) => {
-  await runDrawRoundTrip(page, context, 9, testInfo);
+test("DRAW: zapis z edytora i odtworzenie warstw na Hostcie obok Display", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await runDrawRoundTrip(page, context, loginAs, accounts.standard[0], "A", testInfo);
 });
 
-test("DRAW: równoległy przebieg izolowany na koncie test10", async ({ page, context }, testInfo) => {
-  await runDrawRoundTrip(page, context, 10, testInfo);
+test("DRAW: równoległy przebieg izolowany na osobnym koncie", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await runDrawRoundTrip(page, context, loginAs, accounts.standard[0], "B", testInfo);
 });

@@ -6,11 +6,11 @@
 // edycji przy aktywnej rozgrywce Control. Strony z plików brancha
 // (serveBranchCode), baza i konta produkcyjne.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 test.describe.configure({ retries: 0 });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["games", "games/editor"] });
@@ -48,9 +48,9 @@ async function answersOf(page, questionId) {
   }, questionId);
 }
 
-test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytanie ≤100, podpowiedzi z finałem 11, lista warunków", async ({ page, context }, testInfo) => {
+test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytanie ≤100, podpowiedzi z finałem 11, lista warunków", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(120_000);
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  await loginAs(page, context, accounts.standard[0]);
   const game = await seedGame(page, { name: `E2E-E21-EDITOR-${Date.now()}` });
   try {
     await page.goto(`${ORIGIN}/games/editor?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -108,9 +108,9 @@ test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytan
   }
 });
 
-test("E21 reguły: preparowana wymaga ≥4 pkt; aktywny Control blokuje edycję treści", async ({ page, context }, testInfo) => {
+test("E21 reguły: preparowana wymaga ≥4 pkt; aktywny Control blokuje edycję treści", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const game = await seedGame(page, { name: `E2E-E21-RULES-${Date.now()}`, questions: 10, answers: [40, 30, 3] });
@@ -136,9 +136,9 @@ test("E21 reguły: preparowana wymaga ≥4 pkt; aktywny Control blokuje edycję 
   }
 });
 
-test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI)", async ({ page, context }, testInfo) => {
+test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const name = `E2E-E21-TYPE-${Date.now()}`;
@@ -170,9 +170,9 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
 
 // Decyzja 2026-10-21 (migracja 441): zamknięta ankieta — „Zmień typ” bez
 // pytania o reset; pod wybranym typem „Zachowaj …” (domyślnie odznaczone).
-test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez pytania o reset (UI)", async ({ page, context }, testInfo) => {
+test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez pytania o reset (UI)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const name = `E2E-E21-KEEP-${Date.now()}`;

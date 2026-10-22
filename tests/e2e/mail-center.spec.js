@@ -1,11 +1,16 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./helpers/e2e-test');
 const { serveBranchCode } = require('./helpers/branch-code');
-const { loginAsPooledTestUser } = require('./helpers/login');
-const { clearMailbox, restoreMailCenterPreference, clearMailCenterCapabilities, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require('./helpers/mailbox');
+const { resetMailProviderLimits, waitForEmail, extractHttpLinks } = require('./helpers/mailbox');
 const { expectMailDocument } = require('./helpers/mail-document');
 const URL = 'https://www.familiada.online/mails/';
-const EMAIL = 'test14@familiada.online';
 test.use({ serviceWorkers: 'block' });
+// E25: właściciel i skrzynka bez konta wypożyczane na worker (tests/README.md
+// „Test accounts”). Preferencję adresu (email_unsub_tokens) i linki centrum
+// maili (mail_center_links) czyści wypożyczenie (migracja 460) -- bez fikstur
+// e2e_subscriber_mail_flag i /_e2e_api/mail-center-* (usunięte w 463/464).
+test.use({ needs: { standard: 1, noaccount: 1, resources: ['mail'] } });
+// Adres bez konta tego workera -- ustawiany z fixture na początku testu.
+let EMAIL = null;
 async function branch(context) {
   if (process.env.GITHUB_REF_NAME !== 'main' && process.env.TEST_BRANCH_CODE !== '0') await serveBranchCode(context, { pages: ['mails', 'go', 'subscribers'] });
   await context.addInitScript(() => { localStorage.setItem('uiLang', 'pl'); localStorage.setItem('fam:app_rating_suppressed', 'true'); });
@@ -19,24 +24,21 @@ async function cleanup(page) {
 async function state(page) { return page.evaluate(async () => (await fetch('/_api/mail/session', { cache: 'no-store' })).json()); }
 function proofLink(email) { return extractHttpLinks(email).find(link => /^[a-f0-9]{64}$/.test(new globalThis.URL(link).searchParams.get('m') || '')); }
 
-test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie przy mail-off', async ({ page, context, browser }, testInfo) => {
+test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie przy mail-off', async ({ page, context, browser, accounts, loginAs, mailbox }, testInfo) => {
   test.setTimeout(420000);
+  const [outsider] = accounts.noaccount;
+  EMAIL = outsider.email;
   await branch(context);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const anonymous = await browser.newContext({ viewport: { width: 1400, height: 1000 }, serviceWorkers: 'block' });
   const second = await browser.newContext({ serviceWorkers: 'block' });
   await branch(anonymous); await branch(second);
   const center = await anonymous.newPage();
   const entry = await second.newPage();
-  let initialFlag, games = [], deviceToken;
+  let games = [], deviceToken;
   try {
     await cleanup(page);
-    initialFlag = await page.evaluate(async () => {
-      const { data, error } = await window.__sbClient.rpc('e2e_subscriber_mail_flag', { p_reset: true });
-      if (error || !data?.ok) throw error || new Error('Mail flag fixture failed');
-      return data.previous_suppressed_at;
-    });
-    await clearMailCenterCapabilities(); await clearMailbox(EMAIL); await resetMailProviderLimits(page);
+    await mailbox.clear(outsider); await resetMailProviderLimits(page);
     const after = new Date(Date.now() - 2000).toISOString();
     await page.goto('https://www.familiada.online/subscribers/');
     await expect(page.locator('[data-skel-step]')).toHaveClass(/skel-step-ready/);
@@ -119,7 +121,7 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     expect(await page.evaluate(async token => (await window.__sbClient.rpc('control_device_share_resolve', { p_token: token })).data.ok, deviceToken)).toBe(false);
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-disabled-390.png'), fullPage: true });
     // A new proof is still sent while ordinary notifications are globally off.
-    await clearMailbox(EMAIL); const confirmationAfter = new Date(Date.now() - 2000).toISOString();
+    await mailbox.clear(outsider); const confirmationAfter = new Date(Date.now() - 2000).toISOString();
     await entry.goto(URL); await entry.locator('#mailInput').fill(EMAIL); await entry.locator('#mailForm button').click();
     await expect(entry.locator('#mailTitle')).toHaveText('Sprawdź swoją skrzynkę');
     const verification = await waitForEmail({ recipient: EMAIL, after: confirmationAfter, timeout: 180000 });
@@ -145,8 +147,7 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
         if (ids.length) await page.evaluate(async ids => { const { error } = await window.__sbClient.from('games').delete().in('id', ids); if (error) throw error; }, ids);
       },
       () => cleanup(page),
-      () => initialFlag === undefined ? Promise.resolve() : restoreMailCenterPreference(initialFlag),
-      () => clearMailCenterCapabilities(), () => clearMailbox(EMAIL),
+      () => mailbox.clear(outsider),
       () => anonymous.close(), () => second.close(),
     ];
     const errors = [];
@@ -155,7 +156,7 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
   }
 });
 
-test('mail360: brak dostepu, nieaktualny link i adres konta prowadzi do logowania', async ({ page, context }, testInfo) => {
+test('mail360: brak dostepu, nieaktualny link i adres konta prowadzi do logowania', async ({ page, context, accounts }, testInfo) => {
   await branch(context);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
@@ -165,7 +166,7 @@ test('mail360: brak dostepu, nieaktualny link i adres konta prowadzi do logowani
   await page.goto(URL + '?m=' + 'a'.repeat(64));
   await expect(page.locator('#mailTitle')).toHaveText('Ten link już nie działa');
   await page.screenshot({ path: testInfo.outputPath('shot-mail360-expired-390.png'), fullPage: true });
-  await page.locator('#mailInput').fill('test1@familiada.online'); await page.locator('#mailForm button').click();
+  await page.locator('#mailInput').fill(accounts.standard[0].email); await page.locator('#mailForm button').click();
   await expect(page.locator('#mailTitle')).toHaveText('Masz konto w Familiadzie');
   await expect(page.locator('#mailActions a')).toHaveAttribute('href', '/login/?next=account');
   await expect(page.locator('#mailLists')).toBeHidden();

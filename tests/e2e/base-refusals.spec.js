@@ -1,11 +1,14 @@
 const { expectMailDocument } = require("./helpers/mail-document");
-const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery } = require("./helpers/mailbox");
 const SITE = "https://www.familiada.online";
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
 test.use({ serviceWorkers: "block" });
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel
+// accounts.standard[0], odbiorca accounts.standard[1]; testy czekają na
+// prawdziwe maile do odbiorcy, więc plik wypożycza zasób poczty.
+test.use({ needs: { standard: 2, resources: ["mail"] } });
 test.beforeEach(async ({ context }) => { if (branch) await serveBranchCode(context, { pages: ["bases", "go"] }); });
 async function rpc(page, name, args) {
   return page.evaluate(async ({ name, args }) => {
@@ -34,16 +37,16 @@ async function openShared(page) {
   await page.goto(`${SITE}/bases/?tab=shared`); await ready(page);
 }
 
-test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięcie", async ({ page, context, browser }) => {
+test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięcie", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(300_000);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const recipientContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
   if (branch) await serveBranchCode(recipientContext, { pages: ["bases", "go"] });
   const recipient = await recipientContext.newPage();
   let baseId = null, recipientId = null, recipientEmail = null;
   const name = `E2E-B337-${Date.now()}`;
   try {
-    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    await loginAs(recipient, recipientContext, accounts.standard[1]);
     const identity = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
     recipientId = identity.id; recipientEmail = identity.email;
     await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
@@ -133,9 +136,9 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
   }
 });
 
-test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1400", async ({ page, context }) => {
+test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1400", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(120_000);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const baseId = await createBase(page, `E2E-B337-UI-${Date.now()}`);
   const future = days => new Date(Date.now() + days * 86400000).toISOString();
   const panel = {
@@ -195,9 +198,9 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
   }
 });
 
-test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmowa nadal blokuje", async ({ page, context, browser }) => {
+test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmowa nadal blokuje", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(120_000);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
   if (branch) await serveBranchCode(recipientContext, { pages: ["bases", "go"] });
   const recipient = await recipientContext.newPage();
@@ -209,7 +212,7 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     }, { userId: recipientId, enabled });
   }
   try {
-    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    await loginAs(recipient, recipientContext, accounts.standard[1]);
     const user = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
     recipientId = user.id;
     previousFlag = await recipient.evaluate(async userId => {
@@ -262,16 +265,16 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
 });
 
 
-test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochodne zaproszenie", async ({ page, context, browser }) => {
+test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochodne zaproszenie", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(420_000);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const otherContext = await browser.newContext({ serviceWorkers: "block" });
   if (branch) await serveBranchCode(otherContext, { pages: ["bases", "go"] });
   const recipient = await otherContext.newPage();
   const bases = [];
   let recipientId, recipientEmail;
   try {
-    await loginAsPooledTestUser(recipient, otherContext, 1);
+    await loginAs(recipient, otherContext, accounts.standard[1]);
     const user = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
     recipientId = user.id; recipientEmail = user.email;
     await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });

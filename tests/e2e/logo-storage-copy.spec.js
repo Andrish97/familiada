@@ -1,15 +1,14 @@
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const {randomUUID}=require('node:crypto');
 const pixel='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l38AAAAASUVORK5CYII=';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block',needs:{standard:1}});test.describe.configure({retries:0});
 let stage='login';
 test.afterEach(async({},info)=>{if(info.status!==info.expectedStatus)console.error('::error title=Native Storage copy::'+stage);});
-test('native logo Storage copy: actual bytes, lost-response retry after source deletion and immutable conflict',async({page,context},info)=>{
+test('native logo Storage copy: actual bytes, lost-response retry after source deletion and immutable conflict',async({page,context,accounts,loginAs},info)=>{
  test.setTimeout(120000);
  if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logos']});
- await loginAsPooledTestUser(page,context,info.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  const {copyLogoStorageImage}=await import('../../cloudflare/maintenance-worker/src/lib/resource-copy/storage-copy.js');
  const state=await page.evaluate(async()=>{
   const db=window.__sbClient,{data,error}=await db.auth.getSession();if(error)throw error;

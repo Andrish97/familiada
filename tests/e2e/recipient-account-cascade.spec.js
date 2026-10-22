@@ -1,8 +1,12 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, restoreTestAccount } = require("./helpers/mailbox");
+const { resetMailProviderLimits, extractHttpLinks } = require("./helpers/mailbox");
 const { expectMailDocument } = require("./helpers/mail-document");
+
+// E25: właściciel ankiet (accounts.standard[0]) i odbiorca usuwający konto
+// (accounts.disposable[0] -- odtwarzane przy każdym wypożyczeniu, więc bez
+// ręcznego odtwarzania po teście); tests/README.md „Test accounts”.
+test.use({ needs: { standard: 1, disposable: 1, resources: ["mail"] } });
 
 async function rpc(page, name, args) {
   return page.evaluate(async ({ name, args }) => {
@@ -12,8 +16,9 @@ async function rpc(page, name, args) {
   }, { name, args });
 }
 
-test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i nie oddaje starych linków nowemu kontu", async ({ browser }) => {
+test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i nie oddaje starych linków nowemu kontu", async ({ browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(600000);
+  const [recipientIdentity] = accounts.disposable;
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
@@ -24,12 +29,11 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
   const recipient = await recipientContext.newPage();
   const anonymous = await anonymousContext.newPage();
   const games = [];
-  const email = "test15@familiada.online";
+  const email = recipientIdentity.email;
   let oldRecipientId = null;
   try {
-    await restoreTestAccount("test15");
-    await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
-    await loginAsTestUser(recipient, recipientContext, { username: email });
+    await loginAs(owner, ownerContext, accounts.standard[0]);
+    await loginAs(recipient, recipientContext, recipientIdentity);
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     expect((await rpc(owner, "e2e_poll_mail_budget_cleanup", { p_recipient_email: email })).ok).toBe(true);
     expect((await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId })).ok).toBe(true);
@@ -39,7 +43,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
       const { error } = await sb.from("games").delete().eq("owner_id", uid).like("name", "E2E-348-%");
       if (error) throw error;
     });
-    await clearMailbox(email);
+    await mailbox.clear(recipientIdentity);
     await resetMailProviderLimits(owner);
     const invite = await rpc(owner, "friends_invite", { p_handle: email });
     expect(invite.ok).toBe(true);
@@ -82,7 +86,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
       }, { mailItems: sharing.mail, name: game.name });
       expect(sent).toMatchObject({ sent: 1, failed: 0 });
       previousMailAt = Date.now();
-      const mail = await waitForEmail({ recipient: email, after, subject: new RegExp(game.name), timeout: 150000 });
+      const mail = await mailbox.waitFor(recipientIdentity, { after, subject: new RegExp(game.name), timeout: 150000 });
       expectMailDocument(mail, { accountFooter: true });
       fixture.link = extractHttpLinks(mail).find(link => new URL(link).pathname === "/go/" && new URL(link).searchParams.has("t"));
       expect(fixture.link).toBeTruthy();
@@ -124,12 +128,11 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     for (const fixture of games) expect((await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks).toHaveLength(0);
-    await restoreTestAccount("test15");
-    await loginAsTestUser(recipient, recipientContext, { username: email });
-    const newRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-    expect(newRecipientId).not.toBe(oldRecipientId);
+    // E25: bez odtwarzania konta w trakcie testu (Worker nie ma już
+    // /_e2e_api/accounts/restore; konto disposable wraca przy następnym
+    // wypożyczeniu). Stare linki sprawdzamy w wylogowanej karcie odbiorcy
+    // i w karcie anonimowej.
     for (const fixture of games) {
-      expect(await rpc(recipient, "poll_task_opened", { p_token: fixture.token })).toBe("not_found");
       for (const page of [recipient, anonymous]) {
         await page.goto(fixture.link);
         await expect(page.locator("#title")).toContainText(/wygas|nieważn|nieprawidł|niedostępn/i);
@@ -140,15 +143,6 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     throw error;
   } finally {
     const cleanup = await Promise.allSettled([
-      (async () => {
-        await restoreTestAccount("test15");
-        const recoveryContext = await browser.newContext();
-        try {
-          const recoveryPage = await recoveryContext.newPage();
-          await loginAsTestUser(recoveryPage, recoveryContext, { username: email });
-          expect(await recoveryPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email)).toBe(email);
-        } finally { await recoveryContext.close(); }
-      })(),
       games.length ? owner.evaluate(async ids => {
         const { error } = await window.__sbClient.from("games").delete().in("id", ids);
         if (error) throw error;

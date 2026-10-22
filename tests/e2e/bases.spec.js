@@ -21,24 +21,31 @@ const { acceptBaseShare } = require("./helpers/base-sharing");
 // Strona /bases i zasoby są pobierane z wdrożonej produkcji.
 
 const fs = require("fs");
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { test, expect } = require("./helpers/e2e-test");
+const { resetMailProviderLimits } = require("./helpers/mailbox");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const BASE_URL = "https://www.familiada.online/bases";
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel
+// accounts.standard[0], drugi użytkownik/odbiorca accounts.standard[1]. Pocztę
+// wypożyczamy tylko, gdy przebieg obejmuje testy wysyłające maile (@mailbox
+// i udostępnienie znajomemu): cały plik albo filtr z „mailbox”/„znajom”
+// (E2E_SPEC_FILTER z workflow; lokalnie bez niej — zawsze).
+const specFilter = process.env.E2E_SPEC_FILTER;
+const mailNeeded = specFilter == null || !/(?:^|\s)(?:-g|--grep)[\s=]/.test(specFilter) || /mailbox|znajom/i.test(specFilter);
+test.use({ needs: mailNeeded ? { standard: 2, resources: ["mail"] } : { standard: 2 } });
 test.beforeEach(async ({ context }) => {
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["bases", "go", "tasks"] });
 });
 
-async function newUserContext(browser, username, contextOptions = {}) {
+async function newUserContext(browser, loginAs, identity, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ctx, { pages: ["bases", "go", "tasks"] });
   const pg = await ctx.newPage();
-  await loginAsTestUser(pg, ctx, { username });
+  await loginAs(pg, ctx, identity);
   return { ctx, page: pg };
 }
 
@@ -94,10 +101,10 @@ async function getUserId(page) {
 }
 
 
-test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osłona obrotu)", async ({ browser }, testInfo) => {
+test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osłona obrotu)", async ({ browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(90_000);
   const portrait = { width: 390, height: 844 };
-  const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+  const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0], {
     viewport: portrait, screen: portrait, isMobile: true, hasTouch: true,
   });
   const name = `E20-BS-ROTATE-${Date.now()}`;
@@ -171,16 +178,16 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
 
 // Udostępnienie po NAZWIE użytkownika (P2, B7): adres odbiorcy nie trafia
 // do przeglądarki właściciela; mail buduje send-mail z szablonu serwera.
-test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context, browser }) => {
+test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context, browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(240_000);
-  const recipient = testAccountUsername(8); // skrzynka test8 jest używana w kontrolach dostarczania maili
+  const [owner, recipient] = accounts.standard;
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
   let recipientContext;
   let anonymousContext;
 
   try {
-    const recipientUser = await newUserContext(browser, recipient);
+    const recipientUser = await newUserContext(browser, loginAs, recipient);
     recipientContext = recipientUser.ctx;
     const recipientName = await recipientUser.page.evaluate(async () => {
       const client = window.__sbClient;
@@ -195,10 +202,10 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
       if (!/\/rest\/v1\/rpc\/(base_share_by_user|base_share_panel)|\/functions\/v1\/send-mail/.test(res.url())) return;
       ownerTraffic.push({ url: res.url(), request: res.request().postData() || "", text: await res.text().catch(() => "") });
     });
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, owner);
     baseId = await createBaseDirect(page, name);
     await resetMailProviderLimits(page);
-    await clearMailbox(recipient);
+    await mailbox.clear(recipient);
     const after = new Date(Date.now() - 2_000).toISOString();
 
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
@@ -217,12 +224,12 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     expect(sendMail[0].request).not.toContain("@");
     // Po migracji 456 (produkcja): także RPC udostępnienia i panel bez adresu odbiorcy.
     if (process.env.GITHUB_REF_NAME === "main") {
-      for (const r of ownerTraffic) expect(r.text.toLowerCase(), r.url).not.toContain(recipient.toLowerCase());
+      for (const r of ownerTraffic) expect(r.text.toLowerCase(), r.url).not.toContain(recipient.email.toLowerCase());
     }
 
-    const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i"), timeout: 150_000 });
+    const email = await mailbox.waitFor(recipient, { after, subject: new RegExp(name, "i"), timeout: 150_000 });
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
-    const invitation = extractHttpLinks(email).find((link) => {
+    const invitation = mailbox.links(email).find((link) => {
       const url = new URL(link);
       return /\/go\/?$/.test(url.pathname) && url.searchParams.has("b");
     });
@@ -248,7 +255,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     if (baseId) await deleteBaseDirect(page, baseId).catch(() => {});
     await recipientContext?.close();
     await anonymousContext?.close();
-    await clearMailbox(recipient).catch(() => {});
+    await mailbox.clear(recipient).catch(() => {});
   }
 });
 
@@ -256,9 +263,9 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
 
 test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunięcie)", () => {
 
-  test("kafelek '+' tworzy nową bazę i trafia na listę 'Moje'", async ({ page, context }) => {
+  test("kafelek '+' tworzy nową bazę i trafia na listę 'Moje'", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-CREATE-${Date.now()}`;
     let baseId = null;
@@ -285,9 +292,9 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
     }
   });
 
-  test("podwójny klik w kafelek otwiera zmianę nazwy, zapis aktualizuje nazwę wszędzie", async ({ page, context }) => {
+  test("podwójny klik w kafelek otwiera zmianę nazwy, zapis aktualizuje nazwę wszędzie", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const oldName = `E2E-BS-RENAME-${Date.now()}`;
     const newName = `${oldName}-zmieniona`;
@@ -315,9 +322,9 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
     }
   });
 
-  test("przycisk 'x' + potwierdzenie usuwa bazę z listy i z DB", async ({ page, context }) => {
+  test("przycisk 'x' + potwierdzenie usuwa bazę z listy i z DB", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-DELETE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -344,9 +351,9 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
     }
   });
 
-  test("udostępniona baza pojawia się u drugiego, prawdziwego użytkownika na liście 'Udostępnione' z właściwą rolą", async ({ page, context, browser }) => {
+  test("udostępniona baza pojawia się u drugiego, prawdziwego użytkownika na liście 'Udostępnione' z właściwą rolą", async ({ page, context, browser, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-SHARE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -354,7 +361,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
     try {
       let page2;
-      ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+      ({ ctx: context2, page: page2 } = await newUserContext(browser, loginAs, accounts.standard[1]));
       const user2Id = await getUserId(page2);
       await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
@@ -376,9 +383,9 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
 test.describe("bases: ochrona bazy jako całości (delete_resource_checked + updateChecked)", () => {
 
-  test("usunięcie bazy jest zablokowane, gdy drugi, prawdziwy użytkownik edytuje pytanie w jej wnętrzu", async ({ page, context, browser }) => {
+  test("usunięcie bazy jest zablokowane, gdy drugi, prawdziwy użytkownik edytuje pytanie w jej wnętrzu", async ({ page, context, browser, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-DELLOCKED-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -386,7 +393,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
 
     try {
       let page2;
-      ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+      ({ ctx: context2, page: page2 } = await newUserContext(browser, loginAs, accounts.standard[1]));
       const user2Id = await getUserId(page2);
       await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
@@ -419,9 +426,9 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
     }
   });
 
-  test("usunięcie bazy działa normalnie, gdy nic w jej wnętrzu nie jest zablokowane", async ({ page, context, browser }) => {
+  test("usunięcie bazy działa normalnie, gdy nic w jej wnętrzu nie jest zablokowane", async ({ page, context, browser, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-DELFREE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -430,7 +437,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
 
     try {
       let page2;
-      ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+      ({ ctx: context2, page: page2 } = await newUserContext(browser, loginAs, accounts.standard[1]));
       const user2Id = await getUserId(page2);
       await acceptBaseShare(page, page2, baseId, user2Id, "editor");
       await createQuestionDirect(page, baseId, { text: "Wolne pytanie", answers: [] });
@@ -455,9 +462,9 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
     }
   });
 
-  test("zmiana nazwy bazy usuniętej tuż przed zapisem pokazuje komunikat zamiast cichego 'sukcesu'", async ({ page, context }) => {
+  test("zmiana nazwy bazy usuniętej tuż przed zapisem pokazuje komunikat zamiast cichego 'sukcesu'", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const name = `E2E-BS-RENAMEGONE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -526,10 +533,10 @@ async function countUniModals(page, windowMs) {
 
 test.describe("bases: audyt -- układ i gesty", () => {
 
-  test("desktop: dwie wypustki jak na mobile -- widoczna tylko aktywna sekcja, wybór zapamiętany", async ({ page, context }) => {
+  test("desktop: dwie wypustki jak na mobile -- widoczna tylko aktywna sekcja, wybór zapamiętany", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 1400, height: 900 });
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
@@ -557,9 +564,9 @@ test.describe("bases: audyt -- układ i gesty", () => {
     expect(Math.min(a.width, b.width)).toBeGreaterThan(card.width * 0.4);
   });
 
-  test("telefon: podwójne tapnięcie w kafelek otwiera zmianę nazwy", async ({ browser }) => {
+  test("telefon: podwójne tapnięcie w kafelek otwiera zmianę nazwy", async ({ browser, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+    const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0], {
       viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
     });
     const name = `E2E-BS-TAP-${Date.now()}`;
@@ -589,20 +596,21 @@ test.describe("bases: audyt -- układ i gesty", () => {
   });
 });
 
-test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ page, context, browser }) => {
+test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ page, context, browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(180_000);
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  const [owner, friend] = accounts.standard;
+  await loginAs(page, context, owner);
   const name = "E2E-BS-FRIEND-" + Date.now();
   const baseId = await createBaseDirect(page, name);
   let ctx2 = null;
   let recipientId = null;
   try {
     let page2;
-    ({ ctx: ctx2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+    ({ ctx: ctx2, page: page2 } = await newUserContext(browser, loginAs, friend));
     recipientId = await getUserId(page2);
     await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId);
-    await clearMailbox(testAccountUsername(2));
-    const invite = await page.evaluate(async (handle) => window.__sbClient.rpc("friends_invite", { p_handle: handle }), testAccountUsername(2));
+    await mailbox.clear(friend);
+    const invite = await page.evaluate(async (handle) => window.__sbClient.rpc("friends_invite", { p_handle: handle }), friend.email);
     // Retry poprzedniego runu może zostawić zaproszenie pending. Funkcja
     // zwraca jego id z err=already; odbiorca nadal może je zaakceptować.
     if (invite.error || (!invite.data?.ok && !(invite.data?.err === "already" && invite.data?.status === "pending" && invite.data?.id))) {
@@ -610,7 +618,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     }
     const accepted = await page2.evaluate(async (id) => window.__sbClient.rpc("friends_accept", { p_id: id }), invite.data.id);
     if (accepted.error || !accepted.data?.ok) throw new Error("friends_accept failed");
-    await clearMailbox(testAccountUsername(2));
+    await mailbox.clear(friend);
     await resetMailProviderLimits(page);
 
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
@@ -630,7 +638,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     expect(shareRow?.ok, "zaproszenie do bazy").toBeTruthy();
     const inviteLink = shareRow?.mail_link;
     expect(inviteLink).toBeTruthy();
-    await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: "test2" })).toHaveCount(1, { timeout: 20_000 });
+    await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: friend.username })).toHaveCount(1, { timeout: 20_000 });
     const token = new URL(inviteLink, BASE_URL).searchParams.get("b");
     expect(token).toBeTruthy();
     await page2.goto("/go/?b=" + token, { waitUntil: "domcontentloaded" });
@@ -645,21 +653,21 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     if (recipientId) await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId).catch(() => {});
     if (ctx2) await ctx2.close();
     await deleteBaseDirect(page, baseId);
-    await clearMailbox(testAccountUsername(2)).catch(() => {});
+    await mailbox.clear(friend).catch(() => {});
   }
 });
 
 test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
-  test("zaproszenie: kafelek pokazuje od kogo i rolę, Przeglądaj/Eksport zablokowane do akceptacji", async ({ page, context, browser }) => {
+  test("zaproszenie: kafelek pokazuje od kogo i rolę, Przeglądaj/Eksport zablokowane do akceptacji", async ({ page, context, browser, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-BS-INVITE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
     let ctx2 = null;
     try {
       let page2;
-      ({ ctx: ctx2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+      ({ ctx: ctx2, page: page2 } = await newUserContext(browser, loginAs, accounts.standard[1]));
       await inviteUser(page, baseId, await getUserId(page2), "editor");
 
       await page2.goto(BASE_URL, { waitUntil: "domcontentloaded" });
@@ -690,15 +698,15 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
     }
   });
 
-  test("link z maila: adresat trafia na zaproszenie bez komunikatu; obcy widzi jeden komunikat; cofnięte -> jeden komunikat", async ({ page, context, browser }) => {
+  test("link z maila: adresat trafia na zaproszenie bez komunikatu; obcy widzi jeden komunikat; cofnięte -> jeden komunikat", async ({ page, context, browser, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-BS-LINK-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
     let ctx2 = null;
     try {
       let page2;
-      ({ ctx: ctx2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+      ({ ctx: ctx2, page: page2 } = await newUserContext(browser, loginAs, accounts.standard[1]));
       const token = await inviteUser(page, baseId, await getUserId(page2));
 
       // adresat
@@ -729,9 +737,9 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
 test.describe("bases: audyt -- eksport / import", () => {
 
-  test("eksport -> import zachowuje foldery, tagi pytań i tagi folderów", async ({ page, context }, testInfo) => {
+  test("eksport -> import zachowuje foldery, tagi pytań i tagi folderów", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-BS-EXPORT-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
     const createdIds = [baseId];
@@ -800,8 +808,8 @@ test.describe("bases: audyt -- eksport / import", () => {
     }
   });
 
-  test("E20 eksport Bazy: błąd pozostaje widoczny i eksport da się ponowić", async ({ page, context }) => {
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  test("E20 eksport Bazy: błąd pozostaje widoczny i eksport da się ponowić", async ({ page, context, accounts, loginAs }) => {
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-BS-EXPORT-RETRY-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
     try {
@@ -833,9 +841,9 @@ test.describe("bases: audyt -- eksport / import", () => {
     }
   });
 
-  test("nieudany import nie zostawia pustej/niepełnej bazy", async ({ page, context }, testInfo) => {
+  test("nieudany import nie zostawia pustej/niepełnej bazy", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-BS-IMPFAIL-${Date.now()}`;
     const file = testInfo.outputPath("broken.fambase");
     fs.writeFileSync(file, JSON.stringify({

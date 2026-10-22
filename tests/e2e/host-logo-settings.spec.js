@@ -1,10 +1,11 @@
 const { test, expect } = require("./helpers/production-test");
-const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familiada.online";
 
 test.use({ serviceWorkers: "block" });
+// E25: jedno wypożyczone konto; Control i Wyświetlacz to ciężki przebieg.
+test.use({ needs: { standard: 1, resources: ["heavy"] } });
 
 async function createHostLogoGame(page) {
   return page.evaluate(async () => {
@@ -46,11 +47,10 @@ async function deleteHostLogoGame(page, gameId) {
   }, gameId);
 }
 
-test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control", async ({ page, browser, context }, testInfo) => {
+test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control", async ({ page, browser, context, accounts, loginAs }, testInfo) => {
   test.setTimeout(150_000);
-  // Konto z puli (test1–test8); test9/test10 są wyłączone.
   await serveBranchCode(context, { pages: ["games/settings", "control", "host", "display"] });
-  await loginAsPooledTestUser(page, context, testInfo.workerIndex);
+  await loginAs(page, context, accounts.standard[0]);
   let game;
   let displayContext;
   try {

@@ -2,16 +2,16 @@
 // Komentarz wyświetlany jako tekst (bez interpretacji HTML). Po teście
 // przywracana jest poprzednia ocena konta (RLS nie pozwala jej usunąć,
 // więc konto bez oceny zostaje z oceną testową).
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 
-test("Konto: wystawienie i zmiana oceny systemu", async ({ page, context }) => {
+test("Konto: wystawienie i zmiana oceny systemu", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(120_000);
   if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["account"] });
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto("https://www.familiada.online/account/", { waitUntil: "domcontentloaded" });
   const previous = await page.evaluate(async () => {
     const db = window.__sbClient;

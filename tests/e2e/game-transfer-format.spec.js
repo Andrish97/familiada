@@ -1,16 +1,15 @@
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const branch=process.env.GITHUB_REF_NAME!=='main';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block',needs:{standard:1}});test.describe.configure({retries:0});
 test.afterEach(async({},testInfo)=>{
  if(testInfo.status!==testInfo.expectedStatus)console.log(`::error title=Game transfer::${testInfo.title}; ${String(testInfo.errors?.[0]?.message||'').split('\n').filter(Boolean).slice(0,2).join(' ').slice(0,220)}`);
 });
-test('common game transfer format: native export and existing import for all three kinds, fresh identities and complete cleanup',async({page,context},testInfo)=>{
+test('common game transfer format: native export and existing import for all three kinds, fresh identities and complete cleanup',async({page,context,accounts,loginAs},testInfo)=>{
  test.setTimeout(180000);const owned=[];
  if(branch)await serveBranchCode(context,{pages:['games']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
- await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  try{
   for(const type of ['prepared','poll_text','poll_points']){
    const source=await page.evaluate(async type=>{
@@ -67,12 +66,12 @@ test('common game transfer format: native export and existing import for all thr
  }
 });
 
-test('atomic game import: file modal retry after lost response, foreign owner and deleted result',async({page,context},testInfo)=>{
+test('atomic game import: file modal retry after lost response, foreign owner and deleted result',async({page,context,accounts,loginAs},testInfo)=>{
  test.setTimeout(120000);let importedId=null;let firstRequest=null;let stage='login';
  await page.setViewportSize({width:390,height:844});
  if(branch)await serveBranchCode(context,{pages:['games']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
- await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  const rpc='**/rest/v1/rpc/game_import_package';const requests=[];
  page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/rpc/game_import_package'))requests.push(request.postDataJSON()?.p_request_id);});
  try{
