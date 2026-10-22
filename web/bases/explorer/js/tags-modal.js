@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-22T22570";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T22570";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T22570";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-22T22570";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T22570";
-import { normalizeText } from "./data/listing.js?v=v2026-10-22T22570";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-22T22570";
+import * as ops from "./ops.js?v=v2026-10-22T23395";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T23395";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T23395";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-22T23395";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T23395";
+import { normalizeText } from "./data/listing.js?v=v2026-10-22T23395";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-22T23395";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
 function esc(s) {
