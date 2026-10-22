@@ -22,6 +22,14 @@ async function clearMailbox(recipient) {
   await api(`/emails?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
 }
 
+// "Minęła godzina" dla blokady wysyłki per adres testowy (np. auth:guest_upgrade_email).
+async function releaseMailCooldown(recipient, actionKey) {
+  await api("/mail-cooldowns/release", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipient, action_key: actionKey }),
+  });
+}
+
 async function resetMailProviderLimits() {
   await api("/mail-limits/reset", { method: "POST" });
   console.log("[e2e-mail] provider limits reset before delivery test");
@@ -101,4 +109,4 @@ async function restoreMailCenterPreference(suppressedAt) {
   });
 }
 
-module.exports = { restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

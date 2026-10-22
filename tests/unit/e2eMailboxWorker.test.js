@@ -270,3 +270,22 @@ test('ordinary replies and similar domains retain the real inbox path', async (t
     assert.ok(calls.some(url => url.includes('/rpc/save_inbound_message')));
   }
 });
+
+test("zwolnienie blokady maila: tylko z tokenem, adres testowy i dozwolony klucz", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => { calls.push({ url: String(url), body: options.body ? JSON.parse(options.body) : null }); return Response.json(true); };
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const send = (body, withToken = true) => worker.fetch(new Request("https://www.familiada.online/_e2e_api/mail-cooldowns/release", {
+    method: "POST", headers: { "Content-Type": "application/json", ...(withToken ? { "X-E2E-Token": token() } : {}) }, body: JSON.stringify(body),
+  }), env(), {});
+  const ok = { recipient: "test14@familiada.online", action_key: "auth:guest_upgrade_email" };
+  assert.equal((await send(ok, false)).status, 401);
+  assert.equal((await send({ ...ok, recipient: "real@example.com" })).status, 400);
+  assert.equal((await send({ ...ok, action_key: "account:email" })).status, 400);
+  assert.equal(calls.length, 0);
+  assert.equal((await send(ok)).status, 200);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\/rest\/v1\/rpc\/mail_cooldown_email_release$/);
+  assert.deepEqual(calls[0].body, { p_email: "test14@familiada.online", p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200 });
+});
