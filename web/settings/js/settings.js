@@ -1312,6 +1312,17 @@ function renderExcludedList(users) {
     return;
   }
   el.replaceChildren();
+  // E25: rola konta testowego z powodu wykluczenia (test:<rola>), podsumowanie według ról
+  const label=(user)=>user.reason === "test_guest" ? "Gość testowy"
+    : String(user.reason || "").startsWith("test:") ? `Konto testowe · ${user.reason.slice(5)}` : "Konto testowe";
+  const counts=new Map();
+  for (const user of users) {
+    const key=user.automatic ? label(user) : "Ręcznie";
+    counts.set(key,(counts.get(key)||0)+1);
+  }
+  const summary=document.createElement("div");summary.className="stat-sub excluded-summary";
+  summary.textContent=[...counts].map(([key,count])=>`${key}: ${count}`).join(" · ");
+  el.append(summary);
   for (const user of users) {
     const row=document.createElement("div");row.className="activity-row excluded-account-row";
     const text=document.createElement("div");text.className="excluded-account-copy";
@@ -1319,7 +1330,7 @@ function renderExcludedList(users) {
     row.append(text);
     if (user.automatic) {
       const badge=document.createElement("span");badge.className="stat-sub";
-      badge.textContent=user.reason === "test_guest" ? " · Gość testowy — wykluczenie automatyczne" : " · Konto testowe — wykluczenie automatyczne";
+      badge.textContent=` · ${label(user)} — wykluczenie automatyczne`;
       text.append(badge);
     } else {
       const button=document.createElement("button");button.className="btn xs";button.type="button";button.textContent="Usuń";

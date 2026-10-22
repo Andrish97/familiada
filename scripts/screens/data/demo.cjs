@@ -401,6 +401,14 @@ function buildDb(lang, extras = {}) {
         { created_at: "2026-10-20T10:00:00Z", level: "success", message: "Zweryfikowano kontakt" },
       ] },
       "/_admin_api/marketing/ai-providers": { ok: true, rows: [] },
+      // E25: wykluczenia ze statystyk -- automatyczne z rolą konta testowego, ręczne z przyciskiem
+      "/_admin_api/stats/excluded": { ok: true, rows: [
+        ...["e2e.standard01", "e2e.standard02", "e2e.standard03"].map((username) => ({ user_id: `00000000-0000-4000-8000-0000000000${username.slice(-2)}`, username, email: `e2e+${username.slice(4)}@familiada.online`, reason: "test:standard", automatic: true, added_at: "2026-10-22T20:30:00Z" })),
+        { user_id: "00000000-0000-4000-8000-0000000000d1", username: "e2e.disposable01", email: "e2e+disposable01@familiada.online", reason: "test:disposable", automatic: true, added_at: "2026-10-22T20:30:00Z" },
+        { user_id: "00000000-0000-4000-8000-0000000000e1", username: "e2e.dedicated01", email: "e2e+dedicated01@familiada.online", reason: "test:dedicated", automatic: true, added_at: "2026-10-22T20:30:00Z" },
+        { user_id: "00000000-0000-4000-8000-0000000000f1", username: "guest_3fa9c2d1", email: "", reason: "test_guest", automatic: true, added_at: "2026-10-22T20:31:00Z" },
+        { user_id: "00000000-0000-4000-8000-0000000000aa", username: "wlasciciel", email: "admin@example.com", reason: "manual", automatic: false, added_at: "2026-10-01T09:00:00Z" },
+      ] },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },
