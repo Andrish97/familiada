@@ -41,9 +41,13 @@ permissions:
   contents: write
   actions: write
 
+# Na main przebieg nie jest przerywany kolejnym pushem (kolejny czeka; z kilku
+# czekających zostaje najnowszy) -- inaczej przy częstych pushach kilku sesji
+# długie odświeżanie zrzutów nigdy się nie kończyło. Porównanie z ostatnim
+# commitem „Refresh …” w krokach niżej nie gubi zmian z pominiętych przebiegów.
 concurrency:
   group: screens-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   screens:
@@ -171,7 +175,8 @@ jobs:
         run: |
           git pull --rebase origin main || true
           LAST=$(git log -1 --format=%H --grep="^Refresh help screenshots" HEAD 2>/dev/null || true)
-          [ -n "$LAST" ] && BASE="$LAST"
+          # Bez wcześniejszego odświeżenia -- wszystkie użyte zrzuty (a nie tylko ostatni push).
+          if [ -n "$LAST" ]; then BASE="$LAST"; else ALL=1; fi
           if [ -n "$ALL" ]; then pick=$(node scripts/screens/publish-manual.cjs --list); else pick=$(node scripts/screens/publish-manual.cjs --list --base="$BASE"); fi
           [ -n "$pick" ] || { echo "Brak zrzutów Wskazówek do odświeżenia."; exit 0; }
           node scripts/screens/run.cjs --scenes="$pick" --lang=all --devices=desktop,phone,phone-landscape,tablet,tablet-landscape --out=help-out || true
