@@ -44,9 +44,28 @@ test('Go dynamic states are protected from a later static language initializatio
 });
 
 test("kod QR z kadru strony głównej (id demo) prowadzi do węża", async () => {
-  const { isScreenshotPollId } = await import("../../web/shared/js/core/poll-links.js");
-  assert.equal(isScreenshotPollId("00000000-0000-4000-8000-000000000103"), true);
-  assert.equal(isScreenshotPollId("8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10"), false);
-  assert.equal(isScreenshotPollId("00000000-0000-4000-8000-0000000001"), false);
-  assert.equal(isScreenshotPollId(null), false);
+  const { isScreenshotId } = await import("../../web/shared/js/core/poll-links.js");
+  assert.equal(isScreenshotId("00000000-0000-4000-8000-000000000103"), true);
+  assert.equal(isScreenshotId("8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10"), false);
+  assert.equal(isScreenshotId("00000000-0000-4000-8000-0000000001"), false);
+  assert.equal(isScreenshotId(null), false);
+});
+
+test("każdy link /go/ z kadru (ankieta, urządzenie, QR na Wyświetlaczu) prowadzi do węża", async () => {
+  const { screenshotSnakeUrl } = await import("../../web/shared/js/core/poll-links.js");
+  const base = "https://www.familiada.online";
+  const demo = "00000000-0000-4000-8000-000000000100";
+  for (const q of [`p=anon&id=${demo}&key=k&lang=pl`, `d=host&id=${demo}&key=screensDeviceKey&lang=pl`, `d=buzzer&id=${demo}&key=k&lang=pl`, `d=display&id=${demo}&key=k&lang=pl`, `d=qr&id=${demo}&key=k&lang=pl`]) {
+    assert.equal(screenshotSnakeUrl(new URLSearchParams(q), base, "pl"), `${base}/snake/?qr=${demo}&lang=pl`, q);
+  }
+  assert.equal(screenshotSnakeUrl(new URLSearchParams(`d=host&id=${demo}&key=k`), base), `${base}/snake/?qr=${demo}`);
+  assert.equal(screenshotSnakeUrl(new URLSearchParams("d=host&id=8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10&key=k"), base), null);
+  assert.equal(screenshotSnakeUrl(new URLSearchParams("t=abc"), base), null);
+});
+
+test("go.js sprawdza kod z kadru przed rozpoznaniem rodzaju linku", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../../web/go/js/go.js", import.meta.url), "utf8");
+  const init = source.slice(source.indexOf("async function init()"));
+  assert.ok(init.indexOf("screenshotSnakeUrl(") > 0 && init.indexOf("screenshotSnakeUrl(") < init.indexOf('qs.has("p")'));
 });

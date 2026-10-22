@@ -54,7 +54,6 @@
   "resource-duplicate-ui.spec.js": 1,
   "resource-duplicate.spec.js": 1,
   "restore-demo.spec.js": 1,
-  "snake.spec.js": 1,
   "subscribers.spec.js": 7,
   "test-account-restore.spec.js": 2
  }

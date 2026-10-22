@@ -1159,7 +1159,7 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
   Przycisk i wąż (z założenia telefon w poziomie, ok. 320–430 px wysokości —
   próg by je wyłączył; decyzja właściciela).
 
-- **2026-10-20 — logowanie z węża wraca do gry** (pytanie użytkownika): wyjątek od „po zalogowaniu zawsze /games/” obok `next=` z maili. Link „Zaloguj się” w `/snake/` to `/login/?next=snake&qr=<id demo>&lang=…`; `login.js` przyjmuje `next=snake` tylko z ważnym `qr` (`isScreenshotPollId`, inaczej strona byłaby 404) i wraca na `/snake/?qr=…`. Strona węża jest `standalone` (mapa: brak „Wstecz”).
+- **2026-10-20 — logowanie z węża wraca do gry** (pytanie użytkownika): wyjątek od „po zalogowaniu zawsze /games/” obok `next=` z maili. Link „Zaloguj się” w `/snake/` to `/login/?next=snake&qr=<id demo>&lang=…`; `login.js` przyjmuje `next=snake` tylko z ważnym `qr` (`isScreenshotId`, inaczej strona byłaby 404) i wraca na `/snake/?qr=…`. Strona węża jest `standalone` (mapa: brak „Wstecz”).
 
 - **2026-10-11 (środowisko pracy):** ograniczać ciężkie zadania i testy
   symulacyjne lokalnie (lagi i awarie); punktowe e2e w GitHub Actions,
@@ -1391,3 +1391,4 @@ E19N, a wraz z nim cały etap E19, jest zamknięty produkcyjnie.
 **2026-10-21 — Społeczność bez kart:** „Moje wysłane” to okno
 (`?dialog=mySentOverlay`), parametr `?tab=mine` usunięty bez aliasu (zasada
 „bez fallbacków”); w mapie `marketplace` bez `tabs`, z oknem w `dialogs`.
+- **2026-10-22 — każdy kod QR ze zrzutów prowadzi do węża** (decyzja użytkownika: „wszystkie kody QR widoczne na zrzutach mają prowadzić do węża… żeby to było spójne”). Jedna reguła na początku `/go/` (`screenshotSnakeUrl` w `poll-links.js`): link z identyfikatorem demo `00000000-0000-4000-8000-…` w `id` — ankieta (`p=anon`), urządzenie (`d=host|buzzer|display`), QR na Wyświetlaczu (`d=qr`) — otwiera `/snake/?qr=<id>&lang=…` i liczy skan (`logSnake`). Wcześniej tylko ankiety; kod Prowadzącego dawał „nieprawidłowy link”.

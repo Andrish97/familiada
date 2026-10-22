@@ -1,8 +1,7 @@
 // Ukryta gra w węża: kod QR z kadru ankiet (id demo) → /go/ → /snake/,
 // zdarzenia scan/enter/start/finish w bazie i postęp zalogowanego.
 // Przeglądarka testu ma identyfikator „e2e-…”, więc statystyki admina go pomijają.
-const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const SITE = "https://www.familiada.online";
@@ -10,7 +9,7 @@ const DEMO_ID = "00000000-0000-4000-8000-000000000103";
 const QR = `${SITE}/go/?p=anon&id=${DEMO_ID}&key=poll103KEY&lang=pl`;
 const GAME = `${SITE}/snake/?qr=${DEMO_ID}&lang=pl`;
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
-test.use({ serviceWorkers: "block" });
+test.use({ serviceWorkers: "block", needs: { standard: 1 } });
 
 test.beforeEach(async ({ context }) => {
   if (branch) await serveBranchCode(context, { pages: ["snake", "go"] });
@@ -111,7 +110,7 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
   }
 });
 
-test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i liczbę gier", async ({ page, context }) => {
+test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i liczbę gier", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(180_000);
   await page.goto(GAME, { waitUntil: "domcontentloaded" });
   // Adres linku uzupełnia skrypt gry po starcie (w HTML jest goły /login/).
@@ -121,7 +120,7 @@ test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i li
   // Zdarzenia liczone dopiero od powrotu (wcześniejsze „enter” było bez konta).
   let log = [];
   page.on("framenavigated", (frame) => { if (frame === page.mainFrame() && /\/snake\//.test(frame.url()) && !log.attached) { log = recordSnakeLog(page); log.attached = true; } });
-  await loginAsPooledTestUser(page, context, 0, { url: `${SITE}${loginHref}`, expectUrl: /\/snake\/\?qr=00000000-0000-4000-8000-000000000103/ });
+  await loginAs(page, context, accounts.standard[0], { url: `${SITE}${loginHref}`, expectUrl: /\/snake\/\?qr=00000000-0000-4000-8000-000000000103/ });
   await expect(page.locator("#snakeProgress")).toContainText("na koncie", { timeout: 30_000 });
   await expect(page.locator("#snakeLogin")).toBeHidden();
   await expect.poll(() => log.find((e) => e.kind === "enter")?.body?.ok, { timeout: 15_000 }).toBe(true);
@@ -141,5 +140,16 @@ test("wąż: bez linku z kodu QR /snake/ to zwykłe 404", async ({ page }) => {
     const res = await page.goto(`${SITE}${path}`, { waitUntil: "domcontentloaded" });
     expect(res.status(), path).toBe(404);
     await expect(page.locator("#snakeFrame")).toHaveCount(0);
+  }
+});
+
+test("każdy kod QR z kadrów (urządzenie, QR na Wyświetlaczu) prowadzi do węża", async ({ page }) => {
+  const host = `${SITE}/go/?d=host&id=00000000-0000-4000-8000-000000000100&key=screensDeviceKey&lang=pl`;
+  const display = `${SITE}/go/?d=qr&id=${DEMO_ID}&key=poll103KEY&lang=en`;
+  for (const [url, expected] of [[host, /\/snake\/\?qr=00000000-0000-4000-8000-000000000100&lang=pl$/], [display, new RegExp(`/snake/\\?qr=${DEMO_ID}&lang=en$`)]]) {
+    // Adres w chwili przejścia: strona węża po starcie zdejmuje ?lang= (i18n).
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(expected, { timeout: 30_000 });
+    await expect(page.locator("#snakeFrame")).toHaveAttribute("data-mode", /intro|play/, { timeout: 30_000 });
   }
 });
