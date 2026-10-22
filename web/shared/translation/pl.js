@@ -371,8 +371,7 @@ const pl = {
       q32: { q: "Czy wsparcie daje dodatkowe funkcje?", a: "Nie. Wszystkie funkcje są dostępne dla każdego bez opłat. Wsparcie niczego nie odblokowuje — jest po prostu podziękowaniem." },
     },
     footer: {
-      left: "© {year} Familiada — system do gry na żywo",
-      privacy: "Polityka prywatności",
+      left: "© {year} Familiada — system do gry na żywo"
     },
   },
   auth: {

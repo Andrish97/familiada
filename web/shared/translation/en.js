@@ -358,8 +358,7 @@ const en = {
       q32: { q: "Does support unlock extra features?", a: "No. Every feature is available to everyone free of charge. Support unlocks nothing — it is simply a thank-you." },
     },
     footer: {
-      left: "© {year} Familiada — live game system",
-      privacy: "Privacy policy",
+      left: "© {year} Familiada — live game system"
     },
   },
   auth: {

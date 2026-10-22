@@ -76,44 +76,54 @@
   will-change: transform;
 }
 
-@media (max-width: 600px) {
-  .imgv-overlay.sheet-active { padding: 0; }
-  .imgv-overlay.sheet-active .imgv-panel { padding: 24px 0 env(safe-area-inset-bottom, 0px); }  /* miejsce na pasek okna od dołu */
-  .imgv-overlay.sheet-active .sheet-modal-head {
-    flex: 0 0 auto;
-    width: auto;
-    margin-inline: 8px;
-  }
-  .imgv-overlay.modal--sheet.sheet-active .imgv-top {
-    position: static;
-    height: auto;
-    padding: 0 0 8px;
-    margin: 0;
-    background: none !important;
-    border: 0 !important;
-    pointer-events: auto;
-  }
-  .imgv-overlay.sheet-active .sheet-modal-body {
-    flex: 1 1 auto;
-    width: 100%;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .imgv-overlay.sheet-active .imgv-stage {
-    flex: 1 1 auto;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-  }
-  .imgv-overlay.sheet-active .imgv-zoom {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
-  }
-  .imgv-overlay.sheet-active .imgv-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
+/* Okno od dołu (telefon i ekrany dotykowe, także tablet i telefon w poziomie —
+   warunek SHEET_MQ w modal-sheet.js): pole przybliżania zajmuje całą treść okna. */
+.imgv-overlay.sheet-active { padding: 0; }
+.imgv-overlay.sheet-active .imgv-panel { padding: 24px 0 env(safe-area-inset-bottom, 0px); }  /* miejsce na pasek okna od dołu */
+.imgv-overlay.sheet-active .sheet-modal-head {
+  flex: 0 0 auto;
+  width: auto;
+  margin-inline: 8px;
+}
+.imgv-overlay.modal--sheet.sheet-active .imgv-top {
+  position: static;
+  height: auto;
+  padding: 0 0 8px;
+  margin: 0;
+  background: none !important;
+  border: 0 !important;
+  pointer-events: auto;
+}
+.imgv-overlay.sheet-active .sheet-modal-body {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.imgv-overlay.sheet-active .imgv-stage {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.imgv-overlay.sheet-active .imgv-zoom {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+.imgv-overlay.sheet-active .imgv-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Dotyk (≤ 980 px): pole przybliżania wypełnia okno, a obraz mieści się w nim w całości
+   (object-fit: contain) — bez siatki „fit-content”, w której Safari brało naturalną
+   szerokość obrazu i ucinało boki, i bez pola o wysokości samego obrazu. */
+@media (max-width: 980px) {
+  .imgv-overlay:not(.sheet-active) .imgv-panel { width: 94vw; height: 90vh; height: 90dvh; }
+  .imgv-stage { display: block; flex: 1 1 auto; width: 100%; min-height: 0; }
+  .imgv-zoom { display: block; width: 100%; height: 100%; max-width: none; max-height: none; }
+  .imgv-zoom > img.imgv-img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
 }

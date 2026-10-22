@@ -151,7 +151,7 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
     { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
     { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace\/?(?:\?|$)/ },
     { selector: '.hero-cta a[href*="/connect/"]', url: /\/connect\/?(?:\?|$)/ },
-    { selector: '.footer a[href*="privacy"]', url: /\/privacy\/?(?:\?|$)/ },
+    { selector: "#btnManual", url: /\/manual\/?(?:\?|$)/ },
   ];
   for (const destination of destinations) {
     await page.locator(destination.selector).click();
