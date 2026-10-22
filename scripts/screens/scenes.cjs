@@ -186,6 +186,8 @@ module.exports = [
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
   { id: "logo-image", category: "Dodatkowe", title: "Edytor logo — obraz", path: `/logos/editor/image/?id=${id("8300", 47)}`, sources: ["web/logos/editor/image/", "web/logos/js/editor-image.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], settle: 1500 },
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
+  // Logowanie: „←” po lewej, „i” i język po prawej (jak sekcja 3 topbara stron aplikacji).
+  { id: "login", guest: true, category: "Dodatkowe", title: "Logowanie — górne przyciski (powrót; „i” i język po prawej)", path: "/login/", sources: ["web/login/", "web/shared/translation/translation.js"], ready: "#btnPrimary" },
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
   // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
@@ -397,6 +399,15 @@ module.exports = [
     steps: [async (view) => { await view.locator("body").press("ArrowUp"); await view.waitForTimeout(450); await view.locator("body").press("ArrowRight"); await view.waitForTimeout(1500); }] },
   { id: "home-viewer", guest: true, category: "Dodatkowe", title: "Strona główna — podgląd kadru z przybliżaniem", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(3); await shot.scrollIntoViewIfNeeded(); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-img").click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.waitForTimeout(600); }] },
+  // „Postaw kawę”: filiżanka obok Kontaktu w stopce i okno z wyjaśnieniem (support-modal.js).
+  { id: "support-footer", category: "Dodatkowe", title: "Stopka — Postaw kawę obok Kontaktu", path: "/games/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "support-footer-home", guest: true, category: "Dodatkowe", title: "Strona główna — stopka z Postaw kawę", path: "/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".footer").scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
+  { id: "home-faq-support", guest: true, category: "Dodatkowe", title: "Strona główna — FAQ: Wsparcie projektu", path: "/", sources: ["web/index.html", ...page("home"), "web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { const q = view.locator('[data-i18n="home.faq.q31.q"]'); await q.scrollIntoViewIfNeeded(); await q.click(); await view.locator('[data-i18n="home.faq.cat6"]').scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  { id: "support-modal", category: "Dodatkowe", title: "Okno Postaw kawę", path: "/games/", sources: ["web/shared/js/core/support-modal.js"], ready: ".btn-support-footer",
+    steps: [async (view) => { await view.locator(".btn-support-footer").click(); await view.locator(".support-modal").waitFor({ state: "visible" }); await view.waitForTimeout(300); }] },
   { id: "manual", category: "Podręcznik", title: "Podręcznik — Zasady gry", path: "/manual/?tab=rules", sources: page("manual"), ready: "#tab-rules .m-toc" },
   { id: "manual-games", category: "Podręcznik", title: "Podręcznik — Gry (rozdz. 7.6)", path: "/manual/?tab=games#r7-6", sources: page("manual"), ready: "#tab-games .m-toc", settle: 800 },
   { id: "manual-control", category: "Podręcznik", title: "Podręcznik — Prowadzenie gry", path: "/manual/?tab=control", sources: page("manual"), ready: "#tab-control .m-toc" },

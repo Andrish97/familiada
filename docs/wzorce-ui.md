@@ -102,6 +102,14 @@ idzie (znalezisko T1).
 
 Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
 
+**„i” (Wskazówki) przy języku po prawej [decyzja właściciela 2026-10-22]:**
+przycisk „i” stoi zawsze po prawej, tuż przed przełącznikiem języka (odstęp 8 px,
+ta sama wysokość 37 px), jak w sekcji 3 topbara stron aplikacji (np. Moje gry:
+„i” + język + konto/menu). Strony bez topbara (logowanie) mają po lewej tylko
+powrót, a po prawej grupę `.login-top-right` z atrybutem `data-lang-slot` —
+`translation.js` wstawia do niej przełącznik języka (bez `.lang-floating`).
+Nowa strona bez topbara z „i” = ta sama grupa `data-lang-slot`, nigdy „i” po lewej.
+
 ## A3. Karty (zakładki) — jeden mechanizm [WZÓR: nawigacja-mapa-plan „Karty”]
 
 - Wygląd: **jeden** komponent `.tabs-card` (`.tabs-strip` > `.tab-slot` >
@@ -328,6 +336,17 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
   `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),
   w Control małe okno wyśrodkowane.
+- **Główna akcja okna formularzowego zawsze widoczna (uwaga właściciela
+  2026-10-22, okno kontaktu):** w arkuszu na telefonie „Anuluj” + złoty
+  przycisk główny (ikona + pełne słowo, np. „Wyślij”) w pasku akcji przy
+  tytule; na komputerze w `.uni-foot`. W trakcie zapisu/wysyłki przycisk
+  zostaje z tą samą ikoną i etykietą, tylko `disabled` + `aria-busy` — nigdy
+  sam „…” (wygląda jak menu „więcej”) ani dłuższy tekst, który przestawia
+  nagłówek arkusza.
+- **Turnstile w formularzu:** `size: "flexible"` w wierszu na całą szerokość
+  pól (`.contact-captcha`); dopóki nie ma wyzwania, wiersz nie zajmuje miejsca
+  (`data-turnstile="pending"`), wyzwanie wjeżdża płynnie i przewija się do
+  widoku (`turnstile.js`, `before-interactive-callback`).
 
 ## A11. Przyciski
 

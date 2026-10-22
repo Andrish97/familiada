@@ -6,15 +6,18 @@ const SOURCES = ["web/shared/js/core/contact-modal.js", "web/shared/js/core/turn
 const READY = "#grid .card";
 
 // Atrapy Cloudflare Turnstile: od razu token albo widoczne wyzwanie (pole jak
-// prawdziwy widżet 300 × 65, bez tokenu — okno czeka na rozwiązanie).
+// prawdziwy widżet: size "flexible" = cała szerokość, min. 300 px, wysokość 65;
+// "normal" = 300 × 65), bez tokenu — okno czeka na rozwiązanie.
 const TURNSTILE_OK = `window.turnstile = {
   render(el, o) { setTimeout(() => { try { o && o.callback && o.callback("screens-captcha-token"); } catch (e) {} }, 30); return "screens-widget"; },
   remove() {}, reset() {}, execute() {}, getResponse() { return "screens-captcha-token"; }
 };`;
 const TURNSTILE_CHALLENGE = `window.turnstile = {
-  render(el) {
+  render(el, o) {
     const box = document.createElement("div");
-    box.style.cssText = "width:300px;max-width:100%;height:65px;box-sizing:border-box;border:1px solid #3a3a3a;border-radius:4px;background:#222;display:flex;align-items:center;gap:12px;padding:0 14px;font:14px system-ui;color:#ddd";
+    const width = o && o.size === "flexible" ? "width:100%;min-width:300px" : "width:300px";
+    box.style.cssText = width + ";height:65px;box-sizing:border-box;border:1px solid #3a3a3a;border-radius:4px;background:#222;display:flex;align-items:center;gap:12px;padding:0 14px;font:14px system-ui;color:#ddd";
+    setTimeout(() => { try { o && o["before-interactive-callback"] && o["before-interactive-callback"](); } catch (e) {} }, 300);
     box.innerHTML = '<span style="width:24px;height:24px;border:2px solid #888;border-radius:3px;background:#111"></span><span>Verify you are human</span>';
     el.append(box);
     return "screens-widget";
@@ -59,8 +62,8 @@ module.exports = [
   { id: "contact-modal-captcha", category: C, title: "Okno kontaktu — widoczne wyzwanie Turnstile", path: "/games/", sources: SOURCES, ready: READY,
     steps: [turnstile(TURNSTILE_CHALLENGE), open, fillForm, attach, async (view) => {
       await view.locator("#cModalSubmit").click();
-      await view.locator("#cModalCaptcha:not([hidden])").waitFor({ timeout: 5000 });
-      await view.waitForTimeout(300);
+      await view.locator('#cModalCaptcha[data-turnstile="visible"]').waitFor({ timeout: 5000 });
+      await view.waitForTimeout(700);
     }] },
   { id: "contact-modal-success", category: C, title: "Okno kontaktu — wysłano (numer zgłoszenia)", path: "/games/", sources: SOURCES, ready: READY,
     steps: [turnstile(TURNSTILE_OK), async (view, { page }) => {

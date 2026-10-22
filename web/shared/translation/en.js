@@ -173,6 +173,16 @@ const en = {
       privacy: "Privacy",
     },
   },
+  support: {
+    footerBtn: "Buy me a coffee",
+    title: "Buy me a coffee",
+    lead: "Familiada is and will stay free — every feature is available to everyone.",
+    text: "If you enjoy using it and would like to support further development, you can buy the creator a coffee. It is a voluntary gesture: it gives no extra features or benefits, but it is truly appreciated and keeps the work going. Thank you!",
+    external: "The link opens the external service {host} in a new tab.",
+    go: "Buy a coffee",
+    pick: "Choose a coffee",
+    size: { small: "Small coffee", medium: "Medium coffee", large: "Large coffee" },
+  },
   contact: {
     modal: {
       title: "Contact us",
@@ -315,7 +325,8 @@ const en = {
       cat2: "Preparation & survey",
       cat3: "Equipment & requirements",
       cat4: "Live gameplay",
-      q1:  { q: "Is Familiada Online free?", a: "Yes, completely free. You can create games, collect polls and run gameplay without any fees." },
+      cat6: "Supporting the project",
+      q1:  { q: "Is Familiada Online free?", a: "Yes, completely free — and it will stay that way. You can create games, collect polls and run gameplay without any fees." },
       q2:  { q: "Do I need to install an app?", a: "No. The system works in the browser on any device — computer, tablet and phone. No installation, no configuration." },
       q3:  { q: "What languages does the system support?", a: "The interface is available in Polish, English and Ukrainian. The language changes automatically based on browser settings or manual selection." },
       q4:  { q: "Do I need to create an account?", a: "No. In guest mode you can create games, collect answers and run a live game. Sharing question bases, subscriptions and social features require a full account. Registration uses an email address and password — no Google login." },
@@ -343,6 +354,8 @@ const en = {
       q27: { q: "Can I change the board's appearance?", a: "Yes. In game settings, choose an available theme, team colors, sounds and logo. You will see the changes on the Display." },
       q29: { q: "Is a subscriber poll different from an anonymous poll?", a: "The votes go to the same poll; only the invitation method differs. Anyone with the link or QR code can open it, while you can send subscribers a poll as a task. Before tallying, the poll's Recipients section shows which invited subscribers have responded; after tallying, that status is less clear." },
       q30: { q: "How can I share materials with friends?", a: "It depends on the item: send a game or logo as a copy, share a question base with a selected role, or share a device for use during a game." },
+      q31: { q: "How can I support Familiada?", a: "If you enjoy using Familiada, you can buy the creator a coffee — the cup is in the footer of every page. It is a voluntary gesture that helps develop the service." },
+      q32: { q: "Does support unlock extra features?", a: "No. Every feature is available to everyone free of charge. Support unlocks nothing — it is simply a thank-you." },
     },
     footer: {
       left: "© {year} Familiada — live game system"

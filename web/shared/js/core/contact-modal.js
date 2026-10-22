@@ -1,7 +1,8 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T07402";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T07402";
-import { icon, iconText } from "./icons.js?v=v2026-10-22T07402";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-22T07402";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-22T07433";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-22T07433";
+import { icon, iconText } from "./icons.js?v=v2026-10-22T07433";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-22T07433";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-22T07433";
 
 
 let modalEl = null;
@@ -158,6 +159,19 @@ function applyLabels() {
   if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
 }
 
+// W trakcie wysyłki (także gdy czeka na wyzwanie Turnstile) „Wyślij” zostaje
+// z ikoną i etykietą, tylko wyłączony -- dawny sam „…” wyglądał jak menu
+// „więcej” i chował główną akcję (uwaga właściciela 2026-10-22); ta sama
+// szerokość, więc nagłówek arkusza nie przeskakuje.
+function setSubmitBusy(busy) {
+  isSubmitting = busy;
+  const btn = document.getElementById("cModalSubmit");
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) btn.setAttribute("aria-busy", "true");
+  else btn.removeAttribute("aria-busy");
+}
+
 function ensureModal() {
   if (modalEl) return;
   ensureMobileStyle();
@@ -209,7 +223,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-22T07402");
+    const { sb } = await import("./supabase.js?v=v2026-10-22T07433");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -290,9 +304,7 @@ async function submitContact() {
   if (!message || message.length < 5) { showErr(t("contact.modal.errMessage") || "Wiadomość jest za krótka."); return; }
   if (!ticket && !subject)            { showErr(t("contact.modal.errSubject") || "Podaj temat."); return; }
 
-  isSubmitting = true;
-  const btn = document.getElementById("cModalSubmit");
-  if (btn) { btn.disabled = true; btn.textContent = "…"; }
+  setSubmitBusy(true);
   if (errEl) { errEl.style.display = "none"; }
 
   try {
@@ -315,7 +327,7 @@ async function submitContact() {
     // Weryfikacja Turnstile po stronie Workera (token jednorazowy).
     let captcha_token;
     try {
-      captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang });
+      captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang, size: "flexible" });
     } catch {
       showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
       return;
@@ -360,8 +372,7 @@ async function submitContact() {
   } catch (err) {
     showErr(String(err?.message || err));
   } finally {
-    isSubmitting = false;
-    if (btn) { btn.disabled = false; applyLabels(); }
+    setSubmitBusy(false);
   }
 }
 
@@ -387,8 +398,9 @@ function ensureContactEntryPoint() {
 if (typeof document !== "undefined") {
   window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
   window.addEventListener('i18n:lang', applyLabels);
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureContactEntryPoint, { once: true });
-  else ensureContactEntryPoint();
+  const ensureFooterEntryPoints = () => { ensureContactEntryPoint(); ensureSupportEntryPoint(); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureFooterEntryPoints, { once: true });
+  else ensureFooterEntryPoints();
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-contact-modal], .btn-contact-footer")) openContactModal();
   });

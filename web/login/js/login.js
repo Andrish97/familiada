@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T07402";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T07433";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-22T07402";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T07402";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T07402";
+} from "../../shared/js/core/auth.js?v=v2026-10-22T07433";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T07433";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T07433";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T07402";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T07402";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T07402";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T07402";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T07402";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T07402";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T07402";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T07433";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T07433";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T07433";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T07433";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T07433";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T07433";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T07433";
 
 
 const $ = (s) => document.querySelector(s);
@@ -320,7 +320,8 @@ async function getSilentCaptchaToken() {
         } else {
         widgetId = captcha.render(mount, {
           sitekey: captchaSiteKey,
-          theme: "auto",
+          theme: "dark",
+          language: getCaptchaLang(),
           size: "flexible",
           appearance: "interaction-only",
           execution: "render",
@@ -400,7 +401,8 @@ async function askCaptchaToken() {
     })
     : captcha.render(mount, {
       sitekey: captchaSiteKey,
-      theme: "auto",
+      theme: "dark",
+      language: getCaptchaLang(),
       size: "normal",
       callback: (value) => {
         token = String(value || "");

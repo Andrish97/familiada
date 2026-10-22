@@ -611,6 +611,24 @@ main:has(> .footer){
     text-decoration: none;
 }
 .btn-contact-footer:hover { filter: brightness(1.08); }
+/* „Postaw kawę” obok Kontaktu (support-modal.js): sama filiżanka na każdym urządzeniu. */
+.footer-actions{ display:inline-flex; align-items:center; justify-content:flex-end; gap:12px; }
+.btn-support-footer{ display:inline-flex; align-items:center; background:none; border:none; padding:0; color:var(--gold); font:inherit; cursor:pointer; }
+.btn-support-footer:hover{ filter: brightness(1.08); }
+.btn-support-footer .ico{ width:1.45em; height:1.45em; flex:0 0 auto; }
+/* Wybór kawy: lista opcji jak w oknie „Zmień typ” (games.css .change-type). */
+.support-sizes{ display:grid; gap:8px; }
+.support-size{ display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 12px; border:1px solid rgba(255,255,255,.14); border-radius:14px; cursor:pointer; }
+.support-size:hover{ background:rgba(255,255,255,.04); }
+.support-size:has(input:checked){ border-color:var(--gold); background:rgba(243,198,75,.08); }
+.support-size input{ margin:0; accent-color:var(--gold); }
+.support-size-ico{ display:inline-flex; width:28px; justify-content:center; color:var(--gold); }
+.support-size-ico .ico{ width:18px; height:18px; }
+.support-size--medium .support-size-ico .ico{ width:22px; height:22px; }
+.support-size--large .support-size-ico .ico{ width:26px; height:26px; }
+.support-size-name{ font-weight:900; }
+.support-size-amount{ font-weight:900; color:var(--gold); }
+.support-modal-note{ margin:2px 0 0; font-size:12px; opacity:.65; }
 
 .orientation-suggestion{position:fixed;z-index:9;top:calc(var(--topbar-h, 0px) + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--line2);border-radius:12px;background:#111827;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:12px;pointer-events:none}
 .orientation-suggestion .btn{pointer-events:auto}
@@ -852,9 +870,33 @@ main:has(> .footer){
     white-space: nowrap;
     box-sizing: border-box
 }
+/* Turnstile (size:"flexible") w wierszu na całą szerokość, jak pola. Dopóki
+   nie ma wyzwania (data-turnstile="pending"), wiersz nie zajmuje miejsca
+   (także odstępu kolumny); wyzwanie wjeżdża płynnie. */
 .contact-captcha {
     display: flex;
+    flex-direction: column;
     min-width: 0
+}
+.contact-captcha > * {
+    width: 100%;
+    min-width: 0
+}
+.contact-captcha[data-turnstile="pending"] {
+    height: 0;
+    margin-top: -14px;
+    overflow: hidden;
+    visibility: hidden
+}
+.contact-captcha[data-turnstile="visible"] {
+    animation: contact-captcha-in .22s ease-out
+}
+@keyframes contact-captcha-in {
+    from { opacity: 0; transform: translateY(6px) }
+    to { opacity: 1; transform: none }
+}
+@media (prefers-reduced-motion: reduce) {
+    .contact-captcha[data-turnstile="visible"] { animation: none }
 }
 .contact-captcha[hidden] { display: none }
 .contact-error {
@@ -1152,7 +1194,12 @@ main:has(> .footer){
         align-items: center;
         padding: 0 !important;
         background: var(--modal-scrim, rgba(0,0,0,.55)) !important;
+        /* clip, nie hidden: focus() pola w oknie (kontakt, nazwa, Szukaj)
+           przewijał tło-kontener do wysuwanego jeszcze panelu -- panel
+           skakał od razu na górę zamiast wjechać od dołu (zgłoszenie
+           właściciela 2026-10-22). clip nie daje się przewinąć. */
         overflow: hidden;
+        overflow: clip;
         animation: sheetScrimIn .28s ease both;
     }
     body.sheet-open .modal--sheet.sheet-active.sheet-closing {
@@ -1182,6 +1229,7 @@ main:has(> .footer){
         display: flex;
         flex-direction: column;
         overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
+        overflow: clip;
         transform: translateY(var(--sheet-drag, 0px));
         animation: sheetUp .34s cubic-bezier(.2,.8,.2,1) both;
         will-change: transform;
@@ -1416,6 +1464,7 @@ main:has(> .footer){
 
     /* W trybie strony stopka zostaje, ale Kontakt nie należy do widoku modala. */
     body.sheet-open .footer .btn-contact-footer,
+    body.sheet-open .footer .btn-support-footer,
     body.sheet-open .contact-footer-entry {
         display: none !important;
     }
