@@ -111,6 +111,17 @@ Decyzje:
     obecność urządzeń przez sieć lokalną), a do bazy trafia kopia w tle.
     Tryb zwykły bez zmian. Zakres i pytania otwarte — do rozpisania przed
     wdrożeniem; bez kodu do czasu zatwierdzenia zakresu.
+    Doprecyzowanie użytkownika (2026-10-22):
+    - Założenie: Control i urządzenia mają internet, ale za słaby na
+      stabilny realtime. Wolniejsze wczytanie strony czy gry jest
+      akceptowalne; niezawodny musi być przebieg gry.
+    - To osobny tryb. Control trzyma w przeglądarce wszystko (pytania,
+      stan gry, stan i tożsamość urządzeń) i zostaje w trybie lokalnym, aż
+      operator go wyłączy albo zacznie rozgrywkę od nowa.
+    - Urządzenie przy połączeniu zapisuje u siebie sesję powiązaną z tym
+      konkretnym Control; po odświeżeniu Wyświetlacza, Przycisku czy
+      Prowadzącego wraca do tej sesji, połączenie lokalne odnawia się
+      samo (bez działań użytkownika).
 
 ## Cel
 
