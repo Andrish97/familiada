@@ -12,13 +12,13 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-22T00022";
+} from "./state.js?v=v2026-10-22T00215";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-22T00022";
-import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-22T00022";
-import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-22T00022";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-22T00215";
+import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-22T00215";
+import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-22T00215";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-22T00022";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-22T00215";
 
 
 import {
@@ -27,19 +27,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-22T00022";
+} from "./repo.js?v=v2026-10-22T00215";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-22T00022";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-22T00022";
-import { initExportModal } from "./export-modal.js?v=v2026-10-22T00022";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-22T00022";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00022";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T00022";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T00022";
-import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T00022";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T00022";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T00022";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-22T00022";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-22T00215";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-22T00215";
+import { initExportModal } from "./export-modal.js?v=v2026-10-22T00215";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-22T00215";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T00215";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-22T00215";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-22T00215";
+import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-22T00215";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-22T00215";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-22T00215";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-22T00215";
 
 
 const btnBack = document.getElementById("btnBack");

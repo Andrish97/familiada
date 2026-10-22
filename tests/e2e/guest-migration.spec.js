@@ -46,7 +46,7 @@ const { test, expect } = require("@playwright/test");
 const { loginAsGuest } = require("./helpers/login");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, releaseMailCooldown } = require("./helpers/mailbox");
 
 const TEST_PASSWORD = "E2eTest123!";
 const LOGIN_URL = "https://www.familiada.online/login";
@@ -185,6 +185,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#migrateSection")).toBeVisible({ timeout: 30000 });
     await expect(page.locator("#btnMigrate")).toBeVisible();
+    await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email"); // blokada z poprzedniego przebiegu
     const after = new Date(Date.now() - 2_000).toISOString();
     await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
     await page.locator("#migrateEmail").fill(MAILBOX);
@@ -200,12 +201,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     expect(firstLink, "link migracji").toBeTruthy();
 
     // "Minęła godzina" dla blokady per adres i odstęp GoTrue (60 s na użytkownika).
-    await page.evaluate(async (email) => {
-      const { error } = await window.__sbClient.rpc("cooldown_email_release", {
-        p_email: email, p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200,
-      });
-      if (error) throw new Error("cooldown_email_release: " + error.message);
-    }, MAILBOX);
+    await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email");
     const wait = sentAt + 65_000 - Date.now();
     if (wait > 0) await page.waitForTimeout(wait);
 
