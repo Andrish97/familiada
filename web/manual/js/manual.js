@@ -244,7 +244,7 @@ function sectionScope(id) {
   return out;
 }
 
-function show(id, hash = "", { updateUrl = true, smooth = false, from = null } = {}) {
+function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false } = {}) {
   const ch = id ? findChapter(id) : null;
   current = ch ? ch.id : null;
   returnTo = ch && from && titleOf(from) ? from : null;
@@ -254,7 +254,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null } =
   currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
   hydrateIcons(article);
   wireCarousels(article);
-  setTocOpen(false);
+  // Pierwsze wyświetlenie (i zmiana języka) nie zamyka panelu otwartego w trakcie wczytywania.
+  if (!keepPanel) setTocOpen(false);
   if (updateUrl) {
     const next = chapterHref(current, ch ? hash : "", returnTo);
     if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, "", next);
@@ -299,13 +300,6 @@ function wireNavigation() {
     }
     show(id, url.hash, { from });
   });
-  tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
-  document.getElementById("manualSearchToggle")?.addEventListener("click", () => {
-    setTocOpen(true);
-    toc.querySelector(".searchText")?.focus();
-  });
-  tocBackdrop.addEventListener("click", () => setTocOpen(false));
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
   let raf = 0;
   content.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(markSection); }, { passive: true });
 }
@@ -314,11 +308,23 @@ async function renderForLang() {
   manual = await loadContent(getUiLang());
   searchIndexEntries = buildIndex(manual);
   const params = new URLSearchParams(location.search);
-  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM) });
+  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true });
 }
 
 /* ================= Init ================= */
+// Przyciski panelu działają od pierwszej chwili — także gdy treść i tłumaczenia jeszcze się wczytują.
+function wirePanel() {
+  tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
+  document.getElementById("manualSearchToggle")?.addEventListener("click", () => {
+    setTocOpen(true);
+    toc.querySelector(".searchText")?.focus();
+  });
+  tocBackdrop.addEventListener("click", () => setTocOpen(false));
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
+}
+
 async function init() {
+  wirePanel();
   const i18nP = initManualI18n().catch((err) => {
     console.error("[manual] i18n nieaktywny:", err);
   });

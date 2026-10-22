@@ -211,3 +211,14 @@ test("manual: telefon — przesunięcie palcem zmienia widok karuzeli, nie otwie
     await context.close();
   }
 });
+
+test("manual: telefon — „Spis treści” działa od razu, także gdy treść jeszcze się wczytuje", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // Opóźniona treść Wskazówek: kliknięcie w trakcie wczytywania nie może przepaść ani zostać cofnięte.
+  await page.route(/\/manual\/content\/pl\.js/, async (route) => { await new Promise((r) => setTimeout(r, 2500)); await route.fallback(); });
+  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17`, { waitUntil: "domcontentloaded" });
+  await page.locator("#manualTocToggle").click();
+  await expect(page.locator("#manualToc")).toBeVisible();
+  await expect(page.locator("#manualToc a.m-side-item").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#manualToc")).toBeVisible();
+});
