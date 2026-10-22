@@ -38,6 +38,10 @@ const emptyMap = () => ({ mode: "AUTO", kind: null, matchId: null, outText: "", 
 const match = (q, j, extra = {}) => ({ ...emptyMap(), mode: "AUTO", kind: "MATCH", matchId: q.answers[j].id, outText: q.answers[j].text, pts: q.answers[j].fixed_points, ...extra });
 const miss = (extra = {}) => ({ ...emptyMap(), mode: "MANUAL", kind: "MISS", ...extra });
 const done = { revealedAnswer: true, revealedPoints: true, _addedToSum: true };
+// Finał: wpisy dłuższe niż 11 miejsc Wyświetlacza i ze znakiem spoza jego fontu
+// (Control oznacza litery do obcięcia i znaki pomijane).
+const LONG_TYPED = { pl: "Kawa z mlekiem", en: "Tea with milk", uk: "Кава з молоком" };
+const BAD_TYPED = { pl: "Kawa 😀 z mlekiem", en: "Tea 😀 with milk", uk: "Кава 😀 з молоком" };
 
 // Wspólne przekształcenia stanu (detail z PERSISTED_KEYS + pola wiersza).
 // Uwaga: game-state.mjs dla „round” ustawia display.previewNumbers itp. --
@@ -244,7 +248,7 @@ module.exports = [
   { id: "play-control-final-start", category: CAT, title: "Control — rozpoczęcie finału", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-intro", devices: DESKTOP, settle: 1000,
     db: state((row, d, lang) => { S.finale(row, d, lang); row.step = "f_start"; d.final.runtime.p1 = [null, null, null, null, null]; d.final.runtime.timer = { running: false, phase: null, endsAt: 0, usedP1: false, usedP2: false }; }) },
   { id: "play-control-final-p1-timer", category: CAT, title: "Control — finał, gracz 1: wpisywanie w trakcie odliczania 15 s", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-entryrow", devices: DESKTOP, settle: 800,
-    db: state((row, d, lang) => { S.finale(row, d, lang); d.final.runtime.p1[3] = { text: "" }; d.final.runtime.p1[4] = { text: "" }; d.final.runtime.timer = { running: true, phase: "P1", endsAt: Date.now() + 60e3, usedP1: true, usedP2: false }; }) },
+    db: state((row, d, lang) => { S.finale(row, d, lang); d.final.runtime.p1[3] = { text: LONG_TYPED[lang] }; d.final.runtime.p1[4] = { text: "" }; d.final.runtime.timer = { running: true, phase: "P1", endsAt: Date.now() + 60e3, usedP1: true, usedP2: false }; }) },
   { id: "play-control-final-p1-map", category: CAT, title: "Control — finał, gracz 1: dopasowanie odpowiedzi 3 (odsłonięta odpowiedź, punkty do odsłonięcia)", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-mapinput", devices: DESKTOP, settle: 800,
     db: state((row, d, lang) => {
       S.finaleP1Done(row, d, lang);
@@ -257,6 +261,7 @@ module.exports = [
     db: state((row, d, lang) => {
       S.finaleP1Done(row, d, lang);
       row.step = "f_p1_map_q5";
+      d.final.runtime.p1[4] = { text: BAD_TYPED[lang] };
       d.final.runtime.map1[4] = miss();
       d.final.runtime.sum = [0, 1, 2].reduce((s, i) => s + d.final.runtime.map1[i].pts, 0);
     }) },
