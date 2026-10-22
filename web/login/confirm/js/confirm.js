@@ -57,6 +57,12 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
   if (!currentUser) return true;
 
+  // Link zmiany adresu (albo migracji gościa) tego samego konta, otwarty w jego
+  // sesji: nic nie przełączamy -- usunięcie gościa skasowałoby przenoszone konto.
+  const pendingTo = String(currentUser.user_metadata?.familiada_email_change_pending || "").trim().toLowerCase();
+  const linkTo = String(qp("to") || "").trim().toLowerCase();
+  if ((qp("type") || hp("type")) === "email_change" && pendingTo && pendingTo === linkTo) return true;
+
   const who =
     currentUser.user_metadata?.username ||
     currentUser.email ||

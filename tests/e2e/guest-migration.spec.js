@@ -270,6 +270,8 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
     await reapplyE2EBypass(context);
     await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
+    // Przy aktywnej sesji gościa przycisk wraca do niej, nie zakłada nowego gościa.
+    await expect(page.locator("#btnGuest")).toContainText("Wróć do konta gościa");
 
     await page.click("#btnToggle"); // Załóż konto -> mode=register
     const migrateEmail = `e2e-login-migrate-${Date.now()}@example.invalid`;
@@ -283,15 +285,20 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
 
     // Sukces: status "Sprawdź e-mail…", potem alertModal z dalszą instrukcją.
     await expect(page.locator("#status")).toContainText("Sprawdź e-mail", { timeout: 20000 });
-    await page.getByRole("button", { name: "OK", exact: true }).click().catch(() => {});
+    await page.getByRole("button", { name: "OK", exact: true }).click();
+
+    // Sesja gościa zostaje; Ustawienia konta pokazują oczekującą zamianę
+    // z „Wyślij ponownie” i „Anuluj”.
+    await page.waitForURL(/\/account\//, { timeout: 20000 });
+    await expect(page.locator("#migratePendingHint")).toContainText(migrateEmail, { timeout: 20000 });
+    await expect(page.locator("#migratePendingActions")).toBeVisible();
 
     // Kluczowa właściwość (ta sama co w teście /account powyżej): dopóki
     // e-mail nie jest potwierdzony, konto MUSI zostać gościem. Przed
     // 2026-09-29 login.js wołał tu convertGuestToRegistered(), który
     // flipował profiles.is_guest na false NATYCHMIAST — dokładnie ten stary
-    // bug z komentarza przy migracji 249. Zapytanie idzie bezpośrednio przez
-    // REST, bo login.js po sukcesie realnie robi signOut() (przeglądarka
-    // traci sesję).
+    // bug z komentarza przy migracji 249. Zapytanie bezpośrednio przez REST
+    // tokenem gościa sprzed migracji.
     const res = await request.get(
       `${authInfo.supabaseUrl}/rest/v1/profiles?id=eq.${authInfo.userId}&select=is_guest`,
       { headers: { Authorization: `Bearer ${authInfo.accessToken}`, apikey: authInfo.anonKey } }
@@ -300,8 +307,7 @@ test("migracja konta gościa przez /login (rejestracja z aktywną sesją gościa
     const rows = await res.json();
     expect(rows?.[0]?.is_guest, "profiles.is_guest powinno zostać true dopóki e-mail niepotwierdzony").toBe(true);
   } finally {
-    // Przeglądarka jest już wylogowana (login.js robi signOut() po sukcesie),
-    // więc sprzątanie idzie bezpośrednio przez tę samą edge function co
+    // Sprzątanie bezpośrednio przez tę samą edge function co
     // account-deletion.spec.js, z tym samym (wciąż ważnym) tokenem gościa —
     // konto zostało gościem (is_guest=true), więc delete-account je usuwa.
     await request.post(`${authInfo.supabaseUrl}/functions/v1/delete-account`, {
