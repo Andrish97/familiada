@@ -24,7 +24,6 @@ insert into public.market_game_ratings(market_game_id,user_id,stars) values
  ('46100000-0000-4000-8000-00000000c0a1','46100000-0000-4000-8000-0000000000b1',5);
 insert into public.messages(id,direction,from_email,to_email,subject,body) values
  ('46100000-0000-4000-8000-00000000d0e1','inbound','e2e+standard07@familiada.online','kontakt@familiada.online','Test 461','x'),
- ('46100000-0000-4000-8000-00000000d0e2','inbound','test3@familiada.online','kontakt@familiada.online','Test 461 stary','x'),
  ('46100000-0000-4000-8000-00000000d0e3','outbound','kontakt@familiada.online','e2e+noaccount01@familiada.online','Odp 461','x'),
  ('46100000-0000-4000-8000-00000000d0a1','inbound','prawdziwy461@example.com','kontakt@familiada.online','Pytanie 461','x');
 
@@ -39,7 +38,7 @@ do $$ declare n int; begin
   if n <> 1 then raise exception '461: inbox % (oczekiwane 1)', n; end if;
   select count(*) into n from public.list_messages('sent', 500, 0) where subject like '%461%';
   if n <> 0 then raise exception '461: sent do testowego %', n; end if;
-  if not public.is_test_email('E2E+noaccount05@familiada.online') or not public.is_test_email('test9@familiada.online')
+  if not public.is_test_email('E2E+noaccount05@familiada.online') or public.is_test_email('test9@familiada.online')
      or public.is_test_email('prawdziwy461@example.com') or public.is_test_email('wlasciciel461@example.com') or public.is_test_email(null)
     then raise exception '461: is_test_email'; end if;
 end $$;
