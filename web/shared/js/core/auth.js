@@ -39,6 +39,10 @@ export function niceAuthError(e) {
     return "Anonymous sign-ins are disabled. Enable Anonymous auth and CAPTCHA in Supabase Auth settings.";
   }
 
+  // Limit częstotliwości maili GoTrue: "...you can only request this after 53 seconds."
+  const wait = low.match(/only request this after (\d+) seconds?/);
+  if (wait) return t("index.errResendCooldown", { time: `${wait[1]} s` });
+
   // 2) "New password should be different from the old password."
   if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
 
