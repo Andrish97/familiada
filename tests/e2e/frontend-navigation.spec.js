@@ -107,7 +107,9 @@ for (const map of MAP_LIST) {
     if (map.role === "anon") {
       // Niezalogowany nie ma przycisków w PAGES.buttons — sprawdzamy ↩ stron
       // publicznych: parentAnon z mapy (landing).
-      const publicPages = Object.entries(PAGES).filter(([id, p]) => p.parentAnon && p.access === "public" && pageRoles(id).includes("anon"));
+      // Strony z własnym guardem urządzenia (np. /connect/tv/ tylko dla TV)
+      // pokazują blokadę zamiast topbaru -- mają osobne testy.
+      const publicPages = Object.entries(PAGES).filter(([id, p]) => p.parentAnon && p.access === "public" && pageRoles(id).includes("anon") && !p.deviceGuard);
       expect(publicPages.length).toBeGreaterThan(0);
       for (const [id, p] of publicPages) {
         await page.goto(p.path, { waitUntil: "networkidle" });
@@ -132,7 +134,8 @@ for (const map of MAP_LIST) {
         const visible = buttonVisible(id, spec, map.role, map.profile);
         await page.goto(p.path, { waitUntil: "networkidle" });
         await topbarReady();
-        const btn = page.locator(`#${bid}`);
+        // „Więcej” w topbarze trzyma klony przycisków z tym samym id -- bierzemy oryginał (pierwszy w DOM).
+        const btn = page.locator(`#${bid}`).first();
         if (!visible) {
           await expect(btn, `${id}#${bid} ma być schowany`).toHaveAttribute("data-nav-hidden", "true");
           await expect(btn).toBeHidden();
@@ -179,7 +182,7 @@ for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => na
     for (const [source, ids] of origins) for (const id of ids) {
       await page.goto(source, {waitUntil:"domcontentloaded"});
       await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-      const button = page.locator(`#${id}`);
+      const button = page.locator(`#${id}`).first(); // oryginał, nie klon z „Więcej”
       const subscribers = id === "btnSubscribers";
       await expect(button.locator(`svg.ico-${subscribers ? "envelope" : "people"}`)).toHaveCount(1);
       expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
@@ -207,8 +210,10 @@ for (const [device, viewport] of Object.entries(VIEWPORTS).filter(([name]) => na
 }
 
 // Freeze navigation after the tap so the previous page's final frame can be inspected.
-test("tablet: hamburger closes before navigating without touch filter layers", async ({ browser, accounts, loginAs }, testInfo) => {
-  const context = await browser.newContext({ viewport: { width: 800, height: 1280 }, isMobile: true, hasTouch: true });
+// Hamburger appears only when the topbar does not fit even with "Więcej" (decided
+// from real widths): on an 800 px tablet it is "Więcej", at 600 px it is the hamburger.
+test("touch 600×960: hamburger closes before navigating without touch filter layers", async ({ browser, accounts, loginAs }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 600, height: 960 }, isMobile: true, hasTouch: true });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "friends"] });
   const page = await context.newPage();
   try {
