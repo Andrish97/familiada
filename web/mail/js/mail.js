@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T17500";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T18124";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-22T17500';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-22T17500';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-22T17500';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-22T17500';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-22T17500';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-22T17500';
-import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-22T17500';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-22T18124';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-22T18124';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-22T18124';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-22T18124';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-22T18124';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-22T18124';
+import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-22T18124';
 
 
 const $ = id => document.getElementById(id);
