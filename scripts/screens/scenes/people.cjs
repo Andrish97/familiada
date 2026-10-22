@@ -296,6 +296,8 @@ module.exports = [
     { id: "people-login-guest-migrate", title: "Rejestracja z sesji gościa — przenieść dane gościa? (okno)",
       db: (db) => { asGuest(db); (db.http ||= {})["/_api/auth/email-status"] = { ok: true, status: "none", intent: "signup" }; },
       steps: [textIn("#status", 10), click("#btnToggle"), fill([["#email", "ola@example.test"], ["#pass", "Familiada#2026"], ["#pass2", "Familiada#2026"]]), openModal("#btnPrimary")] },
+    { id: "people-login-guest-session", title: "Logowanie — aktywna sesja gościa (powrót do konta gościa)", steps: [textIn("#status", 3)],
+      db: (db) => asGuest(db) },
     { id: "people-login-setup-username", title: "Pierwsze logowanie — ustaw nazwę użytkownika", ready: "#setupCard:not([hidden])",
       db: (db) => { db.user.user_metadata = {}; db.tables.profiles.find((p) => p.id === USER_ID).username = null; } },
   ].map(({ auth, db: sceneDb, ...s }) => via({ category: C, path: "/login/", sources: LOGIN, ready: "#btnPrimary", ...s,

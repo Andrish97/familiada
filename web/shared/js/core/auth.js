@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-22T00340";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T00340";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T00340";
+import { icon } from "./icons.js?v=v2026-10-22T01453";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T01453";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T01453";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -38,6 +38,10 @@ export function niceAuthError(e) {
   if (low.includes("anonymous sign-ins are disabled")) {
     return "Anonymous sign-ins are disabled. Enable Anonymous auth and CAPTCHA in Supabase Auth settings.";
   }
+
+  // Limit częstotliwości maili GoTrue: "...you can only request this after 53 seconds."
+  const wait = low.match(/only request this after (\d+) seconds?/);
+  if (wait) return t("index.errResendCooldown", { time: `${wait[1]} s` });
 
   // 2) "New password should be different from the old password."
   if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
@@ -142,7 +146,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T00340";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T01453";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {

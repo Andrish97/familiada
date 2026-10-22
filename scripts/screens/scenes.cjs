@@ -69,6 +69,13 @@ const scrollPreview = async (view) => {
   await view.locator("#gsLivePreviewWrap").scrollIntoViewIfNeeded();
   await view.waitForTimeout(1500);
 };
+// Zalogowany gość: znacznik is_guest w metadanych, okno informacji gościa już widziane.
+const asGuest = (db) => {
+  db.user = { ...db.user, is_anonymous: true, email: null, user_metadata: { ...db.user.user_metadata, is_guest: true } };
+  db.localStorage = { ...(db.localStorage || {}), [`fam:guest:info_shown:${db.user.id}`]: "1" };
+  db.rpc.guest_is_expired = false;
+  db.rpc.guest_touch = null;
+};
 const selectTile = (selector) => async (view) => {
   await view.locator(selector).first().click();
   await view.waitForTimeout(250);
@@ -171,6 +178,9 @@ module.exports = [
       await view.locator(".sfx-row").nth(1).locator(".ui-select-item").last().click();
       await view.waitForTimeout(300);
     }] },
+  // Gość (konto anonimowe): Powiel dostępne, Wyślij ukryte (decyzja 2026-10-22).
+  { id: "games-guest", category: "Dodatkowe", title: "Moje gry — gość: pasek akcji (Powiel, bez Wyślij)", path: "/games/", sources: page("games"), ready: "#grid .card", db: asGuest, steps: [selectTile("#grid .card:not(.addCard)")] },
+  { id: "logos-guest", category: "Dodatkowe", title: "Biblioteka logo — gość: pasek akcji (Powiel, bez Wyślij)", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", db: asGuest, steps: [selectTile(".logoTile")] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
@@ -342,6 +352,13 @@ module.exports = [
   { id: "manual-search", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie (wyniki na żywo)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież")] },
   { id: "manual-search-hit", category: "Dodatkowe", title: "Podręcznik — wybrany wynik z zaznaczonymi trafieniami", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież"), async (view) => { await view.locator("#manualSearch .searchText").press("Enter"); await view.locator("mark.m-hit").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  // Karty formularzy: zmiana e-maila w toku (Anuluj zmianę + Wyślij ponownie), hasło, usuwanie konta — cała strona.
+  { id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, new_email: "nowy.adres@example.com" }; },
+    ready: () => !document.getElementById("emailPendingActions")?.hidden },
+  { id: "account-guest", category: "Dodatkowe", title: "Konto gościa — zapis danych (migracja) i usuwanie konta", path: "/account/", sources: page("account"), fullPage: true,
+    db: (db) => { db.user = { ...db.user, is_anonymous: true, email: null, user_metadata: { ...db.user.user_metadata, is_guest: true } }; db.rpc.guest_is_expired = false; db.rpc.guest_touch = null; },
+    ready: "main", steps: [async (view) => { await view.getByRole("button", { name: /Rozumiem|Got it|Зрозуміло/ }).click({ timeout: 5000 }).catch(() => {}); await view.waitForFunction(() => !document.getElementById("migrateSection")?.hidden, null, { timeout: 5000 }).catch(() => {}); await view.waitForTimeout(400); }] },
   { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },
   { id: "bases-name-create", category: "Dodatkowe", title: "Bazy — okno nazwy nowej bazy (wspólne promptModal)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/modal.js"], ready: "#mineGrid > *:nth-child(2)", steps: [openModal("#mineGrid .addCard", ".uni-modal")] },
   { id: "logos-name-create", devices: ["desktop"], category: "Dodatkowe", title: "Logo — okno nazwy nowego logo (wspólne promptModal)", path: "/logos/", sources: [...page("logos"), "web/shared/js/core/modal.js"], ready: ".logoTile", steps: [openModal("#grid .addCard", ".uni-modal")] },

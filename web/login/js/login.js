@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T00340";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T01453";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-22T00340";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T00340";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T00340";
+} from "../../shared/js/core/auth.js?v=v2026-10-22T01453";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T01453";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T01453";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T00340";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T00340";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T00340";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T00340";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T00340";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T00340";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T00340";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T01453";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T01453";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T01453";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T01453";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T01453";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T01453";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T01453";
 
 
 const $ = (s) => document.querySelector(s);
@@ -654,6 +654,18 @@ async function confirmDiscardGuestIfActive() {
 }
 
 async function handlePendingEmailResend(emailAddr, pendingIntent) {
+  // Migrację gościa da się ponowić tylko z jego sesji: konto gościa nie ma
+  // adresu, więc auth.resend go nie znajdzie (kończył się "sukcesem" bez maila).
+  let guest = null;
+  if (pendingIntent === "guest_migrate") {
+    try { guest = await getUser(); } catch {}
+    const guestPending = String(guest?.user_metadata?.familiada_email_change_pending || "").trim().toLowerCase();
+    if (!guest || !isGuestUser(guest) || guestPending !== String(emailAddr || "").trim().toLowerCase()) {
+      void alertModal({ text: t("index.pendingGuestMigrateElsewhere", { email: emailAddr }) });
+      return true;
+    }
+  }
+
   const ok = await confirmModal({
     title: t("index.pendingEmailTitle"),
     text: t("index.pendingEmailText", { email: emailAddr }),
@@ -678,11 +690,11 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   redirect.searchParams.set("to", emailAddr);
 
   if (intent === "guest_migrate") {
-    const { error: resendErr } = await sb().auth.resend({
-      type: "email_change",
-      email: emailAddr,
-      options: { emailRedirectTo: redirect.toString() },
-    });
+    // Ta sama droga co pierwsza wysyłka (jak „Wyślij ponownie” w Ustawieniach konta).
+    const { error: resendErr } = await sb().auth.updateUser(
+      { email: emailAddr },
+      { emailRedirectTo: redirect.toString() }
+    );
     if (resendErr) throw resendErr;
   } else {
     const { error: resendErr } = await sb().auth.resend({
@@ -854,6 +866,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isGuestUser(u)) {
       const who = u.username || u.email || u.id || "";
       setStatus(t("index.statusGuestSession", { who }));
+      // Ten sam przycisk wraca do istniejącej sesji gościa (bez nowego konta).
+      if (btnGuest) {
+        btnGuest.setAttribute("data-i18n", "index.btnGuestContinue");
+        applyTranslations(btnGuest.parentElement || document);
+      }
     } else if (forceAuth) {
       setStatus(t("index.statusLoggedOut"));
     } else {
@@ -868,8 +885,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
   }
-  
-  setStatus(t("index.statusLoggedOut"));
+
+  if (!u || !isGuestUser(u)) setStatus(t("index.statusLoggedOut"));
 
   // Preload captcha API script only — token is fetched on first user interaction
   if (captchaSiteKey) void loadCaptchaApi();
@@ -986,32 +1003,15 @@ document.addEventListener("DOMContentLoaded", async () => {
               }
             }
 
-            // We want the browser to be logged out after requesting the link (avoid accidental session switch).
-            try { localStorage.setItem("auth:guest_upgrade_pending", "1"); } catch {}
-            try { clearGuestLocalMarker(); } catch {}
-            try { await sb().auth.signOut(); } catch {}
-
+            // Sesja gościa zostaje: do potwierdzenia linku gość dalej korzysta
+            // z konta, a w Ustawieniach konta ma „Wyślij ponownie” i „Anuluj”.
+            // Ustawienia konta czytają oczekującą zmianę z tokenu sesji.
+            try { await sb().auth.refreshSession(); } catch {}
             setStatus(t("index.statusCheckEmail"));
-            void alertModal({ text: t("index.guestMigrateConfirmEmail") });
+            await alertModal({ text: t("index.guestMigrateConfirmEmail", { email: mail }) });
+            location.href = withLangParam(PAGES.account.path);
             return;
           }
-
-          // No guest session found: fall back to email_change resend.
-          const language = getUiLang();
-          const confirmUrl2 = new URL("/login/confirm/", location.origin);
-          confirmUrl2.searchParams.set("lang", language);
-          confirmUrl2.searchParams.set("to", mail);
-
-          const { error: resendErr } = await sb().auth.resend({
-            type: "email_change",
-            email: mail,
-            options: { emailRedirectTo: confirmUrl2.toString() },
-          });
-          if (resendErr) throw resendErr;
-
-          setStatus(t("index.statusCheckEmail"));
-          void alertModal({ text: t("index.guestMigrateConfirmEmailNoPassword") });
-          return;
         }
 
         if (pass2.value !== pwd) return setErr(t("index.errPasswordMismatch"));

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ed2QqTAX0RvKxyjgf0ohr2V8zQU4LYcFJDZaDhXbkTrAwAVsOxgRE6358a57jw1
+\restrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3551,7 +3551,7 @@ BEGIN
   p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
   (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
  PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
- IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND (p_action='duplicate' OR public._poll_identity_regular(u.id,to_jsonb(u))))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
  SELECT * INTO item FROM public.resource_clone_jobs WHERE actor_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
  IF FOUND THEN
   IF item.source_id<>p_source OR item.resource_kind<>p_kind OR item.action<>p_action THEN RAISE EXCEPTION 'request_conflict'; END IF;
@@ -3645,7 +3645,7 @@ DECLARE item public.resource_clone_jobs; target uuid; result jsonb; hash text; r
 BEGIN
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor;
  IF NOT FOUND OR item.action<>'duplicate' THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor FOR NO KEY UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job FOR UPDATE NOWAIT;
  name_key:=CASE WHEN item.resource_kind='logo' THEN ARRAY['name'] ELSE ARRAY[item.resource_kind,'name'] END;
@@ -3832,7 +3832,7 @@ CREATE FUNCTION "public"."_resource_clone_read"("p_actor" "uuid", "p_kind" "text
 DECLARE root jsonb; snapshot jsonb; templates jsonb; inherited_demo boolean;
 BEGIN
  IF p_actor IS NULL OR p_kind IS NULL OR p_kind NOT IN('game','base','logo') OR p_source IS NULL THEN RAISE EXCEPTION 'invalid_copy_source'; END IF;
- PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor FOR NO KEY UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
  -- Parent locks prevent new child FK insertions while reading the definition.
  IF p_kind='game' THEN
@@ -3939,7 +3939,7 @@ BEGIN
   p_kind IS NULL OR p_action IS NULL OR p_demo IS NULL OR p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
   (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
  PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
- IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND (p_action='duplicate' OR public._poll_identity_regular(u.id,to_jsonb(u))))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
  hash:=encode(sha256(convert_to(p_definition::text,'UTF8')),'hex');
  SELECT * INTO receipt FROM public.resource_clone_receipts WHERE creator_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
  IF FOUND THEN
@@ -27059,5 +27059,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ed2QqTAX0RvKxyjgf0ohr2V8zQU4LYcFJDZaDhXbkTrAwAVsOxgRE6358a57jw1
+\unrestrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
 

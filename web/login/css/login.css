@@ -117,12 +117,14 @@ input:focus {
 
 /* ── buttons ── */
 
+/* Dwie równe kolumny (główna akcja | przełącznik), gość na całą szerokość. */
 .row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
-    flex-wrap: wrap;
-    justify-content: space-between;
 }
+.row > .btn { width: 100%; min-width: 0; justify-content: center; }
+.row > #btnGuest { grid-column: 1 / -1; }
 
 /* Przyciski: wspólne .btn / .btn.gold z shared/css/base.css */
 
