@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict po2KTEU1etO5UqdmspJTMKGy94qfl1kxyA7ClOutA99DUZGVHPxEUCh18zRlCRg
+\restrict Ed2QqTAX0RvKxyjgf0ohr2V8zQU4LYcFJDZaDhXbkTrAwAVsOxgRE6358a57jw1
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -854,6 +854,7 @@ CREATE TABLE "public"."friendships" (
     "decision_user_id" "uuid" NOT NULL,
     "cancelled_at" timestamp with time zone,
     "source_subscription_id" "uuid",
+    "requested_email" "text",
     CONSTRAINT "friendships_decision_party_check" CHECK ((("decision_user_id" = "requester_id") OR ("decision_user_id" = "addressee_id"))),
     CONSTRAINT "friendships_distinct_chk" CHECK (("requester_id" <> "addressee_id")),
     CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'declined'::"text"])))
@@ -5491,7 +5492,10 @@ BEGIN
     ELSE
       SELECT declined_at INTO v_declined_at FROM public.poll_subscriptions WHERE id=(v_row->>'id')::uuid;
     END IF;
-    v_enabled:=public._contact_mail_enabled(v_row->>'email')
+    -- Znajomi: adres drugiej strony bywa ukryty (friends_list) -- flaga
+    -- powiadomień liczona z prawdziwego adresu konta.
+    v_enabled:=public._contact_mail_enabled(CASE WHEN p_kind='friends'
+      THEN (SELECT public._norm_email(u.email) FROM auth.users u WHERE u.id=(v_row->>'user_id')::uuid) ELSE v_row->>'email' END)
       AND (p_kind<>'subscribers' OR v_row->>'friend_user_id' IS NULL);
     IF v_row->>'status'='pending' AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
       IF p_kind='friends' THEN
@@ -8408,6 +8412,10 @@ BEGIN
   BEGIN
  result:=public._mail_original361_friends_invite(p_handle);
  IF result->>'ok'='true' AND result->>'mail_allowed'='true' AND result->>'id' IS NOT NULL THEN PERFORM public._mail_allocate_notification('friend',(result->>'id')::uuid,'friend:invite'); END IF;
+ IF result->>'ok'='true' AND result->>'id' IS NOT NULL AND position('@' in trim(coalesce(p_handle,'')))>1 THEN
+  UPDATE public.friendships SET requested_email=lower(trim(p_handle))
+   WHERE id=(result->>'id')::uuid AND requester_id=auth.uid();
+ END IF;
  RETURN result - 'to';
   EXCEPTION WHEN lock_not_available THEN
    IF attempt=1000 THEN RAISE; END IF;
@@ -8430,15 +8438,24 @@ BEGIN
  SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
  IF NOT public._account_is_registered(uid,identity) THEN RETURN; END IF;
  RETURN QUERY
- SELECT f.id,p.id,coalesce(nullif(p.username,''),public._norm_email(u.email)),public._norm_email(u.email),f.status,
-   CASE WHEN f.status='active' THEN 'friend' WHEN f.decision_user_id=uid THEN 'incoming' ELSE 'outgoing' END,
-   f.created_at,f.accepted_at,f.email_sent_at,f.email_send_count
- FROM public.friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=uid THEN f.addressee_id ELSE f.requester_id END
- JOIN auth.users u ON u.id=p.id
- WHERE f.cancelled_at IS NULL AND (f.requester_id=uid OR f.addressee_id=uid)
-   AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
-     AND (f.decision_user_id=uid OR f.declined_at>now()-interval '5 days')))
- ORDER BY f.created_at DESC;
+ SELECT x.id,x.user_id,coalesce(nullif(x.username,''),x.shown_email),x.shown_email,x.status,x.direction,
+   x.created_at,x.accepted_at,x.email_sent_at,x.email_send_count
+ FROM (
+  SELECT f.id,p.id AS user_id,p.username,f.status,
+   CASE WHEN f.status='active' THEN 'friend' WHEN f.decision_user_id=uid THEN 'incoming' ELSE 'outgoing' END AS direction,
+   f.created_at,f.accepted_at,f.email_sent_at,f.email_send_count,
+   CASE WHEN f.status='active' THEN public._norm_email(u.email)
+     WHEN f.requester_id=uid THEN coalesce(public._norm_email(f.requested_email),
+       (SELECT public._norm_email(s.subscriber_email) FROM public.poll_subscriptions s
+         WHERE s.id=f.source_subscription_id AND s.owner_id=uid))
+   END AS shown_email
+  FROM public.friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=uid THEN f.addressee_id ELSE f.requester_id END
+  JOIN auth.users u ON u.id=p.id
+  WHERE f.cancelled_at IS NULL AND (f.requester_id=uid OR f.addressee_id=uid)
+    AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
+      AND (f.decision_user_id=uid OR f.declined_at>now()-interval '5 days')))
+ ) x
+ ORDER BY x.created_at DESC;
 END $$;
 
 
@@ -27042,5 +27059,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict po2KTEU1etO5UqdmspJTMKGy94qfl1kxyA7ClOutA99DUZGVHPxEUCh18zRlCRg
+\unrestrict Ed2QqTAX0RvKxyjgf0ohr2V8zQU4LYcFJDZaDhXbkTrAwAVsOxgRE6358a57jw1
 
