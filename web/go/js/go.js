@@ -5,7 +5,7 @@ import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipien
 import { anonymousPollDestination, validAnonymousPollParams, screenshotSnakeUrl } from "../../shared/js/core/poll-links.js?v=v2026-10-22T19285";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T19285";
 import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-22T19285";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T19285";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T19285";
 import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-22T19285";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-22T19285";
 
@@ -780,7 +780,7 @@ async function init() {
   await i18nReady;
   clearActions(); showEmailInput(false);
   // Kod QR z kadru (ankieta, urządzenie, QR na Wyświetlaczu) -- niespodzianka.
-  const snake = screenshotSnakeUrl(qs, location.origin);
+  const snake = screenshotSnakeUrl(qs, location.origin, getUiLang());
   if (snake) {
     const lang = new URL(snake).searchParams.get("lang");
     await Promise.race([logSnake("scan", { lang }), new Promise((resolve) => setTimeout(resolve, 1500))]);

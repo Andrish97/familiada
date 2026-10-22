@@ -56,7 +56,7 @@ test("każdy link /go/ z kadru (ankieta, urządzenie, QR na Wyświetlaczu) prowa
   const base = "https://www.familiada.online";
   const demo = "00000000-0000-4000-8000-000000000100";
   for (const q of [`p=anon&id=${demo}&key=k&lang=pl`, `d=host&id=${demo}&key=screensDeviceKey&lang=pl`, `d=buzzer&id=${demo}&key=k&lang=pl`, `d=display&id=${demo}&key=k&lang=pl`, `d=qr&id=${demo}&key=k&lang=pl`]) {
-    assert.equal(screenshotSnakeUrl(new URLSearchParams(q), base), `${base}/snake/?qr=${demo}&lang=pl`, q);
+    assert.equal(screenshotSnakeUrl(new URLSearchParams(q), base, "pl"), `${base}/snake/?qr=${demo}&lang=pl`, q);
   }
   assert.equal(screenshotSnakeUrl(new URLSearchParams(`d=host&id=${demo}&key=k`), base), `${base}/snake/?qr=${demo}`);
   assert.equal(screenshotSnakeUrl(new URLSearchParams("d=host&id=8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10&key=k"), base), null);

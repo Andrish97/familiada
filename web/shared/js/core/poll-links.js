@@ -24,12 +24,12 @@ export function validAnonymousPollParams(params){
 export function isScreenshotId(id){
  return /^00000000-0000-4000-8000-[0-9a-f]{12}$/i.test(String(id||''));
 }
-// Adres węża dla linku /go/ z kadru (null: zwykły link).
-export function screenshotSnakeUrl(params,base){
+// Adres węża dla linku /go/ z kadru (null: zwykły link). lang -- język strony
+// (i18n zdejmuje ?lang= z adresu przy starcie, więc nie z params).
+export function screenshotSnakeUrl(params,base,lang=null){
  const id=params.get('id');
  if(!isScreenshotId(id))return null;
  const url=new URL('/snake/',base);url.searchParams.set('qr',id);
- const lang=params.get('lang');
  if(['pl','en','uk'].includes(lang))url.searchParams.set('lang',lang);
  return url.toString();
 }
