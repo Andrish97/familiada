@@ -156,3 +156,5 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
 6. **Testy funkcji Workera z bazą** (nie dało się w próbie): logowanie przez `/_api/auth`, powielanie i wysyłanie zasobów, poczta (skrzynki testowe), panel admina, kontakt + punktowe e2e z próby.
 7. Sekrety `SERVER_*` w repo familiada → nowy serwer, konto `deploy`; workflow wdrożeń na nowe skrypty.
 8. Przy błędzie: DNS z powrotem na stary serwer (dane na starym nietknięte do końca przerwy).
+- e2e (branch, `api2`) 39831651404 — `base-explorer` + `editor` + `games` + `game-settings`: 48 zielonych, 6 czerwonych, reszta niewykonana (limit błędów). 5 z 6: testy „dwóch użytkowników” — drugi kontekst (`browser.newContext()`) bez podmiany API szedł na stary serwer (`base_share_accept` do `api.familiada.online`). Poprawka pomocnika: `ensureApiOriginRouting` w `loginAsTestUser` (tylko gdy `E2E_API_ORIGIN`). 1 z 6: jednorazowe „Failed to fetch” przy zapisie pytania — do powtórki.
+- Uwaga: `spec_filter` trafia do powłoki bez cudzysłowów — w `--grep` nie używać `|` ani spacji.
