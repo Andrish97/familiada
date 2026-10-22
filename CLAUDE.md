@@ -121,8 +121,13 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   Stare zasady (`test1`…`test17`, `testAccountUsername`, pula, `test_accounts`)
   wycofane — nie dopisywać nowych użyć. Zasady: `tests/README.md`
   „Test accounts”; plan i pakiety: `docs/konta-testowe-plan.md`.
-- **Do końca E25** (stary kod jeszcze działa): jeden przebieg e2e naraz;
-  na test14 nie zakładać konta.
+- **Przepisywanie speców stopniowo (decyzja użytkownika 2026-10-22):** kto
+  zmienia spec ze starymi kontami, przepisuje go na `helpers/e2e-test` w tym
+  samym etapie (przewodnik: `tests/README.md` „Jak przepisać stary spec”);
+  zapadka `unit/legacyTestAccounts.test.js` — przepisany plik usunąć
+  z `unit/legacy-test-accounts.json`. Spece ze starymi kontami: jeden przebieg
+  naraz jak dotąd; na test14 nie zakładać konta; starych reguł Cloudflare
+  `testN@` nie usuwać, dopóki lista nie jest pusta.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko

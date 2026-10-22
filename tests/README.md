@@ -201,7 +201,11 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
 8. Nowa rola lub zasób — najpierw plan i ta sekcja, potem
    `e2e_identities` (migracja). Nic nie dopisywać tylko w specu.
 
-### Jak przepisać stary spec (pakiet E — dedykowani agenci)
+### Jak przepisać stary spec (stopniowo — przy każdej zmianie speca)
+
+Kto zmienia spec ze starymi kontami, przepisuje go w tym samym etapie.
+Zapadka `unit/legacyTestAccounts.test.js` pilnuje, żeby użyć starych kont
+tylko ubywało: przepisany plik usuń z `unit/legacy-test-accounts.json`.
 
 | Było | Jest |
 |---|---|
