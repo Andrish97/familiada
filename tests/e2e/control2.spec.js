@@ -3011,14 +3011,15 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "720px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
     await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
-    await page.locator("#shareDeviceEmail").fill(recipient.split("@")[0]);
+    await page.locator("#shareDeviceEmail").fill(accounts.standard[1].username);
     await page.locator("#btnShareDeviceAdd").click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
     // username || current.recipient_email` -- skoro test7 ma ustawiony
     // username, modal pokazuje SAMĄ nazwę użytkownika ("test7"), nie pełny
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
-    const recipientUsername = recipient.split("@")[0];
+    // E25: nazwa konta (e2e.standardNN) różni się od części adresu (e2e+standardNN).
+    const recipientUsername = accounts.standard[1].username;
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
 
     // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
