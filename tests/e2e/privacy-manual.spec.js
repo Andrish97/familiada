@@ -50,9 +50,9 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
 test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", async ({ page, context }) => {
   await loginAsTestUser(page, context);
   const cases = [
-    { lang: "pl", title: "Podręcznik użytkownika", part: "Część I", toc: "Spis treści podręcznika" },
-    { lang: "en", title: "User guide", part: "Part I", toc: "User guide contents" },
-    { lang: "uk", title: "Посібник користувача", part: "Частина I", toc: "Зміст посібника" },
+    { lang: "pl", title: "Wskazówki dla użytkownika", part: "Część I", toc: "Spis treści wskazówek" },
+    { lang: "en", title: "Help for users", part: "Part I", toc: "Help contents" },
+    { lang: "uk", title: "Підказки для користувача", part: "Частина I", toc: "Зміст підказок" },
   ];
   for (const item of cases) {
     await page.goto(`${ORIGIN}/manual/?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
@@ -153,7 +153,7 @@ test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego p
   await page.locator('#s-12-2 ~ * a.m-go[data-page="bases"]').first().click();
   await page.waitForURL(/\/bases\/\?ret=/);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-  await expect(page.locator("#btnBack")).toContainText("Podręcznik");
+  await expect(page.locator("#btnBack")).toContainText("Wskazówki");
   await page.locator("#btnBack").click();
   await page.waitForURL(/\/manual\/\?ch=12#s-12-2$/);
   await expect(page.locator("#s-12-2")).toBeInViewport();

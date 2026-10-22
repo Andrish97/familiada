@@ -64,7 +64,7 @@ Each item: **symptom** → possible cause → what to do.
   the Display in a separate window in full screen (TV, second monitor).
 - **The game paused with a message about a missing device** → see 19.5.
 - **The game ended after the settings were changed** → changing the settings during a game ends the current
-  game → change the settings before the start or after the end; going to the guide and coming back
+  game → change the settings before the start or after the end; going to help and coming back
   does not interrupt the game (→ 16.1).
 - **The game was not ended** → the control panel was closed without ending the game → always end
   the game with the [Finish game] button on the end screen (→ 17.5).

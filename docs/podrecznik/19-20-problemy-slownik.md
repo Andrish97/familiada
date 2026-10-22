@@ -64,7 +64,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   Wyświetlacz w osobnym oknie na pełnym ekranie (telewizor, drugi monitor).
 - **Gra wstrzymała się z komunikatem o braku urządzenia** → zob. 19.5.
 - **Gra zakończyła się po zmianie ustawień** → zmiana ustawień w trakcie rozgrywki kończy bieżącą
-  grę → zmieniaj ustawienia przed startem albo po zakończeniu; przejście do podręcznika i powrót
+  grę → zmieniaj ustawienia przed startem albo po zakończeniu; przejście do wskazówek i powrót
   nie przerywa gry (→ 16.1).
 - **Gra nie została zakończona** → zamknięto panel sterowania bez zakończenia gry → zawsze kończ
   grę przyciskiem [Zakończ grę] na ekranie końcowym (→ 17.5).
