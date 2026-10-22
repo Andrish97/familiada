@@ -65,6 +65,13 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   idą równolegle bez umawiania się — konta, skrzynki i zasoby `mail`/`heavy`
   rozdziela lease; workflow nie przydziela kont.
 - Powód zasobów `mail`/`heavy`: wspólne limity wysyłki i mały serwer bazy.
+- **Mniej e2e przy zmianach wyglądu (decyzja użytkownika 2026-10-22):**
+  logikę pokrywają testy unit i zrzuty (`scripts/screens`); e2e tylko na 2–3
+  stronach najbardziej dotkniętych zmianą, w jednym zbiorczym przebiegu,
+  równolegle wolno (lease). Kontrola produkcji przy zmianach wyglądu/UI bez
+  bazy, logowania i bezpieczeństwa: jeden szybki przebieg tych samych speców.
+  Pełny zestaw kontrolny tylko przy migracjach, logowaniu, poczcie
+  i bezpieczeństwie.
 
 ## Wygląd (decyzja 2026-10-10)
 

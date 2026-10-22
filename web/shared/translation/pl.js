@@ -218,6 +218,8 @@ const pl = {
     rotateMessage: "Obróć urządzenie, aby uzyskać właściwy widok.",
     narrowTitle: "Za wąskie okno",
     narrowMessage: "Poszerz okno przeglądarki lub wyjdź z widoku podzielonego ekranu.",
+    smallTitle: "Za małe okno",
+    smallMessage: "Ta strona potrzebuje wyższego okna. Powiększ okno przeglądarki, zmniejsz powiększenie strony lub wyjdź z widoku podzielonego ekranu.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
     guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać ze Znajomych, Subskrybentów, Zadań i udostępniania.",

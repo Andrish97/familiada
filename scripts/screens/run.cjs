@@ -4,7 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --force-devices (urządzenia z --devices także dla scen z własną listą)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -28,7 +28,19 @@ const DEVICES = {
   tablet: { width: 820, height: 1180, scale: 2, mobile: true },
   "phone-landscape": { width: 844, height: 390, scale: 2, mobile: true },
   "tablet-landscape": { width: 1180, height: 820, scale: 2, mobile: true },
+  // Niski viewport (guard wysokości, decyzja 2026-10-22): tablet w poziomie
+  // z paskami przeglądarki/powiększeniem i niskie okno komputera.
+  "tablet-landscape-short": { width: 1200, height: 560, scale: 1, mobile: true, screen: { width: 1280, height: 800 } },
+  "desktop-short": { width: 1400, height: 550, scale: 1, mobile: false },
+  "desktop-1400": { width: 1400, height: 900, scale: 1, mobile: false },
+  // Dotykowy tablet z niskim oknem 1400×550 (Host i Przycisk wymagają dotyku).
+  "tablet-short-1400": { width: 1400, height: 550, scale: 1, mobile: true, screen: { width: 1440, height: 900 } },
 };
+// --viewport=1280x580 -- dodatkowe urządzenie „viewport” (komputer) o podanym rozmiarze.
+if (args.viewport) {
+  const [w, h] = String(args.viewport).split("x").map(Number);
+  DEVICES.viewport = { width: w, height: h, scale: 1, mobile: false };
+}
 const LANGS = ["pl", "en", "uk"];
 
 // ---------- wybór scen ----------
@@ -159,7 +171,7 @@ function gallery(outDir, results) {
   try {
     for (const scene of picked) {
       for (const lang of langs) {
-        const sceneDevices = scene.size ? ["size"] : scene.devices ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
+        const sceneDevices = scene.size ? ["size"] : scene.devices && !args["force-devices"] ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
         for (const device of sceneDevices) {
           const r = await capture(browser, origin, scene, lang, device, outDir);
           results.push(r);

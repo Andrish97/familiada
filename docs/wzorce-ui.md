@@ -332,6 +332,12 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   wyjście = przycisk Wstecz w topbarze, powrót do strony podstawowej.
 - Blokady (urządzenie nieobsługiwane, zasób zajęty) — jeden wygląd:
   pełnoekranowa karta z ikoną, tytułem wielkimi literami, tekstem i „Wróć”.
+- Blokada rozmiaru okna (decyzja użytkownika 2026-10-22): za wąsko →
+  „Za wąskie okno”; za nisko w poziomie (strony robocze < 580 px, `MIN_WORK_HEIGHT`)
+  → „Obróć urządzenie”, gdy obrót pomoże (dotykowy telefon/tablet), w innym
+  razie „Za małe okno” (ikona pełnego ekranu, ten sam wygląd karty). Pojawia
+  się i znika na żywo. Bez progu wysokości: Prowadzący, Przycisk, wąż, strony
+  tekstowe; Wyświetlacz ma próg (obok wymogu HD). Zrzuty: sceny `guard-height-*`.
 - Okno QR (ankieta `#pollQrModalOverlay`, Control `#qrModalOverlay`) to zwykłe
   `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
   `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),

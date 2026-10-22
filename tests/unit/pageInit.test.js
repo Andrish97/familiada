@@ -160,6 +160,7 @@ test("edytor Logo: jawny próg viewportu, topbar nadal działa", async () => {
   assert.deepEqual(user, { id: "u1" });
   assert.equal(calls.width.length, 1);
   assert.equal(calls.width[0].minWidth, 700);
+  assert.equal(calls.width[0].minHeight, 580, "próg wysokości z nav-map (minViewportHeight)");
   assert.equal(calls.width[0].backHref, "/logos/");
   assert.ok(els.btnBack.listeners.click, "„Wstecz” w topbarze zostaje");
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
@@ -229,7 +230,7 @@ test("device-guard, page-overlay i page-init nie cofają przez historię ani ref
 });
 
 test("klucze pageGuard są w pl/en/uk, stare deviceGuard i guestGuard zniknęły", async () => {
-  const keys = ["rotateTitle", "rotateMessage", "narrowTitle", "narrowMessage", "back", "guestTitle", "guestMessage", "login"];
+  const keys = ["rotateTitle", "rotateMessage", "narrowTitle", "narrowMessage", "smallTitle", "smallMessage", "back", "guestTitle", "guestMessage", "login"];
   for (const lang of ["pl", "en", "uk"]) {
     const mod = await import(`../../web/shared/translation/${lang}.js`);
     const dict = mod.default || Object.values(mod)[0];

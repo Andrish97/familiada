@@ -220,6 +220,12 @@ function buildDb(lang, extras = {}) {
 
   // ---------- RPC ----------
   const rpc = {
+    // Urządzenia Prowadzący/Przycisk otwarte z klucza (bez ?preview): jedyne aktywne połączenie, logo domyślne.
+    control_device_instance_register: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
+    control_device_instance_heartbeat: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
+    host2_logo_get_public: { logo: null },
+    control2_device_transport_event: true,
+    game_state_display_is_ready: true,
     poll_share_panel: sharePanel,
     get_poll_preview: `fn:(args, db) => {
       const votes = ${JSON.stringify(pollVotes)};
@@ -359,6 +365,8 @@ function buildDb(lang, extras = {}) {
 
   return {
     user, tables, rpc,
+    // Funkcje Edge: token Realtime urządzenia (Prowadzący/Przycisk z klucza).
+    functions: { "device-realtime-token": { token: "demo-realtime-token" } },
     relations: {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
