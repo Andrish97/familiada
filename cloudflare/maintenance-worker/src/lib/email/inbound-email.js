@@ -1,5 +1,6 @@
 // src/lib/inbound-email.js -- Cloudflare Email Routing inbound handler + MIME parsing.
 import { normalizeE2ERecipient } from "../e2e/e2e-api.js";
+import { isE2EPlusAddress, e2eIdentityName } from "../e2e/e2e-lease.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
 import { uploadToStorage } from "../core/storage.js";
 import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
@@ -28,9 +29,29 @@ export function decodeMimeWords(str) {
   });
 }
 
+// Gdyby Cloudflare podał adres bez części +detail (e2e@), adresat z nagłówka To.
+function inboundRecipient(message) {
+  const to = String(message.to || "").trim();
+  if (!/^e2e@familiada\.online$/i.test(to)) return to;
+  const header = String(message.headers?.get?.("to") || "");
+  const match = header.match(/e2e\+[a-z]+[0-9]{2}(?:\.new)?@familiada\.online/i);
+  return match ? match[0] : to;
+}
+
 export async function handleInboundEmail(message, env) {
   const from    = message.from || "";
-  const recipient = normalizeE2ERecipient(message.to);
+  const recipient = normalizeE2ERecipient(inboundRecipient(message));
+  // E25: jedna reguła Cloudflare e2e@ (+ Subaddressing) -- przyjmujemy tylko
+  // adresy znanych tożsamości testowych; reszta e2e+ odrzucona, nigdy do admina.
+  if (!recipient && /^e2e(\+[^@]*)?@familiada\.online$/i.test(String(message.to || "").trim())) {
+    message.setReject?.("Unknown test address");
+    return;
+  }
+  if (recipient && isE2EPlusAddress(recipient) && !(await e2eIdentityName(env, recipient))) {
+    console.log("[e2e-email] rejected unknown identity");
+    message.setReject?.("Unknown test address");
+    return;
+  }
   // Envelope sender, not visible From/To headers. Keep exact test destinations
   // in the test mailbox; our provider's technical copies are not admin mail.
   if (!recipient && /^bounce\+[a-z0-9_-]+@bounce-zem\.familiada\.online$/i.test(from.trim())) {

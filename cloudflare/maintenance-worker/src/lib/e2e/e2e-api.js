@@ -4,6 +4,7 @@ import { json } from "../core/http.js";
 import { readJson } from "../admin/admin-auth.js";
 import { supabaseRequest, supabaseRpc } from "../core/supabase.js";
 import { fetchFromOrigin } from "../origin/origin.js";
+import { handleE2ELease, isE2EPlusAddress, e2eRunOwns } from "./e2e-lease.js";
 
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
@@ -13,7 +14,13 @@ const E2E_RELEASABLE_MAIL_COOLDOWNS = new Set(["auth:guest_upgrade_email"]);
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
-  return E2E_EMAIL_RE.test(recipient) ? recipient : null;
+  return E2E_EMAIL_RE.test(recipient) || isE2EPlusAddress(recipient) ? recipient : null;
+}
+
+// Adres e2e+ (E25) -- tylko dla przebiegu, który go wypożyczył (nagłówek X-E2E-Run).
+async function leaseGuard(env, request, recipient) {
+  if (!isE2EPlusAddress(recipient) || (await e2eRunOwns(env, request, recipient))) return null;
+  return json({ ok: false, error: "not_leased" }, 403);
 }
 
 export function hexToBytes(hex) {
@@ -81,6 +88,9 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  const leaseResponse = await handleE2ELease(request, env, url);
+  if (leaseResponse) return leaseResponse;
+
   if (url.pathname === "/_e2e_api/mail-trigger" && request.method === "POST") {
     let body;
     try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
@@ -88,6 +98,8 @@ export async function handleE2EApi(request, env, url) {
     if (!recipient || /^test(?:9|10)@/.test(recipient) || !Number.isFinite(after) || after < Date.now() - 900000 || after > Date.now() + 5000) {
       return json({ ok: false, error: "invalid_mail_fixture" }, 400);
     }
+    const triggerDenied = await leaseGuard(env, request, recipient);
+    if (triggerDenied) return triggerDenied;
     // Select recent pending test mail only. Never reset flags, budgets, delays,
     // leases or failures; the normal worker rechecks the actual source/provider.
     const selected = await supabaseRequest(env, "/rest/v1/mail_queue?select=id&to_email=eq." + encodeURIComponent(recipient)
@@ -159,6 +171,8 @@ export async function handleE2EApi(request, env, url) {
     const recipient = normalizeE2ERecipient(body?.recipient);
     const actionKey = String(body?.action_key || "");
     if (!recipient || !E2E_RELEASABLE_MAIL_COOLDOWNS.has(actionKey)) return json({ ok: false, error: "invalid_release" }, 400);
+    const releaseDenied = await leaseGuard(env, request, recipient);
+    if (releaseDenied) return releaseDenied;
     const result = await supabaseRpc(env, "mail_cooldown_email_release", {
       p_email: recipient, p_action_key: actionKey, p_max_age_seconds: 7200,
     });
@@ -184,6 +198,8 @@ export async function handleE2EApi(request, env, url) {
     if (!recipient || !Number.isFinite(afterMs) || afterMs < Date.now() - 25 * 60 * 60 * 1000 || afterMs > Date.now() + 60_000) {
       return json({ ok: false, error: "invalid_query" }, 400);
     }
+    const deliveryDenied = await leaseGuard(env, request, recipient);
+    if (deliveryDenied) return deliveryDenied;
     const after = encodeURIComponent(new Date(afterMs).toISOString());
     const results = await Promise.all([
       supabaseRequest(env, `/rest/v1/mail_queue?select=id,created_at,status,attempts,not_before,last_attempt_at,provider_used,last_error&to_email=eq.${encodeURIComponent(recipient)}&created_at=gte.${after}&order=created_at.asc&limit=30`),
@@ -205,6 +221,8 @@ export async function handleE2EApi(request, env, url) {
     if (afterMs < Date.now() - 25 * 60 * 60 * 1000 || afterMs > Date.now() + 60_000) {
       return json({ ok: false, error: "invalid_after" }, 400);
     }
+    const readDenied = await leaseGuard(env, request, recipient);
+    if (readDenied) return readDenied;
 
     const path = "/rest/v1/e2e_emails" +
       `?select=id,recipient,from_email,subject,body,body_html,received_at` +
@@ -219,6 +237,8 @@ export async function handleE2EApi(request, env, url) {
   if (url.pathname === "/_e2e_api/emails" && request.method === "DELETE") {
     const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
     if (!recipient) return json({ ok: false, error: "invalid_recipient" }, 400);
+    const clearDenied = await leaseGuard(env, request, recipient);
+    if (clearDenied) return clearDenied;
     const res = await supabaseRequest(
       env,
       `/rest/v1/e2e_emails?recipient=eq.${encodeURIComponent(recipient)}`,
