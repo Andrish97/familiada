@@ -1,6 +1,6 @@
 # PROGRESS — E13 (podręcznik użytkownika)
 
-**Status:** PAUZA (decyzja użytkownika 2026-10-21) — czekamy, aż użytkownik skończy menedżer plików i poprawki. Potem (decyzja użytkownika): scalić `main` i **przeprowadzić od nowa pełną weryfikację całego podręcznika z kodem** (jak krok 1 — wszystkie rozdziały, nie tylko zmienione miejsca; agenci jak w kroku 1), poprawić rozbieżności, dopasować rozdziały (PL→EN/UK), przebudować treść i podgląd, e2e brancha, dać do przeczytania; wdrożenie dopiero po zatwierdzeniu.
+**Status:** W TOKU — funkcje strony podręcznika wg uwag użytkownika (`docs/podrecznik-uwagi-2026-10-22.md`, plan na końcu); treść — po sygnale użytkownika „skończyłem” (pełna ponowna weryfikacja). Bez publikacji.
 
 **Plan (źródło prawdy):** [`docs/podrecznik-plan.md`](docs/podrecznik-plan.md) — plan uzgodniony 2026-10-20; zasady E13 w [`docs/wdrozenia.md`](docs/wdrozenia.md), „E13 — instrukcja, indeks, zrzuty i wydajność” (zasady treści manuala z 2026-10-11).
 Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
