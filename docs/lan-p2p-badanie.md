@@ -134,4 +134,4 @@ nadal się liczy).
 
 ## Decyzje
 
-(brak — czeka na użytkownika)
+- 2026-10-22: wariant A — na razie tylko badanie i przemyślenia użytkownika; bez wdrażania.
