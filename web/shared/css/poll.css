@@ -14,6 +14,7 @@ body.pollpub-body {
     min-height:var(--topbar-h);
 }
 .poll-vote-topbar .brand{ color:var(--gold); }
+.poll-vote-topbar .poll-vote-actions{ margin-left:auto; display:flex; align-items:center; gap:8px; }
 
 body.pollpub-body .card {
     margin-top: auto;

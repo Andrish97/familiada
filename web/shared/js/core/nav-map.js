@@ -104,8 +104,8 @@ export const PAGES = {
   controlBuzzer: { path: "/control/buzzer/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok buzzera otwierany przez połączone urządzenie." },
   snake:         { path: "/snake/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Ukryta gra w węża z kodu QR na kadrze strony głównej; nie jest celem zwykłego powrotu." },
   go:            { path: "/go/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
-  pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
-  pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
+  pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], manual: "15.3", kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
+  pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], manual: "15.3", kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
   pollVoteQr:    { path: "/polls/vote/qr/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny ekran QR dla głosowania, z własnym guardem urządzenia." },
   account: {
     path: "/account/", access: "guest", parent: "games",

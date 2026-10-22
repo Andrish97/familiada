@@ -6,9 +6,16 @@ import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-22T00131"
 import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-22T00131";
 import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-22T00131";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-22T00131";
+import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-22T00131";
 
+
+// Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
+const syncManual = () => document.getElementById("btnManual")?.setAttribute("href", manualHref("pollVotePoints"));
+window.addEventListener("i18n:lang", syncManual);
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
+  syncManual();
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
   document.documentElement.classList.remove('page-loading');
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
