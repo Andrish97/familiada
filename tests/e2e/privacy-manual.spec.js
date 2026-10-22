@@ -232,3 +232,26 @@ test("manual: wyszukiwanie wpisane w trakcie wczytywania treści dostaje wyniki 
   await input.fill("kradzież");
   await expect(page.locator("#manualSearch .m-search-hit").first()).toBeVisible({ timeout: 15_000 });
 });
+
+test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, obraz mieści się w ekranie", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  try {
+    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
+    const page = await context.newPage();
+    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
+    const shot = page.locator(".m-shot-zoom").first();
+    await shot.scrollIntoViewIfNeeded();
+    await shot.click();
+    await expect(page.locator("#imgvOverlay.is-open .imgv-img")).toBeVisible();
+    const r = await page.evaluate(() => {
+      const box = (s) => document.querySelector(s).getBoundingClientRect();
+      return { vw: innerWidth, stage: box("#imgvStage"), zoom: box(".imgv-zoom"), img: box(".imgv-img") };
+    });
+    expect(r.zoom.height).toBeGreaterThan(r.stage.height - 2);
+    expect(r.zoom.height).toBeGreaterThan(400);
+    expect(r.img.left).toBeGreaterThanOrEqual(-1);
+    expect(r.img.right).toBeLessThanOrEqual(r.vw + 1);
+  } finally {
+    await context.close();
+  }
+});
