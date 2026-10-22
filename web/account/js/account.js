@@ -252,8 +252,12 @@ function setMigratePendingUi(pendingEmail) {
 
 async function refreshMigrateState() {
   try {
-    const st = await fetchEmailChangeStatus();
-    setMigratePendingUi(st?.pending_email || "");
+    // Z serwera (getUser), nie z tokenu sesji: token po wysłaniu linku bywa
+    // nieaktualny -- "Anuluj" uznawał wtedy, że nie ma czego anulować, i link
+    // z maila dalej przenosił konto (jak w refreshAuthEmailState).
+    const { data, error } = await sb().auth.getUser();
+    if (error) throw error;
+    setMigratePendingUi(extractPendingEmail(data?.user));
   } catch (e) {
     console.warn("[migrate] refreshMigrateState failed:", e);
   }
@@ -443,27 +447,6 @@ function setEmailPendingUi(nextPendingEmail) {
   tickCooldowns();
 }
 
-
-async function fetchEmailChangeStatus() {
-  try {
-    const { data: sess } = await sb().auth.getSession();
-    const token = sess?.session?.access_token;
-    if (!token) return null;
-
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-
-    const email = String(payload.email || "").toLowerCase();
-    const meta = payload.user_metadata || {};
-    const metaPending = String(meta.familiada_email_change_pending || "").trim().toLowerCase();
-    const pending_email = metaPending && metaPending !== email ? metaPending : "";
-    return { ok: true, email, pending_email, is_pending: !!pending_email };
-  } catch (e) {
-    console.warn("[email-change-status] failed:", e);
-    return null;
-  }
-}
 
 async function refreshAuthEmailState() {
   try {
@@ -793,7 +776,7 @@ async function handleEmailCancel() {
     });
     if (metaErr) throw metaErr;
 
-    // 3. Refresh JWT so fetchEmailChangeStatus reads updated metadata
+    // 3. Odświeżenie sesji (token z aktualnymi metadanymi dla innych stron)
     await sb().auth.refreshSession();
 
     setStatus(t("account.statusEmailCancelled"));
