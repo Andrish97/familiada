@@ -7,7 +7,7 @@ const client = require("./helpers/e2e-lease-client");
 const E2E_ADDRESS = /^e2e\+[a-z]+\d{2}@familiada\.online$/;
 
 // Jedna deklaracja na plik (opcja workera): suma potrzeb wszystkich testów pliku.
-test.use({ needs: { standard: 2, noaccount: 1, disposable: 1, dedicated: "e20-gallery" } });
+test.use({ needs: { standard: 2, noaccount: 1, disposable: 1, dedicated: "e20-gallery", resources: ["mail"] } });
 
 test.describe("lease: standard + noaccount", () => {
   test("komplet rozłącznych tożsamości i logowanie właściciela", async ({ page, context, accounts, loginAs }) => {
@@ -30,6 +30,23 @@ test.describe("lease: standard + noaccount", () => {
       method: "DELETE", headers: client.headers(),
     });
     expect(response.status).toBe(403);
+  });
+});
+
+test.describe("lease: poczta e2e+ (reguła Cloudflare e2e@ + Subaddressing)", () => {
+  test("zaproszenie do znajomych dochodzi do skrzynki wypożyczonego odbiorcy", async ({ page, context, accounts, loginAs, mailbox }) => {
+    test.setTimeout(240_000);
+    const [owner, recipient] = accounts.standard;
+    await mailbox.clear(recipient);
+    const after = new Date(Date.now() - 2000).toISOString();
+    await loginAs(page, context, owner);
+    await page.goto("https://www.familiada.online/friends/");
+    await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
+    await page.locator("#inviteInput").fill(recipient.username);
+    await page.locator("#btnInvite").click();
+    await expect(page.locator(".rowsSection--outgoing .shareRow")).toHaveCount(1);
+    const email = await mailbox.waitFor(recipient, { after, subject: /znajom|friends/i, timeout: 150_000 });
+    expect(email.recipient).toBe(recipient.email);
   });
 });
 

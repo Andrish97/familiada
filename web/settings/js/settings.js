@@ -1313,8 +1313,9 @@ function renderExcludedList(users) {
   }
   el.replaceChildren();
   // E25: rola konta testowego z powodu wykluczenia (test:<rola>), podsumowanie według ról
+  const roles={ standard:"zwykłe", disposable:"jednorazowe", dedicated:"przypisane do czynności" };
   const label=(user)=>user.reason === "test_guest" ? "Gość testowy"
-    : String(user.reason || "").startsWith("test:") ? `Konto testowe · ${user.reason.slice(5)}` : "Konto testowe";
+    : String(user.reason || "").startsWith("test:") ? `Konto testowe · ${roles[user.reason.slice(5)] || user.reason.slice(5)}` : "Konto testowe";
   const counts=new Map();
   for (const user of users) {
     const key=user.automatic ? label(user) : "Ręcznie";

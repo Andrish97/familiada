@@ -10,6 +10,13 @@ const DEFAULT_MAIL_SETTINGS = {
   worker_limit: 25,
 };
 
+
+// E25: panel admina bez maili testowych (adresy testN@ i e2e+ w familiada.online);
+// diagnostyka testów ma własne /_e2e_api/mail-delivery.
+function hideTestRecipients(column) {
+  return `&or=(${column}.is.null,and(${column}.not.like.e2e%2B*,${column}.not.like.test*@familiada.online))`;
+}
+
 export async function handleAdminMailApi(request, env, url) {
   if (url.pathname === "/_admin_api/mail/settings") {
     if (request.method === "GET") {
@@ -158,6 +165,7 @@ export async function handleAdminMailApi(request, env, url) {
       "select=id,created_at,created_by,to_email,subject,status,not_before,attempts,last_error,provider_used,provider_order,meta,picked_at,last_attempt_at";
     qs += `&order=created_at.desc&limit=${limit}`;
     if (status !== "all") qs += `&status=eq.${encodeURIComponent(status)}`;
+    qs += hideTestRecipients("to_email");
 
     const list = await supabaseRequest(env, `/rest/v1/mail_queue?${qs}`, { method: "GET" });
     if (!list.ok) {
@@ -226,6 +234,7 @@ export async function handleAdminMailApi(request, env, url) {
     let filters = "";
     if (fn !== "all") filters += `&function_name=eq.${encodeURIComponent(fn)}`;
     if (level !== "all") filters += `&level=eq.${encodeURIComponent(level)}`;
+    filters += hideTestRecipients("recipient_email");
 
     // Count query
     const countResult = await supabaseRequest(env, `/rest/v1/mail_function_logs?select=count${filters}`, { method: "GET" });
