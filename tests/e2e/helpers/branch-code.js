@@ -92,7 +92,7 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
     if (!file) {
       // Próba generalna: strony z produkcji (np. logowanie przez Workera) mają
       // CSP z connect-src tylko na api.familiada.online — podmieniamy adres API.
-      if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && route.request().resourceType() === "document") {
+      if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && route.request().resourceType?.() === "document") {
         const response = await route.fetch({ headers: await route.request().allHeaders() });
         const apiHost = new URL(API_ORIGIN).host;
         const swap = (value) => String(value).split("api.familiada.online").join(apiHost);
