@@ -514,6 +514,15 @@ Wyjaśnić między innymi pojęcia takie jak znajomy, subskrybent, zaproszenie i
 
 Wyjaśnić między innymi pojęcia takie jak baza pytań, logo, Wyświetlacz, ekran prowadzącego i przyciski.
 
+### 21. O projekcie i wsparcie
+
+#### 21.1 Familiada jest bezpłatna
+#### 21.2 Postaw kawę
+
+Filiżanka w stopce, okno „Postaw kawę”, wybór kawy, zewnętrzny serwis buycoffee.to; wsparcie
+dobrowolne, bez dodatkowych funkcji. Treść od sesji „Postaw kawę” (`docs/postaw-kawe-plan.md`
+na branchu `ccr-c9e1b7c4-8uoses`); wdraża sesja Wskazówek razem z funkcją.
+
 ## Założenia wdrożenia podręcznika
 
 ### Mapa pomocy kontekstowej
@@ -551,7 +560,18 @@ Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu man
 
 Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści należy jeszcze sprawdzić funkcje i ograniczenia w aktualnej wersji serwisu oraz potwierdzić zgodność zasad teleturnieju z regulaminem. Następnie można opracowywać rozdziały po kolei. Rozdział 18 jest warunkowy i może zostać pominięty, jeśli nie pojawią się powtarzające się pytania użytkowników.
 
-## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21)
+## Decyzje
+
+- **2026-10-22 — rozdział 21 „O projekcie i wsparcie”:** na końcu Części III, PL/EN/UK; FAQ strony głównej robi sesja „Postaw kawę”, Wskazówki — ta sesja.
+- **2026-10-22 — nazwa strony:** strona `/manual/` nazywa się dla użytkownika **„Wskazówki”** (EN „Help”, UK „Підказки”) — przycisk, tytuł, powrót „←”, wyszukiwarka. „Podręcznik” zostaje tylko nazwą roboczą w repo (katalogi, dokumenty).
+- **2026-10-21 — podstawa Części I:** regulamin TVP w wersji z „głową rodziny” (2019),
+  [PDF](https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf),
+  wskazany przez użytkownika. Wynikają z niego: gra do 300 pkt bez stałej liczby rund
+  i bez „dogrywki” (rozdz. 3 opisuje to zamiast „trzech rund i dogrywki”), mnożniki
+  ×1, ×1, ×1, ×2, ×3 (zgodne z domyślnymi w serwisie), wynik bez nagrody głównej =
+  punkty × 3. Szczegóły: `podrecznik-weryfikacja.md`, Część I.
+
+## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21) — z równoległej sesji (jej wersja podręcznika zastąpiona wersją z `docs/podrecznik/`)
 
 - **Nagroda w finale** — decyzja 2026-10-21: jak w regulaminie TVP (2019, Dział V pkt 21–22):
   kwota = punkty zwycięskiej drużyny z rund × mnożnik, przy osiągniętym celu finału + kwota główna.

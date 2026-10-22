@@ -1,11 +1,12 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T01235";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T03300";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-22T01235';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-22T01235';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-22T01235';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-22T01235';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-22T01235';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-22T01235';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-22T03300';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-22T03300';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-22T03300';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-22T03300';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-22T03300';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-22T03300';
+import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-22T03300';
 
 
 const $ = id => document.getElementById(id);
@@ -170,6 +171,11 @@ window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar
 document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 
 await initI18n({ withSwitcher: true });
+// Podręcznik bez ?ret= — adres tej strony niesie token dostępu (?m=).
+const btnManual = document.getElementById('btnManual');
+const syncManual = () => btnManual?.setAttribute('href', manualHref('mailCenter'));
+syncManual();
+window.addEventListener('i18n:lang', syncManual);
 document.querySelector('.topbar').classList.add('topbar-ready');
 document.getElementById('mailEntry')?.classList.add('skel-step-ready');
 try {

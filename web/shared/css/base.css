@@ -806,6 +806,104 @@ main:has(> .footer){
     background: var(--modal-scrim);
 }
 
+/* Formularz okna kontaktu — rytm jak karty formularzy (Ustawienia konta,
+   docs/wzorce-ui.md): 14 px między polami, 8 px etykieta → pole → podpowiedź,
+   6 px między oznaczeniami plików. Na telefonie (okno od dołu) treść zostaje
+   kolumną z tym samym odstępem (ogólna reguła arkusza zmienia .uni-body
+   w blok bez odstępów). */
+.contact-form {
+    gap: 14px
+}
+.contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0
+}
+.contact-label {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .85
+}
+.contact-field > .inp {
+    width: 100%;
+    box-sizing: border-box
+}
+.contact-field > textarea.inp {
+    resize: vertical;
+    min-height: 140px
+}
+.contact-attach-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    cursor: pointer;
+    user-select: none
+}
+.contact-hint {
+    font-size: 12px;
+    opacity: .75
+}
+.contact-hint:empty,
+.contact-files:empty,
+.contact-captcha:empty { display: none }
+.contact-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px
+}
+.contact-file {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.04);
+    font-size: 12px;
+    opacity: .85;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box
+}
+.contact-captcha {
+    display: flex;
+    min-width: 0
+}
+.contact-captcha[hidden] { display: none }
+.contact-error {
+    font-size: 13px;
+    color: #ff6b6b;
+    line-height: 1.4
+}
+.contact-success {
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 16px 0
+}
+.contact-success-icon {
+    font-size: 32px;
+    color: #6ee7a8
+}
+.contact-success-title {
+    font-size: 15px;
+    font-weight: 700
+}
+.contact-success-ticket {
+    font-size: 13px;
+    opacity: .75
+}
+.contact-modal-overlay.sheet-active .sheet-modal-body > .uni-body.contact-form,
+.contact-modal-overlay.sheet-active .sheet-modal-body > .uni-body.contact-success {
+    display: flex;
+    flex-direction: column
+}
+
 .modal {
     box-sizing: border-box;
     width: min(860px,94vw);

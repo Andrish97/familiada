@@ -46,6 +46,7 @@ const en = {
   "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Log in again.","decisionFailed":"Could not save your decision. Try again."}
 },
   common: {
+    imageViewer: { title: "Preview" },
     save: "Save",
     sort: {
       label: "Sort",
@@ -168,7 +169,7 @@ const en = {
       marketplace: "Community Games",
       connectDevice: "Connect device",
       account: "Account settings",
-      manual: "Guide",
+      manual: "Help",
       privacy: "Privacy",
     },
   },
@@ -283,7 +284,7 @@ const en = {
       ctaConnectTitle: "Connect a device to a game",
       note: "Start as a guest, or log in to return to your saved materials.",
     },
-    imageViewer: { title: "Preview", open: "Enlarge image: {title}", prev: "Previous image", next: "Next image", counter: "{n} of {total}" },
+    imageViewer: { open: "Enlarge image: {title}", prev: "Previous image", next: "Next image", counter: "{n} of {total}" },
     shots: {
       games: "My games", "game-editor": "Game editor", bases: "Question bases", "base-explorer": "Base manager",
       friends: "Friends", subscribers: "Subscribers", tasks: "Tasks", "poll-share": "Sharing a poll", "poll-vote-mobile": "Voting on a phone", "poll-results": "Poll votes and results",
@@ -987,12 +988,12 @@ const en = {
       },
       tallyPoints: {
         title: "Count the votes?",
-        text: "Points are based on all votes. Answers below 4% after rounding will be skipped. Links and invitations will expire.",
+        text: "Points are the share of complete polls, rounded down. Answers below 4% will be skipped. Links and invitations will expire.",
         ok: "Approve",
       },
       tallyText: {
         title: "Approve the answers?",
-        text: "Answers will be saved with points. Shares are based on all votes; answers below 4% after rounding are skipped.",
+        text: "Answers will be saved with points. Points are the share of complete polls, rounded down; answers below 4% are skipped.",
         ok: "Approve",
       },
       reopen: {
@@ -1024,7 +1025,7 @@ const en = {
       loading: "Loading answers…",
       hintText: "Drag an answer onto another to merge them; click the text to fix it. Below 4% of votes — skipped.",
       hintTextTouch: "Merge: tap the button on one answer, then on the other. Tap the text to fix it. Below 4% — skipped.",
-        hintPoints: "Votes converted to points from all votes. Below 4% after rounding is skipped (gray row).",
+        hintPoints: "Points = share of all complete polls. Below 4% — skipped (grey row).",
       counter: "Answers: {n} (3–6 required)",
       sum: "total points: {n}",
       votes: "{n} v.",
@@ -1052,24 +1053,23 @@ const en = {
     },
   },
   manual: {
-    title: "Familiada — guide",
-    tabsLabel: "User guide tabs",
+    title: "Familiada — help",
     legal: "Privacy Policy",
-    pageTitle: "User guide",
-    tabs: {
-      rules: "Game rules",
-      account: "Account",
-      games: "Games",
-      logo: "Logo",
-      bases: "Question bases",
-      people: "Friends and subscribers",
-      community: "Community Games",
-      polls: "Polls",
-      settings: "Game settings",
-      control: "Running the game",
-      help: "Help",
-    },
+    pageTitle: "Help for users",
     toc: "Contents",
+    tocLabel: "Help contents",
+    startLead: "The rules of the Familiada game show and how to use the service, step by step. Choose a chapter from the contents.",
+    prev: "Previous chapter",
+    next: "Next chapter",
+    chapter: "Chapter",
+    sections: "In this chapter",
+    backTo: "Back to: {title}",
+    search: "Search help",
+    searchClear: "Clear",
+    searchEmpty: "No results.",
+    shotPrev: "Previous view",
+    shotNext: "Next view",
+    shotN: "View {n} of {total}",
     demo: {
       modalTitle: "Restore demo files?",
       modalText: "Sample starter materials will be added.",
@@ -1081,7 +1081,7 @@ const en = {
     title: "Familiada Online — privacy policy",
     description: "Familiada Online privacy policy: personal data processing, cookies, and how to contact the administrator.",
     pageTitle: "Familiada Online — Privacy Policy",
-    backToManual: "Guide",
+    backToManual: "Help",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Last updated: July 15, 2026</p>

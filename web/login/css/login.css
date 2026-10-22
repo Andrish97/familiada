@@ -236,12 +236,17 @@ body.mode-login #pwdHint               { display: none; }
 
 /* ── back button (fixed) ── */
 
-.login-back-fixed {
+/* lewy górny róg: powrót na stronę główną i podręcznik */
+.login-top-left {
     position: fixed;
     top: max(20px, env(safe-area-inset-top));
     left: calc(20px + env(safe-area-inset-left, 0px));
     z-index: 1000;
+    display: flex;
+    gap: 8px;
+}
 
+.login-back-fixed {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -262,6 +267,9 @@ body.mode-login #pwdHint               { display: none; }
 
     transition: all .18s ease;
 }
+
+.login-back-fixed.icon-only { padding: 8px 10px; }
+.login-back-fixed .ico { width: 16px; height: 16px; }
 
 .login-back-fixed:hover {
     color: var(--gold);
@@ -286,9 +294,11 @@ body.mode-login #pwdHint               { display: none; }
 }
 
 @media (max-width: 600px) {
-    .login-back-fixed {
+    .login-top-left {
         top: max(14px, env(safe-area-inset-top));
         left: calc(14px + env(safe-area-inset-left, 0px));
+    }
+    .login-back-fixed {
         padding: 8px 12px;
         font-size: 14px;
     }

@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T01235";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T03300";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-22T01235";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T01235";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T01235";
+} from "../../shared/js/core/auth.js?v=v2026-10-22T03300";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T03300";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T03300";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-22T01235";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T01235";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T01235";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T01235";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T01235";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T01235";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T01235";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T03300";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T03300";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T03300";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T03300";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T03300";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T03300";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T03300";
 
 
 const $ = (s) => document.querySelector(s);
@@ -819,6 +819,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Podręcznik: adres z mapy (ret wraca na logowanie, język z bieżącej strony).
+  const btnManual = document.getElementById("btnManual");
+  const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
+  syncManual();
+  window.addEventListener("i18n:lang", syncManual);
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();

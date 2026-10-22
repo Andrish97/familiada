@@ -56,6 +56,14 @@ const openModal = (selector, modal = ".overlay:visible") => async (view) => {
   await view.locator(modal).first().waitFor({ state: "visible", timeout: 5000 });
   await view.waitForTimeout(250);
 };
+// Podręcznik: na telefonie pole jest w wysuwanym spisie treści — otwiera je przycisk z lupą.
+const manualSearch = (query) => async (view) => {
+  const toggle = view.locator("#manualSearchToggle");
+  if (await toggle.isVisible()) await toggle.click();
+  await view.locator("#manualSearch .searchText").fill(query);
+  await view.locator("#manualSearch .m-search-hit").first().waitFor({ timeout: 5000 });
+  await view.waitForTimeout(250);
+};
 const scrollPreview = async (view) => {
   await view.locator('.gs-logo-tile[data-logo-id="default"]').click();
   await view.locator("#gsLivePreviewWrap").scrollIntoViewIfNeeded();
@@ -335,6 +343,15 @@ module.exports = [
   { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
+  { id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
+  { id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: ".m-return" },
+  { id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
+  { id: "manual-shots", category: "Dodatkowe", title: "Podręcznik — karuzela widoków przy prowadzeniu rundy", path: "/manual/?ch=17#s-17-3", sources: [...page("manual"), "web/manual/content/", "web/manual/img/"], ready: ".m-carousel-nav", steps: [async (view) => { await view.locator(".m-carousel img").first().evaluate((img) => img.decode()); await view.waitForTimeout(300); }] },
+  { id: "manual-shot-zoom", category: "Dodatkowe", title: "Wskazówki — podgląd zrzutu (jak na stronie głównej; telefon: okno od dołu z przybliżaniem)", path: "/manual/?ch=6#s-6-1", sources: [...page("manual"), "web/manual/content/", "web/manual/img/", "web/shared/js/core/image-viewer.js", "web/shared/css/image-viewer.css"], ready: ".m-shot-zoom img", steps: [async (view) => { await view.locator(".m-shot-zoom").first().click(); await view.locator("#imgvOverlay.is-open .imgv-img").evaluate((img) => img.decode()); await view.waitForTimeout(400); }] },
+  { id: "manual-support", category: "Dodatkowe", title: "Wskazówki — O projekcie i wsparcie (rozdz. 21)", path: "/manual/?ch=21", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-search", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie (wyniki na żywo)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież")] },
+  { id: "manual-search-hit", category: "Dodatkowe", title: "Podręcznik — wybrany wynik z zaznaczonymi trafieniami", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież"), async (view) => { await view.locator("#manualSearch .searchText").press("Enter"); await view.locator("mark.m-hit").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
   // Karty formularzy: zmiana e-maila w toku (Anuluj zmianę + Wyślij ponownie), hasło, usuwanie konta — cała strona.
   { id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,

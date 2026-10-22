@@ -1,11 +1,11 @@
 // Zadania: wyłącznie ankiety. Do zrobienia / Zrobione (5 dni).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T01235";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T01235";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T01235";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T01235";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T01235";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T01235";
-import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-22T01235";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T03300";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T03300";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T03300";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T03300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T03300";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T03300";
+import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-22T03300";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {

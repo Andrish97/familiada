@@ -46,6 +46,7 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    imageViewer: { title: "Podgląd" },
     save: "Zapisz",
     sort: {
       label: "Sortowanie",
@@ -168,7 +169,7 @@ const pl = {
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
-      manual: "Instrukcja",
+      manual: "Wskazówki",
       privacy: "Prywatność",
     },
   },
@@ -296,7 +297,7 @@ const pl = {
       ctaConnectTitle: "Podłącz urządzenie do rozgrywki",
       note: "Możesz zacząć jako gość albo zalogować się, by wracać do swoich materiałów.",
     },
-    imageViewer: { title: "Podgląd", open: "Powiększ obraz: {title}", prev: "Poprzedni obraz", next: "Następny obraz", counter: "{n} z {total}" },
+    imageViewer: { open: "Powiększ obraz: {title}", prev: "Poprzedni obraz", next: "Następny obraz", counter: "{n} z {total}" },
     shots: {
       games: "Moje gry", "game-editor": "Edycja gry", bases: "Bazy pytań", "base-explorer": "Eksplorator bazy",
       friends: "Znajomi", subscribers: "Subskrybenci", tasks: "Zadania", "poll-share": "Udostępnianie ankiety", "poll-vote-mobile": "Głosowanie na telefonie", "poll-results": "Głosy i wyniki ankiety",
@@ -1001,12 +1002,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 4% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
+        text: "Punkty to udział od pełnych ankiet, zaokrąglony w dół. Odpowiedzi poniżej 4% zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 4% po zaokrągleniu są pomijane.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Punkty to udział od pełnych ankiet, zaokrąglony w dół; odpowiedzi poniżej 4% są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {
@@ -1066,23 +1067,22 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
-    tabsLabel: "Zakładki wskazówek",
     legal: "Polityka prywatności",
     pageTitle: "Wskazówki dla użytkownika",
-    tabs: {
-      rules: "Zasady gry",
-      account: "Konto",
-      games: "Gry",
-      logo: "Logo",
-      bases: "Bazy pytań",
-      people: "Znajomi i subskrybenci",
-      community: "Gry społeczności",
-      polls: "Ankiety",
-      settings: "Ustawienia gry",
-      control: "Prowadzenie gry",
-      help: "Pomoc",
-    },
     toc: "Spis treści",
+    tocLabel: "Spis treści wskazówek",
+    startLead: "Zasady teleturnieju Familiada i obsługa serwisu krok po kroku. Wybierz rozdział ze spisu treści.",
+    prev: "Poprzedni rozdział",
+    next: "Następny rozdział",
+    chapter: "Rozdział",
+    sections: "W tym rozdziale",
+    backTo: "Wróć do: {title}",
+    search: "Szukaj we wskazówkach",
+    searchClear: "Wyczyść",
+    searchEmpty: "Brak wyników.",
+    shotPrev: "Poprzedni widok",
+    shotNext: "Następny widok",
+    shotN: "Widok {n} z {total}",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
       modalText: "Zostaną dodane przykładowe materiały startowe.",

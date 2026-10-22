@@ -6,6 +6,7 @@ const {
   testAccountUsername,
 } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { touchSwipe } = require("./helpers/touch-swipe");
 
 const INDEX_URL = "https://www.familiada.online/";
 
@@ -22,6 +23,9 @@ async function openIndex(page, suffix = "") {
   await page.goto(INDEX_URL + suffix, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).not.toHaveClass(/page-loading/, { timeout: 15_000 });
   await expect(page.locator(".hero-card h1")).toBeVisible();
+  // Pasek etapów pokazuje się dopiero gotowy: z liniami między punktami i pod topbarem.
+  await expect(page.locator("#pipeline.is-ready")).toBeVisible();
+  await expect(page.locator("#pipeline .pipeline-line")).toHaveCount(3);
 }
 
 async function dumpIndexDiagnostics(page) {
@@ -201,4 +205,34 @@ test("fałszywa lub nieprawidłowa sesja nie daje dostępu", async ({ page, cont
   await openIndex(page);
   await page.waitForTimeout(1_500);
   await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?.*)?$/);
+});
+
+test("telefon — przesunięcie palcem zmienia kadr w kaflu, nie otwiera podglądu", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  try {
+    await serveBranchCode(context, { pages: ["index"] });
+    await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+    const page = await context.newPage();
+    await openIndex(page);
+    const shot = page.locator(".tile-shot").first();
+    await shot.scrollIntoViewIfNeeded();
+    const img = shot.locator(".shot-img");
+    const before = await img.getAttribute("data-shot");
+    await touchSwipe(page, shot, { dx: -180 });
+    await expect(img).not.toHaveAttribute("data-shot", before);
+    await touchSwipe(page, shot, { dx: 180 });
+    await expect(img).toHaveAttribute("data-shot", before);
+    await expect(page.locator("#imgvOverlay.is-open")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test("pasek etapów jest niewidoczny, dopóki nie jest gotowy", async ({ page }) => {
+  // Opóźniony skrypt strony: przed jego wykonaniem pasek nie może się pokazać.
+  await page.route(/\/home\/js\/index\.js/, async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.fallback(); });
+  await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#pipeline")).toBeHidden();
+  await expect(page.locator("#pipeline.is-ready")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#pipeline .pipeline-line")).toHaveCount(3);
 });
