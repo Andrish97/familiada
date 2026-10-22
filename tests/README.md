@@ -162,11 +162,24 @@ dedykowani agenci (pakiet E planu).
 | `standard` | `e2e.standard01` / `e2e+standard01@familiada.online` | tak | wszystko zwyczajne: własne dane, udostępnianie, znajomi, poczta do zalogowanego |
 | `noaccount` | `e2e+noaccount01@familiada.online` | **nigdy** | odbiorca bez konta |
 | `disposable` | `e2e.disposable01` (+ `e2e+disposable01.new@`) | tak, odtwarzane przy każdym lease | usuwanie konta, hasło, zmiana e-maila, profil |
-| `gallery` | `e2e.gallery01` | tak, stałe dane | tylko zrzuty galerii E20 |
+| `dedicated` | `e2e.dedicated01` | tak, dane zostają | przypisane na stałe do jednej czynności (tabela niżej) |
 | `guest` | tworzony w teście | tymczasowe | `loginAsGuest`, usuwany na końcu |
 
 Numer w roli nic nie znaczy. Rola w scenariuszu (owner, recipient…) to
 zmienna w teście, nie nazwa konta.
+
+### Dedicated accounts
+
+Konta ogólne z nazwy; przeznaczenie tylko z tej tabeli (źródło prawdy:
+`e2e_identities.purpose`). Brać, gdy czynność musi **zawsze** używać tego
+samego konta i trzymać na nim dane. Przypisanie: wolne konto → migracja
+`purpose` → wiersz tutaj → `accounts: { dedicated: "<purpose>" }`. Brak
+wolnych → poprosić użytkownika o dodanie konta. Szczegóły: plan §1a.
+
+| Account | Purpose | Kto używa | Dane na koncie |
+|---|---|---|---|
+| `e2e.dedicated01` | `e20-gallery` | galeria E20 (`e20-gallery.spec.js`, `e2e-tests.yml`) | dane do zrzutów |
+| `e2e.dedicated02`–`06` | — wolne | | |
 
 Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
 `heavy` (1 naraz — Control, wyświetlacz).
@@ -179,7 +192,7 @@ Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
    Nigdy adres, nazwa ani numer wpisane w specu.
 2. Logowanie tylko `loginAs(page, context, identity)` / `loginAsGuest`.
 3. Poczta tylko przez `mailbox` i tylko na wypożyczonych tożsamościach.
-4. Destrukcyjne operacje na koncie — wyłącznie `disposable`.
+4. Destrukcyjne operacje na koncie — wyłącznie `disposable`; trwałe dane jednej czynności — wyłącznie przypisany `dedicated`.
 5. Na `noaccount` i `*.new` nie logować się i nie zakładać konta.
 6. Spec, który wysyła maile, deklaruje `mail`; Control/wyświetlacz — `heavy`.
 7. Gość — test sam usuwa konto gościa na końcu.

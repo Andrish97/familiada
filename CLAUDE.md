@@ -110,7 +110,9 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
 - **Test accounts (decyzja użytkownika 2026-10-22, E25):** role `standard`,
-  `noaccount`, `disposable`, `gallery`, `guest`; zasoby `mail`, `heavy`.
+  `noaccount`, `disposable`, `dedicated`, `guest`; zasoby `mail`, `heavy`.
+  `dedicated` = konto przypisane na stałe do jednej czynności (rejestr w
+  `tests/README.md` „Dedicated accounts”); brak wolnych → prośba do użytkownika.
   Spec deklaruje potrzeby (`test.use({ accounts, resources })`), worker
   wypożycza (lease) konta na wyłączność — równoległe przebiegi bez umawiania
   się. Nazwy `e2e.<role><NN>`, e-mail `e2e+<role><NN>@familiada.online`
