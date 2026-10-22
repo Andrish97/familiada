@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-22T01453";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T01453";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T01453";
+import { icon } from "./icons.js?v=v2026-10-22T02373";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-22T02373";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-22T02373";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -146,7 +146,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T01453";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-22T02373";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -408,6 +408,10 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
 
   const { data, error } = await sb().auth.updateUser(payload, options);
   if (error) throw new Error(niceAuthError(error));
+
+  // Stan 'pending' w email_intents: po ewentualnym anulowaniu ('expired')
+  // strona potwierdzenia rozpozna anulowaną zamianę, a nowa zamiana go zeruje.
+  try { await sb().rpc("initiate_email_change_intent", { p_new_email: mail }); } catch {}
 
   return data?.user || null;
 }

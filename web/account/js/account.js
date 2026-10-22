@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T01453";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T01453";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-22T01453";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-22T01453";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-22T01453";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-22T01453";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T01453";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T01453";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T01453";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T01453";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T01453";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T01453";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-22T01453";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T02373";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T02373";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-22T02373";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-22T02373";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-22T02373";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-22T02373";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-22T02373";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T02373";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T02373";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T02373";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-22T02373";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T02373";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-22T02373";
 
 
 
@@ -252,8 +252,12 @@ function setMigratePendingUi(pendingEmail) {
 
 async function refreshMigrateState() {
   try {
-    const st = await fetchEmailChangeStatus();
-    setMigratePendingUi(st?.pending_email || "");
+    // Z serwera (getUser), nie z tokenu sesji: token po wysłaniu linku bywa
+    // nieaktualny -- "Anuluj" uznawał wtedy, że nie ma czego anulować, i link
+    // z maila dalej przenosił konto (jak w refreshAuthEmailState).
+    const { data, error } = await sb().auth.getUser();
+    if (error) throw error;
+    setMigratePendingUi(extractPendingEmail(data?.user));
   } catch (e) {
     console.warn("[migrate] refreshMigrateState failed:", e);
   }
@@ -443,27 +447,6 @@ function setEmailPendingUi(nextPendingEmail) {
   tickCooldowns();
 }
 
-
-async function fetchEmailChangeStatus() {
-  try {
-    const { data: sess } = await sb().auth.getSession();
-    const token = sess?.session?.access_token;
-    if (!token) return null;
-
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-
-    const email = String(payload.email || "").toLowerCase();
-    const meta = payload.user_metadata || {};
-    const metaPending = String(meta.familiada_email_change_pending || "").trim().toLowerCase();
-    const pending_email = metaPending && metaPending !== email ? metaPending : "";
-    return { ok: true, email, pending_email, is_pending: !!pending_email };
-  } catch (e) {
-    console.warn("[email-change-status] failed:", e);
-    return null;
-  }
-}
 
 async function refreshAuthEmailState() {
   try {
@@ -793,7 +776,7 @@ async function handleEmailCancel() {
     });
     if (metaErr) throw metaErr;
 
-    // 3. Refresh JWT so fetchEmailChangeStatus reads updated metadata
+    // 3. Odświeżenie sesji (token z aktualnymi metadanymi dla innych stron)
     await sb().auth.refreshSession();
 
     setStatus(t("account.statusEmailCancelled"));

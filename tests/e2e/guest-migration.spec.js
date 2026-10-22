@@ -215,6 +215,9 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     expect(secondLink).not.toBe(firstLink);
 
     await page.locator("#migrateCancel").click();
+    // Podpowiedź znika optymistycznie przed odpowiedzią serwera -- czekamy na
+    // komunikat po zakończonym anulowaniu, inaczej link wyprzedza anulowanie.
+    await expect(page.locator("#appToast")).toContainText("Migracja anulowana", { timeout: 20000 });
     await expect(page.locator("#migratePendingHint")).toBeHidden({ timeout: 15000 });
     await expect.poll(() => getGuestState(page), { timeout: 15000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });
 
@@ -223,7 +226,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     await serveBranchCode(linkContext, { pages: ["login/confirm"] });
     const linkPage = await linkContext.newPage();
     await linkPage.goto(secondLink, { waitUntil: "domcontentloaded" });
-    await expect(linkPage.locator("#status")).toContainText(/anulowana|nie udało/i, { timeout: 20000 });
+    await expect(linkPage.locator("#status")).toContainText(/anulowana/i, { timeout: 20000 });
     console.log("[e2e-diag] link migracji po anulowaniu:", (await linkPage.locator("#status").textContent())?.trim());
     await linkContext.close();
     await expect.poll(() => getGuestState(page), { timeout: 10000 }).toEqual({ profilesIsGuest: true, metaIsGuest: true });

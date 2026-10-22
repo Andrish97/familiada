@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
+\restrict 844B3kM1S8BJTuTqihT2Znazl9CrxjEJvhhCmo0rKc0xSo67bPBldQMNSECTDQV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11389,13 +11389,14 @@ CREATE FUNCTION "public"."guest_cancel_migration"() RETURNS "jsonb"
 declare
   v_uid uuid := auth.uid();
   v_email_confirmed_at timestamptz;
+  v_new_email text;
   has_col boolean;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
   end if;
 
-  select email_confirmed_at into v_email_confirmed_at
+  select email_confirmed_at, email_change into v_email_confirmed_at, v_new_email
   from auth.users
   where id = v_uid;
 
@@ -11421,6 +11422,14 @@ begin
       guest_last_active_at = now(),
       guest_expires_at = now() + interval '5 days'
   where id = v_uid;
+
+  if coalesce(v_new_email, '') <> '' then
+    insert into public.email_intents (email, intent, status, user_id)
+    values (lower(v_new_email), 'guest_migrate', 'expired', v_uid)
+    on conflict (email) do update
+      set status = 'expired', updated_at = now()
+      where public.email_intents.user_id is not distinct from v_uid;
+  end if;
 
   return jsonb_build_object('ok', true);
 end;
@@ -27059,5 +27068,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AYp5yhzoGMoq9eKXZXKpSnsXkerA5nuhenzUo5TTuhaiI9KUJm9vXSO4hMznlHk
+\unrestrict 844B3kM1S8BJTuTqihT2Znazl9CrxjEJvhhCmo0rKc0xSo67bPBldQMNSECTDQV
 
