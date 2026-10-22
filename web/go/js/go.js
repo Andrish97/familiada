@@ -1,16 +1,16 @@
 // web/go/js/go.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T02552";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T02560";
 guardViewportWidth({ minWidth: 0 });
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-22T02552";
-import { anonymousPollDestination, validAnonymousPollParams, isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T02552";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T02552";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-22T02552";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T02552";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-22T02552";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-22T02552";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-22T02560";
+import { anonymousPollDestination, validAnonymousPollParams, isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T02560";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T02560";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-22T02560";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T02560";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-22T02560";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-22T02560";
 
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-22T02552";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T02552";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-22T02560";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T02560";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
