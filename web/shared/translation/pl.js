@@ -179,6 +179,8 @@ const pl = {
     text: "Jeśli lubisz z niej korzystać i chcesz wesprzeć dalszy rozwój, możesz postawić twórcy kawę. To dobrowolny gest: nie daje dodatkowych funkcji ani korzyści, ale bardzo cieszy i motywuje do dalszej pracy. Dziękuję!",
     external: "Link otworzy zewnętrzny serwis {host} w nowej karcie.",
     go: "Postaw kawę",
+    pick: "Wybierz kawę:",
+    sizeLabel: "Postaw kawę za {amount}",
     close: "Zamknij",
   },
   contact: {
