@@ -70,6 +70,7 @@ function localFileFor(pathname, pages) {
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
  */
 async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
+  if (context) context.__e2eBranchRouted = true;
   if (safeAreaInsets) {
     await context.addInitScript((insets) => {
       const applyInsets = () => {
@@ -142,4 +143,11 @@ async function serveBranchLoginHtml(route) {
   await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
 }
 
-module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor };
+// Próba generalna: kontekst, który test otworzył bez serveBranchCode (np. drugi
+// użytkownik z browser.newContext()), też musi mówić z API_ORIGIN.
+async function ensureApiOriginRouting(context) {
+  if (!API_ORIGIN || API_ORIGIN === PROD_API_ORIGIN || !context || context.__e2eBranchRouted) return;
+  await serveBranchCode(context, { pages: [] });
+}
+
+module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor, ensureApiOriginRouting };
