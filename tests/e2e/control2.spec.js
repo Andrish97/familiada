@@ -3123,13 +3123,15 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 // urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
 // poza ponownym wejściem na URL urządzenia.
 
-// Modal kropki statusu (control/js/app.js's showQrModal) koduje URL
-// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
-// Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
+// Modal kropki statusu (control/js/app.js's showQrModal): Wyświetlacz ma
+// bezpośredni link "Otwórz" (#qrModalOpen); Prowadzący i Przycisk — kod QR
+// rysowany lokalnie (SVG, bez adresu w atrybucie) i sześciocyfrowy kod,
+// który operator wpisuje na urządzeniu w /connect/.
 async function readDeviceUrlFromModal(control, kind) {
   if (kind === "display") return control.locator("#qrModalOpen").getAttribute("href");
-  const src = await control.locator("#qrModalImg").getAttribute("src");
-  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+  await expect(control.locator("#qrModalImg")).toHaveAttribute("src", /^data:image\/svg/);
+  const code = String(await control.locator("#qrModalCodeVal").textContent() || "").replace(/\D/g, "");
+  return code.length === 6 ? `code:${code}` : "";
 }
 
 // Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
@@ -3149,7 +3151,15 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
   instrumentAnon(p, kind);
-  await p.goto(url, { waitUntil: "domcontentloaded" });
+  if (url.startsWith("code:")) {
+    await p.goto("/connect/", { waitUntil: "domcontentloaded" });
+    await p.locator("#connectCodeInput").fill(url.slice(5));
+    await p.locator("#btnConnectCode").click();
+    await p.locator(".uni-foot .btn.gold").click();
+    await expect.poll(() => new URL(p.url()).pathname, { timeout: 15000 }).toBe(`/control/${kind}/`);
+  } else {
+    await p.goto(url, { waitUntil: "domcontentloaded" });
+  }
   await control.locator("#qrModalClose").click();
   await expect(control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}`)).toHaveClass(/\bok\b/, { timeout: 15000 });
   return p;
