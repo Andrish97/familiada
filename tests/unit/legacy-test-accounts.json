@@ -6,8 +6,6 @@
   "account-rating.spec.js": 2,
   "activity.spec.js": 1,
   "auth-username.spec.js": 1,
-  "base-explorer-perf.spec.js": 2,
-  "base-explorer.spec.js": 203,
   "base-refusals.spec.js": 7,
   "bases.spec.js": 44,
   "cross-resource-locks.spec.js": 16,

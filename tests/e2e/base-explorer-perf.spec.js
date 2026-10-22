@@ -4,8 +4,9 @@
 // LOCAL_PERF=1) — wypełnia bazę tysiącami wierszy, więc nie na produkcji.
 // Wynik: linie „[perf] …” na stdout + progi, których przekroczenie to błąd.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
+
+test.use({ needs: { standard: 1 } });
 
 const BASE_URL = "https://www.familiada.online/bases/explorer";
 const N_QUESTIONS = Number(process.env.PERF_QUESTIONS || 5000);
@@ -70,9 +71,9 @@ async function timed(page, label, act, until) {
   return ms;
 }
 
-test("duża baza: wczytanie, rysowanie, filtry i zaznaczanie mieszczą się w progach", async ({ page, context }) => {
+test("duża baza: wczytanie, rysowanie, filtry i zaznaczanie mieszczą się w progach", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(300_000);
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${BASE_URL}?id=00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" }).catch(() => {});
   await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 30000 });
   const s = await seed(page, { N_QUESTIONS, N_TOP, N_SUB, N_SUB2, N_TAGS });

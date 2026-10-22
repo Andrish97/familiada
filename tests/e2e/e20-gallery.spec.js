@@ -4,14 +4,15 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./helpers/e20-gallery-accounts");
+const os = require("node:os");
+const { prepareE20Gallery } = require("./helpers/prepare-e20-gallery");
 const { withE2EBypass } = require("./helpers/login");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
 // Playwright clears test-results on startup. Gallery output remains only page
 // folders with PNGs; manifests live in runner temp and are not in the artifact.
-const MANIFEST_DIR = path.join(PREP_DIR, "familiada-e20-gallery-manifests");
+const MANIFEST_DIR = path.join(process.env.RUNNER_TEMP || os.tmpdir(), "familiada-e20-gallery-manifests");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "games",
@@ -35,7 +36,6 @@ const PROFILES = [
 const TV_GALLERY_PAGES = new Set(["home", "login", "connect-tv", "maintenance", "404"]);
 const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
-const requestedAccounts = galleryAccountNumbers();
 const unknownProfiles = requestedProfiles.filter((id) => !PROFILES.some((profile) => profile.id === id));
 if (unknownProfiles.length) {
   throw new Error(`Nieznane profile galerii E20: ${unknownProfiles.join(", ")}. Dostępne: ${PROFILES.map((profile) => profile.id).join(", ")}.`);
@@ -1216,24 +1216,26 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   return { modalIds, blockedByGuard, preparedState };
 }
 
-// Profile są rozdzielone między istniejące konta. Każde konto robi swoje
-// widoki i urządzenia po kolei, a niezależne konta mogą pracować równolegle.
-// To usuwa współbieżność blokad zasobów bez tworzenia osobnego konta galerii.
-test.describe.configure({ mode: "parallel" });
+// E25: jedno konto przypisane do galerii (`dedicated: "e20-gallery"`, dane
+// zostają między przebiegami). Profile i ich widoki lecą kolejno w jednym
+// teście -- strony jednego konta nie mogą działać równolegle (blokady zasobów).
+test.use({ needs: { dedicated: "e20-gallery" } });
 test.setTimeout(requestedPages.length ? 5 * 60 * 1000 : requestedProfiles.length === 1 ? 15 * 60 * 1000 : 30 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
 const selectedProfiles = PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id));
-for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
-  const accountProfiles = selectedProfiles.filter((_, profileIndex) => profileIndex % requestedAccounts.length === accountIndex);
-  if (!accountProfiles.length) continue;
-  test(`E20 gallery · test${accountNumber} · ${accountProfiles.map((profile) => profile.id).join(", ")}`, async ({ browser }) => {
+let prepared = null;
+test.beforeAll(async ({ browser, accounts, loginAs }) => {
+  test.setTimeout(120_000);
+  fs.rmSync(MANIFEST_DIR, { recursive: true, force: true });
+  fs.mkdirSync(MANIFEST_DIR, { recursive: true });
+  prepared = await prepareE20Gallery(browser, accounts.dedicated[0], loginAs);
+});
+
+test(`E20 gallery · ${selectedProfiles.map((profile) => profile.id).join(", ")}`, async ({ browser }) => {
     fs.mkdirSync(OUT, { recursive: true });
-    const files = galleryAccountPaths(accountNumber);
-    if (!fs.existsSync(files.data) || !fs.existsSync(files.authState)) {
-      throw new Error(`Brak przygotowanej sesji lub odczytu danych konta test${accountNumber}; uruchom krok Prepare E20 session`);
-    }
-    const data = JSON.parse(fs.readFileSync(files.data, "utf8"));
+    const { data, authState } = prepared;
+    const accountProfiles = selectedProfiles;
     for (const profile of accountProfiles) {
       const viewport = { width: profile.width, height: profile.height };
       const deviceOptions = {
@@ -1280,7 +1282,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         }
       }
 
-      const context = await browser.newContext({ ...deviceOptions, storageState: files.authState });
+      const context = await browser.newContext({ ...deviceOptions, storageState: authState });
       try {
         await withE2EBypass(context);
         await serveBranchCode(context, { pages: branchPages, safeAreaInsets: profile.safe });
@@ -1482,5 +1484,4 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         await context.close();
       }
     }
-  });
-}
+});

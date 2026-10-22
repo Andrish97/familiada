@@ -31,10 +31,6 @@ on:
         description: 'Opcjonalnie: profile galerii E20 rozdzielone przecinkami. Puste = wszystkie urządzenia.'
         required: false
         default: ""
-      e20_gallery_accounts:
-        description: 'Istniejące konta testowe do galerii E20, np. 1,2,3. Widoki jednego konta są sekwencyjne; konta pracują równolegle.'
-        required: false
-        default: "2"
       publish_mail_screenshots:
         description: 'Publikuj zrzuty /mails/ w docs po udanym punktowym teście.'
         type: boolean
@@ -259,15 +255,6 @@ jobs:
             node --test --test-concurrency=1 unit/*.test.js
           fi
 
-      - name: Prepare E20 session and read existing account data
-        if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
-        env:
-          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
-        run: node e2e/helpers/prepare-e20-gallery.js
-        working-directory: tests
-
       - name: Run E2E tests (spec_filter)
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
@@ -275,7 +262,6 @@ jobs:
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
           E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
           E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
-          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
           # Spec może wypożyczać zasoby tylko dla wybranych testów (np. poczta w control2).
           E2E_SPEC_FILTER: ${{ inputs.spec_filter }}
