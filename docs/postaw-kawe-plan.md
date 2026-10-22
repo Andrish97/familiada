@@ -1,4 +1,4 @@
-# „Postaw kawę” — plan (2026-10-22)
+# „Postaw kawę” — plan (2026-10-22) — WDROŻONE 2026-10-22 (`main` 1d79cc54, kontrola 39720297252)
 
 Prośba użytkownika: Familiada zostaje bezpłatna, ale kto chce, może dobrowolnie
 wesprzeć twórcę („kawa bez benefitów”). Branch: `ccr-c9e1b7c4-8uoses`.
