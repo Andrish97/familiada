@@ -114,13 +114,25 @@ for (const viewport of [
   { width: 844, height: 390, label: "844x390" },
   { width: 667, height: 375, label: "667x375" },
 ]) {
-  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser }) => {
+  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser }, testInfo) => {
     const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
     try {
       await page.setViewportSize(viewport);
       let fixture = tasksPreview;
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
+      // Poziome okno niższe niż próg stron roboczych (580 px, decyzja 2026-10-22):
+      // komputer dostaje „Za małe okno”; po powiększeniu okna lista wraca.
+      if (viewport.width >= viewport.height && viewport.height < 580) {
+        await expect(page.locator("#pageGuard")).toBeVisible();
+        await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "small");
+        await expect(page.locator("html")).toHaveAttribute("data-device-guard", "small");
+        await page.screenshot({ path: testInfo.outputPath(`shot-tasks-guard-small-${viewport.label}.png`) });
+        await page.setViewportSize({ width: 1400, height: 900 });
+        await expect(page.locator("html")).toHaveAttribute("data-device-guard", "ok");
+        await expect(page.locator(".rowsRow")).toHaveCount(4);
+        return;
+      }
       await expect(page.locator(".rowsRow")).toHaveCount(4);
       await expect(page.locator('input[type="search"], .list-search, .games-bottom')).toHaveCount(0);
       await expect(page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);

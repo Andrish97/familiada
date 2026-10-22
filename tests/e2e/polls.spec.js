@@ -78,7 +78,14 @@ test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczy
     await expect(page.locator("#cardMain")).toBeVisible();
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.screenshot({ path: "test-results/shot-e20-polls-ready-1400.png", fullPage: true });
+    // Niskie poziome okno komputera (poniżej 580 px, decyzja 2026-10-22):
+    // „Za małe okno” na żywo, po powiększeniu ankieta wraca bez przeładowania.
     await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.locator("#pageGuard")).toBeVisible();
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "small");
+    await page.screenshot({ path: "test-results/shot-polls-guard-small-844x390.png" });
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await expect(page.locator("#pageGuard")).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(page.locator("#pollTabs")).toBeVisible();
     await page.locator("#tabResults").click();
@@ -86,7 +93,7 @@ test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczy
     await page.locator("#tabShare").click();
     await expect(page.locator("#secShare")).toHaveClass(/active/);
     await expect(page.locator("#pollBar")).toBeVisible();
-    await page.screenshot({ path: "test-results/shot-e20-polls-landscape-844x390.png", fullPage: true });
+    await page.screenshot({ path: "test-results/shot-e20-polls-after-guard-1400.png", fullPage: true });
   } finally {
     await deleteGame(page, fixture.gameId);
   }

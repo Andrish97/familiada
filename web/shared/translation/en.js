@@ -218,6 +218,8 @@ const en = {
     rotateMessage: "Rotate your device to get the right view.",
     narrowTitle: "Window too narrow",
     narrowMessage: "Make the browser window wider or leave split-screen view.",
+    smallTitle: "Window too small",
+    smallMessage: "This page needs a taller window. Enlarge the browser window, zoom out or leave split-screen view.",
     back: "Back",
     guestTitle: "Not available for guest account",
     guestMessage: "This section is available only for registered users. Log in or create an account to use Friends, Subscribers, Tasks, and sharing.",

@@ -186,7 +186,7 @@ export async function initPage(id, opts = {}) {
 
   // Guard jest pierwszą bramką. Nie pytamy o sesję ani nie odsłaniamy strony,
   // dopóki urządzenie i viewport nie spełniają warunków tej trasy.
-  const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth || 0, backHref: backHref(id, { anon: true }), ...(p.deviceGuard || {}), ...opts.deviceGuard });
+  const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth || 0, minHeight: p.minViewportHeight || 0, backHref: backHref(id, { anon: true }), ...(p.deviceGuard || {}), ...opts.deviceGuard });
   if (!(await guard.ready)) return null;
 
   // Auth startuje dopiero po przejściu guarda; może biec równolegle z i18n.

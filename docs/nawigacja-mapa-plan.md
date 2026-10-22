@@ -1133,6 +1133,32 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-22 — guard sprawdza też wysokość** (decyzja użytkownika; przypadek:
+  tablet w poziomie, krótszy bok ≥ 700, szerokość ≥ 980, ale viewport ok. 550 px
+  wysokości przez paski przeglądarki/powiększenie — Moje gry w jednym ściśniętym
+  rzędzie). Pole mapy `minViewportHeight`; jeden wspólny próg stron roboczych
+  `MIN_WORK_HEIGHT` = **580 px** (`device-guard.js`, obok `MIN_WORK_WIDTH`):
+  Moje gry, Edycja gry, Ustawienia gry, Ankieta, Znajomi, Subskrybenci, Zadania,
+  Bazy, Menedżer bazy, Moje loga i trzy edytory logo, Społeczność. Ten sam próg
+  ma Wyświetlacz (i ekran QR ankiety, ten sam guard) — obok wymagań HD/ekranu.
+  Próg obowiązuje tylko **w poziomie** (w pionie układ jest jednokolumnowy i się
+  przewija; inaczej iPhone SE 375×553 byłby blokowany) i nie działa, gdy na
+  dotyku aktywne jest pole tekstowe (klawiatura ekranowa obniża viewport).
+  Stany: za niski poziomy widok → **„Obróć urządzenie”**, gdy obrót pomoże
+  (dotykowy telefon/tablet, strona dozwolona w pionie, a jej próg szerokości
+  mieści się w krótszym boku ekranu), w innym razie **„Za małe okno”**
+  (`pageGuard.smallTitle/smallMessage`; komputer, TV, strona 980 px jak Control
+  czy Wyświetlacz na tablecie). Telefon jak dotąd: obrót albo „Niedostępne na
+  telefonie”. Własny pomiar Control (`fits`) też daje teraz „Za małe okno”
+  (skala panelu zależy od szerokości i wysokości). Guard pojawia się i znika na
+  żywo (resize, orientationchange, visualViewport — także zmiana powiększenia).
+  Wyjątki (bez progu): strony proste/tekstowe działające na telefonie w pionie —
+  strona główna, logowanie, Konto, Podłącz urządzenie, Wskazówki, Prywatność,
+  `/mails/`, głosowanie, `/go/`; Control (ma dokładniejszy pomiar `fits`);
+  Prowadzący (działa na telefonie w pionie i poziomie, układ się przewija),
+  Przycisk i wąż (z założenia telefon w poziomie, ok. 320–430 px wysokości —
+  próg by je wyłączył; decyzja właściciela).
+
 - **2026-10-20 — logowanie z węża wraca do gry** (pytanie użytkownika): wyjątek od „po zalogowaniu zawsze /games/” obok `next=` z maili. Link „Zaloguj się” w `/snake/` to `/login/?next=snake&qr=<id demo>&lang=…`; `login.js` przyjmuje `next=snake` tylko z ważnym `qr` (`isScreenshotPollId`, inaczej strona byłaby 404) i wraca na `/snake/?qr=…`. Strona węża jest `standalone` (mapa: brak „Wstecz”).
 
 - **2026-10-11 (środowisko pracy):** ograniczać ciężkie zadania i testy
