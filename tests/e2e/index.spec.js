@@ -229,9 +229,17 @@ test("telefon — przesunięcie palcem zmienia kadr w kaflu, nie otwiera podglą
 
 test("pasek etapów jest niewidoczny, dopóki nie jest gotowy", async ({ page }) => {
   // Opóźniony skrypt strony: przed jego wykonaniem pasek nie może się pokazać.
-  await page.route(/\/home\/js\/index\.js/, async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.fallback(); });
+  // Sprawdzane w trakcie opóźnienia -- po DOMContentLoaded skrypt już działa,
+  // a gotowy pasek pojawia się zaraz po tłumaczeniach (E27: mniejszy słownik).
+  let beforeScript = null;
+  await page.route(/\/home\/js\/index\.js/, async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    const pipeline = page.locator("#pipeline");
+    beforeScript = { count: await pipeline.count(), hidden: await pipeline.isHidden() };
+    await route.fallback();
+  });
   await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#pipeline")).toBeHidden();
+  expect(beforeScript).toEqual({ count: 1, hidden: true });
   await expect(page.locator("#pipeline.is-ready")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#pipeline .pipeline-line")).toHaveCount(3);
 });
