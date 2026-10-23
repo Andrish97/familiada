@@ -112,7 +112,6 @@
   /* ===== DŹWIĘKI ===== */
   .sfx-table { display: flex; flex-direction: column; }
 
-
   .sfx-variant-select {
     font-size: .82rem;
     padding: 5px 8px;
@@ -171,12 +170,6 @@
     letter-spacing: .06em;
     color: var(--gold);
     opacity: .75;
-  }
-
-  .gs-hint {
-    font-size: .8rem;
-    opacity: .45;
-    margin-top: 4px;
   }
 
   /* ===== DISPLAY PREVIEW ===== */

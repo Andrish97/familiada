@@ -100,7 +100,7 @@ export function buildAnswerHints() {
   box.className = "qf-hints";
   for (const key of ["answerLimit", "finalDisplay"]) {
     const p = document.createElement("p");
-    p.className = "qf-hint";
+    p.className = "hint";
     p.textContent = t(`questionForm.hints.${key}`, { max: LIMITS.A_TEXT, final: FINAL_DISPLAY_MAX });
     box.appendChild(p);
   }

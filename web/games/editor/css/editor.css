@@ -63,8 +63,7 @@
   }
 
   .panelHint {
-      font-size: 12px;
-      opacity: .75;
+      margin: 0;
       text-align: right;
       min-width: 0
   }

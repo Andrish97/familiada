@@ -61,10 +61,4 @@
   .poll-go-email .inp {
     flex: 1 1 200px;
   }
-
-  .poll-go-hint {
-    margin-top: 12px;
-    font-size: 12px;
-    opacity: .7;
-  }
 }

@@ -4,7 +4,6 @@
     height: 100%;
   }
 
-
   body.settings-body > main.wrap{
     flex: 1 1 auto;
     min-height: 0;
@@ -209,11 +208,6 @@
 
   .mode-block .field{
     margin-top: 6px;
-  }
-
-  .mode-hint{
-    font-size: 12px;
-    opacity: .75;
   }
 
   .dt-group{
@@ -607,11 +601,6 @@
     margin-bottom: 6px;
   }
 
-  .field-hint{
-    font-size: 12px;
-    opacity: .7;
-  }
-
   .warn{
     color: #ffcc99;
     font-size: 12px;
@@ -984,7 +973,6 @@
       max-height: none;
       overflow: visible;
     }
-
 
     /* Sidebar — hidden by default, shown when mail-view=folders */
     .mail-client .mail-sidebar {
@@ -1938,7 +1926,6 @@
     margin-bottom: 1rem;
   }
 
-
   .mc-field-inline label {
     font-size: 13px;
     opacity: .7;
@@ -1970,7 +1957,6 @@
     border-bottom: 1px solid var(--w-8);
     user-select: none;
   }
-
 
   .mc-table tbody tr {
     transition: background .15s;
@@ -2212,7 +2198,6 @@
   .session-status--done { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.3); color: #4ade80; }
   .session-status--err  { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); color: #f87171; }
   .session-status-errors { color: #fbbf24; font-size: 12px; white-space: nowrap; }
-
 
   /* Operational presence before maintenance; matches existing settings cards. */
   .activity-row{padding:10px 12px;margin:8px 0;border:1px solid var(--w-14);border-radius:var(--r-sm);overflow-wrap:anywhere}

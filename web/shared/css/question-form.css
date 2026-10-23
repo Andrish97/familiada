@@ -142,13 +142,6 @@
       padding: 2px 4px 0
   }
 
-  .qf-hint {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1.4;
-      opacity: .72
-  }
-
   .btn.icon.qf-del {
       width: 36px;
       height: 36px;

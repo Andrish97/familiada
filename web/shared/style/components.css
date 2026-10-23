@@ -616,10 +616,13 @@
   .pass-wrap .pass-toggle:hover { color: rgb(var(--rgb-white) / .85); }
   .pass-wrap .pass-toggle svg { width: 18px; height: 18px; pointer-events: none; }
 
+  /* Podpowiedź (jedyna: pod polem, w pasku, w oknie). Kolor przyciszony
+     zamiast przezroczystości — stały kontrast, linki w środku czytelne. */
   .hint {
-    opacity: .8;
-    font-size: 13px;
-    line-height: 1.35;
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-muted);
   }
   .msg {
     color: var(--accent);
@@ -856,10 +859,6 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
-  .uni-hint {
-    font-size: 12px;
-    opacity: .75;
-  }
   .uni-inp { width: 100%; }
   /* Kod połączenia urządzenia w oknie (QR w ankiecie i w Control). */
   .uni-code {
@@ -882,11 +881,8 @@
     font-variant-numeric: tabular-nums;
     font-family: var(--font-mono);
   }
-  .share-uni .uni-hint,
-  .uni-modal .uni-hint {
-    text-align: center;
-    line-height: 1.4;
-  }
+  /* Podpowiedź pod tytułem okna: wyśrodkowana. */
+  .uni-hint { text-align: center; }
   .uni-foot {
     margin-top: 14px;
     padding-top: 12px;

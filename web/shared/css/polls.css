@@ -61,8 +61,7 @@
   .pollStateInfo:not(:empty)::before{ content: "· "; opacity: .7; }
   /* powód, dla którego akcja jest wyłączona */
   .pollBarHint{
-    font-size: 12px;
-    line-height: 1.3;
+    margin: 0;
     color: var(--g-60);
     max-width: 420px;
   }
@@ -243,12 +242,6 @@
     align-items: center;
     gap: 12px;
   }
-  .pollQrHint{
-    font-size: 12px;
-    line-height: 1.3;
-    text-align: center;
-    opacity: .7;
-  }
   .qrFrameSmall{
     padding: 12px;
     background: #fff;
@@ -269,7 +262,6 @@
   }
   .qrBox.img:not(:disabled):hover{ transform: scale(1.02); }
   .qrBox.img:empty{ display: none; }
-  .qrBox.img:empty + .pollQrHint{ display: none; }
   .qrBox.img:disabled{ cursor: default; }
   .qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: var(--r-md); }
   .pollQrVote{ display: flex; justify-content: center; }
@@ -367,7 +359,7 @@
     flex-wrap: wrap;
     margin: 0 0 10px;
   }
-  .tallyHint{ font-size: 12px; opacity: .8; line-height: 1.35; flex: 1 1 260px; min-width: 0; }
+  .tallyHint{ margin: 0; flex: 1 1 260px; min-width: 0; }
   .tallyTools{ display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .tallySave{ font-size: 12px; opacity: .75; min-width: 0; }
   .tallySave[data-state="failed"]{ color: #ffaaaa; opacity: 1; }
@@ -503,8 +495,6 @@
   }
 }
 
-
-
 /* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
    warstwie strony, jak ogólne reguły arkusza w silniku. */
 @layer states {
@@ -540,7 +530,6 @@
     }
     .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
   }
-
 
   @media (max-width: 600px){
     /* Układ QR taki sam jak w mobilnym modalu urządzenia w Control. */

@@ -546,14 +546,14 @@ function renderTeams() {
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
         <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
-        <div class="gs-hint gs-team-measure" id="gsTeamAMeasure" aria-live="polite"></div>
+        <div class="hint gs-team-measure" id="gsTeamAMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
         <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
-        <div class="gs-hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
+        <div class="hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
       </div>
-      <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
+      <div class="hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
     </div>
   `;
 
@@ -721,7 +721,7 @@ function renderDisplay() {
           <span class="toggle-slider" data-text="${escAttr(t("gameSettings.display.hostLogoSource"))}"></span>
         </label>
       </div>
-      <div class="gs-hint">${t("gameSettings.display.hostLogoHint")}</div>
+      <div class="hint">${t("gameSettings.display.hostLogoHint")}</div>
     </div>
     <div class="sfx-foot">
       <button class="btn" id="btnDisplayReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
@@ -858,7 +858,7 @@ async function renderSound() {
 
   try { await loadSfxManifest(); } catch (e) {
     const tbl = document.getElementById("sfxTableGs");
-    if (tbl) tbl.innerHTML = `<div class="gs-hint" style="color:red">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
+    if (tbl) tbl.innerHTML = `<div class="hint" style="color:red">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
     return;
   }
 
@@ -1162,7 +1162,7 @@ function renderQuestions() {
               <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeManual"))}"></span>
             </label>
           </div>
-          <div class="gs-hint">${t("gameSettings.questions.finalModeHint")}</div>
+          <div class="hint">${t("gameSettings.questions.finalModeHint")}</div>
         </div>
       </div>
       <div class="sectionBlock">
@@ -1179,8 +1179,8 @@ function renderQuestions() {
               <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeOrdered"))}"></span>
             </label>
           </div>
-          <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
+          <div class="hint">${t("gameSettings.questions.roundsModeHint")}</div>
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1230,7 +1230,7 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
+      <div class="hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
       <div class="gs-badge-row">
         <span class="tag tag--gold">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
@@ -1391,7 +1391,7 @@ function renderRounds() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.rounds.hint" : "gameSettings.rounds.hintPhone")}</div>
+      <div class="hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.rounds.hint" : "gameSettings.rounds.hintPhone")}</div>
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
@@ -1604,7 +1604,7 @@ function renderGame() {
         <div class="setting-item">
           <div class="lbl2">${t("gameSettings.game.roundMultipliers")}</div>
           <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
-          <div class="gs-hint">${t("gameSettings.game.roundMultipliersHint")}</div>
+          <div class="hint">${t("gameSettings.game.roundMultipliersHint")}</div>
           <div class="gs-field-msg" id="gsMultipliersMsg" role="alert"></div>
         </div>
       </div>
@@ -1613,7 +1613,7 @@ function renderGame() {
         <div class="setting-item">
           <div class="lbl2">${t("gameSettings.game.finalMinPoints")}</div>
           <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}" style="margin-top:6px;max-width:160px"/>
-          <div class="gs-hint">${t("gameSettings.game.finalMinPointsHint")}</div>
+          <div class="hint">${t("gameSettings.game.finalMinPointsHint")}</div>
           <div class="gs-field-msg" id="gsFinalMinPtsMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalMinPtsSuggest"></div>
         </div>
@@ -1651,7 +1651,7 @@ function renderGame() {
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}" style="margin-top:6px"/>
             <div class="gs-field-msg" id="gsPrizeMultiplierMsg" role="alert"></div>
           </div>
-          <div class="gs-hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
+          <div class="hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
         </div>
       </div>
     </div>

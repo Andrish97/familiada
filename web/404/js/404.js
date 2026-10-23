@@ -15,7 +15,7 @@ import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T05395";
   const isTv = document.documentElement.dataset.tvLayout === "true";
   if (isTv) {
     document.querySelector(".notfound-actions")?.remove();
-    const hint = document.querySelector(".notfound-hint");
+    const hint = document.querySelector(".notfound-card .hint");
     if (hint) hint.textContent = t("notFound.tvRedirectHint");
   }
   let returnTo = isTv ? "/connect/?tv=1" : "/";
@@ -30,7 +30,7 @@ import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T05395";
           myGames.hidden = false;
           myGames.href = withLangParam("/games/");
         }
-        const hint = document.querySelector(".notfound-hint");
+        const hint = document.querySelector(".notfound-card .hint");
         if (hint) hint.textContent = t("notFound.authRedirectHint");
       }
     } catch (err) {

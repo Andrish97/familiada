@@ -166,7 +166,7 @@ function prepareSheetLayout(overlayEl) {
   const nestedActionSelectors = [".baseShareLookup"];
   const isHeader = el => headerSelectors.some(sel => el.matches(sel));
   const isAction = el => actionSelectors.some(sel => el.matches(sel));
-  const hintNodes = [...modal.querySelectorAll(".mSub, .uni-hint, .hint, .field-hint")]
+  const hintNodes = [...modal.querySelectorAll(".mSub, .uni-hint, .hint")]
     .filter(el => el.textContent.trim() && el.getClientRects().length > 0);
   const onlyHint = hintNodes.length === 1 ? hintNodes[0] : null;
   const isGlobalHint = onlyHint?.matches(".mSub")

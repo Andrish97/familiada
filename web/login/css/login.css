@@ -150,13 +150,7 @@
       padding: 0;
   }
 
-  .hint {
-      display: block;
-      margin-top: 10px;
-      opacity: .75;
-      font-size: 12px;
-      line-height: 1.35;
-  }
+  .hint { display: block; margin-top: 12px; }
 
   .cooldown {
       display: block;

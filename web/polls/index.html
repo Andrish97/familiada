@@ -64,7 +64,7 @@
         <span class="pollStateWord" id="pollStateWord"></span>
         <span class="pollStateInfo" id="pollStateInfo"></span>
         <span class="subsSummary" id="subsSummary"></span>
-        <span class="pollBarHint" id="hintTop"></span>
+        <span class="hint pollBarHint" id="hintTop"></span>
       </div>
       <div class="pollBarActions" id="pollActions">
         <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n-title="polls.actions.resumePoll" data-i18n-aria-label="polls.actions.resumePoll" title="Wznów głosowanie" aria-label="Wznów głosowanie"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.resumePoll">Wznów głosowanie</span></button>
@@ -113,7 +113,7 @@
                 <div class="pollLinkLive" id="linkLive">
                   <div class="pollQrStage">
                     <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
-                    <div class="pollQrHint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
+                    <div class="hint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
                   </div>
                   <input id="pollLink" type="hidden" />
                   <div class="pollLinkActions">
@@ -134,7 +134,7 @@
                 <div class="pollsEmpty empty-state" id="subsEmpty" style="display:none;"></div>
                 <div class="grid subsGrid" id="subsGrid"></div>
                 <div class="subsFoot">
-                  <span class="pollBarHint subsSendHint" id="sendHint"></span>
+                  <span class="hint pollBarHint subsSendHint" id="sendHint"></span>
                 </div>
               </section>
             </div>
@@ -144,7 +144,7 @@
           <div class="polls-section" id="secResults" role="tabpanel">
             <div class="meta" id="resultsMeta"></div>
             <div class="tallyBar" id="tallyBar" hidden>
-              <div class="tallyHint" id="tallyHint"></div>
+              <div class="hint tallyHint" id="tallyHint"></div>
               <div class="tallyTools" id="tallyTools">
                 <span class="tallySave" id="tallySave" role="status"></span>
                 <button class="btn sm" id="btnUndo" type="button" disabled data-i18n-title="polls.tally.undo" data-i18n-aria-label="polls.tally.undo" title="Cofnij" aria-label="Cofnij"><i class="ico" data-icon="undo"></i></button>
@@ -168,7 +168,7 @@
           <button class="btn sm" id="pollRecipientsClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="uni-body">
-          <div class="uni-hint" data-i18n="polls.share.addRecipientsHint">Wybierz osoby, które chcesz zaprosić do tej ankiety.</div>
+          <div class="hint uni-hint" data-i18n="polls.share.addRecipientsHint">Wybierz osoby, które chcesz zaprosić do tej ankiety.</div>
           <div id="pollRecipientsEmpty" class="pollsEmpty empty-state" hidden></div>
           <div id="pollRecipientsFriends" class="pollRecipientGroup"></div>
           <div id="pollRecipientsSubs" class="pollRecipientGroup"></div>
@@ -188,12 +188,12 @@
           <button class="btn sm" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="uni-body">
-          <div class="uni-hint" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
+          <div class="hint uni-hint" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
           <div class="pollQrVote" id="pollQrModalVote" hidden></div>
           <div class="uni-code" id="pollQrModalCode">
             <span class="uni-code-val" id="pollQrModalCodeVal">——————</span>
           </div>
-          <div class="uni-hint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+          <div class="hint uni-hint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
         </div>
         <div class="uni-foot modal-actions" id="pollQrModalActions">
           <button class="btn sm" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn" data-i18n-icon="eye">Otwórz</button>

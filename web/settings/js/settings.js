@@ -3993,7 +3993,7 @@ function showCompose(defaults = {}) {
 
           <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
             <button class="btn sm" id="btnComposePreview" type="button">${icon("eye")} Podgląd</button>
-            <span class="field-hint" id="composeSendStatus"></span>
+            <span class="hint" id="composeSendStatus"></span>
             <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
           </div>
         </div>

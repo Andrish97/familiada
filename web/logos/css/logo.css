@@ -516,7 +516,6 @@
   #drawStageHost.cur-none    canvas,
   #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
-
   /* =========================================================
      DRAW toolbar (w editorToolbar) — toolGrid + separatory
   ========================================================= */
@@ -613,7 +612,6 @@
     max-height: 100%;
     image-rendering: pixelated;
   }
-  .imgPrevHint{ margin-top: 8px; opacity: .75; font-size: 12px; }
 
   /* =========================================================
      IMAGE: ramka kadru 26:11 (cropFrame) — MUSI być widoczna

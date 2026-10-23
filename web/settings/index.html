@@ -105,7 +105,7 @@
           </div>
 
           <div class="mode-block" id="modeMessage">
-            <div class="mode-hint">Komunikat bez daty i bez odliczania.</div>
+            <div class="hint">Komunikat bez daty i bez odliczania.</div>
           </div>
 
           <div class="mode-block" id="modeReturnAt" hidden>
@@ -123,7 +123,7 @@
                 <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
                 <button class="btn sm dt-open" data-dt-open="returnAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
-              <span class="field-hint">Minimum 10 minut od teraz.</span>
+              <span class="hint">Minimum 10 minut od teraz.</span>
             </div>
           </div>
 
@@ -142,7 +142,7 @@
                 <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
                 <button class="btn sm dt-open" data-dt-open="endAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
-              <span class="field-hint">Minimum 10 minut od teraz.</span>
+              <span class="hint">Minimum 10 minut od teraz.</span>
             </div>
           </div>
 
@@ -176,7 +176,7 @@
               <textarea class="inp" id="maintenanceCustomCommentUk" rows="2" placeholder="Додаткова інформація для користувачів..." style="resize:vertical"></textarea>
             </div>
             
-            <span class="field-hint" style="margin-top:8px">Użyj #timer, aby wstawić odliczanie/czas powrotu.</span>
+            <span class="hint" style="margin-top:8px">Użyj #timer, aby wstawić odliczanie/czas powrotu.</span>
           </div>
 
           <div class="field" style="margin-top:12px">
@@ -241,7 +241,7 @@
               <div class="field">
                 <label class="field-label" for="mailWorkerLimit">Ile maili na jedno uruchomienie workera</label>
                 <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
-                <div class="field-hint">To limit na jedno odpalenie (cron lub ręczne).</div>
+                <div class="hint">To limit na jedno odpalenie (cron lub ręczne).</div>
               </div>
             </div>
 
@@ -255,7 +255,7 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <div class="field-hint" id="mailCronHint"></div>
+                <div class="hint" id="mailCronHint"></div>
               </div>
               <div class="field row">
                 <label class="toggle" for="mailCronActive">
@@ -309,7 +309,7 @@
                 <tbody id="mailQueueBody"></tbody>
               </table>
             </div>
-            <div class="field-hint" id="mailQueueInfo">—</div>
+            <div class="hint" id="mailQueueInfo">—</div>
           </section>
 
           <section class="settings-card settings-card-worker">
@@ -318,7 +318,7 @@
               <div class="field">
                 <label class="field-label" for="mailRunLimit">Ile maili wysłać teraz</label>
                 <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
-                <div class="field-hint">Maksymalnie tyle rekordów weźmie worker przy ręcznym uruchomieniu.</div>
+                <div class="hint">Maksymalnie tyle rekordów weźmie worker przy ręcznym uruchomieniu.</div>
               </div>
             </div>
             <div class="panel-actions">
@@ -326,7 +326,7 @@
               <button class="btn sm" id="btnMailRetryFailed" type="button">Przywróć failed i wyślij</button>
               <button class="btn sm" id="btnMailRetrySelected" type="button">Wyślij zaznaczone</button>
             </div>
-            <div class="field-hint">W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.</div>
+            <div class="hint">W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.</div>
           </section>
 
           <section class="settings-card settings-card-wide settings-card-logs">
@@ -387,7 +387,7 @@
               </table>
             </div>
             <div class="mail-logs-pagination" id="mailLogsPagination"></div>
-            <div class="field-hint" id="mailLogsInfo">—</div>
+            <div class="hint" id="mailLogsInfo">—</div>
           </section>
         </div>
       </div>
@@ -403,7 +403,7 @@
           <label class="field-label">Powiadomienia push — Telegram</label>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn sm" id="btnTelegramTest" type="button">Wyślij test</button>
-            <span class="field-hint" id="telegramStatus"></span>
+            <span class="hint" id="telegramStatus"></span>
           </div>
           <div class="hint">Token i Chat ID skonfigurowane jako Worker secrets (<code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>).</div>
         </div>
@@ -430,7 +430,7 @@
             <tbody id="marketTableBody"></tbody>
           </table>
         </div>
-        <div class="field-hint" id="marketTableInfo">—</div>
+        <div class="hint" id="marketTableInfo">—</div>
 
         </div>
       </div>
@@ -626,7 +626,7 @@
               <tbody id="ratingsTableBody"></tbody>
             </table>
           </div>
-          <div class="field-hint" id="ratingsTableInfo">—</div>
+          <div class="hint" id="ratingsTableInfo">—</div>
         </div>
 
         <div class="settings-card">
@@ -649,7 +649,7 @@
               <tbody id="producerRatingsBody"></tbody>
             </table>
           </div>
-          <div class="field-hint" id="producerRatingsInfo"></div>
+          <div class="hint" id="producerRatingsInfo"></div>
         </div>
       </div>
 
@@ -803,7 +803,7 @@
               </button><div class="ui-select-menu" role="listbox"></div>
             </div></div>
           <div data-activity-chart></div>
-          <p class="field-hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
+          <p class="hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
             </div>
           </div>
 
@@ -822,7 +822,7 @@
             </div>
           </div>
 
-          <div class="field-hint" id="statsUpdateTs" style="margin-top:20px;text-align:right">Ostatnia aktualizacja: —</div>
+          <div class="hint" id="statsUpdateTs" style="margin-top:20px;text-align:right">Ostatnia aktualizacja: —</div>
         </div>
       </div>
 
@@ -848,7 +848,7 @@
           <div class="field">
             <label class="field-label" for="mktSubject">Temat wiadomości</label>
             <input class="inp" id="mktSubject" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" placeholder="Temat…">
-            <span class="field-hint" id="mktSubjectHint" style="font-size:11px;opacity:.5"></span>
+            <span class="hint" id="mktSubjectHint" style="font-size:11px;opacity:.5"></span>
           </div>
 
           <!-- Treść (widoczna dla newsletter/custom) -->
@@ -874,7 +874,7 @@
           <!-- Odbiorcy -->
           <div class="field">
             <label class="field-label">Odbiorcy</label>
-            <span class="field-hint" style="display:block;margin-bottom:6px">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
+            <span class="hint" style="display:block;margin-bottom:6px">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
             <textarea class="inp" id="mktEmailInput" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
             <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
               <input type="file" id="mktFileInput" accept=".txt,.csv" style="display:none">

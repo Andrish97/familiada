@@ -1068,12 +1068,6 @@
       font-size: 12px
   }
 
-  .xTypeHint {
-      min-width: 0;
-      opacity: .75;
-      font-size: 12px
-  }
-
   .xRange {
       margin-top: 10px
   }
@@ -1484,12 +1478,6 @@
     .export-modal .xTypeTop {
       align-items: flex-start;
       gap: 4px 8px;
-    }
-
-    .export-modal .xTypeHint {
-      min-width: 0;
-      text-align: right;
-      overflow-wrap: anywhere;
     }
 
   }
@@ -2192,11 +2180,6 @@
       align-items: center;
       flex-wrap: nowrap;
       gap: 6px;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xTypeHint {
-      text-align: right;
-      font-size: 11px;
     }
 
     .modal--sheet.sheet-active .export-modal .xRange {

@@ -84,13 +84,6 @@
       padding: 12px
   }
 
-  .tinyHint {
-      margin-top: 10px;
-      opacity: .75;
-      font-size: 12px;
-      line-height: 1.35
-  }
-
   .nav {
       margin-top: 12px;
       display: flex;

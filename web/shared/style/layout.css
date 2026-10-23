@@ -90,11 +90,6 @@
     text-transform: uppercase;
   }
   .topbar-title .title { font-size: 18px; }
-  .hint {
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: .75;
-  }
 
 
   /* „Graj” | „Ustawienia gry” — przyciski sklejone w grupę. */

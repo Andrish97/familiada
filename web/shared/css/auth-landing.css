@@ -126,12 +126,7 @@
 
   /* ── misc ── */
 
-  .hint {
-      margin-top: 12px;
-      opacity: .75;
-      font-size: 12px;
-      line-height: 1.35;
-  }
+  .hint { margin-top: 12px; }
 
   .landing-body .footer {
       width: 100%;
