@@ -327,7 +327,6 @@ function buildDb(lang, extras = {}) {
     update_logo_checked: { ok: true },
     game_state_get: `fn:(args, db) => db.tables.game_state.find((r) => r.game_id === args.p_game_id) || null`,
     // Kadry rozgrywki: wszystkie urządzenia połączone, dźwięk Wyświetlacza odblokowany.
-    control_device_slots_for_owner: ["display", "host", "buzzer"].map((device_type) => ({ device_type, primary_online: true })),
     control_devices_snapshot: { ok: true, devices: Object.fromEntries(["display", "host", "buzzer"].map((kind) => [kind, {
       primary_online: true, waiting_count: 0, visibility: "visible", focused: true, audio_unlocked: true, meta: {},
     }])) },
