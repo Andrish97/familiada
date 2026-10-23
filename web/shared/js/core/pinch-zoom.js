@@ -153,6 +153,50 @@ export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
     lastTap = now;
   }, { passive: true });
 
+  // Komputer: kółko myszy / gest dwoma palcami na gładziku (ctrl+wheel)
+  // przybliża w miejscu kursora, podwójne kliknięcie 1x <-> 2.5x, a po
+  // przybliżeniu obraz przesuwa się przeciąganiem myszą.
+  const zoomAt = (clientX, clientY, next) => {
+    measure();
+    const pt = local({ x: clientX, y: clientY });
+    const p = { x: (pt.x - tx) / scale, y: (pt.y - ty) / scale };
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, next));
+    if (scale <= MIN_SCALE + 0.001) { reset(); updateCursor(); return; }
+    tx = pt.x - p.x * scale;
+    ty = pt.y - p.y * scale;
+    clamp();
+    apply();
+    updateCursor();
+  };
+  const updateCursor = () => { container.style.cursor = scale > 1 ? (mousePan ? "grabbing" : "grab") : "zoom-in"; };
+  let mousePan = null;
+  container.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, scale * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
+  }, { passive: false });
+  container.addEventListener("dblclick", (e) => {
+    zoomAt(e.clientX, e.clientY, scale > 1 ? 1 : 2.5);
+  });
+  container.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || scale <= 1) return;
+    e.preventDefault();
+    container.setPointerCapture(e.pointerId);
+    mousePan = { id: e.pointerId, x: e.clientX, y: e.clientY, tx, ty };
+    measure();
+    updateCursor();
+  });
+  container.addEventListener("pointermove", (e) => {
+    if (!mousePan || e.pointerId !== mousePan.id) return;
+    tx = mousePan.tx + (e.clientX - mousePan.x);
+    ty = mousePan.ty + (e.clientY - mousePan.y);
+    clamp();
+    apply();
+  }, { passive: true });
+  const endMousePan = (e) => { if (mousePan && e.pointerId === mousePan.id) { mousePan = null; updateCursor(); } };
+  container.addEventListener("pointerup", endMousePan, { passive: true });
+  container.addEventListener("pointercancel", endMousePan, { passive: true });
+  updateCursor();
+
   // Jawne zablokowanie natywnych gestów (pinch strony, scroll) — sam
   // touch-action:none nie zawsze wystarcza.
   const stopNativeGesture = (e) => { if (e.cancelable) e.preventDefault(); };
@@ -162,7 +206,7 @@ export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
   container.addEventListener("gesturestart", (e) => e.preventDefault());
   container.addEventListener("gesturechange", (e) => e.preventDefault());
 
-  return { reset };
+  return { reset: () => { reset(); updateCursor(); } };
 }
 
 // touch-action:none na kontenerze canvasa (logo.css) nie wystarcza

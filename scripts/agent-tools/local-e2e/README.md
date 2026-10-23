@@ -19,7 +19,7 @@ Jak działa (`preload.cjs`, ładowany przez `NODE_OPTIONS=--require`):
   pierwszym użyciu, id = skrót e-maila.
 - `loginAsTestUser` podmieniony: sesja od razu w `localStorage` (ekran
   `/login` wymaga Turnstile od Workera, którego tu nie ma).
-- Inne hosty są odcinane (bez Workera, maili, Edge Functions, realtime).
+- Inne hosty są odcinane (bez Workera, maili, Edge Functions, realtime); wyjątek: serwer `helpers/local-site.js` na 127.0.0.1.
 
 Ograniczenia: brak maili (`@mailbox`), Workera, Storage i realtime;
 `schema.sql` nie zawiera danych (np. szablonów demo) — poza politykami
@@ -27,5 +27,5 @@ limitów maili, które `setup.sh` dokłada. Spece zależne od tych usług
 padną lokalnie także na kodzie z `main` — porównuj z przebiegiem na `main`
 (worktree `origin/main` i `LB_REPO=<worktree>`).
 
-Zmienne: `LB_REPO` (katalog repo ze stronami), `LB_CHROME` (Chromium,
+Zmienne: `LB_DEBUG=1` (ślad zapytań do PostgREST: ścieżka, status, rola z JWT), `LB_REPO` (katalog repo ze stronami), `LB_CHROME` (Chromium,
 domyślnie `/opt/pw-browsers/chromium`), `LB_PGRST`, `LB_SECRET`.

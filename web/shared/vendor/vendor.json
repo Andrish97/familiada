@@ -13,9 +13,9 @@
     {
       "file": "fabric.min.js",
       "package": "fabric",
-      "version": "5.5.2",
+      "version": "7.4.0",
       "license": "MIT",
-      "source": "dist/fabric.min.js",
+      "source": "dist/index.min.js",
       "minify": false,
       "specs": "e2e/logo-editor.spec.js e2e/host-logo-draw.spec.js"
     },

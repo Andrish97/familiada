@@ -177,6 +177,12 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+- **Tłumaczenia i podpowiedzi (decyzja użytkownika 2026-10-23):** każdy klucz
+  `web/shared/translation/{pl,en,uk}.js` jest używany przez kod i istnieje w trzech
+  językach (zapadka `unit/i18nUnused.test.js`; lista: `node scripts/i18n-unused.mjs`,
+  wycięcie: `node scripts/i18n-prune.mjs`). Podpowiedzi mówią tylko to, co
+  nieoczywiste; w Control są krótkie i mieszczą się bez przewijania
+  (`unit/hints.test.js`). Audyt: `docs/audyt-podpowiedzi.md`.
 
 ## Stan i wznawianie
 

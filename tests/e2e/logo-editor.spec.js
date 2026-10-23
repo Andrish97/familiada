@@ -54,20 +54,21 @@ test.describe("lista", () => {
     await open(page);
     const historyBefore = await page.evaluate(() => history.length);
     await expect(page.locator("#tabLogoText")).toHaveClass(/active/);
-    await expect(page.locator("#hint")).toContainText(/klasycznym logo/i);
+    // Pasek mówi tylko o zmianie nazwy -- opis rodzaju jest na kaflu „Nowe logo…” (bez dublowania, 2026-10-23).
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     // Narożniki aktywnej wypustki to ::before/::after przycisku karty (2026-10-21).
     const corner = (sel, pseudo) => page.locator(sel).evaluate((el, p) => getComputedStyle(el, p).display, pseudo);
     expect(await corner("#tabLogoText", "::before")).toBe("none");
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
-    await expect(page.locator("#hint")).toContainText(/rysuj/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoDraw", "::before")).toBe("block");
     expect(await corner("#tabLogoDraw", "::after")).toBe("block");
 
     await page.locator("#tabLogoImage").click();
     await expect(page).toHaveURL(/tab=image/);
-    await expect(page.locator("#hint")).toContainText(/obraz/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoImage", "::after")).toBe("none");
 
     // Karta przez replaceState: odświeżenie zostaje na karcie, a przeglądarkowe
@@ -649,7 +650,15 @@ test.describe("tryb Rysunek", () => {
     await page.mouse.click(b.x + 200, b.y + 150);
     await page.keyboard.type("AB");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30); // koniec edycji
-    await page.mouse.click(b.x + 210, b.y + 170); // zaznacz tekst (narzędzie Tekst)
+    // zaznacz tekst (narzędzie Tekst); wyśrodkowany napis Fabric 7 przy pisaniu trzyma środek, nie lewą krawędź
+    const mid = await page.evaluate(() => {
+      const f = window.__drawFabric;
+      const c = f.upperCanvasEl.getBoundingClientRect();
+      const p = f.getObjects()[0].getCenterPoint();
+      const v = f.viewportTransform;
+      return { x: c.left + v[4] + p.x * v[0], y: c.top + v[5] + p.y * v[3] };
+    });
+    await page.mouse.click(mid.x, mid.y);
     await page.fill("#cSz", "120");
     await page.locator("#cSz").press("Enter");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30);
@@ -696,8 +705,9 @@ test.describe("tryb Rysunek", () => {
       const f = window.__drawFabric;
       const c = f.upperCanvasEl.getBoundingClientRect();
       const o = f.getObjects()[0];
-      const r = o.getBoundingRect();
-      return { x: c.left + r.left + (o.strokeWidth * f.getZoom()) / 2, y: c.top + r.top + r.height / 2 };
+      const r = o.getBoundingRect(); // Fabric 7: współrzędne sceny -> ekran przez viewportTransform
+      const v = f.viewportTransform;
+      return { x: c.left + v[4] + (r.left + o.strokeWidth / 2) * v[0], y: c.top + v[5] + (r.top + r.height / 2) * v[3] };
     });
     await page.mouse.click(hit.x, hit.y);
     await page.keyboard.press("ArrowRight");
@@ -1009,14 +1019,34 @@ test.describe("blokady", () => {
     const id = await L.insertLogo(page, { name: L.uniq("pool-mid"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await edit(page, id);
     // Edytor trzyma logo:L wyłącznie, więc `logos` nie da się zająć, dopóki trzyma. Symulacja
-    // uśpionej karty: zwolnij blokadę edytora jego własnym tab_id, potem zajmij pulę obcą kartą.
-    await page.evaluate(async (logoId) => {
+    // uśpionej karty: zwolnij blokadę edytora jego własnym tab_id i od razu zajmij pulę obcą
+    // kartą. Edytor co kilka sekund odnawia blokadę (resource-lock.js renewAll) i może ją
+    // odzyskać między tymi krokami -- wtedy obie czynności powtarzamy.
+    const poolTab = `e2e-le2-mid-${Date.now()}`;
+    const got = await page.evaluate(async ({ logoId, poolTab }) => {
+      const sb = window.__sbClient;
       const tabId = sessionStorage.getItem("familiada:tabId");
-      await window.__sbClient.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
-    }, id);
-    const lock = poolLock(page, `e2e-le2-mid-${Date.now()}`);
-    const got = await lock("acquire_edit_lock_mode");
-    expect(got.data?.ok, "logos współdzielone po zwolnieniu logo:L").toBe(true);
+      const { data: u } = await sb.auth.getUser();
+      // Blokady innych logo tego konta zostawione przez wcześniejsze testy w tym samym
+      // wątku (zamknięta strona nie zawsze zdąży je zwolnić; wygasają po 120 s) też
+      // zajmują pulę -- zwalniamy je jak zamknięte karty.
+      const { data: stale } = await sb.from("edit_locks").select("resource_type,resource_id,holder_tab_id")
+        .eq("holder_user_id", u.user.id).in("resource_type", ["logo", "logos"]);
+      for (const row of stale || []) {
+        if (row.resource_type === "logo" && row.resource_id === logoId) continue;
+        await sb.rpc("release_edit_lock", { p_resource_type: row.resource_type, p_resource_id: row.resource_id, p_tab_id: row.holder_tab_id });
+      }
+      let res = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await sb.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
+        res = await sb.rpc("acquire_edit_lock_mode", { p_resource_type: "logos", p_resource_id: u.user.id, p_tab_id: poolTab, p_context: "settings", p_mode: "shared" });
+        if (res.data?.ok) break;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      return res;
+    }, { logoId: id, poolTab });
+    expect(got.data?.ok, `logos współdzielone po zwolnieniu logo:L: ${JSON.stringify(got.data || got.error)}`).toBe(true);
+    const lock = poolLock(page, poolTab);
     try {
       await page.fill("#textValue", "CD");
       // Zapis (RPC update_logo_checked) albo odnowienie blokady (locked) kończy edycję pełnym komunikatem.

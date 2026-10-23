@@ -3,29 +3,29 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T11220";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T11220";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T11220";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-23T11220";
-import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T11220";
-import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T11220";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T16395";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T16395";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T16395";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-23T16395";
+import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T16395";
+import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T16395";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   wireAnswerInput, answerFieldProblem, buildAnswerHints, loadAnswerGlyphs,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-23T11220";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T11220";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T11220";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-23T11220";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T11220";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T11220";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T11220";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-23T11220";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T11220";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-23T11220";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T11220";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-23T16395";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T16395";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T16395";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-23T16395";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T16395";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T16395";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T16395";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-23T16395";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T16395";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-23T16395";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T16395";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -252,7 +252,8 @@ function cfgFromGameType(type) {
     type,
     title: t("editor.config.prepared.title"),
     hintTop: t("editor.config.prepared.hintTop"),
-    hintBottom: t("editor.config.prepared.hintBottom", { min: GV_RULES.PTS_MIN, sum: SUM_MAX }),
+    // Punkty i sumę pokazuje już lista warunków nad pytaniami -- bez powtórki na dole.
+    hintBottom: "",
     allowAnswers: true,
     allowPoints: true,
   };
@@ -413,6 +414,7 @@ async function boot() {
     $("hintTop").textContent = cfg.hintTop;
     renderRules();
     $("hintBottom").textContent = cfg.hintBottom;
+    $("hintBottom").hidden = !cfg.hintBottom;
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);
     document.body.classList.toggle("no-points", !cfg.allowPoints);
   }

@@ -7,7 +7,7 @@
 // (exitModalSheet cofa przy tym wpis historii). Okna menedżera otwierane
 // przez nasz kod mają display:grid, wejście z adresu zostawia display:"".
 
-import { exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T11220";
+import { exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T16395";
 
 export function guardRoutedSheet(overlay, isOpen = () => overlay?.style.display === "grid") {
   if (!overlay) return;

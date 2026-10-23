@@ -1,5 +1,6 @@
 // familiada/logos/js/draw.js
-// Tryb DRAW: rysunek wektorowy (Fabric.js 5, globalne window.fabric) -> PIX 150x70.
+// Tryb DRAW: rysunek wektorowy (Fabric.js 7 w trybie zgodnym z zapisami z Fabric 5,
+// shared/js/core/fabric-compat.js; globalne window.fabric) -> PIX 150x70.
 //
 // Świat sceny ma rozmiar ZAPISANY RAZEM Z LOGO (source.world) -- niezależny
 // od ekranu: obiekty są we współrzędnych świata, a dopasowanie do okna robi
@@ -14,14 +15,15 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T11220";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T11220";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T11220";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T11220";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T11220";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T11220";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T11220";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T11220";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T16395";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T16395";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T16395";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T16395";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T16395";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T16395";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T16395";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T16395";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-23T16395";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -134,7 +136,7 @@ export function initDrawEditor(ctx) {
 
   const fabric = () => {
     if (!window.fabric) throw new Error(t("logoEditor.draw.errors.missingFabric"));
-    return window.fabric;
+    return prepareFabric(window.fabric);
   };
 
   // =========================================================
@@ -185,8 +187,7 @@ export function initDrawEditor(ctx) {
   function resizeStage() {
     if (!canvas) return;
     const { w, h } = stageSize();
-    canvas.setWidth(w);
-    canvas.setHeight(h);
+    canvas.setDimensions({ width: w, height: h });
     canvas.calcOffset();
     setZoom(1);
   }
@@ -202,7 +203,7 @@ export function initDrawEditor(ctx) {
   /** Nie pozwala wyjechać obiektem poza scenę. */
   function keepInWorld(obj) {
     obj.setCoords();
-    const r = obj.getBoundingRect(true, true); // we współrzędnych świata
+    const r = obj.getBoundingRect(); // we współrzędnych świata
     let dx = 0, dy = 0;
     if (r.left < 0) dx = -r.left;
     else if (r.left + r.width > worldW) dx = worldW - (r.left + r.width);
@@ -218,8 +219,9 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Historia + podgląd
   // =========================================================
+  // toObject, nie toJSON: w Fabric 7 toJSON pomija własne pola (_line, _canHaveFill).
   function snapshot() {
-    return canvas.toJSON(EXTRA_PROPS);
+    return legacySceneTypes(canvas.toObject(EXTRA_PROPS));
   }
 
   function updateHistoryButtons() {
@@ -254,20 +256,19 @@ export function initDrawEditor(ctx) {
     schedulePreview();
   }
 
-  function loadScene(json) {
-    return new Promise((resolve) => {
-      restoring = true;
-      canvas.loadFromJSON(json, () => {
-        restoring = false;
-        bg = toBW(canvas.backgroundColor);
-        canvas.backgroundColor = hex(bg);
-        updateClipPath();
-        applyToolBehavior();
-        syncBgIcon();
-        canvas.requestRenderAll();
-        resolve();
-      });
-    });
+  async function loadScene(json) {
+    restoring = true;
+    try {
+      await canvas.loadFromJSON(json);
+    } finally {
+      restoring = false;
+    }
+    bg = toBW(canvas.backgroundColor);
+    canvas.backgroundColor = hex(bg);
+    updateClipPath();
+    applyToolBehavior();
+    syncBgIcon();
+    canvas.requestRenderAll();
   }
 
   async function undo() {
@@ -337,7 +338,7 @@ export function initDrawEditor(ctx) {
     });
     const precise = tool === TOOL.SELECT || tool === TOOL.ERASER;
     canvas.perPixelTargetFind = precise;
-    canvas.targetFindTolerance = precise ? 10 : 0;
+    canvas.setTargetFindTolerance(precise ? 10 : 0); // Fabric 7: przypisanie nie zmienia bufora trafień
     if (!selecting) canvas.discardActiveObject();
     if (tool !== TOOL.SHAPES || currentShape !== "polygon") clearPolyDraft();
     if (tool === TOOL.BRUSH) applyBrushStyle();
@@ -575,6 +576,8 @@ export function initDrawEditor(ctx) {
     o.transparentCorners = false;
     o.cornerColor = "#ffffff";
     o.cornerStrokeColor = "#2f6bff";
+    // Fabric 7 szuka uchwytów po kluczach oCoords: przeliczyć po podmianie controls
+    o.setCoords();
   }
 
   function startShape(ev) {
@@ -700,27 +703,26 @@ export function initDrawEditor(ctx) {
 
   const selectedObjects = () => (canvas ? canvas.getActiveObjects().filter(Boolean) : []);
 
-  function duplicateSelection() {
+  async function duplicateSelection() {
     const active = canvas?.getActiveObject();
     if (!active) return;
-    active.clone((clone) => {
-      canvas.discardActiveObject();
-      clone.set({ left: clone.left + 10, top: clone.top + 10, evented: true });
-      if (clone.type === "activeSelection") {
-        // obiekty grupy mają współrzędne względem jej środka -- grupa musi
-        // zostać zaznaczona, żeby Fabric przeliczył je po odznaczeniu
-        clone.canvas = canvas;
-        clone.forEachObject((o) => canvas.add(o));
-        clone.setCoords();
-      } else {
-        canvas.add(clone);
-      }
-      keepInWorld(clone);
-      if (tool !== TOOL.SELECT) setTool(TOOL.SELECT);
-      canvas.setActiveObject(clone);
-      canvas.requestRenderAll();
-      commit();
-    }, EXTRA_PROPS);
+    const clone = await active.clone(EXTRA_PROPS);
+    canvas.discardActiveObject();
+    clone.set({ left: clone.left + 10, top: clone.top + 10, evented: true });
+    if (clone instanceof fabric().ActiveSelection) {
+      // obiekty grupy mają współrzędne względem jej środka -- grupa musi
+      // zostać zaznaczona, żeby Fabric przeliczył je po odznaczeniu
+      clone.canvas = canvas;
+      clone.forEachObject((o) => canvas.add(o));
+      clone.setCoords();
+    } else {
+      canvas.add(clone);
+    }
+    keepInWorld(clone);
+    if (tool !== TOOL.SELECT) setTool(TOOL.SELECT);
+    canvas.setActiveObject(clone);
+    canvas.requestRenderAll();
+    commit();
   }
 
   function moveSelection(dx, dy) {
@@ -1392,7 +1394,7 @@ export function initDrawEditor(ctx) {
         return;
       }
       // Dwuklik w tekst Wskaźnikiem = przejście do edycji tekstu
-      const target = canvas.findTarget(ev);
+      const target = canvas.findTarget(ev)?.target;
       if (tool === TOOL.SELECT && isTextObj(target)) {
         ev.preventDefault();
         setTool(TOOL.TEXT);
@@ -1428,9 +1430,10 @@ export function initDrawEditor(ctx) {
   function eraseAt(opt) {
     const size = settings.ERASER.size;
     const prevTol = canvas.targetFindTolerance;
-    canvas.targetFindTolerance = Math.max(10, size * 2);
-    const target = opt.target || canvas.findTarget(opt.e);
-    canvas.targetFindTolerance = prevTol;
+    canvas.setTargetFindTolerance(Math.max(10, size * 2));
+    // findTarget w trakcie zdarzenia zwraca wynik zapamiętany przy starej tolerancji
+    const target = opt.target || canvas.searchPossibleTargets(canvas.getObjects(), canvas.getScenePoint(opt.e)).target;
+    canvas.setTargetFindTolerance(prevTol);
     if (!target || target === polyPreview) return;
     canvas.remove(target);
     canvas.requestRenderAll();

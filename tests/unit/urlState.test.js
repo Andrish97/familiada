@@ -49,7 +49,7 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
   assert.match(state, /searchParams\.delete\("folder"\)/);
 });
 
-test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
+test("logo ma trzy zakładki, podpowiedź o zmianie nazwy i geometrię wypustek", () => {
   const html = read("logos/index.html");
   const js = read("logos/js/list.js");
   const css = read("logos/css/logo.css");
@@ -58,7 +58,7 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.doesNotMatch(html, /id="createOverlay"|id="pickText"|id="pickDraw"|id="pickImage"/);
-  assert.match(js, /el\.hint\.textContent = t\(hintKeys\[activeListMode\]\)/);
+  assert.match(html, /id="hint" data-i18n="common\.renameTileHint"/);
   // Karta w ?tab= przez wspólny tabs.js (replaceState): przeglądarkowe „Wstecz”
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);

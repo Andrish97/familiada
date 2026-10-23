@@ -75,7 +75,7 @@ na których wygląd zmiana może wpłynąć.
   fonty i dane wyświetlacza (`web/shared/fonts|data`), `web/assets/`.
 - Commit bez zmian w wyglądzie (wydajność, łącze, dokumentacja) — zero scen.
 
-Na `main` punkt odniesienia to ostatni commit, który zmienił dane zrzuty
+Na `main` punkt odniesienia to ostatnie odświeżenie zrzutów przez CI (autor `github-actions`; ręczna publikacja części zrzutów go nie przesuwa)
 (`web/manual/img` albo kadry strony głównej) — przebiegi pominięte przez kolejkę
 (`concurrency` bez przerywania na `main`) nie gubią zmian. Test:
 `tests/unit/screensChanges.test.js`.
