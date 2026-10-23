@@ -56,7 +56,7 @@ Nazwa użytkownika powstaje automatycznie z adresu e-mail; możesz ją zmienić 
 - *Adres jest już zarejestrowany* — serwis wyświetli „Konto już istnieje. Przełączam na
   logowanie.” Zaloguj się albo odzyskaj hasło (→ 5.7).
 
-![Konto czeka na potwierdzenie — wysłać link ponownie?](zrzut:people-login-email-pending)
+![Rejestracja w toku — wysłać wiadomość ponownie?](zrzut:people-login-email-pending)
 ![Adres jest już zarejestrowany](zrzut:people-login-email-registered)
 
 ## 5.3 Logowanie i wylogowanie

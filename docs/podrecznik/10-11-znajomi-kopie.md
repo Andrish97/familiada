@@ -95,6 +95,8 @@ Czym wysyłka różni się od innych sposobów przekazania:
 
 Wysyłanie wymaga konta i co najmniej jednego znajomego.
 
+![Brak znajomych](zrzut:games-send-no-friends)
+
 ## 11.2 Wysyłanie gry
 
 1. W *Moich grach* zaznacz grę i wybierz [Wyślij].
@@ -111,8 +113,6 @@ Kopia zachowuje rodzaj gry i całą treść. Wysłać można:
 
 Nie można wysłać gier dodanych z Gier Społeczności, materiałów demo ani gry, która jest właśnie
 otwarta w edytorze lub ustawieniach.
-
-![Brak znajomych](zrzut:games-send-no-friends)
 
 ## 11.3 Wysyłanie logo
 

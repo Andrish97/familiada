@@ -56,7 +56,7 @@ Your username is created automatically from your email address; you can change i
 - *The address is already registered* — the app will show "This account already exists. Switching to
   login." Log in or recover your password (→ 5.7).
 
-![The account awaits confirmation — send the link again?](zrzut:people-login-email-pending)
+![Registration in progress — send the email again?](zrzut:people-login-email-pending)
 ![The address is already registered](zrzut:people-login-email-registered)
 
 ## 5.3 Logging in and out

@@ -29,7 +29,7 @@ is limited to what fits on the Display; characters the Display cannot show will 
 be accepted.
 
 ![Teams](zrzut:play-settings-teams)
-![A name longer than the Display](zrzut:game-settings-team-limit)
+![Team names — a name that is too long and unsupported characters](zrzut:game-settings-team-limit)
 
 ## 16.3 Display
 
@@ -145,8 +145,8 @@ screen shows the logo.
   the "Display", "Sound" and "Game settings" sections also let you restore just that section.
 - If the settings were changed in the meantime in another window, the app warns you before saving.
 
-![Unsaved changes](zrzut:play-settings-unsaved)
-![Restore defaults](zrzut:play-settings-reset-all)
+![Leaving with unsaved changes](zrzut:play-settings-unsaved)
+![Restoring the default settings](zrzut:play-settings-reset-all)
 
 - [Play] takes you straight to the control panel (→ 17). The game must be ready to play
   (→ 7.6).

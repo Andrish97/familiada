@@ -35,7 +35,7 @@ Każda gra to kafelek z nazwą i statusem:
 | ZATRZYMANA | Zbieranie odpowiedzi jest wstrzymane. Plakietka „do podliczenia” przypomina, że możesz podliczyć głosy (→ 15.6). |
 | GOTOWA | Gra jest gotowa do rozegrania. |
 
-![Statusy i powód blokady na kafelku](zrzut:games-prepared-states)
+![Statusy SZKIC i GOTOWA — braki szkicu na kafelku](zrzut:games-prepared-states)
 ![Otwarta ankieta — liczba głosów](zrzut:games-poll-text-open)
 ![Zatrzymana ankieta — „do podliczenia”](zrzut:games-poll-points-stopped)
 
@@ -162,7 +162,6 @@ z rozszerzeniem `.famgame`, który możesz przechować albo przenieść na inne 
   do pliku — po imporcie będzie to szkic.
 
 ![Eksport do pliku](zrzut:games-export-progress)
-![Eksport otwartej ankiety — bez głosów](zrzut:games-export-votes)
 
 **Import z pliku.** Wybierz [Importuj] i wskaż plik `.famgame` (albo `.json`). Przed
 zatwierdzeniem zobaczysz nazwę, rodzaj gry i liczbę pytań oraz uwagi, na przykład gdy wynik
@@ -170,7 +169,7 @@ ankiety w pliku jest niepełny i gra trafi do biblioteki jako szkic. Import zaws
 nową grę — nie zmienia istniejących.
 
 ![Import — podgląd pliku](zrzut:games-import-preview)
-![Import — plik nie jest grą](zrzut:games-import-error)
+![Import — niepoprawny plik JSON](zrzut:games-import-error)
 
 Podczas importu zbyt długie teksty są skracane (pytanie do 100 znaków, odpowiedź do 17),
 a przy więcej niż 6 odpowiedziach zostaje 6 najwyżej punktowanych. Zaimportowana gra może
@@ -187,5 +186,6 @@ zatrzymanej serwis najpierw uprzedzi, że zebrane głosy nie trafią do bazy.
 
 ![Eksport do bazy — wybór bazy](zrzut:games-export-base)
 ![Brak baz do wyboru](zrzut:games-export-base-empty)
+![Eksport do bazy — ostrzeżenie „Bez bieżących głosów”](zrzut:games-export-votes)
 
 Nie zmieniaj ręcznie zawartości plików `.famgame` — import takiego pliku może się nie udać.

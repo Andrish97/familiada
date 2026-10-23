@@ -24,7 +24,7 @@ Pytania z gry przeniesiesz do bazy przyciskiem [Eksportuj do bazy] w *Moich grac
 Otwarta baza działa podobnie do eksploratora plików na komputerze:
 
 - **po lewej** — drzewo „Foldery”, zaczynające się od „Folderu głównego”, a pod nim panel
-  „Tagi” i „Pasujące kategorie”,
+  „Tagi” i „Proponowane kategorie”,
 - **pośrodku** — zawartość bieżącego folderu: foldery i pytania,
 - **na górze** — pasek narzędzi i pole wyszukiwania.
 
@@ -55,7 +55,7 @@ albo w drzewie folderów.
 | [Odśwież widok] | pokazuje najnowszy stan bazy |
 
 ![Przenieś do…](zrzut:base-explorer-move)
-![Przenieś do… — wyszukiwanie folderu](zrzut:base-explorer-move-search)
+![Kopiuj do… — wyszukiwanie folderu](zrzut:base-explorer-move-search)
 
 **Przeciąganie.** Przeciągnij zaznaczenie na folder, aby je przenieść. Z wciśniętym Ctrl
 (na Macu Option) elementy zostaną skopiowane — folder razem z zawartością. Upuszczenie na pustym
@@ -88,7 +88,7 @@ rund czy wydarzeń.
 ![Kolor tagu](zrzut:base-explorer-tags-color)
 ![Tagi w lewym panelu](zrzut:base-explorer-left-tags)
 
-„Pasujące kategorie” pod tagami serwis tworzy sam — pokazują pytania, które już spełniają
+„Proponowane kategorie” pod tagami serwis tworzy sam — pokazują pytania, które już spełniają
 warunki danego rodzaju gry (→ 7.6):
 
 - **typowe** — nadają się do ankiety tekstowej,
@@ -96,7 +96,7 @@ warunki danego rodzaju gry (→ 7.6):
 - **preparowane** — mają od 3 do 6 odpowiedzi z punktami (każda co najmniej 4, suma najwyżej
   100), więc nadają się do gry preparowanej.
 
-![Pasujące kategorie](zrzut:base-explorer-left-types)
+![Proponowane kategorie](zrzut:base-explorer-left-types)
 
 ## 9.5 Wyszukiwanie i przeglądanie pytań
 
@@ -152,7 +152,7 @@ Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisu
 ## 9.8 Tworzenie gry z wybranych pytań
 
 1. Zaznacz pytania lub foldery i wybierz [Utwórz grę].
-2. W oknie „Eksport gry” wpisz nazwę gry i wybierz rodzaj: ankieta tekstowa, punktacja albo
+2. W oknie „Utwórz grę” wpisz nazwę gry i wybierz rodzaj: ankieta tekstowa, punktacja albo
    preparowana.
 3. Sprawdź listę: zaznaczone pytania (także z zaznaczonych folderów) są już wybrane. Możesz
    dodać lub odznaczyć pytania z całej bazy.
@@ -160,7 +160,7 @@ Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisu
    „Gotowa po utworzeniu.” albo „Utworzy się szkic. Do gotowości brakuje: …”.
 5. Zatwierdź. Gra pojawi się w *Moich grach*.
 
-![Eksport gry — braki widoczne przy pytaniach](zrzut:base-explorer-create-game)
+![Utwórz grę — czego brakuje do gotowości](zrzut:base-explorer-create-game)
 
 Gra powstaje dokładnie z wybranych pytań — serwis nie dobiera brakujących. Nie musi spełniać
 warunków gotowości: możesz utworzyć niekompletny szkic i uzupełnić go w edytorze (→ 7.6).

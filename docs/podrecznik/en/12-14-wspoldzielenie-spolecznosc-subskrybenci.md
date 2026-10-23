@@ -41,11 +41,9 @@ An invitation that is not accepted expires after **5 days**.
 
 | Who | Label | What they can do |
 |---|---|---|
-| Owner | "Mine" | everything: edit, share, rename, [Duplicate] and delete the base |
-| Edit | "EDIT" | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
-| Read | "READ" | browse the base and export it to a file |
-
-![Shared bases — access labels](zrzut:bases-share-long-name)
+| Owner | a tile on the "My bases" tab | everything: edit, share, rename, [Duplicate] and delete the base |
+| Edit | a pencil icon on the tile | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
+| Read | an eye icon on the tile | browse the base and export it to a file |
 
 A person with read access cannot create a game directly from the base. They can export the base
 to a file, import it as their own (→ 9.1) and create a game there.

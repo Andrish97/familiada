@@ -41,11 +41,9 @@ Nieprzyjęte zaproszenie wygasa po **5 dniach**.
 
 | Kto | Oznaczenie | Co może |
 |---|---|---|
-| Właściciel | „Moja” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
-| Edycja | „EDYCJA” | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
-| Odczyt | „ODCZYT” | przeglądać bazę i eksportować ją do pliku |
-
-![Bazy udostępnione — oznaczenia dostępu](zrzut:bases-share-long-name)
+| Właściciel | kafel w zakładce „Moje bazy” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
+| Edycja | ikona ołówka na kafelku | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
+| Odczyt | ikona oka na kafelku | przeglądać bazę i eksportować ją do pliku |
 
 Osoba z dostępem do odczytu nie utworzy gry bezpośrednio z bazy. Może wyeksportować bazę
 do pliku, zaimportować ją jako własną (→ 9.1) i tam utworzyć grę.

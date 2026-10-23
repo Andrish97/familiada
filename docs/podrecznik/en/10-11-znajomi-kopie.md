@@ -95,6 +95,8 @@ How sending differs from other ways of passing things on:
 
 Sending requires an account and at least one friend.
 
+![No friends](zrzut:games-send-no-friends)
+
 ## 11.2 Sending a game
 
 1. In *My games*, select a game and choose [Send].
@@ -111,8 +113,6 @@ The copy keeps the game type and all its content. You can send:
 
 You cannot send games added from Community Games, demo materials, or a game that is currently
 open in the editor or in settings.
-
-![No friends](zrzut:games-send-no-friends)
 
 ## 11.3 Sending a logo
 

@@ -29,7 +29,7 @@ jest ograniczona do tego, co mieści Wyświetlacz; znaki, których Wyświetlacz 
 zostaną przyjęte.
 
 ![Drużyny](zrzut:play-settings-teams)
-![Nazwa dłuższa niż Wyświetlacz](zrzut:game-settings-team-limit)
+![Nazwy drużyn — za długa nazwa i niedozwolone znaki](zrzut:game-settings-team-limit)
 
 ## 16.3 Wygląd
 
@@ -145,8 +145,8 @@ końcowy pokazuje logo.
   w sekcjach „Wygląd”, „Dźwięk” i „Ustawienia gry” jest też przywracanie tylko tej sekcji.
 - Jeśli ustawienia zmieniono w międzyczasie w innym oknie, serwis o tym uprzedzi przed zapisem.
 
-![Niezapisane zmiany](zrzut:play-settings-unsaved)
-![Przywróć domyślne](zrzut:play-settings-reset-all)
+![Wyjście z niezapisanymi zmianami](zrzut:play-settings-unsaved)
+![Przywrócenie ustawień domyślnych](zrzut:play-settings-reset-all)
 
 - [Graj] przechodzi od razu do panelu sterowania (→ 17). Gra musi być gotowa do rozegrania
   (→ 7.6).

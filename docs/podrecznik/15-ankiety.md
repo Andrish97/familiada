@@ -170,7 +170,7 @@ przyciskiem [Graj] (→ 17). Wyniki obejrzysz w [Podgląd] w *Moich grach*, prze
 na „Ankieta”.
 
 ![Gotowa ankieta — ostateczne punkty](zrzut:polls-ready-text)
-![Wyniki w podglądzie gry](zrzut:games-preview-poll)
+![Podgląd gry — widok „Ankieta” z głosami](zrzut:games-preview-poll)
 
 - [Uruchom ponownie] otwiera nową ankietę dla tej samej gry — dotychczasowe głosy i wyniki
   zostaną usunięte.

@@ -170,7 +170,7 @@ with the [Play] button (→ 17). You can view the results in [Preview] in *My ga
 to "Poll".
 
 ![A finished poll — final points](zrzut:polls-ready-text)
-![Results in the game preview](zrzut:games-preview-poll)
+![Game preview — the "Poll" view with votes](zrzut:games-preview-poll)
 
 - [Restart] opens a new poll for the same game — the existing votes and results
   will be deleted.
