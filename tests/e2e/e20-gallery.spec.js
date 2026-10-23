@@ -94,7 +94,7 @@ function additionalStates(data) {
     },
     {
       id: "bases", stateId: "modal:create-base", page: "bases", href: "/bases/",
-      modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Utwórz bazę",
+      modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-inp)", actionLabel: "Moje bazy → Utwórz bazę",
       prepare: async (page) => { await page.locator("#mineGrid .addCard").click(); },
     },
     {
@@ -105,7 +105,7 @@ function additionalStates(data) {
     ...(data.base ? [
       {
         id: "bases", stateId: "modal:rename-base", page: "bases", href: "/bases/",
-        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Zmień nazwę bazy",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-inp)", actionLabel: "Moje bazy → Zmień nazwę bazy",
         prepare: async (page) => {
           const tile = await selectOwnedBase(page, data.base.id);
           await tile.dblclick();
@@ -130,7 +130,7 @@ function additionalStates(data) {
       },
       {
         id: "bases", stateId: "modal:export-base-json", page: "bases", href: "/bases/",
-        modalCapture: true, expectedModalId: "exportJsonOverlay", actionLabel: "Moje bazy → Eksportuj bazę do JSON",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-progress)", actionLabel: "Moje bazy → Eksportuj bazę do JSON",
         prepare: async (page) => {
           await selectOwnedBase(page, data.base.id);
           await expect(page.locator("#btnExport")).toBeEnabled();
@@ -344,12 +344,12 @@ function additionalStates(data) {
       },
       {
         id: "games", stateId: "modal:create-game", page: "games", href: "/games/",
-        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Gry → Utwórz grę",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-inp)", actionLabel: "Gry → Utwórz grę",
         prepare: async (page) => { await page.locator("#grid .addCard").first().click(); },
       },
       {
         id: "games", stateId: "modal:rename-game", page: "games", href: "/games/",
-        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Gry → Zmień nazwę gry",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-inp)", actionLabel: "Gry → Zmień nazwę gry",
         prepare: async (page) => {
           const tile = page.locator(`#grid .card[data-game-id="${data.game.id}"]`);
           await tile.waitFor({ state: "visible", timeout: 15_000 });
@@ -379,7 +379,7 @@ function additionalStates(data) {
       },
       {
         id: "games", stateId: "modal:export-game-json", page: "games", href: "/games/",
-        modalCapture: true, expectedModalId: "exportJsonOverlay", actionLabel: "Gry → Eksport JSON",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-progress)", actionLabel: "Gry → Eksport JSON",
         prepare: async (page) => {
           await page.locator(`#grid .card[data-game-id="${data.game.id}"]`).click();
           await expect(page.locator("#btnExport")).toBeEnabled();
@@ -422,7 +422,7 @@ function additionalStates(data) {
     ] : []),
     ...((data.logos.text || data.logos.draw || data.logos.image) ? [{
       id: "logos", stateId: "modal:rename-logo", page: "logos", href: "/logos/",
-      modalCapture: true, expectedModalId: "renameOverlay", actionLabel: "Lista logo → Zmień nazwę",
+      modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-inp)", actionLabel: "Lista logo → Zmień nazwę",
       prepare: async (page) => {
         const logo = data.logos.text || data.logos.draw || data.logos.image;
         const tile = page.locator(`.logoTile[data-key="${logo.id}"]`);
@@ -448,14 +448,14 @@ function additionalStates(data) {
       },
       {
         id: "logos", stateId: "modal:export-logo", page: "logos", href: "/logos/",
-        modalCapture: true, expectedModalId: "logoExportOverlay", actionLabel: "Lista logo → Eksport logo",
+        modalCapture: true, expectedVisibleSelector: ".uni-modal:has(.uni-progress)", actionLabel: "Lista logo → Eksport logo",
         prepare: async (page) => {
           const logo = data.logos.text || data.logos.draw || data.logos.image;
           await page.locator(`.logoTile[data-key="${logo.id}"]`).click();
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
           await page.locator(".uni-modal:has(.uni-progress)").waitFor({ state: "visible", timeout: 15_000 });
-          await expect(page.locator("#logoExportSub")).toBeVisible();
+          await expect(page.locator(".uni-modal:has(.uni-progress) .mSub")).toBeVisible();
         },
       },
     ] : []),
