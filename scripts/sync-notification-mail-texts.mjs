@@ -1,10 +1,11 @@
 // Teksty maili powiadomień (zaproszenia, udostępnienia, kopie) dla funkcji
-// Edge send-mail -- kopia wybranych kluczy z web/shared/translation/{pl,en,uk}.js.
+// Edge send-mail -- kopia wybranych kluczy z web/shared/translation/<lang>/*.js.
 // Źródłem są tłumaczenia strony; po ich zmianie: node scripts/sync-notification-mail-texts.mjs
 // (test jednostkowy notificationMail.test.js pilnuje zgodności).
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
+import { loadDicts } from "./i18n-parts.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const NOTIFICATION_MAIL_KEYS = [
@@ -30,8 +31,9 @@ const VARS = ["owner", "name", "kind", "base", "role", "type", "game"];
 
 export async function buildTexts() {
   const out = {};
+  const dicts = await loadDicts();
   for (const lang of ["pl", "en", "uk"]) {
-    const dict = (await import(pathToFileURL(path.join(root, `web/shared/translation/${lang}.js`)).href)).default;
+    const dict = dicts[lang];
     out[lang] = {};
     for (const key of NOTIFICATION_MAIL_KEYS) {
       let value = key.split(".").reduce((acc, part) => acc?.[part], dict);

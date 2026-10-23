@@ -6,6 +6,9 @@
 // - Wspólny kod (web/shared/js, css, tłumaczenia) dotyczy tylko stron, które go
 //   wczytują -- wprost albo przez inne moduły (importy, <script>, <link>, ścieżki
 //   .js/.css/.json w kodzie).
+// - Część słownika web/shared/translation/<lang>/<część>.js -- strony z tą częścią
+//   w <meta name="i18n-parts"> (scripts/i18n-parts.mjs); część `common` -- jak
+//   translation.js, czyli każda strona z tłumaczeniami; `server` -- żadna.
 // - Zmiana definicji scen (scenes.cjs, scenes/<obszar>.cjs) -- sceny z tego pliku.
 // - Wszystkie sceny tylko przy zmianie tego, co dotyczy każdego kadru: dane demo,
 //   atrapa Supabase, silnik zrzutów, fonty, dane wyświetlacza, assety.
@@ -70,6 +73,18 @@ function importers() {
   }
   return rev;
 }
+// Część słownika -> pliki, od których liczymy zasięg zmiany.
+const I18N_PART = /^web\/shared\/translation\/(?:pl|en|uk)\/(\w+)\.js$/;
+function i18nPartPages(part) {
+  if (part === "common") return ["web/shared/translation/translation.js"];
+  return walk(path.join(repo, "web")).filter((f) => f.endsWith(".html")).filter((f) => {
+    const meta = /<meta name="i18n-parts" content="([^"]*)">/.exec(fs.readFileSync(f, "utf8"));
+    return meta && meta[1].split(/\s+/).includes(part);
+  }).map((f) => path.relative(repo, f));
+}
+function expandI18nParts(files) {
+  return files.flatMap((f) => { const m = I18N_PART.exec(f); return m ? i18nPartPages(m[1]) : [f]; });
+}
 function withImporters(files) {
   const rev = importers();
   const seen = new Set(files);
@@ -100,7 +115,7 @@ function selectChanged(scenes, base) {
   const changed = files.filter((f) => !IGNORED.some((re) => re.test(f)) && meaningful(f, base));
   const global = changed.filter((f) => GLOBAL.some((re) => re.test(f)));
   if (global.length) return { all: true, scenes, reason: `pliki wspólne dla wszystkich kadrów (${global.slice(0, 5).join(", ")}${global.length > 5 ? " …" : ""})` };
-  const affected = withImporters(changed.filter((f) => f.startsWith("web/")));
+  const affected = withImporters(expandI18nParts(changed).filter((f) => f.startsWith("web/")));
   const defs = sceneFiles(scenes);
   const picked = scenes.filter((s) => changed.includes(defs.get(s.id))
     || [...affected].some((f) => (s.sources || []).some((src) => f.startsWith(src))));
@@ -108,4 +123,4 @@ function selectChanged(scenes, base) {
   return { all: false, scenes: picked, reason: `zmienione pliki: ${changed.length}${skipped ? ` (+${skipped} bez wpływu: same wersje albo wyniki zrzutów)` : ""}` };
 }
 
-module.exports = { selectChanged, changedFiles, meaningful, withImporters, VERSION };
+module.exports = { selectChanged, changedFiles, meaningful, withImporters, expandI18nParts, VERSION };

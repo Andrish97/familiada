@@ -49,7 +49,7 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
   assert.match(state, /searchParams\.delete\("folder"\)/);
 });
 
-test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
+test("logo ma trzy zakładki, podpowiedź o zmianie nazwy i geometrię wypustek", () => {
   const html = read("logos/index.html");
   const js = read("logos/js/list.js");
   const css = read("logos/css/logo.css");
@@ -58,7 +58,7 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.doesNotMatch(html, /id="createOverlay"|id="pickText"|id="pickDraw"|id="pickImage"/);
-  assert.match(js, /el\.hint\.textContent = t\(hintKeys\[activeListMode\]\)/);
+  assert.match(html, /id="hint" data-i18n="common\.renameTileHint"/);
   // Karta w ?tab= przez wspólny tabs.js (replaceState): przeglądarkowe „Wstecz”
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
@@ -81,7 +81,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
     assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));
     assert.match(html, /id="saveStatus"/);
     assert.doesNotMatch(html, /id="btnCreate"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|modal=/);
-    assert.equal(/fabric@/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
+    assert.equal(/\/shared\/vendor\/fabric\.min\.js/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
     assert.match(entry, new RegExp(`bootEditorPage\\(\\{ mode: "${mode}", initEditor: ${init} \\}\\)`));
   }
   const page = read("logos/js/editor-page.js");

@@ -16,18 +16,19 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T05195";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T05195";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T05195";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T05195";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T22030";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T22030";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T22030";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T22030";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T22030";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T22030";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T05195";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T05195";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T05195";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T05195";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T05195";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T22030";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T22030";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T22030";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T22030";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T22030";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-23T22030";
 
 
 const $ = (id) => document.getElementById(id);
@@ -210,7 +211,12 @@ export function createUI({ root, emit }) {
           iconNode("copy"),
         ]),
       ];
+      // Dwa przyciski udostępniania jak w Bazach (decyzja użytkownika 2026-10-23):
+      // „Udostępnienia” (lista w tej sesji, licznik) obok kodu i „Udostępnij”
+      // (adres + znajomi) — u Wyświetlacza obok „Otwórz”, u reszty w trzeciej linii.
+      const sendBtn = h("button", { class: "btn", type: "button", "data-act": "share-send", onclick: () => emit("devices.shareSendOpen", kind) }, iconLabel("envelope-out", t("control.shareDevice")));
       const row2 = [];
+      const lines = [];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
         row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
@@ -218,20 +224,22 @@ export function createUI({ root, emit }) {
           class: `btn ${shown ? "primary" : ""}`, type: "button",
           onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
         }, iconLabel(shown ? "eye-off" : "qr-code", shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))));
+        lines.push(h("div", { class: "device-row-line device-row-line--single" }, [sendBtn]));
       } else {
         // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
         // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
         // operatora.
         row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, iconLabel("display", t("common.open"))));
+        row2.push(sendBtn);
       }
       // Zachowaj stałą geometrię karty w trybie testowym. Zawartość wiersza
       // jest niewidoczna i nieaktywna, ale jego miejsce pozostaje zarezerwowane.
       const shared = Number(shareBadges[kind]) || 0;
       codeLine.push(h("button", {
-        class: "btn", type: "button",
+        class: "btn", type: "button", "data-act": "share-list",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
-        ...iconLabel("people", t("control.shareDevice")),
+        ...iconLabel("people", t("control.shareDeviceShares")),
         h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
       ]));
       const children = [
@@ -243,6 +251,7 @@ export function createUI({ root, emit }) {
       children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
         h("div", { class: "device-row-line" }, codeLine),
         h("div", { class: "device-row-line" }, row2),
+        ...lines,
       ]));
       return h("div", { class: "device-row", "data-device": kind }, children);
     };
@@ -452,7 +461,7 @@ export function createUI({ root, emit }) {
       const key = cat.key;
       const variant = getSfxVariant(key);
       const variantLabel = cat.sounds?.find((s) => s.file.split("?")[0] === variant.split("?")[0])?.label?.[lang] || variant.split("?")[0];
-      const desc = t("control.sfxDesc." + key) || key;
+      const desc = t("gameSettings.sfxDesc." + key) || key;
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
       const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
@@ -989,7 +998,6 @@ export function createUI({ root, emit }) {
       gameplayShell({
         stepLabel: t("control.introStepTitle"),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsIntroBtn") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
         nav: [navButton(t("control.roundsIntroBtn"), {
@@ -1004,13 +1012,12 @@ export function createUI({ root, emit }) {
       // jeszcze się nie rozegrało), więc nie niesie żadnej informacji.
       const scoreRow = r.roundNo > 1 ? h("div", { class: "c2-intro-score" }, [
         h("span", { class: "c2-intro-score-a", text: t("control.scoreLine", { name: teamName(state, "A"), points: r.totals.A }) }),
-        h("span", { class: "c2-intro-score-sep", text: t("control.dash") }),
+        h("span", { class: "c2-intro-score-sep", text: t("common.emDash") }),
         h("span", { class: "c2-intro-score-b", text: t("control.scoreLine", { name: teamName(state, "B"), points: r.totals.B }) }),
       ]) : null;
       gameplayShell({
         stepLabel: t("control.roundStepLabel", { round: r.roundNo }),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsStartTitle") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsStartHint") }),
           scoreRow,
         ].filter(Boolean))],
@@ -1186,11 +1193,11 @@ export function createUI({ root, emit }) {
     const statusItems = [
       h("span", {}, [document.createTextNode(`${teamName(state, "A")}: `), h("b", { text: String(r.totals.A) })]),
       h("span", {}, [document.createTextNode(`${teamName(state, "B")}: `), h("b", { text: String(r.totals.B) })]),
-      ...(state.phase === "REVEAL" ? [] : [h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("control.dash") })])]),
+      ...(state.phase === "REVEAL" ? [] : [h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("common.emDash") })])]),
       h("span", {}, [document.createTextNode(t("control.statusBankLabel")), h("b", { text: String(r.bankPts) })]),
     ];
     if (state.phase === "STEAL" && r.steal.active) {
-      statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("control.dash") })]));
+      statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("common.emDash") })]));
     }
     // Wyniki, bank i akcja przejścia tworzą wspólny dolny pasek. gameplayShell
     // umieszcza go w stałym miejscu pod siatką, więc kafle wypełniają całą
@@ -1273,7 +1280,6 @@ export function createUI({ root, emit }) {
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
       const introBody = [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: isFinal ? t("control.finalOutroHint") : endRevealHint(state, isFinal) }),
       ];
       // Suma finału jeszcze NIE jest wtopiona w rounds.totals na tym
@@ -1298,7 +1304,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.roundsGameEndTitle"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
       // Gra już zakończona: outro nie blokuje ani "Zacznij od nowa", ani
@@ -1331,7 +1336,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.stepFinal"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalStartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalStartHint") }),
       ])],
       nav: [navButton(t("control.finalStartBtn"), {
@@ -1352,13 +1356,13 @@ export function createUI({ root, emit }) {
     const f = state.final;
     const row = f.runtime.map1?.[idx];
     const question = f.questions?.[idx];
-    if (!row) return t("control.dash");
+    if (!row) return t("common.emDash");
     if (row.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === row.matchId);
-      return (a?.text || "").trim() || t("control.dash");
+      return (a?.text || "").trim() || t("common.emDash");
     }
-    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || t("control.dash");
-    return t("control.dash");
+    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || t("common.emDash");
+    return t("common.emDash");
   }
 
   // Kafel odliczania — jeden wiersz na pełną szerokość, ta sama skala co
@@ -1535,7 +1539,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint")}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint", { max: FINAL_DISPLAY_MAX })}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
       ]),
     ];
 
@@ -1593,10 +1597,10 @@ export function createUI({ root, emit }) {
   function resolveMappingPreview(question, inputText, effective) {
     if (effective.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === effective.matchId);
-      return { text: a?.text || t("control.dash"), pts: a ? a.fixed_points : 0 };
+      return { text: a?.text || t("common.emDash"), pts: a ? a.fixed_points : 0 };
     }
-    if (effective.kind === "MISS") return { text: inputText || t("control.dash"), pts: 0 };
-    return { text: t("control.dash"), pts: 0 };
+    if (effective.kind === "MISS") return { text: inputText || t("common.emDash"), pts: 0 };
+    return { text: t("common.emDash"), pts: 0 };
   }
 
   // Wpisywanie (finał, mapowanie): wiersz 1 to edytowalne "Wpisano" (ten sam
@@ -1695,7 +1699,7 @@ export function createUI({ root, emit }) {
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode(t("control.finalRevealAnswerLabel")),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true" }, clipNodes(row.revealedAnswer ? (row.outText || t("control.dash")) : preview.text)),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true" }, clipNodes(row.revealedAnswer ? (row.outText || t("common.emDash")) : preview.text)),
       ]),
       {
         row: 6, col: HALF(0), cls: "c2-tile-primary",
@@ -1882,7 +1886,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.finalP2StartStepLabel"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalP2StartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalP2StartHint") }),
         // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
         // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
@@ -1988,6 +1991,12 @@ export function createUI({ root, emit }) {
         : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
+    }
+    // Zaznaczony kafel (zaznacz → potwierdź, armableTile): sama złota obwódka
+    // nie mówi, że trzeba kliknąć drugi raz -- na ten czas podpowiedź o tym.
+    if (hint && root.querySelector(".c2-tile-armed")) {
+      const main = hint.querySelector(".c2-hint-main") || hint.insertBefore(h("div", { class: "c2-hint-main" }), hint.firstChild);
+      main.textContent = t("control.hints.armed");
     }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;

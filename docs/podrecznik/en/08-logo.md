@@ -85,7 +85,7 @@ Keyboard shortcuts do not work while you are typing text.
 
 1. Click the "New logo from image" tile and choose [Choose image] — a JPG, PNG, GIF
    or WEBP file, up to 5 MB.
-2. Set the crop: the "Display area" frame shows the part of the image that will appear on the screen.
+2. Set the crop: the frame on the "Display area" card shows the part of the image that will appear on the screen.
    You can rotate the image by 90° and straighten it.
 3. Adjust the look with the sliders: brightness, contrast, gamma, black, white and dither (the graininess
    of tonal transitions). [Invert] swaps light and dark areas, [Reset] undoes the settings.
@@ -104,7 +104,7 @@ also saved when you leave with the [Back] button.
 
 **The "My logos" list.** For the selected logo, [Edit], [Preview], [Duplicate],
 export to a `.famlogo` file, [Import] and [Send] — a copy for a friend (→ 11.3) — are available.
-You rename a logo by double-clicking it (on touch screens — by pressing and holding), and delete it with the trash icon.
+You rename a logo by double-clicking it (on a phone, tap twice), and delete it with the trash icon.
 Don't edit the contents of `.famlogo` files by hand — importing such a file may fail.
 
 ![Logo preview](zrzut:logos-market-logos-preview)
@@ -132,4 +132,4 @@ The logo appears at the start of the game, and at the end if you set the end scr
 **Locks.** Editing a logo and playing a game exclude each other: while you are editing a logo, you cannot open
 the control panel or game settings, and during a game or while game settings are open
 you cannot edit or delete a logo. The app will show the reason — finish one activity and go back
-to the other.
+to the other. A waiting page loads by itself once the other activity ends (→ 19.2).

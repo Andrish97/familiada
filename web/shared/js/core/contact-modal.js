@@ -1,8 +1,8 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-23T05195";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T05195";
-import { icon, iconText } from "./icons.js?v=v2026-10-23T05195";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-23T05195";
-import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-23T05195";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-23T22030";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T22030";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T22030";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-23T22030";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-23T22030";
 
 
 let modalEl = null;
@@ -223,7 +223,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-23T05195");
+    const { sb } = await import("./supabase.js?v=v2026-10-23T22030");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -329,7 +329,7 @@ async function submitContact() {
     try {
       captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang, size: "flexible" });
     } catch {
-      showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
+      showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
       return;
     }
     let res;
@@ -347,10 +347,10 @@ async function submitContact() {
       });
     }
 
-    if (res.status === 429) { showErr(t("privacy.contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
+    if (res.status === 429) { showErr(t("contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
     if (res.status === 400 || res.status === 503) {
       const failed = await res.clone().json().catch(() => ({}));
-      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
+      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
     }
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();

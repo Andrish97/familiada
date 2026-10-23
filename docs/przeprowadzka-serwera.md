@@ -123,6 +123,22 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Pauza na prośbę właściciela** (inne przebiegi w toku). Wznowienie od kroku 1 P5 (certyfikat origin), potem DNS + Access. Nic nie działa w tle.
 - **Supabase bez samoczynnych aktualizacji:** wersja przypięta w `familiada-server/supabase/UPSTREAM_REF` (`397cc79`, obrazy z 2026-10-16). Aktualizacja = świadoma zmiana tego pliku → `check` → próba (restore na kopii) → dopiero potem produkcja. Ewentualnie później automat, który tylko *zgłasza* nowszą wersję.
 - **Zamrożenie schematu bazy** (potwierdzone przez właściciela 2026-10-22: w czasie przenoszenia nie wprowadza zmian): od ostatniej próby generalnej z e2e do testów kontrolnych po przełączeniu — bez nowych migracji na `main`. Dane mogą się zmieniać (świeży zrzut przy przełączeniu).
+- **Wyjątek od zamrożenia (zgoda właściciela 2026-10-23):** migracja 472 (przejmowanie urządzeń Control 2, stan `replaced`). Przy przełączeniu wziąć zrzut bazy po 472.
+
+- **Naruszenie zamrożenia (2026-10-23, sesja E26 — sprzątanie bazy):** migracje
+  473–477 (`docs/audyt-sprzatania-bazy.md`) weszły na `main` o 17:17 UTC bez
+  sprawdzenia tej sekcji — agent nie znał zamrożenia. Wszystkie OK w
+  `latest.log`. Na prośbę właściciela doszła 478 (nieużywane funkcje Lead
+  Findera). Skutek dla przeprowadzki: zrzut przy przełączeniu musi być
+  **po 478** (jak dla 472), a próba generalna na `api2` była na schemacie
+  sprzed 473 — przed P6 sprawdzić, że kopia po 477 wczytuje się na nowym
+  serwerze. Do decyzji właściciela, czy uznać 473–477 za wyjątek.
+
+## E2E na nowym serwerze — odłożone (2026-10-23)
+
+- Otwarte: `api_origin` przestawia tylko spece z `serveBranchCode`, a wypożyczanie kont (E25), ich czyszczenie i skrzynka idą przez produkcyjny Worker do starej bazy. Do rozwiązania przed e2e w P5.
+- Decyzja właściciela: na razie zostawić — nowy serwer jeszcze nie działa. Wrócić przy P5.
+- Stan 2026-10-23 (sesja przeprowadzki): w praktyce działa — kopia bazy ma te same konta `e2e.*`, więc lease przez produkcyjny Worker wypożycza konta, którymi spece logują się do `api2`; ponad 230 testów na `api2` (dziennik niżej). Poza próbą zostają tylko funkcje Workera z bazą (sprawdzane po przełączeniu).
 
 ## Próba generalna — dziennik (2026-10-22)
 
@@ -137,6 +153,13 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Portainer od razu pod `docker.familiada.online`** (decyzja właściciela 2026-10-22: nowy adres, bez etapu `docker2`). Caddy na nowym serwerze obsługuje `docker.` także w trybie próby.
 - e2e (branch, `api2`) przebieg 39829329491: zielone `logo-draw-delete`, `rating-system`, `account-rating`, `game-transfer-format`; `logo-storage-copy` czerwony — Storage 1.81 odrzuca klucze przy pustym `GLOBAL_S3_BUCKET` („must be a relative path”). Naprawa w familiada-server: `env-adapt.py` ustawia `GLOBAL_S3_BUCKET=familiada`, `restore.sh` przenosi `storage-single-tenant/` do `familiada/`. Po ponownym wczytaniu (39830375178): `logo-storage-copy` zielony (39830781551), stare pliki ze wszystkich 3 bucketów czytelne (HTTP 200, `storage-layout` 39831358460).
 - **Decyzja (2026-10-22): bez testowego Workera** — funkcje Workera z bazą (`/_api/auth`, powielanie/wysyłanie zasobów, poczta, panel admina, kontakt) testowane w przerwie technicznej zaraz po przełączeniu; w razie błędu powrót DNS na stary serwer. Worker bez zmian (logowanie przez Workera chroni adresy użytkowników — E24).
+
+## Wdrożenia przed, w trakcie i po przełączeniu (2026-10-23)
+
+- **Do przełączenia:** wszystko jak dotąd — push na `main` → `db-migrate` / `deploy-edge` / `deploy-lead-finder` idą na **stary** serwer. Zrzut przy przełączeniu bierze je ze sobą. Strony (Cloudflare Pages) i Worker nie zależą od serwera.
+- **W czasie przerwy:** bez pushy na `main` dotykających `supabase/migrations`, `supabase/functions`, `services/lead-finder` (poszłyby na stary serwer po zrzucie i zginęły). Inne sesje agentów — wstrzymane.
+- **Kolejność w P6 (ważna):** najpierw sekrety `SERVER_HOST`, `SERVER_USER=deploy`, `SSH_PRIVATE_KEY` (klucz konta `deploy`), `SERVER_KNOWN_HOSTS` → nowy serwer; **dopiero potem** scalić `przeprowadzka-p6` do `main` (scalenie zmienia pliki workflow, więc samo uruchomi `db-migrate` i `deploy-edge` — muszą trafić w nowy serwer; na nowym nic nie zmienią, bo stan = zrzut). `przeprowadzka-p6` koliduje z `main` tylko w tym dokumencie.
+- **Po przełączeniu:** push na `main` jak dotąd, ale automaty łączą się z nowym serwerem jako `deploy` (tylko `sudo familiada-*`: psql, zrzut schematu, wdrożenie funkcji Edge z powrotem, Lead Finder z powrotem). `db-read`/`maintenance` też przez `deploy` (rola `reader`). Stary serwer: bez wdrożeń, zostaje kilka dni jako zapas, potem P7.
 
 ## Lista kontrolna przełączenia (P6) — obowiązkowe w dniu migracji
 
@@ -163,3 +186,18 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
 - Po E25 tylko spece na `helpers/e2e-test` (lease) mają konta; dziś przepisany jest tylko wzorcowy `e2e-lease.spec.js` (poczta, bez `serveBranchCode`). Pozostałe 44 spece ze starymi kontami nie przejdą nigdzie. Próba e2e na `api2` czeka na przepisane spece albo na zgodę właściciela na przepisanie wybranych.
 - 2026-10-23 rano: spece przepisane na lease (E25). `main` scalony (unit 766/766). Kopia odświeżona (migracje 466–470; restore 39905285974). Konto `deploy` na nowym serwerze: sudo tylko na `familiada-psql` (admin/reader), `familiada-schema-dump`, `familiada-deploy-edge` (wydania + powrót), `familiada-deploy-lead-finder` (obraz z tagiem sha, powrót) — `server.yml deploy apply` 39906683118; klucz SSH dla `deploy` przy przełączeniu.
 - e2e na `api2` (39905593630): base-explorer, editor, games, game-settings, marketplace, go, go-states, polls, poll-voting — **213 zielonych**, 3 czerwone: gość (oznaczanie przez Workera = stary serwer), 2× konteksty bez logowania (głosujący, ekran QR) bez podmiany API. Poprawka: fixture `context`/`browser` w `helpers/e2e-test.js` kieruje każdy kontekst na `E2E_API_ORIGIN`.
+- 2026-10-23: e2e na `api2` 39908117944 — **zielone** `polls`, `control-release`, `poll-qr`, `poll-anonymous` (po poprawce kontekstów). Kopia odświeżona po migracji 471 (`activity`: ostatnia `471_e2e_mail_resources`, 510 migracji).
+- **Pomiar stary ↔ nowy** (`familiada-server` `compare.yml`): przez internet z GitHuba (USA) — RPC 114 vs 116 ms, realtime w obie strony 100 vs 100 ms (dominuje sieć). Na samym serwerze — RPC mediana 3,9 vs 4,5 ms, p95 10,5 vs 8,8 ms, max 13,8 vs 10,0 ms; stary 2×ARM / 2,4 GB wolne, nowy 4×x86 / 5,7 GB wolne. Pomiar pod obciążeniem (25 naraz) dodany.
+- **P6 przygotowane:** `scripts/apply-migrations.sh` z `PSQL`/`SCHEMA_DUMP` (domyślnie jak dotąd); gałąź **`przeprowadzka-p6`** — automaty `db-migrate`, `db-read`, `maintenance`, `deploy-edge`, `deploy-lead-finder` przez konto `deploy` (`sudo familiada-*`) i sekret `SERVER_KNOWN_HOSTS`. **Nie scalać przed przełączeniem.** Próba uprawnień `deploy` (39910510883): odczyt/admin działają, Docker, inne sudo i niedozwolone flagi zablokowane.
+- 2026-10-23 — **Control na `api2` vs produkcja** (te same 6 testów `control2`, ten sam kod brancha): produkcja 39913005579 — czerwone 473, 2857, 3563; `api2` 39913008593 — czerwone 100, 473, 2265, 2857. Wniosek: 473 (Buzzer przed czasem: `forbidden` zamiast `locked` — wywołanie bez lease) i 2857 (`game_content_locked:control_active`) padają **także na produkcji** — rozjazd speca z kodem, nie serwer. 3563 i 144 (outro) niestabilne na obu.
+- `postgres_changes` (spec `game-state-realtime-spike.spec.js:197`): kanał SUBSCRIBED, ale zmiana `game_state` nie dociera w 15 s — **tak samo na produkcji** (39917036457) i na `api2` (39917039497, 39915049987). Nie skutek przeprowadzki; urządzenia działają na transporcie zapasowym (RPC + odpytywanie) na obu serwerach. Do osobnego zgłoszenia (poza przeprowadzką). `realtime-check` (familiada-server, tylko odczyt): na nowym serwerze sloty replikacji aktywne (zaległość 0), najemca Realtime założony świeżo z `.env`, `REPLICA IDENTITY FULL`, publikacja z `game_state` — konfiguracja zgodna ze starym.
+- 2265 (mnożnik, 4 rundy) na `api2`: 2× przekroczony limit 240 s, potem zielony w 3,9 min (39915049987) — test na granicy limitu na obu serwerach, nie różnica serwera.
+- Test TV (100) na `api2`: pomocnik testów pobierał „/” przez `route.fetch`, który sam szedł za przekierowaniem Workera dla TV (302 → `/connect/?tv=1`), więc adres zostawał „/” — poprawione (`maxRedirects: 0`). Po poprawce kod podłączenia „nieprawidłowy” na `api2` — pułapka routingu próby (strona TV z Workera), do sprawdzenia na produkcji po przełączeniu.
+- Uwaga (stary serwer): slot replikacji Realtime ma **zaległość 1,4 GB WAL** — po przeprowadzce problem znika (nowy slot); do tego czasu obserwować miejsce na dysku.
+- **Pomiar Control stary ↔ nowy (2026-10-23):**
+  - pod obciążeniem na samym serwerze (25 zapytań naraz, `compare.yml` 39917657836): mediana 18,0 → **10,4 ms**, p95 50,9 → **22,8 ms**; pojedynczo 3,9 vs 3,8 ms; przez internet z GitHuba RPC 125 vs 127 ms, realtime 99 vs 102 ms (sieć dominuje);
+  - czas funkcji Control **w bazie** (`db-perf`, `pg_stat_statements`, średnio): `game_state_write` 5,8 → **3,9 ms**, `game_state_get` 3,1 → **1,6 ms**, `game_state_set_lock` 1,8 → **1,1 ms**, `game_state_display_complete` 2,9 → **2,1 ms**, `control_devices_snapshot` 0,76 vs 0,79 ms; ustawienia Postgresa identyczne (17.6, jit on, shared_buffers 128 MB);
+  - w e2e z runnera w USA zapis stanu gry (z siecią) na produkcji ~120 ms, na `api2` ~190 ms — różnica w drodze sieciowej (Cloudflare → serwer), nie w bazie; do ponownego pomiaru z Polski po przełączeniu (`compare.yml`).
+- Narzędzia (familiada-server, tylko odczyt, stary i nowy): `realtime-check`, `db-perf` (`server.yml` / `inventory-old.yml`).
+- 2026-10-23 wieczór — kopia odświeżona po migracjach 472–478 (`transfer` 40027858535, `restore rehearsal` 40027862591): 88 tabel, 262 konta, 65 obiektów Storage, Vault 4/4, crony 0/14, usługi zdrowe — schemat po sprzątaniu E26 wczytuje się na nowym serwerze bez błędów. `main` scalony do gałęzi (konflikt tylko w tym dokumencie; unit 789/789).
+- e2e na `api2` po odświeżeniu: `polls`, `poll-qr`, `poll-anonymous`, `control-release`, `games`, `base-explorer`, `go` — **144/144 zielone** (40028705513); Control `control2:1176` (przejmowanie urządzenia, migracja 472), `:2265`, `:3563` — **zielone** (40028708992).

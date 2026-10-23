@@ -1880,6 +1880,8 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+/* Trzecia linia z jednym przyciskiem („Udostępnij” u Prowadzącego i Przycisku). */
+.device-row-line--single { grid-template-columns: minmax(0, 1fr); }
 
 /* W trybie testowym zachowaj miejsce na akcje i podpowiedź, żeby karty nie
    zmieniały wysokości po przełączeniu trybu. Ukryta zawartość nie jest klikalna. */

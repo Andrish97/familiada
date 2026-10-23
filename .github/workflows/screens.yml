@@ -44,7 +44,7 @@ permissions:
 # Na main przebieg nie jest przerywany kolejnym pushem (kolejny czeka; z kilku
 # czekających zostaje najnowszy) -- inaczej przy częstych pushach kilku sesji
 # długie odświeżanie zrzutów nigdy się nie kończyło. Porównanie z ostatnim
-# commitem zmieniającym zrzuty (kroki niżej) nie gubi zmian z pominiętych przebiegów;
+# odświeżeniem zrzutów przez CI (kroki niżej) nie gubi zmian z pominiętych przebiegów;
 # które sceny -- scripts/screens/changes.cjs (bez samych wersji ?v=, wspólny kod
 # tylko dla stron, które go wczytują).
 concurrency:
@@ -105,10 +105,15 @@ jobs:
           fc-cache -f >/dev/null
           echo "system-ui: $(fc-match system-ui)"
 
+      # Galeria do przeglądu: przy pushu tylko PL i najwyżej 30 min -- zmiana
+      # tłumaczeń dotyczy wszystkich scen (3 języki nie mieszczą się w limicie
+      # przebiegu), a kroki strony głównej i Wskazówek niżej muszą się wykonać.
       - name: Zrzuty
+        timeout-minutes: 30
+        continue-on-error: true
         env:
           SCENES: ${{ inputs.scenes || 'changed' }}
-          LANGS: ${{ inputs.lang || 'all' }}
+          LANGS: ${{ inputs.lang || (github.event_name == 'push' && 'pl') || 'all' }}
           DEVICES: ${{ inputs.devices || 'desktop,phone' }}
           # Push na main: zmiany tego pushu; inne gałęzie i ręcznie: względem main.
           BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before || 'origin/main' }}
@@ -162,11 +167,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ALL: ${{ inputs.homepage && '1' || '' }}
         run: |
-          # Porównanie z ostatnim odświeżeniem kadrów, nie z poprzednim pushem:
-          # przebieg anulowany przez kolejny push (concurrency) nie gubi zmian.
-          # Ostatni commit, który zmienił kadry (CI albo ręcznie) -- od niego liczą się zmiany.
-          LAST=$(git log -1 --format=%H HEAD -- web/assets/img/pl/shots web/assets/img/en/shots web/assets/img/uk/shots 2>/dev/null || true)
-          [ -n "$LAST" ] && BASE="$LAST"
+          # Zmiany liczą się od kodu, z którego CI ostatnio renderowało kadry (stopka
+          # Rendered-From: w commicie odświeżenia), nie od samego commita: ten trafia na
+          # main przez rebase, więc pod nim leżą commity innych sesji, których CI nie
+          # renderowało. Przebieg anulowany przez kolejny push nie gubi zmian, a ręczna
+          # publikacja części kadrów w commicie sesji nie przesuwa punktu odniesienia.
+          # Brak stopki -- wszystkie kadry.
+          RENDERED=$(git rev-parse HEAD)
+          LAST=$(git log -1 --format=%H --author="github-actions" HEAD -- web/assets/img/pl/shots web/assets/img/en/shots web/assets/img/uk/shots 2>/dev/null || true)
+          FROM=$([ -n "$LAST" ] && git log -1 --format='%(trailers:key=Rendered-From,valueonly)' "$LAST" | head -1 || true)
+          if [ -n "$FROM" ] && git cat-file -e "$FROM^{commit}" 2>/dev/null; then BASE="$FROM"; else ALL=1; fi
+          if [ -n "$ALL" ]; then echo "Punkt odniesienia: brak -- wszystkie kadry"; else echo "Punkt odniesienia: $BASE"; fi
           if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
           node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
           [ -d home-out ] || { echo "Brak zmienionych kadrów strony głównej."; exit 0; }
@@ -175,7 +186,7 @@ jobs:
           if git diff --cached --quiet; then echo "Kadry bez zmian."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Refresh homepage screenshots [skip ci]"
+          git commit -m "Refresh homepage screenshots [skip ci]" -m "Rendered-From: $RENDERED"
           # Inne sesje pushują na main równolegle -- kilka prób rebase + push.
           for attempt in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && break
@@ -195,9 +206,13 @@ jobs:
           ALL: ${{ inputs.help && '1' || '' }}
         run: |
           git pull --rebase origin main || true
-          # Ostatni commit, który zmienił zrzuty Wskazówek (CI albo ręcznie) -- od niego liczą się zmiany.
-          LAST=$(git log -1 --format=%H HEAD -- web/manual/img 2>/dev/null || true)
-          if [ -n "$LAST" ]; then BASE="$LAST"; else ALL=1; fi
+          # Punkt odniesienia jak w kadrach strony głównej: kod z ostatniego renderowania
+          # (stopka Rendered-From:), brak stopki -- wszystkie zrzuty Wskazówek.
+          RENDERED=$(git rev-parse HEAD)
+          LAST=$(git log -1 --format=%H --author="github-actions" HEAD -- web/manual/img 2>/dev/null || true)
+          FROM=$([ -n "$LAST" ] && git log -1 --format='%(trailers:key=Rendered-From,valueonly)' "$LAST" | head -1 || true)
+          if [ -n "$FROM" ] && git cat-file -e "$FROM^{commit}" 2>/dev/null; then BASE="$FROM"; else ALL=1; fi
+          if [ -n "$ALL" ]; then echo "Punkt odniesienia: brak -- wszystkie zrzuty"; else echo "Punkt odniesienia: $BASE"; fi
           if [ -n "$ALL" ]; then pick=$(node scripts/screens/publish-manual.cjs --list); else pick=$(node scripts/screens/publish-manual.cjs --list --base="$BASE"); fi
           [ -n "$pick" ] || { echo "Brak zrzutów Wskazówek do odświeżenia."; exit 0; }
           node scripts/screens/run.cjs --scenes="$pick" --lang=all --devices=desktop,phone,phone-landscape,tablet,tablet-landscape --out=help-out || true
@@ -208,7 +223,7 @@ jobs:
           if git diff --cached --quiet; then echo "Zrzuty Wskazówek bez zmian."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Refresh help screenshots [skip ci]"
+          git commit -m "Refresh help screenshots [skip ci]" -m "Rendered-From: $RENDERED"
           for attempt in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && break
             [ "$attempt" = 5 ] && exit 1

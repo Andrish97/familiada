@@ -10,12 +10,16 @@ A base is shared by its owner; this requires an account (→ 5.1).
 
 ## 12.2 Inviting people to a base
 
-1. On the *Question bases* page, select your base and choose [Share].
-2. Choose the access level: "Can edit" (the default) or "View only".
-3. Enter an email address or username and choose [Share] — or select people in the
-   "Friends" list and choose [Share with selected].
+1. On the *Question bases* page, select your base and choose [Share] in the bottom bar.
+2. Enter an email address or username, or select people in the "Friends" list.
+3. At the bottom of the window choose the access level: "Can edit" (the default) or "View only",
+   and choose [Share] — with several recipients the button shows their number, e.g.
+   [Share (3)]. Everyone from this window gets the same access level.
 
-![Share a base](zrzut:bases-share-tools)
+After sending, the window closes. If an invitation cannot be sent (e.g. the person is no longer
+your friend), the window stays open and shows a message.
+
+![Share a base](zrzut:bases-share-send)
 
 The invited person does not have to be your friend, but they must have an account. If they have
 notifications turned on, they get an email with a link.
@@ -37,11 +41,9 @@ An invitation that is not accepted expires after **5 days**.
 
 | Who | Label | What they can do |
 |---|---|---|
-| Owner | "Mine" | everything: edit, share, rename, [Duplicate] and delete the base |
-| Edit | "EDIT" | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
-| Read | "READ" | browse the base and export it to a file |
-
-![Shared bases — access labels](zrzut:bases-share-long-name)
+| Owner | a tile on the "My bases" tab | everything: edit, share, rename, [Duplicate] and delete the base |
+| Edit | a pencil icon on the tile | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
+| Read | an eye icon on the tile | browse the base and export it to a file |
 
 A person with read access cannot create a game directly from the base. They can export the base
 to a file, import it as their own (→ 9.1) and create a game there.
@@ -55,12 +57,15 @@ busy for a moment. If you try to change it at the same time, you will see the me
 is currently being edited in another tab or by another user." Wait a moment
 and try again. While someone has the base open, the owner cannot rename or delete it.
 
-**Managing access (owner).** In the [Share] window, in the "Shared with" section, you can see
-pending, accepted and declined invitations. You can:
+**Managing access (owner).** The [Shares] window (button in the top bar) shows
+pending, accepted and declined invitations. Next to each person you can:
 
-- change the access level, even before the invitation is accepted,
-- send a reminder about a pending invitation,
-- revoke access or cancel an invitation.
+- change the access level with the "Can edit" / "View only" button — the change is saved
+  immediately, even before the invitation is accepted,
+- send a reminder about a pending invitation — the next one after the countdown on the button,
+- revoke access or cancel an invitation with the trash icon.
+
+![Base shares — list of people with the permission next to each](zrzut:bases-share-tools)
 
 A person whose access is revoked loses it immediately — if they have the base open, they will see the message
 "Access revoked". You can also leave a base shared with you yourself with the
@@ -155,7 +160,7 @@ In "My submissions" you can see the status of each submission:
 ![My submissions — statuses](zrzut:logos-market-market-my-sent-all)
 
 You can [Withdraw] a published game. It disappears from the catalogue for new people, but those who
-have already added it still have it — with a "Withdrawn" label.
+have already added it still have it — with the label "ARCHIVED — removed from Community".
 
 ![Withdrawing a game](zrzut:logos-market-market-withdraw)
 
@@ -175,8 +180,8 @@ shows "Has an account — go to Friends.", and you get a friend suggestion from 
 
 ## 14.2 Inviting subscribers
 
-1. Open the *Subscribers* page and the "Invitations" tab.
-2. Enter an email address and choose [Invite].
+1. Open the *Subscribers* page (on a phone — the "Invitations" tab).
+2. In the "Add a subscriber" section, enter an email address and choose [Invite].
 
 An email "Subscription invitation from …" with a "View invitation" button
 is sent to that address. The recipient accepts or declines the invitation on the page the email
@@ -191,14 +196,17 @@ than every 5 days and at most twice in 30 days; after a decline, you can invite 
 
 ## 14.3 Subscriber list and statuses
 
-- "Invitations" tab, "Pending and declined" section: "Pending" — the invitation is waiting for
-  an answer; "Declined" — the recipient said no (shown for 5 days).
-- "Subscribers" tab: people who have accepted the invitation.
+- "Pending" section (under "Add a subscriber"): "Pending" — the invitation is waiting for an answer;
+  "Declined" — the recipient said no (shown for 5 days). The filter above the list shows only one status.
+- "Subscribers" section: people who have accepted the invitation.
+
+On a computer both parts are on one screen; on a phone, you switch between the "Subscribers" and
+"Invitations" tabs at the top.
 
 ![Subscribers and invitations](zrzut:people-subscribers-half@desktop)
 ![Invitation status filter](zrzut:subscribers-filter)
 
-For a pending invitation you can [Resend]. [Remove] ends the subscription and deletes
+For a pending invitation you can [Resend] (the circular arrow icon). The trash icon ends the subscription and deletes
 that person's pending invitations to your polls.
 
 ![Countdown to resending](zrzut:people-subscribers-resend-cooldown)
@@ -244,7 +252,6 @@ in *Account settings* (→ 5.8).
   turn notifications back on, the old invitations will not come back.
 
 ![Subscriptions and tasks](zrzut:mails-tools)
-![Tasks — polls and devices](zrzut:people-mails-items)
 ![Opting out of all notifications](zrzut:people-mails-resign-confirm)
 
 Access to the page expires after an hour of inactivity — after that, come back in through the link.

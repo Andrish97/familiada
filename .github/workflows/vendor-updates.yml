@@ -1,0 +1,93 @@
+name: Aktualizacje bibliotek (web/shared/vendor)
+
+# Co tydzień: nowsze wersje bibliotek z web/shared/vendor (vendor.json).
+# Ta sama główna seria -> gałąź vendor-update z podmienionym plikiem, testy e2e
+# stron, które jej używają, i pull request do scalenia. Nowa główna seria
+# (np. fabric 6/7) -> tylko informacja w podsumowaniu i w opisie PR.
+# Szczegóły: web/shared/vendor/README.md.
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch: {}
+
+concurrency:
+  group: vendor-updates
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check npm and update vendor files
+        id: upd
+        run: |
+          out="$(node scripts/vendor-update.mjs)"
+          echo "$out"
+          echo "json=$out" >> "$GITHUB_OUTPUT"
+          node -e '
+            const r = JSON.parse(process.argv[1]);
+            const lines = ["## Biblioteki web/shared/vendor", ""];
+            lines.push(r.updated.length ? "**Do aktualizacji (ta sama seria):**" : "Brak aktualizacji w tej samej serii.");
+            for (const u of r.updated) lines.push(`- ${u.package}: ${u.from} → ${u.to}`);
+            if (r.major.length) {
+              lines.push("", "**Nowa główna seria (wymaga zmian w kodzie, bez automatycznej podmiany):**");
+              for (const m of r.major) lines.push(`- ${m.package}: ${m.current} → ${m.latest}`);
+            }
+            require("fs").writeFileSync("vendor-summary.md", lines.join("\n") + "\n");
+          ' "$out"
+          cat vendor-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Branch, e2e and pull request
+        if: fromJSON(steps.upd.outputs.json).updated[0] != null
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPECS: ${{ fromJSON(steps.upd.outputs.json).specs }}
+        run: |
+          branch="vendor-update"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add web/shared/vendor
+          git commit -m "Vendor: aktualizacja bibliotek web/shared/vendor" -m "$(cat vendor-summary.md)"
+          git push --force origin "$branch"
+          if [ -n "$SPECS" ]; then
+            gh workflow run e2e-tests.yml --ref "$branch" -f spec_filter="$SPECS" -f max_failures=10
+            echo "E2E na gałęzi $branch: $SPECS" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            cat vendor-summary.md
+            echo
+            echo "Testy e2e stron używających bibliotek uruchomione na gałęzi \`$branch\` (workflow E2E Tests, \`$SPECS\`)."
+            echo "Scalić dopiero przy zielonych testach; potem testy kontrolne na produkcji (CLAUDE.md, cykl wdrożenia)."
+          } > pr-body.md
+          if gh pr view "$branch" --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$branch" --body-file pr-body.md
+          else
+            if ! gh pr create --base main --head "$branch" --title "Aktualizacja bibliotek web/shared/vendor" --body-file pr-body.md; then
+              # Repozytorium nie pozwala Actions tworzyć PR -> zgłoszenie z linkiem do porównania.
+              echo "::warning::Pull request zablokowany ustawieniem repozytorium; zamiast niego zgłoszenie."
+              echo "" >> pr-body.md
+              echo "Zmiany: https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}" >> pr-body.md
+              title="Aktualizacja bibliotek web/shared/vendor"
+              num="$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')"
+              if [ -n "$num" ]; then gh issue edit "$num" --body-file pr-body.md; else gh issue create --title "$title" --body-file pr-body.md; fi
+            fi
+          fi

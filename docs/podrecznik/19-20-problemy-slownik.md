@@ -33,9 +33,20 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 - **Nie mogę edytować gry** → ankieta jest otwarta lub zatrzymana, gra jest otwarta w innym
   miejscu albo trwa jej rozgrywka → przerwij lub zamknij ankietę, zamknij inne okno z tą grą,
   zakończ rozgrywkę (→ 7.5).
-- **„Ta gra jest otwarta gdzie indziej.”** → gra jest otwarta w innej karcie lub na innym
-  urządzeniu (edytor, ustawienia, ankieta, panel sterowania) → zamknij tamto okno i spróbuj
-  ponownie.
+- **„Zajęte w innym miejscu”** (np. „Ta gra jest otwarta gdzie indziej.”, „To logo jest właśnie
+  edytowane…”) → gra, logo albo baza są otwarte w innej karcie, na innym urządzeniu albo u
+  współpracownika (edytor, ustawienia, ankieta, panel sterowania) → zamknij tamto okno.
+  Strony nie trzeba odświeżać: sama sprawdza zasób i wczyta się, gdy się zwolni. Po zwykłym
+  zamknięciu tamtej karty dzieje się to od razu, a gdy karta zniknęła bez zamknięcia (awaria
+  przeglądarki, uśpiony komputer lub telefon, brak sieci) — po około 30 sekundach. Karta w tle
+  (inne okno, zminimalizowana przeglądarka) zasobu nie oddaje.
+- **„Utracono blokadę”** → ta karta przez dłuższą chwilę nie miała połączenia z serwisem (np. po
+  uśpieniu komputera), a w tym czasie zasób przejęła inna karta → odśwież stronę.
+- **„Gra w toku” w ustawieniach gry** → rozgrywka w panelu sterowania nie została zakończona →
+  zakończ ją w panelu albo wybierz [Zakończ rozgrywkę i otwórz ustawienia]; bez tego blokada
+  rozgrywki wygasa po godzinie bezczynności (→ 16.1).
+
+![Zajęte w innym miejscu](zrzut:games-editor-locked-busy)
 - **Odpowiedź się nie zapisuje** → zawiera znaki, których nie pokaże Wyświetlacz (np. emotki),
   albo jest za długa → usuń te znaki; odpowiedź może mieć do 17 znaków (→ 7.3).
 - **Import pliku nie działa** → plik nie jest grą z serwisu albo jest uszkodzony → użyj pliku
@@ -89,14 +100,22 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   ekranu i nie przełączaj aplikacji. Gdy używasz przycisków fizycznych albo grasz bez tabletu
   prowadzącego — zaznacz odpowiednią opcję w panelu (→ 17.1). Po powrocie do strony urządzenie
   łączy się samo w kilka sekund.
-- **Kod QR zeskanowano kilka razy** → na tym samym telefonie działa najnowsza karta, a starsze
-  pokazują komunikat oczekiwania → wracaj do tej samej karty zamiast skanować ponownie; zbędne
-  karty zamknij.
-- **„Urządzenie czeka na swoją kolej”** → to samo urządzenie (przyciski, ekran prowadzącego lub
-  Wyświetlacz) jest otwarte na innym telefonie albo w innej przeglądarce → zamknij tamtą kartę
-  albo poczekaj kilkanaście sekund, aż się rozłączy.
+- **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
+  „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.
+- **„Urządzenie otwarto w innym miejscu”** → to samo urządzenie (Przycisk, ekran prowadzącego lub
+  Wyświetlacz) otwarto w innej karcie, przeglądarce albo na innym sprzęcie → ten ekran sam nie
+  wróci do gry; aby używać go tutaj, kliknij [Używaj tutaj] — tamten ekran się wyłączy.
 - **„Obróć telefon poziomo…”** na przycisku do pojedynku → przycisk działa w poziomie → obróć
   telefon i wyłącz blokadę obrotu ekranu.
+- **„Niedostępne na telefonie”** → strona wymaga tabletu lub komputera (np. edytory logo,
+  *Panel sterowania*) → otwórz ją na tablecie albo komputerze.
+- **„Obróć urządzenie”** → strona zmieści się po obróceniu tabletu → obróć urządzenie.
+- **„Za wąskie okno”** → okno przeglądarki jest węższe, niż potrzebuje strona (np. *Panel sterowania*,
+  edytory logo), także w widoku podzielonego ekranu → poszerz okno albo wyjdź z podzielonego ekranu.
+  Listy, Wskazówki i strony do głosowania działają w każdej szerokości.
+- **„Za małe okno”** → okno w poziomie jest za niskie (poniżej 580 px, np. przez paski przeglądarki
+  albo powiększenie strony) → powiększ okno, zmniejsz powiększenie strony lub wyjdź z podzielonego
+  ekranu.
 - **Brak dźwięku** → dźwięk nie jest odblokowany albo urządzenie jest wyciszone → sprawdź, skąd
   ma płynąć dźwięk (→ 17.2), głośność urządzenia i głośność w podsumowaniu ustawień.
 

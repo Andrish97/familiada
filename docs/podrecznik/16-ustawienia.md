@@ -5,12 +5,16 @@
 Ustawienia dotyczą jednej, konkretnej gry. Otworzysz je przyciskiem [Ustawienia gry]
 w *Moich grach* albo [Zmień ustawienia] w podsumowaniu w panelu sterowania (→ 17.2).
 
-*Ustawienia gry* są niedostępne na telefonie — użyj tabletu lub komputera.
+*Ustawienia gry* działają na telefonie, tablecie i komputerze. Na telefonie sekcje wybierasz
+przyciskiem menu na pasku pod nagłówkiem.
 
 ![Ustawienia gry](zrzut:game-settings)
+![Ustawienia gry na telefonie](zrzut:game-settings@phone)
 
 Ustawienia przygotuj **przed rozpoczęciem rozgrywki**. Gdy gra jest otwarta w panelu sterowania,
-ustawień nie zmienisz. Jeśli zamknąłeś panel w trakcie gry, serwis pokaże „Gra w toku” z wyborem:
+ustawień nie zmienisz. Jeśli rozgrywka nadal trwa (np. zamknąłeś panel w trakcie gry), serwis pokaże
+„Gra w toku”: zapisane zmiany obejmą dopiero następną grę, a blokada rozgrywki wygaśnie sama po
+godzinie bezczynności (okno pokazuje, ile zostało). Możesz wybrać
 [Wróć] albo [Zakończ rozgrywkę i otwórz ustawienia] — ta druga opcja kończy grę, a urządzenia
 trzeba będzie podłączyć od nowa.
 
@@ -27,7 +31,7 @@ jest ograniczona do tego, co mieści Wyświetlacz; znaki, których Wyświetlacz 
 zostaną przyjęte.
 
 ![Drużyny](zrzut:play-settings-teams)
-![Nazwa dłuższa niż Wyświetlacz](zrzut:game-settings-team-limit)
+![Nazwy drużyn — za długa nazwa i niedozwolone znaki](zrzut:game-settings-team-limit)
 
 ## 16.3 Wygląd
 
@@ -123,8 +127,9 @@ Sekcja „Ustawienia gry”:
 
 ![Sekcja „Ustawienia gry”](zrzut:play-settings-game)
 
-Mnożniki i kwoty to dodatnie liczby całkowite — na przykład 0,5 nie zadziała. Nieprawidłowej
-wartości serwis nie zapisze: po [Zapisz] pole wróci do poprzedniej wartości.
+Mnożniki i kwoty to dodatnie liczby całkowite — na przykład 0,5 nie zadziała. Przy nieprawidłowej
+wartości pole od razu pokazuje błąd, a [Zapisz] wstrzymuje zapis z prośbą o poprawienie
+zaznaczonych pól.
 
 ![Nieprawidłowa wartość](zrzut:game-settings-game-invalid)
 
@@ -143,8 +148,8 @@ końcowy pokazuje logo.
   w sekcjach „Wygląd”, „Dźwięk” i „Ustawienia gry” jest też przywracanie tylko tej sekcji.
 - Jeśli ustawienia zmieniono w międzyczasie w innym oknie, serwis o tym uprzedzi przed zapisem.
 
-![Niezapisane zmiany](zrzut:play-settings-unsaved)
-![Przywróć domyślne](zrzut:play-settings-reset-all)
+![Wyjście z niezapisanymi zmianami](zrzut:play-settings-unsaved)
+![Przywrócenie ustawień domyślnych](zrzut:play-settings-reset-all)
 
 - [Graj] przechodzi od razu do panelu sterowania (→ 17). Gra musi być gotowa do rozegrania
   (→ 7.6).

@@ -18,7 +18,7 @@ const { loginAsTestUser } = require("./login");
 const { ensureApiOriginRouting } = require("./branch-code");
 const mailboxApi = require("./mailbox");
 
-const WAIT_MS = 30 * 60_000; // zasób mail ma 2 miejsca; długie spece pocztowe trzymają je kilkanaście minut
+const WAIT_MS = 30 * 60_000; // długie spece pocztowe trzymają zasób mail kilkanaście minut
 const POLL_MS = 15_000;
 const RENEW_MS = 5 * 60_000;
 

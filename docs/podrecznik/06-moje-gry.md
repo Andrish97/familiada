@@ -31,11 +31,12 @@ Każda gra to kafelek z nazwą i statusem:
 | Status | Co oznacza |
 |---|---|
 | SZKIC | Gra w przygotowaniu. Możesz ją edytować. |
+| DO URUCHOMIENIA | Gra z ankietą spełnia warunki — możesz uruchomić ankietę (→ 15.1). |
 | OTWARTA | Trwa ankieta — głosujący mogą odpowiadać. Obok widać liczbę oddanych głosów. |
 | ZATRZYMANA | Zbieranie odpowiedzi jest wstrzymane. Plakietka „do podliczenia” przypomina, że możesz podliczyć głosy (→ 15.6). |
 | GOTOWA | Gra jest gotowa do rozegrania. |
 
-![Statusy i powód blokady na kafelku](zrzut:games-prepared-states)
+![Statusy SZKIC i GOTOWA — braki szkicu na kafelku](zrzut:games-prepared-states)
 ![Otwarta ankieta — liczba głosów](zrzut:games-poll-text-open)
 ![Zatrzymana ankieta — „do podliczenia”](zrzut:games-poll-points-stopped)
 
@@ -50,7 +51,7 @@ Kopia otrzymana od znajomego ma oznaczenie „Od: {nazwa}”.
 
 ![Kopia od znajomego — „Od: …”](zrzut:games-prepared-received)
 
-Nad listą możesz wybrać filtr: SZKIC, OTWARTA, ZATRZYMANA, GOTOWA albo „Otrzymano”
+Nad listą możesz wybrać filtr: SZKIC, DO URUCHOMIENIA, OTWARTA, ZATRZYMANA, GOTOWA albo „Otrzymano”
 (tylko kopie od znajomych). Lista odświeża się sama.
 
 ![Filtr stanu](zrzut:games-filter-menu)
@@ -101,8 +102,8 @@ przytrzymaj go na telefonie), aby zobaczyć powód. Najważniejsze zasady:
 
 [Zmień typ] zmienia tę samą grę — nie tworzy kopii. Szczegóły → 7.8.
 
-Na telefonie i w wąskim oknie przeglądarki przyciski [Graj] i [Ustawienia gry] są ukryte —
-*Panel sterowania* i *Ustawienia gry* otworzysz na komputerze lub tablecie.
+Na telefonie i w wąskim oknie przeglądarki przycisk [Graj] jest ukryty — *Panel sterowania*
+otworzysz na komputerze lub tablecie. [Ustawienia gry] działają także na telefonie.
 
 W zakładce **Gry Społeczności** dostępne są tylko [Graj], [Podgląd] i [Ustawienia gry].
 Takich gier nie można edytować, powielać, eksportować ani wysyłać (→ 13.4).
@@ -122,7 +123,8 @@ zatrzymaną ankietę, serwis uprzedzi: „Ankieta zostanie przerwana.” — zeb
 
 Gry otwartej w innym miejscu (w edytorze, ustawieniach, ankiecie albo w innej karcie
 przeglądarki) nie można w tej chwili usunąć ani zmienić jej nazwy. Serwis pokaże wtedy
-„Ta gra jest otwarta gdzie indziej.” Zamknij tamto okno i spróbuj ponownie.
+„Ta gra jest otwarta gdzie indziej.” Zamknij tamto okno i spróbuj ponownie — gra zwalnia się od
+razu po zamknięciu tamtej karty, a po około 30 sekundach, gdy karta zniknęła bez zamknięcia (→ 19.2).
 
 W zakładce Gry Społeczności kosz oznacza [Usuń z biblioteki] (→ 13.4).
 
@@ -162,7 +164,6 @@ z rozszerzeniem `.famgame`, który możesz przechować albo przenieść na inne 
   do pliku — po imporcie będzie to szkic.
 
 ![Eksport do pliku](zrzut:games-export-progress)
-![Eksport otwartej ankiety — bez głosów](zrzut:games-export-votes)
 
 **Import z pliku.** Wybierz [Importuj] i wskaż plik `.famgame` (albo `.json`). Przed
 zatwierdzeniem zobaczysz nazwę, rodzaj gry i liczbę pytań oraz uwagi, na przykład gdy wynik
@@ -170,7 +171,7 @@ ankiety w pliku jest niepełny i gra trafi do biblioteki jako szkic. Import zaws
 nową grę — nie zmienia istniejących.
 
 ![Import — podgląd pliku](zrzut:games-import-preview)
-![Import — plik nie jest grą](zrzut:games-import-error)
+![Import — niepoprawny plik JSON](zrzut:games-import-error)
 
 Podczas importu zbyt długie teksty są skracane (pytanie do 100 znaków, odpowiedź do 17),
 a przy więcej niż 6 odpowiedziach zostaje 6 najwyżej punktowanych. Zaimportowana gra może
@@ -187,5 +188,6 @@ zatrzymanej serwis najpierw uprzedzi, że zebrane głosy nie trafią do bazy.
 
 ![Eksport do bazy — wybór bazy](zrzut:games-export-base)
 ![Brak baz do wyboru](zrzut:games-export-base-empty)
+![Eksport do bazy — ostrzeżenie „Bez bieżących głosów”](zrzut:games-export-votes)
 
 Nie zmieniaj ręcznie zawartości plików `.famgame` — import takiego pliku może się nie udać.

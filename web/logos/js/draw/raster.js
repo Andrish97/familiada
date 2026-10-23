@@ -8,7 +8,8 @@
 // linia narysowana na przerwie między kaflami znika tak jak na prawdziwym
 // wyświetlaczu, a proporcje zgadzają się z tym, co widać na scenie.
 
-import { DOT_W, DOT_H } from "../render.js?v=v2026-10-23T05195";
+import { prepareFabric } from "../../../shared/js/core/fabric-compat.js?v=v2026-10-23T22030";
+import { DOT_W, DOT_H } from "../render.js?v=v2026-10-23T22030";
 
 
 // Świat nowych rysunków: 26:11, jak cały wyświetlacz. Stare rysunki mają
@@ -26,13 +27,14 @@ const RAST_H = 88;
  * miałby 2x więcej pikseli, a odczyt 208x88 łapał tylko lewą górną ćwiartkę.
  */
 async function renderToRaster(fabric, json, worldW, worldH) {
+  prepareFabric(fabric);
   const el = fabric.util.createCanvasElement();
   el.width = RAST_W;
   el.height = RAST_H;
   const sc = new fabric.StaticCanvas(el, { renderOnAddRemove: false, enableRetinaScaling: false });
   const s = Math.min(RAST_W / worldW, RAST_H / worldH);
   sc.setViewportTransform([s, 0, 0, s, 0, 0]);
-  await new Promise((resolve) => sc.loadFromJSON(json, resolve));
+  await sc.loadFromJSON(json);
   sc.renderAll();
   const data = el.getContext("2d").getImageData(0, 0, RAST_W, RAST_H).data;
   sc.dispose();

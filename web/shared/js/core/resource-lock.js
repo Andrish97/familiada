@@ -3,18 +3,40 @@
 // całego projektu (edytor gry, ustawienia, ankieta, logo, baza pytań,
 // rozgrywka) — jeden mechanizm zamiast osobnej implementacji per strona.
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
-// ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
-// docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T05195";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T05195";
-import { rt } from "./realtime.js?v=v2026-10-23T05195";
-import { icon } from "./icons.js?v=v2026-10-23T05195";
+// ale z treścią/przyciskami parametryzowanymi per wywołanie.
+//
+// Model (docs/blokady-zasobow.md, sekcja 8 — Realtime):
+//  * Arbitrem jest baza: JEDNO wywołanie `acquire_edit_locks` zajmuje cały zestaw
+//    zasobów strony (np. game:G wyłącznie + logos współdzielone) atomowo —
+//    wszystko albo nic, w stałej kolejności; odnowienie i zwolnienie też jednym
+//    wywołaniem. Wiersz w `edit_locks` wygasa po TTL 120 s (bezpiecznik).
+//  * Realtime Presence mówi, które karty ŻYJĄ: karta trzymająca zasób jest
+//    obecna na kanale `edit-lock:<typ>:<id>`. Karta czekająca na zajęty zasób
+//    słucha kanału zasobu, który jej przeszkadza (`blocker_type` / `blocker_id`
+//    z odpowiedzi bazy — logos ↔ logo:L to różne klucze), i gdy trzymającej karty
+//    tam nie ma, a od 25 s nie odnowiła blokady (`expire_edit_locks_absent`),
+//    usuwa jej blokadę i wchodzi od razu — zamiast czekać na TTL. Karta żywa
+//    odnawia co 8 s także w tle (Web Worker, `background-ticker.js`), więc nie
+//    traci blokady nawet przy chwilowym zerwaniu WebSocketu.
+//  * Zwolnienie: `release_edit_locks` (przy zamykaniu karty z `keepalive`),
+//    zejście z Presence i sygnał RELEASED — czekająca karta reaguje natychmiast;
+//    polling co 5 s zostaje jako zapas (np. Realtime niedostępny).
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T22030";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T22030";
+import { icon } from "./icons.js?v=v2026-10-23T22030";
+import { startTicker } from "./background-ticker.js?v=v2026-10-23T22030";
 
 
 const TAB_ID_KEY = "familiada:tabId";
-const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)
-const RETRY_POLL_MS = 5000; // dopóki zablokowani: fallback niezależny od broadcastu
+const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie) i karencji (25 s)
+const RETRY_POLL_MS = 5000; // dopóki zablokowani: zapas niezależny od Realtime
+const SIGNAL_DEBOUNCE_MS = 250; // zdarzenia Presence przychodzą seriami (sync + leave)
 const LOCK_TTL_MS = 120000; // musi być zgodne z edit_lock_ttl() w bazie (migracja 316)
+const CHANNEL_PREFIX = "edit-lock";
+// Zasoby, na które ktoś może CZEKAĆ (strony gry, logo, cała baza) — tylko one
+// mają kanał Presence. Elementy bazy (pytania, foldery, tagi) nie mają
+// czekających okien: konflikt to komunikat w oknie, nie oczekiwanie.
+const PRESENCE_TYPES = new Set(["game", "logo", "logos", "base"]);
 
 function randomId() {
   try {
@@ -38,22 +60,7 @@ export function getTabId() {
   }
 }
 
-function lockChannel(resourceType, resourceId) {
-  return rt(`familiada-edit-lock:${resourceType}:${resourceId}`);
-}
-
-async function acquireOnce(resourceType, resourceId, context, mode = "exclusive") {
-  void refreshAccessToken();
-  const { data, error } = await sb().rpc("acquire_edit_lock_mode", {
-    p_resource_type: resourceType,
-    p_resource_id: resourceId,
-    p_tab_id: getTabId(),
-    p_context: context ?? null,
-    p_mode: mode,
-  });
-  if (error) throw error;
-  return data;
-}
+// ---------------------------------------------------------------- baza
 
 // Ostatni znany token sesji — pagehide nie może czekać na async getSession().
 let lastAccessToken = null;
@@ -64,13 +71,56 @@ async function refreshAccessToken() {
   } catch {}
 }
 
+function normalizeItems(resources, { mode = "exclusive", context = null } = {}) {
+  const unique = new Map();
+  for (const r of (resources || [])) {
+    const type = r?.type ?? r?.resourceType;
+    const id = r?.id ?? r?.resourceId;
+    if (!type || !id) continue;
+    unique.set(`${type}:${id}`, {
+      type,
+      id,
+      mode: r.mode || mode,
+      message: r.message,
+      title: r.title,
+      context: r.context ?? context,
+    });
+  }
+  return Array.from(unique.values());
+}
+
+function rpcResources(items) {
+  return items.map((it) => ({ type: it.type, id: it.id, mode: it.mode }));
+}
+
+// Cały zestaw jednym wywołaniem (migracja 479: tryb per zasób). Odmowa zwraca
+// wynik pierwszej przeszkody: `error`, `resource` (który z naszych), `blocker_type`,
+// `blocker_id`, `blocker_mode`, `blocker_context`.
+async function acquireSet(items, context) {
+  void refreshAccessToken();
+  const { data, error } = await sb().rpc("acquire_edit_locks", {
+    p_resources: rpcResources(items),
+    p_tab_id: getTabId(),
+    p_context: context ?? null,
+    p_mode: "exclusive",
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function releaseSet(items) {
+  try {
+    await sb().rpc("release_edit_locks", { p_resources: rpcResources(items), p_tab_id: getTabId() });
+  } catch {}
+}
+
 // Zwolnienie przy zamykaniu karty: fetch z keepalive przeglądarka dokańcza
 // po zamknięciu strony (zwykłe sb().rpc bywa ubijane) — bez tego blokada
-// wisiała do wygaśnięcia TTL (120 s).
-function releaseRowKeepalive(resourceType, resourceId) {
+// wisiałaby do wygaszenia przez czekającą kartę albo TTL.
+function releaseSetKeepalive(items) {
   if (!lastAccessToken) return false;
   try {
-    fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_lock`, {
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_locks`, {
       method: "POST",
       keepalive: true,
       headers: {
@@ -78,7 +128,7 @@ function releaseRowKeepalive(resourceType, resourceId) {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${lastAccessToken}`,
       },
-      body: JSON.stringify({ p_resource_type: resourceType, p_resource_id: resourceId, p_tab_id: getTabId() }),
+      body: JSON.stringify({ p_resources: rpcResources(items), p_tab_id: getTabId() }),
     }).catch(() => {});
     return true;
   } catch {
@@ -86,22 +136,172 @@ function releaseRowKeepalive(resourceType, resourceId) {
   }
 }
 
-async function releaseRow(resourceType, resourceId) {
+// Usuwa blokady kart nieobecnych na kanale Presence zasobu, które od 25 s nie
+// odnowiły blokady (migracja 479). Wołane tylko z pełnym stanem Presence.
+async function expireAbsent(type, id, presentTabs) {
   try {
-    await sb().rpc("release_edit_lock", {
-      p_resource_type: resourceType,
-      p_resource_id: resourceId,
+    const { data } = await sb().rpc("expire_edit_locks_absent", {
+      p_resource_type: type,
+      p_resource_id: id,
+      p_present_tabs: presentTabs,
       p_tab_id: getTabId(),
     });
+    return Number(data?.removed) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+// ---------------------------------------------------------------- Realtime
+
+function lockTopic(type, id) {
+  return `${CHANNEL_PREFIX}:${type}:${id}`;
+}
+
+// Sygnał RELEASED przez REST (nie wymaga subskrypcji; `keepalive` przeżywa
+// zamknięcie karty). Czekające karty i tak dostają zejście z Presence — to zapas
+// na kanał, który u czekającego nie zdążył się zasubskrybować.
+function broadcastReleased(type, id, { keepalive = false } = {}) {
+  try {
+    fetch(`${SUPABASE_URL}/realtime/v1/api/broadcast`, {
+      method: "POST",
+      keepalive,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ messages: [{ topic: lockTopic(type, id), event: "RELEASED", payload: {} }] }),
+    }).catch(() => {});
   } catch {}
 }
 
-async function releaseOnce(resourceType, resourceId) {
-  await releaseRow(resourceType, resourceId);
-  try {
-    await lockChannel(resourceType, resourceId).sendBroadcast("RELEASED", {}, { mode: "http" });
-  } catch {}
+// Jeden kanał na zasób, współdzielony przez trzymających (track) i czekających
+// (nasłuch) w tej karcie; znika, gdy nikt go nie używa.
+const channels = new Map();
+
+function lockChannel(type, id) {
+  const topic = lockTopic(type, id);
+  let entry = channels.get(topic);
+  if (entry) return entry;
+
+  const tabId = getTabId();
+  const ch = sb().channel(topic, { config: { presence: { key: tabId } } });
+  entry = { topic, ch, status: "IDLE", synced: false, refs: 0, tracked: null, listeners: new Set() };
+
+  const notify = (kind) => {
+    for (const fn of entry.listeners) {
+      try { fn(kind); } catch (e) { console.warn("[resource-lock] listener failed:", e); }
+    }
+  };
+  ch.on("presence", { event: "sync" }, () => { entry.synced = true; notify("sync"); });
+  ch.on("presence", { event: "leave" }, () => notify("leave"));
+  ch.on("broadcast", { event: "RELEASED" }, () => notify("released"));
+  ch.subscribe((status) => {
+    entry.status = status;
+    if (status === "SUBSCRIBED") {
+      // Po każdym (ponownym) dołączeniu trzeba ponownie zgłosić obecność.
+      if (entry.tracked) ch.track(entry.tracked).catch(() => {});
+    } else {
+      entry.synced = false;
+    }
+    notify("status");
+  });
+
+  channels.set(topic, entry);
+  return entry;
 }
+
+function channelRef(type, id) {
+  const entry = lockChannel(type, id);
+  entry.refs += 1;
+  let dropped = false;
+  return {
+    entry,
+    drop() {
+      if (dropped) return;
+      dropped = true;
+      entry.refs -= 1;
+      if (entry.refs > 0) return;
+      channels.delete(entry.topic);
+      try { sb().removeChannel(entry.ch); } catch {}
+    },
+  };
+}
+
+// Karty obecne na kanale: klucz Presence = identyfikator karty.
+function presentTabs(entry) {
+  const tabs = new Set();
+  try {
+    const state = entry.ch.presenceState() || {};
+    for (const [key, metas] of Object.entries(state)) {
+      tabs.add(key);
+      for (const meta of (metas || [])) if (meta?.tab) tabs.add(String(meta.tab));
+    }
+  } catch {}
+  return Array.from(tabs);
+}
+
+// Trzymanie: obecność na kanałach zasobów zestawu (tylko typy z Presence).
+function holdPresence(items, context) {
+  const tabId = getTabId();
+  const refs = [];
+  for (const it of items) {
+    if (!PRESENCE_TYPES.has(it.type)) continue;
+    const ref = channelRef(it.type, it.id);
+    ref.entry.tracked = { tab: tabId, mode: it.mode, context: it.context ?? context ?? null };
+    if (ref.entry.status === "SUBSCRIBED") ref.entry.ch.track(ref.entry.tracked).catch(() => {});
+    refs.push(ref);
+  }
+  return {
+    drop() {
+      for (const ref of refs) {
+        ref.entry.tracked = null;
+        try { ref.entry.ch.untrack().catch(() => {}); } catch {}
+        ref.drop();
+      }
+    },
+  };
+}
+
+// Czekanie: nasłuch kanału zasobu, który przeszkadza (może się zmieniać —
+// po zwolnieniu gry przeszkodą może być pula logo).
+function createBlockerWatch(onSignal) {
+  let ref = null;
+  let key = null;
+  let debounce = null;
+  const listener = (kind) => {
+    if (kind === "status") return;
+    clearTimeout(debounce);
+    debounce = setTimeout(onSignal, SIGNAL_DEBOUNCE_MS);
+  };
+  return {
+    pointAt(type, id) {
+      if (!type || !id) return;
+      const next = `${type}:${id}`;
+      if (next === key) return;
+      ref?.entry.listeners.delete(listener);
+      ref?.drop();
+      key = next;
+      ref = PRESENCE_TYPES.has(type) ? channelRef(type, id) : null;
+      ref?.entry.listeners.add(listener);
+    },
+    // Stan Presence do wygaszenia martwych kart — tylko gdy kanał ma pełny obraz.
+    present() {
+      if (!ref || ref.entry.status !== "SUBSCRIBED" || !ref.entry.synced) return null;
+      return { type: key.split(":")[0], id: key.slice(key.indexOf(":") + 1), tabs: presentTabs(ref.entry) };
+    },
+    stop() {
+      clearTimeout(debounce);
+      ref?.entry.listeners.delete(listener);
+      ref?.drop();
+      ref = null;
+      key = null;
+    },
+  };
+}
+
+// ---------------------------------------------------------------- overlay
 
 function ensureOverlay() {
   let overlay = document.getElementById("resourceLockGuard");
@@ -166,10 +366,12 @@ export function showBlockingOverlay({ title, message, backHref }) {
   showOverlay({ title, message, backHref });
 }
 
+// ---------------------------------------------------------------- blokada strony
+
 /**
  * Blokada wejścia na stronę, która trzyma JEDEN albo KILKA zasobów naraz
- * (docs/blokady-zasobow.md, sekcja 6) — wołać PO auth, PRZED wyrenderowaniem
- * edytowalnej treści.
+ * (docs/blokady-zasobow.md, sekcje 6 i 8) — wołać PO auth, PRZED
+ * wyrenderowaniem edytowalnej treści.
  *
  *   opcje: { title, backHref, context, forbiddenTitle, forbiddenMessage }
  *   resources: [{ type, id, mode, message, title?, context? }]
@@ -179,36 +381,33 @@ export function showBlockingOverlay({ title, message, backHref }) {
  *               (odpowiedź_bazy) => tekst, np. gdy powód zależy od tego, kto
  *               trzyma)
  *
- * Zasoby są zajmowane po kolei, w podanej kolejności: pierwsza przeszkoda
- * zatrzymuje i jej komunikat trafia na overlay — wszystko albo nic (to, co
- * już zajęte, jest oddawane). Zajęte → overlay, sprawdzanie co ~5 s + sygnał
- * RELEASED; gdy da się zająć całość, strona wczytuje się sama.
+ * Cały zestaw jest zajmowany JEDNYM wywołaniem bazy, atomowo (wszystko albo
+ * nic) w stałej kolejności; komunikat pierwszej przeszkody (w podanej
+ * kolejności zasobów) trafia na overlay. Zajęte → overlay; karta słucha
+ * Presence zasobu, który przeszkadza (zejście trzymającej karty, RELEASED),
+ * wygasza blokady martwych kart i sprawdza co ~5 s w zapasie; gdy da się
+ * zająć całość, strona wczytuje się sama.
  *
  * Zwraca { ok: true, release } albo { ok: false } (overlay już pokazany,
  * wywołujący robi return i nic więcej nie renderuje).
  *
- * Dopóki karta żyje, blokady są odnawiane co ~8 s oraz od razu po powrocie
- * karty na wierzch (przeglądarka zwalnia liczniki ukrytych kart). Gdy
+ * Dopóki karta żyje, blokady są odnawiane co ~8 s (licznik w Web Workerze —
+ * nie zwalnia w karcie w tle) oraz od razu po powrocie karty na wierzch. Gdy
  * odnowienie zwróci `locked` (blokadę w międzyczasie ktoś wziął — uśpiony
- * laptop, wygasły TTL), strona blokuje się w całości. Zwalnianie tylko
- * przy faktycznym zamknięciu / nawigacji (pagehide) — NIE przy schowaniu
- * karty, bo alt-tab podczas edycji nie powinien oddawać blokady.
+ * laptop, wygaszona przez czekającą kartę), strona blokuje się w całości.
+ * Zwalnianie tylko przy faktycznym zamknięciu / nawigacji (pagehide) — NIE
+ * przy schowaniu karty, bo alt-tab podczas edycji nie powinien oddawać blokady.
  */
 export async function guardResourceLocks(resources, { title, backHref, context = null, forbiddenTitle, forbiddenMessage } = {}) {
-  const items = (resources || []).filter((r) => r?.type && r?.id).map((r) => ({
-    type: r.type,
-    id: r.id,
-    mode: r.mode || "exclusive",
-    message: r.message,
-    title: r.title ?? title,
-    context: r.context ?? context,
-  }));
+  const items = normalizeItems(resources, { context }).map((it) => ({ ...it, title: it.title ?? title }));
 
   let released = false;
   let lost = false;
   let renewing = false;
-  let heartbeatTimer = null;
-  let retryTimer = null;
+  let stopHeartbeat = null;
+  let stopRetry = null;
+  let watch = null;
+  let presence = null;
 
   function showGoneOverlay() {
     showOverlay({
@@ -234,41 +433,37 @@ export async function guardResourceLocks(resources, { title, backHref, context =
     });
   }
 
-  // Wszystko albo nic: pierwsza przeszkoda przerywa, zajęte wcześniej oddajemy
-  // (bez broadcastu — to nie jest prawdziwe zwolnienie, tylko wycofanie próby).
-  async function tryAcquireAll() {
-    const got = [];
-    for (const item of items) {
-      const res = await acquireOnce(item.type, item.id, item.context, item.mode);
-      if (!res?.ok) {
-        for (const g of got.reverse()) await releaseRow(g.type, g.id);
-        return { ok: false, item, res };
-      }
-      got.push(item);
-    }
-    return { ok: true };
+  // Który z NASZYCH zasobów odmówiono (komunikat) i który zasób przeszkadza (kanał).
+  function refusedItem(res) {
+    const type = res?.resource?.type;
+    const id = res?.resource?.id;
+    return items.find((it) => it.type === type && String(it.id) === String(id)) || items[0];
+  }
+  function blockerOf(res, item) {
+    return { type: res?.blocker_type || item.type, id: res?.blocker_id || item.id };
   }
 
-  const first = await tryAcquireAll();
+  const first = items.length ? await acquireSet(items, context) : { ok: true };
 
-  if (!first.ok) {
-    const { item, res } = first;
+  if (!first?.ok) {
+    const item = refusedItem(first);
 
-    if (res?.error === "gone") {
+    if (first?.error === "gone") {
       // Zasób usunięty gdzie indziej, zanim zdążyliśmy wejść — inny
       // komunikat niż "zajęte przez kogoś" i bez pollingu odzyskania (to
       // się nigdy nie "zwolni").
       showGoneOverlay();
       return { ok: false, gone: true };
     }
-    if (res?.error === "forbidden") {
+    if (first?.error === "forbidden") {
       showForbiddenOverlay();
       return { ok: false, forbidden: true };
     }
 
-    const message = typeof item.message === "function" ? item.message(res) : item.message;
+    const message = typeof item.message === "function" ? item.message(first) : item.message;
     showOverlay({ title: item.title, message, backHref });
 
+    let checking = false;
     // Gdy zasoby się zwolnią, NIE chowamy tu tylko overlayu — strona już raz
     // przerwała renderowanie edytowalnej treści przy pierwszej porażce
     // (wywołujący dostaje { ok:false } i robi return), więc samo schowanie
@@ -277,83 +472,96 @@ export async function guardResourceLocks(resources, { title, backHref, context =
     // przejdzie normalnie przez guardResourceLocks i realnie wyrenderuje
     // treść, zamiast próbować "wznowić" stan w locie.
     async function recheckAndReload() {
-      if (released) return;
-      const again = await tryAcquireAll().catch(() => null);
-      if (again?.ok) {
-        clearInterval(retryTimer);
-        // Zajęte na czas próby zostaje trzymane — przeładowana strona odnowi je
-        // tą samą kartą; pagehide zwolni, gdyby przeładowanie się nie udało.
-        location.reload();
-      } else if (again?.res?.error === "gone") {
-        // Zniknęło całkiem, zanim zwolniła je karta, na którą czekaliśmy —
-        // dalsze odpytywanie nic już nie zmieni.
-        clearInterval(retryTimer);
-        showGoneOverlay();
-      } else if (again?.res?.error === "forbidden") {
-        clearInterval(retryTimer);
-        showForbiddenOverlay();
+      if (released || checking) return;
+      checking = true;
+      try {
+        // Martwa karta (zamknięta bez pagehide, zabita przeglądarka, uśpiony
+        // telefon): nie ma jej na Presence i nie odnawia blokady → wygaszamy.
+        const seen = watch.present();
+        if (seen) await expireAbsent(seen.type, seen.id, seen.tabs);
+
+        const again = await acquireSet(items, context).catch(() => null);
+        if (released) return;
+        if (again?.ok) {
+          stop();
+          // Zajęte na czas próby zostaje trzymane — przeładowana strona odnowi je
+          // tą samą kartą; pagehide zwolni, gdyby przeładowanie się nie udało.
+          location.reload();
+        } else if (again?.error === "gone") {
+          // Zniknęło całkiem, zanim zwolniła je karta, na którą czekaliśmy —
+          // dalsze odpytywanie nic już nie zmieni.
+          stop();
+          showGoneOverlay();
+        } else if (again?.error === "forbidden") {
+          stop();
+          showForbiddenOverlay();
+        } else if (again?.error === "locked") {
+          // Przeszkoda mogła się zmienić (gra zwolniona, teraz pula logo).
+          const b = blockerOf(again, refusedItem(again));
+          watch.pointAt(b.type, b.id);
+        }
+      } finally {
+        checking = false;
       }
     }
 
-    // Broadcast "RELEASED" (natychmiastowe, ale best-effort — wysyłane na
-    // pagehide, przeglądarka może ubić żądanie w trakcie nawigacji) +
-    // niezależny polling co ~5 s jako fallback (obejmuje też zasoby powiązane
-    // innym kluczem, np. logos ↔ logo:L), żeby karta bez broadcastu i tak
-    // weszła najpóźniej po wygaśnięciu TTL po stronie serwera.
-    for (const it of items) lockChannel(it.type, it.id).onBroadcast("RELEASED", recheckAndReload);
-    retryTimer = setInterval(recheckAndReload, RETRY_POLL_MS);
+    function stop() {
+      released = true;
+      if (stopRetry) stopRetry();
+      watch?.stop();
+    }
+
+    watch = createBlockerWatch(recheckAndReload);
+    const b = blockerOf(first, item);
+    watch.pointAt(b.type, b.id);
+    // Zapas niezależny od Realtime (także zasoby bez Presence): najpóźniej po
+    // TTL po stronie serwera karta i tak wejdzie.
+    stopRetry = startTicker(recheckAndReload, RETRY_POLL_MS);
 
     return { ok: false };
   }
 
+  presence = holdPresence(items, context);
+
   async function renewAll() {
-    if (released || lost || renewing) return;
+    if (released || lost || renewing || !items.length) return;
     renewing = true;
     try {
-      for (const item of items) {
-        const res = await acquireOnce(item.type, item.id, item.context, item.mode).catch((e) => {
-          console.warn("[resource-lock] heartbeat failed:", e);
-          return null;
-        });
-        if (released || lost) return;
-        if (res?.error === "gone") {
-          // Zasób zniknął w trakcie edycji (usunięty gdzie indziej, np. przez
-          // Warstwę 2 krzyżowych blokad albo mimo niej). Overlay na wierzchu
-          // już wyrenderowanej treści blokuje dalszą interakcję — nie trzeba
-          // nic chować/przerenderowywać pod spodem.
-          lost = true;
-          clearInterval(heartbeatTimer);
-          showGoneOverlay();
-          return;
-        }
-        if (res?.error === "forbidden") {
-          // Utrata prawa edycji w trakcie sesji (np. rola współdzielenia
-          // zdegradowana albo odebrany dostęp do bazy). Ten sam wzorzec co
-          // "gone" -- overlay na wierzchu, bez pollingu odzyskania.
-          lost = true;
-          clearInterval(heartbeatTimer);
-          showForbiddenOverlay();
-          return;
-        }
-        if (res && res.ok === false && res.error === "locked") {
-          // Blokadę w międzyczasie przejęła inna karta (nasza wygasła —
-          // uśpiony komputer, spowolnione liczniki w tle). Pełna blokada
-          // strony; reszty nie trzymamy, skoro nic tu już nie wolno.
-          lost = true;
-          clearInterval(heartbeatTimer);
-          showLostOverlay();
-          for (const other of items) if (other !== item) void releaseRow(other.type, other.id);
-          return;
-        }
+      const res = await acquireSet(items, context).catch((e) => {
+        console.warn("[resource-lock] heartbeat failed:", e);
+        return null;
+      });
+      if (released || lost || !res || res.ok) return;
+      lost = true;
+      stopHeartbeat?.();
+      presence?.drop();
+      if (res.error === "gone") {
+        // Zasób zniknął w trakcie edycji (usunięty gdzie indziej, np. przez
+        // Warstwę 2 krzyżowych blokad albo mimo niej). Overlay na wierzchu
+        // już wyrenderowanej treści blokuje dalszą interakcję — nie trzeba
+        // nic chować/przerenderowywać pod spodem.
+        showGoneOverlay();
+      } else if (res.error === "forbidden") {
+        // Utrata prawa edycji w trakcie sesji (np. rola współdzielenia
+        // zdegradowana albo odebrany dostęp do bazy). Ten sam wzorzec co
+        // "gone" -- overlay na wierzchu, bez pollingu odzyskania.
+        showForbiddenOverlay();
+      } else {
+        // Blokadę w międzyczasie przejęła inna karta (nasza wygasła —
+        // uśpiony komputer — albo czekająca karta wygasiła ją jako martwą).
+        // Pełna blokada strony; reszty nie trzymamy, skoro nic tu już nie wolno
+        // (odmowa zestawu wycofała w bazie to, co byśmy odnowili).
+        showLostOverlay();
+        void releaseSet(items);
       }
     } finally {
       renewing = false;
     }
   }
 
-  heartbeatTimer = setInterval(renewAll, HEARTBEAT_MS);
+  stopHeartbeat = startTicker(renewAll, HEARTBEAT_MS);
 
-  // Powrót karty na wierzch: odnów od razu, nie czekaj na wolny licznik.
+  // Powrót karty na wierzch: odnów od razu, nie czekaj na licznik.
   const onVisible = () => {
     if (document.visibilityState === "visible") void renewAll();
   };
@@ -361,27 +569,27 @@ export async function guardResourceLocks(resources, { title, backHref, context =
 
   // Zwraca Promise zwolnienia: strona, która wychodzi własnym przyciskiem
   // (np. „Wstecz” edytora logo), czeka na nie przed nawigacją -- przy samym
-  // pagehide przeglądarka potrafi ubić żądanie w trakcie przejścia i blokada
-  // wisiałaby do wygaśnięcia TTL.
-  const release = () => {
-    if (released) return Promise.resolve();
+  // pagehide przeglądarka potrafi ubić żądanie w trakcie przejścia.
+  const release = async ({ keepalive = false } = {}) => {
+    if (released) return;
     released = true;
-    clearInterval(heartbeatTimer);
-    clearInterval(retryTimer);
+    stopHeartbeat?.();
     document.removeEventListener("visibilitychange", onVisible);
-    return Promise.all(items.map((it) => releaseOnce(it.type, it.id)));
+    window.removeEventListener("pagehide", releaseOnHide);
+    if (!items.length) return;
+    if (keepalive) releaseSetKeepalive(items);
+    const done = lost ? Promise.resolve() : releaseSet(items);
+    presence?.drop();
+    for (const it of items) if (PRESENCE_TYPES.has(it.type)) broadcastReleased(it.type, it.id, { keepalive });
+    await done;
   };
 
-  // Zamknięcie karty: najpierw keepalive (przeżywa zamknięcie), potem zwykła
-  // ścieżka z broadcastem RELEASED dla czekających kart.
-  const releaseOnHide = () => {
-    if (released) return;
-    for (const it of items) releaseRowKeepalive(it.type, it.id);
-    void release();
-  };
+  // Zamknięcie karty: keepalive przeżywa zamknięcie; zejście z Presence i
+  // RELEASED budzą czekające karty.
+  const releaseOnHide = () => { void release({ keepalive: true }); };
   window.addEventListener("pagehide", releaseOnHide);
 
-  return { ok: true, release };
+  return { ok: true, release: () => release() };
 }
 
 /**
@@ -394,127 +602,71 @@ export function guardResourceLock({ resourceType, resourceId, mode, message, tit
   );
 }
 
-/**
- * Zajmuje blokadę bez pełnoekranowego guarda. Ten wariant służy elementom
- * edytowanym wewnątrz większego ekranu (pytanie/folder/tag w bazie pytań).
- * Wywołujący sam decyduje, jak pokazać konflikt i MUSI wywołać release().
- *
- * Zwrócony lease ma mutowalne `ok`/`reason` -- gdy heartbeat wykryje że
- * zasób zniknął (`gone`) albo wywołujący stracił prawo edycji (`forbidden`,
- * np. rola współdzielenia zdegradowana w trakcie sesji), `ok` przechodzi
- * na `false`. Sesje dłuższe niż jeden zapis (otwarty modal pytania/tagów)
- * MUSZĄ sprawdzić `lease.ok` tuż przed realnym zapisem i przerwać z
- * komunikatem zamiast próbować zapisać -- RLS i tak zablokuje sam zapis,
- * to tylko zamienia generyczny błąd Supabase na jasny komunikat.
- */
-export async function acquireResourceLock({ resourceType, resourceId, context = null, mode = "exclusive" } = {}) {
-  if (!resourceType || !resourceId) return { ok: false, error: "missing_resource" };
+// ---------------------------------------------------------------- blokada akcji / okna
 
-  let released = false;
-  let heartbeatTimer = null;
-  const first = await acquireOnce(resourceType, resourceId, context, mode);
+/**
+ * Zajmuje zestaw blokad bez pełnoekranowego guarda — na czas jednej operacji
+ * albo otwartego okna (pytanie/folder/tag w bazie, okno zmiany nazwy na liście).
+ * Jedno wywołanie bazy na cały zestaw: stała kolejność (bez zakleszczeń),
+ * odmowa na którymkolwiek zasobie wycofuje całość i zwraca jej wynik
+ * (`error`, `resource`, `blocker_*`). Wywołujący sam pokazuje konflikt i MUSI
+ * wywołać release().
+ *
+ * Zwrócony lease ma mutowalne `ok`/`reason` -- gdy odnowienie wykryje, że
+ * zasób zniknął (`gone`), wywołujący stracił prawo edycji (`forbidden`) albo
+ * blokadę przejęła inna karta (`locked`), `ok` przechodzi na `false`. Sesje
+ * dłuższe niż jeden zapis (otwarte okno) MUSZĄ sprawdzić `lease.ok` tuż przed
+ * realnym zapisem -- RLS i druga warstwa w bazie i tak zablokują sam zapis,
+ * to tylko zamienia generyczny błąd na jasny komunikat.
+ */
+export async function acquireResourceLocks(resources, { context = null, mode = "exclusive" } = {}) {
+  const items = normalizeItems(resources, { mode, context });
+  if (!items.length) return { ok: true, reason: null, release() {} };
+
+  const first = await acquireSet(items, context);
   if (!first?.ok) return first || { ok: false, error: "locked" };
 
+  let released = false;
   const lease = { ok: true, reason: null };
+  const presence = holdPresence(items, context);
 
-  heartbeatTimer = setInterval(async () => {
-    const result = await acquireOnce(resourceType, resourceId, context, mode).catch((error) => {
-      console.warn("[resource-lock] scoped heartbeat failed:", error);
+  const stopHeartbeat = startTicker(async () => {
+    if (released) return;
+    const result = await acquireSet(items, context).catch((error) => {
+      console.warn("[resource-lock] lease heartbeat failed:", error);
       return null;
     });
-    if (result?.error === "gone" || result?.error === "forbidden" || result?.error === "locked") {
+    if (released || !result || result.ok) return;
+    if (result.error === "gone" || result.error === "forbidden" || result.error === "locked") {
       lease.ok = false;
       lease.reason = result.error;
-      clearInterval(heartbeatTimer);
+      stopHeartbeat();
+      presence.drop();
     }
   }, HEARTBEAT_MS);
 
-  const release = () => {
+  const release = ({ keepalive = false } = {}) => {
     if (released) return;
     released = true;
-    clearInterval(heartbeatTimer);
+    stopHeartbeat();
     window.removeEventListener("pagehide", releaseOnHide);
-    void releaseOnce(resourceType, resourceId);
+    if (keepalive) releaseSetKeepalive(items);
+    void releaseSet(items);
+    presence.drop();
+    for (const it of items) if (PRESENCE_TYPES.has(it.type)) broadcastReleased(it.type, it.id, { keepalive });
   };
-  const releaseOnHide = () => {
-    if (!released) releaseRowKeepalive(resourceType, resourceId);
-    release();
-  };
+  const releaseOnHide = () => release({ keepalive: true });
   window.addEventListener("pagehide", releaseOnHide);
-  lease.release = release;
+  lease.release = () => release();
   return lease;
 }
 
 /**
- * Atomowo zajmuje zestaw blokad jednym wywołaniem bazy (acquire_edit_locks,
- * migracja 431): stała kolejność usuwa deadlock dwóch kart, odmowa na
- * którymkolwiek zasobie wycofuje całość i zwraca jej wynik (`error`,
- * `resource`). `ok`/`reason` na zwróconym lease jak w `acquireResourceLock`
- * — odnowienie całego zestawu co HEARTBEAT_MS.
+ * Jedna blokada akcji / okna — skrót do acquireResourceLocks() z jednym zasobem.
  */
-export async function acquireResourceLocks(resources, { context = null, mode = "exclusive" } = {}) {
-  const unique = new Map();
-  for (const item of (resources || [])) {
-    if (!item?.resourceType || !item?.resourceId) continue;
-    unique.set(`${item.resourceType}:${item.resourceId}`, { type: item.resourceType, id: item.resourceId });
-  }
-  const list = Array.from(unique.values());
-  if (!list.length) return { ok: true, reason: null, release() {} };
-
-  // Jedno zapytanie na cały zestaw (migracja 431): stała kolejność i „wszystko
-  // albo nic” po stronie bazy; odnowienie i zwolnienie też jednym wywołaniem
-  // (duży folder w menedżerze bazy to setki zasobów).
-  const acquireAll = async () => {
-    void refreshAccessToken();
-    const { data, error } = await sb().rpc("acquire_edit_locks", {
-      p_resources: list, p_tab_id: getTabId(), p_context: context ?? null, p_mode: mode,
-    });
-    if (error) throw error;
-    return data;
-  };
-  const first = await acquireAll();
-  if (!first?.ok) return first || { ok: false, error: "locked" };
-
-  let released = false;
-  const lease = { ok: true, reason: null };
-  const heartbeatTimer = setInterval(async () => {
-    const result = await acquireAll().catch((error) => {
-      console.warn("[resource-lock] batch heartbeat failed:", error);
-      return null;
-    });
-    if (result?.error === "gone" || result?.error === "forbidden" || result?.error === "locked") {
-      lease.ok = false;
-      lease.reason = result.error;
-      clearInterval(heartbeatTimer);
-    }
-  }, HEARTBEAT_MS);
-
-  // Zasoby tych blokad (pytania, foldery, tagi) nie mają czekających okien
-  // (guardResourceLocks dotyczy gier, logo i całej bazy) — bez RELEASED.
-  const body = () => ({ p_resources: list, p_tab_id: getTabId() });
-  const release = () => {
-    if (released) return;
-    released = true;
-    clearInterval(heartbeatTimer);
-    window.removeEventListener("pagehide", releaseOnHide);
-    void sb().rpc("release_edit_locks", body()).then(() => {}, () => {});
-  };
-  const releaseOnHide = () => {
-    if (!released && lastAccessToken) {
-      try {
-        fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_locks`, {
-          method: "POST",
-          keepalive: true,
-          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${lastAccessToken}` },
-          body: JSON.stringify(body()),
-        }).catch(() => {});
-      } catch {}
-    }
-    release();
-  };
-  window.addEventListener("pagehide", releaseOnHide);
-  lease.release = release;
-  return lease;
+export async function acquireResourceLock({ resourceType, resourceId, context = null, mode = "exclusive" } = {}) {
+  if (!resourceType || !resourceId) return { ok: false, error: "missing_resource" };
+  return acquireResourceLocks([{ type: resourceType, id: resourceId, mode }], { context, mode });
 }
 
 /**

@@ -2,15 +2,15 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T05195"/>
+  <meta name="app-version" content="v2026-10-23T22030"/>
 
 
   <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="home">
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://api.familiada.online">
   <title data-i18n="home.title">Familiada Online — przygotuj pytania i poprowadź grę na żywo</title>
   <meta name="description" content="Przygotuj pytania, zbierz odpowiedzi w ankiecie lub wybierz gotową grę społeczności. Poprowadź rozgrywkę z Panelem sterowania i Wyświetlaczem.">
@@ -32,21 +32,22 @@
   <link rel="alternate" hreflang="x-default" href="https://www.familiada.online/" />
   
   <!-- Performance Preloads -->
-  <link rel="preload" as="style" href="/shared/css/base.css?v=v2026-10-23T05195">
+  <link rel="preload" as="style" href="/shared/css/base.css?v=v2026-10-23T22030">
   
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T05195"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T05195"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T22030"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icon-apple-touch-180.png?v=v2026-10-23T22030"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-23T22030"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05195" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/shared/css/image-viewer.css?v=v2026-10-23T05195" />
-  <link rel="stylesheet" href="/home/css/index.css?v=v2026-10-23T05195"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T22030" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/shared/css/image-viewer.css?v=v2026-10-23T22030" />
+  <link rel="stylesheet" href="/home/css/index.css?v=v2026-10-23T22030"/>
   <!-- HTML strony jest po polsku: ukrywamy treść do wczytania tłumaczeń tylko przy innym języku. -->
   <script>(function(){var l="pl";try{var q=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("uiLang")||navigator.language||"").toLowerCase();l=/^en/.test(q)?"en":/^(uk|ua)/.test(q)?"uk":"pl"}catch(e){}if(l!=="pl")document.documentElement.classList.add("page-loading")})()</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T05195" defer></script>
-  <script type="module" src="/home/js/index.js?v=v2026-10-23T05195" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T05195" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T22030" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T22030" defer></script>
+  <script type="module" src="/home/js/index.js?v=v2026-10-23T22030" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T22030" defer></script>
 
   <script type="application/ld+json">
   {
@@ -118,7 +119,7 @@
       <div class="hero-cta">
         <a class="btn gold" href="/login/" id="ctaStart" data-i18n="home.hero.ctaStart" data-i18n-title="home.hero.ctaStartTitle" title="Rozpocznij tworzenie własnej Familiady">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
         <a class="btn" href="/marketplace/" data-i18n="home.hero.ctaMarketplace" data-i18n-icon-after="gamepad" data-i18n-title="home.hero.ctaMarketplaceTitle" title="Przeglądaj gotowe zestawy pytań do Familiady">Przeglądaj Gry Społeczności</a>
-        <a class="btn" href="/connect/" data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone" data-i18n-title="home.hero.ctaConnectTitle" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie</a>
+        <a class="btn" href="/connect/" data-i18n="nav.menu.connectDevice" data-i18n-icon-after="phone" data-i18n-title="home.hero.ctaConnectTitle" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie</a>
       </div>
       <div class="hero-note" data-i18n="home.hero.note">Możesz zacząć jako gość albo zalogować się, by wracać do swoich materiałów.</div>
     </section>
@@ -126,7 +127,7 @@
     <!-- O SYSTEMIE -->
     <section class="landing-section" id="section-about">
       <p class="landing-section-label" data-i18n="home.nav.about">O systemie</p>
-      <h2 class="landing-section-heading" data-i18n="home.about.title">Familiada Online — przygotuj pytania i poprowadź grę na żywo</h2>
+      <h2 class="landing-section-heading" data-i18n="home.about.title">Jak działa Familiada Online</h2>
       <div class="about-body">
         <p data-i18n="home.about.p1">Przygotuj własną grę, skorzystaj z gotowego zestawu społeczności albo ułóż pytania z materiałów zapisanych w Bazach pytań. Wybierz sposób, który pasuje do Twojego wydarzenia.</p>
         <p data-i18n="home.about.p2">W grach ankietowych zbierasz odpowiedzi przed rozgrywką. Udostępnij ankietę linkiem lub kodem QR, sprawdź odpowiedzi i podlicz wynik, gdy zechcesz przejść do gry.</p>
@@ -145,7 +146,7 @@
       <div class="tiles">
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" data-file="shots/game-editor-preview.webp?v=v2026-10-23T05195" data-full-file="shots/game-editor.webp?v=v2026-10-23T05195" data-shot="game-editor" data-gallery="games,game-editor,bases,base-explorer" alt="Edytor gry: pytania, odpowiedzi i punkty w jednym miejscu" data-i18n-alt="home.tiles.t1.alt" width="960" height="600" loading="lazy" decoding="async"></div>
+          <div class="tile-shot"><img class="shot-img" data-file="shots/game-editor-preview.webp?v=v2026-10-23T22030" data-full-file="shots/game-editor.webp?v=v2026-10-23T22030" data-shot="game-editor" data-gallery="games,game-editor,bases,base-explorer" alt="Edytor gry: pytania, odpowiedzi i punkty w jednym miejscu" data-i18n-alt="home.tiles.t1.alt" width="960" height="600" loading="lazy" decoding="async"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t1.t">Przygotuj grę</h3>
             <p data-i18n="home.tiles.t1.d">Utwórz grę lub wybierz gotowy zestaw, a potem uzupełnij pytania i odpowiedzi. Własne pytania możesz też zachować w Bazach pytań i wykorzystać ponownie.</p>
@@ -153,7 +154,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" data-file="shots/poll-share-preview.webp?v=v2026-10-23T05195" data-full-file="shots/poll-share.webp?v=v2026-10-23T05195" data-shot="poll-share" data-gallery="friends,subscribers,tasks,poll-share,poll-vote-mobile,poll-results" alt="Ankieta z linkiem i kodem QR oraz zebranymi odpowiedziami" data-i18n-alt="home.tiles.t2.alt" width="960" height="600" loading="lazy" decoding="async"></div>
+          <div class="tile-shot"><img class="shot-img" data-file="shots/poll-share-preview.webp?v=v2026-10-23T22030" data-full-file="shots/poll-share.webp?v=v2026-10-23T22030" data-shot="poll-share" data-gallery="friends,subscribers,tasks,poll-share,poll-vote-mobile,poll-results" alt="Ankieta z linkiem i kodem QR oraz zebranymi odpowiedziami" data-i18n-alt="home.tiles.t2.alt" width="960" height="600" loading="lazy" decoding="async"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t2.t">Zbierz odpowiedzi na swój sposób</h3>
             <p data-i18n="home.tiles.t2.d">Udostępnij anonimową ankietę linkiem lub kodem QR albo wyślij ją subskrybentom jako zadanie. Sprawdź postęp, połącz podobne odpowiedzi i podlicz wynik.</p>
@@ -161,7 +162,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" data-file="shots/appearance-preview.webp?v=v2026-10-23T05195" data-full-file="shots/appearance.webp?v=v2026-10-23T05195" data-shot="appearance" data-gallery="appearance,sound,logos,logo-draw" alt="Wybór własnego logo wyświetlanego podczas gry" data-i18n-alt="home.tiles.t3.alt" width="960" height="600" loading="lazy" decoding="async"></div>
+          <div class="tile-shot"><img class="shot-img" data-file="shots/appearance-preview.webp?v=v2026-10-23T22030" data-full-file="shots/appearance.webp?v=v2026-10-23T22030" data-shot="appearance" data-gallery="appearance,sound,logos,logo-draw" alt="Wybór własnego logo wyświetlanego podczas gry" data-i18n-alt="home.tiles.t3.alt" width="960" height="600" loading="lazy" decoding="async"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t3.t">Dopasuj wygląd rozgrywki</h3>
             <p data-i18n="home.tiles.t3.d">Wybierz logo, kolory, dźwięki i ustawienia rund. Przed startem zobaczysz, jak przygotowane wybory zmieniają planszę.</p>
@@ -169,10 +170,10 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" data-file="shots/display-round-preview.webp?v=v2026-10-23T05195" data-full-file="shots/display-round.webp?v=v2026-10-23T05195" data-shot="display-round" data-gallery="control-round,host-round,display-round,control-finale,main-display" alt="Wyświetlacz pokazujący pytanie i wynik drużyn podczas rozgrywki" data-i18n-alt="home.tiles.t4.alt" width="960" height="600" loading="lazy" decoding="async"></div>
+          <div class="tile-shot"><img class="shot-img" data-file="shots/display-round-preview.webp?v=v2026-10-23T22030" data-full-file="shots/display-round.webp?v=v2026-10-23T22030" data-shot="display-round" data-gallery="control-round,host-round,display-round,control-finale,main-display" alt="Wyświetlacz pokazujący pytanie i wynik drużyn podczas rozgrywki" data-i18n-alt="home.tiles.t4.alt" width="960" height="600" loading="lazy" decoding="async"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t4.t">Poprowadź grę na żywo</h3>
-            <p data-i18n="home.tiles.t4.d">Panel sterowania prowadzi przez rundy i finał, a Wyświetlacz pokazuje planszę uczestnikom. Widok prowadzącego i Przycisk do pojedynku możesz podłączyć dodatkowo.</p>
+            <p data-i18n="home.tiles.t4.d">Panel sterowania prowadzi przez rundy i finał, a Wyświetlacz pokazuje planszę uczestnikom.</p>
           </div>
         </article>
 
@@ -268,7 +269,7 @@
     </div>
 
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T05195"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T22030"></script>
 
 </body>
 </html>

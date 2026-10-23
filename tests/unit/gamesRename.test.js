@@ -16,6 +16,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadDict } from "./helpers/i18n.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -23,8 +24,9 @@ const exists = (rel) => fs.existsSync(path.join(ROOT, rel));
 
 // Katalogi/pliki poza kodem aplikacji albo z „builderem” w innym znaczeniu
 // (narzędzia w settings-tools: kora-builder/theme_builder, generatory e-maili w Workerze,
-// historia w docs, migracje bazy, dane audytu w ikony.html).
-const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools", "tools"]);
+// historia w docs, migracje bazy, dane audytu w ikony.html, biblioteki
+// zewnętrzne w shared/vendor).
+const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools", "tools", "vendor"]);
 const SKIP_FILES = new Set(["builder.html", "ikony.html"]);
 const ALLOWED = /kora-builder|theme_builder|Theme Builder/gi;
 
@@ -41,9 +43,7 @@ function walk(dir = "", out = []) {
 }
 
 async function loadTranslation(lang) {
-  const src = read(`shared/translation/${lang}.js`);
-  const url = "data:text/javascript;base64," + Buffer.from(src).toString("base64");
-  return (await import(url)).default;
+  return loadDict(lang);
 }
 
 function flatKeys(obj, prefix = "", out = new Set()) {

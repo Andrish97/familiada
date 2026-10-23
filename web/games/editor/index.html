@@ -2,30 +2,30 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T05195"/>
+  <meta name="app-version" content="v2026-10-23T22030"/>
 
 
   <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="editor gameValidate questionForm resources">
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="editor.title">Familiada — edytor gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05195" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-23T05195"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T22030" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-23T22030"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T05195" defer></script>
-  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-23T05195" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T05195" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T22030" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T22030" defer></script>
+  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-23T22030" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T22030" defer></script>
 
 </head>
 
@@ -51,7 +51,7 @@
     <!-- pole nazwy (wspólne z edytorami logo: .name-field w base.css) -->
     <div class="rowTop">
       <div class="name-field">
-        <label class="name-field-label" for="gameName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
+        <label class="name-field-label" for="gameName" data-i18n="common.nameLabel">Nazwa</label>
         <input id="gameName" class="inp" placeholder="Nazwa gry" data-i18n-placeholder="editor.gameNamePlaceholder"/>
       </div>
     </div>
@@ -77,7 +77,7 @@
       </aside>
 
       <section class="rightPanel">
-        <div id="empty" class="empty" data-i18n="editor.empty">Wybierz pytanie po lewej lub dodaj nowe.</div>
+        <div id="empty" class="empty" data-i18n="editor.empty">Wybierz pytanie z listy lub dodaj nowe.</div>
 
         <div id="editor" class="editorBox">
 
@@ -168,7 +168,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T05195"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T22030"></script>
 
 </body>
 </html>

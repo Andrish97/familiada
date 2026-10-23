@@ -33,9 +33,20 @@ Each item: **symptom** → possible cause → what to do.
 - **I cannot edit a game** → the poll is open or stopped, the game is open somewhere
   else, or it is being played → abort or close the poll, close the other window with this game,
   end the game (→ 7.5).
-- **"This game is open elsewhere."** → the game is open in another tab or on another
-  device (editor, settings, poll, control panel) → close that window and try
-  again.
+- **"In use elsewhere"** (e.g. "This game is open elsewhere.", "This logo is currently being
+  edited…") → the game, logo or base is open in another tab, on another device or by a
+  collaborator (editor, settings, poll, control panel) → close that window.
+  You don't need to reload the page: it checks the item itself and loads once it is free. After
+  that tab is closed normally this happens at once; if the tab disappeared without closing (browser
+  crash, a sleeping computer or phone, no network) — after about 30 seconds. A tab in the background
+  (another window, minimised browser) keeps the item.
+- **"Lock lost"** → this tab had no connection to the app for a while (e.g. after the computer
+  slept), and in the meantime another tab took over the item → reload the page.
+- **"Game in progress" in game settings** → the game in the control panel was not finished → finish
+  it in the panel or choose [End game and open settings]; otherwise the game lock expires after
+  an hour of inactivity (→ 16.1).
+
+![In use elsewhere](zrzut:games-editor-locked-busy)
 - **An answer is not saved** → it contains characters the Display cannot show (for example emoji),
   or it is too long → remove those characters; an answer can have up to 17 characters (→ 7.3).
 - **Importing a file does not work** → the file is not a game from the app or it is damaged → use a
@@ -89,14 +100,21 @@ Each item: **symptom** → possible cause → what to do.
   time and do not switch apps. If you use physical buttons or play without a host
   tablet, tick the matching option in the panel (→ 17.1). When you return to the page, the device
   reconnects on its own within a few seconds.
-- **The QR code was scanned several times** → on the same phone, the newest tab works, and the older ones
-  show a waiting message → go back to the same tab instead of scanning again; close any
-  tabs you do not need.
-- **"This device is waiting"** → the same device (buttons, host screen or
-  Display) is open on another phone or in another browser → close that tab
-  or wait a dozen or so seconds until it disconnects.
+- **The QR code was scanned several times** → the screen opened last works, the earlier ones show
+  "This device was opened elsewhere" → use the newest screen and close the tabs you do not need.
+- **"This device was opened elsewhere"** → the same device (buzzer, host screen or Display) was
+  opened in another tab, browser or on other hardware → this screen does not return to the game by
+  itself; to use it here, click [Use here] — the other screen switches off.
 - **"Turn your phone sideways…"** on the buzzer → the buzzer works in landscape → turn
   the phone and switch off the screen rotation lock.
+- **"Not available on a phone"** → the page needs a tablet or a computer (e.g. logo editors,
+  *Control panel*) → open it on a tablet or a computer.
+- **"Rotate your device"** → the page fits once the tablet is rotated → rotate the device.
+- **"Window too narrow"** → the browser window is narrower than the page needs (e.g. *Control panel*,
+  logo editors), also in split-screen view → widen the window or leave split screen. Lists, Help and
+  voting pages work at any width.
+- **"Window too small"** → the window is too low in landscape (under 580 px, e.g. because of browser
+  bars or page zoom) → enlarge the window, zoom out or leave split screen.
 - **No sound** → the sound is not unlocked or the device is muted → check where the sound
   should come from (→ 17.2), the device volume and the volume in the settings summary.
 

@@ -10,12 +10,16 @@ Bazę udostępnia jej właściciel; potrzebne jest do tego konto (→ 5.1).
 
 ## 12.2 Zapraszanie do bazy
 
-1. Na stronie *Bazy pytań* zaznacz swoją bazę i wybierz [Udostępnij].
-2. Wybierz poziom dostępu: „Może edytować” (domyślnie) albo „Tylko podgląd”.
-3. Wpisz adres e-mail lub nazwę użytkownika i wybierz [Udostępnij] — albo zaznacz osoby na liście
-   „Znajomi” i wybierz [Udostępnij zaznaczonym].
+1. Na stronie *Bazy pytań* zaznacz swoją bazę i w dolnym pasku wybierz [Udostępnij].
+2. Wpisz adres e-mail lub nazwę użytkownika albo zaznacz osoby na liście „Znajomi”.
+3. Na dole okna wybierz poziom dostępu: „Może edytować” (domyślnie) albo „Tylko podgląd”,
+   i wybierz [Udostępnij] — przy kilku odbiorcach przycisk pokazuje ich liczbę, np.
+   [Udostępnij (3)]. Wszyscy odbiorcy z tego okna dostają ten sam poziom dostępu.
 
-![Udostępnij bazę](zrzut:bases-share-tools)
+Po wysłaniu okno się zamyka. Jeśli zaproszenia nie da się wysłać (np. osoba nie jest już
+Twoim znajomym), okno zostaje otwarte i pokazuje komunikat.
+
+![Udostępnij bazę](zrzut:bases-share-send)
 
 Zaproszona osoba nie musi być Twoim znajomym, ale musi mieć konto. Jeśli ma włączone
 powiadomienia, dostanie wiadomość e-mail z odnośnikiem.
@@ -37,11 +41,9 @@ Nieprzyjęte zaproszenie wygasa po **5 dniach**.
 
 | Kto | Oznaczenie | Co może |
 |---|---|---|
-| Właściciel | „Moja” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
-| Edycja | „EDYCJA” | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
-| Odczyt | „ODCZYT” | przeglądać bazę i eksportować ją do pliku |
-
-![Bazy udostępnione — oznaczenia dostępu](zrzut:bases-share-long-name)
+| Właściciel | kafel w zakładce „Moje bazy” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
+| Edycja | ikona ołówka na kafelku | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
+| Odczyt | ikona oka na kafelku | przeglądać bazę i eksportować ją do pliku |
 
 Osoba z dostępem do odczytu nie utworzy gry bezpośrednio z bazy. Może wyeksportować bazę
 do pliku, zaimportować ją jako własną (→ 9.1) i tam utworzyć grę.
@@ -55,12 +57,15 @@ zajęty. Jeśli spróbujesz zmienić go w tym samym czasie, zobaczysz komunikat 
 jest właśnie edytowany w innej karcie lub przez innego użytkownika.” Poczekaj chwilę
 i spróbuj ponownie. Gdy ktoś ma bazę otwartą, właściciel nie zmieni jej nazwy ani jej nie usunie.
 
-**Zarządzanie dostępem (właściciel).** W oknie [Udostępnij], w sekcji „Udostępnione”, widać
-zaproszenia oczekujące, przyjęte i odrzucone. Możesz:
+**Zarządzanie dostępem (właściciel).** Okno [Udostępnienia] (przycisk w górnym pasku) pokazuje
+zaproszenia oczekujące, przyjęte i odrzucone. Przy każdej osobie możesz:
 
-- zmienić poziom dostępu, także przed przyjęciem zaproszenia,
-- przypomnieć o oczekującym zaproszeniu,
-- odebrać dostęp albo anulować zaproszenie.
+- zmienić poziom dostępu przyciskiem „Może edytować” / „Tylko podgląd” — zmiana zapisuje się
+  od razu, także przed przyjęciem zaproszenia,
+- przypomnieć o oczekującym zaproszeniu — kolejne przypomnienie po odliczaniu przy przycisku,
+- odebrać dostęp albo anulować zaproszenie ikoną kosza.
+
+![Udostępnienia bazy — lista osób z uprawnieniem przy każdej](zrzut:bases-share-tools)
 
 Osoba, której odebrano dostęp, traci go od razu — jeśli ma bazę otwartą, zobaczy komunikat
 „Odebrano Ci dostęp”. Sama możesz też zrezygnować z udostępnionej bazy przyciskiem
@@ -155,7 +160,7 @@ W „Moich wysłanych” widać status zgłoszenia:
 ![Moje wysłane — statusy](zrzut:logos-market-market-my-sent-all)
 
 Opublikowaną grę możesz [Wycofaj]. Zniknie z katalogu dla kolejnych osób, ale ci, którzy
-już ją dodali, nadal ją mają — z oznaczeniem „Wycofana”.
+już ją dodali, nadal ją mają — z oznaczeniem „ARCHIWALNA — usunięta ze Społeczności”.
 
 ![Wycofanie gry](zrzut:logos-market-market-withdraw)
 
@@ -175,8 +180,8 @@ pojawi się „Ma konto — przejdź do Znajomych.”, a Ty dostaniesz od niego 
 
 ## 14.2 Zapraszanie subskrybentów
 
-1. Otwórz stronę *Subskrybenci* i zakładkę „Zaproszenia”.
-2. Wpisz adres e-mail i wybierz [Zaproś].
+1. Otwórz stronę *Subskrybenci* (na telefonie — zakładkę „Zaproszenia”).
+2. W sekcji „Dodaj subskrybenta” wpisz adres e-mail i wybierz [Zaproś].
 
 Na podany adres przyjdzie wiadomość „Zaproszenie do subskrypcji od użytkownika …” z przyciskiem
 „Zobacz zaproszenie”. Odbiorca przyjmuje albo odrzuca zaproszenie na stronie, na którą prowadzi
@@ -191,14 +196,17 @@ niż co 5 dni i najwyżej dwa razy na 30 dni; po odrzuceniu możesz zaprosić po
 
 ## 14.3 Lista i status subskrybentów
 
-- Zakładka „Zaproszenia”, sekcja „Oczekujące i odrzucone”: „Oczekuje” — zaproszenie czeka na
-  odpowiedź; „Odrzucono” — odbiorca odmówił (widoczne przez 5 dni).
-- Zakładka „Subskrybenci”: osoby, które przyjęły zaproszenie.
+- Sekcja „Oczekujące” (pod „Dodaj subskrybenta”): „Oczekuje” — zaproszenie czeka na odpowiedź;
+  „Odrzucono” — odbiorca odmówił (widoczne przez 5 dni). Filtr nad listą pokaże tylko jeden stan.
+- Sekcja „Subskrybenci”: osoby, które przyjęły zaproszenie.
+
+Na komputerze obie części są na jednym ekranie; na telefonie przełączasz u góry zakładki
+„Subskrybenci” i „Zaproszenia”.
 
 ![Subskrybenci i zaproszenia](zrzut:people-subscribers-half@desktop)
 ![Filtr stanu zaproszeń](zrzut:subscribers-filter)
 
-Przy oczekującym zaproszeniu możesz [Wyślij ponownie]. [Usuń] kończy subskrypcję i usuwa
+Przy oczekującym zaproszeniu możesz [Wyślij ponownie] (ikona strzałki w kółku). Ikona kosza kończy subskrypcję i usuwa
 oczekujące zaproszenia tej osoby do Twoich ankiet.
 
 ![Odliczanie do ponownej wysyłki](zrzut:people-subscribers-resend-cooldown)
@@ -244,7 +252,6 @@ w *Ustawieniach konta* (→ 5.8).
   przywrócisz powiadomienia, dawne zaproszenia nie wrócą.
 
 ![Subskrypcje i zadania](zrzut:mails-tools)
-![Zadania — ankiety i urządzenia](zrzut:people-mails-items)
 ![Rezygnacja ze wszystkich powiadomień](zrzut:people-mails-resign-confirm)
 
 Dostęp do strony wygasa po godzinie bezczynności — potem wejdź ponownie przez odnośnik.

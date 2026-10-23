@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseGoLink,goKindMatches,goErrorKey,baseStateKey,matchesGoRecipient} from '../../web/shared/js/core/go-contract.js';
+import { loadDict } from "./helpers/i18n.js";
 const token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const valid={p:`p=anon&id=${token}&key=public`,d:`d=host&id=${token}&key=${token}`,t:`t=${token}`,s:`s=${token}`,f:`f=${token}`,b:`b=${token}`,u:`u=${token}`,m:`m=${'a'.repeat(64)}`,c:`c=${token}`};
 test('every Go family validates before dispatch, including mixed mail-center links',()=>{
@@ -30,7 +31,7 @@ test('canonical account has priority over a new owner of the old address',()=>{
 });
 test('all terminal and unavailable message keys exist in PL EN UK; base acceptance is on Bases',async()=>{
  for(const lang of ['pl','en','uk']){
-  const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+  const dict = await loadDict(lang);
   for(const code of ['poll_stopped','poll_closed','expired','invalid_token','revoked','unknown'])assert.equal(typeof dict.pollGo[goErrorKey(code)],'string');
   for(const status of ['done','declined','cancelled','expired','unknown'])assert.equal(typeof dict.pollGo[baseStateKey(status)],'string');
   assert.ok(dict.pollGo.accountMismatch);

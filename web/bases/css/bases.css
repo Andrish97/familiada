@@ -14,11 +14,11 @@
 ========================================================= */
 
 .modal.shareModal{ width: min(820px, 94vw); }
-/* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
-.modal-actions > .baseShareRoleSlot{ order: -1; margin-right: auto; }
+/* Uprawnienie nowych udostępnień: jeden przełącznik w stopce okna „Udostępnij bazę”
+   (decyzja użytkownika 2026-10-23), po lewej; Anuluj i Udostępnij po prawej. */
 .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
 .baseShareSections .shareSection{ margin-top: 0; }
-.modal-actions > .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
+.baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
 .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
 .baseShareRoleShort{ display:none; }

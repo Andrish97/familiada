@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {anonymousPollLink,anonymousPollDestination,validAnonymousPollParams} from '../../web/shared/js/core/poll-links.js';
+import { loadDict } from "./helpers/i18n.js";
 const gameId='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',key='public&key',base='https://www.familiada.online/polls/';
 test('anonymous links always use Go and retain the run scope and supported language without identity',()=>{
  for(const lang of ['pl','en','uk']){
@@ -32,7 +33,7 @@ test('owner card and real QR screen share the Go generator; opening the QR scree
  assert.match(polls,/return anonymousPollLink\(/);assert.match(qr,/url = anonymousPollLink\(/);
  assert.match(polls,/window\.open\(_pollQrOpenUrl,/);assert.doesNotMatch(polls,/searchParams\.set\("url", _pollQrOpenUrl\)/);
  for(const lang of ['pl','en','uk']) {
-  const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+  const dict = await loadDict(lang);
   for(const key of ['anonymousLinkTitle','anonymousLinkChecking','anonymousLinkExpired','anonymousLinkMissing','linkCheckFailed'])assert.equal(typeof dict.pollGo[key],'string',lang+'.'+key);
  }
 });

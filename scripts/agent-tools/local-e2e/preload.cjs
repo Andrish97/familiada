@@ -12,7 +12,6 @@ const WEB = path.join(REPO, "web");
 const PGRST = process.env.LB_PGRST || "http://127.0.0.1:3555";
 const CACHE = path.join(require("node:os").homedir(), ".cache", "familiada-local-e2e");
 const SECRET = process.env.LB_SECRET || "local-test-secret-local-test-secret-123456";
-const SBJS = process.env.LB_SBJS || path.join(CACHE, "supabase-js/package/dist/umd/supabase.js");
 const PSQL = ["-h", process.env.LB_PGHOST || "/var/tmp/pgfam", "-p", "5499", "-U", "postgres", "-d", "fam", "-qtA", "-c"];
 
 const b64u = (b) => Buffer.from(b).toString("base64url");
@@ -67,6 +66,7 @@ async function handle(route) {
       delete headers.apikey;
       if (!/^Bearer ey/.test(headers.authorization || "") || !userFromAuth(headers.authorization)) delete headers.authorization;
       const res = await route.fetch({ url: target, headers });
+      if (process.env.LB_DEBUG) console.log(`[lb] ${req.method()} ${url.pathname} -> ${res.status()} ${req.headers().origin || ""} auth=${(() => { try { const q = JSON.parse(Buffer.from(String(req.headers().authorization).split(" ")[1].split(".")[1], "base64url")); return q.role + "/" + q.email; } catch { return "?"; } })()} kept=${!!headers.authorization}`);
       return route.fulfill({ response: res, headers: { ...res.headers(), ...CORS } });
     }
     if (url.pathname.startsWith("/auth/v1/token")) {
@@ -94,10 +94,9 @@ async function handle(route) {
     return route.fulfill({ status: 200, contentType: mime[path.extname(file)] || "application/octet-stream", body: fs.readFileSync(file) });
   }
 
-  if (/\/npm\/@supabase\/supabase-js/.test(url.pathname) && fs.existsSync(SBJS)) {
-    return route.fulfill({ status: 200, contentType: "text/javascript", headers: CORS, body: fs.readFileSync(SBJS) });
-  }
   if (url.hostname === "cdn.jsdelivr.net" || url.hostname === "unpkg.com") return route.continue().catch(() => route.abort());
+  // serwer z helpers/local-site.js (strony z dysku, adres 127.0.0.1)
+  if (url.hostname === "127.0.0.1" && url.origin !== PGRST) return route.continue();
   return route.abort();
 }
 

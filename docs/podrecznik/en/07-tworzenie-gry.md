@@ -27,8 +27,11 @@ Select a game on the list and choose [Edit]. The editor consists of:
 Click a question on the list to open it. To delete it, click the trash icon on its
 tile and confirm — you will delete the question together with its answers.
 
+![Deleting a question](zrzut:games-editor-delete-question)
+
 On a narrower screen, the editor shows either the question list or the selected question; you go back
-to the list with the [Back] button.
+to the list with the [Back] button. On a phone, the question opens in a sheet from the bottom — close
+it to return to the list.
 
 ![Game editor](zrzut:game-editor)
 ![Editor on a phone — question list](zrzut:games-editor-list-phone@phone)
@@ -50,7 +53,6 @@ answers as well.
 You can also prepare questions and answers in a question base and create a game from them (→ 9.8).
 
 ![Characters the Display cannot show and hints at the answers](zrzut:game-editor-answer-rules)
-![Deleting a question](zrzut:games-editor-delete-question)
 
 ## 7.4 Answer scoring
 

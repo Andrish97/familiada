@@ -1,3 +1,6 @@
+-- Uwaga: od migracji 472 nikt nie czeka w kolejce przy żywej instancji
+-- głównej (stan 'replaced'); ten test opisuje zachowanie sprzed 472.
+-- Aktualny test: tests/sql/control2-device-takeover-472.sql.
 -- Migracja 397: odblokowanie dźwięku jako cecha instancji Wyświetlacza i
 -- jedna migawka stanu urządzeń dla Control.
 -- Uruchomienie: lokalna baza wg docs/sql/local-db.md (schema.sql + migracja

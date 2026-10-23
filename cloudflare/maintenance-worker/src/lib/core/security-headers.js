@@ -17,8 +17,9 @@ const PASSTHROUGH_HOSTS = new Set([
 
 const CAPTCHA = "https://challenges.cloudflare.com https://hcaptcha.com https://*.hcaptcha.com";
 
-// Źródła z web/: moduły i biblioteki z cdn.jsdelivr.net (supabase-js, qrcode,
-// fabric, jsQR, opentype, TinyMCE), opentype z cdnjs (narzędzia panelu),
+// Źródła z web/: biblioteki stron z własnej domeny (web/shared/vendor:
+// supabase-js, fabric, jsQR); z cdn.jsdelivr.net już tylko panel admina
+// (TinyMCE, opentype), opentype też z cdnjs (narzędzia panelu),
 // captcha (Turnstile/hCaptcha), API i Realtime Supabase, pliki Storage.
 // Skrypty i style inline są używane (JSON-LD, style="..."), stąd 'unsafe-inline'.
 export const CSP_REPORT_ONLY = [

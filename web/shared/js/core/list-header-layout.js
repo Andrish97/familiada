@@ -74,14 +74,16 @@ export function initListHeaderLayout(selector = ".bar") {
 }
 
 // Dolny pasek list: najpierw sprawdza naturalną szerokość wszystkich kontrolek.
-// Gdy napisy się nie mieszczą, przyciski przechodzą na same ikony. Gdy nie
+// Najpierw zwęża się pole wyszukiwania (do min-width); gdy napisy nadal się nie
+// mieszczą, przyciski przechodzą na same ikony. Gdy nie
 // mieszczą się nawet ikony, pasek zostaje jednym rzędem i przewija się w bok;
 // na starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
 // z większą (decyzja użytkownika 2026-10-21, zamiast zawijania w rzędy).
 // Separator grup: 1 px kreski + 8 px odstępu (CSS .has-group-sep). Pojawia
-// się, gdy odstęp między grupami spadłby poniżej TOOLBAR_SEPARATOR_ROOM.
+// się (także na komputerze), gdy odstęp między grupami spadłby poniżej
+// TOOLBAR_SEPARATOR_ROOM -- decyzja użytkownika 2026-10-23.
 const TOOLBAR_SEPARATOR_WIDTH = 9;
-const TOOLBAR_SEPARATOR_ROOM = 24;
+const TOOLBAR_SEPARATOR_ROOM = 40;
 
 function initListBottomToolbarLayout() {
   for (const bar of document.querySelectorAll(".games-bottom")) {
@@ -176,15 +178,40 @@ function initListBottomToolbarLayout() {
       const compact = bar.classList.contains("is-compact-icons") && lastTextMeasures;
       const textLeft = compact ? lastTextMeasures.left : measureGroup(left, "text");
       const textRight = compact ? lastTextMeasures.right : measureGroup(right, "text");
-      if (!compact) lastTextMeasures = { left: textLeft, right: textRight };
+      // Pole wyszukiwania zwęża się (CSS: max-width 240 → min-width 140 px), zanim
+      // przyciski stracą napisy -- do decyzji liczy się jego najmniejsza szerokość.
+      // Tylko rozwinięte pole (na telefonie CSS zwija je do lupy).
+      const search = [...left.querySelectorAll(":scope > .list-search")]
+        .find((el) => el.querySelector(".searchBox")?.getClientRects().length) || null;
+      const searchStyle = search && !compact ? getComputedStyle(search) : null;
+      const searchBox = searchStyle ? {
+        current: search.getBoundingClientRect().width,
+        min: parseFloat(searchStyle.minWidth) || 0,
+        max: parseFloat(searchStyle.maxWidth) || search.getBoundingClientRect().width,
+      } : (compact ? lastTextMeasures.searchBox : null);
+      const searchSlack = searchBox && !compact ? Math.max(0, searchBox.current - searchBox.min) : (compact ? lastTextMeasures.searchSlack : 0);
+      if (!compact) lastTextMeasures = { left: textLeft, right: textRight, searchSlack, searchBox };
       const barStyle = getComputedStyle(bar);
       const groupGap = parseFloat(barStyle.columnGap) || parseFloat(barStyle.gap) || 0;
       const hasTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
         .some((label) => label.textContent.trim());
-      const textNeeded = textLeft.width + textRight.width + groupGap;
+      const textNeeded = textLeft.width + textRight.width + groupGap - searchSlack;
       const useIcons = hasTextLabels && textNeeded > available + 1;
       bar.classList.toggle("is-compact-icons", useIcons);
       let needed = textNeeded;
+      // Z napisami: pole dostaje to, co zostaje (najwyżej max-width). W układzie
+      // jednego rzędu grupy mają stałą szerokość, więc ustawiamy ją wprost.
+      if (search) {
+        // Zwężone pole dochodzi do drugiej grupy -- zostawia miejsce na separator.
+        const room = available - textNeeded - TOOLBAR_SEPARATOR_WIDTH;
+        const width = !useIcons && searchBox
+          ? `${Math.floor(Math.min(searchBox.max, searchBox.min + Math.max(0, room)))}px` : "";
+        if (search.style.flexBasis !== width) {
+          search.style.flex = width ? `0 0 ${width}` : "";
+          search.style.width = width;
+        }
+        if (width) needed = textNeeded + parseFloat(width) - searchBox.min;
+      }
       if (useIcons) {
         needed = measureGroup(left, "icons").width + measureGroup(right, "icons").width + groupGap;
       }

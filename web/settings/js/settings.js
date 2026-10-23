@@ -14,18 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T05195";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T05195";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05195";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T05195";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05195";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T05195";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T05195";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T05195";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T05195";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T05195";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T22030";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T22030";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T22030";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T22030";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T22030";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T22030";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T22030";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T22030";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T22030";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T22030";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T22030";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T22030";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -36,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T05195";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T22030";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T05195";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T05195";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T05195";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T05195"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T22030";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T22030";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T22030";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T22030"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T05195";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T22030";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1071,9 +1071,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05195"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T05195"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T22030"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T22030"/>
 
   <style>
     body{margin:0;padding:0}
@@ -2827,12 +2827,16 @@ function renderMailList(rows) {
       const badge = isOpen
         ? `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.18);color:#ffeaa6">open</span>`
         : `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);opacity:.5">closed</span>`;
+      // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
+      const deletedBadge = r.author_account_deleted_at
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">konto usunięte</span>`
+        : "";
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${escSetting(r.ticket_number)}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge} ${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge}${deletedBadge} ${escSetting(r.subject || "—")}</div>
         <div class="mail-ti-preview" style="opacity:.45">${escSetting(String(r.message_count || 0))} msg</div>`;
       item.addEventListener("click", () => openReport(r.id));
       body.appendChild(item);
@@ -4001,9 +4005,8 @@ function showCompose(defaults = {}) {
 
   // Initialize TinyMCE for composeMessageArea after HTML is inserted
   const initComposeTinyMCE = () => {
-    if (typeof tinymce === "undefined") {
-      console.warn("TinyMCE script not loaded yet, retrying...");
-      setTimeout(initComposeTinyMCE, 200);
+    if (!globalThis.tinymce) {
+      loadTinyMce().then(initComposeTinyMCE, () => showToast("Nie udało się wczytać edytora treści.", "error"));
       return;
     }
     const composeEl = document.getElementById("composeMessageArea");
@@ -4014,12 +4017,12 @@ function showCompose(defaults = {}) {
     }
     
     // Remove existing TinyMCE instance
-    const existing = tinymce.get("composeMessageArea");
+    const existing = globalThis.tinymce?.get("composeMessageArea");
     if (existing) {
-      tinymce.remove(existing);
+      globalThis.tinymce.remove(existing);
     }
     
-    tinymce.init({
+    globalThis.tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
       menubar: "edit insert view format table tools",
@@ -4148,7 +4151,7 @@ function showCompose(defaults = {}) {
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
-    const editor = tinymce.get("composeMessageArea");
+    const editor = globalThis.tinymce?.get("composeMessageArea");
     const hasData = (document.getElementById("composeSubjectInput")?.value || "").trim()
       || (editor ? editor.getContent() : "")
       || (document.getElementById("composeGreetingCustom")?.value || "").trim()
@@ -4252,7 +4255,7 @@ function showCompose(defaults = {}) {
     value: "custom",
     onChange: (templateKey) => {
       const templateText = getEmailTemplates(composeLang)[templateKey] || "";
-      const editor = tinymce.get("composeMessageArea");
+      const editor = globalThis.tinymce?.get("composeMessageArea");
       if (editor && templateText) editor.setContent(templateText);
     },
   });
@@ -4333,7 +4336,7 @@ function showCompose(defaults = {}) {
     e.preventDefault();
     e.stopPropagation();
     
-    const editor = tinymce.get("composeMessageArea");
+    const editor = globalThis.tinymce?.get("composeMessageArea");
     if (editor) {
       editor.insertContent("#quote");
       editor.focus();
@@ -4366,7 +4369,7 @@ function closeCompose() {
 async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const toEmail = (document.getElementById("composeToInput")?.value || "").trim();
-  const editor = tinymce.get("composeMessageArea");
+  const editor = globalThis.tinymce?.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -4466,7 +4469,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
 
 function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  const editor = tinymce.get("composeMessageArea");
+  const editor = globalThis.tinymce?.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -5212,10 +5215,28 @@ function settingsTabFromUrl() {
   return tabFromUrl(SETTINGS_TABS, DEFAULT_SETTINGS_TAB);
 }
 
+// TinyMCE (edytor treści maili: „Napisz” i Marketing) ładowany dopiero przy
+// pierwszym użyciu, w przypiętej wersji — nie blokuje startu panelu.
+const TINYMCE_SRC = "https://cdn.jsdelivr.net/npm/tinymce@7.9.3/tinymce.min.js";
+let tinymcePromise = null;
+function loadTinyMce() {
+  if (globalThis.tinymce) return Promise.resolve(globalThis.tinymce);
+  tinymcePromise ||= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = TINYMCE_SRC;
+    script.onload = () => resolve(globalThis.tinymce);
+    script.onerror = () => { tinymcePromise = null; reject(new Error("TinyMCE could not be loaded")); };
+    document.head.appendChild(script);
+  });
+  return tinymcePromise;
+}
+let onMarketingTab = null;
+
 function setActiveTab(tab, { updateUrl = true } = {}) {
   if (tab !== "tools" && !SETTINGS_TABS.includes(tab)) tab = DEFAULT_SETTINGS_TAB;
   activeTab = tab;
   window.activeTab = tab;
+  if (tab === "marketing") onMarketingTab?.();
 
   if (updateUrl && tab !== "tools") setTab(tab, DEFAULT_SETTINGS_TAB);
   
@@ -6267,6 +6288,18 @@ async function openStatsDetailModal(type) {
     },
   });
 
+  // Szerokie tabele (Rozgrywki: 13 kolumn, Niedomyślne ustawienia: 16) nie
+  // mieściły się w oknie 860 px, a przewijanie w poziomie bywa niewidoczne
+  // (paski na macOS/iPadOS pokazują się dopiero przy przewijaniu). Okno rośnie
+  // do szerokości tabeli, najwyżej do 96% ekranu; węższe ekrany przewijają.
+  function fitModalToTable() {
+    const modal = body.closest(".modal");
+    const table = tableWrap.querySelector("table");
+    if (!modal || !table) return;
+    const missing = table.scrollWidth - table.parentElement.clientWidth;
+    if (missing > 0) modal.style.width = `min(${Math.ceil(modal.getBoundingClientRect().width + missing + 2)}px, 96vw)`;
+  }
+
   function renderPage(page) {
     const total = allRows.length;
     const pages = Math.max(1, Math.ceil(total / perPage));
@@ -6278,6 +6311,7 @@ async function openStatsDetailModal(type) {
 
     tableWrap.innerHTML = "";
     tableWrap.appendChild(buildStatsTable(cfg, pageRows));
+    fitModalToTable();
 
     pageWrap.innerHTML = "";
     if (pages > 1) pageWrap.appendChild(buildStatsPagination(page, pages, renderPage));
@@ -6378,7 +6412,7 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  const editor = tinymce.get("mktBody");
+  const editor = globalThis.tinymce?.get("mktBody");
   const bodyHtml = editor ? editor.getContent() : "";
   frame.srcdoc = buildMarketingMailHtml({ template: mktActiveTpl, subject, bodyHtml });
 }
@@ -6417,7 +6451,7 @@ function mktParseEmails() {
 async function sendMarketing() {
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
   // Get HTML content from TinyMCE
-  const editor = tinymce.get("mktBody");
+  const editor = globalThis.tinymce?.get("mktBody");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -6910,11 +6944,11 @@ function wireEvents() {
 
   // Initialize TinyMCE for marketing message area
   const initMktTinyMCE = () => {
-    if (typeof tinymce === "undefined") { setTimeout(initMktTinyMCE, 200); return; }
+    if (!globalThis.tinymce) { loadTinyMce().then(initMktTinyMCE, () => showToast("Nie udało się wczytać edytora treści.", "error")); return; }
     const mktEl = document.getElementById("mktBody");
     if (!mktEl) { setTimeout(initMktTinyMCE, 200); return; }
     if (mktEl._tinyMCEInitialized) return;
-    tinymce.init({
+    globalThis.tinymce.init({
       selector: "#mktBody", height: 400, menubar: "edit insert view format table tools",
       branding: false, promotion: false, license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
@@ -6944,12 +6978,13 @@ function wireEvents() {
       setup: (editor) => { mktEl._tinyMCEInitialized = true; },
     });
   };
-  setTimeout(initMktTinyMCE, 100);
+  onMarketingTab = initMktTinyMCE;
+  if (activeTab === "marketing") initMktTinyMCE();
 
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T05195");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T22030");
 
   const MC_PAGE_SIZE = 50;
 
