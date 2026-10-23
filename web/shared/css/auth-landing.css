@@ -25,7 +25,10 @@
     --muted: rgba(255,255,255,.75);
     --danger: #ff7a7a;
     margin: 0;
-    min-height: 100dvh;
+    /* Wysokość okna (nie min-height): html nie przewija się — body przewija
+       kartę i stopkę w niskim oknie (jak login.css). */
+    box-sizing: border-box;
+    height: 100dvh;
     display: grid;
     grid-template-rows: 1fr auto;
     place-items: center;

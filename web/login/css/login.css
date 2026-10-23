@@ -17,7 +17,10 @@
 
 
   .login-body {
-      min-height: 100dvh;
+      /* Wysokość okna (nie min-height): html nie przewija się, więc body musi
+         przewijać się samo, gdy karta i stopka nie mieszczą się w niskim oknie. */
+      box-sizing: border-box;
+      height: 100dvh;
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, sans-serif;
       color: var(--text);

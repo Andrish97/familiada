@@ -317,6 +317,12 @@ wewnątrz tabeli listy Eksploratora).
 
 ## Do poprawienia (zgłoszenia użytkownika)
 
+- **Logowanie — dwie kopie powłoki (E23, 2026-10-23):** `login.css`
+  (`.login-body`) i `auth-landing.css` (`.landing-body`: potwierdzenie, reset)
+  powtarzają tło `html`, siatkę `body` i safe area z innymi gradientami. Do
+  scalenia w jedną klasę — wymaga zmiany HTML logowania (e2e z brancha nie
+  podmienia HTML logowania: sprawdzić zrzutami i kontrolą na produkcji).
+
 - **Control → Urządzenia — podpowiedź pod siatką (E23, 2026-10-23):**
   „Wejdź na familiada.online…” stoi dużą czcionką nad stopką kroku, z pustym
   pasem nad nią na komputerze. Do ustawienia bliżej siatki albo jako `.hint`.
@@ -395,3 +401,4 @@ wewnątrz tabeli listy Eksploratora).
 | 2026-10-23 | Jedna pozycja menu `.menu-item` | Cztery nazwy tej samej rzeczy → jedna: `.ui-select-item`, `.lang-option`, `.account-menu-item`, `.cm-item` (+ `ui-select-item-label` → `menu-item-label`). Jeden wygląd (bez obramowania, najechanie `--w-8`, wybrana `aria-selected`, nieaktywna `aria-disabled`, `.is-danger`, fokus klawiatury); dotyk/telefon: 44 px i 14 px. Usunięte kopie w Eksploratorze, Marketplace, liście filtrów, pasku list. Spece: mechaniczna zmiana selektorów. Zrzuty: tasks-account-menu, games-sort-menu, base-explorer-menu (telefon/komputer). |
 | 2026-10-23 | Postęp importu/eksportu bez stylów inline | Gry (import, eksport do bazy), Bazy (import), Logo (import): ten sam blok co okno uniwersalne (`.uni-progress`, `.uni-progress-row/-step/-count`, `.progress > .progress-bar`, `.uni-progress-msg`), ukrywanie atrybutem `hidden`; błąd pliku `.field-error role=alert` (było `color:#f87171` inline). Logo: komunikat „Zaimportowano logo” jako `.msg` (wcześniej w polu błędu). Zrzuty: games-export-progress, games-import-error, logos-market-logos-import-done/-error. |
 | 2026-10-23 | Jeden nagłówek sekcji `.section-title` | `.shareSectionTitle` (silnik), `.qf-label`, `.qf-sumTitle` (formularz pytania), `.panelTitle` (Edytor gry), `.sectionTitle` (Ustawienia gry: małe, szare wersaliki — słabsze od etykiety pola) → `.section-title`. Zamknięte zgłoszenie „hierarchia nagłówków w Ustawieniach gry”. |
+| 2026-10-23 | Logowanie w niskim oknie | Audyt (1400×550): rejestracja 615 px przy zablokowanym `html` — `body` miało `min-height`, więc rosło zamiast się przewijać; stopka niedostępna. `login.css` i `auth-landing.css`: `height: 100dvh` (body przewija się samo, zgodnie z decyzją „karta dostępna w niskim oknie przez przewijanie”). Zrzuty i audyt: login, login-register, people-reset-* (telefon, niskie okno) — 0 uwag. |
