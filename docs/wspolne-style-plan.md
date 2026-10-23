@@ -343,10 +343,55 @@ wewnątrz tabeli listy Eksploratora).
   z `.card`/`.btn`/`.btn.gold` (2026-10-23); klasy zostają, bo plik ładuje też
   Wyświetlacz bez silnika. Do zrobienia: wspólny moduł `block-screen` (§6.2).
 
-- **Funkcje koloru (2026-10-23):** `hexToRgb`/`rgbToHex`/`normHex` w ustawieniach
-  gry (wielkie litery, czarny przy błędzie) i znacznikach Eksploratora (małe
-  litery, `null`) mają różną semantykę zapisu — wspólny moduł `core/color.js`
-  dopiero z decyzją o jednym formacie zapisu koloru (migracja danych?).
+- **Funkcje koloru — ujednolicić (decyzja użytkownika 2026-10-23):** jeden
+  moduł `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`) dla Ustawień gry
+  i znaczników Eksploratora; jeden format zapisu i jedno zachowanie przy
+  błędnym zapisie. Bez migracji bazy: odczyt normalizuje oba dawne zapisy.
+- **Android — przezroczystość przy przyciskach z ikonami (zgłoszenie
+  użytkownika 2026-10-23):** na Androidzie przy przyciskach z ikonami bywają
+  artefakty przezroczystości (znane z 2026-10-11/12: menu Gier, ikony AI).
+  W nowym układzie zasada w silniku: przycisk z ikoną ma kryjące tło
+  (`--under` + odcień), bez `opacity` < 1, `filter`, `backdrop-filter`
+  i `transform` w stanach dotyku; audyt (`audit-layout.cjs`) sprawdza to na
+  urządzeniach dotykowych.
+- **Wypustki — rozpisać mechanizm i uprościć (zgłoszenie użytkownika
+  2026-10-23):** na zrzutach widać problemy; obecny mechanizm (wypustka
+  zachodzi na kartę o `--tab-extra`, wklęsłe narożniki `::before/::after`,
+  prostowanie rogu karty pod skrajną wypustką, obwódki i separatory) jest
+  trudny. Opis obecnego mechanizmu i propozycja prostszego — sekcja
+  „Wypustki: mechanizm i uproszczenie” niżej.
+
+## Wypustki: mechanizm i uproszczenie
+
+**Obecnie (wariant A, decyzja 2026-10-21; `components.css` „Karta z
+wypustkami”):**
+1. `.tabs-card` = pasek `.tabs-strip` (tło strony, wysokość `--tab-height`)
+   nad osobną kartą `.card`.
+2. Aktywna wypustka (`.tab-label.active`) ma tło i obramowanie karty,
+   zaokrąglone górne rogi i wysokość `--tab-height + --tab-extra` —
+   zachodzi o `--tab-extra` na górną krawędź karty, żeby zasłonić jej linię.
+3. Wklęsłe narożniki u podstawy aktywnej wypustki rysują `::before/::after`
+   (gradienty radialne), osobno wyłączane przy skrajnych wypustkach.
+4. Róg karty pod skrajną aktywną wypustką prostowany regułą w `@layer states`.
+5. Nieaktywne wypustki: separatory `::after` między sąsiadami, wyłączane
+   obok aktywnej; na telefonie inna wysokość i rozmiar czcionki.
+6. Strony dokładały własne zaokrąglenia, `z-index` etykiet i `overflow`.
+
+Problemy: zależność od warstw i kolejności reguł, piksele `--tab-extra`
+przy skalowaniu (szczeliny/podwójna linia na zrzutach), narożniki
+liczone osobno dla pierwszej/ostatniej wypustki, różne tła pod wypustką
+(`--bg` paska vs tło strony).
+
+**Propozycja (prostsza): wypustki jako nagłówek samej karty.** Karta ma
+jedno obramowanie i zawsze zaokrąglone wszystkie rogi (`overflow: hidden`
+przycina tła wypustek). Pierwszy wiersz karty to wypustki równej szerokości:
+- aktywna — tło karty (łączy się z treścią, bez linii pod spodem),
+- nieaktywne — tło o stopień ciemniejsze + dolna linia `--line`,
+- separator między nieaktywnymi — zwykły `border-left`.
+Nie ma zachodzenia o piksele, wklęsłych narożników ani prostowania rogów;
+wysokość jedna (`--tab-height`), stany jak przyciski (fokus, najechanie).
+Kartka dzielona (`.tabs-card--split`) i wypustki Control korzystają z tego
+samego nagłówka.
 
 ## Dziennik E23
 
