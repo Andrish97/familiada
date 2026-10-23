@@ -12,7 +12,9 @@ menu button on the bar below the header.
 ![Game settings on a phone](zrzut:game-settings@phone)
 
 Prepare the settings **before the game starts**. While the game is open in the control panel,
-you cannot change its settings. If you closed the panel during a game, the app shows "Game in progress" with a choice:
+you cannot change its settings. If the game is still running (e.g. you closed the panel during a game), the app
+shows "Game in progress": saved changes apply only to the next game, and the game lock expires on its own
+after the stated time of inactivity. You can choose
 [Go back] or [End game and open settings] — the second option ends the game, and you will have to connect
 the devices again.
 
@@ -29,7 +31,7 @@ is limited to what fits on the Display; characters the Display cannot show will 
 be accepted.
 
 ![Teams](zrzut:play-settings-teams)
-![A name longer than the Display](zrzut:game-settings-team-limit)
+![Team names — a name that is too long and unsupported characters](zrzut:game-settings-team-limit)
 
 ## 16.3 Display
 
@@ -125,8 +127,8 @@ The "Game settings" section:
 
 ![The “Game settings” section](zrzut:play-settings-game)
 
-Multipliers and amounts are positive whole numbers — for example, 0.5 won't work. The app won't save
-an invalid value: after [Save], the field goes back to its previous value.
+Multipliers and amounts are positive whole numbers — for example, 0.5 won't work. With an invalid
+value the field shows an error at once, and [Save] stops saving and asks you to correct the marked fields.
 
 ![An invalid value](zrzut:game-settings-game-invalid)
 
@@ -145,8 +147,8 @@ screen shows the logo.
   the "Display", "Sound" and "Game settings" sections also let you restore just that section.
 - If the settings were changed in the meantime in another window, the app warns you before saving.
 
-![Unsaved changes](zrzut:play-settings-unsaved)
-![Restore defaults](zrzut:play-settings-reset-all)
+![Leaving with unsaved changes](zrzut:play-settings-unsaved)
+![Restoring the default settings](zrzut:play-settings-reset-all)
 
 - [Play] takes you straight to the control panel (→ 17). The game must be ready to play
   (→ 7.6).

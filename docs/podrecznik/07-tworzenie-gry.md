@@ -27,8 +27,11 @@ Zaznacz grę na liście i wybierz [Edytuj]. Edytor składa się z:
 Kliknij pytanie na liście, aby je otworzyć. Aby je usunąć, kliknij ikonę kosza na jego
 kafelku i potwierdź — usuniesz pytanie razem z odpowiedziami.
 
+![Usuwanie pytania](zrzut:games-editor-delete-question)
+
 Na węższym ekranie edytor pokazuje na zmianę listę pytań albo wybrane pytanie; do listy
-wracasz przyciskiem [Wstecz].
+wracasz przyciskiem [Wstecz]. Na telefonie pytanie otwiera się w oknie od dołu — po jego
+zamknięciu wracasz do listy.
 
 ![Edytor gry](zrzut:game-editor)
 ![Edytor na telefonie — lista pytań](zrzut:games-editor-list-phone@phone)
@@ -50,7 +53,6 @@ także odpowiedzi.
 Pytania i odpowiedzi możesz też przygotować w bazie pytań i utworzyć z nich grę (→ 9.8).
 
 ![Znaki spoza Wyświetlacza i podpowiedzi przy odpowiedziach](zrzut:game-editor-answer-rules)
-![Usuwanie pytania](zrzut:games-editor-delete-question)
 
 ## 7.4 Punktacja odpowiedzi
 

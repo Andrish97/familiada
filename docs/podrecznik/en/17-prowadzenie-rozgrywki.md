@@ -88,7 +88,7 @@ with points, the final questions or the details of answer scoring. The second pa
 and up to cover it; in landscape — right and left. Only the host sees what is uncovered.
 After each change of stage, the cover may come back.
 
-![Host screen — the lower part under the cover](zrzut:play-host-duel@tablet-landscape)
+![Host screen — the right part under the cover](zrzut:play-host-duel@tablet-landscape)
 ![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet-landscape)
 
 **A device disconnects.** When a required device stops responding, after a few seconds
@@ -166,13 +166,13 @@ or animation plays — wait until the panel unlocks them.
 - [X] adds a mistake (counter "1 / 3", "2 / 3", "3 / 3"); an X appears on the Display with a sound.
 - [3s] starts a three-second countdown when an answer is taking too long. When the
   time runs out, the app adds an X on its own. Clicking again or doing anything else turns the countdown off without an X.
-- [Pass control] hands the question over to the opponents — once per round, before the first revealed
-  answer. A red hint then appears on the host screen.
+- [Pass control] hands the question over to the opponents — once per round, right after winning the
+  face-off: the team's first answer (correct or an X) removes this option. A red hint then appears on the host screen.
 
 The host sees the question and all the answers with points, e.g. "2) Bike (24)" — a green
 row is an answer already shown to the audience. The host checks the pool, the X's and the team scores on the Display.
 
-![Team's turn — a selected answer, the X counter and Pass control](zrzut:play-control-play-pass)
+![Team's turn right after the face-off — a selected answer and Pass control](zrzut:play-control-play-pass)
 ![The 3-second countdown](zrzut:play-control-timer3)
 ![Display — revealed answers, the pool and X](zrzut:play-display-play)
 ![Host screen — answers already shown in green](zrzut:play-host-play@tablet-landscape)
@@ -263,7 +263,7 @@ helps spot a repeat. The timer is 20 s.
 and the button changes to [Finish final] — the operator chooses when to finish. If the target
 was not reached, [Finish final] appears after player 2's last points.
 
-![Target reached — Finish final](zrzut:play-control-final-end)
+![Target reached — Finish final](zrzut:play-control-final-goal)
 
 ## 17.5 Ending the game
 

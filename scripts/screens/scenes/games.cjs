@@ -174,7 +174,7 @@ module.exports = [
     db: (db, lang) => {
       const src = gameRow(db, id("8000", 101));
       const copyId = id("8000", 401);
-      db.tables.games.push({ ...src, id: copyId, name: `${src.name} (${{ pl: "kopia", en: "copy", uk: "копія" }[lang]})`, created_at: "2026-10-21T09:00:00.000Z", updated_at: "2026-10-21T09:00:00.000Z" });
+      db.tables.games.push({ ...src, id: copyId, name: `${src.name} ${{ pl: "kopia", en: "copy", uk: "копія" }[lang]}`, created_at: "2026-10-21T09:00:00.000Z", updated_at: "2026-10-21T09:00:00.000Z" });
       db.http["/_api/resource-duplicate"] = { ok: true, id: copyId };
     },
     steps: [select(id("8000", 101)), async (view) => { await view.locator("#btnDuplicate").click(); await view.locator(`${tile(id("8000", 401))}.selected`).waitFor({ timeout: 5000 }); await view.waitForTimeout(400); }] },

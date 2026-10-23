@@ -18,7 +18,7 @@ emails from you about polls and shared devices (→ 14.1).
 
 ![Friends](zrzut:friends)
 
-The invitation appears in the "Pending and declined" section. If the invited person has
+The invitation appears in the "Pending" section. If the invited person has
 notifications turned on, they get an email with an "Open invitation" button.
 
 If there is no account for that address, the app tells you so and offers to add the person
@@ -30,29 +30,32 @@ account on the *Subscribers* page, the app offers to invite them as a friend.
 
 ## 10.3 Handling invitations and their statuses
 
-**Received invitations** are in the "Friends" tab, in the "Suggestions" section:
+**Received invitations** are in the "Suggestions" section (on a phone — in the "Friends" tab):
 
-- [Accept] — the person is added to your friends list,
-- [Decline] — the invitation moves to the collapsed "Declined by me" section. For
-  30 days you can bring it back with the [Undo decline] button and then accept it.
+- ✓ [Accept] — the person is added to your friends list,
+- × [Decline] — the invitation moves to the collapsed "Declined" section. For 30 days you can
+  bring it back with the [Undo decline] button and then accept it.
 
 ![Proposals in the “Friends” tab (phone)](zrzut:people-friends-received@phone)
 ![Declined proposals](zrzut:people-friends-declined)
 
-**Sent invitations** are in the "Invitations" tab, in the "Pending and declined" section:
+**Sent invitations** are in the "Pending" section (on a phone — in the "Invitations" tab), with
+the status "Pending" or "Declined"; the filter above the list shows only one of them:
 
-- pending — you can [Resend] them (once the required waiting time has passed) or [Withdraw] them,
-- declined — you can only [Withdraw] them.
+- pending — you can [Resend] them (the circular arrow icon, once the required waiting time has
+  passed) or withdraw them with the trash icon,
+- declined — you can only withdraw them with the trash icon.
 
 ![Sent invitations — countdown to resending](zrzut:people-friends-resend-cooldown)
 
 After an invitation is declined, neither of the two people can invite the other for 30 days.
 Invitation emails are sent no more often than every 5 days and at most twice in 30 days.
 
-On a computer, both tabs are shown side by side; on a phone, you switch between them at the top.
-The counters next to the tabs show pending invitations.
+On a computer everything is on one screen: "Add a friend" and "Pending" on the left, "Friends",
+"Suggestions" and "Declined" on the right. On a phone, you switch between the "Friends" and
+"Invitations" tabs at the top; the counters next to them show pending invitations.
 
-![Both tabs side by side on a computer](zrzut:people-friends-half@desktop)
+![Friends on a computer — all sections on one screen](zrzut:people-friends-half@desktop)
 
 ## 10.4 Managing your friends list
 
@@ -60,7 +63,7 @@ Your friends list is in the "Friends" tab. Each person is shown with their name 
 
 To remove a friend, choose [Remove] and confirm. Then:
 
-- the person disappears from the list and moves to "Declined by me" — for 30 days you can
+- the person disappears from the list and moves to the "Declined" section — for 30 days you can
   undo this with [Undo decline],
 - pending poll and question base invitations between the two of you are cancelled,
 - **bases and devices you have already shared stay shared** — revoke access to bases (→ 12.5) and devices
@@ -95,6 +98,8 @@ How sending differs from other ways of passing things on:
 
 Sending requires an account and at least one friend.
 
+![No friends](zrzut:games-send-no-friends)
+
 ## 11.2 Sending a game
 
 1. In *My games*, select a game and choose [Send].
@@ -112,8 +117,6 @@ The copy keeps the game type and all its content. You can send:
 You cannot send games added from Community Games, demo materials, or a game that is currently
 open in the editor or in settings.
 
-![No friends](zrzut:games-send-no-friends)
-
 ## 11.3 Sending a logo
 
 On the *My logos* page, select a logo, choose [Send] and continue as for a game. Your friend
@@ -126,12 +129,13 @@ can use the logo they receive in their own games (→ 8.5). Demo logos cannot be
 When someone sends you a copy, you get an email "… sent you a copy" (if you have notifications
 turned on), and a counter appears next to the *My games* or *My logos* tab.
 
-The copy waits in the "Received copies" section — with its name and a "From: …" label:
+The copy waits at the start of the list — a game in the tab for its type, a logo in *My logos* — as a tile
+with a "PROPOSED" badge and a "From: …" label. In the corner of the tile there are two buttons:
 
-- [Accept] — the copy goes into your library: a game into the tab for its type, a logo into
+- ✓ [Accept] — the copy goes into your library: a game into the tab for its type, a logo into
   *My logos*. It keeps the "From: …" label, and in *My games* you can also find it with
   the "Received" filter.
-- [Decline] — the copy disappears. The same person cannot send it to you again for 30 days.
+- × [Decline] — the copy disappears. The same person cannot send it to you again for 30 days.
 
 ![Received game copies](zrzut:games-received-copies)
 ![Received logo copies](zrzut:logos-market-logos-received)

@@ -31,11 +31,12 @@ Each game is a tile with its name and status:
 | Status | What it means |
 |---|---|
 | DRAFT | The game is being prepared. You can edit it. |
+| READY TO LAUNCH | The poll game meets the requirements — you can launch the poll (→ 15.1). |
 | OPEN | The poll is running — voters can answer. The number of votes cast is shown next to it. |
 | STOPPED | Collecting answers is paused. The "to be counted" badge reminds you that you can count the votes (→ 15.6). |
 | READY | The game is ready to play. |
 
-![Statuses and the blocking reason on the tile](zrzut:games-prepared-states)
+![DRAFT and READY statuses — what the draft is missing, on the tile](zrzut:games-prepared-states)
 ![An open poll — number of votes](zrzut:games-poll-text-open)
 ![A stopped poll — “to be tallied”](zrzut:games-poll-points-stopped)
 
@@ -50,7 +51,7 @@ A copy received from a friend is marked "From: {name}".
 
 ![A copy from a friend — “From: …”](zrzut:games-prepared-received)
 
-Above the list you can choose a filter: DRAFT, OPEN, STOPPED, READY or "Received"
+Above the list you can choose a filter: DRAFT, READY TO LAUNCH, OPEN, STOPPED, READY or "Received"
 (only copies from friends). The list refreshes by itself.
 
 ![Status filter](zrzut:games-filter-menu)
@@ -162,7 +163,6 @@ with the `.famgame` extension, which you can keep or move to another account.
   into the file — after import it will be a draft.
 
 ![Export to a file](zrzut:games-export-progress)
-![Exporting an open poll — without votes](zrzut:games-export-votes)
 
 **Import from file.** Choose [Import] and pick a `.famgame` (or `.json`) file. Before
 confirming, you will see the name, the game type and the number of questions, as well as notes, for example when the poll
@@ -170,7 +170,7 @@ result in the file is incomplete and the game will be added to the library as a 
 a new game — it does not change existing ones.
 
 ![Import — file preview](zrzut:games-import-preview)
-![Import — the file is not a game](zrzut:games-import-error)
+![Import — invalid JSON file](zrzut:games-import-error)
 
 During import, texts that are too long are shortened (question to 100 characters, answer to 17),
 and if there are more than 6 answers, the 6 highest-scoring ones stay. An imported game may
@@ -187,5 +187,6 @@ first warns you that the collected votes won't be copied to the base.
 
 ![Export to a base — choosing the base](zrzut:games-export-base)
 ![No bases to choose](zrzut:games-export-base-empty)
+![Export to a base — the "Without current votes" warning](zrzut:games-export-votes)
 
 Don't edit the contents of `.famgame` files by hand — importing such a file may fail.

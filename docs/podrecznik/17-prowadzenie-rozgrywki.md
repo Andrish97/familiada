@@ -88,7 +88,7 @@ z punktami, pytania finału albo szczegóły oceny odpowiedzi. Druga część by
 i w górę, aby zasłonić; w poziomie — w prawo i w lewo. Odsłonięcie widzi tylko prowadzący.
 Po każdej zmianie etapu zasłona może wrócić.
 
-![Ekran prowadzącego — dolna część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
+![Ekran prowadzącego — prawa część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
 ![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet-landscape)
 
 **Rozłączenie urządzenia.** Gdy wymagane urządzenie przestanie odpowiadać, po kilku sekundach
@@ -166,13 +166,13 @@ lub animacji — poczekaj, aż panel je odblokuje.
 - [X] dodaje błąd (licznik „1 / 3”, „2 / 3”, „3 / 3”); na Wyświetlaczu pojawia się X z dźwiękiem.
 - [Rozpocznij odliczanie 3s] włącza trzysekundowe odliczanie, gdy odpowiedź się przeciąga. Po
   upływie czasu serwis sam doda X. Ponowne kliknięcie albo inna czynność wyłącza odliczanie bez X.
-- [Oddaj kontrolę] przekazuje pytanie przeciwnikom — raz w rundzie, przed pierwszą odkrytą
-  odpowiedzią. Na ekranie prowadzącego pojawia się wtedy czerwona podpowiedź.
+- [Oddaj kontrolę] przekazuje pytanie przeciwnikom — raz w rundzie, zaraz po wygranym
+  pojedynku: pierwsza odpowiedź drużyny (trafiona albo X) wyłącza tę możliwość. Na ekranie prowadzącego pojawia się wtedy czerwona podpowiedź.
 
 Prowadzący widzi pytanie i wszystkie odpowiedzi z punktami, np. „2) Rower (24)” — zielony
 wiersz to odpowiedź już pokazana publiczności. Pulę, X i wyniki drużyn sprawdza na Wyświetlaczu.
 
-![Rozgrywka — zaznaczona odpowiedź, licznik X i Oddaj kontrolę](zrzut:play-control-play-pass)
+![Rozgrywka zaraz po pojedynku — zaznaczona odpowiedź i Oddaj kontrolę](zrzut:play-control-play-pass)
 ![Odliczanie 3 s](zrzut:play-control-timer3)
 ![Wyświetlacz — odsłonięte odpowiedzi, pula i X](zrzut:play-display-play)
 ![Ekran prowadzącego — pokazane odpowiedzi na zielono](zrzut:play-host-play@tablet-landscape)
@@ -263,7 +263,7 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 a przycisk zmienia się na [Zakończ finał] — operator sam wybiera moment zakończenia. Jeśli celu
 nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
 
-![Cel osiągnięty — Zakończ finał](zrzut:play-control-final-end)
+![Cel osiągnięty — Zakończ finał](zrzut:play-control-final-goal)
 
 ## 17.5 Zakończenie gry
 
