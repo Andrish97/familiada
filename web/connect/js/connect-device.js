@@ -180,7 +180,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-23T05292";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });

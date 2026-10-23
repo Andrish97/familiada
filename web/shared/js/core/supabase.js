@@ -15,7 +15,7 @@ export function sb() {
 
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     throw new Error(
-      "supabase-js v2 nie jest załadowany. Upewnij się, że <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script> jest przed modułami."
+      "supabase-js nie jest załadowany. Upewnij się, że <script src='/shared/vendor/supabase-js.js' defer></script> jest przed modułami."
     );
   }
 

@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://api.familiada.online">
   <title data-i18n="home.title">Familiada Online — przygotuj pytania i poprowadź grę na żywo</title>
   <meta name="description" content="Przygotuj pytania, zbierz odpowiedzi w ankiecie lub wybierz gotową grę społeczności. Poprowadź rozgrywkę z Panelem sterowania i Wyświetlaczem.">
@@ -43,7 +42,7 @@
   <link rel="stylesheet" href="/home/css/index.css?v=v2026-10-23T05292"/>
   <!-- HTML strony jest po polsku: ukrywamy treść do wczytania tłumaczeń tylko przy innym języku. -->
   <script>(function(){var l="pl";try{var q=(new URLSearchParams(location.search).get("lang")||localStorage.getItem("uiLang")||navigator.language||"").toLowerCase();l=/^en/.test(q)?"en":/^(uk|ua)/.test(q)?"uk":"pl"}catch(e){}if(l!=="pl")document.documentElement.classList.add("page-loading")})()</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T05292" defer></script>
   <script src="/shared/js/core/security-warning.js?v=v2026-10-23T05292" defer></script>
   <script type="module" src="/home/js/index.js?v=v2026-10-23T05292" defer></script>
   <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T05292" defer></script>

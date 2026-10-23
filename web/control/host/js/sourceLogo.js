@@ -45,7 +45,7 @@ function loadFabric() {
   if (!fabricPromise) {
     fabricPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js";
+      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-23T05292";
       script.async = true;
       script.onload = () => globalThis.fabric?.StaticCanvas ? resolve(globalThis.fabric) : reject(new Error("Fabric.js did not initialize"));
       script.onerror = () => reject(new Error("Fabric.js could not be loaded"));

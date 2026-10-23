@@ -4001,9 +4001,8 @@ function showCompose(defaults = {}) {
 
   // Initialize TinyMCE for composeMessageArea after HTML is inserted
   const initComposeTinyMCE = () => {
-    if (typeof tinymce === "undefined") {
-      console.warn("TinyMCE script not loaded yet, retrying...");
-      setTimeout(initComposeTinyMCE, 200);
+    if (!globalThis.tinymce) {
+      loadTinyMce().then(initComposeTinyMCE, () => showToast("Nie udało się wczytać edytora treści.", "error"));
       return;
     }
     const composeEl = document.getElementById("composeMessageArea");
@@ -4014,12 +4013,12 @@ function showCompose(defaults = {}) {
     }
     
     // Remove existing TinyMCE instance
-    const existing = tinymce.get("composeMessageArea");
+    const existing = globalThis.tinymce?.get("composeMessageArea");
     if (existing) {
-      tinymce.remove(existing);
+      globalThis.tinymce.remove(existing);
     }
     
-    tinymce.init({
+    globalThis.tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
       menubar: "edit insert view format table tools",
@@ -4148,7 +4147,7 @@ function showCompose(defaults = {}) {
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
-    const editor = tinymce.get("composeMessageArea");
+    const editor = globalThis.tinymce?.get("composeMessageArea");
     const hasData = (document.getElementById("composeSubjectInput")?.value || "").trim()
       || (editor ? editor.getContent() : "")
       || (document.getElementById("composeGreetingCustom")?.value || "").trim()
@@ -4252,7 +4251,7 @@ function showCompose(defaults = {}) {
     value: "custom",
     onChange: (templateKey) => {
       const templateText = getEmailTemplates(composeLang)[templateKey] || "";
-      const editor = tinymce.get("composeMessageArea");
+      const editor = globalThis.tinymce?.get("composeMessageArea");
       if (editor && templateText) editor.setContent(templateText);
     },
   });
@@ -4333,7 +4332,7 @@ function showCompose(defaults = {}) {
     e.preventDefault();
     e.stopPropagation();
     
-    const editor = tinymce.get("composeMessageArea");
+    const editor = globalThis.tinymce?.get("composeMessageArea");
     if (editor) {
       editor.insertContent("#quote");
       editor.focus();
@@ -4366,7 +4365,7 @@ function closeCompose() {
 async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const toEmail = (document.getElementById("composeToInput")?.value || "").trim();
-  const editor = tinymce.get("composeMessageArea");
+  const editor = globalThis.tinymce?.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -4466,7 +4465,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
 
 function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  const editor = tinymce.get("composeMessageArea");
+  const editor = globalThis.tinymce?.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -5212,10 +5211,28 @@ function settingsTabFromUrl() {
   return tabFromUrl(SETTINGS_TABS, DEFAULT_SETTINGS_TAB);
 }
 
+// TinyMCE (edytor treści maili: „Napisz” i Marketing) ładowany dopiero przy
+// pierwszym użyciu, w przypiętej wersji — nie blokuje startu panelu.
+const TINYMCE_SRC = "https://cdn.jsdelivr.net/npm/tinymce@7.9.3/tinymce.min.js";
+let tinymcePromise = null;
+function loadTinyMce() {
+  if (globalThis.tinymce) return Promise.resolve(globalThis.tinymce);
+  tinymcePromise ||= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = TINYMCE_SRC;
+    script.onload = () => resolve(globalThis.tinymce);
+    script.onerror = () => { tinymcePromise = null; reject(new Error("TinyMCE could not be loaded")); };
+    document.head.appendChild(script);
+  });
+  return tinymcePromise;
+}
+let onMarketingTab = null;
+
 function setActiveTab(tab, { updateUrl = true } = {}) {
   if (tab !== "tools" && !SETTINGS_TABS.includes(tab)) tab = DEFAULT_SETTINGS_TAB;
   activeTab = tab;
   window.activeTab = tab;
+  if (tab === "marketing") onMarketingTab?.();
 
   if (updateUrl && tab !== "tools") setTab(tab, DEFAULT_SETTINGS_TAB);
   
@@ -6378,7 +6395,7 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  const editor = tinymce.get("mktBody");
+  const editor = globalThis.tinymce?.get("mktBody");
   const bodyHtml = editor ? editor.getContent() : "";
   frame.srcdoc = buildMarketingMailHtml({ template: mktActiveTpl, subject, bodyHtml });
 }
@@ -6417,7 +6434,7 @@ function mktParseEmails() {
 async function sendMarketing() {
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
   // Get HTML content from TinyMCE
-  const editor = tinymce.get("mktBody");
+  const editor = globalThis.tinymce?.get("mktBody");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
@@ -6910,11 +6927,11 @@ function wireEvents() {
 
   // Initialize TinyMCE for marketing message area
   const initMktTinyMCE = () => {
-    if (typeof tinymce === "undefined") { setTimeout(initMktTinyMCE, 200); return; }
+    if (!globalThis.tinymce) { loadTinyMce().then(initMktTinyMCE, () => showToast("Nie udało się wczytać edytora treści.", "error")); return; }
     const mktEl = document.getElementById("mktBody");
     if (!mktEl) { setTimeout(initMktTinyMCE, 200); return; }
     if (mktEl._tinyMCEInitialized) return;
-    tinymce.init({
+    globalThis.tinymce.init({
       selector: "#mktBody", height: 400, menubar: "edit insert view format table tools",
       branding: false, promotion: false, license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
@@ -6944,7 +6961,8 @@ function wireEvents() {
       setup: (editor) => { mktEl._tinyMCEInitialized = true; },
     });
   };
-  setTimeout(initMktTinyMCE, 100);
+  onMarketingTab = initMktTinyMCE;
+  if (activeTab === "marketing") initMktTinyMCE();
 
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS

@@ -12,7 +12,6 @@ const WEB = path.join(REPO, "web");
 const PGRST = process.env.LB_PGRST || "http://127.0.0.1:3555";
 const CACHE = path.join(require("node:os").homedir(), ".cache", "familiada-local-e2e");
 const SECRET = process.env.LB_SECRET || "local-test-secret-local-test-secret-123456";
-const SBJS = process.env.LB_SBJS || path.join(CACHE, "supabase-js/package/dist/umd/supabase.js");
 const PSQL = ["-h", process.env.LB_PGHOST || "/var/tmp/pgfam", "-p", "5499", "-U", "postgres", "-d", "fam", "-qtA", "-c"];
 
 const b64u = (b) => Buffer.from(b).toString("base64url");
@@ -94,9 +93,6 @@ async function handle(route) {
     return route.fulfill({ status: 200, contentType: mime[path.extname(file)] || "application/octet-stream", body: fs.readFileSync(file) });
   }
 
-  if (/\/npm\/@supabase\/supabase-js/.test(url.pathname) && fs.existsSync(SBJS)) {
-    return route.fulfill({ status: 200, contentType: "text/javascript", headers: CORS, body: fs.readFileSync(SBJS) });
-  }
   if (url.hostname === "cdn.jsdelivr.net" || url.hostname === "unpkg.com") return route.continue().catch(() => route.abort());
   return route.abort();
 }
