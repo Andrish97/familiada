@@ -786,7 +786,7 @@ function buildStarInput(gameId, selectedStars = 0) {
   wrap.className = "mkt-rate-wrap";
 
   const label = document.createElement("span");
-  label.className = "mkt-rate-label";
+  label.className = "field-label";
   label.textContent = t("marketplace.rating.rateThis");
   wrap.appendChild(label);
 

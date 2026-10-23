@@ -92,23 +92,23 @@ function buildModalHtml() {
       </div>
       <div id="cModalForm" class="uni-body contact-form">
         <div class="contact-field">
-          <label class="contact-label" id="cModalEmailLabel" for="cModalEmail"></label>
+          <label class="field-label" id="cModalEmailLabel" for="cModalEmail"></label>
           <input class="inp" id="cModalEmail" type="email" autocomplete="email"/>
         </div>
         <div class="contact-field">
-          <label class="contact-label" id="cModalTicketLabel" for="cModalTicket"></label>
+          <label class="field-label" id="cModalTicketLabel" for="cModalTicket"></label>
           <input class="inp" id="cModalTicket" type="text" autocomplete="off"/>
         </div>
         <div class="contact-field" id="cModalSubjectField">
-          <label class="contact-label" id="cModalSubjectLabel" for="cModalSubject"></label>
+          <label class="field-label" id="cModalSubjectLabel" for="cModalSubject"></label>
           <input class="inp" id="cModalSubject" type="text"/>
         </div>
         <div class="contact-field">
-          <label class="contact-label" id="cModalMessageLabel" for="cModalMessage"></label>
+          <label class="field-label" id="cModalMessageLabel" for="cModalMessage"></label>
           <textarea class="inp" id="cModalMessage" rows="7"></textarea>
         </div>
         <div class="contact-field">
-          <div class="contact-label" id="cModalAttachLabel"></div>
+          <div class="field-label" id="cModalAttachLabel"></div>
           <input type="file" id="cModalAttachments" multiple hidden/>
           <label for="cModalAttachments" class="btn sm contact-attach-btn">
             ${icon("paperclip")}

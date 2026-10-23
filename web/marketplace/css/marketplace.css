@@ -319,15 +319,6 @@
   }
 
   /* ===== Field label ===== */
-  .field-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 900;
-    opacity: .75;
-    margin-bottom: 5px;
-    letter-spacing: .03em;
-  }
-
   /* ===== Mobile ===== */
   @media (max-width: 600px) {
     .mkt-head #btnMySent{width:36px;height:36px;min-height:36px;padding:0;justify-content:center}
@@ -375,7 +366,6 @@
   .mkt-rating-summary { font-size: .95em; margin-bottom: 8px; }
 
   .mkt-rate-wrap  { margin-top: 6px; }
-  .mkt-rate-label { font-size: .82em; opacity: .65; display: block; margin-bottom: 4px; }
   .mkt-star-input { display: flex; gap: 2px; }
   .mkt-star-btn   {
     background: none; border: none; cursor: pointer;

@@ -270,7 +270,7 @@
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 8,
   "mediaWidth": 1,
-  "sharedDuplicate": 3
+  "sharedDuplicate": 2
  },
  "web/marketplace/index.html": {
   "inlineStyleHtml": 11
@@ -310,7 +310,7 @@
   "colorLiteral": 73,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
-  "sharedDuplicate": 7,
+  "sharedDuplicate": 6,
   "unusedClass": 14
  },
  "web/settings/index.html": {

@@ -162,15 +162,6 @@
 
   .gs-field:last-child { margin-bottom: 0; }
 
-  .gs-label {
-    font-size: .78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--gold);
-    opacity: .75;
-  }
-
   /* ===== DISPLAY PREVIEW ===== */
   .display-preview {
     width: 100%;

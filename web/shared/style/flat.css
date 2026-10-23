@@ -811,13 +811,17 @@
     gap: 8px;
     min-width: 0;
   }
-  .contact-label {
+  /* Etykieta pola (jedyna): nad polem, wersaliki, przyciszona. */
+  .field-label {
+    display: block;
+    margin: 0 0 6px;
     font-size: 12px;
     font-weight: 900;
     letter-spacing: .08em;
     text-transform: uppercase;
-    opacity: .85;
+    color: var(--text-muted);
   }
+  .contact-field > .field-label { margin: 0; }
   .contact-field > .inp { width: 100%; }
   .contact-field > textarea.inp {
     resize: vertical;

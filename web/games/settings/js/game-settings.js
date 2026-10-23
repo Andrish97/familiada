@@ -544,12 +544,12 @@ function renderTeams() {
     <div class="gs-cat-title">${t("gameSettings.categories.teams")}</div>
     <div class="gs-section">
       <div class="gs-field">
-        <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
+        <div class="field-label">${t("gameSettings.teams.nameA")}</div>
         <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
         <div class="hint gs-team-measure" id="gsTeamAMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-field">
-        <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
+        <div class="field-label">${t("gameSettings.teams.nameB")}</div>
         <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
         <div class="hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
       </div>
@@ -692,11 +692,11 @@ function renderDisplay() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.colors")}</div>
+      <div class="field-label">${t("gameSettings.display.colors")}</div>
       <div class="colorRow">${swatches}</div>
     </div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.theme")}</div>
+      <div class="field-label">${t("gameSettings.display.theme")}</div>
       <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
         <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
@@ -706,11 +706,11 @@ function renderDisplay() {
       </div>
     </div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.logo")}</div>
+      <div class="field-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.hostLogoMode")}</div>
+      <div class="field-label">${t("gameSettings.display.hostLogoMode")}</div>
       <div class="toggle-group gs-host-logo-mode" role="radiogroup" aria-label="${escAttr(t("gameSettings.display.hostLogoMode"))}">
         <label class="toggle-item">
           <input type="radio" name="gsHostLogoMode" value="pixel" ${localSettings.display.hostLogoMode === "pixel" ? "checked" : ""}/>

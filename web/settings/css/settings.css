@@ -579,13 +579,6 @@
     flex-wrap: wrap;
   }
 
-  .field-label{
-    font-size: 12px;
-    opacity: .8;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-
   .field-label.field-title{
     font-size: 14px;
     font-weight: 900;
@@ -998,14 +991,7 @@
     background: var(--w-4);
   }
 
-  .stat-label{
-    font-size: 11px;
-    opacity: .7;
-    text-transform: uppercase;
-    font-weight: 900;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
+  .stat-box .field-label{ margin-bottom: 8px; }
 
   .stat-value{
     font-size: 32px;
@@ -1097,7 +1083,7 @@
       min-width: 0 !important;
       overflow: hidden !important;
     }
-    .stat-label{
+    .stat-box .field-label{
       font-size: 10px !important;
       letter-spacing: 0 !important;
       white-space: nowrap !important;
