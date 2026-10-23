@@ -347,6 +347,10 @@ wewnątrz tabeli listy Eksploratora).
   moduł `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`) dla Ustawień gry
   i znaczników Eksploratora; jeden format zapisu i jedno zachowanie przy
   błędnym zapisie. Bez migracji bazy: odczyt normalizuje oba dawne zapisy.
+  **Zrobione (branch, 2026-10-23):** `core/color.js` — zapis `#RRGGBB`
+  wielkimi literami, odczyt przyjmuje małe litery, brak `#` i skrót `#abc`,
+  błędny zapis → `null` (domyślny kolor wybiera strona). Ustawienia gry
+  normalizują kolory przy wczytaniu, znaczniki — przy edycji.
 - **Android — przezroczystość przy przyciskach z ikonami (zgłoszenie
   użytkownika 2026-10-23):** na Androidzie przy przyciskach z ikonami bywają
   artefakty przezroczystości (znane z 2026-10-11/12: menu Gier, ikony AI).
@@ -464,3 +468,4 @@ dla wszystkich (Bazy i Ankiety miały wcześniej 12 px zamiast 20 px).
 | 2026-10-23 | Wypustki — jeden promień łuków | Decyzja użytkownika: wszystkie łuki wypustki identyczne (dwa górne i wklęsłe u podstawy — trzy przy skrajnej, cztery przy środkowej). Przyczyna różnicy: pasek 36 px, promień 20 px — górny łuk zabierał 20 px, wklęsły spłaszczał się do ~15. `--tab-r = min(--radius, (wysokość + 1 px)/2)`: komputer 18,5 px wszystkie łuki, telefon (44 px) 20 px. |
 | 2026-10-23 | Wypustki: wklęsły łuk = róg karty odwrócony (ten sam promień `--tab-r` = `--radius`, linia nieprzezroczysta, wygładzone przejścia gradientu); reguła prostująca róg karty bez `:has` w `:has` (przeglądarka ją pomijała — w Grach, Bazach, Ankietach, Logo róg pod skrajną wypustką był zaokrąglony). Zrzuty: gry, bazy, loga (telefon/komputer). |
 | 2026-10-23 | Wypustki — wklęsły łuk o połowę mniejszy | Decyzja użytkownika: wewnętrzne zaokrąglenie mniejsze (połowa zewnętrznego) — ładniej. `--tab-r-in = --tab-r / 2` (10 px przy 20 px). Zrzuty: gry (wszystkie zakładki), bazy, loga — telefon i komputer. |
+| 2026-10-23 | Funkcje koloru | `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`) zamiast dwóch kopii (Ustawienia gry, znaczniki Eksploratora); zapis `#RRGGBB` wielkimi literami, odczyt dawnych zapisów, bez migracji. Unit `color.test.js`; spec `game-settings` — oczekiwany zapis domyślnego koloru `#C4002F` (format z decyzji). Zrzuty: game-settings-color, base-explorer-tags-edit/-color. |

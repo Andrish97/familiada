@@ -12,6 +12,7 @@ import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/co
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15470";
 import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15470";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
+import { normHex, hexToRgb, rgbToHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
 import { normalizeText } from "./data/listing.js?v=v2026-10-23T15470";
 import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-23T15470";
 
@@ -40,23 +41,6 @@ function clamp255(n) {
   n = Number(n);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(255, Math.round(n)));
-}
-
-function rgbToHex(r, g, b) {
-  const to2 = (x) => x.toString(16).padStart(2, "0");
-  return "#" + to2(clamp255(r)) + to2(clamp255(g)) + to2(clamp255(b));
-}
-
-function hexToRgb(hex) {
-  const s = String(hex || "").trim();
-  const m = s.match(/^#?([0-9a-fA-F]{6})$/);
-  if (!m) return null;
-  const h = m[1];
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  };
 }
 
 function hideErr(box) {
@@ -267,11 +251,11 @@ export async function openTagsModal(state, opts = {}) {
       mode: mode === "edit" ? "edit" : "create",
       tagId: mode === "edit" ? editTagId : null,
       name: "",
-      color: "#4da3ff",
+      color: "#4DA3FF",
     },
     // L3
-    pickedColor: "#4da3ff",
-    colorBase: "#4da3ff",
+    pickedColor: "#4DA3FF",
+    colorBase: "#4DA3FF",
   };
 
   // Promise + resolver tworzone od razu, ZANIM podepniemy listenery -- inaczej klik
@@ -471,7 +455,7 @@ export async function openTagsModal(state, opts = {}) {
       editMode === "edit" && tagId ? (state.tags || []).find((t) => t.id === tagId) || null : null;
 
     m.edit.name = String(current?.name || "");
-    m.edit.color = String(current?.color || "#4da3ff");
+    m.edit.color = normHex(current?.color) || "#4DA3FF";
     m.pickedColor = m.edit.color;
 
     if (E.editTitle) {
@@ -544,7 +528,7 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   function openPickerFrom(hex) {
-    m.colorBase = String(hex || "#4da3ff");
+    m.colorBase = String(hex || "#4DA3FF");
     const rgb = hexToRgb(m.colorBase) || { r: 77, g: 163, b: 255 };
     setPickerUI(rgb, { silent: false });
     go(3);
@@ -639,7 +623,7 @@ export async function openTagsModal(state, opts = {}) {
       return false;
     }
 
-    const color = String(m.pickedColor || "#4da3ff").trim();
+    const color = String(m.pickedColor || "#4DA3FF").trim();
 
     const editId = (m.edit.mode === "edit" && m.edit.tagId) ? m.edit.tagId : null;
     if (editId && sessionLease && !sessionLease.ok) {

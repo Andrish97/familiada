@@ -321,13 +321,13 @@ test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", asyn
     await page.locator("#btnDisplayReset").click();
     await page.locator(".uni-foot .btn.gold:visible").click(); // potwierdź reset sekcji
 
-    // Domyślny kolor A z DEFAULT_SETTINGS to #c4002f = rgb(196,0,47)
+    // Domyślny kolor A z DEFAULT_SETTINGS to #C4002F = rgb(196,0,47) (zapis: wielkie litery, core/color.js)
     await expect(page.locator('.swatchBtn[data-color-key="A"]')).toHaveCSS("background-color", "rgb(196, 0, 47)");
 
     await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
-    expect(game.settings.display.colors.A).toBe("#c4002f");
+    expect(game.settings.display.colors.A).toBe("#C4002F");
   } finally {
     await deleteGame(page, gameId);
   }

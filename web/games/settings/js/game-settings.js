@@ -4,6 +4,7 @@
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15470";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15470";
+import { normHex, hexToRgb, rgbToHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15470";
 import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15470";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15470";
@@ -41,7 +42,7 @@ const gameId = qs.get("id");
 const DEFAULT_SETTINGS = {
   teams: { teamA: "", teamB: "" },
   display: {
-    colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
+    colors: { A: "#C4002F", B: "#2A62FF", BACKGROUND: "#D21180", DOT: "#D7FF3D" },
     theme: null,
     logoId: null,
     hostLogoMode: "source",
@@ -78,10 +79,10 @@ function mergeSettings(saved) {
     },
     display: {
       colors: {
-        A: s.display?.colors?.A ?? defs.display.colors.A,
-        B: s.display?.colors?.B ?? defs.display.colors.B,
-        BACKGROUND: s.display?.colors?.BACKGROUND ?? defs.display.colors.BACKGROUND,
-        DOT: s.display?.colors?.DOT ?? defs.display.colors.DOT,
+        A: normHex(s.display?.colors?.A) ?? defs.display.colors.A,
+        B: normHex(s.display?.colors?.B) ?? defs.display.colors.B,
+        BACKGROUND: normHex(s.display?.colors?.BACKGROUND) ?? defs.display.colors.BACKGROUND,
+        DOT: normHex(s.display?.colors?.DOT) ?? defs.display.colors.DOT,
       },
       theme: s.display?.theme ?? defs.display.theme,
       logoId: s.display?.logoId ?? defs.display.logoId,
@@ -392,26 +393,6 @@ function setActiveCat(cat) {
   renderCat(cat);
 }
 
-// ===== HEX / RGB UTILS =====
-function normHex(s) {
-  s = String(s ?? "").trim();
-  if (!s.startsWith("#")) s = "#" + s;
-  s = s.toUpperCase();
-  return /^#[0-9A-F]{6}$/.test(s) ? s : null;
-}
-
-function hexToRgb(hex) {
-  const h = normHex(hex);
-  if (!h) return { r: 0, g: 0, b: 0 };
-  const n = parseInt(h.slice(1), 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
-function rgbToHex(r, g, b) {
-  const n = (Math.max(0, Math.min(255, r | 0)) << 16) | (Math.max(0, Math.min(255, g | 0)) << 8) | Math.max(0, Math.min(255, b | 0));
-  return "#" + n.toString(16).padStart(6, "0").toUpperCase();
-}
-
 // ===== COLOR MODAL =====
 function getColorLabels() {
   return {
@@ -441,7 +422,7 @@ function buildColorModalBody() {
 async function openColorModal(key) {
   colorModalTarget = key;
   const hex = localSettings.display.colors[key] || "#000000";
-  const { r, g, b } = hexToRgb(hex);
+  const { r, g, b } = hexToRgb(hex) || { r: 0, g: 0, b: 0 };
   colorModalR = r; colorModalG = g; colorModalB = b;
   const body = buildColorModalBody();
   const refs = {
