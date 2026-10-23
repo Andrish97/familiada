@@ -345,7 +345,10 @@ wewnątrz tabeli listy Eksploratora).
   przy Przycisku.
 - **Ekran blokady (`blocking-overlay.css`)**: wygląd karty i przycisków zrównany
   z `.card`/`.btn`/`.btn.gold` (2026-10-23); klasy zostają, bo plik ładuje też
-  Wyświetlacz bez silnika. Do zrobienia: wspólny moduł `block-screen` (§6.2).
+  Wyświetlacz bez silnika. Wspólny moduł `core/blocking-screen.js` — **zrobione
+  2026-10-23:** strona „tu nie wejdziesz”, zasób edytowany gdzie indziej i ekran
+  „urządzenie otwarto w innym miejscu” (Wyświetlacz, Prowadzący, Przycisk —
+  bez własnego HTML w trzech plikach).
 
 - **Funkcje koloru — ujednolicić (decyzja użytkownika 2026-10-23):** jeden
   moduł `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`) dla Ustawień gry
@@ -477,3 +480,4 @@ dla wszystkich (Bazy i Ankiety miały wcześniej 12 px zamiast 20 px).
 | 2026-10-23 | Wybór koloru: jeden moduł | `core/color-picker.js` (`colorPickerHTML(prefix)`, `bindColorPicker(root, { value, onChange })`) zamiast dwóch obsług suwaków/HEX (Ustawienia gry, znaczniki Eksploratora); jedno zachowanie: zmiana na bieżąco przy wpisywaniu HEX. Wygląd `.color-picker` w silniku (dwie karty), kopie w `game-settings.css` i `base-explorer.css` usunięte; teksty `common.colorPicker` (wcześniej Ustawienia gry miały polski „Format” w każdym języku). Zrzuty game-settings-color, base-explorer-tags-color (telefon/komputer) — bez zmian wyglądu. |
 | 2026-10-23 | Android: przycisk bez tła, pasek komunikatu | Audyt telefonu (`android-przezroczystosc`): `opacity` przy przyciskach z ikoną. Nowy element silnika `.btn-plain` (przycisk bez tła, przygaszony kolorem, podświetlenie tylko myszą) — czyszczenie wyszukiwania (`.searchClear`, 5 miejsc; kopia w Eksploratorze i `listToolsInlineClear` usunięte), rozwijanie drzewa, usuń plik dźwięku, baner gościa. Baner gościa: `style.cssText` w JS → `.notice-bar` (tło kryjące, `--z-notice`). Wiersz w odliczaniu (`.shareRow.is-cooling-down`) i odpowiedź pominięta w zliczaniu (`.aRow.out`): kolor zamiast `opacity`/`filter`. `#btnSearchSheet.is-active` — stan aktywny `.btn` silnika (bez własnego przezroczystego tła). Audyt 10 scen × 2 urządzenia: 0 uwag. |
 | 2026-10-23 | Android: reszta audytu telefonu | Aktywny filtr/sortowanie, „Otrzymane” i pasek list w Udostępnianiu: usunięte własne kopie stanu aktywnego z przezroczystym tłem — jeden stan `.btn.is-active`/`.ui-select.is-active` silnika. Gwiazdki oceny: bez `filter` i powiększenia przy dotyku; przerwa techniczna (panel admina) zablokowana: kolor zamiast `opacity`/`filter`. Audyt telefonu, sceny 125–517 (paczki po 40, `manual-shots` wisi w runnerze): pozostałe uwagi to fałszywy alarm safe area przy przewiniętej stronie konta i wykres panelu admina. Zrzuty 6 scen × 2 urządzenia: 0 uwag. |
+| 2026-10-23 | Ekran blokady: device-lease | „Otwarto w innym miejscu” / „Łączenie” na Wyświetlaczu, Prowadzącym i Przycisku — `blockingScreen()` (opcja `prefix` dla identyfikatorów `deviceLease*`) zamiast statycznego HTML w trzech plikach i ręcznego składania przycisku; `.blocking-actions[hidden]` ukrywa przycisk (wcześniej `display:flex` wygrywał z `hidden`). Zrzuty device-lease-replaced (tablet, telefon poziomo), play-buzzer-waiting — 0 uwag. |

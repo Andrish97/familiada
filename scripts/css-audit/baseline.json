@@ -366,9 +366,6 @@
  "web/shared/js/core/contact-modal.js": {
   "inlineStyleJs": 22
  },
- "web/shared/js/core/device-lease.js": {
-  "inlineStyleJs": 2
- },
  "web/shared/js/core/guest-info-modal.js": {
   "inlineStyleJs": 4
  },

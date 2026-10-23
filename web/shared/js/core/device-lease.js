@@ -2,7 +2,7 @@ import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23
 import { t } from "../../translation/translation.js?v=v2026-10-23T16561";
 import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T16561";
 import { startTicker } from "./background-ticker.js?v=v2026-10-23T16561";
-import { icon } from "./icons.js?v=v2026-10-23T16561";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-23T16561";
 import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T16561";
 import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T16561";
 
@@ -19,41 +19,26 @@ const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
 let takeoverHandler = null;
 
 export function updateDeviceLeaseOverlay(state) {
-  const overlay = document.getElementById("deviceLeaseOverlay");
-  if (!overlay) return;
+  // Wspólny ekran blokady (blocking-screen.js); części: deviceLeaseIcon,
+  // deviceLeaseTitle, deviceLeaseMsg, deviceLeaseTakeover.
+  const overlay = blockingScreen("deviceLeaseOverlay", [
+    { key: "Takeover", i18n: "deviceLease.takeover", iconName: "check", accent: true },
+  ], { prefix: "deviceLease" });
+  if (!overlay.dataset.leaseState) {
+    overlay.setAttribute("aria-live", "polite");
+    document.getElementById("deviceLeaseTakeover")?.addEventListener("click", () => takeoverHandler?.());
+  }
   overlay.dataset.leaseState = state || "starting";
-  // .blocking-overlay jest domyślnie display:none (wspólny styl nakładek),
-  // więc samo zdjęcie `hidden` nie pokazuje komunikatu.
   if (state === "primary") {
-    overlay.hidden = true;
-    overlay.style.display = "none";
+    setBlockingOpen(overlay, false);
     return;
   }
   const replaced = state === "replaced";
-  const iconEl = document.getElementById("deviceLeaseIcon");
-  const title = document.getElementById("deviceLeaseTitle");
-  const text = document.getElementById("deviceLeaseText");
-  if (iconEl) iconEl.innerHTML = icon(replaced ? "phone" : "refresh");
-  if (title) title.textContent = t(replaced ? "deviceLease.replacedTitle" : "deviceLease.reconnectingTitle");
-  if (text) text.textContent = t(replaced ? "deviceLease.replacedText" : "deviceLease.reconnectingText");
-  let actions = overlay.querySelector("#deviceLeaseActions");
-  if (!actions) {
-    actions = document.createElement("div");
-    actions.id = "deviceLeaseActions";
-    actions.className = "blocking-actions";
-    const button = document.createElement("button");
-    button.id = "deviceLeaseTakeover";
-    button.type = "button";
-    button.className = "blocking-action is-accent";
-    button.addEventListener("click", () => takeoverHandler?.());
-    actions.append(button);
-    overlay.querySelector(".blocking-card")?.append(actions);
-  }
-  const button = actions.querySelector("#deviceLeaseTakeover");
-  button.innerHTML = `${icon("check")} ${t("deviceLease.takeover")}`;
-  actions.hidden = !replaced;
-  overlay.hidden = false;
-  overlay.style.display = "flex";
+  setBlockingIcon(overlay, replaced ? "phone" : "refresh");
+  document.getElementById("deviceLeaseTitle").textContent = t(replaced ? "deviceLease.replacedTitle" : "deviceLease.reconnectingTitle");
+  document.getElementById("deviceLeaseMsg").textContent = t(replaced ? "deviceLease.replacedText" : "deviceLease.reconnectingText");
+  overlay.querySelector(".blocking-actions").hidden = !replaced;
+  setBlockingOpen(overlay, true);
 }
 
 export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev }) {

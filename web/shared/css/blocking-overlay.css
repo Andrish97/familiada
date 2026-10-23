@@ -37,6 +37,7 @@
 .blocking-title { margin: 0; font-size: 1rem; font-weight: 900; letter-spacing: .08em; line-height: 1.25; text-transform: uppercase; }
 .blocking-message { opacity: .9; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-line; }
 .blocking-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.blocking-actions[hidden] { display: none; }
 .blocking-action {
   appearance: none;
   min-height: 42px;

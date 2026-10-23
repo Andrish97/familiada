@@ -10,22 +10,23 @@ import { icon } from "./icons.js?v=v2026-10-23T16561";
 
 /**
  * Nakładka o danym id (tworzona raz). actions: [{ key, i18n, iconName, accent }].
+ * prefix: początek identyfikatorów części (domyślnie id nakładki).
  * Nie zamyka się kliknięciem w tło (to blokada).
  */
-export function blockingScreen(id, actions = []) {
+export function blockingScreen(id, actions = [], { prefix = id } = {}) {
   let overlay = document.getElementById(id);
   if (overlay) return overlay;
   overlay = document.createElement("div");
   overlay.id = id;
   overlay.className = "blocking-overlay";
-  const buttons = actions.map((a) => `<button id="${id}${a.key}" class="blocking-action${a.accent ? " is-accent" : ""}" type="button" data-i18n="${a.i18n}" data-i18n-icon="${a.iconName}">${icon(a.iconName)} ${t(a.i18n)}</button>`).join("");
+  const buttons = actions.map((a) => `<button id="${prefix}${a.key}" class="blocking-action${a.accent ? " is-accent" : ""}" type="button" data-i18n="${a.i18n}" data-i18n-icon="${a.iconName}">${icon(a.iconName)} ${t(a.i18n)}</button>`).join("");
   overlay.innerHTML = `
-    <div class="blocking-card" role="alertdialog" aria-labelledby="${id}Title" aria-describedby="${id}Msg">
+    <div class="blocking-card" role="alertdialog" aria-labelledby="${prefix}Title" aria-describedby="${prefix}Msg">
       <div class="blocking-heading">
-        <span id="${id}Icon" class="blocking-icon" aria-hidden="true"></span>
-        <h2 id="${id}Title" class="blocking-title"></h2>
+        <span id="${prefix}Icon" class="blocking-icon" aria-hidden="true"></span>
+        <h2 id="${prefix}Title" class="blocking-title"></h2>
       </div>
-      <div id="${id}Msg" class="blocking-message"></div>
+      <div id="${prefix}Msg" class="blocking-message"></div>
       <div class="blocking-actions">${buttons}</div>
     </div>`;
   document.documentElement.appendChild(overlay);
