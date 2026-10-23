@@ -935,6 +935,11 @@ async function simulateSheetOpen(page, overlaySelector) {
     if (!overlay) throw new Error(`overlay ${sel} not found in DOM`);
     overlay.style.display = "";
     overlay.hidden = false;
+    // Bez dostępu Cloudflare Access panel jest zablokowany (settings-locked
+    // ukrywa main) i nie kończy ładowania (data-skel-step) — test sprawdza sam
+    // kontrakt CSS okna, więc zdejmuje blokadę i odsłania treść.
+    document.body.classList.remove("settings-locked");
+    document.querySelector("main.wrap")?.classList.add("skel-step-ready");
     document.body.classList.add("sheet-open");
     overlay.classList.add("sheet-active");
   }, overlaySelector);
@@ -1073,6 +1078,8 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
           <div class="uni-body">treść</div>
         </div>`;
       main.appendChild(overlay);
+      document.body.classList.remove("settings-locked"); // jak w simulateSheetOpen
+      main.classList.add("skel-step-ready");
       document.body.classList.add("sheet-open");
     });
 
