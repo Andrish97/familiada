@@ -16,12 +16,42 @@ wypustki (stary wygląd; wklęsły łuk = połowa promienia; jedna obsługa
 (bez `opacity`/`filter`/`backdrop-filter` — Android), `blockingScreen` także dla
 device-lease, Control w jednym `control.css`.
 
-Następne: e2e przejmowania urządzenia (`control2.spec.js`, „nowe otwarcie
-urządzenia przejmuje”) po kafelkach Control; potem wdrożenie na `main` według
-cyklu z CLAUDE.md i kontrola produkcji (logowanie — HTML z Workera dopiero po
-wdrożeniu). Dalsze moduły §6.2 (`dialog.js`, `popover.js`) i panel admina (§8a)
-— po wdrożeniu tej paczki.
+Dalej (do `dbfadc04`): okna od dołu bez nadpisań stron (warstwy, `.sheet-fill`/
+`.sheet-scroll`/`.modal-scroll`/`.modal--media`, tytuł i przyciski w jednym
+wierszu), `[hidden]` bez obejścia (audyt zrzutów `hidden-widoczny`), style
+inline na stronach publicznych (poza logowaniem), `.field`, `.import-preview`,
+błąd `hideTip()` w edytorze rysowania. e2e zielone: 1947, 1954.
 
+**PAUZA na prośbę użytkownika (2026-10-23, wieczór).** Wznowienie dopiero po
+„wracamy”. Przerwane: e2e 1961 (nawigacja, układ ankiet, głosowanie, Go,
+usuwanie w edytorze rysowania — na `dbfadc04`) i porównanie zrzutów tej paczki
+(sceny w scratchpadzie, do powtórzenia: `node scripts/screens/run.cjs
+--scenes=games,games-import-preview,games-export-base,games-editor-txt-import-preview,logos-market-logos-import-file,logos-market-market-submit,people-404,polls-open-text-share,polls-vote-points-stopped,poll-vote-text,control-devices,game-settings,logo-draw,base-explorer-tags-edit`
+na `c77b779b` i na HEAD, porównać). Po wznowieniu: najpierw te dwa sprawdzenia.
+
+Uwagi użytkownika do wykonania po wznowieniu (2026-10-23):
+1. **Zaznaczanie — jeden element wszędzie.** Pole zaznaczenia (wiele) wygląda
+   różnie: listy w Bazach, okno tagów, listy udostępniania, inne miejsca.
+   Ma być jeden wygląd (bardziej prostokątny, jak zaznaczanie wielu) i jedna
+   reguła w silniku; użytkownik: „chyba nie rozumiesz, na jakiej zasadzie działa
+   ujednolicenie” — zasada: ta sama rzecz = ten sam element silnika, strona nie
+   dokłada własnego wyglądu.
+2. **Przycisk „Edycja” jako trzeci w oknie** (udostępnianie bazy) — ten sam
+   problem co nagłówek okna: przyciski i tytuł mają jak najdłużej mieścić się
+   w jednym wierszu (oszczędność miejsca).
+3. **Kreska nad przyciskami** w oknach — usunąć (separator ma być tylko jeden,
+   pod paskiem tytułu i przycisków).
+4. **Strony „inne”** to tylko: Przycisk (buzzer), Prowadzący, TV, wąż, QR
+   ankiety (TV = powiększony widok). 404 i przerwa techniczna to zwykłe strony —
+   mają używać zwykłego silnika z warstwami (nie `flat.css`).
+5. **Przyciski dwóch stanów** — obecne są brzydkie; zaprojektować jeden
+   mechanizm (silnik + moduł JS) i podpiąć m.in. rolę w udostępnianiu bazy
+   („Może edytować” / „Tylko podgląd”). Propozycja w `docs/wspolne-style-plan.md`
+   „Decyzje” (2026-10-23, przyciski dwóch stanów) — do akceptacji.
+6. Strony logowania (login, potwierdzenie, reset): style inline → `hidden`
+   razem z wdrożeniem (HTML w e2e z brancha pochodzi z Workera produkcji).
+
+Potem: wdrożenie na `main` według cyklu z CLAUDE.md i kontrola produkcji.
 
 Repo Andrish97/familiada, branch `main`; stan po E14 i porządkowaniu repo.
 

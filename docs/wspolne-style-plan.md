@@ -9,6 +9,23 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+- **2026-10-23 — przyciski dwóch stanów (propozycja do akceptacji, uwaga
+  użytkownika: obecne są brzydkie).** Jeden element `.toggle-btn` + moduł
+  `core/toggle-button.js` (`bindToggle(btn, { on, onChange })`): zwykły `.btn`
+  z `aria-pressed`, stan „włączony” = złoty odcień i złota krawędź (jak aktywny
+  filtr), „wyłączony” = zwykły przycisk; ikona i napis zmieniają się razem ze
+  stanem (np. oko „Tylko podgląd” ↔ ołówek „Może edytować”). Dla wyboru jednej
+  z dwóch wartości widocznych naraz — przełącznik segmentowy `.toggle-group`
+  (dwie pigułki, aktywna złota). Rola w udostępnianiu bazy: segment
+  „Podgląd | Edycja” w wierszu i w stopce okna, ta sama obsługa. Wszystkie
+  obecne przyciski stanowe (`aria-pressed`: Eksplorator, rynek, rysowanie logo,
+  wyniki ankiet, Gry) przepiąć na ten mechanizm.
+- **2026-10-23 — zaznaczanie (uwaga użytkownika).** Jedno pole zaznaczenia
+  w całym serwisie (prostokątne, zaokrąglone jak zaznaczanie wielu) — listy
+  Baz, okno tagów, listy udostępniania; strony bez własnego wyglądu checkboxa.
+- **2026-10-23 — strony bez zwykłego silnika:** tylko Przycisk, Prowadzący, TV,
+  wąż i QR ankiety; 404 i przerwa techniczna przechodzą na silnik z warstwami.
+
 Katalog duplikatów i kolejność ujednolicania: [`e23-katalog-komponentow.md`](e23-katalog-komponentow.md).
 
 - **Wzorce układu globalnie (decyzja użytkownika 2026-10-23):** „np. karta
