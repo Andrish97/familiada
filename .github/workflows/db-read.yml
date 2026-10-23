@@ -34,12 +34,12 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
 
       - name: Read
         env:
           SQL_FILE: ${{ inputs.sql_file }}
           # rola agent_reader (migracja 414): tylko odczyt wybranych tabel,
           # bez auth/profili/poczty, bez uprawnień superużytkownika
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} sudo familiada-psql reader
         run: scripts/db-read.sh "$SQL_FILE"

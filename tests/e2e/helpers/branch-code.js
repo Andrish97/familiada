@@ -88,6 +88,7 @@ function branchI18nParts() {
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
  */
 async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
+  if (context) context.__e2eBranchRouted = true;
   if (safeAreaInsets) {
     await context.addInitScript((insets) => {
       const applyInsets = () => {
@@ -126,7 +127,20 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
     const file = localFileFor(url.pathname, pages);
     // Pozwól kolejnym handlerom Playwrighta dodać np. kontrolowany bypass
     // konserwacji dla testu; bez nich fallback zachowuje zwykłe żądanie sieciowe.
-    if (!file) return route.fallback();
+    if (!file) {
+      // Próba generalna: strony z produkcji (np. logowanie przez Workera) mają
+      // CSP z connect-src tylko na api.familiada.online — podmieniamy adres API.
+      if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && route.request().resourceType?.() === "document") {
+        const response = await route.fetch({ headers: await route.request().allHeaders() });
+        const apiHost = new URL(API_ORIGIN).host;
+        const swap = (value) => String(value).split("api.familiada.online").join(apiHost);
+        const headers = Object.fromEntries(Object.entries(response.headers()).map(([k, v]) => [k, /content-security-policy/i.test(k) ? swap(v) : v]));
+        delete headers["content-encoding"];
+        delete headers["content-length"];
+        return route.fulfill({ response, headers, body: swap(await response.text()) });
+      }
+      return route.fallback();
+    }
     let body = fs.readFileSync(file);
     if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && [".js", ".html"].includes(path.extname(file))) {
       body = body.toString("utf8").split(PROD_API_ORIGIN).join(API_ORIGIN);
@@ -166,4 +180,11 @@ async function serveBranchLoginHtml(route) {
   await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
 }
 
-module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor };
+// Próba generalna: kontekst, który test otworzył bez serveBranchCode (np. drugi
+// użytkownik z browser.newContext()), też musi mówić z API_ORIGIN.
+async function ensureApiOriginRouting(context) {
+  if (!API_ORIGIN || API_ORIGIN === PROD_API_ORIGIN || !context || context.__e2eBranchRouted) return;
+  await serveBranchCode(context, { pages: [] });
+}
+
+module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor, ensureApiOriginRouting };

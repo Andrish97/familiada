@@ -40,13 +40,13 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
 
       - name: Activity (liczby)
         id: activity
         working-directory: .
         env:
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} sudo familiada-psql reader
           DB_READ_TUPLES: '1'
           DB_READ_NO_NOTICE: '1'
         run: |

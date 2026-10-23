@@ -1,5 +1,6 @@
 // tests/e2e/helpers/login.js
 const { generateE2EToken } = require("./e2e-token");
+const { ensureApiOriginRouting } = require("./branch-code");
 
 const LOGIN_URL = "https://www.familiada.online/login";
 
@@ -176,6 +177,7 @@ async function dumpPageDiagnostics(page, gotoResponse) {
  * mają to samo TEST_PASSWORD (nie ma osobnych haseł per konto).
  */
 async function loginAsTestUser(page, context, opts = {}) {
+  await ensureApiOriginRouting(context || page.context());
   // Rozróżniamy "nie podano username w ogóle" (użyj domyślnego test1@…) od
   // "podano klucz username, ale wartość jest pusta" -- to drugie MUSI
   // głośno wybuchnąć, bo inaczej cicho logujemy się na domyślne konto
