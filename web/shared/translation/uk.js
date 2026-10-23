@@ -686,7 +686,6 @@ const uk = {
     },
     shareModal: {
       manageTitle: "Поширення бази",
-      roleLabel: "Дозвіл",
       sharedHint: "Дозвіл зміниш кнопкою біля особи.",
       title: "Поділитися базою",
       placeholder: "Ім’я користувача або e-mail...",

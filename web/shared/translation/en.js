@@ -691,7 +691,6 @@ const en = {
     },
     shareModal: {
       manageTitle: "Base shares",
-      roleLabel: "Permission",
       sharedHint: "Change the permission with the button next to the person.",
       title: "Share base",
       placeholder: "Username or email...",

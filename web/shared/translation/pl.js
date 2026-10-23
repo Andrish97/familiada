@@ -699,7 +699,6 @@ const pl = {
     },
     shareModal: {
       manageTitle: "Udostępnienia bazy",
-      roleLabel: "Uprawnienie",
       sharedHint: "Uprawnienie zmienisz przyciskiem przy osobie.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",

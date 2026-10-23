@@ -17,9 +17,9 @@ teraz. Docelowo (decyzja użytkownika, wieczór 2026-10-23) **dwa osobne okna**:
 - **„Udostępnij”** — przycisk w dolnym pasku Baz obok Powiel/Eksport/Import,
   ta sama ikona co „Wyślij” w Grach. Okno jak „Dodaj odbiorców” w ankietach:
   sekcja „E-mail lub nazwa użytkownika” (pole) i sekcja „Znajomi” (lista do
-  zaznaczenia z przyciskami listy); w stopce wybór uprawnienia (dwa przyciski
-  „Może edytować” / „Tylko podgląd”, zaznaczony podświetlony — tylko w Bazach),
-  „Anuluj” i złoty „Udostępnij” (licznik odbiorców, gdy więcej niż jeden).
+  zaznaczenia z przyciskami listy); w stopce po lewej jeden przełącznik
+  uprawnienia („Może edytować” ↔ „Tylko podgląd”, jak dawniej — tylko w Bazach),
+  po prawej „Anuluj” i złoty „Udostępnij” (licznik odbiorców, gdy więcej niż jeden).
   Jedno uprawnienie dla wszystkich odbiorców z tego okna. Po udanym wysłaniu
   okno się zamyka (jak w Grach), błąd zostawia je otwarte.
 - **Control (Urządzenia)** — przy każdym urządzeniu dwa przyciski:

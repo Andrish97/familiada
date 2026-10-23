@@ -223,37 +223,10 @@ function baseRoleButton(value, onChange) {
   update();
   return button;
 }
-// Wybór uprawnienia dla nowych udostępnień w stopce okna „Udostępnij bazę”:
-// dwa przyciski (Może edytować / Tylko podgląd), zaznaczony widoczny.
-function baseRoleSelect(value, onChange) {
-  const wrap = document.createElement("div");
-  wrap.className = "baseShareRoleSelect";
-  wrap.setAttribute("role", "group");
-  wrap.setAttribute("aria-label", t("bases.shareModal.roleLabel"));
-  const buttons = [["editor", "edit-paper"], ["viewer", "eye"]].map(([role, iconName]) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "btn xsm baseShareRoleOpt";
-    button.dataset.role = role;
-    const label = t(role === "editor" ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
-    const shortLabel = t(role === "editor" ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
-    button.innerHTML = `${icon(iconName)}<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
-    button.title = label;
-    button.addEventListener("click", () => { value = role; onChange(role); update(); });
-    return button;
-  });
-  const update = () => buttons.forEach(button => {
-    const on = button.dataset.role === value;
-    button.classList.toggle("is-selected", on);
-    button.setAttribute("aria-pressed", on ? "true" : "false");
-  });
-  update();
-  wrap.append(...buttons);
-  return wrap;
-}
 function initShareRoleSelect() {
-  // Jedno uprawnienie dla wszystkich odbiorców z tego okna (adres i zaznaczeni znajomi).
-  shareRole?.replaceChildren(baseRoleSelect(shareRoleValue, value => { shareRoleValue = value; }));
+  // Jeden przełącznik (Może edytować / Tylko podgląd) w stopce okna „Udostępnij bazę”:
+  // jedno uprawnienie dla wszystkich odbiorców z tego okna (adres i zaznaczeni znajomi).
+  shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
 }
 function showShareMessage(message, kind = "info") {
   if (!message) { hideToast(); return; }
