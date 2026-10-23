@@ -160,6 +160,13 @@ zadziałać zabezpieczenie `fit-text.js` (czcionka z okna za duża). Wypisuje
 czcionkę bazową dla każdego okna; zrzuty w `out/control-fit/`. Uruchamiać przy
 każdej zmianie wyglądu rozgrywki Control (decyzja: `docs/ujednolicenie-wygladu.md`).
 
+## Czcionka
+
+Strony używają czcionki systemowej (`system-ui`). W CI (`screens.yml`, krok
+„Czcionka systemowa (Inter)”) i w środowisku agentów to Inter — na gołym Ubuntu
+byłby DejaVu Sans i zrzuty różniłyby się od lokalnych. Lokalnie: `fc-match system-ui`
+powinno pokazać Inter.
+
 ## Adres stron na zrzutach
 
 Strony idą pod `https://www.familiada.online` (pliki z dysku przez
