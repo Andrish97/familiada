@@ -150,12 +150,16 @@
  "web/control/js/ui.js": {
   "inlineStyleJs": 11
  },
+ "web/games/css/games-page.css": {
+  "mediaWidth": 1,
+  "sharedDuplicate": 9
+ },
  "web/games/css/games.css": {
   "important": 5,
   "colorLiteral": 36,
   "rootTokens": 2,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 32
+  "sharedDuplicate": 40
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
@@ -355,8 +359,7 @@
   "styleBlock": 1
  },
  "web/shared/css/auth-landing.css": {
-  "colorLiteral": 17,
-  "rootTokens": 7,
+  "colorLiteral": 16,
   "sharedDuplicate": 7
  },
  "web/shared/css/base.css": {
@@ -364,7 +367,7 @@
   "colorLiteral": 197,
   "mediaWidth": 12,
   "zIndexLiteral": 17,
-  "sharedDuplicate": 200,
+  "sharedDuplicate": 196,
   "unusedClass": 14
  },
  "web/shared/css/blocking-overlay.css": {
@@ -373,7 +376,6 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/contacts.css": {
-  "colorLiteral": 3,
   "mediaWidth": 3,
   "zIndexLiteral": 1
  },
@@ -390,7 +392,7 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/poll.css": {
-  "colorLiteral": 6,
+  "colorLiteral": 4,
   "unusedClass": 1
  },
  "web/shared/css/polls.css": {
@@ -492,13 +494,13 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 2,
-  "sharedDuplicate": 195,
-  "unusedClass": 9
+  "sharedDuplicate": 191,
+  "unusedClass": 2
  },
  "web/shared/style/layout.css": {
   "important": 2,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 24
+  "sharedDuplicate": 23
  },
  "web/shared/style/utilities.css": {
   "important": 3,
