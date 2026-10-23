@@ -88,16 +88,76 @@ Dwie funkcje wymagają uwagi przy usuwaniu:
 
 ## B. Do decyzji: zmienia zachowanie albo usuwa dane
 
-| # | Co | Stan na produkcji | Propozycja |
-|---|---|---|---|
-| B1 | `game_state_history` | ~10 MB (3,8 MB sterty + 6,1 MB TOAST). Każdy zapis `game_state_write` dodaje snapshot i przycina go do 20 na grę. Czyta ją tylko `game_state_undo`, której nikt nie wywołuje | Usunąć zapis w `game_state_write`, funkcję `game_state_undo` i tabelę (mniej zapisów przy każdym ruchu w Control) |
-| B2 | Naprawa E21 | `e21_repair_runs`: 1 wpis (2026-10-21 01:30), zadanie cron samo się wyrejestrowało; `e21_demo_templates_before`: 9 wierszy (kopia szablonów sprzed poprawki) | Etap zamknięty: usunąć `e21_data_repair`, `e21_demo_*` i obie tabele (oraz pliki `scripts/db-read/e21-*`) |
-| B3 | `shared_devices` (stare zapamiętane urządzenia) | Nic do niej nie pisze (0 INSERT w kodzie), zastąpiona przez `control_device_shares`. Nadal czyta ją `tasks_list`, a czyści ~8 funkcji | Usunąć odczyt z `tasks_list`, kasowania w funkcjach i tabelę. To większa migracja |
-| B4 | `contact_reports` + `contact_report_messages` | Stary formularz (marzec). Funkcje zapisu nieużywane, tabele mają po ≤1 stronie danych. `admin_list_messages` (filtr `reports`) nadal czyta `contact_reports` | Sprawdzić w panelu, czy są tam stare zgłoszenia. Potem usunąć funkcje `submit_contact_report`, `find_report_and_append_message`, `admin_move_message`, `admin_update_contact_report`, odczyt w `admin_list_messages` i tabele |
-| B5 | `mail_function_logs` | Największa tabela: 52 MB (24 MB sterty + 28 MB indeksów), ~91 tys. wierszy, retencja 1 miesiąc (cron `cleanup-mail-function-logs`). Indeksy `fn_created` (9,4 MB), `request` (2,4 MB) i `queue` (1,2 MB) mają 0 skanów w ~2 dobach; `level_created` (7,3 MB) ma 4 | Skrócić retencję (np. do 14 dni) i/lub usunąć nieużywane indeksy, jeśli panel admina ich nie potrzebuje |
-| B6 | `marketing_search_logs` | 3,5 MB sterty na 12 wierszy (rozdęcie po 23 tys. usunięć) | `VACUUM FULL` na tej tabeli (krótka blokada, tabela tylko dla Lead Findera) |
-| B7 | `cron_embed_missing_market_games` | Brak wywołującego: zadanie `embed-missing-market-games` od migracji 111 woła `invoke_embed_missing_market_games` | Usunąć po potwierdzeniu listy zadań w `cron.job` (wymaga właściciela) |
-| B8 | Indeksy z 0 skanów od startu serwera | `games_keys_control/display/host_idx` (~0,9 MB), `market_games_embedding_ivfflat_idx` (1 MB), `market_games_questions_text_trgm_idx` (1 MB), `qb_questions_payload_text_idx` | Zostawić; ponowić odczyt `cleanup-index-usage` po ~2 tygodniach. Mogą obsługiwać rzadkie ścieżki (wyszukiwanie w Marketplace) |
+### B1. `game_state_history` (~10 MB)
+Zaplanowana w Control v2 (migracja 259) jako „lekkie cofnięcie”. Przycisk
+cofania nigdy nie powstał, a `game_state_undo` nie ma wywołującego. Mimo to
+każdy zapis stanu (`game_state_write`) kopiuje cały poprzedni stan do
+historii i przycina ją do 20 na grę. Przez ~2 doby było to ~2,9 tys.
+kopii i ~4,8 tys. usunięć. Decyzja: **usunąć** (zapis w `game_state_write`,
+`game_state_undo`, tabela; lżejszy każdy ruch w Control) **albo zbudować
+cofanie** w Control. Zmiana dotyka gorącej ścieżki gry, więc trzeba e2e
+Control.
+
+### B2. Pozostałości naprawy E21
+Naprawa wykonała się raz (`e21_repair_runs`: 1 wpis, 2026-10-21 01:30)
+i sama zdjęła się z crona. `e21_demo_templates_before` (9 wierszy) to
+kopia szablonów demo sprzed poprawki, czyli jedyna droga „wstecz”.
+Decyzja: czy kopia jest jeszcze potrzebna. Jeśli nie, usunąć tabele,
+`e21_data_repair`, `e21_demo_*` i `scripts/db-read/e21-*`.
+
+### B3. `shared_devices` (stare zapamiętane urządzenia, marzec)
+Nic do niej nie pisze, bo zastąpiła ją `control_device_shares`. Czyta ją
+już tylko `tasks_list` (część `device`), ale strona Zadań i tak filtruje
+wynik do `kind = 'poll'`, więc w praktyce to martwy kod. Czyści ją ~8
+funkcji (usuwanie konta, gry, e2e). Usunięcie nie zmienia niczego
+widocznego, tylko dotyka wielu funkcji: większa migracja i test SQL.
+W tej samej migracji można usunąć części `base`/`device` z `tasks_list`.
+
+### B4. Stary formularz kontaktowy (`contact_reports`, `contact_report_messages`)
+Zakładka „Zgłoszenia” w panelu korzysta z `reports` (`list_reports`).
+Gałąź `list_messages(p_filter='reports')` czytająca `contact_reports` nie
+jest wywoływana, bo panel obsługuje folder `reports` osobno. Funkcje zapisu
+starego formularza są martwe. Tabele mają po ≤1 stronie danych, więc mogą
+zawierać kilka starych zgłoszeń z e-mailami. Decyzja: usunąć dane czy
+najpierw je przejrzeć lub przenieść. Potem usunąć 4 funkcje, gałąź
+w `list_messages` i tabele.
+
+### B5. `mail_function_logs` (52 MB, największa tabela)
+Około 3,6 tys. wpisów na dobę, retencja 1 miesiąc. Panel (`/_admin_api/mail/logs`)
+filtruje po `function_name` i `level` z sortowaniem po dacie, więc indeksy
+`fn_created` i `level_created` są potrzebne (0 skanów to tylko krótkie okno).
+Indeksów `request_id` (2,4 MB) i `queue_id` (1,2 MB) nie używa żadne
+zapytanie, więc są do usunięcia. Odwrotnie: e2e czyta logi po
+`recipient_email` bez indeksu (skan całej tabeli). Panel ukrywa wpisy
+testowe (`hideTestRecipients`), ale tabela je przechowuje. Decyzje:
+(a) retencja, np. 14 dni; (b) usunąć 2 nieużywane indeksy; (c) opcjonalnie
+krótsza retencja dla adresów `e2e+…`.
+
+### B6. `marketing_search_logs`
+3,5 MB sterty na 12 wierszy (rozdęcie po ~23 tys. usunięć). `VACUUM FULL`
+blokuje tylko tę tabelę na ułamek sekundy (Lead Finder). Bez wpływu na
+użytkowników.
+
+### B7. `cron_embed_missing_market_games` i `app_config.edge_service_role_jwt`
+Od migracji 111 zadanie `embed-missing-market-games` woła
+`invoke_embed_missing_market_games` (sekrety z Vault). Stara funkcja nie ma
+wywołującego, ale migracja 450 ją jeszcze poprawiała. Czyta z
+`app_config` klucze `edge_url` i `edge_service_role_jwt`, czyli być może
+zapisany jawnie token `service_role` (migracja 110 wstawiła pusty, ale
+mógł zostać uzupełniony). Tabela jest zamknięta RLS, a `ntfy_topic`
+z niej nadal działa. Decyzja: po potwierdzeniu `cron.job` usunąć funkcję
+i oba klucze. Jeśli token był wpisany, warto go uznać za do wymiany.
+
+### B8. Indeksy z 0 skanów i polityka RLS po kluczach
+`games_keys_control/display/host_idx` (~0,9 MB) obsługują tylko martwe
+`get_game_by_key` i `poll_results` (A2) oraz politykę
+`games_select_by_keys`. Ta polityka sprawdza claim `share_key` w JWT,
+a żaden kod takiego tokenu nie wystawia, więc też jest pozostałością
+(liczona przy każdym odczycie `games`). Po A2 można usunąć politykę i te 3
+indeksy. Indeksy Marketplace (`embedding_ivfflat`, `questions_text_trgm`)
+obsługują `market_find_similar_*` przy zgłaszaniu gier (rzadkie), więc
+**zostają**. `qb_questions_payload_text_idx`: ponowić `cleanup-index-usage`
+po ~2 tygodniach.
 
 Nie są śmieciami: tabele `marketing_*` (Lead Finder działa, panel admina),
 `demo_template_data`, `schema_migrations`.
