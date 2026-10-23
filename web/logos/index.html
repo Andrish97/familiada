@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18093"/>
+  <meta name="app-version" content="v2026-10-23T18502"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,23 +15,23 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T18093"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-23T18502"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-23T18502"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
 
-  <script type="module" src="/logos/js/list.js?v=v2026-10-23T18093" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
+  <script type="module" src="/logos/js/list.js?v=v2026-10-23T18502" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
 
 </head>
 
@@ -43,7 +43,7 @@
       <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz<span class="badge" id="gamesCopiesNavBadge" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span><span class="badge" data-nav-contact-count="friends" aria-hidden="true"></span></button>
+      <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" hidden><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span><span class="badge" data-nav-contact-count="friends" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
@@ -111,15 +111,15 @@
         <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
-      <div class="importRow import-file-picker" style="margin-top:8px">
+      <div class="importRow import-file-picker">
         <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" hidden>
         <button class="btn sm" id="btnImportLogoChoose" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
         <span class="import-file-name" id="logoImportFileName" data-i18n="common.filePicker.none" aria-live="polite">Nie wybrano pliku</span>
       </div>
 
       <!-- Podgląd canvas -->
-      <div id="logoImportPreviewWrap" style="display:none;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12)">
-        <canvas id="logoImportPreviewCanvas" style="width:100%;display:block"></canvas>
+      <div id="logoImportPreviewWrap" class="import-preview import-preview--media" hidden>
+        <canvas id="logoImportPreviewCanvas"></canvas>
       </div>
       <!-- Błąd -->
       <div id="logoImportErr" class="field-error" role="alert" hidden></div>
@@ -136,7 +136,7 @@
         <div class="importMsg uni-progress-msg" id="logoImportMsg"></div>
       </div>
 
-      <div class="importRow modal-actions" style="margin-top:12px">
+      <div class="importRow modal-actions">
         <button class="btn sm" id="btnLogoImportCancelAction" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
         <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm" data-i18n-icon="upload">Importuj</button>
         <button class="btn sm gold" id="btnLogoImportDone" type="button" data-i18n="logoEditor.import.done" data-i18n-icon="check" hidden>Gotowe</button>
@@ -168,8 +168,8 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18502"></script>
 
 </body>
 </html>

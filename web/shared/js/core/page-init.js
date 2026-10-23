@@ -29,11 +29,11 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-23T18093";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-23T18093";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-23T18093";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-23T18093";
-import "./scroll-fade.js?v=v2026-10-23T18093"; // wygaszona krawędź przewijanych list (wszystkie strony)
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-23T18502";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-23T18502";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-23T18502";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-23T18502";
+import "./scroll-fade.js?v=v2026-10-23T18502"; // wygaszona krawędź przewijanych list (wszystkie strony)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
@@ -45,10 +45,10 @@ if (globalThis.matchMedia?.(TOUCH_ONLY)?.matches) {
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-23T18093"),
-    import("./topbar-controller.js?v=v2026-10-23T18093"),
-    import("./modal-sheet.js?v=v2026-10-23T18093"),
-    import("./device-guard.js?v=v2026-10-23T18093"),
+    import("./auth.js?v=v2026-10-23T18502"),
+    import("./topbar-controller.js?v=v2026-10-23T18502"),
+    import("./modal-sheet.js?v=v2026-10-23T18502"),
+    import("./device-guard.js?v=v2026-10-23T18502"),
 
   ]);
   return {
@@ -66,10 +66,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-23T18093");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-23T18502");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-23T18093");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-23T18502");
     await initRatingSystem(user);
   }
 }
@@ -102,7 +102,7 @@ function wireManual(id, user, opts) {
   const btn = elementOf(opts.manual, "btnManual");
   if (!btn) return;
   // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
-  if (!user && PAGES.manual.access !== "public") { btn.hidden = true; btn.style.display = "none"; return; }
+  if (!user && PAGES.manual.access !== "public") { btn.hidden = true; return; }
   btn.addEventListener("click", async (ev) => {
     const href = manualHref(id);
     if (opts.onManual) { await opts.onManual(href, ev); return; }
@@ -112,7 +112,6 @@ function wireManual(id, user, opts) {
 
 function hideButton(btn) {
   btn.hidden = true;
-  btn.style.display = "none";
   btn.dataset.navHidden = "true"; // przycisk poza rachunkiem „Więcej” w topbarze
 }
 
@@ -132,7 +131,6 @@ function wireButtons(id, user, d) {
     if (btn.dataset.navHidden === "true") {
       delete btn.dataset.navHidden;
       btn.hidden = false;
-      btn.style.display = "";
     }
     const updateDeviceVisibility = () => {
       const visible = buttonVisible(id, spec, role, d.getDeviceProfile());
@@ -142,7 +140,6 @@ function wireButtons(id, user, d) {
       else {
         delete btn.dataset.navHidden;
         btn.hidden = false;
-        btn.style.display = "";
       }
       if (spec.minViewportWidth) {
         window.dispatchEvent?.(new Event("nav:visibilitychange"));
@@ -211,7 +208,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-23T18093")
+      void import("./nav-contact-badges.js?v=v2026-10-23T18502")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }

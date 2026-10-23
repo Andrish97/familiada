@@ -1,10 +1,10 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T18093";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18093";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T18093";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T18502";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18502";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T18502";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -17,19 +17,14 @@ const TYPES = [GAME_TYPES.POLL_TEXT, GAME_TYPES.POLL_POINTS, GAME_TYPES.PREPARED
 const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
 
-function show(el, on) {
-  if (!el) return;
-  el.style.display = on ? "grid" : "none";
-}
-
 function setErr(msg) {
   const xErr = $("xErr");
   if (!xErr) return;
   if (!msg) {
-    xErr.style.display = "none";
+    xErr.hidden = true;
     xErr.textContent = "";
   } else {
-    xErr.style.display = "block";
+    xErr.hidden = false;
     xErr.textContent = msg;
   }
 }
@@ -240,7 +235,7 @@ export function initExportModal() {
 
 
   function showProgress(on) {
-    if (xProg) xProg.style.display = on ? "" : "none";
+    if (xProg) xProg.hidden = !on;
   }
 
   function setProgress({ step, i, n, msg, isError, done } = {}) {

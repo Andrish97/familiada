@@ -15,7 +15,7 @@ export function hideForGuest(user, elements = []) {
   if (!guest) return false;
   for (const el of elements) {
     if (!el) continue;
-    el.style.display = "none";
+    el.hidden = true;
   }
   return true;
 }

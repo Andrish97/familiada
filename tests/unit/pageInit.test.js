@@ -247,7 +247,7 @@ function gamesButtons() {
     els[id] = fakeEl();
   }
   els.btnConnectDevice.dataset.navHidden = "true";
-  els.btnConnectDevice.style.display = "none";
+  els.btnConnectDevice.hidden = true;
   loc.pathname = "/games/";
   loc.search = "?lang=pl";
 }
@@ -260,7 +260,7 @@ test("przyciski: konto widzi wszystkie, przejście przez linkTo", async () => {
   assert.equal(els.btnSubscribers.hidden, false);
   assert.equal(els.btnTasks.hidden, false);
   assert.equal(els.btnConnectDevice.dataset.navHidden, undefined, "zdjęte domyślne ukrycie z HTML");
-  assert.equal(els.btnConnectDevice.style.display, "");
+  assert.equal(els.btnConnectDevice.hidden, false);
   await els.btnBases.click();
   assert.equal(loc.href, "/bases/?ret=%2Fgames%2F");
   await els.btnConnectDevice.click();
@@ -274,7 +274,6 @@ test("przyciski: gość nie dostaje przycisków dla konta (roles: user)", async 
   await initPage("games", { deps });
   for (const id of ["btnFriends", "btnSubscribers", "btnTasks", "btnConnectDevice"]) {
     assert.equal(els[id].hidden, true, id);
-    assert.equal(els[id].style.display, "none", id);
     assert.equal(els[id].dataset.navHidden, "true", id);
     assert.equal(els[id].listeners.click, undefined, id);
   }
@@ -287,7 +286,6 @@ test("przyciski wymagające szerokości reagują na viewport i zmianę orientacj
   const phone = makeDeps({ viewportWidth: 390, formFactor: "phone" });
   await initPage("games", { deps: phone.deps });
   assert.equal(els.btnPlay.hidden, true);
-  assert.equal(els.btnPlay.style.display, "none");
   // Ustawienia gry działają na telefonie (decyzja 2026-10-21) — przycisk widoczny.
   assert.equal(els.btnSettings.hidden, false);
   assert.equal(els.btnEdit.hidden, false);

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18093"/>
+  <meta name="app-version" content="v2026-10-23T18502"/>
 
 
   <meta charset="utf-8" />
@@ -15,24 +15,24 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T18093" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T18502" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T18502"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
 
 </head>
 
@@ -164,7 +164,7 @@
   
         <div class="tagsFoot">
           <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag" data-i18n-icon="plus">Dodaj tag</button>
-          <div id="tagsAssignErr" class="importMsg" style="display:none;"></div>
+          <div id="tagsAssignErr" class="importMsg" hidden></div>
           <div class="tagsFootSpacer"></div>
           <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
@@ -191,7 +191,7 @@
         </div>
   
         <div class="tagsFoot">
-          <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
+          <div id="tagsEditErr" class="importMsg" hidden></div>
           <div class="tagsFootSpacer"></div>
           <button class="btn sm" id="tagsL2Back" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
@@ -281,9 +281,9 @@
 
         <div class="tagsFootSpacer"></div>
 
-        <div id="xErr" class="importMsg" style="display:none;"></div>
+        <div id="xErr" class="importMsg" hidden></div>
 
-        <div class="xProg" id="xProg" style="display:none;">
+        <div class="xProg" id="xProg" hidden>
           <div class="xProgTop">
             <div id="xProgStep" class="xProgStep">—</div>
             <div id="xProgCount" class="xProgCount">0/0</div>
@@ -339,7 +339,7 @@
       <div class="tagsFoot">
         <div class="tagsFootSpacer"></div>
 
-        <div id="qErr" class="importMsg" style="display:none;"></div>
+        <div id="qErr" class="importMsg" hidden></div>
 
         <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
         <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
@@ -362,7 +362,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
 
 </body>
 </html>

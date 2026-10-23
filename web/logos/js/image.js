@@ -7,10 +7,10 @@
 //   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
 // Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18093";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18093";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-23T18093";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18502";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18502";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-23T18502";
 
 
 const ASPECT = 26 / 11;
@@ -42,7 +42,7 @@ const MAX_PREVIEW_SIDE = 1400; // obrazek pod ramką -- tylko do oglądania
 
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const num = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
-const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+const show = (el, on) => { if (el) el.hidden = !on; };
 
 /** Ścieżka pliku w buckecie z publicznego URL albo null, gdy to nie plik tego usera. */
 export function storagePathFromUrl(url, userId) {
@@ -451,7 +451,6 @@ export function initImageEditor(ctx) {
   // =========================================================
   function setStageImage(src) {
     if (!imgPreview) return;
-    imgPreview.style.display = "block";
     if (src) imgPreview.src = src; else imgPreview.removeAttribute("src");
     show(cropFrame, false); // ramka pojawia się, gdy obraz jest gotowy (showImage)
   }

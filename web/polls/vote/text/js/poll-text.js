@@ -1,13 +1,13 @@
 // js/pages/poll-text.js
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T18093";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T18502";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T18093";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-23T18093";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-23T18093";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-23T18093";
-import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-23T18093";
-import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-23T18093";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T18502";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-23T18502";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-23T18502";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-23T18502";
+import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-23T18502";
+import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-23T18502";
 
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
@@ -92,10 +92,10 @@ function showFinished() {
   const closed = document.getElementById("closed");
 
   // chowamy całe UI pytań (input + hint + liczniki)
-  if (qbox) qbox.style.display = "none";
+  if (qbox) qbox.hidden = true;
 
   // chowamy "ankieta zamknięta", bo to inny stan
-  if (closed) closed.style.display = "none";
+  if (closed) closed.hidden = true;
 
   // pokazujemy tylko jedno podziękowanie
   if (sub) sub.textContent = MSG.thanks();
@@ -112,10 +112,10 @@ function setSub(t) {
 }
 
 function showClosed(on) {
-  if (closed) closed.style.display = on ? "" : "none";
-  if (qbox) qbox.style.display = on ? "none" : "";
-  if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
-  else if (!on && subEl) subEl.style.display = "";
+  if (closed) closed.hidden = !on;
+  if (qbox) qbox.hidden = on;
+  if (on && subEl) subEl.hidden = true; // Hide loading sub when showing closed/error msg
+  else if (!on && subEl) subEl.hidden = false;
   if (on) document.getElementById("closed")?.classList.add("skel-step-ready");
 }
 

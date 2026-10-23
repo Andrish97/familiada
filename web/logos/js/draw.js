@@ -15,15 +15,15 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18093";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T18093";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T18093";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18093";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T18093";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T18093";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T18093";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-23T18093";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18502";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T18502";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T18502";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18502";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T18502";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T18502";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T18502";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-23T18502";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -1563,7 +1563,7 @@ export function initDrawEditor(ctx) {
   // =========================================================
   return {
     async open(payload = null) {
-      paneDraw.style.display = "";
+      paneDraw.hidden = false;
       await loadFonts();
       if (!canvas) installCanvas();
 
@@ -1593,12 +1593,11 @@ export function initDrawEditor(ctx) {
     },
 
     close() {
-      paneDraw.style.display = "none";
+      paneDraw.hidden = true;
       if (canvas && isTextObj(canvas.getActiveObject())) canvas.getActiveObject().exitEditing?.();
       closeShapePicker();
       closeFontPicker();
       hideCursorDot();
-      hideTip();
       if (toolCtx) toolCtx.innerHTML = "";
     },
 

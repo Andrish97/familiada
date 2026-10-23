@@ -5,11 +5,11 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-23T18093";
-import { signOut } from './auth.js?v=v2026-10-23T18093';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-23T18093';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T18093';
-import { icon, iconText } from './icons.js?v=v2026-10-23T18093';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-23T18502";
+import { signOut } from './auth.js?v=v2026-10-23T18502';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-23T18502';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T18502';
+import { icon, iconText } from './icons.js?v=v2026-10-23T18502';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -96,7 +96,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
       const computed = getComputedStyle(btn);
       // Nie licz przycisków wyłączonych przez breakpoint (np. „Gry
       // Producenta”). Nadal uwzględniaj elementy schowane przez poprzedni
-      // pomiar overflow — ich display:none jest ustawione inline.
+      // pomiar overflow (klasa .hidden).
       if (btn.classList.contains('hidden-on-mobile') && computed.display === 'none') return false;
       return computed.display !== 'none' || _hiddenBtns.includes(btn);
     });
@@ -112,9 +112,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     if (!section2.isConnected || section2Width <= 0) return;
 
     const btns = getVisibleBtns();
-    btns.forEach(btn => { btn.style.display = ''; });
+    btns.forEach(btn => btn.classList.remove('hidden'));
     _hiddenBtns = [];
-    moreEl.style.display = 'none';
+    moreEl.hidden = true;
     moreDropdownEl.innerHTML = '';
 
     const gap = Number.parseFloat(getComputedStyle(section2).columnGap) || 0;
@@ -130,9 +130,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     // trafiają do menu Więcej, ale muszą zmniejszać miejsce dla przycisków.
     const availableWidth = Math.max(0, section2Width - fixedWidth - fixedItems.length * gap);
 
-    moreEl.style.display = '';
+    moreEl.hidden = false;
     const moreWidth = moreEl.getBoundingClientRect().width;
-    moreEl.style.display = 'none';
+    moreEl.hidden = true;
 
     // Jeśli nawet najważniejszy przycisk razem z „Więcej” nie mieszczą się,
     // przełącz cały pasek na hamburger. Nie używamy stałego progu viewportu:
@@ -159,7 +159,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     let remaining = totalWidth;
     for (let i = btns.length - 1; i >= 0; i--) {
       if (remaining + moreWidth + gap <= availableWidth) break;
-      btns[i].style.display = 'none';
+      btns[i].classList.add('hidden');
       hidden.unshift(btns[i]);
       remaining -= btnWidths[i] + gap;
     }
@@ -168,10 +168,10 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
 
     _hiddenBtns = hidden;
     updateMoreBadge(hidden);
-    moreEl.style.display = '';
+    moreEl.hidden = false;
     hidden.forEach(btn => {
       const clone = btn.cloneNode(true);
-      clone.style.display = '';
+      clone.classList.remove('hidden');
       clone.addEventListener('click', () => btn.click());
       moreDropdownEl.appendChild(clone);
     });
@@ -209,12 +209,12 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   }
 
   function expandAll() {
-    getButtons().forEach(btn => { if (btn) btn.style.display = ''; });
+    getButtons().forEach(btn => btn?.classList.remove('hidden'));
     // Na mobile „Więcej” jest schowane — jego licznik nie może zostać,
     // bo hamburger sumuje widoczne liczniki i liczyłby je podwójnie.
     _hiddenBtns = [];
     updateMoreBadge([]);
-    moreEl.style.display = 'none';
+    moreEl.hidden = true;
     moreDropdownEl.hidden = true;
     moreDropdownEl.innerHTML = '';
   }
@@ -263,7 +263,6 @@ export function setTopbarAccount(user, {
   if (prevWho) {
     prevWho.innerHTML = '—';
     prevWho.className = prevWho.className.replace(/\baccount-btn\b|\baccount-btn--mobile-label\b/g, '').trim();
-    prevWho.style.cursor = '';
     prevWho.removeAttribute('tabindex');
     prevWho.onclick = null;
   }
@@ -273,16 +272,16 @@ export function setTopbarAccount(user, {
   const btnLoginEl = document.getElementById('btnLogout');
 
   if (!user) {
-    if (whoEl) whoEl.style.display = 'none';
+    if (whoEl) whoEl.hidden = true;
     if (btnLoginEl) {
       if (showAuthEntry) {
-        btnLoginEl.style.display = '';
+        btnLoginEl.hidden = false;
         btnLoginEl.innerHTML = iconText('person', t('common.authEntry') || 'Zaloguj / Załóż konto');
         btnLoginEl.dataset.i18n = 'common.authEntry';
         btnLoginEl.dataset.i18nIcon = 'person';
         btnLoginEl.onclick = () => { location.href = withLangParam(loginHref); };
       } else {
-        btnLoginEl.style.display = 'none';
+        btnLoginEl.hidden = true;
       }
     }
     return { guestMode: true };
@@ -291,12 +290,12 @@ export function setTopbarAccount(user, {
   const guestMode = isGuestUser(user);
   const username = user.username || user.email || '—';
 
-  if (btnLoginEl) btnLoginEl.style.display = 'none';
+  if (btnLoginEl) btnLoginEl.hidden = true;
 
   if (!whoEl) return { guestMode };
 
   // Przekształć #who w trigger
-  whoEl.style.display = '';
+  whoEl.hidden = false;
   whoEl.innerHTML = '';
   const whoSpan = document.createElement('span');
   whoSpan.className = 'account-who';
@@ -306,10 +305,7 @@ export function setTopbarAccount(user, {
   chevron.innerHTML = icon('caret-down');
   whoEl.append(whoSpan, chevron);
   whoEl.classList.add('account-btn', 'btn');
-  if (!whoEl.matches('button')) {
-    whoEl.style.cursor = 'pointer';
-    whoEl.tabIndex = 0;
-  }
+  if (!whoEl.matches('button')) whoEl.tabIndex = 0;
 
   // Menu — wstawiamy za #who w DOM, position:fixed na desktop
   const menu = document.createElement('div');
@@ -395,7 +391,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-23T18093');
+  const { getUser } = await import('./auth.js?v=v2026-10-23T18502');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -581,8 +577,8 @@ function initTopbarController() {
     closeBtn.addEventListener('pointerdown', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-    if (!section2.querySelector(':scope > .topbar-title')) section2.style.display = 'none';
-    section4.style.display = 'none';
+    if (!section2.querySelector(':scope > .topbar-title')) section2.hidden = true;
+    section4.hidden = true;
 
     const backBtn = section1.querySelector('#btnBack,#btnBackToGames');
     if (backBtn) backBtn.classList.add('mobile-primary-back');
@@ -616,8 +612,8 @@ function initTopbarController() {
     section2Placeholder.remove();
     section4Placeholder.remove();
 
-    section2.style.display = '';
-    section4.style.display = '';
+    section2.hidden = false;
+    section4.hidden = false;
 
     toggleBtn?.remove();
     overlay?.remove();
@@ -678,7 +674,7 @@ function initTopbarController() {
     const more = document.createElement('div');
     more.className = 'nav-more';
     more.id = 'navMore';
-    more.style.display = 'none';
+    more.hidden = true;
     const label = t('games.nav.more');
     more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="games.nav.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
     more.querySelector('[data-i18n]').textContent = label && label !== 'games.nav.more' ? label : 'Więcej';

@@ -1,12 +1,13 @@
 /* Silnik stylów E23 — klasy pomocnicze (docs/silnik-stylow-projekt.md §4.3).
    Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.
    [hidden] i .hidden w warstwie states (ostatniej): ukrycie wygrywa z każdym
-   display strony bez flagi important; :not(#ukryte) podnosi specyficzność do
-   poziomu id (1,1,0), żeby wygrać także z regułami stanów okien (arkusz).
+   display strony. Reguły stanów (np. arkusz okna), które ustawiają display,
+   pomijają ukryte elementy przez :not([hidden]) -- audyt zrzutów
+   (hidden-widoczny) pilnuje, żeby nic ukrytego się nie pokazało.
    Styli inline nie używamy (atrybut hidden). */
 @layer states {
-  [hidden]:not(#ukryte),
-  .hidden:not(#ukryte) { display: none; }
+  [hidden],
+  .hidden { display: none; }
 }
 
 @layer utilities {

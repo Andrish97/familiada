@@ -8,28 +8,24 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18093";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T18093";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18502";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T18502";
 
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
   buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-23T18093";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-23T18502";
 
 
 const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
 
-function show(el, on) {
-  if (el) el.style.display = on ? "grid" : "none";
-}
-
 function setErr(msg) {
   const el = $("qErr");
   if (!el) return;
-  el.style.display = msg ? "block" : "none";
+  el.hidden = !msg;
   el.textContent = msg || "";
 }
 

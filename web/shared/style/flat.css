@@ -891,6 +891,15 @@
   .choice-list { display: grid; gap: 8px; }
   @media (pointer: coarse) { .choice { min-height: 44px; align-items: center; } }
 
+  /* Pole formularza: etykieta (.field-label) nad kontrolką, kolejne pola
+     z odstępem; pole tekstowe i lista wyboru na całą szerokość. */
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field > .field-label { margin: 0; }
+  .field + .field,
+  .modal > .field { margin-top: 12px; }
+  .field > :is(.inp, .ui-select) { width: 100%; box-sizing: border-box; }
+  .field > .ui-select > .ui-select-btn { width: 100%; justify-content: space-between; }
+  .field > textarea.inp { resize: vertical; }
   /* Etykieta pola (jedyna): nad polem, wersaliki, przyciszona. */
   .field-label {
     display: block;
@@ -1047,6 +1056,28 @@
     opacity: .75;
     font-size: .9rem;
   }
+  /* Podgląd importu (Gry, edytor gry, Logo): ramka z podsumowaniem i listą
+     pytań; wariant --media dla obrazu (canvas logo) od krawędzi do krawędzi. */
+  .import-preview {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line2);
+    border-radius: var(--r-md);
+    background: var(--k-20);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .import-preview--media { padding: 0; overflow: hidden; }
+  .import-preview--media > canvas { display: block; width: 100%; }
+  .import-preview-title { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .import-preview-title + * { margin-top: 7px; }
+  .import-preview-summary { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--gold); font-weight: 800; margin-bottom: 6px; }
+  .import-preview-list { display: grid; gap: 7px; }
+  .import-preview-list--scroll { max-height: 220px; overflow-y: auto; }
+  .import-preview-item { padding-top: 6px; border-top: 1px solid var(--w-8); overflow-wrap: anywhere; }
+  .import-preview-item strong { display: block; }
+  .import-preview-answers { color: var(--muted); margin-top: 2px; }
+  .import-preview .is-error { color: var(--bad-text); }
   .importMsg {
     margin-left: auto;
     opacity: .85;
@@ -3464,12 +3495,13 @@
 /* Silnik stylów E23 — klasy pomocnicze (docs/silnik-stylow-projekt.md §4.3).
    Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.
    [hidden] i .hidden w warstwie states (ostatniej): ukrycie wygrywa z każdym
-   display strony bez flagi important; :not(#ukryte) podnosi specyficzność do
-   poziomu id (1,1,0), żeby wygrać także z regułami stanów okien (arkusz).
+   display strony. Reguły stanów (np. arkusz okna), które ustawiają display,
+   pomijają ukryte elementy przez :not([hidden]) -- audyt zrzutów
+   (hidden-widoczny) pilnuje, żeby nic ukrytego się nie pokazało.
    Styli inline nie używamy (atrybut hidden). */
 
-  [hidden]:not(#ukryte),
-  .hidden:not(#ukryte) { display: none; }
+  [hidden],
+  .hidden { display: none; }
 
 
 

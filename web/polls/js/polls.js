@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-23T18093";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-23T18093";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18093";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T18093";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T18093";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18093";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T18093";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T18093";
-import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T18093";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T18093";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T18093";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-23T18093";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T18093";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T18093";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T18093";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18093";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T18093";
-import { createTally } from "./poll-tally.js?v=v2026-10-23T18093";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-23T18502";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-23T18502";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18502";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T18502";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T18502";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18502";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T18502";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T18502";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T18502";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T18502";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T18502";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-23T18502";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T18502";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T18502";
+import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T18502";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18502";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T18502";
+import { createTally } from "./poll-tally.js?v=v2026-10-23T18502";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-23T18093";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-23T18502";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -675,7 +675,7 @@ function renderSubs(force = false) {
     const sub = subsAll.find((s) => !tk.recipient_user_id && emailKey(s.email) === emailKey(tk.recipient_email));
     return { tk, kind: tk.recipient_user_id ? "friend" : "subscriber", label: tk.label || friend?.label || sub?.email || tk.recipient_email || "—" };
   });
-  if (subsEmpty) subsEmpty.style.display = "none";
+  if (subsEmpty) subsEmpty.hidden = true;
   const rows = sharedRecipients.map(({ tk, kind, label }) => {
     const waiting = taskIsWaiting(tk);
     const limit = (tk.reminder_count || 0) >= 2;
@@ -1004,10 +1004,10 @@ let refreshSeq = 0;
 function renderShareSection(st, link) {
   const available = sharingAvailable(st);
   const hasLink = st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED;
-  if (shareBody) shareBody.style.display = available ? "" : "none";
+  if (shareBody) shareBody.hidden = !available;
   shareBody?.classList.toggle("is-locked", st === STATUS.DRAFT);
   if (shareEmpty) {
-    shareEmpty.style.display = available ? "none" : "";
+    shareEmpty.hidden = available;
     shareEmpty.textContent = st === STATUS.READY ? t("polls.share.closedEmpty") : t("polls.share.draftEmpty");
   }
   if (linkPlaceholder) linkPlaceholder.hidden = st !== STATUS.DRAFT;
@@ -1028,10 +1028,10 @@ async function refresh() {
   if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
   if (!gameId) {
-    if (pollBar) pollBar.style.display = "none";
-    if (cardMain) cardMain.style.display = "none";
+    if (pollBar) pollBar.hidden = true;
+    if (cardMain) cardMain.hidden = true;
     if (pollLoadRetryWrap) pollLoadRetryWrap.hidden = true;
-    if (cardEmpty) cardEmpty.style.display = "";
+    if (cardEmpty) cardEmpty.hidden = false;
     setMsg(t("polls.missingId"), "error");
     return;
   }
@@ -1055,9 +1055,9 @@ async function refresh() {
 
   initialLoadFailed = false;
   if (pollLoadRetryWrap) pollLoadRetryWrap.hidden = true;
-  if (cardEmpty) cardEmpty.style.display = "none";
-  if (pollBar) pollBar.style.display = "";
-  if (cardMain) cardMain.style.display = "";
+  if (cardEmpty) cardEmpty.hidden = true;
+  if (pollBar) pollBar.hidden = false;
+  if (cardMain) cardMain.hidden = false;
 
   const st = game.status || STATUS.DRAFT;
   const key = `${st}:${game.share_key_poll}`;

@@ -20,9 +20,14 @@
   margin-top: 24px;
 }
 
-.notfound-actions .btn{
+.notfound-actions .btn:not([hidden]){
   display: inline-flex;
   align-items: center;
   gap: 6px;
   text-decoration: none;
+}
+
+.notfound-card .notfound-redirect{
+  margin-top: 20px;
+  opacity: .6;
 }

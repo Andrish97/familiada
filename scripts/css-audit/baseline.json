@@ -1,7 +1,4 @@
 {
- "web/404.html": {
-  "inlineStyleHtml": 1
- },
  "web/account/css/account.css": {
   "colorLiteral": 2,
   "mediaWidth": 1,
@@ -14,7 +11,7 @@
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
-  "inlineStyleHtml": 6
+  "inlineStyleHtml": 1
  },
  "web/bases/explorer/js/actions.js": {
   "inlineStyleJs": 42
@@ -23,19 +20,16 @@
   "inlineStyleJs": 2
  },
  "web/bases/explorer/js/export-modal.js": {
-  "inlineStyleJs": 6
- },
- "web/bases/explorer/js/mobile.js": {
   "inlineStyleJs": 2
  },
- "web/bases/explorer/js/question-modal.js": {
+ "web/bases/explorer/js/mobile.js": {
   "inlineStyleJs": 2
  },
  "web/bases/explorer/js/render.js": {
   "inlineStyleJs": 9
  },
  "web/bases/explorer/js/tags-modal.js": {
-  "inlineStyleJs": 7
+  "inlineStyleJs": 5
  },
  "web/bases/explorer/js/ui/marquee.js": {
   "inlineStyleJs": 1
@@ -46,9 +40,6 @@
  "web/bases/explorer/js/ui/tree-row.js": {
   "inlineStyleJs": 1
  },
- "web/bases/index.html": {
-  "inlineStyleHtml": 3
- },
  "web/bases/js/bases.js": {
   "inlineStyleJs": 3
  },
@@ -56,11 +47,8 @@
   "colorLiteral": 3,
   "mediaWidth": 1
  },
- "web/connect/index.html": {
-  "inlineStyleHtml": 1
- },
  "web/connect/js/connect-device.js": {
-  "inlineStyleJs": 9
+  "inlineStyleJs": 5
  },
  "web/connect/tv/css/tv.css": {
   "colorLiteral": 1,
@@ -93,7 +81,7 @@
   "colorLiteral": 20,
   "rootTokens": 3,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 1
+  "sharedDuplicate": 2
  },
  "web/control/display/index.html": {
   "styleBlock": 1
@@ -120,11 +108,7 @@
   "inlineStyleJs": 1
  },
  "web/control/index.html": {
-  "inlineStyleHtml": 4,
   "styleBlock": 1
- },
- "web/control/js/app.js": {
-  "inlineStyleJs": 2
  },
  "web/control/js/ui.js": {
   "inlineStyleJs": 11
@@ -133,31 +117,18 @@
   "sharedDuplicate": 1
  },
  "web/games/editor/css/editor.css": {
-  "colorLiteral": 8,
+  "colorLiteral": 7,
   "mediaWidth": 1,
   "sharedDuplicate": 1
  },
- "web/games/editor/index.html": {
-  "inlineStyleHtml": 2
- },
- "web/games/index.html": {
-  "inlineStyleHtml": 9
- },
  "web/games/js/games.js": {
-  "inlineStyleJs": 22
+  "inlineStyleJs": 4
  },
  "web/games/settings/index.html": {
-  "inlineStyleHtml": 1,
   "styleBlock": 1
  },
  "web/games/settings/js/game-settings.js": {
   "inlineStyleJs": 7
- },
- "web/go/index.html": {
-  "inlineStyleHtml": 1
- },
- "web/go/js/go.js": {
-  "inlineStyleJs": 1
  },
  "web/home/css/index.css": {
   "colorLiteral": 2,
@@ -193,20 +164,14 @@
   "zIndexLiteral": 8,
   "sharedDuplicate": 4
  },
- "web/logos/index.html": {
-  "inlineStyleHtml": 5
- },
  "web/logos/js/draw.js": {
-  "inlineStyleJs": 17
+  "inlineStyleJs": 15
  },
  "web/logos/js/image.js": {
-  "inlineStyleJs": 8
+  "inlineStyleJs": 6
  },
  "web/logos/js/list.js": {
   "inlineStyleJs": 5
- },
- "web/logos/js/text.js": {
-  "inlineStyleJs": 1
  },
  "web/mail/css/mail.css": {
   "colorLiteral": 7,
@@ -225,23 +190,8 @@
   "colorLiteral": 8,
   "sharedDuplicate": 2
  },
- "web/marketplace/index.html": {
-  "inlineStyleHtml": 8
- },
- "web/polls/index.html": {
-  "inlineStyleHtml": 7
- },
  "web/polls/js/poll-tally.js": {
   "inlineStyleJs": 1
- },
- "web/polls/js/polls.js": {
-  "inlineStyleJs": 9
- },
- "web/polls/vote/points/index.html": {
-  "inlineStyleHtml": 2
- },
- "web/polls/vote/points/js/poll-points.js": {
-  "inlineStyleJs": 6
  },
  "web/polls/vote/qr/css/poll-qr.css": {
   "colorLiteral": 1
@@ -249,21 +199,15 @@
  "web/polls/vote/qr/index.html": {
   "styleBlock": 1
  },
- "web/polls/vote/text/index.html": {
-  "inlineStyleHtml": 2
- },
- "web/polls/vote/text/js/poll-text.js": {
-  "inlineStyleJs": 6
- },
  "web/settings/css/settings.css": {
   "colorLiteral": 68,
   "mediaWidth": 5,
   "zIndexLiteral": 16,
-  "sharedDuplicate": 7,
+  "sharedDuplicate": 6,
   "unusedClass": 14
  },
  "web/settings/index.html": {
-  "inlineStyleHtml": 136
+  "inlineStyleHtml": 135
  },
  "web/settings/js/admin-pwa.js": {
   "inlineStyleJs": 1
@@ -334,9 +278,6 @@
  "web/shared/js/core/guest-info-modal.js": {
   "inlineStyleJs": 4
  },
- "web/shared/js/core/guest-mode.js": {
-  "inlineStyleJs": 1
- },
  "web/shared/js/core/list-header-layout.js": {
   "inlineStyleJs": 3
  },
@@ -348,9 +289,6 @@
  },
  "web/shared/js/core/modal.js": {
   "inlineStyleJs": 3
- },
- "web/shared/js/core/page-init.js": {
-  "inlineStyleJs": 4
  },
  "web/shared/js/core/page-overlay.js": {
   "inlineStyleJs": 2
@@ -370,9 +308,6 @@
  "web/shared/js/core/tooltips.js": {
   "inlineStyleJs": 2
  },
- "web/shared/js/core/topbar-controller.js": {
-  "inlineStyleJs": 21
- },
  "web/shared/js/core/ui-select.js": {
   "inlineStyleJs": 12
  },
@@ -388,14 +323,14 @@
  "web/shared/style/components.css": {
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 231,
+  "sharedDuplicate": 240,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "mediaWidth": 14,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 266,
-  "unusedClass": 5
+  "sharedDuplicate": 276,
+  "unusedClass": 4
  },
  "web/shared/style/layout.css": {
   "zIndexLiteral": 1,
@@ -403,8 +338,8 @@
  },
  "web/shared/style/utilities.css": {
   "mediaWidth": 1,
-  "sharedDuplicate": 13,
-  "unusedClass": 3
+  "sharedDuplicate": 14,
+  "unusedClass": 2
  },
  "web/shared/vendor/fabric.min.js": {
   "inlineStyleJs": 16

@@ -3,29 +3,29 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T18093";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T18093";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T18093";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-23T18093";
-import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T18093";
-import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T18093";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T18502";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T18502";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T18502";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-23T18502";
+import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T18502";
+import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T18502";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   wireAnswerInput, answerFieldProblem, buildAnswerHints, loadAnswerGlyphs,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-23T18093";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T18093";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T18093";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T18093";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T18093";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T18093";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-23T18093";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18093";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-23T18093";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T18093";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-23T18502";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T18502";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T18502";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T18502";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T18502";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T18502";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-23T18502";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18502";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-23T18502";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T18502";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -921,20 +921,20 @@ async function boot() {
     }
     txtPreviewBody.classList.remove("is-error");
     const summary = document.createElement("div");
-    summary.className = "txt-preview-summary";
+    summary.className = "import-preview-summary";
     summary.textContent = t("editor.importModal.previewSummary", {
       questions: parsed.items.length,
       answers: parsed.items.reduce((sum, item) => sum + item.answers.length, 0),
     });
     const list = document.createElement("div");
-    list.className = "txt-preview-list";
+    list.className = "import-preview-list";
     for (const [index, item] of parsed.items.slice(0, 3).entries()) {
       const row = document.createElement("div");
-      row.className = "txt-preview-item";
+      row.className = "import-preview-item";
       const question = document.createElement("strong");
       question.textContent = `${index + 1}. ${item.qText}`;
       const answers = document.createElement("div");
-      answers.className = "txt-preview-answers";
+      answers.className = "import-preview-answers";
       answers.textContent = item.answers.slice(0, 5).map(answer => answer.text).join(" · ");
       if (item.answers.length > 5) answers.textContent += " · …";
       row.append(question, answers);
@@ -942,7 +942,7 @@ async function boot() {
     }
     if (parsed.items.length > 3) {
       const more = document.createElement("div");
-      more.className = "txt-preview-answers";
+      more.className = "import-preview-answers";
       more.textContent = t("editor.importModal.previewMore", { count: parsed.items.length - 3 });
       list.append(more);
     }

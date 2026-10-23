@@ -51,5 +51,5 @@ for(const lang of ['pl','en','uk'])test(`actual Go views: states and actors ${la
  for(const error of ['poll_stopped','poll_closed','expired','invalid_token','revoked','unknown']){
   views.showResolveError({error});assert.equal(nodes.actions.children.length,0);assert.equal(nodes.title.textContent,dict.pollGo[contract.goErrorKey(error)]);
  }
- views.showNetworkFailure();assert.equal(nodes.actions.children.length,1);assert.equal(nodes.message.textContent,dict.pollGo.linkCheckFailed);assert.equal(nodes.emailRow.style.display,'none');
+ views.showNetworkFailure();assert.equal(nodes.actions.children.length,1);assert.equal(nodes.message.textContent,dict.pollGo.linkCheckFailed);assert.equal(nodes.emailRow.hidden,true);
 });

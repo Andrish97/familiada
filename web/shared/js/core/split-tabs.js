@@ -11,7 +11,7 @@
 // markActiveTab z tabs.js — role, aria, strzałki); role tabpanel tylko
 // w trybie wąskim.
 
-import { markActiveTab } from "./tabs.js?v=v2026-10-23T18093";
+import { markActiveTab } from "./tabs.js?v=v2026-10-23T18502";
 
 export const SPLIT_MQ = "(max-width: 600px), (max-width: 980px) and (orientation: landscape)";
 

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18093"/>
+  <meta name="app-version" content="v2026-10-23T18502"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,22 +14,22 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T18093"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-23T18502"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T18502"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18502" defer></script>
 
 </head>
 
@@ -44,7 +44,7 @@
         <span data-i18n="games.nav.marketplace" data-i18n-icon-after="gamepad">Gry Społeczności</span>
       </button>
 
-      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" hidden>
         <span data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
         <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
       </button>
@@ -64,23 +64,23 @@
         <span class="badge" id="friendsBadge" data-nav-contact-count="friends" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnSubscribers" data-nav-hidden="true" style="display:none;">
+      <button class="btn" id="btnSubscribers" data-nav-hidden="true" hidden>
         <span data-i18n="games.nav.subscribers" data-i18n-icon-after="envelope">Subskrybenci</span>
         <span class="badge" id="subscribersBadge" data-nav-contact-count="subscribers" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnTasks" data-nav-hidden="true" style="display:none;">
+      <button class="btn" id="btnTasks" data-nav-hidden="true" hidden>
         <span data-i18n="games.nav.tasks" data-i18n-icon-after="bell">Zadania</span>
         <span class="badge" id="tasksBadge" aria-hidden="true"></span>
       </button>
 
-      <div class="nav-more" id="navMore" style="display:none;">
+      <div class="nav-more" id="navMore" hidden>
         <button class="btn" id="btnMore" type="button"><span data-i18n="games.nav.more">Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
         <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn icon" id="btnInstall" type="button" style="display:none;" title="Zainstaluj aplikację" aria-label="Zainstaluj aplikację" data-i18n-title="games.pwaInstall.title" data-i18n-aria-label="games.pwaInstall.title"><i class="ico" data-icon="download"></i></button>
+      <button class="btn icon" id="btnInstall" type="button" hidden title="Zainstaluj aplikację" aria-label="Zainstaluj aplikację" data-i18n-title="games.pwaInstall.title" data-i18n-aria-label="games.pwaInstall.title"><i class="ico" data-icon="download"></i></button>
       <button class="btn icon" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
     <div class="topbar-section topbar-section-4">
@@ -182,12 +182,14 @@
           <span data-i18n="games.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
         </div>
 
-        <div class="ui-select" id="baseSelectWrap" style="margin-top:12px;width:100%;">
-          <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span class="ui-select-label">—</span>
-            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-          </button>
-          <div class="ui-select-menu" role="listbox"></div>
+        <div class="field">
+          <div class="ui-select" id="baseSelectWrap">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">—</span>
+              <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
         </div>
 
         <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
@@ -220,14 +222,14 @@
           <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <div class="importRow import-file-picker" style="margin-top:8px">
+        <div class="importRow import-file-picker">
           <input id="importFile" type="file" accept=".famgame,.json,application/json" hidden>
           <button class="btn sm" id="btnChooseImportFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
           <span class="import-file-name" id="importFileName" aria-live="polite">Nie wybrano pliku</span>
         </div>
 
         <!-- Podgląd / błąd po wczytaniu pliku -->
-        <div id="importPreview" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:.88rem;display:grid;gap:4px"></div>
+        <div id="importPreview" class="import-preview" hidden></div>
         <div id="importErr" class="field-error" role="alert" hidden></div>
 
         <!-- Pasek postępu (podczas importu) -->
@@ -242,7 +244,7 @@
           <div class="importMsg uni-progress-msg" id="importProgMsg"></div>
         </div>
 
-        <div class="importRow modal-actions" style="margin-top:12px">
+        <div class="importRow modal-actions">
           <button class="btn sm" id="btnImportCancelAction" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="games.import.confirm" data-i18n-icon="upload">Importuj</button>
           <div class="importMsg" id="importMsg"></div>
@@ -277,7 +279,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
 
 </body>
 </html>

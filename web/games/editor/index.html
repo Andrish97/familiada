@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18093"/>
+  <meta name="app-version" content="v2026-10-23T18502"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,21 +14,21 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="editor.title">Familiada — edytor gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-23T18093"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-23T18502"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18502" defer></script>
 
 </head>
 
@@ -128,7 +128,7 @@
         </span>
       </div>
 
-      <div class="importRow import-file-picker" style="margin-top:12px;">
+      <div class="importRow import-file-picker">
         <input id="txtFile" type="file" accept=".txt,text/plain" hidden>
         <button class="btn sm" id="btnTxtLoadFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
         <span class="import-file-name" id="txtFileName" aria-live="polite">Nie wybrano pliku</span>
@@ -145,12 +145,12 @@
 2 Odpowiedź 2
 3 Odpowiedź 3" data-i18n-placeholder="editor.importModal.placeholder"></textarea>
 
-      <section class="txt-preview" id="txtPreview" aria-live="polite" aria-label="Podgląd importu" data-i18n-aria-label="editor.importModal.previewLabel">
-        <div class="txt-preview-title" data-i18n="editor.importModal.previewTitle">Podgląd na żywo</div>
-        <div id="txtPreviewBody" class="txt-preview-body" data-i18n="editor.importModal.previewEmpty">Wpisz pytania, aby zobaczyć podgląd.</div>
+      <section class="import-preview" id="txtPreview" aria-live="polite" aria-label="Podgląd importu" data-i18n-aria-label="editor.importModal.previewLabel">
+        <div class="import-preview-title" data-i18n="editor.importModal.previewTitle">Podgląd na żywo</div>
+        <div id="txtPreviewBody" data-i18n="editor.importModal.previewEmpty">Wpisz pytania, aby zobaczyć podgląd.</div>
       </section>
 
-      <div class="mSub" style="margin-top:10px;">
+      <div class="mSub">
         <span data-i18n="editor.importModal.formatHint">
           Działa też format bez numerów (po prostu linie z odpowiedziami).
           Import toleruje spacje/taby, „1.”, „2)” itp.
@@ -171,7 +171,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
 
 </body>
 </html>

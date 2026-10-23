@@ -104,9 +104,6 @@
     opacity: .75;
   }
 
-  .gs-actionbar-msg.hidden {
-    display: none;
-  }
 
   /* ===== DŹWIĘKI ===== */
   .sfx-table { display: flex; flex-direction: column; }

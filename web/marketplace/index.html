@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18093"/>
+  <meta name="app-version" content="v2026-10-23T18502"/>
 
 
   <meta charset="UTF-8"/>
@@ -26,20 +26,20 @@
   <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
 
   <base href="/"/>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
-  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-23T18093"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-23T18502"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-23T18093" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18502" defer></script>
 
 </head>
 <body class="mkt-body skel-body">
@@ -145,10 +145,10 @@
           <button class="btn sm" id="btnSubmitClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <div class="field" style="margin-top:12px">
+        <div class="field">
           <label class="field-label" id="submitGameLabel" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
-          <div class="ui-select" id="submitGameSelect" style="width:100%">
-            <button class="btn inp ui-select-btn" type="button" aria-labelledby="submitGameLabel" aria-haspopup="listbox" aria-expanded="false" style="width:100%;justify-content:space-between">
+          <div class="ui-select" id="submitGameSelect">
+            <button class="btn inp ui-select-btn" type="button" aria-labelledby="submitGameLabel" aria-haspopup="listbox" aria-expanded="false">
               <span class="ui-select-label" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</span>
               <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
             </button>
@@ -157,21 +157,21 @@
           <span class="hint" id="submitNoEligible" hidden data-i18n="marketplace.submit.noEligible">Brak odpowiednich gier.</span>
         </div>
 
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" for="submitTitle" data-i18n="marketplace.submit.titleLabel">Tytuł</label>
           <input class="inp" id="submitTitle" type="text" maxlength="120"
             data-i18n-placeholder="marketplace.submit.titlePlaceholder"
             placeholder="Tytuł widoczny w Grach Społeczności"/>
         </div>
 
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" for="submitDesc" data-i18n="marketplace.submit.descLabel">Opis</label>
-          <textarea class="inp" id="submitDesc" rows="3" maxlength="500" style="width:100%;box-sizing:border-box;resize:vertical"
+          <textarea class="inp" id="submitDesc" rows="3" maxlength="500"
             data-i18n-placeholder="marketplace.submit.descPlaceholder"
             placeholder="Krótki opis gry (temat, poziom trudności, dla kogo…)"></textarea>
         </div>
 
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
           <div class="mkt-lang-picker" id="submitLangPicker">
             <button class="btn sm is-active" data-lang="pl" type="button" aria-label="Polski" title="Polski"><i class="ico" data-icon="flag-pl"></i></button>
@@ -228,14 +228,14 @@
       </div>
     </div>
 
-    <div class="footer" style="margin-top:auto">
+    <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
 
 </body>
 </html>

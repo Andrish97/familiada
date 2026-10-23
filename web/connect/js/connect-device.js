@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18093";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T18093";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T18093";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T18093";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T18093";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18093";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T18093";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T18093";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-23T18093";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T18093";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T18093";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18502";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T18502";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T18502";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T18502";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T18502";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18502";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T18502";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T18502";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-23T18502";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T18502";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T18502";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -52,7 +52,7 @@ function deviceTypeIcon(type) {
 const _isMobile = isMobileDevice() || navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
 // Pokaż skaner od razu: nie uzależniaj jego dostępności na iPhonie od
 // zakończenia pobierania tłumaczeń ani odpowiedzi strony po logowaniu.
-if (_isMobile && btnScanQr) btnScanQr.style.display = "";
+if (_isMobile && btnScanQr) btnScanQr.hidden = false;
 
 // ── Podgląd urządzenia po kodzie: wspólne confirmModal (modal.js) ─────────────
 async function showDevicePreview(info) {
@@ -180,7 +180,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-23T18093";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-23T18502";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
@@ -271,7 +271,7 @@ async function startQrScan() {
   input.type = "file";
   input.accept = "image/*";
   input.capture = "environment";
-  input.style.display = "none";
+  input.hidden = true;
   document.body.appendChild(input);
 
   input.addEventListener("change", async () => {
@@ -333,10 +333,10 @@ async function startQrScan() {
   const guestMode  = isLoggedIn ? isGuestUser(currentUser) : true;
 
   // Gość nie dostaje „Wskazówek” na tej stronie (jak dotąd).
-  if (guestMode && btnManual) btnManual.style.display = "none";
+  if (guestMode && btnManual) btnManual.hidden = true;
 
   if (_isMobile && btnScanQr) {
-    btnScanQr.style.display = "";
+    btnScanQr.hidden = false;
     btnScanQr.addEventListener("click", startQrScan);
   }
   initListHeaderLayout(".connect-device-body > main.wrap > .bar");
