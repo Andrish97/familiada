@@ -65,14 +65,7 @@
 
   /* ── status / error ── */
 
-  .status {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--g-10);
-      background: var(--k-20);
-      color: var(--txt);
-  }
+  .status { margin-top: 14px; }
 
 
   /* ── form ── */
