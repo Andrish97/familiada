@@ -55,7 +55,7 @@ test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytan
   try {
     await page.goto(`${ORIGIN}/games/editor?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await page.locator("#qList .qcard:not(.addTile)").first().click();
+    await page.locator("#qList .qcard:not(.addCard)").first().click();
     const first = page.locator("#aList .qf-row:not(.qf-add) .qf-text").first();
     await expect(first).toHaveValue("Odp 1", { timeout: 15000 });
 

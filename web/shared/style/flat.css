@@ -2853,6 +2853,14 @@
     font-size: 12px;
     line-height: 1.35;
   }
+  .addCard:is(:disabled, [aria-disabled="true"]) {
+    border-color: var(--w-25);
+    background: var(--w-4);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .addCard:is(:disabled, [aria-disabled="true"]) .plus { color: var(--text-muted); }
 
   .list-empty { cursor: default; }
   .logoGridBig > .list-empty { min-height: 230px; border-radius: var(--radius-lg); }

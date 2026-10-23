@@ -515,7 +515,7 @@ async function boot() {
 
   function renderAddQuestionTile() {
     renderRules();
-    const sub = qList?.querySelector(".addTile .sub");
+    const sub = qList?.querySelector(".addCard .sub");
     if (sub) sub.textContent = questions.length >= QN_MIN ? MSG.minQuestionsOk() : MSG.minQuestions(QN_MIN, questions.length);
   }
 
@@ -525,7 +525,7 @@ async function boot() {
 
     const addQ = document.createElement("button");
     addQ.type = "button";
-    addQ.className = "qcard addTile";
+    addQ.className = "addCard";
     addQ.innerHTML = `
       <div class="plus">${icon("plus")}</div>
       <div class="txt"></div>

@@ -116,7 +116,7 @@ async function openEditor(page, gameId) {
   await page.waitForLoadState("networkidle");
 }
 
-const qCard = (page, i) => page.locator("#qList .qcard:not(.addTile)").nth(i);
+const qCard = (page, i) => page.locator("#qList .qcard:not(.addCard)").nth(i);
 const aRow = (page, i) => page.locator("#aList .qf-row:not(.qf-add)").nth(i);
 const aRows = (page) => page.locator("#aList .qf-row:not(.qf-add)");
 
@@ -455,7 +455,7 @@ test("edytor: otwarte pytanie jest w adresie (?q=) i wejście z ?q= otwiera to p
     const q2Id = await addQuestionApi(page, gameId, 2, "Q2");
 
     await openEditor(page, gameId);
-    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(2, { timeout: 15000 });
     await qCard(page, 1).click();
     await expect(page.locator("#qText")).toHaveValue("Q2", { timeout: 10000 });
     await expect(page).toHaveURL(new RegExp(`[?&]q=${q2Id}`));
@@ -480,7 +480,7 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
     await addAnswerApi(page, q3Id, 1, "A3text", 0);
 
     await openEditor(page, gameId);
-    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(3, { timeout: 15000 });
+    await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(3, { timeout: 15000 });
 
     await qCard(page, 2).click(); // Q3
     await expect(page.locator("#qText")).toHaveValue("Q3", { timeout: 10000 });
@@ -488,7 +488,7 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
 
     await qCard(page, 1).locator(".x").click(); // usuń Q2 (środek)
     await page.locator(".uni-foot .btn.gold:visible").click();
-    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
+    await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(2, { timeout: 10000 });
 
     // Q3 dalej aktywne, treść/odpowiedzi bez zmian mimo zmiany numeru porządkowego
     await expect(page.locator("#qText")).toHaveValue("Q3");
@@ -513,8 +513,8 @@ test("edytor: nie ma twardego limitu liczby pytań — dodanie wielu ponad minim
     await openEditor(page, gameId);
 
     for (let i = 1; i <= TARGET; i++) {
-      await page.locator("#qList .addTile").click();
-      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(i, { timeout: 10000 });
+      await page.locator("#qList .addCard").click();
+      await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(i, { timeout: 10000 });
     }
 
     const questions = await getQuestionsRows(page, gameId);
@@ -631,7 +631,7 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
 
     // Karta B: overlay blokady, ZERO dostępu do edytowalnej treści pod spodem
     await expect(pageB.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
-    await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(0);
+    await expect(pageB.locator("#qList .qcard:not(.addCard)")).toHaveCount(0);
 
     // Zamknięcie karty A zwalnia blokadę — best-effort przez pagehide+broadcast,
     // a jeśli to zawiedzie, fallback to TTL (120 s) + polling w karcie B (do 5s) —
@@ -639,7 +639,7 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
     await pageA.close();
 
     await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 }); // keepalive przy pagehide; TTL 120 s to ostateczność
-    await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
+    await expect(pageB.locator("#qList .qcard:not(.addCard)")).toHaveCount(2, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -683,7 +683,7 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
     expect(questions.find((q) => q.id === q2Id), "usunięty wiersz nie powinien zostać wskrzeszony przez zapis").toBeUndefined();
 
     // Karta sama zauważa zniknięcie — kafelek Q2 znika z listy bez odświeżania strony
-    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(1, { timeout: 10000 });
+    await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(1, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -998,9 +998,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await expect(aRows(page)).toHaveCount(1);
       expect(await getAnswersRows(page, qId)).toHaveLength(1);
 
-      await page.locator("#qList .addTile").dblclick();
+      await page.locator("#qList .addCard").dblclick();
       await page.waitForTimeout(2000);
-      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2);
+      await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(2);
       expect(await getQuestionsRows(page, gameId)).toHaveLength(2);
     } finally {
       await deleteGame(page, gameId);
@@ -1156,13 +1156,13 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     try {
       await seedPrepared(page, gameId, [["Q1"], ["Q2"], ["Q3"], ["Q4"]]);
       await openEditor(page, gameId);
-      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(4, { timeout: 15000 });
+      await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(4, { timeout: 15000 });
 
       const rpc = page.waitForResponse((r) => r.url().includes("/rpc/game_question_delete"));
       await qCard(page, 1).locator(".x").click();
       await page.locator(".uni-foot .btn.gold:visible").click();
       expect((await rpc).status()).toBe(200);
-      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(3, { timeout: 10000 });
+      await expect(page.locator("#qList .qcard:not(.addCard)")).toHaveCount(3, { timeout: 10000 });
       await expect(qCard(page, 2).locator(".qord")).toHaveText("Pytanie 3");
 
       const qs = await getQuestionsRows(page, gameId);

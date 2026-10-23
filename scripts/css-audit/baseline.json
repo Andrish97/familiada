@@ -159,11 +159,10 @@
   "sharedDuplicate": 1
  },
  "web/games/editor/css/editor.css": {
-  "important": 2,
-  "colorLiteral": 11,
+  "important": 1,
+  "colorLiteral": 8,
   "mediaWidth": 1,
-  "zIndexLiteral": 1,
-  "sharedDuplicate": 8
+  "sharedDuplicate": 1
  },
  "web/games/editor/index.html": {
   "inlineStyleHtml": 4
