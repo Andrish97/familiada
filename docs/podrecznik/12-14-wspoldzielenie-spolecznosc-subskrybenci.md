@@ -10,12 +10,12 @@ Bazę udostępnia jej właściciel; potrzebne jest do tego konto (→ 5.1).
 
 ## 12.2 Zapraszanie do bazy
 
-1. Na stronie *Bazy pytań* zaznacz swoją bazę i wybierz [Udostępnij].
-2. Wybierz poziom dostępu: „Może edytować” (domyślnie) albo „Tylko podgląd”.
-3. Wpisz adres e-mail lub nazwę użytkownika i wybierz [Udostępnij] — albo zaznacz osoby na liście
-   „Znajomi” i wybierz [Udostępnij zaznaczonym].
+1. Na stronie *Bazy pytań* zaznacz swoją bazę i w dolnym pasku wybierz [Udostępnij].
+2. Wpisz adres e-mail lub nazwę użytkownika albo zaznacz osoby na liście „Znajomi”.
+3. Na dole okna wybierz poziom dostępu: „Może edytować” (domyślnie) albo „Tylko podgląd”,
+   i wybierz [Udostępnij]. Wszyscy odbiorcy z tego okna dostają ten sam poziom dostępu.
 
-![Udostępnij bazę](zrzut:bases-share-tools)
+![Udostępnij bazę](zrzut:bases-share-send)
 
 Zaproszona osoba nie musi być Twoim znajomym, ale musi mieć konto. Jeśli ma włączone
 powiadomienia, dostanie wiadomość e-mail z odnośnikiem.
@@ -55,7 +55,7 @@ zajęty. Jeśli spróbujesz zmienić go w tym samym czasie, zobaczysz komunikat 
 jest właśnie edytowany w innej karcie lub przez innego użytkownika.” Poczekaj chwilę
 i spróbuj ponownie. Gdy ktoś ma bazę otwartą, właściciel nie zmieni jej nazwy ani jej nie usunie.
 
-**Zarządzanie dostępem (właściciel).** W oknie [Udostępnij], w sekcji „Udostępnione”, widać
+**Zarządzanie dostępem (właściciel).** Okno [Udostępnienia] (przycisk w górnym pasku) pokazuje
 zaproszenia oczekujące, przyjęte i odrzucone. Możesz:
 
 - zmienić poziom dostępu, także przed przyjęciem zaproszenia,

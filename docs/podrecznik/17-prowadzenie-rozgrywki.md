@@ -57,8 +57,9 @@ Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie al
 
 ![Poprzedni ekran Przycisku — urządzenie otwarto w innym miejscu](zrzut:device-lease-replaced@phone-landscape)
 
-[Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
-nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
+[Kopiuj] kopiuje kod, [Udostępnienia] pokazuje, komu urządzenie jest udostępnione w tej sesji
+(z cofnięciem), a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
+nazwę użytkownika albo zaznacz znajomych. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
 e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
