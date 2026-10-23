@@ -348,7 +348,7 @@ function buildDb(lang, extras = {}) {
       { id: id("mkt-sent-3"), title: "Pubowy quiz czwartkowy", lang: "pl", status: "rejected", library_count: 0, moderation_note: "Za mało pytań w rundzie finałowej." },
     ], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
-    control2_session_ping: null, control2_control_log: 1,
+    control2_session_ping: null, control2_control_log: 1, control2_net_ping: null,
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
     // Głosowanie z linku (anonimowo): stan i treść ankiety.
     poll_state: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); return g ? { ok: true, state: g.status === "poll_open" ? "open" : "ended", type: g.type } : { ok: false, state: "not_found" }; }`,

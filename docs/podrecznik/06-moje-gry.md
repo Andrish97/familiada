@@ -101,8 +101,8 @@ przytrzymaj go na telefonie), aby zobaczyć powód. Najważniejsze zasady:
 
 [Zmień typ] zmienia tę samą grę — nie tworzy kopii. Szczegóły → 7.8.
 
-Na telefonie i w wąskim oknie przeglądarki przyciski [Graj] i [Ustawienia gry] są ukryte —
-*Panel sterowania* i *Ustawienia gry* otworzysz na komputerze lub tablecie.
+Na telefonie i w wąskim oknie przeglądarki przycisk [Graj] jest ukryty — *Panel sterowania*
+otworzysz na komputerze lub tablecie. [Ustawienia gry] działają także na telefonie.
 
 W zakładce **Gry Społeczności** dostępne są tylko [Graj], [Podgląd] i [Ustawienia gry].
 Takich gier nie można edytować, powielać, eksportować ani wysyłać (→ 13.4).

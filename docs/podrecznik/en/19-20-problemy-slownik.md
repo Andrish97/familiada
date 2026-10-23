@@ -97,8 +97,8 @@ Each item: **symptom** → possible cause → what to do.
   or wait a dozen or so seconds until it disconnects.
 - **"Turn your phone sideways…"** on the buzzer → the buzzer works in landscape → turn
   the phone and switch off the screen rotation lock.
-- **"Not available on a phone"** → the page needs a tablet or a computer (e.g. *Game settings*, logo
-  editors, *Control panel*) → open it on a tablet or a computer.
+- **"Not available on a phone"** → the page needs a tablet or a computer (e.g. logo editors,
+  *Control panel*) → open it on a tablet or a computer.
 - **"Rotate your device"** → the page fits once the tablet is rotated → rotate the device.
 - **"Window too narrow"** → the browser window is narrower than the page needs (e.g. *Control panel*,
   logo editors), also in split-screen view → widen the window or leave split screen. Lists, Help and

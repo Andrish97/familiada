@@ -97,8 +97,8 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   albo poczekaj kilkanaście sekund, aż się rozłączy.
 - **„Obróć telefon poziomo…”** na przycisku do pojedynku → przycisk działa w poziomie → obróć
   telefon i wyłącz blokadę obrotu ekranu.
-- **„Niedostępne na telefonie”** → strona wymaga tabletu lub komputera (np. *Ustawienia gry*, edytory
-  logo, *Panel sterowania*) → otwórz ją na tablecie albo komputerze.
+- **„Niedostępne na telefonie”** → strona wymaga tabletu lub komputera (np. edytory logo,
+  *Panel sterowania*) → otwórz ją na tablecie albo komputerze.
 - **„Obróć urządzenie”** → strona zmieści się po obróceniu tabletu → obróć urządzenie.
 - **„Za wąskie okno”** → okno przeglądarki jest węższe, niż potrzebuje strona (np. *Panel sterowania*,
   edytory logo), także w widoku podzielonego ekranu → poszerz okno albo wyjdź z podzielonego ekranu.

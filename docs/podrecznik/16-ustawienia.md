@@ -5,9 +5,11 @@
 Ustawienia dotyczą jednej, konkretnej gry. Otworzysz je przyciskiem [Ustawienia gry]
 w *Moich grach* albo [Zmień ustawienia] w podsumowaniu w panelu sterowania (→ 17.2).
 
-*Ustawienia gry* są niedostępne na telefonie — użyj tabletu lub komputera.
+*Ustawienia gry* działają na telefonie, tablecie i komputerze. Na telefonie sekcje wybierasz
+przyciskiem menu na pasku pod nagłówkiem.
 
 ![Ustawienia gry](zrzut:game-settings)
+![Ustawienia gry na telefonie](zrzut:game-settings@phone)
 
 Ustawienia przygotuj **przed rozpoczęciem rozgrywki**. Gdy gra jest otwarta w panelu sterowania,
 ustawień nie zmienisz. Jeśli zamknąłeś panel w trakcie gry, serwis pokaże „Gra w toku” z wyborem:
