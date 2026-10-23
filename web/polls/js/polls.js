@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-23T05195";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-23T05195";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05195";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05195";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T05195";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05195";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T05195";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05195";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T05195";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T05195";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T05195";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-23T05195";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05195";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T05195";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T05195";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T05195";
-import { createTally } from "./poll-tally.js?v=v2026-10-23T05195";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-23T05492";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-23T05492";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05492";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05492";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T05492";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05492";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T05492";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05492";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05492";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T05492";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T05492";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T05492";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-23T05492";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05492";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T05492";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T05492";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05492";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T05492";
+import { createTally } from "./poll-tally.js?v=v2026-10-23T05492";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-23T05195";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-23T05492";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)

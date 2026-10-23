@@ -181,7 +181,7 @@ wolnych → poprosić użytkownika o dodanie konta. Szczegóły: plan §1a.
 | `e2e.dedicated01` | `e20-gallery` | galeria E20 (`e20-gallery.spec.js`, `e2e-tests.yml`) | dane do zrzutów |
 | `e2e.dedicated02`–`06` | — wolne | | |
 
-Resources (wspólne ograniczenia): `mail` (2 naraz — limity dostawcy),
+Resources (wspólne ograniczenia): `mail` (6 naraz — kolejka poczty rozkłada wysyłkę; migracja 471),
 `heavy` (1 naraz — Control, wyświetlacz).
 
 ### Rules for specs

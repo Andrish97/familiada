@@ -62,14 +62,10 @@ for m in "${MIGS[@]}"; do
   "${PSQL[@]}" -f "$REPO/$m" 2>&1 | grep -v "NOTICE" || true
 done
 
-# --- PostgREST i supabase-js (raz, do ~/.cache) ---
+# --- PostgREST (raz, do ~/.cache); supabase-js idzie z web/shared/vendor ---
 if [ ! -x "$CACHE/postgrest" ]; then
   curl -sSL -o "$CACHE/pgrst.tar.xz" https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz
   tar xf "$CACHE/pgrst.tar.xz" -C "$CACHE"
-fi
-if [ ! -f "$CACHE/supabase-js/package/dist/umd/supabase.js" ]; then
-  mkdir -p "$CACHE/supabase-js"
-  (cd "$CACHE/supabase-js" && tar xzf "$(npm pack @supabase/supabase-js@2 --silent | tail -1)")
 fi
 cat > "$CACHE/pgrst.conf" <<CONF
 db-uri = "postgres://postgres@localhost:5499/fam?host=$P"

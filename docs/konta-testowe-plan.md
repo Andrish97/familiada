@@ -28,6 +28,7 @@ Zasady dla speców: `tests/README.md`, sekcja „Test accounts”.
 | 2026-10-22 | **Skrzynka uniwersalna** (użytkownik: „usuń, skrzynka ma być uniwersalna”): z `helpers/mailbox.js` usunięte `restoreTestAccount`, `queueMailTemplateFixtures`, `clearMailCenterCapabilities`, `restoreMailCenterPreference`; migracja 464 usuwa fikstury z adresatem przypisanym do konta (`e2e_registered_subscriber_fixture`, `e2e_subscriber_mail_flag` — stare z test8/test14 i wersje z 462). |
 | 2026-10-22 | **Bez wzorców testN w bazie** (użytkownik): migracja 465 — funkcje e2e_* (sprzątanie par, budżet i cooldowny adresu, Społeczność, podgląd kolejki plików), `mail_queue_cooldown_guard`, `is_test_email`, `profiles_reserve_test_username`, widok `stats_exclusions_effective` (tylko tożsamość e2e, `e2e_role`, gość testowy), CHECK `e2e_emails` (tylko `e2e+`), prefiks nazw `test` usunięty. |
 | 2026-10-22 | Workflow e2e bez puli kont (użytkownik): usunięte wejście `test_accounts`, zmienne `TEST_ACCOUNT_COUNT`/`TEST_ACCOUNT_NUMBERS`, opis puli w komentarzu; `e2e-seq.sh` bez `ACCOUNTS`. Zostaje `e20_gallery_accounts` (galeria E20 — kod speca, do przepisania na `dedicated: "e20-gallery"`). |
+| 2026-10-23 | Zasób `mail` z 2 do 6 miejsc (użytkownik: „mamy przepustowość, kolejka zrobi swoje”) — migracja 471, wiersze `resource.mail03`–`06`. |
 
 **Do potwierdzenia:** liczności puli (propozycja: `standard` 40, `noaccount` 10, `disposable` 6, `dedicated` 6).
 
@@ -97,7 +98,7 @@ jako „wirtualne konta” roli `resource`:
 
 | Resource | Sztuk | Kiedy deklarować |
 |---|---|---|
-| `mail` | 2 | spec wysyła lub czeka na maile (wspólne limity dostawcy, `resetMailProviderLimits`) |
+| `mail` | 6 (471; było 2) | spec wysyła lub czeka na maile (wspólne limity dostawcy, `resetMailProviderLimits`) |
 | `heavy` | 1 | Control, wyświetlacz, wiele kontekstów przeglądarki (mały serwer bazy) |
 
 Spec bez deklaracji zasobu go nie zajmuje.
