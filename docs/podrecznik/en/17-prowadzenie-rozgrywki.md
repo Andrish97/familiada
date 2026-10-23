@@ -50,6 +50,13 @@ scan them from the room. It is best to use two separate devices.
 ![The *Connect a device* page](zrzut:connect-device)
 ![After entering the code — the game name and owner to check](zrzut:play-connect-confirm)
 
+Each device works in one place at a time. Opening it in a new tab or on other hardware (e.g. after
+scanning the code again) takes over its role straight away, and the previous screen shows "This
+device was opened elsewhere". To go back to the previous screen, click [Use here] on it — the other
+one switches off.
+
+![The previous buzzer screen — the device was opened elsewhere](zrzut:device-lease-replaced@phone-landscape)
+
 [Copy] copies the code, and [Share] sends the device to another person — enter their email address or
 username, or choose a friend. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
