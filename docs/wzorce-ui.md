@@ -464,7 +464,7 @@ Lokalizacje `plik:linia` względem `web/`.
 | Strona | Rodzaj | Topbar | Karty | Pasek akcji | Marginesy |
 |---|---|---|---|---|---|
 | `/` (landing) | tekstowa | — (marka + język) | — (kotwice `#`) | — | ✓ |
-| `/login/` | wejście | — (własny `login-back-fixed`) | — | — | — |
+| `/login/` | wejście | `.btn` / `.btn.icon` (powłoka `.auth-body`) | — | — | — |
 | `/login/reset/`, `/login/confirm/` | wejście | — | — | — | — |
 | `/games/` | lista | ✓ | ✗ K1, K3 | ✗ P1 | ✓ |
 | `/games/editor/` | praca | ✗ T1 | — | — | ✓ |

@@ -3325,6 +3325,41 @@
   .change-type-keep { grid-column: 2; display: none; align-items: center; gap: 8px; margin-top: 6px; font-size: .9rem; font-weight: 700; }
   .change-type-option:has(input[type="radio"]:checked) .change-type-keep { display: flex; }
 
+  /* ── Strony logowania (logowanie, potwierdzenie, reset hasła) ──────
+     Jedna powłoka: tło z gradientem na html (cały ekran, także pod paskiem
+     stanu), body przezroczyste, wysokość okna i własne przewijanie (html się
+     nie przewija), treść w strefie bezpiecznej, stopka na dole. */
+  html:has(> body.auth-body) {
+    background: var(--bg-auth);
+    overflow: hidden;
+  }
+  .auth-body {
+    box-sizing: border-box;
+    height: 100dvh;
+    margin: 0;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    place-items: center;
+    color: var(--text);
+    background: transparent;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .auth-shell { width: min(520px, 92vw); padding: 18px; }
+  .auth-body .footer {
+    width: 100%;
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
+  }
+  .auth-body .footer::before { width: 92%; }
+  @media (max-width: 980px) {
+    .auth-body .footer {
+      padding-left: calc(15px + env(safe-area-inset-left, 0px));
+      padding-right: calc(15px + env(safe-area-inset-right, 0px));
+    }
+  }
+
 /* ── utilities.css ── */
 /* Silnik stylów E23 — klasy pomocnicze (docs/silnik-stylow-projekt.md §4.3).
    Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.

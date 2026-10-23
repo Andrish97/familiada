@@ -1,62 +1,7 @@
 /* Gradient na html — widoczny przez transparentne body */
 @layer page {
-  html:has(.login-body) {
-      background:
-          radial-gradient(circle at 20% 10%, var(--g-10), transparent 55%),
-          radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
-          var(--bg);
-      /* Scroll trzymamy w body — html nie scroluję, overscroll na html nie pokazuje się */
-      overflow: hidden;
-  }
-
-  /* === LOGIN / REGISTER PAGE ===
-     html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
-     body: transparent — shows html gradient through it
-     Children: stay inside safe area thanks to padding on body
-  */
-
-
-  .login-body {
-      /* Wysokość okna (nie min-height): html nie przewija się, więc body musi
-         przewijać się samo, gdy karta i stopka nie mieszczą się w niskim oknie. */
-      box-sizing: border-box;
-      height: 100dvh;
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      color: var(--text);
-      display: grid;
-      grid-template-rows: 1fr auto;
-      place-items: center;
-      background: transparent;
-      /* Scroll w body → overscroll iOS nie ujawnia tła html */
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-
-      /* keep children below/beside status bar & notch */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-
-  /* ── card ── */
-
-  .login-shell {
-      width: min(520px, 92vw);
-      padding: 18px;
-  }
-
-  .login-shell[data-skel-step] {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity .3s ease;
-  }
-  .login-shell[data-skel-step].skel-step-ready {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-  }
-
-
+  /* Powłoka (tło, wysokość okna, strefa bezpieczna, stopka): .auth-body
+     i .auth-shell w silniku (layout.css). */
 
   /* ── typography ── */
 
@@ -217,58 +162,13 @@
   .login-top-right { right: calc(20px + env(safe-area-inset-right, 0px)); }
 
 
-  /* wysokość jak przycisk języka obok (.lang-btn: 37 px), żeby górne przyciski
-     po obu stronach były równe */
-  .login-back-fixed {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: var(--r-md);
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: .05em;
-    color: rgba(255,255,255,.75);
-    text-decoration: none;
-    border: 1px solid var(--w-14);
-    background: linear-gradient(var(--w-4), var(--w-4)) var(--bg); /* kryjące (Android) */
-    transition: all .18s ease;
-    box-sizing: border-box;
-    min-height: 37px;
-  }
-  .login-back-fixed.icon-only { padding: 8px 10px; min-width: 38px; justify-content: center; }
-  .login-back-fixed .ico { width: 16px; height: 16px; }
-
-  .login-back-fixed:hover {
-      color: var(--gold);
-      border-color: var(--gold);
-      background: var(--g-10);
-  }
-
-  .login-body .footer {
-      width: 100%;
-      padding-left: calc(18px + env(safe-area-inset-left, 0px));
-      padding-right: calc(18px + env(safe-area-inset-right, 0px));
-      box-sizing: border-box;
-  }
-  .login-body .footer::before {
-      width: 92%;
-  }
-  @media (max-width: 980px) {
-      .login-body .footer {
-          padding-left: calc(15px + env(safe-area-inset-left, 0px));
-          padding-right: calc(15px + env(safe-area-inset-right, 0px));
-      }
-  }
+  /* przyciski w rogach: zwykłe .btn / .btn.icon, wysokość jak przycisk języka */
+  :is(.login-top-left, .login-top-right) .btn { min-height: var(--topbar-ctl-h); }
 
   @media (max-width: 600px) {
       .login-top-left,
       .login-top-right { top: max(14px, env(safe-area-inset-top)); }
       .login-top-left { left: calc(14px + env(safe-area-inset-left, 0px)); }
       .login-top-right { right: calc(14px + env(safe-area-inset-right, 0px)); }
-      .login-back-fixed {
-          padding: 8px 12px;
-          font-size: 14px;
-      }
   }
 }

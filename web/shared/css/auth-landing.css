@@ -1,54 +1,6 @@
-/* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
+/* Potwierdzenie konta i reset hasła — treść karty. */
 @layer page {
-  html:has(.landing-body) {
-      background:
-          radial-gradient(circle at 20% 20%, var(--g-10), transparent 55%),
-          radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
-          var(--bg);
-      overflow: hidden;
-  }
-
-  /* === CONFIRM / RESET PAGES ===
-     html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
-     body: transparent — shows html gradient through it
-     Children: stay inside safe area thanks to padding on body
-  */
-
-  /* Zmienne strony na body (tokeny :root są poza warstwami i wygrywają). */
-
-
-  .landing-body {
-    --card: var(--w-8);
-    --stroke: var(--w-14);
-    --led: var(--accent);
-    --txt: #ffffff;
-    --muted: rgba(255,255,255,.75);
-    --danger: #ff7a7a;
-    margin: 0;
-    /* Wysokość okna (nie min-height): html nie przewija się — body przewija
-       kartę i stopkę w niskim oknie (jak login.css). */
-    box-sizing: border-box;
-    height: 100dvh;
-    display: grid;
-    grid-template-rows: 1fr auto;
-    place-items: center;
-    color: var(--txt);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: transparent;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-
-  /* ── layout ── */
-
-  .landing-shell {
-      width: min(560px, 92vw);
-      padding: 18px;
-  }
-
-
+  /* Powłoka: .auth-body i .auth-shell w silniku (layout.css). */
 
   /* ── typography ── */
 
@@ -56,7 +8,7 @@
       font-weight: 1000;
       letter-spacing: .18em;
       text-transform: uppercase;
-      color: var(--led);
+      color: var(--accent);
       font-size: 18px;
   }
 
@@ -96,19 +48,4 @@
 
   .hint { margin-top: 12px; }
 
-  .landing-body .footer {
-      width: 100%;
-      padding-left: calc(18px + env(safe-area-inset-left, 0px));
-      padding-right: calc(18px + env(safe-area-inset-right, 0px));
-      box-sizing: border-box;
-  }
-  .landing-body .footer::before {
-      width: 92%;
-  }
-  @media (max-width: 980px) {
-      .landing-body .footer {
-          padding-left: calc(15px + env(safe-area-inset-left, 0px));
-          padding-right: calc(15px + env(safe-area-inset-right, 0px));
-      }
-  }
 }

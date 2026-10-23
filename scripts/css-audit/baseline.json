@@ -192,7 +192,6 @@
   "inlineStyleJs": 15
  },
  "web/login/css/login.css": {
-  "colorLiteral": 2,
   "zIndexLiteral": 1,
   "sharedDuplicate": 9
  },
@@ -323,7 +322,6 @@
   "styleBlock": 1
  },
  "web/shared/css/auth-landing.css": {
-  "colorLiteral": 4,
   "sharedDuplicate": 5
  },
  "web/shared/css/blocking-overlay.css": {
@@ -439,13 +437,13 @@
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 262,
+  "sharedDuplicate": 264,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {
   "important": 2,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 23
+  "sharedDuplicate": 25
  },
  "web/shared/style/utilities.css": {
   "important": 3,

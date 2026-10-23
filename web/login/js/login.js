@@ -832,7 +832,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setStatus(t("index.statusChecking"));
   // Pierwszy etap logowania: szkielet formularza jest gotowy po i18n i
   // przygotowaniu trybu, bez czekania na późniejsze żądania auth/captcha.
-  document.querySelector(".login-shell[data-skel-step]")?.classList.add("skel-step-ready");
+  document.querySelector(".auth-shell[data-skel-step]")?.classList.add("skel-step-ready");
   if (guestExpired) {
     void alertModal({ text: t("index.guestExpired") });
   }

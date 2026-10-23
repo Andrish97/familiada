@@ -17,7 +17,7 @@ const p2 = document.getElementById("p2");
 const save = document.getElementById("save");
 const back = document.getElementById("back");
 
-function setStatus(m){ status.textContent = m; document.querySelector(".landing-shell[data-skel-step]")?.classList.add("skel-step-ready"); }
+function setStatus(m){ status.textContent = m; document.querySelector(".auth-shell[data-skel-step]")?.classList.add("skel-step-ready"); }
 function setErr(m=""){ err.textContent = m; }
 
 function qp(name){

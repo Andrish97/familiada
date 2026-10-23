@@ -322,6 +322,10 @@ wewnątrz tabeli listy Eksploratora).
   powtarzają tło `html`, siatkę `body` i safe area z innymi gradientami. Do
   scalenia w jedną klasę — wymaga zmiany HTML logowania (e2e z brancha nie
   podmienia HTML logowania: sprawdzić zrzutami i kontrolą na produkcji).
+  **Zrobione (branch, 2026-10-23):** silnik `.auth-body` + `.auth-shell`
+  (layout.css, tło `--bg-auth`); `login.css` i `auth-landing.css` mają tylko
+  treść karty; przyciski w rogach logowania `.btn` / `.btn.icon`
+  (było `login-back-fixed`). Kontrola na produkcji po wdrożeniu.
 
 - **Control → Urządzenia — podpowiedź pod siatką (E23, 2026-10-23):**
   „Wejdź na familiada.online…” stoi dużą czcionką nad stopką kroku, z pustym
@@ -469,3 +473,4 @@ dla wszystkich (Bazy i Ankiety miały wcześniej 12 px zamiast 20 px).
 | 2026-10-23 | Wypustki: wklęsły łuk = róg karty odwrócony (ten sam promień `--tab-r` = `--radius`, linia nieprzezroczysta, wygładzone przejścia gradientu); reguła prostująca róg karty bez `:has` w `:has` (przeglądarka ją pomijała — w Grach, Bazach, Ankietach, Logo róg pod skrajną wypustką był zaokrąglony). Zrzuty: gry, bazy, loga (telefon/komputer). |
 | 2026-10-23 | Wypustki — wklęsły łuk o połowę mniejszy | Decyzja użytkownika: wewnętrzne zaokrąglenie mniejsze (połowa zewnętrznego) — ładniej. `--tab-r-in = --tab-r / 2` (10 px przy 20 px). Zrzuty: gry (wszystkie zakładki), bazy, loga — telefon i komputer. |
 | 2026-10-23 | Funkcje koloru | `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`) zamiast dwóch kopii (Ustawienia gry, znaczniki Eksploratora); zapis `#RRGGBB` wielkimi literami, odczyt dawnych zapisów, bez migracji. Unit `color.test.js`; spec `game-settings` — oczekiwany zapis domyślnego koloru `#C4002F` (format z decyzji). Zrzuty: game-settings-color, base-explorer-tags-edit/-color. |
+| 2026-10-23 | Powłoka logowania | `.login-body`/`.landing-body` i `.login-shell`/`.landing-shell` → `.auth-body`/`.auth-shell` w silniku; `login-back-fixed` → `.btn`/`.btn.icon`; nowe sceny zrzutów `login-confirm`, `login-reset`. Zrzuty: logowanie — przyciski w rogach jak w topbarze; potwierdzenie/reset — tło jak logowanie; audyt 0 uwag. |

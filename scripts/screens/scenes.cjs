@@ -201,6 +201,8 @@ module.exports = [
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
   // Logowanie: „←” po lewej, „i” i język po prawej (jak sekcja 3 topbara stron aplikacji).
   { id: "login", guest: true, category: "Dodatkowe", title: "Logowanie — górne przyciski (powrót; „i” i język po prawej)", path: "/login/", sources: ["web/login/", "web/shared/translation/translation.js"], ready: "#btnPrimary" },
+  { id: "login-confirm", guest: true, category: "Dodatkowe", title: "Potwierdzenie konta — wspólna powłoka logowania (.auth-body)", path: "/login/confirm/", sources: ["web/login/confirm/", "web/shared/css/auth-landing.css"], ready: ".auth-shell.skel-step-ready" },
+  { id: "login-reset", guest: true, category: "Dodatkowe", title: "Reset hasła — wspólna powłoka logowania (.auth-body)", path: "/login/reset/", sources: ["web/login/reset/", "web/shared/css/auth-landing.css"], ready: ".auth-shell.skel-step-ready" },
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
   // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie

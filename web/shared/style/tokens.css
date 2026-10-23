@@ -35,6 +35,8 @@
 
   /* ── podłoża (kryjące) ──────────────────────────────────────── */
   --bg: #050914;                 /* tło strony */
+  /* tło stron logowania (.auth-body) */
+  --bg-auth: radial-gradient(circle at 20% 10%, var(--g-10), transparent 55%), radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%), var(--bg);
   --surface-top: var(--bg);      /* topbar */
   --surface-tile: var(--bg);     /* kafel */
   --surface-tile-hover: var(--surface-2);
