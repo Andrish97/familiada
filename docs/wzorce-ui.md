@@ -121,10 +121,16 @@ Nowa strona bez topbara z „i” = ta sama grupa `data-lang-slot`, nigdy „i�
 ## A3. Karty (zakładki) — jeden mechanizm [WZÓR: nawigacja-mapa-plan „Karty”]
 
 - Wygląd: **jeden** komponent `.tabs-card` (`.tabs-strip` > `.tab-slot` >
-  `.tab-label` + `.tab-wrapper` z `.tab-active` i `.tab-corner-left/right`),
-  jeden zestaw wymiarów w zmiennych CSS (`--tab-height`, `--radius`,
-  `--surface`) w `base.css` — nie osobna kopia CSS na stronę. Szerokości:
-  równe części paska (`flex: 1 1 0`), nie `--tab-width` na stronę.
+  `.tab-label`; pod spodem `.card`) w `shared/style/components.css` — bez
+  kopii CSS na stronach (E23, 2026-10-23). Aktywna wypustka zachodzi na kartę;
+  górne łuki = promień karty (`--tab-r`), wklęsłe u podstawy = połowa
+  (`--tab-r-in`); skrajna aktywna wypustka stoi równo z krawędzią karty, a róg
+  karty pod nią jest prosty (jedna reguła w `@layer states`). Szerokości:
+  równe części paska (`flex: 1 1 0`).
+- Stan w JS: **jedna** funkcja `markActiveTab(labels, active)` z
+  `core/tabs.js` — `.active` wypustki i slotu, `role="tab"`/`tablist`,
+  `aria-selected`, `tabindex`, strzałki/Home/End. Karta dzielona (dwie karty
+  na komputerze, wypustki na telefonie): `core/split-tabs.js`.
 - Adres: karta zawsze w `?tab=<nazwa>`; domyślna bez parametru; nieznana →
   pierwsza; zmiana karty = `history.replaceState` (przeglądarkowe „Wstecz” =
   ↩ = poprzednia *strona*); **bez** `sessionStorage`, bez `#hash` jako karty.
@@ -371,6 +377,8 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 | Destrukcyjny | `.btn.danger` → **czerwony obrys** (jak `.btn.pollAbort`) | dziś `.btn.danger` = czerwone wypełnienie (tylko „Usuń konto”), a `.pollAbort` ma obrys; jeden wygląd; tylko w oknach potwierdzenia i na dole formularza |
 | Rozmiary | `.btn` (formularze, okna), `.btn.sm` (paski akcji, 13 px), `.btn.xs` (w kaflu, 11 px), `.btn.xsm` (wiersz udostępniania) | nie wymyślać `btn-sm`, `small` |
 | Ikona | `.btn.icon` (`.btn.sm.icon`) | jedna klasa, kwadrat o wysokości przycisku (37 / 33 px) |
+| Bez tła | `.btn-plain` (+ klasa rozmiaru, np. `.searchClear`) | sama ikona/tekst w polu, wierszu lub pasku (czyszczenie wyszukiwania, rozwijanie drzewa, usuń plik, zamknij baner); przygaszony kolorem |
+| Stany | `.is-active` / `[aria-pressed=true]` (włączony), `:disabled` (kolory `--disabled-*`) | jeden wygląd na wszystkich stronach; **bez** `opacity`, `filter`, `backdrop-filter`, `transform` w stanach dotyku (Android: artefakty) — podświetlenie najechania tylko w `(hover: hover) and (pointer: fine)` |
 | Zakazane | `.btn.ghost` (menedżer bazy), `.btn.green` (nieużywane), `.btn-sm` (Control), `.tbtn` (pasek rysowania logo, własna rodzina) | |
 
 Etykiety: pełne słowa, bez skrótów typu „Imp”, „Exp.bz”, „Podgl.”.
