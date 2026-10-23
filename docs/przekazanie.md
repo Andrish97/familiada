@@ -22,8 +22,8 @@ wierszu), `[hidden]` bez obejścia (audyt zrzutów `hidden-widoczny`), style
 inline na stronach publicznych (poza logowaniem), `.field`, `.import-preview`,
 błąd `hideTip()` w edytorze rysowania. e2e zielone: 1947, 1954.
 
-**PAUZA na prośbę użytkownika (2026-10-23, wieczór).** Wznowienie dopiero po
-„wracamy”. Przerwane: e2e 1961 (nawigacja, układ ankiet, głosowanie, Go,
+**PAUZA na prośbę użytkownika (2026-10-23, wieczór; potwierdzone „nie wracamy”).**
+Wznowienie dopiero po „wracamy”. Przerwane: e2e 1961 (nawigacja, układ ankiet, głosowanie, Go,
 usuwanie w edytorze rysowania — na `dbfadc04`) i porównanie zrzutów tej paczki
 (sceny w scratchpadzie, do powtórzenia: `node scripts/screens/run.cjs
 --scenes=games,games-import-preview,games-export-base,games-editor-txt-import-preview,logos-market-logos-import-file,logos-market-market-submit,people-404,polls-open-text-share,polls-vote-points-stopped,poll-vote-text,control-devices,game-settings,logo-draw,base-explorer-tags-edit`
