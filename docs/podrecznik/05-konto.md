@@ -88,8 +88,8 @@ Wybierz [Wejdź jako gość] na stronie *Logowanie*. Konto gościa:
 
 Serwis co jakiś czas przypomina, że konto gościa zostanie usunięte, i proponuje [Migruj teraz].
 
-![Konto gościa — zachęta do zapisania danych](zrzut:people-account-guest)
-![Jak zapisać dane gościa](zrzut:people-account-guest-info)
+![Ustawienia konta gościa — „Zapisz swoje dane” i „Usuń konto”](zrzut:people-account-guest)
+![Okno „Konto gościa” — ważne informacje i jak zachować dane](zrzut:people-account-guest-info)
 
 **Jak zachować dane gościa** — zamień konto gościa na zwykłe konto. Gry, bazy pytań,
 logo i inne pliki zostaną zachowane.

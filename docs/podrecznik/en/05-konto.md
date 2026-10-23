@@ -88,8 +88,8 @@ Choose [Continue as guest] on the *Login* page. A guest account:
 
 From time to time the app reminds you that the guest account will be deleted and offers [Migrate now].
 
-![Guest account — prompt to keep your data](zrzut:people-account-guest)
-![How to keep guest data](zrzut:people-account-guest-info)
+![Guest account settings — "Save your data" and "Delete account"](zrzut:people-account-guest)
+![The "Guest account" window — important information and how to keep your data](zrzut:people-account-guest-info)
 
 **How to keep your guest data** — turn the guest account into a regular account. Games, question bases,
 logos and other files will be kept.
