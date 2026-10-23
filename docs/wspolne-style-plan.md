@@ -276,6 +276,11 @@ i Ustawieniach niż zakładał pierwszy plan).
   na `.card--entry`/`.btn` razem z modułem `block-screen` (plik działa też bez
   tokenów na TV — sprawdzić Tizen).
 
+- **Funkcje koloru (2026-10-23):** `hexToRgb`/`rgbToHex`/`normHex` w ustawieniach
+  gry (wielkie litery, czarny przy błędzie) i znacznikach Eksploratora (małe
+  litery, `null`) mają różną semantykę zapisu — wspólny moduł `core/color.js`
+  dopiero z decyzją o jednym formacie zapisu koloru (migracja danych?).
+
 ## Dziennik E23
 
 | Data | Krok | Wynik |
