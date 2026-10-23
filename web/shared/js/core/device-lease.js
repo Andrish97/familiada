@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-23T05292";
-import { t } from "../../translation/translation.js?v=v2026-10-23T05292";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T05292";
-import { startTicker } from "./background-ticker.js?v=v2026-10-23T05292";
-import { icon } from "./icons.js?v=v2026-10-23T05292";
-import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T05292";
-import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T05292";
+import { sb } from "./supabase.js?v=v2026-10-23T05395";
+import { t } from "../../translation/translation.js?v=v2026-10-23T05395";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T05395";
+import { startTicker } from "./background-ticker.js?v=v2026-10-23T05395";
+import { icon } from "./icons.js?v=v2026-10-23T05395";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T05395";
+import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T05395";
 
 
 const HEARTBEAT_MS = 3_000;
