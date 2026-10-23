@@ -132,4 +132,4 @@ Logo pojawia się na początku gry i na końcu, jeśli tak ustawisz ekran końco
 **Blokady.** Edycja logo i rozgrywka się wykluczają: gdy edytujesz logo, nie otworzysz
 panelu sterowania ani ustawień gry, a podczas rozgrywki lub przy otwartych ustawieniach gry
 nie edytujesz ani nie usuniesz logo. Serwis wskaże powód — zakończ jedną czynność i wróć
-do drugiej.
+do drugiej. Czekająca strona wczyta się sama, gdy tamta się zakończy (→ 19.2).

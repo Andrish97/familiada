@@ -123,7 +123,8 @@ zatrzymaną ankietę, serwis uprzedzi: „Ankieta zostanie przerwana.” — zeb
 
 Gry otwartej w innym miejscu (w edytorze, ustawieniach, ankiecie albo w innej karcie
 przeglądarki) nie można w tej chwili usunąć ani zmienić jej nazwy. Serwis pokaże wtedy
-„Ta gra jest otwarta gdzie indziej.” Zamknij tamto okno i spróbuj ponownie.
+„Ta gra jest otwarta gdzie indziej.” Zamknij tamto okno i spróbuj ponownie — gra zwalnia się od
+razu po zamknięciu tamtej karty, a po około 30 sekundach, gdy karta zniknęła bez zamknięcia (→ 19.2).
 
 W zakładce Gry Społeczności kosz oznacza [Usuń z biblioteki] (→ 13.4).
 

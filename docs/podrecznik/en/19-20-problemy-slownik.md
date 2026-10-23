@@ -33,9 +33,20 @@ Each item: **symptom** → possible cause → what to do.
 - **I cannot edit a game** → the poll is open or stopped, the game is open somewhere
   else, or it is being played → abort or close the poll, close the other window with this game,
   end the game (→ 7.5).
-- **"This game is open elsewhere."** → the game is open in another tab or on another
-  device (editor, settings, poll, control panel) → close that window and try
-  again.
+- **"In use elsewhere"** (e.g. "This game is open elsewhere.", "This logo is currently being
+  edited…") → the game, logo or base is open in another tab, on another device or by a
+  collaborator (editor, settings, poll, control panel) → close that window.
+  You don't need to reload the page: it checks the item itself and loads once it is free. After
+  that tab is closed normally this happens at once; if the tab disappeared without closing (browser
+  crash, a sleeping computer or phone, no network) — after about 30 seconds. A tab in the background
+  (another window, minimised browser) keeps the item.
+- **"Lock lost"** → this tab had no connection to the app for a while (e.g. after the computer
+  slept), and in the meantime another tab took over the item → reload the page.
+- **"Game in progress" in game settings** → the game in the control panel was not finished → finish
+  it in the panel or choose [End game and open settings]; otherwise the game lock expires after
+  an hour of inactivity (→ 16.1).
+
+![In use elsewhere](zrzut:games-editor-locked-busy)
 - **An answer is not saved** → it contains characters the Display cannot show (for example emoji),
   or it is too long → remove those characters; an answer can have up to 17 characters (→ 7.3).
 - **Importing a file does not work** → the file is not a game from the app or it is damaged → use a

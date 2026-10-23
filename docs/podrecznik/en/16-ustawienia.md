@@ -14,7 +14,7 @@ menu button on the bar below the header.
 Prepare the settings **before the game starts**. While the game is open in the control panel,
 you cannot change its settings. If the game is still running (e.g. you closed the panel during a game), the app
 shows "Game in progress": saved changes apply only to the next game, and the game lock expires on its own
-after the stated time of inactivity. You can choose
+after an hour of inactivity (the window shows how much time is left). You can choose
 [Go back] or [End game and open settings] — the second option ends the game, and you will have to connect
 the devices again.
 

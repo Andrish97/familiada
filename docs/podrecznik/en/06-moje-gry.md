@@ -123,7 +123,8 @@ stopped poll, the app will warn you: "The poll will be aborted." — the collect
 
 A game that is open somewhere else (in the editor, settings, poll or in another browser
 tab) cannot be deleted or renamed at that moment. The app will then show
-"This game is open elsewhere." Close that window and try again.
+"This game is open elsewhere." Close that window and try again — the game is freed as soon as that tab
+is closed, or after about 30 seconds if the tab disappeared without closing (→ 19.2).
 
 In the Community Games tab, the trash icon means [Remove from library] (→ 13.4).
 

@@ -14,7 +14,7 @@ przyciskiem menu na pasku pod nagłówkiem.
 Ustawienia przygotuj **przed rozpoczęciem rozgrywki**. Gdy gra jest otwarta w panelu sterowania,
 ustawień nie zmienisz. Jeśli rozgrywka nadal trwa (np. zamknąłeś panel w trakcie gry), serwis pokaże
 „Gra w toku”: zapisane zmiany obejmą dopiero następną grę, a blokada rozgrywki wygaśnie sama po
-podanym czasie bezczynności. Możesz wybrać
+godzinie bezczynności (okno pokazuje, ile zostało). Możesz wybrać
 [Wróć] albo [Zakończ rozgrywkę i otwórz ustawienia] — ta druga opcja kończy grę, a urządzenia
 trzeba będzie podłączyć od nowa.
 

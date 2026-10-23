@@ -132,4 +132,4 @@ The logo appears at the start of the game, and at the end if you set the end scr
 **Locks.** Editing a logo and playing a game exclude each other: while you are editing a logo, you cannot open
 the control panel or game settings, and during a game or while game settings are open
 you cannot edit or delete a logo. The app will show the reason — finish one activity and go back
-to the other.
+to the other. A waiting page loads by itself once the other activity ends (→ 19.2).
