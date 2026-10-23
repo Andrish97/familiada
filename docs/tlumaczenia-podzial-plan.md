@@ -75,3 +75,7 @@ zostają: strona wczytuje wtedy część sąsiedniej strony (meta z generatora).
    nie ma okna, w którym serwer nie znajduje tekstów.
 4. Push B na `main`: podział (usunięcie `{pl,en,uk}.js`).
 5. Kontrola produkcji (te same spece + mail auth).
+
+## Stan
+
+Zrobione 2026-10-23: krok A (5ce48dae) i B (da861378) na produkcji, kontrola ✓ — szczegóły w Dzienniku `wdrozenia.md`.
