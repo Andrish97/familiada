@@ -3,14 +3,14 @@
 // Dwa okna jak w Bazach (decyzja użytkownika 2026-10-23): „Udostępnienia”
 // (lista w tej sesji, cofanie) i „Udostępnij” (adres + znajomi, jeden przycisk).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T22015";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T22015";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T22015";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T22015";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T22015";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T22015";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T22030";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T22030";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T22030";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T22030";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T22030";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T22030";
 
-import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T22015";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T22030";
 
 
 function deviceTypeLabel(type) {
