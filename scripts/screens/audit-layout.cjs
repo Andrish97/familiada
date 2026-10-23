@@ -62,12 +62,16 @@ function inspectLayout(opts) {
   // Nakładka blokująca (ekran „Obróć urządzenie”, brak dostępu, blokada zasobu):
   // strona pod nią jest niedostępna z założenia — audyt sprawdza samą nakładkę.
   const guard = [...document.querySelectorAll(".blocking-overlay")].find((el) => visible(el));
-  const root = guard || document.body;
+  // Otwarte okno (nakładka na cały ekran): strona pod nim ma zablokowane
+  // przewijanie z założenia — sprawdzamy samo okno.
+  const dialog = !guard && [...document.querySelectorAll(".overlay, .market-preview-overlay, [role=dialog][aria-modal=true]")]
+    .filter((el) => visible(el) && getComputedStyle(el).position === "fixed").pop();
+  const root = guard || dialog || document.body;
 
   // 1. Dokument.
   const doc = document.scrollingElement || document.documentElement;
   if (doc.scrollWidth > W + 1) add("poziome-przewijanie", null, `${doc.scrollWidth}px > ${W}px`);
-  if (doc.scrollHeight > H + 1 && !guard) {
+  if (doc.scrollHeight > H + 1 && !guard && !dialog) {
     const st = getComputedStyle(document.body), hs = getComputedStyle(document.documentElement);
     const locked = /hidden|clip/.test(st.overflowY) || /hidden|clip/.test(hs.overflowY);
     if (locked) add("ucieta-strona", null, `treść ${doc.scrollHeight}px > ekran ${H}px przy zablokowanym przewijaniu`);
