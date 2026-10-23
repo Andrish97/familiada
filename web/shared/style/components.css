@@ -1162,7 +1162,7 @@
   .colorTopRow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .colorHexField { flex: 1 1 auto; min-width: 0; display: grid; gap: 6px; }
   .colorHexField .inp { width: 100%; }
-  .colorHexField .hint { margin: 0; }
+  .colorHexField :is(.hint, .field-label) { margin: 0; }
   .colorPreview {
     flex: 0 0 auto;
     width: 72px;

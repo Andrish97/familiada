@@ -16,18 +16,18 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T14553";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T14553";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T14553";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T14553";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T14553";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T14553";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T14582";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T14582";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T14582";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T14582";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T14582";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T14582";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T14553";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T14553";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T14553";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T14553";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T14553";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T14582";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T14582";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T14582";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T14582";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T14582";
 
 
 const $ = (id) => document.getElementById(id);
@@ -321,7 +321,7 @@ export function createUI({ root, emit }) {
 
     const soundRowChildren = [
       h("div", { class: "device-opt-check-hint", text: t("control.soundSourceIntro") }),
-      h("div", { class: "toggle-group", style: "margin-top:8px" }, [
+      h("div", { class: "toggle-group" }, [
         h("label", { class: "toggle-item" }, [soundRadioControl, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceControlOpt") })]),
         h("label", { class: "toggle-item" }, [soundRadioDisplay, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceDisplayOpt") })]),
       ]),

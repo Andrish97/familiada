@@ -208,7 +208,7 @@
     border:1px solid var(--w-14);
     background:var(--w-4);
   }
-  .colorItem .lbl2{ font-size:14px; white-space:nowrap; }
+  .colorItem .field-label{ margin: 0; white-space: nowrap; }
   .swatchBtn{
     width:22px; height:22px; border-radius:var(--r-sm);
     border:1px solid var(--w-25);
@@ -283,8 +283,6 @@
   }
   .setting-item{ margin-bottom:12px; }
   .setting-item:last-child{ margin-bottom:0; }
-  .setting-item .lbl2{ font-size:.87rem; margin-bottom:6px; opacity:.85; }
-  .lbl2{ font-size:.87rem; opacity:.85; }
   .gs-row-dragging{ opacity:.35; }
   .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--gold,#f0b429); }
   .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--gold,#f0b429); }
@@ -476,7 +474,7 @@
 
     .colorRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .colorItem { justify-content: space-between; min-width: 0; padding: 8px 10px; }
-    .colorItem .lbl2 { white-space: normal; min-width: 0; line-height: 1.2; }
+    .colorItem .field-label { white-space: normal; min-width: 0; line-height: 1.2; }
 
     .gs-logo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .gs-logo-tile { min-width: 0; }

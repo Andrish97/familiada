@@ -20,8 +20,13 @@ const SCROLL_POLICY = {
   global: [/^\/$/, /^\/marketplace\//, /^\/account\//, /^\/manual\//, /^\/privacy\//, /^\/settings\//, /^\/login\//],
 };
 
+// Elementy, które nie mogą się zawijać (decyzje: e20-uwagi-do-korekty.md,
+// ujednolicenie-wygladu.md; lista w wspolne-style-plan.md „Zakazy…”).
+const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn"];
+
 // Funkcja wykonywana w stronie (page.evaluate). opts: { path, safe, allowDocScroll }.
 function inspectLayout(opts) {
+  const NO_WRAP = opts.noWrap || [];
   const out = [];
   const W = innerWidth, H = innerHeight;
   const safe = { top: 0, right: 0, bottom: 0, left: 0, ...(opts.safe || {}) };
@@ -126,6 +131,24 @@ function inspectLayout(opts) {
       || (r.left < safe.left - 1 && safe.left) || (r.right > W - safe.right + 1 && safe.right);
     if (inSafe && (!opts.allowDocScroll || el.closest("[style*=fixed], .topbar, footer, .footer, .bottom-bar") || getComputedStyle(el).position === "fixed")) add("safe-area", el, `${Math.round(r.left)},${Math.round(r.top)}–${Math.round(r.right)},${Math.round(r.bottom)}`);
   }
+  // 4. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
+  for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
+    if (!visible(el)) continue;
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.3;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const lines = new Set([...range.getClientRects()].filter((r) => r.width > 1).map((r) => Math.round(r.top / (lh * 0.6))));
+    if (lines.size > 1) add("zawiniete", el, `${lines.size} wiersze`);
+  }
+  for (const foot of root.querySelectorAll(".footer")) {
+    if (!visible(foot)) continue;
+    const parts = [...foot.children].filter((c) => visible(c) && getComputedStyle(c).position !== "absolute");
+    for (let i = 1; i < parts.length; i++) {
+      const a = parts[i - 1].getBoundingClientRect(), b = parts[i].getBoundingClientRect();
+      if (b.top >= a.bottom - 1) add("stopka-pod-soba", parts[i], "część stopki spadła pod poprzednią");
+    }
+  }
+
   // Uniknąć powtórzeń (te same elementy w listach).
   const seen = new Set();
   return out.filter((p) => { const k = `${p.kind}|${p.el.replace(/:\d+/g, "")}`; if (seen.has(k)) return false; seen.add(k); return true; });
@@ -133,7 +156,7 @@ function inspectLayout(opts) {
 
 const allowDocScroll = (path) => SCROLL_POLICY.global.some((re) => re.test(path.split(/[?#]/)[0]));
 
-module.exports = { inspectLayout, allowDocScroll, SCROLL_POLICY };
+module.exports = { inspectLayout, allowDocScroll, SCROLL_POLICY, NO_WRAP };
 
 if (require.main === module) {
   const { spawnSync } = require("node:child_process");

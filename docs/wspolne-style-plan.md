@@ -317,6 +317,11 @@ wewnątrz tabeli listy Eksploratora).
 
 ## Do poprawienia (zgłoszenia użytkownika)
 
+- **Ustawienia gry — hierarchia nagłówków (E23, 2026-10-23):** tytuł sekcji
+  (`.sectionTitle`, np. „FINAŁ”) jest mniejszy i ciemniejszy niż etykieta
+  pola (`.field-label`) pod nim. Do ujednolicenia z panelem ustawień (§8a):
+  jeden nagłówek sekcji karty dla Ustawień gry, Konta i panelu admina.
+
 - **Ankieta — topbar bez „Więcej” (zgłoszone 2026-10-23, zrzut ~1200 px):**
   na stronie ankiety (`/polls/`) przyciski Znajomi/Subskrybenci zawijają się
   w dwie linie pod tytułem zamiast zwinąć do „Więcej”. Przyczyna: „Więcej”
@@ -386,3 +391,4 @@ wewnątrz tabeli listy Eksploratora).
 | 2026-10-23 | Szuflady i wielokropki (audyt układu) | Audyt: zamknięta szuflada Eksploratora (własna implementacja, tylko `transform`) zostawiała przyciski drzewa w kolejności Tab poza ekranem. Eksplorator na wspólnym `.drawer`/`.drawer-scrim` (zamknięta: `visibility:hidden`); `--drawer-top` (początek pod paskiem narzędzi); próg Eksploratora 900 → 980 (wspólny). Szuflada w silniku liczy safe area (lewo — telefon poziomo, dół — pasek gestu). Wielokropek: `core/tooltips.js` pokazuje pełny tekst uciętego napisu (najechanie, fokus klawiatury, przytrzymanie na dotyku) — na wszystkich stronach bez `title` w kodzie. |
 | 2026-10-23 | Strona bez przewijania `.page-fit` | Audyt: Edytor gry na telefonie liczył wysokość `100dvh − 72px` (bez safe area) — strona 31 px wyższa od ekranu, stopka pod paskiem gestu. Jedna klasa silnika `.page-fit` (dawniej `games-body`): Gry, Bazy, Logo i edytory Logo, Ankiety, Zadania, Connect, panel admina, Znajomi/Subskrybenci (bez własnej powłoki `contacts-body`), Edytor gry (bez `calc`); edytory Logo bez `calc(100vh − 74px − 24px)`. Ankiety → Anonimowo: QR dopasowuje się do wysokości (kontener rozmiaru), przyciski zawsze widoczne i równej wysokości (wcześniej „QR na wyświetlaczu” ucięty na telefonie). Audyt sprawdza nakładkę blokującą zamiast strony pod nią. |
 | 2026-10-23 | Okna w safe area | Tokeny `--modal-vw`/`--modal-vh` (94vw/92dvh minus wycięcia ekranu; dla przeglądarek TV bez `env()`/`dvh` — 94vw/92vh): `.modal` (+`--medium`/`--narrow`), okno uniwersalne, okna Eksploratora, szczegóły Marketplace. Sceny podglądu gry (`games-preview`, `games-market-preview`) czekały na starą klasę `.bld-q-block` — teraz `.q-preview-item`. |
+| 2026-10-23 | Etykieta pola i przełączniki | `.lbl2` (Ustawienia gry, Eksplorator — inny wygląd tej samej roli) → `.field-label`; bez `style="margin-top:8px"` przy `.toggle-group` (Ustawienia gry ×3, Control). Podgląd gry: Gra | Ankieta jako `.btn-group`. |

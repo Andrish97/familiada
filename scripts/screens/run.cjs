@@ -15,7 +15,7 @@ const path = require("node:path");
 const { execSync } = require("node:child_process");
 const { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
-const { inspectLayout, allowDocScroll } = require("./audit-layout.cjs");
+const { inspectLayout, allowDocScroll, NO_WRAP } = require("./audit-layout.cjs");
 const { buildDb } = require("./data/demo.cjs");
 let buildGameState = null; // data/game-state.mjs (ESM, ładowany w main)
 
@@ -126,7 +126,7 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
   // --audit: układ (przewijanie, obcięcia, sterowanie poza ekranem, safe area) — audit-layout.cjs.
   const audit = args.audit
-    ? await view.evaluate(inspectLayout, { path: pathOnly, safe: safeArea, allowDocScroll: scene.fullPage || allowDocScroll(pathOnly) }).catch((e) => [{ kind: "blad-audytu", el: "", detail: e.message.split("\n")[0] }])
+    ? await view.evaluate(inspectLayout, { path: pathOnly, safe: safeArea, allowDocScroll: scene.fullPage || allowDocScroll(pathOnly), noWrap: NO_WRAP }).catch((e) => [{ kind: "blad-audytu", el: "", detail: e.message.split("\n")[0] }])
     : [];
   const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });

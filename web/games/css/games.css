@@ -11,13 +11,12 @@
     margin-bottom: 16px;
   }
 
+  /* Gra | Ankieta: sklejona grupa (.btn-group, silnik), aktywny = aria-pressed. */
   .bld-preview-switch {
     display: flex;
-    gap: 8px;
     margin-bottom: 12px;
   }
-  .bld-preview-switch[hidden],
-  .bld-preview-questions[hidden] { display: none; }
+
   .bld-preview-switch .btn { flex: 1; }
 
   /* Wyniki ankiety w podglądzie (te same klasy co na stronie ankiety) */
