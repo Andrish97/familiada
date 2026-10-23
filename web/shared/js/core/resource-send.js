@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-23T15405";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15405";
-import { toast } from "./toast.js?v=v2026-10-23T15405";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15405";
-import { icon, iconText } from "./icons.js?v=v2026-10-23T15405";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "./modal-sheet.js?v=v2026-10-23T15405";
-import { attachListTools } from "./share-sections.js?v=v2026-10-23T15405";
+import { sb } from "./supabase.js?v=v2026-10-23T15421";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15421";
+import { toast } from "./toast.js?v=v2026-10-23T15421";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15421";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T15421";
+import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "./modal-sheet.js?v=v2026-10-23T15421";
+import { attachListTools } from "./share-sections.js?v=v2026-10-23T15421";
 
 
 const attempts = new Map();

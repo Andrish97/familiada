@@ -2237,13 +2237,16 @@
   .tabs-card {
     --tabs-r: var(--r-lg);
     width: 100%;
-    margin: 0 auto; /* odstęp od paska tytułu daje .bar */
+    margin: 0 auto;
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
+  /* Odstęp nad wypustkami: pod paskiem tytułu daje go .bar, pod każdym innym
+     elementem (np. karta akcji ankiety) — ta sama wartość tutaj. */
+  :not(.bar) + .tabs-card { margin-top: 12px; }
   .tabs-strip {
     flex: 0 0 auto;
     display: flex;
