@@ -761,7 +761,9 @@
      stan pokazujemy jako nieaktywny (wyszarzony, nieklikalny) zamiast
      usuwać z widoku — znikają naturalnie dopiero, gdy operator zejdzie z
      tego kroku (cała karta Urządzeń przestaje się renderować). */
-  .c2-devicerows .device-row[data-opted-out] .device-row-2 { display:flex; opacity:.35; pointer-events:none; }
+  /* bez opacity (Android): przyciski i kod przygaszone kolorami wyłączenia */
+  .c2-devicerows .device-row[data-opted-out] .device-row-2 { display:flex; pointer-events:none; color: var(--disabled-text); }
+  .c2-devicerows .device-row[data-opted-out] .device-row-2 :is(.btn, .inp, .device-connect-code, .device-connect-code-val) { color: var(--disabled-text); border-color: var(--disabled-line); }
   /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
      .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;
      "Wstecz" (klasa c2-btn-back) dostaje margin-right:auto, więc odrywa
@@ -850,26 +852,31 @@
     touch-action: manipulation;
     display:flex; min-width:0; max-width:100%; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere;
     padding:8px 10px; border-radius:var(--r-md); border:1px solid var(--line2);
-    background:var(--w-8); color: var(--text); font-weight:800; font-size:1.02em; line-height:1.3;
+    /* Tło kryjące jak .btn silnika: odcień (--btn-tint) na podłożu (--under);
+       bez filter/transform/opacity w stanach (Android: artefakty). */
+    --btn-tint: var(--w-8);
+    --under: var(--surface); /* kafle leżą na karcie Control */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
+    color: var(--text); font-weight:800; font-size:1.02em; line-height:1.3;
     cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
-    transition:filter .12s ease, background .12s ease, border-color .12s ease;
+    transition:background .12s ease, border-color .12s ease;
   }
-  .c2-tile:hover:not(:disabled) { filter:brightness(1.1); }
-  .c2-tile:active:not(:disabled) { transform:translateY(1px); }
-  /* Dokładnie jak stare css/base.css's .btn:disabled — opacity .45 +
-     saturate(.6), nie tylko przyciemnienie (zgłoszone: "wyszarzać się jak
-     w starym Control"). */
-  .c2-tile:disabled { opacity:.45; cursor:not-allowed; filter:saturate(.6); }
-  .c2-tile-revealed { background:rgba(95,217,122,.16); border-color:rgba(95,217,122,.45); color:#a8ecba; opacity:1; }
-  .c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); }
-  .c2-tile-primary { border-color:var(--g-35); background:var(--g-10); color:var(--gold); }
+  @media (hover: hover) and (pointer: fine) {
+    .c2-tile:hover:not(:disabled) { border-color: var(--w-25); }
+  }
+  .c2-tile:active:not(:disabled) { border-color: var(--g-60); }
+  /* Wyłączony: wyszarzony kolorami (nie opacity); odcień wariantu zostaje. */
+  .c2-tile:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor:not-allowed; }
+  .c2-tile-revealed { --btn-tint: rgba(95,217,122,.16); border-color:rgba(95,217,122,.45); color:#a8ecba; }
+  .c2-tile-danger { --btn-tint: rgba(255,120,120,.12); border-color:rgba(255,120,120,.4); }
+  .c2-tile-primary { --btn-tint: var(--g-10); border-color:var(--g-35); color:var(--gold); }
   /* MISS zaznaczony (control/js/ui.js's renderFinalMapping) — czerwona
      ramka/tło ZOSTAJE, tylko tekst robi się złoty, dokładnie jak stare
      control/js/gameFinal.js's ".btn.sm.danger.gold" razem na jednym
      przycisku. Osobna, jawna reguła zamiast polegania na kolejności w
      arkuszu — nie ma znaczenia, która z dwóch klas jest zadeklarowana wyżej. */
-  .c2-tile-primary.c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); color:var(--gold); }
-  .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.05em; cursor:default; }
+  .c2-tile-primary.c2-tile-danger { --btn-tint: rgba(255,120,120,.12); border-color:rgba(255,120,120,.4); color:var(--gold); }
+  .c2-tile-timer { --btn-tint: rgba(122,178,255,.12); border-color:rgba(122,178,255,.4); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.05em; cursor:default; }
   .c2-tile-timer.startable { cursor:pointer; font-size:.92em; }
   .c2-tile-sub { display:block; margin-top:2px; font-size:.72em; font-weight:700; opacity:.8; }
   /* Uzbrojony kafel (zaznacz -> potwierdź, control/js/ui.js's armableTile) —
@@ -1023,14 +1030,16 @@
      Reużywana TA SAMA klasa na "Dźwięk powtórzenia" (renderFinalP2Start) —
      zgłoszone: sample ma być identyczny wielkościowo i kolorystycznie. */
   .c2-btn-repeat {
-    border-radius:var(--r-md); border:1px solid rgba(255,120,120,.4); background:rgba(255,120,120,.12);
+    border-radius:var(--r-md); border:1px solid rgba(255,120,120,.4);
+    --btn-tint: rgba(255,120,120,.12); --under: var(--surface); background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
     color:#ffb3b3; font-weight:800; font-size:.92em; padding:12px 26px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; text-align:center;
   }
-  .c2-btn-repeat:hover:not(:disabled) { filter:brightness(1.15); }
-  .c2-btn-repeat:active:not(:disabled) { transform:translateY(1px); }
-  .c2-btn-repeat.on { background:rgba(255,120,120,.34); border-color:rgba(255,120,120,.75); color: var(--text); box-shadow:0 0 0 2px rgba(255,120,120,.35) inset; }
-  .c2-btn-repeat:disabled { opacity:.4; cursor:default; }
+  @media (hover: hover) and (pointer: fine) {
+    .c2-btn-repeat:hover:not(:disabled) { border-color:rgba(255,120,120,.75); }
+  }
+  .c2-btn-repeat.on { --btn-tint: rgba(255,120,120,.34); border-color:rgba(255,120,120,.75); color: var(--text); box-shadow:0 0 0 2px rgba(255,120,120,.35) inset; }
+  .c2-btn-repeat:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor:default; }
   /* Kafel odliczania (start/countdown/zatrzymaj) — jeden pełnoszerokościowy
      wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
   .c2-timer-row { width:100%; font-size:1.02em; }
