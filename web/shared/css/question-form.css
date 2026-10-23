@@ -149,9 +149,9 @@
       line-height: 1;
   }
 
-  .qf-add:hover {
-      filter: brightness(1.08);
-      border-color: var(--accent)
+  /* podświetlenie tylko myszą, bez filter (Android) */
+  @media (hover: hover) and (pointer: fine) {
+    .qf-add:hover { border-color: var(--accent); }
   }
 
   .qf-add .qf-addLbl {
@@ -166,7 +166,6 @@
 
   .qf-add:disabled {
       cursor: not-allowed;
-      filter: none;
       color: rgba(255,255,255,.92);
       border-color: var(--w-25)
   }

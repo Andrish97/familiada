@@ -655,7 +655,7 @@
     text-decoration: none;
     font-weight: 900;
   }
-  .footer a:hover { filter: brightness(1.08); }
+  @media (hover: hover) and (pointer: fine) { .footer a:hover { filter: brightness(1.08); } }
   .footer-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 12px; }
   @media (max-width: 600px) {
     .footer {
@@ -680,9 +680,9 @@
     font-family: inherit;
     text-decoration: none;
   }
-  .btn-contact-footer:hover { filter: brightness(1.08); }
+  @media (hover: hover) and (pointer: fine) { .btn-contact-footer:hover { filter: brightness(1.08); } }
   .btn-support-footer { display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
-  .btn-support-footer:hover { filter: brightness(1.08); }
+  @media (hover: hover) and (pointer: fine) { .btn-support-footer:hover { filter: brightness(1.08); } }
   .btn-support-footer .ico { width: 1.45em; height: 1.45em; flex: 0 0 auto; }
   /* Wybór kawy: lista opcji jak w oknie „Zmień typ”. */
   .support-sizes { display: grid; gap: 8px; }
@@ -785,7 +785,7 @@
     letter-spacing: .06em;
     cursor: pointer;
   }
-  .inp[type=file]::file-selector-button:hover { filter: brightness(1.06); }
+  @media (hover: hover) and (pointer: fine) { .inp[type=file]::file-selector-button:hover { filter: brightness(1.06); } }
 
   /* ── Treść strony: margines od krawędzi okna (--page-gutter) ──── */
   .wrap {
@@ -1354,7 +1354,7 @@
   .toggle-item:last-child .toggle-slider { border-radius: 0 var(--r-lg) var(--r-lg) 0; }
   .toggle-item:hover .toggle-slider { background: var(--w-8); }
   .toggle-item input:checked + .toggle-slider { background: var(--accent); color: var(--bg); }
-  .toggle-item input:checked:hover + .toggle-slider { filter: brightness(1.08); }
+  @media (hover: hover) and (pointer: fine) { .toggle-item input:checked:hover + .toggle-slider { filter: brightness(1.08); } }
   .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -4px; }
 
   /* ── Wybór koloru (jeden: ustawienia gry, znaczniki w Eksploratorze;

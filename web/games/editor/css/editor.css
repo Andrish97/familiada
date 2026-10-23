@@ -120,8 +120,9 @@
       overflow: hidden
   }
 
-  .qcard .x:hover,.qcard:hover {
-      filter: brightness(1.06)
+  /* tylko mysz: na dotyku filter na karcie z przyciskami dawał artefakty (Android) */
+  @media (hover: hover) and (pointer: fine) {
+    .qcard .x:hover,.qcard:hover { filter: brightness(1.06); }
   }
 
   .qord {
