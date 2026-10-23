@@ -2,7 +2,7 @@
 // Publikuje zrzuty użyte w podręczniku (![Podpis](zrzut:scena@urządzenie) w docs/podrecznik)
 // z wyniku run.cjs do web/manual/img/<język>/<scena>-<urządzenie>.webp.
 // Użycie:
-//   node scripts/screens/publish-manual.cjs --list      -- sceny do zrzucenia (lista dla --scenes=)
+//   node scripts/screens/publish-manual.cjs --list      -- zrzuty do zrobienia „scena@urządzenie” (lista dla --scenes=)
 //   node scripts/screens/run.cjs --scenes=$(node scripts/screens/publish-manual.cjs --list) --lang=all \
 //     && node scripts/screens/publish-manual.cjs
 //   node scripts/screens/publish-manual.cjs --list --base=<ref>  -- tylko sceny do odświeżenia: zmiany od <ref>
@@ -63,7 +63,9 @@ async function toWebp(page, png, maxWidth, quality) {
       const missing = new Set(shots.filter((s) => !fs.existsSync(path.join(repo, "web/manual", s.file))).map((s) => s.scene));
       used = used.filter((id) => all || ids.has(id) || missing.has(id));
     }
-    console.log(used.join(","));
+    // „scena@urządzenie” -- run.cjs robi tylko urządzenia użyte w treści (nie wszystkie z --devices).
+    const pairs = [...new Set(shots.filter((s) => used.includes(s.scene)).map((s) => `${s.scene}@${s.device}`))];
+    console.log(pairs.join(","));
     return;
   }
   const missing = [];
