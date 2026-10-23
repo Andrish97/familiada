@@ -7,7 +7,7 @@ od dostępności jsDelivr, a nowa wersja biblioteki trafia na produkcję tylko
 | Plik | Pakiet npm | Wersja | Licencja | Skąd |
 |---|---|---|---|---|
 | `supabase-js.js` | `@supabase/supabase-js` | 2.118.0 | MIT | `dist/umd/supabase.js` |
-| `fabric.min.js` | `fabric` | 5.3.0 | MIT | `dist/fabric.min.js` |
+| `fabric.min.js` | `fabric` | 5.5.2 | MIT | `dist/fabric.min.js` |
 | `jsQR.min.js` | `jsqr` | 1.4.0 | Apache-2.0 | `dist/jsQR.js`, zminifikowany esbuild |
 
 Aktualizacja: manifest `vendor.json` (tu i w tabeli te same wersje). Co

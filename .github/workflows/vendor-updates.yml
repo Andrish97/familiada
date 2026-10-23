@@ -9,6 +9,7 @@ name: Aktualizacje bibliotek (web/shared/vendor)
 permissions:
   contents: write
   pull-requests: write
+  issues: write
   actions: write
 
 on:
@@ -80,6 +81,13 @@ jobs:
           if gh pr view "$branch" --json state -q .state 2>/dev/null | grep -q OPEN; then
             gh pr edit "$branch" --body-file pr-body.md
           else
-            gh pr create --base main --head "$branch" --title "Aktualizacja bibliotek web/shared/vendor" --body-file pr-body.md \
-              || echo "::warning::Nie udało się otworzyć pull requestu (ustawienie repozytorium: Actions → Allow GitHub Actions to create pull requests). Gałąź: $branch"
+            if ! gh pr create --base main --head "$branch" --title "Aktualizacja bibliotek web/shared/vendor" --body-file pr-body.md; then
+              # Repozytorium nie pozwala Actions tworzyć PR -> zgłoszenie z linkiem do porównania.
+              echo "::warning::Pull request zablokowany ustawieniem repozytorium; zamiast niego zgłoszenie."
+              echo "" >> pr-body.md
+              echo "Zmiany: https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}" >> pr-body.md
+              title="Aktualizacja bibliotek web/shared/vendor"
+              num="$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')"
+              if [ -n "$num" ]; then gh issue edit "$num" --body-file pr-body.md; else gh issue create --title "$title" --body-file pr-body.md; fi
+            fi
           fi

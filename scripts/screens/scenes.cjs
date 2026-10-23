@@ -331,6 +331,9 @@ module.exports = [
   // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.
   { id: "admin-stats-exclusions", category: "Dodatkowe", title: "Panel admina — wykluczenia ze statystyk (role kont testowych)", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#excludedList .excluded-summary").waitFor(); await view.locator("#excludedList").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  // Tabela „Rozgrywki” w szczegółach statystyk (szerokość kolumn, przycisk „Pokaż przebieg”).
+  { id: "admin-stats-gameplay-table", category: "Dodatkowe", title: "Panel admina — tabela Rozgrywki", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+    steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().waitFor(); await view.waitForTimeout(400); }] },
   // Migracja 466: pomiar łącza urządzeń w przebiegu rozgrywki.
   { id: "admin-stats-network-probe", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki z pomiarem łącza", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().click(); await view.locator(".stats-session-run-details").waitFor(); await view.waitForTimeout(400); }] },

@@ -1009,14 +1009,34 @@ test.describe("blokady", () => {
     const id = await L.insertLogo(page, { name: L.uniq("pool-mid"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await edit(page, id);
     // Edytor trzyma logo:L wyłącznie, więc `logos` nie da się zająć, dopóki trzyma. Symulacja
-    // uśpionej karty: zwolnij blokadę edytora jego własnym tab_id, potem zajmij pulę obcą kartą.
-    await page.evaluate(async (logoId) => {
+    // uśpionej karty: zwolnij blokadę edytora jego własnym tab_id i od razu zajmij pulę obcą
+    // kartą. Edytor co kilka sekund odnawia blokadę (resource-lock.js renewAll) i może ją
+    // odzyskać między tymi krokami -- wtedy obie czynności powtarzamy.
+    const poolTab = `e2e-le2-mid-${Date.now()}`;
+    const got = await page.evaluate(async ({ logoId, poolTab }) => {
+      const sb = window.__sbClient;
       const tabId = sessionStorage.getItem("familiada:tabId");
-      await window.__sbClient.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
-    }, id);
-    const lock = poolLock(page, `e2e-le2-mid-${Date.now()}`);
-    const got = await lock("acquire_edit_lock_mode");
-    expect(got.data?.ok, "logos współdzielone po zwolnieniu logo:L").toBe(true);
+      const { data: u } = await sb.auth.getUser();
+      // Blokady innych logo tego konta zostawione przez wcześniejsze testy w tym samym
+      // wątku (zamknięta strona nie zawsze zdąży je zwolnić; wygasają po 120 s) też
+      // zajmują pulę -- zwalniamy je jak zamknięte karty.
+      const { data: stale } = await sb.from("edit_locks").select("resource_type,resource_id,holder_tab_id")
+        .eq("holder_user_id", u.user.id).in("resource_type", ["logo", "logos"]);
+      for (const row of stale || []) {
+        if (row.resource_type === "logo" && row.resource_id === logoId) continue;
+        await sb.rpc("release_edit_lock", { p_resource_type: row.resource_type, p_resource_id: row.resource_id, p_tab_id: row.holder_tab_id });
+      }
+      let res = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await sb.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
+        res = await sb.rpc("acquire_edit_lock_mode", { p_resource_type: "logos", p_resource_id: u.user.id, p_tab_id: poolTab, p_context: "settings", p_mode: "shared" });
+        if (res.data?.ok) break;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      return res;
+    }, { logoId: id, poolTab });
+    expect(got.data?.ok, `logos współdzielone po zwolnieniu logo:L: ${JSON.stringify(got.data || got.error)}`).toBe(true);
+    const lock = poolLock(page, poolTab);
     try {
       await page.fill("#textValue", "CD");
       // Zapis (RPC update_logo_checked) albo odnowienie blokady (locked) kończy edycję pełnym komunikatem.
