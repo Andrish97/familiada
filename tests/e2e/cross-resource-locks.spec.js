@@ -12,17 +12,16 @@
 //    indziej) obok 'ok'/'locked' — guardResourceLock() pokazuje inny
 //    overlay i nie odpytuje dalej (nigdy się nie "zwolni").
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 
+// E25: konta wypożyczane na worker na wyłączność (tests/README.md „Test accounts”).
 // Testy puli logo (Warstwa B: otwarte ustawienia/Control KTÓREJKOLWIEK gry
-// właściciela blokują edycję i usuwanie wszystkich jego logo) muszą działać na
-// koncie, na którym nikt inny nie prowadzi rozgrywki ani nie otwiera ustawień:
-// test1..test<workery> to pula control2 (Control w równoległych plikach tego
-// samego przebiegu), a test1 używa też record-playthrough. test8 nie jest ani
-// w puli Control (4 workery), ani w edytorach gier; subscriptions używa go
-// tylko jako zaproszonego i odbiorcy maili.
-const LOGO_POOL_ACCOUNT = testAccountUsername(8);
+// właściciela blokują edycję i usuwanie wszystkich jego logo) idą na osobnym
+// koncie accounts.standard[1], żeby blokada 'settings' zostawiona przez testy
+// gier na accounts.standard[0] (TTL do 25 s) nie wpadała w testy logo.
+test.use({ needs: { standard: 2 } });
+const gameAccount = (accounts) => accounts.standard[0];
+const logoPoolAccount = (accounts) => accounts.standard[1];
 
 async function waitForLock(page, resourceType, resourceId, timeoutMs = 10000) {
   const start = Date.now();
@@ -96,9 +95,9 @@ async function logoExists(page, logoId) {
 
 /* ================= Usuwanie gry ================= */
 
-test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrzega, że ankieta zostanie przerwana", async ({ page, context }) => {
+test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrzega, że ankieta zostanie przerwana", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-POLLOPEN-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -133,9 +132,9 @@ test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrze
   }
 });
 
-test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async ({ page, context }) => {
+test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-LOCKED-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -172,9 +171,9 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
   }
 });
 
-test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, context }) => {
+test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(40_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-FREE-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -208,9 +207,9 @@ test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, 
 
 /* ================= Usuwanie logo ================= */
 
-test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawienia", async ({ page, context }) => {
+test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawienia", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
+  await loginAs(page, context, logoPoolAccount(accounts));
 
   const logoName = `E2E-XLOCK-LOGO-${Date.now()}`;
   const { logoId, gameId } = await page.evaluate(async (logoName) => {
@@ -269,17 +268,16 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
   }
 });
 
-test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, context }) => {
+test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(40_000);
   // Osobne konto: otwarte ustawienia KTÓREJKOLWIEK gry blokują usuwanie
-  // wszystkich logo właściciela (Warstwa B, migracja 256). Na wspólnym test1
+  // wszystkich logo właściciela (Warstwa B, migracja 256). Na wspólnym koncie
   // równoległy test "zablokowane, gdy ... otwarte ustawienia" (albo edytor
   // ustawień w innym pliku) zostawiał blokadę 'settings' do 25 s -- ten test
   // dostawał wtedy prawdziwe "zmieniasz ustawienia gry" (niestabilny
-  // fail, CI 2026-09-27). test8 nie używa nikt inny do ustawień gier/logo
-  // (pula control2 to test1..test<liczba workerów>; subscriptions używa test8
-  // tylko jako zaproszonego, bez ustawień i logo).
-  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
+  // fail, CI 2026-09-27). Konto puli logo jest wypożyczone na wyłączność
+  // i nie służy testom ustawień gier w tym pliku.
+  await loginAs(page, context, logoPoolAccount(accounts));
   await waitForLogoPoolFree(page); // poprzedni test mógł zostawić blokadę ustawień (TTL)
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
@@ -346,9 +344,9 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
 
 /* ================= Stan "gone" (zasób zniknął w trakcie edycji) ================= */
 
-test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez delete_resource_checked) pokazuje overlay zamiast ciszy", async ({ page, context }) => {
+test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez delete_resource_checked) pokazuje overlay zamiast ciszy", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(40_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-GONE-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -392,9 +390,9 @@ test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez d
 // dowolną z tych stron, ten trzyma blokadę — druga dostaje overlay,
 // niezależnie od tego, która to konkretnie strona.
 
-test("edytor blokuje ustawienia tej samej gry", async ({ page, context }) => {
+test("edytor blokuje ustawienia tej samej gry", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameId = await page.evaluate(async () => {
     const sb = window.__sbClient;
@@ -430,9 +428,9 @@ test("edytor blokuje ustawienia tej samej gry", async ({ page, context }) => {
   }
 });
 
-test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
+test("ustawienia blokują edytor tej samej gry", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameId = await page.evaluate(async () => {
     const sb = window.__sbClient;
@@ -472,9 +470,9 @@ test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
 // answers.fixed_points, tych samych danych co edytor/ustawienia — więc
 // otwarcie ankiety wyklucza edytor tej samej gry i odwrotnie.
 
-test("ankieta blokuje edytor tej samej gry", async ({ page, context }) => {
+test("ankieta blokuje edytor tej samej gry", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameId = await page.evaluate(async () => {
     const sb = window.__sbClient;
@@ -506,9 +504,9 @@ test("ankieta blokuje edytor tej samej gry", async ({ page, context }) => {
   }
 });
 
-test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
+test("edytor blokuje ankietę tej samej gry", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameId = await page.evaluate(async () => {
     const sb = window.__sbClient;
@@ -548,9 +546,9 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
 // co editor.js/game-settings.js -- muszą sprawdzić aktywny lock 'game' i
 // pokazać alert modal zamiast zapisywać w ciemno.
 
-test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const originalName = `E2E-XLOCK-RENAME-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -594,9 +592,9 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
   }
 });
 
-test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-RESET-${Date.now()}`;
   const { gameId, questionId } = await page.evaluate(async (name) => {
@@ -660,9 +658,9 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
   }
 });
 
-test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-EXPORT-${Date.now()}`;
   const gameId = await page.evaluate(async (name) => {
@@ -717,9 +715,9 @@ function blankGlyphPayload() {
   };
 }
 
-test("edytor logo: druga karta nie może edytować tego samego logo", async ({ page, context }) => {
+test("edytor logo: druga karta nie może edytować tego samego logo", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
+  await loginAs(page, context, logoPoolAccount(accounts));
 
   const logoName = `E2E-XLOCK-LOGOEDIT-${Date.now()}`;
   const logoId = await page.evaluate(async ({ name, payload }) => {
@@ -764,9 +762,9 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
   }
 });
 
-test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-settings.js ma otwartą inną grę użytkownika", async ({ page, context }) => {
+test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-settings.js ma otwartą inną grę użytkownika", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
+  await loginAs(page, context, logoPoolAccount(accounts));
 
   const logoName = `E2E-XLOCK-LOGOPOOL-${Date.now()}`;
   const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {

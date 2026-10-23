@@ -1,11 +1,12 @@
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
-const { loginAsTestUser } = require("./helpers/login");
 const { touchSwipe } = require("./helpers/touch-swipe");
 
 const ORIGIN = "https://www.familiada.online";
 
 test.use({ serviceWorkers: "block" });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
@@ -27,9 +28,9 @@ test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async
   }
 });
 
-test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page, context }) => {
+test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page, context, accounts, loginAs }) => {
   // Powrót prowadzi do instrukcji, która wymaga sesji (bez niej: logowanie).
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/privacy?lang=en&ret=${encodeURIComponent("https://example.com/phishing")}`);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached(); // „Wstecz” podpina initPage
   await page.locator("#btnBack").click();
@@ -86,8 +87,8 @@ test("privacy: treść przewija się palcem na telefonie i kółkiem na komputer
   }
 });
 
-test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", async ({ page, context }) => {
-  await loginAsTestUser(page, context);
+test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   const cases = [
     { lang: "pl", title: "Wskazówki dla użytkownika", part: "Część I", toc: "Spis treści wskazówek" },
     { lang: "en", title: "Help for users", part: "Part I", toc: "Help contents" },
@@ -105,8 +106,8 @@ test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", a
   }
 });
 
-test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik → i poprzedni/następny", async ({ page, context }, testInfo) => {
-  await loginAsTestUser(page, context);
+test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik → i poprzedni/następny", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
   const historyBefore = await page.evaluate(() => history.length);
 
@@ -138,9 +139,9 @@ test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik 
   await expect(page).not.toHaveURL(/[?&]ch=/);
 });
 
-test("manual: przycisk pomocy strony otwiera jej rozdział, Wstecz wraca", async ({ page, context }) => {
+test("manual: przycisk pomocy strony otwiera jej rozdział, Wstecz wraca", async ({ page, context, accounts, loginAs }) => {
   await serveBranchCode(context, { pages: ["privacy", "manual", "bases"] });
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/bases/?lang=pl`, { waitUntil: "domcontentloaded" });
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnManual").click();
@@ -150,9 +151,9 @@ test("manual: przycisk pomocy strony otwiera jej rozdział, Wstecz wraca", async
   await page.waitForURL(/\/bases\//);
 });
 
-test("manual: telefon — spis treści pod przyciskiem", async ({ page, context }) => {
+test("manual: telefon — spis treści pod przyciskiem", async ({ page, context, accounts, loginAs }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=17`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#manualToc")).toBeHidden();
   await page.locator("#manualTocToggle").click();
@@ -185,9 +186,9 @@ test("manual: wyszukiwanie — wyniki na żywo, wybór otwiera podrozdział z za
   await expect(page.locator(".m-doc mark.m-hit").first()).toBeInViewport();
 });
 
-test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego podrozdziału", async ({ page, context }) => {
+test("manual: nazwa strony prowadzi do serwisu, „←” wraca do tego samego podrozdziału", async ({ page, context, accounts, loginAs }) => {
   await serveBranchCode(context, { pages: ["privacy", "manual", "bases"] });
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=12#s-12-2`, { waitUntil: "domcontentloaded" });
   await page.locator('#s-12-2 ~ * a.m-go[data-page="bases"]').first().click();
   await page.waitForURL(/\/bases\/\?ret=/);

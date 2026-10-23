@@ -4,6 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
+//   --scenes=a,b@phone  -- „scena@urządzenie”: tylko to urządzenie (lista z publish-manual.cjs --list)
 //   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --force-devices (urządzenia z --devices także dla scen z własną listą)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
@@ -45,10 +46,16 @@ const LANGS = ["pl", "en", "uk"];
 
 // ---------- wybór scen ----------
 const { selectChanged } = require("./changes.cjs");
+const onlyDevices = {};
 function pickScenes() {
   if (args.all) return scenes;
   if (args.scenes) {
-    const ids = args.scenes.split(",").filter(Boolean);
+    // Wpis „scena@urządzenie” zawęża urządzenia sceny (lista z publish-manual.cjs --list).
+    const ids = args.scenes.split(",").filter(Boolean).map((entry) => {
+      const [id, device] = entry.split("@");
+      if (device) (onlyDevices[id] ||= new Set()).add(device);
+      return id;
+    });
     const unknown = ids.filter((id) => !scenes.some((s) => s.id === id));
     if (unknown.length) throw new Error(`Nieznane sceny: ${unknown.join(", ")}. Lista: --list`);
     return scenes.filter((s) => ids.includes(s.id));
@@ -159,7 +166,9 @@ function gallery(outDir, results) {
   try {
     for (const scene of picked) {
       for (const lang of langs) {
-        const sceneDevices = scene.size ? ["size"] : scene.devices && !args["force-devices"] ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
+        const sceneDevices = scene.size ? ["size"]
+          : onlyDevices[scene.id] ? [...onlyDevices[scene.id]]
+          : scene.devices && !args["force-devices"] ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
         for (const device of sceneDevices) {
           const r = await capture(browser, origin, scene, lang, device, outDir);
           results.push(r);

@@ -8,18 +8,21 @@
 //
 // Audyt: strona kompleksowa, obsługuje 4 główne ścieżki + edge case'i
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel,
+// drugi zalogowany odbiorca (znajomy) i adres bez konta jako subskrybent e-mail.
+// Maile wysyła tylko UI (poll-mail.js), a tu RPC wołamy wprost — bez zasobu mail.
+test.use({ needs: { standard: 2, noaccount: 1 } });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["go", "polls/vote/text", "polls/vote/points"] });
 });
-const { loginAsPooledTestUser } = require("./helpers/login");
 
 async function createTaskToken(page, pollType = "poll_points", opts = {}) {
-  const { recipientPage = null } = opts;
+  const { recipientPage = null, subscriberEmail = null } = opts;
   const game = await page.evaluate(async ({ type }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
@@ -80,8 +83,9 @@ async function createTaskToken(page, pollType = "poll_points", opts = {}) {
       if (error || !data?.ok) throw new Error(error?.message || "friend acceptance failed");
     }, friendship.id);
   } else {
-    subId = await page.evaluate(async () => {
-      const sb = window.__sbClient, email = "test14@familiada.online";
+    if (!subscriberEmail) throw new Error("createTaskToken: brak subscriberEmail");
+    subId = await page.evaluate(async email => {
+      const sb = window.__sbClient;
       const { data: cleaned, error: cleanupError } = await sb.rpc("e2e_subscriber_email_cleanup", { p_email: email });
       if (cleanupError || !cleaned?.ok) throw new Error(cleanupError?.message || "subscriber fixture cleanup failed");
       const { data: invite, error } = await sb.rpc("subscribers_invite", { p_email: email });
@@ -89,7 +93,7 @@ async function createTaskToken(page, pollType = "poll_points", opts = {}) {
       const { data: accepted, error: acceptError } = await sb.rpc("poll_sub_accept_email", { p_token: invite.token, p_email: email });
       if (acceptError || !accepted?.ok) throw new Error(acceptError?.message || "subscriber fixture acceptance failed");
       return invite.id;
-    });
+    }, subscriberEmail);
   }
   const taskToken = await page.evaluate(async ({ gameId, recipientUserId, subId }) => {
     const sb = window.__sbClient;
@@ -144,11 +148,11 @@ async function deleteGame(page, gameId) {
 test.describe("go.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("task invite: zalogowany user bez account invite → głos", async ({ page, context }, testInfo) => {
+  test("task invite: zalogowany user bez account invite → głos", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(120_000);
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-      const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
+      await loginAs(page, context, accounts.standard[0]);
+      const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points", { subscriberEmail: accounts.noaccount[0].email });
 
 
       const url = new URL("/go/", "https://www.familiada.online/");
@@ -184,7 +188,7 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("task invite: niezalogowany user → redirect do login", async ({ page, browser }, testInfo) => {
+  test("task invite: niezalogowany user → redirect do login", async ({ page, browser, accounts, loginAs }, testInfo) => {
     // Task musi mieć recipient_user_id (account invite) — tylko wtedy
     // niezalogowany widz dostaje prompt logowania (handleTaskInvite Case 4
     // w js/pages/go.js); recipient_email-only jest Case 5, wolny głos
@@ -196,8 +200,8 @@ test.describe("go.js audyt", () => {
     const recipientPage = await recipientContext.newPage();
     let gameId;
     try {
-      await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
-      await loginAsPooledTestUser(recipientPage, recipientContext, (testInfo.parallelIndex + 1) % 2);
+      await loginAs(setupPage, setupContext, accounts.standard[0]);
+      await loginAs(recipientPage, recipientContext, accounts.standard[1]);
       const created = await createTaskToken(setupPage, "poll_points", { recipientPage });
       gameId = created.gameId;
       const taskToken = created.taskToken;
@@ -206,7 +210,7 @@ test.describe("go.js audyt", () => {
       url.searchParams.set("t", taskToken);
 
       // `page` nigdy się nie loguje (test sprawdza właśnie widok dla
-      // niezalogowanego) -- withE2EBypass() w loginAsTestUser normalnie
+      // niezalogowanego) -- withE2EBypass() przy logowaniu (loginAs) normalnie
       // ustawia localStorage.uiLang=pl, ale tu ten kod nigdy nie leci, więc
       // strona spada na navigator.language (w CI: en-US) i renderuje się
       // po angielsku -- patrz identyczny komentarz w polls.spec.js.
@@ -231,10 +235,10 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("subscription invite: zalogowany user → accept/decline", async ({ page, context }, testInfo) => {
+  test("subscription invite: zalogowany user → accept/decline", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const { subToken } = await createSubToken(page);
 
 
@@ -269,7 +273,7 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("subscription invite: niezalogowany + email → accept/decline", async ({ page, browser }, testInfo) => {
+  test("subscription invite: niezalogowany + email → accept/decline", async ({ page, browser, accounts, loginAs }, testInfo) => {
     // Setup w izolowanym kontekście (insert wymaga zalogowanego ownera; nie
     // chcemy zarazić cookies głównego `page`, które ma zostać niezalogowane).
     // Dla subscriber_email-only + status pending, handleSubInvite (Case 4 w
@@ -279,7 +283,7 @@ test.describe("go.js audyt", () => {
     const setupContext = await browser.newContext();
     const setupPage = await setupContext.newPage();
     try {
-      await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
+      await loginAs(setupPage, setupContext, accounts.standard[0]);
       const { subToken } = await createSubToken(setupPage);
 
       const url = new URL("/go/", "https://www.familiada.online/");
@@ -316,11 +320,11 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("task invite: expired token → error message", async ({ page, context }, testInfo) => {
+  test("task invite: expired token → error message", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+      await loginAs(page, context, accounts.standard[0]);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points", { subscriberEmail: accounts.noaccount[0].email });
 
       // Ustaw task na "declined" (expired)
       await page.evaluate(async (token) => {
@@ -346,10 +350,10 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("task invite: ponowne uruchomienie ankiety → 'To zaproszenie wygasło'", async ({ page, context }, testInfo) => {
+  test("task invite: ponowne uruchomienie ankiety → 'To zaproszenie wygasło'", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+      await loginAs(page, context, accounts.standard[0]);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points", { subscriberEmail: accounts.noaccount[0].email });
 
       // poll_abort kasuje zaproszenia i rotuje klucz; poll_open uruchamia z nowym kluczem
       await page.evaluate(async (gid) => {
@@ -371,10 +375,10 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("task invite: ankieta zakończona (podliczona) → 'Ankieta zakończona'", async ({ page, context }, testInfo) => {
+  test("task invite: ankieta zakończona (podliczona) → 'Ankieta zakończona'", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+      await loginAs(page, context, accounts.standard[0]);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points", { subscriberEmail: accounts.noaccount[0].email });
 
       // Podliczenie wymaga głosów — poll_go_resolve podajemy jako odpowiedź 'poll_closed'.
       await page.route("**/rest/v1/rpc/poll_go_resolve", (route) =>
@@ -396,10 +400,10 @@ test.describe("go.js audyt", () => {
     }
   });
 
-  test("task invite: ankieta zatrzymana → 'Ankieta jest zatrzymana'", async ({ page, context }, testInfo) => {
+  test("task invite: ankieta zatrzymana → 'Ankieta jest zatrzymana'", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+      await loginAs(page, context, accounts.standard[0]);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points", { subscriberEmail: accounts.noaccount[0].email });
 
       // Stan zatrzymania — poll_go_resolve podajemy jako odpowiedź 'poll_stopped'.
       await page.route("**/rest/v1/rpc/poll_go_resolve", (route) =>
@@ -465,9 +469,9 @@ test.describe("go.js audyt", () => {
   });
 });
 
-test("task invite: odmowa po zatrzymaniu nie pokazuje fałszywego sukcesu", async ({ page, context }, testInfo) => {
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
-  const { gameId, taskToken } = await createTaskToken(page, "poll_text");
+test("task invite: odmowa po zatrzymaniu nie pokazuje fałszywego sukcesu", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await loginAs(page, context, accounts.standard[0]);
+  const { gameId, taskToken } = await createTaskToken(page, "poll_text", { subscriberEmail: accounts.noaccount[0].email });
   try {
     await page.goto(`https://www.familiada.online/go/?t=${taskToken}`);
     await expect(page.getByRole("button", { name: "Odrzuć", exact: true })).toBeVisible({ timeout: 30_000 });

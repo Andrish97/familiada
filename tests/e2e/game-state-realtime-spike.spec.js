@@ -30,14 +30,17 @@
 // 259/260/261) — zero wpływu na dzisiejszy control.html/display/index.html i ich
 // dane.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
+
+test.use({ needs: { standard: 1 } });
 
 test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state_get nadal działa z kluczem", async ({
   page,
   browser,
+  accounts,
+  loginAs,
 }) => {
-  await loginAsTestUser(page, page.context());
+  await loginAs(page, page.context(), accounts.standard[0]);
 
   const gameName = `E2E-GAME-STATE-SPIKE-${Date.now()}`;
   const game = await page.evaluate(async (name) => {
@@ -191,8 +194,8 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
   }
 });
 
-test("control2: krótkotrwały token primary dostarcza zmiany game_state przez postgres_changes", async ({ page, browser }) => {
-  await loginAsTestUser(page, page.context());
+test("control2: krótkotrwały token primary dostarcza zmiany game_state przez postgres_changes", async ({ page, browser, accounts, loginAs }) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const gameName = `E2E-GAME-STATE-SCOPED-REALTIME-${Date.now()}`;
   const game = await page.evaluate(async (name) => {
     const sb = window.__sbClient;

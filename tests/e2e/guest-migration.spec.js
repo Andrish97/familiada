@@ -42,7 +42,7 @@
 // js/core/auth.js i tak lądują w CODE_DIRS, więc serwują się z brancha
 // niezależnie od tego, że samo login.html idzie z produkcji.
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { loginAsGuest } = require("./helpers/login");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { serveBranchCode } = require("./helpers/branch-code");
@@ -51,8 +51,9 @@ const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, r
 const TEST_PASSWORD = "E2eTest123!";
 const LOGIN_URL = "https://www.familiada.online/login";
 
-// service worker obsłużyłby żądania z własnego cache z pominięciem page.route
-test.use({ serviceWorkers: "block" });
+// service worker obsłużyłby żądania z własnego cache z pominięciem page.route.
+// Skrzynka bez konta (noaccount) na mail migracji; zasób "mail" (E25).
+test.use({ serviceWorkers: "block", needs: { noaccount: 1, resources: ["mail"] } });
 
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["account"] });
@@ -113,7 +114,8 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     await expect(page.locator("#usernameSection")).toBeHidden();
 
     const migrateEmail = `e2e-migrate-${Date.now()}@example.invalid`;
-    const migrateUsername = `e2emigrate${Date.now() % 1000000}`;
+    // Prefiks "e2e" jest zarezerwowany dla tożsamości testowych (migracja 460).
+    const migrateUsername = `gmigrate${Date.now() % 1000000}`;
 
     await page.locator("#migrateUsername").fill(migrateUsername);
     await page.locator("#migrateEmail").fill(migrateEmail);
@@ -171,11 +173,11 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
   }
 });
 
-// Skrzynka test14 nie ma konta: link nie jest klikany, zmiana anulowana, gość usunięty,
-// więc żadne konto na tym adresie nie powstaje. Spec z @mailbox -- uruchamiać pojedynczo.
-test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, anulowanie unieważnia link @mailbox", async ({ page, context, browser }) => {
+// Skrzynka noaccount (E25) nie ma konta: link otwierany dopiero po anulowaniu
+// (nie przenosi konta), gość usunięty, więc żadne konto na tym adresie nie powstaje.
+test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, anulowanie unieważnia link", async ({ page, context, browser, accounts }) => {
   test.setTimeout(240_000);
-  const MAILBOX = "test14@familiada.online";
+  const MAILBOX = accounts.noaccount[0].email;
   await resetMailProviderLimits();
   await clearMailbox(MAILBOX);
   await loginAsGuest(page, context);
@@ -187,7 +189,7 @@ test("migracja konta gościa: mail i ponowne wysłanie docierają do skrzynki, a
     await expect(page.locator("#btnMigrate")).toBeVisible();
     await releaseMailCooldown(MAILBOX, "auth:guest_upgrade_email"); // blokada z poprzedniego przebiegu
     const after = new Date(Date.now() - 2_000).toISOString();
-    await page.locator("#migrateUsername").fill(`e2emig${Date.now() % 1000000}`);
+    await page.locator("#migrateUsername").fill(`gmig${Date.now() % 1000000}`);
     await page.locator("#migrateEmail").fill(MAILBOX);
     await page.locator("#migratePass1").fill(TEST_PASSWORD);
     await page.locator("#migratePass2").fill(TEST_PASSWORD);

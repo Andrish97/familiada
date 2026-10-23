@@ -1,11 +1,14 @@
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser,instrumentPage}=require('./helpers/login');
+const {instrumentPage}=require('./helpers/login');
 const {rpc,seed}=require('./helpers/poll-game');
 const origin='https://www.familiada.online';
 const pages=['go','polls','polls/vote/qr','polls/vote/text','polls/vote/points'];
 const branch=process.env.GITHUB_REF_NAME!=='main';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block'});
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({needs:{standard:1}});
+test.describe.configure({retries:0});
 async function evidence(page,testInfo,label){
  for(const width of [390,1400]){
   await page.setViewportSize({width,height:width===390?844:900});
@@ -13,12 +16,12 @@ async function evidence(page,testInfo,label){
   await page.screenshot({path:testInfo.outputPath(`shot-anon362-go-${label}-${width}.png`),fullPage:true,animations:'disabled'});
  }
 }
-test('anonymous Go: both kinds, source link and QR, every real parent state, invalid links and network retry',async({page,context,browser},testInfo)=>{
+test('anonymous Go: both kinds, source link and QR, every real parent state, invalid links and network retry',async({page,context,browser,accounts,loginAs},testInfo)=>{
  test.setTimeout(240000);const games=[];let anonymous;
  try{
   if(branch)await serveBranchCode(context,{pages});
   await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
-  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+  await loginAs(page,context,accounts.standard[0]);
   anonymous=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   await anonymous.addInitScript(()=>localStorage.setItem('uiLang','pl'));
   if(branch)await serveBranchCode(anonymous,{pages});

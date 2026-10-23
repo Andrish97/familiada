@@ -1,13 +1,15 @@
 // Short visual check after the complete live voting contract has already passed.
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const {seed,complete}=require('./helpers/poll-game');
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
-for(const type of ['poll_text','poll_points'])test(`anonymous layout ${type}: one live cooldown, saved answers390/1400`,async({page,context,browser},testInfo)=>{
+test.use({serviceWorkers:'block'});
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({needs:{standard:1}});
+test.describe.configure({retries:0});
+for(const type of ['poll_text','poll_points'])test(`anonymous layout ${type}: one live cooldown, saved answers390/1400`,async({page,context,browser,accounts,loginAs},testInfo)=>{
  let game,anonymous;
  try{
-  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);game=await seed(page,type);
+  await loginAs(page,context,accounts.standard[0]);game=await seed(page,type);
   const browserToken=await page.evaluate(async({game,type})=>{
    const db=window.__sbClient;const {error:nameError}=await db.from('games').update({name:'Rodzinna ankieta — wakacje'}).eq('id',game.id);if(nameError)throw nameError;
    const {data:questions,error}=await db.from('questions').select('id,answers(id,ord)').eq('game_id',game.id);if(error)throw error;

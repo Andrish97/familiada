@@ -1,11 +1,14 @@
 const { expectMailDocument } = require("./helpers/mail-document");
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsPooledTestUser } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
+const { resetMailProviderLimits, waitForEmail, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
 const { generateE2EToken } = require("./helpers/e2e-token");
-const email = "test14@familiada.online"; // Skrzynka bez konta: nie zakładać konta.
 test.use({ serviceWorkers: "block" });
+// E25: właściciel i drugie konto wypożyczane na worker, skrzynka bez konta
+// (nie zakładać konta) z accounts.noaccount (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } });
+// Adres bez konta tego workera -- ustawiany z fixture na początku każdego testu.
+let email = null;
 test.describe.configure({ mode: "serial" });
 test.beforeEach(async ({ context }) => {
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["subscribers", "friends", "go"] });
@@ -15,6 +18,7 @@ test.beforeEach(async ({ context }) => {
 const usedLinks = new Set();
 const subscribeLink = (mail) => extractHttpLinks(mail).find(url => new URL(url).searchParams.has("s"));
 async function cleanup(page) {
+  if (!email) return;
   await page.evaluate(async email => {
     const { data, error } = await window.__sbClient.rpc("e2e_subscriber_email_cleanup", { p_email: email });
     if (error || !data?.ok) throw error || new Error(JSON.stringify(data));
@@ -26,15 +30,16 @@ async function invite(page, recipient) {
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInvite").click();
 }
-for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i ${withdrawal ? "wypisanie jako odmowa" : "usunięcie"}`, async ({ page, context, browser }, testInfo) => {
+for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i ${withdrawal ? "wypisanie jako odmowa" : "usunięcie"}`, async ({ page, context, browser, accounts, loginAs, mailbox }, testInfo) => {
   test.setTimeout(240000);
-  await loginAsPooledTestUser(page, context, 0);
+  email = accounts.noaccount[0].email;
+  await loginAs(page, context, accounts.standard[0]);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
-    await clearMailbox(email);
+    await mailbox.clear(accounts.noaccount[0]);
     await resetMailProviderLimits(page);
     const after = new Date(Date.now()-2000).toISOString();
     await page.goto("https://www.familiada.online/subscribers/");
@@ -117,15 +122,16 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await anonymous.close();
   }
 });
-test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ page, context, browser }) => {
+test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ page, context, browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(240000);
-  await loginAsPooledTestUser(page, context, 0);
+  email = accounts.noaccount[0].email;
+  await loginAs(page, context, accounts.standard[0]);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
-    await clearMailbox(email);
+    await mailbox.clear(accounts.noaccount[0]);
     await resetMailProviderLimits(page);
     const after = new Date(Date.now()-2000).toISOString();
     await page.goto("https://www.familiada.online/subscribers/");
@@ -174,18 +180,18 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
     await anonymous.close();
   }
 });
-test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, context }) => {
-  await loginAsPooledTestUser(page, context, 0);
+test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto("https://www.familiada.online/subscribers/");
   await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
-  await invite(page, "test8@familiada.online");
+  await invite(page, accounts.standard[1].email);
   await expect(page.locator(".uni-modal")).toContainText("możesz zaprosić tę osobę do znajomych");
   await expect(page.getByRole("link", { name: "Przejdź", exact: true })).toHaveAttribute("href", /\/friends\//);
 });
 
-test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany", async ({ page, context, browser }) => {
-  await loginAsPooledTestUser(page, context, 0);
-  const recipientEmail = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email);
+test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany", async ({ page, context, browser, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
+  const recipientEmail = accounts.standard[0].email;
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
@@ -238,17 +244,18 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
   }
 });
 
-test("@mailbox subskrybenci: globalne wypisanie blokuje kolejne zaproszenia bez kolejki", async ({ page, context, browser }) => {
+test("@mailbox subskrybenci: globalne wypisanie blokuje kolejne zaproszenia bez kolejki", async ({ page, context, browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(240000);
-  await loginAsPooledTestUser(page, context, 0);
-  const flag = await page.evaluate(async () => (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: false })).data);
-  expect(flag).toMatchObject({ ok: true, suppressed_at: null });
+  email = accounts.noaccount[0].email;
+  await loginAs(page, context, accounts.standard[0]);
+  // Globalne wypisanie adresu (email_unsub_tokens) czyści wypożyczenie
+  // (migracja 460) -- ten test jest ostatni w pliku (tryb serial).
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
-    await clearMailbox(email);
+    await mailbox.clear(accounts.noaccount[0]);
     await resetMailProviderLimits(page);
     const after = new Date(Date.now()-2000).toISOString();
     await page.goto("https://www.familiada.online/subscribers/");
@@ -291,8 +298,6 @@ test("@mailbox subskrybenci: globalne wypisanie blokuje kolejne zaproszenia bez 
     expect(delivery.queue).toEqual([]);
     expect(delivery.events).toEqual([]);
   } finally {
-    const restored = await page.evaluate(async () => (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: true })).data);
-    expect(restored).toMatchObject({ ok: true, suppressed_at: null });
     await cleanup(page);
     await anonymous.close();
   }
