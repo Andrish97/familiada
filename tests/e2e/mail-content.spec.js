@@ -38,7 +38,7 @@ async function templates() {
     const { buildMarketingMailHtml } = await import('data:text/javascript;base64,' + Buffer.from(marketingSource).toString('base64'));
     for (const template of ['invitation','newsletter','custom']) {
       const subject = `E2E-PKT6-${stamp}-marketing-${template}`;
-      items.push({ lang:'pl', type: 'marketing', subject, expected: template === 'invitation' ? 'Niezależny widok prowadzącego' : 'Campaign body', html: buildMarketingMailHtml({ template, subject, bodyHtml: '<p><strong>Campaign body</strong></p>' }) });
+      items.push({ lang:'pl', type: 'marketing', subject, expected: template === 'invitation' ? 'Widok prowadzącego i Przycisk do pojedynku' : 'Campaign body', html: buildMarketingMailHtml({ template, subject, bodyHtml: '<p><strong>Campaign body</strong></p>' }) });
     }
     return items;
   } finally { globalThis.fetch = originalFetch; }

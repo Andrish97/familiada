@@ -271,8 +271,8 @@ test("gość może dodać i usunąć kopię, ale nie ocenia ani nie wysyła gry"
   test.setTimeout(90_000);
   await loginAsGuest(page, context);
   await page.goto(URL, { waitUntil: "domcontentloaded" });
-  // jednorazowa informacja dla gościa wstrzymuje start strony do „OK”
-  await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 20_000 });
+  // jednorazowe okno informacji dla gościa loginAsGuest oznacza już jako
+  // widziane (fam:guest:info_shown:<id>), więc strona startuje bez „OK”
   const game = await publishedGame(page);
   try {
     // bezpośredni link do gry: siatka pokazuje 20 kart naraz, a kolejność zależy od katalogu
