@@ -126,7 +126,7 @@ const supabaseStub = `(() => {
     reserved_username_prefixes_list: [], list_shared_bases_ext: [], base_declines_list_mine: [],
     resource_copy_inbox_list: [], resource_copy_badges: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, game_validate: { poll_entry: { ok: true }, edit: { ok: true }, play: { ok: true } },
-    release_edit_lock: { ok: true },
+    release_edit_lock: { ok: true }, acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true }, expire_edit_locks_absent: { ok: true, removed: 0 },
     poll_state: { ok: true, state: 'open', type: 'poll_text' },
     poll_get_payload: { game: { id: '${previewGameId}', name: 'Rodzinne spotkanie', type: 'poll_text', status: 'poll_open' }, questions: [{ id: '00000000-0000-4000-8000-000000000003', ord: 1, text: 'Co zabierzesz na rodzinny piknik?', answers: [{ id: 'a1', ord: 1, text: 'Koc' }, { id: 'a2', ord: 2, text: 'Kosz' }, { id: 'a3', ord: 3, text: 'Piłkę' }] }] },
     get_poll_game: { game: { id: '${previewGameId}', name: 'Rodzinne spotkanie', type: 'poll_text', status: 'poll_open' } },

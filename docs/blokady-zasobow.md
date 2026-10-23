@@ -18,6 +18,12 @@ wdrożone; 7 — mapa `PAGES` — jeszcze nie). Najważniejsze różnice: TTL
 `logos`, `guardResourceLocks()`, brak `findBusyContext` i
 `guardResourceBusy`, reguły w bazie bez `holder_context`.
 
+**Uwaga (2026-10-23, migracja 479):** zajmowanie zestawu zasobów strony jest
+**atomowe** (jedno wywołanie `acquire_edit_locks`, tryb per zasób), a karty
+czekające wygaszają blokady **martwych kart** przez Realtime Presence
+zamiast czekać na TTL — sekcja 8. Opis heartbeatu „co 8 s” i „polling co 5 s”
+w sekcjach 1–6 jest nadal prawdziwy; opis „zasoby zajmowane po kolei” — nie.
+
 ---
 
 ## 1. Mechanizm
@@ -613,3 +619,52 @@ Implementacja pozostaje zbiorem jawnych FK, triggerów i transakcyjnych RPC
 wspólnych gałęzi. Nowe kopie E19C muszą dołożyć swoje niezależne poddrzewo
 odbiorcy i osobne kontrakty, a E19N przegląda deklaracje/powroty stron.
 Nie traktować dzisiejszego zamknięcia jako obsługi dowolnego przyszłego zasobu.
+
+## 8. Realtime: atomowe zajmowanie i szybkie zwalnianie (decyzja użytkownika 2026-10-23)
+
+Polecenie: „przepisać blokady zasobów na realtime, żeby były atomowe i szybciej
+się zwalniały”. Migracja `2026-10-23_479_edit_locks_atomic_realtime.sql`, kod
+`web/shared/js/core/resource-lock.js`; test SQL `tests/sql/edit-locks-realtime-479.sql`.
+
+### Co się zmieniło
+
+| Było | Jest |
+|---|---|
+| Strona zajmowała zasoby **po kolei** osobnymi wywołaniami (`acquire_edit_lock_mode` × N); „wszystko albo nic” robił kod strony, oddając już zajęte po odmowie | **Jedno wywołanie** `acquire_edit_locks` na cały zestaw strony, z trybem per zasób (`{type, id, mode}`): `game:G` wyłącznie + `logos` współdzielone w jednej transakcji, stała kolejność, wszystko albo nic po stronie bazy. Odnowienie (co 8 s) i zwolnienie (`release_edit_locks`) — też jednym wywołaniem |
+| Czekająca karta: broadcast `RELEASED` (gubiony przy pagehide) + polling co 5 s; martwa karta (zamknięta bez `pagehide`, zabita przeglądarka, uśpiony telefon) trzymała zasób do **TTL 120 s** | Karta trzymająca zasób jest obecna na kanale **Presence** `edit-lock:<typ>:<id>`; czekająca karta słucha kanału zasobu, który **przeszkadza** (`blocker_type` / `blocker_id` z odpowiedzi bazy — przy `logos` ↔ `logo:L` to inny klucz niż jej własny), i na zejście z Presence / `RELEASED` od razu próbuje ponownie. Blokadę karty, której **nie ma na Presence** i która od **25 s** (`edit_lock_absent_grace()`) nie odnowiła blokady, usuwa `expire_edit_locks_absent` — karta wchodzi po ~25–30 s zamiast 120 s. Polling co 5 s zostaje jako zapas (Realtime niedostępny, zasoby bez Presence) |
+| Heartbeat `setInterval` — w karcie w tle Chrome spowalnia go do raz na minutę (blisko TTL) | Heartbeat z Web Workera (`background-ticker.js`, jak dzierżawa urządzeń) — co 8 s także w tle; karta żywa **nigdy** nie traci blokady przez samą nieobecność na Presence (zerwany WebSocket), bo wygaszenie wymaga obu warunków naraz |
+| `release_edit_lock` zwalniał blokadę po samym identyfikatorze karty | Zwalnia tylko **własne** (`holder_user_id = auth.uid()`) — identyfikatory kart są widoczne w Presence (współpracownik bazy), więc nie mogą być kluczem do cudzej blokady |
+
+Zasoby z Presence: `game`, `logo`, `logos`, `base` (na nie ktoś może czekać:
+strony gry, edytor logo, eksplorator). Elementy bazy (`base_question`,
+`base_folder`, `base_tag`) bez Presence — konflikt to komunikat w oknie, nie
+oczekiwanie; blokady okien na listach (zmiana nazwy gry / logo / bazy) i akcji
+(`acquireResourceLock(s)`) idą tą samą drogą co blokady stron (jeden RPC,
+Presence dla typów z listy, keepalive przy zamknięciu).
+
+### Skutek dla użytkownika
+
+- Zamknięcie karty (także bez `pagehide`), zabicie przeglądarki, uśpiony
+  telefon: czekająca karta (np. ustawienia po zamkniętym Control) wchodzi po
+  ok. 25–30 s, nie po 2 minutach; zwykłe zamknięcie — w ułamku sekundy
+  (keepalive + zejście z Presence).
+- Karta ukryta (alt-tab, inne okno) **nie** oddaje blokady — odnawia co 8 s
+  także w tle. Karta naprawdę martwa albo bez sieci > 25 s, gdy ktoś czeka,
+  traci blokadę; po powrocie widzi „Utracono blokadę” (jak dotąd po TTL).
+- Gdy nikt nie czeka, nic się nie zmienia: wiersz wygasa po TTL 120 s.
+
+### Wdrożenie (migracja zmieniająca zachowanie — razem z kodem)
+
+Stary kod działa z nową bazą (funkcje zgodne wstecz), ale **nowy kod wymaga
+479**: bez niej `acquire_edit_locks` ignoruje `mode` elementu i wziąłby
+`logos` wyłącznie (stara sygnatura: jeden `p_mode` na zestaw), a
+`expire_edit_locks_absent` nie istnieje. Dlatego e2e brancha na produkcyjnej
+bazie przed migracją jest niemiarodajne. Kolejność: 479 na `main` → Pages →
+testy kontrolne: `cross-resource-locks.spec.js` (gra ↔ ustawienia ↔ edytor,
+`gone`), `logo-editor.spec.js` (pula logo), `bases.spec.js` /
+`base-explorer.spec.js` (base:B), `control2.spec.js` (Control ↔ ustawienia).
+Lokalnie przed wdrożeniem: `tests/sql/edit-locks-realtime-479.sql`,
+`edit-locks-batch-431.sql`, `docs/sql/test-locks-316.sql` — OK (2026-10-23);
+zrzuty scen `games-editor-locked-busy`, `logos-market-editor-busy` z nowym
+RPC — OK.
+
