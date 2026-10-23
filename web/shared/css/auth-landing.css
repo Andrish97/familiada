@@ -89,22 +89,7 @@
       gap: 10px;
   }
 
-  .form input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--w-14);
-      background: var(--k-20);
-      color: var(--txt);
-      outline: none;
-      font-weight: 800;
-  }
-
-  .form input:focus {
-      border-color: var(--g-35);
-      box-shadow: 0 0 0 2px var(--g-10);
-  }
+  .form .inp { width: 100%; box-sizing: border-box; }
 
   /* ── buttons ── */
 

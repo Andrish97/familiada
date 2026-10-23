@@ -716,6 +716,7 @@
     transition: border-color var(--dur-fast) ease;
   }
   .inp:focus { border-color: var(--g-35); }
+  .inp:focus-visible { border-color: var(--g-60); box-shadow: 0 0 0 3px var(--g-10); }
   .inp[type=file] { width: min(520px, 100%); }
   .inp[type=file]::file-selector-button {
     margin-right: 10px;

@@ -95,22 +95,10 @@
       gap: 10px;
   }
 
-  input {
-      padding: 12px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--w-14);
-      background: var(--k-20);
-      color: var(--text);
-      outline: 0;
-  }
+  .form .inp { width: 100%; box-sizing: border-box; }
 
   /* pole hasła z przyciskiem „pokaż” (silnik: .pass-wrap) */
   .pass-wrap input { padding-right: 42px; }
-
-  input:focus {
-      border-color: var(--g-60);
-      box-shadow: 0 0 0 3px var(--g-10);
-  }
 
   /* ── buttons ── */
 
