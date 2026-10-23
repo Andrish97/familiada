@@ -630,7 +630,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     const shareResponsePromise = page.waitForResponse((response) =>
       response.url().includes("/rpc/base_share_to_friend") && response.request().method() === "POST"
     );
-    await page.locator("#btnBaseShareFriends").click();
+    await page.locator("#btnShareAdd").click();
     const shareResponse = await shareResponsePromise;
     expect(shareResponse.ok(), "RPC udostępnienia bazy").toBeTruthy();
     const shareData = await shareResponse.json();

@@ -104,10 +104,7 @@ const baseShareFriends = document.getElementById("baseShareFriends");
 const baseShareBulkHost = document.getElementById("baseShareBulkActions");
 attachListTools(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
 attachListTools(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
-const baseShareFriendsLabel = document.getElementById("baseShareFriendsLabel");
-const baseShareFriendsShort = document.getElementById("baseShareFriendsShort");
-const btnShareCancel = document.getElementById("btnShareCancel");
-const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
+const btnShareAddLabel = document.getElementById("btnShareAddLabel");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
@@ -222,7 +219,8 @@ function baseRoleButton(value, onChange) {
   return button;
 }
 function initShareRoleSelect() {
-  // Jedno uprawnienie dla nowych udostępnień (wpisany adres i zaznaczeni znajomi).
+  // Jedno uprawnienie dla nowych udostępnień (wpisany adres i zaznaczeni znajomi),
+  // obok przycisku „Udostępnij” w sekcji „Komu udostępnić”.
   shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
 }
 function showShareMessage(message, kind = "info") {
@@ -734,6 +732,7 @@ async function openShareModal() {
   shareEmail.value = "";
   shareRoleValue = "editor";
   initShareRoleSelect();
+  updateBaseShareSelection();
   await renderShareModal();
   show(shareOverlay, true);
   enterModalSheet(shareOverlay, { backBtn: btnBack, onClose: closeShareModal });
@@ -863,12 +862,14 @@ async function renderShareModal() {
   }
 }
 let baseShareBulkActions = null;
+// Jeden przycisk „Udostępnij” dla wpisanego adresu i zaznaczonych znajomych:
+// licznik w etykiecie to liczba odbiorców, przycisk aktywny, gdy jest komu.
 function updateBaseShareSelection() {
   const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
   const selected = baseShareFriends?.querySelectorAll('input:checked:not(:disabled)').length || 0;
-  btnBaseShareFriends.disabled = shareAddInFlight || !selected;
-  if (baseShareFriendsLabel) baseShareFriendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
-  if (baseShareFriendsShort) baseShareFriendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
+  const recipients = selected + (String(shareEmail?.value || "").trim() ? 1 : 0);
+  if (btnShareAdd) btnShareAdd.disabled = shareAddInFlight || !recipients;
+  if (btnShareAddLabel) btnShareAddLabel.textContent = recipients > 1 ? t("baseSharePanel.shareN", { n: recipients }) : t("baseSharePanel.share");
   baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {
@@ -888,17 +889,20 @@ async function deliverBaseShare(row, { reminder = false } = {}) {
   return sendNotificationMail({ action: "base:share", token, reminder });
 }
 let shareAddInFlight = false;
-async function shareAdd(friendIds = null) {
+// Udostępnia naraz wpisanemu adresowi (jeśli jest) i zaznaczonym znajomym,
+// z jednym uprawnieniem z przełącznika obok przycisku.
+async function shareAdd() {
   if (shareAddInFlight) return;
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
   const raw = String(shareEmail.value || "").trim();
-  if (!friendIds && !raw) { showShareMessage(t("bases.share.enterEmail"), "error"); return; }
-  shareAddInFlight = true; btnShareAdd.disabled = true; updateBaseShareSelection();
+  const friendIds = [...baseShareFriends.querySelectorAll('input:checked:not(:disabled)')].map(input => input.value);
+  if (!friendIds.length && !raw) { showShareMessage(t("bases.share.enterEmail"), "error"); return; }
+  shareAddInFlight = true; updateBaseShareSelection();
   let message = t("bases.share.success");
   let messageKind = "info";
   try {
-    for (const id of friendIds || [null]) {
+    for (const id of [...(raw ? [null] : []), ...friendIds]) {
       const { data, error } = await sb().rpc(id ? "base_share_to_friend" : "base_share_by_user", id
         ? { p_base_id: b.id, p_recipient_user_id: id, p_role: shareRoleValue }
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
@@ -909,13 +913,12 @@ async function shareAdd(friendIds = null) {
         if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
       }
       catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
-      if (!friendIds) shareEmail.value = "";
+      if (!id) shareEmail.value = "";
     }
      await renderShareModal(); showShareMessage(message, messageKind);
   } catch { showShareMessage(t("bases.share.failed"), "error"); }
-  finally { shareAddInFlight = false; btnShareAdd.disabled = false; updateBaseShareSelection(); }
+  finally { shareAddInFlight = false; updateBaseShareSelection(); }
 }
-btnBaseShareFriends?.addEventListener("click", () => shareAdd([...baseShareFriends.querySelectorAll('input:checked:not(:disabled)')].map(input => input.value)));
 
 /* ================= Wypustki (mine/shared) ================= */
 // Karty z mapy stron (pierwsza = domyślna); adres jest jedynym źródłem.
@@ -1337,8 +1340,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   btnShareClose?.addEventListener("click", () => closeShareModal());
-  btnShareCancel?.addEventListener("click", () => closeShareModal());
   btnShareAdd?.addEventListener("click", async () => shareAdd());
+  shareEmail?.addEventListener("input", () => updateBaseShareSelection());
   shareEmail?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") shareAdd();
   });

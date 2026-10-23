@@ -113,31 +113,28 @@
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="uni-body">
-          <div class="uni-hint" data-i18n="bases.shareModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.</div>
           <div class="baseShareSections">
-            <section class="shareSection" data-section="lookup">
-              <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
+            <!-- Jedna sekcja „Komu udostępnić”: wpisany adres i zaznaczeni znajomi
+                 idą jednym przyciskiem z jednym uprawnieniem (decyzja użytkownika 2026-10-23). -->
+            <section class="shareSection shareSection--new" data-section="new">
+              <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="baseSharePanel.sectionNew">Komu udostępnić</h2><div id="baseShareBulkActions"></div></div>
               <div class="baseShareLookup">
                 <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
-                <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n-title="baseSharePanel.share" data-i18n-aria-label="baseSharePanel.share" aria-label="Udostępnij">
-                  <i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="baseSharePanel.share">Udostępnij</span>
+              </div>
+              <div id="baseShareFriends" class="shareList shareList--scroll"></div>
+              <div class="shareNewActions">
+                <div id="shareRole" class="baseShareRoleSlot"></div>
+                <button class="btn sm gold" id="btnShareAdd" type="button" disabled data-i18n-title="baseSharePanel.share" data-i18n-aria-label="baseSharePanel.share" aria-label="Udostępnij">
+                  <i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span id="btnShareAddLabel" data-i18n="baseSharePanel.share">Udostępnij</span>
                 </button>
               </div>
             </section>
-            <section class="shareSection" data-section="friends">
-              <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2><div id="baseShareBulkActions"></div></div>
-              <div id="baseShareFriends" class="shareList shareList--scroll"></div>
-            </section>
-            <section class="shareSection" data-section="shared">
+            <section class="shareSection shareSection--shared" data-section="shared">
               <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
+              <div class="shareSectionSub" data-i18n="bases.shareModal.sharedHint">Uprawnienie zmienisz przyciskiem przy osobie.</div>
               <div id="shareSectionsHost" class="shareList shareList--scroll"></div>
             </section>
           </div>
-        </div>
-        <div class="uni-foot modal-actions">
-          <div id="shareRole" class="baseShareRoleSlot"></div>
-          <button class="btn sm" id="btnShareCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
-          <button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="baseShareFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="baseShareFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
         </div>
       </div>
     </div>

@@ -137,7 +137,7 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
-  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "lookup": "E-mail або ім’я користувача", "share": "Поширити"},
+  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "sectionNew": "Кому поширити", "share": "Поширити", "shareN": "Поширити ({n})"},
   shareSections: {
     subscribers: "Підписники",
     subscribersSub: "Ще без запрошення — вибери, кого запросити.",
@@ -684,7 +684,7 @@ const uk = {
       close: "Готово",
     },
     shareModal: {
-      hint: "Введи ім’я або e-mail чи вибери друзів. Дозвіл обирається внизу вікна.",
+      sharedHint: "Дозвіл зміниш кнопкою біля особи.",
       title: "Поділитися базою",
       placeholder: "Ім’я користувача або e-mail...",
       roleEditor: "Може редагувати",
@@ -3646,10 +3646,6 @@ const uk = {
       sectionAdd: "E-mail або ім’я користувача",
       sectionFriends: "Друзі, з якими можна поділитися",
       sectionShared: "Надано доступ у цій сесії",
-      shareSelected: "Поділитися з вибраними",
-      shareSelectedN: "Поділитися з вибраними ({n})",
-      shareSelectedShortN: "Поділитися ({n})",
-      hint: "Введи ім’я або e-mail чи вибери друзів.",
       recipientKind: { friend: "друг", account: "має акаунт", mail: "пошта" },
       noneShared: "Не надано.",
       noSubs: "Немає підписників.",

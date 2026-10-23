@@ -137,7 +137,7 @@ const en = {
       contactBtn: "Contact",
     },
   },
-  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "lookup": "Email or username", "share": "Share"},
+  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "sectionNew": "Share with", "share": "Share", "shareN": "Share ({n})"},
   shareSections: {
     subscribers: "Subscribers",
     subscribersSub: "Not invited yet — pick who to invite.",
@@ -689,7 +689,7 @@ const en = {
       close: "Done",
     },
     shareModal: {
-      hint: "Enter a username or email, or select friends. Choose the permission at the bottom.",
+      sharedHint: "Change the permission with the button next to the person.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",
@@ -3639,10 +3639,6 @@ const en = {
       sectionAdd: "Email or username",
       sectionFriends: "Friends you can share with",
       sectionShared: "Shared in this session",
-      shareSelected: "Share with selected",
-      shareSelectedN: "Share with selected ({n})",
-      shareSelectedShortN: "Share ({n})",
-      hint: "Enter a username or email, or select friends.",
       recipientKind: { friend: "friend", account: "has an account", mail: "email" },
       noneShared: "Not shared.",
       noSubs: "No subscribers.",

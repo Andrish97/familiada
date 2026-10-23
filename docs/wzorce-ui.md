@@ -342,6 +342,11 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
   `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),
   w Control małe okno wyśrodkowane.
+- **Okna udostępniania (Baza, urządzenie Control; decyzja użytkownika
+  2026-10-23):** bez stopki — zamyka ✕; sekcja „Komu udostępnić” (adres +
+  znajomi) z jednym przyciskiem „Udostępnij” (w Bazach obok uprawnienie)
+  pod listą, osobno sekcja „Udostępnione”. Szczegóły:
+  `ujednolicenie-wygladu.md` „Decyzje — okna udostępniania”.
 - **Główna akcja okna formularzowego zawsze widoczna (uwaga właściciela
   2026-10-22, okno kontaktu):** w arkuszu na telefonie „Anuluj” + złoty
   przycisk główny (ikona + pełne słowo, np. „Wyślij”) w pasku akcji przy

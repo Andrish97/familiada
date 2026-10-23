@@ -43,12 +43,9 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const emailInp = document.getElementById("shareDeviceEmail");
   const subsList = document.getElementById("shareDeviceSubsList");
   const bulkHost = document.getElementById("shareDeviceBulkActions");
-  const btnShareFriends = document.getElementById("btnShareDeviceFriends");
   const btnAdd = document.getElementById("btnShareDeviceAdd");
+  const btnAddLabel = document.getElementById("btnShareDeviceAddLabel");
   const btnClose = document.getElementById("btnShareDeviceClose");
-  const btnCancel = document.getElementById("btnShareDeviceCancel");
-  const friendsLabel = document.getElementById("shareDeviceFriendsLabel");
-  const friendsShort = document.getElementById("shareDeviceFriendsShort");
   const currentWrap = document.getElementById("shareDeviceCurrentWrap");
   const currentCont = document.getElementById("shareDeviceCurrentContent");
   const backBtn = document.getElementById("btnBack");
@@ -63,6 +60,10 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   let renderVersion = 0;
   let preflightVersion = 0;
   let bulkActions = null;
+  // Wpisany adres odrzucony przez preflight (już udostępniono / bez powiadomień):
+  // jeden przycisk „Udostępnij” czeka, aż pole zostanie poprawione lub wyczyszczone.
+  let lookupBlocked = false;
+  let shareInFlight = false;
   const cooldownTicker = createCooldownTicker();
   cooldownTicker.start();
 
@@ -82,7 +83,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     clearMessage();
   }
   btnClose?.addEventListener("click", closeModal);
-  btnCancel?.addEventListener("click", closeModal);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay && !(overlay.classList.contains("modal--sheet") && isSheetViewport())) closeModal();
   });
@@ -143,7 +143,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     if (version !== renderVersion) return;
     if (friendsError) {
       subsList.replaceChildren();
-      if (btnShareFriends) btnShareFriends.disabled = true;
+      updateSelection();
       showMessage(t("control.shareDeviceModal.failed"), { state: "error" });
       return;
     }
@@ -199,38 +199,18 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         cooldownTicker.setEndMs(`device:${friend.user_id}`, nextAllowedAtMs);
       }
     }
-    if (btnShareFriends) {
-      updateSelection();
-      btnShareFriends.onclick = async () => {
-        const selected = [...subsList.querySelectorAll('input[type="checkbox"]:checked')];
-        if (!selected.length) return;
-        btnShareFriends.disabled = true;
-        try {
-          let cooldown = false;
-          let disabled = false;
-          for (const item of selected) {
-            const result = await doShare({ friendId: item.value });
-            cooldown ||= result === false;
-            disabled ||= result === "disabled";
-          }
-          await renderModal();
-          await refreshBadges();
-          showMessage(cooldown ? (t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.") :
-            disabled ? (t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
-        } catch (error) {
-          showMessage(error?.message || "Błąd.", { state: "error" });
-          updateSelection();
-        }
-      };
-    }
+    updateSelection();
   }
 
+  // Jeden przycisk „Udostępnij” dla wpisanego adresu i zaznaczonych znajomych:
+  // licznik w etykiecie to liczba odbiorców, przycisk aktywny, gdy jest komu.
   function updateSelection() {
     const inputs = subsList?.querySelectorAll('input[type="checkbox"]') || [];
     const selected = subsList?.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)').length || 0;
-    if (btnShareFriends) btnShareFriends.disabled = !selected;
-    if (friendsLabel) friendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
-    if (friendsShort) friendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
+    const raw = String(emailInp?.value || "").trim();
+    const recipients = selected + (raw ? 1 : 0);
+    if (btnAdd) btnAdd.disabled = shareInFlight || lookupBlocked || !recipients;
+    if (btnAddLabel) btnAddLabel.textContent = recipients > 1 ? t("baseSharePanel.shareN", { n: recipients }) : t("control.shareDevice");
     bulkActions?.update(inputs);
   }
 
@@ -256,30 +236,45 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     return queued ? true : "disabled";
   }
 
+  // Udostępnia naraz wpisanemu adresowi (jeśli jest) i zaznaczonym znajomym.
   btnAdd?.addEventListener("click", async () => {
+    if (shareInFlight) return;
     clearMessage();
     const raw = String(emailInp?.value || "").trim();
-    if (!raw) return;
+    const selected = [...(subsList?.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)') || [])].map((item) => item.value);
+    if (!raw && !selected.length) return;
+    shareInFlight = true; updateSelection();
     try {
-      const mailSent = await doShare({ lookup: raw });
-      if (emailInp) emailInp.value = "";
+      let cooldown = false, disabled = false, already = false;
+      if (raw) {
+        const result = await doShare({ lookup: raw });
+        if (emailInp) emailInp.value = "";
+        cooldown ||= result === false; disabled ||= result === "disabled"; already ||= result === "already";
+      }
+      for (const friendId of selected) {
+        const result = await doShare({ friendId });
+        cooldown ||= result === false; disabled ||= result === "disabled";
+      }
+      shareInFlight = false;
       await renderModal();
       await refreshBadges();
-      if (mailSent === false) {
-        showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
-      }
-      if (mailSent === "already") showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
-      if (mailSent === "disabled") showMessage(t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
-      else if (mailSent !== false && mailSent !== "already") toast(t("control.shareDeviceModal.mailSent"));
+      if (cooldown) showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
+      else if (disabled) showMessage(t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
+      else if (already) showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
+      else toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       showMessage(e?.message || "Błąd.", { state: "error" });
+    } finally {
+      shareInFlight = false;
+      updateSelection();
     }
   });
   emailInp?.addEventListener("input", () => {
     const version = ++preflightVersion;
     const raw = String(emailInp.value || "").trim();
     clearMessage();
-    if (btnAdd) btnAdd.disabled = false;
+    lookupBlocked = false;
+    updateSelection();
     if (!raw) return;
     setTimeout(async () => {
       if (version !== preflightVersion || raw !== String(emailInp.value || "").trim()) return;
@@ -290,13 +285,13 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       if (!data?.ok) {
         if (data?.error === "notifications_disabled") {
           showMessage(shareErrorMessage(data.error), { state: "error" });
-          if (btnAdd) btnAdd.disabled = true;
+          lookupBlocked = true; updateSelection();
         }
         return;
       }
       if (data.already_shared) {
         showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
-        if (btnAdd) btnAdd.disabled = true;
+        lookupBlocked = true; updateSelection();
       } else if (data.mail_disabled) {
         showMessage(t("control.shareDeviceModal.recipientDisabled") || "Odbiorca ma wyłączone powiadomienia e-mail. Dostęp zostanie nadany bez maila.");
       } else if (data.mail_allowed === false && data.cooldown_until) {
@@ -316,7 +311,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     _deviceType = kind;
     if (titleEl) titleEl.textContent = `${t("control.shareDeviceModal.title") || "Udostępnij"} — ${deviceTypeLabel(kind)}`;
     if (emailInp) emailInp.value = "";
-    if (btnAdd) btnAdd.disabled = false;
+    lookupBlocked = false;
+    updateSelection();
     overlay.style.display = "grid";
     enterModalSheet(overlay, { backBtn, onClose: closeModal });
     await renderModal();

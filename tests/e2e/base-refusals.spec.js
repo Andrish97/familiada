@@ -59,8 +59,8 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShare(page, baseId);
     const friend = page.locator(`#baseShareFriends [data-id="${recipientId}"]`);
     await friend.locator('input[type="checkbox"]').check();
-    await page.locator("#shareRole button").click(); // editor -> viewer (jedno uprawnienie w stopce)
-    await page.locator("#btnBaseShareFriends").click();
+    await page.locator("#shareRole button").click(); // editor -> viewer (jedno uprawnienie obok „Udostępnij”)
+    await page.locator("#btnShareAdd").click();
     const sharedRow = page.locator("#shareSectionsHost .shareRow");
     await expect(sharedRow).toHaveCount(1);
     await expect(friend).toHaveCount(0);
@@ -167,7 +167,7 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
       await expect(page.locator('#shareSectionsHost [data-id="declined"] [data-act="resend"]')).toHaveCount(0);
       await expect(page.locator('#shareSectionsHost [data-id="declined"] .shareCountdown')).toBeVisible();
       await page.locator('#baseShareFriends [data-id="f1"] input').check();
-      await expect(page.locator('#btnBaseShareFriends')).toBeEnabled();
+      await expect(page.locator('#btnShareAdd')).toBeEnabled();
       const geometry = await page.evaluate(() => {
         const left = document.querySelector('#baseShareFriends'); const right = document.querySelector('#shareSectionsHost');
         left.scrollTop = 70; right.scrollTop = 120;
@@ -181,7 +181,7 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
       expect(new Set(geometry.buttons.map(button => button.height)).size).toBe(1);
       await page.locator('#shareEmail').fill('alicja@example.net'); await page.locator('#btnShareAdd').click();
       await expect(page.locator('.app-toast-text')).toBeVisible();
-      await page.locator('#btnShareCancel').click();
+      await page.locator('#btnShareClose').click();
       await page.locator('#tabBasesShared').click();
       const head = page.locator('#baseDeclinesHost .rowsSectionHead');
       await expect(head).toHaveAttribute('aria-expanded', 'false'); await head.click();
@@ -235,7 +235,7 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     await page.locator("#btnShareClose").click(); await openShare(page, baseId);
     await expect(checkbox).toBeEnabled();
     const after = new Date().toISOString();
-    await checkbox.check(); await page.locator("#btnBaseShareFriends").click();
+    await checkbox.check(); await page.locator("#btnShareAdd").click();
     const rows = page.locator("#shareSectionsHost .shareRow"); await expect(rows).toHaveCount(1);
     await expect(rows.locator('[data-act="resend"]')).toHaveCount(0);
     const panel = await rpc(page, "base_share_panel", { p_base_id: baseId });
@@ -291,7 +291,7 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
       if (source === "friend") {
         await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
         const response = page.waitForResponse(res => res.url().endsWith("/rpc/base_share_to_friend") && res.request().method() === "POST");
-        await page.locator("#btnBaseShareFriends").click();
+        await page.locator("#btnShareAdd").click();
         expect((await response).ok()).toBe(true);
       } else {
         await page.locator("#shareEmail").fill(recipientEmail); await page.locator("#btnShareAdd").click();
@@ -313,7 +313,7 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
     await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
     expect((await rpc(page, "friends_remove", { p_id: friendship.id })).ok).toBe(true);
     const rejectedResponse = page.waitForResponse(res => res.url().endsWith("/rpc/base_share_to_friend") && res.request().method() === "POST");
-    await page.locator("#btnBaseShareFriends").click();
+    await page.locator("#btnShareAdd").click();
     const rejected = await (await rejectedResponse).json();
     expect(rejected[0].ok).toBe(false); expect(rejected[0].err).toBe("not_friend");
     await expect(page.locator(".app-toast-text")).toContainText("Ta osoba nie jest już na liście znajomych.");

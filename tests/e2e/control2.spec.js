@@ -3814,7 +3814,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const friendShareAfter = new Date().toISOString();
     const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
     await choice.check();
-    await page.locator("#btnShareDeviceFriends").click();
+    await page.locator("#btnShareDeviceAdd").click();
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(peer.username);
     const display = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"display"})).find(row=>row.recipient_id===peer.id);
     expect(display.cooldown_until).toBeNull();
@@ -3829,7 +3829,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     await open("buzzer");
     await choice.check();
     expect((await rpc(page,"friends_remove",{p_id:fresh.id})).ok).toBe(true);
-    await page.locator("#btnShareDeviceFriends").click();
+    await page.locator("#btnShareDeviceAdd").click();
     await expect(page.locator(".app-toast-text")).toContainText("Ta osoba nie jest już na liście znajomych");
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_id===peer.id)).toBe(false);
   } finally {

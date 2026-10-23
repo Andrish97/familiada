@@ -624,8 +624,9 @@
     </div>
   </div>
 
-  <!-- Modal "Udostępnij urządzenie" — dokładnie jak dzisiejsze control.html,
-       reużywa control/js/share-device.js bez zmian (patrz control/js/app.js). -->
+  <!-- Modal "Udostępnij urządzenie" — ten sam układ co okno udostępniania bazy:
+       jedna sekcja „Komu udostępnić” (adres + znajomi, jeden przycisk) i lista
+       udostępnionych w tej sesji; obsługa w control/js/shareDevice.js. -->
   <div class="overlay modal--sheet" id="shareDeviceOverlay" style="display:none;">
     <div class="modal share-uni shareModal" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" data-sheet-local-actions>
       <div class="uni-head">
@@ -633,30 +634,23 @@
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div class="uni-body">
-        <div class="uni-hint" data-i18n="control.shareDeviceModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych.</div>
-        <section class="shareSection shareSection--lookup">
-          <div class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div>
+        <section class="shareSection shareSection--new">
+          <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="baseSharePanel.sectionNew">Komu udostępnić</div><div id="shareDeviceBulkActions"></div></div>
           <div class="baseShareLookup">
             <input id="shareDeviceEmail" class="inp" type="text"
                    placeholder="Nazwa użytkownika lub e-mail..."
                    data-i18n-placeholder="bases.shareModal.placeholder"/>
-            <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDevice">Udostępnij</span></button>
           </div>
-        </section>
-
-        <section class="shareSection shareSection--friends">
-          <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</div><div id="shareDeviceBulkActions"></div></div>
           <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
+          <div class="shareNewActions">
+            <button class="btn sm gold" id="btnShareDeviceAdd" type="button" disabled data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span id="btnShareDeviceAddLabel" data-i18n="control.shareDevice">Udostępnij</span></button>
+          </div>
         </section>
 
         <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
           <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
-          <div id="shareDeviceCurrentContent" class="shareList"></div>
+          <div id="shareDeviceCurrentContent" class="shareList shareList--scroll"></div>
         </section>
-      </div>
-      <div class="uni-foot modal-actions">
-        <button class="btn sm" id="btnShareDeviceCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
-        <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="shareDeviceFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="shareDeviceFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
       </div>
     </div>
   </div>

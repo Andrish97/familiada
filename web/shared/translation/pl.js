@@ -137,7 +137,7 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
-  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij"},
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "sectionNew": "Komu udostępnić", "share": "Udostępnij", "shareN": "Udostępnij ({n})"},
   shareSections: {
     subscribers: "Subskrybenci",
     subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",
@@ -697,7 +697,7 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
-      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.",
+      sharedHint: "Uprawnienie zmienisz przyciskiem przy osobie.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",
@@ -3452,10 +3452,6 @@ const pl = {
       sectionAdd: "Mail lub nazwa użytkownika",
       sectionFriends: "Znajomi, którym możesz udostępnić",
       sectionShared: "Udostępnione w tej sesji",
-      shareSelected: "Udostępnij zaznaczonym",
-      shareSelectedN: "Udostępnij zaznaczonym ({n})",
-      shareSelectedShortN: "Udostępnij ({n})",
-      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych.",
       recipientKind: { friend: "znajomy", account: "ma konto", mail: "mail" },
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",
