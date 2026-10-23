@@ -1,7 +1,7 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15140";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15140";
-import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15140";
-import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-23T15140";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15152";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15152";
+import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15152";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-23T15152";
 
 await initI18n();
 const profile = getDeviceProfile();
@@ -94,6 +94,7 @@ form.addEventListener("submit", async (event) => {
 
 input.disabled = false;
 button.disabled = false;
-input.focus();
+// Najpierw odsłonić krok szkieletu (visibility:hidden nie przyjmuje fokusu), potem fokus.
 document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
+input.focus();
 }

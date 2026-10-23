@@ -423,7 +423,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
       await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#explorerLeft")).toBeVisible();
+      // Treść strony wraca po zamknięciu arkusza. Na telefonie lewy panel to zamknięta
+      // szuflada (.drawer, visibility:hidden — E23), więc sprawdzamy prawy panel z listą.
+      await expect(page.locator(".explorer-right")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }
@@ -525,7 +527,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
       await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#explorerLeft")).toBeVisible();
+      // Treść strony wraca po zamknięciu arkusza. Na telefonie lewy panel to zamknięta
+      // szuflada (.drawer, visibility:hidden — E23), więc sprawdzamy prawy panel z listą.
+      await expect(page.locator(".explorer-right")).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }
