@@ -1173,7 +1173,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   }
 });
 
-test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser, accounts, loginAs }, testInfo) => {
+test("control2: nowe otwarcie urządzenia przejmuje od razu, wyparta karta nie wraca sama", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(120000);
   await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, {
@@ -1210,55 +1210,45 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
       return result;
     }, game.id);
 
+    // Migracja 472 (decyzja użytkownika 2026-10-23): nowe otwarcie z innej
+    // przeglądarki przejmuje urządzenie od razu, stara karta dostaje
+    // 'replaced' i wraca tylko po kliknięciu „Używaj tutaj”.
+    const dotOf = { display: "#dotDisplay", host: "#dotHost", buzzer: "#dotBuzzer" };
     for (const type of ["display", "host", "buzzer"]) {
       const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
-      const primaryStates = [];
-      const primary = await openAnon(browser, contexts, path, `${type}-primary`, [], {
-        onPage(devicePage) {
-          devicePage.on("response", async response => {
-            if (!response.url().includes("control_device_instance_")) return;
-            try {
-              const parsed = await response.json();
-              if (parsed?.state) primaryStates.push(parsed.state);
-            } catch {}
-          });
-        },
-      });
-      await expect.poll(() => primaryStates.includes("primary"), { timeout: 10000 }).toBe(true);
-      await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
-      const waitingStates = [];
-      const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, [], {
-        onPage(devicePage) {
-          devicePage.on("response", async response => {
-            if (!response.url().includes("control_device_instance_")) return;
-            let body = "<unreadable>";
-            try { body = JSON.stringify(await response.json()); } catch {}
-            const parsed = body === "<unreadable>" ? null : JSON.parse(body);
-            if (parsed?.state) waitingStates.push(parsed.state);
-            console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
-          });
-        },
-      });
-      await expect.poll(() => waitingStates.includes("waiting"), { timeout: 10000 }).toBe(true);
-      await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
-      await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
-      await primary.close();
-      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
-      await waiting.close();
+      const first = await openAnon(browser, contexts, path, `${type}-first`, []);
+      await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+      const startedAt = Date.now();
+      const second = await openAnon(browser, contexts, path, `${type}-second`, []);
+      await expect(second.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(first.locator("#deviceLeaseTakeover")).toBeVisible({ timeout: 8000 });
+      expect(Date.now() - startedAt, "przejęcie bez czekania na wygaśnięcie starej karty").toBeLessThan(15000);
+
+      if (type === "display") {
+        // Zamknięcie nowej karty: stara nie przejmuje sama nawet po
+        // wygaśnięciu lease (12 s + takt heartbeatu).
+        await second.context().close();
+        await first.waitForTimeout(16000);
+        await expect(first.locator("#deviceLeaseTakeover")).toBeVisible();
+      } else {
+        await second.close();
+      }
+      // Świadome przejęcie na starej karcie.
+      await first.locator("#deviceLeaseTakeover").click();
+      await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(dotOf[type])).toHaveClass(/\bok\b/, { timeout: 10000 });
+      // Zamknięcie karty zwalnia urządzenie od razu (keepalive), bez 12–15 s.
+      await first.close({ runBeforeUnload: true });
+      await expect(page.locator(dotOf[type])).not.toHaveClass(/\bok\b/, { timeout: 6000 });
 
       if (type === "buzzer" || type === "host") {
-        // Migracja 423: ponowne otwarcie w tej samej przeglądarce (np. drugi
-        // skan QR na telefonie/tablecie) przejmuje urządzenie od razu, bez
-        // czekania 12 s na wygaśnięcie starej karty; stara przechodzi w
-        // oczekiwanie.
-        const first = await openAnon(browser, contexts, path, `${type}-first`, []);
-        await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
-        const startedAt = Date.now();
-        const again = await first.context().newPage();
-        await again.goto(first.url(), { waitUntil: "domcontentloaded" });
+        // Ta sama przeglądarka (np. drugi skan QR) też przejmuje od razu.
+        const one = await openAnon(browser, contexts, path, `${type}-same-1`, []);
+        await expect(one.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+        const again = await one.context().newPage();
+        await again.goto(one.url(), { waitUntil: "domcontentloaded" });
         await expect(again.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 8000 });
-        await expect(first.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 8000 });
-        expect(Date.now() - startedAt, "przejęcie bez czekania na wygaśnięcie starej karty").toBeLessThan(10000);
+        await expect(one.locator("#deviceLeaseTakeover")).toBeVisible({ timeout: 8000 });
       }
     }
   } finally {

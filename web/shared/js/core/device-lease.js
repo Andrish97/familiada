@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-23T12245";
-import { t } from "../../translation/translation.js?v=v2026-10-23T12245";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T12245";
-import { startTicker } from "./background-ticker.js?v=v2026-10-23T12245";
-import { icon } from "./icons.js?v=v2026-10-23T12245";
-import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T12245";
-import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T12245";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T13133";
+import { t } from "../../translation/translation.js?v=v2026-10-23T13133";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T13133";
+import { startTicker } from "./background-ticker.js?v=v2026-10-23T13133";
+import { icon } from "./icons.js?v=v2026-10-23T13133";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T13133";
+import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T13133";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -13,6 +13,10 @@ const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
     const r = Math.random() * 16 | 0;
     return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
   });
+
+// Świadome przejęcie z ekranu „otwarto w innym miejscu” (jedna instancja
+// lease na stronę urządzenia).
+let takeoverHandler = null;
 
 export function updateDeviceLeaseOverlay(state) {
   const overlay = document.getElementById("deviceLeaseOverlay");
@@ -25,13 +29,29 @@ export function updateDeviceLeaseOverlay(state) {
     overlay.style.display = "none";
     return;
   }
-  const waiting = state === "waiting";
+  const replaced = state === "replaced";
   const iconEl = document.getElementById("deviceLeaseIcon");
   const title = document.getElementById("deviceLeaseTitle");
   const text = document.getElementById("deviceLeaseText");
-  if (iconEl) iconEl.innerHTML = icon(waiting ? "hourglass" : "refresh");
-  if (title) title.textContent = t(waiting ? "deviceLease.waitingTitle" : "deviceLease.reconnectingTitle");
-  if (text) text.textContent = t(waiting ? "deviceLease.waitingText" : "deviceLease.reconnectingText");
+  if (iconEl) iconEl.innerHTML = icon(replaced ? "phone" : "refresh");
+  if (title) title.textContent = t(replaced ? "deviceLease.replacedTitle" : "deviceLease.reconnectingTitle");
+  if (text) text.textContent = t(replaced ? "deviceLease.replacedText" : "deviceLease.reconnectingText");
+  let actions = overlay.querySelector("#deviceLeaseActions");
+  if (!actions) {
+    actions = document.createElement("div");
+    actions.id = "deviceLeaseActions";
+    actions.className = "blocking-actions";
+    const button = document.createElement("button");
+    button.id = "deviceLeaseTakeover";
+    button.type = "button";
+    button.className = "blocking-action is-accent";
+    button.addEventListener("click", () => takeoverHandler?.());
+    actions.append(button);
+    overlay.querySelector(".blocking-card")?.append(actions);
+  }
+  const button = actions.querySelector("#deviceLeaseTakeover");
+  button.innerHTML = `${icon("check")} ${t("deviceLease.takeover")}`;
+  actions.hidden = !replaced;
   overlay.hidden = false;
   overlay.style.display = "flex";
 }
@@ -42,9 +62,10 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
   let state = "starting";
   let epoch = null;
   let registerNext = true;
-  // Pierwsza rejestracja tej strony może przejąć rolę główną od karty tej
-  // samej przeglądarki (migracja 423). Ponowne rejestracje — np. po
-  // wybudzeniu karty — już nie, żeby dwie karty nie przerzucały się rolą.
+  // Pierwsza rejestracja tej strony przejmuje rolę główną od razu, z dowolnej
+  // przeglądarki (migracja 472); poprzednia instancja dostaje 'replaced'.
+  // Ponowne rejestracje — np. po wybudzeniu karty — już nie: przy żywej
+  // głównej instancji wybudzona karta zostaje wyparta i nie wraca sama.
   let firstRegistration = true;
   let inFlight = false;
   let stopped = false;
@@ -132,6 +153,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
 
   async function heartbeat(register = false) {
     if (stopped) return null;
+    // Wyparta karta nie odpytuje serwera; wraca tylko przez takeover().
+    if (state === "replaced" && !register) return null;
     if (inFlight) {
       // Nowsze metadane (np. odblokowanie dźwięku) nie mogą czekać na
       // kolejny takt — wyślij je zaraz po bieżącym żądaniu.
@@ -195,12 +218,27 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     if (event?.persisted) return;
     stopped = true;
     stopTicker?.();
-    if (mode === "lease") {
-      void call("control_device_instance_release", {
-        p_game_id: gameId, p_device_type: deviceType, p_key: key,
-        p_connection_id: connectionId, p_epoch: epoch,
+    if (mode === "lease") releaseOnExit();
+  }
+  // Zamykana karta: zwykłe żądanie przeglądarka zwykle ucina, a wtedy nowe
+  // urządzenie czekało na wygaśnięcie lease (12-15 s). keepalive dowozi
+  // zwolnienie po zamknięciu karty, więc slot jest wolny od razu.
+  function releaseOnExit() {
+    try {
+      void fetch(`${SUPABASE_URL}/rest/v1/rpc/control_device_instance_release`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          p_game_id: gameId, p_device_type: deviceType, p_key: key,
+          p_connection_id: connectionId, p_epoch: epoch,
+        }),
       }).catch(() => {});
-    }
+    } catch { /* zostaje wygaśnięcie lease */ }
   }
 
   let stopLifecycle = null;
@@ -235,8 +273,18 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     }).catch(() => {});
   }
 
+  // „Używaj tutaj”: nowa instancja jak przy otwarciu strony.
+  function takeover() {
+    if (stopped || state !== "replaced") return;
+    connectionId = makeConnectionId();
+    firstRegistration = true;
+    registerNext = true;
+    void heartbeat(true);
+  }
+  takeoverHandler = takeover;
+
   return {
-    start, stop,
+    start, stop, takeover,
     /** Zdarzenie diagnostyki sesji (control2_device_log). */
     log: logEvent,
     get mode() { return mode; },

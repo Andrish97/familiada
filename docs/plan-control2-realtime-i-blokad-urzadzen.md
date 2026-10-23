@@ -56,6 +56,14 @@ Decyzje:
    w oczekiwanie i wraca, gdy nowa zniknie. Ponowne rejestracje nie przejmują
    (brak przerzucania między dwiema kartami). Inna przeglądarka nadal czeka.
    Migracja 423, test `tests/sql/control2-same-browser-takeover-423.sql`.
+   **Zmienione 2026-10-23 (decyzja użytkownika: „tu nie chronimy jak
+   w zasobach, a wkurzamy długim czekaniem”):** nowe otwarcie z **dowolnej**
+   przeglądarki/urządzenia przejmuje od razu; wyparta karta ma stan
+   `replaced`, nie czeka w kolejce i nigdy nie wraca sama — pokazuje
+   „Urządzenie otwarto w innym miejscu” z przyciskiem „Używaj tutaj”.
+   Wybudzona karta przy żywej głównej też dostaje `replaced`; bez głównej
+   przejmuje jak dotąd. Zamknięcie karty zwalnia slot od razu (`keepalive`).
+   Migracja 472, test `tests/sql/control2-device-takeover-472.sql`.
 8. **Brak wymaganego urządzenia blokuje całą grę (decyzja użytkownika
    2026-10-20).** Jeśli Przycisk nie został wyłączony w panelu („Przycisk
    fizyczny”), jego brak wstrzymuje wszystkie akcje gry, także kroki, w których
