@@ -1,7 +1,8 @@
 # Audyt sprzątania bazy (2026-10-23)
 
-Stan: **audyt zrobiony, nic nie usunięto**. Decyzje B1–B8 zapisane
-(2026-10-23), wykonanie czeka na polecenie startu (sekcja „Decyzje”).
+Stan (2026-10-23): **migracje 473–477 gotowe na branchu `ccr-340eeb59-hp37zo`,
+przetestowane lokalnie, czekają na wdrożenie** (aktywność na produkcji —
+decyzja użytkownika o przerwie). Sekcja „Wykonanie” niżej.
 
 ## Metoda
 
@@ -166,6 +167,34 @@ Nie są śmieciami: tabele `marketing_*` (Lead Finder działa, panel admina),
 `public_kv` (≤1 wiersz, objęta testem 446) jest nieużywana od usunięcia
 klucza TinyMCE w migracji 124. Można ją dołączyć do A3 po sprawdzeniu
 zawartości.
+
+## Wykonanie (2026-10-23)
+
+Ponowny audyt po „zaczynaj”: scalony `main` (nowa tylko migracja 472 —
+przejmowanie urządzeń, bez związku z listami); analiza statyczna na świeżym
+`schema.sql` — żaden usuwany obiekt nie zyskał użycia; odczyty produkcji
+39990453597 (sterta) i 39990515391 (indeksy) — bez zmian względem audytu.
+
+Różnice względem listy (dodane przy wykonaniu):
+- `fam_clip_words` — używała jej tylko naprawa E21 (B2);
+- `contact_reports_set_updated_at` — funkcja triggera starego formularza (B4);
+- `_delete_user_data`: zamiast starych `contact_reports` kasuje zgłoszenia
+  w `reports`/`messages`, gdy autorem jest e-mail konta (decyzja 2026-10-07
+  „zgłoszenia kontaktowe usuniętego konta: usuwane całe”, `usuwanie-danych.md`);
+- `e2e_shared_devices_cleanup` zostaje (spece), bez kasowania `shared_devices`
+  i bez klucza `deleted` w wyniku;
+- B6: `CLUSTER … USING marketing_search_logs_pkey` zamiast `VACUUM FULL`
+  (migracje idą w jednej transakcji);
+- B7: gdy zadanie cron nadal woła starą funkcję, migracja ją zostawia
+  z ostrzeżeniem w logu (zamiast przerywać kolejkę migracji);
+- skrypty audytu uprawnień (`*-acl-audit`, `public-read-audit`) bez zmian —
+  dla usuniętych obiektów zwracają −1 / brak.
+
+Migracje: 473 (A, B5–B8), 474 (B1), 475 (B2), 476 (B3 + kasowanie zgłoszeń
+konta), 477 (B4). Testy lokalne: `tests/sql/e26-cleanup-473-477.sql`
+(przeniesienie 2 zgłoszeń / 5 wiadomości, kolizja numeru, zapis stanu gry,
+tasks_list, usunięcie konta) i `tests/sql/e26-b7-cron-473.sql` — OK.
+Kontrola po wdrożeniu: `scripts/db-read/e26-after.sql` (oczekiwane zera).
 
 ## Uwagi
 
