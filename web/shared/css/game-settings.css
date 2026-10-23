@@ -202,39 +202,11 @@
   .gs-live-preview-grid .display-preview { margin: 0; }
   .gs-host-logo-mode { display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; width: min(100%, 320px); margin-top: 8px; }
   .gs-host-logo-mode .toggle-slider { padding: 8px 12px; }
-  .gs-host-logo-mode .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--gold); outline-offset: -3px; }
 
   @media (max-width: 680px) {
     .gs-live-preview-grid { grid-template-columns: 1fr; }
   }
 
-  /* ===== TOGGLE GROUP (jak w control-new) ===== */
-  .toggle-group{
-    display:inline-grid;
-    grid-template-columns:1fr 1fr;
-    gap:0;
-    border-radius:var(--r-lg);
-    background:var(--k-20);
-    border:2px solid var(--w-14);
-    overflow:hidden;
-    width:fit-content;
-  }
-  .toggle-item{ position:relative; cursor:pointer; }
-  .toggle-item input{ position:absolute; opacity:0; width:0; height:0; }
-  .toggle-slider{
-    display:block; padding:10px 20px;
-    background:transparent; color:var(--gold);
-    font-weight:700; font-size:0;
-    letter-spacing:.02em;
-    transition:background .24s ease, color .24s ease;
-    white-space:nowrap; text-align:center; border-radius:0;
-  }
-  .toggle-slider::before{ content:attr(data-text); font-size:13px; }
-  .toggle-item:first-child .toggle-slider{ border-top-left-radius:var(--r-lg); border-bottom-left-radius:var(--r-lg); }
-  .toggle-item:last-child .toggle-slider{ border-top-right-radius:var(--r-lg); border-bottom-right-radius:var(--r-lg); }
-  .toggle-item input:checked + .toggle-slider{ background:var(--gold); color:#000; }
-  .toggle-item:hover .toggle-slider{ background:var(--w-8); }
-  .toggle-item input:checked:hover + .toggle-slider{ background:#ffd766; }
 
   /* ===== COLOR SWATCHES ===== */
   .colorRow{

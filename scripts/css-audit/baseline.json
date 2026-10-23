@@ -92,9 +92,9 @@
  },
  "web/control/css/control.css": {
   "important": 1,
-  "colorLiteral": 15,
+  "colorLiteral": 13,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 25
+  "sharedDuplicate": 22
  },
  "web/control/css/control2.css": {
   "important": 2,
@@ -362,10 +362,10 @@
  },
  "web/shared/css/game-settings.css": {
   "important": 3,
-  "colorLiteral": 27,
+  "colorLiteral": 25,
   "mediaWidth": 3,
   "zIndexLiteral": 2,
-  "sharedDuplicate": 12
+  "sharedDuplicate": 9
  },
  "web/shared/css/image-viewer.css": {
   "important": 2,
@@ -466,14 +466,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 207,
+  "sharedDuplicate": 210,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 240,
+  "sharedDuplicate": 243,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

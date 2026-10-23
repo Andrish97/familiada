@@ -1232,6 +1232,39 @@
     html.webapp .fs-btn { display: none !important; }
   }
 
+  /* ── Przełącznik segmentowy (radio w pigułkach): .toggle-group > label.toggle-item
+     > input + span.toggle-slider[data-text]. Jedna kopia (dawniej ustawienia gry i Control). */
+  .toggle-group {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    width: fit-content;
+    overflow: hidden;
+    border: 2px solid var(--w-14);
+    border-radius: var(--r-lg);
+    background: var(--k-20);
+  }
+  .toggle-item { position: relative; cursor: pointer; }
+  .toggle-item input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: relative;
+    display: block;
+    padding: 10px 20px;
+    color: var(--accent);
+    font-size: 0;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-align: center;
+    white-space: nowrap;
+    transition: background var(--dur-base) ease, color var(--dur-base) ease;
+  }
+  .toggle-slider::before { content: attr(data-text); font-size: 13px; }
+  .toggle-item:first-child .toggle-slider { border-radius: var(--r-lg) 0 0 var(--r-lg); }
+  .toggle-item:last-child .toggle-slider { border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+  .toggle-item:hover .toggle-slider { background: var(--w-8); }
+  .toggle-item input:checked + .toggle-slider { background: var(--accent); color: var(--bg); }
+  .toggle-item input:checked:hover + .toggle-slider { filter: brightness(1.08); }
+  .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -4px; }
+
   /* ── Podgląd pytań (Gry, rynek, panel admina): lista pytań z odpowiedziami. */
   .q-preview {
     display: flex;
