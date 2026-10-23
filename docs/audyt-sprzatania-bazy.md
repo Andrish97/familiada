@@ -1,6 +1,7 @@
 # Audyt sprzątania bazy (2026-10-23)
 
-Stan: **audyt zrobiony, nic nie usunięto**. Lista do decyzji użytkownika.
+Stan: **audyt zrobiony, nic nie usunięto**. Decyzje B1–B4 zapisane
+(2026-10-23), wykonanie czeka na polecenie startu (sekcja „Decyzje”).
 
 ## Metoda
 
@@ -175,4 +176,23 @@ zawartości.
 
 ## Decyzje
 
-- (brak — czeka na użytkownika)
+**2026-10-23 (użytkownik): zapisać do zrobienia, na razie nic nie robić.**
+Start dopiero na wyraźne polecenie.
+
+- **B1 — usunąć:** cofanie zostało wycofane („cofanie zostało cofnięte”).
+  Usunąć zapis historii w `game_state_write`, funkcję `game_state_undo`
+  i tabelę `game_state_history`; poprawić komentarze i dokumentację, które
+  o nich wspominają (np. komentarz tabeli `game_state`).
+- **B2 — wyczyścić:** kopia szablonów nie jest potrzebna. Usunąć
+  `e21_demo_templates_before`, `e21_repair_runs`, `e21_data_repair`,
+  `e21_demo_*` i pliki `scripts/db-read/e21-*`.
+- **B3 — usunąć:** „urządzenia to sprawa chwilowa”, więc nie przenosić
+  danych. Usunąć `shared_devices` (wiersze, tabelę, trigger
+  `copy_pending_shared_devices`), kasowania w funkcjach i część `device`
+  w `tasks_list`.
+- **B4 — przenieść:** zgłoszenia z `contact_reports` i
+  `contact_report_messages` przenieść do `reports` / `messages` (nowy
+  model), potem usunąć stare funkcje, gałąź `list_messages('reports')`
+  i stare tabele.
+- B5–B8 oraz część A: bez decyzji (A i B3/B6/B8 zaproponowane jako
+  bezpieczne; B5 retencja i B7 `cron.job` czekają na użytkownika).
