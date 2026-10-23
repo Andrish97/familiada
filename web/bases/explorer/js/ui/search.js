@@ -7,10 +7,10 @@
 // (#searchOverlay), do którego na czas edycji przenosimy to samo pole z paska
 // (tam schowane) — dlatego nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-23T15152";
-import { renderAll } from "../render.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15152";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T15152";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-23T15182";
+import { renderAll } from "../render.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15182";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T15182";
 
 const TEXT_DELAY_MS = 200;
 
@@ -103,7 +103,7 @@ function wireSearchSheet(state, { clear, commit }) {
     document.dispatchEvent(new CustomEvent("explorer:close-drawer"));
     home = { parent: box.parentElement, next: box.nextSibling };
     body.append(box);
-    overlay.style.display = "grid";
+    setOverlayOpen(overlay, true);
     enterModalSheet(overlay, { onClose: hide });
     document.addEventListener("keydown", onKey, true);
     document.getElementById("searchText")?.focus();
@@ -115,7 +115,7 @@ function wireSearchSheet(state, { clear, commit }) {
     commit();
     document.removeEventListener("keydown", onKey, true);
     exitModalSheet(overlay);
-    overlay.style.display = "none";
+    setOverlayOpen(overlay, false);
     const box = document.getElementById("searchBox");
     if (home?.parent && box) home.parent.insertBefore(box, home.next?.parentNode === home.parent ? home.next : null);
     renderAll(state);

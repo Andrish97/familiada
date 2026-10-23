@@ -3,10 +3,10 @@
 // z tytułem, na telefonie okno od dołu z przybliżaniem palcami (pinch-zoom.js).
 // Zamyka [×], Esc, kliknięcie tła albo „Wstecz” na górnym pasku (backBtn).
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T15152";
-import { icon } from "./icons.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T15152";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-23T15152";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15182";
+import { icon } from "./icons.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "./modal-sheet.js?v=v2026-10-23T15182";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-23T15182";
 
 /**
  * @param {{ mount?: HTMLElement|null, before?: Node|null, backBtn?: HTMLElement|null }} opts
@@ -17,7 +17,7 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
   const overlay = document.createElement("div");
   overlay.id = "imgvOverlay";
   overlay.className = "overlay modal--sheet imgv-overlay";
-  overlay.style.display = "none";
+  setOverlayOpen(overlay, false);
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
     <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvHeading">
@@ -70,7 +70,7 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
       }
       stage.appendChild(img);
     }
-    overlay.style.display = "";
+    setOverlayOpen(overlay, true);
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
     enterModalSheet(overlay, { backBtn, onClose: close });
@@ -80,7 +80,7 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
   const close = () => {
     if (!overlay.classList.contains("is-open")) return;
     overlay.classList.remove("is-open");
-    overlay.style.display = "none";
+    setOverlayOpen(overlay, false);
     overlay.setAttribute("aria-hidden", "true");
     exitModalSheet(overlay);
     previewZoom?.reset();

@@ -18,23 +18,23 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15152";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-23T15152";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T15152";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T15152";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-23T15152";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T15152";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T15152";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15182";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-23T15182";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T15182";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T15182";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-23T15182";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T15182";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T15182";
 
-import { renderPreview } from "./render.js?v=v2026-10-23T15152";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-23T15152";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-23T15152";
-import { cannotEditReason } from "./text.js?v=v2026-10-23T15152";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-23T15152";
+import { renderPreview } from "./render.js?v=v2026-10-23T15182";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-23T15182";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-23T15182";
+import { cannotEditReason } from "./text.js?v=v2026-10-23T15182";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-23T15182";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-23T15152";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-23T15152";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-23T15182";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-23T15182";
 
 
 const DEBOUNCE_MS = 700;
@@ -239,11 +239,11 @@ export async function bootEditorPage({ mode, initEditor }) {
     previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
     previewZoom.reset();
     lockPageZoomForPreview();
-    el.previewOverlay.style.display = "";
+    setOverlayOpen(el.previewOverlay, true);
     enterModalSheet(el.previewOverlay, { backBtn: el.btnBack, onClose: closePreview });
   }
   function closePreview() {
-    el.previewOverlay.style.display = "none";
+    setOverlayOpen(el.previewOverlay, false);
     exitModalSheet(el.previewOverlay);
     unlockPageZoomAfterPreview();
     previewZoom?.reset();
@@ -301,7 +301,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   const userP = initPage(EDITOR_PAGE_IDS[mode], {
     ready: i18nP,
     onBack: async (href) => {
-      if (el.previewOverlay.style.display !== "none") { closePreview(); return; }
+      if (isOverlayOpen(el.previewOverlay)) { closePreview(); return; }
       await leave(href);
     },
     onManual: (href) => leave(href),

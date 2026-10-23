@@ -5,9 +5,9 @@
 // wraca do drzewa. Telefon: drzewo / tagi / kategorie zamiast hamburgera —
 // przycisk otwiera panel z tym widokiem, ponowne stuknięcie go zamyka.
 
-import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-23T15152";
-import { selectionClear } from "../state.js?v=v2026-10-23T15152";
-import { initDrawer } from "../mobile.js?v=v2026-10-23T15152";
+import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-23T15182";
+import { selectionClear } from "../state.js?v=v2026-10-23T15182";
+import { initDrawer } from "../mobile.js?v=v2026-10-23T15182";
 
 // Schowane drzewo nie trzyma zaznaczenia — skróty (Usuń, F2…) działałyby
 // na niewidocznych folderach.

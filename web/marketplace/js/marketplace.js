@@ -1,19 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T15152";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T15152";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T15152";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T15152";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-23T15152";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T15152";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T15152";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T15152";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T15152";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T15152";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T15152";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T15152";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T15152";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T15182";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T15182";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T15182";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T15182";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-23T15182";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T15182";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T15182";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T15182";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T15182";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T15182";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T15182";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T15182";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T15182";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -118,14 +118,14 @@ function showToast(msg, type = "info") {
 function openMySent() {
   if (isGuest || !currentUser || !els.mySentOverlay) return;
   returnToMySent = false;
-  els.mySentOverlay.style.display = "";
+  setOverlayOpen(els.mySentOverlay, true);
   enterModalSheet(els.mySentOverlay, { backBtn: currentBackBtn(), onClose: closeMySent });
   void loadMySent();
 }
 
 function closeMySent() {
-  if (!els.mySentOverlay || els.mySentOverlay.style.display === "none") return;
-  els.mySentOverlay.style.display = "none";
+  if (!els.mySentOverlay || !isOverlayOpen(els.mySentOverlay)) return;
+  setOverlayOpen(els.mySentOverlay, false);
   exitModalSheet(els.mySentOverlay);
 }
 
@@ -398,7 +398,7 @@ async function openDetail(id, { updateUrl = true, replaceUrl = false, trigger = 
   if (els.btnAddLibrary) els.btnAddLibrary.hidden = true;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = true;
   if (els.addedBadge) els.addedBadge.hidden = true;
-  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+  if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, true);
   enterModalSheet(els.gameDetailOverlay, { backBtn: currentBackBtn(), onClose: closeDetail });
 
   const { data, error } = await sb().rpc("market_game_detail", { p_id: id }).single();
@@ -406,7 +406,7 @@ async function openDetail(id, { updateUrl = true, replaceUrl = false, trigger = 
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
     if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "error";
-    if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
+    if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, false);
     exitModalSheet(els.gameDetailOverlay);
     detailGameId = null;
     showToast(t("marketplace.errorLoad"), "error");
@@ -478,7 +478,7 @@ function renderDetail(g) {
   const withdrawn = g.status === "withdrawn";
   updateLibraryButtons(inLibrary, withdrawn);
 
-  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+  if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, true);
 }
 
 function marketplaceUrl() {
@@ -514,7 +514,7 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
 
 function closeDetail({ updateUrl = true } = {}) {
   detailRequest++;
-  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
+  if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, false);
   exitModalSheet(els.gameDetailOverlay);
   detailGameId = null;
   detailGame = null;
@@ -706,13 +706,13 @@ async function openSubmitModal() {
     btn.classList.toggle("is-active", btn.dataset.lang === submitLang);
   });
 
-  if (els.submitOverlay) els.submitOverlay.style.display = "";
+  if (els.submitOverlay) setOverlayOpen(els.submitOverlay, true);
   enterModalSheet(els.submitOverlay, { backBtn: currentBackBtn(), onClose: closeSubmitModal });
 }
 
 function closeSubmitModal() {
-  if (!els.submitOverlay || els.submitOverlay.style.display === "none") return;
-  els.submitOverlay.style.display = "none";
+  if (!els.submitOverlay || !isOverlayOpen(els.submitOverlay)) return;
+  setOverlayOpen(els.submitOverlay, false);
   exitModalSheet(els.submitOverlay);
   backToMySent();
 }
@@ -1050,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("i18n:lang", async () => {
     if (detailGame) renderDetail(detailGame);
-    if (els.mySentOverlay && els.mySentOverlay.style.display !== "none") await loadMySent();
+    if (els.mySentOverlay && isOverlayOpen(els.mySentOverlay)) await loadMySent();
     await loadBrowse({ reset: true });
   });
 });

@@ -1,10 +1,10 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15152";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15152";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15152";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15182";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15182";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15182";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -271,7 +271,7 @@ export function initExportModal() {
 
   function close(result = { ok: false }) {
     renderToken += 1; // przerwij dorysowywanie listy
-    show(overlay, false);
+    setOverlayOpen(overlay, false);
     exitModalSheet(overlay);
     setErr("");
 
@@ -317,7 +317,7 @@ export function initExportModal() {
     renderList();
     updateTypeUI();
 
-    show(overlay, true);
+    setOverlayOpen(overlay, true);
     enterModalSheet(overlay, { backBtn: btnBack, onClose: () => close({ ok: false }) });
     setTimeout(() => xName?.focus(), 0);
 

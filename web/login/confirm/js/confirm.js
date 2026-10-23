@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15152";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15182";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15152";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-23T15152";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-23T15152";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-23T15152";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15152";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-23T15152";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T15152";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15182";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-23T15182";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-23T15182";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-23T15182";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15182";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-23T15182";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-23T15182";
 
 
 const status = document.getElementById("status");

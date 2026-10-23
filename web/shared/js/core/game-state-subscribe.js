@@ -13,12 +13,12 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T15152";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T15152";
-import { rt } from "./realtime.js?v=v2026-10-23T15152";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T15152";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T15152";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-23T15152";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T15182";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T15182";
+import { rt } from "./realtime.js?v=v2026-10-23T15182";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T15182";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T15182";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-23T15182";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {

@@ -9,8 +9,8 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T15152";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T15152";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15182";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T15182";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -19,7 +19,7 @@ import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T15152";
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-23T15152"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-23T15182"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -82,12 +82,10 @@ function setUrlDialog(key, push) {
 
 function showRoutedOverlay(el) {
   if (!el) return false;
-  el.hidden = false;
-  el.classList.remove("hidden");
-  el.style.display = "";
+  setOverlayOpen(el, true);
+  el.dataset.routed = "true";
   const close = () => {
-    el.style.display = "none";
-    el.hidden = true;
+    setOverlayOpen(el, false);
     exitModalSheet(el);
   };
   enterModalSheet(el, { onClose: close, historyKey: el.id, restore: false });
@@ -103,9 +101,8 @@ function onModalPopstate() {
   if (key && activeDialogKey !== key) {
     const route = sheetRoutes.get(key);
     if (route) {
-      route.overlay.hidden = false;
-      route.overlay.classList.remove("hidden");
-      route.overlay.style.display = "";
+      setOverlayOpen(route.overlay, true);
+      route.overlay.dataset.routed = "true";
       enterModalSheet(route.overlay, { ...route.options, historyKey: key, restore: true });
     } else {
       showRoutedOverlay(document.getElementById(key));
@@ -114,6 +111,24 @@ function onModalPopstate() {
 }
 
 if (typeof window !== "undefined") window.addEventListener("popstate", onModalPopstate);
+
+/**
+ * Okno (nakładka .overlay): jeden sposób pokazywania i chowania — atrybut
+ * hidden (silnik: [hidden] { display: none !important }). Czyści dawne
+ * style.display i klasę .hidden, żeby nie mieszać trzech mechanizmów.
+ */
+export function setOverlayOpen(el, open) {
+  if (!el) return;
+  delete el.dataset.routed; // pokazanie „z adresu” oznacza showRoutedOverlay
+  el.hidden = !open;
+  el.classList.remove("hidden");
+  el.style.removeProperty("display");
+}
+
+/** Czy okno jest pokazane (atrybut hidden i obliczony display). */
+export function isOverlayOpen(el) {
+  return !!el && !el.hidden && getComputedStyle(el).display !== "none";
+}
 
 export function setModalSheetPage(pageId) {
   currentPageId = pageId;
@@ -124,7 +139,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-23T15152").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-23T15182").then((module) => module.openContactModal());
 
     }, 0);
     return;

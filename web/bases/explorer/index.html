@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T15152"/>
+  <meta name="app-version" content="v2026-10-23T15182"/>
 
 
   <meta charset="utf-8" />
@@ -15,24 +15,24 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15152" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15152"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15152"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15152"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15152"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15152"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T15152" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T15152" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15182" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15182"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15182"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15182"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15182"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15182"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T15182" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T15182" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15152"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15182"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15152" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15182" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T15152"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T15182"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15152" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15182" defer></script>
 
 </head>
 
@@ -113,7 +113,7 @@
   <!-- Przenieś do… / Kopiuj do… (ui/move-modal.js): drzewo folderów z wyszukiwaniem -->
   <!-- Szukaj na telefonie (ui/search.js): pole, tabletki i podpowiedzi z paska
        przenoszone na czas edycji do treści okna -->
-  <div class="overlay modal--sheet sheet-fit" id="searchOverlay" style="display:none;">
+  <div class="overlay modal--sheet sheet-fit" id="searchOverlay" hidden>
     <div class="modal modal--narrow search-modal" role="dialog" aria-modal="true" aria-labelledby="searchSheetTitle">
       <div class="mHead">
         <div class="mTitle" id="searchSheetTitle" data-i18n="baseExplorer.search.sheetTitle">Szukaj</div>
@@ -128,7 +128,7 @@
     </div>
   </div>
 
-  <div class="overlay modal--sheet" id="moveOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="moveOverlay" hidden>
     <div class="modal modal--narrow move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
       <div class="mHead">
         <div class="mTitle" id="moveTitle">Przenieś do</div>
@@ -148,7 +148,7 @@
     </div>
   </div>
 
-  <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="tagsOverlay" hidden>
     <div class="modal modal--medium tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
   
       <!-- WARSTWA 1: przypisz -->
@@ -251,7 +251,7 @@
     <!-- =======================================================
        [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
        ======================================================= -->
-  <div class="overlay modal--sheet" id="exportOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="exportOverlay" hidden>
     <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
 
       <div class="tagsHead">
@@ -337,7 +337,7 @@
     <!-- =======================================================
        [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
        ======================================================= -->
-  <div class="overlay modal--sheet" id="questionOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="questionOverlay" hidden>
     <div class="modal modal--medium tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
 
       <div class="tagsHead">
@@ -393,7 +393,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15152"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15182"></script>
 
 </body>
 </html>

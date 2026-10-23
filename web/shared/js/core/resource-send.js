@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-23T15152";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15152";
-import { toast } from "./toast.js?v=v2026-10-23T15152";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15152";
-import { icon, iconText } from "./icons.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T15152";
-import { attachListTools } from "./share-sections.js?v=v2026-10-23T15152";
+import { sb } from "./supabase.js?v=v2026-10-23T15182";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15182";
+import { toast } from "./toast.js?v=v2026-10-23T15182";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15182";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "./modal-sheet.js?v=v2026-10-23T15182";
+import { attachListTools } from "./share-sections.js?v=v2026-10-23T15182";
 
 
 const attempts = new Map();
@@ -16,7 +16,7 @@ function getDialog() {
   overlay = document.createElement("div");
   overlay.id = "resourceSendOverlay";
   overlay.className = "overlay modal--sheet resource-send-overlay";
-  overlay.style.display = "none";
+  setOverlayOpen(overlay, false);
   overlay.innerHTML = `
     <div class="modal modal--medium shareModal resource-send-modal" role="dialog" aria-modal="true" aria-labelledby="resourceSendTitle">
       <div class="mHead">
@@ -51,8 +51,8 @@ function getDialog() {
 }
 
 function closeDialog(overlay) {
-  if (!overlay || overlay.style.display === "none") return;
-  overlay.style.display = "none";
+  if (!overlay || !isOverlayOpen(overlay)) return;
+  setOverlayOpen(overlay, false);
   exitModalSheet(overlay);
 }
 
@@ -172,7 +172,7 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
         }
       };
 
-      overlay.style.display = "grid";
+      setOverlayOpen(overlay, true);
       enterModalSheet(overlay, {
         backBtn: document.getElementById("btnBackSheet") || document.getElementById("btnBack"),
         onClose: () => closeDialog(overlay),

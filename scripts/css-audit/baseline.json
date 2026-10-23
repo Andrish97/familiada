@@ -19,7 +19,7 @@
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
-  "inlineStyleHtml": 13
+  "inlineStyleHtml": 8
  },
  "web/bases/explorer/js/actions.js": {
   "inlineStyleJs": 42
@@ -40,18 +40,12 @@
   "inlineStyleJs": 9
  },
  "web/bases/explorer/js/tags-modal.js": {
-  "inlineStyleJs": 13
+  "inlineStyleJs": 11
  },
  "web/bases/explorer/js/ui/marquee.js": {
   "inlineStyleJs": 1
  },
  "web/bases/explorer/js/ui/move-modal.js": {
-  "inlineStyleJs": 3
- },
- "web/bases/explorer/js/ui/search.js": {
-  "inlineStyleJs": 2
- },
- "web/bases/explorer/js/ui/sheet-guard.js": {
   "inlineStyleJs": 1
  },
  "web/bases/explorer/js/ui/tree-row.js": {
@@ -141,13 +135,10 @@
   "inlineStyleJs": 1
  },
  "web/control/index.html": {
-  "inlineStyleHtml": 5,
+  "inlineStyleHtml": 4,
   "styleBlock": 1
  },
  "web/control/js/app.js": {
-  "inlineStyleJs": 2
- },
- "web/control/js/shareDevice.js": {
   "inlineStyleJs": 2
  },
  "web/control/js/ui.js": {
@@ -164,16 +155,16 @@
   "sharedDuplicate": 1
  },
  "web/games/editor/index.html": {
-  "inlineStyleHtml": 4
+  "inlineStyleHtml": 3
  },
  "web/games/editor/js/editor.js": {
-  "inlineStyleJs": 3
+  "inlineStyleJs": 1
  },
  "web/games/index.html": {
-  "inlineStyleHtml": 12
+  "inlineStyleHtml": 11
  },
  "web/games/js/games.js": {
-  "inlineStyleJs": 25
+  "inlineStyleJs": 23
  },
  "web/games/settings/index.html": {
   "inlineStyleHtml": 2,
@@ -226,22 +217,13 @@
   "sharedDuplicate": 4
  },
  "web/logos/editor/draw/index.html": {
-  "inlineStyleHtml": 8
- },
- "web/logos/editor/image/index.html": {
-  "inlineStyleHtml": 1
- },
- "web/logos/editor/text/index.html": {
-  "inlineStyleHtml": 1
+  "inlineStyleHtml": 7
  },
  "web/logos/index.html": {
   "inlineStyleHtml": 8
  },
  "web/logos/js/draw.js": {
   "inlineStyleJs": 17
- },
- "web/logos/js/editor-page.js": {
-  "inlineStyleJs": 2
  },
  "web/logos/js/image.js": {
   "inlineStyleJs": 8
@@ -272,19 +254,16 @@
   "sharedDuplicate": 2
  },
  "web/marketplace/index.html": {
-  "inlineStyleHtml": 11
- },
- "web/marketplace/js/marketplace.js": {
-  "inlineStyleJs": 8
+  "inlineStyleHtml": 8
  },
  "web/polls/index.html": {
-  "inlineStyleHtml": 8
+  "inlineStyleHtml": 7
  },
  "web/polls/js/poll-tally.js": {
   "inlineStyleJs": 1
  },
  "web/polls/js/polls.js": {
-  "inlineStyleJs": 11
+  "inlineStyleJs": 9
  },
  "web/polls/vote/points/index.html": {
   "inlineStyleHtml": 2
@@ -403,7 +382,7 @@
   "inlineStyleJs": 1
  },
  "web/shared/js/core/image-viewer.js": {
-  "inlineStyleJs": 6
+  "inlineStyleJs": 3
  },
  "web/shared/js/core/list-header-layout.js": {
   "inlineStyleJs": 3
@@ -413,9 +392,6 @@
  },
  "web/shared/js/core/marketing-mail.js": {
   "inlineStyleJs": 32
- },
- "web/shared/js/core/modal-sheet.js": {
-  "inlineStyleJs": 3
  },
  "web/shared/js/core/modal.js": {
   "inlineStyleJs": 4
@@ -431,9 +407,6 @@
  },
  "web/shared/js/core/poll-results.js": {
   "inlineStyleJs": 1
- },
- "web/shared/js/core/resource-send.js": {
-  "inlineStyleJs": 3
  },
  "web/shared/js/core/swipe.js": {
   "inlineStyleJs": 1

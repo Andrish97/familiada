@@ -5,12 +5,12 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-23T15152";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-23T15152";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-23T15152";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T15152";
-import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-23T15152";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15152";
+import { normalizeText } from "../data/listing.js?v=v2026-10-23T15182";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-23T15182";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-23T15182";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T15182";
+import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-23T15182";
+import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15182";
 
 const ROOT = "root";
 
@@ -117,7 +117,7 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
       ok.onclick = null;
       overlay.onclick = null;
       exitModalSheet(overlay);
-      overlay.style.display = "none";
+      setOverlayOpen(overlay, false);
       // fokus wraca tam, skąd otwarto okno (menu kontekstowe znika — wtedy lista)
       const back = returnFocus?.isConnected && returnFocus.offsetParent !== null ? returnFocus : document.getElementById("list");
       back?.focus?.({ preventScroll: true });
@@ -176,7 +176,7 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
     if (startId && !blockedIds.has(startId)) picked = startId;
     render();
     document.dispatchEvent(new CustomEvent("explorer:close-drawer"));
-    overlay.style.display = "grid";
+    setOverlayOpen(overlay, true);
     enterModalSheet(overlay, { onClose: () => finish(undefined) });
     list.querySelector(".is-picked")?.scrollIntoView({ block: "nearest" });
     // fokus w oknie; na dotyku bez pola tekstowego (klawiatura zasłoniłaby drzewo)
