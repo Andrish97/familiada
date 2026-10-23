@@ -245,20 +245,7 @@
     margin-bottom: 0;
   }
 
-  .mkt-checkbox-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 12px;
-    font-size: 13px;
-    opacity: .85;
-    cursor: pointer;
-    line-height: 1.4;
-  }
-
-  .mkt-checkbox-row input[type=checkbox] {
-    margin-top: 1px;
-  }
+  .mkt-submit-confirm { margin-top: 12px; font-size: 13px; }
 
   .mkt-submit-error { margin-top: 10px; }
 

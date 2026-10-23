@@ -1,32 +1,33 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15182";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15182";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15182";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15182";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15182";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15182";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-23T15182";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15182";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T15182";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-23T15182";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15182";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-23T15182";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15235";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15235";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15235";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15235";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15235";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15235";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-23T15235";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15235";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T15235";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-23T15235";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15235";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-23T15235";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-23T15182";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-23T15235";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-23T15182";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T15182";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T15182";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15182";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15182";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-23T15182";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-23T15235";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T15235";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T15235";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15235";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-23T15235";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15235";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-23T15235";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -514,12 +515,12 @@ function escText(s) {
 
 function parkDisplayIframe() {
   const holder = document.getElementById("gsLivePreviewWrap");
-  if (holder) holder.style.display = "none";
+  if (holder) holder.hidden = true;
 }
 
 function showDisplayIframe() {
   const holder = document.getElementById("gsLivePreviewWrap");
-  if (holder) holder.style.display = "grid";
+  if (holder) holder.hidden = false;
 }
 
 // ===== RENDER CATEGORIES =====
@@ -553,7 +554,7 @@ function renderTeams() {
         <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
         <div class="hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
       </div>
-      <div class="hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
+      <div class="hint">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
     </div>
   `;
 
@@ -627,7 +628,7 @@ function createDisplayIframe() {
   _displayIframe = document.createElement("iframe");
   _displayIframe.id = "gsDisplayPreview";
   _displayIframe.src = "/control/display/?preview=1";
-  _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
+  _displayIframe.className = "gs-preview-frame";
   _displayIframe.title = "Display preview";
   _displayReady = false;
 
@@ -662,7 +663,7 @@ function createHostIframe() {
   _hostIframe = document.createElement("iframe");
   _hostIframe.id = "gsHostPreview";
   _hostIframe.src = "/control/host/?preview=1";
-  _hostIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
+  _hostIframe.className = "gs-preview-frame";
   _hostIframe.title = t("gameSettings.display.hostPreview");
   _hostReady = false;
   window.addEventListener("message", e => {
@@ -697,7 +698,7 @@ function renderDisplay() {
     </div>
     <div class="gs-section">
       <div class="field-label">${t("gameSettings.display.theme")}</div>
-      <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
+      <div class="ui-select" id="gsThemeSelect">
         <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
           <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
@@ -764,7 +765,7 @@ async function renderLogoGrid() {
   const grid = document.getElementById("gsLogoGrid");
   if (!grid) return;
 
-  grid.innerHTML = `<div class="hint" style="padding:8px 0">${t("gameSettings.display.logoLoading")}</div>`;
+  grid.innerHTML = `<div class="hint">${t("gameSettings.display.logoLoading")}</div>`;
 
   if (!_logoFont) {
     try { _logoFont = await loadFont5x7(); } catch {}
@@ -858,7 +859,7 @@ async function renderSound() {
 
   try { await loadSfxManifest(); } catch (e) {
     const tbl = document.getElementById("sfxTableGs");
-    if (tbl) tbl.innerHTML = `<div class="hint" style="color:red">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
+    if (tbl) tbl.innerHTML = `<div class="field-error" role="alert">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
     return;
   }
 
@@ -912,7 +913,7 @@ async function renderSound() {
 
     row.innerHTML = `
       <div class="sfx-row-desc">${escText(desc)}</div>
-      <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}" style="min-width:0">
+      <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
           <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
@@ -1150,7 +1151,7 @@ function renderQuestions() {
             </label>
           </div>
         </div>
-        <div class="setting-item" id="gsFinalModeField" style="display:${hasFinal ? "block" : "none"}">
+        <div class="setting-item" id="gsFinalModeField"${hasFinal ? "" : " hidden"}>
           <div class="field-label">${t("gameSettings.questions.finalModeLabel")}</div>
           <div class="toggle-group">
             <label class="toggle-item">
@@ -1180,7 +1181,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="hint">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1230,7 +1231,7 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
+      <div class="hint gs-list-hint">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
       <div class="gs-badge-row">
         <span class="tag tag--gold">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
@@ -1391,7 +1392,7 @@ function renderRounds() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.rounds.hint" : "gameSettings.rounds.hintPhone")}</div>
+      <div class="hint gs-list-hint">${t(DRAG ? "gameSettings.rounds.hint" : "gameSettings.rounds.hintPhone")}</div>
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
@@ -1617,7 +1618,7 @@ function renderGame() {
           <div class="field-error" id="gsFinalMinPtsMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalMinPtsSuggest"></div>
         </div>
-        <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
+        <div class="setting-item" id="gsFinalTargetField"${hasFinal ? "" : " hidden"}>
           <div class="field-label">${t("gameSettings.game.finalTarget")}</div>
           <input class="inp" id="gsFinalTarget" type="number" min="1" max="${ADVANCED_LIMITS.finalTarget.max}" value="${escAttr(fieldValue("gsFinalTarget", adv.finalTarget))}" style="margin-top:6px;max-width:160px"/>
           <div class="field-error" id="gsFinalTargetMsg" role="alert"></div>
@@ -1628,19 +1629,19 @@ function renderGame() {
         <div class="section-title">${t("gameSettings.game.endScreenSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.endModeLabel")}</div>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+          <div class="choice-list">
+            <label class="choice">
               <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>${t("gameSettings.game.endModeLogoShort")}
             </label>
-            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+            <label class="choice">
               <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>${t("gameSettings.game.endModePointsShort")}
             </label>
-            <label style="display:${hasFinal ? "flex" : "none"};gap:8px;align-items:center;cursor:pointer" id="gsEndModeMoneyLabel">
+            <label class="choice" id="gsEndModeMoneyLabel"${hasFinal ? "" : " hidden"}>
               <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>${t("gameSettings.game.endModeMoneyShort")}
             </label>
           </div>
         </div>
-        <div class="setting-item" id="gsPrizeSettingsRow" style="display:${hasFinal && endMode === "money" ? "grid" : "none"};grid-template-columns:1fr 1fr;gap:14px">
+        <div class="setting-item gs-prize-row" id="gsPrizeSettingsRow"${hasFinal && endMode === "money" ? "" : " hidden"}>
           <div>
             <div class="field-label">${t("gameSettings.game.prizeAmount")}</div>
             <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${escAttr(fieldValue("gsMainPrize", adv.mainPrizeAmount))}" style="margin-top:6px"/>
@@ -1651,7 +1652,7 @@ function renderGame() {
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}" style="margin-top:6px"/>
             <div class="field-error" id="gsPrizeMultiplierMsg" role="alert"></div>
           </div>
-          <div class="hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
+          <div class="hint gs-prize-hint">${t("gameSettings.game.prizeHint")}</div>
         </div>
       </div>
     </div>
@@ -1716,7 +1717,7 @@ function renderGame() {
       markDirty();
       const prizeRow = document.getElementById("gsPrizeSettingsRow");
       if (prizeRow) {
-        prizeRow.style.display = (localSettings.game.hasFinal === true && radio.value === "money") ? "grid" : "none";
+        prizeRow.hidden = !(localSettings.game.hasFinal === true && radio.value === "money");
       }
     });
   });
@@ -1745,30 +1746,17 @@ async function guardActiveGameSession() {
   let status = await requestStatus();
   if (!status.in_progress) return true;
 
-  const overlay = document.createElement("div");
-  overlay.id = "ingameGuard";
-  Object.assign(overlay.style, {
-    position: "fixed", inset: "0", width: "100vw", height: "100vh",
-    fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
-    background: "rgba(0,0,0,.78)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-    color: "#fff", zIndex: "2147483647", display: "flex", alignItems: "center", justifyContent: "center",
-    padding: "16px", boxSizing: "border-box", overscrollBehavior: "none",
-  });
-  overlay.innerHTML = `
-    <div style="width:100%;max-width:560px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:left;">
-      <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${escText(t("control.ingameGuard.title"))}</div>
-      <div style="opacity:.9;line-height:1.4;word-wrap:break-word;">${escText(t("control.ingameGuard.message"))}</div>
-      <div id="ingameGuardCountdown" aria-live="polite" style="margin-top:12px;font-weight:700;"></div>
-      <div id="ingameGuardError" role="alert" style="margin-top:10px;color:#ffd1d1;display:none;"></div>
-      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${escText(t("control.ingameGuard.back"))}</button>
-        <button id="ingameGuardCancel" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.9);color:#3a2c00;">${escText(t("control.ingameGuard.cancel"))}</button>
-      </div>
-    </div>
-  `;
-  document.documentElement.appendChild(overlay);
-  document.documentElement.style.overflow = "hidden";
-  document.body.style.overflow = "hidden";
+  // Ekran blokady (core/blocking-screen.js) + odliczanie i błąd nad przyciskami.
+  const overlay = blockingScreen("ingameGuard", [
+    { key: "Back", i18n: "control.ingameGuard.back", iconName: "arrow-left" },
+    { key: "Cancel", i18n: "control.ingameGuard.cancel", iconName: "close", accent: true },
+  ]);
+  setBlockingIcon(overlay, "warning");
+  overlay.querySelector("#ingameGuardTitle").textContent = t("control.ingameGuard.title");
+  overlay.querySelector("#ingameGuardMsg").textContent = t("control.ingameGuard.message");
+  overlay.querySelector(".blocking-actions").insertAdjacentHTML("beforebegin",
+    `<div id="ingameGuardCountdown" class="msg" aria-live="polite"></div><div id="ingameGuardError" class="field-error" role="alert" hidden></div>`);
+  setBlockingOpen(overlay, true);
 
   return new Promise((resolve) => {
     let done = false;
@@ -1784,9 +1772,8 @@ async function guardActiveGameSession() {
       if (done) return;
       done = true;
       clearInterval(timer);
+      setBlockingOpen(overlay, false);
       overlay.remove();
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
       resolve(allowed);
     };
     const updateCountdown = () => {
@@ -1811,7 +1798,7 @@ async function guardActiveGameSession() {
         else deadline = Date.parse(status.expires_at || "");
       } catch (error) {
         errorEl.textContent = error?.message || t("control.ingameGuard.statusError");
-        errorEl.style.display = "block";
+        errorEl.hidden = false;
       } finally {
         refreshing = false;
       }
@@ -1830,7 +1817,7 @@ async function guardActiveGameSession() {
       cancelling = true;
       backButton.disabled = true;
       cancelButton.disabled = true;
-      errorEl.style.display = "none";
+      errorEl.hidden = true;
       try {
         const { data, error } = await sb().rpc("control_game_cancel_for_settings", { p_game_id: gameId });
         if (error) throw error;
@@ -1838,7 +1825,7 @@ async function guardActiveGameSession() {
         finish(true);
       } catch (error) {
         errorEl.textContent = error?.message || t("control.ingameGuard.cancelError");
-        errorEl.style.display = "block";
+        errorEl.hidden = false;
         backButton.disabled = false;
         cancelButton.disabled = false;
         cancelling = false;
@@ -1872,7 +1859,7 @@ async function main() {
 
   const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
-    if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
+    if (content) content.innerHTML = `<p class="callout callout--bad" role="alert">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
   }
 
@@ -2023,5 +2010,5 @@ async function main() {
 main().catch(err => {
   console.error("[game-settings]", err);
   void pageLock?.release?.().catch(() => {});
-  if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
+  if (content) content.innerHTML = `<p class="callout callout--bad" role="alert">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
 });

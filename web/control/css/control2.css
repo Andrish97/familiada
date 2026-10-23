@@ -184,7 +184,7 @@
   .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
   .c2-devicerows .device-row { margin-bottom:0; align-content:start; padding:10px; gap:6px; }
   .c2-devicerows .control-test-choice { grid-column:1 / -1; display:flex; flex-direction:row; align-items:center; gap:16px !important; }
-  .c2-devicerows .control-test-choice > .device-opt-check { flex:0 0 auto; }
+  .c2-devicerows .control-test-choice > .choice { flex:0 0 auto; }
   .c2-devicerows .control-test-choice > .hint { flex:1 1 auto; min-width:0; }
   .c2-devicerows .device-row-2 { gap:6px; }
   .c2-devicerows .device-row-2 .btn { padding:7px 9px; }
@@ -265,7 +265,7 @@
   /* Status połączenia: lekka plakietka z kropką zamiast dużego kafla. */
   .c2-devicerows .conn-status { padding:.35em .75em .35em .6em; border-radius: var(--r-pill); gap:.45em; border-color:transparent; }
   .c2-devicerows .conn-status::before { content:""; width:.55em; height:.55em; border-radius:50%; background:currentColor; box-shadow:0 0 .5em currentColor; }
-  .device-opt-check-label { font-size:calc(var(--c2-fs) * .88); }
+  .c2-devicerows .choice-label { font-size:calc(var(--c2-fs) * .88); }
   .c2-devicerows .hint { font-size:calc(var(--c2-fs) * .76); }
   /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
      letter-spacing zawija się/wychodzi poza kartę w węższej, 2-kolumnowej

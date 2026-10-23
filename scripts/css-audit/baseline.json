@@ -86,16 +86,16 @@
  },
  "web/control/css/control.css": {
   "important": 1,
-  "colorLiteral": 11,
+  "colorLiteral": 10,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 20
+  "sharedDuplicate": 19
  },
  "web/control/css/control2.css": {
   "important": 2,
   "colorLiteral": 27,
   "rootTokens": 1,
   "mediaWidth": 2,
-  "sharedDuplicate": 13,
+  "sharedDuplicate": 12,
   "unusedClass": 1
  },
  "web/control/css/test-mode.css": {
@@ -167,11 +167,11 @@
   "inlineStyleJs": 23
  },
  "web/games/settings/index.html": {
-  "inlineStyleHtml": 2,
+  "inlineStyleHtml": 1,
   "styleBlock": 1
  },
  "web/games/settings/js/game-settings.js": {
-  "inlineStyleJs": 46
+  "inlineStyleJs": 8
  },
  "web/go/index.html": {
   "inlineStyleHtml": 1
@@ -436,14 +436,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 225,
+  "sharedDuplicate": 228,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 259,
+  "sharedDuplicate": 262,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {

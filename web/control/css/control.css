@@ -435,26 +435,8 @@
     padding-top: 8px;
   }
 
-  .device-opt-check {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .device-opt-check input[type="checkbox"] {
-    margin-top: 1px;
-  }
-  .device-opt-check-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .device-opt-check-label {
-    font-size: .82rem;
-    color: #eee;
-  }
-  .device-opt-check-text .hint { margin: 0; }
+  /* Opcje urządzeń: wspólne .choice (silnik). */
+  .choice-label { font-size: .82rem; }
 
   .device-row-2 {
     display: flex;

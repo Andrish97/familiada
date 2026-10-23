@@ -16,18 +16,18 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T15182";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T15182";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T15182";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15182";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T15182";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15182";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T15235";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T15235";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T15235";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15235";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T15235";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15235";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T15182";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T15182";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T15182";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T15182";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15182";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T15235";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T15235";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T15235";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T15235";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15235";
 
 
 const $ = (id) => document.getElementById(id);
@@ -268,8 +268,8 @@ export function createUI({ root, emit }) {
     noHostChk.checked = !!state.settings.noHostTablet;
     on(noHostChk, "change", (e) => emit("devices.noHostTablet", e.currentTarget.checked));
     hostRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
-      h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
-        h("span", { class: "device-opt-check-label", text: t("control.noHostTablet") }),
+      h("label", { class: "choice" }, [noHostChk, h("div", { class: "choice-text" }, [
+        h("span", { class: "choice-label", text: t("control.noHostTablet") }),
         h("span", { class: "hint", text: t("control.noHostTabletHint") }),
       ])]),
     ]));
@@ -281,8 +281,8 @@ export function createUI({ root, emit }) {
     physBuzzChk.checked = !!state.settings.physicalBuzzer;
     on(physBuzzChk, "change", (e) => emit("devices.physicalBuzzer", e.currentTarget.checked));
     buzzerRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
-      h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
-        h("span", { class: "device-opt-check-label", text: t("control.physicalBuzzer") }),
+      h("label", { class: "choice" }, [physBuzzChk, h("div", { class: "choice-text" }, [
+        h("span", { class: "choice-label", text: t("control.physicalBuzzer") }),
         h("span", { class: "hint", text: t("control.physicalBuzzerHint") }),
       ])]),
     ]));
@@ -302,7 +302,7 @@ export function createUI({ root, emit }) {
     // element, a testToggle jest wtedy odłączoną kopią ze starym stanem.
     on(testToggle, "change", (e) => emit("devices.testMode", e.currentTarget.checked));
     const testChoice = h("div", { class: "control-test-choice" }, [
-      h("label", { class: "device-opt-check" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),
+      h("label", { class: "choice" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),
       h("span", { class: "hint", text: t(ctx.testModeAvailable === false ? "control.testModeTooSmall" : "control.testModeHint"), role: "status" }),
     ]);
 

@@ -863,6 +863,22 @@
     gap: 8px;
     min-width: 0;
   }
+  /* Wybór z etykietą (jeden): label.choice > input[checkbox|radio] + tekst
+     (opcjonalnie span.choice-text z .hint pod spodem); lista: .choice-list. */
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    cursor: pointer;
+    user-select: none;
+  }
+  .choice > input { flex: 0 0 auto; margin-top: 1px; }
+  .choice-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .choice-text > .hint { margin: 0; }
+  .choice-list { display: grid; gap: 8px; }
+  @media (pointer: coarse) { .choice { min-height: 44px; align-items: center; } }
+
   /* Etykieta pola (jedyna): nad polem, wersaliki, przyciszona. */
   .field-label {
     display: block;

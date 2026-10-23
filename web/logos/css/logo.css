@@ -194,13 +194,6 @@
     margin: 0 2px;
   }
 
-  .chk{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size: 12px;
-    opacity:.9;
-  }
 
   /* =========================================================
      DRAW SETTINGS (drugi rząd, POZIOMY z scroll)

@@ -138,13 +138,6 @@
      Email notifications panel
   ========================================== */
 
-  .flag-row{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 44px;
-    user-select: none;
-  }
 
   /* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
   #userRatingInfo { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
