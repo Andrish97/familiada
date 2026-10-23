@@ -90,7 +90,7 @@ test("serveBranchCode podmienia kod login, zachowując HTML Workera i Turnstile"
 
 test("serveBranchCode oddaje dalszą obsługę żądań zewnętrznych kolejnym handlerom testu", async () => {
   let handler;
-  await serveBranchCode({ route: (_pattern, callback) => { handler = callback; } }, { pages: ["games"] });
+  await serveBranchCode({ addInitScript: async () => {}, route: (_pattern, callback) => { handler = callback; } }, { pages: ["games"] });
   let fellBack = false;
   await handler({
     request: () => ({ url: () => "https://www.familiada.online/login" }),
