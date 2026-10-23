@@ -15,7 +15,7 @@
   "colorLiteral": 37,
   "mediaWidth": 7,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 17,
+  "sharedDuplicate": 10,
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
@@ -364,7 +364,7 @@
   "important": 3,
   "colorLiteral": 21,
   "mediaWidth": 3,
-  "sharedDuplicate": 9
+  "sharedDuplicate": 3
  },
  "web/shared/css/image-viewer.css": {
   "important": 2,
@@ -465,14 +465,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 216,
+  "sharedDuplicate": 224,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 250,
+  "sharedDuplicate": 258,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

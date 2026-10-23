@@ -229,20 +229,6 @@
     background:var(--w-4);
     border:1px solid var(--line2, var(--w-8));
   }
-  .colorTopRow{ display:flex; gap:12px; align-items:center; flex-wrap:nowrap; }
-  .colorHexField{ flex:1 1 auto; min-width:0; display:grid; gap:6px; }
-  .colorHexField .inp{ width:100%; }
-  .colorHexField .hint{ margin:0; }
-  .colorPreview{
-    width:72px; height:72px; border-radius:var(--r-md); flex:0 0 auto;
-    border:1px solid var(--w-14);
-    background:var(--w-8);
-  }
-  .sliders{ display:grid; gap:10px; }
-  .sliderRow{ display:grid; grid-template-columns:18px minmax(0,1fr) 44px; align-items:center; gap:10px; }
-  .sLbl{ font-weight:1000; letter-spacing:.06em; opacity:.9; }
-  .sVal{ text-align:right; font-weight:900; opacity:.9; font-variant-numeric:tabular-nums; }
-  .rng{ width:100%; }
 
   /* ===== SFX TABLE (identyczny z control-new) ===== */
   .sfx-row:last-child{
