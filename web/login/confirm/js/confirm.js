@@ -15,7 +15,7 @@ const go = document.getElementById("go");
 const back = document.getElementById("back");
 let sessionInfo = "";
 
-function setStatus(m){ status.textContent = m; document.querySelector(".auth-shell[data-skel-step]")?.classList.add("skel-step-ready"); }
+function setStatus(m){ status.textContent = m; document.querySelector("body > [data-skel-step]")?.classList.add("skel-step-ready"); }
 function setErr(m=""){ err.textContent = m || sessionInfo; }
 
 function qp(name){

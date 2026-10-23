@@ -38,7 +38,7 @@ test('logowanie pokazuje pierwszy etap po inicjalizacji języka i ukrywa go do t
   const js = read('login/js/login.js');
   assert.match(html, /class="auth-shell" data-skel-step/);
   assert.match(css, /\[data-skel-step\] \{[\s\S]*?visibility:\s*hidden/);
-  assert.ok(js.indexOf('setStatus(t("index.statusChecking"))') < js.indexOf('auth-shell[data-skel-step]') );
+  assert.ok(js.indexOf('setStatus(t("index.statusChecking"))') < js.indexOf('body > [data-skel-step]') );
 });
 
 test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
