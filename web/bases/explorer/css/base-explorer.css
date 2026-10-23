@@ -1753,13 +1753,8 @@
      shared/css/base.css. Warstwy (tagi, eksport) mają własny nagłówek i stopkę;
      pasek akcji przed listą, przewija się tylko lista. */
   @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
-      /* base-explorer.css ma własną, starszą regułę mobilną (@media
-         max-width:900px) na .tags-modal/.export-modal/.question-modal/
-         .rename-modal z width:...!important, węższą niż pełna szerokość —
-         !important bije naszą regułę width:100% mimo niższej specyficzności
-         tamtej reguły, więc trzeba przebić tym samym. */
       .modal--sheet .tags-modal {
-          width: 100% !important;
+          width: 100%;
       }
       .modal--sheet.sheet-active .tags-modal:has(> .sheet-modal-body > .tags-layer) {
           overflow: hidden;

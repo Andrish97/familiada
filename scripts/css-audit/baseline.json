@@ -8,7 +8,7 @@
   "sharedDuplicate": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
-  "important": 15,
+  "important": 14,
   "colorLiteral": 36,
   "mediaWidth": 1,
   "zIndexLiteral": 6,
