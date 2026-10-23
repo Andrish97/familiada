@@ -149,7 +149,6 @@
   /* Wypustki kart */
   --radius: var(--r-lg);
   --tab-height: 36px;
-  --tab-extra: 1px;
   --tab-label-font-size: 12px;
   --tab-label-letter-spacing: .08em;
 

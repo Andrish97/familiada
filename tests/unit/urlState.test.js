@@ -63,13 +63,12 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  // Narożniki skrajnych wypustek: wspólna reguła w silniku (pierwsza/ostatnia).
+  // Wypustki (uproszczenie 2026-10-23): pasek to górna część karty, karta pod
+  // nim zawsze bez górnej krawędzi i z prostymi górnymi rogami; bez narożników
+  // liczonych dla skrajnych wypustek i bez reguł rogów na stronach.
   const base = read("shared/style/components.css");
-  assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
-  assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
-  // Róg karty pod skrajną aktywną wypustką: jedna reguła silnika dla wszystkich kart.
-  assert.match(base, /tab-slot:first-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-left-radius: 0; \}/);
-  assert.match(base, /tab-slot:last-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-right-radius: 0; \}/);
+  assert.match(base, /\.tabs-card:not\(\.tabs-card--split\):has\(> \.tabs-strip:not\(\[hidden\]\)\) > \.card \{\s*border-top: 0;/);
+  assert.doesNotMatch(base, /--tab-extra|tab-label\.active\)::before/);
   assert.doesNotMatch(css, /border-top-(left|right)-radius: 0/);
 });
 

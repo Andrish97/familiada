@@ -108,23 +108,9 @@
   }
 
   /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
-  .tabs-card.hub-tabs.polls-tabs-card{
-    --radius: 12px;
-    --surface: var(--surface-1);
-    --border-color: var(--line2);
-    overflow: hidden;
-  }
-  .polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
+  /* Wypustki: silnik (.tabs-card). „Odbiorcy” tylko na telefonie. */
   .polls-tabs-card .slot-recipients{ display: none; }
   .pollShareLabelMobile{ display: none; }
-  .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
-  /* Ukryta wypustka „Odbiorcy” (komputer) nie liczy się jako sąsiad separatora. */
-  @media (min-width: 981px){
-    .polls-tabs-card .slot-recipients + .slot-results .tab-label::after{ display: none; }
-  }
-  /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
-  .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
-  .polls-tabs-card .tab-slot.is-disabled .tab-label::before{ opacity: 0 !important; }
 
   /* Sekcje z wypustkami zajmują całą szerokość obszaru treści, jak w Games.
      Węższe karty wpisywania maila i Go mają osobne reguły w swoich stylach. */

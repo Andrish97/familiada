@@ -7,9 +7,6 @@
   "mediaWidth": 1,
   "sharedDuplicate": 1
  },
- "web/bases/css/bases.css": {
-  "zIndexLiteral": 1
- },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 15,
   "colorLiteral": 36,
@@ -348,10 +345,9 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/polls.css": {
-  "important": 3,
+  "important": 2,
   "colorLiteral": 20,
   "mediaWidth": 1,
-  "zIndexLiteral": 1,
   "sharedDuplicate": 3
  },
  "web/shared/css/question-form.css": {
@@ -435,14 +431,14 @@
  "web/shared/style/components.css": {
   "important": 38,
   "mediaWidth": 13,
-  "zIndexLiteral": 5,
+  "zIndexLiteral": 3,
   "sharedDuplicate": 228,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
-  "zIndexLiteral": 6,
+  "zIndexLiteral": 4,
   "sharedDuplicate": 262,
   "unusedClass": 5
  },

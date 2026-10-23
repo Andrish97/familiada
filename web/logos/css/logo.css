@@ -728,15 +728,6 @@
     overflow: hidden;
   }
 
-  .logo-tabs-card .tabs-strip{
-    flex: 0 0 auto;
-    display: flex;
-  }
-
-  .logo-tabs-card .tab-slot,
-  .logo-tabs-card .tab-label{
-    width: 100%;
-  }
 
 
   /* karta listy: nie rośnie poza viewport */

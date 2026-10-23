@@ -60,27 +60,7 @@
      Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
   ========================================================= */
 
-  .tabs-card.hub-tabs.bases-tabs-card{
-    --radius: 12px;
-    --surface: var(--surface-1);
-    --border-color: var(--line2);
-    overflow: hidden;
-  }
-
-  .bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
-
-  .bases-tabs-card .tab-label:not(.active){
-    z-index: 4; /* label zawsze nad aktywną wypustką */
-  }
-  .bases-tabs-card .tab-label{
-    font-weight: 1000;
-  }
-
-  /*
-    games.css ma efekt hover na .tab-label::before. Na touch (sticky hover)
-    wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
-    wypustce i tylko dla urządzeń z myszą.
-  */
+  /* Wypustki: silnik (.tabs-card). */
 
 
   /* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),

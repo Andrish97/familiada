@@ -393,6 +393,14 @@ wysokość jedna (`--tab-height`), stany jak przyciski (fokus, najechanie).
 Kartka dzielona (`.tabs-card--split`) i wypustki Control korzystają z tego
 samego nagłówka.
 
+**Zrobione (2026-10-23):** silnik ma nowy mechanizm (pasek z obramowaniem
+i zaokrąglonymi górnymi rogami, karta pod nim w `@layer states` bez górnej
+krawędzi, separatory `border-left`, aktywna = tło karty, nieaktywne = tło
+strony + dolna linia, najechanie tylko mysz, fokus klawiatury). Usunięte:
+`--tab-extra`, wklęsłe narożniki, reguły rogów na stronach (Ankiety, Bazy,
+Logo), martwe zmienne i reguły wypustek Control. Wypustki Control: Control nie
+ma już paska wypustek (kroki w topbarze) — nic do przepięcia.
+
 ## Dziennik E23
 
 | Data | Krok | Wynik |
@@ -450,3 +458,4 @@ samego nagłówka.
 | 2026-10-23 | e2e: TV i arkusze Eksploratora | Przebieg 39975689360: 66 ✓, 4 ✗. TV: `tv.js` ustawiał fokus pola kodu przed odsłonięciem kroku szkieletu (`visibility:hidden` nie przyjmuje fokusu) — kolejność zamieniona. `mobile-sheet-modals`: po zamknięciu arkusza spec sprawdzał widoczność `#explorerLeft`, który na telefonie jest teraz zamkniętą szufladą `.drawer` (celowo ukrytą) — sprawdza `.explorer-right` (zmiana celu asercji wynikająca z wymaganego zachowania szuflady). Uwaga dla `spec_filter`: wartość trafia do skryptu bez cudzysłowów — `--grep` z `|` lub nawiasami podawać w cudzysłowie (`--grep "a|b"`). |
 | 2026-10-23 | Jedno pokazywanie okna | `modal-sheet.js`: `setOverlayOpen(el, open)` / `isOverlayOpen(el)` — atrybut `hidden` zamiast trzech sposobów (`style.display` grid/flex/"", klasa `.hidden`, `hidden`). Przepięte: podgląd gry, odbiorcy ankiety, arkusz pytania w Edytorze, podgląd logo, okna Eksploratora (szukaj, przenieś, znaczniki, eksport, pytanie, skróty klawiatury), udostępnianie urządzenia w Control, Marketplace (moje wysłane, szczegóły, zgłoszenie), wysyłka kopii, podgląd zdjęcia; w HTML `hidden` zamiast `style="display:none"`. Strażnik okien „z adresu” w Eksploratorze: znacznik `data-routed` (dawniej rozpoznanie po `display:grid`). Panel admina — w jego fazie. Zrzuty: 17 scen z otwartymi oknami (telefon/komputer), audyt 0 uwag. |
 | 2026-10-23 | Ustawienia gry bez stylów inline; „Gra w toku”; jeden wybór `.choice` | Ustawienia gry: ekran „Gra w toku” (całość w stylach inline) na `core/blocking-screen.js` (identyfikatory bez zmian); błędy `color:red`/`#ffd1d1` → `.field-error` / `.callout--bad`; podgląd na żywo, pola finału, wiersz nagrody, etykieta „Pieniądze” — `hidden`; ramki podglądu `.gs-preview-frame`. Jeden wiersz wyboru z etykietą `.choice` (+ `.choice-text`, `.choice-list`, 44 px na dotyku) zamiast `.device-opt-check` (Control), `.mkt-checkbox-row` (Marketplace), `.flag-row`/`.chk` (Konto, Logo) i inline (ekran końcowy w Ustawieniach gry). Zrzuty: control-devices, account, logos-market-image-preview, game-settings-game, logos-market-market-submit, play-settings-ingame — audyt 0 uwag. |
+| 2026-10-23 | Wypustki uproszczone | Zgłoszenie użytkownika („uprościć; trójkąciki, rogi karty, obwódki”). Nowy mechanizm opisany w „Wypustki: mechanizm i uproszczenie”. Zrzuty (komputer/telefon): games, bases, logos, poll-share, people-friends-half, mails-tools, games-market, bases-shared-proposed. Unit `urlState` i spec `friends` (wysokość aktywnej wypustki) dostosowane. |
