@@ -13,14 +13,14 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-22T22514";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-22T22514";
-import { rt } from "./realtime.js?v=v2026-10-22T22514";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-22T22514";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-22T22514";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T00394";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T00394";
+import { rt } from "./realtime.js?v=v2026-10-23T00394";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T00394";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T00394";
 
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
   let active = false;
   let pollTimer = null;
   let directChannel = null;
@@ -42,8 +42,6 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let readIncidentOpen = false;
   let renderIncidentOpen = false;
   let hiddenAt = document.visibilityState === "hidden" ? performance.now() : null;
-  let diagnosticWriteFailed = false;
-  let diagnosticQueue = Promise.resolve();
   let lastRenderedRev = -1;
   let sync;
   // Pomiar łącza w trakcie gry (migracja 466): tylko start, spowolnienie
@@ -55,11 +53,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }),
     send: (phase, data) => {
       if (!active || !sessionStarted) return;
-      const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const event = { event_id: eventId, phase, visibility: document.visibilityState === "hidden" ? "hidden" : "visible", ...data };
-      sb().rpc("control2_network_probe_event", {
-        p_game_id: gameId, p_device_type: deviceType, p_key: key, p_event: event, ...getLeaseArgs(),
-      }).abortSignal(AbortSignal.timeout(4000)).then(() => {}, () => {});
+      log({ event_type: "network_state", source: "probe", phase, visibility: document.visibilityState === "hidden" ? "hidden" : "visible", ...data });
     },
   });
 
@@ -73,28 +67,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       rendered_revision: lastRenderedRev >= 0 ? lastRenderedRev : null,
     };
   }
+  // Zapis przez dziennik sesji urządzenia (session-log.js, control2_device_log).
   function sendDiagnostic(eventType, phase, transport, metrics = {}) {
     if (!active || !sessionStarted) return;
-    const eventId = globalThis.crypto?.randomUUID?.()
-      || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const event = { event_id: eventId, event_type: eventType, phase, transport, ...transportContext(), ...metrics };
-    diagnosticQueue = diagnosticQueue.catch(() => {}).then(async () => {
-      let saved = false;
-      for (const delayMs of [0, 700]) {
-        if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
-        try {
-          const { error } = await sb().rpc("control2_device_transport_event", {
-            p_game_id: gameId, p_device_type: deviceType, p_key: key, p_event: event,
-            ...getLeaseArgs(),
-          }).abortSignal(AbortSignal.timeout(4000));
-          if (!error) { saved = true; break; }
-        } catch { /* Diagnostic retries must never delay or block gameplay. */ }
-      }
-      if (!saved && !diagnosticWriteFailed) {
-        diagnosticWriteFailed = true;
-        console.info("[device-diagnostics] zapis diagnostyki transportu chwilowo niedostępny");
-      } else if (saved) diagnosticWriteFailed = false;
-    }).catch(() => {});
+    log({ event_type: eventType, phase, transport, ...transportContext(), ...metrics });
   }
   function noteReadStatus(result) {
     if (!sessionStarted) return;

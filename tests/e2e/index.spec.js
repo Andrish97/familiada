@@ -1,9 +1,7 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const {
   instrumentPage,
   loginAsGuest,
-  loginAsTestUser,
-  testAccountUsername,
 } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { touchSwipe } = require("./helpers/touch-swipe");
@@ -11,6 +9,7 @@ const { touchSwipe } = require("./helpers/touch-swipe");
 const INDEX_URL = "https://www.familiada.online/";
 
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page, context }) => {
@@ -189,8 +188,8 @@ test("gość na stronie głównej trafia do /games/ (E4) i jest w całości sprz
   }
 });
 
-test("zalogowany użytkownik trafia do biblioteki gier", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("zalogowany użytkownik trafia do biblioteki gier", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/games\/?(?:\?|$)/, { timeout: 20_000 });
 });

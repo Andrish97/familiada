@@ -5,10 +5,10 @@
 // zapis — CAS na całym `settings` blobie zamiast ślepego nadpisania, plus
 // odświeżenie żywej listy pytań przed zapisem finału/rund).
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") {
     await serveBranchCode(context, { pages: ["games/settings", "games"] });
@@ -123,9 +123,9 @@ async function saveAndWait(page) {
 }
 
 /* ================= A: Warstwa 1 — blokada wejścia ================= */
-test("ustawienia gry: dwie karty — druga karta jest blokowana overlayem, wchodzi po zamknięciu pierwszej", async ({ page, context }) => {
+test("ustawienia gry: dwie karty — druga karta jest blokowana overlayem, wchodzi po zamknięciu pierwszej", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   await page.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
@@ -161,9 +161,9 @@ test("ustawienia gry: dwie karty — druga karta jest blokowana overlayem, wchod
 // mogła zapisać w międzyczasie, a ten zapis i tak by ją nadpisał w
 // całości. Teraz zapis jest warunkowy (CAS na całej kolumnie `settings`)
 // i w razie konfliktu pokazuje jawny komunikat zamiast cichego nadpisania.
-test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI kończy się jawnym konfliktem, nie cichym nadpisaniem", async ({ page, context }) => {
+test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI kończy się jawnym konfliktem, nie cichym nadpisaniem", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -207,9 +207,9 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
 // saveAll() teraz odświeża żywą listę pytań tuż przed zapisem i filtruje
 // takie martwe id, zamiast zapisać do bazy wskazanie na coś, co już nie
 // istnieje.
-test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w międzyczasie zamiast zapisać martwe id", async ({ page, context }) => {
+test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w międzyczasie zamiast zapisać martwe id", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, {
     settings: { game: { hasFinal: true, finalQuestionsMode: "random" } },
@@ -253,9 +253,9 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
 // ochrony wyżej) — po jednym teście na każdą nietrywialną gałąź kodu w
 // każdej zakładce, analogicznie do głębi editor.spec.js.
 
-test("ustawienia gry: drużyny — zapis nazw persystuje po przeładowaniu strony", async ({ page, context }) => {
+test("ustawienia gry: drużyny — zapis nazw persystuje po przeładowaniu strony", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -278,9 +278,9 @@ test("ustawienia gry: drużyny — zapis nazw persystuje po przeładowaniu stron
   }
 });
 
-test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do settings", async ({ page, context }) => {
+test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do settings", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -306,9 +306,9 @@ test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do set
   }
 });
 
-test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", async ({ page, context }) => {
+test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, {
     settings: { display: { colors: { A: "#111111", B: "#222222", BACKGROUND: "#333333", DOT: "#444444" }, theme: null, logoId: null } },
@@ -333,9 +333,9 @@ test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", asyn
   }
 });
 
-test("ustawienia gry: dźwięk — 'Własny' bez pliku blokuje zapis komunikatem, baza bez zmian", async ({ page, context }) => {
+test("ustawienia gry: dźwięk — 'Własny' bez pliku blokuje zapis komunikatem, baza bez zmian", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -363,9 +363,9 @@ test("ustawienia gry: dźwięk — 'Własny' bez pliku blokuje zapis komunikatem
   }
 });
 
-test("ustawienia gry: zajęty zasób daje zwykły Resource Guard, po zwolnieniu aktywna rozgrywka ma osobny guard", async ({ page, context }) => {
+test("ustawienia gry: zajęty zasób daje zwykły Resource Guard, po zwolnieniu aktywna rozgrywka ma osobny guard", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   const gameId = await createGame(page);
   const holderTab = await context.newPage();
   let cancelCalled = false;
@@ -412,9 +412,9 @@ test("ustawienia gry: zajęty zasób daje zwykły Resource Guard, po zwolnieniu 
   }
 });
 
-test("ustawienia gry: podgląd kolejnego dźwięku zatrzymuje poprzedni", async ({ page, context }) => {
+test("ustawienia gry: podgląd kolejnego dźwięku zatrzymuje poprzedni", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   await page.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
@@ -435,9 +435,9 @@ test("ustawienia gry: podgląd kolejnego dźwięku zatrzymuje poprzedni", async 
   }
 });
 
-test("ustawienia gry: dźwięk — zmiana głośności zapisuje się do settings", async ({ page, context }) => {
+test("ustawienia gry: dźwięk — zmiana głośności zapisuje się do settings", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -463,9 +463,9 @@ test("ustawienia gry: dźwięk — zmiana głośności zapisuje się do settings
   }
 });
 
-test("ustawienia gry: niepełny finał w trybie wyboru blokuje zapis komunikatem, baza bez zmian", async ({ page, context }) => {
+test("ustawienia gry: niepełny finał w trybie wyboru blokuje zapis komunikatem, baza bez zmian", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -504,9 +504,9 @@ test("ustawienia gry: niepełny finał w trybie wyboru blokuje zapis komunikatem
   }
 });
 
-test("ustawienia gry: finał — wybranie dokładnie 5 z 10 pytań zapisuje się, wyklucza je z rund, limit 5 pilnowany w UI", async ({ page, context }) => {
+test("ustawienia gry: finał — wybranie dokładnie 5 z 10 pytań zapisuje się, wyklucza je z rund, limit 5 pilnowany w UI", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { pad: false });
   try {
@@ -561,9 +561,9 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 10 pytań zapisuje się
   }
 });
 
-test("ustawienia gry: wyłączenie finału zwraca jego pytania na koniec puli rund", async ({ page, context }) => {
+test("ustawienia gry: wyłączenie finału zwraca jego pytania na koniec puli rund", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   const gameId = await createGame(page, { pad: false });
   try {
     const ids = [];
@@ -600,9 +600,9 @@ test("ustawienia gry: wyłączenie finału zwraca jego pytania na koniec puli ru
   }
 });
 
-test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kolejność", async ({ page, context }) => {
+test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kolejność", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { pad: false });
   try {
@@ -633,9 +633,9 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
   }
 });
 
-test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrzymany, w bazie poprzednia wartość", async ({ page, context }) => {
+test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrzymany, w bazie poprzednia wartość", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -670,9 +670,9 @@ test("ustawienia gry: niepoprawne wartości — komunikat przy polu, zapis wstrz
   }
 });
 
-test("ustawienia gry: reset wszystkich ustawień przywraca domyślne, zapis po kliknięciu Zapisz", async ({ page, context }) => {
+test("ustawienia gry: reset wszystkich ustawień przywraca domyślne, zapis po kliknięciu Zapisz", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -696,9 +696,9 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne, zapis po k
   }
 });
 
-test("ustawienia gry: Wstecz z niezapisanymi zmianami pyta; po zapisie wraca na ret bez pytania", async ({ page, context }) => {
+test("ustawienia gry: Wstecz z niezapisanymi zmianami pyta; po zapisie wraca na ret bez pytania", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page);
   try {
@@ -729,9 +729,9 @@ test("ustawienia gry: Wstecz z niezapisanymi zmianami pyta; po zapisie wraca na 
 });
 
 
-test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia stronę, potwierdzenie wychodzi bez zapisu", async ({ page, context }) => {
+test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia stronę, potwierdzenie wychodzi bez zapisu", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   const gameId = await createGame(page);
   try {
     await openSettings(page, gameId, "&ret=%2Fgames%2F");
@@ -755,9 +755,9 @@ test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia 
   }
 });
 
-test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu bez otwierania Dźwięku", async ({ page, context }) => {
+test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu bez otwierania Dźwięku", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
   const gameId = await createGame(page);
   try {
     const key = await page.evaluate(async gameId => {
@@ -792,9 +792,9 @@ test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu be
 test.describe("ustawienia gry: telefon", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test("ustawienia gry: telefon — wejście z Moich gier, bez Graj, sekcje mieszczą się, zapis działa", async ({ page, context }) => {
+  test("ustawienia gry: telefon — wejście z Moich gier, bez Graj, sekcje mieszczą się, zapis działa", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-SETTINGS-PHONE-${Date.now()}`;
     const gameId = await createGame(page, { name });
     try {

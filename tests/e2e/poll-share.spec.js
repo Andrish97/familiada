@@ -1,11 +1,12 @@
 const { expectMailDocument } = require("./helpers/mail-document");
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, loginAsPooledTestUser, testAccountUsername } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
+const { resetMailProviderLimits, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
 
-const subscriberEmail = "test14@familiada.online"; // Skrzynka bez konta.
 test.use({ serviceWorkers: "block" });
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel,
+// znajomy z kontem (z pocztą) i adres bez konta jako subskrybent e-mail.
+test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ context }) => {
@@ -20,8 +21,8 @@ async function rpc(page, name, args) {
   }, { name, args });
 }
 
-async function cleanup(ownerPage, friendId) {
-  await rpc(ownerPage, "e2e_poll_mail_budget_cleanup", { p_recipient_email: testAccountUsername(8) });
+async function cleanup(ownerPage, friendId, { friendEmail, subscriberEmail }) {
+  await rpc(ownerPage, "e2e_poll_mail_budget_cleanup", { p_recipient_email: friendEmail });
   await rpc(ownerPage, "e2e_poll_mail_budget_cleanup", { p_recipient_email: subscriberEmail });
   await rpc(ownerPage, "e2e_poll_subscriptions_cleanup", { p_other_user_id: friendId });
   await rpc(ownerPage, "e2e_friendships_cleanup", { p_other_user_id: friendId });
@@ -51,8 +52,12 @@ async function seedPoll(page, { type = "poll_text" } = {}) {
   }, type);
 }
 
-test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty", async ({ browser }, testInfo) => {
+test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty", async ({ browser, accounts, loginAs, mailbox }, testInfo) => {
   test.setTimeout(600000);
+  const [owner, friend] = accounts.standard;
+  const [subscriber] = accounts.noaccount;
+  const subscriberEmail = subscriber.email;
+  const emails = { friendEmail: friend.email, subscriberEmail };
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const friendContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
@@ -67,15 +72,15 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
   let friendId = null;
   let gameId = null;
   try {
-    await loginAsTestUser(ownerPage, ownerContext, { username: testAccountUsername(7) });
-    await loginAsTestUser(friendPage, friendContext, { username: testAccountUsername(8) });
+    await loginAs(ownerPage, ownerContext, owner);
+    await loginAs(friendPage, friendContext, friend);
     friendId = await friendPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     for (const type of ["poll_text", "poll_points"]) {
-      await cleanup(ownerPage, friendId);
-      await clearMailbox(testAccountUsername(8));
-      await clearMailbox(subscriberEmail);
+      await cleanup(ownerPage, friendId, emails);
+      await mailbox.clear(friend);
+      await mailbox.clear(subscriber);
       await resetMailProviderLimits(ownerPage);
-      const invitation = await rpc(ownerPage, "friends_invite", { p_handle: testAccountUsername(8) });
+      const invitation = await rpc(ownerPage, "friends_invite", { p_handle: friend.email });
       expect(invitation.ok).toBe(true);
       expect((await rpc(friendPage, "friends_accept", { p_id: invitation.id })).ok).toBe(true);
       const subscription = await rpc(ownerPage, "subscribers_invite", { p_email: subscriberEmail });
@@ -93,17 +98,17 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
       await ownerPage.locator(".uni-foot .btn.gold:visible").click();
       await expect(ownerPage.locator("#btnAddRecipients")).toBeEnabled({ timeout: 20000 });
       await ownerPage.locator("#btnAddRecipients").click();
-      await ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: "test8" }).click();
+      await ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: friend.username }).click();
       await ownerPage.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail }).click();
       await ownerPage.locator("#pollRecipientsAdd").click();
       await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2, { timeout: 20000 });
-      const emails = await Promise.all([
-        waitForEmail({ recipient: testAccountUsername(8), after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
-        waitForEmail({ recipient: subscriberEmail, after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
+      const mails = await Promise.all([
+        mailbox.waitFor(friend, { after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
+        mailbox.waitFor(subscriber, { after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
       ]);
-      expectMailDocument(emails[0], { accountFooter: true });
-      expectMailDocument(emails[1], { globalUnsub: true });
-      const links = emails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
+      expectMailDocument(mails[0], { accountFooter: true });
+      expectMailDocument(mails[1], { globalUnsub: true });
+      const links = mails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
       expect(links.every(Boolean)).toBe(true);
       const tasks = (await rpc(ownerPage, "poll_share_panel", { p_game_id: gameId })).tasks;
       const item = await ownerPage.evaluate(async gameId => {
@@ -156,13 +161,17 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
     }
   } finally {
     if (gameId) await ownerPage.evaluate(async id => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId).catch(() => {});
-    if (friendId) await cleanup(ownerPage, friendId).catch(() => {});
+    if (friendId) await cleanup(ownerPage, friendId, emails).catch(() => {});
     await Promise.all([ownerContext.close(), friendContext.close(), anonymousContext.close()]);
   }
 });
 
-test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni znikają z wyboru", async ({ browser }) => {
+test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni znikają z wyboru", async ({ browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(360000);
+  const [owner, friend] = accounts.standard;
+  const [subscriber] = accounts.noaccount;
+  const subscriberEmail = subscriber.email;
+  const emails = { friendEmail: friend.email, subscriberEmail };
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const friendContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
@@ -176,15 +185,15 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
   let gameId = null;
   let friendId = null;
   try {
-    await loginAsTestUser(ownerPage, ownerContext, { username: testAccountUsername(7) });
-    await loginAsTestUser(friendPage, friendContext, { username: testAccountUsername(8) });
+    await loginAs(ownerPage, ownerContext, owner);
+    await loginAs(friendPage, friendContext, friend);
     friendId = await friendPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-    await cleanup(ownerPage, friendId);
-    await clearMailbox(testAccountUsername(8));
-    await clearMailbox(subscriberEmail);
+    await cleanup(ownerPage, friendId, emails);
+    await mailbox.clear(friend);
+    await mailbox.clear(subscriber);
     await resetMailProviderLimits(ownerPage);
 
-    const friendInvite = await rpc(ownerPage, "friends_invite", { p_handle: testAccountUsername(8) });
+    const friendInvite = await rpc(ownerPage, "friends_invite", { p_handle: friend.email });
     expect(friendInvite?.ok).toBe(true);
     const accepted = await rpc(friendPage, "friends_accept", { p_id: friendInvite.id });
     expect(accepted?.ok).toBe(true);
@@ -213,7 +222,7 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     await ownerPage.locator("#btnAddRecipients").click();
     const modal = ownerPage.locator("#pollRecipientsOverlay");
     await expect(modal).toBeVisible();
-    const friendRow = modal.locator("#pollRecipientsFriends .shareRow").filter({ hasText: "test8" });
+    const friendRow = modal.locator("#pollRecipientsFriends .shareRow").filter({ hasText: friend.username });
     const subscriberRow = modal.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail });
     await expect(friendRow).toHaveCount(1);
     await expect(subscriberRow).toHaveCount(1);
@@ -222,16 +231,16 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     await expect(modal.locator("#pollRecipientsAdd")).toBeEnabled();
     await modal.locator("#pollRecipientsAdd").click();
     await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2, { timeout: 20000 });
-    await expect(ownerPage.locator("#subsGrid .shareRow").filter({ hasText: "test8" })).toHaveCount(1);
+    await expect(ownerPage.locator("#subsGrid .shareRow").filter({ hasText: friend.username })).toHaveCount(1);
     await expect(ownerPage.locator("#subsGrid .shareRow").filter({ hasText: subscriberEmail })).toHaveCount(1);
 
     await ownerPage.locator("#btnAddRecipients").click();
-    await expect(ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: "test8" })).toHaveCount(0);
+    await expect(ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: friend.username })).toHaveCount(0);
     await expect(ownerPage.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail })).toHaveCount(0);
     await ownerPage.locator("#pollRecipientsCancel").click();
     const mails = await Promise.all([
-      waitForEmail({ recipient: testAccountUsername(8), after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
-      waitForEmail({ recipient: subscriberEmail, after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
+      mailbox.waitFor(friend, { after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
+      mailbox.waitFor(subscriber, { after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
     ]);
     expectMailDocument(mails[0], { accountFooter: true });
     expectMailDocument(mails[1], { globalUnsub: true });
@@ -285,35 +294,39 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     expect(rows).toEqual([]);
   } finally {
     if (gameId) await ownerPage.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId).catch(() => {});
-    if (friendId) await cleanup(ownerPage, friendId).catch(() => {});
+    if (friendId) await cleanup(ownerPage, friendId, emails).catch(() => {});
     await Promise.all([ownerContext.close(), friendContext.close(), anonymousContext.close()]);
   }
 });
 
-test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów", async ({ page, context, browser }) => {
-  await loginAsPooledTestUser(page, context, 0);
+test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów", async ({ page, context, browser, accounts, loginAs }) => {
+  const [owner, recipientIdentity] = accounts.standard;
+  const emails = { friendEmail: recipientIdentity.email, subscriberEmail: accounts.noaccount[0].email };
+  await loginAs(page, context, owner);
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
   const recipientPage = await recipientContext.newPage();
-  let gameId = null, subId = null, recipientId = null;
+  let gameId = null, recipientId = null;
   try {
-    await loginAsTestUser(recipientPage, recipientContext, { username: testAccountUsername(8) });
+    await loginAs(recipientPage, recipientContext, recipientIdentity);
     recipientId = await recipientPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-    await cleanup(page, recipientId);
-    const ids = await page.evaluate(async ({ recipientId, email }) => {
+    await cleanup(page, recipientId, emails);
+    const areFriends = await page.evaluate(async recipientId => {
       const sb = window.__sbClient;
       const ownerId = (await sb.auth.getUser()).data.user.id;
-      const { data: areFriends, error: friendError } = await sb.rpc("are_friends", { a: ownerId, b: recipientId });
-      if (friendError || areFriends) throw friendError || new Error("fixture must have no accepted Friendship");
-      const { data, error } = await sb.rpc("e2e_registered_subscriber_fixture", { p_remove: false });
-      if (error || !data?.ok) throw new Error(error?.message || data?.err || "registered subscriber fixture failed");
+      const { data, error } = await sb.rpc("are_friends", { a: ownerId, b: recipientId });
+      if (error) throw error;
       return data;
-    }, { recipientId, email: testAccountUsername(8) });
-    subId = ids.id;
+    }, recipientId);
+    expect(areFriends).toBeFalsy();
+    // E25: usunięta fikstura e2e_registered_subscriber_fixture wstawiała wprost
+    // (z pominięciem RPC) aktywną subskrypcję e-mail na adres konta; tego stanu
+    // nie da się zbudować przez aplikację. Sprawdzamy bramkę, która go nie
+    // dopuszcza: zaproszenie Subskrybenta na adres z kontem jest odrzucane.
+    const invite = await rpc(page, "subscribers_invite", { p_email: recipientIdentity.email });
+    expect(invite).toMatchObject({ ok: false, err: "has_account" });
     const game = await seedPoll(page);
     gameId = game.id;
     await rpc(page, "poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
-    const direct = await rpc(page, "poll_share_send", { p_game_id: gameId, p_friend_ids: [], p_subscriber_ids: [subId] });
-    expect(direct).toMatchObject({ ok: true, created: 0, mail: [] });
     const legacy = await page.evaluate(async gameId => {
       const { data, error } = await window.__sbClient.rpc("polls_hub_share_poll", {
         p_game_id: gameId, p_sub_ids: [],
@@ -331,18 +344,19 @@ test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów",
     await page.goto(`https://www.familiada.online/polls/?id=${gameId}`);
     await page.locator("#btnAddRecipients").click();
     await expect(page.locator("#pollRecipientsOverlay")).toBeVisible();
-    await expect(page.locator("#pollRecipientsSubs .shareRow").filter({ hasText: testAccountUsername(8) })).toHaveCount(0);
+    await expect(page.locator("#pollRecipientsSubs .shareRow").filter({ hasText: recipientIdentity.email })).toHaveCount(0);
   } finally {
-    if (subId) await rpc(page, "e2e_registered_subscriber_fixture", { p_remove: true });
     if (gameId) await page.evaluate(async id => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
-    if (recipientId) await cleanup(page, recipientId);
+    if (recipientId) await cleanup(page, recipientId, emails);
     await recipientContext.close();
   }
 });
 
-test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", async ({ page, context, browser }) => {
+test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(150_000);
-  await loginAsPooledTestUser(page, context, 0);
+  const [owner, recipientIdentity] = accounts.standard;
+  const emails = { friendEmail: recipientIdentity.email, subscriberEmail: accounts.noaccount[0].email };
+  await loginAs(page, context, owner);
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
   const recipient = await recipientContext.newPage();
   let gameId, user, previous;
@@ -351,9 +365,9 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
     if (error) throw error;
   }, { id: user.id, enabled });
   try {
-    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    await loginAs(recipient, recipientContext, recipientIdentity);
     user = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
-    await cleanup(page, user.id);
+    await cleanup(page, user.id, emails);
     previous = await recipient.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("user_flags").select("email_notifications").eq("user_id", id).maybeSingle();
       if (error) throw error; return data?.email_notifications ?? true;
@@ -372,7 +386,7 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
     const after = new Date().toISOString();
     await page.goto(`https://www.familiada.online/polls/?id=${gameId}`);
     await page.locator("#btnAddRecipients").click();
-    const friend = page.locator("#pollRecipientsFriends .shareRow").filter({ hasText: user.email.split("@")[0] });
+    const friend = page.locator("#pollRecipientsFriends .shareRow").filter({ hasText: recipientIdentity.username });
     await expect(friend.locator('input')).toBeEnabled(); await friend.locator('input').check();
     await page.locator("#pollRecipientsAdd").click();
     await expect(page.locator("#subsGrid .shareRow")).toHaveCount(1, { timeout: 30_000 });
@@ -406,14 +420,14 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
   } finally {
     if (previous !== undefined) await setFlag(previous);
     if (gameId) await page.evaluate(async id => { const { error } = await window.__sbClient.from("games").delete().eq("id", id); if (error) throw error; }, gameId);
-    if (user) await cleanup(page, user.id);
+    if (user) await cleanup(page, user.id, emails);
     await recipientContext.close();
   }
 });
 
-test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz akcje390/1400", async ({ page, context }) => {
+test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz akcje390/1400", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(150_000);
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAs(page, context, accounts.standard[0]);
   const game = await seedPoll(page);
   const future = new Date(Date.now() + 12 * 3600000).toISOString();
   const panel = { ok: true,
@@ -486,14 +500,16 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
   }
 });
 
-test("ankieta: trzy dostarczone maile zachowują limit24h po usunięciu taska i gry", async ({ page, context }) => {
+test("ankieta: trzy dostarczone maile zachowują limit24h po usunięciu taska i gry", async ({ page, context, accounts, loginAs, mailbox }) => {
   test.setTimeout(600_000);
-  await loginAsPooledTestUser(page, context, 0);
+  const [subscriber] = accounts.noaccount;
+  const subscriberEmail = subscriber.email;
+  await loginAs(page, context, accounts.standard[0]);
   let gameId;
   try {
     await rpc(page, "e2e_subscriber_email_cleanup", { p_email: subscriberEmail });
     expect((await rpc(page, "e2e_poll_mail_budget_cleanup", { p_recipient_email: subscriberEmail })).ok).toBe(true);
-    await clearMailbox(subscriberEmail); await resetMailProviderLimits(page);
+    await mailbox.clear(subscriber); await resetMailProviderLimits(page);
     for (let n = 0; n < 3; n++) {
       // Ten helper czyści task/sub i podłogę pary; nie czyści trwałego budżetu342.
       await rpc(page, "e2e_subscriber_email_cleanup", { p_email: subscriberEmail });
@@ -507,7 +523,7 @@ test("ankieta: trzy dostarczone maile zachowują limit24h po usunięciu taska i 
       await page.locator('#pollRecipientsSubs .shareRow').filter({ hasText: subscriberEmail }).locator('input').check();
       await page.locator('#pollRecipientsAdd').click();
       await expect(page.locator('#subsGrid .shareRow')).toHaveCount(1, { timeout: 30_000 });
-      const email = await waitForEmail({ recipient: subscriberEmail, after, subject: new RegExp(game.name), timeout: 150_000 });
+      const email = await mailbox.waitFor(subscriber, { after, subject: new RegExp(game.name), timeout: 150_000 });
       expect(extractHttpLinks(email).some(url => new URL(url).pathname === '/go/' && new URL(url).searchParams.has('t'))).toBe(true);
       await expect.poll(async () => (await readMailDelivery({ recipient: subscriberEmail, after })).queue || [], { timeout: 30_000 }).toEqual([]);
       await page.evaluate(async id => { const { error } = await window.__sbClient.from('games').delete().eq('id', id); if (error) throw error; }, gameId);
@@ -531,6 +547,6 @@ test("ankieta: trzy dostarczone maile zachowują limit24h po usunięciu taska i 
     if (gameId) await page.evaluate(async id => { const { error } = await window.__sbClient.from('games').delete().eq('id', id); if (error) throw error; }, gameId);
     await rpc(page, "e2e_subscriber_email_cleanup", { p_email: subscriberEmail });
     await rpc(page, "e2e_poll_mail_budget_cleanup", { p_recipient_email: subscriberEmail });
-    await clearMailbox(subscriberEmail);
+    await mailbox.clear(subscriber);
   }
 });

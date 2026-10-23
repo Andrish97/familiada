@@ -2575,6 +2575,22 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .stats-session-event strong{color:#ffd875}
 .stats-session-event span{color:rgba(255,255,255,.68)}
 .stats-session-event-error{color:#ff9a9a}
+.stats-session-suggestions{margin-bottom:14px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.025);line-height:1.45;overflow-wrap:anywhere}
+.stats-session-suggestion{display:flex;flex-direction:column;gap:3px;padding:8px 0 8px 10px;border-top:1px solid rgba(255,255,255,.07);border-left:3px solid rgba(255,255,255,.25);font-size:12px}
+.stats-session-suggestion strong{font-size:13px}
+.stats-session-suggestion span{color:rgba(255,255,255,.72)}
+.stats-session-suggestion--problem{border-left-color:#ff8a80}
+.stats-session-suggestion--problem strong{color:#ffb3ab}
+.stats-session-suggestion--warn{border-left-color:#ffd875}
+.stats-session-suggestion--warn strong{color:#ffd875}
+.stats-session-suggestion--info strong{color:rgba(255,255,255,.85)}
+.stats-session-suggestion details{color:rgba(255,255,255,.6);font-size:11px}
+.stats-session-suggestion summary{cursor:pointer;color:rgba(255,255,255,.7)}
+.stats-session-suggestion-empty,.stats-session-suggestion-devices{margin:4px 0;color:rgba(255,255,255,.7);font-size:12px}
+.stats-sessions-diagnosis{flex:none}
+.stats-sessions-diagnosis-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07);font-size:12px}
+.stats-sessions-diagnosis-row span{color:rgba(255,255,255,.78)}
+.stats-sessions-diagnosis-row strong{color:#ffd875;white-space:nowrap}
 .stats-session-details-cell{white-space:normal!important;vertical-align:middle}
 .stats-session-details-button{white-space:nowrap}
 

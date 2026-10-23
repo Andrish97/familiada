@@ -14,17 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T22514";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T22514";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T22514";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T22514";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22514";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22514";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T22514";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T22514";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T22514";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T22514";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T22514";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T00394";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T00394";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T00394";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T00394";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T00394";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T00394";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T00394";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T00394";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T00394";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T00394";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T00394";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T00394";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -35,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T22514";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T00394";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T22514";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T22514";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T22514";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T22514"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T00394";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T00394";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T00394";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T00394"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T22514";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T00394";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1070,9 +1071,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T22514"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T22514"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T22514"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T00394"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T00394"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T00394"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5442,9 +5443,106 @@ function openSessionRunDetailsModal(r) {
     text: "",
     okText: "Wróć do tabeli",
     showCancel: false,
-    body: buildSessionRunDetails(r),
+    body: buildSessionRunView(r),
     onReady: ({ overlay }) => overlay?.classList.add("stats-session-details-overlay"),
   });
+}
+
+// Sugerowane problemy (session-diagnosis.js) nad przebiegiem rozgrywki.
+function buildSessionRunView(r) {
+  const view = document.createElement("div");
+  view.append(buildSessionSuggestions(r), buildSessionRunDetails(r));
+  return view;
+}
+
+function buildSessionSuggestions(r) {
+  const section = document.createElement("section");
+  section.className = "stats-session-suggestions";
+  const heading = document.createElement("strong");
+  heading.className = "stats-session-events-title";
+  heading.textContent = "Sugerowane problemy";
+  section.appendChild(heading);
+  if (!r.diag) {
+    const none = document.createElement("p");
+    none.className = "stats-session-suggestion-empty";
+    none.textContent = "Brak podsumowania diagnostyki dla tej sesji.";
+    section.appendChild(none);
+    return section;
+  }
+  const events = Array.isArray(r.stats_detail?.events) ? r.stats_detail.events : [];
+  const devices = Object.entries(deviceInfoBySource(events))
+    .map(([source, metrics]) => `${SOURCE_NAMES[source] || source}: ${describeDevice(metrics) || "—"}`);
+  if (devices.length) {
+    const line = document.createElement("p");
+    line.className = "stats-session-suggestion-devices";
+    line.textContent = `Urządzenia — ${devices.join("; ")}`;
+    section.appendChild(line);
+  }
+  const suggestions = diagnoseSession(r);
+  if (!suggestions.length) {
+    const none = document.createElement("p");
+    none.className = "stats-session-suggestion-empty";
+    none.textContent = "Nie wykryto problemów.";
+    section.appendChild(none);
+  }
+  const timeOf = event => event.at ? new Date(event.at).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+  for (const item of suggestions) {
+    const row = document.createElement("div");
+    row.className = `stats-session-suggestion stats-session-suggestion--${item.level}`;
+    const title = document.createElement("strong");
+    title.textContent = item.title;
+    const detail = document.createElement("span");
+    detail.textContent = item.detail;
+    row.append(title, detail);
+    if (item.evidence.length) {
+      const proof = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = `Na podstawie zdarzeń (${item.evidence.length})`;
+      proof.appendChild(summary);
+      for (const event of item.evidence.slice(0, 12)) {
+        const line = document.createElement("div");
+        line.textContent = `${timeOf(event)} · ${SOURCE_NAMES[event.source] || event.source || "—"} · ${event.message || event.category || event.kind}`;
+        proof.appendChild(line);
+      }
+      row.appendChild(proof);
+    }
+    section.appendChild(row);
+  }
+  if (Number(r.diag.dropped_count) > 0) {
+    const dropped = document.createElement("p");
+    dropped.className = "stats-session-suggestion-empty";
+    dropped.textContent = `Przekroczono limit 3000 zdarzeń: pominięto ${r.diag.dropped_count} szczegółów (liczniki są pełne).`;
+    section.appendChild(dropped);
+  }
+  return section;
+}
+
+// Zestawienie sugestii dla załadowanych sesji Control 2 (tabela Rozgrywki).
+function buildSessionsDiagnosisSummary(rows) {
+  const result = summarizeSessions(rows);
+  const section = document.createElement("section");
+  section.className = "stats-session-suggestions stats-sessions-diagnosis";
+  const heading = document.createElement("strong");
+  heading.className = "stats-session-events-title";
+  heading.textContent = `Sugerowane problemy — ${result.sessions} sesji Control 2`;
+  section.appendChild(heading);
+  const clean = document.createElement("p");
+  clean.className = "stats-session-suggestion-empty";
+  clean.textContent = result.sessions
+    ? `Bez problemów (poza informacjami): ${result.clean} (${Math.round(result.clean / result.sessions * 100)}%)`
+    : "Brak sesji z podsumowaniem diagnostyki.";
+  section.appendChild(clean);
+  for (const item of result.items) {
+    const line = document.createElement("div");
+    line.className = "stats-sessions-diagnosis-row";
+    const label = document.createElement("span");
+    label.textContent = item.title;
+    const value = document.createElement("strong");
+    value.textContent = `${item.count} (${Math.round(item.share * 100)}%)`;
+    line.append(label, value);
+    section.appendChild(line);
+  }
+  return section;
 }
 
 function buildSessionRunDetails(r) {
@@ -5473,12 +5571,6 @@ function buildSessionRunDetails(r) {
     settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
-  const deviceEventLog = r.device_event_log || r.display_event_log;
-  if (deviceEventLog?.status === "no_events_recorded") {
-    line("Brak zapisanych zdarzeń urządzeń dla tej sesji.");
-  } else if (deviceEventLog?.status === "session_id_missing") {
-    line("Nie można powiązać logu urządzeń z tą sesją.");
-  }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {
@@ -5625,7 +5717,8 @@ function buildSessionRunDetails(r) {
           const visibility = metrics.visibility === "hidden" ? "karta w tle" : metrics.visibility === "visible" ? "karta widoczna" : "widoczność nieznana";
           const focus = metrics.focused === true ? "okno aktywne" : metrics.focused === false ? "okno bez fokusu" : "fokus nieznany";
           const reasons = { initial:"stan na początku rozgrywki", visibilitychange:"zmiana widoczności" };
-          return { title: `Widoczność: ${devices}`, detail: `${reasons[metrics.visibility_reason || metrics.reason] || "stan karty"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
+          const away = metrics.hidden_duration_ms != null ? ` · wcześniej w tle ${formatDuration(metrics.hidden_duration_ms)}` : "";
+          return { title: `Widoczność: ${devices}`, detail: `${reasons[metrics.visibility_reason || metrics.reason] || "stan karty"} · ${visibility} · ${focus}${away}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
         }
         if (metrics.reason === "network_state") {
           return { title: "Sieć Wyświetlacza", detail: metrics.online ? "przeglądarka zgłosiła połączenie z siecią" : "przeglądarka zgłosiła brak połączenia z siecią" };
@@ -5730,6 +5823,33 @@ function buildSessionRunDetails(r) {
           return { title: `Display potwierdził r${metrics.acknowledged_revision ?? metrics.revision ?? "—"}`, detail: `ACK przez ${source} po ${formatDuration(metrics.latency_ms)}${expected}${metrics.control_visibility === "hidden" ? " · Control było w tle" : ""}` };
         }
       }
+      if (event.category === "page_lifecycle") {
+        const phases = {
+          freeze: "przeglądarka zamroziła stronę",
+          resume: `strona wznowiona po zamrożeniu${metrics.duration_ms != null ? ` (${formatDuration(metrics.duration_ms)})` : ""}`,
+          pagehide: metrics.persisted ? "strona ukryta w pamięci przeglądarki" : "strona zamknięta lub przeładowana",
+          pageshow: "strona przywrócona z pamięci przeglądarki",
+          offline: "przeglądarka zgłosiła brak sieci",
+          online: `sieć wróciła${metrics.duration_ms != null ? ` po ${formatDuration(metrics.duration_ms)}` : ""}`,
+        };
+        return { title: `Strona: ${devices}`, detail: phases[metrics.phase] || "zmiana stanu strony" };
+      }
+      if (event.category === "wake_lock") {
+        const phases = {
+          granted: "blokada wygaszania ekranu włączona",
+          denied: `przeglądarka odmówiła blokady wygaszania ekranu${metrics.error_name ? ` (${metrics.error_name})` : ""}`,
+          unsupported: "przeglądarka nie obsługuje blokady wygaszania ekranu",
+          released: "system zwolnił blokadę wygaszania przy widocznej karcie (np. oszczędzanie baterii)",
+        };
+        return { title: `Ekran: ${devices}`, detail: phases[metrics.phase] || "blokada wygaszania ekranu" };
+      }
+      if (event.category === "device_info") {
+        const classes = { phone: "telefon", tablet: "tablet", desktop: "komputer", tv: "telewizor" };
+        const parts = [classes[metrics.device_class], metrics.browser, metrics.os,
+          metrics.battery_level != null ? `bateria ${metrics.battery_level}%${metrics.charging ? " (ładowanie)" : ""}` : "",
+          metrics.save_data ? "oszczędzanie danych" : ""].filter(Boolean);
+        return { title: `Urządzenie: ${devices}`, detail: parts.join(" · ") || "—" };
+      }
       if (event.category === "realtime") {
         const state = metrics.state === "connected" ? "połączony" : "rozłączony; działa odpytywanie awaryjne";
         const channels = {
@@ -5780,7 +5900,7 @@ function buildSessionRunDetails(r) {
         const row = document.createElement("div");
         row.className = "stats-session-event";
         const title = document.createElement("strong");
-        title.textContent = `${timeOf(event)} · ${text.title}`;
+        title.textContent = `${timeOf(event)}${event.prestart ? " · przed startem gry" : ""} · ${text.title}`;
         row.appendChild(title);
         const detail = document.createElement("span");
         detail.textContent = text.detail;
@@ -6176,7 +6296,10 @@ async function openStatsDetailModal(type) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
-    if (type === "gameplay") exportButton.disabled = false;
+    if (type === "gameplay") {
+      exportButton.disabled = false;
+      body.insertBefore(buildSessionsDiagnosisSummary(allRows), tableWrap);
+    }
     renderPage(1);
   } catch (err) {
     tableWrap.textContent = `Błąd: ${err.message}`;
@@ -6826,7 +6949,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T22514");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T00394");
 
   const MC_PAGE_SIZE = 50;
 

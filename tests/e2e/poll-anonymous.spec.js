@@ -1,10 +1,12 @@
 // Real anonymous forms and real production DB; only the first response is lost deliberately.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./helpers/e2e-test');
 const { serveBranchCode } = require('./helpers/branch-code');
-const { loginAsPooledTestUser, instrumentPage } = require('./helpers/login');
+const { instrumentPage } = require('./helpers/login');
 const origin='https://www.familiada.online';
 const useBranchCode=process.env.GITHUB_REF_NAME!=='main';
 test.use({serviceWorkers:'block'});
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({needs:{standard:1}});
 test.describe.configure({retries:0});
 async function rpc(page,name,args){return page.evaluate(async({name,args})=>{const {data,error}=await window.__sbClient.rpc(name,args);if(error)throw new Error(error.message);return data;},{name,args});}
 async function seed(page,type){return page.evaluate(async type=>{
@@ -26,10 +28,10 @@ async function complete(page,type){
   else await page.locator('.alist button').first().click();
  }
 }
-for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preserved answers, 30s browser scope, retries and session lifecycle`,async({page,context,browser},testInfo)=>{
+for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preserved answers, 30s browser scope, retries and session lifecycle`,async({page,context,browser,accounts,loginAs},testInfo)=>{
  test.setTimeout(180000);let game;const anonymousContexts=[];
  try{
-  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+  await loginAs(page,context,accounts.standard[0]);
   game=await seed(page,type);
   const anonymous=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});anonymousContexts.push(anonymous);
   if(useBranchCode)await serveBranchCode(anonymous,{pages:['polls/vote/text','polls/vote/points']});

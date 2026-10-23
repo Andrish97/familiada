@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T22514";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-22T22514";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-22T22514";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-22T22514";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-22T22514";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T22514";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T00394";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T00394";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T00394";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T00394";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T00394";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T00394";
 
-import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-22T22514";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T00394";
 
 
 function deviceTypeLabel(type) {

@@ -21,13 +21,15 @@
 // (karta Udostępnianie nieaktywna). Na telefonie akcje są w dolnym pasku
 // przyklejonym do ekranu, przyciski równej szerokości. Subskrybenci
 // wymagają osobnego konta subskrybenta, którego tu nie zakładamy — kafelki
-// subskrybentów są mierzone tylko, jeśli konto testowe już jakichś ma.
+// subskrybentów są mierzone tylko, jeśli konto już jakichś ma (wypożyczone
+// konto jest czyszczone, więc zwykle ich nie ma).
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 test.use({ serviceWorkers: "block" });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["polls"] });
 });
@@ -261,10 +263,10 @@ async function expectBarState(page, state) {
   await expect(page.locator("#pollBar")).toHaveAttribute("data-state", state, { timeout: 60000 });
 }
 
-async function runStates(page, context, testInfo, type) {
+async function runStates(page, context, testInfo, type, { owner, loginAs }) {
   const all = [];
   await page.setViewportSize({ width: 1400, height: 900 });
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, owner);
   const game = await seedPollGame(page, type);
   const tag = type;
   try {
@@ -319,12 +321,12 @@ async function runStates(page, context, testInfo, type) {
   expect(all).toEqual([]);
 }
 
-test("układ przycisków: ankieta punktowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context }, testInfo) => {
+test("układ przycisków: ankieta punktowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context, accounts, loginAs }, testInfo) => {
   test.setTimeout(420_000);
-  await runStates(page, context, testInfo, "poll_points");
+  await runStates(page, context, testInfo, "poll_points", { owner: accounts.standard[0], loginAs });
 });
 
-test("układ przycisków: ankieta tekstowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context }, testInfo) => {
+test("układ przycisków: ankieta tekstowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context, accounts, loginAs }, testInfo) => {
   test.setTimeout(420_000);
-  await runStates(page, context, testInfo, "poll_text");
+  await runStates(page, context, testInfo, "poll_text", { owner: accounts.standard[0], loginAs });
 });

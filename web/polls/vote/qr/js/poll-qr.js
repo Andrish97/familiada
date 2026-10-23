@@ -1,9 +1,9 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-22T22514";
-import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-22T22514";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-22T22514";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-22T22514";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-22T22514";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-23T00394";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T00394";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T00394";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-23T00394";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-23T00394";
 
 
 // 1. Inicjalizacja i18n

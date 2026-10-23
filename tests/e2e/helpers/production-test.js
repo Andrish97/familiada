@@ -1,4 +1,6 @@
-const base = require('@playwright/test');
+// Na bazie e2e-test (E25): spece produkcyjne mają też wypożyczane konta
+// (`needs`, `accounts`, `loginAs`, `mailbox`); bez `needs` nic nie wypożyczają.
+const base = require('./e2e-test');
 const { generateE2EToken } = require('./e2e-token');
 
 async function maintenanceBypass(context) {

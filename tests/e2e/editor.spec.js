@@ -19,12 +19,12 @@
 // prawdziwy -- workflow odpalony na branchu testuje poprawki przed
 // wdrożeniem. Regresje z audytu: sekcja "editor: audyt" na końcu pliku.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["games/editor", "bases/explorer"] });
@@ -153,9 +153,9 @@ async function seedPollPointsFull(page, gameId, { firstAnswerPoints = 0 } = {}) 
 // odrzucała, a UI pokazywał generyczny błąd zostawiając textarea pustą, mimo
 // że w bazie wciąż był stary tekst. Naprawione: puste pole -> ten sam
 // fallback do domyślnej etykiety, jakiego już używają odpowiedzi.
-test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie błąd, nie desync)", async ({ page, context }) => {
+test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie błąd, nie desync)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -178,8 +178,8 @@ test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie bł�
 });
 
 /* ================= B: import zawsze wipeuje istniejącą zawartość ================= */
-test("E20 import TXT pokazuje podgląd na żywo, błąd formatu i bezpieczny tekst", async ({ page, context }, testInfo) => {
-  await loginAsTestUser(page, context);
+test("E20 import TXT pokazuje podgląd na żywo, błąd formatu i bezpieczny tekst", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await loginAs(page, context, accounts.standard[0]);
   const gameId = await createGame(page, { type: "prepared" });
   try {
     await openEditor(page, gameId);
@@ -205,9 +205,9 @@ test("E20 import TXT pokazuje podgląd na żywo, błąd formatu i bezpieczny tek
   }
 });
 
-test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartość gry", async ({ page, context }) => {
+test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartość gry", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -232,9 +232,9 @@ test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartoś
 });
 
 /* ================= C: nieudany parse importu NIE kasuje zawartości ================= */
-test("edytor: import bez '#' pokazuje błąd formatu i nie rusza istniejącej zawartości", async ({ page, context }) => {
+test("edytor: import bez '#' pokazuje błąd formatu i nie rusza istniejącej zawartości", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -264,9 +264,9 @@ test("edytor: import bez '#' pokazuje błąd formatu i nie rusza istniejącej za
 });
 
 /* ================= D: odpowiedź zaczynająca się od cyfry zostaje okaleczona ================= */
-test("edytor: import okalecza odpowiedź zaczynającą się od cyfry (myli ją z numerem listy)", async ({ page, context }) => {
+test("edytor: import okalecza odpowiedź zaczynającą się od cyfry (myli ją z numerem listy)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -288,9 +288,9 @@ test("edytor: import okalecza odpowiedź zaczynającą się od cyfry (myli ją z
 });
 
 /* ================= E: ostatni "/" w linii zawsze traktowany jako punkty ================= */
-test("edytor: import dwuznacznie tnie tekst na ostatnim '/', nawet gdy to część treści odpowiedzi", async ({ page, context }) => {
+test("edytor: import dwuznacznie tnie tekst na ostatnim '/', nawet gdy to część treści odpowiedzi", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -311,9 +311,9 @@ test("edytor: import dwuznacznie tnie tekst na ostatnim '/', nawet gdy to częś
 });
 
 /* ================= F: ujemne i dziesiętne punkty z importu są przycinane ================= */
-test("edytor: import przycina ujemne punkty do 0 i zaokrągla w dół dziesiętne", async ({ page, context }) => {
+test("edytor: import przycina ujemne punkty do 0 i zaokrągla w dół dziesiętne", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -335,9 +335,9 @@ test("edytor: import przycina ujemne punkty do 0 i zaokrągla w dół dziesiętn
 });
 
 /* ================= G: import ucina odpowiedzi powyżej AN_MAX bez ostrzeżenia ================= */
-test("edytor: import po cichu ucina odpowiedzi powyżej limitu 6 na pytanie", async ({ page, context }) => {
+test("edytor: import po cichu ucina odpowiedzi powyżej limitu 6 na pytanie", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -358,9 +358,9 @@ test("edytor: import po cichu ucina odpowiedzi powyżej limitu 6 na pytanie", as
 });
 
 /* ================= H: import ignoruje punkty dla poll_points ================= */
-test("edytor: import ignoruje punkty z tekstu dla typu poll_points (zawsze zapisuje 0)", async ({ page, context }) => {
+test("edytor: import ignoruje punkty z tekstu dla typu poll_points (zawsze zapisuje 0)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_points" });
   try {
@@ -380,9 +380,9 @@ test("edytor: import ignoruje punkty z tekstu dla typu poll_points (zawsze zapis
 });
 
 /* ================= I: suma punktów >100 (prepared) NIE blokuje zapisu ================= */
-test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, zapis i tak przechodzi", async ({ page, context }) => {
+test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, zapis i tak przechodzi", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -412,9 +412,9 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
 });
 
 /* ================= J: usunięcie odpowiedzi ze środka -> nowa wypełnia zwolniony ord ================= */
-test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze środka, nie doklejana na koniec", async ({ page, context }) => {
+test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze środka, nie doklejana na koniec", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -445,9 +445,9 @@ test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze śr
 });
 
 /* ================= ?q=: otwarte pytanie w adresie ================= */
-test("edytor: otwarte pytanie jest w adresie (?q=) i wejście z ?q= otwiera to pytanie", async ({ page, context }) => {
+test("edytor: otwarte pytanie jest w adresie (?q=) i wejście z ?q= otwiera to pytanie", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -468,9 +468,9 @@ test("edytor: otwarte pytanie jest w adresie (?q=) i wejście z ?q= otwiera to p
 });
 
 /* ================= K: usunięcie pytania ze środka przenumerowuje resztę ================= */
-test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pytanie zachowuje treść i odpowiedzi", async ({ page, context }) => {
+test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pytanie zachowuje treść i odpowiedzi", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -503,9 +503,9 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
 });
 
 /* ================= L: brak twardego limitu liczby pytań ================= */
-test("edytor: nie ma twardego limitu liczby pytań — dodanie wielu ponad minimum nie rzuca błędu", async ({ page, context }) => {
+test("edytor: nie ma twardego limitu liczby pytań — dodanie wielu ponad minimum nie rzuca błędu", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   const TARGET = 15; // wyraźnie ponad QN_MIN=10, bez przesady w czasie testu
@@ -525,9 +525,9 @@ test("edytor: nie ma twardego limitu liczby pytań — dodanie wielu ponad minim
 });
 
 /* ================= M: wejście do edytora gdy ankieta poll_open -> blokada ================= */
-test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna blokada strony, brak dostępu", async ({ page, context }) => {
+test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna blokada strony, brak dostępu", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_points" });
   try {
@@ -553,9 +553,9 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna 
 });
 
 /* ================= N/O: wejście gdy ankieta 'ready' -> confirm reset (Anuluj / OK) ================= */
-test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się nie resetuje", async ({ page, context }) => {
+test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się nie resetuje", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_points" });
   try {
@@ -576,9 +576,9 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
   }
 });
 
-test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset do draft + zerowanie punktów", async ({ page, context }) => {
+test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset do draft + zerowanie punktów", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_points" });
   try {
@@ -614,9 +614,9 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
 // trzyma blokadę zasobu (resource-lock.js, edit_locks). Warstwa 2
 // (updateChecked, obrona przed ominięciem blokady — patrz test niżej) to
 // dodatkowa, niezależna linia obrony — ten test sprawdza samą Warstwę 1.
-test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu pierwszej", async ({ page, context }) => {
+test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu pierwszej", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(90_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -651,9 +651,9 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
 // edytuje usunięte już pytanie, musi się jawnie nie udać (updateChecked w
 // db-guard.js), zamiast pokazać fałszywe "Zapisano." (0-row UPDATE nie
 // zwraca błędu z Supabase/PostgREST — patrz komentarz w db-guard.js).
-test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady kończy się jawnym komunikatem, nie fałszywym 'Zapisano.'", async ({ page, context }) => {
+test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady kończy się jawnym komunikatem, nie fałszywym 'Zapisano.'", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -695,9 +695,9 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
 // otwarto w innej karcie/urządzeniu. Dawniej zapisywał dalej (luka "Warstwa 2
 // zero" z docs/plan-testy-i-poprawki.md); od migracji 274 baza sama odrzuca
 // zapis treści gry z otwartą ankietą, a edytor pokazuje overlay z powodem.
-test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie A (baza odrzuca)", async ({ page, context }) => {
+test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie A (baza odrzuca)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_points" });
   try {
@@ -747,9 +747,9 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie 
 // odpowiedzi tym flagiem, więc dla poll_text odpowiedzi z importowanego tekstu
 // są całkowicie pomijane (nie tylko punkty, jak dla poll_points — same wiersze
 // answers() nigdy nie powstają).
-test("edytor: import do gry typu poll_text nie tworzy żadnych odpowiedzi (allowAnswers=false)", async ({ page, context }) => {
+test("edytor: import do gry typu poll_text nie tworzy żadnych odpowiedzi (allowAnswers=false)", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "poll_text" });
   try {
@@ -770,9 +770,9 @@ test("edytor: import do gry typu poll_text nie tworzy żadnych odpowiedzi (allow
 });
 
 /* ================= S: nazwa gry — pusta -> fallback do domyślnej, >80 znaków -> ucięta ================= */
-test("edytor: pusta nazwa gry po blur zapisuje się jako domyślna, nie jako pusty string", async ({ page, context }) => {
+test("edytor: pusta nazwa gry po blur zapisuje się jako domyślna, nie jako pusty string", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared", name: "Moja gra testowa" });
   try {
@@ -788,9 +788,9 @@ test("edytor: pusta nazwa gry po blur zapisuje się jako domyślna, nie jako pus
   }
 });
 
-test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async ({ page, context }) => {
+test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.standard[0]);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
@@ -809,11 +809,11 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
    editor: audyt (docs/audyt-stron.md) -- regresje poprawionych błędów
    ===================================================================== */
 
-async function newUserContext(browser, username, contextOptions = {}) {
+async function newUserContext(browser, loginAs, identity, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
   await serveBranchCode(ctx, { pages: ["games/editor", "bases/explorer"] });
   const pg = await ctx.newPage();
-  await loginAsTestUser(pg, ctx, { username });
+  await loginAs(pg, ctx, identity);
   return { ctx, page: pg };
 }
 
@@ -845,9 +845,9 @@ async function seedPrepared(page, gameId, questions) {
 
 test.describe("editor: audyt -- pisanie i zapisy", () => {
 
-  test("pauza po spacji w treści pytania nie zjada spacji (autozapis nie nadpisuje pola)", async ({ page, context }) => {
+  test("pauza po spacji w treści pytania nie zjada spacji (autozapis nie nadpisuje pola)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId }] = await seedPrepared(page, gameId, [["Start"]]);
@@ -872,9 +872,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("przełączenie pytania w trakcie zapisu nie przenosi tekstu do następnego pytania", async ({ page, context }) => {
+  test("przełączenie pytania w trakcie zapisu nie przenosi tekstu do następnego pytania", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "poll_text" });
     try {
       const [{ qId: q1 }, { qId: q2 }] = await seedPrepared(page, gameId, [["Q1"], ["Q2"]]);
@@ -902,9 +902,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("zapis punktów nie przebudowuje listy: kursor zostaje w następnym polu, wpisany tekst się zapisuje", async ({ page, context }) => {
+  test("zapis punktów nie przebudowuje listy: kursor zostaje w następnym polu, wpisany tekst się zapisuje", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1"], ["A2"], ["A3"]]]]);
@@ -936,9 +936,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("klik w kosz innej odpowiedzi zaraz po wpisaniu punktów działa za pierwszym razem", async ({ page, context }) => {
+  test("klik w kosz innej odpowiedzi zaraz po wpisaniu punktów działa za pierwszym razem", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId, aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1"], ["A2"], ["A3"]]]]);
@@ -959,9 +959,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("pole punktów: same cyfry, najwyżej 100, minus i puste dają 0", async ({ page, context }) => {
+  test("pole punktów: same cyfry, najwyżej 100, minus i puste dają 0", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId, aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1", 5], ["A2"], ["A3"]]]]);
@@ -984,9 +984,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("podwójny klik w 'Dodaj odpowiedź' i 'Dodaj pytanie' dodaje jedno, nie dwa", async ({ page, context }) => {
+  test("podwójny klik w 'Dodaj odpowiedź' i 'Dodaj pytanie' dodaje jedno, nie dwa", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId }] = await seedPrepared(page, gameId, [["Pytanie"]]);
@@ -1007,9 +1007,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("'Moje gry' zaraz po wpisaniu czeka na zapis zamiast go przerwać", async ({ page, context }) => {
+  test("'Moje gry' zaraz po wpisaniu czeka na zapis zamiast go przerwać", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId }] = await seedPrepared(page, gameId, [["Stary tekst"]]);
@@ -1028,9 +1028,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("szybkie klikanie pytań A -> B: spóźnione odpowiedzi A nie nadpisują B", async ({ page, context }) => {
+  test("szybkie klikanie pytań A -> B: spóźnione odpowiedzi A nie nadpisują B", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       const [{ qId: q1 }] = await seedPrepared(page, gameId, [["Q1", [["Q1-A"]]], ["Q2", [["Q2-A"]]], ["Q3", [["Q3-A"]]]]);
@@ -1057,9 +1057,9 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
 
 test.describe("editor: audyt -- import i wejście na stronę", () => {
 
-  test("'Wczytaj plik' / wybór pliku wczytuje treść do pola i import działa", async ({ page, context }) => {
+  test("'Wczytaj plik' / wybór pliku wczytuje treść do pola i import działa", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       await openEditor(page, gameId);
@@ -1083,9 +1083,9 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     }
   });
 
-  test("import jest jedną transakcją: błąd w połowie nie rusza starej zawartości (game_import_content)", async ({ page, context }) => {
+  test("import jest jedną transakcją: błąd w połowie nie rusza starej zawartości (game_import_content)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       await seedPrepared(page, gameId, [["Stare 1", [["S1"]]], ["Stare 2", [["S2"]]]]);
@@ -1115,9 +1115,9 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     }
   });
 
-  test("import przy otwartej ankiecie odrzuca baza (Warstwa 2 działa też dla RPC importu)", async ({ page, context }) => {
+  test("import przy otwartej ankiecie odrzuca baza (Warstwa 2 działa też dla RPC importu)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "poll_points" });
     try {
       await seedPollPointsFull(page, gameId);
@@ -1139,9 +1139,9 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     }
   });
 
-  test("nieistniejąca gra: komunikat zostaje do kliknięcia OK, potem powrót do listy gier", async ({ page, context }) => {
+  test("nieistniejąca gra: komunikat zostaje do kliknięcia OK, potem powrót do listy gier", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     await page.goto("https://www.familiada.online/games/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
     await expect(page).toHaveURL(/\/games\/editor/);
@@ -1149,9 +1149,9 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
   });
 
-  test("usunięcie pytania: jedno RPC usuwa i przenumerowuje (bez dziur w numeracji)", async ({ page, context }) => {
+  test("usunięcie pytania: jedno RPC usuwa i przenumerowuje (bez dziur w numeracji)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAs(page, context, accounts.standard[0]);
     const gameId = await createGame(page, { type: "prepared" });
     try {
       await seedPrepared(page, gameId, [["Q1"], ["Q2"], ["Q3"], ["Q4"]]);
@@ -1225,9 +1225,9 @@ const mRows = (page) => page.locator("#qAnswers .qf-row:not(.qf-add)");
 
 test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edytor)", () => {
 
-  test("ten sam układ co edytor: kafelek '+ Dodaj odpowiedź n/6', pasek SUMA, wiersze qf-row", async ({ page, context }) => {
+  test("ten sam układ co edytor: kafelek '+ Dodaj odpowiedź n/6', pasek SUMA, wiersze qf-row", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-LAYOUT-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, { text: "Pytanie", answers: [{ text: "A", fixed_points: 30 }, { text: "B", fixed_points: 20 }] });
@@ -1244,9 +1244,9 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
     }
   });
 
-  test("usunięcie ze środka i dodanie nowej: numery odpowiedzi po kolei (bez duplikatu)", async ({ page, context }) => {
+  test("usunięcie ze środka i dodanie nowej: numery odpowiedzi po kolei (bez duplikatu)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-ORD-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, {
@@ -1266,9 +1266,9 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
     }
   });
 
-  test("pusta odpowiedź blokuje zapis z komunikatem (wcześniej zapisywała się pusta)", async ({ page, context }) => {
+  test("pusta odpowiedź blokuje zapis z komunikatem (wcześniej zapisywała się pusta)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-EMPTY-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, { text: "Pytanie", answers: [] });
@@ -1283,15 +1283,15 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
     }
   });
 
-  test("nieudany zapis zostawia modal otwarty z wpisaną treścią", async ({ page, context }) => {
+  test("nieudany zapis zostawia modal otwarty z wpisaną treścią", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-FAIL-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, { text: "Stara treść", answers: [] });
       await openQuestionModal(page, baseId, qid);
-      await page.route("**/rest/v1/qb_questions*", (route) =>
-        route.request().method() === "PATCH" ? route.abort() : route.fallback());
+      // Zapis pytania idzie przez funkcję SQL qb_save_question (migracja 427).
+      await page.route("**/rest/v1/rpc/qb_save_question*", (route) => route.abort());
       await page.locator("#qText").fill("Nowa treść");
       await page.locator("#qSave").click();
       await expect(page.locator("#qErr")).toHaveText("Nie udało się zapisać pytania. Spróbuj ponownie.", { timeout: 10000 });
@@ -1299,14 +1299,14 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
       await expect(page.locator("#qText")).toHaveValue("Nowa treść");
       expect((await getBaseQuestion(page, qid)).text).toBe("Stara treść");
     } finally {
-      await page.unroute("**/rest/v1/qb_questions*");
+      await page.unroute("**/rest/v1/rpc/qb_save_question*");
       await deleteBase(page, baseId);
     }
   });
 
-  test("zamknięcie ze zmianami pyta o porzucenie; bez zmian zamyka od razu", async ({ page, context }) => {
+  test("zamknięcie ze zmianami pyta o porzucenie; bez zmian zamyka od razu", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-DIRTY-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, { text: "Treść", answers: [] });
@@ -1334,9 +1334,9 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
     }
   });
 
-  test("pole punktów jak w edytorze: 250 -> 100; przy 6 odpowiedziach kafelek dodawania wyłączony", async ({ page, context }) => {
+  test("pole punktów jak w edytorze: 250 -> 100; przy 6 odpowiedziach kafelek dodawania wyłączony", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const baseId = await createBase(page, `E2E-QF-PTS-${Date.now()}`);
     try {
       const qid = await createBaseQuestion(page, baseId, {
@@ -1364,9 +1364,9 @@ test.describe("editor: audyt -- zrzuty ekranu", () => {
     ["desktop", { viewport: { width: 1280, height: 860 } }],
     ["mobile", { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }],
   ]) {
-    test(`zrzut: edytor i modal pytania (${label})`, async ({ browser }, testInfo) => {
+    test(`zrzut: edytor i modal pytania (${label})`, async ({ browser, accounts, loginAs }, testInfo) => {
       test.setTimeout(90_000);
-      const { ctx, page } = await newUserContext(browser, testAccountUsername(1), opts);
+      const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0], opts);
       const gameId = await createGame(page, { type: "prepared", name: `E2E-SHOT-${Date.now()}` });
       const baseId = await createBase(page, `E2E-SHOT-${Date.now()}`);
       try {

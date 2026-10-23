@@ -67,6 +67,15 @@ const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”); Control
+// i urządzenia to ciężki przebieg. Pocztę (i adres bez konta) wypożyczamy tylko,
+// gdy przebieg obejmuje testy @mailbox: cały plik albo filtr z „mailbox”
+// (E2E_SPEC_FILTER z workflow; lokalnie bez niej — zawsze).
+const specFilter = process.env.E2E_SPEC_FILTER;
+const mailNeeded = specFilter == null || !/(?:^|\s)(?:-g|--grep)[\s=]/.test(specFilter) || /mailbox/i.test(specFilter);
+test.use({ needs: mailNeeded
+  ? { standard: 2, noaccount: 1, resources: ["heavy", "mail"] }
+  : { standard: 2, resources: ["heavy"] } });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE === "1") {
     await serveBranchCode(context, { pages: ["control", "settings", "games/settings", "go"] });
@@ -88,9 +97,9 @@ function progressRe(x) {
   return x instanceof RegExp ? x : new RegExp(String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 }
 
-test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetlacz", async ({ page, browser }, testInfo) => {
+test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetlacz", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(120000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-TV-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const context = await controlContext(browser, { locale: "pl-PL", userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
   try {
@@ -132,9 +141,9 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
   } finally { await context.close(); await deleteGame(page, game.id); }
 });
 
-test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowanie", async ({ page, browser }, testInfo) => {
+test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowanie", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(180000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-CUSTOM-OUTRO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -202,7 +211,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await deleteGame(page, game.id);
   }
 });
-const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, getTestAccountPool, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
@@ -461,9 +470,9 @@ async function expectMappingFieldFits(page, testInfo, label) {
   await page.screenshot({ path: testInfo.outputPath(`shot-mapping-${label}.png`) });
 }
 
-test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", async ({ page, browser }, testInfo) => {
+test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(120000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-INTRO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [], errors = [];
   let releasePress;
@@ -690,7 +699,10 @@ async function readControl2Sessions(page, gameId) {
       .select("id,status,ended_at,rounds_played,rounds_score_a,rounds_score_b,team_a_score,team_b_score,final_points,stats_detail")
       .eq("game_id", gid).eq("control_version", 2).order("started_at");
     if (error) throw new Error("read production statistics: " + error.message);
-    return data;
+    // Zdarzenia sesji są w osobnej tabeli (migracja 468), nie w stats_detail.
+    const events = await window.__sbClient.rpc("control2_owner_session_events", { p_game_id: gid });
+    if (events.error) throw new Error("read session events: " + events.error.message);
+    return data.map(row => ({ ...row, stats_detail: { ...row.stats_detail, events: events.data?.[row.id] || [] } }));
   }, gameId);
 }
 
@@ -933,9 +945,9 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
 
 // ===== 1. Parowanie urządzeń =====
 
-test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser }, testInfo) => {
+test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser, accounts, loginAs }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`, {
     settings: { game: { hasFinal: true, roundsQuestionsMode: "pick", finalQuestionsMode: "random", advanced: { finalTarget: 250 } } },
     roundQuestions: Array.from({ length: 6 }, (_, i) => ({
@@ -1069,11 +1081,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const acceptedControlVisibility = [];
     page.on("response", async (response) => {
-      if (!response.url().includes("/rpc/control2_control_visibility_event") || !response.ok()) return;
-      const payload = response.request().postDataJSON()?.p_event;
+      if (!response.url().includes("/rpc/control2_control_log") || !response.ok()) return;
+      const events = response.request().postDataJSON()?.p_events || [];
       const result = await response.json().catch(() => null);
-      if (result === true && payload?.reason === "visibilitychange") {
-        acceptedControlVisibility.push(payload.visibility);
+      if (!(Number(result) > 0)) return;
+      for (const event of events) {
+        if (event?.event_type === "page_state" && event.reason === "visibilitychange") acceptedControlVisibility.push(event.visibility);
       }
     });
     for (const visibility of ["hidden", "visible"]) {
@@ -1113,11 +1126,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const devices = [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]];
     for (const [deviceType, devicePage] of devices) {
       devicePage.on("response", async (response) => {
-        if (!response.url().includes("/rpc/control2_device_transport_event") || !response.ok()) return;
-        const payload = response.request().postDataJSON()?.p_event;
+        if (!response.url().includes("/rpc/control2_device_log") || !response.ok()) return;
+        const events = response.request().postDataJSON()?.p_events || [];
         const result = await response.json().catch(() => null);
-        if (result === true && payload?.event_type === "page_state") {
-          acceptedPageStates.push({ deviceType, visibility: payload.visibility, reason: payload.reason });
+        if (!(Number(result) > 0)) return;
+        for (const event of events) {
+          if (event?.event_type === "page_state") acceptedPageStates.push({ deviceType, visibility: event.visibility, reason: event.reason });
         }
       });
       for (const visibility of ["hidden", "visible"]) {
@@ -1135,6 +1149,17 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       }
     }
 
+    // Diagnostyka sesji (468–469): opis urządzenia od Control i każdego
+    // urządzenia, zdarzenia sprzed startu gry dołączone do sesji, powrót
+    // karty z czasem w tle.
+    const sessions = await readControl2Sessions(page, game.id);
+    const sessionEvents = sessions.at(-1)?.stats_detail.events || [];
+    const sources = new Set(sessionEvents.filter(event => event.category === "device_info").map(event => event.source));
+    expect([...sources].sort()).toEqual(["buzzer", "control", "display", "host"]);
+    expect(sessionEvents.some(event => event.prestart === true)).toBe(true);
+    expect(sessionEvents.some(event => event.category === "display_state" && event.source === "host"
+      && event.metrics?.visibility === "visible" && typeof event.metrics?.hidden_duration_ms === "number")).toBe(true);
+
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
@@ -1142,9 +1167,9 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   }
 });
 
-test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser }, testInfo) => {
+test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(120000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, {
     roundQuestions: Array.from({ length: 6 }, (_, i) => ({
       ord: i + 1, text: `Lease pytanie ${i + 1}`,
@@ -1238,8 +1263,8 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
 
 // ===== 2. Pełna runda + wznowienie po przeładowaniu =====
 
-test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
@@ -1370,9 +1395,9 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
 // ===== 3. Mechanika rund: reset pojedynku, pass, kradzież win/loss, R8 =====
 
-test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser }, testInfo) => {
+test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(300000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-ROUNDMECH-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
@@ -1501,9 +1526,9 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
 // ===== 4. Finał: próg -> finał, wczesne zakończenie w połowie mapowania =====
 
-test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach, pomija gracza 2", async ({ page, browser }, testInfo) => {
+test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach, pomija gracza 2", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(300000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 50,
@@ -1620,8 +1645,8 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
 // ===== 5. physicalBuzzer + noHostTablet =====
 
-test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór drużyny", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór drużyny", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-PHYSBUZZ-${Date.now()}`, {
     roundQuestions: [TWO_QUESTIONS[0]],
   });
@@ -1723,8 +1748,8 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
 
 // ===== 6. "Zacznij od nowa" =====
 
-test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-RESTART-${Date.now()}`);
   const contexts = [];
   try {
@@ -1780,8 +1805,8 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
 
 // ===== 7. Druga karta Control blokowana (resource-lock) =====
 
-test("control2: druga karta Control na tę samą grę jest zablokowana (resource-lock, kontekst \"control\")", async ({ page, context }, testInfo) => {
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+test("control2: druga karta Control na tę samą grę jest zablokowana (resource-lock, kontekst \"control\")", async ({ page, context, accounts, loginAs }, testInfo) => {
+  await loginAs(page, context, accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-LOCK-${Date.now()}`);
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -1839,8 +1864,8 @@ async function expectQrBoth(displayPage) {
   await expect(displayPage.locator("#qrBuzzerCard")).not.toHaveClass(/hidden/);
 }
 
-test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osobna i oba naraz", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osobna i oba naraz", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-DUALQR-${Date.now()}`);
   const contexts = [];
   try {
@@ -1902,7 +1927,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // zasłonięcie jest jednokierunkowe (silnik sam nigdy nie odsłania, tylko
 // lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
-test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
+test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser, accounts, loginAs }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   // 180s okazało się za ciasne w CI: 15s realnego oczekiwania na timer
   // gracza 1 + 10 pytań mapowania, z których KAŻDE ma teraz poprawnie
@@ -1912,7 +1937,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   // diagnostyką [e2e-diag-state]: każdy commit/lock w całym przebiegu
   // rozstrzygał się w <1s). Zapas, nie naprawa buga.
   test.setTimeout(240_000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 15,
@@ -2237,7 +2262,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 
 // ===== 10. Mnożnik rundy =====
 
-test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }, testInfo) => {
+test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser, accounts, loginAs }, testInfo) => {
   // Ten sam wzorzec i przyczyna co przy teście "pełny finał" (patrz
   // komentarz przy jego test.setTimeout(240_000) wyżej w tym pliku) --
   // zdiagnozowane 1:1 z logów [e2e-diag-state] CI (run #299/#300, oba
@@ -2250,7 +2275,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
   // za ciasny margines na tę długość testu, nie błąd aplikacji. Zapas,
   // nie naprawa buga.
   test.setTimeout(240_000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const roundQ = (n) => ({ ord: n, text: `Pytanie rundowe ${n}`, answers: [{ ord: 1, text: "Jedyna odpowiedź", fixed_points: 40 }] });
   // 5. pytanie (nieużywane) tylko po to, żeby pula NIE wyczerpała się po
   // rundzie 4 -- z dokładnie 4 pytaniami R9's gałąź ③ ("pula wyczerpana")
@@ -2312,8 +2337,8 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
 
 // ===== 11. Wyścig dwóch przycisków Buzzera =====
 
-test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden zaakceptowany", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden zaakceptowany", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-BUZZRACE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -2370,8 +2395,8 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
 
 // ===== 11b. Ponów naciśnięcie (RETRY_DUEL) =====
 
-test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer otwiera się na nowo", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer otwiera się na nowo", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-RETRYDUEL-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -2424,8 +2449,8 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
 
 // ===== 12. Wyciszenie dźwięku =====
 
-test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarzenia audio", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarzenia audio", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-MUTE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -2490,9 +2515,9 @@ test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarz
 // w teście "wyciszenie dźwięku" wyżej, tylko że tym razem wycisza
 // urządzenie, które FAKTYCZNIE gra (Display).
 
-test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }, testInfo) => {
+test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser, accounts, loginAs }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -2677,8 +2702,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 // polsku, więc nawet gdyby cała reszta ścieżki działała, treść by się nie
 // zmieniła.
 
-test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy faktycznie się tłumaczy", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy faktycznie się tłumaczy", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-LANG-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -2732,8 +2757,8 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
 // podglądu (control/display/js/main.js's instrumentSceneApi(), dodane też do trybu
 // podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
-test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-GSPREVIEW-${Date.now()}`);
   const contexts = [];
   try {
@@ -2829,12 +2854,11 @@ async function releaseLogoLock(page, logoId, tabId) {
   }, { logoId, tabId }).catch(() => {});
 }
 
-test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context, browser }, testInfo) => {
-  // Ten test sam zakłada wyłączny lock logo. Bierzemy drugie konto z jawnej
-  // puli, by wcześniejszy Control z tego samego worker-a nie zostawił jeszcze
+test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context, browser, accounts, loginAs }, testInfo) => {
+  // Ten test sam zakłada wyłączny lock logo. Bierzemy drugie wypożyczone
+  // konto, by wcześniejszy Control z tego samego worker-a nie zostawił jeszcze
   // wspólnego locka `logos` podczas zamykania karty i nie zablokował fixture.
-  const lockTestPool = getTestAccountPool();
-  await loginAsTestUser(page, context, { username: lockTestPool[1] || lockTestPool[0] });
+  await loginAs(page, context, accounts.standard[1]);
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
   const { logoId, gameId, hostKey, displayKey } = await page.evaluate(async ({ name, payload }) => {
@@ -2918,10 +2942,10 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 // dowodzi, że link z maila faktycznie łączy -- NOWY, niezalogowany kontekst
 // przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
 // żadnego logowania (token jednego odbiorcy w URL-u wystarcza).
-test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
+test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(300000); // setup + pełny interwał mail-worker + otwarcie linku
-  const recipient = testAccountUsername(7);
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  const recipient = accounts.standard[1].email;
+  await loginAs(page, context, accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
   let recipientSetupPage = null, recipientUid = null, recipientOriginalFlag = null;
@@ -2954,7 +2978,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const recipientSetupContext = await controlContext(browser);
     contexts.push(recipientSetupContext);
     recipientSetupPage = await recipientSetupContext.newPage();
-    await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
+    await loginAs(recipientSetupPage, recipientSetupContext, accounts.standard[1]);
     const identity = await recipientSetupPage.evaluate(async () => {
       const client = window.__sbClient, user = (await client.auth.getUser()).data.user;
       const { data, error } = await client.from("user_flags").select("email_notifications").eq("user_id", user.id).maybeSingle();
@@ -3003,14 +3027,15 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "720px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
     await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
-    await page.locator("#shareDeviceEmail").fill(recipient.split("@")[0]);
+    await page.locator("#shareDeviceEmail").fill(accounts.standard[1].username);
     await page.locator("#btnShareDeviceAdd").click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
     // username || current.recipient_email` -- skoro test7 ma ustawiony
     // username, modal pokazuje SAMĄ nazwę użytkownika ("test7"), nie pełny
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
-    const recipientUsername = recipient.split("@")[0];
+    // E25: nazwa konta (e2e.standardNN) różni się od części adresu (e2e+standardNN).
+    const recipientUsername = accounts.standard[1].username;
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
 
     // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
@@ -3111,13 +3136,15 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 // urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
 // poza ponownym wejściem na URL urządzenia.
 
-// Modal kropki statusu (control/js/app.js's showQrModal) koduje URL
-// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
-// Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
+// Modal kropki statusu (control/js/app.js's showQrModal): Wyświetlacz ma
+// bezpośredni link "Otwórz" (#qrModalOpen); Prowadzący i Przycisk — kod QR
+// rysowany lokalnie (SVG, bez adresu w atrybucie) i sześciocyfrowy kod,
+// który operator wpisuje na urządzeniu w /connect/.
 async function readDeviceUrlFromModal(control, kind) {
   if (kind === "display") return control.locator("#qrModalOpen").getAttribute("href");
-  const src = await control.locator("#qrModalImg").getAttribute("src");
-  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+  await expect(control.locator("#qrModalImg")).toHaveAttribute("src", /^data:image\/svg/);
+  const code = String(await control.locator("#qrModalCodeVal").textContent() || "").replace(/\D/g, "");
+  return code.length === 6 ? `code:${code}` : "";
 }
 
 // Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
@@ -3137,14 +3164,22 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
   instrumentAnon(p, kind);
-  await p.goto(url, { waitUntil: "domcontentloaded" });
+  if (url.startsWith("code:")) {
+    await p.goto("/connect/", { waitUntil: "domcontentloaded" });
+    await p.locator("#connectCodeInput").fill(url.slice(5));
+    await p.locator("#btnConnectCode").click();
+    await p.locator(".uni-foot .btn.gold").click();
+    await expect.poll(() => new URL(p.url()).pathname, { timeout: 15000 }).toBe(`/control/${kind}/`);
+  } else {
+    await p.goto(url, { waitUntil: "domcontentloaded" });
+  }
   await control.locator("#qrModalClose").click();
   await expect(control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}`)).toHaveClass(/\bok\b/, { timeout: 15000 });
   return p;
 }
 
-test("control2: awaria odczytu stanu urządzeń wstrzymuje akcje bez fałszywego rozłączenia", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: awaria odczytu stanu urządzeń wstrzymuje akcje bez fałszywego rozłączenia", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-PRESENCE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   try {
@@ -3203,8 +3238,8 @@ test("control2: awaria odczytu stanu urządzeń wstrzymuje akcje bez fałszywego
   }
 });
 
-test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponowne podłączenie przez modal", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponowne podłączenie przez modal", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   await deleteStaleReconnectTestGames(page);
   const game = await makeGame(page, `E2E-CONTROL2-RECONNECT-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -3367,8 +3402,8 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 // minął", analogicznie do reload-owego wznowienia z testu #2, tylko z
 // deterministycznym wyłączeniem żywego zegarka na czas przerwy.
 
-test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczenia X), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczenia X), gdy Control zamknięte podczas odliczania", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-TIMER3REVERT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -3439,8 +3474,8 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
   }
 });
 
-test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-FINALTIMERREVERT-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 50,
@@ -3525,8 +3560,8 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
 // odpowiedzi odsłonięte PRZED "Zakończ rundę" (END_ROUND z
 // r.revealed.length>=r.answers.length finalizuje rundę OD RAZU, bez
 // pośredniego kroku R8 "Przejdź do...").
-test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz pokazuje WIN, nie logo", async ({ page, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz pokazuje WIN, nie logo", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-ENDPOINTS-${Date.now()}`, {
     roundQuestions: [TWO_QUESTIONS[0]],
     settings: { game: { hasFinal: false, advanced: { endScreenMode: "points" } } },
@@ -3594,9 +3629,9 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
   }
 });
 
-test("control2: opóźnione potwierdzenie Display blokuje następną akcję i buzzer po końcu dźwięku", async ({ page, browser }, testInfo) => {
+test("control2: opóźnione potwierdzenie Display blokuje następną akcję i buzzer po końcu dźwięku", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(150000);
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-ACK-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   let release;
@@ -3655,23 +3690,21 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
   }
 });
 
-test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser }) => {
+test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(300_000);
-  const accountPool = getTestAccountPool();
-  test.skip(accountPool.length < 2, "Scenariusz znajomego wymaga dwóch różnych kont testowych.");
-  const email = "test14@familiada.online";
+  const email = accounts.noaccount[0].email;
   const rpc = (target, name, args = {}) => target.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
     if (error) throw new Error(`${name}: ${error.message}`);
     return data;
   }, { name, args });
-  await loginAsTestUser(page, context, { username: accountPool[0] });
+  await loginAs(page, context, accounts.standard[0]);
   const recipientContext = await controlContext(browser);
   const recipient = await recipientContext.newPage();
   const anonymous = await controlContext(browser, { hasTouch: true }); // Prowadzący wymaga dotyku
   let game = null, peer = null, oldFlag = null;
   try {
-    await loginAsTestUser(recipient, recipientContext, { username: accountPool[1] });
+    await loginAs(recipient, recipientContext, accounts.standard[1]);
     peer = await recipient.evaluate(async () => {
       const user = (await window.__sbClient.auth.getUser()).data.user;
       const {data,error}=await window.__sbClient.from("profiles").select("username").eq("id",user.id).single();
@@ -3681,8 +3714,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
       const { data, error } = await window.__sbClient.from("user_flags").select("email_notifications").eq("user_id",id).single();
       if (error) throw error; return data.email_notifications;
     }, peer.id);
-    const flag = await rpc(page,"e2e_subscriber_mail_flag",{p_reset:false});
-    expect(flag).toMatchObject({ok:true,suppressed_at:null});
+    // Stan wypisania adresu czyści wypożyczenie (migracja 460).
     expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
@@ -3769,7 +3801,6 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_id===peer.id)).toBe(false);
   } finally {
     try {
-      expect((await rpc(page,"e2e_subscriber_mail_flag",{p_reset:true})).ok).toBe(true);
       await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email});
       if(peer){
         await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id});
@@ -3786,10 +3817,10 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
 });
 
 
-test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zapis statystyk", async ({ page }, testInfo) => {
+test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zapis statystyk", async ({ page, accounts, loginAs }, testInfo) => {
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1400, height: 900 });
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS, settings:{teams:{teamA:"",teamB:""}} });
   const assertFits = async () => {
     await expect.poll(() => page.evaluate(() => {
@@ -3915,10 +3946,10 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
   } finally { await deleteGame(page, game.id); }
 });
 
-test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({ page }, testInfo) => {
+test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({ page, accounts, loginAs }, testInfo) => {
   test.setTimeout(90000);
   await page.setViewportSize({ width: 1400, height: 960 });
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-E19N-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   try {
     await page.goto(`/control/?id=${encodeURIComponent(game.id)}&lang=pl`);
@@ -3958,10 +3989,10 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
   }
 });
 
-test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy dźwięku z Wyświetlacza", async ({ page, browser }, testInfo) => {
+test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy dźwięku z Wyświetlacza", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1366, height: 768 });
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAs(page, page.context(), accounts.standard[0]);
   const game = await makeGame(page, `E2E-CONTROL2-RETURN-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {

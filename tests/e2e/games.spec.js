@@ -18,24 +18,24 @@
 // więc workflow odpalony na branchu testuje poprawki przed wdrożeniem.
 
 const fs = require("fs");
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const GAMES_URL = "https://www.familiada.online/games";
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
+test.use({ needs: { standard: 1 } });
 
-test.beforeEach(async ({ context }) => {
+test.beforeEach(async ({ context, accounts, loginAs }) => {
   await serveBranchCode(context, { pages: ["games"] });
 });
 
-async function newUserContext(browser, username, contextOptions = {}) {
+async function newUserContext(browser, loginAs, identity, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
   await serveBranchCode(ctx, { pages: ["games"] });
   const pg = await ctx.newPage();
-  await loginAsTestUser(pg, ctx, { username });
+  await loginAs(pg, ctx, identity);
   return { ctx, page: pg };
 }
 
@@ -97,8 +97,8 @@ function tileByName(page, name) {
 
 /* ================= 1) Kafelki: zaznaczanie, tworzenie, zmiana nazwy, usuwanie ================= */
 
-test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.setViewportSize({ width: 390, height: 844 });
   await openGames(page);
   const open = page.locator(".list-search-open");
@@ -124,8 +124,8 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   await expect(page.locator(".list-empty").first()).toBeHidden();
 });
 
-test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zapamiętują wybór", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zapamiętują wybór", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await page.setViewportSize({ width: 390, height: 844 });
   await openGames(page);
 
@@ -160,8 +160,8 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await expect(sort.locator('.ui-select-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
 });
 
-test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzie", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzie", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   let releaseRequest;
   const requestGate = new Promise((resolve) => { releaseRequest = resolve; });
   await page.route("**/rest/v1/games*", async (route) => {
@@ -177,8 +177,8 @@ test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzi
   await expect(page.locator("#hint")).not.toBeEmpty();
 });
 
-test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await serveBranchCode(context, { pages: ["logos"] });
   await page.route("**/rest/v1/user_logos*", (route) => route.fulfill({
     status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test logo load failure" }),
@@ -190,8 +190,8 @@ test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", 
   await expect(page.locator(".app-toast-text")).not.toBeEmpty();
 });
 
-test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context }) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
   await serveBranchCode(context, { pages: ["bases"] });
   await page.route("**/rest/v1/question_bases*", (route) => route.fulfill({
     status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test base load failure" }),
@@ -203,9 +203,9 @@ test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", a
 
 test.describe("games: audyt -- kafelki", () => {
 
-  test("E20: telefon landscape zachowuje wyszukiwanie i zaznaczoną grę po obrocie", async ({ browser }, testInfo) => {
+  test("E20: telefon landscape zachowuje wyszukiwanie i zaznaczoną grę po obrocie", async ({ browser, accounts, loginAs }, testInfo) => {
     test.setTimeout(90_000);
-    const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+    const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0], {
       viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
     });
     const name = `E20-GM-ROTATE-${Date.now()}`;
@@ -254,9 +254,9 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
-  test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
+  test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+    const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0], {
       viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
     });
     const name = `E2E-GM-TAP-${Date.now()}`;
@@ -288,9 +288,9 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
-  test("nowa gra przez '+', pusta nazwa daje komunikat, dwuklik zmienia nazwę, kosz usuwa", async ({ page, context }) => {
+  test("nowa gra przez '+', pusta nazwa daje komunikat, dwuklik zmienia nazwę, kosz usuwa", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-NEW-${Date.now()}`;
     const renamed = `${name}-R`;
     try {
@@ -327,9 +327,9 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
-  test("filtr stanu obok wyszukiwania ukrywa kafle o innym stanie, stan w adresie", async ({ page, context }) => {
+  test("filtr stanu obok wyszukiwania ukrywa kafle o innym stanie, stan w adresie", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
     const ready = `E2E-GM-FLT-R-${stamp}`;
     const draft = `E2E-GM-FLT-D-${stamp}`;
@@ -365,9 +365,9 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
-  test("usunięcie gry skasowanej w międzyczasie nie pokazuje 'gra jest w użyciu'", async ({ page, context }) => {
+  test("usunięcie gry skasowanej w międzyczasie nie pokazuje 'gra jest w użyciu'", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-GONE-${Date.now()}`;
     try {
       await seedPreparedGame(page, name, { questions: 1 });
@@ -386,9 +386,9 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
-  test("zmiana języka tłumaczy kafelki od razu", async ({ page, context }) => {
+  test("zmiana języka tłumaczy kafelki od razu", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-LANG-${Date.now()}`;
     try {
       await seedPreparedGame(page, name, { questions: 1 });
@@ -411,9 +411,9 @@ test.describe("games: audyt -- kafelki", () => {
 
 test.describe("games: audyt -- eksport / import pliku", () => {
 
-  test("eksport: nazwa pliku z polskimi literami; import odtwarza grę", async ({ page, context }, testInfo) => {
+  test("eksport: nazwa pliku z polskimi literami; import odtwarza grę", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-Łódź-${Date.now()}`;
     try {
       await seedPreparedGame(page, name);
@@ -452,8 +452,8 @@ test.describe("games: audyt -- eksport / import pliku", () => {
     }
   });
 
-  test("E20 eksport gry: błąd pozostaje widoczny, eksport można ponowić", async ({ page, context }) => {
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  test("E20 eksport gry: błąd pozostaje widoczny, eksport można ponowić", async ({ page, context, accounts, loginAs }) => {
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-EXPORT-RETRY-${Date.now()}`;
     const gameId = await seedPreparedGame(page, name, { questions: 1 });
     try {
@@ -484,9 +484,9 @@ test.describe("games: audyt -- eksport / import pliku", () => {
     }
   });
 
-  test("import: 7 odpowiedzi -> 6, zepsuty plik -> nasz komunikat", async ({ page, context }, testInfo) => {
+  test("import: 7 odpowiedzi -> 6, zepsuty plik -> nasz komunikat", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-IMP7-${Date.now()}`;
     const file = testInfo.outputPath("seven.famgame");
     fs.writeFileSync(file, JSON.stringify({
@@ -517,9 +517,9 @@ test.describe("games: audyt -- eksport / import pliku", () => {
     }
   });
 
-  test("nieudany import nie zostawia niepełnej gry", async ({ page, context }, testInfo) => {
+  test("nieudany import nie zostawia niepełnej gry", async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-IMPFAIL-${Date.now()}`;
     const file = testInfo.outputPath("fail.famgame");
     fs.writeFileSync(file, JSON.stringify({
@@ -553,9 +553,9 @@ test.describe("games: audyt -- eksport / import pliku", () => {
 
 test.describe("games: audyt -- eksport do bazy", () => {
 
-  test("eksport tworzy folder z pytaniami; błąd w połowie nie zostawia folderu", async ({ page, context }) => {
+  test("eksport tworzy folder z pytaniami; błąd w połowie nie zostawia folderu", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
     const gameName = `E2E-GM-TOBASE-${stamp}`;
     const baseName = `E2E-GM-BASE-${stamp}`;
@@ -617,9 +617,9 @@ test.describe("games: audyt -- eksport do bazy", () => {
     }
   });
 
-  test("otwarta ankieta: eksport do bazy najpierw ostrzega o bieżących głosach (jak eksport do pliku)", async ({ page, context }) => {
+  test("otwarta ankieta: eksport do bazy najpierw ostrzega o bieżących głosach (jak eksport do pliku)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-TOBASE-OPEN-${Date.now()}`;
     try {
       await page.evaluate(async (name) => {
@@ -653,9 +653,9 @@ test.describe("games: audyt -- eksport do bazy", () => {
 
 test.describe("games: audyt -- Społeczność", () => {
 
-  test("podgląd pokazuje pytania, kosz pyta o potwierdzenie", async ({ page, context }) => {
+  test("podgląd pokazuje pytania, kosz pyta o potwierdzenie", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
 
     const mg = await page.evaluate(async () => {
       const { data, error } = await window.__sbClient.rpc("market_browse", { p_lang: "pl", p_search: "", p_limit: 50, p_offset: 0 });
@@ -712,9 +712,9 @@ test.describe("games: audyt -- Społeczność", () => {
 // wdrożeniem pomijany przez --grep-invert "migracja 272".
 test.describe("games: audyt -- migracja 272", () => {
 
-  test("edycja zamkniętej ankiety resetuje ją jednym RPC (status, daty, punkty)", async ({ page, context }) => {
+  test("edycja zamkniętej ankiety resetuje ją jednym RPC (status, daty, punkty)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-RESET-${Date.now()}`;
     try {
       const gameId = await page.evaluate(async (name) => {
@@ -765,9 +765,9 @@ test.describe("games: audyt -- migracja 272", () => {
 
 test.describe("games: audyt -- game_validate", () => {
 
-  test("kody game_validate dla typowych stanów gry", async ({ page, context }) => {
+  test("kody game_validate dla typowych stanów gry", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
     const names = [`E2E-GM-GV1-${stamp}`, `E2E-GM-GV2-${stamp}`, `E2E-GM-GV3-${stamp}`];
     try {
@@ -807,9 +807,9 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 
-  test("szkic ankiety spełniający warunki ma stan „do uruchomienia” (także w filtrze)", async ({ page, context }) => {
+  test("szkic ankiety spełniający warunki ma stan „do uruchomienia” (także w filtrze)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
     const ready = `E2E-GM-TOOPEN-${stamp}`;
     const short = `E2E-GM-TOOPEN9-${stamp}`;
@@ -839,9 +839,9 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 
-  test("wyłączony 'Graj' podpowiada powód z bazy, w wybranym języku", async ({ page, context }) => {
+  test("wyłączony 'Graj' podpowiada powód z bazy, w wybranym języku", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-GVUI-${Date.now()}`;
     try {
       await seedPreparedGame(page, name, { questions: 9 });
@@ -865,9 +865,9 @@ test.describe("games: audyt -- game_validate", () => {
 
 test.describe("games: audyt -- Warstwa 2 reguł gry", () => {
 
-  test("treść gry z otwartą ankietą i zamknięcie bez głosów są odrzucane przez bazę", async ({ page, context }) => {
+  test("treść gry z otwartą ankietą i zamknięcie bez głosów są odrzucane przez bazę", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-W2-${Date.now()}`;
     try {
       const res = await page.evaluate(async (name) => {
@@ -913,9 +913,9 @@ test.describe("games: audyt -- Warstwa 2 reguł gry", () => {
 
 test.describe("games: audyt -- rules_state", () => {
 
-  test("kafelek pokazuje, czego brakuje; stan w tabeli nadąża za zmianami treści", async ({ page, context }) => {
+  test("kafelek pokazuje, czego brakuje; stan w tabeli nadąża za zmianami treści", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
     const bad = `E2E-GM-RS-BAD-${stamp}`;
     const good = `E2E-GM-RS-OK-${stamp}`;
@@ -967,9 +967,9 @@ test.describe("games: audyt -- rules_state", () => {
 
 test.describe("games: podgląd -- przełącznik Gra · Ankieta", () => {
 
-  test("gra ankietowa: szkic bez wyników, otwarta ankieta pokazuje pytania; gra preparowana bez przełącznika", async ({ page, context }) => {
+  test("gra ankietowa: szkic bez wyników, otwarta ankieta pokazuje pytania; gra preparowana bez przełącznika", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-POLLPREV-${Date.now()}`;
     const prepared = `E2E-GM-POLLPREV-P-${Date.now()}`;
     try {

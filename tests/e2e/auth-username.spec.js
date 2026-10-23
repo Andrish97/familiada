@@ -1,11 +1,12 @@
 // P2 (audyt E24, B7): logowanie i reset hasła nazwą użytkownika przez Worker
 // (/_api/auth/*) -- przeglądarka nigdy nie dostaje adresu e-mail konta.
 // Kod strony logowania z brancha (serveBranchCode), Worker i baza produkcyjne.
-const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser, withE2EBypass, instrumentPage } = require("./helpers/login");
+// Konto disposable (reset hasła wysyła mail na adres konta -- plan E25 §1).
+const { test, expect } = require("./helpers/e2e-test");
+const { withE2EBypass, instrumentPage } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
-test.use({ serviceWorkers: "block" });
+test.use({ serviceWorkers: "block", needs: { disposable: 1, resources: ["mail"] } });
 const LOGIN_URL = "https://www.familiada.online/login";
 
 async function openLogin(browser) {
@@ -36,9 +37,10 @@ async function submitAndReadError(page, login, password) {
   return (await page.locator("#err").textContent()).trim();
 }
 
-test("P2 B7: logowanie i reset hasła nazwą użytkownika bez ujawniania adresu e-mail", async ({ page, context, browser }) => {
+test("P2 B7: logowanie i reset hasła nazwą użytkownika bez ujawniania adresu e-mail", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(180000);
-  await loginAsPooledTestUser(page, context, 0);
+  const [account] = accounts.disposable;
+  await loginAs(page, context, account);
   const own = await page.evaluate(async () => {
     const client = window.__sbClient;
     const user = (await client.auth.getUser()).data.user;
@@ -47,6 +49,7 @@ test("P2 B7: logowanie i reset hasła nazwą użytkownika bez ujawniania adresu 
     return { id: user.id, email: user.email, username: data.username };
   });
   expect(own.username).toBeTruthy();
+  expect(own.username).toBe(account.username);
   expect(own.username).not.toContain("@");
 
   const login = await openLogin(browser);

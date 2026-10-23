@@ -1,17 +1,25 @@
 const { expectMailDocument } = require("./helpers/mail-document");
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { resetMailProviderLimits, extractHttpLinks } = require("./helpers/mailbox");
 test.use({ serviceWorkers: "block" });
+// E25: zapraszający (accounts.standard[0]) i zapraszany z pocztą
+// (accounts.standard[1]) wypożyczani na worker, adres bez konta z
+// accounts.noaccount (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 2, noaccount: 1, resources: ["mail"] } });
 test.describe.configure({ mode: "serial" });
-async function user(browser, number) {
+async function user(browser, loginAs, identity) {
   const context = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["friends", "subscribers", "go", "games"] });
   const page = await context.newPage();
-  await loginAsTestUser(page, context, { username: testAccountUsername(number) });
+  await loginAs(page, context, identity);
   const id = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-  return { context, page, id };
+  return { context, page, id, identity };
+}
+// Wiersz kontaktu pokazuje nazwę albo adres: oba zawierają człon roli z numerem
+// (e2e.<rola><NN> / e2e+<rola><NN>@…).
+function tag(identity) {
+  return new RegExp(identity.name.replace(/^e2e\./, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 }
 async function cleanup(page, id) {
   await page.evaluate(async id => {
@@ -27,20 +35,20 @@ async function invite(page, handle) {
   await page.locator("#inviteInput").fill(handle);
   await page.locator("#btnInvite").click();
 }
-test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", async ({ browser }, testInfo) => {
+test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", async ({ browser, accounts, loginAs, mailbox }, testInfo) => {
   test.setTimeout(240000);
-  const owner = await user(browser, 7);
-  const recipient = await user(browser, 8);
+  const owner = await user(browser, loginAs, accounts.standard[0]);
+  const recipient = await user(browser, loginAs, accounts.standard[1]);
   try {
     await cleanup(owner.page, recipient.id);
-    await clearMailbox(testAccountUsername(8));
+    await mailbox.clear(recipient.identity);
     await resetMailProviderLimits(owner.page);
     const after = new Date(Date.now() - 2000).toISOString();
     await open(owner.page);
     await expect(owner.page.locator("#inviteForm")).toBeVisible();
     await expect(owner.page.locator(".games-bottom")).toHaveCount(0);
-    await invite(owner.page, testAccountUsername(8));
-    const outgoing = owner.page.locator('.rowsSection--outgoing .shareRow').filter({ hasText: /test8/i });
+    await invite(owner.page, recipient.identity.email);
+    const outgoing = owner.page.locator('.rowsSection--outgoing .shareRow').filter({ hasText: tag(recipient.identity) });
     await expect(outgoing).toHaveCount(1);
     await expect(outgoing.locator("[data-act=resend]")).toHaveAttribute("aria-label", "Wyślij ponownie");
     await expect(outgoing.locator("[data-act=resend]")).toBeDisabled();
@@ -50,19 +58,19 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     const blocked = await owner.page.evaluate(async id => (await window.__sbClient.rpc("friends_resend", { p_id: id })).data, await outgoing.getAttribute("data-id"));
     expect(blocked.err).toBe("cooldown");
     await owner.page.screenshot({ path: testInfo.outputPath("shot-friends-layout.png"), fullPage: true });
-    const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    const email = await mailbox.waitFor(recipient.identity, { after, subject: /znajom|friends/i, timeout: 150000 });
     expectMailDocument(email, { accountFooter: true });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     await recipient.page.goto(link);
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
-    const incoming = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: /test7/i });
+    const incoming = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: tag(owner.identity) });
     await expect(incoming).toHaveCount(1);
     await incoming.locator('[data-act="accept"]').click();
-    const active = recipient.page.locator('.rowsSection--friend .shareRow').filter({ hasText: /test7/i });
+    const active = recipient.page.locator('.rowsSection--friend .shareRow').filter({ hasText: tag(owner.identity) });
     await expect(active).toHaveCount(1);
     await owner.page.reload();
-    await expect(owner.page.locator('.rowsSection--friend .shareRow').filter({ hasText: /test8/i })).toHaveCount(1);
+    await expect(owner.page.locator('.rowsSection--friend .shareRow').filter({ hasText: tag(recipient.identity) })).toHaveCount(1);
     await active.locator('[data-act="remove"]').click();
     await expect(recipient.page.locator(".uni-modal")).toContainText("Przyjęte bazy i urządzenia zostają");
     await recipient.page.locator(".uni-foot .btn.gold").click();
@@ -73,11 +81,11 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     await recipient.context.close();
   }
 });
-test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({ browser }) => {
-  const owner = await user(browser, 7);
+test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({ browser, accounts, loginAs }) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   try {
     await open(owner.page);
-    await invite(owner.page, "test14@familiada.online");
+    await invite(owner.page, accounts.noaccount[0].email);
     await expect(owner.page.locator(".uni-modal")).toContainText("możesz dodać tę osobę jako subskrybenta");
     const link = owner.page.getByRole("link", { name: "Przejdź", exact: true });
     await expect(link).toHaveAttribute("href", /\/subscribers\//);
@@ -88,8 +96,8 @@ test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({
   } finally { await owner.context.close(); }
 });
 
-test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowienie", async ({ browser }, testInfo) => {
-  const owner = await user(browser, 7);
+test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowienie", async ({ browser, accounts, loginAs }, testInfo) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   try {
     await owner.context.route('**/rest/v1/rpc/contacts_list', async route => {
       const kind = route.request().postDataJSON().p_kind;
@@ -127,8 +135,8 @@ test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowieni
 });
 
 // Aktywna lista określa stan; nie powtarzamy etykiety zaakceptowania.
-test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser }) => {
-  const owner = await user(browser, 7);
+test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser, accounts, loginAs }) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   try {
     await owner.context.route("**/rest/v1/rpc/contacts_list", route => {
       const kind = route.request().postDataJSON().p_kind;
@@ -156,8 +164,8 @@ test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser 
 });
 
 // Widok decyzji i dostępność akcji: kontrolowane dane, bez tworzenia maili.
-test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ browser }, testInfo) => {
-  const owner = await user(browser, 7);
+test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ browser, accounts, loginAs }, testInfo) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   try {
     let incomingStatus = "declined";
     await owner.context.route("**/rest/v1/rpc/friends_undo_reject", route => { incomingStatus = "pending"; return route.fulfill({ json: { ok: true } }); });
@@ -197,25 +205,25 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
   } finally { await owner.context.close(); }
 });
 
-test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie", async ({ browser }) => {
+test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie", async ({ browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(240000);
-  const owner = await user(browser, 7);
-  const recipient = await user(browser, 8);
+  const owner = await user(browser, loginAs, accounts.standard[0]);
+  const recipient = await user(browser, loginAs, accounts.standard[1]);
   try {
     await cleanup(owner.page, recipient.id);
-    await clearMailbox(testAccountUsername(8));
+    await mailbox.clear(recipient.identity);
     await resetMailProviderLimits(owner.page);
     const after = new Date(Date.now()-2000).toISOString();
     await open(owner.page);
-    await invite(owner.page, testAccountUsername(8));
-    const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    await invite(owner.page, recipient.identity.email);
+    const email = await mailbox.waitFor(recipient.identity, { after, subject: /znajom|friends/i, timeout: 150000 });
     expectMailDocument(email, { accountFooter: true });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     const token = new URL(link).searchParams.get("f");
     await recipient.page.goto(link);
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
-    const incoming = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: /test7/i });
+    const incoming = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: tag(owner.identity) });
     const id = await incoming.getAttribute("data-id");
     await incoming.locator('[data-act="reject"]').click();
     await recipient.page.locator(".uni-foot .btn.gold").click();
@@ -244,7 +252,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(recipient.page.locator("#title")).toHaveText("Jesteście znajomymi");
     // Drugi przypadek bez wysyłki: fixture RPC dla sprawdzenia cofania odmowy.
     await cleanup(owner.page, recipient.id);
-    const next = await owner.page.evaluate(async handle => (await window.__sbClient.rpc("friends_invite", { p_handle: handle })).data, testAccountUsername(8));
+    const next = await owner.page.evaluate(async handle => (await window.__sbClient.rpc("friends_invite", { p_handle: handle })).data, recipient.identity.email);
     expect(next.ok).toBe(true);
     await recipient.page.evaluate(async id => {
       const { data, error } = await window.__sbClient.rpc("friends_reject", { p_id: id });
@@ -263,10 +271,10 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
   }
 });
 
-test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważnienie", async ({ browser }, testInfo) => {
+test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważnienie", async ({ browser, accounts, loginAs, mailbox }, testInfo) => {
   test.setTimeout(240000);
-  const owner = await user(browser, 7);
-  const recipient = await user(browser, 8);
+  const owner = await user(browser, loginAs, accounts.standard[0]);
+  const recipient = await user(browser, loginAs, accounts.standard[1]);
   const rpc = async (page, name, args) => page.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
     if (error) throw error;
@@ -278,19 +286,19 @@ test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważn
       [owner.id, (await rpc(owner.page, "badges_get", {})).friends_pending],
       [recipient.id, (await rpc(recipient.page, "badges_get", {})).friends_pending],
     ]);
-    await clearMailbox(testAccountUsername(8));
+    await mailbox.clear(recipient.identity);
     await resetMailProviderLimits(owner.page);
     const after = new Date(Date.now() - 2000).toISOString();
     await open(owner.page);
-    await invite(owner.page, testAccountUsername(8));
-    const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    await invite(owner.page, recipient.identity.email);
+    const email = await mailbox.waitFor(recipient.identity, { after, subject: /znajom|friends/i, timeout: 150000 });
     expectMailDocument(email, { accountFooter: true });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     const token = new URL(link).searchParams.get("f");
     await recipient.page.goto(link);
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
-    const proposal = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: /test7/i });
+    const proposal = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: tag(owner.identity) });
     const id = await proposal.getAttribute("data-id");
     await proposal.locator('[data-act="accept"]').click();
     for (const [actor, peer, number] of [[owner, recipient, 7], [recipient, owner, 8]]) {
@@ -337,7 +345,7 @@ test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważn
     expect((await rpc(owner.page, "friends_cancel", { p_id: id })).ok).toBe(true);
     expect((await rpc(recipient.page, "friends_undo_reject", { p_id: id })).ok).toBe(false);
     expect((await rpc(owner.page, "friends_token_info", { p_token: token })).ok).toBe(false);
-    for (const [actor, handle] of [[owner, testAccountUsername(8)], [recipient, testAccountUsername(7)]]) {
+    for (const [actor, handle] of [[owner, recipient.identity.email], [recipient, owner.identity.email]]) {
       expect(await rpc(actor.page, "friends_invite", { p_handle: handle })).toMatchObject({ ok: false, reason: "after_reject" });
     }
   } finally {
@@ -347,8 +355,8 @@ test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważn
   }
 });
 
-test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }) => {
-  const owner = await user(browser, 7);
+test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, accounts, loginAs }) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   try {
     let empty = false;
     await owner.context.route("**/rest/v1/rpc/contacts_list", route => route.fulfill({ json: empty ? [] : [
@@ -419,8 +427,8 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
   } finally { await owner.context.close(); }
 });
 
-test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser }, testInfo) => {
-  const owner = await user(browser, 7);
+test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser, accounts, loginAs }, testInfo) => {
+  const owner = await user(browser, loginAs, accounts.standard[0]);
   let allowRetry = false;
   await owner.context.route("**/rest/v1/rpc/contacts_list", async route => {
     if (!allowRetry) {

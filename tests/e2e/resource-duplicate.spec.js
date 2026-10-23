@@ -1,16 +1,15 @@
-const {test,expect}=require('@playwright/test');
-const {loginAsPooledTestUser}=require('./helpers/login');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
 const {generateE2EToken}=require('./helpers/e2e-token');
 const {randomUUID}=require('node:crypto');
 const pixel='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l38AAAAASUVORK5CYII=';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block',needs:{standard:1}});test.describe.configure({retries:0});
 let stage='login';
 test.afterEach(async({},info)=>{if(info.status!==info.expectedStatus)console.error('::error title=Resource duplicate stage::'+stage);});
-test('common duplicate API: three game types, complete base tree, all logo modes, replay, source removal and own files',async({page,context},info)=>{
+test('common duplicate API: three game types, complete base tree, all logo modes, replay, source removal and own files',async({page,context,accounts,loginAs},info)=>{
  test.setTimeout(240000);const resources=[],files=[];
  if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','bases','logos']});
- await loginAsPooledTestUser(page,context,info.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  const e2e=generateE2EToken(process.env.E2E_BYPASS_SECRET);
  const duplicate=async(kind,id,request)=>page.evaluate(async({kind,id,request,e2e})=>{
   const {data,error}=await window.__sbClient.auth.getSession();if(error)throw error;
