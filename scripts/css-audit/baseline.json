@@ -92,16 +92,16 @@
  },
  "web/control/css/control.css": {
   "important": 1,
-  "colorLiteral": 12,
+  "colorLiteral": 11,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 22
+  "sharedDuplicate": 20
  },
  "web/control/css/control2.css": {
   "important": 2,
   "colorLiteral": 27,
   "rootTokens": 1,
   "mediaWidth": 2,
-  "sharedDuplicate": 14,
+  "sharedDuplicate": 13,
   "unusedClass": 1
  },
  "web/control/css/test-mode.css": {

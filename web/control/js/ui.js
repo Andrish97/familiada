@@ -16,18 +16,18 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T14582";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T14582";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T14582";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T14582";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T14582";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T14582";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T15005";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T15005";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T15005";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15005";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T15005";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15005";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T14582";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T14582";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T14582";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T14582";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T14582";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T15005";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T15005";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T15005";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T15005";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15005";
 
 
 const $ = (id) => document.getElementById(id);
@@ -244,7 +244,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "device-row-line" }, codeLine),
         h("div", { class: "device-row-line" }, row2),
       ]));
-      return h("div", { class: "device-row", "data-device": kind }, children);
+      return h("div", { class: "card card--inset device-row", "data-device": kind }, children);
     };
 
     // Jeden ekran, wszystkie 3 urządzenia naraz — dokładnie jak dzisiejsze
@@ -270,7 +270,7 @@ export function createUI({ root, emit }) {
     hostRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.noHostTablet") }),
-        h("span", { class: "device-opt-check-hint", text: t("control.noHostTabletHint") }),
+        h("span", { class: "hint", text: t("control.noHostTabletHint") }),
       ])]),
     ]));
     if (state.settings.noHostTablet) hostRow.setAttribute("data-opted-out", "");
@@ -283,7 +283,7 @@ export function createUI({ root, emit }) {
     buzzerRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.physicalBuzzer") }),
-        h("span", { class: "device-opt-check-hint", text: t("control.physicalBuzzerHint") }),
+        h("span", { class: "hint", text: t("control.physicalBuzzerHint") }),
       ])]),
     ]));
     if (state.settings.physicalBuzzer) buzzerRow.setAttribute("data-opted-out", "");
@@ -303,7 +303,7 @@ export function createUI({ root, emit }) {
     on(testToggle, "change", (e) => emit("devices.testMode", e.currentTarget.checked));
     const testChoice = h("div", { class: "control-test-choice" }, [
       h("label", { class: "device-opt-check" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),
-      h("span", { class: "device-opt-check-hint", text: t(ctx.testModeAvailable === false ? "control.testModeTooSmall" : "control.testModeHint"), role: "status" }),
+      h("span", { class: "hint", text: t(ctx.testModeAvailable === false ? "control.testModeTooSmall" : "control.testModeHint"), role: "status" }),
     ]);
 
     // ===== Dźwięk — JEDNA sekcja, przełącznik dwustanowy w tym samym stylu
@@ -320,16 +320,16 @@ export function createUI({ root, emit }) {
     on(soundRadioDisplay, "change", () => emit("devices.soundSource", "display"));
 
     const soundRowChildren = [
-      h("div", { class: "device-opt-check-hint", text: t("control.soundSourceIntro") }),
+      h("div", { class: "hint", text: t("control.soundSourceIntro") }),
       h("div", { class: "toggle-group" }, [
         h("label", { class: "toggle-item" }, [soundRadioControl, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceControlOpt") })]),
         h("label", { class: "toggle-item" }, [soundRadioDisplay, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceDisplayOpt") })]),
       ]),
     ];
     if (soundOnDisplay) {
-      soundRowChildren.push(h("div", { class: "device-opt-check-hint", style: "margin-top:8px", text: t("control.soundSourceDisplayHint") }));
+      soundRowChildren.push(h("div", { class: "hint", text: t("control.soundSourceDisplayHint") }));
     }
-    rows.push(h("div", { class: "device-row" }, [
+    rows.push(h("div", { class: "card card--inset device-row" }, [
       h("div", { class: "device-row-1" }, [
         h("div", { class: "device-name", text: t("control.soundSection") }),
       ]),
@@ -338,7 +338,7 @@ export function createUI({ root, emit }) {
     // Tryb testowy jest kolejną kartą listy urządzeń: bezpośrednio po
     // czterech kartach (Wyświetlacz, Prowadzący, Przycisk, Dźwięk), przed
     // dolną podpowiedzią, separatorem i nawigacją kroku.
-    testChoice.classList.add("device-row");
+    testChoice.classList.add("card", "card--inset", "device-row");
     rows.push(testChoice);
 
     // Dokładnie jak dzisiejsze btnDevicesNext (control/js/app.js's

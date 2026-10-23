@@ -134,10 +134,20 @@ function inspectLayout(opts) {
   // 4. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;
-    const lh = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.3;
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const lines = new Set([...range.getClientRects()].filter((r) => r.width > 1).map((r) => Math.round(r.top / (lh * 0.6))));
+    // Wiersze samego tekstu (bez plakietek z position:absolute i ikon).
+    const lh = parseFloat(getComputedStyle(el).fontSize) * 1.1;
+    const tops = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!n.textContent.trim() || !visible(n.parentElement) || getComputedStyle(n.parentElement).position === "absolute") continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) if (r.width > 1) tops.push(r.top);
+    }
+    tops.sort((x, y) => x - y);
+    const lines = new Set();
+    let last = -Infinity;
+    for (const t of tops) { if (t - last > lh * 0.6) lines.add(t); last = t; }
     if (lines.size > 1) add("zawiniete", el, `${lines.size} wiersze`);
   }
   for (const foot of root.querySelectorAll(".footer")) {
