@@ -58,11 +58,16 @@ async function runDrawRoundTrip(page, context, loginAs, identity, variant, testI
     await page.goto(`${ORIGIN}/logos/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
+    // Nazwa odblokowuje się przed editor.open() (fonty, scena Fabric) -- czekamy
+    // na gotowy edytor, inaczej scena jeszcze nie istnieje albo zostanie wyczyszczona.
+    await page.waitForSelector("main.logoWrap.skel-step-ready", { timeout: 20_000 });
     await page.evaluate(() => {
       const canvas = window.__drawFabric;
       const fabric = window.fabric;
       if (!canvas || !fabric) throw new Error("Edytor DRAW nie udostępnił sceny Fabric");
-      const width = canvas.getWidth(), height = canvas.getHeight();
+      // Współrzędne sceny to świat logo (clipPath edytora, 1040x440), nie
+      // piksele canvasu na ekranie -- edytor skaluje świat viewportTransformem.
+      const width = canvas.clipPath?.width || 1040, height = canvas.clipPath?.height || 440;
       canvas.discardActiveObject();
       const layers = [
         new fabric.Rect({ left: width * .10, top: height * .20, width: width * .60, height: height * .50, fill: "#fff", strokeWidth: 0 }),

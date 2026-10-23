@@ -137,7 +137,9 @@ test.describe("poll-qr.js audyt", () => {
       // Check the real generated QR, including its destination route.
       const expectedQr = await page.evaluate(async ({ gameId, shareKey }) => {
         const { default: QRCode } = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm");
-        const url = new URL("/polls/vote/points/", location.origin);
+        // Publiczny link anonimowy prowadzi przez /go/ (shared/js/core/poll-links.js).
+        const url = new URL("/go/", location.origin);
+        url.searchParams.set("p", "anon");
         url.searchParams.set("id", gameId);
         url.searchParams.set("key", shareKey);
         url.searchParams.set("lang", "pl");
