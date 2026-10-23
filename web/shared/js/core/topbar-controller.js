@@ -709,11 +709,10 @@ function initTopbarController() {
     }, 120);
   }, { passive: true });
 
-  // „Więcej” na każdej stronie (E23): strony bez własnego #navMore w HTML,
-  // z co najmniej dwoma przyciskami w sekcji 2, dostają je tutaj — przyciski
-  // zwijają się zamiast zawijać pasek (przy braku miejsca nawet na jeden:
-  // hamburger).
-  if (!hasOverflowNav && section2.querySelectorAll(':scope > .btn').length > 1) {
+  // „Więcej” na każdej stronie (E23, spójność): strony bez własnego #navMore
+  // w HTML dostają je tutaj — przyciski sekcji 2 zwijają się zamiast zawijać
+  // pasek; gdy nie mieści się nawet jeden (np. jedyny przycisk): hamburger.
+  if (!hasOverflowNav && section2.querySelector(':scope > .btn')) {
     const more = document.createElement('div');
     more.className = 'nav-more';
     more.id = 'navMore';

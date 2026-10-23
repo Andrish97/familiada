@@ -9,6 +9,14 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+- **Ujednolicać bez kompromisów (decyzja użytkownika 2026-10-23):** „musisz
+  konsekwentnie i bezlitośnie ujednolicać i poprawiać, nie miej kompromisów”.
+  Lokalne warianty komponentów, mechanizmów i wyglądu zastępować wspólnymi,
+  także gdy zmienia to wygląd strony; zostawiać tylko to, czego wspólny
+  komponent naprawdę nie może przejąć (uzasadnienie w Dzienniku).
+- **„Więcej” na każdej stronie (decyzja użytkownika 2026-10-23):** „na
+  większości stron nie jest potrzebne, ale lepiej żeby było dla spójności” —
+  kontroler topbara daje je każdej stronie z przyciskami w sekcji 2.
 - **Spójność ponad zgodność ze starymi zrzutami (decyzja użytkownika 2026-10-23):**
   „nie musisz dostosowywać każdej strony na 100%; jeśli coś jest lepsze
   i bardziej spójne, lepiej postawić na spójność niż zgodność ze starymi
@@ -250,3 +258,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | e2e brancha, krok 2 — martwy CSS | Przebieg 39955820500 (mobile-sheet-modals: okna panelu admina + friends: wypustki) 7/7 ✓ po poprawce blokady panelu admina (`.settings-locked` ukrywa tylko topbar, stopka zostaje). Martwy CSS (audyt `--unused`, każda klasa sprawdzona grepem; klasy składane `${}` i TinyMCE `tox-*` zostają): ~1620 linii z Control v1, ustawień gry, Eksploratora, Konta, Logo, Wskazówek, rynku, ankiety i panelu admina. Zrzuty przed/po: 53 pary identyczne. Zgłoszenie użytkownika: brak „Więcej” w topbarze ankiety → „Do poprawienia”. |
 | 2026-10-23 | „Więcej” we wspólnym topbarze | Zgłoszenie użytkownika (ankieta: przyciski zawijają się w dwie linie). `topbar-controller.js` dodaje „Więcej” stronom bez `#navMore` (≥ 2 przyciski w sekcji 2); `components.css`: tytuł strony zostaje w wymuszonym hamburgerze. Zrzuty przed/po: zmienione tylko sceny ankiety na tablecie (zamierzone), pozostałe 38 par identyczne. |
 | 2026-10-23 | Mechanizmy: podpowiedzi | `.app-tooltip` w silniku (animacja wejścia), `tooltips.js` nie doładowuje już CSS (jedno żądanie mniej na każdej stronie); `kora-builder` (bez silnika) z własną regułą. Nowa scena `tooltip`. |
+| 2026-10-23 | „Więcej” wszędzie | Decyzja użytkownika (spójność): „Więcej” także na stronach z jednym przyciskiem (Bazy, Logo, Control, Poczta, Wskazówki) — przy braku miejsca od razu hamburger. Zrzuty 48 par identyczne. Decyzja „ujednolicać bez kompromisów” w sekcji „Decyzje”. |
