@@ -175,7 +175,8 @@ export function validatePassword(pwd) {
   if (!/[0-9]/.test(v)) hints.push(t("auth.passwordHintNumber"));
   if (!/[^A-Za-z0-9]/.test(v)) hints.push(t("auth.passwordHintSpecial"));
   if (hints.length) {
-    throw new Error(t("auth.passwordRules", { hints: hints.join(", ") }));
+    // Pełna lista wymagań stoi już w podpowiedzi przy polu -- błąd mówi tylko, czego brakuje.
+    throw new Error(t("auth.passwordMissing", { hints: hints.join(", ") }));
   }
   return v;
 }

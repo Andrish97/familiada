@@ -163,14 +163,12 @@ export function initTextEditor(ctx) {
   function updateWarnings(c) {
     const parts = [];
     if (c.invalid.length) parts.push(t("logoEditor.text.invalidChars", { chars: c.invalid.join(" ") }));
-    if (!c.fit) parts.push(t("logoEditor.text.tooWide", { width: c.usedW }));
+    // Liczbę pokazuje pomiar pod polem -- ostrzeżenie mówi tylko, co zrobić.
+    if (!c.fit) parts.push(t("logoEditor.text.fixTooWide"));
     if (textWarn) textWarn.textContent = parts.join("\n");
     show(textWarn, parts.length > 0);
     if (textMeasure) {
-      textMeasure.textContent = t("logoEditor.text.widthStatus", {
-        width: c.usedW,
-        status: c.fit ? t("logoEditor.text.fits") : t("logoEditor.text.notFits"),
-      });
+      textMeasure.textContent = t("logoEditor.text.widthStatus", { width: c.usedW });
     }
   }
 

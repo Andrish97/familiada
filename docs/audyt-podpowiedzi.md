@@ -271,6 +271,40 @@ Strony:
 Zostawione: `editor.importModal.formatHint` ma „17 znaków” na sztywno —
 statyczne `data-i18n` nie przyjmuje parametrów, a stała się nie zmienia.
 
+## Dublowanie w jednym widoku (2026-10-23)
+
+Polecenie użytkownika: „Podpowiedź loga dubluje podpowiedź na kaflu. Sprawdź
+podobne przypadki dublowania w jednym widoku.”
+
+Metoda: skaner na scenach `scripts/screens` (PL, komputer i telefon, ~500
+scen bez Podręcznika — jego sceny zawieszają się w środowisku zrzutów):
+widoczne teksty bloków dzielone na zdania; zgłaszane zdania (≥ 15 znaków)
+powtórzone w jednym widoku i zdania prawie równe (wspólne słowa ≥ 70% albo
+zawieranie). W tym samym przejściu: surowe klucze tłumaczeń na stronach —
+**brak**. Większość trafień to dane (nazwy, daty, adresy), nawigacja
+(zakładka ↔ tytuł sekcji, spis treści Podręcznika) albo przycisk ↔ tytuł
+okna, które otwiera — zostają.
+
+Poprawione:
+| Widok | Było | Teraz |
+|---|---|---|
+| Logo — lista | opis rodzaju w pasku = tekst kafla „Nowe logo…” | pasek: tylko „Podwójne naciśnięcie kafla zmienia nazwę.” |
+| Edytor gry (preparowana) | dolna podpowiedź „Każda odpowiedź co najmniej 4 pkt, suma… 100” = lista warunków | bez dolnej podpowiedzi |
+| Edytor logo — obraz | „Obszar wyświetlacza” jako tytuł karty i podpis w ramce kadrowania (na obrazie) | tylko tytuł karty |
+| Edytor logo — napis | „Napis się nie mieści: szerokość 86/30” + „Szerokość: 86/30 (nie mieści się)” | ostrzeżenie „Napis się nie mieści — skróć go.”, pomiar „Szerokość: 86/30.” |
+| Logowanie (rejestracja), reset hasła, konto | podpowiedź „Hasło musi zawierać: …” i błąd z tym samym początkiem | błąd: „Brakuje: …” (tylko braki) |
+| Reset hasła | tytuł „Ustaw nowe hasło” + „Link OK. Ustaw nowe hasło.” | „Link jest ważny.” |
+| Control — start gry, rundy, finału, rundy 2 finału | duży tytuł = przycisk („Rozpocznij rundę” ×2) | bez tytułu; opis (co pokaże Wyświetlacz) jest główną treścią |
+| Control — koniec gry | tytuł „Koniec gry” = nagłówek kroku | bez tytułu |
+| Podłącz wyświetlacz (TV) — zły kod | błąd powtarzał etykietę „Wpisz kod … z panelu sterowania” | „Ten kod nie jest kodem wyświetlacza. Pasuje też kod ekranu QR z ankiety.” |
+| Wypisanie od właściciela (`/go`) | tytuł = przycisk „Wypisz się od X”, opis „Kliknij poniżej…” | „Ankiety od X”, skutek wypisania, przycisk „Wypisz się” |
+| Strona główna | tytuł sekcji ≈ h1; zdanie o widoku prowadzącego w sekcji i w kaflu 4 | „Jak działa Familiada Online”; zdanie tylko w sekcji |
+
+Zostawione celowo: „Zostaną same pytania” przy dwóch opcjach zmiany typu
+(każda opcja ma swój opis), „Gry społeczności” w górnym pasku i jako
+zakładka (dwa różne miejsca), dymek przycisku-ikony „Proponowane
+kategorie”.
+
 ## Decyzje
 
 - **2026-10-23 (użytkownik):** audyt tłumaczeń na nieużywane klucze

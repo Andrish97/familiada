@@ -154,8 +154,10 @@
     /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
        "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
     .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
-    .c2-intro-title { font-size:2em; font-weight:900; color:var(--gold); letter-spacing:.02em; }
     .c2-intro-hint { font-size:1.05em; line-height:1.5; opacity:.85; max-width:520px; }
+    /* Bez tytułu nad opisem (tytuł powtarzał przycisk / nagłówek kroku):
+       opis jest główną treścią ekranu przejściowego. */
+    .c2-intro > .c2-intro-hint:first-child { font-size:1.35em; opacity:1; max-width:620px; }
     .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15em; font-weight:800; margin-top:6px; }
     .c2-intro-score-sep { opacity:.5; font-weight:400; }
     .c2-intro-btn { padding:14px 34px; font-size:1.1em; border-radius:16px; }

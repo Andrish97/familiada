@@ -990,7 +990,6 @@ export function createUI({ root, emit }) {
       gameplayShell({
         stepLabel: t("control.introStepTitle"),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsIntroBtn") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
         nav: [navButton(t("control.roundsIntroBtn"), {
@@ -1011,7 +1010,6 @@ export function createUI({ root, emit }) {
       gameplayShell({
         stepLabel: t("control.roundStepLabel", { round: r.roundNo }),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsStartTitle") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsStartHint") }),
           scoreRow,
         ].filter(Boolean))],
@@ -1274,7 +1272,6 @@ export function createUI({ root, emit }) {
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
       const introBody = [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: isFinal ? t("control.finalOutroHint") : endRevealHint(state, isFinal) }),
       ];
       // Suma finału jeszcze NIE jest wtopiona w rounds.totals na tym
@@ -1299,7 +1296,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.roundsGameEndTitle"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
       // Gra już zakończona: outro nie blokuje ani "Zacznij od nowa", ani
@@ -1332,7 +1328,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.stepFinal"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalStartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalStartHint") }),
       ])],
       nav: [navButton(t("control.finalStartBtn"), {
@@ -1883,7 +1878,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.finalP2StartStepLabel"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalP2StartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalP2StartHint") }),
         // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
         // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
