@@ -120,7 +120,7 @@ module.exports = [
       db.rpc.market_my_library = [{ market_game_id: id("8b00", 1), game_id: id("8000", 301), title: c.market[0][0], lang, archived: false }];
       db.rpc.market_game_detail = [{ id: id("8b00", 1), payload: { questions: c.questions.slice(0, 10).map(([text, answers], i) => ({ ord: i + 1, text, answers: answers.map(([t, pts], ai) => ({ ord: ai + 1, text: t, fixed_points: pts })) })) } }];
     },
-    steps: [click("#tabMarket", 600), click("#grid .card[data-market-id]"), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .bld-q-block").first().waitFor(); await view.waitForTimeout(300); }] },
+    steps: [click("#tabMarket", 600), click("#grid .card[data-market-id]"), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .q-preview-item").first().waitFor(); await view.waitForTimeout(300); }] },
   { id: "games-empty", category: CAT, title: "Moje gry — pusta biblioteka (tylko kafel „Nowa gra”)", path: "/games/", sources: GAMES, ready: "#grid .addCard",
     db: (db) => { db.tables.games = []; db.tables.questions = []; db.tables.answers = []; db.rpc.polls_vote_counts = []; } },
   { id: "games-received-copies", category: CAT, title: "Moje gry — otrzymane kopie jako kafle propozycji zaraz po kaflu „Nowa gra” (✓/✕ w rogu, „Propozycja” + „Od”), liczniki w linii na wypustkach", path: "/games/", sources: [...GAMES, "web/shared/js/core/resource-copy-inbox.js", "web/shared/js/core/proposed-tile.js"], ready: "#grid .card[data-proposed]",
@@ -215,7 +215,7 @@ module.exports = [
   { id: "games-export-votes", category: CAT, title: "Moje gry — Eksportuj otwartą ankietę: ostrzeżenie „Bez bieżących głosów”", path: "/games/?tab=poll_points", sources: [...GAMES, "web/shared/js/core/game-transfer-format.js"], ready: "#grid .card",
     steps: [select(IDS.poll), open("#btnExportBase", ".uni-modal")] },
   { id: "games-preview", category: CAT, title: "Moje gry — podgląd gry preparowanej", path: "/games/", sources: GAMES, ready: "#grid .card",
-    steps: [select(IDS.game), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .bld-q-block").first().waitFor(); await view.waitForTimeout(300); }] },
+    steps: [select(IDS.game), open("#btnPreview", "#previewOverlay"), async (view) => { await view.locator("#previewQuestions .q-preview-item").first().waitFor(); await view.waitForTimeout(300); }] },
   { id: "games-preview-poll", category: CAT, title: "Moje gry — podgląd ankiety: przełącznik Gra · Ankieta, wyniki głosowania", path: "/games/?tab=poll_points", sources: [...GAMES, "web/shared/js/core/poll-results.js"], ready: "#grid .card",
     steps: [select(IDS.poll), open("#btnPreview", "#previewOverlay"), click("#btnPreviewModePoll", 800)] },
   { id: "games-preview-poll-text", category: CAT, title: "Moje gry — podgląd ankiety tekstowej (same pytania)", path: "/games/?tab=poll_text", sources: GAMES, ready: "#grid .card",

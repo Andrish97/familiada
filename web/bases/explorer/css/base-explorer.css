@@ -1341,7 +1341,7 @@
   .question-modal,
   .export-modal {
     min-height: 0;
-    max-height: 92vh;
+    max-height: var(--modal-vh);
     display: flex;
     flex-direction: column;
     overflow: hidden;

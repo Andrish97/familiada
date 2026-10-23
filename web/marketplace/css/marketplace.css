@@ -292,7 +292,7 @@
     }
 
     .mkt-modal-detail {
-      width: 94vw;
+      width: var(--modal-vw);
     }
 
 

@@ -795,8 +795,9 @@
     opacity: .75;
   }
 
+  /* Okno mieści się w obszarze bez wycięć ekranu: --modal-vw/--modal-vh (tokens.css). */
   .modal {
-    width: min(860px, 94vw);
+    width: min(860px, var(--modal-vw));
     margin-inline: auto;
     border-radius: var(--r-lg);
     border: 1px solid var(--line);
@@ -804,14 +805,14 @@
     --under: var(--surface-modal);
     box-shadow: var(--shadow-modal);
     padding: 18px;
-    max-height: 92vh;
+    max-height: var(--modal-vh);
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
   /* Proste okna (nazwa, krótkie potwierdzenie) — węższe. */
   /* Szerokości okien (jedyne trzy): domyślna 860, --medium 720 (= okno uniwersalne), --narrow 560. */
-  .modal.modal--medium { width: min(720px, 94vw); }
-  .modal.modal--narrow { width: min(560px, 94vw); }
+  .modal.modal--medium { width: min(720px, var(--modal-vw)); }
+  .modal.modal--narrow { width: min(560px, var(--modal-vw)); }
 
   .mTitle {
     font-weight: 1000;
@@ -882,8 +883,8 @@
   /* Uniwersalne okno (modal.js): nagłówek, przewijana treść, stopka. */
   .uni-modal,
   .share-uni {
-    width: min(720px, 94vw);
-    max-height: 92vh;
+    width: min(720px, var(--modal-vw));
+    max-height: var(--modal-vh);
     display: flex;
     flex-direction: column;
     overflow: hidden;
