@@ -13,7 +13,11 @@ Bazę udostępnia jej właściciel; potrzebne jest do tego konto (→ 5.1).
 1. Na stronie *Bazy pytań* zaznacz swoją bazę i w dolnym pasku wybierz [Udostępnij].
 2. Wpisz adres e-mail lub nazwę użytkownika albo zaznacz osoby na liście „Znajomi”.
 3. Na dole okna wybierz poziom dostępu: „Może edytować” (domyślnie) albo „Tylko podgląd”,
-   i wybierz [Udostępnij]. Wszyscy odbiorcy z tego okna dostają ten sam poziom dostępu.
+   i wybierz [Udostępnij] — przy kilku odbiorcach przycisk pokazuje ich liczbę, np.
+   [Udostępnij (3)]. Wszyscy odbiorcy z tego okna dostają ten sam poziom dostępu.
+
+Po wysłaniu okno się zamyka. Jeśli zaproszenia nie da się wysłać (np. osoba nie jest już
+Twoim znajomym), okno zostaje otwarte i pokazuje komunikat.
 
 ![Udostępnij bazę](zrzut:bases-share-send)
 
@@ -56,11 +60,14 @@ jest właśnie edytowany w innej karcie lub przez innego użytkownika.” Poczek
 i spróbuj ponownie. Gdy ktoś ma bazę otwartą, właściciel nie zmieni jej nazwy ani jej nie usunie.
 
 **Zarządzanie dostępem (właściciel).** Okno [Udostępnienia] (przycisk w górnym pasku) pokazuje
-zaproszenia oczekujące, przyjęte i odrzucone. Możesz:
+zaproszenia oczekujące, przyjęte i odrzucone. Przy każdej osobie możesz:
 
-- zmienić poziom dostępu, także przed przyjęciem zaproszenia,
-- przypomnieć o oczekującym zaproszeniu,
-- odebrać dostęp albo anulować zaproszenie.
+- zmienić poziom dostępu przyciskiem „Może edytować” / „Tylko podgląd” — zmiana zapisuje się
+  od razu, także przed przyjęciem zaproszenia,
+- przypomnieć o oczekującym zaproszeniu — kolejne przypomnienie po odliczaniu przy przycisku,
+- odebrać dostęp albo anulować zaproszenie ikoną kosza.
+
+![Udostępnienia bazy — lista osób z uprawnieniem przy każdej](zrzut:bases-share-tools)
 
 Osoba, której odebrano dostęp, traci go od razu — jeśli ma bazę otwartą, zobaczy komunikat
 „Odebrano Ci dostęp”. Sama możesz też zrezygnować z udostępnionej bazy przyciskiem

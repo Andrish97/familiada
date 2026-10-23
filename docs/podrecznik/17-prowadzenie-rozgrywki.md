@@ -57,14 +57,17 @@ Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie al
 
 ![Poprzedni ekran Przycisku — urządzenie otwarto w innym miejscu](zrzut:device-lease-replaced@phone-landscape)
 
-[Kopiuj] kopiuje kod, [Udostępnienia] pokazuje, komu urządzenie jest udostępnione w tej sesji
-(z cofnięciem), a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
-nazwę użytkownika albo zaznacz znajomych. Odbiorca z kontem znajdzie urządzenie w
+[Kopiuj] kopiuje kod. [Udostępnienia] (obok kodu, z liczbą osób) pokazuje, komu urządzenie
+jest udostępnione w tej sesji — ikoną kosza cofniesz udostępnienie. [Udostępnij] (przy
+Wyświetlaczu obok [Otwórz], przy Prowadzącym i Przycisku pod kodami QR) wysyła urządzenie innej
+osobie — wpisz jej adres e-mail lub nazwę użytkownika albo zaznacz znajomych i wybierz
+[Udostępnij]; okno się zamknie. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
 e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
-![Udostępnianie urządzenia innej osobie](zrzut:play-control-share-device-list)
+![Udostępnienia urządzenia — komu jest udostępnione w tej sesji](zrzut:play-control-share-device-list)
+![Udostępnij urządzenie — adres lub znajomi](zrzut:control-share-send)
 
 **Bez części urządzeń:**
 

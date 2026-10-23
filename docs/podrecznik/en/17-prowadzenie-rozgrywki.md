@@ -57,14 +57,17 @@ one switches off.
 
 ![The previous buzzer screen — the device was opened elsewhere](zrzut:device-lease-replaced@phone-landscape)
 
-[Copy] copies the code, [Shares] shows who the device is shared with in this session
-(with revoking), and [Share] sends the device to another person — enter their email address or
-username, or select friends. A recipient with an account will find the device in
+[Copy] copies the code. [Shares] (next to the code, with the number of people) shows who the
+device is shared with in this session — revoke a share with the trash icon. [Share] (for the
+Display next to [Open], for the Host and the Buzzer below the QR codes) sends the device to another
+person — enter their email address or username, or select friends, and choose [Share]; the
+window closes. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
 email and on the *My notifications* page. In the shared list, a phone and a tablet
 show the Host and the Buzzer, and a computer shows the Display. Sharing devices requires an account.
 
-![Sharing a device with another person](zrzut:play-control-share-device-list)
+![Device shares — who it is shared with in this session](zrzut:play-control-share-device-list)
+![Share a device — address or friends](zrzut:control-share-send)
 
 **Without some of the devices:**
 
