@@ -476,54 +476,7 @@
       font-variant-numeric: tabular-nums
   }
 
-  .rng {
-      --track: linear-gradient(to right, #000, #fff);
-      appearance: none;
-      -webkit-appearance: none;
-      width: 100%;
-      height: 20px;
-      background: 0 0;
-      padding: 0;
-      margin: 0
-  }
-
-  .rng::-webkit-slider-runnable-track {
-      height: 6px;
-      border-radius: var(--r-pill);
-      background: var(--track);
-      box-shadow: 0 0 0 1px var(--w-14) inset
-  }
-
-  .rng::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: var(--r-pill);
-      background: #f5d26b;
-      margin-top: -5px;
-      box-shadow: 0 0 0 2px var(--k-40)
-  }
-
-  .rng::-moz-range-track {
-      height: 6px;
-      border-radius: var(--r-pill);
-      background: var(--track);
-      box-shadow: 0 0 0 1px var(--w-14) inset
-  }
-
-  .rng::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: var(--r-pill);
-      background: #f5d26b;
-      border: 0;
-      box-shadow: 0 0 0 2px var(--k-40)
-  }
-
-  .rng::-moz-range-progress {
-      background: 0 0
-  }
+  .rng { width: 100%; }
 
   .drop-pulse {
       animation: dropPulse 420ms ease-out;

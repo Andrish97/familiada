@@ -594,14 +594,9 @@
     overflow-wrap: anywhere;
     text-overflow: unset;
   }
-  .summarySoundVol {
-    flex-shrink: 0;
-    width: 90px;
-    accent-color: var(--gold, #f0b429);
-  }
-  .sound-volume-slider { width: 90px; accent-color: var(--accent); }
+  .summarySoundVol { flex-shrink: 0; width: 90px; }
+  .sound-volume-slider { width: 90px; }
   .summarySoundVol.sound-volume-slider { flex-shrink: 0; }
-  .sound-volume-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .summarySoundVolLabel {
     flex-shrink: 0;
     min-width: 36px;
