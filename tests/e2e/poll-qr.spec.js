@@ -7,7 +7,7 @@
 // - fullscreen
 //
 // Audyt: poll-qr.js — mała, przejrzysta strona. Główne błędy naprawione:
-// - timeout dla QRCode.toDataURL (8s)
+// - bardzo długi adres: obraz albo komunikat o błędzie (lokalny generator QR)
 // - anulowanie poprzedniego rendera przy nowym starcie
 // - czyszczenie interval przy unload
 // - sprawdzenie statusu gry w device mode
@@ -106,7 +106,7 @@ test.describe("poll-qr.js audyt", () => {
 
       // Sprawdzić, że src jest data URL (zawiera base64)
       const src = await qrImage.getAttribute("src");
-      expect(src).toMatch(/^data:image\/png;base64,/);
+      expect(src).toMatch(/^data:image\/svg\+xml/);
 
       await deleteGame(page, game.gameId);
     } finally {
@@ -133,17 +133,18 @@ test.describe("poll-qr.js audyt", () => {
       await expect(qrImage).toBeVisible({ timeout: 10000 });
 
       const src = await qrImage.getAttribute("src");
-      expect(src).toMatch(/^data:image\/png;base64,/);
+      expect(src).toMatch(/^data:image\/svg\+xml/);
       // Check the real generated QR, including its destination route.
       const expectedQr = await page.evaluate(async ({ gameId, shareKey }) => {
-        const { default: QRCode } = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm");
+        // Ten sam lokalny generator co strona (shared/js/core/qr-code.js).
+        const { qrDataUrl } = await import("/shared/js/core/qr-code.js");
         // Publiczny link anonimowy prowadzi przez /go/ (shared/js/core/poll-links.js).
         const url = new URL("/go/", location.origin);
         url.searchParams.set("p", "anon");
         url.searchParams.set("id", gameId);
         url.searchParams.set("key", shareKey);
         url.searchParams.set("lang", "pl");
-        return QRCode.toDataURL(url.toString(), { width: 840, margin: 1 });
+        return qrDataUrl(url.toString(), { margin: 1 });
       }, game);
       expect(src).toBe(expectedQr);
 
@@ -318,13 +319,13 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context, accounts, loginAs }, testInfo) => {
+  test("bardzo długi adres: kod QR albo komunikat o błędzie", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
       await loginAs(page, context, accounts.standard[0]);
 
 
-      // Podaj bardzo długi URL, żeby sprawdzić timeout
+      // Bardzo długi URL może przekroczyć pojemność kodu QR.
       const longUrl = "https://www.familiada.online/polls/vote/points/index.html?id=test-id-very-very-long-" + "x".repeat(2000);
 
       const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
@@ -332,11 +333,9 @@ test.describe("poll-qr.js audyt", () => {
 
       await page.goto(qrPageUrl.toString(), { waitUntil: "domcontentloaded" });
 
-      // Czekaj na komunikat o błędzie (powinno upłynąć 8 sekund timeout)
-      // Jeśli render się powiódł, będzie img; jeśli timeout, będzie tekst "qrFailed"
+      // Jeśli kod się zmieścił, będzie img; jeśli nie, tekst "qrFailed".
       const qrBox = page.locator(".qr-box");
 
-      // Czekaj maksymalnie 15 sekund (timeout + buffer)
       await expect(qrBox).not.toContainText("Ładowanie gry…", { timeout: 15000 });
 
       // Sprawdź czy jest img lub komunikat o błędzie

@@ -12,7 +12,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T02145";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T02145";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T02145";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T02145";
-import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T02145";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T02145";
 import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T02145";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T02145";
@@ -210,9 +210,10 @@ async function showVoteQrModal() {
   try {
     const wrap = document.createElement("div");
     wrap.className = "qrFrameSmall qrFrameBig";
-    const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, url, { width: 640, margin: 1 });
-    wrap.appendChild(canvas);
+    const img = document.createElement("img");
+    img.src = qrDataUrl(url, { margin: 1 });
+    img.alt = "";
+    wrap.appendChild(img);
     pollQrModalVote.appendChild(wrap);
   } catch (e) {
     console.warn("[polls] big QR failed:", e);
@@ -320,10 +321,11 @@ async function renderQr(url) {
     const wrap = document.createElement("div");
     wrap.className = "qrFrameSmall";
 
-    const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, url, { width: 320, margin: 1 });
-
-    wrap.appendChild(canvas);
+    // Kod QR rysowany lokalnie (SVG), jak w Control i na Wyświetlaczu.
+    const img = document.createElement("img");
+    img.src = qrDataUrl(url, { margin: 1 });
+    img.alt = "";
+    wrap.appendChild(img);
     qrBox.appendChild(wrap);
   } catch (e) {
     console.warn("[polls] QR failed:", e);

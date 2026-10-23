@@ -1,4 +1,5 @@
-import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+// Kod QR rysowany lokalnie (SVG), jak w Control i na Wyświetlaczu — bez zewnętrznej biblioteki z CDN.
+import { qrDataUrl } from "../../../../shared/js/core/qr-code.js?v=v2026-10-23T02145";
 import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-23T02145";
 import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T02145";
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T02145";
@@ -45,7 +46,6 @@ function withLangInUrl(u, lang){
 }
 
 const qr = document.getElementById("qr");
-let renderAbortController = null;
 
 // Stan końcowy ekranu: zamiast kodu QR komunikat (ankieta zamknięta / link
 // wygasł / brak ankiety). Po rotacji klucza ten sam klucz już nie wraca do
@@ -53,7 +53,6 @@ let renderAbortController = null;
 let ended = false;
 function showEnded(msgKey) {
   ended = true;
-  if (renderAbortController) renderAbortController.abort();
   if (pollLangInterval) clearInterval(pollLangInterval);
   document.querySelector(".qr-container")?.classList.add("is-ended");
   document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
@@ -83,30 +82,17 @@ async function render(u){
     return;
   }
 
-  // Anuluj poprzedni render, jeśli wciąż w toku
-  if (renderAbortController) renderAbortController.abort();
-  renderAbortController = new AbortController();
-  const signal = renderAbortController.signal;
-
   qr.innerHTML = "";
   if (ended) return;
   if(!u){ qr.textContent = t("pollQr.missingUrl"); return; }
 
   try{
-    const timeoutId = setTimeout(() => renderAbortController?.abort(), 8000);
-    const dataUrl = await QRCode.toDataURL(u, { width: 840, margin: 1 });
-    clearTimeout(timeoutId);
-
-    if (signal.aborted) return;
-
     const img = document.createElement("img");
-    img.src = dataUrl;
-    qr.innerHTML = "";
+    img.src = qrDataUrl(u, { margin: 1 });
     qr.appendChild(img);
   }catch(e){
-    if (signal.aborted) return;
     console.error("[poll-qr] QR error:", e);
-    qr.textContent = e.name === "AbortError" ? t("pollQr.qrFailed") : t("pollQr.qrFailed");
+    qr.textContent = t("pollQr.qrFailed");
   }
 }
 
