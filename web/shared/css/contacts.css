@@ -1,7 +1,5 @@
 /* Znajomi i Subskrybenci: dwie karty, wspólne sekcje i wiersze odbiorców. */
 @layer page {
-  .contacts-body{ height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-  .contacts-body > main.wrap{ width: 100%; box-sizing: border-box; padding: 18px var(--page-pad-right) 18px var(--page-pad-left); flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   .contacts-body .bar{ margin-bottom: 16px; }
   .contacts-body .title{ font-size: 18px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
   #contactsHost > .load-retry{ grid-column: 1 / -1; align-self: start; }
@@ -14,7 +12,6 @@
   .contacts-invite-icon{ flex: 0 0 18px; }
   .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
   @media (max-width: 720px){
-    .contacts-body > main.wrap{ padding: 15px; }
     .contacts-invite-row{ gap: 8px; }
   }
 
@@ -44,7 +41,6 @@
   .contacts-card .shareSectionTitle{ flex: 0 0 auto; }
   .contacts-card .shareList--scroll{ max-height: none; flex: 1 1 auto; min-height: 0; align-content: start; }
   .contacts-card .shareRow{ flex-shrink: 0; }
-  .contacts-body .footer{ flex: 0 0 auto; }
 
   .contacts-card .shareSection[hidden]{ display: none; }
 }

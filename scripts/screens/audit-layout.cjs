@@ -54,10 +54,15 @@ function inspectLayout(opts) {
   };
   const scrollable = (st) => /(auto|scroll)/.test(st.overflowY) || /(auto|scroll)/.test(st.overflowX);
 
+  // Nakładka blokująca (ekran „Obróć urządzenie”, brak dostępu, blokada zasobu):
+  // strona pod nią jest niedostępna z założenia — audyt sprawdza samą nakładkę.
+  const guard = [...document.querySelectorAll(".blocking-overlay")].find((el) => visible(el));
+  const root = guard || document.body;
+
   // 1. Dokument.
   const doc = document.scrollingElement || document.documentElement;
   if (doc.scrollWidth > W + 1) add("poziome-przewijanie", null, `${doc.scrollWidth}px > ${W}px`);
-  if (doc.scrollHeight > H + 1) {
+  if (doc.scrollHeight > H + 1 && !guard) {
     const st = getComputedStyle(document.body), hs = getComputedStyle(document.documentElement);
     const locked = /hidden|clip/.test(st.overflowY) || /hidden|clip/.test(hs.overflowY);
     if (locked) add("ucieta-strona", null, `treść ${doc.scrollHeight}px > ekran ${H}px przy zablokowanym przewijaniu`);
@@ -65,7 +70,7 @@ function inspectLayout(opts) {
   }
 
   // 2. Obcięcia i wielokropki.
-  const all = [...document.querySelectorAll("body *")].filter((el) => !el.closest("svg, canvas, video, iframe, [data-audit-skip]"));
+  const all = [...root.querySelectorAll("*")].filter((el) => !el.closest("svg, canvas, video, iframe, [data-audit-skip]"));
   for (const el of all) {
     if (/^(INPUT|TEXTAREA|SELECT|IMG|PICTURE|OPTION|SCRIPT|STYLE|TEMPLATE)$/.test(el.tagName)) continue;
     const st = getComputedStyle(el);
@@ -96,7 +101,7 @@ function inspectLayout(opts) {
   }
 
   // 3. Sterowanie poza ekranem / zasłonięte / w safe area.
-  const controls = [...document.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [tabindex]:not([tabindex='-1'])")]
+  const controls = [...root.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [tabindex]:not([tabindex='-1'])")]
     .filter((el) => !el.closest("svg, [data-audit-skip]") && visible(el));
   for (const el of controls) {
     const r = el.getBoundingClientRect();

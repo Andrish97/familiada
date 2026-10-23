@@ -2,7 +2,7 @@
 @layer page {
 
   /* Oddech między tytułem, kartą, sekcjami i wierszami. */
-  body.games-body > main.wrap > .bar{
+  body.page-fit > main.wrap > .bar{
     margin-bottom: 14px;
   }
   /* przewijana lista bez ramki, zaokrąglona jak wiersze (decyzja 2026-10-20) */

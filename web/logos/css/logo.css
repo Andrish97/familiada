@@ -143,14 +143,14 @@
 
   .editorShell{
     margin-top: 0;
-    height: calc(100vh - 74px - 24px); /* topbar + padding wrappera */
-    min-height: 0; /* kurczy się do miejsca nad stopką (podgląd tekstu wypychał stopkę za ekran) */
+    flex: 1 1 auto; /* wypełnia main .page-fit; kurczy się nad stopką */
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 22px;
   }
 
-  body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
+  body.page-fit.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
 
   /* karta edytora —
      .card.games-card (specificity 0,2,0) ma overflow:hidden, więc
@@ -715,14 +715,7 @@
      (spójnie jak games)
   ========================================================= */
 
-  /* main na stronach logo ma być flex-kolumną jak w stronie gier */
-  body.games-body.logo-body > main.logoWrap{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  /* main na stronach logo: flex-kolumna z .page-fit (silnik). */
 
   /* listShell też */
   #listShell{

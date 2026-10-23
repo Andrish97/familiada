@@ -1,19 +1,7 @@
 /* css/editor.css */
 @layer page {
-  body.editor-body {
-      min-height: 100dvh;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden
-  }
-
-  body.editor-body .wrap {
-      height: calc(100dvh - 72px);
-      padding-top: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column
-  }
+  /* Wysokość: .page-fit (silnik). */
+  body.editor-body .wrap { padding-top: 12px; }
 
   .rowTop {
       display: flex;
@@ -373,15 +361,6 @@
   }
 
   @media (max-width: 600px) and (orientation: portrait) {
-      body.editor-body {
-          overflow: hidden;
-      }
-
-      body.editor-body .wrap {
-          overflow: hidden;
-          height: calc(100dvh - 72px);
-      }
-
       body.editor-body .layout {
           min-height: 0;
           flex: 1;
@@ -410,9 +389,8 @@
       }
 
       body.editor-body .wrap {
-          height: auto;
-          min-height: calc(100dvh - 72px);
-          overflow: auto;
+          flex: 0 0 auto;
+          overflow: visible;
       }
 
       body.editor-body .layout {
