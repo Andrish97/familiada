@@ -117,6 +117,7 @@
   /* ── warstwy (wartości 1:1 z dotychczasowych; skala §3.2 później) ── */
   --z-local: 1;
   --z-topbar: 10;
+  --z-notice: 40;               /* pasek komunikatu nad stroną */
   --z-overlay: 50;
   --z-popover: 60;
   --z-float: 100;

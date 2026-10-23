@@ -826,7 +826,7 @@ async function renderSound() {
     const fileTagHtml = custom
       ? `<div class="sfx-file-tag">
            <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
-           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń" aria-label="Usuń">${icon("trash")}</button>
+           <button class="btn-plain sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń" aria-label="Usuń">${icon("trash")}</button>
          </div>`
       : "";
 

@@ -118,7 +118,7 @@ export function renderToolbar(state) {
         <div class="searchBox" id="searchBox">
           ${icon("search", { className: "searchBoxIco" })}
           <input id="searchText" class="searchText" type="search" autocomplete="off" />
-          <button id="searchSubmitBtn" class="searchClear" type="button" hidden>${icon("close")}</button>
+          <button id="searchSubmitBtn" class="btn-plain searchClear" type="button" hidden>${icon("close")}</button>
         </div>
         ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn icon left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
       </div>

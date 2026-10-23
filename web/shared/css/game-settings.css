@@ -247,20 +247,7 @@
   .sfx-file-input{
     display: none;
   }
-  .sfx-file-remove{
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: inherit;
-    opacity: .6;
-    font-size: .85rem;
-    padding: 0 2px;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-  .sfx-file-remove:hover{
-    opacity: 1;
-  }
+  .sfx-file-remove{ font-size: .85rem; padding: 0 2px; line-height: 1; }
   .sfx-add-btn{
     font-size: .8rem;
     padding: 4px 8px;

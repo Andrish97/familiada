@@ -34,15 +34,7 @@ function writeStorage(key, value) {
 function buildBanner(uid) {
   const bar = document.createElement("div");
   bar.id = "guestMigrateReminder";
-  bar.style.cssText = [
-    "position:sticky", "top:0", "z-index:40",
-    "display:flex", "align-items:center", "justify-content:center",
-    "gap:14px", "flex-wrap:wrap",
-    "padding:10px 16px",
-    "background:rgba(255,196,0,.14)",
-    "border-bottom:1px solid rgba(255,196,0,.35)",
-    "font-size:.85rem", "text-align:center",
-  ].join(";");
+  bar.className = "notice-bar";
 
   const text = document.createElement("span");
   text.textContent = t("guestReminder.text");
@@ -50,12 +42,11 @@ function buildBanner(uid) {
   const link = document.createElement("a");
   link.href = "/account/";
   link.textContent = t("guestReminder.link");
-  link.style.cssText = "font-weight:800;color:var(--gold,#ffd76a);text-decoration:underline;white-space:nowrap";
 
   const dismissBtn = document.createElement("button");
   dismissBtn.type = "button";
   dismissBtn.textContent = t("guestReminder.dismiss");
-  dismissBtn.style.cssText = "background:none;border:none;color:inherit;opacity:.75;text-decoration:underline;cursor:pointer;font-size:inherit;white-space:nowrap";
+  dismissBtn.className = "btn-plain";
   dismissBtn.addEventListener("click", () => {
     writeStorage(DISMISSED_PREFIX + uid, "1");
     bar.remove();
@@ -65,7 +56,7 @@ function buildBanner(uid) {
   closeBtn.type = "button";
   closeBtn.setAttribute("aria-label", t("guestReminder.close"));
   closeBtn.innerHTML = icon("close");
-  closeBtn.style.cssText = "background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:1rem;line-height:1;padding:0 2px";
+  closeBtn.className = "btn-plain";
   closeBtn.addEventListener("click", () => bar.remove()); // tylko na dziś — jutro wróci
 
   bar.append(text, link, dismissBtn, closeBtn);

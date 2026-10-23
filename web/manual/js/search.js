@@ -89,7 +89,7 @@ function snippet(text, words, width = 120) {
  */
 export function initManualSearch(host, getEntries, onPick) {
   host.innerHTML = `
-    <div class="searchBox searchBox--field">${icon("search")}<input class="searchText" type="search" enterkeyhint="search" autocomplete="off"><button class="searchClear" type="button" hidden>${icon("close")}</button></div>
+    <div class="searchBox searchBox--field">${icon("search")}<input class="searchText" type="search" enterkeyhint="search" autocomplete="off"><button class="btn-plain searchClear" type="button" hidden>${icon("close")}</button></div>
     <div class="m-search-results" role="listbox" hidden></div>`;
   const input = host.querySelector(".searchText");
   const clear = host.querySelector(".searchClear");

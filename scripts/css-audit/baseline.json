@@ -12,7 +12,7 @@
   "colorLiteral": 36,
   "mediaWidth": 1,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 9,
+  "sharedDuplicate": 8,
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
@@ -372,9 +372,6 @@
  "web/shared/js/core/guest-info-modal.js": {
   "inlineStyleJs": 4
  },
- "web/shared/js/core/guest-migrate-reminder.js": {
-  "inlineStyleJs": 4
- },
  "web/shared/js/core/guest-mode.js": {
   "inlineStyleJs": 1
  },
@@ -433,14 +430,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 229,
+  "sharedDuplicate": 230,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 265,
+  "sharedDuplicate": 266,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {

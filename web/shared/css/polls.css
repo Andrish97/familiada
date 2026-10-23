@@ -440,7 +440,7 @@
   }
   .resultQ .aTxtInp:hover{ border-color: var(--w-14); }
   .resultQ .aTxtInp:focus{ border-color: var(--g-60); background: var(--k-20); }
-  .resultQ .aRow.out{ opacity: .55; }
+  .resultQ .aRow.out{ color: var(--text-muted); } /* bez opacity (Android) */
   .resultQ .aRow.dragging{ opacity: .5; }
   .resultQ .aRow.drop-target{ border-color: var(--gold); background: var(--g-10); }
   .resultQ .aRow.merge-src{ border-color: var(--g-60); background: var(--g-10); }

@@ -137,7 +137,7 @@ export function attachListTools(heading, list, key) {
   inlineInput.autocomplete = "off";
   const inlineClear = document.createElement("button");
   inlineClear.type = "button";
-  inlineClear.className = "searchClear listToolsInlineClear";
+  inlineClear.className = "btn-plain searchClear";
   inlineClear.innerHTML = icon("close");
   inline.append(inlineInput, inlineClear);
   list.before(inline);

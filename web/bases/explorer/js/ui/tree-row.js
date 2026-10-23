@@ -12,7 +12,7 @@ export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&a
 /** Strzałka rozwijania (albo puste miejsce tej samej szerokości). */
 export function treeToggleHtml(id, { canToggle, isOpen }) {
   return canToggle
-    ? `<button type="button" class="tree-toggle" data-id="${esc(id)}" aria-label="${esc(t("baseExplorer.tree.toggle"))}">${icon(isOpen ? "caret-down" : "caret-right")}</button>`
+    ? `<button type="button" class="btn-plain tree-toggle" data-id="${esc(id)}" aria-label="${esc(t("baseExplorer.tree.toggle"))}">${icon(isOpen ? "caret-down" : "caret-right")}</button>`
     : `<span class="tree-toggle-space"></span>`;
 }
 

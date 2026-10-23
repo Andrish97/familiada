@@ -50,7 +50,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   box.innerHTML = icon("search");
   const clear = document.createElement("button");
   clear.type = "button";
-  clear.className = "searchClear";
+  clear.className = "btn-plain searchClear";
   clear.innerHTML = icon("close");
   clear.hidden = true;
   const input = document.createElement("input");
