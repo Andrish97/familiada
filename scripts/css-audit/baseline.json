@@ -82,17 +82,12 @@
   "styleBlock": 1
  },
  "web/control/css/control.css": {
-  "important": 1,
-  "colorLiteral": 10,
-  "zIndexLiteral": 1,
-  "sharedDuplicate": 18
- },
- "web/control/css/control2.css": {
-  "important": 2,
-  "colorLiteral": 27,
+  "important": 3,
+  "colorLiteral": 37,
   "rootTokens": 1,
   "mediaWidth": 2,
-  "sharedDuplicate": 12,
+  "zIndexLiteral": 1,
+  "sharedDuplicate": 8,
   "unusedClass": 1
  },
  "web/control/css/test-mode.css": {

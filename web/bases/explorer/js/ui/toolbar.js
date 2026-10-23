@@ -31,7 +31,7 @@ export function toolbarButtonsHtml() {
       return `<button class="${cls}" type="button" data-act="${esc(a.toolbar.act)}" data-action="${esc(a.id)}">${icon(a.icon)}</button>`;
     }).join("");
     // pierwszy separator oddziela hamburger, który jest tylko na telefonie
-    return `<div class="tbSep${i === 0 ? " mobile-only" : ""}" aria-hidden="true"></div>
+    return `<div class="tbSep${i === 0 ? " explorer-narrow-only" : ""}" aria-hidden="true"></div>
       <div class="tbGroup" role="group" data-group="${esc(group)}" aria-label="${esc(t(GROUP_LABEL[group]))}">${buttons}</div>`;
   }).join("");
 }

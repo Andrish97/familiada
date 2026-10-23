@@ -1124,12 +1124,12 @@
      MOBILE — drawer + responsive layout
      ========================================================= */
 
-  .mobile-only { display: none !important; }
+  .explorer-narrow-only { display: none !important; }
 
   @media (max-width: 980px) {
 
     /* Pokaż przycisk drawera w toolbarze */
-    .mobile-only { display: inline-flex !important; }
+    .explorer-narrow-only { display: inline-flex !important; }
 
     /* Topbar layout — dwie kolumny na mobile (obsługiwane przez topbar-mobile-menu.js) */
 
@@ -1629,7 +1629,7 @@
   .left-view-btn .badge:empty { display: none; }
   .left-view-tabs { gap: 6px; align-items: center; }
   @media (max-width: 980px) {
-    .desktop-only { display: none !important; }
+    .explorer-wide-only { display: none !important; }
     /* panel na telefonie: kryjące tło jak okna od dołu */
     .explorer-left { background: var(--surface-modal); }
   }
