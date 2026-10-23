@@ -1,16 +1,16 @@
 // web/go/js/go.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T21510";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T05195";
 guardViewportWidth({ minWidth: 0 });
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-22T21510";
-import { anonymousPollDestination, validAnonymousPollParams, isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T21510";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T21510";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-22T21510";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-22T21510";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-22T21510";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-22T21510";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-23T05195";
+import { anonymousPollDestination, validAnonymousPollParams, screenshotSnakeUrl } from "../../shared/js/core/poll-links.js?v=v2026-10-23T05195";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05195";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T05195";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05195";
 
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-22T21510";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-22T21510";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-23T05195";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05195";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
@@ -153,16 +153,6 @@ async function handleAnonymousPollGateway() {
     return;
   }
   setView({ head:t("pollGo.anonymousLinkTitle"), text:t("pollGo.anonymousLinkChecking") });
-  if (isScreenshotPollId(qs.get("id"))) {
-    // Ktoś zeskanował kod z kadru na stronie głównej -- niespodzianka.
-    const lang = ["pl","en","uk"].includes(qs.get("lang")) ? qs.get("lang") : null;
-    await Promise.race([logSnake("scan", { lang }), new Promise((resolve) => setTimeout(resolve, 1500))]);
-    const target = new URL("/snake/", location.origin);
-    target.searchParams.set("qr", qs.get("id"));
-    if (lang) target.searchParams.set("lang", lang);
-    location.replace(target.toString());
-    return;
-  }
   try {
     const {data,error}=await sb().rpc("poll_state", {p_game_id:qs.get("id"),p_key:qs.get("key")});
     if(error || !data?.ok) throw error || new Error("invalid poll state");
@@ -789,6 +779,14 @@ async function handleQrGateway() {
 async function init() {
   await i18nReady;
   clearActions(); showEmailInput(false);
+  // Kod QR z kadru (ankieta, urządzenie, QR na Wyświetlaczu) -- niespodzianka.
+  const snake = screenshotSnakeUrl(qs, location.origin, getUiLang());
+  if (snake) {
+    const lang = new URL(snake).searchParams.get("lang");
+    await Promise.race([logSnake("scan", { lang }), new Promise((resolve) => setTimeout(resolve, 1500))]);
+    location.replace(snake);
+    return;
+  }
   if (["invalid", "missing"].includes(parsedLink.kind)) {
     setView({ head: parsedLink.kind === "missing" ? MSG.missingLinkTitle() : MSG.invalidLinkTitle(), text: parsedLink.kind === "missing" ? MSG.missingLinkText() : MSG.invalidLinkText() }); return;
   }

@@ -1,15 +1,16 @@
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const L = require("./helpers/logo-editor");
 
 const ORIGIN = "https://www.familiada.online";
 test.use({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
+// E25: jedno wypożyczone konto (czyszczone przy wypożyczeniu).
+test.use({ needs: { standard: 1 } });
 
-test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", async ({ page, context }, testInfo) => {
+test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", async ({ page, context, accounts, loginAs }, testInfo) => {
   test.setTimeout(180_000);
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["logos"] });
-  await loginAsTestUser(page, context, { username: testAccountUsername(2) });
+  await loginAs(page, context, accounts.standard[0]);
   await L.openList(page, { origin: ORIGIN });
   const name = L.uniq("delete-selection");
   let id;

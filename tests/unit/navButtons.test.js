@@ -54,6 +54,20 @@ test("wymagania szerokości stron są jawne i odróżniają edytory od Control",
   }
 });
 
+test("progi wysokości: strony robocze 580 px (MIN_WORK_HEIGHT), proste i samodzielne bez progu", async () => {
+  const { MIN_WORK_HEIGHT } = await import("../../web/shared/js/core/device-guard.js");
+  const work = ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "gameSettings", "marketplace"];
+  for (const id of work) assert.equal(PAGES[id].minViewportHeight, MIN_WORK_HEIGHT, `${id}.minViewportHeight`);
+  // Control mierzy dopasowanie panelu sam (fits: szerokość i wysokość skali).
+  for (const id of ["home", "login", "account", "connectDevice", "manual", "privacy", "mailCenter", "control", "connectTv"]) {
+    assert.equal(PAGES[id].minViewportHeight, undefined, `${id} bez progu wysokości`);
+  }
+  for (const [id, page] of Object.entries(PAGES)) {
+    if (page.kind === "standalone") assert.equal(page.minViewportHeight, undefined, `${id} (standalone) bez progu wysokości`);
+    if (page.minViewportHeight !== undefined) assert.ok(Number.isFinite(page.minViewportHeight) && page.minViewportHeight > 0, `${id}.minViewportHeight`);
+  }
+});
+
 test("każdy cel przycisku istnieje w PAGES, a karta celu na jego liście tabs", () => {
   for (const [id, p] of withButtons) {
     for (const [bid, spec] of Object.entries(p.buttons)) {

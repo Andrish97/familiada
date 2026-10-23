@@ -3,8 +3,10 @@
 Zrzuty **prawdziwych stron** z `web/` na bogatych danych demo, w trzech
 językach, bez kont, bez bazy i bez ręcznego klikania. Kod: `scripts/screens/`.
 Zastąpił dawny panel zrzutów w panelu admina (usunięty 2026-10-20; zakładka
-„Zrzuty strony” w `/settings/` ma już tylko odnośniki: uruchomienie workflow,
-galeria, strona główna).
+„Zrzuty strony” z samymi odnośnikami usunięta 2026-10-22 — decyzja użytkownika).
+Uruchamianie: workflow „Zrzuty stron” w GitHub Actions; galeria: gałąź
+`screens-gallery`. Użytkownik demo jest jeden: `user` w `data/panel.cjs`
+(także zrzuty linków z e-maila w `scenes/people.cjs`).
 
 ## Zasada działania
 
@@ -28,7 +30,8 @@ node scripts/screens/run.cjs --list                # lista scen
 node scripts/screens/run.cjs --changed --dry       # tylko pokaż, które sceny by poszły
 ```
 
-Opcje: `--lang=pl|en|uk|all` (domyślnie `pl`), `--devices=desktop,phone,tablet,phone-landscape`
+Opcje: `--lang=pl|en|uk|all` (domyślnie `pl`), `--devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400`
+(niskie widoki guarda wysokości: tablet 1200×560 przy ekranie 1280×800, komputer 1400×550, dotykowy tablet 1400×550 dla Prowadzącego i Przycisku; `--viewport=1280x580` dodaje urządzenie `viewport` o dowolnym rozmiarze, `--force-devices` stosuje `--devices` także do scen z własną listą)
 (domyślnie `desktop,phone` = 1440×900 i 390×844), `--base=<ref>`, `--out=<katalog>`,
 `--verbose` (ostrzeżenia i błędy konsoli strony), `--strict` (kod ≠ 0 przy problemach).
 
@@ -51,12 +54,31 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
    **Na `main`** dodatkowo: zmienione kadry strony głównej są odświeżane
    (`publish-homepage.cjs`), zapisywane commitem `Refresh homepage screenshots`
    i workflow wywołuje wdrożenie Pages — strona główna i og:image same się
-   aktualizują.
+   aktualizują. Tak samo zrzuty Wskazówek (`web/manual/img`, commit
+   `Refresh help screenshots`).
 3. **Ręcznie z telefonu**: Actions → „Zrzuty stron” → Run workflow
    (`changed`, `all` albo lista scen).
 
-`--changed` wybiera sceny po prefiksach plików w `sources` sceny. Zmiana w
-`web/shared/`, `web/assets/`, danych demo albo atrapie oznacza wszystkie sceny.
+### Które sceny po zmianie (`changes.cjs`, decyzja użytkownika 2026-10-22)
+
+Wspólne dla `run.cjs --changed` (galeria, kadry strony głównej) i
+`publish-manual.cjs --list --base` (Wskazówki): przeliczane są tylko sceny,
+na których wygląd zmiana może wpłynąć.
+
+- Plik różniący się tylko znacznikami wersji (`?v=…`, meta `app-version`) — bez
+  wpływu; wyniki zrzutów (`web/assets/img/*/shots`, `og`, `web/manual/img`) też.
+- Wspólny kod (`web/shared/js`, `css`, `translation`) — sceny stron, które go
+  wczytują, także pośrednio (graf z importów, `<script>`, `<link>`, ścieżek
+  `.js/.css/.json` w kodzie). Np. `image-viewer.js` → Wskazówki i strona główna.
+- Zmiana pliku scen (`scenes.cjs`, `scenes/<obszar>.cjs`) — sceny z tego pliku.
+- Wszystkie sceny: dane demo (`data/`), atrapa (`fake-supabase.js`), `lib.cjs`,
+  fonty i dane wyświetlacza (`web/shared/fonts|data`), `web/assets/`.
+- Commit bez zmian w wyglądzie (wydajność, łącze, dokumentacja) — zero scen.
+
+Na `main` punkt odniesienia to ostatni commit, który zmienił dane zrzuty
+(`web/manual/img` albo kadry strony głównej) — przebiegi pominięte przez kolejkę
+(`concurrency` bez przerywania na `main`) nie gubią zmian. Test:
+`tests/unit/screensChanges.test.js`.
 
 ## Sceny (`scenes.cjs`)
 
@@ -137,6 +159,13 @@ Błąd, gdy coś jest ucięte, wychodzi poza kartę, strona się przewija albo m
 zadziałać zabezpieczenie `fit-text.js` (czcionka z okna za duża). Wypisuje
 czcionkę bazową dla każdego okna; zrzuty w `out/control-fit/`. Uruchamiać przy
 każdej zmianie wyglądu rozgrywki Control (decyzja: `docs/ujednolicenie-wygladu.md`).
+
+## Czcionka
+
+Strony używają czcionki systemowej (`system-ui`). W CI (`screens.yml`, krok
+„Czcionka systemowa (Inter)”) i w środowisku agentów to Inter — na gołym Ubuntu
+byłby DejaVu Sans i zrzuty różniłyby się od lokalnych. Lokalnie: `fc-match system-ui`
+powinno pokazać Inter.
 
 ## Adres stron na zrzutach
 

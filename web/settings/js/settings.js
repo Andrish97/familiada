@@ -14,17 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-22T21510";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-22T21510";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-22T21510";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-22T21510";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-22T21510";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T21510";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-22T21510";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T21510";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-22T21510";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-22T21510";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-22T21510";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T05195";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T05195";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05195";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T05195";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05195";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T05195";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T05195";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T05195";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T05195";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T05195";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -35,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-22T21510";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T05195";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-22T21510";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-22T21510";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-22T21510";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-22T21510"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T05195";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T05195";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T05195";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T05195"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-22T21510";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T05195";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -129,7 +130,6 @@ const els = {
   toolsDropdown: document.getElementById("toolsDropdown"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
-  btnTabScreenshots: document.getElementById("btnTabScreenshots"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   btnTabRatings: document.getElementById("btnTabRatings"),
   btnTabStats: document.getElementById("btnTabStats"),
@@ -146,7 +146,6 @@ const els = {
   reportsPanel: document.getElementById("reportsPanel"),
   marketingPanel: document.getElementById("marketingPanel"),
   marketingContactsPanel: document.getElementById("marketingContactsPanel"),
-  homepageScreenshotsPanel: document.getElementById("homepageScreenshotsPanel"),
   btnTabMarketing: document.getElementById("btnTabMarketing"),
   btnTabMarketingContacts: document.getElementById("btnTabMarketingContacts"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
@@ -1072,9 +1071,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-22T21510"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-22T21510"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-22T21510"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05195"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05195"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T05195"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5205,7 +5204,7 @@ function closeTools() {
 // Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
 const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
-  "reports", "marketing", "marketingContacts", "homepageScreenshots",
+  "reports", "marketing", "marketingContacts",
 ];
 const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
@@ -5229,7 +5228,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
-  const btnScreenshots = document.getElementById("btnTabScreenshots");
   const tools = document.getElementById("btnTools");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
@@ -5241,7 +5239,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
-  if (btnScreenshots) btnScreenshots.classList.toggle("active", tab === "homepageScreenshots");
   if (tools) tools.classList.toggle("active", tab === "tools");
 
   // Hide/show panels
@@ -5254,7 +5251,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
-  if (els.homepageScreenshotsPanel) els.homepageScreenshotsPanel.hidden = tab !== "homepageScreenshots";
 
   // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
@@ -5294,7 +5290,6 @@ function activateSettingsTabFromUrl() {
     reports: els.btnTabReports,
     marketing: els.btnTabMarketing,
     marketingContacts: els.btnTabMarketingContacts,
-    homepageScreenshots: els.btnTabScreenshots,
   };
   const button = buttons[tab];
   if (button) button.click();
@@ -5448,9 +5443,106 @@ function openSessionRunDetailsModal(r) {
     text: "",
     okText: "Wróć do tabeli",
     showCancel: false,
-    body: buildSessionRunDetails(r),
+    body: buildSessionRunView(r),
     onReady: ({ overlay }) => overlay?.classList.add("stats-session-details-overlay"),
   });
+}
+
+// Sugerowane problemy (session-diagnosis.js) nad przebiegiem rozgrywki.
+function buildSessionRunView(r) {
+  const view = document.createElement("div");
+  view.append(buildSessionSuggestions(r), buildSessionRunDetails(r));
+  return view;
+}
+
+function buildSessionSuggestions(r) {
+  const section = document.createElement("section");
+  section.className = "stats-session-suggestions";
+  const heading = document.createElement("strong");
+  heading.className = "stats-session-events-title";
+  heading.textContent = "Sugerowane problemy";
+  section.appendChild(heading);
+  if (!r.diag) {
+    const none = document.createElement("p");
+    none.className = "stats-session-suggestion-empty";
+    none.textContent = "Brak podsumowania diagnostyki dla tej sesji.";
+    section.appendChild(none);
+    return section;
+  }
+  const events = Array.isArray(r.stats_detail?.events) ? r.stats_detail.events : [];
+  const devices = Object.entries(deviceInfoBySource(events))
+    .map(([source, metrics]) => `${SOURCE_NAMES[source] || source}: ${describeDevice(metrics) || "—"}`);
+  if (devices.length) {
+    const line = document.createElement("p");
+    line.className = "stats-session-suggestion-devices";
+    line.textContent = `Urządzenia — ${devices.join("; ")}`;
+    section.appendChild(line);
+  }
+  const suggestions = diagnoseSession(r);
+  if (!suggestions.length) {
+    const none = document.createElement("p");
+    none.className = "stats-session-suggestion-empty";
+    none.textContent = "Nie wykryto problemów.";
+    section.appendChild(none);
+  }
+  const timeOf = event => event.at ? new Date(event.at).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+  for (const item of suggestions) {
+    const row = document.createElement("div");
+    row.className = `stats-session-suggestion stats-session-suggestion--${item.level}`;
+    const title = document.createElement("strong");
+    title.textContent = item.title;
+    const detail = document.createElement("span");
+    detail.textContent = item.detail;
+    row.append(title, detail);
+    if (item.evidence.length) {
+      const proof = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = `Na podstawie zdarzeń (${item.evidence.length})`;
+      proof.appendChild(summary);
+      for (const event of item.evidence.slice(0, 12)) {
+        const line = document.createElement("div");
+        line.textContent = `${timeOf(event)} · ${SOURCE_NAMES[event.source] || event.source || "—"} · ${event.message || event.category || event.kind}`;
+        proof.appendChild(line);
+      }
+      row.appendChild(proof);
+    }
+    section.appendChild(row);
+  }
+  if (Number(r.diag.dropped_count) > 0) {
+    const dropped = document.createElement("p");
+    dropped.className = "stats-session-suggestion-empty";
+    dropped.textContent = `Przekroczono limit 3000 zdarzeń: pominięto ${r.diag.dropped_count} szczegółów (liczniki są pełne).`;
+    section.appendChild(dropped);
+  }
+  return section;
+}
+
+// Zestawienie sugestii dla załadowanych sesji Control 2 (tabela Rozgrywki).
+function buildSessionsDiagnosisSummary(rows) {
+  const result = summarizeSessions(rows);
+  const section = document.createElement("section");
+  section.className = "stats-session-suggestions stats-sessions-diagnosis";
+  const heading = document.createElement("strong");
+  heading.className = "stats-session-events-title";
+  heading.textContent = `Sugerowane problemy — ${result.sessions} sesji Control 2`;
+  section.appendChild(heading);
+  const clean = document.createElement("p");
+  clean.className = "stats-session-suggestion-empty";
+  clean.textContent = result.sessions
+    ? `Bez problemów (poza informacjami): ${result.clean} (${Math.round(result.clean / result.sessions * 100)}%)`
+    : "Brak sesji z podsumowaniem diagnostyki.";
+  section.appendChild(clean);
+  for (const item of result.items) {
+    const line = document.createElement("div");
+    line.className = "stats-sessions-diagnosis-row";
+    const label = document.createElement("span");
+    label.textContent = item.title;
+    const value = document.createElement("strong");
+    value.textContent = `${item.count} (${Math.round(item.share * 100)}%)`;
+    line.append(label, value);
+    section.appendChild(line);
+  }
+  return section;
 }
 
 function buildSessionRunDetails(r) {
@@ -5479,12 +5571,6 @@ function buildSessionRunDetails(r) {
     settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
-  const deviceEventLog = r.device_event_log || r.display_event_log;
-  if (deviceEventLog?.status === "no_events_recorded") {
-    line("Brak zapisanych zdarzeń urządzeń dla tej sesji.");
-  } else if (deviceEventLog?.status === "session_id_missing") {
-    line("Nie można powiązać logu urządzeń z tą sesją.");
-  }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {
@@ -5631,7 +5717,8 @@ function buildSessionRunDetails(r) {
           const visibility = metrics.visibility === "hidden" ? "karta w tle" : metrics.visibility === "visible" ? "karta widoczna" : "widoczność nieznana";
           const focus = metrics.focused === true ? "okno aktywne" : metrics.focused === false ? "okno bez fokusu" : "fokus nieznany";
           const reasons = { initial:"stan na początku rozgrywki", visibilitychange:"zmiana widoczności" };
-          return { title: `Widoczność: ${devices}`, detail: `${reasons[metrics.visibility_reason || metrics.reason] || "stan karty"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
+          const away = metrics.hidden_duration_ms != null ? ` · wcześniej w tle ${formatDuration(metrics.hidden_duration_ms)}` : "";
+          return { title: `Widoczność: ${devices}`, detail: `${reasons[metrics.visibility_reason || metrics.reason] || "stan karty"} · ${visibility} · ${focus}${away}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
         }
         if (metrics.reason === "network_state") {
           return { title: "Sieć Wyświetlacza", detail: metrics.online ? "przeglądarka zgłosiła połączenie z siecią" : "przeglądarka zgłosiła brak połączenia z siecią" };
@@ -5672,6 +5759,36 @@ function buildSessionRunDetails(r) {
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
       }
+      if (event.category === "device_network") {
+        // Pomiar łącza (migracja 466): Cloudflare = samo łącze urządzenia,
+        // serwer = Cloudflare + nasz serwer i baza; różnica to czas systemu.
+        const ms = value => Number.isFinite(Number(value)) ? `${Math.round(Number(value))} ms` : "?";
+        const pair = (edge, db, edgeFailed, dbFailed) => {
+          const server = Number.isFinite(Number(edge)) && Number.isFinite(Number(db)) && !edgeFailed && !dbFailed
+            ? ` (sam serwer ~${Math.max(0, Math.round(Number(db) - Number(edge)))} ms)` : "";
+          return `do Cloudflare ${edgeFailed ? "brak odpowiedzi" : ms(edge)} · do serwera ${dbFailed ? "brak odpowiedzi" : ms(db)}${server}`;
+        };
+        const link = [
+          metrics.connection_type && metrics.connection_type !== "unknown" ? `sieć ${metrics.connection_type}` : "",
+          metrics.effective_type ? `jakość ${metrics.effective_type}` : "",
+          metrics.browser_rtt_ms != null ? `RTT przeglądarki ${metrics.browser_rtt_ms} ms` : "",
+          metrics.downlink_mbps != null ? `${String(metrics.downlink_mbps).replace(".", ",")} Mb/s` : "",
+          metrics.online === false ? "przeglądarka zgłaszała brak sieci" : "",
+        ].filter(Boolean).join(", ");
+        const linkText = link ? ` · ${link}` : "";
+        if (metrics.phase === "baseline") return { title: `Pomiar łącza na starcie: ${devices}`, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        if (metrics.phase === "slow") {
+          const title = metrics.verdict === "server" ? `Wolny serwer (łącze sprawne): ${devices}` : `Wolne łącze urządzenia: ${devices}`;
+          return { title, detail: `${pair(metrics.edge_ms, metrics.db_ms, metrics.edge_failed, metrics.db_failed)}${linkText}` };
+        }
+        if (metrics.phase === "recovered") {
+          const counts = [
+            metrics.device_network_samples ? `łącze ${metrics.device_network_samples}×` : "",
+            metrics.server_samples ? `serwer ${metrics.server_samples}×` : "",
+          ].filter(Boolean).join(", ");
+          return { title: `Łącze wróciło do normy: ${devices}`, detail: `Spowolnienie trwało ${formatDuration(metrics.duration_ms)}${counts ? ` (wolne pomiary: ${counts})` : ""} · najgorzej: do Cloudflare ${ms(metrics.max_edge_ms)}, do serwera ${ms(metrics.max_db_ms)}` };
+        }
+      }
       if (event.category === "device_transport") {
         const duration = metrics.duration_ms != null ? ` · przerwa ${formatDuration(metrics.duration_ms)}` : "";
         const catchups = Number(metrics.catchup_count) > 0
@@ -5705,6 +5822,33 @@ function buildSessionRunDetails(r) {
           const expected = metrics.expected_ms != null && Number.isFinite(Number(metrics.expected_ms)) ? `; oczekiwano ${formatDuration(metrics.expected_ms)}` : "";
           return { title: `Display potwierdził r${metrics.acknowledged_revision ?? metrics.revision ?? "—"}`, detail: `ACK przez ${source} po ${formatDuration(metrics.latency_ms)}${expected}${metrics.control_visibility === "hidden" ? " · Control było w tle" : ""}` };
         }
+      }
+      if (event.category === "page_lifecycle") {
+        const phases = {
+          freeze: "przeglądarka zamroziła stronę",
+          resume: `strona wznowiona po zamrożeniu${metrics.duration_ms != null ? ` (${formatDuration(metrics.duration_ms)})` : ""}`,
+          pagehide: metrics.persisted ? "strona ukryta w pamięci przeglądarki" : "strona zamknięta lub przeładowana",
+          pageshow: "strona przywrócona z pamięci przeglądarki",
+          offline: "przeglądarka zgłosiła brak sieci",
+          online: `sieć wróciła${metrics.duration_ms != null ? ` po ${formatDuration(metrics.duration_ms)}` : ""}`,
+        };
+        return { title: `Strona: ${devices}`, detail: phases[metrics.phase] || "zmiana stanu strony" };
+      }
+      if (event.category === "wake_lock") {
+        const phases = {
+          granted: "blokada wygaszania ekranu włączona",
+          denied: `przeglądarka odmówiła blokady wygaszania ekranu${metrics.error_name ? ` (${metrics.error_name})` : ""}`,
+          unsupported: "przeglądarka nie obsługuje blokady wygaszania ekranu",
+          released: "system zwolnił blokadę wygaszania przy widocznej karcie (np. oszczędzanie baterii)",
+        };
+        return { title: `Ekran: ${devices}`, detail: phases[metrics.phase] || "blokada wygaszania ekranu" };
+      }
+      if (event.category === "device_info") {
+        const classes = { phone: "telefon", tablet: "tablet", desktop: "komputer", tv: "telewizor" };
+        const parts = [classes[metrics.device_class], metrics.browser, metrics.os,
+          metrics.battery_level != null ? `bateria ${metrics.battery_level}%${metrics.charging ? " (ładowanie)" : ""}` : "",
+          metrics.save_data ? "oszczędzanie danych" : ""].filter(Boolean);
+        return { title: `Urządzenie: ${devices}`, detail: parts.join(" · ") || "—" };
       }
       if (event.category === "realtime") {
         const state = metrics.state === "connected" ? "połączony" : "rozłączony; działa odpytywanie awaryjne";
@@ -5756,7 +5900,7 @@ function buildSessionRunDetails(r) {
         const row = document.createElement("div");
         row.className = "stats-session-event";
         const title = document.createElement("strong");
-        title.textContent = `${timeOf(event)} · ${text.title}`;
+        title.textContent = `${timeOf(event)}${event.prestart ? " · przed startem gry" : ""} · ${text.title}`;
         row.appendChild(title);
         const detail = document.createElement("span");
         detail.textContent = text.detail;
@@ -6152,7 +6296,10 @@ async function openStatsDetailModal(type) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
-    if (type === "gameplay") exportButton.disabled = false;
+    if (type === "gameplay") {
+      exportButton.disabled = false;
+      body.insertBefore(buildSessionsDiagnosisSummary(allRows), tableWrap);
+    }
     renderPage(1);
   } catch (err) {
     tableWrap.textContent = `Błąd: ${err.message}`;
@@ -6610,13 +6757,6 @@ function wireEvents() {
     });
   }
 
-  if (els.btnTabScreenshots) {
-    els.btnTabScreenshots.addEventListener("click", () => {
-      if (activeTab === "tools") closeTools();
-      setActiveTab("homepageScreenshots");
-    });
-  }
-
   wireMarketplaceEvents();
   wireReportsEvents();
   startAdminBadges();
@@ -6809,7 +6949,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-22T21510");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T05195");
 
   const MC_PAGE_SIZE = 50;
 

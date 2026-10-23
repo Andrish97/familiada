@@ -7,20 +7,22 @@
 // - fullscreen
 //
 // Audyt: poll-qr.js — mała, przejrzysta strona. Główne błędy naprawione:
-// - timeout dla QRCode.toDataURL (8s)
+// - bardzo długi adres: obraz albo komunikat o błędzie (lokalny generator QR)
 // - anulowanie poprzedniego rendera przy nowym starcie
 // - czyszczenie interval przy unload
 // - sprawdzenie statusu gry w device mode
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({ needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["polls/vote/qr", "polls/vote/text", "polls/vote/points", "polls"] });
 });
-const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
+const { instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page) {
   return await page.evaluate(async () => {
@@ -81,10 +83,10 @@ async function deleteGame(page, gameId) {
 test.describe("poll-qr.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("wyświetla QR z przekazanego URL", async ({ page, context }, testInfo) => {
+  test("wyświetla QR z przekazanego URL", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -104,7 +106,7 @@ test.describe("poll-qr.js audyt", () => {
 
       // Sprawdzić, że src jest data URL (zawiera base64)
       const src = await qrImage.getAttribute("src");
-      expect(src).toMatch(/^data:image\/png;base64,/);
+      expect(src).toMatch(/^data:image\/svg\+xml/);
 
       await deleteGame(page, game.gameId);
     } finally {
@@ -112,10 +114,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("device mode: generuje QR z ?id=&key=", async ({ page, context }, testInfo) => {
+  test("device mode: generuje QR z ?id=&key=", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
 
@@ -131,15 +133,18 @@ test.describe("poll-qr.js audyt", () => {
       await expect(qrImage).toBeVisible({ timeout: 10000 });
 
       const src = await qrImage.getAttribute("src");
-      expect(src).toMatch(/^data:image\/png;base64,/);
+      expect(src).toMatch(/^data:image\/svg\+xml/);
       // Check the real generated QR, including its destination route.
       const expectedQr = await page.evaluate(async ({ gameId, shareKey }) => {
-        const { default: QRCode } = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm");
-        const url = new URL("/polls/vote/points/", location.origin);
+        // Ten sam lokalny generator co strona (shared/js/core/qr-code.js).
+        const { qrDataUrl } = await import("/shared/js/core/qr-code.js");
+        // Publiczny link anonimowy prowadzi przez /go/ (shared/js/core/poll-links.js).
+        const url = new URL("/go/", location.origin);
+        url.searchParams.set("p", "anon");
         url.searchParams.set("id", gameId);
         url.searchParams.set("key", shareKey);
         url.searchParams.set("lang", "pl");
-        return QRCode.toDataURL(url.toString(), { width: 840, margin: 1 });
+        return qrDataUrl(url.toString(), { margin: 1 });
       }, game);
       expect(src).toBe(expectedQr);
 
@@ -149,10 +154,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: zły klucz w device mode", async ({ page, context }, testInfo) => {
+  test("obsługuje błąd: zły klucz w device mode", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
 
@@ -178,10 +183,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context }, testInfo) => {
+  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       // Cofnij do draft — poll-qr.js pokazuje wtedy "Ten link wygasł"
@@ -210,9 +215,9 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("ekran QR przełącza się na 'Ankieta została zamknięta' po zamknięciu", async ({ page, context }, testInfo) => {
+  test("ekran QR przełącza się na 'Ankieta została zamknięta' po zamknięciu", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       // Zamknięcie wymaga głosów (game_poll_close_check) — stan "ready" dla tego
@@ -247,9 +252,9 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("ekran QR po ponownym uruchomieniu pokazuje 'Ten link wygasł'", async ({ page, context }, testInfo) => {
+  test("ekran QR po ponownym uruchomieniu pokazuje 'Ten link wygasł'", async ({ page, context, accounts, loginAs }, testInfo) => {
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const pollQrUrl = new URL("/polls/vote/qr/", "https://www.familiada.online/");
@@ -280,10 +285,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context }, testInfo) => {
+  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -314,13 +319,13 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context }, testInfo) => {
+  test("bardzo długi adres: kod QR albo komunikat o błędzie", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
 
 
-      // Podaj bardzo długi URL, żeby sprawdzić timeout
+      // Bardzo długi URL może przekroczyć pojemność kodu QR.
       const longUrl = "https://www.familiada.online/polls/vote/points/index.html?id=test-id-very-very-long-" + "x".repeat(2000);
 
       const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
@@ -328,11 +333,9 @@ test.describe("poll-qr.js audyt", () => {
 
       await page.goto(qrPageUrl.toString(), { waitUntil: "domcontentloaded" });
 
-      // Czekaj na komunikat o błędzie (powinno upłynąć 8 sekund timeout)
-      // Jeśli render się powiódł, będzie img; jeśli timeout, będzie tekst "qrFailed"
+      // Jeśli kod się zmieścił, będzie img; jeśli nie, tekst "qrFailed".
       const qrBox = page.locator(".qr-box");
 
-      // Czekaj maksymalnie 15 sekund (timeout + buffer)
       await expect(qrBox).not.toContainText("Ładowanie gry…", { timeout: 15000 });
 
       // Sprawdź czy jest img lub komunikat o błędzie
@@ -347,10 +350,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("zmiana języka zmienia tekst i QR", async ({ page, context }, testInfo) => {
+  test("zmiana języka zmienia tekst i QR", async ({ page, context, accounts, loginAs }, testInfo) => {
 
     try {
-      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      await loginAs(page, context, accounts.standard[0]);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
@@ -373,7 +376,7 @@ test.describe("poll-qr.js audyt", () => {
 
       // Teraz zmień poll_qr_lang na angielski przez polls.js — bez ponownego
       // logowania: pollsPage współdzieli `context` (i jego cookies) z `page`,
-      // które już zalogowało test7 wyżej, więc sesja jest już aktywna.
+      // które już zalogowało właściciela wyżej, więc sesja jest już aktywna.
       const pollsPage = await context.newPage();
       instrumentPage(pollsPage);
 

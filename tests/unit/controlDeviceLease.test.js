@@ -7,6 +7,19 @@ const source = fs.readFileSync(new URL("../../web/shared/js/core/device-lease.js
   .replace(/^import .*;$/gm, "")
   .replace(/export function/g, "function");
 
+// Atrapy modułów diagnostyki sesji (session-log.js, keep-alive.js).
+function sessionLogStubs(sink = { events: [], options: null }) {
+  return {
+    createSessionLog(options) {
+      sink.options = options;
+      return { push: event => sink.events.push(event), flush: async () => {}, flushOnExit() {}, stop() {} };
+    },
+    collectDeviceInfo: async () => ({ event_type: "device_info", device_class: "phone" }),
+    watchPageLifecycle: () => () => {},
+    onWakeLockChange: () => () => {},
+  };
+}
+
 test("lease wygasły po wznowieniu karty rejestruje nową instancję i odzyskuje primary", async () => {
   const calls = [];
   const listeners = new Map();
@@ -39,6 +52,7 @@ test("lease wygasły po wznowieniu karty rejestruje nową instancję i odzyskuje
     crypto: { randomUUID: () => `connection-${++nextId}` },
     AbortSignal,
     getDevicePresenceMeta: () => ({}),
+    ...sessionLogStubs(), navigator: { onLine: true },
     startTicker(fn, ms) { timers.set(ms, fn); return () => timers.delete(ms); },
   };
   const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
@@ -76,7 +90,7 @@ test("heartbeat przekazuje rewizję gry tylko głównej instancji (samonaprawa z
     document: { visibilityState: "visible", hasFocus: () => true, addEventListener() {}, removeEventListener() {}, getElementById: () => null },
     window: { addEventListener() {}, removeEventListener() {} },
     crypto: { randomUUID: () => "connection-x" }, AbortSignal,
-    getDevicePresenceMeta: () => ({}), startTicker: () => () => {},
+    getDevicePresenceMeta: () => ({}), startTicker: () => () => {}, ...sessionLogStubs(), navigator: { onLine: true },
   };
   const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
   const lease = create({ gameId: "game", deviceType: "buzzer", key: "key", onGameRev: rev => revs.push(rev) });
@@ -86,5 +100,43 @@ test("heartbeat przekazuje rewizję gry tylko głównej instancji (samonaprawa z
   lease.setMeta({});
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(revs, [9]);
+  lease.stop();
+});
+
+test("dziennik sesji urządzenia: start instancji głównej, parametry lease i czas w tle przy powrocie", async () => {
+  const sink = { events: [], options: null };
+  const docListeners = new Map();
+  const doc = {
+    visibilityState: "visible", hasFocus: () => true, wasDiscarded: false,
+    addEventListener(name, fn) { docListeners.set(name, fn); }, removeEventListener() {}, getElementById: () => null,
+  };
+  const client = { rpc() { return { abortSignal: async () => ({ data: { mode: "lease", state: "primary", epoch: 5 }, error: null }) }; } };
+  const context = {
+    sb: () => client, t: key => key, document: doc, navigator: { onLine: true },
+    window: { addEventListener() {}, removeEventListener() {} },
+    crypto: { randomUUID: () => "connection-log" }, AbortSignal, Date,
+    getDevicePresenceMeta: () => ({}), startTicker: () => () => {}, ...sessionLogStubs(sink),
+  };
+  const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
+  const lease = create({ gameId: "game", deviceType: "display", key: "key" });
+  await lease.start();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(sink.options.rpc, "control2_device_log");
+  assert.equal(sink.options.canSend(), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(sink.options.params())), {
+    p_game_id: "game", p_device_type: "display", p_key: "key", p_connection_id: "connection-log", p_epoch: 5,
+  });
+  assert.deepEqual(sink.events.map(event => event.event_type), ["page_state", "device_info"]);
+  assert.equal(sink.events[0].reason, "initial");
+  doc.visibilityState = "hidden";
+  docListeners.get("visibilitychange")();
+  doc.visibilityState = "visible";
+  docListeners.get("visibilitychange")();
+  const back = sink.events.at(-1);
+  assert.equal(back.visibility, "visible");
+  assert.equal(typeof back.hidden_duration_ms, "number");
+  assert.equal(typeof back.since_heartbeat_ms, "number");
+  lease.log({ event_type: "runtime_error", phase: "render" });
+  assert.equal(sink.events.at(-1).event_type, "runtime_error");
   lease.stop();
 });

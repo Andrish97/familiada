@@ -1,7 +1,8 @@
 const {test,expect}=require('./helpers/production-test');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const {generateE2EToken}=require('./helpers/e2e-token');
 const {serveBranchCode}=require('./helpers/branch-code');
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({needs:{standard:1}});
 
 // Testy podręcznika sprawdzają kod brancha (strona manual + tłumaczenia).
 test.beforeEach(async({context},testInfo)=>{
@@ -23,8 +24,8 @@ test('release: canonical routes serve the current app and preserve connection pa
   }
 });
 
-test('release: Games play and settings links open the new panel',async({page},testInfo)=>{
- await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
+test('release: Games play and settings links open the new panel',async({page,accounts,loginAs},testInfo)=>{
+ await loginAs(page,page.context(),accounts.standard[0]);
  await page.goto('/games/');
  // Adresy stron są w mapie nawigacji (E4), games.js buduje linki przez linkTo().
  const source=await page.request.get('/shared/js/core/nav-map.js');

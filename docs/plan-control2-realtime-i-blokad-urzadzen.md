@@ -87,6 +87,41 @@ Decyzje:
     najwyżej 96 = dwie najlepsze odpowiedzi, trzecia ≥ 4 pkt; wcześniej 920). Progi wyliczone
     z pytań (finał: dwie najlepsze odpowiedzi 5 pytań; rundy: punkty pytań ×
     mnożniki) są podpowiedzią, nie blokadą (`advanced-limits.js`).
+12. **Pomiar łącza urządzeń w diagnostyce (decyzja użytkownika 2026-10-22).**
+    Cel: odróżnić łącze użytkownika od problemów systemu. Każde urządzenie
+    i Control w trakcie gry co 30 s (w spowolnieniu co 5 s, karta w tle nie
+    mierzy) mierzy dwa czasy: `GET api.familiada.online/_ping` (odpowiada
+    Worker Cloudflare bez serwera) i RPC `control2_net_ping` (Cloudflare +
+    serwer + baza). Wolny pierwszy (≥ 1 s) = łącze urządzenia; szybki pierwszy
+    i różnica ≥ 1 s = serwer. Zapis tylko: pomiar na starcie, początek
+    spowolnienia z werdyktem, powrót do normy (po 2 dobrych pomiarach) —
+    `control2_network_probe_event`, kategoria `device_network` w eksporcie
+    i panelu; do tego `navigator.connection` (typ sieci, jakość, RTT,
+    przepustowość), gdy przeglądarka podaje. Migracje 466–467, moduł
+    `web/shared/js/core/network-probe.js`.
+13. **Tryb lokalny: Control jako źródło prawdy, świadomy wybór gracza
+    (kierunek, decyzja użytkownika 2026-10-22).** Analiza „przyspieszacza
+    lokalnego” (Control wysyła stan także przez WebRTC w sieci lokalnej,
+    baza nadal źródłem prawdy) wykazała, że przy słabym internecie
+    komórkowym (np. hotspot w górach) pomaga mało: skraca tylko drogę
+    Control → urządzenie, a gra dalej czeka na zapis do bazy, potwierdzenia
+    Wyświetlacza, gotowość Przycisku i sygnał życia urządzeń. Kierunek:
+    osobny tryb, który operator **świadomie włącza**; wtedy Control pełni
+    rolę bazy (stan, blokady, naciśnięcia Przycisku, potwierdzenia,
+    obecność urządzeń przez sieć lokalną), a do bazy trafia kopia w tle.
+    Tryb zwykły bez zmian. Zakres i pytania otwarte — do rozpisania przed
+    wdrożeniem; bez kodu do czasu zatwierdzenia zakresu.
+    Doprecyzowanie użytkownika (2026-10-22):
+    - Założenie: Control i urządzenia mają internet, ale za słaby na
+      stabilny realtime. Wolniejsze wczytanie strony czy gry jest
+      akceptowalne; niezawodny musi być przebieg gry.
+    - To osobny tryb. Control trzyma w przeglądarce wszystko (pytania,
+      stan gry, stan i tożsamość urządzeń) i zostaje w trybie lokalnym, aż
+      operator go wyłączy albo zacznie rozgrywkę od nowa.
+    - Urządzenie przy połączeniu zapisuje u siebie sesję powiązaną z tym
+      konkretnym Control; po odświeżeniu Wyświetlacza, Przycisku czy
+      Prowadzącego wraca do tej sesji, połączenie lokalne odnawia się
+      samo (bez działań użytkownika).
 
 ## Cel
 

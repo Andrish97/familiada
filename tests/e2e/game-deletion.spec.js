@@ -3,11 +3,12 @@
 // realnie czyści folder user-sounds/{userId}/{gameId}/ w Supabase Storage,
 // nie tylko wiersz w DB.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 
-test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", async ({ page, context }) => {
-  await loginAsTestUser(page, context);
+test.use({ needs: { standard: 1 } });
+
+test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
 
   // Stwórz testową grę bezpośrednio przez API (nie testujemy tu kreatora gier,
   // tylko usuwanie — dokładnie ten sam kształt co createGame() w games.js)

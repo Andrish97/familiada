@@ -1,10 +1,12 @@
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const origin='https://www.familiada.online';
 const token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const branch=process.env.GITHUB_REF_NAME!=='main';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block'});
+// E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
+test.use({needs:{standard:1}});
+test.describe.configure({retries:0});
 let currentCase='login';
 test.afterEach(async({page},testInfo)=>{
  if(testInfo.status===testInfo.expectedStatus)return;
@@ -21,11 +23,11 @@ async function evidence(page,testInfo,label){
  }
 }
 // Business responses here are explicit fixtures. This verifies UI/actors, not SMTP or DB mutations.
-test('Go state matrix: canonical account, terminal messages, every family, malformed links and recoverable network',async({page,context,browser},testInfo)=>{
+test('Go state matrix: canonical account, terminal messages, every family, malformed links and recoverable network',async({page,context,browser,accounts,loginAs},testInfo)=>{
  test.setTimeout(180000);
  if(branch)await serveBranchCode(context,{pages:['go']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
- await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  const user=await page.evaluate(async()=>{const {data,error}=await window.__sbClient.auth.getUser();if(error)throw error;return data.user;});
  let result,fail=false,calls=0;
  const resolve=async route=>{calls++;if(fail)return route.abort('failed');return route.fulfill({json:result});};

@@ -1,16 +1,15 @@
-const {test,expect}=require('@playwright/test');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
-const {loginAsPooledTestUser}=require('./helpers/login');
 const branch=process.env.GITHUB_REF_NAME!=='main';
 const pixel='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l38AAAAASUVORK5CYII=';
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block',needs:{standard:1}});test.describe.configure({retries:0});
 let stage='login',failureStage='';
 test.afterEach(async({},testInfo)=>{if(testInfo.status!==testInfo.expectedStatus)console.error('::error title=Logo transfer stage::'+(failureStage||stage));});
-test('standalone logo package: TEXT IMAGE DRAW, own imported image, nested source independence and incomplete export rejection',async({page,context},testInfo)=>{
+test('standalone logo package: TEXT IMAGE DRAW, own imported image, nested source independence and incomplete export rejection',async({page,context,accounts,loginAs},testInfo)=>{
  test.setTimeout(180000);const ids=[],files=[];
  if(branch)await serveBranchCode(context,{pages:['games','logos']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
- await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  let originalUrl;
  try{
   stage='original image upload';originalUrl=await page.evaluate(async data=>{const db=window.__sbClient;const {data:a,error}=await db.auth.getUser();if(error)throw error;const {uploadImportedLogoImage}=await import('/logos/js/db.js?v=' + document.querySelector('meta[name="app-version"]').content);return uploadImportedLogoImage(data,a.user.id);},pixel);files.push(originalUrl);

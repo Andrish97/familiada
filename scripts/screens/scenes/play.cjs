@@ -164,7 +164,7 @@ const buzzerDb = (fn) => (db, lang) => {
     control_device_instance_register: { mode: "lease", state: "primary", epoch: 1, game_rev: 1, waiting_count: 0 },
     control_device_instance_heartbeat: { mode: "lease", state: "primary", epoch: 1, game_rev: 1, waiting_count: 0 },
     control_device_instance_release: true,
-    control2_device_transport_event: true,
+    control2_device_log: 1,
     game_state_display_is_ready: true,
   });
   if (fn) state(fn)(db, lang);

@@ -30,24 +30,27 @@ test('activity API is read-only and uncached for admin requests',async()=>{
  } finally {globalThis.fetch=previous;}
 });
 
-test('Admin gameplay stats merge lease transitions into stats_detail JSON and keep the legacy log key',async()=>{
+test('Admin gameplay stats read per-session events and summary (468)',async()=>{
  const previous=globalThis.fetch;
  const calls=[];
- const leaseEvent={kind:'diagnostic',category:'device_lease',at:'2026-10-15T12:00:00Z',devices:['buzzer'],metrics:{from_state:'waiting',to_state:'primary',epoch:4}};
+ const leaseEvent={kind:'diagnostic',category:'device_lease',source:'buzzer',at:'2026-10-15T12:00:00Z',devices:['buzzer'],metrics:{from_state:'waiting',to_state:'primary',epoch:4}};
+ const controlEvent={kind:'error',source:'control',at:'2026-10-15T12:01:00Z',message:'x',devices:[]};
+ const diag={event_count:2,dropped_count:0,summary:{buzzer:{'device_lease:primary':{n:1}}}};
  try {
   globalThis.fetch=withJwks(async(url)=>{
    const path=new URL(url).pathname;
    calls.push(path);
-   if(path.endsWith('/get_stats_detail')) return new Response(JSON.stringify([{session_id:'session-1',control_version:2,stats_detail:{events:[]}}]),{headers:{'content-type':'application/json'}});
-   if(path.endsWith('/get_control2_display_events')) return new Response(JSON.stringify({'session-1':[leaseEvent]}),{headers:{'content-type':'application/json'}});
+   if(path.endsWith('/get_stats_detail')) return new Response(JSON.stringify([{session_id:'session-1',control_version:2,stats_detail:{events:[{kind:'error',message:'stale'}]}}]),{headers:{'content-type':'application/json'}});
+   if(path.endsWith('/get_control2_session_events')) return new Response(JSON.stringify({'session-1':[leaseEvent,controlEvent]}),{headers:{'content-type':'application/json'}});
+   if(path.endsWith('/get_control2_session_diag')) return new Response(JSON.stringify({'session-1':diag}),{headers:{'content-type':'application/json'}});
    throw new Error(`Unexpected Admin stats RPC: ${path}`);
   });
   const response=await handleAdminApi(new Request('https://settings.familiada.online/_admin_api/stats/detail?type=gameplay',{headers:{'CF-Access-Jwt-Assertion':await signAccessJwt()}}),{...ACCESS_ENV,SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
   assert.equal(response.status,200);
   const body=await response.json();
-  assert.deepEqual(body.rows[0].stats_detail.events,[leaseEvent]);
-  assert.deepEqual(body.rows[0].device_event_log,{status:'events_recorded',event_count:1});
-  assert.deepEqual(body.rows[0].display_event_log,body.rows[0].device_event_log);
-  assert.deepEqual(calls,['/rest/v1/rpc/get_stats_detail','/rest/v1/rpc/get_control2_display_events']);
+  assert.deepEqual(body.rows[0].stats_detail.events,[leaseEvent,controlEvent]);
+  assert.deepEqual(body.rows[0].diag,diag);
+  assert.equal('device_event_log' in body.rows[0],false);
+  assert.deepEqual(calls.sort(),['/rest/v1/rpc/get_control2_session_diag','/rest/v1/rpc/get_control2_session_events','/rest/v1/rpc/get_stats_detail']);
  } finally {globalThis.fetch=previous;}
 });

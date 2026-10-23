@@ -220,6 +220,12 @@ function buildDb(lang, extras = {}) {
 
   // ---------- RPC ----------
   const rpc = {
+    // Urządzenia Prowadzący/Przycisk otwarte z klucza (bez ?preview): jedyne aktywne połączenie, logo domyślne.
+    control_device_instance_register: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
+    control_device_instance_heartbeat: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
+    host2_logo_get_public: { logo: null },
+    control2_device_log: 1,
+    game_state_display_is_ready: true,
     poll_share_panel: sharePanel,
     get_poll_preview: `fn:(args, db) => {
       const votes = ${JSON.stringify(pollVotes)};
@@ -342,7 +348,7 @@ function buildDb(lang, extras = {}) {
       { id: id("mkt-sent-3"), title: "Pubowy quiz czwartkowy", lang: "pl", status: "rejected", library_count: 0, moderation_note: "Za mało pytań w rundzie finałowej." },
     ], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
-    control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
+    control2_session_ping: null, control2_control_log: 1,
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
     // Głosowanie z linku (anonimowo): stan i treść ankiety.
     poll_state: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); return g ? { ok: true, state: g.status === "poll_open" ? "open" : "ended", type: g.type } : { ok: false, state: "not_found" }; }`,
@@ -359,6 +365,8 @@ function buildDb(lang, extras = {}) {
 
   return {
     user, tables, rpc,
+    // Funkcje Edge: token Realtime urządzenia (Prowadzący/Przycisk z klucza).
+    functions: { "device-realtime-token": { token: "demo-realtime-token" } },
     relations: {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
@@ -409,6 +417,58 @@ function buildDb(lang, extras = {}) {
         { user_id: "00000000-0000-4000-8000-0000000000f1", username: "guest_3fa9c2d1", email: "", reason: "test_guest", automatic: true, added_at: "2026-10-22T20:31:00Z" },
         { user_id: "00000000-0000-4000-8000-0000000000aa", username: "wlasciciel", email: "admin@example.com", reason: "manual", automatic: false, added_at: "2026-10-01T09:00:00Z" },
       ] },
+      // Migracja 466: przebieg rozgrywki z pomiarami łącza (start, spowolnienie, powrót).
+      "/_admin_api/stats/detail?type=gameplay*": { ok: true, rows: [{
+        game_name: "Quiz rodzinny", owner: "jan.kowalski", control_version: 2, status: "playing", effective_status: "playing",
+        started_at: "2026-10-22T21:00:00Z", ended_at: null, rounds_played: 2, rounds_score_a: 62, rounds_score_b: 100,
+        team_a_score: 62, team_b_score: 100, final_step: null, final_points: null, winner_team: null, error_count: 0,
+        stats_detail: { last_step: "r_play", teams: { teamA: "Drużyna A", teamB: "Drużyna B" }, events: [
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:05Z", devices: ["display"], message: "Pomiar łącza na starcie gry.",
+            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 48, db_ms: 131, connection_type: "wifi", effective_type: "4g", browser_rtt_ms: 50, downlink_mbps: 9.6 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:06Z", devices: ["control"], message: "Pomiar łącza na starcie gry.",
+            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 39, db_ms: 118 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:23:31Z", devices: ["display"], message: "Wolne łącze urządzenia (już do Cloudflare).",
+            metrics: { source: "probe", phase: "slow", verdict: "device_network", edge_ms: 2140, db_ms: 2390, connection_type: "wifi", effective_type: "3g", browser_rtt_ms: 900, downlink_mbps: 0.8 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:24:40Z", devices: ["display"], message: "Łącze i odpowiedź serwera wróciły do normy.",
+            metrics: { source: "probe", phase: "recovered", verdict: "device_network", duration_ms: 69000, samples: 12, device_network_samples: 12, server_samples: 0, max_edge_ms: 4810, max_db_ms: 5000, edge_ms: 61, db_ms: 140 } },
+          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:40:02Z", devices: ["control"], message: "Wolna odpowiedź serwera przy sprawnym łączu urządzenia.",
+            metrics: { source: "probe", phase: "slow", verdict: "server", edge_ms: 44, db_ms: 2730 } },
+          // Diagnostyka per sesja (468–469): opis urządzeń, uśpienie telefonu, blokada ekranu.
+          { kind: "diagnostic", category: "device_info", source: "display", prestart: true, at: "2026-10-22T20:58:10Z", devices: ["display"], message: "Urządzenie i przeglądarka.",
+            metrics: { device_class: "phone", browser: "safari", os: "ios", battery_level: 30, charging: false } },
+          { kind: "diagnostic", category: "wake_lock", source: "display", prestart: true, at: "2026-10-22T20:58:11Z", devices: ["display"], message: "Przeglądarka odmówiła blokady wygaszania ekranu.",
+            metrics: { phase: "denied", error_name: "NotAllowedError" } },
+          { kind: "diagnostic", category: "device_info", source: "control", prestart: true, at: "2026-10-22T20:57:40Z", devices: ["control"], message: "Urządzenie i przeglądarka.",
+            metrics: { device_class: "desktop", browser: "chrome", os: "windows" } },
+          { kind: "diagnostic", category: "display_state", source: "display", at: "2026-10-22T21:12:00Z", devices: ["display"], message: "Stan karty Wyświetlacz: w tle (zmiana widoczności).",
+            metrics: { reason: "page_state", visibility: "hidden", visibility_reason: "visibilitychange" } },
+          { kind: "diagnostic", category: "device_lease", source: "display", at: "2026-10-22T21:12:20Z", devices: ["display"], message: "Blokada urządzenia wygasła.",
+            metrics: { from_state: "primary", to_state: "expired", epoch: 1 } },
+          { kind: "diagnostic", category: "display_state", source: "display", at: "2026-10-22T21:13:05Z", devices: ["display"], message: "Stan karty Wyświetlacz: widoczna (zmiana widoczności).",
+            metrics: { reason: "page_state", visibility: "visible", visibility_reason: "visibilitychange", hidden_duration_ms: 65000, since_heartbeat_ms: 64000 } },
+        ] },
+        diag: { event_count: 11, dropped_count: 0, summary: {
+          display: {
+            "device_network:baseline": { n: 1 }, "device_network:slow:device_network": { n: 1, max_ms: 2390 }, "device_network:recovered": { n: 1, dur_ms: 69000 },
+            "device_info:device_info": { n: 1 }, "wake_lock:denied": { n: 1 },
+            "display_state:page_state:hidden": { n: 1 }, "display_state:page_state:visible": { n: 1, hidden_ms: 65000 },
+            "device_lease:expired": { n: 1 }, "device_lease:primary": { n: 2 },
+          },
+          control: { "device_network:baseline": { n: 1 }, "device_network:slow:server": { n: 1, max_ms: 2730 }, "device_info:device_info": { n: 1 } },
+        } },
+      }, {
+        game_name: "Familiada w biurze", owner: "ola", control_version: 2, status: "final", effective_status: "final",
+        started_at: "2026-10-21T18:00:00Z", ended_at: "2026-10-21T18:42:00Z", rounds_played: 5, rounds_score_a: 310, rounds_score_b: 180,
+        team_a_score: 445, team_b_score: 180, final_step: "finished", final_points: 135, winner_team: "A", error_count: 0,
+        stats_detail: { last_step: "f_end", teams: { teamA: "Księgowość", teamB: "IT" }, events: [] },
+        diag: { event_count: 4, dropped_count: 0, summary: { host: { "display_state:page_state:hidden": { n: 2 }, "display_state:page_state:visible": { n: 2, hidden_ms: 14000 } } } },
+      }, {
+        game_name: "Wieczór quizowy", owner: "kuba2009", control_version: 2, status: "final", effective_status: "final",
+        started_at: "2026-10-20T19:00:00Z", ended_at: "2026-10-20T19:35:00Z", rounds_played: 4, rounds_score_a: 220, rounds_score_b: 260,
+        team_a_score: 220, team_b_score: 260, final_step: null, final_points: null, winner_team: "B", error_count: 0,
+        stats_detail: { last_step: "r_gameEnd", teams: { teamA: "Kowalscy", teamB: "Nowakowie" }, events: [] },
+        diag: { event_count: 6, dropped_count: 0, summary: {} },
+      }] },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },

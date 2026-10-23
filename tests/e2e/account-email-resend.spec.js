@@ -10,11 +10,11 @@
 // zwalniany w tej samej gałęzi catch — czyli ochrona antyspamowa na ten
 // przycisk była całkowicie martwa.
 //
-// Test korzysta ze wspólnego konta testowego test1@familiada.online — zmiana
-// e-maila NIE podmienia realnego loginu tego konta dopóki link nie zostanie
-// kliknięty (Supabase "secure email change"), więc jest bezpieczna dla
-// innych testów/przebiegów, pod warunkiem że na końcu anulujemy zmianę i
-// zwalniamy cooldown (finally, bezwarunkowo).
+// Zmiana e-maila -> konto disposable (E25, plan §1): Worker odtwarza je przy
+// każdym wypożyczeniu. Zmiana NIE podmienia loginu, dopóki link nie zostanie
+// kliknięty, a na końcu i tak anulujemy ją i zwalniamy cooldown (finally,
+// bezwarunkowo) -- kolejny test w tym samym workerze dostaje czysty stan.
+// Powiadomienie o zmianie idzie na adres konta -> zasób "mail".
 //
 // Cooldown "account:email" zwalniany bezpośrednio przez tę samą RPC
 // (cooldown_release), której używa sam account.js przy rollbacku błędu —
@@ -24,15 +24,14 @@
 // TEGO repo (helpers/branch-code.js), backend prawdziwy -- workflow odpalony
 // na branchu testuje poprawkę przed wdrożeniem.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const ACCOUNT_URL = "https://www.familiada.online/account";
 const CD_EMAIL_KEY = "account:email";
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
-test.use({ serviceWorkers: "block" });
+test.use({ serviceWorkers: "block", needs: { disposable: 1, resources: ["mail"] } });
 
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["account"] });
@@ -66,10 +65,10 @@ async function cancelPendingEmail(page) {
   });
 }
 
-test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie ReferenceError", async ({ page, context }) => {
+test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie ReferenceError", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(200_000);
 
-  await loginAsTestUser(page, context);
+  await loginAs(page, context, accounts.disposable[0]);
 
   try {
     await page.goto(ACCOUNT_URL, { waitUntil: "domcontentloaded" });
@@ -81,7 +80,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // już sprawdzony sygnał końca ładowania co w subscriptions.spec.js.
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
-    // Samoleczenie: gdyby poprzedni przebieg na tym wspólnym koncie nie
+    // Samoleczenie: gdyby poprzedni test na tym koncie nie
     // posprzątał po sobie (np. własny test.setTimeout ubił test w trakcie,
     // zanim finally zdążyło dokończyć swoje await-y), zacznij od czystego
     // stanu. Dwa NIEZALEŻNE gubione stany: pending e-mail (lockEl) ORAZ
@@ -142,9 +141,8 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     await expect(page.locator("#appToast")).toContainText("Wysłano ponownie", { timeout: 15000 });
     await expect(page.locator("#appToast")).not.toHaveClass(/error/);
   } finally {
-    // Przywróć konto testowe do stanu bez oczekującej zmiany e-maila i bez
-    // wypalonego cooldownu — dla kolejnych przebiegów e2e na tym samym
-    // wspólnym koncie.
+    // Przywróć konto do stanu bez oczekującej zmiany e-maila i bez
+    // wypalonego cooldownu — dla kolejnych testów w tym samym workerze.
     await cancelPendingEmail(page).catch(() => {});
     await releaseEmailCooldown(page).catch(() => {});
   }

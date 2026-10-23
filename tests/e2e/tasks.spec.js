@@ -1,32 +1,32 @@
 // tests/e2e/tasks.spec.js
 // Zadania tylko ankiety; bazy obsługiwane wyłącznie w Bases.
-// Chodzi po produkcji (po wdrożeniu strony). Konta tylko z puli: test2 (A)
-// i test3 (B); test9/10 nie używać.
+// Chodzi po produkcji (po wdrożeniu strony). E25: dwa wypożyczone konta
+// standard (A = standard[0], B = standard[1]); udostępnienie bazy wysyła
+// powiadomienie, więc zasób mail.
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
 
 const { serveBranchCode } = require("./helpers/branch-code");
 const { tasksPreview } = require("./fixtures/tasks-preview");
 
 const TASKS_URL = "https://www.familiada.online/tasks/";
 
-test.use({ serviceWorkers: "block" });
+test.use({ serviceWorkers: "block", needs: { standard: 2, resources: ["mail"] } });
 
-async function newUserContext(browser, username) {
+async function newUserContext(browser, loginAs, identity) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
-  await loginAsTestUser(page, ctx, { username });
+  await loginAs(page, ctx, identity);
   // Na main sprawdzamy opublikowane pliki Pages; na branchu kandydat do wdrożenia.
   if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(ctx, { pages: ["tasks", "bases", "go"] });
   return { ctx, page };
 }
 
 test.describe("tasks: baza udostępniona drugiemu kontu", () => {
-  test("baza pozostaje w Bazach i nie powiela się w Zadaniach ani ich plakietce", async ({ browser }) => {
+  test("baza pozostaje w Bazach i nie powiela się w Zadaniach ani ich plakietce", async ({ browser, accounts, loginAs }) => {
     test.setTimeout(120_000);
-    const a = await newUserContext(browser, testAccountUsername(2));
-    const b = await newUserContext(browser, testAccountUsername(3));
+    const a = await newUserContext(browser, loginAs, accounts.standard[0]);
+    const b = await newUserContext(browser, loginAs, accounts.standard[1]);
     const baseName = `E2E zadania ${Date.now()}`;
     let baseId = null;
     try {
@@ -76,8 +76,8 @@ test.describe("tasks: baza udostępniona drugiemu kontu", () => {
   });
 });
 
-test("E20 zadania pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser }, testInfo) => {
-  const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
+test("E20 zadania pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser, accounts, loginAs }, testInfo) => {
+  const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0]);
   let allowRetry = false;
   await ctx.route("**/rest/v1/rpc/tasks_list", async route => {
     if (!allowRetry) {
@@ -114,13 +114,25 @@ for (const viewport of [
   { width: 844, height: 390, label: "844x390" },
   { width: 667, height: 375, label: "667x375" },
 ]) {
-  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser }) => {
-    const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
+  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser, accounts, loginAs }, testInfo) => {
+    const { ctx, page } = await newUserContext(browser, loginAs, accounts.standard[0]);
     try {
       await page.setViewportSize(viewport);
       let fixture = tasksPreview;
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
+      // Poziome okno niższe niż próg stron roboczych (580 px, decyzja 2026-10-22):
+      // komputer dostaje „Za małe okno”; po powiększeniu okna lista wraca.
+      if (viewport.width >= viewport.height && viewport.height < 580) {
+        await expect(page.locator("#pageGuard")).toBeVisible();
+        await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "small");
+        await expect(page.locator("html")).toHaveAttribute("data-device-guard", "small");
+        await page.screenshot({ path: testInfo.outputPath(`shot-tasks-guard-small-${viewport.label}.png`) });
+        await page.setViewportSize({ width: 1400, height: 900 });
+        await expect(page.locator("html")).toHaveAttribute("data-device-guard", "ok");
+        await expect(page.locator(".rowsRow")).toHaveCount(4);
+        return;
+      }
       await expect(page.locator(".rowsRow")).toHaveCount(4);
       await expect(page.locator('input[type="search"], .list-search, .games-bottom')).toHaveCount(0);
       await expect(page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);

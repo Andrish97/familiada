@@ -6,12 +6,9 @@
 // a nie z www.familiada.online -- testują kod z gałęzi, na prawdziwym
 // backendzie (baza, RPC, blokady, Storage), bez wdrażania na produkcję.
 //
-// Testy idą równolegle; każdy worker ma WŁASNE konto (po parallelIndex), więc
-// blokady, lista i sprzątanie jednego testu nie wpływają na inne. Pula:
-// LOGO_E2E_ACCOUNTS (domyślnie 2,3,6,7) -- bez test1@ (na nim działa
-// nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
-// „prowadzisz rozgrywkę”), test4@/test5@ (zarezerwowane dla odizolowanych
-// przebiegów), i test9@/test10@ (wyłączone z puli w CLAUDE.md; logowanie działa — sprawdzone 2026-10-20).
+// Testy idą równolegle; każdy worker wypożycza WŁASNE konto (E25,
+// helpers/e2e-test.js, czyszczone przy wypożyczeniu), więc blokady, lista
+// i sprzątanie jednego testu nie wpływają na inne.
 // Logowanie raz na workera (captureSession). Każdy test
 // sprząta swoje logo i pliki (prefiks).
 //
@@ -20,9 +17,8 @@
 
 const path = require("path");
 const fs = require("fs");
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { startLocalSite, captureSession, useSession } = require("./helpers/local-site");
-const { testAccountUsername } = require("./helpers/login");
 const L = require("./helpers/logo-editor");
 
 const DEMO_IMAGE = path.resolve(__dirname, "../../web/logos/assets/demo-image.png");
@@ -30,15 +26,13 @@ const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon-1024.png"
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "parallel" });
-
-const ACCOUNTS = String(process.env.LOGO_E2E_ACCOUNTS || "2,3,6,7").split(",").map(Number).filter(Boolean);
+test.use({ needs: { standard: 1 } });
 
 let site;
 let session;
-test.beforeAll(async ({ browser }, testInfo) => {
+test.beforeAll(async ({ browser, accounts }) => {
   site = await startLocalSite();
-  const account = ACCOUNTS[testInfo.parallelIndex % ACCOUNTS.length];
-  session = await captureSession(browser, testAccountUsername(account));
+  session = await captureSession(browser, accounts.standard[0].email);
 });
 test.afterAll(async () => { await site?.close(); });
 test.beforeEach(async ({ context }) => { await useSession(context, site.origin, session); });

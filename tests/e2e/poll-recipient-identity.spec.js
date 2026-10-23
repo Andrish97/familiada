@@ -1,8 +1,12 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, restoreTestAccount } = require("./helpers/mailbox");
+const { withE2EBypass } = require("./helpers/login");
+const { resetMailProviderLimits, extractHttpLinks } = require("./helpers/mailbox");
 const { expectMailDocument } = require("./helpers/mail-document");
+
+// E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel
+// i konto disposable odbiorcy (usuwane i zakładane ponownie w teście); poczta.
+test.use({ needs: { standard: 1, disposable: 1, resources: ["mail"] } });
 
 async function rpc(page, name, args) {
   return page.evaluate(async ({ name, args }) => {
@@ -12,7 +16,49 @@ async function rpc(page, name, args) {
   }, { name, args });
 }
 
-test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kasowanie chroni stare linki", async ({ browser }) => {
+// E25: konto usunięte w trakcie testu zakładamy ponownie tym samym adresem
+// (usunięty restoreTestAccount robił to kluczem serwisowym): prawdziwy formularz
+// rejestracji i link z maila potwierdzającego. Formularz nie ma pola nazwy,
+// a domyślna nazwa z adresu (e2e+…) jest zastrzeżona, więc do zapytania signup
+// dokładamy nazwę tożsamości w metadanych (API signUp ją przyjmuje; baza
+// dopuszcza e2e.* tylko dla adresu tej tożsamości). Kolejne wypożyczenie i tak
+// odtwarza konto disposable (podpina je po adresie).
+async function registerAgain(page, context, identity, mailbox) {
+  const after = new Date(Date.now() - 2000).toISOString();
+  const withUsername = route => {
+    const body = route.request().postDataJSON() || {};
+    body.data = { ...(body.data || {}), username: identity.username };
+    return route.continue({ postData: JSON.stringify(body) });
+  };
+  await page.route("**/auth/v1/signup*", withUsername);
+  try {
+    await withE2EBypass(context);
+    await page.goto("https://www.familiada.online/login/", { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => {
+      const status = document.querySelector("#status")?.textContent?.trim() || "";
+      return !document.documentElement.classList.contains("page-loading") && !!status && !/checking|sprawdzam|перевіряю/i.test(status);
+    }, null, { timeout: 20000 });
+    await page.click("#btnToggle");
+    await page.fill("#email", identity.email);
+    await page.fill("#pass", process.env.TEST_PASSWORD);
+    await page.fill("#pass2", process.env.TEST_PASSWORD);
+    await page.click("#btnPrimary");
+    await expect(page.locator("#status")).toContainText("Sprawdź e-mail", { timeout: 30000 });
+  } finally {
+    await page.unroute("**/auth/v1/signup*", withUsername);
+    await context.setExtraHTTPHeaders({});
+  }
+  const mail = await mailbox.waitFor(identity, { after, subject: /Potwierdzenie konta/i, timeout: 150000 });
+  const link = mailbox.links(mail).find(link => new URL(link).pathname === "/login/confirm/" && new URL(link).searchParams.get("type") === "signup");
+  expect(link).toBeTruthy();
+  await page.goto(link, { waitUntil: "domcontentloaded" });
+  await page.waitForURL(/\/games/, { timeout: 30000 });
+  const user = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+  expect(user.email).toBe(identity.email);
+  return user.id;
+}
+
+test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kasowanie chroni stare linki", async ({ browser, accounts, loginAs, mailbox }) => {
   test.setTimeout(600000);
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
@@ -24,12 +70,13 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
   const recipient = await recipientContext.newPage();
   const anonymous = await anonymousContext.newPage();
   const games = [];
-  const email = "test15@familiada.online";
+  const [ownerIdentity] = accounts.standard;
+  const [recipientIdentity] = accounts.disposable;
+  const email = recipientIdentity.email;
   let oldRecipientId = null;
   try {
-    await restoreTestAccount("test15");
-    await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
-    await loginAsTestUser(recipient, recipientContext, { username: email });
+    await loginAs(owner, ownerContext, ownerIdentity);
+    await loginAs(recipient, recipientContext, recipientIdentity);
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     expect((await rpc(owner, "e2e_poll_mail_budget_cleanup", { p_recipient_email: email })).ok).toBe(true);
     expect((await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId })).ok).toBe(true);
@@ -39,9 +86,9 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
       const { error } = await sb.from("games").delete().eq("owner_id", uid).like("name", "E2E-351-%");
       if (error) throw error;
     });
-    await clearMailbox(email);
+    await mailbox.clear(recipientIdentity);
     await resetMailProviderLimits(owner);
-    // Account15 is explicitly reserved for deletion and recreated in finally.
+    // Konto disposable: usuwane tutaj, zakładane ponownie niżej (registerAgain).
     await recipient.goto("https://www.familiada.online/account/");
     await recipient.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20000 });
     await recipient.locator("#deletePassword").fill(process.env.TEST_PASSWORD);
@@ -96,7 +143,7 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
       }, { mailItems: sharing.mail, name: game.name });
       expect(sent).toMatchObject({ sent: 1, failed: 0 });
       previousMailAt = Date.now();
-      const mail = await waitForEmail({ recipient: email, after, subject: new RegExp(game.name), timeout: 150000 });
+      const mail = await mailbox.waitFor(recipientIdentity, { after, subject: new RegExp(game.name), timeout: 150000 });
       expectMailDocument(mail, { globalUnsub: true });
       fixture.link = extractHttpLinks(mail).find(link => new URL(link).pathname === "/go/" && new URL(link).searchParams.has("t"));
       expect(fixture.link).toBeTruthy();
@@ -124,11 +171,8 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
         expect(await rpc(anonymous, "poll_task_done", { p_token: fixture.token })).toBe("votes_incomplete");
       }
     }
-    const restored = await restoreTestAccount("test15");
-    expect(restored.admin_excluded).toBe(true);
-    expect(restored.user_id).not.toBe(oldRecipientId);
-    await loginAsTestUser(recipient, recipientContext, { username: email });
-    const registeredId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    const registeredId = await registerAgain(recipient, recipientContext, recipientIdentity, mailbox);
+    expect(registeredId).not.toBe(oldRecipientId);
     for (const fixture of games) {
       const task = (await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks.find(task => task.id === fixture.taskId);
       expect(task.recipient_user_id).toBe(registeredId);
@@ -167,9 +211,7 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     for (const fixture of games) expect((await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks).toHaveLength(0);
-    await restoreTestAccount("test15");
-    await loginAsTestUser(recipient, recipientContext, { username: email });
-    const newRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    const newRecipientId = await registerAgain(recipient, recipientContext, recipientIdentity, mailbox);
     expect(newRecipientId).not.toBe(oldRecipientId);
     for (const fixture of games) {
       expect(await rpc(recipient, "poll_task_opened", { p_token: fixture.token })).toBe("not_found");
@@ -182,16 +224,9 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
     console.error("[e2e351] scenario failed:", error.message);
     throw error;
   } finally {
+    // Konta disposable nie odtwarzamy tutaj: po błędzie worker zaczyna od nowa,
+    // a nowe wypożyczenie zakłada konto od zera.
     const cleanup = await Promise.allSettled([
-      (async () => {
-        await restoreTestAccount("test15");
-        const recoveryContext = await browser.newContext();
-        try {
-          const recoveryPage = await recoveryContext.newPage();
-          await loginAsTestUser(recoveryPage, recoveryContext, { username: email });
-          expect(await recoveryPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email)).toBe(email);
-        } finally { await recoveryContext.close(); }
-      })(),
       (async () => {
         expect((await rpc(owner, "e2e_subscriber_email_cleanup", { p_email: email })).ok).toBe(true);
         if (!games.length) return;

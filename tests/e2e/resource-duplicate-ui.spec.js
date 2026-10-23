@@ -1,17 +1,16 @@
-const {test,expect}=require('@playwright/test');
-const {loginAsPooledTestUser}=require('./helpers/login');
+const {test,expect}=require('./helpers/e2e-test');
 const {serveBranchCode}=require('./helpers/branch-code');
 const {generateE2EToken}=require('./helpers/e2e-token');
-test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.use({serviceWorkers:'block',needs:{standard:1}});test.describe.configure({retries:0});
 let stage='login';
 test.afterEach(async({},info)=>{if(info.status!==info.expectedStatus)console.error('::error title=Duplicate UI stage::'+stage);});
-test('duplicate action on Games Bases Logo: own card and name only, shared icon action, mobile and desktop screenshots',async({page,context},info)=>{
+test('duplicate action on Games Bases Logo: own card and name only, shared icon action, mobile and desktop screenshots',async({page,context,accounts,loginAs},info)=>{
  test.setTimeout(240000);const fixtures=[],copies=[];
  if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','bases','logos']});
  const e2e=generateE2EToken(process.env.E2E_BYPASS_SECRET);
  await context.route('https://www.familiada.online/_api/resource-duplicate',async route=>await route.continue({headers:{...route.request().headers(),'X-E2E-Token':e2e}}));
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
- await loginAsPooledTestUser(page,context,info.parallelIndex);
+ await loginAs(page,context,accounts.standard[0]);
  try{
   for(const [kind,path,table,selector] of [['game','games','games','.card[data-game-id]'],['base','bases','question_bases','.card[data-base-id]'],['logo','logos','user_logos','.logoTile']]){
    stage='create source '+kind;
@@ -26,7 +25,8 @@ test('duplicate action on Games Bases Logo: own card and name only, shared icon 
    // The suffix belongs to the title; there is no additional copy badge.
    await expect(copy.locator(kind==='logo'?'.logoName':'.name')).toHaveText(source.name+' kopia');
    await expect(copy.locator('.tag').filter({hasText:/^kopia$/})).toHaveCount(0);
-   for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){
+   // Landscape >= 580 px high: work pages block shorter landscape views (nav-map minViewportHeight, device-guard; decision 2026-10-22).
+   for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',1024,600]]){
     stage='screenshot '+kind+' '+label;await page.setViewportSize({width,height});await copy.scrollIntoViewIfNeeded();await expect(page.locator('#btnDuplicate svg.ico')).toBeVisible();
     if(label==='mobile')await expect(page.locator('#btnDuplicate .only-desktop')).toBeHidden();
     await page.screenshot({path:info.outputPath('shot-resource-duplicate-'+kind+'-'+label+'.png'),fullPage:true});

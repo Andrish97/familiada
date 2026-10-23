@@ -27,11 +27,13 @@ function uidFor(email) {
   return `${hx.slice(0, 8)}-${hx.slice(8, 12)}-4${hx.slice(13, 16)}-8${hx.slice(17, 20)}-${hx.slice(20, 32)}`;
 }
 const known = new Set();
-function ensureUser(email) {
+function ensureUser(email, username, role) {
   const id = uidFor(email);
   if (!known.has(id)) {
-    const login = String(email).split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_");
-    execFileSync("psql", [...PSQL, `insert into auth.users(id,email) values ('${id}','${email}') on conflict do nothing;
+    const login = username || String(email).split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_");
+    // Tożsamość e2e (E25) przed profilem -- baza dopuszcza adres e2e+ i nazwę e2e.* tylko dla niej.
+    const identity = role ? `insert into public.e2e_identities(name,role,email,user_id) values ('${login}','${role}','${email}','${id}') on conflict do nothing;` : "";
+    execFileSync("psql", [...PSQL, `insert into auth.users(id,email) values ('${id}','${email}') on conflict do nothing; ${identity}
       insert into public.profiles(id,username,email) values ('${id}','${login}','${email}') on conflict (id) do nothing;`]);
     known.add(id);
   }
@@ -156,3 +158,30 @@ loginHelpers.loginAsTestUser = async function (page, context, opts = {}) {
   if (typeof origInstrument === "function") origInstrument(page);
   await page.goto(opts.expectUrl && typeof opts.expectUrl === "string" ? opts.expectUrl : "https://www.familiada.online/games/", { waitUntil: "domcontentloaded" });
 };
+
+// E25: wypożyczanie kont bez Workera -- każdy worker dostaje własne tożsamości
+// e2e (konto lokalne zakładane przy pierwszym użyciu), zasoby zawsze wolne.
+const leaseClient = require(path.join(REPO, "tests/e2e/helpers/e2e-lease-client.js"));
+leaseClient.lease = async function ({ worker, needs }) {
+  const w = Number(worker) || 0;
+  const identities = [];
+  const pad = (n) => String(n).padStart(2, "0");
+  for (const role of ["standard", "noaccount", "disposable"]) {
+    for (let i = 0; i < (needs[role] || 0); i++) {
+      const name = `e2e.${role}${pad(w * 10 + i + 1)}`;
+      const email = `e2e+${role}${pad(w * 10 + i + 1)}@familiada.online`;
+      if (role !== "noaccount") ensureUser(email, name, role);
+      else execFileSync("psql", [...PSQL, `insert into public.e2e_identities(name,role,email) values ('${name}','noaccount','${email}') on conflict do nothing;`]);
+      identities.push({ name, role, email, user_id: role === "noaccount" ? null : uidFor(email), admin_excluded: true });
+    }
+  }
+  for (const purpose of [].concat(needs.dedicated || [])) {
+    const email = `e2e+dedicated${pad(w + 1)}@familiada.online`;
+    ensureUser(email, `e2e.dedicated${pad(w + 1)}`, "dedicated");
+    identities.push({ name: `e2e.dedicated${pad(w + 1)}`, role: "dedicated", purpose, email, user_id: uidFor(email), admin_excluded: true });
+  }
+  for (const resource of [].concat(needs.resources || [])) identities.push({ name: resource, role: "resource" });
+  return { ok: true, identities };
+};
+leaseClient.renew = async () => ({ ok: true });
+leaseClient.release = async () => ({ ok: true });

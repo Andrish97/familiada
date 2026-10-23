@@ -7,13 +7,14 @@
 // is_demo=true została (edycja jej nie kasuje — patrz logo-editor/js/main.js
 // updateLogo(), które nie dotyka is_demo).
 
-const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { test, expect } = require("./helpers/e2e-test");
+
+test.use({ needs: { standard: 1 } });
 
 // /account jest celowo zablokowane dla gości (guest-mode.js showGuestBlockedOverlay,
 // account.js:453) — restore demo można przetestować tylko na koncie testowym.
-test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)", async ({ page, context }) => {
-  await loginAsTestUser(page, context);
+test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
 
   const setup = await page.evaluate(async () => {
     const sb = window.__sbClient;

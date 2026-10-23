@@ -1,5 +1,7 @@
 -- Rollback-only smoke test for migration 393: active visibility events for
--- Display, Host, Buzzer and Control appear in the Admin event log.
+-- Display, Host, Buzzer and Control appear in the Admin event log
+-- (since 468: per-session table control2_session_events; since 470 written
+-- through control2_device_log / control2_control_log).
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE FUNCTION pg_temp.check(label text, condition boolean) RETURNS void
@@ -25,7 +27,7 @@ DECLARE
   v_token text;
   v_connection uuid;
   v_state jsonb;
-  v_accepted boolean;
+  v_count integer;
 BEGIN
   FOREACH v_type IN ARRAY ARRAY['display','host','buzzer'] LOOP
     v_token := public.control_runtime_device_link(
@@ -42,46 +44,40 @@ BEGIN
     IF v_state->>'state'<>'primary' THEN
       RAISE EXCEPTION 'FAILED: % should become primary: %',v_type,v_state;
     END IF;
-    v_accepted := public.control2_device_transport_event(
+    v_count := public.control2_device_log(
       'b3930000-0000-0000-0000-000000000001',v_type,v_token,
-      jsonb_build_object('event_type','page_state','event_id',v_type||'-initial-393',
-        'reason','initial','visibility','visible','focused',true,'online',true),
-      v_connection,(v_state->>'epoch')::bigint
+      v_connection,(v_state->>'epoch')::bigint,
+      jsonb_build_array(
+        jsonb_build_object('event_type','page_state','event_id',v_type||'-initial-393',
+          'reason','initial','visibility','visible','focused',true,'online',true),
+        jsonb_build_object('event_type','page_state','event_id',v_type||'-hidden-393',
+          'reason','visibilitychange','visibility','hidden','focused',false,'online',true))
     );
-    IF v_accepted IS DISTINCT FROM true THEN
-      RAISE EXCEPTION 'FAILED: initial visibility not accepted for %',v_type;
-    END IF;
-    v_accepted := public.control2_device_transport_event(
-      'b3930000-0000-0000-0000-000000000001',v_type,v_token,
-      jsonb_build_object('event_type','page_state','event_id',v_type||'-hidden-393',
-        'reason','visibilitychange','visibility','hidden','focused',false,'online',true),
-      v_connection,(v_state->>'epoch')::bigint
-    );
-    IF v_accepted IS DISTINCT FROM true THEN
-      RAISE EXCEPTION 'FAILED: visibility transition not accepted for %',v_type;
+    IF v_count IS DISTINCT FROM 2 THEN
+      RAISE EXCEPTION 'FAILED: visibility snapshots not accepted for % (%)',v_type,v_count;
     END IF;
   END LOOP;
 END $$;
 
 DO $$
-DECLARE v_accepted boolean;
+DECLARE v_count integer;
 BEGIN
-  v_accepted := public.control2_control_visibility_event(
+  v_count := public.control2_control_log(
     'b3930000-0000-0000-0000-000000000001',
-    '{"event_id":"control-hidden-393","reason":"visibilitychange","visibility":"hidden","focused":false,"online":true}'::jsonb
+    '[{"event_type":"page_state","event_id":"control-hidden-393","reason":"visibilitychange","visibility":"hidden","focused":false,"online":true}]'::jsonb
   );
-  IF v_accepted IS DISTINCT FROM true THEN
+  IF v_count IS DISTINCT FROM 1 THEN
     RAISE EXCEPTION 'FAILED: Control visibility transition was not accepted';
   END IF;
 END $$;
 
 SELECT pg_temp.check('initial and hidden snapshots recorded for three devices and Control',
-  (SELECT count(*)=7 FROM public.control2_device_events
+  (SELECT count(*)=7 FROM public.control2_session_events
    WHERE game_id='b3930000-0000-0000-0000-000000000001' AND event_type='page_state'));
 SELECT pg_temp.check('Admin event export identifies device and visibility transition',
   EXISTS (
     SELECT 1 FROM jsonb_array_elements(
-      public.get_control2_display_events(ARRAY(
+      public.get_control2_session_events(ARRAY(
         SELECT session_id FROM public.game_session_active
         WHERE game_id='b3930000-0000-0000-0000-000000000001'
       ))->(SELECT session_id::text FROM public.game_session_active
@@ -95,7 +91,7 @@ SELECT pg_temp.check('Admin event export identifies device and visibility transi
 SELECT pg_temp.check('Control visibility is included in Admin event export',
   EXISTS (
     SELECT 1 FROM jsonb_array_elements(
-      public.get_control2_display_events(ARRAY(
+      public.get_control2_session_events(ARRAY(
         SELECT session_id FROM public.game_session_active
         WHERE game_id='b3930000-0000-0000-0000-000000000001'
       ))->(SELECT session_id::text FROM public.game_session_active

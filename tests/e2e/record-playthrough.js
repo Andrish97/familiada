@@ -14,9 +14,10 @@
 // przygotowywane przez ten workflow PRZED odpaleniem tego pliku.
 //
 // Wymagane zmienne środowiskowe (te same co istniejący e2e-tests.yml):
-// E2E_BYPASS_SECRET, TEST_PASSWORD. Loguje się jako test1@familiada.online
-// (domyślne konto puli testX, patrz e2e/helpers/login.js) -- domena jest
-// stałą w kodzie, nie sekretem.
+// E2E_BYPASS_SECRET, TEST_PASSWORD. Konta wypożycza (lease, E25) przez
+// helpers/e2e-lease-client.js: operator i odbiorca udostępnienia to
+// accounts.standard[0] i [1], zasób heavy (oraz mail dla scenariusza 8) --
+// tests/README.md „Test accounts”.
 // Opcjonalnie: DISPLAY (domyślnie ":99"), PULSE_SINK (domyślnie "CaptureSink"),
 // RECORD_OUT_DIR (domyślnie "tests/recordings").
 //
@@ -31,11 +32,53 @@ const { chromium, expect } = require("@playwright/test");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
-const { loginAsTestUser, instrumentPage } = require("./helpers/login");
+// Skrypt działa poza test runnerem (bez fixture `loginAs`), więc logowanie
+// i wypożyczanie kont jak w helpers/e2e-test.js.
+const { loginAsTestUser: loginWithPassword, instrumentPage } = require("./helpers/login");
+const leaseClient = require("./helpers/e2e-lease-client");
 const { installDisplayPerformance, startRunnerPerformance, collectDisplayPerformance } = require("./helpers/display-performance.cjs");
 const { waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online";
+
+// Logowanie wypożyczonym kontem (to samo co fixture loginAs w helpers/e2e-test.js).
+async function loginAs(page, context, identity) {
+  if (!identity?.email || identity.role === "noaccount") {
+    throw new Error(`loginAs: ${identity?.name || "?"} nie jest kontem do logowania`);
+  }
+  return loginWithPassword(page, context, { username: identity.email });
+}
+
+// Wypożycza komplet kont na czas nagrania (czeka do ~10 min, gdy zajęte),
+// odnawia lease co 5 min; release() oddaje komplet.
+async function leaseAccounts(needs) {
+  const worker = "record";
+  const deadline = Date.now() + 10 * 60_000;
+  let result;
+  for (;;) {
+    result = await leaseClient.lease({ worker, needs, label: "record-playthrough" });
+    if (result?.ok) break;
+    if (result?.error !== "busy" || Date.now() > deadline) {
+      throw new Error(`[e2e-lease] nie udało się wypożyczyć ${JSON.stringify(needs)}: ${JSON.stringify(result)}`);
+    }
+    console.log(`[e2e-lease] zajęte (${result.role || result.resource || result.purpose}), czekam; posiadacze: ${JSON.stringify(result.holders)}`);
+    await new Promise((resolve) => setTimeout(resolve, 15_000));
+  }
+  console.log(`[e2e-lease] ${result.identities.map((i) => i.name).join(", ")}`);
+  const accounts = { standard: [] };
+  for (const identity of result.identities) {
+    if (identity.role === "standard") accounts.standard.push({ ...identity, username: identity.name });
+  }
+  const timer = setInterval(() => { leaseClient.renew().catch(() => {}); }, 5 * 60_000);
+  timer.unref?.();
+  return {
+    accounts,
+    release: async () => {
+      clearInterval(timer);
+      await leaseClient.release(worker).catch((error) => console.log("[e2e-lease] release:", error.message));
+    },
+  };
+}
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
 const PULSE_SINK = process.env.PULSE_SINK || "CaptureSink";
 const OUT_DIR = process.env.RECORD_OUT_DIR || path.join(__dirname, "..", "recordings");
@@ -1764,27 +1807,25 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
 // wysłania czegokolwiek), RPC share_device zapisuje udostępnienie, a
 // js/core/send-mail (Edge Function) wysyła PRAWDZIWY e-mail z linkiem
 // /control/host?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
-// QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. test2@familiada.online
-// to drugie konto z tej samej puli testX co test1 (login.js) -- gwarantowane
-// istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=8), więc
-// resolveToUserId zawsze je znajdzie.
-async function scenarioShareDeviceEmail(pages, { browser }) {
+// QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. Odbiorca to drugie
+// wypożyczone konto (accounts.standard[1]) -- istnieje, więc resolveToUserId
+// zawsze je znajdzie.
+async function scenarioShareDeviceEmail(pages, { browser, accounts }) {
   const { control } = pages;
-  const RECIPIENT_EMAIL = "test2@familiada.online";
+  const recipient = accounts.standard[1];
+  const RECIPIENT_EMAIL = recipient.email;
 
   // Zgłoszone: maile mają cooldown/suppression, żeby nie spamować -- przy
   // wielokrotnym testowaniu na TYM SAMYM koncie trzeba to ręcznie zdjąć w
   // bazie przed testem. docs/email-system-description.md: mail-worker
   // POMIJA wysyłkę CICHO (bez błędu), gdy user_flags.email_notifications
   // odbiorcy jest false -- wygląda identycznie jak zwykły timeout, tylko
-  // mail nigdy się nie zjawi. test2 jest tu odbiorcą w WIELU przebiegach
-  // tego scenariusza (każde CI) -- zamiast liczyć na to, że nikt nigdy nie
-  // zgasił tej flagi, wymuszamy ją z powrotem na true PRZED udostępnieniem:
+  // mail nigdy się nie zjawi. Lease czyści konto, ale zamiast liczyć na to,
+  // że nikt nie zgasił tej flagi, wymuszamy ją z powrotem na true PRZED udostępnieniem:
   // logujemy się NA KONTO ODBIORCY w osobnym, efemerycznym kontekście
   // (user_flags ma RLS tylko na własny wiersz -- auth.uid()=user_id) i
   // nadpisujemy. Identyczny wzorzec jak w control2.spec.js's @mailbox test
-  // dla tego samego scenariusza (tam na test7, nie test2 -- inne konto
-  // odbiorcy, ten sam mechanizm).
+  // dla tego samego scenariusza.
   //
   // Ten sam kontekst usuwa też od razu udostępnienie z poprzedniego
   // przebiegu (e2e_shared_devices_cleanup, migracja 287 -- analogiczne do
@@ -1801,7 +1842,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
     const recipientSetupCtx = await browser.newContext();
     const recipientSetupPage = await recipientSetupCtx.newPage();
     try {
-      await loginAsTestUser(recipientSetupPage, recipientSetupCtx, { username: RECIPIENT_EMAIL });
+      await loginAs(recipientSetupPage, recipientSetupCtx, recipient);
       recipientUid = await recipientSetupPage.evaluate(async (ownerUid) => {
         const sb = window.__sbClient;
         const { data: userData } = await sb.auth.getUser();
@@ -1809,7 +1850,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
         if (ownerUid) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerUid });
         return userData.user.id;
       }, testUid);
-      console.log("[record] user_flags.email_notifications wymuszone na true + stare udostępnienia wyczyszczone dla test2");
+      console.log("[record] user_flags.email_notifications wymuszone na true + stare udostępnienia wyczyszczone dla odbiorcy");
     } finally {
       await recipientSetupCtx.close().catch(() => {});
     }
@@ -1856,10 +1897,9 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   // e-mail leci asynchronicznie, osobno (fetch do Edge Function, bez
   // czekania w UI). shareDevice.js's renderModal() pokazuje
   // `recipient_username || recipient_email` -- skoro konto testowe MA
-  // ustawiony username ("test2"), modal poprawnie pokazuje tylko to, nie
-  // pełny e-mail (zdiagnozowane w CI run #31: treść była "test2", nie
-  // "test2@familiada.online" -- to zachowanie aplikacji, nie błąd).
-  await expect(control.locator("#shareDeviceCurrentContent")).toContainText("test2", { timeout: 15_000 });
+  // ustawiony username, modal poprawnie pokazuje tylko to, nie pełny e-mail
+  // (zdiagnozowane w CI run #31 -- to zachowanie aplikacji, nie błąd).
+  await expect(control.locator("#shareDeviceCurrentContent")).toContainText(recipient.username, { timeout: 15_000 });
   await control.waitForTimeout(2000); // widz ma zdążyć przeczytać potwierdzenie
 
   console.log(`[record] czekam na e-mail udostępnienia do ${RECIPIENT_EMAIL}`);
@@ -1911,11 +1951,11 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
 
   // ZNALEZIONA REALNA PRZYCZYNA (control2.spec.js's @mailbox test, run #333):
   // bez tego to udostępnienie zostawało w bazie (TTL 4h) i zanieczyszczało
-  // KAŻDY inny test/scenariusz, który loguje się jako ten sam, hardcodowany
-  // operator (test1) i pokazuje "Aktualnie udostępnione dla: ..." dla
+  // KAŻDY inny test/scenariusz, który loguje się jako ten sam operator
+  // i pokazuje "Aktualnie udostępnione dla: ..." dla
   // urządzenia "host" -- list_my_device_shares() zwraca WSZYSTKIE
   // udostępnienia tego device_type niezależnie od gry/testu, a UI bierze
-  // pierwsze dopasowanie, więc stare "test2" z tego scenariusza przesłaniało
+  // pierwsze dopasowanie, więc stary odbiorca z tego scenariusza przesłaniał
   // świeże udostępnienie innego testu. Sprzątamy po sobie, zamiast liczyć na
   // TTL albo na cleanup innego testu.
   await control.evaluate(async (rid) => {
@@ -2238,6 +2278,8 @@ async function main() {
   }
 
   const scenariosToRun = filterScenarios(SCENARIOS);
+  const needsMail = scenariosToRun.some((scenario) => scenario.file.startsWith("08-"));
+  let lease = null;
 
   const browser = await chromium.launch({
     headless: false,
@@ -2251,6 +2293,10 @@ async function main() {
   });
 
   try {
+    lease = await leaseAccounts({ standard: 2, resources: needsMail ? ["heavy", "mail"] : ["heavy"] });
+    const { accounts } = lease;
+    const [operator] = accounts.standard;
+
     // Zgłoszone: kolejka maili (scenariusz 8, udostępnianie urządzenia)
     // bywa pusta nawet po 90s timeoutu waitForEmail() -- nie to samo co
     // zbyt ciasny margines (ten osobno naprawiony, patrz commit o 60s/90s).
@@ -2266,7 +2312,7 @@ async function main() {
     // zewnątrz przy każdym przebiegu. RPC nie ma żadnego GRANT/REVOKE w
     // migracji (2026-04-23_email_providers_limits.sql), więc jest wołalna
     // z tego samego, zwykłego klienta co restoreDemoGame().
-    if (scenariosToRun.some((scenario) => scenario.file.startsWith("08-"))) {
+    if (needsMail) {
       const resetError = await resetMailProviderLimits().then(() => null, (e) => e.message);
       console.log("[record] reset_email_limits:", resetError ? `FAILED (${resetError})` : "OK");
     }
@@ -2275,7 +2321,7 @@ async function main() {
       console.log(`\n=== Scenariusz: ${scenario.file} ===`);
       const setupCtx = await browser.newContext({ baseURL: BASE_URL });
       const setupPage = await setupCtx.newPage();
-      await loginAsTestUser(setupPage, setupCtx);
+      await loginAs(setupPage, setupCtx, operator);
       const game = await scenario.makeGame(setupPage);
 
       const { contexts, pages } = await openTiledDevices(browser, game, await setupCtx.storageState());
@@ -2290,7 +2336,7 @@ async function main() {
         // game.finalQuestions (prawdziwa treść z restoreDemoGame). Reszta
         // scenariuszy deklaruje run(pages) i ten drugi argument po prostu
         // ignoruje.
-        await scenario.run(pages, { contexts, browser, game });
+        await scenario.run(pages, { contexts, browser, game, accounts });
       } catch (err) {
         console.error(`[record] scenariusz ${scenario.file} rzucił błąd:`, err);
         await dumpFailureDiagnostics(pages.control, scenario.file).catch((diagErr) => {
@@ -2318,6 +2364,7 @@ async function main() {
     }
   } finally {
     await browser.close();
+    await lease?.release();
   }
 }
 

@@ -206,7 +206,11 @@
       remove: async () => ({ data: [], error: null }),
       createSignedUrl: async (p) => ({ data: { signedUrl: db.storage?.[`${bucket}/${p}`] || "" }, error: null }),
     }) },
-    functions: { invoke: async (name) => { miss("function", name); return { data: { ok: true }, error: null }; } },
+    functions: { invoke: async (name) => {
+      // Odpowiedź funkcji Edge z danych sceny (db.functions), inaczej zgłoszenie braku.
+      if (db.functions && Object.prototype.hasOwnProperty.call(db.functions, name)) return { data: db.functions[name], error: null };
+      miss("function", name); return { data: { ok: true }, error: null };
+    } },
   };
   window.supabase = { createClient: () => client };
 })();

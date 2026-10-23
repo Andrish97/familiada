@@ -84,28 +84,28 @@ export async function handleAdminApi(request, env) {
       const sessionIds = rows
         .filter(row => Number(row?.control_version) === 2 && typeof row?.session_id === "string")
         .map(row => row.session_id);
-      let displayEvents = {};
+      // Zdarzenia i podsumowanie sesji z jednej tabeli (migracja 468).
+      const objectOf = data => data && typeof data === "object" && !Array.isArray(data) ? data : {};
+      let sessionEvents = {};
+      let sessionDiag = {};
       if (sessionIds.length) {
-        const logRes = await supabaseRpc(env, "get_control2_display_events", { p_session_ids: sessionIds });
-        if (!logRes.ok) return json({ ok: false, error: "display_events_failed", details: summarizeSupabaseError(logRes) }, logRes.status || 500);
-        displayEvents = logRes.data && typeof logRes.data === "object" && !Array.isArray(logRes.data) ? logRes.data : {};
+        const [logRes, diagRes] = await Promise.all([
+          supabaseRpc(env, "get_control2_session_events", { p_session_ids: sessionIds }),
+          supabaseRpc(env, "get_control2_session_diag", { p_session_ids: sessionIds }),
+        ]);
+        if (!logRes.ok) return json({ ok: false, error: "session_events_failed", details: summarizeSupabaseError(logRes) }, logRes.status || 500);
+        if (!diagRes.ok) return json({ ok: false, error: "session_diag_failed", details: summarizeSupabaseError(diagRes) }, diagRes.status || 500);
+        sessionEvents = objectOf(logRes.data);
+        sessionDiag = objectOf(diagRes.data);
       }
       rows = rows.map(row => {
         const { session_id: sessionId, ...publicRow } = row || {};
         if (Number(publicRow.control_version) !== 2) return publicRow;
-        const extraEvents = Array.isArray(displayEvents[sessionId]) ? displayEvents[sessionId] : [];
+        const events = Array.isArray(sessionEvents[sessionId]) ? sessionEvents[sessionId] : [];
         const stats = publicRow.stats_detail && typeof publicRow.stats_detail === "object" ? publicRow.stats_detail : {};
-        const events = [...(Array.isArray(stats.events) ? stats.events : []), ...extraEvents]
-          .sort((a, b) => Date.parse(a?.at || "") - Date.parse(b?.at || ""));
-        const eventLog = {
-          status: sessionId ? (extraEvents.length ? "events_recorded" : "no_events_recorded") : "session_id_missing",
-          event_count: extraEvents.length,
-        };
         return {
           ...publicRow,
-          device_event_log: eventLog,
-          // Keep the old key for saved Admin exports and older clients.
-          display_event_log: eventLog,
+          diag: sessionDiag[sessionId] || null,
           stats_detail: { ...stats, events },
         };
       });

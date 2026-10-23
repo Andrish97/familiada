@@ -50,6 +50,13 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
 | Logi maili, tokeny wypisania, zgłoszenia kontaktowe (e-mail, IP), zaproszenia do baz (e-mail), limity wysyłek | zostają na zawsze |
 | Pliki (Storage) | konto: usuwane **przed** bazą (błąd bazy = pliki znikają, konto zostaje), max 1000 plików; porzucenie gościa: **wcale** |
 
+**Diagnostyka rozgrywek Control 2 (migracja 468, decyzja 2026-10-22):**
+`control2_session_events` (szczegóły, 90 dni) i `control2_session_diag`
+(podsumowanie sesji) nie mają kluczy obcych do gier, sesji ani kont —
+po usunięciu gry lub konta zostają dla statystyk. Zawierają tylko dane
+techniczne (typy zdarzeń, czasy, metryki łącza, klasa urządzenia), bez
+treści gry i danych osobowych.
+
 ## 3. Mapa docelowa (propozycja do potwierdzenia)
 
 **Gra**

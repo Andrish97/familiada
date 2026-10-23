@@ -8,12 +8,20 @@
 // wynika z ekranu dotykowego i krótszego boku ekranu; orientacja oraz to,
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
+//
+// Wysokość (decyzja użytkownika 2026-10-22): strony robocze mają też próg
+// wysokości viewportu (nav-map: minViewportHeight). Sprawdzany tylko w
+// poziomie — w pionie układ jest jednokolumnowy i przewija się. Za niski
+// poziomy widok to „obróć urządzenie”, gdy obrót pomoże (dotykowy telefon
+// lub tablet, a w pionie strona się mieści), w innym razie „Za małe okno”
+// (komputer, telewizor albo strona, której obrót nie pomoże, np. próg 980 px).
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-22T21510";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-23T05195";
 
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
+export const MIN_WORK_HEIGHT = 580;
 export const TV_HD_RESOLUTION = Object.freeze({ width: 1280, height: 720 });
 
 function screenSides() {
@@ -69,12 +77,40 @@ export function deviceGuardState(minWidth = MIN_WORK_WIDTH, options = {}) {
 
 // Telefon (decyzja użytkownika 2026-10-20): albo obrót, jeśli pomoże, albo
 // „Niedostępne na telefonie” -- także gdy ekran jest za mały („screen”) lub
-// widok za wąski („narrow”): telefonu nie da się poszerzyć ani wymienić ekranu.
+// widok za wąski/niski („narrow”, „small”): telefonu nie da się poszerzyć ani
+// wymienić ekranu.
 function phoneGuardState(state, profile) {
-  return profile.formFactor === "phone" && (state === "screen" || state === "narrow") ? "unsupported" : state;
+  return profile.formFactor === "phone" && (state === "screen" || state === "narrow" || state === "small") ? "unsupported" : state;
 }
 
-function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false } = {}) {
+// Klawiatura ekranowa (dotyk + aktywne pole tekstowe) potrafi obniżyć
+// viewport; to nie jest za małe okno, więc wtedy wysokości nie sprawdzamy.
+function virtualKeyboardLikely(profile) {
+  if (!profile.touch || typeof document === "undefined") return false;
+  const el = document.activeElement;
+  if (!el || el === document.body) return false;
+  if (el.isContentEditable) return true;
+  const tag = String(el.tagName || "").toLowerCase();
+  if (tag === "textarea" || tag === "select") return true;
+  return tag === "input" && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(el.type || "");
+}
+
+/** Poziomy viewport niższy niż próg strony (pion nie ma progu wysokości). */
+function tooShort(profile, minHeight) {
+  return minHeight > 0 && profile.orientation === "landscape" && profile.viewportHeight < minHeight
+    && !virtualKeyboardLikely(profile);
+}
+
+// Obrót pomaga na zbyt niski poziomy widok tylko na dotykowym telefonie lub
+// tablecie, gdy w pionie strona jest dozwolona, a jej próg szerokości mieści
+// się w krótszym boku ekranu (w pionie wysokości nie sprawdzamy).
+function rotationFixesHeight(profile, minWidth, { requirePhoneLandscape = false } = {}) {
+  if (profile.formFactor !== "tablet" && profile.formFactor !== "phone") return false;
+  if (profile.formFactor === "phone" && requirePhoneLandscape) return false;
+  return profile.screenShortSide >= minWidth;
+}
+
+function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false, minHeight = 0 } = {}) {
   const profile = getDeviceProfile();
   // Physical screen limits take precedence over category exclusions. The
   // short-side threshold is for touch-first devices only (for example, a
@@ -101,7 +137,10 @@ function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, mi
       && profile.viewportWidth < shortSide * 0.85;
     if (splitHeight || splitWidth) return "narrow";
   }
-  if (profile.viewportWidth >= minWidth) return "ok";
+  if (profile.viewportWidth >= minWidth) {
+    if (tooShort(profile, minHeight)) return rotationFixesHeight(profile, minWidth, { requirePhoneLandscape }) ? "rotate" : "small";
+    return "ok";
+  }
   // Consider rotation only for a full-width portrait phone/tablet viewport.
   // A split-view tablet has a substantially reduced width; rotating its pane
   // is not a reliable way to obtain the full physical screen width.
@@ -122,6 +161,7 @@ const TEXTS = {
   touch: { title: "pageGuard.touchTitle", message: "pageGuard.touchMessage", icon: "phone" },
   rotate: { title: "pageGuard.rotateTitle", message: "pageGuard.rotateMessage", icon: "rotate-right" },
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
+  small: { title: "pageGuard.smallTitle", message: "pageGuard.smallMessage", icon: "fullscreen-enter" },
   tvUnsupported: { title: "pageGuard.tvUnsupportedTitle", message: "pageGuard.tvUnsupportedMessage", icon: "display" },
 };
 
@@ -146,10 +186,13 @@ export function showDeviceGuard(state, backHref, messageKey = null) {
   });
 }
 
-/** Strona wymaga minimalnej szerokości: guard reaguje na resize i obrót. */
-export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, fitsAfterRotate = null, messageKey = null, rotateMessageKey = null, formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false } = {}) {
+/**
+ * Strona wymaga minimalnej szerokości (i w poziomie wysokości): guard reaguje
+ * na resize, obrót i zmianę powiększenia (visualViewport).
+ */
+export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, minHeight = 0, backHref = null, fits = null, fitsAfterRotate = null, messageKey = null, rotateMessageKey = null, formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false } = {}) {
   const currentState = () => {
-    let state = deviceGuardState(minWidth, { formFactors, requiresTouch, minScreenShortSide, minTvResolution, allowPhoneLandscape, requirePhoneLandscape });
+    let state = deviceGuardState(minWidth, { formFactors, requiresTouch, minScreenShortSide, minTvResolution, allowPhoneLandscape, requirePhoneLandscape, minHeight });
     const profile = getDeviceProfile();
     const rotationCanHelp = (profile.formFactor === "tablet" || (profile.formFactor === "phone" && allowPhoneLandscape))
       && profile.orientation === "portrait"
@@ -157,13 +200,15 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
       && typeof fitsAfterRotate === "function"
       && fitsAfterRotate();
     if (state === "rotate" && fitsAfterRotate && !rotationCanHelp) state = "narrow";
-    if (state === "ok" && fits && !fits()) state = rotationCanHelp ? "rotate" : "narrow";
+    // Własny pomiar strony (Control: skala panelu) obejmuje szerokość i wysokość,
+    // więc niedopasowanie to „Za małe okno”, nie „Za wąskie okno”.
+    if (state === "ok" && fits && !fits()) state = rotationCanHelp ? "rotate" : "small";
     return phoneGuardState(state, profile);
   };
   function apply() {
     const state = currentState();
-    if (state === "narrow" && messageKey) {
-      showPageGuard({ kind: "device", state, iconName: "fullscreen-enter", titleKey: TEXTS.narrow.title, messageKey, backHref });
+    if ((state === "narrow" || state === "small") && messageKey) {
+      showPageGuard({ kind: "device", state, iconName: "fullscreen-enter", titleKey: TEXTS[state].title, messageKey, backHref });
     } else if (state === "rotate" && rotateMessageKey) showDeviceGuard(state, backHref, rotateMessageKey);
     else if (state !== "ok") showDeviceGuard(state, backHref);
     else if (document.getElementById("pageGuard")?.dataset.kind !== "guest") hidePageGuard();
@@ -192,6 +237,9 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
   window.addEventListener("resize", refresh);
   window.addEventListener("orientationchange", onOrientationChange);
   window.visualViewport?.addEventListener("resize", refresh, { passive: true });
+  // Po zamknięciu klawiatury ekranowej (utrata fokusu pola) próg wysokości
+  // znów obowiązuje.
+  if (minHeight > 0) document.addEventListener("focusout", () => setTimeout(refresh, 0));
   refresh();
 
   return { refresh, state: currentState, ready };

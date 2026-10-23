@@ -4,7 +4,8 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
+//   --scenes=a,b@phone  -- „scena@urządzenie”: tylko to urządzenie (lista z publish-manual.cjs --list)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape,tablet-landscape,tablet-landscape-short,desktop-short,desktop-1400,tablet-short-1400  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --force-devices (urządzenia z --devices także dla scen z własną listą)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -28,35 +29,41 @@ const DEVICES = {
   tablet: { width: 820, height: 1180, scale: 2, mobile: true },
   "phone-landscape": { width: 844, height: 390, scale: 2, mobile: true },
   "tablet-landscape": { width: 1180, height: 820, scale: 2, mobile: true },
+  // Niski viewport (guard wysokości, decyzja 2026-10-22): tablet w poziomie
+  // z paskami przeglądarki/powiększeniem i niskie okno komputera.
+  "tablet-landscape-short": { width: 1200, height: 560, scale: 1, mobile: true, screen: { width: 1280, height: 800 } },
+  "desktop-short": { width: 1400, height: 550, scale: 1, mobile: false },
+  "desktop-1400": { width: 1400, height: 900, scale: 1, mobile: false },
+  // Dotykowy tablet z niskim oknem 1400×550 (Host i Przycisk wymagają dotyku).
+  "tablet-short-1400": { width: 1400, height: 550, scale: 1, mobile: true, screen: { width: 1440, height: 900 } },
 };
+// --viewport=1280x580 -- dodatkowe urządzenie „viewport” (komputer) o podanym rozmiarze.
+if (args.viewport) {
+  const [w, h] = String(args.viewport).split("x").map(Number);
+  DEVICES.viewport = { width: w, height: h, scale: 1, mobile: false };
+}
 const LANGS = ["pl", "en", "uk"];
 
 // ---------- wybór scen ----------
-function changedFiles(base) {
-  const run = (cmd) => { try { return execSync(cmd, { cwd: repo, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); } catch { return ""; } };
-  const committed = run(`git diff --name-only ${base}...HEAD`);
-  const working = run("git status --porcelain").split("\n").map((l) => l.slice(3).trim()).join("\n");
-  return [...new Set(`${committed}\n${working}`.split("\n").map((s) => s.trim()).filter(Boolean))];
-}
+const { selectChanged } = require("./changes.cjs");
+const onlyDevices = {};
 function pickScenes() {
   if (args.all) return scenes;
   if (args.scenes) {
-    const ids = args.scenes.split(",").filter(Boolean);
+    // Wpis „scena@urządzenie” zawęża urządzenia sceny (lista z publish-manual.cjs --list).
+    const ids = args.scenes.split(",").filter(Boolean).map((entry) => {
+      const [id, device] = entry.split("@");
+      if (device) (onlyDevices[id] ||= new Set()).add(device);
+      return id;
+    });
     const unknown = ids.filter((id) => !scenes.some((s) => s.id === id));
     if (unknown.length) throw new Error(`Nieznane sceny: ${unknown.join(", ")}. Lista: --list`);
     return scenes.filter((s) => ids.includes(s.id));
   }
   if (args.changed) {
-    const base = args.base || "origin/main";
-    const files = changedFiles(base);
-    // Zmiana wspólnego kodu albo samych danych/silnika zrzutów dotyczy wszystkich stron.
-    const global = files.filter((f) => /^web\/(shared|assets)\//.test(f) || /^scripts\/screens\/(fake-supabase|lib\.cjs|data\/)/.test(f));
-    if (global.length) {
-      console.log(`Zmienione pliki wspólne (${global.slice(0, 5).join(", ")}${global.length > 5 ? " …" : ""}) -- wszystkie sceny.`);
-      return scenes;
-    }
-    const picked = scenes.filter((s) => files.some((f) => s.sources.some((src) => f.startsWith(src))));
-    console.log(`Zmienione pliki: ${files.length}, sceny: ${picked.map((s) => s.id).join(", ") || "brak"}`);
+    // Tylko sceny, na które zmiana może wpłynąć (changes.cjs: bez samych ?v=, wspólny kod -- strony, które go wczytują).
+    const { all, scenes: picked, reason } = selectChanged(scenes, args.base || "origin/main");
+    console.log(`${reason} -- sceny: ${all ? "wszystkie" : picked.map((s) => s.id).join(", ") || "brak"}`);
     return picked;
   }
   throw new Error("Podaj --changed, --scenes=… albo --all (--list pokazuje sceny).");
@@ -159,7 +166,9 @@ function gallery(outDir, results) {
   try {
     for (const scene of picked) {
       for (const lang of langs) {
-        const sceneDevices = scene.size ? ["size"] : scene.devices ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
+        const sceneDevices = scene.size ? ["size"]
+          : onlyDevices[scene.id] ? [...onlyDevices[scene.id]]
+          : scene.devices && !args["force-devices"] ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
         for (const device of sceneDevices) {
           const r = await capture(browser, origin, scene, lang, device, outDir);
           results.push(r);

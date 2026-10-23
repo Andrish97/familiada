@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-22T21510";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T05195";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-22T21510";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-22T21510";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-22T21510";
+} from "../../shared/js/core/auth.js?v=v2026-10-23T05195";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05195";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05195";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-22T21510";
-import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-22T21510";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-22T21510";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-22T21510";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-22T21510";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-22T21510";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-22T21510";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05195";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-23T05195";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05195";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-23T05195";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T05195";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05195";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05195";
 
 
 const $ = (s) => document.querySelector(s);
@@ -567,7 +567,7 @@ const nextTab = params.get("tab");
 // Ukryta gra w węża: powrót tylko z ważnym linkiem z kodu QR (inaczej /snake/ = 404).
 const nextSnakeQr = params.get("qr");
 const NEXT_TARGETS = ["tasks", "friends", "bases"];
-if (isScreenshotPollId(nextSnakeQr)) NEXT_TARGETS.push("snake");
+if (isScreenshotId(nextSnakeQr)) NEXT_TARGETS.push("snake");
 const hasNextTarget = NEXT_TARGETS.includes(nextTarget);
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";

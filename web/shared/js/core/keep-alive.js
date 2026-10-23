@@ -31,17 +31,42 @@ function acquireWebLock() {
   navigator.locks.request("familiada-keep-alive", { mode: "shared" }, () => new Promise(() => {}));
 }
 
-async function acquireScreenWakeLock() {
-  if (!navigator.wakeLock) return;
+// Stan blokady wygaszania ekranu dla diagnostyki sesji (session-log.js):
+// zapisujemy tylko zmiany (włączona, odmowa, brak obsługi, zwolnienie przez
+// system przy widocznej karcie — np. tryb oszczędzania baterii).
+const _wakeListeners = new Set();
+let _wakeState = null;
+function setWakeState(phase, extra = {}) {
+  if (_wakeState?.phase === phase) return;
+  _wakeState = { phase, ...extra };
+  for (const listener of _wakeListeners) { try { listener(_wakeState); } catch {} }
+}
+export function onWakeLockChange(listener) {
+  _wakeListeners.add(listener);
+  if (_wakeState) listener(_wakeState);
+  return () => _wakeListeners.delete(listener);
+}
+
+async function requestWakeLock() {
   try {
     _wakeLock = await navigator.wakeLock.request("screen");
-    // Re-acquire after tab becomes visible again (browser releases it automatically)
-    document.addEventListener("visibilitychange", async () => {
-      if (!document.hidden && _wakeLock?.released) {
-        try { _wakeLock = await navigator.wakeLock.request("screen"); } catch {}
-      }
+    setWakeState("granted");
+    _wakeLock.addEventListener?.("release", () => {
+      // Ukrycie karty zwalnia blokadę zawsze; liczy się zwolnienie przy widocznej.
+      if (!document.hidden) setWakeState("released");
     });
-  } catch {}
+  } catch (error) {
+    setWakeState("denied", { error_name: String(error?.name || "Error").slice(0, 40) });
+  }
+}
+
+async function acquireScreenWakeLock() {
+  if (!navigator.wakeLock) { setWakeState("unsupported"); return; }
+  await requestWakeLock();
+  // Re-acquire after tab becomes visible again (browser releases it automatically)
+  document.addEventListener("visibilitychange", async () => {
+    if (!document.hidden && (!_wakeLock || _wakeLock.released)) await requestWakeLock();
+  });
 }
 
 // Odpowiednik triku znanego z bibliotek typu NoSleep.js, bez osadzania

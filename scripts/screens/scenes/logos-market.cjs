@@ -311,7 +311,7 @@ module.exports = [
     steps: [async (view) => { await view.locator(".mkt-card").nth(1).click(); await view.locator("#gameDetailOverlay[data-detail-state=ready]").waitFor(); await view.waitForTimeout(500); }] },
 
   // ================= Panel admina =================
-  // Istniejące: admin-stats-snake, admin-badges, admin-market-pending, admin-screens.
+  // Istniejące: admin-stats-snake, admin-badges, admin-market-pending.
   { id: "logos-market-admin-maintenance", category: CAT, title: "Panel admina — Prace techniczne (przerwa wyłączona)", path: "/settings/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800 },
   { id: "logos-market-admin-maintenance-on", category: CAT, title: "Panel admina — Prace techniczne (przerwa włączona, odliczanie)", path: "/settings/", sources: ADMIN, ready: "#panelStatus", settle: 800,
     db: (db) => { adminData(db); db.http["/_admin_api/state"] = { enabled: true, mode: "countdown", returnAt: "2026-10-21T18:30:00Z", endAt: "2026-10-21T18:30:00Z", message: "" }; } },
