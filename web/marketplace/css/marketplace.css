@@ -170,18 +170,7 @@
   }
 
   /* ===== My sent list ===== */
-  .mkt-sent-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 12px 14px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--line);
-    background: var(--card);
-    --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
-    margin-bottom: 10px;
-  }
+  .mkt-sent-row{ flex-wrap: wrap; }
 
   .mkt-sent-info {
     flex: 1;
@@ -306,9 +295,7 @@
       width: 94vw;
     }
 
-    .mkt-sent-row {
-      gap: 8px;
-    }
+
   }
 
   /* ===== Ratings ===== */

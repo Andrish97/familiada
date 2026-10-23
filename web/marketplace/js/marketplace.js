@@ -621,7 +621,7 @@ async function loadMySent() {
       ? `<span class="mkt-sent-rating">${starsDisplay(g.avg_rating, g.rating_count)}</span>`
       : "";
     const libraryInfo = `<span class="mkt-sent-library">${esc(t("marketplace.libraryCount").replace("{count}", g.library_count ?? 0))}</span>`;
-    return `<div class="mkt-sent-row">
+    return `<div class="shareRow mkt-sent-row">
       <div class="mkt-sent-info">
         <div class="mkt-sent-title">${esc(g.title)}</div>
         <div class="mkt-sent-meta">${esc(g.lang.toUpperCase())} · ${libraryInfo} ${ratingInfo}</div>
