@@ -277,7 +277,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (preview) {
     // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
-    $("fsBtn")?.remove();
+    $("btnFullscreen")?.remove();
     await bootPreview();
     return;
   }

@@ -124,7 +124,7 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     await tv.locator("#tvCode").press("Enter");
     await expect.poll(() => new URL(tv.url()).pathname).toBe("/control/display/");
     expect(new URL(tv.url()).searchParams.get("id")).toBe(game.id);
-    await expect(tv.locator("#fsBtn")).toBeVisible();
+    await expect(tv.locator("#btnFullscreen")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
     await tv.goto(`https://www.familiada.online/go/?d=display&id=${game.id}&key=${game.share_key_display}`);
     // Przy domyślnym źródle Control ekran odblokowania dźwięku na Display
@@ -3853,7 +3853,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
       await expect(frame.locator('body')).toBeVisible({ timeout: 20000 });
       const viewport = await frame.locator('body').evaluate(() => ({ width:innerWidth, height:innerHeight }));
       expect(viewport).toEqual({ width:1024, height:768 });
-      await expect(frame.locator(kind === 'display' ? '#fsBtn' : '#btnFS')).toBeHidden();
+      await expect(frame.locator('#btnFullscreen')).toBeHidden();
     }
     await expect(page.getByRole('button', { name:'Dalej', exact:true })).toBeEnabled({ timeout:30000 });
     await assertFits();

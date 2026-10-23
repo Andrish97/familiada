@@ -82,10 +82,10 @@
   "styleBlock": 1
  },
  "web/control/buzzer/css/buzzer.css": {
-  "colorLiteral": 20,
+  "colorLiteral": 19,
   "rootTokens": 12,
-  "zIndexLiteral": 5,
-  "sharedDuplicate": 8
+  "zIndexLiteral": 4,
+  "sharedDuplicate": 7
  },
  "web/control/buzzer/index.html": {
   "styleBlock": 1
@@ -125,8 +125,8 @@
   "important": 2,
   "colorLiteral": 14,
   "rootTokens": 37,
-  "zIndexLiteral": 6,
-  "sharedDuplicate": 9
+  "zIndexLiteral": 5,
+  "sharedDuplicate": 8
  },
  "web/control/host/index.html": {
   "styleBlock": 1
@@ -295,8 +295,7 @@
   "inlineStyleJs": 6
  },
  "web/polls/vote/qr/css/poll-qr.css": {
-  "colorLiteral": 1,
-  "zIndexLiteral": 1
+  "colorLiteral": 1
  },
  "web/polls/vote/qr/index.html": {
   "styleBlock": 1
@@ -468,14 +467,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 193,
+  "sharedDuplicate": 195,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 224,
+  "sharedDuplicate": 226,
   "unusedClass": 7
  },
  "web/shared/style/layout.css": {
@@ -493,9 +492,9 @@
  },
  "web/snake/css/snake.css": {
   "important": 2,
-  "colorLiteral": 6,
-  "zIndexLiteral": 8,
-  "sharedDuplicate": 7
+  "colorLiteral": 5,
+  "zIndexLiteral": 7,
+  "sharedDuplicate": 6
  },
  "web/tasks/css/tasks.css": {
   "mediaWidth": 2

@@ -87,26 +87,6 @@ body,html {
     box-sizing: border-box
 }
 
-.fsBtn {
-    position: fixed;
-    top: calc(var(--safe-top) + 10px);
-    right: calc(var(--safe-right) + 10px);
-    z-index: 200;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--r-md);
-    background: var(--k-40);
-    border: 1px solid var(--w-25);
-    box-shadow: 0 4px 14px var(--k-40);
-    color: var(--text);
-    font-weight: 900;
-    cursor: pointer
-}
-
-.fsBtn:active {
-    transform: translateY(1px)
-}
-
 .paper {
     position: fixed;
     inset: 0;
@@ -506,7 +486,7 @@ div#cover2Logo {
 
 .pseudoFS .paper { position: fixed; inset: 0 }
 
-.pseudoFS .fsBtn {
+.pseudoFS .fs-btn {
     opacity: .85
 }
 

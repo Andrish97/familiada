@@ -306,7 +306,7 @@ test.describe("poll-qr.js audyt", () => {
       await expect(page.locator(".qr-box img")).toBeVisible({ timeout: 10000 });
 
       // Przycisk fullscreen powinien być widoczny
-      const fsBtn = page.locator("#btnFS");
+      const fsBtn = page.locator("#btnFullscreen");
       await expect(fsBtn).toBeVisible();
 
       // Kliknij (może nie zadziałać w teście bez uprawnień, ale sprawdzamy syntax)

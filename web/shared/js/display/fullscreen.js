@@ -1,7 +1,7 @@
 import { icon } from "../core/icons.js?v=v2026-10-23T05395";
 
 export const initFullscreenButton = () => {
-  const fsBtn = document.getElementById("fsBtn");
+  const fsBtn = document.getElementById("btnFullscreen");
   if (!fsBtn) return;
 
   const ICON_ENTER = icon("fullscreen-enter");

@@ -48,7 +48,7 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
           doc.addEventListener(event, onActivity, { passive: true, capture: true });
         }
         const css = doc.createElement('style');
-        css.textContent = '#fsBtn,#btnFS{display:none!important}';
+        css.textContent = '#btnFullscreen{display:none!important}';
         doc.head.append(css);
       });
       slot.append(frame);

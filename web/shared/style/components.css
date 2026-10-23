@@ -1064,8 +1064,41 @@
     .a2hs { display: none !important; }
   }
   @supports (-webkit-touch-callout: none) {
-    html.webapp .fsBtn { display: none !important; }
+    html.webapp .fs-btn { display: none !important; }
   }
+
+  /* ── Przycisk w rogu ekranu (pełny ekran, konto na ekranach gry) ── */
+  .corner-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--w-25);
+    border-radius: var(--r-md);
+    background: var(--k-40);
+    box-shadow: 0 4px 14px var(--k-40);
+    color: var(--text);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    user-select: none;
+    touch-action: manipulation;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .corner-btn:hover { background: var(--k-70); }
+  .corner-btn:active { transform: translateY(1px); }
+  .corner-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .corner-btn .ico { width: 20px; height: 20px; }
+  /* Pełny ekran: prawy górny róg w strefie bezpiecznej. */
+  .fs-btn {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: var(--z-toast);
+  }
+  .fs-btn.on { border-color: var(--g-60); }
 
   /* ── Język, menu topbara (konto, język, hamburger) ────────────── */
   .lang-switcher {

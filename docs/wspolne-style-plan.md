@@ -9,6 +9,16 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+- **Skończony, najmniejszy zestaw elementów (decyzja użytkownika 2026-10-23):**
+  „zestaw elementów ma być skończony i jak najmniejszy; używaj podobnych
+  elementów tam, gdzie teraz są różne, jeśli zastosowanie pasuje”. Katalog
+  komponentów silnika jest zamknięty: nowy element tylko, gdy żaden istniejący
+  nie pasuje do zastosowania (wpis w `wzorce-ui.md`).
+- **Te same nazwy dla tego samego (decyzja użytkownika 2026-10-23):** „elementy,
+  które teraz mają inne nazwy a robią to samo, mają mieć te same nazwy;
+  pozwalam ci na poprawianie JS i HTML też; nie musisz się pytać”. Zmiana
+  nazwy klasy obejmuje CSS, JS, HTML, sceny zrzutów i selektory w specach e2e
+  (tylko mechaniczna podmiana selektora — logika speców bez zmian).
 - **Ujednolicać bez kompromisów (decyzja użytkownika 2026-10-23):** „musisz
   konsekwentnie i bezlitośnie ujednolicać i poprawiać, nie miej kompromisów”.
   Lokalne warianty komponentów, mechanizmów i wyglądu zastępować wspólnymi,
@@ -259,3 +269,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | „Więcej” we wspólnym topbarze | Zgłoszenie użytkownika (ankieta: przyciski zawijają się w dwie linie). `topbar-controller.js` dodaje „Więcej” stronom bez `#navMore` (≥ 2 przyciski w sekcji 2); `components.css`: tytuł strony zostaje w wymuszonym hamburgerze. Zrzuty przed/po: zmienione tylko sceny ankiety na tablecie (zamierzone), pozostałe 38 par identyczne. |
 | 2026-10-23 | Mechanizmy: podpowiedzi | `.app-tooltip` w silniku (animacja wejścia), `tooltips.js` nie doładowuje już CSS (jedno żądanie mniej na każdej stronie); `kora-builder` (bez silnika) z własną regułą. Nowa scena `tooltip`. |
 | 2026-10-23 | „Więcej” wszędzie | Decyzja użytkownika (spójność): „Więcej” także na stronach z jednym przyciskiem (Bazy, Logo, Control, Poczta, Wskazówki) — przy braku miejsca od razu hamburger. Zrzuty 48 par identyczne. Decyzja „ujednolicać bez kompromisów” w sekcji „Decyzje”. |
+| 2026-10-23 | Nazwy: przycisk w rogu / pełny ekran | `fsBtn`, `fs-btn`, `qr-fs-btn`, `snake-corner-btn` → `.corner-btn` (kwadrat 44 px w rogu) + `.fs-btn` (pełny ekran); id `btnFS`/`fsBtn` → `btnFullscreen` (Prowadzący, Przycisk, Wyświetlacz, snake, QR ankiety, tryb testowy, spece control2/poll-qr — tylko selektor). Zrzuty: snake i QR ankiety mają wspólny przycisk (zamierzone), reszta identyczna. Decyzje „te same nazwy” i „skończony zestaw elementów” w sekcji „Decyzje”. |

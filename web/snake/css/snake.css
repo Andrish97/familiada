@@ -80,41 +80,14 @@ body.snake-body {
   justify-content: center;
 }
 
-/* Przyciski w rogach (pełny ekran, konto) -- jak na Wyświetlaczu (control/display), w strefie bezpiecznej. */
-.snake-corner-btn {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  box-sizing: border-box;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--w-25);
-  background: var(--k-20);
-  color: rgba(255,255,255,.92);
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  user-select: none;
-  flex: 0 0 auto;
-}
-.snake-corner-btn:hover { background: var(--k-40); }
-.snake-corner-btn:active { transform: translateY(1px); }
-.snake-corner-btn[hidden] { display: none; }
-.snake-corner-btn .ico { width: 18px; height: 18px; }
-.fs-btn {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top, 0px));
-  right: max(12px, env(safe-area-inset-right, 0px));
-  z-index: 9999;
-}
+/* Przyciski w rogach: wspólne .corner-btn / .fs-btn z silnika; „włączony” w kolorze motywu. */
 .fs-btn.on { border-color: rgba(215,255,61,.55); }
 
-/* Konto: obok pełnego ekranu (34 px przycisku + 8 px odstępu). */
+/* Konto: obok pełnego ekranu (44 px przycisku + 8 px odstępu). */
 .snake-account {
   position: fixed;
   top: max(12px, env(safe-area-inset-top, 0px));
-  right: calc(max(12px, env(safe-area-inset-right, 0px)) + 42px);
+  right: calc(max(12px, env(safe-area-inset-right, 0px)) + 52px);
   z-index: 9999;
   display: flex;
   align-items: flex-start; /* przyciski równo z pełnym ekranem, gdy komunikat ma dwie linie */

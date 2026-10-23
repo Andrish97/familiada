@@ -47,7 +47,7 @@ function isStandalone() {
 }
 
 function setupFullscreenButton() {
-  const btn = document.getElementById("btnFS");
+  const btn = document.getElementById("btnFullscreen");
   const hint = document.getElementById("buzzerA2HS");
   const close = document.getElementById("buzzerA2HSClose");
   const ico = document.getElementById("fsIco");

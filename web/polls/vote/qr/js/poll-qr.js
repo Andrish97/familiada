@@ -146,7 +146,7 @@ if (!url && paramId && paramKey) {
 }
 
 // --- Fullscreen ---
-const btnFS = document.getElementById("btnFS");
+const btnFS = document.getElementById("btnFullscreen");
 
 function updateFsIcon(){
   if(!btnFS) return;

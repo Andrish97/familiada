@@ -60,7 +60,7 @@ const isIOSSafari = () => {
 const isStandalone = () => !!(navigator.standalone || matchMedia("(display-mode: standalone)").matches);
 
 function setupFullscreen() {
-  const btn = $("fsBtn");
+  const btn = $("btnFullscreen");
   const hint = $("snakeA2HS");
   const close = $("snakeA2HSClose");
   let pseudoFS = false;

@@ -68,7 +68,7 @@ function isStandalone() {
 }
 
 function setupFullscreenButton() {
-  const btn = document.getElementById("btnFS");
+  const btn = document.getElementById("btnFullscreen");
   const hint = document.getElementById("hostA2HS");
   const close = document.getElementById("hostA2HSClose");
   const ico = document.getElementById("fsIco");
@@ -214,7 +214,7 @@ async function main() {
 
   if (preview) {
     // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
-    document.getElementById("btnFS")?.remove();
+    document.getElementById("btnFullscreen")?.remove();
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ previewOnly: true });
     let latestRow = null;
