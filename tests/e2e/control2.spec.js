@@ -1216,12 +1216,16 @@ test("control2: nowe otwarcie urządzenia przejmuje od razu, wyparta karta nie w
     const dotOf = { display: "#dotDisplay", host: "#dotHost", buzzer: "#dotBuzzer" };
     for (const type of ["display", "host", "buzzer"]) {
       const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
+      // Stan lease z nakładki (data-lease-state); samo toBeHidden przechodzi
+      // też na stronie /go/ przed przekierowaniem, gdy nakładki jeszcze nie ma.
+      const leaseState = (devicePage) => devicePage.locator("#deviceLeaseOverlay");
       const first = await openAnon(browser, contexts, path, `${type}-first`, []);
-      await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+      await expect(leaseState(first)).toHaveAttribute("data-lease-state", "primary", { timeout: 15000 });
       const startedAt = Date.now();
       const second = await openAnon(browser, contexts, path, `${type}-second`, []);
-      await expect(second.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
-      await expect(first.locator("#deviceLeaseTakeover")).toBeVisible({ timeout: 8000 });
+      await expect(leaseState(second)).toHaveAttribute("data-lease-state", "primary", { timeout: 15000 });
+      await expect(leaseState(first)).toHaveAttribute("data-lease-state", "replaced", { timeout: 8000 });
+      await expect(first.locator("#deviceLeaseTakeover")).toBeVisible();
       expect(Date.now() - startedAt, "przejęcie bez czekania na wygaśnięcie starej karty").toBeLessThan(15000);
 
       if (type === "display") {
@@ -1235,7 +1239,7 @@ test("control2: nowe otwarcie urządzenia przejmuje od razu, wyparta karta nie w
       }
       // Świadome przejęcie na starej karcie.
       await first.locator("#deviceLeaseTakeover").click();
-      await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(leaseState(first)).toHaveAttribute("data-lease-state", "primary", { timeout: 10000 });
       await expect(page.locator(dotOf[type])).toHaveClass(/\bok\b/, { timeout: 10000 });
       // Zamknięcie karty zwalnia urządzenie od razu (keepalive), bez 12–15 s.
       await first.close({ runBeforeUnload: true });
@@ -1244,11 +1248,11 @@ test("control2: nowe otwarcie urządzenia przejmuje od razu, wyparta karta nie w
       if (type === "buzzer" || type === "host") {
         // Ta sama przeglądarka (np. drugi skan QR) też przejmuje od razu.
         const one = await openAnon(browser, contexts, path, `${type}-same-1`, []);
-        await expect(one.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+        await expect(leaseState(one)).toHaveAttribute("data-lease-state", "primary", { timeout: 15000 });
         const again = await one.context().newPage();
         await again.goto(one.url(), { waitUntil: "domcontentloaded" });
-        await expect(again.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 8000 });
-        await expect(one.locator("#deviceLeaseTakeover")).toBeVisible({ timeout: 8000 });
+        await expect(leaseState(again)).toHaveAttribute("data-lease-state", "primary", { timeout: 10000 });
+        await expect(leaseState(one)).toHaveAttribute("data-lease-state", "replaced", { timeout: 8000 });
       }
     }
   } finally {
