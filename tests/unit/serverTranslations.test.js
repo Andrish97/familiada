@@ -9,7 +9,7 @@ import uk from "../../web/shared/translation/uk.js";
 
 // Teksty używane poza stroną: edge function send-email (sekcja authEmail)
 // i Cloudflare Worker (contactEmail, marketplaceSsr). Obie strony pobierają
-// translation/<lang>.js z originu w trakcie działania, więc brak klucza
+// translation/<lang>/server.js z originu w trakcie działania, więc brak klucza
 // w którymś języku wychodzi dopiero na produkcji — stąd ten test.
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -115,7 +115,7 @@ test("ukraińskie teksty serwerowe nie mieszają cyrylicy z łacinką w jednym s
 
 test("parser workera czyta sekcje identycznie jak prawdziwy import, w PL/EN/UK", () => {
   for (const lang of LANGS) {
-    const code = read(`shared/translation/${lang}.js`);
+    const code = read(`shared/translation/${lang}/server.js`);
     for (const section of ["contactEmail", "marketplaceSsr", "authEmail"]) {
       assert.deepEqual(extractSection(code, section), DICTS[lang][section], `${lang}.${section}`);
     }
@@ -143,10 +143,10 @@ function mockFetch(t, { originDown = false, game = null } = {}) {
   globalThis.fetch = async (url) => {
     const u = String(url instanceof Request ? url.url : url);
     calls.push(u);
-    const m = u.match(/\/translation\/(\w+)\.js/);
+    const m = u.match(/\/translation\/(\w+)\/server\.js/);
     if (m) {
       if (originDown) throw new TypeError("network down");
-      return new Response(read(`shared/translation/${m[1]}.js`), { status: 200, headers: { "Content-Type": "application/javascript" } });
+      return new Response(read(`shared/translation/${m[1]}/server.js`), { status: 200, headers: { "Content-Type": "application/javascript" } });
     }
     if (u.includes("/rest/v1/rpc/")) {
       return new Response(JSON.stringify(game ? [game] : []), { status: 200, headers: { "Content-Type": "application/json" } });
