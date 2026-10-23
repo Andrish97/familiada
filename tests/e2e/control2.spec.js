@@ -2330,7 +2330,11 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
-    // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
+    // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A odsłania
+    // wszystkie odpowiedzi (40 + dopełnienie 4 + 4 = bank 48), a "Zakończ rundę"
+    // przy wszystkim odsłoniętym finalizuje rundę od razu (bez R8). Pudła
+    // i kradzież nie mają wpływu na mnożnik, a ich bramki dźwięku zjadały
+    // ~40 s z limitu 240 s (2026-10-23); pełna ścieżka zostaje w rundzie 4.
     for (let round = 1; round <= 3; round++) {
       await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe(`Runda ${round}`), { timeout: 22000 });
       await startRoundConfirmed(page);
@@ -2339,10 +2343,11 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
       await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
       await revealAnswer(page, 1);
-      await strikeOutAndLoseSteal(page);
-      await endRoundAndRevealRest(page, "Przejdź do następnej rundy");
+      await revealAnswer(page, 2);
+      await revealAnswer(page, 3);
+      await clickConfirmed(page.getByRole("button", { name: "Zakończ rundę" }));
     }
-    await expect(page.getByText("Alfa: 120")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alfa: 144")).toBeVisible({ timeout: 10000 });
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 4"), { timeout: 22000 });
@@ -2356,7 +2361,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await strikeOutAndLoseSteal(page);
     await endRoundAndRevealRest(page, "Przejdź do następnej rundy");
 
-    await expect(page.getByText("Alfa: 200")).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
+    await expect(page.getByText("Alfa: 224")).toBeVisible({ timeout: 10000 }); // 144 + 40x2, nie 184
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
