@@ -1645,11 +1645,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const answers = sortAnswersByPoints(q.answers);
       const hasPoints = answers.some(a => a.fixed_points != null && a.fixed_points > 0);
       const answersHtml = answers.map(a =>
-        `<li>${esc(a.text)}${hasPoints ? ` <span class="bld-pts">(${a.fixed_points ?? 0} ${ptsLabel})</span>` : ""}</li>`
+        `<li>${esc(a.text)}${hasPoints ? ` <span class="q-preview-pts">(${a.fixed_points ?? 0} ${ptsLabel})</span>` : ""}</li>`
       ).join("");
-      return `<div class="bld-q-block">
-        <div class="bld-q-text">${i + 1}. ${esc(q.text)}</div>
-        ${answersHtml ? `<ul class="bld-q-answers">${answersHtml}</ul>` : ""}
+      return `<div class="q-preview-item">
+        <div class="q-preview-text">${i + 1}. ${esc(q.text)}</div>
+        ${answersHtml ? `<ol class="q-preview-answers">${answersHtml}</ol>` : ""}
       </div>`;
     }).join("");
   });

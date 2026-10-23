@@ -172,7 +172,7 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page.locator("#sortSelect .ui-select-label")).toHaveText("Title A–Z");
   await page.locator("#browseGrid .mkt-card").first().click();
   await expect(page.locator("#btnAddLibrary")).toHaveText("Add to my games");
-  await expect(page.locator("#detailQuestions .mkt-pts").first()).toContainText("pts");
+  await expect(page.locator("#detailQuestions .q-preview-pts").first()).toContainText("pts");
   await page.keyboard.press("Escape");
   await expect(page.locator("#gameDetailOverlay")).toBeHidden();
   await expect(page).toHaveURL(/sort=title/);

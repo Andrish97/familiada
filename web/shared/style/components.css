@@ -1071,6 +1071,26 @@
     html.webapp .fs-btn { display: none !important; }
   }
 
+  /* ── Podgląd pytań (Gry, rynek, panel admina): lista pytań z odpowiedziami. */
+  .q-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .q-preview-item {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--w-4);
+  }
+  .q-preview-text { margin-bottom: 7px; font-size: 14px; font-weight: 900; }
+  .q-preview-answers { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }
+  .q-preview-answers li { font-size: 13px; color: var(--text-muted); }
+  .q-preview-pts { font-size: 11px; font-weight: 900; color: var(--accent); }
+
   /* ── Komunikat w treści (ostrzeżenie, błąd, informacja) ──────────
      Ramka z lewym paskiem w kolorze stanu; zawsze przy tym, czego dotyczy. */
   .callout {

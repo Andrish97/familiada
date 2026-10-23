@@ -1050,8 +1050,6 @@
     gap: 14px;
   }
 
-
-
   .stats-inner-card + .stats-inner-card{
     margin-top: 14px;
   }
@@ -1324,28 +1322,6 @@
     margin: 8px 0 12px;
     opacity: .8;
     font-size: .92em;
-  }
-
-  .market-preview-questions{
-    max-height: 55vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding-right: 4px;
-  }
-
-  .market-preview-q-text{
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .market-preview-q ol{
-    margin: 0;
-    padding-left: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
   }
 
   .modal-wide{

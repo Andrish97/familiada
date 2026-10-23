@@ -73,48 +73,6 @@
   }
   .bld-preview-poll .resultQ .aTxt { position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
-
-  .bld-preview-questions {
-    max-height: 55vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-right: 4px;
-  }
-
-  .bld-q-block {
-    padding: 10px 12px;
-    border-radius: var(--r-md);
-    background: rgb(var(--rgb-white) / .05);
-    border: 1px solid var(--line);
-  }
-
-  .bld-q-text {
-    font-weight: 900;
-    font-size: 14px;
-    margin-bottom: 7px;
-  }
-
-  .bld-q-answers {
-    margin: 0;
-    padding-left: 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .bld-q-answers li {
-    font-size: 13px;
-    opacity: .85;
-  }
-
-  .bld-pts {
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--gold);
-    opacity: .7;
-  }
 }
 
 /* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po

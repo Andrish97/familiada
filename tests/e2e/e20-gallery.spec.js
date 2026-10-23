@@ -565,7 +565,7 @@ function additionalStates(data) {
         }
         await detailOverlay.waitFor({ state: "visible", timeout: 5_000 });
         await expect(page.locator("#detailTitle")).toHaveText(browseTitle, { timeout: 5_000 });
-        await expect(page.locator("#detailQuestions .mkt-q-block").first()).toBeVisible({ timeout: 5_000 });
+        await expect(page.locator("#detailQuestions .q-preview-item").first()).toBeVisible({ timeout: 5_000 });
       },
     },
     {

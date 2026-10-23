@@ -446,11 +446,11 @@ function renderDetail(g) {
     } else {
       els.detailQuestions.innerHTML = qs.map((q, i) => {
         const answers = sortAnswersByPoints(q.answers).map(a =>
-          `<li>${esc(a.text)} <span class="mkt-pts">(${esc(t("marketplace.detail.points", { count: a.fixed_points ?? 0 }))})</span></li>`
+          `<li>${esc(a.text)} <span class="q-preview-pts">(${esc(t("marketplace.detail.points", { count: a.fixed_points ?? 0 }))})</span></li>`
         ).join("");
-        return `<div class="mkt-q-block">
-          <div class="mkt-q-text">${i + 1}. ${esc(q.text)}</div>
-          <ol class="mkt-q-answers">${answers}</ol>
+        return `<div class="q-preview-item">
+          <div class="q-preview-text">${i + 1}. ${esc(q.text)}</div>
+          <ol class="q-preview-answers">${answers}</ol>
         </div>`;
       }).join("");
     }

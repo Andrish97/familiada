@@ -323,7 +323,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 304
+  "inlineStyleJs": 303
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
@@ -466,14 +466,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 202,
+  "sharedDuplicate": 207,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 235,
+  "sharedDuplicate": 240,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

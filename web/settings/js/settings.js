@@ -2410,11 +2410,11 @@ async function openMarketPreview(id) {
     const qs = game.payload?.questions || [];
     qEl.innerHTML = qs.map((q, i) => {
       const answers = (q.answers || [])
-        .map(a => `<li>${escSetting(a.text)} <span style="opacity:.5">(${a.fixed_points ?? 0} pkt)</span></li>`)
+        .map(a => `<li>${escSetting(a.text)} <span class="q-preview-pts">(${a.fixed_points ?? 0} pkt)</span></li>`)
         .join("");
-      return `<div class="market-preview-q">
-        <div class="market-preview-q-text">${i + 1}. ${escSetting(q.text)}</div>
-        <ol>${answers}</ol>
+      return `<div class="q-preview-item">
+        <div class="q-preview-text">${i + 1}. ${escSetting(q.text)}</div>
+        <ol class="q-preview-answers">${answers}</ol>
       </div>`;
     }).join("");
   }

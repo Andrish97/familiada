@@ -683,7 +683,7 @@ test.describe("games: audyt -- Społeczność", () => {
 
       await page.locator("#btnPreview").click();
       await expect(page.locator("#previewOverlay")).toBeVisible();
-      await expect(page.locator("#previewQuestions .bld-q-block").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#previewQuestions .q-preview-item").first()).toBeVisible({ timeout: 15000 });
       await page.locator("#btnPreviewClose").click();
       await expect(page.locator("#previewOverlay")).toBeHidden();
 
