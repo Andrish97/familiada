@@ -3174,7 +3174,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   // Render current message (central with gold accent)
   const bubble = document.createElement("div");
   bubble.className = `mail-msg ${isInbound ? "inbound" : "outbound"} mail-msg-central`;
-  bubble.style.cssText = "border:1px solid rgba(255,234,166,.4);box-shadow:0 0 15px rgba(255,234,166,.15);";
 
   const bodyEl = document.createElement("div");
   const htmlSrc = msg.body_html;

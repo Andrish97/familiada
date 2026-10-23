@@ -1221,8 +1221,8 @@
 
     /* Modale nad drawerem; tryb sheet przełącza je do przepływu strony. */
     .overlay { z-index: 1100; }
-    /* tylko wyśrodkowane okno — arkusz (.sheet-active) ma pełną szerokość z silnika */
-    .overlay:not(.sheet-active) > :is(.tags-modal, .export-modal, .question-modal) {
+    /* wyśrodkowane okno; w oknie od dołu szerokość daje silnik (warstwa states) */
+    .overlay > :is(.tags-modal, .export-modal, .question-modal) {
       width: calc(100% - 24px);
     }
     .tags-modal,
