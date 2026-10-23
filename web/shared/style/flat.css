@@ -2246,7 +2246,7 @@
   .listToolsHead > .rowsSectionCaret { flex: 0 0 auto; margin-left: 0; cursor: pointer; }
   .listTools { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
   .listTools[hidden], .listTools > [hidden] { display: none; }
-  .listTools .btn, .listTools .ui-select-btn { width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: var(--r-sm); }
+  .listTools .btn, .listTools .ui-select-btn { width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; }
   .listTools .ico { width: 18px; height: 18px; }
   .listTools .ui-select.listTools-select { width: 36px; min-width: 36px; max-width: 36px; flex: 0 0 36px; }
   .listTools .ui-select-label { display: none; }
@@ -3211,10 +3211,9 @@
   .list-search .searchBox { width: auto; flex: 1 1 auto; min-width: 0; height: 36px; margin: 0; }
   .list-search .searchText { height: 100%; padding: 0 4px; }
   .list-search .btn { padding: 0; min-height: 36px; }
-  .list-search-open { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; flex: 0 0 36px; border-radius: var(--r-sm); }
+  .list-search-open { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; flex: 0 0 36px; }
   .list-search .list-search-open { min-height: 36px; }
   .list-search-open .ico { width: 18px; height: 18px; }
-  .list-search-open.is-active { color: var(--accent); border-color: var(--accent); background: var(--g-10); }
 
   /* Filtr i sortowanie obok wyszukiwania. */
   .list-filter.ui-select, .list-sort.ui-select { min-width: 150px; width: 150px; flex: 0 0 auto; }
@@ -3229,7 +3228,7 @@
     .games-bottom-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
     .list-search .searchBox { display: none; }
-    .list-search .list-search-open { display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: var(--r-sm); }
+    .list-search .list-search-open { display: inline-flex; width: 36px; height: 36px; padding: 0; }
   }
 
   /* Zawsze jeden rząd. Gdy kontrolki nie mieszczą się nawet jako ikony,
