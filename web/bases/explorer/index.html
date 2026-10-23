@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T14420"/>
+  <meta name="app-version" content="v2026-10-23T14472"/>
 
 
   <meta charset="utf-8" />
@@ -15,24 +15,24 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T14420" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T14420"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T14420"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T14420"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T14420"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T14420"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T14420" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T14420" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T14472" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T14472"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T14472"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T14472"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T14472"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T14472"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T14472" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T14472" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T14420"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T14472"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T14420" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T14472" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T14420"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T14472"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T14420" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T14472" defer></script>
 
 </head>
 
@@ -72,10 +72,10 @@
   <div class="explorer" data-skel-step>
 
     <!-- OVERLAY do zamykania drawera na mobile -->
-    <div id="drawerOverlay" class="drawer-overlay" hidden aria-hidden="true"></div>
+    <button id="drawerOverlay" class="drawer-scrim" type="button" tabindex="-1" aria-hidden="true"></button>
 
     <!-- LEWY PANEL: foldery + tagi -->
-    <aside id="explorerLeft" class="explorer-left">
+    <aside id="explorerLeft" class="explorer-left drawer">
       <div id="tree" class="tree">
         <!-- drzewo kategorii -->
       </div>
@@ -393,7 +393,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T14420"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T14472"></script>
 
 </body>
 </html>

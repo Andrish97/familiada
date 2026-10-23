@@ -7,10 +7,10 @@
 // (#searchOverlay), do którego na czas edycji przenosimy to samo pole z paska
 // (tam schowane) — dlatego nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-23T14420";
-import { renderAll } from "../render.js?v=v2026-10-23T14420";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T14420";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T14420";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-23T14472";
+import { renderAll } from "../render.js?v=v2026-10-23T14472";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T14472";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T14472";
 
 const TEXT_DELAY_MS = 200;
 
@@ -133,7 +133,7 @@ function wireSearchSheet(state, { clear, commit }) {
     e.preventDefault();
     hide();
   });
-  window.matchMedia?.("(max-width: 900px)").addEventListener?.("change", (e) => { if (!e.matches) hide(); });
+  window.matchMedia?.("(max-width: 980px)").addEventListener?.("change", (e) => { if (!e.matches) hide(); });
 
   guardRoutedSheet(overlay, () => open);
   return { open: show, close: hide, isOpen: () => open };

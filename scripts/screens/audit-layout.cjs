@@ -3,8 +3,8 @@
 // „Zakazy przewijania i zawijania”): na każdej scenie i urządzeniu sprawdza
 //   - poziome przewijanie strony (zakazane wszędzie),
 //   - przewijanie dokumentu na stronach, gdzie jest zakazane (SCROLL_POLICY),
-//   - treść ukrytą przez obcięcie (overflow:hidden/clip bez wielokropka),
-//     wielokropek bez pełnego tekstu (title/aria-label/podpowiedź),
+//   - treść ukrytą przez obcięcie (overflow:hidden/clip bez wielokropka;
+//     wielokropek ma pełny tekst w podpowiedzi core/tooltips.js),
 //   - elementy sterujące poza ekranem albo zasłonięte przez przodka bez scrolla,
 //   - elementy sterujące i tekst w strefie safe area (wyspa aparatu, pasek gestu).
 //
@@ -77,12 +77,9 @@ function inspectLayout(opts) {
     if (!visible(el)) continue;
     // Napis tylko dla czytników (sr-only, etykieta zwinięta do ikony) — ukryty celowo.
     if (el.clientWidth <= 2 || el.clientHeight <= 2 || (st.clip && st.clip !== "auto") || st.clipPath !== "none") continue;
-    if (st.textOverflow === "ellipsis" || Number(st.webkitLineClamp) > 0) {
-      const full = (el.textContent || "").trim();
-      const hasFull = [el, el.parentElement, el.closest("[title],[aria-label],[data-tooltip]")].some((e) => e && (e.title || e.getAttribute("aria-label") || e.dataset?.tooltip || "").trim().length >= full.length - 1);
-      if (!hasFull && full) add("wielokropek-bez-pelnego-tekstu", el, full.slice(0, 40));
-      continue;
-    }
+    // Wielokropek: pełny tekst daje podpowiedź (core/tooltips.js — najechanie,
+    // fokus, przytrzymanie na dotyku); naturalność ocenia się na zrzucie.
+    if (st.textOverflow === "ellipsis" || Number(st.webkitLineClamp) > 0) continue;
     // Obcięcie widocznych dzieci (nie ozdobników o pointer-events:none / absolutnych tłach).
     const er = el.getBoundingClientRect();
     const hidden = [...el.querySelectorAll("*")].filter((c) => {

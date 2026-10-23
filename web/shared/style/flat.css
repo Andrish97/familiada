@@ -2824,14 +2824,15 @@
   /* Szuflada boczna (≤ 980 px): panel z lewej pod topbarem i tło; na
      komputerze panel stoi w układzie strony, a przycisk i tło są ukryte.
      W warstwie states, bo nadpisuje układ strony. Zamknięta: visibility
-     hidden (zawartość nie łapie fokusu). Ustawienia gry, Wskazówki. */
+     hidden (zawartość nie łapie fokusu). --drawer-top: początek pod paskiem
+     strony (domyślnie topbar). Ustawienia gry, Wskazówki, Eksplorator. */
   .drawer-toggle,
   .drawer-scrim { display: none; }
   @media (max-width: 980px) {
     .drawer-toggle { display: inline-flex; flex: 0 0 auto; }
     .drawer-scrim {
       position: fixed;
-      inset: var(--topbar-h, 64px) 0 0;
+      inset: var(--drawer-top, var(--topbar-h, 64px)) 0 0;
       z-index: 40;
       padding: 0;
       border: 0;
@@ -2841,10 +2842,13 @@
     .drawer {
       position: fixed;
       z-index: 41;
-      top: var(--topbar-h, 64px);
+      top: var(--drawer-top, var(--topbar-h, 64px));
       bottom: 0;
       left: 0;
-      width: min(320px, 86vw);
+      box-sizing: border-box;
+      width: calc(min(320px, 86vw) + env(safe-area-inset-left, 0px));
+      /* Strefa bezpieczna: wycięcie z lewej (telefon poziomo), pasek gestu na dole. */
+      padding: 14px 10px calc(14px + env(safe-area-inset-bottom, 0px)) calc(10px + env(safe-area-inset-left, 0px));
       border: 1px solid var(--line);
       border-left: 0;
       border-radius: 0 var(--r-md) var(--r-md) 0;

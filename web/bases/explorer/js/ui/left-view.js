@@ -5,9 +5,9 @@
 // wraca do drzewa. Telefon: drzewo / tagi / kategorie zamiast hamburgera —
 // przycisk otwiera panel z tym widokiem, ponowne stuknięcie go zamyka.
 
-import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-23T14420";
-import { selectionClear } from "../state.js?v=v2026-10-23T14420";
-import { initDrawer } from "../mobile.js?v=v2026-10-23T14420";
+import { renderAll, renderToolbar, isNarrow } from "../render.js?v=v2026-10-23T14472";
+import { selectionClear } from "../state.js?v=v2026-10-23T14472";
+import { initDrawer } from "../mobile.js?v=v2026-10-23T14472";
 
 // Schowane drzewo nie trzyma zaznaczenia — skróty (Usuń, F2…) działałyby
 // na niewidocznych folderach.
@@ -37,7 +37,7 @@ export function wireLeftView(state) {
   });
 
   // na komputerze nie ma szuflady; widok zostaje, przyciski się odświeżają
-  window.matchMedia?.("(max-width: 900px)").addEventListener?.("change", () => {
+  window.matchMedia?.("(max-width: 980px)").addEventListener?.("change", () => {
     if (!isNarrow()) drawer?.close();
     renderToolbar(state);
   });

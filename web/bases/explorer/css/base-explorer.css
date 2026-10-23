@@ -21,7 +21,7 @@
   /* Na telefonie w portrecie przewija się tylko tabela. Kontener .explorer
      zajmuje stałą przestrzeń między toolbarem a stopką i nie przechwytuje
      gestów pionowych listy. */
-  @media (max-width: 900px) and (orientation: portrait) {
+  @media (max-width: 980px) and (orientation: portrait) {
     main.explorer-page > .explorer {
       overflow: hidden;
     }
@@ -805,7 +805,7 @@
 
   /* Komputer: wyszukiwarka szersza niż lewy panel (decyzja użytkownika
      2026-10-21 — przy wielu tabletkach robiło się ciasno), przyciski za nią. */
-  @media (min-width: 901px) {
+  @media (min-width: 981px) {
       .toolbar {
           display: grid;
           grid-template-columns: 520px minmax(0, 1fr);
@@ -1175,7 +1175,7 @@
 
   .mobile-only { display: none !important; }
 
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
 
     /* Pokaż przycisk drawera w toolbarze */
     .mobile-only { display: inline-flex !important; }
@@ -1183,7 +1183,7 @@
     /* Topbar layout — dwie kolumny na mobile (obsługiwane przez topbar-mobile-menu.js) */
 
     /* Layout: jeden panel zamiast dwóch kolumn.
-       display:flex (nie block) -- .explorer-left/.drawerOverlay są na mobile
+       display:flex (nie block) -- .explorer-left/#drawerOverlay są na mobile
        position:fixed (poza flow), więc jedynym flex-childem w praktyce jest
        .explorer-right, który dzięki temu może się rozciągnąć (flex:1 1 auto
        poniżej) na całą dostępną wysokość, tak jak na desktopie robi to
@@ -1197,45 +1197,11 @@
       min-height: 0;
     }
 
-    /* Lewy panel jako drawer */
-    .explorer-left {
-      position: fixed;
-      /* #toolbar jest osobnym elementem NAD .explorer (patrz base-explorer.html) --
-         samo --topbar-h (wysokość globalnego topbara strony) zaczyna drawer
-         tuż pod topbarem, czyli DOKŁADNIE tam gdzie zaczyna się #toolbar, więc
-         drawer go zasłaniał. --be-toolbar-h (mierzone w mobile.js's initDrawer())
-         dosuwa start drawera pod realną, aktualną wysokość toolbara (1 albo 2
-         wiersze, zależnie od zawijania). */
-      top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px));
-      left: 0;
-      bottom: 0;
-      width: min(300px, 85vw);
-      z-index: 1000;
-      background: rgba(14, 14, 18, 0.98);
-      border-right: 1px solid var(--w-14);
-      padding: 16px 12px 24px;
-      transform: translateX(-110%);
-      transition: transform 220ms ease;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .explorer-left.is-open {
-      transform: translateX(0);
-    }
-
-    /* Overlay za drawerem — patrz komentarz przy .explorer-left o --be-toolbar-h */
-    .drawer-overlay {
-      position: fixed;
-      top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px));
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 999;
-      background: var(--k-40);
-    }
-
-    .drawer-overlay[hidden] { display: none !important; }
+    /* Lewy panel jako szuflada (.drawer/.drawer-scrim w silniku). #toolbar jest
+       osobnym elementem NAD .explorer: --drawer-top dolicza jego realną
+       wysokość (--be-toolbar-h, mierzone w mobile.js przy otwarciu), żeby
+       szuflada i tło nie zasłaniały toolbara. */
+    body { --drawer-top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px)); }
 
     /* Prawy panel — pełna szerokość, rozciągnięty na całą wysokość .explorer
        (flex:1 1 auto zamiast sztywnego min-height:50vh, patrz komentarz przy
@@ -1718,7 +1684,7 @@
     #matchedCategories .row,
     #tags .row[data-kind=tag] { min-height: 36px; }
   }
-  @media (min-width: 901px) {
+  @media (min-width: 981px) {
     .search-row .searchBox { margin-right: 0; }
   }
   .left-view-btn { position: relative; }
@@ -1731,7 +1697,7 @@
   }
   .left-view-btn .badge:empty { display: none; }
   .left-view-tabs { gap: 6px; align-items: center; }
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
     .desktop-only { display: none !important; }
     /* panel na telefonie: kryjące tło jak okna od dołu */
     .explorer-left { background: var(--surface-modal); }
@@ -1857,7 +1823,7 @@
   .searchClear .ico { width: 14px; height: 14px; }
   .searchClear[hidden] { display: none; }
   #btnSearchSheet.is-active { color: var(--gold); border-color: var(--gold); background: var(--g-10); }
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
     .toolbar > .search-row { display: none; }
   }
   .searchSheetBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }

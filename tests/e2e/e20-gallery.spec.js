@@ -690,7 +690,7 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
 }
 
 function pageModalIds(page) {
-  return page.locator('.overlay[id], .overlay .modal, .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
+  return page.locator('.overlay[id], .overlay .modal, .colorModalOverlay[id], .dt-modal[id], .drawer-scrim[id], dialog[id], [role="dialog"][id]')
     .evaluateAll((items) => items
       .filter((el) => !["pageGuard", "resourceLockGuard"].includes(el.id))
       .filter((el) => !/(alert|confirm|error|errModal)/i.test(el.id))

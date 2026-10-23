@@ -62,9 +62,28 @@ function install() {
     if (!frame) frame = requestAnimationFrame(position);
   }
 
-  function show(node, point = null) {
+  // Tekst ucięty wielokropkiem (text-overflow: ellipsis lub line-clamp) pokazuje
+  // pełną treść w tej samej podpowiedzi (decyzja 2026-10-23: nic nie ucięte
+  // bez dostępu do całości). Szuka od elementu pod wskaźnikiem w górę.
+  function truncatedFrom(node) {
+    for (let el = node, depth = 0; el instanceof Element && depth < 4; el = el.parentElement, depth++) {
+      const st = getComputedStyle(el);
+      const clamp = Number(st.webkitLineClamp) > 0;
+      if (st.textOverflow !== "ellipsis" && !clamp) continue;
+      const cut = clamp ? el.scrollHeight > el.clientHeight + 1 : el.scrollWidth > el.clientWidth + 1;
+      return cut && el.textContent.trim() ? el : null;
+    }
+    return null;
+  }
+  function truncatedInside(node) {
+    if (!(node instanceof Element)) return null;
+    for (const el of node.querySelectorAll("*")) { const cut = truncatedFrom(el); if (cut === el) return el; }
+    return null;
+  }
+
+  function show(node, point = null, fullText = "") {
     if (!node) return;
-    const text = textFor(node);
+    const text = fullText || textFor(node);
     if (!text) return;
     active = node;
     pointer = point;
@@ -95,8 +114,19 @@ function install() {
     if (event.pointerType === "touch") return;
     keyboardFocus = false;
     const node = event.target.closest?.(selector);
-    if (node && node !== active) show(node, { x: event.clientX, y: event.clientY });
+    if (node) { if (node !== active) show(node, { x: event.clientX, y: event.clientY }); return; }
+    const cut = truncatedFrom(event.target);
+    if (cut && cut !== active) show(cut, { x: event.clientX, y: event.clientY }, cut.textContent.trim());
   });
+  // Dotyk: przytrzymanie uciętego tekstu pokazuje całość (do następnego dotknięcia).
+  let pressTimer = 0;
+  document.addEventListener("pointerdown", (event) => {
+    clearTimeout(pressTimer);
+    if (event.pointerType !== "touch") return;
+    const cut = truncatedFrom(event.target);
+    if (cut) pressTimer = setTimeout(() => show(cut, { x: event.clientX, y: event.clientY }, cut.textContent.trim()), 450);
+  });
+  for (const type of ["pointerup", "pointercancel"]) document.addEventListener(type, () => clearTimeout(pressTimer));
   document.addEventListener("pointerdown", (event) => {
     keyboardFocus = false;
     if (event.pointerType === "touch") hide();
@@ -114,7 +144,9 @@ function install() {
   document.addEventListener("focusin", (event) => {
     if (!keyboardFocus) return;
     const node = event.target.closest?.(selector);
-    if (node) show(node);
+    if (node) { show(node); return; }
+    const cut = truncatedFrom(event.target) || truncatedInside(event.target);
+    if (cut) show(event.target, null, cut.textContent.trim());
   });
   document.addEventListener("focusout", (event) => {
     if (active?.contains(event.target)) hide();

@@ -532,7 +532,7 @@
   }
 
   /* Tablet w pionie i telefon: nazwa nad kontrolkami, plik na całą szerokość. */
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
     .sfx-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 8px; padding: 10px 0; }
     .sfx-row-desc, .sfx-file-wrap { grid-column: 1 / -1; }
     .sfx-file-wrap { justify-content: flex-start; }

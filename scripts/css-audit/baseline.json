@@ -11,10 +11,10 @@
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
-  "important": 16,
-  "colorLiteral": 37,
-  "mediaWidth": 7,
-  "zIndexLiteral": 8,
+  "important": 15,
+  "colorLiteral": 36,
+  "mediaWidth": 1,
+  "zIndexLiteral": 6,
   "sharedDuplicate": 10,
   "unusedClass": 2
  },
@@ -361,7 +361,7 @@
  "web/shared/css/game-settings.css": {
   "important": 3,
   "colorLiteral": 20,
-  "mediaWidth": 3,
+  "mediaWidth": 2,
   "sharedDuplicate": 3
  },
  "web/shared/css/image-viewer.css": {
@@ -471,7 +471,7 @@
   "mediaWidth": 13,
   "zIndexLiteral": 6,
   "sharedDuplicate": 260,
-  "unusedClass": 6
+  "unusedClass": 5
  },
  "web/shared/style/layout.css": {
   "important": 2,
@@ -481,7 +481,7 @@
  "web/shared/style/utilities.css": {
   "important": 3,
   "sharedDuplicate": 14,
-  "unusedClass": 4
+  "unusedClass": 3
  },
  "web/shared/translation/translation.js": {
   "inlineStyleJs": 9

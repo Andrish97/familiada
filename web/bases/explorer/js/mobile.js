@@ -14,9 +14,10 @@ export function initDrawer({ onChange } = {}) {
   const overlay = document.getElementById("drawerOverlay");
   if (!panel || !overlay) return null;
 
-  // #toolbar zajmuje realną, zmienną wysokość (1 wiersz na szerszym mobile,
-  // 2 wiersze gdy przyciski się zawiną) -- drawer/overlay w CSS doliczają
-  // to do --topbar-h, żeby nie zasłaniać toolbara. Mierzymy przy każdym
+  // Szuflada i tło: wspólne .drawer/.drawer-scrim (silnik). #toolbar zajmuje
+  // realną, zmienną wysokość (1 wiersz na szerszym mobile, 2 wiersze gdy
+  // przyciski się zawiną) -- --drawer-top w CSS dolicza ją do --topbar-h,
+  // żeby nie zasłaniać toolbara. Mierzymy przy każdym
   // otwarciu (nie raz przy init), bo wysokość może się zmienić między
   // otwarciami (obrót ekranu, dojście do innej szerokości viewportu).
   function updateToolbarOffset() {
@@ -30,7 +31,7 @@ export function initDrawer({ onChange } = {}) {
   function open() {
     updateToolbarOffset();
     panel.classList.add("is-open");
-    overlay.hidden = false;
+    overlay.classList.add("is-open");
     // Blokada przewijania tylko, gdy strona się przewija: klasa włącza
     // scrollbar-gutter (base.css), który bez paska przewijania zwęziłby
     // układ i pasek narzędzi „mrugnąłby” przy każdym otwarciu.
@@ -45,7 +46,7 @@ export function initDrawer({ onChange } = {}) {
   function close() {
     if (!isOpen()) return;
     panel.classList.remove("is-open");
-    overlay.hidden = true;
+    overlay.classList.remove("is-open");
     document.body.classList.remove("explorer-drawer-open");
     document.body.style.overflow = "";
     onChange?.();
