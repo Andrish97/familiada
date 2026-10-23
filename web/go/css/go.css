@@ -14,22 +14,9 @@
     flex-direction: column;
   }
 
-  .poll-go-card {
-    margin-top: auto;
-    margin-bottom: auto;
-    border-radius: var(--r-lg);
-    border: 1px solid var(--line);
-    background: var(--card);
-    --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
-    padding: 20px;
-    box-shadow: 0 24px 60px var(--k-40);
-  }
 
-  body.poll-go-body:not(.mail-body) .poll-go-card {
-    width: min(680px, 100%);
-    align-self: center;
-    box-sizing: border-box;
-  }
+
+  body.poll-go-body:not(.mail-body) .poll-go-card { align-self: center; }
 
   .poll-go-title {
     font-weight: 1000;

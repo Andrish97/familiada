@@ -24,15 +24,7 @@
     padding: 80px 18px 72px;
   }
 
-  .auth-card{
-    --under: #141822; /* podłoże przycisków (css/base.css) */
-    width: min(520px, 92vw);
-    padding: 18px;
-    border-radius: var(--r-lg);
-    border: 1px solid var(--w-14);
-    background: var(--w-8);
-    box-shadow: 0 24px 60px var(--k-40);
-  }
+  .auth-card { width: min(520px, 92vw); }
 
   .auth-brand{
     font-weight: 1000;

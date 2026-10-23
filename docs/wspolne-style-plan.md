@@ -268,6 +268,14 @@ i Ustawieniach niż zakładał pierwszy plan).
   w wymuszonym hamburgerze (≥ 761 px) tytuł strony zostaje jak na telefonie.
   Zrzuty: `poll-results`/`poll-share`/`polls-tally-tie` na tablecie.
 
+- **Scena `play-buzzer-on` (2026-10-23):** runner zrzutów zgłasza „NIEGOTOWA” także
+  na czystym `main` (nie po E23) — naprawić scenę/atrapę przy najbliższej pracy
+  przy Przycisku.
+- **Ekran blokady (`blocking-overlay.css`)**: własne `.blocking-card`,
+  `.blocking-action(.is-accent)` (nowy przycisk „Używaj tutaj” z `main`) — przepiąć
+  na `.card--entry`/`.btn` razem z modułem `block-screen` (plik działa też bez
+  tokenów na TV — sprawdzić Tizen).
+
 ## Dziennik E23
 
 | Data | Krok | Wynik |
@@ -293,3 +301,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | Puste stany: jeden `.empty-state` | `bld-no-q` ≡ `mkt-no-q`, `left-panel-empty`, `m-search-empty`, `gs-picker-empty`, `connect-device-empty`, `stats-session-suggestion-empty`, `mail-empty` (poczta), `activity-chart-empty` (wygląd) i pusta lista Eksploratora → `.empty-state`; nowy wariant `.empty-state--inline` (bez drugiej ramki w obramowanej liście/panelu). Nowa scena `manual-search-empty`. Spec `privacy-manual`: `.m-search-empty` → `.empty-state` (selektor). |
 | 2026-10-23 | Oznaczenia i liczniki | Panel admina: `mail-pill` + 12 wariantów kolorów (stan kolejki, poziom logu, funkcja, pominięty) i `session-status--live/done/err` → `.tag` z wariantami `--gold/--info/--bad/--warn/--ok/--muted` (`--upper` dla poczty). `tree-count` (Eksplorator) → nowy `.badge--muted` (liczba elementów, nie powiadomienie). `.load-retry` (Kontakty, Ankieta, Zadania) w silniku. |
 | 2026-10-23 | Karta: jedna `.card` | Silnik: `.card` (poziom 1: `--surface-1`, `--r-lg`, 16 px / telefon 12 px, cień karty), `.card--inset` (w karcie), `.card--entry` (karta wejścia 680 px). Usunięte kopie: Ankieta, głosowanie (→ `--entry`), Control (zostaje układ), Kontakty (promień 14 → 20 jak wszędzie), Connect (→ `--inset`). |
+| 2026-10-23 | Scalenie `main` + karty wejścia | `main` (77 commitów: Supabase z `/shared/vendor`, przejmowanie urządzeń) scalony; konflikty w nagłówkach stron TV/gry i Dzienniku. Karty wejścia `landing-card` (potwierdzenie/reset), `login-card` (+`setup-card` = złoty obrys), `poll-go-card` (Go, maile), `auth-card` (panel admina) → `.card.card--entry`. |

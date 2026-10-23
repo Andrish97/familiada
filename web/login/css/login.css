@@ -53,14 +53,7 @@
       pointer-events: auto;
   }
 
-  .login-card {
-      background: var(--w-8);
-      --under: #141822; /* podłoże przycisków (css/base.css) */
-      border: 1px solid var(--w-14);
-      border-radius: var(--r-lg);
-      padding: 18px;
-      box-shadow: 0 24px 60px var(--k-40);
-  }
+
 
   /* ── typography ── */
 
@@ -161,12 +154,7 @@
 
   /* ── setup card (first-run) ── */
 
-  .setup-card {
-      background: rgba(8,12,28,.6);
-      --under: #070b19;
-      border: 1px solid var(--g-35);
-      box-shadow: 0 30px 80px var(--k-70);
-  }
+  .setup-card { border-color: var(--g-35); }
 
   .setup-title {
       margin-top: 10px;

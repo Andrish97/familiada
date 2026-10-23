@@ -204,7 +204,7 @@
   "inlineStyleJs": 15
  },
  "web/login/css/login.css": {
-  "colorLiteral": 7,
+  "colorLiteral": 4,
   "zIndexLiteral": 1,
   "sharedDuplicate": 10
  },
@@ -307,7 +307,7 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 76,
+  "colorLiteral": 75,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
   "sharedDuplicate": 7,
