@@ -6,18 +6,21 @@
 }
 .imgv-overlay.is-open { display: grid; }
 
+/* Szerokość okna z proporcji obrazu (--imgv-ratio) i wysokości nagłówka
+   (--imgv-chrome, mierzona w image-viewer.js): obraz wypełnia okno i mieści
+   się w całości, bez ucinania dołu przy niższym oknie przeglądarki. */
 .imgv-panel {
-  width: fit-content;
+  --imgv-max-h: min(88vh, 960px);
+  width: min(92vw, 1432px, calc((var(--imgv-max-h) - var(--imgv-chrome, 120px)) * var(--imgv-ratio, 1.6) + 32px));
   max-width: 92vw;
-  max-height: min(82vh, 900px);
+  max-height: var(--imgv-max-h);
   padding: 16px;
   display: flex;
   flex-direction: column;
 }
 
 @media (max-width: 980px) {
-  /* Tabletowy widok nadal jest zwykłym modalem, więc zostają widoczne
-     marginesy po bokach. Pełnoekranowy układ dotyczy tylko arkusza telefonu. */
+  /* Wąskie okno bez arkusza: zwykły modal z marginesami po bokach. */
   .imgv-overlay { padding: 3vw; }
   .imgv-panel { max-width: 94vw; max-height: 90vh; }
 }
@@ -40,31 +43,29 @@
 
 .imgv-stage {
   position: relative;
-  width: auto;
+  width: 100%;
   min-width: 0;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: block;
   overflow: hidden;
 }
 
 .imgv-img {
-  max-width: min(88vw, 1400px);
-  max-height: min(72vh, 800px);
   display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
 }
 
+/* Pole przybliżania palcami (pinch-zoom.js) -- na każdym urządzeniu. */
 .imgv-zoom {
-  width: fit-content;
-  height: fit-content;
-  max-width: 90vw;
-  max-height: min(72vh, 800px);
+  width: 100%;
+  aspect-ratio: var(--imgv-ratio, 1.6);
   min-width: 0;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: block;
   touch-action: none;
   overflow: hidden;
   position: relative;
@@ -109,6 +110,7 @@
 .imgv-overlay.sheet-active .imgv-zoom {
   width: 100%;
   height: 100%;
+  aspect-ratio: auto;
   max-width: none;
   max-height: none;
 }
@@ -123,7 +125,6 @@
    szerokość obrazu i ucinało boki, i bez pola o wysokości samego obrazu. */
 @media (max-width: 980px) {
   .imgv-overlay:not(.sheet-active) .imgv-panel { width: 94vw; height: 90vh; height: 90dvh; }
-  .imgv-stage { display: block; flex: 1 1 auto; width: 100%; min-height: 0; }
-  .imgv-zoom { display: block; width: 100%; height: 100%; max-width: none; max-height: none; }
-  .imgv-zoom > img.imgv-img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
+  .imgv-stage { flex: 1 1 auto; }
+  .imgv-zoom { height: 100%; aspect-ratio: auto; }
 }

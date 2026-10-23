@@ -1,12 +1,13 @@
 // js/core/image-viewer.js
 // Podgląd zrzutu w oknie (strona główna, Wskazówki): na komputerze obraz w oknie
-// z tytułem, na telefonie okno od dołu z przybliżaniem palcami (pinch-zoom.js).
+// z tytułem, na telefonie i tablecie okno od dołu; wszędzie przybliżanie palcami
+// (pinch-zoom.js).
 // Zamyka [×], Esc, kliknięcie tła albo „Wstecz” na górnym pasku (backBtn).
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T15153";
-import { icon } from "./icons.js?v=v2026-10-23T15153";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T15153";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-23T15153";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15305";
+import { icon } from "./icons.js?v=v2026-10-23T15305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T15305";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-23T15305";
 
 /**
  * @param {{ mount?: HTMLElement|null, before?: Node|null, backBtn?: HTMLElement|null }} opts
@@ -39,41 +40,48 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
 
   // preview -- obraz ze strony (już wczytany): pokazany od razu w docelowym
   // rozmiarze, a pełny kadr podmienia go po zdekodowaniu, bez skoku okna.
+  // Okno na komputerze: szerokość z proporcji obrazu i wysokości nagłówka
+  // (--imgv-chrome), żeby cały obraz mieścił się w oknie bez ucinania dołu.
+  const panel = overlay.querySelector(".imgv-panel");
+  const fit = () => {
+    const zoom = stage.querySelector(".imgv-zoom");
+    if (!zoom || !overlay.classList.contains("is-open")) return;
+    const chrome = panel.getBoundingClientRect().height - zoom.getBoundingClientRect().height;
+    if (chrome > 0) panel.style.setProperty("--imgv-chrome", `${Math.ceil(chrome)}px`);
+  };
+  const setRatio = (w, h) => { if (w > 0 && h > 0) { panel.style.setProperty("--imgv-ratio", String(w / h)); requestAnimationFrame(fit); } };
+  window.addEventListener("resize", () => requestAnimationFrame(fit), { passive: true });
+
+  // preview -- obraz ze strony (już wczytany): pokazany od razu w docelowym
+  // rozmiarze, a pełny kadr podmienia go po zdekodowaniu, bez skoku okna.
+  // Przybliżanie palcami (pinch-zoom.js) na każdym urządzeniu -- także na
+  // dużym tablecie i komputerze z ekranem dotykowym.
   const open = (src, title, preview = null) => {
     if (overlay.classList.contains("is-open")) return;
     previousFocus = document.activeElement;
     stage.innerHTML = "";
     titleEl.textContent = title || "";
-    const isMobile = window.matchMedia("(max-width: 980px)").matches;
     const img = document.createElement("img");
     img.className = "imgv-img"; img.alt = title || "";
     const ready = preview?.complete && preview.naturalWidth > 0;
     img.src = ready ? (preview.currentSrc || preview.src) : src;
+    if (ready) setRatio(preview.naturalWidth, preview.naturalHeight);
+    else img.decode().then(() => setRatio(img.naturalWidth, img.naturalHeight)).catch(() => {});
     if (ready && img.src !== new URL(src, location.href).href) {
       const full = new Image();
       full.src = src;
       full.decode().then(() => { if (img.isConnected) img.src = src; }).catch(() => {});
     }
-    if (isMobile) {
-      const zoom = document.createElement("div");
-      zoom.className = "imgv-zoom";
-      zoom.appendChild(img); stage.appendChild(zoom);
-      previewZoom = initPinchZoom(zoom, img);
-      lockPageZoomForPreview();
-    } else {
-      if (ready) {
-        // Rozmiar okna z proporcji kadru, a nie z rozdzielczości podglądu.
-        const ratio = preview.naturalWidth / preview.naturalHeight;
-        img.style.aspectRatio = `${preview.naturalWidth} / ${preview.naturalHeight}`;
-        img.style.width = `min(88vw, 1400px, calc(min(72vh, 800px) * ${ratio}))`;
-        img.style.height = "auto";
-      }
-      stage.appendChild(img);
-    }
+    const zoom = document.createElement("div");
+    zoom.className = "imgv-zoom";
+    zoom.appendChild(img); stage.appendChild(zoom);
+    previewZoom = initPinchZoom(zoom, img);
+    lockPageZoomForPreview();
     overlay.style.display = "";
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
     enterModalSheet(overlay, { backBtn, onClose: close });
+    requestAnimationFrame(fit);
     (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
   };
 

@@ -6,7 +6,7 @@
 // Po przeciągnięciu przeglądarka wysyła jeszcze „click” — consumeClick()
 // pozwala go pominąć, żeby nie skasował zaznaczenia z ramki.
 
-import { isModKey } from "../platform.js?v=v2026-10-23T15153";
+import { isModKey } from "../platform.js?v=v2026-10-23T15305";
 
 /**
  * container   element przewijany z wierszami
