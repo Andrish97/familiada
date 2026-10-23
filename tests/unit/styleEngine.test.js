@@ -22,7 +22,9 @@ function htmlFiles(dir = path.join(root, "web"), out = []) {
   return out;
 }
 const stylesheets = (html) => [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"?]+)/g)].map((m) => m[1]);
-const enginePages = () => htmlFiles().filter((f) => stylesheets(read(f)).some((h) => h.startsWith("/shared/style/")));
+const FLAT = ["/shared/style/tokens.css", "/shared/style/flat.css"];
+const isFlat = (f) => stylesheets(read(f)).includes(FLAT[1]);
+const enginePages = () => htmlFiles().filter((f) => !isFlat(f) && stylesheets(read(f)).some((h) => h.startsWith("/shared/style/")));
 
 test("silnik: tokeny poza warstwami, reszta w zadeklarowanych warstwach", () => {
   assert.doesNotMatch(read("web/shared/style/tokens.css"), /@layer/);
@@ -51,5 +53,22 @@ test("strony na silniku: pełny zestaw w kolejności, bez starych plików, plik 
     for (const own of sheets.slice(last + 1)) {
       assert.match(stripComments(read(`web${own}`)), /^@layer page \{/, `${page}: ${own} poza @layer page`);
     }
+  }
+});
+
+test("silnik płaski (ekrany TV) aktualny i bez warstw", async () => {
+  const { buildFlat, FLAT_PATH } = await import("../../scripts/build-flat-engine.mjs");
+  assert.equal(fs.readFileSync(FLAT_PATH, "utf8"), buildFlat(), "node scripts/build-flat-engine.mjs");
+  assert.doesNotMatch(stripComments(buildFlat()), /@layer/);
+});
+
+test("ekrany TV: tokeny + silnik płaski, własny CSS bez warstw", () => {
+  const pages = htmlFiles().filter(isFlat);
+  for (const p of ["web/connect/tv/index.html", "web/polls/vote/qr/index.html", "web/maintenance/index.html", "web/404.html"]) assert.ok(pages.includes(p), p);
+  for (const page of pages) {
+    const sheets = stylesheets(read(page));
+    assert.deepEqual(sheets.filter((h) => h.startsWith("/shared/style/")), FLAT, page);
+    for (const legacy of LEGACY) assert.ok(!sheets.includes(legacy), `${page}: ${legacy}`);
+    for (const own of sheets.slice(sheets.indexOf(FLAT[1]) + 1)) assert.doesNotMatch(read(`web${own}`), /@layer/, `${page}: ${own}`);
   }
 });

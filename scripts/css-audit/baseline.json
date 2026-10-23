@@ -95,11 +95,18 @@
  "web/control/css/control.css": {
   "important": 8,
   "colorLiteral": 176,
-  "rootTokens": 10,
   "mediaWidth": 14,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 46,
-  "unusedClass": 90
+  "sharedDuplicate": 59,
+  "unusedClass": 91
+ },
+ "web/control/css/control2.css": {
+  "important": 2,
+  "colorLiteral": 53,
+  "rootTokens": 1,
+  "mediaWidth": 2,
+  "sharedDuplicate": 14,
+  "unusedClass": 2
  },
  "web/control/css/test-mode.css": {
   "important": 9,
@@ -139,7 +146,7 @@
  },
  "web/control/index.html": {
   "inlineStyleHtml": 5,
-  "styleBlock": 2
+  "styleBlock": 1
  },
  "web/control/js/app.js": {
   "inlineStyleJs": 2
@@ -159,7 +166,7 @@
   "colorLiteral": 36,
   "rootTokens": 2,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 40
+  "sharedDuplicate": 39
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
@@ -497,17 +504,24 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 2,
-  "sharedDuplicate": 191,
+  "sharedDuplicate": 192,
   "unusedClass": 2
+ },
+ "web/shared/style/flat.css": {
+  "important": 47,
+  "mediaWidth": 13,
+  "zIndexLiteral": 3,
+  "sharedDuplicate": 223,
+  "unusedClass": 7
  },
  "web/shared/style/layout.css": {
   "important": 2,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 23
+  "sharedDuplicate": 22
  },
  "web/shared/style/utilities.css": {
   "important": 3,
-  "sharedDuplicate": 3,
+  "sharedDuplicate": 12,
   "unusedClass": 5
  },
  "web/shared/translation/translation.js": {

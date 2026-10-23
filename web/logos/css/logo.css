@@ -865,116 +865,6 @@
   }
 
   /* =========================================================
-     FULL WIDTH MODAL (jak w games)
-  ========================================================= */
-
-  /* =========================================================
-     PREVIEW: modal (prawie pełna szerokość, canvas widoczny w całości)
-  ========================================================= */
-
-  /* overlay wyśrodkowuje modal */
-  #previewOverlay{
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-  }
-
-  /* modal: prawie 100% szerokości, wysokość dopasowana do canvasa */
-  #previewOverlay .modal.previewModal{
-    position: relative;
-    width: min(98vw, 1800px);
-    max-width: min(98vw, 1800px);
-    max-height: min(90vh, 1000px);
-    border-radius: var(--radius-lg);
-    padding: 18px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
-     co .mHead/.mkt-detail-head w innych modalach (spójny wygląd przycisku
-     zamknięcia we wszystkich modalach, patrz css/base.css .mHead). */
-  #previewOverlay .previewModalTitle{
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    margin-bottom: 12px;
-  }
-
-  #previewOverlay .previewModalTitle .mTitle{
-    font-weight: 1000;
-    letter-spacing: .04em;
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
-
-  #previewOverlay .previewModalTitle .mSub{
-    font-size: 12px;
-    opacity: .75;
-  }
-
-  /* kontener canvasa - scrollable on mobile.
-     Bez własnego tła (rgba(0,0,0,.25) dawało widoczny, ciemniejszy
-     prostokąt wokół "leżącego" (landscape) podglądu w wysokim, pionowym
-     kontenerze na telefonie — canvas dopasowany do szerokości zostawia
-     dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła
-     wyglądała jak osobny, niepasujący element zamiast zwykłej,
-     niewidocznej przestrzeni). Tło modala (var(--bg) w trybie sheet,
-     var(--card) na desktopie) wystarcza. */
-  #previewOverlay .previewModalCanvas{
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 12px;
-  }
-
-  /* canvas skaluje się do kontenera na desktopie, na touch pozwala na scroll */
-  #previewOverlay .previewModalCanvas canvas{
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: 100%;
-    image-rendering: pixelated;
-    flex-shrink: 0;
-  }
-
-  /* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na
-     samym canvasie, niezależny od powiększania całej strony przeglądarki.
-     touch-action:none — bez tego przeglądarka przechwytuje gest dwoma
-     palcami jako natywny zoom CAŁEJ strony (topbar/stopka też), zamiast
-     zostawić go naszemu JS-owi ograniczonemu do tego elementu. overflow
-     zmienione na hidden, bo panowanie robimy sami przez CSS transform —
-     natywny scroll kontenera i nasz transform liczyłyby się podwójnie. */
-  #previewOverlay .modal.previewModal.is-touch .previewModalCanvas {
-    overflow: hidden;
-    touch-action: none;
-  }
-
-  /* WAŻNE: canvas ma zostać dopasowany do kontenera (width:100%;height:auto;
-     max-height:100% — te same reguły co na desktopie) TAKŻE w is-touch —
-     scale(1) w naszym JS-owym pinch-zoomie (initPreviewPinchZoom) ma
-     oznaczać "dopasowany do ekranu", a nie naturalny rozmiar bufora
-     canvasa (1600x700). Wcześniej ta reguła nadpisywała to na
-     width:auto/height:auto (naturalny rozmiar), więc już na starcie,
-     zanim użytkownik cokolwiek uszczypnął, widoczny był tylko wąski,
-     mocno "przybliżony" wycinek loga (naturalna szerokość 1600px vs
-     kontener ~300-400px) — stąd wrażenie zepsutego zoomu i ciemnego tła
-     kontenera widocznego dookoła nieproporcjonalnie dopasowanej treści. */
-  #previewOverlay .modal.previewModal.is-touch .previewModalCanvas canvas {
-    transform-origin: 0 0;
-    will-change: transform;
-  }
-
-  /* =========================================================
      LIST VIEW: karta do krawędzi ekranu + scroll w logoGridBig
      (spójnie jak games)
   ========================================================= */
@@ -1150,6 +1040,8 @@
   }
 }
 
+
+
 /* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
    warstwie strony, jak ogólne reguły arkusza w silniku. */
 @layer states {
@@ -1161,4 +1053,115 @@
     #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
       align-items: stretch;
     }}
+
+
+  /* =========================================================
+     FULL WIDTH MODAL (jak w games)
+  ========================================================= */
+
+  /* =========================================================
+     PREVIEW: modal (prawie pełna szerokość, canvas widoczny w całości)
+  ========================================================= */
+
+  /* overlay wyśrodkowuje modal */
+  #previewOverlay{
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  /* modal: prawie 100% szerokości, wysokość dopasowana do canvasa */
+  #previewOverlay .modal.previewModal{
+    position: relative;
+    width: min(98vw, 1800px);
+    max-width: min(98vw, 1800px);
+    max-height: min(90vh, 1000px);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
+     co .mHead/.mkt-detail-head w innych modalach (spójny wygląd przycisku
+     zamknięcia we wszystkich modalach, patrz css/base.css .mHead). */
+  #previewOverlay .previewModalTitle{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  #previewOverlay .previewModalTitle .mTitle{
+    font-weight: 1000;
+    letter-spacing: .04em;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  #previewOverlay .previewModalTitle .mSub{
+    font-size: 12px;
+    opacity: .75;
+  }
+
+  /* kontener canvasa - scrollable on mobile.
+     Bez własnego tła (rgba(0,0,0,.25) dawało widoczny, ciemniejszy
+     prostokąt wokół "leżącego" (landscape) podglądu w wysokim, pionowym
+     kontenerze na telefonie — canvas dopasowany do szerokości zostawia
+     dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła
+     wyglądała jak osobny, niepasujący element zamiast zwykłej,
+     niewidocznej przestrzeni). Tło modala (var(--bg) w trybie sheet,
+     var(--card) na desktopie) wystarcza. */
+  #previewOverlay .previewModalCanvas{
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  /* canvas skaluje się do kontenera na desktopie, na touch pozwala na scroll */
+  #previewOverlay .previewModalCanvas canvas{
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+
+  /* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na
+     samym canvasie, niezależny od powiększania całej strony przeglądarki.
+     touch-action:none — bez tego przeglądarka przechwytuje gest dwoma
+     palcami jako natywny zoom CAŁEJ strony (topbar/stopka też), zamiast
+     zostawić go naszemu JS-owi ograniczonemu do tego elementu. overflow
+     zmienione na hidden, bo panowanie robimy sami przez CSS transform —
+     natywny scroll kontenera i nasz transform liczyłyby się podwójnie. */
+  #previewOverlay .modal.previewModal.is-touch .previewModalCanvas {
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  /* WAŻNE: canvas ma zostać dopasowany do kontenera (width:100%;height:auto;
+     max-height:100% — te same reguły co na desktopie) TAKŻE w is-touch —
+     scale(1) w naszym JS-owym pinch-zoomie (initPreviewPinchZoom) ma
+     oznaczać "dopasowany do ekranu", a nie naturalny rozmiar bufora
+     canvasa (1600x700). Wcześniej ta reguła nadpisywała to na
+     width:auto/height:auto (naturalny rozmiar), więc już na starcie,
+     zanim użytkownik cokolwiek uszczypnął, widoczny był tylko wąski,
+     mocno "przybliżony" wycinek loga (naturalna szerokość 1600px vs
+     kontener ~300-400px) — stąd wrażenie zepsutego zoomu i ciemnego tła
+     kontenera widocznego dookoła nieproporcjonalnie dopasowanej treści. */
+  #previewOverlay .modal.previewModal.is-touch .previewModalCanvas canvas {
+    transform-origin: 0 0;
+    will-change: transform;
+  }
 }

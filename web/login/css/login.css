@@ -111,6 +111,9 @@
       outline: 0;
   }
 
+  /* pole hasła z przyciskiem „pokaż” (silnik: .pass-wrap) */
+  .pass-wrap input { padding-right: 42px; }
+
   input:focus {
       border-color: rgba(255,220,120,.5);
       box-shadow: 0 0 0 3px rgba(255,220,120,.12);

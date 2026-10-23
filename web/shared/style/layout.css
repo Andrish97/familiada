@@ -77,12 +77,14 @@
     }
   }
 
-  .title {
+  /* Tytuł strony: w pasku listy i w topbarze (sekcja 2). */
+  .bar .title {
     font-size: 18px;
     font-weight: 900;
     letter-spacing: .12em;
     text-transform: uppercase;
   }
+  .topbar-title .title { font-size: 18px; }
   .hint {
     margin-top: 4px;
     font-size: 12px;
