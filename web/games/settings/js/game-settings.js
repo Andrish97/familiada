@@ -1,32 +1,32 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15101";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15101";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15101";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15101";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15101";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15101";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-23T15101";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15101";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T15101";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-23T15101";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15101";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-23T15101";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15124";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15124";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15124";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15124";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15124";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15124";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-23T15124";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15124";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T15124";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-23T15124";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15124";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-23T15124";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-23T15101";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-23T15124";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-23T15101";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T15101";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T15101";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15101";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15101";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-23T15101";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-23T15124";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T15124";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T15124";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T15124";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T15124";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-23T15124";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -1136,7 +1136,7 @@ function renderQuestions() {
     <div class="gs-cat-title">${t("gameSettings.categories.questions")}</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.questions.finaleSection")}</div>
+        <div class="section-title">${t("gameSettings.questions.finaleSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.finale.hasFinal")}</div>
           <div class="toggle-group">
@@ -1166,7 +1166,7 @@ function renderQuestions() {
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.questions.roundsSection")}</div>
+        <div class="section-title">${t("gameSettings.questions.roundsSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.questions.roundsModeLabel")}</div>
           <div class="toggle-group">
@@ -1600,7 +1600,7 @@ function renderGame() {
     <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.roundsScoreSection")}</div>
+        <div class="section-title">${t("gameSettings.game.roundsScoreSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.roundMultipliers")}</div>
           <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
@@ -1609,7 +1609,7 @@ function renderGame() {
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.finaleSection")}</div>
+        <div class="section-title">${t("gameSettings.game.finaleSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.finalMinPoints")}</div>
           <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}" style="margin-top:6px;max-width:160px"/>
@@ -1625,7 +1625,7 @@ function renderGame() {
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.endScreenSection")}</div>
+        <div class="section-title">${t("gameSettings.game.endScreenSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.endModeLabel")}</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">

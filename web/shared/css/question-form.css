@@ -12,12 +12,8 @@
     min-width: 0;
   }
 
-  /* nagłówek sekcji jak .shareSectionTitle */
-  .qf-label {
-      font-weight: 800;
-      letter-spacing: .2px;
-      margin-bottom: 10px
-  }
+  /* nagłówek sekcji: wspólny .section-title; odstęp do pola pod nim */
+  .qf-section > .section-title { margin-bottom: 10px; }
 
   .qf-qtext { width: 100%; min-height: 90px; }
 
@@ -175,7 +171,7 @@
       border-color: var(--w-25)
   }
 
-  /* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”
+  /* Nagłówek sekcji „Odpowiedzi” (.section-title) z dopiskiem „Suma 60/100”
      -- czerwonym powyżej puli; bez punktów sam nagłówek. */
   .qf-sum {
       display: flex;
@@ -185,10 +181,6 @@
       min-height: 20px
   }
 
-  .qf-sumTitle {
-      font-weight: 800;
-      letter-spacing: .2px
-  }
 
   /* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
   .qf-sumChip {

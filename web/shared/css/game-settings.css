@@ -277,10 +277,7 @@
     border-bottom:1px solid var(--w-8);
   }
   .sectionBlock:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
-  .sectionTitle{
-    font-size:.75rem; font-weight:700; letter-spacing:.08em;
-    text-transform:uppercase; opacity:.5; margin-bottom:10px;
-  }
+  .sectionBlock > .section-title{ margin-bottom:10px; }
   .setting-item{ margin-bottom:12px; }
   .setting-item:last-child{ margin-bottom:0; }
   .gs-row-dragging{ opacity:.35; }

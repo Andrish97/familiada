@@ -6,10 +6,10 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T15101";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-23T15101";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-23T15101";
-import "./scroll-fade.js?v=v2026-10-23T15101"; // wygaszona krawędź przewijanych list
+import { t } from "../../translation/translation.js?v=v2026-10-23T15124";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-23T15124";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-23T15124";
+import "./scroll-fade.js?v=v2026-10-23T15124"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -326,7 +326,7 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
   section.className = "shareSection";
   if (key) section.dataset.section = key;
   const heading = document.createElement("h2");
-  heading.className = "shareSectionTitle";
+  heading.className = "section-title";
   heading.textContent = title;
   const list = document.createElement("div");
   list.className = "shareList shareList--scroll";
@@ -376,7 +376,7 @@ export function renderShareSections(host, groups, opts = {}) {
     sec.className = "shareSection shareSection--" + key;
     sec.dataset.section = key;
     const title = document.createElement("div");
-    title.className = "shareSectionTitle";
+    title.className = "section-title";
     title.textContent = g.title || t(`shareSections.${key}`);
     const sub = document.createElement("div");
     sub.className = "shareSectionSub";

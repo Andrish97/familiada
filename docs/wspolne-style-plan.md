@@ -320,11 +320,6 @@ wewnątrz tabeli listy Eksploratora).
 - **Control → Urządzenia — podpowiedź pod siatką (E23, 2026-10-23):**
   „Wejdź na familiada.online…” stoi dużą czcionką nad stopką kroku, z pustym
   pasem nad nią na komputerze. Do ustawienia bliżej siatki albo jako `.hint`.
-- **Ustawienia gry — hierarchia nagłówków (E23, 2026-10-23):** tytuł sekcji
-  (`.sectionTitle`, np. „FINAŁ”) jest mniejszy i ciemniejszy niż etykieta
-  pola (`.field-label`) pod nim. Do ujednolicenia z panelem ustawień (§8a):
-  jeden nagłówek sekcji karty dla Ustawień gry, Konta i panelu admina.
-
 - **Ankieta — topbar bez „Więcej” (zgłoszone 2026-10-23, zrzut ~1200 px):**
   na stronie ankiety (`/polls/`) przyciski Znajomi/Subskrybenci zawijają się
   w dwie linie pod tytułem zamiast zwinąć do „Więcej”. Przyczyna: „Więcej”
@@ -399,3 +394,4 @@ wewnątrz tabeli listy Eksploratora).
 | 2026-10-23 | Moduł ekranu blokady | `core/blocking-screen.js` (`blockingScreen(id, akcje)`, `setBlockingIcon`, `setBlockingOpen` z blokadą przewijania) zamiast dwóch kopii znaczników i blokady przewijania w `page-overlay.js` i `resource-lock.js` (identyfikatory bez zmian). Generator podręcznika czyta ikony przycisków także z zapisu `{ i18n, iconName }` w JS. Zrzuty: games-editor-locked-busy, logos-market-editor-phone. |
 | 2026-10-23 | Jedna pozycja menu `.menu-item` | Cztery nazwy tej samej rzeczy → jedna: `.ui-select-item`, `.lang-option`, `.account-menu-item`, `.cm-item` (+ `ui-select-item-label` → `menu-item-label`). Jeden wygląd (bez obramowania, najechanie `--w-8`, wybrana `aria-selected`, nieaktywna `aria-disabled`, `.is-danger`, fokus klawiatury); dotyk/telefon: 44 px i 14 px. Usunięte kopie w Eksploratorze, Marketplace, liście filtrów, pasku list. Spece: mechaniczna zmiana selektorów. Zrzuty: tasks-account-menu, games-sort-menu, base-explorer-menu (telefon/komputer). |
 | 2026-10-23 | Postęp importu/eksportu bez stylów inline | Gry (import, eksport do bazy), Bazy (import), Logo (import): ten sam blok co okno uniwersalne (`.uni-progress`, `.uni-progress-row/-step/-count`, `.progress > .progress-bar`, `.uni-progress-msg`), ukrywanie atrybutem `hidden`; błąd pliku `.field-error role=alert` (było `color:#f87171` inline). Logo: komunikat „Zaimportowano logo” jako `.msg` (wcześniej w polu błędu). Zrzuty: games-export-progress, games-import-error, logos-market-logos-import-done/-error. |
+| 2026-10-23 | Jeden nagłówek sekcji `.section-title` | `.shareSectionTitle` (silnik), `.qf-label`, `.qf-sumTitle` (formularz pytania), `.panelTitle` (Edytor gry), `.sectionTitle` (Ustawienia gry: małe, szare wersaliki — słabsze od etykiety pola) → `.section-title`. Zamknięte zgłoszenie „hierarchia nagłówków w Ustawieniach gry”. |

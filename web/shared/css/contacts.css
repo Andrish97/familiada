@@ -38,7 +38,7 @@
   .contacts-card .contacts-add,
   .contacts-card .shareSection:has(> .shareList[hidden]),
   .contacts-card .shareSection:not(:has(.shareRow)){ overflow: visible; }
-  .contacts-card .shareSectionTitle{ flex: 0 0 auto; }
+  .contacts-card .section-title{ flex: 0 0 auto; }
   .contacts-card .shareList--scroll{ max-height: none; flex: 1 1 auto; min-height: 0; align-content: start; }
   .contacts-card .shareRow{ flex-shrink: 0; }
 

@@ -11,32 +11,32 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15101" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15101"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T15101"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15124" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15124"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T15124"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15101" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15101" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15124" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15124" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T15101";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T15124";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-23T15101");
+    import("/control/js/app.js?v=v2026-10-23T15124");
 
   </script>
 
-  <link rel="stylesheet" href="/control/css/control2.css?v=v2026-10-23T15101"/>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/control/css/control2.css?v=v2026-10-23T15124"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T15124"/>
 
 </head>
 <body class="control-body skel-body">
@@ -123,7 +123,7 @@
       <div class="uni-body">
         <div class="hint uni-hint" data-i18n="control.shareDeviceModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych.</div>
         <section class="shareSection shareSection--lookup">
-          <div class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div>
+          <div class="section-title" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div>
           <div class="baseShareLookup">
             <input id="shareDeviceEmail" class="inp" type="text"
                    placeholder="Nazwa użytkownika lub e-mail..."
@@ -133,12 +133,12 @@
         </section>
 
         <section class="shareSection shareSection--friends">
-          <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</div><div id="shareDeviceBulkActions"></div></div>
+          <div class="shareSectionHeading"><div class="section-title" data-i18n="contacts.sections.friend">Znajomi</div><div id="shareDeviceBulkActions"></div></div>
           <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
         </section>
 
         <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
-          <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
+          <div class="section-title" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
           <div id="shareDeviceCurrentContent" class="shareList"></div>
         </section>
       </div>
@@ -155,7 +155,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15101"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15124"></script>
 
 </body>
 </html>

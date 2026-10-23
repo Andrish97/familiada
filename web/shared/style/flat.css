@@ -2161,10 +2161,10 @@
     border: 1px solid var(--line-faint);
   }
   .shareSection:first-child { margin-top: 0; }
-  .shareSectionTitle { margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
+  .section-title { margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
   .shareSectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
-  .shareSectionHeading > .shareSectionTitle { flex: 1 1 auto; min-width: 0; }
-  .shareSectionTitle.shareSectionHeading { flex-wrap: wrap; }
+  .shareSectionHeading > .section-title { flex: 1 1 auto; min-width: 0; }
+  .section-title.shareSectionHeading { flex-wrap: wrap; }
   .shareBulkActions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex: 0 0 auto; }
   /* wygląd zwykłego przycisku, tylko ikona złota */
   .shareBulkAction { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: var(--r-sm); color: var(--accent); }

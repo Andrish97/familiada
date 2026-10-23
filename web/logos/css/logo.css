@@ -530,7 +530,7 @@
     flex-direction: column;
     min-height: 0;
   }
-  /* tytuł panelu jak nagłówki sekcji w innych miejscach (.shareSectionTitle);
+  /* tytuł panelu jak nagłówki sekcji w innych miejscach (.section-title);
      wspólny dla edytora obrazu i podglądu w edytorze tekstu */
   .imgCardTitle{
     font-weight: 800;

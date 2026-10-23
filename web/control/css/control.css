@@ -376,7 +376,7 @@
 
   .shareModal > .mHead { margin-bottom: 0; }
   .shareModal > .uni-body > .shareSection { margin: 0; padding: 12px; flex: 0 0 auto; }
-  .shareModal .shareSectionTitle { line-height: 1.3; }
+  .shareModal .section-title { line-height: 1.3; }
   .shareModal .shareMain { min-width: 0; }
   .shareModal .shareEmail { overflow-wrap: anywhere; white-space: normal; }
   .shareModal .shareDeviceFriendRow { cursor: pointer; }

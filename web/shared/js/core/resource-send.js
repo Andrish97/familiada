@@ -1,10 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-23T15101";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15101";
-import { toast } from "./toast.js?v=v2026-10-23T15101";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15101";
-import { icon, iconText } from "./icons.js?v=v2026-10-23T15101";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T15101";
-import { attachListTools } from "./share-sections.js?v=v2026-10-23T15101";
+import { sb } from "./supabase.js?v=v2026-10-23T15124";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T15124";
+import { toast } from "./toast.js?v=v2026-10-23T15124";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-23T15124";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T15124";
+import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T15124";
+import { attachListTools } from "./share-sections.js?v=v2026-10-23T15124";
 
 
 const attempts = new Map();
@@ -25,11 +25,11 @@ function getDialog() {
       </div>
       <p class="mSub resource-send-name"></p>
       <section class="shareSection resource-send-friends-section">
-        <div class="shareSectionHeading"><div class="shareSectionTitle" data-friends-title></div></div>
+        <div class="shareSectionHeading"><div class="section-title" data-friends-title></div></div>
         <div class="shareList resource-send-friends" role="group"></div>
       </section>
       <details class="shareSection resource-send-history">
-        <summary class="shareSectionTitle" data-history-title></summary>
+        <summary class="section-title" data-history-title></summary>
         <div class="shareList resource-send-history-list"></div>
       </details>
       <p class="resource-send-error" role="status" aria-live="polite"></p>

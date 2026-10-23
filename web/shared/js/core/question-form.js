@@ -10,11 +10,11 @@
 // game_validate) -- tu tylko do pilnowania pól i podpowiedzi w UI; o tym,
 // czy grę wolno otworzyć / grać, decyduje baza (js/core/game-validate.js).
 
-import { RULES, TYPES } from "./game-rules.js?v=v2026-10-23T15101";
-import { t } from "../../translation/translation.js?v=v2026-10-23T15101";
-import { icon } from "./icons.js?v=v2026-10-23T15101";
-import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-23T15101";
-import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-23T15101";
+import { RULES, TYPES } from "./game-rules.js?v=v2026-10-23T15124";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15124";
+import { icon } from "./icons.js?v=v2026-10-23T15124";
+import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-23T15124";
+import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-23T15124";
 
 
 export const LIMITS = {
@@ -162,7 +162,7 @@ export function renderSumPill(el, sum) {
   el.classList.toggle("over", sum > LIMITS.SUM_MAX);
   el.innerHTML = "";
   const label = document.createElement("span");
-  label.className = "qf-sumTitle";
+  label.className = "section-title";
   label.textContent = t("questionForm.answersHeading");
   const val = document.createElement("span");
   val.className = "qf-sumChip";
