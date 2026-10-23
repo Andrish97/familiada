@@ -6284,6 +6284,18 @@ async function openStatsDetailModal(type) {
     },
   });
 
+  // Szerokie tabele (Rozgrywki: 13 kolumn, Niedomyślne ustawienia: 16) nie
+  // mieściły się w oknie 860 px, a przewijanie w poziomie bywa niewidoczne
+  // (paski na macOS/iPadOS pokazują się dopiero przy przewijaniu). Okno rośnie
+  // do szerokości tabeli, najwyżej do 96% ekranu; węższe ekrany przewijają.
+  function fitModalToTable() {
+    const modal = body.closest(".modal");
+    const table = tableWrap.querySelector("table");
+    if (!modal || !table) return;
+    const missing = table.scrollWidth - table.parentElement.clientWidth;
+    if (missing > 0) modal.style.width = `min(${Math.ceil(modal.getBoundingClientRect().width + missing + 2)}px, 96vw)`;
+  }
+
   function renderPage(page) {
     const total = allRows.length;
     const pages = Math.max(1, Math.ceil(total / perPage));
@@ -6295,6 +6307,7 @@ async function openStatsDetailModal(type) {
 
     tableWrap.innerHTML = "";
     tableWrap.appendChild(buildStatsTable(cfg, pageRows));
+    fitModalToTable();
 
     pageWrap.innerHTML = "";
     if (pages > 1) pageWrap.appendChild(buildStatsPagination(page, pages, renderPage));
