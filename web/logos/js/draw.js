@@ -746,7 +746,7 @@ export function initDrawEditor(ctx) {
   const group = (inner) => `<div class="ctxGroup">${inner}</div>`;
   const label = (text) => `<span class="ctxLabel">${text}</span>`;
   const numInput = (id, min, max, step, value) =>
-    `<input id="${id}" class="ctxInput" type="number" min="${min}" max="${max}" step="${step}" value="${value}"/>`;
+    `<input id="${id}" class="inp sm ctxInput" type="number" min="${min}" max="${max}" step="${step}" value="${value}"/>`;
   const toggleBtn = (id, on, content, title = "") =>
     `<button class="btn xs" id="${id}" type="button" aria-pressed="${on ? "true" : "false"}" ${title ? `title="${title}" aria-label="${title}"` : ""}>${content}</button>`;
   const lineStyleHtml = (id) =>
@@ -922,7 +922,7 @@ export function initDrawEditor(ctx) {
     const firstFill = shapes.find((o) => o.fill && o.fill !== "transparent")?.fill;
 
     let html =
-      group(label(T("outlineLabel")) + `<input id="cObjStroke" class="ctxInput" type="number" min="${RANGE.outline[0]}" max="${RANGE.outline[1]}" step="1" value="${widths.size === 1 ? [...widths][0] : ""}" placeholder="—"/>`) +
+      group(label(T("outlineLabel")) + `<input id="cObjStroke" class="inp sm ctxInput" type="number" min="${RANGE.outline[0]}" max="${RANGE.outline[1]}" step="1" value="${widths.size === 1 ? [...widths][0] : ""}" placeholder="—"/>`) +
       group(label(T("styleLabel")) + lineStyleHtml("cObjLineStyle")) +
       group(colorBtn(strokeColors.size === 1 ? [...strokeColors][0] : "WHITE", 'id="cObjStrokeColor"'));
     if (canFill) {

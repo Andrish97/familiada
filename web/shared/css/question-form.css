@@ -19,25 +19,7 @@
       margin-bottom: 10px
   }
 
-  .qf-qtext {
-      width: 100%;
-      min-height: 90px;
-      padding: 10px 12px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--line2);
-      background: var(--k-20);
-      color: var(--text);
-      outline: 0;
-      resize: vertical;
-      font: inherit;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.35
-  }
-
-  .qf-qtext:focus {
-      border-color: var(--g-35)
-  }
+  .qf-qtext { width: 100%; min-height: 90px; }
 
   .qf-list {
       display: grid;

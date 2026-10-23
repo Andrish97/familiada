@@ -110,15 +110,15 @@
             <div class="field">
               <span class="field-label field-title">Powrót</span>
               <div class="dt-group">
-                <input class="dt-input" id="returnAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
+                <input class="inp dt-input" id="returnAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
                 <span class="dt-colon">:</span>
-                <input class="dt-input" id="returnAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
+                <input class="inp dt-input" id="returnAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
                 <span class="dt-sep">—</span>
-                <input class="dt-input" id="returnAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
+                <input class="inp dt-input" id="returnAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
                 <span class="dt-dot">.</span>
-                <input class="dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
+                <input class="inp dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
-                <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
+                <input class="inp dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
                 <button class="btn sm dt-open" data-dt-open="returnAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
               <span class="hint">Minimum 10 minut od teraz.</span>
@@ -129,15 +129,15 @@
             <div class="field">
               <span class="field-label field-title">Do godziny</span>
               <div class="dt-group">
-                <input class="dt-input" id="endAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
+                <input class="inp dt-input" id="endAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
                 <span class="dt-colon">:</span>
-                <input class="dt-input" id="endAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
+                <input class="inp dt-input" id="endAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
                 <span class="dt-sep">—</span>
-                <input class="dt-input" id="endAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
+                <input class="inp dt-input" id="endAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
                 <span class="dt-dot">.</span>
-                <input class="dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
+                <input class="inp dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
-                <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
+                <input class="inp dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
                 <button class="btn sm dt-open" data-dt-open="endAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
               <span class="hint">Minimum 10 minut od teraz.</span>
@@ -582,7 +582,7 @@
           <!-- Thread list -->
           <div class="mail-list">
             <div class="mail-list-toolbar">
-              <input class="inp mail-search" type="search" id="mailSearch" placeholder="Szukaj…" autocomplete="off">
+              <input class="inp sm mail-search" type="search" id="mailSearch" placeholder="Szukaj…" autocomplete="off">
               <button class="btn sm" id="btnMailRefresh" type="button" title="Odśwież" aria-label="Odśwież"><i class="ico" data-icon="refresh"></i></button>
             </div>
             <div id="mailListBody"></div>

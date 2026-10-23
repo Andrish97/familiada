@@ -270,24 +270,7 @@
   }
 
   /* Suwaki/inputs */
-  .ctxInput{
-    height: 28px;
-    width: 56px;
-    padding: 2px 6px;
-    font-size: 12px;
-    font-weight: 700;
-    --btn-tint: var(--w-8);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
-
-    border: 1px solid var(--w-14);
-    border-radius: var(--r-sm);
-    color: var(--text);
-    text-align: center;
-  }
-  .ctxInput::placeholder{ color: var(--w-25); }
-  .ctxInput:focus{ outline: none; border-color: var(--w-25); --btn-tint: var(--w-14);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
-   }
+  .ctxGroup .inp.sm{ width: 56px; text-align: center; }
 
   /* Przyciski (jak .btn) */
   /* Przyciski paska ustawień: wspólne .btn.xs; wysokość jak pola paska (28 px). */

@@ -209,18 +209,7 @@
     flex-wrap: wrap;
   }
 
-  .dt-input{
-    width: 86px;
-    padding: 10px 12px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--line2);
-    background: var(--w-8);
-    color: var(--text);
-    outline: 0;
-    font-weight: 900;
-    text-align: center;
-    font-size: 14px;
-  }
+  .dt-input{ width: 86px; text-align: center; }
 
   .dt-btn{
     width: 22px;
@@ -1395,14 +1384,7 @@
     border-bottom: 1px solid var(--w-8);
     flex-shrink: 0;
   }
-  .mail-search {
-    flex: 1;
-    min-width: 0;
-    font-size: 12px;
-    padding: 5px 9px;
-    height: 28px;
-    box-sizing: border-box;
-  }
+  .mail-search { flex: 1; min-width: 0; }
 
   #mailListBody { flex: 1; overflow-y: auto; min-height: 0; }
 
