@@ -1241,6 +1241,18 @@ test("control2: nowe otwarcie urządzenia przejmuje od razu, wyparta karta nie w
       await first.locator("#deviceLeaseTakeover").click();
       await expect(leaseState(first)).toHaveAttribute("data-lease-state", "primary", { timeout: 10000 });
       await expect(page.locator(dotOf[type])).toHaveClass(/\bok\b/, { timeout: 10000 });
+      if (type === "display") {
+        // Uśpienie dłuższe niż lease bez nowego otwarcia: heartbeat odcięty na
+        // 15 s, potem ta sama karta wraca jako główna (nowa epoka), bez ekranu
+        // „otwarto w innym miejscu”.
+        const sleepRoute = "**/rest/v1/rpc/control_device_instance_heartbeat*";
+        await first.route(sleepRoute, route => route.abort());
+        await first.waitForTimeout(15000);
+        await first.unroute(sleepRoute);
+        await expect(leaseState(first)).toHaveAttribute("data-lease-state", "primary", { timeout: 15000 });
+        await expect(first.locator("#deviceLeaseTakeover")).toBeHidden();
+        await expect(page.locator(dotOf[type])).toHaveClass(/\bok\b/, { timeout: 10000 });
+      }
       // Zamknięcie karty zwalnia urządzenie od razu (keepalive), bez 12–15 s.
       await first.close({ runBeforeUnload: true });
       await expect(page.locator(dotOf[type])).not.toHaveClass(/\bok\b/, { timeout: 6000 });

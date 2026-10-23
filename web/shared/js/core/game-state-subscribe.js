@@ -211,6 +211,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Tu accessToken zawsze zwraca token urządzenia.
   let directToken = null;
   let directClient = null;
+  // Lease, dla którego wystawiono token kanału (claims: połączenie + epoka).
+  let directLeaseKey = null;
+  const leaseKey = (lease) => `${lease?.p_connection_id || ""}:${lease?.p_epoch || ""}`;
   function realtimeClient() {
     if (!directClient) {
       directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -268,6 +271,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!active) return;
     const lease = getLeaseArgs();
     if (!lease?.p_connection_id || !lease?.p_epoch) return;
+    directLeaseKey = leaseKey(lease);
     try {
       const { data, error } = await sb().functions.invoke("device-realtime-token", {
         body: { game_id: gameId, device_type: deviceType, key,
@@ -398,7 +402,13 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
 
   async function start() {
-    if (active) return;
+    // Ta sama karta wróciła jako główna z nową epoką (np. po uśpieniu dłuższym
+    // niż lease): token kanału ma starą epokę i RLS odrzuca wiersze, więc
+    // kanał trzeba odbudować od razu, zamiast czekać na nadrabianie z heartbeatu.
+    if (active) {
+      if (directLeaseKey && leaseKey(getLeaseArgs()) !== directLeaseKey) resync();
+      return;
+    }
     active = true;
     sync.reset();
     await fetchGuarded("rpc_bootstrap");
