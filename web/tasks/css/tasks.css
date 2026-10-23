@@ -14,7 +14,6 @@
     padding: 0 0 12px;
     border-radius: var(--r-md);
   }
-  .tasks-load-retry{ display:flex; justify-content:center; padding: 12px 0; }
   .tasks-card .rowsSection + .rowsSection{
     margin-top: 24px;
   }
