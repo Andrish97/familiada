@@ -268,7 +268,7 @@
   "zIndexLiteral": 4
  },
  "web/marketplace/css/marketplace.css": {
-  "colorLiteral": 13,
+  "colorLiteral": 8,
   "mediaWidth": 1,
   "sharedDuplicate": 3
  },
@@ -467,14 +467,14 @@
   "mediaWidth": 13,
   "zIndexLiteral": 3,
   "sharedDuplicate": 202,
-  "unusedClass": 3
+  "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
   "sharedDuplicate": 232,
-  "unusedClass": 7
+  "unusedClass": 6
  },
  "web/shared/style/layout.css": {
   "important": 2,
