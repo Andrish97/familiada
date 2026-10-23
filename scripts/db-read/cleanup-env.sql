@@ -8,4 +8,5 @@ SELECT current_setting('track_functions') <> 'none' AS track_functions_wlaczone,
        (SELECT count(*) FROM pg_extension) AS rozszerzenia,
        (SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
          WHERE c.relnamespace = 'auth'::regnamespace AND NOT t.tgisinternal) AS triggery_auth,
-       pg_database_size(current_database()) AS rozmiar_bazy
+       pg_database_size(current_database()) AS rozmiar_bazy,
+       pg_postmaster_start_time() AS start_serwera
