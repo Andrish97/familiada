@@ -381,6 +381,9 @@
  "web/shared/css/tv-layout.css": {
   "rootTokens": 2
  },
+ "web/shared/js/core/blocking-screen.js": {
+  "inlineStyleJs": 3
+ },
  "web/shared/js/core/compose-mail.js": {
   "inlineStyleJs": 3
  },
@@ -421,16 +424,13 @@
   "inlineStyleJs": 4
  },
  "web/shared/js/core/page-overlay.js": {
-  "inlineStyleJs": 8
+  "inlineStyleJs": 4
  },
  "web/shared/js/core/pinch-zoom.js": {
   "inlineStyleJs": 2
  },
  "web/shared/js/core/poll-results.js": {
   "inlineStyleJs": 1
- },
- "web/shared/js/core/resource-lock.js": {
-  "inlineStyleJs": 3
  },
  "web/shared/js/core/resource-send.js": {
   "inlineStyleJs": 3

@@ -123,6 +123,8 @@ function buildIconMap(tr) {
       const ic = t.match(/data-i18n-icon(?:-after)?="([^"]+)"/)?.[1];
       if (key && ic) vote(key, ic);
     }
+    // Przyciski opisane w JS: { i18n: "klucz", iconName: "ikona" } (np. core/blocking-screen.js).
+    for (const m of src.matchAll(/i18n:\s*"([^"]+)",\s*iconName:\s*"([^"]+)"/g)) vote(m[1], m[2]);
     for (const m of src.matchAll(/iconText\(\s*["']([\w-]+)["']\s*,\s*t\(\s*["']([\w.]+)["']/g)) vote(m[2], m[1]);
   }
   const map = new Map();

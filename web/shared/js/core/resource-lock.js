@@ -5,10 +5,10 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T15005";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T15005";
-import { rt } from "./realtime.js?v=v2026-10-23T15005";
-import { icon } from "./icons.js?v=v2026-10-23T15005";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T15042";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T15042";
+import { rt } from "./realtime.js?v=v2026-10-23T15042";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-23T15042";
 
 
 const TAB_ID_KEY = "familiada:tabId";
@@ -104,37 +104,15 @@ async function releaseOnce(resourceType, resourceId) {
 }
 
 function ensureOverlay() {
-  let overlay = document.getElementById("resourceLockGuard");
-  if (overlay) return overlay;
-
-  overlay = document.createElement("div");
-  overlay.id = "resourceLockGuard";
-
-  overlay.className = "blocking-overlay";
-
-  overlay.innerHTML = `
-    <div class="blocking-card" role="alertdialog" aria-labelledby="resourceLockGuardTitle" aria-describedby="resourceLockGuardMsg">
-      <div class="blocking-heading">
-        <span id="resourceLockGuardIcon" class="blocking-icon" aria-hidden="true">${icon("warning")}</span>
-        <h2 id="resourceLockGuardTitle" class="blocking-title" data-i18n="resourceLock.title">${t("resourceLock.title")}</h2>
-      </div>
-
-      <div id="resourceLockGuardMsg" class="blocking-message"></div>
-
-      <div class="blocking-actions">
-        <button id="resourceLockGuardBack" class="blocking-action" type="button" data-i18n="resourceLock.back" data-i18n-icon="arrow-left">${icon("arrow-left")} ${t("resourceLock.back")}</button>
-      </div>
-    </div>
-  `;
-
-  document.documentElement.appendChild(overlay);
+  const overlay = blockingScreen("resourceLockGuard", [{ key: "Back", i18n: "resourceLock.back", iconName: "arrow-left" }]);
+  setBlockingIcon(overlay, "warning");
   return overlay;
 }
 
 function showOverlay({ title, message, backHref }) {
   const overlay = ensureOverlay();
   applyTranslations(overlay);
-  if (title) overlay.querySelector("#resourceLockGuardTitle").textContent = title;
+  overlay.querySelector("#resourceLockGuardTitle").textContent = title || t("resourceLock.title");
   overlay.querySelector("#resourceLockGuardMsg").textContent = message || "";
 
   const backBtn = overlay.querySelector("#resourceLockGuardBack");
@@ -151,9 +129,7 @@ function showOverlay({ title, message, backHref }) {
     location.replace(withLangParam(target));
   };
 
-  overlay.style.display = "flex";
-  document.documentElement.style.overflow = "hidden";
-  document.body.style.overflow = "hidden";
+  setBlockingOpen(overlay, true);
 }
 
 /**
