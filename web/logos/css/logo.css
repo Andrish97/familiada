@@ -299,48 +299,39 @@
   ========================================================= */
   #fontPick{ position: relative; display:inline-flex; align-items:center; gap:8px; }
 
-  /* Popover: FIXED, pozycję ustawia JS */
-
-  #fontPickPop:not([hidden]){
+  /* Wybór fontu (narzędzie tekstu w rysowaniu): popover FIXED, pozycję
+     ustawia JS. */
+  .fontPickPop:not([hidden]){
     position: fixed;
     top: 0;
     left: 0;
     z-index: 99999;
     display: block;
-    pointer-events: auto;
-
-    /* twarde ograniczenia (żeby nie "wystawało") */
     max-width: calc(100vw - 16px);
     box-sizing: border-box;
   }
-
-  #fontPickPop .fontPickPanel{
-    width: min(560px, calc(100vw - 16px));
-    max-height: min(380px, calc(100vh - 24px));
+  .fontPickPop .fontPickPanel{
+    width: min(520px, calc(100vw - 16px));
+    max-height: min(360px, calc(100vh - 24px));
     overflow: hidden;
-    /* jak .ui-select-menu (kryjące tło) */
-    border-radius: var(--r-md);
-    border: 1px solid var(--line);
-    background: var(--bg);
-    box-shadow: 0 24px 60px var(--k-70);
-    box-sizing: border-box;
+    padding: 0;
   }
-
-  /* search */
-  #fontPickPop .fontPickSearch{
+  .fontPickPop .fontPickSearch{
     display: flex;
-    gap: 10px;
+    gap: 6px;
     padding: 10px;
     border-bottom: 1px solid var(--w-8);
-    background: var(--k-20);
   }
-
-  /* scroll ma być na liście */
-
-  /* item */
-  /* item — jak .menu-item */
-
-  #fontPickEmpty{ padding: 12px; opacity: .75; }
+  .fontPickPop .fontPickSearch .inp{ flex: 1; height: 30px; font-size: 13px; }
+  .fontPickPop .fontPickList{
+    padding: 6px;
+    overflow-y: auto;
+    max-height: 280px;
+  }
+  /* Pozycja: wspólne .menu-item; tu tylko układ nazwy i próbki. */
+  .fontPickPop .fontPickItem{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .fontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
+  .fontPickPop .fontPickEmpty{ padding: 16px; text-align: center; opacity: .6; font-size: 13px; }
 
   /* =========================================================
      CONTENT (bez scrolla strony)
@@ -356,16 +347,6 @@
 
   .pane{ height: 100%; min-height: 0; }
 
-  /* Draw font picker popover */
-  #drawFontPickPop #drawFontList{
-    display:block;
-    padding:6px;
-    overflow-y:auto;
-    max-height:280px;
-  }
-  /* Pozycja: wspólne .menu-item; tu tylko układ nazwy i próbki. */
-  #drawFontPickPop .fontPickItem{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  #drawFontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
 
   /* =========================================================
      PIX PREVIEW WARNING

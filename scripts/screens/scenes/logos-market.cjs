@@ -325,6 +325,8 @@ module.exports = [
   { id: "logos-market-admin-reports", category: CAT, title: "Panel admina — Poczta Familiada (skrzynka)", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 1000 },
   { id: "logos-market-admin-reports-message", category: CAT, title: "Panel admina — Poczta Familiada, otwarta wiadomość", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
     steps: [async (view) => { await view.locator(".mail-thread-item").first().click(); await view.waitForTimeout(1200); }] },
+  { id: "logos-market-admin-reports-assign", category: CAT, title: "Panel admina — Poczta Familiada, okno Przydziel zgłoszenie", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
+    steps: [async (view) => { await view.locator(".mail-thread-item").first().click(); await view.waitForTimeout(1200); }, openModal('button[aria-label="Przydziel zgłoszenie"], button[data-tooltip="Przydziel zgłoszenie"], button[title="Przydziel zgłoszenie"]', "#assignReportModal")] },
   { id: "logos-market-admin-market-preview", category: CAT, title: "Panel admina — Gry Społeczności, podgląd zgłoszenia", path: "/settings/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
     steps: [openModal("[data-market-preview]", "#marketPreviewOverlay")] },
   { id: "logos-market-admin-market-reject", category: CAT, title: "Panel admina — Gry Społeczności, odrzucenie z powodem", path: "/settings/?tab=marketplace", sources: ADMIN, ready: "[data-market-reject]", db: adminData, settle: 600,

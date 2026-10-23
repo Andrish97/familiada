@@ -64,7 +64,7 @@ function inspectLayout(opts) {
   const guard = [...document.querySelectorAll(".blocking-overlay")].find((el) => visible(el));
   // Otwarte okno (nakładka na cały ekran): strona pod nim ma zablokowane
   // przewijanie z założenia — sprawdzamy samo okno.
-  const dialog = !guard && [...document.querySelectorAll(".overlay, .market-preview-overlay, [role=dialog][aria-modal=true]")]
+  const dialog = !guard && [...document.querySelectorAll(".overlay, [role=dialog][aria-modal=true]")]
     .filter((el) => visible(el) && getComputedStyle(el).position === "fixed").pop();
   const root = guard || dialog || document.body;
 
@@ -183,6 +183,13 @@ function inspectLayout(opts) {
       const a = parts[i - 1].getBoundingClientRect(), b = parts[i].getBoundingClientRect();
       if (b.top >= a.bottom - 1) add("stopka-pod-soba", parts[i], "część stopki spadła pod poprzednią");
     }
+  }
+
+  // Atrybut hidden / klasa .hidden musi chować element -- żadna reguła strony
+  // ani silnika nie może przywrócić mu display.
+  for (const el of document.querySelectorAll("[hidden], .hidden")) {
+    if (el.closest("template, svg, head")) continue;
+    if (getComputedStyle(el).display !== "none") add("hidden-widoczny", el, `display: ${getComputedStyle(el).display}`);
   }
 
   // Uniknąć powtórzeń (te same elementy w listach).

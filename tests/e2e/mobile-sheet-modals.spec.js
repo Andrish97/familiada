@@ -758,7 +758,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 
     await page.evaluate(() => {
       const overlay = document.getElementById("gameDetailOverlay");
-      overlay.style.display = "";
+      overlay.hidden = false;
       document.body.classList.add("sheet-open");
       overlay.classList.add("sheet-active");
     });
@@ -769,7 +769,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 
     await page.evaluate(() => {
       const overlay = document.getElementById("gameDetailOverlay");
-      overlay.style.display = "none";
+      overlay.hidden = true;
       document.body.classList.remove("sheet-open");
       overlay.classList.remove("sheet-active");
     });

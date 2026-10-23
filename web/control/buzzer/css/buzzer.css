@@ -46,7 +46,8 @@ body.buzzer-body {
   background: #000;
 }
 
-.arena {
+/* :not([hidden]) -- silnik bez warstw (flat.css): ukrycie wygrywa z display. */
+.arena:not([hidden]) {
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

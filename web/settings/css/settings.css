@@ -1247,27 +1247,19 @@
   }
 
   /* ── Generic modal overlay ──────────────────────────────────── */
-  .market-preview-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1100;
-    background: var(--scrim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .market-preview-card {
-    --under: #0d1229; /* podłoże przycisków (css/base.css) */
-    background: #0d1229;
-    border: 1px solid var(--w-14);
-    border-radius: var(--r-md);
-    padding: 22px 24px;
-    max-height: 90vh;
+  /* Okno „Przydziel zgłoszenie”: lista zgłoszeń jak menu, pola pod nią. */
+  .assign-report-body { display: flex; flex-direction: column; gap: 8px; }
+  .assign-report-body > .field-label { margin: 6px 0 0; }
+  .assign-report-list {
+    max-height: 200px;
     overflow-y: auto;
-    width: 100%;
-    box-sizing: border-box;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
   }
+  .assign-report-ticket { color: var(--accent); }
+  .assign-report-subject { font-weight: 600; color: var(--text-muted); }
+  .assign-report-status { flex: 0 0 auto; font-size: 10px; color: var(--text-muted); }
 
   /* ── Mail client layout ─────────────────────────────────────── */
   .mail-client {

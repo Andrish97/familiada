@@ -193,9 +193,6 @@
   "zIndexLiteral": 8,
   "sharedDuplicate": 4
  },
- "web/logos/editor/draw/index.html": {
-  "inlineStyleHtml": 7
- },
  "web/logos/index.html": {
   "inlineStyleHtml": 5
  },
@@ -259,14 +256,14 @@
   "inlineStyleJs": 6
  },
  "web/settings/css/settings.css": {
-  "colorLiteral": 70,
+  "colorLiteral": 68,
   "mediaWidth": 5,
-  "zIndexLiteral": 17,
+  "zIndexLiteral": 16,
   "sharedDuplicate": 7,
   "unusedClass": 14
  },
  "web/settings/index.html": {
-  "inlineStyleHtml": 145
+  "inlineStyleHtml": 136
  },
  "web/settings/js/admin-pwa.js": {
   "inlineStyleJs": 1
@@ -275,7 +272,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 292
+  "inlineStyleJs": 283
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,

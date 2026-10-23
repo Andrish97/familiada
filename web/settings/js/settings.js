@@ -3643,30 +3643,26 @@ function openAssignModal(messageId) {
   if (list) {
     list.innerHTML = "";
     for (const r of msgReports) {
-      const opt = document.createElement("div");
-      opt.className = "assign-report-option";
+      const opt = document.createElement("button");
+      opt.type = "button";
+      opt.className = "menu-item assign-report-option";
+      opt.setAttribute("role", "option");
+      opt.setAttribute("aria-selected", "false");
       opt.dataset.reportId = r.id;
-      opt.style.cssText = "padding:6px 8px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0";
       const isOpen = r.status === "open";
       opt.innerHTML = `
-        <span style="font-weight:600;color:#ffeaa6">${escSetting(r.ticket_number)}</span>
-        <span style="opacity:.6;font-size:12px;margin-left:8px">${escSetting(r.subject || "—")}</span>
-        <span style="font-size:10px;margin-left:4px;opacity:.4">${isOpen ? "open" : "closed"}</span>`;
+        <b class="assign-report-ticket">${escSetting(r.ticket_number)}</b>
+        <span class="assign-report-subject">${escSetting(r.subject || "—")}</span>
+        <small class="assign-report-status">${isOpen ? "open" : "closed"}</small>`;
       opt.addEventListener("click", () => {
-        const wasSelected = opt.classList.contains("selected");
-        list.querySelectorAll(".assign-report-option").forEach(el => {
-          el.style.background = "";
-          el.classList.remove("selected");
-        });
-        if (!wasSelected) {
-          opt.classList.add("selected");
-          opt.style.background = "rgba(255,234,166,.12)";
-        }
+        const wasSelected = opt.getAttribute("aria-selected") === "true";
+        list.querySelectorAll(".assign-report-option").forEach(el => el.setAttribute("aria-selected", "false"));
+        if (!wasSelected) opt.setAttribute("aria-selected", "true");
       });
       list.appendChild(opt);
     }
     if (!msgReports.length) {
-      list.innerHTML = `<div style="opacity:.4;font-size:12px;padding:8px">Brak zgłoszeń. Utwórz nowe poniżej.</div>`;
+      list.innerHTML = `<div class="empty-state empty-state--inline">Brak zgłoszeń. Utwórz nowe poniżej.</div>`;
     }
   }
 
@@ -3675,11 +3671,11 @@ function openAssignModal(messageId) {
     subjectInput.value = "";
     subjectInput.oninput = () => {
       const quoteLabel = document.getElementById("assignQuoteLabel");
-      if (quoteLabel) quoteLabel.style.display = subjectInput.value.trim() ? "flex" : "none";
+      if (quoteLabel) quoteLabel.hidden = !subjectInput.value.trim();
     };
   }
   const quoteLabel = document.getElementById("assignQuoteLabel");
-  if (quoteLabel) quoteLabel.style.display = "none";
+  if (quoteLabel) quoteLabel.hidden = true;
   const quoteCheck = document.getElementById("assignQuoteCheck");
   if (quoteCheck) quoteCheck.checked = false;
   modal.hidden = false;
@@ -4643,7 +4639,7 @@ function wireReportsEvents() {
     const messageId = modal?.dataset.messageId;
     if (!messageId) return;
 
-    const selected = document.querySelector(".assign-report-option.selected");
+    const selected = document.querySelector('.assign-report-option[aria-selected="true"]');
     if (selected) {
       await doAssign(messageId, selected.dataset.reportId, false);
       return;

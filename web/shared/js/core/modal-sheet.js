@@ -173,7 +173,7 @@ export function isSheetViewport() {
 // pasek akcji oraz osobno przewijaną treść z podpowiedziami. Wrappery są display:contents
 // poza trybem sheet, więc układ desktopowy i istniejące selektory pozostają.
 function prepareSheetLayout(overlayEl) {
-  const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
+  const modal = overlayEl?.querySelector(":scope > .modal");
   if (!modal || modal.dataset.sheetLayoutReady === "1") return;
   // Okno z warstwami (.modal-layer, np. tagi: lista → nowy tag → kolor):
   // każda warstwa dostaje własny nagłówek, pasek akcji i treść.
@@ -298,7 +298,7 @@ function sheetHandle(overlayEl) {
     const dy = lastY - startY;
     startY = null;
     overlayEl.classList.remove("sheet-dragging");
-    const panel = overlayEl.querySelector(":scope > .modal, :scope > .market-preview-card");
+    const panel = overlayEl.querySelector(":scope > .modal");
     const limit = Math.min(160, (panel?.offsetHeight || 600) * 0.25);
     if (!moved || dy > limit || velocity > 0.6) { closeSheetAnimated(); return; }
     overlayEl.classList.add("sheet-settling");
@@ -326,7 +326,7 @@ function closeSheetAnimated() {
 }
 
 function restoreSheetLayout(overlayEl) {
-  const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
+  const modal = overlayEl?.querySelector(":scope > .modal");
   if (!modal || !sheetLayouts.has(modal)) return;
   for (const layer of modal.querySelectorAll(":scope > .modal-layer")) restoreSheetBox(layer);
   restoreSheetBox(modal);
@@ -366,7 +366,7 @@ function onSheetMqChange(e) {
 sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
 globalThis.addEventListener?.("resize", () => { if (activeClose) fitSheetTop(activeOverlay); });
 
-// overlayEl: element .overlay (lub .market-preview-overlay) danego modala.
+// overlayEl: element .overlay danego modala.
 // opts.onClose: funkcja zamykająca TEN modal (pasek, klik w tło, Wstecz
 //   przeglądarki). opts.backBtn / keepBackBtnText -- dawne przejęcie
 //   przycisku wstecz w topbarze; okno od dołu leży nad topbarem, więc

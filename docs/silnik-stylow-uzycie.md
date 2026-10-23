@@ -49,11 +49,17 @@ dowolną, skrypt ją ujednolici. `flat.css` jest generowany
 - Plik strony pisze **w `@layer page { … }`** — wygrywa z komponentami
   silnika bez względu na specyficzność, więc **nie potrzebuje `!important`**.
 - Reguły stanów, które muszą wygrać ze stroną (arkusz okna na telefonie,
-  prosty róg karty pod skrajną wypustką), są w `@layer states`.
-- `!important` jest zabronione w plikach stron (wyjątek tylko `[hidden]`
-  w `utilities.css`). Uwaga: `!important` **odwraca** kolejność warstw —
-  ważna deklaracja z wcześniejszej warstwy wygrywa z późniejszą; to dodatkowy
-  powód, żeby go nie używać.
+  prosty róg karty pod skrajną wypustką, `[hidden]`), są w silniku w
+  `@layer states`. **Strona nie pisze reguł arkusza** (`.sheet-active`,
+  `.sheet-modal-*`) — układ okna od dołu opisuje znacznikami silnika (§6a).
+  Reguła strony w `@layer page` (np. wysokość listy na komputerze) sama
+  przegrywa z arkuszem, więc nie potrzebuje `:not(.sheet-active)`.
+- `!important` jest zabronione (test `noImportant`). Uwaga: `!important`
+  **odwraca** kolejność warstw — ważna deklaracja z wcześniejszej warstwy
+  wygrywa z późniejszą; to dodatkowy powód, żeby go nie używać.
+- `[hidden]` chowa zawsze: reguła stanu, która ustawia `display`, dopisuje
+  `:not([hidden])`. Audyt zrzutów (`--audit`, uwaga `hidden-widoczny`)
+  wyłapuje element z `hidden`, który jest widoczny.
 
 ## 4. Tokeny — zamiast liczb i kolorów
 
@@ -129,6 +135,23 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 | ekran blokady („tu nie wejdziesz”, zasób zajęty) | `blockingScreen(id, actions, { prefix })` + `setBlockingIcon` / `setBlockingOpen` z `core/blocking-screen.js` | |
 | strony logowania | `body.auth-body` + `.auth-shell` | |
 | przycisk w rogu (pełny ekran) | `.corner-btn` (+ `.fs-btn`) | |
+
+### 6a. Okno: nagłówek, akcje, treść (wyśrodkowane na komputerze, od dołu na telefonie)
+
+Okno składa się z nagłówka (`.uni-head` / `.mHead` z `.mTitle`), podpowiedzi
+(`.mSub` albo `.uni-hint` w `.uni-body`), treści i stopki z przyciskami
+(`.uni-foot` / `.modal-actions`). Na telefonie `modal-sheet.js` układa je
+sam: tytuł i przyciski w jednym wierszu, dopóki się mieszczą (inaczej
+przyciski pod tytułem), podpowiedź pod nimi, potem przewijana treść.
+Stronie zostaje treść — strukturę opisują znaczniki:
+
+| potrzeba | znacznik | zachowanie w oknie od dołu |
+|---|---|---|
+| kilka kroków w jednym oknie (lista → nowy element → kolor) | `<section class="modal-layer" hidden>` dla każdego kroku, przełączanie `showModalLayer(layer)` | każda warstwa ma własny nagłówek, akcje i treść |
+| treść stoi, przewija się tylko lista | `.sheet-fill` na drodze od treści do listy, `.sheet-scroll` na liście | wypełnienie ma wysokość treści i kurczy się do okna; kurczy się lista |
+| sekcje udostępniania (`.shareSection` z `.shareList--scroll`) | rodzic `.sheet-fill` | każda sekcja kurczy się, przewija się jej lista |
+| lista z limitem wysokości na komputerze | `.modal-scroll` | bez limitu — przewija się cała treść okna |
+| obraz / podgląd na całe okno | `.modal--media` na `.modal`, `.sheet-fill` na polu obrazu | obraz od krawędzi do krawędzi, pole na całą wysokość |
 
 Brakuje czegoś? Najpierw sprawdź `components.css` (nagłówki sekcji `/* ── … */`)
 i `wzorce-ui.md`. Nowy element: do `components.css` (w `@layer components`),

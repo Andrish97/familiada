@@ -2673,9 +2673,9 @@
     body.sheet-open { overflow: hidden; }
     body.sheet-open .footer { visibility: hidden; }
 
-    body.sheet-open :is(.overlay, .market-preview-overlay).modal--sheet:not(.sheet-active) { display: none; }
+    body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
-    body.sheet-open :is(.overlay, .market-preview-overlay).modal--sheet.sheet-active {
+    body.sheet-open .overlay.modal--sheet.sheet-active {
       position: fixed;
       inset: 0;
       z-index: var(--z-sheet);
@@ -2692,7 +2692,7 @@
     }
     body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut .24s ease both; }
 
-    .modal--sheet.sheet-active :is(.modal, .market-preview-card) {
+    .modal--sheet.sheet-active .modal {
       position: relative;
       width: 100%;
       max-width: 760px;
@@ -2718,9 +2718,9 @@
       animation: sheetUp .34s var(--ease-out) both;
       will-change: transform;
     }
-    .modal--sheet.sheet-active.sheet-dragging :is(.modal, .market-preview-card) { animation: none; transition: none; }
-    .modal--sheet.sheet-active.sheet-settling :is(.modal, .market-preview-card) { animation: none; transition: transform .22s var(--ease-out); }
-    .modal--sheet.sheet-active.sheet-closing :is(.modal, .market-preview-card) { animation: sheetDown .24s ease-in both; }
+    .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
+    .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
+    .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown .24s ease-in both; }
 
     /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
        ekranu, żeby pole i przyciski zostały nad klawiaturą. */
@@ -2750,7 +2750,7 @@
 
     /* Tablet: niższy panel z bocznymi krawędziami. */
     @media (min-width: 601px) {
-      .modal--sheet.sheet-active :is(.modal, .market-preview-card) {
+      .modal--sheet.sheet-active .modal {
         height: min(88dvh, 920px);
         border: 1px solid var(--line);
         border-bottom: 0;
@@ -2838,7 +2838,7 @@
        przewijana lista -- kurczy się pierwsza. Pozostałe elementy na tej drodze
        mają swoją wysokość. Sekcja udostępniania (.shareSection) w .sheet-fill
        sama jest wypełnieniem, a jej lista (.shareList--scroll) się przewija. */
-    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden])) {
+    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) {
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -2852,7 +2852,7 @@
       overflow: hidden;
     }
     .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
-    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden])) > :not(.sheet-fill),
+    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) > :not(.sheet-fill, .sheet-scroll),
     .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
     .modal--sheet.sheet-active .sheet-modal-body .sheet-scroll,
     .modal--sheet.sheet-active .sheet-fill > .shareSection > .shareList--scroll {
