@@ -2764,6 +2764,33 @@
   }
   .btn-group > .btn[hidden] + .btn { border-radius: var(--r-md); }
 
+  /* ── Karta (jedyna): poziom 1 na tle strony, --inset w karcie, --entry
+     dla pojedynczej karty wejścia (głosowanie, Go, logowanie). ───── */
+  .card {
+    --under: var(--surface-1);
+    box-sizing: border-box;
+    padding: 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-card);
+  }
+  .card--inset {
+    padding: 12px;
+    border-color: var(--w-8);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under);
+    box-shadow: none;
+  }
+  .card--entry {
+    width: min(680px, 100%);
+    margin: auto;
+    padding: 18px;
+  }
+  @media (max-width: 600px) {
+    .card { padding: 12px; }
+  }
+
   /* ── Karta listy ─────────────────────────────────────────────── */
   .games-shell {
     flex: 1 1 auto;

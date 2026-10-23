@@ -6,7 +6,7 @@
   .contacts-body .title{ font-size: 18px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
   .contacts-layout{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
   .contacts-layout > .load-retry{ grid-column: 1 / -1; align-self: start; }
-  .contacts-card{ --under: var(--surface-1); min-width: 0; padding: 14px; background: var(--surface-1); border: 1px solid var(--line2); border-radius: var(--r-md); box-shadow: 0 18px 36px rgb(var(--rgb-black) / .25); }
+  .contacts-card{ min-width: 0; }
   .contacts-invite{ margin-top: 10px; }
   .contacts-invite label{ display: block; margin-bottom: 6px; }
   .contacts-invite-row{ display: flex; align-items: center; gap: 10px; }
@@ -17,7 +17,6 @@
   @media (max-width: 720px){
     .contacts-body > main.wrap{ padding: 15px; }
     .contacts-layout{ grid-template-columns: minmax(0,1fr); gap: 14px; }
-    .contacts-card{ padding: 10px; }
     .contacts-invite-row{ gap: 8px; }
   }
 

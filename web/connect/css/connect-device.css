@@ -19,10 +19,6 @@
     flex-direction: column;
     overflow: hidden;
     margin: 0;
-    padding: 12px;
-    border: 1px solid var(--w-8);
-    border-radius: var(--r-md);
-    background: var(--w-4);
   }
   .connect-device-inner-card[hidden] { display: none !important; }
   .connect-device-card-header {

@@ -1,15 +1,5 @@
 /* css/polls.css */
 @layer page {
-  /* Zwykła karta strony; karta z wypustkami (.games-card) ma wygląd z silnika. */
-  .card:where(:not(.games-card)) {
-      border-radius: var(--r-lg);
-      border: 1px solid var(--line);
-      background: var(--card);
-      --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
-      padding: 14px;
-      box-shadow: 0 24px 60px var(--k-40);
-  }
-
   .name {
       font-weight: 1000;
       font-size: 16px;

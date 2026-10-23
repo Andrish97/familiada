@@ -11,6 +11,10 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 Katalog duplikatów i kolejność ujednolicania: [`e23-katalog-komponentow.md`](e23-katalog-komponentow.md).
 
+- **Regularnie podciągać `main` (decyzja użytkownika 2026-10-23):** „co jakiś
+  czas podciągaj main i patrz, czy coś się zmieniło, i też poprawiaj” — po
+  każdej paczce scalić `main` do brancha; nowe/zmienione strony i style z
+  `main` od razu przepiąć na silnik i wspólne elementy (zrzuty, e2e punktowo).
 - **Wyrównywać i poprawiać po drodze (decyzja użytkownika 2026-10-23):** „jeśli
   coś jest nierówne, niesymetryczne itd., a warto to wyrównać, poprawić — zrób
   (dodaj do planu)”. Przy każdej paczce oglądać zrzuty pod kątem wyrównania,
@@ -288,3 +292,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | Podpowiedzi: jedna `.hint` | Silnik miał dwie definicje (`components.css` 13 px/.8, `layout.css` 12 px/.75) — jedna: 12 px, `line-height` 1.4, kolor `--text-muted` zamiast przezroczystości (stały kontrast). Nazwy stron → `hint`: `qf-hint`, `gs-hint`, `poll-go-hint`, `notfound-hint`, `field-hint`, `mode-hint`, `imgPrevHint`, `xTypeHint`, `tinyHint`, `pollQrHint`, `connect-device-code-hint`; `panelHint`/`tallyHint`/`pollBarHint`/`uni-hint` zostają tylko jako układ obok `hint`. Nadpisania `.hint` w Kontaktach, Control, logowaniu — usunięte (zostaje margines karty logowania). |
 | 2026-10-23 | Puste stany: jeden `.empty-state` | `bld-no-q` ≡ `mkt-no-q`, `left-panel-empty`, `m-search-empty`, `gs-picker-empty`, `connect-device-empty`, `stats-session-suggestion-empty`, `mail-empty` (poczta), `activity-chart-empty` (wygląd) i pusta lista Eksploratora → `.empty-state`; nowy wariant `.empty-state--inline` (bez drugiej ramki w obramowanej liście/panelu). Nowa scena `manual-search-empty`. Spec `privacy-manual`: `.m-search-empty` → `.empty-state` (selektor). |
 | 2026-10-23 | Oznaczenia i liczniki | Panel admina: `mail-pill` + 12 wariantów kolorów (stan kolejki, poziom logu, funkcja, pominięty) i `session-status--live/done/err` → `.tag` z wariantami `--gold/--info/--bad/--warn/--ok/--muted` (`--upper` dla poczty). `tree-count` (Eksplorator) → nowy `.badge--muted` (liczba elementów, nie powiadomienie). `.load-retry` (Kontakty, Ankieta, Zadania) w silniku. |
+| 2026-10-23 | Karta: jedna `.card` | Silnik: `.card` (poziom 1: `--surface-1`, `--r-lg`, 16 px / telefon 12 px, cień karty), `.card--inset` (w karcie), `.card--entry` (karta wejścia 680 px). Usunięte kopie: Ankieta, głosowanie (→ `--entry`), Control (zostaje układ), Kontakty (promień 14 → 20 jak wszędzie), Connect (→ `--inset`). |

@@ -16,23 +16,6 @@
   .poll-vote-topbar .brand{ color:var(--gold); }
   .poll-vote-topbar .poll-vote-actions{ margin-left:auto; display:flex; align-items:center; gap:8px; }
 
-  body.pollpub-body .card {
-      margin-top: auto;
-      margin-bottom: auto;
-      border-radius: var(--r-lg);
-      border: 1px solid var(--line);
-      background: var(--card);
-      --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
-      padding: 18px;
-      box-shadow: 0 24px 60px var(--k-40)
-  }
-
-  body.pollpub-body > main.wrap > .card {
-      width: min(680px, 100%);
-      align-self: center;
-      box-sizing: border-box;
-  }
-
   body.pollpub-body .brand {
       font-weight: 1000;
       letter-spacing: .18em;
