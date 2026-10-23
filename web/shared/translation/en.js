@@ -1459,7 +1459,7 @@ const en = {
       pollPoints: {
         title: "Scoring",
         hintTop: "You can start the poll when:",
-        hintBottom: "You do not enter points — the poll calculates them from the audience votes.",
+        hintBottom: "You do not enter points — the poll calculates them from respondents' votes.",
       },
       prepared: {
         title: "Prepared",

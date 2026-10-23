@@ -252,7 +252,8 @@ function cfgFromGameType(type) {
     type,
     title: t("editor.config.prepared.title"),
     hintTop: t("editor.config.prepared.hintTop"),
-    hintBottom: t("editor.config.prepared.hintBottom", { min: GV_RULES.PTS_MIN, sum: SUM_MAX }),
+    // Punkty i sumę pokazuje już lista warunków nad pytaniami -- bez powtórki na dole.
+    hintBottom: "",
     allowAnswers: true,
     allowPoints: true,
   };
@@ -413,6 +414,7 @@ async function boot() {
     $("hintTop").textContent = cfg.hintTop;
     renderRules();
     $("hintBottom").textContent = cfg.hintBottom;
+    $("hintBottom").hidden = !cfg.hintBottom;
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);
     document.body.classList.toggle("no-points", !cfg.allowPoints);
   }

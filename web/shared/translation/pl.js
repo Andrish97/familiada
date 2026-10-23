@@ -1462,7 +1462,7 @@ const pl = {
       pollPoints: {
         title: "Punktacja",
         hintTop: "Ankietę uruchomisz, gdy:",
-        hintBottom: "Punktów nie wpisujesz — policzy je ankieta z głosów widzów.",
+        hintBottom: "Punktów nie wpisujesz — policzy je ankieta z głosów uczestników.",
       },
       prepared: {
         title: "Preparowana",
