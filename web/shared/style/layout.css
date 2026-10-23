@@ -81,6 +81,7 @@
 
   /* Tytuł strony: w pasku listy i w topbarze (sekcja 2). */
   .bar .title {
+    margin: 0;
     overflow-wrap: break-word;
     hyphens: auto;
     text-wrap: pretty;
