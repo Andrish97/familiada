@@ -51,15 +51,17 @@
     display: flex;
     gap: 8px;
     align-items: center;
-  }
-  .bar > .actions {
-    flex: 0 0 auto; min-width: 0; max-width: 100%;
-    justify-content: flex-end; margin: 0; overflow: visible; flex-wrap: nowrap;
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+    justify-content: flex-end;
+    margin: 0;
+    overflow: visible;
+    flex-wrap: nowrap;
   }
   .bar > .actions > * { flex: 0 0 auto; }
   .bar.has-actions-below > :first-child { flex: 1 1 100%; }
   .bar.has-actions-below > .actions { flex: 1 1 100%; justify-content: flex-start; }
-  .bar .title { overflow-wrap: break-word; hyphens: auto; text-wrap: pretty; }
   .bar .hint { overflow-wrap: normal; hyphens: auto; text-wrap: pretty; }
   .bar .hint .list-hint-phrase { display: inline-block; max-width: 100%; white-space: normal; vertical-align: top; }
   .bar .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -79,6 +81,9 @@
 
   /* Tytuł strony: w pasku listy i w topbarze (sekcja 2). */
   .bar .title {
+    overflow-wrap: break-word;
+    hyphens: auto;
+    text-wrap: pretty;
     font-size: 18px;
     font-weight: 900;
     letter-spacing: .12em;

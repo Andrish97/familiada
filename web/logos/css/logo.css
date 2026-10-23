@@ -28,7 +28,6 @@
   /* =========================================================
      LIST / GRID (kafelki)
   ========================================================= */
-  .logoShell{ margin-top: 8px; }
 
   .logoGridBig{
     display: grid;
@@ -451,15 +450,6 @@
     position: relative;
     display: block;
   }
-  #drawStage{
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    background: #000;
-    touch-action: none;
-  }
   .drawStageHost canvas{
     display: block;
     max-width: 100%;
@@ -470,6 +460,10 @@
      DRAW
   ========================================================= */
   #drawStage{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     display: block;
     background: #000;
     touch-action: none;
@@ -522,9 +516,6 @@
   #drawStageHost.cur-none    canvas,
   #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
-  #toolsDraw{
-    flex-wrap: wrap !important;
-  }
 
   /* =========================================================
      DRAW toolbar (w editorToolbar) — toolGrid + separatory
@@ -532,7 +523,7 @@
 
   #toolsDraw{
     width: 100%;
-    flex-wrap: wrap;         /* może się łamać, ale układ pozostaje logiczny */
+    flex-wrap: wrap;
     gap: 10px;
   }
 
@@ -627,7 +618,6 @@
   /* =========================================================
      IMAGE: ramka kadru 26:11 (cropFrame) — MUSI być widoczna
   ========================================================= */
-  #paneImage .imgStage{ position: relative; }
 
   #paneImage .cropFrame{
     position: absolute;
@@ -671,7 +661,10 @@
 
   /* Pole obrazu przejmuje gesty (przesuwanie/pinch ramki) — bez przewijania
      i powiększania strony pod palcem. */
-  #paneImage .imgStage{ touch-action: none; }
+  #paneImage .imgStage{
+    position: relative;
+    touch-action: none;
+  }
 
   /* Dotyk: większe uchwyty i niewidoczna strefa ~44px wokół nich */
   #paneImage .cropHandle::before{
@@ -783,6 +776,7 @@
 
   /* część z kartą ma wypełnić resztę */
   .logoShell{
+    margin-top: 8px;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;

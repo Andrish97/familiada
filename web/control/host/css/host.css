@@ -176,7 +176,6 @@ html.landscape .pane2 {
     pointer-events: none
 }
 
-.text { position: absolute; pointer-events: auto }
 
 .pane2::before {
     content: "";
@@ -204,39 +203,24 @@ html.landscape .pane2::before {
 }
 
 .text {
-    margin: 0;
-    display: grid;
-    grid-auto-rows: minmax(var(--line), auto);
-    align-content: start;
-    white-space: normal;
-    word-break: break-word;
-    font-size: calc(var(--line)*var(--font-ratio));
-    line-height: calc(var(--line)*var(--h-line-height-mult));
-    color: var(--h-ink);
-    letter-spacing: var(--h-letter-spacing);
-    /* Zgłoszone: "Odpowiedzi gracza 1 w drugiej linijce się nie mieszczą"
-       -- potwierdzone offline harnessem (statyczny CSS + Playwright, bez
-       Supabase): na telefonowym rozmiarze ekranu (375x812, portret) długa
-       zawartość pasma 2 w rundzie 2 finału (odpowiedź gracza 1 + status +
-       pełna lista planszy) realnie przekracza wysokość pudełka — .pane's
-       overflow:hidden wtedy po cichu UCINA resztę listy, bez żadnego
-       sygnału dla prowadzącego, że coś jest niewidoczne. Na tablecie
-       (768x1024+) ta sama treść mieści się bez problemu — to tylko
-       najmniejsze ekrany. .text samo (nie .pane — ten zostaje overflow:
-       hidden, żeby nic nie wylewało się na redMargin/cover2) dostaje
-       własny, ukryty scroll jako bezpiecznik: Host to ekran dotykowy
-       używany wyłącznie przez prowadzącego (nie widza), więc przewinięcie
-       nie psuje żadnej publicznej prezentacji, a chroni przed utratą
-       treści na małych ekranach. Pasek przewijania ukryty celowo (to ma
-       dalej wyglądać jak kartka papieru, nie jak okno z scrollbarem) --
-       funkcja przewijania (dotyk/kółko myszy) działa niezależnie od jego
-       widoczności. */
-    overflow-y: auto;
-    overflow-x: hidden;
-    touch-action: pan-y;
-    box-sizing: border-box;
-    scrollbar-width: none;
-    -ms-overflow-style: none
+  position: absolute;
+  pointer-events: auto;
+  margin: 0;
+  display: grid;
+  grid-auto-rows: minmax(var(--line), auto);
+  align-content: start;
+  white-space: normal;
+  word-break: break-word;
+  font-size: calc(var(--line)*var(--font-ratio));
+  line-height: calc(var(--line)*var(--h-line-height-mult));
+  color: var(--h-ink);
+  letter-spacing: var(--h-letter-spacing);
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .text::-webkit-scrollbar {
@@ -288,13 +272,14 @@ html.landscape .pane2::before {
     bottom: var(--bottom-pad-1)
 }
 
-html.landscape .pane1 .text { bottom: calc(var(--safe-bottom) + var(--bottom-pad-1)) }
-html.landscape { --host-text-top-2: calc(var(--safe-top) + var(--top-pad-2)) }
 
 /* Keep the top-right fullscreen control clear of the first visible text row.
    In portrait it sits over pane 1; in landscape it sits over pane 2. */
 html.portrait { --top-pad-1: max(calc(var(--line) * 1), 56px) }
-html.landscape { --top-pad-2: max(calc(var(--line) * 1), 56px) }
+html.landscape {
+  --host-text-top-2: calc(var(--safe-top) + var(--top-pad-2));
+  --top-pad-2: max(calc(var(--line) * 1), 56px);
+}
 
 html.portrait .pane1 .text {
     left: var(--text-left-1);
@@ -302,8 +287,9 @@ html.portrait .pane1 .text {
 }
 
 html.landscape .pane1 .text {
-    left: calc(var(--outer-left) + var(--text-left-1));
-    right: var(--text-right-1)
+  bottom: calc(var(--safe-bottom) + var(--bottom-pad-1));
+  left: calc(var(--outer-left) + var(--text-left-1));
+  right: var(--text-right-1);
 }
 
 .pane2 .text {

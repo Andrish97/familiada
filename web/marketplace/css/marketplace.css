@@ -91,16 +91,16 @@
   /* Jedna karta jak na innych listach (decyzja 2026-10-21): narzędzia
      (wyszukiwanie jak „Przenieś do”, język, sortowanie) u góry karty, pod
      nimi siatka; „Moje wysłane” to okno (#mySentOverlay). */
+  .mkt-games-card .mkt-search-bar{ margin-bottom: 14px; }
+  .mkt-search-box{ flex: 1 1 auto; min-width: 0; }
+  .mkt-search-button{ display: none; }
   .mkt-games-card{
     background: var(--surface, var(--surface-1));
     border: 1px solid var(--line2, var(--w-14));
     border-radius: var(--r-md);
     box-sizing: border-box;
+    padding: 16px;
   }
-  .mkt-games-card .mkt-search-bar{ margin-bottom: 14px; }
-  .mkt-search-box{ flex: 1 1 auto; min-width: 0; }
-  .mkt-search-button{ display: none; }
-  .mkt-games-card{ padding: 16px; }
   .mkt-games-card > .mkt-info:empty{ display: none; }
   #mySentList{ display: grid; gap: 10px; }
 
@@ -176,12 +176,6 @@
     flex: 1;
   }
 
-  .mkt-card-footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 4px;
-  }
 
   .mkt-count {
     font-size: 11px;
@@ -447,7 +441,13 @@
   .mkt-rating-avg   { font-weight: 600; }
   .mkt-rating-count { opacity: .55; font-size: .82em; }
   .mkt-no-rating    { opacity: .4; font-size: .82em; }
-  .mkt-card-footer  { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .mkt-card-footer  {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
 
   .mkt-detail-rating { padding: 8px 0 4px; }
   .mkt-rating-summary { font-size: .95em; margin-bottom: 8px; }

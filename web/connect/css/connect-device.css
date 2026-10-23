@@ -109,12 +109,6 @@
     font-family: ui-monospace, 'SF Mono', Monaco, monospace;
   }
 
-  .connect-device-code-hint {
-    margin-top: 10px;
-    font-size: .82rem;
-    opacity: .55;
-    line-height: 1.4;
-  }
 
   /* Komputer i tablet poziomo: lewo–prawo (decyzja 2026-10-21) — po lewej
      węższa karta z kodem, po prawej udostępnione urządzenia na całą wysokość. */
@@ -135,7 +129,12 @@
     /* Nagłówki obu kart tej samej wysokości (prawa ma przyciski listy). */
     .connect-device-inner-card > .connect-device-card-header { min-height: 36px; display: flex; align-items: center; }
   }
-  .connect-device-code-hint { margin-top: 8px; }
+  .connect-device-code-hint {
+    font-size: .82rem;
+    opacity: .55;
+    line-height: 1.4;
+    margin-top: 8px;
+  }
 
   /* Przewijana lista udostępnionych urządzeń przycina wiersze jak karta (dawniej base.css). */
   #sharedDevicesList{ border-radius: var(--r-md); }

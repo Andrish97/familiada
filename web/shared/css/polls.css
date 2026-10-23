@@ -46,24 +46,6 @@
   /* A. Pasek stanu — pełna szerokość.
      Lewa: stan słowem + krótki opis. Prawa: WSZYSTKIE akcje; główna złota,
      „Przerwij” zawsze ostatni (stonowany, czerwony obrys). */
-  .pollBar{
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 8px 0 10px;
-    border-bottom: 1px solid var(--line2);
-  }
-  .pollBarState{
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
-    min-width: 0;
-    flex: 1 1 260px; /* zajmuje resztę rzędu i zwęża się; akcje spadają niżej tylko, gdy się nie mieszczą */
-  }
   .pollStateWord{
     font-weight: 1000;
     font-size: 15px;
@@ -85,6 +67,32 @@
     max-width: 420px;
   }
   .pollBarHint:empty{ display: none; }
+  /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
+  .pollBarActions .ico{ width: 16px; height: 16px; flex: 0 0 16px; }
+  /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
+
+  /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
+  .pollBar{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line2);
+    padding: 12px;
+    border: 1px solid var(--line2);
+    border-radius: var(--r-md);
+    background: var(--card);
+  }
+  .pollBarState{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+    flex: 1 1 240px;
+  }
   .pollBarActions{
     display: flex;
     align-items: center;
@@ -92,18 +100,12 @@
     gap: 8px;
     flex-wrap: wrap;
     min-width: 0;
-    flex: 0 1 auto;
+    flex: 1 1 240px;
   }
-  /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
-  .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
-  .pollBarActions .ico{ width: 16px; height: 16px; flex: 0 0 16px; }
-  /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
-
-  /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
-  .pollBar{ padding: 12px; border: 1px solid var(--line2); border-radius: var(--r-md); background: var(--card); }
-  .pollBarState{ flex: 1 1 240px; }
-  .pollBarActions{ flex: 1 1 240px; }
-  .pollBarActions .btn{ flex: 0 0 auto; }
+  .pollBarActions .btn{
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
   .pollBar .subsSummary{ flex-basis: 100%; }
   .pollAbort:not(:disabled){ --btn-tint: rgba(180,50,50,.08); color: #dca4a4; border-color: rgba(180,80,80,.35); }
   @media (max-width: 980px){

@@ -253,24 +253,21 @@
       display: none!important
   }
 
-  .addTile {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 6px;
-      text-align: center
-  }
 
   .addTile {
-      border-radius: var(--r-lg);
-      border: 1px dashed var(--g-35);
-      --btn-tint: var(--w-4);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
-
-      padding: 14px;
-      align-items: center;
-      cursor: pointer;
-      min-height: 100px
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    border-radius: var(--r-lg);
+    border: 1px dashed var(--g-35);
+    --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg));
+    padding: 14px;
+    align-items: center;
+    cursor: pointer;
+    min-height: 100px;
   }
 
   .addTile:hover {
@@ -289,14 +286,12 @@
       color: var(--text)
   }
 
-  .addTile .sub {
-      opacity: .75;
-      font-size: 12px;
-      font-weight: 800
-  }
 
   .addTile .sub {
-      color: rgba(255,255,255,.82)
+    opacity: .75;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,.82);
   }
 
   .addTile:disabled,

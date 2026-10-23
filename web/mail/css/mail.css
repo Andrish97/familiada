@@ -47,7 +47,6 @@
   .mail-panels-card [hidden]{display:none!important}
   @media(max-width:620px){
    .mail-wrap{padding:16px var(--page-pad-right) 16px var(--page-pad-left);gap:16px}
-   .mail-entry{padding:18px 14px;border-radius:var(--r-lg)}
    #mailAddress{font-size:12px}
    #mailMessage{font-size:13px}
    .mail-form-row{gap:8px}
@@ -57,7 +56,11 @@
    .mail-preference h2{font-size:13px}
    .mail-preference .btn{padding:7px 10px;font-size:12px}
    .mail-preference.is-disabled{flex-direction:column;gap:12px;padding:14px}
-   .mail-entry{width:100%}
+   .mail-entry{
+     padding: 18px 14px;
+     border-radius: var(--r-lg);
+     width: 100%;
+   }
    .mail-tabs-card>.tabs-strip{display:flex}
    .mail-tabs-card:has(.slot-share.active) .mail-panels-card{border-top-left-radius:0}
    .mail-tabs-card:has(.slot-results.active) .mail-panels-card{border-top-right-radius:0}

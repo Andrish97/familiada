@@ -70,7 +70,6 @@
      zagnieżdżone klasy się nie mnożą. */
   :root { --c2-fs:clamp(14px, min((100vh - 223px) * .031, 1.6vw), 28px); }
   .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; font-size:calc(var(--c2-fs) * var(--c2-fit, 1)); }
-  #app > .cardBody { font-size:var(--c2-fs); }
   #app > .cardBody .btn { font-size:calc(var(--c2-fs) * .82); }
   #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
   #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
@@ -87,7 +86,12 @@
      przestrzeń nad/pod przyciskami) — teraz dół to WYŁĄCZNIE
      .control-main-card's 16px, dokładnie tyle, ile .stepFoot dostaje u
      góry (patrz niżej). */
-  #app > .cardBody { min-height:0; overflow:hidden; padding-bottom:0; }
+  #app > .cardBody {
+    font-size: var(--c2-fs);
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
   /* Środkowa, przewijana treść Urządzeń/Podsumowania — .stepFoot (obok, NIE
      w środku) zawsze zostaje widoczny na dole karty, wyłączony z tego
      przewijania (zgłoszone: "dolne przyciski mają być wyłączone z

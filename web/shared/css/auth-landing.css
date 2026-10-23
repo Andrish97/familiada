@@ -15,30 +15,26 @@
   */
 
   /* Zmienne strony na body (tokeny :root są poza warstwami i wygrywają). */
-  .landing-body {
-      --card: var(--w-8);
-      --stroke: var(--w-14);
-      --led: var(--accent);
-      --txt: #ffffff;
-      --muted: rgba(255,255,255,.75);
-      --danger: #ff7a7a;
-  }
 
 
   .landing-body {
-      margin: 0;
-      min-height: 100dvh;
-      display: grid;
-      grid-template-rows: 1fr auto;
-      place-items: center;
-      color: var(--txt);
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: transparent;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-
-      /* keep children below/beside status bar & notch */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    --card: var(--w-8);
+    --stroke: var(--w-14);
+    --led: var(--accent);
+    --txt: #ffffff;
+    --muted: rgba(255,255,255,.75);
+    --danger: #ff7a7a;
+    margin: 0;
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    place-items: center;
+    color: var(--txt);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: transparent;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
                env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
