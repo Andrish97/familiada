@@ -234,6 +234,7 @@
     gap: 8px;
     white-space: nowrap;
   }
+  .games-bottom:has(.games-bottom-left):has(.games-bottom-right) { justify-content: space-between; }
   .games-bottom .only-desktop { display: inline !important; }
 
   /* Wyszukiwanie po nazwie w lewej części dolnego paska (list-search.js):

@@ -56,7 +56,8 @@
 
   /* Kompensacja za stały topbar. */
   body:has(.topbar) {
-    --topbar-h: calc(max(12px, env(safe-area-inset-top)) + 56px);
+    --topbar-h-min: calc(max(12px, env(safe-area-inset-top)) + 56px);
+    --topbar-h: var(--topbar-h-min); /* topbar-controller.js wpisuje zmierzoną */
     padding-top: var(--topbar-h);
   }
 
@@ -105,7 +106,10 @@
      <body class="skel-body">: topbar ma stałą wysokość, sekcje 3–4 i
      nawigacja odsłaniają się po topbar-ready; [data-skel-step] po
      skel-step-ready; [data-skel-group] czeka na swoje kroki. */
-  body.skel-body .topbar { min-height: var(--topbar-h); }
+  /* Stała wysokość z założenia, nie zmierzona: zmierzona --topbar-h
+     „zapamiętywała” chwilowe zawinięcie paska podczas ładowania (tablet:
+     pusty pas pod paskiem do końca wizyty). */
+  body.skel-body .topbar { min-height: var(--topbar-h-min); }
   body.skel-body .topbar:not(.topbar-ready) .topbar-section-1 > :not(.brand),
   body.skel-body .topbar:not(.topbar-ready) .topbar-section-2 { visibility: hidden; }
   body.skel-body .topbar-section-3,
