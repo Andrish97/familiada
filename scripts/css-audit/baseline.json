@@ -98,7 +98,7 @@
   "rootTokens": 10,
   "mediaWidth": 14,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 47,
+  "sharedDuplicate": 46,
   "unusedClass": 90
  },
  "web/control/css/test-mode.css": {
@@ -368,7 +368,7 @@
   "colorLiteral": 197,
   "mediaWidth": 12,
   "zIndexLiteral": 17,
-  "sharedDuplicate": 196,
+  "sharedDuplicate": 197,
   "unusedClass": 14
  },
  "web/shared/css/blocking-overlay.css": {
@@ -397,8 +397,9 @@
   "unusedClass": 1
  },
  "web/shared/css/polls.css": {
-  "important": 2,
+  "important": 3,
   "colorLiteral": 54,
+  "mediaWidth": 1,
   "zIndexLiteral": 1,
   "sharedDuplicate": 4
  },
