@@ -274,24 +274,21 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         p_connection_id: lease.connection_id, p_epoch: lease.epoch,
       });
       if (readError) throw readError;
-      await sb.realtime.setAuth(data.token);
-      const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
-      window.__scopedDiag = { system: [], dedicatedRev: null, dedicatedStatus: null };
-      // [e2e-diag] Osobny klient tylko dla Realtime z accessToken: token
-      // urządzenia nie może zostać nadpisany tokenem sesji (anon) po dołączeniu.
-      const dedicated = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
+      // Jak aplikacja (web/shared/js/core/game-state-subscribe.js): osobny
+      // klient tylko dla Realtime, accessToken zawsze zwraca token urządzenia.
+      // Na wspólnym kliencie realtime-js po dołączeniu podmieniał token na
+      // anon, a ponowne dołączenie zakładało subskrypcję bez claims urządzenia.
+      const realtime = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
         accessToken: async () => data.token,
       });
-      window.__scopedDedicated = dedicated;
-      dedicated.channel(`${channelName}:dedicated`).on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
-      }, payload => {
-        if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedDiag.dedicatedRev = payload.new.rev;
-      }).on("system", {}, payload => {
-        window.__scopedDiag.system.push(`dedicated:${payload?.status || ""}:${String(payload?.message || "").slice(0, 120)}`);
-      }).subscribe(status => { window.__scopedDiag.dedicatedStatus = status; });
-      const channel = sb.channel(channelName).on("system", {}, payload => {
-        window.__scopedDiag.system.push(`shared:${payload?.status || ""}:${String(payload?.message || "").slice(0, 120)}`);
+      window.__scopedRealtimeClient = realtime;
+      window.__scopedDeviceToken = data.token;
+      // Token przed subscribe(): claims subskrypcji ustala dołączenie.
+      await realtime.realtime.setAuth();
+      const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
+      window.__scopedSystem = [];
+      const channel = realtime.channel(channelName).on("system", {}, payload => {
+        window.__scopedSystem.push(`${payload?.status || ""}:${String(payload?.message || "").slice(0, 80)}`);
       }).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
       }, payload => {
@@ -300,28 +297,25 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         }
         if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
       });
+      // SUBSCRIBED to tylko dołączenie; subskrypcja w bazie jest gotowa po
+      // komunikacie systemowym "Subscribed to PostgreSQL".
       await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
+        const timeout = setTimeout(() => reject(new Error(`postgres_changes subscribe timeout ${JSON.stringify(window.__scopedSystem)}`)), 15000);
+        let joined = false, ready = false;
+        const done = () => { if (joined && ready) { clearTimeout(timeout); resolve(); } };
+        channel.on("system", {}, payload => {
+          if (/PostgreSQL/i.test(String(payload?.message || ""))) {
+            if (payload?.status === "ok") { ready = true; done(); }
+            else { clearTimeout(timeout); reject(new Error(`postgres_changes system: ${payload?.message}`)); }
+          }
+        });
         channel.subscribe(status => {
-          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "SUBSCRIBED") { joined = true; done(); }
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
             clearTimeout(timeout); reject(new Error(`postgres_changes: ${status}`));
           }
         });
       });
-      // Give Realtime's postgres_changes listener a short settle interval
-      // after the channel join acknowledgement before the first write.
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const claimsOf = token => {
-        try { return JSON.parse(atob(String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); } catch { return null; }
-      };
-      const current = claimsOf(sb.realtime.accessTokenValue);
-      window.__scopedDiag.sharedToken = {
-        same: sb.realtime.accessTokenValue === data.token,
-        manual: sb.realtime._manuallySetToken === true,
-        role: current?.role || null,
-        hasDevice: !!current?.device_type,
-      };
       return { channelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
@@ -334,9 +328,14 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
       }, payload => { window.__ownerRealtimeCompletionRev = payload?.new?.rendered_rev ?? null; });
       await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 12000);
+        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 15000);
+        let joined = false, ready = false;
+        const done = () => { if (joined && ready) { clearTimeout(timeout); resolve(); } };
+        channel.on("system", {}, payload => {
+          if (/PostgreSQL/i.test(String(payload?.message || "")) && payload?.status === "ok") { ready = true; done(); }
+        });
         channel.subscribe(status => {
-          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "SUBSCRIBED") { joined = true; done(); }
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
             clearTimeout(timeout); reject(new Error(`owner completion postgres_changes: ${status}`));
           }
@@ -354,12 +353,17 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       return { error };
     }, game.id);
     expect(writeError, "owner game_state_write should succeed").toBeNull();
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || window.__scopedDiag.dedicatedRev || null), { timeout: 15000 })
-      .not.toBeNull().catch(() => {});
-    await devicePage.waitForTimeout(1000);
-    const diag = await devicePage.evaluate(() => ({ ...window.__scopedDiag, sharedRev: window.__scopedRealtimeRev || null }));
-    console.log(`[e2e-diag] scoped realtime ${JSON.stringify(diag)}`);
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
+      .not.toBeNull().catch(() => {});
+    const diag = await devicePage.evaluate(() => ({
+      system: window.__scopedSystem, rev: window.__scopedRealtimeRev || null,
+      deviceTokenKept: window.__scopedRealtimeClient.realtime.accessTokenValue === window.__scopedDeviceToken,
+    }));
+    console.log(`[e2e-diag] scoped realtime ${JSON.stringify(diag)}`);
+    // Ponowne dołączenie (zerwane łącze) bierze token z gniazda -- musi to
+    // być nadal token urządzenia, nie anon.
+    expect(diag.deviceTokenKept).toBe(true);
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 1000 })
       .not.toBeNull();
     const completedRevision = await devicePage.evaluate(async ({ gid, key, lease }) => {
       const sb = window.__sbClient;
@@ -388,12 +392,9 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       .toBe(completedRevision);
   } finally {
     await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
-    if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
-      const sb = window.__sbClient;
-      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
-      if (channel) await sb.removeChannel(channel);
-      await sb.realtime.setAuth(undefined);
-    }, channelName).catch(() => {});
+    if (channelName) await deviceContext.pages()[0]?.evaluate(async () => {
+      await window.__scopedRealtimeClient?.removeAllChannels();
+    }).catch(() => {});
     if (ownerCompletionChannelName) await page.evaluate(async name => {
       const sb = window.__sbClient;
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));
