@@ -17,11 +17,11 @@
 //
 // i18n: cały tekst pasma 1/2 idzie przez t() z tych samych kluczy co dawniej
 // control/js/gameRounds.js's roundsHost()/control/js/gameFinal.js's
-// finalHost() (translation/{pl,en,uk}.js) — audyt znalazł, że ten plik miał
+// finalHost() (translation/<lang>/control.js) — audyt znalazł, że ten plik miał
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T16395";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T18172";
 
 
 const $ = (id) => document.getElementById(id);
@@ -142,7 +142,7 @@ export function createHostRenderer() {
   }
 
   // control/js/gameRounds.js's hostTitleForRounds() — dokładnie te same 4
-  // warianty tytułu wg fazy (translation/pl.js's roundTitle*). Pominięty:
+  // warianty tytułu wg fazy (translation/pl/control.js: roundTitle*). Pominięty:
   // stary system miał piąty, przejściowy wariant "POJEDYNEK" trwający
   // ułamek sekundy tuż po rozstrzygnięciu pojedynku (duel.enabled=false na
   // chwilę przed zmianą fazy) — bez odpowiednika w nowym silniku (nie ma

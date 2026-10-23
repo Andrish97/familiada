@@ -7,7 +7,7 @@ import { formatText, getTranslationSection } from "../core/translations.js";
 export async function buildContactEmail(opts) {
   const { type, lang = "pl", ticket, subject, message, originalMessage, replyMessage } = opts;
 
-  // Teksty: sekcja contactEmail w translation/{pl,en,uk}.js (pobierana z originu).
+  // Teksty: sekcja contactEmail w translation/<lang>/server.js (pobierana z originu).
   const tr = await getTranslationSection(normalizeLang(lang), "contactEmail");
   const vars = { ticket: ticket || "", subject: subject || "" };
   const c = {

@@ -14,18 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T16395";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T16395";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T16395";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T16395";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T16395";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T16395";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T16395";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T16395";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T16395";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T16395";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T16395";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T16395";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T18172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T18172";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T18172";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18172";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T18172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18172";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T18172";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18172";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T18172";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T18172";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T18172";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T18172";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -36,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T16395";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T18172";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T16395";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T16395";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T16395";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T16395"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T18172";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T18172";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T18172";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T18172"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T16395";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T18172";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1071,9 +1071,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T16395"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T16395"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T16395"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18172"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T18172"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T18172"/>
 
   <style>
     body{margin:0;padding:0}
@@ -2827,12 +2827,16 @@ function renderMailList(rows) {
       const badge = isOpen
         ? `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.18);color:#ffeaa6">open</span>`
         : `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);opacity:.5">closed</span>`;
+      // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
+      const deletedBadge = r.author_account_deleted_at
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">konto usunięte</span>`
+        : "";
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${escSetting(r.ticket_number)}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge} ${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge}${deletedBadge} ${escSetting(r.subject || "—")}</div>
         <div class="mail-ti-preview" style="opacity:.45">${escSetting(String(r.message_count || 0))} msg</div>`;
       item.addEventListener("click", () => openReport(r.id));
       body.appendChild(item);
@@ -6980,7 +6984,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T16395");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T18172");
 
   const MC_PAGE_SIZE = 50;
 

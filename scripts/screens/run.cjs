@@ -86,6 +86,8 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // Brak sekcji słownika na stronie (nieaktualna meta i18n-parts) -- jak błąd JS.
+  page.on("console", (m) => { if (m.text().startsWith("[i18n]")) errors.push(m.text()); });
   if (args.verbose) page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log(`    [${m.type()}] ${m.text().slice(0, 300)}`); });
   const [pathOnly, hash = ""] = scene.path.split("#");
   const sep = pathOnly.includes("?") ? "&" : "?";

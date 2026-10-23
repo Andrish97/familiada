@@ -16,6 +16,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadDict } from "./helpers/i18n.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -42,9 +43,7 @@ function walk(dir = "", out = []) {
 }
 
 async function loadTranslation(lang) {
-  const src = read(`shared/translation/${lang}.js`);
-  const url = "data:text/javascript;base64," + Buffer.from(src).toString("base64");
-  return (await import(url)).default;
+  return loadDict(lang);
 }
 
 function flatKeys(obj, prefix = "", out = new Set()) {

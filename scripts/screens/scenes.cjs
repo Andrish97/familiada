@@ -355,6 +355,14 @@ module.exports = [
   { id: "admin-market-pending", category: "Dodatkowe", title: "Panel admina — Gry Społeczności, licznik „Do zatwierdzenia”", path: "/settings/", sources: ["web/settings/"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop"],
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
   // Audyt E24 (P1): podgląd maila bez skryptów (Ś6), lead-finder przez Worker (Ś2), obejście przerwy 12 h (Ś7).
+  // E26: zgłoszenie zostaje po usunięciu konta autora, z plakietką „konto usunięte”.
+  { id: "admin-reports-deleted-author", category: "Dodatkowe", title: "Panel admina — zgłoszenia: plakietka „konto usunięte”", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabReports").click());
+      await view.evaluate(() => document.getElementById("mfReports").click());
+      await view.locator(".mail-thread-item[data-report-id]").first().waitFor();
+      await view.waitForTimeout(500);
+    }] },
   { id: "admin-mail-html", category: "Dodatkowe", title: "Panel admina — poczta: treść HTML maila (bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => {
       await view.evaluate(() => document.getElementById("btnTabReports").click());

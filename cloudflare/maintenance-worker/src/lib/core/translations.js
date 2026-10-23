@@ -1,5 +1,5 @@
-// src/lib/core/translations.js -- teksty z ogólnych tłumaczeń strony
-// (translation/{pl,en,uk}.js) pobierane z originu w trakcie działania.
+// src/lib/core/translations.js -- teksty z tłumaczeń strony, część serwera
+// (translation/<lang>/server.js) pobierana z originu w trakcie działania.
 //
 // Workers nie pozwalają na eval/new Function, więc pliku nie wykonujemy:
 // wycinamy z niego jedną sekcję najwyższego poziomu (np. `contactEmail: {`)
@@ -17,9 +17,9 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 const cache = new Map();
 
 async function fetchTranslationCode(lang) {
-  const url = `${ORIGIN_BASE}/shared/translation/${lang}.js?t=${Date.now()}`;
+  const url = `${ORIGIN_BASE}/shared/translation/${lang}/server.js?t=${Date.now()}`;
   const res = await fetchWithOrigin(url, new Request(url), ORIGIN_HOST, ORIGIN_RESOLVE);
-  if (res.status !== 200) throw new Error(`HTTP ${res.status} for /shared/translation/${lang}.js`);
+  if (res.status !== 200) throw new Error(`HTTP ${res.status} for /shared/translation/${lang}/server.js`);
   return res.text();
 }
 
@@ -64,7 +64,7 @@ export function formatText(template, vars = {}) {
 // ── wycinanie i parsowanie sekcji ──────────────────────────────────────────
 
 export function extractSection(code, section) {
-  // Sekcje najwyższego poziomu mają w plikach tłumaczeń wcięcie 2 spacji.
+  // Sekcje najwyższego poziomu mają w częściach tłumaczeń wcięcie 2 spacji.
   const re = new RegExp(`\\n {2}${section}\\s*:\\s*\\{`);
   const m = re.exec(code);
   if (!m) throw new Error(`no "${section}" section in translations`);

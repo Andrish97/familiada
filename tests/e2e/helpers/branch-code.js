@@ -65,6 +65,24 @@ function localFileFor(pathname, pages) {
   return null;
 }
 
+// Adres strony -> zawartość <meta name="i18n-parts"> z HTML brancha.
+function branchI18nParts() {
+  const out = {};
+  const walk = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) { if (!["img", "audio", "fonts", "vendor"].includes(ent.name)) walk(full); continue; }
+      if (!ent.name.endsWith(".html")) continue;
+      const meta = /<meta name="i18n-parts" content="([^"]*)">/.exec(fs.readFileSync(full, "utf8"));
+      if (!meta) continue;
+      const rel = path.relative(REPO_ROOT, full).split(path.sep).join("/");
+      out[rel.endsWith("index.html") ? `/${rel.slice(0, -"index.html".length)}` : `/${rel}`] = meta[1];
+    }
+  };
+  walk(REPO_ROOT);
+  return out;
+}
+
 /**
  * @param {import('@playwright/test').BrowserContext} context
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
@@ -84,6 +102,25 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
       else document.addEventListener("DOMContentLoaded", applyInsets, { once: true });
     }, safeAreaInsets);
   }
+  // HTML z produkcji (logowanie, strony spoza `pages`) przy translation.js
+  // z brancha: bez meta i18n-parts strona wczytałaby tylko część wspólną
+  // słownika (docs/tlumaczenia-podzial-plan.md). Meta z HTML brancha trafia
+  // do <head> zanim wykonają się moduły strony.
+  await context.addInitScript((partsByPath) => {
+    const key = location.pathname.endsWith("/") || location.pathname.endsWith(".html") ? location.pathname : `${location.pathname}/`;
+    const content = partsByPath[key];
+    if (content == null || location.origin !== "https://www.familiada.online") return;
+    const add = () => {
+      if (!document.head || document.head.querySelector('meta[name="i18n-parts"]')) return false;
+      const meta = document.createElement("meta");
+      meta.name = "i18n-parts";
+      meta.content = content;
+      document.head.prepend(meta);
+      return true;
+    };
+    const observer = new MutationObserver(() => { if (document.head) { add(); observer.disconnect(); } });
+    observer.observe(document, { childList: true, subtree: true });
+  }, branchI18nParts());
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
     const url = new URL(route.request().url());
     const file = localFileFor(url.pathname, pages);

@@ -2,10 +2,11 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T16395"/>
+  <meta name="app-version" content="v2026-10-23T18172"/>
 
 
   <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="bases contacts resources">
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -14,18 +15,18 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T16395"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T16395" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T16395"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18172"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18172" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T18172"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T16395"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-23T16395"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T18172"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-23T18172"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T16395" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-23T16395" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T16395" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T16395" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18172" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-23T18172" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18172" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18172" defer></script>
 
 </head>
 
@@ -37,7 +38,7 @@
       <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span> <span class="badge" id="altBadge" data-nav-contact-count="friends" aria-hidden="true"></span></button>
+      <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="nav.menu.friends" data-i18n-icon-after="people">Znajomi</span> <span class="badge" id="altBadge" data-nav-contact-count="friends" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
@@ -113,7 +114,7 @@
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="uni-body">
-          <div class="uni-hint" data-i18n="bases.shareModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.</div>
+          <div class="uni-hint" data-i18n="bases.shareModal.hint">Wybrane uprawnienie dostaną wszystkie osoby, którym teraz udostępnisz bazę.</div>
           <div class="baseShareSections">
             <section class="shareSection" data-section="lookup">
               <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
@@ -137,7 +138,7 @@
         <div class="uni-foot modal-actions">
           <div id="shareRole" class="baseShareRoleSlot"></div>
           <button class="btn sm" id="btnShareCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
-          <button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="baseShareFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="baseShareFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
+          <button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="contacts.shareSelected" data-i18n-aria-label="contacts.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span id="baseShareFriendsLabel" class="shareSelectedFull">Udostępnij zaznaczonym</span><span id="baseShareFriendsShort" class="shareSelectedShort">Udostępnij</span></button>
         </div>
       </div>
     </div>
@@ -187,7 +188,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T16395"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18172"></script>
 
 </body>
 </html>

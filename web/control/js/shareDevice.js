@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T16395";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T16395";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T16395";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T16395";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T16395";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T16395";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T18172";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18172";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T18172";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T18172";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T18172";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T18172";
 
-import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T16395";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T18172";
 
 
 function deviceTypeLabel(type) {
@@ -216,7 +216,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
           await renderModal();
           await refreshBadges();
           showMessage(cooldown ? (t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.") :
-            disabled ? (t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
+            disabled ? (t("contacts.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
         } catch (error) {
           showMessage(error?.message || "Błąd.", { state: "error" });
           updateSelection();
@@ -229,8 +229,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     const inputs = subsList?.querySelectorAll('input[type="checkbox"]') || [];
     const selected = subsList?.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)').length || 0;
     if (btnShareFriends) btnShareFriends.disabled = !selected;
-    if (friendsLabel) friendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
-    if (friendsShort) friendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
+    if (friendsLabel) friendsLabel.textContent = t("contacts.shareSelectedN", { n: selected });
+    if (friendsShort) friendsShort.textContent = t("contacts.shareSelectedShortN", { n: selected });
     bulkActions?.update(inputs);
   }
 
@@ -269,7 +269,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
       }
       if (mailSent === "already") showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
-      if (mailSent === "disabled") showMessage(t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
+      if (mailSent === "disabled") showMessage(t("contacts.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
       else if (mailSent !== false && mailSent !== "already") toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       showMessage(e?.message || "Błąd.", { state: "error" });

@@ -23,7 +23,7 @@ const alternate = (account) => ({ ...account, email: account.email.replace("@", 
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Treść maili auth we wszystkich językach. send-email bierze teksty z sekcji
-// authEmail w translation/<lang>.js (pobieranej ze strony w trakcie działania),
+// authEmail w translation/<lang>/server.js (pobieranej ze strony w trakcie działania),
 // więc tu sprawdzamy, że prawdziwy mail w danym języku ma dokładnie te teksty
 // i link z tym samym ?lang=. Testy przepływu niżej (kliknięcie linku) działają
 // po polsku; testy na końcu pliku sprawdzają język treści.
@@ -38,11 +38,13 @@ const AUTH_MAIL_GAP_MS = 65_000;
 const lastAuthMailAt = new Map();
 
 async function loadAuthEmailCopy(lang) {
-  // translation/*.js to ESM bez "type": "module" — Node 20 w CI nie wykrywa
-  // tego sam, więc import przez data: URL (jak w tests/unit/gamesRename.test.js).
-  const src = fs.readFileSync(path.resolve(__dirname, "../../web/shared/translation", `${lang}.js`), "utf8");
-  const dict = (await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"))).default;
-  return { authEmail: dict.authEmail, index: dict.index };
+  // translation/<lang>/*.js to ESM bez "type": "module" — Node 20 w CI nie wykrywa
+  // tego sam, więc import przez data: URL.
+  const part = async (name) => {
+    const src = fs.readFileSync(path.resolve(__dirname, "../../web/shared/translation", lang, `${name}.js`), "utf8");
+    return (await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"))).default;
+  };
+  return { authEmail: (await part("server")).authEmail, index: (await part("login")).index };
 }
 
 async function waitForAuthMailSlot(account, testInfo) {
@@ -58,7 +60,7 @@ function expectMailInLanguage(email, copy, lang, label, typeKey, { actionPattern
   // Znacznik wstawiany tylko przez send-email czytający tłumaczenia strony —
   // stara wersja z tekstami w kodzie (identycznymi) go nie ma. "@lang" wyklucza
   // też ciche przejście na polski przy brakującym tłumaczeniu.
-  expect(html, `${label}: mail nie powstał z translation/${lang}.js`)
+  expect(html, `${label}: mail nie powstał z translation/${lang}/server.js`)
     .toContain(`<meta name="familiada-i18n" content="authEmail.${typeKey}@${lang}">`);
   expect(email.subject, `${label}: temat`).toBe(copy.subject);
   for (const field of ["subtitle", "title", "desc", "btn", "ignore", "footer"]) {
@@ -647,7 +649,7 @@ test("Auth: reset hasla dociera przy wylaczonych powiadomieniach", async ({ page
 });
 
 for (const lang of MAIL_LANGS) {
-  test(`mail resetu hasla (${lang}) ma teksty z translation/${lang}.js`, async ({ page, context, accounts }, testInfo) => {
+  test(`mail resetu hasla (${lang}) ma teksty z translation/${lang}/server.js`, async ({ page, context, accounts }, testInfo) => {
     test.setTimeout(240_000);
     const [account] = accounts.disposable;
     const { authEmail, index } = await loadAuthEmailCopy(lang);
@@ -678,7 +680,7 @@ for (const lang of MAIL_LANGS) {
 }
 
 for (const lang of MAIL_LANGS) {
-  test(`maile zmiany e-maila (${lang}) maja teksty z translation/${lang}.js`, async ({ page, context, accounts, loginAs }, testInfo) => {
+  test(`maile zmiany e-maila (${lang}) maja teksty z translation/${lang}/server.js`, async ({ page, context, accounts, loginAs }, testInfo) => {
     test.setTimeout(240_000);
     const [account] = accounts.disposable;
     const changed = alternate(account);

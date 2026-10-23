@@ -5,10 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-23T16395';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-23T16395';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T16395';
-import { icon, iconText } from './icons.js?v=v2026-10-23T16395';
+import { signOut } from './auth.js?v=v2026-10-23T18172';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-23T18172';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T18172';
+import { icon, iconText } from './icons.js?v=v2026-10-23T18172';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -361,7 +361,7 @@ export function setTopbarAccount(user, {
     const btnSettings = document.createElement('button');
     btnSettings.className = 'btn account-menu-item';
     btnSettings.type = 'button';
-    btnSettings.textContent = t('games.nav.account') || 'Ustawienia konta';
+    btnSettings.textContent = t('nav.menu.account') || 'Ustawienia konta';
     btnSettings.addEventListener('click', () => {
       menu.hidden = true;
       location.href = withLangParam(accountHref);
@@ -433,7 +433,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-23T16395');
+  const { getUser } = await import('./auth.js?v=v2026-10-23T18172');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();

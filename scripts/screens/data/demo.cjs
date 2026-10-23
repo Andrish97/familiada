@@ -327,7 +327,6 @@ function buildDb(lang, extras = {}) {
     update_logo_checked: { ok: true },
     game_state_get: `fn:(args, db) => db.tables.game_state.find((r) => r.game_id === args.p_game_id) || null`,
     // Kadry rozgrywki: wszystkie urządzenia połączone, dźwięk Wyświetlacza odblokowany.
-    control_device_slots_for_owner: ["display", "host", "buzzer"].map((device_type) => ({ device_type, primary_online: true })),
     control_devices_snapshot: { ok: true, devices: Object.fromEntries(["display", "host", "buzzer"].map((kind) => [kind, {
       primary_online: true, waiting_count: 0, visibility: "visible", focused: true, audio_unlocked: true, meta: {},
     }])) },
@@ -387,7 +386,11 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/state": { enabled: false, mode: "message", message: "" },
       // Liczniki powiadomień panelu: 3 nieprzeczytane maile, 2 otwarte zgłoszenia, 4 gry do zatwierdzenia.
       "/_admin_api/messages?filter=inbox*": { ok: true, rows: [1, 2, 3, 4].map((n) => ({ id: `m${n}`, direction: "inbound", is_read: n === 4, report_id: null, subject: `Pytanie ${n}`, created_at: "2026-10-20T10:00:00Z" })) },
-      "/_admin_api/reports?status=all*": { ok: true, rows: [{ id: "r1", status: "open" }, { id: "r2", status: "open" }, { id: "r3", status: "closed" }] },
+      "/_admin_api/reports?status=all*": { ok: true, rows: [
+        { id: "r1", status: "open", ticket_number: "TICKET-2026-0007", subject: "Nie działa dźwięk na Wyświetlaczu", created_at: "2026-10-22T18:10:00Z", message_count: 2 },
+        { id: "r2", status: "open", ticket_number: "TICKET-2026-0006", subject: "Błąd w pytaniu finałowym", created_at: "2026-10-20T09:30:00Z", message_count: 3, author_account_deleted_at: "2026-10-21T12:00:00Z" },
+        { id: "r3", status: "closed", ticket_number: "TICKET-2026-0005", subject: "Pytanie o import gry", created_at: "2026-10-18T15:45:00Z", message_count: 1 },
+      ] },
       "/_admin_api/marketplace/list?status=pending*": { ok: true, rows: ["Rodzinny quiz", "Wieczór filmowy", "Szkolna Familiada", "Kuchnia świata", "Gra producenta"].map((title, i) => ({ id: `mk${i}`, title, lang: "pl", status: "pending", origin: i === 4 ? "producer" : "user", author_username: "ania.k", created_at: "2026-10-19T18:00:00Z", library_count: 0 })) },
       // Poczta: treść HTML maila w podglądzie (iframe sandbox bez skryptów --
       // skrypt i onerror z treści nie mogą nic zmienić; audyt E24, Ś6).
