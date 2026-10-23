@@ -1,12 +1,13 @@
 // Tłumaczenia UK — część „bases”.
 const uk = {
-  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "lookup": "E-mail або ім’я користувача", "share": "Поширити"},
+  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "lookup": "E-mail або ім’я користувача", "share": "Поширити", "hint": "Введи ім’я або e-mail чи вибери друзів.", "shareN": "Поширити ({n})"},
   bases: {
     title: "Familiada — бази питань",
     headerTitle: "Мої бази питань",
     actions: {
       browse: "Переглянути",
       share: "Поділитися",
+      shares: "Поширення",
       export: "Експорт",
       import: "Імпорт",
       remove: "Видалити",
@@ -42,7 +43,8 @@ const uk = {
       close: "Готово",
     },
     shareModal: {
-      hint: "Вибраний дозвіл отримають усі, кому ти зараз надаси доступ до бази.",
+      manageTitle: "Поширення бази",
+      sharedHint: "Дозвіл зміниш кнопкою біля особи.",
       title: "Поділитися базою",
       placeholder: "Ім’я користувача або e-mail...",
       roleEditor: "Може редагувати",

@@ -1,12 +1,13 @@
 // Tłumaczenia EN — część „bases”.
 const en = {
-  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "lookup": "Email or username", "share": "Share"},
+  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "lookup": "Email or username", "share": "Share", "hint": "Enter a username or email, or select friends.", "shareN": "Share ({n})"},
   bases: {
     title: "Familiada — question bases",
     headerTitle: "My question bases",
     actions: {
       browse: "Browse",
       share: "Share",
+      shares: "Shares",
       export: "Export",
       import: "Import",
       remove: "Delete",
@@ -42,7 +43,8 @@ const en = {
       close: "Done",
     },
     shareModal: {
-      hint: "Everyone you share the base with now gets the selected permission.",
+      manageTitle: "Base shares",
+      sharedHint: "Change the permission with the button next to the person.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",

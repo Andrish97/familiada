@@ -211,7 +211,12 @@ export function createUI({ root, emit }) {
           iconNode("copy"),
         ]),
       ];
+      // Dwa przyciski udostępniania jak w Bazach (decyzja użytkownika 2026-10-23):
+      // „Udostępnienia” (lista w tej sesji, licznik) obok kodu i „Udostępnij”
+      // (adres + znajomi) — u Wyświetlacza obok „Otwórz”, u reszty w trzeciej linii.
+      const sendBtn = h("button", { class: "btn", type: "button", "data-act": "share-send", onclick: () => emit("devices.shareSendOpen", kind) }, iconLabel("envelope-out", t("control.shareDevice")));
       const row2 = [];
+      const lines = [];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
         row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
@@ -219,20 +224,22 @@ export function createUI({ root, emit }) {
           class: `btn ${shown ? "primary" : ""}`, type: "button",
           onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
         }, iconLabel(shown ? "eye-off" : "qr-code", shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))));
+        lines.push(h("div", { class: "device-row-line device-row-line--single" }, [sendBtn]));
       } else {
         // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
         // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
         // operatora.
         row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, iconLabel("display", t("common.open"))));
+        row2.push(sendBtn);
       }
       // Zachowaj stałą geometrię karty w trybie testowym. Zawartość wiersza
       // jest niewidoczna i nieaktywna, ale jego miejsce pozostaje zarezerwowane.
       const shared = Number(shareBadges[kind]) || 0;
       codeLine.push(h("button", {
-        class: "btn", type: "button",
+        class: "btn", type: "button", "data-act": "share-list",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
-        ...iconLabel("people", t("control.shareDevice")),
+        ...iconLabel("people", t("control.shareDeviceShares")),
         h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
       ]));
       const children = [
@@ -244,6 +251,7 @@ export function createUI({ root, emit }) {
       children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
         h("div", { class: "device-row-line" }, codeLine),
         h("div", { class: "device-row-line" }, row2),
+        ...lines,
       ]));
       return h("div", { class: "device-row", "data-device": kind }, children);
     };

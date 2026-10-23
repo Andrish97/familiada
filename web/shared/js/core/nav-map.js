@@ -82,7 +82,7 @@ export const PAGES = {
   friends:       { path: "/friends/", access: "user", minViewportHeight: 580, parent: "games", from: ["games", "bases", "polls", "logoEditor", "control", "manual"], manual: "10", tabs: ["invite", "received"], state: ["f", "tab"] },
   subscribers:   { path: "/subscribers/", access: "user", minViewportHeight: 580, parent: "games", from: ["games", "polls", "manual"], manual: "14", tabs: ["invite", "received"], state: ["tab"] },
   tasks:         { path: "/tasks/",             access: "user", minViewportHeight: 580,   parent: "games", from: ["games", "manual"], manual: "15.4", state: ["t"] },
-  bases:         { path: "/bases/",             access: "guest", minViewportHeight: 580,  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer", "manual"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
+  bases:         { path: "/bases/",             access: "guest", minViewportHeight: 580,  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer", "manual"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "shareSendOverlay", "importOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
