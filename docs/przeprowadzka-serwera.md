@@ -154,6 +154,16 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - e2e (branch, `api2`) przebieg 39829329491: zielone `logo-draw-delete`, `rating-system`, `account-rating`, `game-transfer-format`; `logo-storage-copy` czerwony — Storage 1.81 odrzuca klucze przy pustym `GLOBAL_S3_BUCKET` („must be a relative path”). Naprawa w familiada-server: `env-adapt.py` ustawia `GLOBAL_S3_BUCKET=familiada`, `restore.sh` przenosi `storage-single-tenant/` do `familiada/`. Po ponownym wczytaniu (39830375178): `logo-storage-copy` zielony (39830781551), stare pliki ze wszystkich 3 bucketów czytelne (HTTP 200, `storage-layout` 39831358460).
 - **Decyzja (2026-10-22): bez testowego Workera** — funkcje Workera z bazą (`/_api/auth`, powielanie/wysyłanie zasobów, poczta, panel admina, kontakt) testowane w przerwie technicznej zaraz po przełączeniu; w razie błędu powrót DNS na stary serwer. Worker bez zmian (logowanie przez Workera chroni adresy użytkowników — E24).
 
+## Sekrety po przeprowadzce — podział (decyzja właściciela 2026-10-23, do zrobienia po P6)
+
+- Podzielić `.env` według tego, kto używa, w `/srv/familiada/secrets/` (każdy plik 600, root):
+  - `supabase/docker/.env` — tylko rdzeń Supabase (hasło bazy, JWT, klucze anon/service, Studio);
+  - `functions.env` — wszystko, czego używają funkcje Edge (poczta, AI, Telegram, GitHub, klucz Lead Findera…), podpięte `env_file` tylko do kontenera funkcji;
+  - `lead-finder.env` — Lead Finder; wspólny klucz Lead Findera w obu plikach albo w małym wspólnym.
+- Nowy sekret funkcji = jedna linijka w `functions.env`, bez zmiany compose.
+- Polecenie `sudo familiada-secret set NAZWA` (wartość ukryta, wybór pliku po nazwie, restart tylko tej usługi, wynik „zapisano: tak”) i `familiada-secret list` (same nazwy). Z Termuxa albo terminala Cockpit.
+- Portainer tylko do podglądu (stos z naszych skryptów).
+
 ## Wdrożenia przed, w trakcie i po przełączeniu (2026-10-23)
 
 - **Do przełączenia:** wszystko jak dotąd — push na `main` → `db-migrate` / `deploy-edge` / `deploy-lead-finder` idą na **stary** serwer. Zrzut przy przełączeniu bierze je ze sobą. Strony (Cloudflare Pages) i Worker nie zależą od serwera.
