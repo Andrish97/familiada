@@ -228,6 +228,7 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+| 2026-10-23 | E26 / 478 wdrożona | db-migrate 39998445769: 478 OK 17:52:53. Kontrola `e26-after` 39998799584: 0 funkcji, 0 relacji, 0 polityk, indeks e2e jest. Zrzut przy przełączeniu serwera po 478. |
 | 2026-10-23 | Panel admina: teksty na sztywno | Decyzja użytkownika: panel admina (`web/settings/`) ma teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony — wyjątek dopisany do zasady tłumaczeń w `CLAUDE.md`/`AGENTS.md`. Plakietka „konto usunięte” z powrotem na sztywno, klucze `adminReports.*` usunięte z pl/en/uk; `i18n-unused` 0, unit 783/783, zrzut bez zmian. |
 | 2026-10-23 | E26 / 478: nieużywane funkcje Lead Findera | Polecenie użytkownika. Ponowne sprawdzenie na świeżym `main`: `clear_marketing_search_logs`, `truncate_marketing_queries_log`, `truncate_marketing_search_logs`, `marketing_get_verified_contacts`, `market_admin_upsert` bez wywołującego (strony, Worker, Edge, Lead Finder, funkcje bazy; tylko skrypty audytu). Migracja 478 lokalnie OK; kontrola `e26-after.sql` rozszerzona. Zmiana w czasie zamrożenia — zapis w `przeprowadzka-serwera.md` (zrzut po 478). |
 | 2026-10-23 | E26: plakietka „konto usunięte” przez tłumaczenia | Zasada tłumaczeń (CLAUDE.md, 2026-10-23): tekst plakietki i podpowiedzi z `adminReports.*` w pl/en/uk zamiast na sztywno w `settings.js`; data w języku interfejsu. `i18n-unused` 0 nieużywanych, unit 783/783, zrzut `admin-reports-deleted-author` bez zmian. |
