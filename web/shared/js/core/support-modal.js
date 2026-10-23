@@ -1,7 +1,7 @@
-import { t } from "../../translation/translation.js?v=v2026-10-23T17010";
-import { icon } from "./icons.js?v=v2026-10-23T17010";
-import { confirmModal } from "./modal.js?v=v2026-10-23T17010";
-import { isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T17010";
+import { t } from "../../translation/translation.js?v=v2026-10-23T17153";
+import { icon } from "./icons.js?v=v2026-10-23T17153";
+import { confirmModal } from "./modal.js?v=v2026-10-23T17153";
+import { isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T17153";
 
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu, bez napisu) otwiera okno z wyjaśnieniem
