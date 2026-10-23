@@ -2388,17 +2388,13 @@
   /* Przyciski stopki wspólnego okna: ikona i napis z odstępem. */
   .uni-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4em; }
 
-  /* ── Karta z wypustkami (wygląd „segregatora”, prostsza budowa 2026-10-23;
-     wspolne-style-plan.md „Wypustki: mechanizm i uproszczenie”) ─────────
-     Karta pod paskiem to zwykła .card — zawsze wszystkie rogi zaokrąglone,
-     żadnych reguł zależnych od aktywnej wypustki. Wypustki są odsunięte od
-     krawędzi karty o dwa promienie, więc żadna nie styka się z rogiem karty.
-     Aktywna wypustka: tło i obwódka karty, zaokrąglona u góry, nachodzi na
-     kartę o grubość obwódki (1 px) i ma zawsze dwa wklęsłe łuki u podstawy. */
+  /* ── Karta z wypustkami (wariant A, decyzja 2026-10-21) ──────────
+     Aktywna wypustka to sam przycisk karty: tło i obramowanie z
+     zaokrągleniem u góry, zachodzi o --tab-extra na kartę; ::before/::after
+     rysują wklęsłe narożniki. Strony dopisują zaokrąglenia swojej karty. */
   .tabs-card {
-    --tabs-r: var(--r-lg);
     width: 100%;
-    margin: 0 auto;
+    margin: 0 auto; /* odstęp od paska tytułu daje .bar */
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
@@ -2412,91 +2408,138 @@
     flex: 0 0 auto;
     display: flex;
     height: var(--tab-height);
-    /* Dwa promienie: łuk skrajnej wypustki kończy się tam, gdzie zaczyna się
-       zaokrąglenie rogu karty — obrys przechodzi płynnie. */
-    padding: 0 calc(var(--tabs-r) * 2);
+    align-items: stretch;
+    background: var(--bg);
     position: relative;
-    z-index: 1;
+    z-index: var(--z-local);
   }
+  .tab-label,
   .tab-slot {
     position: relative;
     display: flex;
-    flex: 1 1 0;
-    min-width: 0;
+    justify-content: center;
   }
-  /* Separator między wypustkami; znika przy aktywnej. */
-  .tab-slot + .tab-slot::before {
+  .tab-slot {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
+    align-items: stretch;
+  }
+  /* Równe kolumny: licznik na wypustce nie zmienia szerokości żadnej
+     (także na telefonie — wygrywa z .tab-slot w @media niżej). */
+  .tabs-strip > .tab-slot {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .tab-label {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    width: 100%;
+    height: var(--tab-height);
+    line-height: var(--tab-height);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    transition: color .15s;
+  }
+  .tabs-strip .tab-label {
+    font-size: var(--tab-label-font-size);
+    letter-spacing: var(--tab-label-letter-spacing);
+  }
+  /* Licznik na wypustce: zwykły .badge w jednej linii obok tekstu. */
+  .tabs-strip .tab-label > .badge { margin-left: 6px; }
+  .tabs-strip .tab-label > .badge:empty { display: none; }
+  .tab-label.active,
+  .tab-slot.active .tab-label { color: var(--text-strong); }
+  /* Separator (::after) i podświetlenie najechania (::before) nieaktywnych. */
+  .tab-label::after {
     content: "";
     position: absolute;
     left: 0;
-    top: 10px;
-    bottom: 10px;
+    top: 8px;
+    bottom: 8px;
     width: 1px;
+    background: var(--k-40);
+    display: none;
+  }
+  .tab-label::before {
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 14%;
+    bottom: 14%;
+    border-radius: calc(var(--radius) * .9);
     background: var(--line-strong);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
   }
-  :is(.tab-slot.active, .tab-slot:has(> .tab-label.active)) + .tab-slot::before { display: none; }
-  .tab-label {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-    padding: 0 6px;
-    border: 1px solid transparent;
-    border-bottom: 0;
-    border-radius: var(--tabs-r) var(--tabs-r) 0 0;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: var(--tab-label-font-size);
-    font-weight: 800;
-    letter-spacing: var(--tab-label-letter-spacing);
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color var(--dur-fast);
-  }
-  .tab-label > .badge { margin-left: 6px; }
-  .tab-label > .badge:empty { display: none; }
-  .tab-label:disabled { opacity: .45; cursor: not-allowed; }
-  .tab-label:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+  /* Tylko mysz: na dotyku hover „przyklejał się” po stuknięciu. */
   @media (hover: hover) and (pointer: fine) {
-    .tab-label:not(.active):not(:disabled):hover { color: var(--text); }
+    .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover { color: var(--text); }
+    .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover::before { opacity: 1; }
   }
-  /* Aktywna: tło i obwódka karty, nachodzi na kartę o 1 px (zasłania jej linię). */
+  .tab-slot:not(.active):not(:has(.tab-label.active)) + .tab-slot:not(.active):not(:has(.tab-label.active)) .tab-label::after { display: block; }
   :is(.tab-label.active, .tab-slot.active > .tab-label) {
-    z-index: 1;
-    margin-bottom: -1px;
+    height: calc(var(--tab-height) + var(--tab-extra));
+    margin-bottom: calc(-1 * var(--tab-extra));
     background: var(--surface-1);
-    border-color: var(--line-strong);
-    color: var(--text-strong);
+    border: 1px solid var(--line-strong);
+    border-bottom: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    z-index: 3;
   }
-  /* Wklęsłe łuki u podstawy: kwadrat promienia z wyciętym ćwiartkowym kołem
-     (pierścień 1 px w kolorze obwódki), zawsze po obu stronach. */
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before,
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
     content: "";
+    display: block;
     position: absolute;
+    top: auto;
+    /* łuk kończy się w wierszu górnej krawędzi karty */
     bottom: 0;
-    width: var(--tabs-r);
-    height: var(--tabs-r);
+    width: var(--radius);
+    height: calc(var(--radius) + var(--tab-extra) - 1px);
+    border-radius: 0;
+    opacity: 1;
+    transition: none;
     pointer-events: none;
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before {
-    right: 100%;
-    background: radial-gradient(circle at 0 0, transparent calc(var(--tabs-r) - 1px), var(--line-strong) calc(var(--tabs-r) - 1px), var(--line-strong) var(--tabs-r), var(--surface-1) calc(var(--tabs-r) + .5px));
+    left: calc(-1 * var(--radius));
+    right: auto;
+    background: radial-gradient(circle at 0 0, transparent calc(var(--radius) - 1px), var(--line-strong) calc(var(--radius) - 1px), var(--line-strong) var(--radius), var(--surface-1) calc(var(--radius) + .5px));
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
-    left: 100%;
-    background: radial-gradient(circle at 100% 0, transparent calc(var(--tabs-r) - 1px), var(--line-strong) calc(var(--tabs-r) - 1px), var(--line-strong) var(--tabs-r), var(--surface-1) calc(var(--tabs-r) + .5px));
+    right: calc(-1 * var(--radius));
+    left: auto;
+    background: radial-gradient(circle at 100% 0, transparent calc(var(--radius) - 1px), var(--line-strong) calc(var(--radius) - 1px), var(--line-strong) var(--radius), var(--surface-1) calc(var(--radius) + .5px));
   }
+  /* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
+  .tab-slot:first-child > .tab-label.active::before,
+  .tab-slot.active:first-child > .tab-label::before,
+  .tab-slot:last-child > .tab-label.active::after,
+  .tab-slot.active:last-child > .tab-label::after { display: none; }
   @media (max-width: 600px) {
+    .tabs-strip { gap: 0; }
     /* Krótkie nazwy zakładek na telefonie */
     .tabs-strip .only-desktop { display: none !important; }
     .tabs-strip .only-mobile { display: inline !important; }
-    .tabs-card { --tabs-r: var(--r-md); }
-    .tab-label { padding: 0 3px; }
+    .tab-slot {
+      flex: 1 1 max-content;
+      justify-content: center;
+    }
+    .tab-label { z-index: 2; }
+    /* bez separatorów między nieaktywnymi (narożniki aktywnej zostają) */
+    .tab-slot:not(.active) > .tab-label:not(.active)::after { display: none; }
   }
 
   /* ── Karta dzielona (decyzja 2026-10-23) ─────────────────────────
@@ -2544,8 +2587,15 @@
 
 
 
+  /* Karta pod wypustkami: róg prosty po stronie aktywnej skrajnej wypustki
+     (wszystkie karty z wypustkami; warstwa states, bo strony ustawiają
+     zaokrąglenie karty w warstwie page). Karta dzielona — tylko w trybie wąskim. */
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .card { border-top-left-radius: 0; }
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .card { border-top-right-radius: 0; }
   @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
     .split-panels > [data-split-panel]:not(.active) { display: none; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
   }
 
   /* ── Okno od dołu (arkusz) — telefon i tablet dotykowy ──────────

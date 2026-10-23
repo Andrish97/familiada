@@ -63,12 +63,13 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  // Wypustki (2026-10-23): wygląd segregatora, prostsza budowa — karta zawsze
-  // z zaokrąglonymi rogami (bez reguł zależnych od aktywnej wypustki), pasek
-  // odsunięty o dwa promienie, łuki zawsze po obu stronach.
+  // Narożniki skrajnych wypustek: wspólna reguła w silniku (pierwsza/ostatnia).
   const base = read("shared/style/components.css");
-  assert.match(base, /padding: 0 calc\(var\(--tabs-r\) \* 2\);/);
-  assert.doesNotMatch(base, /--tab-extra|first-child > \.tab-label\.active::before|tabs-strip:not\(\[hidden\]\)\) > \.card/);
+  assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
+  assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
+  // Róg karty pod skrajną aktywną wypustką: jedna reguła silnika dla wszystkich kart.
+  assert.match(base, /tab-slot:first-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-left-radius: 0; \}/);
+  assert.match(base, /tab-slot:last-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-right-radius: 0; \}/);
   assert.doesNotMatch(css, /border-top-(left|right)-radius: 0/);
 });
 

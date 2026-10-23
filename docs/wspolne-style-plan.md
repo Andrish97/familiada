@@ -382,22 +382,18 @@ przy skalowaniu (szczeliny/podwójna linia na zrzutach), narożniki
 liczone osobno dla pierwszej/ostatniej wypustki, różne tła pod wypustką
 (`--bg` paska vs tło strony).
 
-**Decyzja użytkownika (2026-10-23, po zrzutach):** wariant „wypustki jako
-nagłówek karty” odrzucony („nie podoba mi się”). Wypustki mają wyglądać jak
-stare (segregator: aktywna wystaje nad kartę, wklęsłe łuki), tylko budowa
-prostsza; ostrych rogów nie może być.
+**Decyzja użytkownika (2026-10-23):** wypustki mają wyglądać **w 100% jak
+stare**: skrajne (lewa i prawa, niezależnie od liczby wypustek) równo
+z krawędzią karty i z prostym (niezaokrąglonym) rogiem karty pod nimi;
+środkowe z dwoma przyklejonymi zaokrąglonymi łukami. Prostsza ma być tylko
+budowa i jednolitość — nie wygląd. Odrzucone: „nagłówek karty” i wypustki
+odsunięte od krawędzi.
 
-**Zrobione (prostsza budowa):**
-- karta pod wypustkami to zwykła `.card` — zawsze wszystkie rogi zaokrąglone,
-  żadnych reguł zależnych od aktywnej wypustki ani prostowania rogów;
-- pasek odsunięty od krawędzi karty o dwa promienie (`--tabs-r`), więc łuk
-  skrajnej wypustki kończy się tam, gdzie zaczyna się zaokrąglenie rogu
-  karty — obrys płynny, bez ostrego rogu;
-- aktywna wypustka nachodzi na kartę o grubość obwódki (1 px, stała zamiast
-  `--tab-extra`), łuki `::before/::after` zawsze po obu stronach (bez wyjątków
-  dla pierwszej/ostatniej);
-- separator między wypustkami jedną regułą, ukryty przy aktywnej;
-- strony nie nadpisują wypustek (Ankiety, Bazy, Logo — usunięte).
+**Stan:** wygląd przywrócony 1:1 (porównanie pikselowe Gry, Gry Społeczności,
+Logo, Kontakty — bez różnic w wypustkach). Budowa jednolita: wszystko w silniku
+(`components.css` + jedna reguła rogu karty w `@layer states`, także dla karty
+dzielonej); strony nie mają własnych reguł wypustek ani rogów; jeden promień
+dla wszystkich (Bazy i Ankiety miały wcześniej 12 px zamiast 20 px).
 
 ## Dziennik E23
 
@@ -459,3 +455,4 @@ prostsza; ostrych rogów nie może być.
 | 2026-10-23 | Wypustki uproszczone | Zgłoszenie użytkownika („uprościć; trójkąciki, rogi karty, obwódki”). Nowy mechanizm opisany w „Wypustki: mechanizm i uproszczenie”. Zrzuty (komputer/telefon): games, bases, logos, poll-share, people-friends-half, mails-tools, games-market, bases-shared-proposed. Unit `urlState` i spec `friends` (wysokość aktywnej wypustki) dostosowane. |
 | 2026-10-23 | Wypustki — powrót do wyglądu segregatora | Użytkownik odrzucił „nagłówek karty”. Stary wygląd, prostsza budowa (opis wyżej); ostry róg karty przy skrajnej wypustce usunięty. Zrzuty STARE/NOWE pokazane użytkownikowi (Gry, Gry Społeczności, Ankieta, telefon: Gry, Znajomi). |
 | 2026-10-23 | Odstęp nad wypustkami | Zgłoszenie użytkownika: w Ankietach zniknął odstęp między kartą akcji a wypustkami (skutek przeniesienia odstępu na `.bar`). Jedna reguła: `:not(.bar) + .tabs-card { margin-top: 12px }`. Przegląd 12 stron na komputerze i telefonie. Uwaga użytkownika: mniej szczegółów, więcej całości — kolejne paczki sprawdzać zbiorczym przeglądem stron. |
+| 2026-10-23 | Wypustki — przywrócony stary wygląd 1:1 | Decyzja użytkownika: identycznie jak stare, prostsza i jednolita tylko budowa. Przywrócony blok silnika sprzed zmian; porównanie pikselowe ze stanem b9e0301d: wypustki bez różnic (Gry, Gry Społeczności, Logo, Kontakty); Bazy i Ankiety z promieniem 20 px jak reszta. |
