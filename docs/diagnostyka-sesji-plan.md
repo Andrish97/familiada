@@ -1,7 +1,23 @@
 # Diagnostyka rozgrywki per sesja — plan
 
-Stan: **plan do zatwierdzenia** (2026-10-22). Bez kodu i migracji do decyzji
-użytkownika („wdrażamy”).
+Stan: **wdrożone** (2026-10-22/23, etapy 1–4; przebiegi w Dzienniku
+`docs/wdrozenia.md`).
+
+- Etap 1 — migracja 468 + Worker: `control2_session_events` (limit 3000 na
+  sesję, 90 dni, cron `control2-session-events-cleanup`), trwałe
+  `control2_session_diag`, `game_sessions.runtime_session_id`, przeniesione
+  dane obu starych magazynów.
+- Etap 2 — migracja 469 + front: `control2_device_log` (urządzenia, główna
+  instancja) i `control2_control_log` (Control), wspólny
+  `web/shared/js/core/session-log.js`, nowe sygnały, zapis przed startem gry.
+- Etap 3 — panel admina: `web/settings/js/session-diagnosis.js`, sekcja
+  „Sugerowane problemy” w przebiegu i zestawienie nad tabelą rozgrywek.
+  Odstępstwo od planu: bez osobnego endpointu logu sesji — przy obecnej
+  objętości (średnio ~24 zdarzenia na sesję) lista rozgrywek niesie zdarzenia
+  i podsumowania z jednej tabeli; eksport JSON zostaje kompletny.
+- Etap 4 — migracja 470: usunięte `control2_device_events`, stare RPC zapisu
+  i odczytu, `stats_detail.events`; zmiany blokad urządzeń wprost do zdarzeń
+  sesji; `control2_session_ping(p_game_id)` tylko jako sygnał aktywności.
 
 ## Cel (decyzja użytkownika 2026-10-22)
 

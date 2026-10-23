@@ -17,6 +17,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   Podręcznik (E13): `docs/podrecznik-plan.md` — plan uzgodniony 2026-10-20.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
   Test accounts — role i lease (E25): `docs/konta-testowe-plan.md`.
+  Diagnostyka rozgrywek Control 2 per sesja: `docs/diagnostyka-sesji-plan.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
