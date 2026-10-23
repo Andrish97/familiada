@@ -662,7 +662,7 @@ const en = {
       close: "Done",
     },
     shareModal: {
-      hint: "Enter a username or email, or select friends. Choose the permission at the bottom.",
+      hint: "Everyone you share the base with now gets the selected permission.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",
@@ -1418,7 +1418,7 @@ const en = {
     questionsTitle: "Questions",
     importHint: "Import works from a TXT file or pasted content.",
     importBtn: "Import",
-    empty: "Select a question on the left or add a new one.",
+    empty: "Select a question from the list or add a new one.",
     questionLabel: "Question text",
     importModal: {
       invalidChars: "Question {q}, answer {ord}: characters the Display does not have: {chars}. Remove them to import.",
@@ -2215,7 +2215,7 @@ const en = {
       renameFailed: "Rename failed.",
       moveIntoSelf: "You cannot move a folder into itself.",
       moveIntoChild: "You cannot move a folder into its subfolder.",
-      selectItemsRight: "Select folders or questions on the right.",
+      selectItemsRight: "First select folders or questions in the list.",
       noTagsSelected: "No tags selected.",
       rootInOperation: "The root folder cannot be part of this operation.",
       actionFailed: "Action failed.",
@@ -2236,11 +2236,11 @@ const en = {
       treeLockedSearch:
         "While searching, the tree is locked. Click ✕ to clear, or click outside the search field.",
       treeLockedSelection:
-        "You have Tags/Categories selected. Clear the selection on the left (click the panel background) to use the tree.",
+        "You have Tags/Categories selected. Clear that selection in the tags panel (click an empty spot in it) to use the tree.",
       tagsLockedSearch:
         "While searching, the Tags/Categories panel is locked. Click ✕ to clear, or click outside the search field.",
       searchLockedSelection:
-        "You have Tags/Categories selected — search is locked. Clear the selection on the left (click the panel background) to search.",
+        "You have Tags/Categories selected — search is locked. Clear that selection in the tags panel (click an empty spot in it) to search.",
     },
     confirm: {
       deleteOne: "Delete this item? It goes to the trash for 30 days.",
