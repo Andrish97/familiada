@@ -177,9 +177,9 @@ module.exports = [
     }] },
   { ...P, id: "polls-qr-vote-modal", title: "Okno powiększonego kodu QR do głosowania (kliknięty mały QR)", path: `/polls/?id=${IDS.poll}`, sources: POLLS, ready: "#cardMain.skel-step-ready",
     steps: [async (view) => {
-      await view.locator("#qr canvas, #qr img").first().waitFor({ timeout: 8000 });
+      await view.locator("#qr img").first().waitFor({ timeout: 8000 });
       await view.locator("#qr").click();
-      await view.locator("#pollQrModalVote canvas").waitFor({ timeout: 5000 });
+      await view.locator("#pollQrModalVote img").waitFor({ timeout: 5000 });
       await view.waitForTimeout(300);
     }] },
   { ...P, id: "polls-open-confirm", title: "Okno potwierdzenia — uruchomienie ankiety ze szkicu", path: `/polls/?id=${G.draftPoints}`, sources: POLLS, ready: "#cardMain.skel-step-ready", db: noTasks,
