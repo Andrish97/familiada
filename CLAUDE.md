@@ -176,6 +176,8 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
   - sprawdzenie: `node scripts/i18n-unused.mjs` (nieużywane, brakujące, różnice
     między językami) i zapadka `unit/i18nUnused.test.js`.
+  - **wyjątek — panel admina (`web/settings/`, decyzja użytkownika 2026-10-23):**
+    teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony.
 - **Podpowiedzi (decyzja użytkownika 2026-10-23):** podpowiedź jest skuteczna, jasna,
   trafna (zgodna z faktycznym działaniem i etykietą przycisku), sensowna i mówi tylko
   to, co **nieoczywiste** — oczywistych rzeczy nie podpowiadamy; ten sam tekst nie

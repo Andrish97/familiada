@@ -2829,7 +2829,7 @@ function renderMailList(rows) {
         : `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);opacity:.5">closed</span>`;
       // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
       const deletedBadge = r.author_account_deleted_at
-        ? `<span title="${escSetting(t("adminReports.authorDeletedTitle", { date: new Date(r.author_account_deleted_at).toLocaleDateString(getUiLang() || "pl") }))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">${escSetting(t("adminReports.authorDeleted"))}</span>`
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">konto usunięte</span>`
         : "";
       item.innerHTML = `
         <div class="mail-ti-row">
