@@ -211,9 +211,13 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let directToken = null;
   let directClient = null;
   function realtimeClient() {
-    directClient ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      accessToken: async () => directToken || SUPABASE_ANON_KEY,
-    });
+    if (!directClient) {
+      directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        accessToken: async () => directToken || SUPABASE_ANON_KEY,
+      });
+      // debug helper (jak globalThis.__sbClient w supabase.js)
+      globalThis.__sbDeviceRealtime = directClient;
+    }
     return directClient;
   }
 

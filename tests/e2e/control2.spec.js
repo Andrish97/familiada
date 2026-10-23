@@ -1287,7 +1287,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
     // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
     for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
-      await expect.poll(() => devicePage.evaluate(() => window.__sbClient?.getChannels?.()
+      await expect.poll(() => devicePage.evaluate(() => window.__sbDeviceRealtime?.getChannels?.()
         ?.filter(channel => String(channel.topic || "").includes("game-state-direct"))
         .map(channel => `${channel.topic}:${channel.state}`) || []), {
         timeout: 15000,
