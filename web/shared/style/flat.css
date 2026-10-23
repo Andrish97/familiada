@@ -2393,6 +2393,10 @@
      zaokrągleniem u góry, zachodzi o --tab-extra na kartę; ::before/::after
      rysują wklęsłe narożniki. Strony dopisują zaokrąglenia swojej karty. */
   .tabs-card {
+    /* Jeden promień wszystkich łuków wypustki (dwa górne i wklęsłe u podstawy):
+       najwyżej połowa wysokości wypustki, żeby górny i dolny łuk zmieściły się
+       w pełni i były identyczne (przy 36 px promień 20 px spłaszczał dolne). */
+    --tab-r: min(var(--radius), calc((var(--tab-height) + var(--tab-extra)) / 2));
     width: 100%;
     margin: 0 auto; /* odstęp od paska tytułu daje .bar */
     position: relative;
@@ -2477,7 +2481,7 @@
     right: 6%;
     top: 14%;
     bottom: 14%;
-    border-radius: calc(var(--radius) * .9);
+    border-radius: calc(var(--tab-r) * .9);
     background: var(--line-strong);
     opacity: 0;
     pointer-events: none;
@@ -2495,7 +2499,7 @@
     background: var(--surface-1);
     border: 1px solid var(--line-strong);
     border-bottom: 0;
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: var(--tab-r) var(--tab-r) 0 0;
     z-index: 3;
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before,
@@ -2506,22 +2510,22 @@
     top: auto;
     /* łuk kończy się w wierszu górnej krawędzi karty */
     bottom: 0;
-    width: var(--radius);
-    height: calc(var(--radius) + var(--tab-extra) - 1px);
+    width: var(--tab-r);
+    height: calc(var(--tab-r) + var(--tab-extra) - 1px);
     border-radius: 0;
     opacity: 1;
     transition: none;
     pointer-events: none;
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before {
-    left: calc(-1 * var(--radius));
+    left: calc(-1 * var(--tab-r));
     right: auto;
-    background: radial-gradient(circle at 0 0, transparent calc(var(--radius) - 1px), var(--line-strong) calc(var(--radius) - 1px), var(--line-strong) var(--radius), var(--surface-1) calc(var(--radius) + .5px));
+    background: radial-gradient(circle at 0 0, transparent calc(var(--tab-r) - 1px), var(--line-strong) calc(var(--tab-r) - 1px), var(--line-strong) var(--tab-r), var(--surface-1) calc(var(--tab-r) + .5px));
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
-    right: calc(-1 * var(--radius));
+    right: calc(-1 * var(--tab-r));
     left: auto;
-    background: radial-gradient(circle at 100% 0, transparent calc(var(--radius) - 1px), var(--line-strong) calc(var(--radius) - 1px), var(--line-strong) var(--radius), var(--surface-1) calc(var(--radius) + .5px));
+    background: radial-gradient(circle at 100% 0, transparent calc(var(--tab-r) - 1px), var(--line-strong) calc(var(--tab-r) - 1px), var(--line-strong) var(--tab-r), var(--surface-1) calc(var(--tab-r) + .5px));
   }
   /* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
   .tab-slot:first-child > .tab-label.active::before,

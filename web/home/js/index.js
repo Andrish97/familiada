@@ -1,13 +1,13 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T15442";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T15470";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T15442";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T15442";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-23T15442";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T15442";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T15442";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-23T15442";
-import { manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-23T15442";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-23T15442";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T15470";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T15470";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-23T15470";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T15470";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T15470";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-23T15470";
+import { manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-23T15470";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-23T15470";
 
 
 async function redirectIfSession() {

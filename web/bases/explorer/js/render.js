@@ -3,13 +3,13 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-23T15442";
-import { computeListing } from "./data/listing.js?v=v2026-10-23T15442";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-23T15442";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15442";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-23T15442";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-23T15442";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-23T15442";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-23T15470";
+import { computeListing } from "./data/listing.js?v=v2026-10-23T15470";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-23T15470";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-23T15470";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-23T15470";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-23T15470";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
