@@ -383,11 +383,6 @@
  "web/shared/css/question-form.css": {
   "colorLiteral": 6
  },
- "web/shared/css/tooltips.css": {
-  "important": 1,
-  "colorLiteral": 4,
-  "zIndexLiteral": 1
- },
  "web/shared/css/tv-layout.css": {
   "rootTokens": 2
  },
@@ -472,15 +467,15 @@
  "web/shared/style/components.css": {
   "important": 38,
   "mediaWidth": 13,
-  "zIndexLiteral": 2,
-  "sharedDuplicate": 192,
+  "zIndexLiteral": 3,
+  "sharedDuplicate": 193,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
-  "zIndexLiteral": 3,
-  "sharedDuplicate": 223,
+  "zIndexLiteral": 4,
+  "sharedDuplicate": 224,
   "unusedClass": 7
  },
  "web/shared/style/layout.css": {

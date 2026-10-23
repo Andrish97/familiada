@@ -1,15 +1,7 @@
-const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-23T05395", import.meta.url).href;
-
+// Wygląd: .app-tooltip w silniku stylów (web/shared/style/components.css).
 function install() {
   if (typeof document === "undefined" || document.documentElement.dataset.tooltipSystem) return;
   document.documentElement.dataset.tooltipSystem = "ready";
-
-  if (!document.querySelector(`link[href="${STYLE_URL}"]`)) {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = STYLE_URL;
-    document.head.append(link);
-  }
 
   const tip = document.createElement("div");
   tip.className = "app-tooltip";

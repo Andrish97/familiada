@@ -241,7 +241,7 @@ przez `style.setProperty('--x', …)`.
 | `states.js` | `emptyState({ icon, text, action })`, `markReady(el)`, `setBusy(el)` | `.empty-state` w 8 plikach, `showEmptyResult`, szkielety w 34 plikach |
 | `device.js` | `fullscreenButton()`, `a2hsBanner()`, PWA | `fullscreen.js`, 5× `requestFullscreen`, 3 kopie A2HS, `beforeinstallprompt` w Grach |
 | `page-shell.js` | `initPage()` dla wszystkich stron, wariant „bare” dla wejścia/urządzeń | `page-init`, `topbar-controller`, `nav-map`, `device-guard`, strony bez `initPage` (settings, mails, go, login, home, głosowanie, ekrany gry) |
-| `tooltips` | bez samodzielnego ładowania CSS (styl w silniku) | `tooltips.js` + `tooltips.css` ładowany z JS |
+| `tooltips` | **zrobione 2026-10-23:** styl `.app-tooltip` w `components.css` (z animacją wejścia), `tooltips.css` usunięty; laboratorium `kora-builder` ma własną regułę | `tooltips.js` + `tooltips.css` ładowany z JS |
 
 Moduły bez zmian: `icons.js` (już wspólny), `nav-map.js`, logika
 `list-filter`, `share-sections` (przepięte na nowe komponenty).

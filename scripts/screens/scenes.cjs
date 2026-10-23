@@ -221,6 +221,8 @@ module.exports = [
   // Wspólne okna i menu na prostej stronie (E23: porównanie silnika stylów przed/po).
   { id: "tasks-decline-confirm", category: "Dodatkowe", title: "Zadania — potwierdzenie odrzucenia (wspólne okno)", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/modal.js"], ready: "#tasksHost > *",
     steps: [async (view) => { await view.locator('.rowsAct').filter({ hasText: /Odrzu|Decline|Відхил/ }).first().click(); await view.locator(".overlay:visible .uni-modal").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(400); }] },
+  { id: "tooltip", category: "Dodatkowe", title: "Podpowiedź po najechaniu (core/tooltips.js)", path: "/games/", sources: [...page("games"), "web/shared/js/core/tooltips.js"], ready: "#grid .card", devices: ["desktop"],
+    steps: [async (view) => { await view.locator("#btnManual").hover(); await view.waitForTimeout(400); }] },
   { id: "tasks-search", category: "Dodatkowe", title: "Zadania — wyszukiwanie w sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *",
     steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("we"); await view.waitForTimeout(400); }] },
   { id: "tasks-account-menu", category: "Dodatkowe", title: "Zadania — menu konta (komputer) i menu telefonu", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/topbar-controller.js"], ready: "#tasksHost > *",

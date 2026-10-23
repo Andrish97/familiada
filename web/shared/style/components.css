@@ -2166,6 +2166,28 @@
     /* bez separatorów między nieaktywnymi (narożniki aktywnej zostają) */
     .tab-slot:not(.active) > .tab-label:not(.active)::after { display: none; }
   }
+
+  /* Podpowiedź (core/tooltips.js) — dawniej osobny tooltips.css ładowany z JS. */
+  .app-tooltip {
+    position: fixed;
+    z-index: 2147483000;
+    max-width: min(320px, calc(100vw - 16px));
+    padding: 8px 11px;
+    border: 1px solid rgb(var(--rgb-gold) / .3);
+    border-radius: var(--r-sm);
+    background: var(--surface-1);
+    box-shadow: 0 10px 30px var(--k-40);
+    color: rgb(var(--rgb-white) / .94);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: .01em;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+  }
+  .app-tooltip:not([hidden]) { animation: popover-in var(--dur-fast) var(--ease-out); }
 }
 
 @layer states {
