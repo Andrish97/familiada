@@ -503,14 +503,20 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.logo.show")).at(-1)?.args[0]?.ms || 0).toBeGreaterThan(14);
     await expect(page.getByRole("button", { name: "Rozpocznij rundę", exact: true })).toBeEnabled({ timeout: 22000 });
     await displayPage.screenshot({ path: testInfo.outputPath("shot-intro-logo.png") });
+    // Od fencingu lease (372/374) RPC urządzenia najpierw sprawdza lease;
+    // wywołanie bez niego dostaje "forbidden", zanim dojdzie do blokady.
+    // Lease bierzemy z prawdziwego heartbeatu Buzzera (co 3 s), przed startem rundy.
+    const buzzerLease = (await buzzerPage.waitForRequest(req => req.url().includes("/rpc/control_device_instance_heartbeat"), { timeout: 10000 })).postDataJSON();
     const roundWrite = page.waitForResponse(resp => WRITE_RPC_RE.test(resp.url()));
     await page.getByRole("button", { name: "Rozpocznij rundę", exact: true }).click();
     const written = await (await roundWrite).json();
     expect(Date.parse(written.locked_until)).toBeGreaterThan(Date.now());
-    const premature = await buzzerPage.evaluate(async ({id,key}) => {
-      const result = await window.__sbClient.rpc("game_state_buzzer_press", {p_game_id:id,p_key:key,p_team:"A"});
+    const premature = await buzzerPage.evaluate(async ({id,key,lease}) => {
+      const result = await window.__sbClient.rpc("game_state_buzzer_press", {
+        p_game_id:id, p_key:key, p_team:"A", p_connection_id:lease.p_connection_id, p_epoch:lease.p_epoch,
+      });
       return { error: result.error?.message, pressed: result.data?.detail?.rounds?.duel?.lastPressed };
-    }, {id:game.id,key:game.share_key_buzzer});
+    }, {id:game.id,key:game.share_key_buzzer,lease:buzzerLease});
     expect(premature.error).toContain("locked");
     expect(premature.pressed).toBeFalsy();
     await expect(buzzerPage.locator("#btnA")).toBeEnabled({ timeout: 15000 });
@@ -1281,7 +1287,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
     // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
     for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
-      await expect.poll(() => devicePage.evaluate(() => window.__sbClient?.getChannels?.()
+      await expect.poll(() => devicePage.evaluate(() => window.__sbDeviceRealtime?.getChannels?.()
         ?.filter(channel => String(channel.topic || "").includes("game-state-direct"))
         .map(channel => `${channel.topic}:${channel.state}`) || []), {
         timeout: 15000,
@@ -1372,6 +1378,28 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       if (error) throw new Error("read committed round: " + error.message);
       return { roundNo: data.detail?.rounds?.roundNo, scoreA: data.detail?.rounds?.totals?.A };
     }, game.id), { timeout: 10000 }).toEqual({ roundNo: 2, scoreA: 90 });
+
+    // Urządzenia jadą na postgres_changes, nie na transporcie zapasowym
+    // (diagnoza 2026-10-23: kanał SUBSCRIBED bez dostarczanych zmian).
+    const transportOf = sessions => {
+      const events = (sessions[0]?.stats_detail.events || []).filter(event => ["display", "host", "buzzer"].includes(event.source));
+      const pick = (source, phase) => events.filter(event => event.source === source && event.metrics?.phase === phase).length;
+      return Object.fromEntries(["display", "host", "buzzer"].map(source => [source, {
+        connected: events.filter(event => event.source === source && event.category === "device_transport"
+          && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
+        catchup: pick(source, "fallback_catchup"),
+        recovered: pick(source, "recovered"),
+      }]));
+    };
+    await expect.poll(async () => {
+      const transport = transportOf(await readControl2Sessions(page, game.id));
+      return Object.values(transport).every(item => item.connected > 0);
+    }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+    const transport = transportOf(await readControl2Sessions(page, game.id));
+    console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
+    for (const [source, item] of Object.entries(transport)) {
+      expect(item.catchup, `${source}: zmiany doszły kanałem bezpośrednim, bez nadrabiania z heartbeatu`).toBe(0);
+    }
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);
@@ -2302,7 +2330,11 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
-    // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
+    // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A odsłania
+    // wszystkie odpowiedzi (40 + dopełnienie 4 + 4 = bank 48), a "Zakończ rundę"
+    // przy wszystkim odsłoniętym finalizuje rundę od razu (bez R8). Pudła
+    // i kradzież nie mają wpływu na mnożnik, a ich bramki dźwięku zjadały
+    // ~40 s z limitu 240 s (2026-10-23); pełna ścieżka zostaje w rundzie 4.
     for (let round = 1; round <= 3; round++) {
       await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe(`Runda ${round}`), { timeout: 22000 });
       await startRoundConfirmed(page);
@@ -2311,10 +2343,11 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
       await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
       await revealAnswer(page, 1);
-      await strikeOutAndLoseSteal(page);
-      await endRoundAndRevealRest(page, "Przejdź do następnej rundy");
+      await revealAnswer(page, 2);
+      await revealAnswer(page, 3);
+      await clickConfirmed(page.getByRole("button", { name: "Zakończ rundę" }));
     }
-    await expect(page.getByText("Alfa: 120")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alfa: 144")).toBeVisible({ timeout: 10000 });
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 4"), { timeout: 22000 });
@@ -2328,7 +2361,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await strikeOutAndLoseSteal(page);
     await endRoundAndRevealRest(page, "Przejdź do następnej rundy");
 
-    await expect(page.getByText("Alfa: 200")).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
+    await expect(page.getByText("Alfa: 224")).toBeVisible({ timeout: 10000 }); // 144 + 40x2, nie 184
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -2861,7 +2894,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   await loginAs(page, context, accounts.standard[1]);
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
-  const { logoId, gameId, hostKey, displayKey } = await page.evaluate(async ({ name, payload }) => {
+  const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data: logo, error: logoErr } = await sb.from("user_logos")
@@ -2876,16 +2909,22 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
       })
       .select("id").single();
     if (gameErr) throw new Error("insert game failed: " + gameErr.message);
-    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", { p_game_id: game.id, p_session_id: null });
-    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control session failed");
-    const { data: host, error: hostError } = await sb.rpc("control_runtime_device_link", { p_game_id: game.id, p_device_type: "host" });
-    const { data: display, error: displayError } = await sb.rpc("control_runtime_device_link", { p_game_id: game.id, p_device_type: "display" });
-    if (hostError || displayError || !host?.ok || !display?.ok) throw new Error(hostError?.message || displayError?.message || "Device token failed");
-    return { logoId: logo.id, gameId: game.id, hostKey:host.token, displayKey:display.token };
+    return { logoId: logo.id, gameId: game.id };
   }, { name: logoName, payload: blankGlyphPayload() });
 
-  // stan "play" wymaga >= 10 pytań, inaczej overlay stanu przykrywa blokadę logo
+  // stan "play" wymaga >= 10 pytań, inaczej overlay stanu przykrywa blokadę logo.
+  // Pytania przed sesją Control: aktywny Control blokuje treść gry
+  // (game_content_locked:control_active).
   await padGame(page, gameId);
+  const { hostKey, displayKey } = await page.evaluate(async (gid) => {
+    const sb = window.__sbClient;
+    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", { p_game_id: gid, p_session_id: null });
+    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control session failed");
+    const { data: host, error: hostError } = await sb.rpc("control_runtime_device_link", { p_game_id: gid, p_device_type: "host" });
+    const { data: display, error: displayError } = await sb.rpc("control_runtime_device_link", { p_game_id: gid, p_device_type: "display" });
+    if (hostError || displayError || !host?.ok || !display?.ok) throw new Error(hostError?.message || displayError?.message || "Device token failed");
+    return { hostKey: host.token, displayKey: display.token };
+  }, gameId);
   const logoContexts = [];
   let hostPage;
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
@@ -3606,6 +3645,10 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę" }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 90:0")).toBeVisible({ timeout: 10000 });
+    // Control rysuje ekran wyniku z lokalnego stanu, zanim game_state_write
+    // (GAME_END_SHOW, locks.gameEnded) się zatwierdzi; statystyki sesji liczy
+    // wyzwalacz tego zapisu -- czekamy na zatwierdzony stan.
+    await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.status, { timeout: 10000 }).toBe("final");
     const completedSessions = await readControl2Sessions(page, game.id);
     expect(completedSessions).toHaveLength(1);
     expect(completedSessions[0]).toMatchObject({ status: "final", rounds_played: 1, rounds_score_a: 90, rounds_score_b: 0, team_a_score: 90, final_points: null });

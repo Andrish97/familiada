@@ -1,0 +1,32 @@
+{
+  "_opis": "Biblioteki serwowane z własnej domeny (README.md). Wersje aktualizuje scripts/vendor-update.mjs (workflow vendor-updates.yml): tylko w tej samej głównej serii, przez gałąź z testami e2e i pull request.",
+  "libs": [
+    {
+      "file": "supabase-js.js",
+      "package": "@supabase/supabase-js",
+      "version": "2.118.0",
+      "license": "MIT",
+      "source": "dist/umd/supabase.js",
+      "minify": false,
+      "specs": "e2e/auth-username.spec.js e2e/frontend-navigation.spec.js e2e/poll-qr.spec.js e2e/guest-duplicate.spec.js"
+    },
+    {
+      "file": "fabric.min.js",
+      "package": "fabric",
+      "version": "7.4.0",
+      "license": "MIT",
+      "source": "dist/index.min.js",
+      "minify": false,
+      "specs": "e2e/logo-editor.spec.js e2e/host-logo-draw.spec.js"
+    },
+    {
+      "file": "jsQR.min.js",
+      "package": "jsqr",
+      "version": "1.4.0",
+      "license": "Apache-2.0",
+      "source": "dist/jsQR.js",
+      "minify": true,
+      "specs": ""
+    }
+  ]
+}

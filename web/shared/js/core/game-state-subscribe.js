@@ -13,11 +13,12 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T05434";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T05434";
-import { rt } from "./realtime.js?v=v2026-10-23T05434";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T05434";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T05434";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T12245";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T12245";
+import { rt } from "./realtime.js?v=v2026-10-23T12245";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T12245";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T12245";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-23T12245";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
@@ -96,7 +97,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (started && !sessionStarted) {
       sessionStarted = true;
       network.start();
-      transportSnapshotLogged = true;
+      // Bez kanału na starcie stan transportu zapisze onDirectReady.
+      transportSnapshotLogged = directConnected;
       if (directConnected) {
         sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
       } else {
@@ -201,6 +203,67 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }
   }
 
+  // Osobny klient tylko dla kanału bezpośredniego (diagnoza 2026-10-23):
+  // claims subskrypcji postgres_changes ustala token z dołączenia do kanału.
+  // Na wspólnym kliencie realtime-js po dołączeniu podmieniał token urządzenia
+  // na token sesji (anon), więc każde ponowne dołączenie (zerwane łącze,
+  // uśpienie) szło jako anon: kanał SUBSCRIBED, a RLS odrzucał każdy wiersz.
+  // Tu accessToken zawsze zwraca token urządzenia.
+  let directToken = null;
+  let directClient = null;
+  function realtimeClient() {
+    if (!directClient) {
+      directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        accessToken: async () => directToken || SUPABASE_ANON_KEY,
+      });
+      // debug helper (jak globalThis.__sbClient w supabase.js)
+      globalThis.__sbDeviceRealtime = directClient;
+    }
+    return directClient;
+  }
+
+  function onDirectReady() {
+    if (!active) return;
+    const recoveredAt = directIncidentAt;
+    directConnected = true;
+    directIncidentAt = null;
+    if (sessionStarted) {
+      if (recoveredAt != null) {
+        const incident = directIncident;
+        const durationMs = Math.round(performance.now() - recoveredAt);
+        if (incident && (durationMs >= 2000 || incident.catchupCount > 0 || incident.firstStatus === "TOKEN_ERROR")) {
+          sendDiagnostic("transport_state", "recovered", "postgres_changes", {
+            status: "SUBSCRIBED", duration_ms: durationMs, first_status: incident.firstStatus,
+            transition_count: incident.transitionCount, catchup_count: incident.catchupCount,
+            missed_revisions: incident.missedRevisions, latest_revision: incident.latestRevision || null,
+            max_fetch_ms: incident.maxFetchMs, max_render_ms: incident.maxRenderMs,
+            start_visibility: incident.startVisibility, start_online: incident.startOnline,
+            hidden_duration_ms: incident.hiddenDurationMs + (hiddenAt == null ? 0 : Math.max(0, Math.round(performance.now() - Math.max(hiddenAt, incident.startedAt)))),
+            was_discarded: incident.wasDiscarded,
+            error_class: incident.errorClass,
+          });
+          transportSnapshotLogged = true;
+        }
+        directIncident = null;
+      }
+      // Kanał gotowy chwilę po starcie gry (krótka przerwa bez nadrabiania)
+      // też musi zostawić ślad, że urządzenie jedzie na postgres_changes.
+      if (!transportSnapshotLogged) {
+        transportSnapshotLogged = true;
+        sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
+      }
+    }
+    // Close the bootstrap/subscription race, then let direct row events
+    // carry subsequent state without an additional RPC per event.
+    fetchGuarded("rpc_channel_recovery");
+  }
+
+  function onDirectFailure(status) {
+    noteDirectFailure(status);
+    if (active) fetchGuarded("rpc_channel_failure");
+    console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
+  }
+
   async function startDirect() {
     if (!active) return;
     const lease = getLeaseArgs();
@@ -212,16 +275,31 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       });
       if (error || !data?.token || !active) throw error || new Error("Brak tokenu Realtime");
       tokenAuthIncidentOpen = false;
-      await sb().realtime.setAuth(data.token);
-      if (!active) { try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {} return; }
+      directToken = data.token;
+      const client = realtimeClient();
+      // Token musi być ustawiony przed subscribe(): dołączenie bez niego
+      // zakłada subskrypcję z claims anon (późniejszy access_token ich nie zmienia).
+      await client.realtime.setAuth();
+      if (!active) { directToken = null; return; }
       directUnavailableLogged = false;
-      if (directChannel) await sb().removeChannel(directChannel);
-      for (const channel of directTableChannels.values()) await sb().removeChannel(channel).catch(() => {});
+      if (directChannel) await client.removeChannel(directChannel);
+      for (const channel of directTableChannels.values()) await client.removeChannel(channel).catch(() => {});
       directTableChannels.clear();
       directTableConnected.clear();
-      const channel = sb().channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}`);
+      const channel = client.channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}`);
       directChannel = channel;
-      channel.on("postgres_changes", {
+      const readiness = createDirectReadiness(() => {
+        if (channel !== directChannel) return;
+        console.info("[device-realtime] kanał gotowy (SUBSCRIBED + PostgreSQL)");
+        onDirectReady();
+      });
+      channel.on("system", {}, (payload) => {
+        if (channel !== directChannel) return;
+        const status = postgresSystemStatus(payload);
+        console.info(`[device-realtime] system ${payload?.extension || "-"} ${payload?.status || "-"}: ${String(payload?.message || "").slice(0, 80)}`);
+        readiness.postgres(status);
+        if (status === "error") onDirectFailure("POSTGRES_ERROR");
+      }).on("postgres_changes", {
         event: "*", schema: "public", table: "game_state", filter: `game_id=eq.${gameId}`,
       }, (payload) => {
         const row = payload?.new;
@@ -232,52 +310,37 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         if (channel !== directChannel) return;
         directStatus = status;
         if (status === "SUBSCRIBED" && active) {
-          const recoveredAt = directIncidentAt;
-          directConnected = true;
-          directIncidentAt = null;
-          if (sessionStarted) {
-            if (recoveredAt != null) {
-              const incident = directIncident;
-              const durationMs = Math.round(performance.now() - recoveredAt);
-              if (incident && (durationMs >= 2000 || incident.catchupCount > 0 || incident.firstStatus === "TOKEN_ERROR")) {
-                sendDiagnostic("transport_state", "recovered", "postgres_changes", {
-                  status, duration_ms: durationMs, first_status: incident.firstStatus,
-                  transition_count: incident.transitionCount, catchup_count: incident.catchupCount,
-                  missed_revisions: incident.missedRevisions, latest_revision: incident.latestRevision || null,
-                  max_fetch_ms: incident.maxFetchMs, max_render_ms: incident.maxRenderMs,
-                  start_visibility: incident.startVisibility, start_online: incident.startOnline,
-                  hidden_duration_ms: incident.hiddenDurationMs + (hiddenAt == null ? 0 : Math.max(0, Math.round(performance.now() - Math.max(hiddenAt, incident.startedAt)))),
-                  was_discarded: incident.wasDiscarded,
-                  error_class: incident.errorClass,
-                });
-              }
-              directIncident = null;
-            } else if (!transportSnapshotLogged) {
-              transportSnapshotLogged = true;
-              sendDiagnostic("transport_state", "connected", "postgres_changes", { status });
+          console.info("[device-realtime] SUBSCRIBED");
+          readiness.joined();
+          setTimeout(() => {
+            if (channel === directChannel && active && !readiness.ready) {
+              console.warn("[device-realtime] brak potwierdzenia PostgreSQL po 10 s; działa transport awaryjny");
             }
-          }
-          // Close the bootstrap/subscription race, then let direct row events
-          // carry subsequent state without an additional RPC per event.
-          fetchGuarded("rpc_channel_recovery");
+          }, 10_000);
         }
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          noteDirectFailure(status);
-          if (active) fetchGuarded("rpc_channel_failure");
-          console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
+          readiness.reset();
+          onDirectFailure(status);
         }
       });
       for (const [table, handler] of Object.entries(onDirectTables)) {
         if (typeof handler !== "function" || !/^[a-z_]+$/.test(table)) continue;
-        const channel = sb().channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}:${table}`);
-        directTableChannels.set(table, channel);
-        channel.on("postgres_changes", {
-          event: "*", schema: "public", table, filter: `game_id=eq.${gameId}`,
-        }, (payload) => handler({ status: "CHANGE", payload }));
-        channel.subscribe((status) => {
-          directTableConnected.set(table, status === "SUBSCRIBED");
-          handler({ status, payload: null });
+        const tableChannel = client.channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}:${table}`);
+        directTableChannels.set(table, tableChannel);
+        const tableReadiness = createDirectReadiness(() => {
+          directTableConnected.set(table, true);
+          handler({ status: "SUBSCRIBED", payload: null });
         });
+        tableChannel.on("system", {}, (payload) => tableReadiness.postgres(postgresSystemStatus(payload)))
+          .on("postgres_changes", {
+            event: "*", schema: "public", table, filter: `game_id=eq.${gameId}`,
+          }, (payload) => handler({ status: "CHANGE", payload }))
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") { tableReadiness.joined(); return; }
+            tableReadiness.reset();
+            directTableConnected.set(table, false);
+            handler({ status, payload: null });
+          });
       }
       clearTimeout(tokenTimer);
       tokenRetryMs = 1_000;
@@ -310,17 +373,18 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     directConnected = false;
     clearTimeout(tokenTimer);
     tokenTimer = null;
+    const client = directClient;
     if (directChannel) {
       const channel = directChannel;
       directChannel = null;
-      await sb().removeChannel(channel).catch(() => {});
+      await client?.removeChannel(channel).catch(() => {});
     }
     for (const [table, channel] of directTableChannels) {
       directTableConnected.set(table, false);
-      await sb().removeChannel(channel).catch(() => {});
+      await client?.removeChannel(channel).catch(() => {});
     }
     directTableChannels.clear();
-    try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {}
+    directToken = null;
   }
 
   function resync() {
