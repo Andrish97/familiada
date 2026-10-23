@@ -96,7 +96,12 @@ const importProgMsg = document.getElementById("importProgMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
+const shareSendOverlay = document.getElementById("shareSendOverlay");
 const shareSectionsHost = document.getElementById("shareSectionsHost");
+const btnShareSend = document.getElementById("btnShareSend");
+const btnShareDone = document.getElementById("btnShareDone");
+const btnShareSendClose = document.getElementById("btnShareSendClose");
+const btnShareSendCancel = document.getElementById("btnShareSendCancel");
 
 const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
@@ -218,10 +223,37 @@ function baseRoleButton(value, onChange) {
   update();
   return button;
 }
+// Wybór uprawnienia dla nowych udostępnień w stopce okna „Udostępnij bazę”:
+// dwa przyciski (Może edytować / Tylko podgląd), zaznaczony widoczny.
+function baseRoleSelect(value, onChange) {
+  const wrap = document.createElement("div");
+  wrap.className = "baseShareRoleSelect";
+  wrap.setAttribute("role", "group");
+  wrap.setAttribute("aria-label", t("bases.shareModal.roleLabel"));
+  const buttons = [["editor", "edit-paper"], ["viewer", "eye"]].map(([role, iconName]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn xsm baseShareRoleOpt";
+    button.dataset.role = role;
+    const label = t(role === "editor" ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
+    const shortLabel = t(role === "editor" ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
+    button.innerHTML = `${icon(iconName)}<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
+    button.title = label;
+    button.addEventListener("click", () => { value = role; onChange(role); update(); });
+    return button;
+  });
+  const update = () => buttons.forEach(button => {
+    const on = button.dataset.role === value;
+    button.classList.toggle("is-selected", on);
+    button.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  update();
+  wrap.append(...buttons);
+  return wrap;
+}
 function initShareRoleSelect() {
-  // Jedno uprawnienie dla nowych udostępnień (wpisany adres i zaznaczeni znajomi),
-  // obok przycisku „Udostępnij” w sekcji „Komu udostępnić”.
-  shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
+  // Jedno uprawnienie dla wszystkich odbiorców z tego okna (adres i zaznaczeni znajomi).
+  shareRole?.replaceChildren(baseRoleSelect(shareRoleValue, value => { shareRoleValue = value; }));
 }
 function showShareMessage(message, kind = "info") {
   if (!message) { hideToast(); return; }
@@ -275,8 +307,9 @@ function setButtonsState() {
   // Przeglądanie: każdy z dostępem
   if (btnBrowse) btnBrowse.disabled = !hasAccess;
 
-  // Udostępnianie: tylko owner
+  // Udostępnianie (lista i nowe): tylko owner
   if (btnShare) btnShare.disabled = !hasAccess || !owner;
+  if (btnShareSend) btnShareSend.disabled = !hasAccess || !owner;
 
   // Eksport: każdy z dostępem
   if (btnExport) btnExport.disabled = !hasAccess;
@@ -727,12 +760,9 @@ function emailLooksOk(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
 }
 
+// Okno „Udostępnienia” (górny pasek): kto ma dostęp, uprawnienie, ponów, cofnij.
 async function openShareModal() {
   showShareMessage("");
-  shareEmail.value = "";
-  shareRoleValue = "editor";
-  initShareRoleSelect();
-  updateBaseShareSelection();
   await renderShareModal();
   show(shareOverlay, true);
   enterModalSheet(shareOverlay, { backBtn: btnBack, onClose: closeShareModal });
@@ -750,25 +780,54 @@ function closeShareModal() {
   void refreshView({ withBadge: true });
 }
 
+// Okno „Udostępnij bazę” (dolny pasek, jak „Wyślij” w Grach): adres lub nazwa
+// i znajomi do zaznaczenia, uprawnienie w stopce.
+async function openShareSendModal() {
+  showShareMessage("");
+  shareEmail.value = "";
+  shareRoleValue = "editor";
+  initShareRoleSelect();
+  updateBaseShareSelection();
+  await renderShareSendModal();
+  show(shareSendOverlay, true);
+  enterModalSheet(shareSendOverlay, { backBtn: btnBack, onClose: closeShareSendModal });
+}
+
+function closeShareSendModal() {
+  show(shareSendOverlay, false);
+  shareRenderVersion++;
+  shareCooldownTicker.resetBindings();
+  showShareMessage("");
+  exitModalSheet(shareSendOverlay);
+  void refreshView({ withBadge: true });
+}
+
 const shareCooldownTicker = createCooldownTicker();
 shareCooldownTicker.start();
 
-async function renderShareModal() {
+// Dane obu okien udostępniania (znajomi do zaznaczenia, wysłane, aktywne).
+async function loadSharePanel() {
   const b = selectedBase();
-  if (!b || !isOwner(b)) return;
+  if (!b || !isOwner(b)) return null;
   const version = ++shareRenderVersion;
   shareCooldownTicker.resetBindings();
   const { data, error } = await sb().rpc("base_share_panel", { p_base_id: b.id });
-  if (version !== shareRenderVersion) return;
-  if (error || !data?.ok) { showShareMessage(t("bases.share.failed"), "error"); return; }
+  if (version !== shareRenderVersion) return null;
+  if (error || !data?.ok) { showShareMessage(t("bases.share.failed"), "error"); return null; }
+  return { b, data };
+}
+function emptyShareList(host) {
+  const el = document.createElement("div"); el.className = "shareEmpty empty-state";
+  el.textContent = t("baseSharePanel.empty"); host.append(el);
+}
+// Okno „Udostępnij bazę”: znajomi do zaznaczenia (bez tych, którzy już mają dostęp).
+async function renderShareSendModal() {
+  const loaded = await loadSharePanel();
+  if (!loaded) return;
+  const { data } = loaded;
   baseShareFriends.replaceChildren();
   baseShareBulkHost?.replaceChildren();
-  shareSectionsHost.replaceChildren();
-  const empty = host => {
-    const el = document.createElement("div"); el.className = "shareEmpty empty-state";
-    el.textContent = t("baseSharePanel.empty"); host.append(el);
-  };
-  if (!data.friends.length) empty(baseShareFriends);
+  if (!data.friends.length) emptyShareList(baseShareFriends);
   const bulkActions = shareBulkActionsEl({
     onSelectAll: () => {
       baseShareFriends.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
@@ -803,8 +862,15 @@ async function renderShareModal() {
     baseShareFriends.append(row);
   }
   updateBaseShareSelection();
+}
+// Okno „Udostępnienia”: wysłane (oczekujące, odrzucone) i aktywne udostępnienia.
+async function renderShareModal() {
+  const loaded = await loadSharePanel();
+  if (!loaded) return;
+  const { b, data } = loaded;
+  shareSectionsHost.replaceChildren();
   const recipients = [...data.outgoing, ...data.active];
-  if (!recipients.length) empty(shareSectionsHost);
+  if (!recipients.length) emptyShareList(shareSectionsHost);
   for (const recipient of recipients) {
     const active = recipient.status === "done";
     const roleEl = baseRoleButton(recipient.role, async role => {
@@ -915,7 +981,8 @@ async function shareAdd() {
       catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
       if (!id) shareEmail.value = "";
     }
-     await renderShareModal(); showShareMessage(message, messageKind);
+    if (messageKind === "error") { await renderShareSendModal(); showShareMessage(message, messageKind); }
+    else { closeShareSendModal(); showShareMessage(message, messageKind); }
   } catch { showShareMessage(t("bases.share.failed"), "error"); }
   finally { shareAddInFlight = false; updateBaseShareSelection(); }
 }
@@ -1252,6 +1319,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!b || !isOwner(b)) return;
     await openShareModal();
   });
+  btnShareSend?.addEventListener("click", async () => {
+    const b = selectedBase();
+    if (!b || !isOwner(b)) return;
+    await openShareSendModal();
+  });
 
   btnExport?.addEventListener("click", async () => {
     const b = selectedBase();
@@ -1340,13 +1412,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   btnShareClose?.addEventListener("click", () => closeShareModal());
+  btnShareDone?.addEventListener("click", () => closeShareModal());
+  btnShareSendClose?.addEventListener("click", () => closeShareSendModal());
+  btnShareSendCancel?.addEventListener("click", () => closeShareSendModal());
   btnShareAdd?.addEventListener("click", async () => shareAdd());
   shareEmail?.addEventListener("input", () => updateBaseShareSelection());
   shareEmail?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") shareAdd();
   });
 
-  [importOverlay, shareOverlay].forEach((ov) => {
+  [importOverlay, shareOverlay, shareSendOverlay].forEach((ov) => {
     ov?.addEventListener("click", (e) => {
       if (e.target !== ov) return;
       // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
@@ -1354,6 +1429,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ov.classList.contains("modal--sheet") && isSheetViewport()) return;
       if (ov === importOverlay) closeImportModal();
       if (ov === shareOverlay) closeShareModal();
+      if (ov === shareSendOverlay) closeShareSendModal();
     });
   });
 });
@@ -1440,7 +1516,7 @@ function initFileLaunch() {
   bindResourceDuplicate({button:btnDuplicate,kind:"base",getSource:selectedBase,onDone:async id=>{selectedId=id;setActiveTab("mine");await refreshView();},onState:setButtonsState});
   if (guestMode) {
     document.body.classList.add("bases-guest");
-    hideForGuest(currentUser, [btnShare, basesSectionShared]);
+    hideForGuest(currentUser, [btnShare, btnShareSend, basesSectionShared]);
     tabBasesShared?.closest(".tab-slot")?.remove();
   }
 

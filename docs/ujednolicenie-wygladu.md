@@ -5,25 +5,31 @@ pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
 ## Decyzje — okna udostępniania Bazy i urządzenia Control (2026-10-23)
 
-Uwaga użytkownika: stopka okna („Anuluj”, „Udostępnij zaznaczonym”, przełącznik
-uprawnienia) myliła to, co już udostępnione, z tym, co udostępniamy teraz.
+Uwaga użytkownika: jedno okno ze stopką („Anuluj”, „Udostępnij zaznaczonym”,
+przełącznik uprawnienia) myliło to, co już udostępnione, z tym, co udostępniamy
+teraz. Docelowo (decyzja użytkownika, wieczór 2026-10-23) **dwa osobne okna**:
 
-- **Bez stopki.** Okno zamyka tylko ✕ w nagłówku (na telefonie także Wstecz
-  i uchwyt arkusza) — jak okna bez akcji potwierdzającej. Żadnego „Anuluj”.
-- **Jedna sekcja „Komu udostępnić”:** pole „nazwa lub e-mail” i lista
-  znajomych do zaznaczenia razem, ale z osobnymi podpisami („E-mail lub
-  nazwa użytkownika”, „Znajomi” z przyciskami listy), żeby było widać, że
-  druga część to znajomi (uwaga użytkownika 2026-10-23); pod listą jeden przycisk **Udostępnij**
-  (licznik odbiorców w etykiecie, gdy jest ich więcej niż jeden: „Udostępnij (3)”),
-  aktywny, gdy jest komu. W Bazach obok niego przełącznik uprawnienia
-  (Może edytować / Tylko podgląd) — jedno uprawnienie dla wszystkich nowych
-  udostępnień z tego kliknięcia.
-- **Sekcja „Udostępnione”** (Control: „Udostępnione w tej sesji”) osobno, pod
-  spodem; w Bazach z podpowiedzią „Uprawnienie zmienisz przyciskiem przy
-  osobie” — zmiana roli w wierszu zapisuje się od razu.
-- Ten sam układ w obu oknach (`bases/index.html`, `control/index.html`,
-  wspólne `.shareNewActions` w `base.css`); na telefonie obie sekcje dzielą
-  wysokość arkusza, przewijają się tylko listy.
+- **„Udostępnienia”** — przycisk w górnym pasku Baz (dawniej „Udostępnij”,
+  ikona osób) otwiera okno tylko z listą udostępnionych tej bazy: uprawnienie
+  zmieniane przyciskiem przy osobie (zapis od razu), „Ponów”, kosz. Podpowiedź
+  „Uprawnienie zmienisz przyciskiem przy osobie.” W stopce tylko „Zamknij”
+  (poza ✕ w nagłówku; na telefonie przycisk jest w pasku arkusza).
+- **„Udostępnij”** — przycisk w dolnym pasku Baz obok Powiel/Eksport/Import,
+  ta sama ikona co „Wyślij” w Grach. Okno jak „Dodaj odbiorców” w ankietach:
+  sekcja „E-mail lub nazwa użytkownika” (pole) i sekcja „Znajomi” (lista do
+  zaznaczenia z przyciskami listy); w stopce wybór uprawnienia (dwa przyciski
+  „Może edytować” / „Tylko podgląd”, zaznaczony podświetlony — tylko w Bazach),
+  „Anuluj” i złoty „Udostępnij” (licznik odbiorców, gdy więcej niż jeden).
+  Jedno uprawnienie dla wszystkich odbiorców z tego okna. Po udanym wysłaniu
+  okno się zamyka (jak w Grach), błąd zostawia je otwarte.
+- **Control (Urządzenia)** — przy każdym urządzeniu dwa przyciski:
+  „Udostępnienia” (licznik, obok kodu) i „Udostępnij” (u Wyświetlacza obok
+  „Otwórz”, u Prowadzącego/Przycisku w trzeciej linii). Te same dwa okna, bez
+  uprawnienia; „Udostępnienia” listuje udostępnienia w tej sesji z cofaniem.
+- Wspólne: `.shareSendModal` (stopka jak w oknie odbiorców ankiety), arkusz na
+  telefonie — pole adresu u góry, lista znajomych bierze resztę wysokości;
+  w oknie „Udostępnienia” przewija się tylko lista. `?dialog=shareSendOverlay`
+  w mapie stron (Bazy).
 
 ## Decyzja — komunikaty edytora gry (2026-10-19)
 

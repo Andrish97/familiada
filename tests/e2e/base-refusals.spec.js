@@ -26,12 +26,21 @@ async function createBase(page, name) {
     if (error) throw error; return data.id;
   }, name);
 }
+// Okno „Udostępnij bazę” (dolny pasek): adres + znajomi; po udanym wysłaniu zamyka się.
 async function openShare(page, baseId) {
+  await page.goto(`${SITE}/bases/`); await ready(page);
+  await page.locator(`#mineGrid [data-base-id="${baseId}"]`).click();
+  await page.locator("#btnShareSend").click();
+  await expect(page.locator("#shareSendOverlay")).toBeVisible();
+  await expect(page.locator("#baseShareFriends .shareRow, #baseShareFriends .shareEmpty").first()).toBeVisible();
+}
+// Okno „Udostępnienia” (górny pasek): lista udostępnionych, uprawnienie przy osobie.
+async function openShares(page, baseId) {
   await page.goto(`${SITE}/bases/`); await ready(page);
   await page.locator(`#mineGrid [data-base-id="${baseId}"]`).click();
   await page.locator("#btnShare").click();
   await expect(page.locator("#shareOverlay")).toBeVisible();
-  await expect(page.locator("#baseShareFriends .shareRow, #baseShareFriends .shareEmpty").first()).toBeVisible();
+  await expect(page.locator("#shareSectionsHost .shareRow, #shareSectionsHost .shareEmpty").first()).toBeVisible();
 }
 async function openShared(page) {
   await page.goto(`${SITE}/bases/?tab=shared`); await ready(page);
@@ -59,11 +68,12 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShare(page, baseId);
     const friend = page.locator(`#baseShareFriends [data-id="${recipientId}"]`);
     await friend.locator('input[type="checkbox"]').check();
-    await page.locator("#shareRole button").click(); // editor -> viewer (jedno uprawnienie obok „Udostępnij”)
+    await page.locator('#shareRole [data-role="viewer"]').click(); // editor -> viewer (uprawnienie w stopce okna)
     await page.locator("#btnShareAdd").click();
+    await expect(page.locator("#shareSendOverlay")).toBeHidden();
+    await openShares(page, baseId);
     const sharedRow = page.locator("#shareSectionsHost .shareRow");
     await expect(sharedRow).toHaveCount(1);
-    await expect(friend).toHaveCount(0);
     await expect(sharedRow.locator('[data-act="resend"]')).toBeDisabled();
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "viewer");
     const tasks = await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: baseId });
@@ -71,6 +81,8 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     const tokenInfo = await rpc(page, "base_share_panel", { p_base_id: baseId });
     expect(tokenInfo.outgoing[0].status).toBe("pending");
     // Duplicate po e-mailu/nazwie nie tworzy kolejnego zaproszenia ani maila.
+    await openShare(page, baseId);
+    await expect(page.locator(`#baseShareFriends [data-id="${recipientId}"]`)).toHaveCount(0);
     await page.locator("#shareEmail").fill(recipientEmail);
     await page.locator("#btnShareAdd").click();
     // Komunikaty udostępniania to wspólny dymek (toast), nie pole w oknie.
@@ -96,7 +108,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
       await expect(recipient.locator('#baseDeclinesHost [data-act="undo"]')).toBeVisible();
       expect(await recipient.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
-    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await openShares(page, baseId);
     await expect(sharedRow).toContainText("Odrzucono");
     await expect(sharedRow.locator('[data-act="resend"]')).toHaveCount(0);
     expect(await rpc(recipient, "base_share_accept", { p_task_id: taskId })).toBe(false);
@@ -110,12 +122,12 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShared(recipient); await head.click();
     await expect(recipient.locator('#baseDeclinesHost [data-act="undo"]')).toBeVisible();
     await recipient.locator('#baseDeclinesHost [data-act="undo"]').click(); await expect(proposed).toBeVisible();
-    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await openShares(page, baseId);
     await sharedRow.locator(".baseShareRole").click();
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "editor");
     await proposed.locator("[data-accept]").click();
     await expect(proposed).toHaveCount(0);
-    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await openShares(page, baseId);
     await expect(sharedRow).toContainText("Zaakceptowano");
     await sharedRow.locator(".baseShareRole").click();
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "viewer");
@@ -158,30 +170,45 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
   try {
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-      await openShare(page, baseId);
-      await expect(page.locator('#shareOverlay .shareSection')).toHaveCount(2);
-      await expect(page.locator('#baseShareFriends [data-id="f0"] input')).toBeDisabled();
-      await expect(page.locator('#baseShareFriends [data-id="f0"]')).toHaveClass(/is-cooling-down/);
+      // Okno „Udostępnienia”: stany wierszy, własne przewijanie listy.
+      await openShares(page, baseId);
+      await expect(page.locator('#shareOverlay .shareSection')).toHaveCount(1);
       await expect(page.locator('#shareSectionsHost [data-id="pending"] [data-act="resend"]')).toBeDisabled();
       await expect(page.locator('#shareSectionsHost [data-id="muted"] [data-act="resend"]')).toHaveCount(0);
       await expect(page.locator('#shareSectionsHost [data-id="declined"] [data-act="resend"]')).toHaveCount(0);
       await expect(page.locator('#shareSectionsHost [data-id="declined"] .shareCountdown')).toBeVisible();
-      await page.locator('#baseShareFriends [data-id="f1"] input').check();
-      await expect(page.locator('#btnShareAdd')).toBeEnabled();
       const geometry = await page.evaluate(() => {
-        const left = document.querySelector('#baseShareFriends'); const right = document.querySelector('#shareSectionsHost');
-        left.scrollTop = 70; right.scrollTop = 120;
+        const right = document.querySelector('#shareSectionsHost');
+        right.scrollTop = 120;
         const row = document.querySelector('#shareSectionsHost [data-id="pending"]');
         // Przycisk uprawnienia ma napis (decyzja 2026-10-20) — porównujemy pozostałe.
         const buttons = [...row.querySelectorAll('.shareRowActions button:not(.baseShareRole)')].map(button => ({ width: Math.round(button.getBoundingClientRect().width), height: Math.round(button.getBoundingClientRect().height) }));
-        return { scroll: [left.scrollTop, right.scrollTop], overflow: document.documentElement.scrollWidth > innerWidth, buttons };
+        return { scroll: right.scrollTop, overflow: document.documentElement.scrollWidth > innerWidth, buttons };
       });
-      expect(geometry.scroll).toEqual([70, 120]); expect(geometry.overflow).toBe(false);
+      expect(geometry.scroll).toBe(120); expect(geometry.overflow).toBe(false);
       // Szerokość zależy od treści (licznik czasu przy „Ponów”); porównujemy wysokość.
       expect(new Set(geometry.buttons.map(button => button.height)).size).toBe(1);
+      await page.locator('#btnShareDone').click();
+      await expect(page.locator('#shareOverlay')).toBeHidden();
+      // Okno „Udostępnij bazę”: cooldown znajomego, zaznaczenie, własne przewijanie, błąd zostawia okno otwarte.
+      await openShare(page, baseId);
+      await expect(page.locator('#shareSendOverlay .shareSection')).toHaveCount(2);
+      await expect(page.locator('#baseShareFriends [data-id="f0"] input')).toBeDisabled();
+      await expect(page.locator('#baseShareFriends [data-id="f0"]')).toHaveClass(/is-cooling-down/);
+      await expect(page.locator('#btnShareAdd')).toBeDisabled();
+      await page.locator('#baseShareFriends [data-id="f1"] input').check();
+      await expect(page.locator('#btnShareAdd')).toBeEnabled();
+      const sendGeometry = await page.evaluate(() => {
+        const left = document.querySelector('#baseShareFriends'); left.scrollTop = 70;
+        return { scroll: left.scrollTop, overflow: document.documentElement.scrollWidth > innerWidth };
+      });
+      expect(sendGeometry.scroll).toBe(70); expect(sendGeometry.overflow).toBe(false);
+      await page.locator('#baseShareFriends [data-id="f1"] input').uncheck();
       await page.locator('#shareEmail').fill('alicja@example.net'); await page.locator('#btnShareAdd').click();
       await expect(page.locator('.app-toast-text')).toBeVisible();
-      await page.locator('#btnShareClose').click();
+      await expect(page.locator('#shareSendOverlay')).toBeVisible();
+      await page.locator('#btnShareSendCancel').click();
+      await expect(page.locator('#shareSendOverlay')).toBeHidden();
       await page.locator('#tabBasesShared').click();
       const head = page.locator('#baseDeclinesHost .rowsSectionHead');
       await expect(head).toHaveAttribute('aria-expanded', 'false'); await head.click();
@@ -232,10 +259,12 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     const checkbox = page.locator(`#baseShareFriends [data-id="${recipientId}"] input`);
     await expect(checkbox).toBeDisabled();
     await setFlag(false);
-    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await openShare(page, baseId);
     await expect(checkbox).toBeEnabled();
     const after = new Date().toISOString();
     await checkbox.check(); await page.locator("#btnShareAdd").click();
+    await expect(page.locator("#shareSendOverlay")).toBeHidden();
+    await openShares(page, baseId);
     const rows = page.locator("#shareSectionsHost .shareRow"); await expect(rows).toHaveCount(1);
     await expect(rows.locator('[data-act="resend"]')).toHaveCount(0);
     const panel = await rpc(page, "base_share_panel", { p_base_id: baseId });
@@ -249,7 +278,7 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     const proposed = recipient.locator(`#sharedGrid [data-base-id="${baseId}"][data-proposed="1"]`);
     await proposed.locator('[data-accept]').click(); await expect(proposed).toHaveCount(0);
     expect(await rpc(recipient, "leave_shared_base", { p_base_id: baseId })).toBe(true);
-    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await openShare(page, baseId);
     await expect(checkbox).toBeDisabled();
     const refused = await rpc(page, "base_share_panel", { p_base_id: baseId });
     expect(refused.friends[0].email_enabled).toBe(false);
@@ -296,6 +325,8 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
       } else {
         await page.locator("#shareEmail").fill(recipientEmail); await page.locator("#btnShareAdd").click();
       }
+      await expect(page.locator("#shareSendOverlay")).toBeHidden();
+      await openShares(page, id);
       await expect(page.locator("#shareSectionsHost .shareRow")).toHaveCount(1);
       const tasks = await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: id });
       expect(tasks).toHaveLength(1);
@@ -305,7 +336,7 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
       const link = extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("b"));
       expect(link).toBeTruthy();
       invites.push({ id, task: tasks[0].task_id, link });
-      await page.locator("#btnShareClose").click();
+      await page.locator("#btnShareDone").click();
     }
     // A previously selected checkbox must not fall back to a direct invitation.
     const staleBase = await createBase(page, `E2E-B357-stale-${Date.now()}`); bases.push(staleBase);

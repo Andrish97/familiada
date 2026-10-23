@@ -137,7 +137,7 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
-  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "sectionNew": "Komu udostępnić", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij", "shareN": "Udostępnij ({n})"},
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "hint": "Wpisz nazwę lub e-mail albo zaznacz znajomych.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij", "shareN": "Udostępnij ({n})"},
   shareSections: {
     subscribers: "Subskrybenci",
     subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",
@@ -655,6 +655,7 @@ const pl = {
     actions: {
       browse: "Przeglądaj",
       share: "Udostępnij",
+      shares: "Udostępnienia",
       export: "Eksport",
       import: "Import",
       remove: "Usuń",
@@ -697,6 +698,8 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
+      manageTitle: "Udostępnienia bazy",
+      roleLabel: "Uprawnienie",
       sharedHint: "Uprawnienie zmienisz przyciskiem przy osobie.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
@@ -3217,6 +3220,7 @@ const pl = {
     stepDevices: "Urządzenia",
     blackScreen: "Czarny ekran",
     shareDevice: "Udostępnij",
+    shareDeviceShares: "Udostępnienia",
     qrDisplayAlt: "QR do wyświetlacza",
     qrHostAlt: "QR prowadzącego",
     qrBuzzerAlt: "QR Przycisku do pojedynku",

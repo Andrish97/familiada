@@ -3049,15 +3049,19 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
-    await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    // Dwa okna jak w Bazach: „Udostępnij” (adres + znajomi) i „Udostępnienia” (lista w tej sesji).
+    await page.locator('[data-device="host"] [data-act="share-send"]').click();
+    await expect(page.locator("#shareDeviceSendOverlay")).toBeVisible({ timeout: 10000 });
     // Regresja CSS: brak klamry wcześniej zagnieżdżał te reguły pod finałem.
     await expect(page.locator('[data-device="host"]')).toHaveCSS("border-top-style", "solid");
-    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "720px");
+    await expect(page.locator("#shareDeviceSendOverlay .shareModal")).toHaveCSS("max-width", "720px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
-    await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     await page.locator("#shareDeviceEmail").fill(accounts.standard[1].username);
     await page.locator("#btnShareDeviceAdd").click();
+    await expect(page.locator("#shareDeviceSendOverlay")).toBeHidden();
+    await page.locator('[data-device="host"] [data-act="share-list"]').click();
+    await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
     // username || current.recipient_email` -- skoro test7 ma ustawiony
@@ -3067,8 +3071,12 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const recipientUsername = accounts.standard[1].username;
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
 
-    // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
-    await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
+    // Okno „Udostępnij”: dwie sekcje (adres, znajomi) i znikający wspólny komunikat.
+    await page.locator("#btnShareDeviceDone").click();
+    await expect(page.locator("#shareDeviceOverlay")).toBeHidden();
+    await page.locator('[data-device="host"] [data-act="share-send"]').click();
+    await expect(page.locator("#shareDeviceSendOverlay")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("#shareDeviceSendOverlay .shareSection")).toHaveCount(2);
     page.on("response", async (res) => {
       if (!res.url().includes("/rpc/control_device_share_preflight_by_lookup")) return;
       const data = await res.json().catch(() => null);
@@ -3119,7 +3127,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
     expect(links.length, "mail musi zawierać działający link do /go/?d=host").toBeGreaterThan(0);
 
-    await page.locator("#btnShareDeviceClose").click();
+    await page.locator("#btnShareDeviceSendClose").click();
 
     // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
     // (nie ten sam user/sesja co operator) -- dowód, że token grantu
@@ -3764,14 +3772,22 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
       throw error;
     }
     const open = async type => {
-      await page.locator(`[data-device="${type}"]`).getByRole("button",{name:"Udostępnij"}).click();
-      await expect(page.locator("#shareDeviceOverlay")).toBeVisible();
+      await page.locator(`[data-device="${type}"] [data-act="share-send"]`).click();
+      await expect(page.locator("#shareDeviceSendOverlay")).toBeVisible();
       await expect(page.locator("#shareDeviceSubsList input").first()).toBeVisible();
+    };
+    // Po wysłaniu okno „Udostępnij” zamyka się; lista jest w oknie „Udostępnienia”.
+    const openShares = async type => {
+      await expect(page.locator("#shareDeviceSendOverlay")).toBeHidden();
+      await page.locator(`[data-device="${type}"] [data-act="share-list"]`).click();
+      await expect(page.locator("#shareDeviceOverlay")).toBeVisible();
     };
     await open("host");
     await page.locator("#shareDeviceEmail").fill(email);
     await page.locator("#btnShareDeviceAdd").click();
+    await openShares("host");
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
+    await page.locator("#btnShareDeviceDone").click();
     const shares = await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"host"});
     const host = shares.find(row=>row.recipient_email===email);
     expect(host.recipient_id).toBeNull();
@@ -3794,7 +3810,6 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     await gateway.locator(".uni-foot .btn.gold").click();
     await expect(gateway.locator("#mailPreferenceTitle")).toHaveText("Powiadomienia są wyłączone");
     expect((await rpc(page,"control_device_share_resolve",{p_token:host.share_token})).ok).toBe(false);
-    await page.locator("#btnShareDeviceClose").click();
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
@@ -3804,7 +3819,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
     const delivery = await readMailDelivery({recipient:email,after:mutedAfter});
     expect(delivery.queue).toEqual([]); expect(delivery.events).toEqual([]);
-    await page.locator("#btnShareDeviceClose").click();
+    await page.locator("#btnShareDeviceSendClose").click();
     await recipient.evaluate(async id=>{
       const {error}=await window.__sbClient.from("user_flags").upsert({user_id:id,email_notifications:false},{onConflict:"user_id"});
       if(error)throw error;
@@ -3815,6 +3830,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
     await choice.check();
     await page.locator("#btnShareDeviceAdd").click();
+    await openShares("display");
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(peer.username);
     const display = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"display"})).find(row=>row.recipient_id===peer.id);
     expect(display.cooldown_until).toBeNull();

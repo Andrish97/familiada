@@ -1586,6 +1586,10 @@ async function main() {
         await shareDevice.open(payload);
         return;
       }
+      if (action === "devices.shareSendOpen") {
+        await shareDevice.openSend(payload);
+        return;
+      }
       if (action === "devices.next") {
         // Wyjście z podłączania: wracamy do BLACK, jeśli operator zostawił widoczny QR.
         store.state.display.mode = "BLACK";

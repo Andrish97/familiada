@@ -14,11 +14,13 @@
 ========================================================= */
 
 .modal.shareModal{ width: min(820px, 94vw); }
-/* Uprawnienie nowych udostępnień: obok przycisku „Udostępnij” w sekcji
-   „Komu udostępnić” (decyzja użytkownika 2026-10-23). */
+/* Uprawnienie nowych udostępnień: wybór w stopce okna „Udostępnij bazę”
+   (decyzja użytkownika 2026-10-23) — dwa przyciski, zaznaczony podświetlony. */
 .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
 .baseShareSections .shareSection{ margin-top: 0; }
-.shareNewActions > .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
+.baseShareRoleSelect{ display: inline-flex; gap: 4px; }
+.baseShareRoleOpt{ height: auto; min-height: 0; padding: 6px 10px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; opacity: .7; }
+.baseShareRoleOpt.is-selected{ opacity: 1; background: rgba(255,234,166,.18); border-color: #ffeaa6; color: #ffeaa6; }
 .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
 .baseShareRoleShort{ display:none; }

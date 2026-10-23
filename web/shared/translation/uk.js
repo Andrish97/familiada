@@ -137,7 +137,7 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
-  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "sectionNew": "Кому поширити", "lookup": "E-mail або ім’я користувача", "share": "Поширити", "shareN": "Поширити ({n})"},
+  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "hint": "Введи ім’я або e-mail чи вибери друзів.", "lookup": "E-mail або ім’я користувача", "share": "Поширити", "shareN": "Поширити ({n})"},
   shareSections: {
     subscribers: "Підписники",
     subscribersSub: "Ще без запрошення — вибери, кого запросити.",
@@ -642,6 +642,7 @@ const uk = {
     actions: {
       browse: "Переглянути",
       share: "Поділитися",
+      shares: "Поширення",
       export: "Експорт",
       import: "Імпорт",
       remove: "Видалити",
@@ -684,6 +685,8 @@ const uk = {
       close: "Готово",
     },
     shareModal: {
+      manageTitle: "Поширення бази",
+      roleLabel: "Дозвіл",
       sharedHint: "Дозвіл зміниш кнопкою біля особи.",
       title: "Поділитися базою",
       placeholder: "Ім’я користувача або e-mail...",
@@ -3409,6 +3412,7 @@ const uk = {
     stepDevices: "Пристрої",
     blackScreen: "Чорний екран",
     shareDevice: "Поділитися",
+    shareDeviceShares: "Поширення",
     qrDisplayAlt: "QR для дисплея",
     qrHostAlt: "QR для ведучого",
     qrBuzzerAlt: "QR для Кнопки для поєдинку",
