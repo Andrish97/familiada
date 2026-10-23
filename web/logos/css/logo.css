@@ -871,12 +871,18 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   width: min(98vw, 1800px);
   max-width: min(98vw, 1800px);
   max-height: min(90vh, 1000px);
-  border-radius: var(--radius-lg);
-  padding: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Zwykłe okno (komputer): zaokrąglenie i marginesy. W oknie od dołu (telefon,
+   tablet) obowiązuje wspólny wygląd roletki z base.css -- zaokrąglona tylko
+   góra, dół przy krawędzi ekranu. */
+#previewOverlay:not(.sheet-active) .modal.previewModal{
+  border-radius: var(--radius-lg);
+  padding: 18px;
 }
 
 /* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
@@ -926,8 +932,8 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   align-items: center;
   justify-content: center;
   width: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  /* Przybliżanie i przesuwanie robi pinch-zoom.js (transform), także myszą na komputerze. */
+  overflow: hidden;
   border-radius: 12px;
 }
 
@@ -939,6 +945,7 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   max-height: 100%;
   image-rendering: pixelated;
   flex-shrink: 0;
+  transform-origin: 0 0;
 }
 
 /* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na
