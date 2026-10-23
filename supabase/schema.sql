@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wbOK7nzocjijO1P80jBI9rmnReUMFkhLBVqmcxG6PoSilIp86Afa7omMlMF3SYI
+\restrict PGNMQ5WsGZwJQeWIM1IdPcdbzafu1F9UgVQpah3YuD4bw64JTzX7pwzZnXMLas9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -461,37 +461,6 @@ $$;
 
 
 --
--- Name: _control2_device_events_forward(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."_control2_device_events_forward"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
-DECLARE
-  v_view jsonb;
-  v_runtime uuid;
-  v_connection uuid;
-BEGIN
-  BEGIN
-    SELECT runtime_session_id INTO v_runtime FROM public.game_sessions WHERE id = NEW.session_id;
-    v_view := public._control2_device_event_view(NEW.device_type, NEW.event_type, coalesce(NEW.details, '{}'::jsonb));
-    IF coalesce(NEW.details->>'connection_id', '') ~ '^[0-9a-f-]{36}$' THEN
-      v_connection := (NEW.details->>'connection_id')::uuid;
-    END IF;
-    PERFORM public._control2_session_event_add(
-      NEW.session_id, v_runtime, NEW.game_id, NEW.device_type, v_connection, 'diagnostic',
-      v_view->>'category', NEW.event_type, v_view->>'message', jsonb_build_array(NEW.device_type),
-      v_view->'metrics', NEW.event_id, coalesce(NEW.created_at, now()));
-  EXCEPTION WHEN OTHERS THEN
-    RAISE WARNING 'Control 2 session event was not recorded: %', SQLERRM;
-  END;
-  RETURN NULL;
-END;
-$_$;
-
-
---
 -- Name: _control2_diag_bump("uuid", "text", "text", timestamp with time zone, "jsonb", boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -630,67 +599,54 @@ CREATE FUNCTION "public"."_control2_log_device_lease_transition"() RETURNS "trig
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 DECLARE
-  v_session_id uuid;
   v_from text;
   v_epoch bigint;
   v_event_id text;
   v_game_rev bigint;
+  v_details jsonb;
+  v_view jsonb;
 BEGIN
-  IF TG_OP='INSERT' THEN
-    IF NEW.state<>'waiting' OR NOT EXISTS (
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.state <> 'waiting' OR NOT EXISTS (
       SELECT 1 FROM public.control_device_slots s
-      WHERE s.session_id=NEW.session_id AND s.device_type=NEW.device_type
-        AND s.primary_connection_id IS NOT NULL AND s.primary_connection_id<>NEW.id
+      WHERE s.session_id = NEW.session_id AND s.device_type = NEW.device_type
+        AND s.primary_connection_id IS NOT NULL AND s.primary_connection_id <> NEW.id
     ) THEN RETURN NEW; END IF;
     v_from := NULL;
     v_epoch := 0;
-    v_event_id := 'lease:'||NEW.id::text||':waiting';
+    v_event_id := 'lease:' || NEW.id::text || ':waiting';
   ELSE
     IF OLD.state IS NOT DISTINCT FROM NEW.state THEN RETURN NEW; END IF;
     v_from := OLD.state;
-    v_epoch := coalesce(NEW.epoch,OLD.epoch,0);
-    v_event_id := 'lease:'||NEW.id::text||':'||NEW.state||':'||v_epoch::text;
+    v_epoch := coalesce(NEW.epoch, OLD.epoch, 0);
+    v_event_id := 'lease:' || NEW.id::text || ':' || NEW.state || ':' || v_epoch::text;
   END IF;
 
-  SELECT a.session_id INTO v_session_id
-  FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-  WHERE a.game_id=NEW.game_id AND s.control_version=2 AND s.ended_at IS NULL
-  LIMIT 1;
-  IF v_session_id IS NULL THEN RETURN NEW; END IF;
-  SELECT rev INTO v_game_rev FROM public.game_state WHERE game_id=NEW.game_id;
-
   BEGIN
-    INSERT INTO public.control2_device_events(
-      game_id,session_id,device_type,event_type,event_id,details
-    ) VALUES (
-      NEW.game_id,v_session_id,NEW.device_type,'lease_state',v_event_id,
-      jsonb_build_object(
-        'device_type',NEW.device_type,
-        'from_state',v_from,
-        'to_state',NEW.state,
-        'epoch',v_epoch,
-        'connection_id',NEW.id,
-        'visibility',NEW.page_visibility,
-        'focused',NEW.focused,
-        'received_revision',NEW.received_rev,
-        'rendered_revision',NEW.rendered_rev,
-        'started_sound_cue_seq',NEW.started_sound_cue_seq,
-        'game_revision',v_game_rev,
-        'last_seen_age_ms',least(3600000,greatest(0,
-          extract(epoch FROM clock_timestamp()-NEW.last_seen_at)*1000
-        ))::integer
-      )
-    ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
-
-    DELETE FROM public.control2_device_events e
-    WHERE e.game_id=NEW.game_id
-      AND (e.created_at<now()-interval '30 days' OR e.id IN (
-        SELECT id FROM public.control2_device_events
-        WHERE game_id=NEW.game_id ORDER BY created_at DESC,id DESC OFFSET 500
-      ));
+    SELECT rev INTO v_game_rev FROM public.game_state WHERE game_id = NEW.game_id;
+    v_details := jsonb_strip_nulls(jsonb_build_object(
+      'device_type', NEW.device_type,
+      'from_state', v_from,
+      'to_state', NEW.state,
+      'epoch', v_epoch,
+      'connection_id', NEW.id,
+      'visibility', NEW.page_visibility,
+      'focused', NEW.focused,
+      'received_revision', NEW.received_rev,
+      'rendered_revision', NEW.rendered_rev,
+      'started_sound_cue_seq', NEW.started_sound_cue_seq,
+      'game_revision', v_game_rev,
+      'last_seen_age_ms', least(3600000, greatest(0,
+        extract(epoch FROM clock_timestamp() - NEW.last_seen_at) * 1000))::integer
+    ));
+    v_view := public._control2_device_event_view(NEW.device_type, 'lease_state', v_details);
+    PERFORM public._control2_session_event_add(
+      public._control2_active_game_session(NEW.game_id), NEW.session_id, NEW.game_id, NEW.device_type, NEW.id,
+      'diagnostic', v_view->>'category', 'lease_state', v_view->>'message',
+      jsonb_build_array(NEW.device_type), v_view->'metrics', v_event_id, now());
   EXCEPTION WHEN OTHERS THEN
-    RAISE WARNING 'Control 2 lease event was not recorded: %',SQLERRM;
+    -- Diagnostyka nie może przerwać rejestracji ani odnowienia lease.
+    RAISE WARNING 'Control 2 lease event was not recorded: %', SQLERRM;
   END;
   RETURN NEW;
 END;
@@ -6100,63 +6056,6 @@ $$;
 
 
 --
--- Name: control2_control_visibility_event("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control2_control_visibility_event"("p_game_id" "uuid", "p_event" "jsonb") RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE
-  v_session_id uuid;
-  v_event_id text;
-BEGIN
-  IF auth.uid() IS NULL OR NOT EXISTS (
-    SELECT 1 FROM public.games g WHERE g.id=p_game_id AND g.owner_id=auth.uid()
-  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
-  IF p_event IS NULL OR octet_length(p_event::text)>2000
-     OR p_event->>'reason' NOT IN ('initial','visibilitychange')
-     OR p_event->>'visibility' NOT IN ('visible','hidden') THEN
-    RAISE EXCEPTION 'invalid page state';
-  END IF;
-  v_event_id:=left(coalesce(p_event->>'event_id',''),80);
-  IF v_event_id='' THEN RAISE EXCEPTION 'event_id_required'; END IF;
-
-  SELECT a.session_id INTO v_session_id
-  FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-  WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
-  IF v_session_id IS NULL THEN RETURN false; END IF;
-
-  INSERT INTO public.control2_device_events(
-    game_id,session_id,device_type,event_type,event_id,details
-  ) VALUES (
-    p_game_id,v_session_id,'control','page_state',v_event_id,
-    jsonb_build_object(
-      'device_type','control',
-      'visibility_reason',p_event->>'reason',
-      'visibility',p_event->>'visibility',
-      'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean'
-        THEN (p_event->>'focused')::boolean ELSE NULL END,
-      'online',CASE WHEN jsonb_typeof(p_event->'online')='boolean'
-        THEN (p_event->>'online')::boolean ELSE NULL END,
-      'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean'
-        THEN (p_event->>'was_discarded')::boolean ELSE NULL END
-    )
-  ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
-
-  DELETE FROM public.control2_device_events e
-  WHERE e.game_id=p_game_id
-    AND (e.created_at<now()-interval '30 days' OR e.id IN (
-      SELECT id FROM public.control2_device_events
-      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
-    ));
-  RETURN true;
-END;
-$$;
-
-
---
 -- Name: control2_device_log("uuid", "text", "text", "uuid", bigint, "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6191,204 +6090,6 @@ $$;
 
 
 --
--- Name: control2_device_transport_event("uuid", "text", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control2_device_transport_event"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_event" "jsonb", "p_connection_id" "uuid", "p_epoch" bigint) RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $_$
-DECLARE
-  v_session_id uuid;
-  v_event_type text;
-  v_phase text;
-  v_transport text;
-  v_status text;
-  v_trigger text;
-  v_details jsonb;
-  v_event_id text;
-  v_rev bigint;
-  v_previous_rev bigint;
-BEGIN
-  IF p_device_type NOT IN ('display','host','buzzer')
-     OR NOT public._control_device_action_valid(
-       p_game_id,p_device_type,p_key,p_connection_id,p_epoch
-     ) THEN
-    RAISE EXCEPTION 'forbidden';
-  END IF;
-  IF p_event IS NULL OR octet_length(p_event::text)>2000 THEN
-    RAISE EXCEPTION 'invalid event';
-  END IF;
-
-  v_event_type := p_event->>'event_type';
-  v_phase := p_event->>'phase';
-  v_transport := p_event->>'transport';
-  v_status := p_event->>'status';
-  v_trigger := p_event->>'trigger';
-  IF v_event_type='page_state' THEN
-    IF p_event->>'reason' NOT IN ('initial','visibilitychange')
-       OR p_event->>'visibility' NOT IN ('visible','hidden') THEN
-      RAISE EXCEPTION 'invalid page state';
-    END IF;
-  ELSE
-    IF v_event_type NOT IN ('transport_state','state_sync')
-       OR v_event_type IS NULL
-       OR v_phase IS NULL
-       OR v_phase NOT IN (
-         'connected','disconnected','recovered','auth_error',
-         'fallback_catchup','read_error','read_recovered','render_error','render_recovered'
-       )
-       OR v_transport IS NULL
-       OR v_transport NOT IN ('postgres_changes','rpc_fallback') THEN
-      RAISE EXCEPTION 'invalid event';
-    END IF;
-    IF (v_event_type='transport_state' AND v_phase IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered'))
-       OR (v_event_type='state_sync' AND v_phase NOT IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered')) THEN
-      RAISE EXCEPTION 'invalid event phase';
-    END IF;
-  END IF;
-  IF v_status IS NOT NULL AND v_status NOT IN (
-    'SUBSCRIBED','CHANNEL_ERROR','TIMED_OUT','CLOSED','TOKEN_ERROR','FETCH_ERROR'
-  ) THEN
-    RAISE EXCEPTION 'invalid status';
-  END IF;
-  IF v_trigger IS NOT NULL AND v_trigger NOT IN (
-    'poll','broadcast','bootstrap','resume','channel_recovery','channel_failure',
-    'delete_recovery','doorbell_ready','lease_heartbeat','other'
-  ) THEN RAISE EXCEPTION 'invalid trigger'; END IF;
-
-  SELECT a.session_id INTO v_session_id
-  FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-  WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
-  IF v_session_id IS NULL THEN RETURN false; END IF;
-
-  IF coalesce(p_event->>'revision','') ~ '^[0-9]{1,18}$' THEN
-    v_rev := (p_event->>'revision')::bigint;
-  END IF;
-  IF coalesce(p_event->>'previous_revision','') ~ '^[0-9]{1,18}$' THEN
-    v_previous_rev := (p_event->>'previous_revision')::bigint;
-  END IF;
-
-  v_details := jsonb_build_object(
-    'device_type',p_device_type,
-    'visibility_reason',CASE WHEN v_event_type='page_state' THEN p_event->>'reason' ELSE NULL END,
-    'phase',v_phase,
-    'transport',v_transport,
-    'status',v_status,
-    'trigger',v_trigger,
-    'revision',v_rev,
-    'previous_revision',v_previous_rev,
-    'rendered_revision',CASE
-      WHEN coalesce(p_event->>'rendered_revision','') ~ '^[0-9]{1,18}$'
-        THEN (p_event->>'rendered_revision')::bigint ELSE NULL END,
-    'duration_ms',CASE
-      WHEN jsonb_typeof(p_event->'duration_ms')='number'
-        THEN least(3600000,greatest(0,(p_event->>'duration_ms')::numeric))::integer ELSE NULL END,
-    'transition_count',CASE WHEN jsonb_typeof(p_event->'transition_count')='number'
-      THEN least(1000,greatest(0,(p_event->>'transition_count')::numeric))::integer ELSE NULL END,
-    'catchup_count',CASE WHEN jsonb_typeof(p_event->'catchup_count')='number'
-      THEN least(10000,greatest(0,(p_event->>'catchup_count')::numeric))::integer ELSE NULL END,
-    'missed_revisions',CASE WHEN jsonb_typeof(p_event->'missed_revisions')='number'
-      THEN least(1000000,greatest(0,(p_event->>'missed_revisions')::numeric))::integer ELSE NULL END,
-    'latest_revision',CASE WHEN coalesce(p_event->>'latest_revision','') ~ '^[0-9]{1,18}$'
-      THEN (p_event->>'latest_revision')::bigint ELSE NULL END,
-    'max_fetch_ms',CASE WHEN jsonb_typeof(p_event->'max_fetch_ms')='number'
-      THEN least(60000,greatest(0,(p_event->>'max_fetch_ms')::numeric))::integer ELSE NULL END,
-    'max_render_ms',CASE WHEN jsonb_typeof(p_event->'max_render_ms')='number'
-      THEN least(60000,greatest(0,(p_event->>'max_render_ms')::numeric))::integer ELSE NULL END,
-    'first_status',CASE WHEN p_event->>'first_status' IN ('CHANNEL_ERROR','TIMED_OUT','CLOSED','TOKEN_ERROR')
-      THEN p_event->>'first_status' ELSE NULL END,
-    'start_visibility',CASE WHEN p_event->>'start_visibility' IN ('visible','hidden')
-      THEN p_event->>'start_visibility' ELSE 'unknown' END,
-    'start_online',CASE WHEN jsonb_typeof(p_event->'start_online')='boolean'
-      THEN (p_event->>'start_online')::boolean ELSE NULL END,
-    'hidden_duration_ms',CASE WHEN jsonb_typeof(p_event->'hidden_duration_ms')='number'
-      THEN least(86400000,greatest(0,(p_event->>'hidden_duration_ms')::numeric))::integer ELSE NULL END,
-    'fetch_ms',CASE
-      WHEN jsonb_typeof(p_event->'fetch_ms')='number'
-        THEN least(60000,greatest(0,(p_event->>'fetch_ms')::numeric))::integer ELSE NULL END,
-    'render_ms',CASE
-      WHEN jsonb_typeof(p_event->'render_ms')='number'
-        THEN least(60000,greatest(0,(p_event->>'render_ms')::numeric))::integer ELSE NULL END,
-    'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden')
-      THEN p_event->>'visibility' ELSE 'unknown' END,
-    'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean'
-      THEN (p_event->>'focused')::boolean ELSE NULL END,
-    'online',CASE WHEN jsonb_typeof(p_event->'online')='boolean'
-      THEN (p_event->>'online')::boolean ELSE NULL END,
-    'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean'
-      THEN (p_event->>'was_discarded')::boolean ELSE NULL END,
-    'error_class',CASE WHEN v_status IN ('TOKEN_ERROR','FETCH_ERROR')
-        OR (v_event_type='state_sync' AND v_phase='render_error')
-        OR (v_event_type='transport_state' AND p_event->>'error_class' IS NOT NULL)
-      THEN left(coalesce(p_event->>'error_class','Error'),80) ELSE NULL END
-  );
-
-  v_event_id := left(coalesce(p_event->>'event_id',''),80);
-  IF v_event_id='' THEN RAISE EXCEPTION 'event_id_required'; END IF;
-  INSERT INTO public.control2_device_events(
-    game_id,session_id,device_type,event_type,event_id,details
-  ) VALUES (
-    p_game_id,v_session_id,p_device_type,v_event_type,v_event_id,v_details
-  ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
-
-  DELETE FROM public.control2_device_events e
-  WHERE e.game_id=p_game_id
-    AND (e.created_at<now()-interval '30 days' OR e.id IN (
-      SELECT id FROM public.control2_device_events
-      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
-    ));
-  RETURN true;
-END;
-$_$;
-
-
---
--- Name: control2_display_event("uuid", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE sid uuid; event_name text; event_details jsonb;
-BEGIN
-  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
-  IF p_event IS NULL OR octet_length(p_event::text)>2000 THEN RAISE EXCEPTION 'invalid event'; END IF;
-  event_name:=p_event->>'event_type';
-  IF event_name IS NULL OR event_name NOT IN ('page_state','render_stall','runtime_error','network_state') THEN RAISE EXCEPTION 'invalid event type'; END IF;
-  SELECT a.session_id INTO sid FROM public.game_session_active a
-    JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-    WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
-  IF sid IS NULL THEN RETURN false; END IF;
-  IF event_name='page_state' THEN
-    event_details:=jsonb_build_object('reason',CASE WHEN p_event->>'reason' IN ('initial','visibilitychange','focus','blur') THEN p_event->>'reason' ELSE 'statechange' END,
-      'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
-      'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean' THEN (p_event->>'focused')::boolean ELSE NULL END,
-      'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean' THEN (p_event->>'was_discarded')::boolean ELSE NULL END);
-  ELSIF event_name='render_stall' THEN
-    event_details:=jsonb_build_object('max_frame_gap_ms',LEAST(60000,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'max_frame_gap_ms')='number' THEN (p_event->>'max_frame_gap_ms')::numeric ELSE 0 END))::integer,
-      'stalled_frames',LEAST(10000,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'stalled_frames')='number' THEN (p_event->>'stalled_frames')::numeric ELSE 0 END))::integer,
-      'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
-      'state_rev',LEAST(9223372036854775807::numeric,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint);
-  ELSIF event_name='runtime_error' THEN
-    event_details:=jsonb_build_object('phase',CASE WHEN p_event->>'phase' IN ('render','completion_ack') THEN p_event->>'phase' ELSE 'other' END,
-      'error_name',left(coalesce(p_event->>'error_name','Error'),80),
-      'state_rev',LEAST(9223372036854775807::numeric,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint);
-  ELSE
-    event_details:=jsonb_build_object('online',CASE WHEN jsonb_typeof(p_event->'online')='boolean' THEN (p_event->>'online')::boolean ELSE false END);
-  END IF;
-  INSERT INTO public.control2_device_events(game_id,session_id,event_type,event_id,details)
-    VALUES(p_game_id,sid,event_name,left(p_event->>'event_id',80),event_details)
-    ON CONFLICT(game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
-  DELETE FROM public.control2_device_events e WHERE e.game_id=p_game_id AND
-    (e.created_at<now()-interval '30 days' OR e.id IN (SELECT id FROM public.control2_device_events WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500));
-  RETURN true;
-END $$;
-
-
---
 -- Name: control2_net_ping(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6396,80 +6097,6 @@ CREATE FUNCTION "public"."control2_net_ping"() RETURNS boolean
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public', 'pg_temp'
     AS $$ SELECT true $$;
-
-
---
--- Name: control2_network_probe_event("uuid", "text", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control2_network_probe_event"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_event" "jsonb", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE
-  v_session_id uuid;
-  v_phase text := p_event->>'phase';
-  v_verdict text := p_event->>'verdict';
-  v_event_id text;
-  v_details jsonb;
-BEGIN
-  IF p_device_type = 'control' THEN
-    IF NOT EXISTS (SELECT 1 FROM public.games WHERE id = p_game_id AND owner_id = auth.uid()) THEN
-      RAISE EXCEPTION 'forbidden';
-    END IF;
-  ELSIF p_device_type NOT IN ('display','host','buzzer')
-     OR NOT public._control_device_action_valid(p_game_id, p_device_type, p_key, p_connection_id, p_epoch) THEN
-    RAISE EXCEPTION 'forbidden';
-  END IF;
-  IF p_event IS NULL OR octet_length(p_event::text) > 2000 THEN RAISE EXCEPTION 'invalid event'; END IF;
-  IF v_phase IS NULL OR v_phase NOT IN ('baseline','slow','recovered') THEN RAISE EXCEPTION 'invalid phase'; END IF;
-  IF v_verdict IS NOT NULL AND v_verdict NOT IN ('ok','device_network','server') THEN RAISE EXCEPTION 'invalid verdict'; END IF;
-  v_event_id := left(coalesce(p_event->>'event_id', ''), 80);
-  IF v_event_id = '' THEN RAISE EXCEPTION 'event_id_required'; END IF;
-
-  SELECT a.session_id INTO v_session_id
-  FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id = a.session_id AND s.game_id = a.game_id
-  WHERE a.game_id = p_game_id AND s.control_version = 2 AND s.ended_at IS NULL;
-  IF v_session_id IS NULL THEN RETURN false; END IF;
-
-  -- Tylko liczby w rozsądnych granicach i znane wartości tekstowe.
-  v_details := jsonb_strip_nulls(jsonb_build_object(
-    'source', 'probe',
-    'device_type', p_device_type,
-    'phase', v_phase,
-    'verdict', v_verdict,
-    'edge_ms', CASE WHEN jsonb_typeof(p_event->'edge_ms') = 'number' THEN least(60000, greatest(0, (p_event->>'edge_ms')::numeric))::integer END,
-    'db_ms', CASE WHEN jsonb_typeof(p_event->'db_ms') = 'number' THEN least(60000, greatest(0, (p_event->>'db_ms')::numeric))::integer END,
-    'edge_failed', CASE WHEN jsonb_typeof(p_event->'edge_failed') = 'boolean' THEN (p_event->>'edge_failed')::boolean END,
-    'db_failed', CASE WHEN jsonb_typeof(p_event->'db_failed') = 'boolean' THEN (p_event->>'db_failed')::boolean END,
-    'max_edge_ms', CASE WHEN jsonb_typeof(p_event->'max_edge_ms') = 'number' THEN least(60000, greatest(0, (p_event->>'max_edge_ms')::numeric))::integer END,
-    'max_db_ms', CASE WHEN jsonb_typeof(p_event->'max_db_ms') = 'number' THEN least(60000, greatest(0, (p_event->>'max_db_ms')::numeric))::integer END,
-    'samples', CASE WHEN jsonb_typeof(p_event->'samples') = 'number' THEN least(100000, greatest(0, (p_event->>'samples')::numeric))::integer END,
-    'device_network_samples', CASE WHEN jsonb_typeof(p_event->'device_network_samples') = 'number' THEN least(100000, greatest(0, (p_event->>'device_network_samples')::numeric))::integer END,
-    'server_samples', CASE WHEN jsonb_typeof(p_event->'server_samples') = 'number' THEN least(100000, greatest(0, (p_event->>'server_samples')::numeric))::integer END,
-    'duration_ms', CASE WHEN jsonb_typeof(p_event->'duration_ms') = 'number' THEN least(86400000, greatest(0, (p_event->>'duration_ms')::numeric))::integer END,
-    'effective_type', CASE WHEN p_event->>'effective_type' IN ('slow-2g','2g','3g','4g') THEN p_event->>'effective_type' END,
-    'connection_type', CASE WHEN p_event->>'connection_type' IN ('bluetooth','cellular','ethernet','none','wifi','wimax','other','unknown') THEN p_event->>'connection_type' END,
-    'browser_rtt_ms', CASE WHEN jsonb_typeof(p_event->'browser_rtt_ms') = 'number' THEN least(60000, greatest(0, (p_event->>'browser_rtt_ms')::numeric))::integer END,
-    'downlink_mbps', CASE WHEN jsonb_typeof(p_event->'downlink_mbps') = 'number' THEN least(10000, greatest(0, (p_event->>'downlink_mbps')::numeric)) END,
-    'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' END,
-    'online', CASE WHEN jsonb_typeof(p_event->'online') = 'boolean' THEN (p_event->>'online')::boolean END
-  ));
-
-  INSERT INTO public.control2_device_events(game_id, session_id, device_type, event_type, event_id, details)
-  VALUES (p_game_id, v_session_id, p_device_type, 'network_state', v_event_id, v_details)
-  ON CONFLICT (game_id, event_id) WHERE event_id IS NOT NULL DO NOTHING;
-
-  DELETE FROM public.control2_device_events e
-  WHERE e.game_id = p_game_id
-    AND (e.created_at < now() - interval '30 days' OR e.id IN (
-      SELECT id FROM public.control2_device_events
-      WHERE game_id = p_game_id ORDER BY created_at DESC, id DESC OFFSET 500
-    ));
-  RETURN true;
-END;
-$$;
 
 
 --
@@ -6508,47 +6135,21 @@ $$;
 
 
 --
--- Name: control2_session_ping("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: control2_session_ping("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."control2_session_ping"("p_game_id" "uuid", "p_event" "jsonb" DEFAULT NULL::"jsonb") RETURNS "void"
+CREATE FUNCTION "public"."control2_session_ping"("p_game_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE sid uuid; v_runtime uuid; event_kind text; category text;
 BEGIN
-  IF NOT EXISTS(SELECT 1 FROM public.games WHERE id = p_game_id AND owner_id = auth.uid()) THEN
+  IF NOT EXISTS (SELECT 1 FROM public.games WHERE id = p_game_id AND owner_id = auth.uid()) THEN
     RAISE EXCEPTION 'forbidden';
   END IF;
-  SELECT a.session_id INTO sid
+  UPDATE public.game_sessions s SET last_seen_at = now()
   FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id = a.session_id AND s.game_id = a.game_id
-  WHERE a.game_id = p_game_id AND s.control_version = 2 AND s.ended_at IS NULL;
-  IF sid IS NULL THEN RETURN; END IF;
-  SELECT runtime_session_id INTO v_runtime FROM public.game_sessions
-    WHERE id = sid AND ended_at IS NULL FOR UPDATE;
-  IF NOT FOUND THEN RETURN; END IF;
-  IF p_event IS NOT NULL THEN
-    event_kind := p_event->>'kind';
-    IF event_kind IS NULL OR event_kind NOT IN ('error','disconnect','reconnect','diagnostic') THEN RAISE EXCEPTION 'invalid event'; END IF;
-    IF octet_length(p_event::text) > 6000 THEN RAISE EXCEPTION 'event too large'; END IF;
-    IF event_kind = 'diagnostic' THEN
-      category := p_event->>'category';
-      IF category IS NULL OR category NOT IN ('connectivity','audio_start','audio_unlock','display_delay','state_sync','realtime') THEN
-        RAISE EXCEPTION 'invalid diagnostic category';
-      END IF;
-    END IF;
-    PERFORM public._control2_session_event_add(
-      sid, v_runtime, p_game_id, 'control', NULL, event_kind, category, NULL,
-      left(coalesce(p_event->>'message', ''), CASE WHEN event_kind = 'diagnostic' THEN 300 ELSE 1000 END),
-      p_event->'devices',
-      CASE WHEN event_kind = 'diagnostic' AND jsonb_typeof(p_event->'metrics') = 'object' THEN p_event->'metrics' ELSE '{}'::jsonb END,
-      NULL, now());
-  END IF;
-  UPDATE public.game_sessions SET last_seen_at = now(),
-    client_meta = client_meta || jsonb_build_object('error_count',
-      (SELECT count(*) FROM public.control2_session_events e WHERE e.game_session_id = sid AND e.kind = 'error'))
-  WHERE id = sid;
+  WHERE a.game_id = p_game_id AND s.id = a.session_id AND s.game_id = a.game_id
+    AND s.control_version = 2 AND s.ended_at IS NULL;
 END;
 $$;
 
@@ -11303,82 +10904,6 @@ BEGIN
     AND (p.cooldown_until IS NULL OR p.cooldown_until < now())
   ORDER BY p.priority ASC;
 END;
-$$;
-
-
---
--- Name: get_control2_display_events("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[]) RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-  SELECT coalesce(jsonb_object_agg(session_id::text,events),'{}'::jsonb)
-  FROM (
-    SELECT e.session_id,jsonb_agg(
-      jsonb_build_object(
-        'kind','diagnostic',
-        'category',CASE
-          WHEN e.event_type='lease_state' THEN 'device_lease'
-          WHEN e.event_type='transport_state' THEN 'device_transport'
-          WHEN e.event_type='state_sync' THEN 'device_state_sync'
-          WHEN e.event_type='network_state' AND e.details->>'source'='probe' THEN 'device_network'
-          ELSE 'display_state' END,
-        'at',e.created_at,
-        'message',CASE
-          WHEN e.event_type='page_state' THEN
-            'Stan karty ' || CASE e.device_type
-              WHEN 'display' THEN 'Wyświetlacz'
-              WHEN 'host' THEN 'Host'
-              WHEN 'buzzer' THEN 'Buzzer'
-              WHEN 'control' THEN 'Control'
-              ELSE 'urządzenia' END || ': ' ||
-            CASE e.details->>'visibility'
-              WHEN 'visible' THEN 'widoczna'
-              WHEN 'hidden' THEN 'w tle'
-              ELSE 'nieznana' END ||
-            CASE e.details->>'visibility_reason'
-              WHEN 'initial' THEN ' (stan początkowy).'
-              WHEN 'visibilitychange' THEN ' (zmiana widoczności).'
-              ELSE '.' END
-          WHEN e.event_type='network_state' AND e.details->>'source'='probe' THEN CASE
-            WHEN e.details->>'phase'='baseline' THEN 'Pomiar łącza na starcie gry.'
-            WHEN e.details->>'phase'='slow' AND e.details->>'verdict'='device_network' THEN 'Wolne łącze urządzenia (już do Cloudflare).'
-            WHEN e.details->>'phase'='slow' AND e.details->>'verdict'='server' THEN 'Wolna odpowiedź serwera przy sprawnym łączu urządzenia.'
-            WHEN e.details->>'phase'='recovered' THEN 'Łącze i odpowiedź serwera wróciły do normy.'
-            ELSE 'Pomiar łącza.' END
-          WHEN e.event_type='lease_state' AND e.details->>'to_state'='waiting' THEN 'Urządzenie oczekuje na zwolnienie blokady.'
-          WHEN e.event_type='lease_state' AND e.details->>'to_state'='primary' THEN 'Urządzenie zostało aktywowane jako główne.'
-          WHEN e.event_type='lease_state' AND e.details->>'to_state'='released' THEN 'Urządzenie zwolniło blokadę.'
-          WHEN e.event_type='lease_state' AND e.details->>'to_state'='expired' THEN 'Blokada urządzenia wygasła.'
-          WHEN e.event_type='lease_state' AND e.details->>'to_state'='revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
-          WHEN e.event_type='transport_state' AND e.details->>'phase'='recovered' THEN 'Zakończyła się przerwa w bezpośrednim kanale urządzenia.'
-          WHEN e.event_type='transport_state' AND e.details->>'phase'='auth_error' THEN 'Nie udało się uruchomić bezpośredniego kanału urządzenia.'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry.'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_error' THEN 'Odczyt stanu gry z bazy nie powiódł się.'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_recovered' THEN 'Odczyt stanu gry z bazy wrócił.'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_error' THEN 'Urządzenie odebrało stan gry, ale jego obsługa renderu zgłosiła błąd.'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_recovered' THEN 'Renderowanie stanu gry wróciło do działania.'
-          WHEN e.event_type='transport_state' THEN 'Zmienił się stan bezpośredniego kanału urządzenia.'
-          WHEN e.event_type='state_sync' THEN 'Urządzenie zsynchronizowało stan gry.'
-          ELSE 'Zdarzenie urządzenia.' END,
-        'devices',jsonb_build_array(e.device_type),
-        'metrics',e.details||jsonb_build_object('reason',e.event_type,'impact',CASE
-          WHEN e.event_type='transport_state' AND coalesce((e.details->>'catchup_count')::integer,0)>0 THEN 'fallback_catchup'
-          WHEN e.event_type='transport_state' THEN 'transport_recovered'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_error' THEN 'render_failure'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_recovered' THEN 'render_recovered'
-          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_error' THEN 'database_read_failure'
-          WHEN e.event_type='network_state' AND e.details->>'source'='probe' AND e.details->>'phase'='slow' THEN e.details->>'verdict'
-          ELSE NULL END)
-      ) ORDER BY e.created_at,e.id
-    ) AS events
-    FROM public.control2_device_events e
-    JOIN public.game_sessions s ON s.id=e.session_id AND s.control_version=2
-    WHERE e.session_id=ANY(coalesce(p_session_ids,'{}'::uuid[]))
-    GROUP BY e.session_id
-  ) logs;
 $$;
 
 
@@ -21210,38 +20735,6 @@ CREATE TABLE "public"."contact_reports" (
 
 
 --
--- Name: control2_device_events; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."control2_device_events" (
-    "id" bigint NOT NULL,
-    "game_id" "uuid" NOT NULL,
-    "session_id" "uuid",
-    "device_type" "text" DEFAULT 'display'::"text" NOT NULL,
-    "event_type" "text" NOT NULL,
-    "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "event_id" "text",
-    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text", 'control'::"text"]))),
-    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text", 'transport_state'::"text", 'state_sync'::"text"])))
-);
-
-
---
--- Name: control2_device_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."control2_device_events" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME "public"."control2_device_events_id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: control2_session_diag; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -22912,14 +22405,6 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
--- Name: control2_device_events control2_device_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."control2_device_events"
-    ADD CONSTRAINT "control2_device_events_pkey" PRIMARY KEY ("id");
-
-
---
 -- Name: control2_session_diag control2_session_diag_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -23934,20 +23419,6 @@ CREATE INDEX "base_share_tasks_status_created_idx" ON "public"."base_share_tasks
 --
 
 CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "btree" ("token");
-
-
---
--- Name: control2_device_events_event_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX "control2_device_events_event_id_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "event_id") WHERE ("event_id" IS NOT NULL);
-
-
---
--- Name: control2_device_events_game_created_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "control2_device_events_game_created_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "created_at" DESC, "id" DESC);
 
 
 --
@@ -24973,13 +24444,6 @@ CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_r
 
 
 --
--- Name: control2_device_events control2_device_events_forward; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "control2_device_events_forward" BEFORE INSERT ON "public"."control2_device_events" FOR EACH ROW EXECUTE FUNCTION "public"."_control2_device_events_forward"();
-
-
---
 -- Name: control_device_connections control_device_connections_log_lease_state; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -25812,22 +25276,6 @@ ALTER TABLE ONLY "public"."contact_report_messages"
 
 ALTER TABLE ONLY "public"."contact_reports"
     ADD CONSTRAINT "contact_reports_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
-
-
---
--- Name: control2_device_events control2_device_events_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."control2_device_events"
-    ADD CONSTRAINT "control2_device_events_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
-
-
---
--- Name: control2_device_events control2_device_events_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."control2_device_events"
-    ADD CONSTRAINT "control2_device_events_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."game_sessions"("id") ON DELETE CASCADE;
 
 
 --
@@ -27038,12 +26486,6 @@ ALTER TABLE "public"."contact_report_messages" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."contact_reports" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: control2_device_events; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."control2_device_events" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: control2_session_diag; Type: ROW SECURITY; Schema: public; Owner: -
@@ -28340,5 +27782,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wbOK7nzocjijO1P80jBI9rmnReUMFkhLBVqmcxG6PoSilIp86Afa7omMlMF3SYI
+\unrestrict PGNMQ5WsGZwJQeWIM1IdPcdbzafu1F9UgVQpah3YuD4bw64JTzX7pwzZnXMLas9
 
