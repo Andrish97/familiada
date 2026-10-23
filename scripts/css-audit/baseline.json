@@ -3,7 +3,7 @@
   "inlineStyleHtml": 1
  },
  "web/account/css/account.css": {
-  "colorLiteral": 3,
+  "colorLiteral": 2,
   "mediaWidth": 1,
   "sharedDuplicate": 1
  },
@@ -307,7 +307,7 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 75,
+  "colorLiteral": 73,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
   "sharedDuplicate": 7,
@@ -379,7 +379,7 @@
   "sharedDuplicate": 3
  },
  "web/shared/css/question-form.css": {
-  "colorLiteral": 6
+  "colorLiteral": 5
  },
  "web/shared/css/tv-layout.css": {
   "rootTokens": 2

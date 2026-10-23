@@ -77,7 +77,7 @@
   </header>
   <main class="wrap" data-skel-step>
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>
-      <div class="settings-card">
+      <div class="card card--inset settings-card">
         <div class="panel-head">
           <div class="panel-title">Prace techniczne</div>
           <div class="panel-sub">Ustawienia strony maintenance</div>
@@ -210,7 +210,7 @@
 
       <div id="mailPanel" hidden>
         <div class="settings-cards">
-          <section class="settings-card settings-card-settings">
+          <section class="card card--inset settings-card settings-card-settings">
             <div class="panel-head">
               <div class="panel-title">Ustawienia wysyłki</div>
             </div>
@@ -275,7 +275,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-card-wide settings-card-queue">
+          <section class="card card--inset settings-card settings-card-wide settings-card-queue">
             <div class="settings-card-head">
               <div class="settings-card-title">Kolejka wysyłki (mail_queue)</div>
               <div class="mail-controls">
@@ -310,7 +310,7 @@
             <div class="hint" id="mailQueueInfo">—</div>
           </section>
 
-          <section class="settings-card settings-card-worker">
+          <section class="card card--inset settings-card settings-card-worker">
             <div class="settings-card-title">Ręczne akcje workera</div>
             <div class="mail-inline-grid">
               <div class="field">
@@ -327,7 +327,7 @@
             <div class="hint">W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.</div>
           </section>
 
-          <section class="settings-card settings-card-wide settings-card-logs">
+          <section class="card card--inset settings-card settings-card-wide settings-card-logs">
             <div class="settings-card-head">
               <div class="settings-card-title">Logi funkcji mailowych</div>
               <div class="mail-controls">
@@ -391,7 +391,7 @@
       </div>
       <!-- MARKETPLACE PANEL -->
       <div class="market-admin-panel" id="marketplacePanel" hidden>
-      <div class="settings-card">
+      <div class="card card--inset settings-card">
         <div class="panel-head">
           <div class="panel-title">Gry Społeczności</div>
           <div class="panel-sub">Moderacja zgłoszeń i gry producenta</div>
@@ -435,7 +435,7 @@
 
       <!-- GENERATOR PANEL -->
       <div class="market-admin-panel" id="generatorPanel" hidden>
-        <div class="settings-card" id="gen-session-card">
+        <div class="card card--inset settings-card" id="gen-session-card">
           <div class="panel-head">
             <div class="panel-title">Gry Producenta</div>
             <div class="panel-sub">Generowanie i zarządzanie grami producenta</div>
@@ -464,7 +464,7 @@
         </div>
 
         <!-- Manage existing -->
-        <div class="settings-card" id="gen-manage-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-manage-card" style="display:none">
           <div class="settings-card-title">Gry w katalogu Gry Społeczności</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
             <button class="btn sm btn-blue" id="gen-scan-btn" disabled><i class="ico" data-icon="search"></i> Skanuj</button>
@@ -483,7 +483,7 @@
         </div>
 
         <!-- Import -->
-        <div class="settings-card" id="gen-import-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-import-card" style="display:none">
           <div class="settings-card-title">Import gier z JSON</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="btn sm" style="cursor:pointer">
@@ -501,7 +501,7 @@
         </div>
 
         <!-- Generate -->
-        <div class="settings-card" id="gen-input-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-input-card" style="display:none">
           <div class="settings-card-title">Kolejka generowania gier</div>
           <div style="margin-bottom:12px">
             <div class="field">
@@ -526,7 +526,7 @@
         </div>
 
         <!-- Generated results -->
-        <div class="settings-card" id="gen-results-section" style="display:none;margin-top:16px">
+        <div class="card card--inset settings-card" id="gen-results-section" style="display:none;margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
             <div class="settings-card-title" style="margin-bottom:0">Wygenerowane gry</div>
             <div style="display:flex;gap:8px;align-items:center">
@@ -600,7 +600,7 @@
 
       <!-- RATINGS PANEL -->
       <div class="market-admin-panel" id="ratingsPanel" hidden>
-        <div class="settings-card">
+        <div class="card card--inset settings-card">
           <div class="panel-head">
             <div class="panel-title">Oceny aplikacji</div>
             <div class="panel-sub">Co użytkownicy myślą o systemie</div>
@@ -627,7 +627,7 @@
           <div class="hint" id="ratingsTableInfo">—</div>
         </div>
 
-        <div class="settings-card">
+        <div class="card card--inset settings-card">
           <div class="settings-card-head">
             <div class="settings-card-title">Oceny gier producenta</div>
             <button class="btn sm" id="btnProducerRatingsRefresh" type="button">Odśwież</button>
@@ -653,7 +653,7 @@
 
       <!-- STATS PANEL -->
       <div class="market-admin-panel" id="statsPanel" hidden>
-        <div class="settings-card">
+        <div class="card card--inset settings-card">
           <div class="panel-head">
             <div class="panel-title">Statystyki systemu</div>
             <div class="panel-sub">Monitoruj aktywność i rozwój platformy</div>
@@ -743,7 +743,7 @@
           <div class="stats-section">
             <div class="stats-section-label">Wąż — ukryta gra z kodu QR</div>
             <div class="stats-inner-grid">
-              <div class="stats-inner-card">
+              <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Lejek (osoby: unikalne przeglądarki)</div>
                 <table style="width:100%;border-collapse:collapse;font-size:13px">
                   <tbody id="snakeFunnel">
@@ -752,7 +752,7 @@
                 </table>
                 <div class="stat-sub dim" id="snakeScores">Najlepszy wynik: — | Średni: —</div>
               </div>
-              <div class="stats-inner-card">
+              <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Najlepsi gracze z kontem</div>
                 <table style="width:100%;border-collapse:collapse;font-size:13px">
                   <tbody id="snakeTop">
@@ -761,7 +761,7 @@
                 </table>
               </div>
             </div>
-            <div class="stats-inner-card">
+            <div class="card card--inset stats-inner-card">
               <div class="stats-inner-label">Skany i gry — ostatnie 14 dni</div>
               <div id="snakeTrend" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
               <div id="snakeTrendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
@@ -772,7 +772,7 @@
           <div class="stats-section">
             <div class="stats-section-label">Retencja &amp; Aktywność</div>
             <div class="stats-inner-grid">
-              <div class="stats-inner-card">
+              <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Lejek &amp; Retencja</div>
                 <table style="width:100%;border-collapse:collapse;font-size:13px">
                   <tbody id="retentionTable">
@@ -780,19 +780,19 @@
                   </tbody>
                 </table>
               </div>
-              <div class="stats-inner-card">
+              <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Segmenty użytkowników</div>
                 <div id="segmentBars" style="display:flex;flex-direction:column;gap:10px">
                   <div style="opacity:.4;font-size:12px">Ładowanie…</div>
                 </div>
               </div>
             </div>
-            <div class="stats-inner-card">
+            <div class="card card--inset stats-inner-card">
               <div class="stats-inner-label">Nowi użytkownicy — ostatnie 14 dni</div>
               <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
               <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
             </div>
-            <div class="stats-inner-card" id="activityHistory">
+            <div class="card card--inset stats-inner-card" id="activityHistory">
               <div class="stats-inner-label">Aktywni użytkownicy</div>
           <div class="activity-chart-controls"><span id="activityChartLabel">Przedział</span>
             <div class="ui-select is-active" id="activityChartPeriod">
@@ -808,7 +808,7 @@
           <!-- Wykluczenia ze statystyk -->
           <div class="stats-section">
             <div class="stats-section-label">Wykluczenia ze statystyk</div>
-            <div class="stats-inner-card">
+            <div class="card card--inset stats-inner-card">
               <div style="display:flex;gap:8px;margin-bottom:14px">
                 <input class="inp" id="excludeUsernameInput" type="text" placeholder="Nazwa użytkownika…" style="flex:1"/>
                 <button class="btn sm gold" id="btnExcludeAdd" type="button">Wyklucz</button>
@@ -826,7 +826,7 @@
 
       <!-- ── Marketing panel ── -->
       <div class="market-admin-panel" id="marketingPanel" hidden>
-        <div class="settings-card">
+        <div class="card card--inset settings-card">
           <div class="panel-head">
             <div class="panel-title">Wysyłka marketingowa</div>
             <div class="panel-sub">Wyślij wiadomość do wielu adresatów jednocześnie</div>
@@ -902,7 +902,7 @@
 
       <!-- ── Marketing Contacts panel ── -->
       <div class="market-admin-panel" id="marketingContactsPanel" hidden>
-        <div class="settings-card">
+        <div class="card card--inset settings-card">
           <div class="panel-head">
             <div class="panel-title">Kontakty Marketingowe</div>
             <div class="panel-sub">Wyszukiwarka leadów: SearXNG → Email → AI Weryfikacja</div>

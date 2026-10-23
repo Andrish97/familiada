@@ -120,10 +120,11 @@
     box-shadow: var(--shadow-card);
   }
   .card--inset {
+    --under: var(--surface-inset);
     padding: 12px;
     border-color: var(--w-8);
     border-radius: var(--r-md);
-    background: linear-gradient(var(--w-4), var(--w-4)) var(--under);
+    background: var(--surface-inset);
     box-shadow: none;
   }
   .card--entry {

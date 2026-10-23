@@ -45,7 +45,8 @@
   --surface-item: #1b2332;       /* pozycja menu */
   --surface-item-hover: #292f3d;
   --surface-section: #202331;    /* sekcja udostępniania (podłoże przycisków) */
-  --surface-2: #0b1020;          /* sekcja zagnieżdżona, kafel po najechaniu */
+  --surface-2: #0b1020;
+  --surface-inset: #1a2130;      /* karta w karcie (surface-1 + biel 4%), kryjąca */          /* sekcja zagnieżdżona, kafel po najechaniu */
   --surface-sunken: var(--k-20);
 
   /* ── linie ──────────────────────────────────────────────────── */

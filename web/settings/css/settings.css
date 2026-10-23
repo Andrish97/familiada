@@ -619,11 +619,6 @@
   }
 
   .settings-card{
-    --under: #0f131d; /* podłoże dla kryjących teł przycisków (css/base.css) */
-    border: 1px solid var(--w-14);
-    border-radius: var(--r-md);
-    background: var(--w-4);
-    padding: 14px;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
@@ -1055,13 +1050,7 @@
     gap: 14px;
   }
 
-  .stats-inner-card{
-    --under: #161a24; /* podłoże przycisków (css/base.css) */
-    padding: 16px;
-    border: 1px solid var(--w-14);
-    border-radius: var(--r-md);
-    background: var(--w-4);
-  }
+
 
   .stats-inner-card + .stats-inner-card{
     margin-top: 14px;
@@ -1094,7 +1083,6 @@
       margin-right: 0 !important;
     }
     .settings-card{
-      padding: 14px;
       width: auto !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
@@ -2008,7 +1996,7 @@
   }
 
   .settings-cards,
-  .settings-card {
+  .settings-card{
     min-width: 0;
     overflow-x: clip;
   }
@@ -2019,9 +2007,7 @@
     .mail-panel {
       padding: 10px;
     }
-    .settings-card {
-      padding: 10px;
-    }
+
     .market-admin-panel > .mail-panel {
       padding: 10px;
     }

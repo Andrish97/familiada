@@ -8,13 +8,8 @@
 @layer page {
   /* Treść pytania i odpowiedzi jako dwie sekcje z otoczką, jak sekcje w innych
      oknach (.shareSection w base.css; uwaga użytkownika 2026-10-20). */
-  .qf-section {
-      --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
-      padding: 12px;
-      border-radius: var(--r-md);
-      background: var(--w-4);
-      border: 1px solid var(--w-8);
-      min-width: 0
+  .qf-section{
+    min-width: 0;
   }
 
   /* nagłówek sekcji jak .shareSectionTitle */
