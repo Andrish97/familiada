@@ -279,6 +279,7 @@
  },
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 25,
+  "mediaWidth": 1,
   "sharedDuplicate": 3,
   "unusedClass": 1
  },

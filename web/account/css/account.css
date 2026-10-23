@@ -1,225 +1,223 @@
-.account-body {
-  min-height: 100vh;
-  background: var(--bg);
-  color: #fff;
-}
+@layer page {
+  .account-body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: #fff;
+  }
 
 
 
-.account-grid {
-  margin-top: 16px;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.account-panel {
-  --under: #04070f; /* podłoże dla kryjących teł przycisków (css/base.css) */
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: var(--card);
-  box-shadow: 0 18px 40px rgba(0,0,0,.35);
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.account-panel .section-title {
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: .08em;
-}
-
-.account-panel .section-hint {
-  font-size: 12px;
-  opacity: .75;
-}
-
-.account-panel.danger {
-  --under: #19121c;
-  border-color: rgba(255,120,120,.35);
-  background: var(--card);
-}
-
-.account-panel--demo {
-  grid-column: 1 / -1;
-}
-/* panel na całą szerokość: opis po lewej, przycisk po prawej — niski pasek */
-@media (min-width: 981px) {
-  .account-panel--demo {
+  .account-grid {
+    margin-top: 16px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto auto;
-    column-gap: 24px;
-    row-gap: 6px;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-panel {
+    --under: #04070f; /* podłoże dla kryjących teł przycisków (css/base.css) */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: var(--card);
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .account-panel .section-title {
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: .08em;
+  }
+
+  .account-panel .section-hint {
+    font-size: 12px;
+    opacity: .75;
+  }
+
+  .account-panel.danger {
+    --under: #19121c;
+    border-color: rgba(255,120,120,.35);
+    background: var(--card);
+  }
+
+  .account-panel--demo {
+    grid-column: 1 / -1;
+  }
+  /* panel na całą szerokość: opis po lewej, przycisk po prawej — niski pasek */
+  @media (min-width: 981px) {
+    .account-panel--demo {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
+      column-gap: 24px;
+      row-gap: 6px;
+      align-items: center;
+    }
+    .account-panel--demo > * { grid-column: 1; }
+    .account-panel--demo > .account-actions {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      margin-top: 0;
+    }
+  }
+
+  /* duży ekran: trzy kolumny (nazwa · e-mail · hasło / wiadomości · ocena · usuń konto) */
+  @media (min-width: 1400px) {
+    .account-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .account-grid > #deleteSection { order: 1; }
+    .account-grid > .account-panel--demo { order: 2; }
+  }
+
+  @media (max-width: 980px) {
+    .account-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Karta formularza (docs/wzorce-ui.md, „Karty formularzy”, 2026-10-21):
+     pola jedno pod drugim na całą szerokość, przyciski w wierszu akcji na dole
+     karty (karty w jednym rzędzie siatki mają przyciski na jednej linii).
+     Komputer: przyciski po prawej, szerokość według treści; telefon: cały
+     wiersz — jeden przycisk na całą szerokość, dwa po równo (drugorzędny
+     po lewej, złoty po prawej). Przycisk ma wysokość pola (40 px). */
+  .account-panel > .inp,
+  .account-panel > .pass-wrap{ width: 100%; }
+  .account-actions{
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: auto;
+  }
+  .account-actions .btn,
+  #ratingEditBtn{
+    min-height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
+    box-sizing: border-box;
+  }
+  .account-actions .pending-actions:not([hidden]){ display: contents; }
+  /* E-mail: pole „Powtórz nowy e-mail” w grupie #emailActions, którą skrypt
+     ukrywa przy oczekującej zmianie -- wtedy znika też „Zmień e-mail”,
+     a w wierszu akcji zostaje para Anuluj / Wyślij ponownie. */
+  .account-field-group{ display: contents; }
+  .account-field-group[hidden]{ display: none; }
+  .account-field-group > .inp{ width: 100%; }
+  #emailActions[hidden] ~ .account-actions > #saveEmail{ display: none; }
+  @media (max-width: 600px) {
+    .account-actions{ flex-wrap: nowrap; }
+    .account-actions .btn{ flex: 1 1 0; min-width: 0; }
+  }
+
+  .cooldown{
+    font-size: 12px;
+    opacity: .75;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255,234,166,.28);
+    background: rgba(0,0,0,.18);
+  }
+
+  .pending-box{
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,234,166,.22);
+    background: rgba(0,0,0,.22);
+  }
+
+  .pending-title{
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: .08em;
+  }
+
+  .pending-text{
+    font-size: 12px;
+    opacity: .85;
+    line-height: 1.35;
+  }
+
+
+  .cooldown-banner{
+    margin: 10px 0 18px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.22);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 13px;
+    opacity: .92;
+  }
+
+  .section-hint.subtle{
+    opacity: .8;
+    font-size: 12px;
+  }
+
+
+  /* --- fixed control sizing (avoid multi-line buttons changing height) --- */
+  .account-panel .inp,
+  .cooldown {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  .account-panel .inp {
+    padding: 0 14px;
+    line-height: 40px;
+  }
+
+  .account-panel .btn {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    white-space: nowrap;
   }
-  .account-panel--demo > * { grid-column: 1; }
-  .account-panel--demo > .account-actions {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    margin-top: 0;
+
+  .spacer{
+    width: 130px;
+    min-height: 30px;
+    pointer-events: none;
+    visibility: hidden;
   }
-}
 
-/* duży ekran: trzy kolumny (nazwa · e-mail · hasło / wiadomości · ocena · usuń konto) */
-@media (min-width: 1400px) {
-  .account-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  /* ==========================================
+     Email notifications panel
+  ========================================== */
+
+  .flag-row{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    user-select: none;
   }
-  .account-grid > #deleteSection { order: 1; }
-  .account-grid > .account-panel--demo { order: 2; }
-}
 
-@media (max-width: 980px) {
-  .account-grid {
-    grid-template-columns: 1fr;
+
+  /* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
+  #userRatingInfo { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
+  #userRatingInfo .rating-info { display: grid; gap: 6px; }
+  #userRatingInfo .rating-stars,
+  #userRatingInfo .rating-comment-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #userRatingInfo .label { font-size: 12px; opacity: .75; }
+  #userRatingInfo .value.italic { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }
+  #ratingEditBtn{ margin-top: auto; align-self: flex-end; }
+  @media (max-width: 600px) {
+    #ratingEditBtn{ align-self: stretch; }
   }
+  .account-panel .pass-wrap .inp{ padding-right: 44px; }
 }
-
-/* Karta formularza (docs/wzorce-ui.md, „Karty formularzy”, 2026-10-21):
-   pola jedno pod drugim na całą szerokość, przyciski w wierszu akcji na dole
-   karty (karty w jednym rzędzie siatki mają przyciski na jednej linii).
-   Komputer: przyciski po prawej, szerokość według treści; telefon: cały
-   wiersz — jeden przycisk na całą szerokość, dwa po równo (drugorzędny
-   po lewej, złoty po prawej). Przycisk ma wysokość pola (40 px). */
-.account-panel > .inp,
-.account-panel > .pass-wrap{ width: 100%; }
-.account-actions{
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: auto;
-}
-.account-actions .btn,
-#ratingEditBtn{
-  min-height: 40px;
-  padding-top: 0;
-  padding-bottom: 0;
-  box-sizing: border-box;
-}
-.account-actions .pending-actions:not([hidden]){ display: contents; }
-/* E-mail: pole „Powtórz nowy e-mail” w grupie #emailActions, którą skrypt
-   ukrywa przy oczekującej zmianie -- wtedy znika też „Zmień e-mail”,
-   a w wierszu akcji zostaje para Anuluj / Wyślij ponownie. */
-.account-field-group{ display: contents; }
-.account-field-group[hidden]{ display: none; }
-.account-field-group > .inp{ width: 100%; }
-#emailActions[hidden] ~ .account-actions > #saveEmail{ display: none; }
-@media (max-width: 600px) {
-  .account-actions{ flex-wrap: nowrap; }
-  .account-actions .btn{ flex: 1 1 0; min-width: 0; }
-}
-
-.cooldown{
-  font-size: 12px;
-  opacity: .75;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px dashed rgba(255,234,166,.28);
-  background: rgba(0,0,0,.18);
-}
-
-.pending-box{
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,234,166,.22);
-  background: rgba(0,0,0,.22);
-}
-
-.pending-title{
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: .08em;
-}
-
-.pending-text{
-  font-size: 12px;
-  opacity: .85;
-  line-height: 1.35;
-}
-
-
-.cooldown-banner{
-  margin: 10px 0 18px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.22);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  font-size: 13px;
-  opacity: .92;
-}
-
-.section-hint.subtle{
-  opacity: .8;
-  font-size: 12px;
-}
-
-
-/* --- fixed control sizing (avoid multi-line buttons changing height) --- */
-.account-panel .inp,
-.cooldown {
-  height: 40px;
-  min-height: 40px;
-  box-sizing: border-box;
-}
-
-.account-panel .inp {
-  padding: 0 14px;
-  line-height: 40px;
-}
-
-.account-panel .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.spacer{
-  width: 130px;
-  min-height: 30px;
-  pointer-events: none;
-  visibility: hidden;
-}
-
-
-/* ==========================================
-   Email notifications panel
-========================================== */
-
-.flag-row{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  user-select: none;
-}
-
-.flag-row .chk{
-  width: 20px;
-  height: 20px;
-}
-
-/* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
-#userRatingInfo { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
-#userRatingInfo .rating-info { display: grid; gap: 6px; }
-#userRatingInfo .rating-stars,
-#userRatingInfo .rating-comment-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-#userRatingInfo .label { font-size: 12px; opacity: .75; }
-#userRatingInfo .value.italic { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }
-#ratingEditBtn{ margin-top: auto; align-self: flex-end; }
-@media (max-width: 600px) {
-  #ratingEditBtn{ align-self: stretch; }
-}
-.account-panel .pass-wrap .inp{ padding-right: 44px; }
