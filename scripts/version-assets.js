@@ -46,7 +46,11 @@ const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 // lustrem wykluczeń z rsync w .github/workflows/deploy-pages.yml (krok
 // "Prepare public-only deployment directory") — jeśli tamta lista się
 // zmieni, zmień i tę.
-const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests', 'cloudflare', 'supabase', 'services', 'docs', 'searxng'];
+// "vendor" (web/shared/vendor) jest wyjątkiem od lustra rsync: pliki trafiają
+// na Pages, ale to zminifikowany kod bibliotek — regex wersjonujący mógłby
+// dopisać "?v=" do napisów w ich środku. Odwołania do nich (w HTML i JS
+// stron) wersjonują się normalnie.
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests', 'cloudflare', 'supabase', 'services', 'docs', 'searxng', 'vendor'];
 
 /**
  * Rekurencyjnie pobiera listę plików do przetworzenia

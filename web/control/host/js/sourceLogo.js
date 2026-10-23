@@ -30,7 +30,7 @@ function canvasOf(width, height) {
 function loadWordmarkFont() {
   if (!fontPromise) {
     fontPromise = (async () => {
-      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-23T05303")', { weight: "200 900" });
+      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-23T05434")', { weight: "200 900" });
 
       await font.load();
       document.fonts.add(font);
@@ -45,7 +45,7 @@ function loadFabric() {
   if (!fabricPromise) {
     fabricPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js";
+      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-23T05434";
       script.async = true;
       script.onload = () => globalThis.fabric?.StaticCanvas ? resolve(globalThis.fabric) : reject(new Error("Fabric.js did not initialize"));
       script.onerror = () => reject(new Error("Fabric.js could not be loaded"));

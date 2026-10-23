@@ -193,8 +193,7 @@ function deviceCss(device) {
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
         page.on('console', (message) => { if (message.type() === 'error') console.error(`[${pageName}/${device.name}] ${message.text()}`); });
-        await page.route('**/cdn.jsdelivr.net/npm/@supabase/supabase-js@2**', (route) => route.fulfill({ contentType: 'text/javascript', body: '/* app preview injects its own local Supabase client */' }));
-        await page.route('**/cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm', (route) => route.fulfill({ contentType: 'text/javascript', body: "export default { toDataURL: async () => 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=' };" }));
+        await page.route('**/shared/vendor/supabase-js.js**', (route) => route.fulfill({ contentType: 'text/javascript', body: '/* app preview injects its own local Supabase client */' }));
         await page.route('**/_api/mail/session', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, email: 'podglad@example.invalid', notifications_enabled: true, subscriptions: [], items: [] }) }));
         if (pageName.startsWith('settings')) {
           await page.route('**/_admin_api/**', async (route) => {

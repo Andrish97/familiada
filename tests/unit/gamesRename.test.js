@@ -23,8 +23,9 @@ const exists = (rel) => fs.existsSync(path.join(ROOT, rel));
 
 // Katalogi/pliki poza kodem aplikacji albo z „builderem” w innym znaczeniu
 // (narzędzia w settings-tools: kora-builder/theme_builder, generatory e-maili w Workerze,
-// historia w docs, migracje bazy, dane audytu w ikony.html).
-const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools", "tools"]);
+// historia w docs, migracje bazy, dane audytu w ikony.html, biblioteki
+// zewnętrzne w shared/vendor).
+const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools", "tools", "vendor"]);
 const SKIP_FILES = new Set(["builder.html", "ikony.html"]);
 const ALLOWED = /kora-builder|theme_builder|Theme Builder/gi;
 

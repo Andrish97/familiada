@@ -101,6 +101,10 @@ async function newContext(browser, db, lang, device) {
   await context.route(/^https:\/\/(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)\//, routeCdn);
   await context.route(/^https:\/\/(?!cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)/, (route) => route.abort());
   await context.route((url) => url.origin === SITE, (route) => {
+    // Atrapa warstwy Supabase zamiast prawdziwej biblioteki (web/shared/vendor).
+    if (new URL(route.request().url()).pathname === "/shared/vendor/supabase-js.js") {
+      return route.fulfill({ contentType: "text/javascript", body: fs.readFileSync(path.join(__dirname, "fake-supabase.js")) });
+    }
     const r = serveLocal(route.request().url());
     const safe = context.__screensSafeArea;
     const body = safe && /text\/(css|html)/.test(r.type) ? rewriteSafeArea(String(r.body), safe) : r.body;

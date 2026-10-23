@@ -24,7 +24,7 @@ const STUB = `
     const ctx=await b.newContext({viewport:{width:w,height:h},locale:'pl-PL'});
     await ctx.addInitScript(()=>{try{localStorage.setItem('sb-x-auth-token','1');localStorage.setItem('fam:app_rating_suppressed','1')}catch(e){}});
     await ctx.route('**/*', r=>{const u=r.request().url();
-      if(/cdn\.jsdelivr\.net\/npm\/@supabase/.test(u)) return r.fulfill({contentType:'application/javascript',body:STUB});
+      if(/\/shared\/vendor\/supabase-js\.js/.test(u)) return r.fulfill({contentType:'application/javascript',body:STUB});
       if(u.startsWith('http://localhost:9183')) return r.continue(); if(/npm\/qrcode/.test(u)) return r.fulfill({contentType:'application/javascript',body:require('fs').readFileSync(process.env.QRCODE_ESM || (__dirname+'/qrcode.esm.js'))}); return r.abort();});
     const p=await ctx.newPage(); p.on('console',m=>{console.log('C',m.type(),m.text().slice(0,160))});p.on('pageerror',e=>console.log('ERR',e.message));p.on('requestfailed',r=>console.log('RF',r.url().slice(0,120)));
     await p.goto('http://localhost:9183/polls/?id=g1'); await p.waitForTimeout(3000); 
