@@ -453,7 +453,7 @@ export function createUI({ root, emit }) {
       const key = cat.key;
       const variant = getSfxVariant(key);
       const variantLabel = cat.sounds?.find((s) => s.file.split("?")[0] === variant.split("?")[0])?.label?.[lang] || variant.split("?")[0];
-      const desc = t("control.sfxDesc." + key) || key;
+      const desc = t("gameSettings.sfxDesc." + key) || key;
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
       const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
@@ -1004,7 +1004,7 @@ export function createUI({ root, emit }) {
       // jeszcze się nie rozegrało), więc nie niesie żadnej informacji.
       const scoreRow = r.roundNo > 1 ? h("div", { class: "c2-intro-score" }, [
         h("span", { class: "c2-intro-score-a", text: t("control.scoreLine", { name: teamName(state, "A"), points: r.totals.A }) }),
-        h("span", { class: "c2-intro-score-sep", text: t("control.dash") }),
+        h("span", { class: "c2-intro-score-sep", text: t("common.emDash") }),
         h("span", { class: "c2-intro-score-b", text: t("control.scoreLine", { name: teamName(state, "B"), points: r.totals.B }) }),
       ]) : null;
       gameplayShell({
@@ -1185,11 +1185,11 @@ export function createUI({ root, emit }) {
     const statusItems = [
       h("span", {}, [document.createTextNode(`${teamName(state, "A")}: `), h("b", { text: String(r.totals.A) })]),
       h("span", {}, [document.createTextNode(`${teamName(state, "B")}: `), h("b", { text: String(r.totals.B) })]),
-      ...(state.phase === "REVEAL" ? [] : [h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("control.dash") })])]),
+      ...(state.phase === "REVEAL" ? [] : [h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("common.emDash") })])]),
       h("span", {}, [document.createTextNode(t("control.statusBankLabel")), h("b", { text: String(r.bankPts) })]),
     ];
     if (state.phase === "STEAL" && r.steal.active) {
-      statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("control.dash") })]));
+      statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("common.emDash") })]));
     }
     // Wyniki, bank i akcja przejścia tworzą wspólny dolny pasek. gameplayShell
     // umieszcza go w stałym miejscu pod siatką, więc kafle wypełniają całą
@@ -1348,13 +1348,13 @@ export function createUI({ root, emit }) {
     const f = state.final;
     const row = f.runtime.map1?.[idx];
     const question = f.questions?.[idx];
-    if (!row) return t("control.dash");
+    if (!row) return t("common.emDash");
     if (row.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === row.matchId);
-      return (a?.text || "").trim() || t("control.dash");
+      return (a?.text || "").trim() || t("common.emDash");
     }
-    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || t("control.dash");
-    return t("control.dash");
+    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || t("common.emDash");
+    return t("common.emDash");
   }
 
   // Kafel odliczania — jeden wiersz na pełną szerokość, ta sama skala co
@@ -1589,10 +1589,10 @@ export function createUI({ root, emit }) {
   function resolveMappingPreview(question, inputText, effective) {
     if (effective.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === effective.matchId);
-      return { text: a?.text || t("control.dash"), pts: a ? a.fixed_points : 0 };
+      return { text: a?.text || t("common.emDash"), pts: a ? a.fixed_points : 0 };
     }
-    if (effective.kind === "MISS") return { text: inputText || t("control.dash"), pts: 0 };
-    return { text: t("control.dash"), pts: 0 };
+    if (effective.kind === "MISS") return { text: inputText || t("common.emDash"), pts: 0 };
+    return { text: t("common.emDash"), pts: 0 };
   }
 
   // Wpisywanie (finał, mapowanie): wiersz 1 to edytowalne "Wpisano" (ten sam
@@ -1691,7 +1691,7 @@ export function createUI({ root, emit }) {
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode(t("control.finalRevealAnswerLabel")),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true" }, clipNodes(row.revealedAnswer ? (row.outText || t("control.dash")) : preview.text)),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true" }, clipNodes(row.revealedAnswer ? (row.outText || t("common.emDash")) : preview.text)),
       ]),
       {
         row: 6, col: HALF(0), cls: "c2-tile-primary",

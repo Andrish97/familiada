@@ -867,8 +867,8 @@ function updateBaseShareSelection() {
   const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
   const selected = baseShareFriends?.querySelectorAll('input:checked:not(:disabled)').length || 0;
   btnBaseShareFriends.disabled = shareAddInFlight || !selected;
-  if (baseShareFriendsLabel) baseShareFriendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
-  if (baseShareFriendsShort) baseShareFriendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
+  if (baseShareFriendsLabel) baseShareFriendsLabel.textContent = t("contacts.shareSelectedN", { n: selected });
+  if (baseShareFriendsShort) baseShareFriendsShort.textContent = t("contacts.shareSelectedShortN", { n: selected });
   baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {

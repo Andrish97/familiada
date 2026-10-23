@@ -229,8 +229,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     const inputs = subsList?.querySelectorAll('input[type="checkbox"]') || [];
     const selected = subsList?.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)').length || 0;
     if (btnShareFriends) btnShareFriends.disabled = !selected;
-    if (friendsLabel) friendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
-    if (friendsShort) friendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
+    if (friendsLabel) friendsLabel.textContent = t("contacts.shareSelectedN", { n: selected });
+    if (friendsShort) friendsShort.textContent = t("contacts.shareSelectedShortN", { n: selected });
     bulkActions?.update(inputs);
   }
 

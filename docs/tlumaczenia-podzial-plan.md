@@ -49,6 +49,10 @@ web/shared/translation/
 | `control.shareDeviceModal.friendMailDisabled` | `contacts.friendMailDisabled` | `contacts-page.js`, Bazy, Control |
 | `bases.badges.from` | `resourceSend.from` (ten sam tekst już był) | `proposed-tile.js`, Bazy |
 | `bases.badges.proposed`, `bases.proposed.accept/decline` | `resourceSend.proposed/accept/decline` | `proposed-tile.js` |
+| `control.finalBadge/finalPoolHint/finalPoolEmpty/finalPickEmpty/finalListHint`, `control.ingameGuard.*`, `control.sfxChooseFile/sfxCustom/sfxDesc/sfxResetAll/sfxTooLong` | `gameSettings.*` (te same nazwy) | Ustawienia gry (Control wczytuje `gameSettings`) |
+| `control.dash` | `common.emDash` | Control, Moje gry |
+| `control.shareDeviceModal.shareSelected/shareSelectedN/shareSelectedShortN` | `contacts.*` | Bazy, Control |
+| `logoEditor.editor.nameLabel` | `common.nameLabel` | edytory logo, edytor pytań |
 | `index.captchaRequired`, `errInvalidEmail`, `errResendCooldown(Generic)`, `errResetMissingLogin`, `errUsernameTaken`, `statusError`, `errNoSession` | `auth.*` | `auth.js`, `contact-modal.js`, Konto, Logowanie |
 
 Pożyczki między stronami (np. Ustawienia gry ← `control.*`, Gry ← `polls.results.*`)

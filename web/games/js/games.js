@@ -706,7 +706,7 @@ function typeLabel(uiType) {
   if (uiType === TYPES.POLL_POINTS) return MSG.typePollPoints();
   if (uiType === TYPES.PREPARED) return MSG.typePrepared();
   if (uiType === TYPES.MARKET) return MSG.typeMarket();
-  return String(uiType || t("control.dash")).toUpperCase();
+  return String(uiType || t("common.emDash")).toUpperCase();
 }
 
 // Klucz stanu kafla (draft/toOpen/open/stopped/ready) — wspólny dla etykiety i filtra.
@@ -915,7 +915,7 @@ function cardProposed(g, offer) {
     <div class="name"></div>
     <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
   `;
-  el.querySelector(".name").textContent = g.name || offer.name || t("control.dash");
+  el.querySelector(".name").textContent = g.name || offer.name || t("common.emDash");
   el.addEventListener("click", () => selectGame(g.id));
   bindProposedActions(el, {
     accept: () => decideResourceCopy(offer.id, "accept"),
@@ -944,7 +944,7 @@ function cardGame(g) {
     <div class="tileTags"></div>
   `;
 
-  el.querySelector(".name").textContent = g.name || t("control.dash");
+  el.querySelector(".name").textContent = g.name || t("common.emDash");
 
   // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
   // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
