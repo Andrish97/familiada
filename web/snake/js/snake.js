@@ -67,7 +67,7 @@ function setupFullscreen() {
   const sync = () => {
     const on = !!(document.fullscreenElement || document.webkitFullscreenElement) || pseudoFS;
     btn.innerHTML = icon(on ? "fullscreen-exit" : "fullscreen-enter");
-    btn.classList.toggle("on", on);
+    btn.classList.toggle("is-active", on);
   };
   const showHint = (on) => {
     document.documentElement.classList.toggle("showA2HS", on);

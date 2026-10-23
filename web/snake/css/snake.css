@@ -81,7 +81,7 @@ body.snake-body {
 }
 
 /* Przyciski w rogach: wspólne .corner-btn / .fs-btn z silnika; „włączony” w kolorze motywu. */
-.fs-btn.on { border-color: rgba(215,255,61,.55); }
+.fs-btn.is-active { border-color: rgba(215,255,61,.55); color: var(--text); --btn-tint: transparent; }
 
 /* Konto: obok pełnego ekranu (44 px przycisku + 8 px odstępu). */
 .snake-account {

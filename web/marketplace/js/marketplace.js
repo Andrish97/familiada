@@ -703,7 +703,7 @@ async function openSubmitModal() {
   // Reset lang picker
   submitLang = getUiLang();
   els.submitLangPicker?.querySelectorAll("[data-lang]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.lang === submitLang);
+    btn.classList.toggle("is-active", btn.dataset.lang === submitLang);
   });
 
   if (els.submitOverlay) els.submitOverlay.style.display = "";
@@ -935,7 +935,7 @@ function wireEvents() {
     if (!btn) return;
     submitLang = btn.dataset.lang;
     els.submitLangPicker.querySelectorAll("[data-lang]").forEach(b => {
-      b.classList.toggle("active", b === btn);
+      b.classList.toggle("is-active", b === btn);
     });
   });
 

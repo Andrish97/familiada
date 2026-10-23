@@ -2003,13 +2003,6 @@
     font-size: 12px;
   }
 
-  .logs-page-nav .btn.sm.is-active {
-    --btn-tint: rgba(255,218,126,.25); /* kryjące tło: css/base.css */
-    border-color: rgba(255,218,126,.55);
-    color: #ffda7e;
-    font-weight: 700;
-  }
-
   .logs-page-dots {
     font-size: 12px;
     opacity: .5;

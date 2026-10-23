@@ -38,8 +38,8 @@ export function proposedActionsHtml() {
   const decline = esc(t("bases.proposed.decline"));
   return `
     <div class="tileMiniActions">
-      <button class="btn xsm gold" data-accept type="button" title="${accept}" aria-label="${accept}">${icon("check")}</button>
-      <button class="btn xsm" data-decline type="button" title="${decline}" aria-label="${decline}">${icon("close")}</button>
+      <button class="btn xs gold" data-accept type="button" title="${accept}" aria-label="${accept}">${icon("check")}</button>
+      <button class="btn xs" data-decline type="button" title="${decline}" aria-label="${decline}">${icon("close")}</button>
     </div>`;
 }
 

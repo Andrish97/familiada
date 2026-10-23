@@ -10,7 +10,7 @@ export const initFullscreenButton = () => {
   const sync = () => {
     const on = !!document.fullscreenElement;
     fsBtn.innerHTML = on ? ICON_EXIT : ICON_ENTER;
-    fsBtn.classList.toggle("on", on);
+    fsBtn.classList.toggle("is-active", on);
     fsBtn.title = on ? "Wyjście z pełnego ekranu" : "Pełny ekran";
   };
 

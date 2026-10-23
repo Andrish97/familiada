@@ -343,7 +343,6 @@ export function initDrawEditor(ctx) {
     if (tool === TOOL.BRUSH) applyBrushStyle();
 
     for (const [key, t2] of [["select", TOOL.SELECT], ["pan", TOOL.PAN], ["brush", TOOL.BRUSH], ["eraser", TOOL.ERASER], ["shapes", TOOL.SHAPES], ["text", TOOL.TEXT]]) {
-      btn[key]?.classList.toggle("on", tool === t2);
       btn[key]?.setAttribute("aria-pressed", tool === t2 ? "true" : "false");
     }
     updateCursor();
@@ -747,7 +746,7 @@ export function initDrawEditor(ctx) {
   const numInput = (id, min, max, step, value) =>
     `<input id="${id}" class="ctxInput" type="number" min="${min}" max="${max}" step="${step}" value="${value}"/>`;
   const toggleBtn = (id, on, content, title = "") =>
-    `<button class="ctxBtn ${on ? "on" : ""}" id="${id}" type="button" ${title ? `title="${title}" aria-label="${title}"` : ""}>${content}</button>`;
+    `<button class="btn xs" id="${id}" type="button" aria-pressed="${on ? "true" : "false"}" ${title ? `title="${title}" aria-label="${title}"` : ""}>${content}</button>`;
   const lineStyleHtml = (id) =>
     `<div class="ui-select ctxSelect" id="${id}"><button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span></button><div class="ui-select-menu" role="listbox"></div></div>`;
   const alignButtons = (align) => group(
@@ -824,7 +823,7 @@ export function initDrawEditor(ctx) {
     const s = settings.SHAPES;
     const shape = shapeById(currentShape);
     let html =
-      `<div class="ctxGroup" style="position:relative;"><button class="ctxBtn ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
+      `<div class="ctxGroup" style="position:relative;"><button class="btn xs ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
       `<span class="ctxSelectIco">${shape.icon}</span><span class="ctxSelectLabel">${t(shape.label)}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button></div>` +
       group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
       group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
@@ -833,7 +832,7 @@ export function initDrawEditor(ctx) {
       html += group(`<label class="ctxChk"><input type="checkbox" id="cFill" ${s.fill ? "checked" : ""}/> ${T("fillCheckbox")}</label>` + colorBtn(s.fillColor, 'id="cFillColor"'));
     }
     if (shape.isPoly && polyPoints.length) {
-      html += group(`<button class="ctxBtn on" id="cPolyDone" type="button">${iconText("check", T("polygonDone"))}</button>`);
+      html += group(`<button class="btn xs gold" id="cPolyDone" type="button">${iconText("check", T("polygonDone"))}</button>`);
     }
     toolCtx.innerHTML = html;
 
@@ -868,7 +867,7 @@ export function initDrawEditor(ctx) {
   function textSettingsHtml(v) {
     const fontLabel = DRAW_FONTS.find((f) => f.value === v.font)?.label || T("fontFallback");
     return (
-      group(`<button class="ctxBtn ctxSelectBtn" id="cFont" type="button" title="${fontLabel}"><span class="ctxSelectLabel">${fontLabel}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button>`) +
+      group(`<button class="btn xs ctxSelectBtn" id="cFont" type="button" title="${fontLabel}"><span class="ctxSelectLabel">${fontLabel}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button>`) +
       group(label(T("sizeLabel")) + numInput("cSz", ...RANGE.fontSize, 1, v.size)) +
       group(label(T("lineHeightLabel")) + numInput("cLH", 0.6, 3, 0.05, v.lineHeight)) +
       group(label(T("letterSpacingLabel")) + numInput("cSp", 0, 20, 0.5, v.spacing)) +

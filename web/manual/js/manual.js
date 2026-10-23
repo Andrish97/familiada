@@ -153,9 +153,9 @@ function wireCarousels(root) {
     const slides = [...track.children];
     const nav = document.createElement("div");
     nav.className = "m-carousel-nav";
-    nav.innerHTML = `<button class="btn sm icon-btn" type="button" data-step="-1" aria-label="${esc(t("manual.shotPrev"))}" title="${esc(t("manual.shotPrev"))}">${icon("arrow-left")}</button>
+    nav.innerHTML = `<button class="btn sm icon" type="button" data-step="-1" aria-label="${esc(t("manual.shotPrev"))}" title="${esc(t("manual.shotPrev"))}">${icon("arrow-left")}</button>
       <div class="m-carousel-dots">${slides.map((_, i) => `<button class="m-carousel-dot" type="button" data-i="${i}" aria-label="${esc(t("manual.shotN", { n: i + 1, total: slides.length }))}"></button>`).join("")}</div>
-      <button class="btn sm icon-btn" type="button" data-step="1" aria-label="${esc(t("manual.shotNext"))}" title="${esc(t("manual.shotNext"))}">${icon("arrow-right")}</button>`;
+      <button class="btn sm icon" type="button" data-step="1" aria-label="${esc(t("manual.shotNext"))}" title="${esc(t("manual.shotNext"))}">${icon("arrow-right")}</button>`;
     box.append(nav);
     const dots = [...nav.querySelectorAll(".m-carousel-dot")];
     const index = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));

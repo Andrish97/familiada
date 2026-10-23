@@ -263,8 +263,7 @@
   }
 
   /* Małe przyciski z samą ikoną (akceptuj / odrzuć / usuń na kafelkach). */
-  .btn.xs > svg.ico:only-child,
-  .btn.xsm > svg.ico:only-child {
+  .btn.xs > svg.ico:only-child {
     width: 1.5em;
     height: 1.5em;
     vertical-align: -0.35em;
@@ -527,6 +526,14 @@
   }
   .btn:hover { filter: brightness(1.08); }
   .btn:active { transform: translateY(1px); }
+  :is(.btn, .corner-btn):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Włączony przełącznik / wybrana opcja (jedyny stan „aktywny” przycisku). */
+  :is(.btn, .corner-btn).is-active,
+  :is(.btn, .corner-btn)[aria-pressed="true"] {
+    --btn-tint: var(--g-10);
+    border-color: var(--g-60);
+    color: var(--accent);
+  }
   .btn.gold {
     --btn-tint: var(--g-10);
     border-color: var(--g-35);
@@ -669,25 +676,22 @@
     letter-spacing: .04em;
   }
   .btn.xs {
-    padding: 5px 8px;
-    border-radius: var(--r-sm);
-    font-size: 11px;
-    letter-spacing: .03em;
-  }
-  .btn.xsm {
     padding: 6px 10px;
     border-radius: var(--r-sm);
     font-size: 12px;
   }
+  /* Przycisk-ikona: kwadrat o wysokości zwykłego przycisku (jedyny wariant;
+     dawne .icon-btn i przyciski-ikony stron). */
   .btn.icon {
-    width: 40px;
-    height: 40px;
+    min-width: 37px;
+    min-height: 37px;
     padding: 0;
     display: grid;
     place-items: center;
-    font-size: 18px;
-    border-radius: var(--r-md);
+    font-size: 17px;
+    line-height: 1;
   }
+  .btn.sm.icon { min-width: 33px; min-height: 33px; font-size: 15px; }
   .btn.full { width: 100%; }
 
   /* ── Pole tekstowe ─────────────────────────────────────────────── */
@@ -1250,7 +1254,6 @@
   }
   .corner-btn:hover { background: var(--k-70); }
   .corner-btn:active { transform: translateY(1px); }
-  .corner-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .corner-btn .ico { width: 20px; height: 20px; }
   /* Pełny ekran: prawy górny róg w strefie bezpiecznej. */
   .fs-btn {
@@ -1259,7 +1262,7 @@
     right: max(12px, env(safe-area-inset-right, 0px));
     z-index: var(--z-toast);
   }
-  .fs-btn.on { border-color: var(--g-60); }
+
 
   /* ── Język, menu topbara (konto, język, hamburger) ────────────── */
   .lang-switcher {
@@ -2969,16 +2972,7 @@
     background: var(--w-25);
   }
 
-  /* ── Przyciski z ikoną i menu „Więcej” w topbarze ─────────────── */
-  .icon-btn {
-    min-width: 37px;
-    min-height: 37px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    font-size: 17px;
-    line-height: 1;
-  }
+  /* ── Menu „Więcej” w topbarze ─────────────── */
   .nav-more {
     position: relative;
     display: inline-flex;

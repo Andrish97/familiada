@@ -45,7 +45,7 @@ body {
     transform: translateY(1px)
 }
 
-.fs-btn.on {
+.fs-btn.is-active {
     border-color: rgba(215,255,61,.55)
 }
 

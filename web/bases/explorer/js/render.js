@@ -124,8 +124,8 @@ export function renderToolbar(state) {
       </div>
       <div class="toolbar-btns-row">
         <div class="left-view-tabs mobile-only">
-          ${LEFT_VIEWS.map((v) => `<button${v.id === "tree" ? ' id="btnDrawerToggle"' : ""} class="tbBtn left-view-btn" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon, { className: "tbIco" })}<span class="badge"></span></button>`).join("")}
-          <button id="btnSearchSheet" class="tbBtn" type="button" aria-controls="searchOverlay">${icon("search", { className: "tbIco" })}</button>
+          ${LEFT_VIEWS.map((v) => `<button${v.id === "tree" ? ' id="btnDrawerToggle"' : ""} class="btn icon left-view-btn" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
+          <button id="btnSearchSheet" class="btn icon" type="button" aria-controls="searchOverlay">${icon("search")}</button>
         </div>
         ${toolbarButtonsHtml()}
       </div>`;

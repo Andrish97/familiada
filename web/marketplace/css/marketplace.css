@@ -353,12 +353,6 @@
     margin-top: 4px;
   }
 
-  .mkt-lang-picker .btn.active {
-    border-color: var(--g-60);
-    --btn-tint: var(--g-10); /* kryjące tło: css/base.css */
-    color: var(--gold);
-  }
-
   .mkt-submit-warn {
     margin-top: 14px;
     padding: 10px 12px;

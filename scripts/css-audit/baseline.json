@@ -12,7 +12,7 @@
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 16,
-  "colorLiteral": 58,
+  "colorLiteral": 44,
   "mediaWidth": 7,
   "zIndexLiteral": 8,
   "sharedDuplicate": 18,
@@ -220,7 +220,7 @@
  },
  "web/logos/css/logo.css": {
   "important": 15,
-  "colorLiteral": 22,
+  "colorLiteral": 19,
   "rootTokens": 12,
   "mediaWidth": 1,
   "zIndexLiteral": 8,
@@ -308,7 +308,7 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 122,
+  "colorLiteral": 119,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
   "sharedDuplicate": 7,
@@ -374,7 +374,7 @@
  },
  "web/shared/css/polls.css": {
   "important": 3,
-  "colorLiteral": 21,
+  "colorLiteral": 20,
   "mediaWidth": 1,
   "zIndexLiteral": 1,
   "sharedDuplicate": 3
@@ -474,13 +474,13 @@
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 226,
+  "sharedDuplicate": 225,
   "unusedClass": 7
  },
  "web/shared/style/layout.css": {
   "important": 2,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 22
+  "sharedDuplicate": 21
  },
  "web/shared/style/utilities.css": {
   "important": 3,

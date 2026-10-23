@@ -202,7 +202,7 @@ function setMsg(el, t) {
 function baseRoleButton(value, onChange) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "btn xsm baseShareRole";
+  button.className = "btn xs baseShareRole";
   const update = () => {
     const editor = value === "editor";
     const label = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");

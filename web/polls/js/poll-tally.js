@@ -313,12 +313,12 @@ export function createTally({ gameId, pollResults, ui }) {
     inp.setAttribute("aria-label", t("polls.tally.hintText"));
 
     const cnt = mk("span", "tcCnt");
-    const mergeBtn = mk("button", "tcBtn tcMergeBtn", icon("merge"));
+    const mergeBtn = mk("button", "btn sm icon tcMergeBtn", icon("merge"));
     mergeBtn.type = "button";
     mergeBtn.setAttribute("aria-pressed", "false");
     mergeBtn.title = t("polls.tally.mergeWith");
     mergeBtn.setAttribute("aria-label", t("polls.tally.mergeWith"));
-    const del = mk("button", "tcBtn tcDel", icon("trash"));
+    const del = mk("button", "btn sm icon danger tcDel", icon("trash"));
     del.type = "button";
     del.title = t("polls.tally.remove");
     del.setAttribute("aria-label", t("polls.tally.remove"));

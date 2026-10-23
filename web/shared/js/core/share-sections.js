@@ -280,7 +280,7 @@ export function shareRowEl(row) {
   for (const a of row.actions || []) {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "btn xsm" + (a.gold ? " gold" : "");
+    b.className = "btn xs" + (a.gold ? " gold" : "");
     b.dataset.act = a.key;
     b.title = a.title || "";
     b.setAttribute("aria-label", a.title || a.key);
@@ -438,7 +438,7 @@ export function rowEl(row) {
     const iconOnly = a.iconOnly || actionIcon === "trash" || !a.text;
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "btn xsm rowsAct" + (a.gold ? " gold" : "") + (iconOnly ? " rowsAct--icon" : "");
+    b.className = "btn xs rowsAct" + (a.gold ? " gold" : "") + (iconOnly ? " rowsAct--icon" : "");
     b.dataset.act = a.key;
     b.title = label;
     b.setAttribute("aria-label", label);

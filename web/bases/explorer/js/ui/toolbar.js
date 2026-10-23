@@ -27,8 +27,8 @@ function esc(s) {
 export function toolbarButtonsHtml() {
   return TOOLBAR_GROUPS.map((group, i) => {
     const buttons = ACTIONS.filter((a) => a.toolbar?.group === group).map((a) => {
-      const cls = ["tbBtn", a.danger ? "danger" : "", a.primary ? "primary" : ""].filter(Boolean).join(" ");
-      return `<button class="${cls}" type="button" data-act="${esc(a.toolbar.act)}" data-action="${esc(a.id)}">${icon(a.icon, { className: "tbIco" })}</button>`;
+      const cls = ["btn icon", a.danger ? "danger" : "", a.primary ? "gold" : ""].filter(Boolean).join(" ");
+      return `<button class="${cls}" type="button" data-act="${esc(a.toolbar.act)}" data-action="${esc(a.id)}">${icon(a.icon)}</button>`;
     }).join("");
     // pierwszy separator oddziela hamburger, który jest tylko na telefonie
     return `<div class="tbSep${i === 0 ? " mobile-only" : ""}" aria-hidden="true"></div>

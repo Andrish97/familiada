@@ -395,8 +395,7 @@
   .resultQ .aRow.tallyTie{ border-style: dashed; }
 
   .resultQ .tcHandle,
-  .resultQ .tcCnt,
-  .resultQ .tcBtn{
+  .resultQ .tcCnt{
     position: relative;
     flex: 0 0 auto;
     max-width: 0;
@@ -410,19 +409,17 @@
     pointer-events: none;
     transition: max-width .45s ease, opacity .35s ease;
   }
+  /* Przyciski wiersza (scal, usuń) — wspólne .btn.sm.icon; tylko w trybie podliczania. */
+  .resultQ .aList:not(.tally) :is(.tcMergeBtn, .tcDel){ display: none; }
   .resultQ .aList.tally .aRow{ min-height: 46px; height: auto; gap: 6px; padding: 3px 8px; }
   .resultQ .aList.tally .aRow,
   .resultQ .aList.tally .aBar,
   .resultQ .aList.tally .tcHandle,
-  .resultQ .aList.tally .tcCnt,
-  .resultQ .aList.tally .tcBtn{ transition: none; }
+  .resultQ .aList.tally .tcCnt{ transition: none; }
   .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
   .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
   .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
-  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: var(--r-md); background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--bg)); box-shadow: 0 2px 7px var(--k-20); }
-  .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--w-25); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg)); border-radius: var(--r-sm); }
-  .resultQ .aList.tally .tcBtn:hover{ background: var(--w-8); }
-  .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
+  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; margin-left: 7px; }
   /* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
   @media (hover: hover) and (pointer: fine){
     .resultQ .aList.tally .tcMergeBtn{ display: none; }
@@ -445,10 +442,9 @@
     /* linia 1: tekst + przyciski; linia 2: głosy + punkty */
     .resultQ .aList.tallyText .aRow{ flex-wrap: wrap; row-gap: 0; padding: 5px 6px 5px 8px; }
     .resultQ .aList.tallyText .aTxtInp{ order: 1; flex: 1 1 0; }
-    .resultQ .aList.tally .tcActionGroup{ order: 2; margin-left: 4px; padding: 0; gap: 4px; border: 0; background: none; box-shadow: none; }
+    .resultQ .aList.tally .tcActionGroup{ order: 2; margin-left: 4px; gap: 4px; }
     .resultQ .aList.tallyText .tcCnt{ order: 3; flex: 0 0 calc(100% - 96px); max-width: none; margin-left: 6px; text-align: left; }
     .resultQ .aList.tallyText .aVal{ order: 4; margin-left: auto; padding-right: 4px; }
-    .resultQ .aList.tally .tcBtn{ width: 32px; height: 32px; border-radius: var(--r-sm); }
   }
 
   .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
@@ -458,10 +454,6 @@
   .resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(255,112,122,.08), rgba(255,112,122,.2)); }
   .resultQ .aRow.tallySkipped .aTxt,
   .resultQ .aRow.tallySkipped .aVal{ color: #ffc0c4; }
-  .resultQ .aRow.merge-src .tcMergeBtn,
-  .resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: var(--accent); background: var(--g-10); color: var(--gold); box-shadow: 0 0 0 2px var(--g-10); }
-  .resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
-  .resultQ .aList.tally .tcBtn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .resultQ .aTxtInp{
     position: relative;
     flex: 1 1 auto;
@@ -491,7 +483,7 @@
   }
   .resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); }
   @media (prefers-reduced-motion: reduce){
-    .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
+    .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tallyMeta{ transition: none; }
   }
 
   /* telefon: dymek (shared toast) nad dolnym paskiem akcji ankiety */

@@ -108,7 +108,7 @@ jeśli `<body class="topbar-title-mobile">`) + ikony + hamburger. Sekcje 2 / 4
 (przyciski) idą do panelu hamburgera. **Tytuł nie idzie do hamburgera** — dziś
 idzie (znalezisko T1).
 
-Przyciski topbara: zawsze `.btn` (nie `ghost`, nie `icon-btn` obok zwykłych).
+Przyciski topbara: zawsze `.btn` (ikona: `.btn.icon`).
 
 **„i” (Wskazówki) przy języku po prawej [decyzja właściciela 2026-10-22]:**
 przycisk „i” stoi zawsze po prawej, tuż przed przełącznikiem języka (odstęp 8 px,
@@ -370,7 +370,7 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 | **Główny** | `.btn.gold` | jeden na widok; zamiast `.btn.main` (logowanie) i `.c2-btn.primary` (Control, styl inline w `control/index.html:288`) |
 | Destrukcyjny | `.btn.danger` → **czerwony obrys** (jak `.btn.pollAbort`) | dziś `.btn.danger` = czerwone wypełnienie (tylko „Usuń konto”), a `.pollAbort` ma obrys; jeden wygląd; tylko w oknach potwierdzenia i na dole formularza |
 | Rozmiary | `.btn` (formularze, okna), `.btn.sm` (paski akcji, 13 px), `.btn.xs` (w kaflu, 11 px), `.btn.xsm` (wiersz udostępniania) | nie wymyślać `btn-sm`, `small` |
-| Ikona | `.btn.icon` / `.icon-btn` | jedna klasa, 40 × 40 |
+| Ikona | `.btn.icon` (`.btn.sm.icon`) | jedna klasa, kwadrat o wysokości przycisku (37 / 33 px) |
 | Zakazane | `.btn.ghost` (menedżer bazy), `.btn.green` (nieużywane), `.btn-sm` (Control), `.tbtn` (pasek rysowania logo, własna rodzina) | |
 
 Etykiety: pełne słowa, bez skrótów typu „Imp”, „Exp.bz”, „Podgl.”.

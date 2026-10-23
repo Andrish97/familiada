@@ -49,7 +49,7 @@
     .baseShareSections .shareList--scroll{ max-height: 180px; }
   }
 
-  /* .btn.xsm przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
+  /* .btn.xs przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
      control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
      ładują tego pliku wcale (zgłoszone: przycisk tam wyglądał jak pełnowymiarowy
      .btn). Zostaje tu zaimportowane niejawnie przez base.css, nie duplikowane. */
