@@ -276,7 +276,23 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       if (readError) throw readError;
       await sb.realtime.setAuth(data.token);
       const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
-      const channel = sb.channel(channelName).on("postgres_changes", {
+      window.__scopedDiag = { system: [], dedicatedRev: null, dedicatedStatus: null };
+      // [e2e-diag] Osobny klient tylko dla Realtime z accessToken: token
+      // urządzenia nie może zostać nadpisany tokenem sesji (anon) po dołączeniu.
+      const dedicated = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
+        accessToken: async () => data.token,
+      });
+      window.__scopedDedicated = dedicated;
+      dedicated.channel(`${channelName}:dedicated`).on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
+      }, payload => {
+        if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedDiag.dedicatedRev = payload.new.rev;
+      }).on("system", {}, payload => {
+        window.__scopedDiag.system.push(`dedicated:${payload?.status || ""}:${String(payload?.message || "").slice(0, 120)}`);
+      }).subscribe(status => { window.__scopedDiag.dedicatedStatus = status; });
+      const channel = sb.channel(channelName).on("system", {}, payload => {
+        window.__scopedDiag.system.push(`shared:${payload?.status || ""}:${String(payload?.message || "").slice(0, 120)}`);
+      }).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
       }, payload => {
         if (Number(payload?.new?.display_rendered_rev) > 0) {
@@ -296,6 +312,16 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
+      const claimsOf = token => {
+        try { return JSON.parse(atob(String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); } catch { return null; }
+      };
+      const current = claimsOf(sb.realtime.accessTokenValue);
+      window.__scopedDiag.sharedToken = {
+        same: sb.realtime.accessTokenValue === data.token,
+        manual: sb.realtime._manuallySetToken === true,
+        role: current?.role || null,
+        hasDevice: !!current?.device_type,
+      };
       return { channelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
@@ -328,6 +354,11 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       return { error };
     }, game.id);
     expect(writeError, "owner game_state_write should succeed").toBeNull();
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || window.__scopedDiag.dedicatedRev || null), { timeout: 15000 })
+      .not.toBeNull().catch(() => {});
+    await devicePage.waitForTimeout(1000);
+    const diag = await devicePage.evaluate(() => ({ ...window.__scopedDiag, sharedRev: window.__scopedRealtimeRev || null }));
+    console.log(`[e2e-diag] scoped realtime ${JSON.stringify(diag)}`);
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
       .not.toBeNull();
     const completedRevision = await devicePage.evaluate(async ({ gid, key, lease }) => {
