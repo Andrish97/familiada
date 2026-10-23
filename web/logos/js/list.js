@@ -173,16 +173,6 @@ function listModeForLogo(logo) {
 
 function setActiveListMode(mode, { updateUrl = true } = {}) {
   activeListMode = String(mode || "").toUpperCase();
-  const hintKeys = {
-    TEXT: "logoEditor.create.textSubtitle",
-    DRAW: "logoEditor.create.drawSubtitle",
-    IMAGE: "logoEditor.create.imageSubtitle",
-  };
-  if (el.hint) {
-    // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
-    el.hint.removeAttribute("data-i18n");
-    el.hint.textContent = t(hintKeys[activeListMode]);
-  }
   for (const [key, tab] of Object.entries(el.tabs)) {
     const active = key === activeListMode;
     tab?.classList.toggle("active", active);

@@ -108,7 +108,6 @@ function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
     tagsL2Close (X)
     tagsL2Save  (Zapisz)
     tagsEditTitle
-    tagsEditHelp
     tagsEditName
     tagsEditColorTile  (duży kafel – klik => L3)
     tagsEditColorDot   (kropka w kaflu)
@@ -147,7 +146,6 @@ function els() {
     l2Save: document.getElementById("tagsL2Save"),
     l2Back: document.getElementById("tagsL2Back"),
     editTitle: document.getElementById("tagsEditTitle"),
-    editHelp: document.getElementById("tagsEditHelp"),
     editName: document.getElementById("tagsEditName"),
     editColorTile: document.getElementById("tagsEditColorTile"),
     editColorDot: document.getElementById("tagsEditColorDot"),
@@ -479,12 +477,6 @@ export async function openTagsModal(state, opts = {}) {
         editMode === "edit"
           ? t("baseExplorer.tags.editModeTitle")
           : t("baseExplorer.tags.createModeTitle");
-    }
-    if (E.editHelp) {
-      E.editHelp.textContent =
-        editMode === "edit"
-          ? t("baseExplorer.tags.editModeHelp")
-          : t("baseExplorer.tags.createModeHelp");
     }
     if (E.editName) E.editName.value = m.edit.name;
 

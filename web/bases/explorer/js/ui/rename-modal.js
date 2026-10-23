@@ -8,7 +8,7 @@ import { t } from "../../../../shared/translation/translation.js?v=v2026-10-23T1
 export async function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   const v = await promptModal({
     title: title || t("baseExplorer.rename.title"),
-    text: t("baseExplorer.rename.help"),
+    text: "",
     okText: t("baseExplorer.common.save"),
     cancelText: t("common.cancel"),
     value: String(value || ""),

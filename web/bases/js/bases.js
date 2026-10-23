@@ -934,7 +934,8 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
     btn?.closest(".tab-slot")?.classList.toggle("active", on);
     btn?.setAttribute("aria-selected", on ? "true" : "false");
   }
-  setHint(mineOn ? t("bases.headerHint") : t("bases.headerHintShared"));
+  // Udostępnionym bazom nie zmienia się nazwy -- wtedy bez podpowiedzi.
+  setHint(mineOn ? t("common.renameTileHint") : "");
 }
 
 function setSharedBasesBadge(n) {

@@ -1,4 +1,4 @@
-# Audyt podpowiedzi (2026-10-23)
+# Audyt podpowiedzi i tłumaczeń (2026-10-23)
 
 Polecenie użytkownika: audyt podpowiedzi w systemie — skuteczność, klarowność,
 trafność, sensowność, nieoczywistość (**oczywistych rzeczy nie podpowiadamy**).
@@ -180,6 +180,104 @@ Ustawienia gry, Konto, listy), jeden szybki przebieg e2e Control
 (spece sprawdzające teksty podpowiedzi — przed zmianą przejrzeć `--grep`
 na `c2-hint`).
 
+## Audyt tłumaczeń — nieużywane klucze
+
+Polecenie użytkownika (2026-10-23): dodać audyt tłumaczeń na nieużywane
+i wykonać razem z poprawkami podpowiedzi.
+
+Narzędzia:
+- `scripts/i18n-unused.mjs` — lista nieużywanych kluczy
+  `web/shared/translation/{pl,en,uk}.js`. Klucz jest używany, gdy kod
+  (`web`, `supabase/functions`, `cloudflare`, `scripts`; bez testów) ma go
+  dosłownie, gdy pasuje do prefiksu dynamicznego (`` t(`ns.${x}`) ``,
+  `"ns." + x`) albo gdy należy do sekcji czytanej w całości poza stroną
+  (`authEmail` — send-email, `marketplaceSsr` i `contactEmail` — Worker).
+  Klucze maili powiadomień są w `scripts/sync-notification-mail-texts.mjs`,
+  więc liczą się jako używane.
+- `scripts/i18n-prune.mjs` — wycina nieużywane klucze ze źródła (parser
+  literału obiektu; formatowanie, funkcje i komentarze zostają; pusty obiekt
+  znika). Po wycięciu sprawdza, że zostały dokładnie oczekiwane klucze
+  z niezmienionymi wartościami.
+- Zapadka `tests/unit/i18nUnused.test.js`: brak nieużywanych kluczy i ten
+  sam zestaw kluczy w PL/EN/UK.
+
+Weryfikacja wyników: brak innych form składania kluczy (zmienne z
+prefiksem, `${ns}.x`, `.join(".")`), wyrywkowo sprawdzone grupy
+(`privacy.contact.*`, `tasks.deviceType.*`, `security.selfXssWarning`,
+`pollsHub*`); teksty usuniętych kluczy nie występują w asercjach e2e.
+Testy unit, które sprawdzały istnienie martwego klucza
+(`pollAnonymous.wait`), poprawione na klucze faktycznie używane.
+
+Wynik: **995 kluczy usuniętych w każdym języku (3523 → 2528)**, `pl.js`
+199 KB → 150 KB.
+
+| Sekcja | Usunięte / było |
+|---|---|
+| `control` | 231 / 518 (stary Control 1) |
+| `pollsHubSubscriptions` | 189 / 198 |
+| `pollsHub` | 173 / 173 (cała sekcja) |
+| `pollsHubPolls` | 164 / 175 |
+| `bases` | 48 / 164 |
+| `baseExplorer` | 33 / 242 |
+| `gameSettings` | 29 / 122 |
+| `polls` | 23 / 163 |
+| `editor` | 18 / 90 |
+| `privacy` | 15 / 20 (stary formularz kontaktu) |
+| `tasks` | 15 / 39 |
+| `index` | 12 / 78 |
+| `logoEditor` | 10 / 186 |
+| `games` | 9 / 186 |
+| `connectDevice` | 7 / 43 |
+| `maintenance` | 6 / 15 |
+| `account` | 5 |
+| `marketplace` | 4 |
+| `contacts` | 3 |
+| `auth` | 2 |
+| `pollSharePanel`, `buzzer`, `manual`, `pollAnonymous`, `notFound`, `security` | po 1 |
+
+## Wykonane (2026-10-23)
+
+Control:
+- nowe podpowiedzi o nieoczywistych regułach: reguła pojedynku (z nazwą
+  drużyny wygrywającej przy remisie), 3 s = X i trzeci X → kradzież,
+  oddanie kontroli tylko przed pierwszym trafieniem, kradzież zabiera cały
+  bank, mapowanie finału „sprawdź zaznaczony wybór”, cel finału z liczbą
+  punktów z ustawień;
+- **zaznaczony kafel** (zaznacz → potwierdź): na czas zaznaczenia blok
+  podpowiedzi mówi „Kliknij zaznaczony kafel jeszcze raz (albo Enter)…”
+  (`ui.js`, po renderze, gdy jest `.c2-tile-armed`);
+- usunięte oczywiste („Przejdź dalej”, „Wskaż trafioną… albo X”) i
+  nieosiągalne gałęzie (`r_intro`, `r_roundStart`, `f_start`, `f_p2_start`,
+  `f_end`, brak drużyny);
+- EN „Confirm” → „Accept” (zgodnie z przyciskiem), „11 znaków” ze stałej
+  `FINAL_DISPLAY_MAX`.
+
+Strony:
+- jeden tekst `common.renameTileHint` („Podwójne naciśnięcie kafla zmienia
+  nazwę.”) na Grach, Bazach (moje) i Logo (zamiast opisu rodzaju, który
+  powtarzał tekst kafla „Nowe logo…”);
+  bez podpowiedzi w Społeczności i Udostępnionych bazach (tylko oczywistość);
+- bez oczywistych opisów w oknie zmiany nazwy i tagów Eksploratora;
+- Konto: nazwa użytkownika (kto ją widzi), e-mail (jedna podpowiedź
+  zamiast dwóch o tym samym), powiadomienia, demo (jedna linia zamiast dwóch);
+- kod urządzenia — jeden zapis w Control (okno QR, krok urządzeń)
+  i ankietach;
+- Ustawienia gry: tryb kolejności rund (bez „Podsumowania”), logo
+  prowadzącego, „Pytania finału (5)” zamiast „(max 5)”;
+- formularz pytania: limit znaków bez stałego zdania o nieobsługiwanych
+  znakach (błąd pokazuje się przy polu, `questionForm.errors.answerChars`);
+- edytor: „uczestnicy ankiety” zamiast „widzowie”; literówka „otworzone”.
+
+Zostawione: `editor.importModal.formatHint` ma „17 znaków” na sztywno —
+statyczne `data-i18n` nie przyjmuje parametrów, a stała się nie zmienia.
+
 ## Decyzje
 
-(do uzupełnienia po decyzji użytkownika)
+- **2026-10-23 (użytkownik):** audyt tłumaczeń na nieużywane klucze
+  i poprawki podpowiedzi wykonać razem.
+- **2026-10-23 (użytkownik):** podpowiedzi w Control nie mogą być za długie —
+  zawsze mieszczą się bez przewijania. Pilnuje tego test
+  `hints.test.js` (każda `control.hints.*` ≤ 90 znaków, PL/EN/UK); pomiar
+  w przeglądarce (najdłuższa nazwa drużyny, lista skrótów finału, okna
+  1180×820, 1024×700 i 980×640 — najmniejsza szerokość Control) —
+  wszystko się mieści.

@@ -28,6 +28,7 @@ import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T
 import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T13220";
 import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T13220";
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T13220";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-23T13220";
 
 
 const $ = (id) => document.getElementById(id);
@@ -1535,7 +1536,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint")}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint", { max: FINAL_DISPLAY_MAX })}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
       ]),
     ];
 
@@ -1988,6 +1989,12 @@ export function createUI({ root, emit }) {
         : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
+    }
+    // Zaznaczony kafel (zaznacz → potwierdź, armableTile): sama złota obwódka
+    // nie mówi, że trzeba kliknąć drugi raz -- na ten czas podpowiedź o tym.
+    if (hint && root.querySelector(".c2-tile-armed")) {
+      const main = hint.querySelector(".c2-hint-main") || hint.insertBefore(h("div", { class: "c2-hint-main" }), hint.firstChild);
+      main.textContent = t("control.hints.armed");
     }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;

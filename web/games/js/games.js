@@ -75,8 +75,7 @@ const MSG = {
   alertDeleteFailed: () => t("games.alert.deleteFailed"),
   alertDeleteInUseLocked: () => t("games.alert.deleteInUseLocked"),
   alertCreateFailed: () => t("games.alert.createFailed"),
-  hintSelect: () => t("games.hint.select"),
-  hintSelectPlus: () => t("games.hint.selectPlus"),
+  hintRename: () => t("common.renameTileHint"),
   alertCheckFailed: () => t("games.alert.checkFailed"),
   alertOpenPollFailed: () => t("games.alert.openPollFailed"),
   exportJsonSub: () => t("games.exportFile.subtitle"),
@@ -1053,7 +1052,7 @@ function render() {
     canExport: false,
   });
 
-  setHint(MSG.hintSelectPlus());
+  setHint(MSG.hintRename());
 }
 
 function renderMarket() {
@@ -1079,7 +1078,7 @@ function renderMarket() {
   }
 
   setMarketButtonsState();
-  setHint(t("games.market.hint"));
+  setHint("");
 }
 
 function setMarketButtonsState() {
