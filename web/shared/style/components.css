@@ -2263,12 +2263,18 @@
     display: flex;
     justify-content: center;
   }
-  /* Równe kolumny: licznik na wypustce nie zmienia szerokości żadnej. */
   .tab-slot {
     width: auto;
     min-width: 0;
     flex: 1 1 0;
     align-items: stretch;
+  }
+  /* Równe kolumny: licznik na wypustce nie zmienia szerokości żadnej
+     (także na telefonie — wygrywa z .tab-slot w @media niżej). */
+  .tabs-strip > .tab-slot {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
   }
   .tab-label {
     border: 0;
