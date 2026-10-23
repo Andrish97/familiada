@@ -346,7 +346,7 @@ test("ustawienia gry: dźwięk — 'Własny' bez pliku blokuje zapis komunikatem
     const firstRow = page.locator(".sfx-row").first();
     const key = await firstRow.getAttribute("data-key");
     await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
-    await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
+    await firstRow.locator('.menu-item[data-value="__custom__"]').click();
     await expect(firstRow.locator("[data-sfx-preview]")).toBeDisabled();
     await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
 

@@ -1,4 +1,4 @@
-import { iconText } from "./icons.js?v=v2026-10-23T15042";
+import { iconText } from "./icons.js?v=v2026-10-23T15080";
 
 
 export function initUiSelect(root, { options = [], value = "", placeholder = "—", onChange, disabled = false } = {}) {
@@ -62,7 +62,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
     else label.textContent = match ? match.label : placeholder;
     // pełna nazwa w dymku — na przycisku może być ucięta wielokropkiem
     if (match?.label) btn.title = match.label; else btn.removeAttribute("title");
-    for (const item of menu.querySelectorAll(".ui-select-item")) {
+    for (const item of menu.querySelectorAll(".menu-item")) {
       const isSelected = item.dataset.value === currentValue;
       item.setAttribute("aria-selected", isSelected ? "true" : "false");
     }
@@ -80,12 +80,12 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
     currentOptions.forEach((opt) => {
       const item = document.createElement("button");
       item.type = "button";
-      item.className = "ui-select-item";
+      item.className = "menu-item";
       item.dataset.value = opt.value;
       if (opt.icon) item.innerHTML = iconText(opt.icon, opt.label);
       else {
         const text = document.createElement("span");
-        text.className = "ui-select-item-label";
+        text.className = "menu-item-label";
         text.textContent = opt.label || placeholder;
         item.appendChild(text);
       }
@@ -140,7 +140,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
   });
 
   menu.addEventListener("click", (e) => {
-    const item = e.target.closest(".ui-select-item");
+    const item = e.target.closest(".menu-item");
     if (!item) return;
     setValue(item.dataset.value);
     close();

@@ -106,7 +106,7 @@ test("PL/EN/UK: cały zależny interfejs, tytuły, obrazy i linki zmieniają ję
 
   for (const item of cases) {
     await page.locator(".lang-btn").click();
-    await page.locator(`.lang-option[data-lang="${item.lang}"]`).click();
+    await page.locator(`.menu-item[data-lang="${item.lang}"]`).click();
     await expect(page).toHaveTitle(item.title);
     await expect(page.locator(".hero-card h1")).toContainText(item.heading);
     await expect(page.locator(".shot-img").first()).toHaveAttribute("src", new RegExp(item.image));

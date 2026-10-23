@@ -135,14 +135,14 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await expect(filterButton).toHaveAttribute("aria-label", /.+/);
   await filterButton.click();
   await expect(filterButton).toHaveAttribute("aria-expanded", "true");
-  const openOption = filter.locator('.ui-select-item[data-value="open"]');
+  const openOption = filter.locator('.menu-item[data-value="open"]');
   const filterMenu = await filter.locator(".ui-select-menu").boundingBox();
   expect(filterMenu.width).toBeGreaterThanOrEqual(220);
   expect(filterMenu.height).toBeGreaterThanOrEqual(44);
   await openOption.click();
   await expect(filter).toHaveClass(/is-active/);
   await expect(page).toHaveURL(/status=open/);
-  await expect(filter.locator('.ui-select-item[data-value="open"]')).toHaveAttribute("aria-selected", "true");
+  await expect(filter.locator('.menu-item[data-value="open"]')).toHaveAttribute("aria-selected", "true");
 
   const sort = page.locator(".list-sort");
   const sortButton = sort.locator(".ui-select-btn");
@@ -150,14 +150,14 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await expect(sortButton).toHaveAttribute("aria-label", /.+/);
   await sortButton.click();
   await expect(sortButton).toHaveAttribute("aria-expanded", "true");
-  const nameOption = sort.locator('.ui-select-item[data-value="name"]');
+  const nameOption = sort.locator('.menu-item[data-value="name"]');
   const sortMenu = await sort.locator(".ui-select-menu").boundingBox();
   expect(sortMenu.width).toBeGreaterThanOrEqual(220);
   expect(sortMenu.height).toBeGreaterThanOrEqual(44);
   await nameOption.click();
   await expect(sort).toHaveClass(/is-active/);
   await expect(page).toHaveURL(/sort=name/);
-  await expect(sort.locator('.ui-select-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
+  await expect(sort.locator('.menu-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
 });
 
 test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzie", async ({ page, context, accounts, loginAs }) => {
@@ -398,7 +398,7 @@ test.describe("games: audyt -- kafelki", () => {
       await expect(status).toContainText("SZKIC", { timeout: 15000 });
 
       await page.locator(".lang-btn").click();
-      await page.locator('.lang-option[data-lang="en"]').click();
+      await page.locator('.menu-item[data-lang="en"]').click();
       await expect(status).toContainText("DRAFT", { timeout: 5000 });
       await expect(status).not.toContainText("SZKIC");
     } finally {
@@ -587,7 +587,7 @@ test.describe("games: audyt -- eksport do bazy", () => {
         // wtedy budowany od nowa -- wcześniejszy klik trafiłby w stary)
         await expect(page.locator("#btnExportBaseDo")).toBeEnabled({ timeout: 15000 });
         await page.locator("#baseSelectWrap .ui-select-btn").click();
-        await page.locator("#baseSelectWrap .ui-select-item", { hasText: baseName }).click();
+        await page.locator("#baseSelectWrap .menu-item", { hasText: baseName }).click();
         await page.locator("#btnExportBaseDo").click();
       };
 
@@ -853,7 +853,7 @@ test.describe("games: audyt -- game_validate", () => {
       await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /pytań/);
 
       await page.locator(".lang-btn").click();
-      await page.locator('.lang-option[data-lang="en"]').click();
+      await page.locator('.menu-item[data-lang="en"]').click();
       await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /questions/, { timeout: 10000 });
     } finally {
       await deleteGamesByName(page, name);

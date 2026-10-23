@@ -36,9 +36,9 @@ test("TV: język zmienia cały formularz i komunikaty, pilot obsługuje menu", a
   await page.keyboard.press("ArrowUp");
   await expect(page.locator(".lang-btn")).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.locator('.lang-option[data-lang="pl"]')).toBeFocused();
+  await expect(page.locator('.menu-item[data-lang="pl"]')).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(page.locator('.lang-option[data-lang="en"]')).toBeFocused();
+  await expect(page.locator('.menu-item[data-lang="en"]')).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("h1")).toHaveText("Connect display");
   await expect(page.locator("#tvConnect")).toHaveText("Connect");
@@ -46,7 +46,7 @@ test("TV: język zmienia cały formularz i komunikaty, pilot obsługuje menu", a
   await page.locator("#tvConnect").click();
   await expect(page.locator("#tvMessage")).toContainText("6-digit");
   await page.locator(".lang-btn").click();
-  await page.locator('.lang-option[data-lang="uk"]').click();
+  await page.locator('.menu-item[data-lang="uk"]').click();
   await expect(page.locator("h1")).toHaveText("Підключіть дисплей");
   await expect(page.locator("#tvMessage")).toContainText("6-значний");
   await expect(page.locator("#tvCode")).toHaveValue("12");

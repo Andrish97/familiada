@@ -6,14 +6,14 @@
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
 // shared/style/components.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
-import { selectionSetSingle } from "./state.js?v=v2026-10-23T15042";
-import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-23T15042";
-import { buildContext } from "./actions/context.js?v=v2026-10-23T15042";
-import { runAction } from "./actions/run.js?v=v2026-10-23T15042";
-import { formatShortcut } from "./platform.js?v=v2026-10-23T15042";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15042";
-import { renderSelection } from "./render.js?v=v2026-10-23T15042";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-23T15042";
+import { selectionSetSingle } from "./state.js?v=v2026-10-23T15080";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-23T15080";
+import { buildContext } from "./actions/context.js?v=v2026-10-23T15080";
+import { runAction } from "./actions/run.js?v=v2026-10-23T15080";
+import { formatShortcut } from "./platform.js?v=v2026-10-23T15080";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15080";
+import { renderSelection } from "./render.js?v=v2026-10-23T15080";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-23T15080";
 
 // Ten sam warunek co okna od dołu (SHEET_MQ w modal-sheet.js).
 const SHEET_QUERY = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
@@ -134,7 +134,7 @@ function sheetHandle(cm) {
 
 function itemHtml(item, idx) {
   if (item.sep) return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
-  const cls = ["cm-item", item.disabled ? "disabled" : "", item.danger ? "danger" : ""].filter(Boolean).join(" ");
+  const cls = item.danger ? "menu-item is-danger" : "menu-item";
   const kbd = item.shortcut ? `<span class="cm-kbd">${item.shortcut}</span>` : "";
   const why = item.disabled && item.reason ? ` title="${item.reason}"` : "";
   return `<button type="button" role="menuitem" class="${cls}" data-idx="${idx}"${item.id ? ` data-action="${item.id}"` : ""}${item.disabled ? " aria-disabled=\"true\"" : ""}${why}>
@@ -195,7 +195,7 @@ function menuItems(ctx) {
 // pozycjach, Enter i spacja wykonują (przycisk), Tab zamyka.
 function onMenuKeydown(e) {
   const cm = e.currentTarget;
-  const items = [...cm.querySelectorAll(".cm-item:not(.disabled)")];
+  const items = [...cm.querySelectorAll(".menu-item:not([aria-disabled='true'])")];
   if (!items.length) return;
   const i = items.indexOf(document.activeElement);
   let next = null;
@@ -227,7 +227,7 @@ export async function showContextMenu({ state, x, y, target, fromKeyboard = fals
   cm.setAttribute("role", "menu");
   cm.innerHTML = items.map(itemHtml).join("");
   cm.onclick = async (e) => {
-    const btn = e.target.closest(".cm-item[data-idx]");
+    const btn = e.target.closest(".menu-item[data-idx]");
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
@@ -252,5 +252,5 @@ export async function showContextMenu({ state, x, y, target, fromKeyboard = fals
   } else {
     place(cm, x, y);
   }
-  if (fromKeyboard) cm.querySelector(".cm-item:not(.disabled)")?.focus({ preventScroll: true });
+  if (fromKeyboard) cm.querySelector(".menu-item:not([aria-disabled='true'])")?.focus({ preventScroll: true });
 }

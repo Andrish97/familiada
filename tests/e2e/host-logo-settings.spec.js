@@ -76,7 +76,7 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await page.locator(".gs-host-logo-mode .toggle-item").nth(1).click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
     await page.locator("#gsThemeSelect .ui-select-btn").click();
-    await page.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
+    await page.locator('#gsThemeSelect .menu-item[data-value="modern"]').click();
     await page.locator('.swatchBtn[data-color-key="DOT"]').click();
     await page.locator("#gsColorHex").fill("#33aaff");
     await page.locator("#gsColorHex").press("Tab");

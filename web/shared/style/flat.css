@@ -1207,26 +1207,39 @@
     display: block;
     animation: popover-in var(--dur-fast) var(--ease-out);
   }
-  .ui-select-item {
+  /* Pozycja menu (jedna): lista wyboru, język, konto, menu kontekstowe,
+     czcionki rysowania. Wybrana: aria-selected; nieaktywna: aria-disabled. */
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
+    min-height: 36px;
+    padding: 8px 12px;
     border: 0;
+    border-radius: var(--r-sm);
     background: transparent;
     color: var(--text);
-    padding: 8px 10px;
-    border-radius: var(--r-sm);
     text-align: left;
-    font-weight: 900;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 800;
     letter-spacing: .03em;
-    cursor: pointer;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background var(--dur-fast);
   }
-  .ui-select-item:hover { background: var(--w-8); }
-  .ui-select-item[aria-selected="true"] {
-    background: var(--g-10);
-    color: var(--accent);
+  .menu-item > span:not(.cm-kbd, .ui-select-dirty-dot, .badge) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .menu-item > .ico { flex: 0 0 auto; width: 16px; height: 16px; }
+  .menu-item:hover { background: var(--w-8); }
+  .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .menu-item[aria-selected="true"] { background: var(--g-10); color: var(--accent); }
+  .menu-item[aria-disabled="true"] { opacity: .45; cursor: default; }
+  .menu-item[aria-disabled="true"]:hover { background: transparent; }
+  .menu-item.is-danger { color: var(--bad-text); }
+  /* Dotyk i telefon: cel dotyku 44 px. */
+  @media (max-width: 600px), (pointer: coarse) {
+    .menu-item { min-height: 44px; font-size: 14px; }
   }
   .ui-select.is-disabled .ui-select-btn {
     opacity: .45;
@@ -1445,12 +1458,7 @@
     height: 2em;
     vertical-align: middle;
   }
-  .lang-option .ico {
-    width: 1.6em;
-    height: 1.6em;
-    vertical-align: -.5em;
-    margin-right: 2px;
-  }
+  .lang-menu .menu-item > .ico { width: 1.6em; height: 1.6em; }
   .topbar-menu-toggle {
     order: 999;
     min-width: 38px;
@@ -1480,30 +1488,6 @@
     animation: popover-in var(--dur-fast) var(--ease-out);
   }
   .lang-menu { max-width: calc(100vw - 24px); }
-  .lang-option,
-  .account-menu-item {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: var(--r-sm);
-    border: 1px solid var(--line-strong);
-    background: var(--surface-item);
-    color: var(--text);
-    text-align: left;
-    cursor: pointer;
-    font-weight: 800;
-    font-size: 13px;
-    letter-spacing: .04em;
-  }
-  .lang-option { gap: 6px; }
-  .account-menu-item {
-    transition: background var(--dur-fast);
-    touch-action: manipulation;
-  }
-  .lang-option:hover,
-  .account-menu-item:hover { background: var(--surface-item-hover); }
-
   .account-wrap {
     position: relative;
     display: inline-flex;
@@ -1701,7 +1685,7 @@
   }
   .topbar-mobile-group .btn > .badge { margin-left: auto; }
   .topbar-mobile-group .btn svg.ico { display: block; vertical-align: middle; }
-  .topbar-mobile-group .account-menu-item {
+  .topbar-mobile-group .menu-item {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2206,7 +2190,6 @@
   .listTools .ui-select-label { display: none; }
   .listTools .ui-select-icon { display: inline-flex; }
   .listTools .is-active.btn, .listTools .is-active .ui-select-btn { color: var(--accent); border-color: var(--accent); --btn-tint: var(--g-10); }
-  .listTools .ui-select-item { min-height: 40px; }
   .shareRow.is-search-hidden, .rowsRow.is-search-hidden { display: none; }
   .listToolsEmpty[hidden] { display: none; }
   .listToolsInline { height: 36px; margin-top: 8px; padding: 0 4px 0 10px; }
@@ -3175,7 +3158,6 @@
     .games-bottom-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
     .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn { color: var(--accent); }
     .list-filter .ui-select-menu, .list-sort .ui-select-menu { max-height: min(55dvh, 420px); }
-    .list-filter .ui-select-item, .list-sort .ui-select-item { min-height: 44px; }
     .games-bottom-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
     .list-search .searchBox { display: none; }

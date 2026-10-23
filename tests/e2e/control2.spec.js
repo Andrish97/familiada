@@ -2769,13 +2769,13 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     // Zmiana języka leci przez window "i18n:lang" -> store.commit() poza
     // kolejką engine.dispatch() (ten sam wzorzec co Mute) — bez czekania na
     // faktyczny zapis test sprawdzał Hosta, zanim uiLang w ogóle dotarło.
-    await clickConfirmed(page.locator('.lang-option[data-lang="en"]'));
+    await clickConfirmed(page.locator('.menu-item[data-lang="en"]'));
 
     await expect(hostPage.locator("#paperText1")).toContainText("BUZZER", { timeout: 10000 });
     await expect(hostPage.locator("#paperText1")).not.toContainText("PRZYCISK");
     await expect(hostPage.locator("#p2Hint")).toContainText("cover");
     await page.locator(".lang-btn").click();
-    await clickConfirmed(page.locator('.lang-option[data-lang="pl"]'));
+    await clickConfirmed(page.locator('.menu-item[data-lang="pl"]'));
     await expect(hostPage.locator("#p2Hint")).toContainText("zasłonić");
     await expect(hostPage.locator("#cover2Swipe")).toContainText("odsłonić");
   } finally {
@@ -3976,7 +3976,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     }
     for (const [lang, nameA, nameB] of [['en','Team A','Team B'],['uk','Команда A','Команда B'],['pl','Drużyna A','Drużyna B']]) {
       await page.locator('.lang-btn').click();
-      await page.locator(`.lang-option[data-lang="${lang}"]`).click();
+      await page.locator(`.menu-item[data-lang="${lang}"]`).click();
       for (const [call, expected] of [['api.small.long1',nameA],['api.small.long2',nameB]]) {
         await expect.poll(() => display.locator('body').evaluate((_body, call) => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
       }

@@ -375,7 +375,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
       await row.click({ button: "right" });
-      const tagsItem = page.locator(".context-menu .cm-item", { hasText: /Tagi/i });
+      const tagsItem = page.locator(".context-menu .menu-item", { hasText: /Tagi/i });
       await expect(tagsItem).toBeVisible({ timeout: 5000 });
       await tagsItem.click();
 
@@ -455,7 +455,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await page.keyboard.press("Control+a");
       await row.click({ button: "right" });
 
-      const createGameItem = page.locator(".context-menu .cm-item", { hasText: /Utwórz grę/i });
+      const createGameItem = page.locator(".context-menu .menu-item", { hasText: /Utwórz grę/i });
       await expect(createGameItem).toBeVisible({ timeout: 5000 });
       await createGameItem.click();
 
@@ -549,7 +549,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
       await row.click({ button: "right" });
-      const renameItem = page.locator(".context-menu .cm-item", { hasText: /Zmień nazwę/i });
+      const renameItem = page.locator(".context-menu .menu-item", { hasText: /Zmień nazwę/i });
       await expect(renameItem).toBeVisible({ timeout: 5000 });
       await renameItem.click();
 

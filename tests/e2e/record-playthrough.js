@@ -872,11 +872,11 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // łącznie z etykietami "Buzzer A/B" na przyciskach Buzzera).
   await control.locator(".lang-btn").click();
   await control.waitForTimeout(500);
-  await control.locator('.lang-option[data-lang="en"]').click();
+  await control.locator('.menu-item[data-lang="en"]').click();
   await control.waitForTimeout(2500); // niech nagranie złapie zmianę na Hoście/Display/Buzzerze
   await control.locator(".lang-btn").click();
   await control.waitForTimeout(500);
-  await control.locator('.lang-option[data-lang="pl"]').click();
+  await control.locator('.menu-item[data-lang="pl"]').click();
   await control.waitForTimeout(1500);
 
   // Zgłoszone: wyścig buzzerów wpleciony w pojedynek rundy 1 (zamiast
@@ -1667,7 +1667,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   // przykładowe wygenerowane z właściwego familiadowego JSON-u.
   await control.locator('.gs-sidebar-item[data-cat="display"]').click();
   await control.locator("#gsThemeSelect .ui-select-btn").click();
-  await control.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
+  await control.locator('#gsThemeSelect .menu-item[data-value="modern"]').click();
   await control.locator('.swatchBtn[data-color-key="A"]').click();
   await control.locator("#gsColorHex").fill("00A86B");
   await control.locator("#gsColorHex").press("Tab");

@@ -83,7 +83,7 @@ module.exports = [
     sources: [...page("bases/explorer"), ...FADE], ready: "#list > *", db: moreFolders, steps: [scrollMid(".explorer .list")] },
   { id: "fade-explorer-move", category: CAT, title: "Eksplorator bazy — okno Przenieś do… z długim drzewem (lista w ramce)", path: `/bases/explorer/?id=${IDS.base}`, devices: BOTH,
     sources: [...page("bases/explorer"), ...FADE], ready: '#list .row[data-kind="q"]', db: moreFolders,
-    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator('#contextMenu .cm-item[data-action="item.moveTo"]').click(); await view.locator("#moveOverlay .moveRow").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }, scrollMid("#moveList")] },
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator('#contextMenu .menu-item[data-action="item.moveTo"]').click(); await view.locator("#moveOverlay .moveRow").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }, scrollMid("#moveList")] },
   { id: "fade-editor", category: CAT, title: "Edycja gry — lista pytań przewinięta do środka", path: `/games/editor/?id=${IDS.game}`, devices: BOTH,
     sources: [...page("games/editor"), ...FADE], ready: "#qList > *:nth-child(2)", steps: [scrollMid(".listShell")] },
   { ...finale, id: "fade-settings-finale", category: CAT, title: "Ustawienia gry — Finał: długa pula pytań (lista w ramce, wygaszona dolna krawędź)", devices: BOTH,

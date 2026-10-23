@@ -51,11 +51,11 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
 
     await page.locator("#langFilter .ui-select-btn").click();
-    await page.locator(`#langFilter .ui-select-item[data-value="${language}"]`).click();
+    await page.locator(`#langFilter .menu-item[data-value="${language}"]`).click();
     await expect(page).toHaveURL(new RegExp(`filter=${language}`));
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
     await page.locator("#sortSelect .ui-select-btn").click();
-    await page.locator('#sortSelect .ui-select-item[data-value="newest"]').click();
+    await page.locator('#sortSelect .menu-item[data-value="newest"]').click();
     await expect(page).toHaveURL(/sort=newest/);
 
     await firstCard.click();
@@ -138,17 +138,17 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   const langFilter = page.locator("#langFilter");
   await expect(langFilter).toHaveClass(/ui-select/);
   await langFilter.locator(".ui-select-btn").click();
-  await langFilter.locator(`.ui-select-item[data-value="${lang}"]`).click();
+  await langFilter.locator(`.menu-item[data-value="${lang}"]`).click();
   await expect(page.locator("#browseGrid .mkt-lang-badge").first()).toHaveText(lang.toUpperCase());
   const sortSelect = page.locator("#sortSelect");
   await expect(sortSelect).toHaveClass(/ui-select/);
   await sortSelect.locator(".ui-select-btn").click();
-  await sortSelect.locator('.ui-select-item[data-value="title"]').click();
+  await sortSelect.locator('.menu-item[data-value="title"]').click();
   await expect(page).toHaveURL(/sort=title/);
 
   await page.locator("#searchInput").fill("");
   await langFilter.locator(".ui-select-btn").click();
-  await langFilter.locator('.ui-select-item[data-value="all"]').click();
+  await langFilter.locator('.menu-item[data-value="all"]').click();
   await page.locator("#browseGrid .mkt-card").first().focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#gameDetailOverlay")).toBeVisible();
@@ -168,7 +168,7 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page).toHaveURL(/\/marketplace\/game\/[^/?]+/);
   await page.keyboard.press("Escape");
   await page.locator(".lang-btn").click();
-  await page.locator('.lang-option[data-lang="en"]').click();
+  await page.locator('.menu-item[data-lang="en"]').click();
   await expect(page.locator("#sortSelect .ui-select-label")).toHaveText("Title A–Z");
   await page.locator("#browseGrid .mkt-card").first().click();
   await expect(page.locator("#btnAddLibrary")).toHaveText("Add to my games");
@@ -301,7 +301,7 @@ test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", asyn
     await page.locator("#btnMySent").click();
     await page.locator("#btnSubmitNew").click();
     await page.locator("#submitGameSelect .ui-select-btn").click();
-    await page.locator("#submitGameSelect .ui-select-item", { hasText: name }).click();
+    await page.locator("#submitGameSelect .menu-item", { hasText: name }).click();
     await page.locator("#submitTitle").fill(name);
     await page.locator("#submitDesc").fill("Bezpieczny test zgłoszenia marketplace");
     await page.locator("#submitConfirm").check();

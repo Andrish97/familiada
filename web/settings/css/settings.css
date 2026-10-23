@@ -86,8 +86,8 @@
     gap: 14px;
   }
 
-  #homepageShotSceneSelect .ui-select-item.has-unsaved-changes{display:flex;align-items:center;justify-content:space-between}
-  #homepageShotSceneSelect .ui-select-item-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  #homepageShotSceneSelect .menu-item.has-unsaved-changes{display:flex;align-items:center;justify-content:space-between}
+  #homepageShotSceneSelect .menu-item-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
   #homepageShotSceneSelect .ui-select-dirty-dot{flex:none;margin-left:12px;color:var(--gold,#d7ff3d);font-size:18px;line-height:1}
   #homepageShotCategoryActions{display:grid;gap:12px}
   #homepageShotCategoryActions[hidden]{display:none}

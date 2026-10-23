@@ -310,7 +310,6 @@
     .games-bottom-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
     .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn { color: var(--accent); }
     .list-filter .ui-select-menu, .list-sort .ui-select-menu { max-height: min(55dvh, 420px); }
-    .list-filter .ui-select-item, .list-sort .ui-select-item { min-height: 44px; }
     .games-bottom-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
     .list-search .searchBox { display: none; }

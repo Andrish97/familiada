@@ -411,7 +411,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await page.keyboard.press("Control+a");
       await row.click({ button: "right" });
 
-      const createGameItem = page.locator(".context-menu .cm-item", { hasText: /Utwórz grę/i });
+      const createGameItem = page.locator(".context-menu .menu-item", { hasText: /Utwórz grę/i });
       await expect(createGameItem).toBeVisible({ timeout: 5000 });
       await createGameItem.click();
 
@@ -619,7 +619,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await row.click();
       await row.click({ button: "right" });
 
-      const tagsItem = page.locator(".context-menu .cm-item", { hasText: /Tagi/i });
+      const tagsItem = page.locator(".context-menu .menu-item", { hasText: /Tagi/i });
       await expect(tagsItem).toBeVisible({ timeout: 5000 });
       await tagsItem.click();
 
@@ -643,8 +643,8 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       // zawieszony pierwszy await, ale kolejne wywołanie tworzy nowy Promise --
       // więc kluczowy dowód to brak wyjątku powyżej; to tylko dodatkowa pewność)
       await row.click({ button: "right" });
-      await expect(page.locator(".context-menu .cm-item", { hasText: /Tagi/i })).toBeVisible({ timeout: 5000 });
-      await page.locator(".context-menu .cm-item", { hasText: /Tagi/i }).click();
+      await expect(page.locator(".context-menu .menu-item", { hasText: /Tagi/i })).toBeVisible({ timeout: 5000 });
+      await page.locator(".context-menu .menu-item", { hasText: /Tagi/i }).click();
       await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 10000 });
       await page.locator("#tagsL1Close").click();
       await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 5000 });
@@ -757,7 +757,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // widoczne podświetlenie od razu po PPM
       await expect(row).toHaveClass(/is-selected/);
 
-      const renameItem = page.locator(".context-menu .cm-item", { hasText: /Zmień nazwę/i });
+      const renameItem = page.locator(".context-menu .menu-item", { hasText: /Zmień nazwę/i });
       await expect(renameItem).toBeVisible({ timeout: 5000 });
       await expect(renameItem).toBeEnabled();
 
@@ -975,7 +975,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
       await row.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Tagi/i }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Tagi/i }).click();
       await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#tagsAddNew").click();
@@ -1019,7 +1019,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await row2.click({ modifiers: ["Control"] });
 
       await row2.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Tagi/i }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Tagi/i }).click();
       await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
 
       const checkbox = page.locator(`#tagsAssignList input[type="checkbox"][data-tag-id="${tagId}"]`);
@@ -1062,7 +1062,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
 
-      const deleteItem = page.locator(".context-menu .cm-item", { hasText: /Usuń tag/i });
+      const deleteItem = page.locator(".context-menu .menu-item", { hasText: /Usuń tag/i });
       await expect(deleteItem).toBeVisible({ timeout: 5000 });
       await deleteItem.click();
 
@@ -1684,7 +1684,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await row.click();
       await row.click({ button: "right" });
 
-      const editItem = page.locator(".context-menu .cm-item", { hasText: /Edytuj pytanie/i });
+      const editItem = page.locator(".context-menu .menu-item", { hasText: /Edytuj pytanie/i });
       await expect(editItem).toBeVisible({ timeout: 5000 });
       await expect(editItem).toBeEnabled({
         timeout: 5000,
@@ -2201,7 +2201,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const rowGood = page.locator(`#list .row[data-kind="q"][data-id="${qGood}"]`);
       await rowGood.click({ modifiers: ["Control"] });
       await rowShort.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Utwórz grę/i }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Utwórz grę/i }).click();
 
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
@@ -2762,7 +2762,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
       await row.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Tagi/i }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Tagi/i }).click();
       await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
 
       // oba tagi widoczne w L1 (w tym zablokowany) -- zaznaczamy tylko WOLNY
@@ -2879,7 +2879,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await expect(tagRow).toBeVisible({ timeout: 15000 });
       await tagRow.click({ button: "right" });
 
-      const editItem = page.locator(".context-menu .cm-item", { hasText: /Edytuj tag/i });
+      const editItem = page.locator(".context-menu .menu-item", { hasText: /Edytuj tag/i });
       await expect(editItem).toBeVisible({ timeout: 5000 });
       await editItem.click();
 
@@ -3081,7 +3081,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       await simulateLongPress(page, rowSel);
 
       await expect(page.locator(".context-menu")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator(".context-menu .cm-item", { hasText: /Edytuj pytanie/i })).toBeVisible();
+      await expect(page.locator(".context-menu .menu-item", { hasText: /Edytuj pytanie/i })).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }
@@ -3446,7 +3446,7 @@ test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
       await pressToolbarShortcut(page, "cut", "Control+x");
       // „Wklej” z menu folderu wkleja do niego (pasek wkleja do bieżącego)
       await catRow.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /^\s*Wklej/ }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /^\s*Wklej/ }).click();
       await expect(qRow).toBeHidden({ timeout: 10000 });
       expect((await getQuestionRow(page, qid))?.category_id).toBe(target);
 
@@ -3749,7 +3749,7 @@ test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () =
       // pytanie → „Przenieś do…” → szukaj „gleb” (bez polskich znaków) → Przenieś tutaj
       const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await qRow.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Przenieś do/ }).click();
       await expect(page.locator("#moveOverlay")).toBeVisible();
       await page.locator("#moveSearch").fill("gleb");
       await page.locator(`#moveList .moveRow[data-id="${b1}"]`).click();
@@ -3762,7 +3762,7 @@ test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () =
       // folder Beta: w oknie Beta i Głęboki są wyszarzone
       const bRow = page.locator(`#list .row[data-kind="cat"][data-id="${b}"]`);
       await bRow.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Przenieś do/ }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Przenieś do/ }).click();
       await expect(page.locator(`#moveList .moveRow[data-id="${b}"]`)).toHaveClass(/is-blocked/);
       await page.locator(`#moveList .moveRow[data-id="${b}"]`).click({ force: true });
       await expect(page.locator("#moveOk")).toBeDisabled();
@@ -3772,7 +3772,7 @@ test.describe("base-explorer: Przenieś do… / Kopiuj do… (E22 etap 9)", () =
       // kopia folderu Alfa do Beta przez drzewo (dwuklik zatwierdza)
       const aRow = page.locator(`#list .row[data-kind="cat"][data-id="${a}"]`);
       await aRow.click({ button: "right" });
-      await page.locator(".context-menu .cm-item", { hasText: /Kopiuj do/ }).click();
+      await page.locator(".context-menu .menu-item", { hasText: /Kopiuj do/ }).click();
       await page.locator(`#moveList .moveRow[data-id="${b}"]`).dblclick();
       await expect(page.locator("#moveOverlay")).toBeHidden();
       await expect(aRow).toBeVisible(); // oryginał zostaje
@@ -3799,7 +3799,7 @@ test.describe("base-explorer: Przenieś do — klawiatura i adres (E22 przegląd
       await expect(qRow).toBeVisible({ timeout: 15000 });
       const openMove = async () => {
         await qRow.click({ button: "right" });
-        await page.locator('.context-menu .cm-item[data-action="item.moveTo"]').click();
+        await page.locator('.context-menu .menu-item[data-action="item.moveTo"]').click();
         await expect(page.locator("#moveOverlay")).toBeVisible();
       };
 

@@ -670,7 +670,7 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     // polls.js) teraz TYLKO zapisuje games.poll_qr_lang, nie czeka na
     // żadnego odbiorcę.
     await page.locator(".lang-btn").click();
-    await page.locator('.lang-option[data-lang="en"]').click();
+    await page.locator('.menu-item[data-lang="en"]').click();
 
     // Odczekujemy z zapasem ponad POLL_LANG_INTERVAL_MS (4000ms w
     // poll-qr.js), żeby złapać rzeczywiste, cykliczne pollowanie -- nie
