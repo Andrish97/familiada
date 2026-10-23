@@ -3378,6 +3378,17 @@
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   .auth-shell { width: min(520px, 92vw); padding: 18px; }
+  /* Treść karty: marka, formularz (pola na całą szerokość), podpowiedź. */
+  .auth-shell .brand {
+    font-weight: 1000;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .auth-shell .form { display: grid; gap: 10px; }
+  .auth-shell .form .inp { width: 100%; }
+  .auth-shell .hint { display: block; margin-top: 12px; }
   .auth-body .footer {
     width: 100%;
     padding-left: calc(18px + env(safe-area-inset-left, 0px));

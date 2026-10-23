@@ -1,16 +1,9 @@
 /* Potwierdzenie konta i reset hasła — treść karty. */
 @layer page {
-  /* Powłoka: .auth-body i .auth-shell w silniku (layout.css). */
+  /* Powłoka i wspólna treść karty (.brand, .form, .hint): .auth-body i
+     .auth-shell w silniku (layout.css). */
 
   /* ── typography ── */
-
-  .brand {
-      font-weight: 1000;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--accent);
-      font-size: 18px;
-  }
 
   .sub {
       margin-top: 6px;
@@ -25,13 +18,7 @@
 
   /* ── form ── */
 
-  .form {
-      margin-top: 12px;
-      display: grid;
-      gap: 10px;
-  }
-
-  .form .inp { width: 100%; box-sizing: border-box; }
+  .form { margin-top: 12px; }
 
   /* ── buttons ── */
 
@@ -44,8 +31,5 @@
 
   /* Przyciski: wspólne .btn / .btn.gold z shared/css/base.css */
 
-  /* ── misc ── */
-
-  .hint { margin-top: 12px; }
 
 }
