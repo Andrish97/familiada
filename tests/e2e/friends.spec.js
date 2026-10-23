@@ -371,10 +371,10 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, 
       const invite = owner.page.locator('[data-split-tab="invite"]');
       const received = owner.page.locator('[data-split-tab="received"]');
       await expect(invite).toHaveAttribute("aria-selected", "true");
-      // Pasek wypustek na telefonie ma 44 px (wspólny --tab-height, E23); od
-      // uproszczenia wypustek aktywna ma tę samą wysokość (bez zachodzenia na kartę).
+      // Pasek wypustek na telefonie ma 44 px (wspólny --tab-height, E23); aktywna
+      // wypustka zachodzi o grubość obwódki (1 px) na kartę.
       expect(Math.round((await owner.page.locator("#contactsTabs").boundingBox()).height)).toBe(44);
-      expect(Math.round((await invite.boundingBox()).height)).toBeLessThanOrEqual(44);
+      expect(Math.round((await invite.boundingBox()).height)).toBe(45);
       await expect(owner.page.locator("#contactsInvite")).toBeVisible();
       await expect(owner.page.locator("#contactsReceived")).toBeHidden();
       await expect(received.locator(".badge")).toHaveText("1");

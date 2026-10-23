@@ -1,5 +1,5 @@
 // js/core/db-guard.js
-import { sb } from "./supabase.js?v=v2026-10-23T15354";
+import { sb } from "./supabase.js?v=v2026-10-23T15405";
 
 
 // Supabase/PostgREST UPDATE ... WHERE trafiający w 0 wierszy NIE zwraca

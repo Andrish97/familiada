@@ -63,12 +63,12 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  // Wypustki (uproszczenie 2026-10-23): pasek to górna część karty, karta pod
-  // nim zawsze bez górnej krawędzi i z prostymi górnymi rogami; bez narożników
-  // liczonych dla skrajnych wypustek i bez reguł rogów na stronach.
+  // Wypustki (2026-10-23): wygląd segregatora, prostsza budowa — karta zawsze
+  // z zaokrąglonymi rogami (bez reguł zależnych od aktywnej wypustki), pasek
+  // odsunięty o dwa promienie, łuki zawsze po obu stronach.
   const base = read("shared/style/components.css");
-  assert.match(base, /\.tabs-card:not\(\.tabs-card--split\):has\(> \.tabs-strip:not\(\[hidden\]\)\) > \.card \{\s*border-top: 0;/);
-  assert.doesNotMatch(base, /--tab-extra|tab-label\.active\)::before/);
+  assert.match(base, /padding: 0 calc\(var\(--tabs-r\) \* 2\);/);
+  assert.doesNotMatch(base, /--tab-extra|first-child > \.tab-label\.active::before|tabs-strip:not\(\[hidden\]\)\) > \.card/);
   assert.doesNotMatch(css, /border-top-(left|right)-radius: 0/);
 });
 
