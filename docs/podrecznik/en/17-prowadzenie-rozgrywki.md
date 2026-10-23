@@ -50,13 +50,24 @@ scan them from the room. It is best to use two separate devices.
 ![The *Connect a device* page](zrzut:connect-device)
 ![After entering the code — the game name and owner to check](zrzut:play-connect-confirm)
 
-[Copy] copies the code, and [Share] sends the device to another person — enter their email address or
-username, or choose a friend. A recipient with an account will find the device in
+Each device works in one place at a time. Opening it in a new tab or on other hardware (e.g. after
+scanning the code again) takes over its role straight away, and the previous screen shows "This
+device was opened elsewhere". To go back to the previous screen, click [Use here] on it — the other
+one switches off.
+
+![The previous buzzer screen — the device was opened elsewhere](zrzut:device-lease-replaced@phone-landscape)
+
+[Copy] copies the code. [Shares] (next to the code, with the number of people) shows who the
+device is shared with in this session — revoke a share with the trash icon. [Share] (for the
+Display next to [Open], for the Host and the Buzzer below the QR codes) sends the device to another
+person — enter their email address or username, or select friends, and choose [Share]; the
+window closes. A recipient with an account will find the device in
 *Connect a device* → "Devices shared with me", and a person without an account — in the
 email and on the *My notifications* page. In the shared list, a phone and a tablet
 show the Host and the Buzzer, and a computer shows the Display. Sharing devices requires an account.
 
-![Sharing a device with another person](zrzut:play-control-share-device-list)
+![Device shares — who it is shared with in this session](zrzut:play-control-share-device-list)
+![Share a device — address or friends](zrzut:control-share-send)
 
 **Without some of the devices:**
 
@@ -116,7 +127,9 @@ timer keeps counting down. Common causes and fixes → 19.5.
 The browser may mute the Display's sound after it is reloaded or the TV goes to sleep —
 then the [Unlock sound] button appears again, and the panel waits until it is pressed.
 
-**How the panel works.** The hints column tells you who is answering now and what the game is waiting for; the bar under
+**How the panel works.** The hints column tells you who is answering now, what the next step is
+and the rules the buttons do not show (e.g. that the end of the 3 s countdown is an X, and the third X
+starts a steal); when a tile is selected, it reminds you to click it again. The bar under
 the board shows the playing team and the round pool. The button for moving on changes its name depending
 on the step (e.g. [Go to the final]). Actions that change the score — revealing an answer,
 an X, accepting a buzz, passing control — need **two clicks**: the first selects the

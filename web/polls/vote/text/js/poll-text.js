@@ -1,13 +1,13 @@
 // js/pages/poll-text.js
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T05492";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-23T20201";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T05492";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-23T05492";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-23T05492";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-23T05492";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-23T05492";
-import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-23T05492";
-import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-23T05492";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-23T20201";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-23T20201";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-23T20201";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-23T20201";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-23T20201";
+import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-23T20201";
+import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-23T20201";
 
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
@@ -411,7 +411,7 @@ window.addEventListener("pagehide", () => stopRetry?.(), { once: true });
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+    // initI18n() robi dynamic import części słownika — bez tego czekania
     // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
     // co dla elementów bez data-i18n (np. #closed) zwraca surowy klucz
     // (np. "pollText.alreadyVoted") zamiast tłumaczenia (patrz t() w

@@ -59,7 +59,7 @@ test("filtr podpięty na stronach gier i baz, tłumaczenia w pl/en/uk", () => {
   assert.match(read("web/games/js/games.js"), /filter:\s*\{\s*param: "status"/);
   assert.match(read("web/bases/js/bases.js"), /filter:\s*\{\s*param: "role"/);
   for (const l of ["pl", "en", "uk"]) {
-    const s = read(`web/shared/translation/${l}.js`);
+    const s = ["common", "games", "bases"].map((part) => read(`web/shared/translation/${l}/${part}.js`)).join("\n");
     for (const k of ["filterAll:", "noResults:", "filter: {"]) assert.ok(s.includes(k), `${l}: ${k}`);
   }
 });

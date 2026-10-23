@@ -10,12 +10,16 @@ A base is shared by its owner; this requires an account (→ 5.1).
 
 ## 12.2 Inviting people to a base
 
-1. On the *Question bases* page, select your base and choose [Share].
-2. Choose the access level: "Can edit" (the default) or "View only".
-3. Enter an email address or username and choose [Share] — or select people in the
-   "Friends" list and choose [Share with selected].
+1. On the *Question bases* page, select your base and choose [Share] in the bottom bar.
+2. Enter an email address or username, or select people in the "Friends" list.
+3. At the bottom of the window choose the access level: "Can edit" (the default) or "View only",
+   and choose [Share] — with several recipients the button shows their number, e.g.
+   [Share (3)]. Everyone from this window gets the same access level.
 
-![Share a base](zrzut:bases-share-tools)
+After sending, the window closes. If an invitation cannot be sent (e.g. the person is no longer
+your friend), the window stays open and shows a message.
+
+![Share a base](zrzut:bases-share-send)
 
 The invited person does not have to be your friend, but they must have an account. If they have
 notifications turned on, they get an email with a link.
@@ -55,12 +59,15 @@ busy for a moment. If you try to change it at the same time, you will see the me
 is currently being edited in another tab or by another user." Wait a moment
 and try again. While someone has the base open, the owner cannot rename or delete it.
 
-**Managing access (owner).** In the [Share] window, in the "Shared with" section, you can see
-pending, accepted and declined invitations. You can:
+**Managing access (owner).** The [Shares] window (button in the top bar) shows
+pending, accepted and declined invitations. Next to each person you can:
 
-- change the access level, even before the invitation is accepted,
-- send a reminder about a pending invitation,
-- revoke access or cancel an invitation.
+- change the access level with the "Can edit" / "View only" button — the change is saved
+  immediately, even before the invitation is accepted,
+- send a reminder about a pending invitation — the next one after the countdown on the button,
+- revoke access or cancel an invitation with the trash icon.
+
+![Base shares — list of people with the permission next to each](zrzut:bases-share-tools)
 
 A person whose access is revoked loses it immediately — if they have the base open, they will see the message
 "Access revoked". You can also leave a base shared with you yourself with the

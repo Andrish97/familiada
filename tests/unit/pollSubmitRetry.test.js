@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import { loadDict } from "./helpers/i18n.js";
 const source=await readFile(new URL('../../web/shared/js/core/poll-submit-retry.js',import.meta.url),'utf8');
 const body=source.replace(/^import .*;\s*$/gm,'').replace('export function','function')+';return showPollSubmitRetry;';
 async function setup(lang='pl') {
- const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+ const dict = await loadDict(lang);
  const messages=[],events=new Map();let now=0,tick,removed=false;
  const t=(key,args={})=>Object.entries(args).reduce((value,[key,arg])=>value.replaceAll('{'+key+'}',String(arg)),dict.pollAnonymous[key.split('.').at(-1)]);
  const window={addEventListener:(key,fn)=>events.set(key,fn),removeEventListener:key=>events.delete(key)};

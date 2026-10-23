@@ -83,7 +83,8 @@ treści gry i danych osobowych.
 3. Usuwane też wszystko, co powiązane z moim **e-mailem**: subskrypcje
    i zaproszenia tylko po e-mailu, zaproszenia do baz, oczekujące
    i nieudane maile do mnie i ode mnie, logi maili, tokeny wypisania,
-   limity wysyłek, zgłoszenia kontaktowe — **całe** (decyzja 2026-10-07).
+   limity wysyłek (decyzja 2026-10-07). Zgłoszenia kontaktowe zostają
+   z plakietką „konto usunięte” (zmiana 2026-10-23, decyzja 3).
    Ponowna rejestracja tym samym e-mailem zaczyna od zera.
 4. Współpracownik mojej bazy: przy najbliższej akcji / odnowieniu
    blokady komunikat „Baza została usunięta” z wyjściem do listy baz.
@@ -97,6 +98,11 @@ treści gry i danych osobowych.
    że ankieta zostanie przerwana.
 2. Głosy usuniętego konta w cudzych ankietach: zostają anonimowe.
 3. Zgłoszenia kontaktowe usuniętego konta: usuwane całe.
+   **Zmiana 2026-10-23 (decyzja użytkownika, E26):** zgłoszenia zostają —
+   słuszne zgłoszenie ma być widoczne i poprawione, nawet gdy autor potem
+   usunął konto. Usunięcie konta oznacza jego zgłoszenia
+   (`reports.author_account_deleted_at`), a panel admina pokazuje przy nich
+   plakietkę „konto usunięte”.
 4. Usunięcie konta jest nadrzędne — pomija blokady (jedyny wyjątek).
    Usunięcie gry blokady respektuje.
 

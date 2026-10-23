@@ -50,13 +50,24 @@ szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 ![Strona *Podłącz urządzenie*](zrzut:connect-device)
 ![Po wpisaniu kodu — nazwa gry i właściciel do sprawdzenia](zrzut:play-connect-confirm)
 
-[Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
-nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
+Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie albo na innym sprzęcie
+(np. po ponownym zeskanowaniu kodu) od razu przejmuje jego rolę, a poprzedni ekran pokazuje
+„Urządzenie otwarto w innym miejscu”. Aby wrócić do poprzedniego ekranu, kliknij na nim
+[Używaj tutaj] — wtedy wyłączy się ten drugi.
+
+![Poprzedni ekran Przycisku — urządzenie otwarto w innym miejscu](zrzut:device-lease-replaced@phone-landscape)
+
+[Kopiuj] kopiuje kod. [Udostępnienia] (obok kodu, z liczbą osób) pokazuje, komu urządzenie
+jest udostępnione w tej sesji — ikoną kosza cofniesz udostępnienie. [Udostępnij] (przy
+Wyświetlaczu obok [Otwórz], przy Prowadzącym i Przycisku pod kodami QR) wysyła urządzenie innej
+osobie — wpisz jej adres e-mail lub nazwę użytkownika albo zaznacz znajomych i wybierz
+[Udostępnij]; okno się zamknie. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
 e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
-![Udostępnianie urządzenia innej osobie](zrzut:play-control-share-device-list)
+![Udostępnienia urządzenia — komu jest udostępnione w tej sesji](zrzut:play-control-share-device-list)
+![Udostępnij urządzenie — adres lub znajomi](zrzut:control-share-send)
 
 **Bez części urządzeń:**
 
@@ -116,7 +127,9 @@ zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 Przeglądarka może wyciszyć dźwięk Wyświetlacza po jego przeładowaniu albo uśpieniu telewizora —
 wtedy przycisk [Odblokuj dźwięk] pojawi się ponownie, a panel poczeka na jego naciśnięcie.
 
-**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada i na co czeka gra; pasek pod
+**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada, jaki jest następny krok
+i reguły, których nie widać na przyciskach (np. że koniec odliczania 3 s to X, a trzeci X
+oznacza kradzież); przy zaznaczonym kafelku przypomina o drugim kliknięciu. Pasek pod
 tablicą pokazuje drużynę grającą i pulę rundy. Przycisk przejścia dalej zmienia nazwę zależnie
 od kroku (np. [Przejdź do finału]). Czynności, które zmieniają wynik — odsłonięcie odpowiedzi,
 X, przyjęcie zgłoszenia, oddanie kontroli — wymagają **dwóch kliknięć**: pierwsze zaznacza

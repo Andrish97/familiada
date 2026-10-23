@@ -14,12 +14,13 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05492";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-23T05492";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-23T05492";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T05492";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-23T05492";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T05492";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T20201";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-23T20201";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-23T20201";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T20201";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-23T20201";
+import { createWriteOrder, confirmedRevisionOnly } from "./writeOrder.js?v=v2026-10-23T20201";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T20201";
 
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
@@ -135,6 +136,25 @@ export function createStore(gameId) {
   // te same referencje z `state`, więc późniejsza mutacja i tak przeciekałaby
   // do już "zbudowanego" payloadu, unieważniając cały ten fix.
   let _writeQueue = Promise.resolve();
+  const writeOrder = createWriteOrder();
+  // Potwierdzony wiersz: pełne zastosowanie tylko, gdy nie czeka nowszy zapis
+  // (writeOrder.js) — inaczej lokalny, nowszy stan zostaje, a z serwera
+  // bierzemy rewizję i blokadę.
+  function applyConfirmed(row) {
+    if (writeOrder.newerQueued()) {
+      state.rev = row.rev ?? state.rev;
+      state.__row = confirmedRevisionOnly(state.__row, row);
+    } else {
+      applyRow(row);
+    }
+  }
+  function enqueueWrite(run) {
+    writeOrder.enqueue();
+    const settled = () => run().finally(() => writeOrder.settle());
+    const result = _writeQueue.then(settled, settled);
+    _writeQueue = result.catch(() => {});
+    return result;
+  }
   function commit({ soundCueKey, lockMs } = {}) {
     const payload = {
       step: state.step,
@@ -145,10 +165,7 @@ export function createStore(gameId) {
       lockMs: lockMs == null ? null : Math.ceil(lockMs),
       detail: structuredClone(buildDetail(state)),
     };
-    const run = () => commitNow(payload);
-    const result = _writeQueue.then(run, run);
-    _writeQueue = result.catch(() => {});
-    return result;
+    return enqueueWrite(() => commitNow(payload));
   }
 
   // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
@@ -204,7 +221,7 @@ export function createStore(gameId) {
       console.log(`[e2e-diag-state] t=${_t0} commitNow.attempt START step=${payload.step} expectedRev=${state.rev}`);
       const row = await persist.write({ ...payload, expectedRev: state.rev });
       console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt WRITE-OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
-      applyRow(row);
+      applyConfirmed(row);
       emit();
       ringDoorbell(gameId, row.rev);
       return row;
@@ -241,10 +258,7 @@ export function createStore(gameId) {
     // setLock() w ogóle zdąża dostać swoją kolej w _writeQueue, czy czeka
     // za czymś, co nigdy się nie rozstrzyga.
     console.log(`[e2e-diag-state] t=${Date.now()} setLock ENQUEUE ms=${ms}`);
-    const run = () => setLockNow(ms);
-    const result = _writeQueue.then(run, run);
-    _writeQueue = result.catch(() => {});
-    return result;
+    return enqueueWrite(() => setLockNow(ms));
   }
 
   async function setLockNow(ms) {
@@ -267,7 +281,7 @@ export function createStore(gameId) {
         }
       }
       console.log(`[e2e-diag-state] t=${Date.now()} setLockNow OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
-      applyRow(row);
+      applyConfirmed(row);
       emit();
     } catch (e) {
       console.log(`[e2e-diag-state] t=${Date.now()} setLockNow CATCH afterMs=${Date.now() - _t0}: ${e?.constructor?.name} ${e?.message}`);

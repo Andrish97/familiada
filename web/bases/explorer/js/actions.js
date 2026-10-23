@@ -12,13 +12,13 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-23T05492";
+} from "./state.js?v=v2026-10-23T20201";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-23T05492";
-import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T05492";
-import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-23T05492";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-23T20201";
+import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-23T20201";
+import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-23T20201";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-23T05492";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-23T20201";
 
 
 import {
@@ -27,19 +27,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-23T05492";
+} from "./repo.js?v=v2026-10-23T20201";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-23T05492";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-23T05492";
-import { initExportModal } from "./export-modal.js?v=v2026-10-23T05492";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-23T05492";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T05492";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T05492";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T05492";
-import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T05492";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T05492";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T05492";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-23T05492";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-23T20201";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-23T20201";
+import { initExportModal } from "./export-modal.js?v=v2026-10-23T20201";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-23T20201";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T20201";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T20201";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T20201";
+import { alertModal, confirmModal, promptModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T20201";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T20201";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T20201";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-23T20201";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -981,8 +981,7 @@ export async function deleteSelected(state) {
     return false;
   }
 
-  const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteItems", { label }) });
+  const ok = await confirmModal({ text: keys.size === 1 ? t("baseExplorer.confirm.deleteOne") : t("baseExplorer.confirm.deleteMany", { n: keys.size }) });
   if (!ok) return false;
 
   return await deleteItems(state, keys);
@@ -1077,7 +1076,7 @@ export async function renameByKey(state, key, newValueRaw) {
 async function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   const v = await promptModal({
     title: title || t("baseExplorer.rename.title"),
-    text: t("baseExplorer.rename.help"),
+    text: "",
     okText: t("baseExplorer.common.save"),
     cancelText: t("common.cancel"),
     value: String(value || ""),
@@ -1166,8 +1165,7 @@ export async function deleteTags(state, tagIds) {
   const ids = Array.from(new Set((tagIds || []).filter(Boolean)));
   if (!ids.length) return false;
 
-  const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteTags", { label }) });
+  const ok = await confirmModal({ text: ids.length === 1 ? t("baseExplorer.confirm.deleteTagsOne") : t("baseExplorer.confirm.deleteTagsMany", { n: ids.length }) });
   if (!ok) return false;
 
   const lease = await acquireResourceLocks(
@@ -2187,8 +2185,7 @@ async function untagSelectedInTagView(state) {
     return false;
   }
 
-  const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.removeTagsInTagView", { label }) });
+  const ok = await confirmModal({ text: keys.size === 1 ? t("baseExplorer.confirm.removeTagsOne") : t("baseExplorer.confirm.removeTagsMany", { n: keys.size }) });
   if (!ok) return false;
 
   const qIds = [];

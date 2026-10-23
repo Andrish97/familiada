@@ -10,9 +10,9 @@ zaprosili Cię inni (→ 12). Filtr nad listą pokaże bazy według roli: Moja, 
 
 - Aby utworzyć bazę, kliknij kafelek „Nowa baza” i wpisz nazwę (do 80 znaków).
 - Aby otworzyć bazę, zaznacz ją i wybierz [Przeglądaj|folder].
-- Dla zaznaczonej bazy dostępne są też [Udostępnij] (→ 12.2), [Powiel], [Eksport] do pliku
-  `.fambase` i [Import] z pliku.
-- Nazwę bazy zmienisz dwuklikiem, a bazę usuniesz ikoną kosza — tylko w swoich bazach.
+- Właściciel zaznaczonej bazy ma w górnym pasku [Udostępnienia] (kto ma dostęp), a w dolnym
+  [Powiel], [Eksport] do pliku `.fambase`, [Import] z pliku i [Udostępnij] (→ 12.2).
+- Nazwę bazy zmienisz dwuklikiem (na telefonie stuknij dwa razy), a bazę usuniesz ikoną kosza — tylko w swoich bazach.
 
 ![Bazy pytań](zrzut:bases)
 ![Nowa baza](zrzut:bases-name-create)

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { VERSION, withImporters } = require("../../scripts/screens/changes.cjs");
+const { VERSION, withImporters, expandI18nParts } = require("../../scripts/screens/changes.cjs");
 const scenes = require("../../scripts/screens/scenes.cjs");
 
 test("same znaczniki wersji (?v= i meta app-version) nie są zmianą", () => {
@@ -32,4 +32,14 @@ test("wspólny moduł dotyczy tylko stron, które go wczytują (także pośredni
 test("moduł wczytywany przez każdą stronę (page-init) dotyczy prawie wszystkich scen", () => {
   const files = withImporters(["web/shared/js/core/device-guard.js"]);
   assert.ok(files.has("web/games/index.html") && files.has("web/control/index.html"));
+});
+
+test("część słownika dotyczy tylko stron z nią w meta i18n-parts", () => {
+  const pick = (files) => scenes.filter((s) => [...files].some((f) => (s.sources || []).some((src) => f.startsWith(src)))).map((s) => s.id);
+  const snake = pick(withImporters(expandI18nParts(["web/shared/translation/en/snake.js"])));
+  assert.ok(snake.length > 0, "sceny Węża");
+  assert.ok(!snake.includes("games") && !snake.includes("control"), "zmiana tekstu Węża nie odświeża Gier ani Control");
+  assert.deepEqual(expandI18nParts(["web/shared/translation/pl/server.js"]), []);
+  // część wspólna -- jak translation.js (każda strona z tłumaczeniami)
+  assert.deepEqual(expandI18nParts(["web/shared/translation/uk/common.js"]), ["web/shared/translation/translation.js"]);
 });

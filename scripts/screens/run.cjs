@@ -43,6 +43,8 @@ if (args.viewport) {
   DEVICES.viewport = { width: w, height: h, scale: 1, mobile: false };
 }
 const LANGS = ["pl", "en", "uk"];
+// Strefa bezpieczna iPhone'a (wyspa aparatu, pasek gestu) dla urządzeń „phone” -- jak na telefonie.
+const IPHONE_SAFE_AREA = { phone: { top: 47, bottom: 34 }, "phone-landscape": { left: 59, right: 59, bottom: 21 } };
 
 // ---------- wybór scen ----------
 const { selectChanged } = require("./changes.cjs");
@@ -78,10 +80,14 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   // Dane tylko dla tej sceny (np. pusty stan, błąd, inny stan gry) bez zmian w demo.cjs.
   if (typeof scene.db === "function") scene.db(db, lang);
   const context = await newContext(browser, db, lang, device);
-  if (scene.safeArea) await emulateSafeArea(context, origin, scene.safeArea);
+  // Telefon jak iPhone (zrzuty w ramce z wyspą aparatu): strefa bezpieczna, chyba że scena ma własną.
+  const safeArea = scene.safeArea || IPHONE_SAFE_AREA[deviceName];
+  if (safeArea) await emulateSafeArea(context, origin, safeArea);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // Brak sekcji słownika na stronie (nieaktualna meta i18n-parts) -- jak błąd JS.
+  page.on("console", (m) => { if (m.text().startsWith("[i18n]")) errors.push(m.text()); });
   if (args.verbose) page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log(`    [${m.type()}] ${m.text().slice(0, 300)}`); });
   const [pathOnly, hash = ""] = scene.path.split("#");
   const sep = pathOnly.includes("?") ? "&" : "?";

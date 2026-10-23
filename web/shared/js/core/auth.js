@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-23T05492";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-23T05492";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T05492";
+import { icon } from "./icons.js?v=v2026-10-23T20201";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-23T20201";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T20201";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -41,7 +41,7 @@ export function niceAuthError(e) {
 
   // Limit częstotliwości maili GoTrue: "...you can only request this after 53 seconds."
   const wait = low.match(/only request this after (\d+) seconds?/);
-  if (wait) return t("index.errResendCooldown", { time: `${wait[1]} s` });
+  if (wait) return t("auth.errResendCooldown", { time: `${wait[1]} s` });
 
   // 2) "New password should be different from the old password."
   if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
@@ -72,7 +72,7 @@ export function niceAuthError(e) {
     if (status >= 500 || low.includes("unexpected_failure") || low.includes("internal")) {
       return t("auth.loginFailed");
     }
-    return t("index.captchaRequired");
+    return t("auth.captchaRequired");
   }
 
   // 7) Links / tokens
@@ -146,7 +146,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-23T05492";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-23T20201";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -159,7 +159,7 @@ export function validateUsername(un, { allowEmpty = false } = {}) {
   // NOTE: guests will be prompted to change it after account upgrade.
   if (v.toLowerCase().startsWith("guest_")) throw new Error(t("auth.usernameReservedGuest"));
   const reserved=reservedUsernameReason(v);
-  if (reserved) throw new Error(t("index.errUsernameTaken"));
+  if (reserved) throw new Error(t("auth.errUsernameTaken"));
   if (v.length < 3) throw new Error(t("auth.usernameMin"));
   if (v.length > 20) throw new Error(t("auth.usernameMax"));
   if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error(t("auth.usernameChars"));
@@ -175,7 +175,8 @@ export function validatePassword(pwd) {
   if (!/[0-9]/.test(v)) hints.push(t("auth.passwordHintNumber"));
   if (!/[^A-Za-z0-9]/.test(v)) hints.push(t("auth.passwordHintSpecial"));
   if (hints.length) {
-    throw new Error(t("auth.passwordRules", { hints: hints.join(", ") }));
+    // Pełna lista wymagań stoi już w podpowiedzi przy polu -- błąd mówi tylko, czego brakuje.
+    throw new Error(t("auth.passwordMissing", { hints: hints.join(", ") }));
   }
   return v;
 }
@@ -389,7 +390,7 @@ export function guestAuthEntryUrl() {
  */
 export async function convertGuestToRegisteredEmailOnly(email, language, captchaToken = null) {
   const mail = String(email || "").trim().toLowerCase();
-  if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
+  if (!mail || !mail.includes("@")) throw new Error(t("auth.errInvalidEmail"));
 
   const payload = {
     email: mail,
@@ -505,12 +506,12 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
 
 export async function getEmailStatus(email, captchaToken = null) {
   const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized || !normalized.includes("@")) throw new Error(t("index.errInvalidEmail"));
+  if (!normalized || !normalized.includes("@")) throw new Error(t("auth.errInvalidEmail"));
 
   const { status, data } = await authApi("email-status", { email: normalized, ...(captchaToken ? { captcha_token: captchaToken } : {}) });
   if (status === 429) throw new Error(t("auth.tooManyRequests"));
   if (data.error === "captcha_failed") throw authApiError(status, data.error);
-  if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
+  if (status !== 200 || !data.ok) throw new Error(t("auth.statusError"));
 
   const statusRaw = String(data.status || "").trim().toLowerCase();
   return {
@@ -529,7 +530,7 @@ export async function prepareConfirmationResend(email, intent, captchaToken = nu
   });
   if (status === 429) throw new Error(t("auth.tooManyRequests"));
   if (data.error === "captcha_failed") throw authApiError(status, data.error);
-  if (status !== 200 || !data.ok) throw new Error(t("index.statusError"));
+  if (status !== 200 || !data.ok) throw new Error(t("auth.statusError"));
   return { allowed: !!data.allowed, nextAllowedAtMs: data.next_allowed_at ? Date.parse(data.next_allowed_at) || 0 : 0 };
 }
 
@@ -554,7 +555,7 @@ export async function signOut() {
 
 export async function resetPassword(email, redirectTo, language, captchaToken = null) {
   const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized.includes("@")) throw new Error(t("index.errResetMissingLogin"));
+  if (!normalized.includes("@")) throw new Error(t("auth.errResetMissingLogin"));
 
   const resetRedirectTo = redirectTo || buildAuthRedirect("/login/reset/", language);
 
@@ -577,7 +578,7 @@ export async function resetPasswordByUsername(username, language, captchaToken =
     lang: language,
     ...(captchaToken ? { captcha_token: captchaToken } : {}),
   });
-  if (status === 404) throw new Error(t("index.errResetMissingLogin"));
+  if (status === 404) throw new Error(t("auth.errResetMissingLogin"));
   if (status !== 200 || !data.ok) throw authApiError(status, data.error);
   return { sent: !!data.sent, nextAllowedAtMs: data.next_allowed_at ? Date.parse(data.next_allowed_at) || 0 : 0 };
 }

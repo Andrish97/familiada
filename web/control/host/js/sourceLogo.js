@@ -1,6 +1,8 @@
 // Host-only renderer for the source preserved in a logo's payload.
 // Logo editors and their stored formats are deliberately not changed here.
 
+import { prepareFabric } from "../../../shared/js/core/fabric-compat.js?v=v2026-10-23T20201";
+
 const FRAME_W = 1280;
 const FRAME_H = 720;
 const LOGO_ASPECT = 26 / 11;
@@ -30,7 +32,7 @@ function canvasOf(width, height) {
 function loadWordmarkFont() {
   if (!fontPromise) {
     fontPromise = (async () => {
-      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-23T05492")', { weight: "200 900" });
+      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-23T20201")', { weight: "200 900" });
 
       await font.load();
       document.fonts.add(font);
@@ -41,13 +43,13 @@ function loadWordmarkFont() {
 }
 
 function loadFabric() {
-  if (globalThis.fabric?.StaticCanvas) return Promise.resolve(globalThis.fabric);
+  if (globalThis.fabric?.StaticCanvas) return Promise.resolve(prepareFabric(globalThis.fabric));
   if (!fabricPromise) {
     fabricPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-23T05492";
+      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-23T20201";
       script.async = true;
-      script.onload = () => globalThis.fabric?.StaticCanvas ? resolve(globalThis.fabric) : reject(new Error("Fabric.js did not initialize"));
+      script.onload = () => globalThis.fabric?.StaticCanvas ? resolve(prepareFabric(globalThis.fabric)) : reject(new Error("Fabric.js did not initialize"));
       script.onerror = () => reject(new Error("Fabric.js could not be loaded"));
       document.head.appendChild(script);
     });
@@ -375,11 +377,8 @@ async function renderDrawLogo(logo, dot) {
     const background = source.bg === "WHITE" ? "#fff" : source.bg === "BLACK" ? "#000" : savedScene.background;
     scene.background = background || "";
     scene.backgroundColor = background || "";
-    await new Promise((resolve, reject) => {
-      try { canvas.loadFromJSON(scene, resolve); } catch (error) { reject(error); }
-    });
-    canvas.setWidth(width);
-    canvas.setHeight(height);
+    await canvas.loadFromJSON(scene);
+    canvas.setDimensions({ width, height });
     canvas.renderAll();
     const svgSource = canvas.toSVG({
       suppressPreamble: true,

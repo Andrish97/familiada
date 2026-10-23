@@ -2,10 +2,11 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T05492"/>
+  <meta name="app-version" content="v2026-10-23T20201"/>
 
 
   <meta charset="utf-8" />
+  <meta name="i18n-parts" content="baseExplorer gameValidate games questionForm resources">
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -15,21 +16,21 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05492" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05492" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T05492" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T05492" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T05492" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T20201" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T20201" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T20201" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T20201" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T20201" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T05492"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T20201"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T05492" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T20201" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T05492"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T20201"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T05492" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T20201" defer></script>
 
 </head>
 
@@ -119,7 +120,7 @@
       <div class="mSub" data-i18n="baseExplorer.search.sheetHelp">Szuka w nazwach pytań i folderów. Tagi i kategorie wybierasz przyciskami w pasku — działają razem z tekstem.</div>
       <div class="searchSheetBody" id="searchSheetBody"></div>
       <div class="modal-actions">
-        <button class="btn sm" id="searchSheetClear" type="button" data-i18n="baseExplorer.search.clear" data-i18n-icon="close">Wyczyść</button>
+        <button class="btn sm" id="searchSheetClear" type="button" data-i18n="common.clear" data-i18n-icon="close">Wyczyść</button>
         <button class="btn sm gold" id="searchSheetDone" type="button" data-i18n="baseExplorer.search.done" data-i18n-icon="check">Gotowe</button>
       </div>
     </div>
@@ -175,7 +176,6 @@
           <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <div class="mSub" id="tagsEditHelp">—</div>
   
         <div class="tagsEditGrid tagsCard">
           <label class="tagsCardLbl" for="tagsEditName" data-i18n="baseExplorer.tags.nameLabel">Nazwa</label>
@@ -390,7 +390,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T05492"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T20201"></script>
 
 </body>
 </html>

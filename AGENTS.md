@@ -18,6 +18,8 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
   Test accounts — role i lease (E25): `docs/konta-testowe-plan.md`.
   Diagnostyka rozgrywek Control 2 per sesja: `docs/diagnostyka-sesji-plan.md`.
+  Podział tłumaczeń na części (E27): `docs/tlumaczenia-podzial-plan.md`.
+  Sprzątanie bazy (audyt 2026-10-23, do decyzji): `docs/audyt-sprzatania-bazy.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
 - **Kompletna mapa stron i nawigacji (decyzja 2026-10-17):** dodanie,
   usunięcie, zmiana adresu albo zachowania dowolnej strony wymaga równoczesnej
@@ -176,6 +178,45 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+- **Tłumaczenia przy każdej zmianie (decyzja użytkownika 2026-10-23):** kto zmienia
+  kod lub teksty strony, pilnuje tłumaczeń w tym samym commicie:
+  - nowy lub zmieniony tekst — od razu w `web/shared/translation/{pl,en,uk}/<część>.js`
+    (wszystkie trzy języki, ta sama treść znaczeniowa), nigdy tekst na sztywno w JS/HTML
+    (poza zapasowym tekstem w HTML przy `data-i18n`, zgodnym z PL);
+  - **części słownika (E27, decyzja użytkownika 2026-10-23):** `common` (każda strona),
+    części stron (`games`, `control`, `polls`…) i `server` (teksty serwera — strony
+    jej nie wczytują). Nowy klucz w sekcji, w której już leżą teksty tej strony;
+    moduł wspólny (`web/shared/js`) bierze teksty z `common`, nie z sekcji jednej
+    strony. Po zmianie kluczy użytych na stronie: `node scripts/i18n-parts.mjs`
+    (meta `i18n-parts` w HTML; zapadka `unit/i18nParts.test.js`). Plan:
+    `docs/tlumaczenia-podzial-plan.md`;
+  - **panel admina (decyzja użytkownika 2026-10-23):** teksty `web/settings` mogą
+    być wpisane na sztywno po polsku; tłumaczenia tylko dla tego, co trafia do
+    użytkowników (maile, podgląd strony przerwy);
+  - tekst, który przestał być używany — usunąć klucz z trzech języków
+    (`node scripts/i18n-prune.mjs`); klucz użyty w kodzie musi istnieć w słowniku;
+  - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
+  - sprawdzenie: `node scripts/i18n-unused.mjs` (nieużywane, brakujące, różnice
+    między językami) i zapadka `unit/i18nUnused.test.js`.
+  - **wyjątek — panel admina (`web/settings/`, decyzja użytkownika 2026-10-23):**
+    teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony.
+- **Podręcznik przy zmianach działania (decyzja użytkownika 2026-10-23):** zmiana,
+  która wyraźnie zmienia wygląd strony albo sposób korzystania z funkcji (nowy lub
+  usunięty przycisk, inny gest, kolejność kroków, nowe ograniczenie, nowy komunikat
+  ważny dla użytkownika), w tym samym etapie aktualizuje Wskazówki: tekst
+  `docs/podrecznik/*.md` w PL, EN i UK (tylko stan obecny, bez „wcześniej”/„teraz już”),
+  sceny zrzutów użyte w treści (`![Podpis](zrzut:scena)`, nowa scena, gdy podręcznik
+  pokazuje nowy stan), potem `node scripts/manual/build-content.mjs`. Zrzuty
+  Wskazówek odświeża CI po pushu na `main`. Drobne poprawki bez wpływu na opis — bez zmian
+  w podręczniku. Plan i zasady: `docs/podrecznik-plan.md`.
+- **Podpowiedzi (decyzja użytkownika 2026-10-23):** podpowiedź jest skuteczna, jasna,
+  trafna (zgodna z faktycznym działaniem i etykietą przycisku), sensowna i mówi tylko
+  to, co **nieoczywiste** — oczywistych rzeczy nie podpowiadamy; ten sam tekst nie
+  stoi dwa razy w jednym widoku (podpowiedź nie powtarza kafla, tytułu, nagłówka,
+  przycisku ani listy warunków); bez „na dole okna”, „po lewej” itp., gdy na telefonie
+  układ jest inny — element wskazujemy nazwą. W Control podpowiedzi są krótkie i zawsze mieszczą
+  się bez przewijania (`unit/hints.test.js`, ≤ 90 znaków). Pełne zasady:
+  `docs/wzorce-ui.md` „A16. Podpowiedzi”; audyt: `docs/audyt-podpowiedzi.md`.
 
 ## Stan i wznawianie
 

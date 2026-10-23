@@ -449,6 +449,45 @@ elementu zostaje cała).
 Legenda: **✓** zgodne · **✗ n** odstaje (numer = opis w B2) · **—** nie dotyczy.
 Lokalizacje `plik:linia` względem `web/`.
 
+## A16. Podpowiedzi [decyzja użytkownika 2026-10-23]
+
+Podpowiedź = tekst pomocniczy przy elemencie (pasek listy, pole, sekcja,
+okno, blok podpowiedzi Control, dymek). Kryteria (audyt
+`docs/audyt-podpowiedzi.md`):
+
+- **Nieoczywistość** — podpowiadamy tylko to, czego nie widać z samego
+  interfejsu: reguły (np. „3 s bez odpowiedzi = X”), skutki (co zobaczy
+  Wyświetlacz, co się stanie po kliknięciu), ukryte gesty (podwójne
+  naciśnięcie zmienia nazwę), ograniczenia (limity znaków, warunki gotowości).
+  Nie podpowiadamy tego, co mówi przycisk, tytuł albo stan elementu
+  („Kliknij, żeby zaznaczyć”, „Przejdź dalej” przy jedynym aktywnym „Dalej”).
+- **Skuteczność** — podpowiedź pojawia się tam i wtedy, kiedy jest potrzebna
+  (np. „kliknij jeszcze raz” dopiero przy zaznaczonym kaflu), a błąd mówi,
+  co zrobić albo czego brakuje.
+- **Klarowność** — krótko, pełnymi zdaniami, z podmiotem; bez skrótów myślowych
+  i odwołań do miejsc spoza widoku („przy wejściu do Podsumowania” na stronie
+  ustawień).
+- **Trafność** — zgodna z działaniem kodu i z etykietą przycisku w każdym
+  języku (cytujemy dokładną etykietę albo nie cytujemy wcale); liczby ze
+  stałych, nie na sztywno.
+- **Bez wskazań położenia zależnych od układu** — nie piszemy „na dole
+  okna”, „po lewej”, „po prawej”, jeśli na telefonie (arkusz, wysuwany panel,
+  pasek akcji u góry) element jest gdzie indziej; wskazujemy element nazwą
+  („w panelu tagów”, „na liście”) albo w ogóle nie wskazujemy miejsca.
+- **Sensowność** — jedna podpowiedź na jedną rzecz; ten sam wzorzec na
+  wszystkich stronach ma ten sam tekst (np. `common.renameTileHint` na
+  listach kafli).
+- **Bez dublowania w jednym widoku** — ten sam tekst nie stoi dwa razy:
+  podpowiedź nie powtarza tekstu kafla, tytułu karty, nagłówka kroku,
+  przycisku, listy warunków ani błędu (błąd mówi tylko, czego brakuje).
+  Do sprawdzenia skaner powtórzonych zdań na scenach zrzutów (opis
+  w audycie, sekcja „Dublowanie w jednym widoku”).
+- **Control** — podpowiedzi krótkie (≤ 90 znaków, `unit/hints.test.js`)
+  i zawsze mieszczą się w kolumnie bez przewijania, razem z listą skrótów
+  klawiszowych, od 980 px szerokości.
+- **Tłumaczenia** — każda podpowiedź w PL/EN/UK; nieużywana — usunięta
+  (zasada w CLAUDE.md/AGENTS.md „Tłumaczenia przy każdej zmianie”).
+
 ## B1. Tabele
 
 ### Struktura

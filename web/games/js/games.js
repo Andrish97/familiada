@@ -1,24 +1,24 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-23T05492";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-23T05492";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-23T05492";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-23T05492";
-import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-23T05492";
-import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-23T05492";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05492";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-23T05492";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05492";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05492";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T05492";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05492";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T05492";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T05492";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T05492";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-23T05492";
+import { changeGameType } from "./change-type.js?v=v2026-10-23T20201";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-23T20201";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-23T20201";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-23T20201";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-23T20201";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-23T20201";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T20201";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-23T20201";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T20201";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-23T20201";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T20201";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T20201";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T20201";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T20201";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T20201";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-23T20201";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-23T05492";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T05492";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T05492";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T05492";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-23T20201";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-23T20201";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T20201";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T20201";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -26,10 +26,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-23T05492";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-23T05492';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-23T20201";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-23T20201';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05492";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T20201";
 
 import {
   TYPES,
@@ -38,13 +38,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-23T05492";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T05492";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05492";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-23T05492";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-23T05492";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T05492";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-23T05492";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-23T20201";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T20201";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T20201";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-23T20201";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-23T20201";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T20201";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-23T20201";
 
 
 const MSG = {
@@ -75,8 +75,7 @@ const MSG = {
   alertDeleteFailed: () => t("games.alert.deleteFailed"),
   alertDeleteInUseLocked: () => t("games.alert.deleteInUseLocked"),
   alertCreateFailed: () => t("games.alert.createFailed"),
-  hintSelect: () => t("games.hint.select"),
-  hintSelectPlus: () => t("games.hint.selectPlus"),
+  hintRename: () => t("common.renameTileHint"),
   alertCheckFailed: () => t("games.alert.checkFailed"),
   alertOpenPollFailed: () => t("games.alert.openPollFailed"),
   exportJsonSub: () => t("games.exportFile.subtitle"),
@@ -707,7 +706,7 @@ function typeLabel(uiType) {
   if (uiType === TYPES.POLL_POINTS) return MSG.typePollPoints();
   if (uiType === TYPES.PREPARED) return MSG.typePrepared();
   if (uiType === TYPES.MARKET) return MSG.typeMarket();
-  return String(uiType || t("control.dash")).toUpperCase();
+  return String(uiType || t("common.emDash")).toUpperCase();
 }
 
 // Klucz stanu kafla (draft/toOpen/open/stopped/ready) — wspólny dla etykiety i filtra.
@@ -916,7 +915,7 @@ function cardProposed(g, offer) {
     <div class="name"></div>
     <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
   `;
-  el.querySelector(".name").textContent = g.name || offer.name || t("control.dash");
+  el.querySelector(".name").textContent = g.name || offer.name || t("common.emDash");
   el.addEventListener("click", () => selectGame(g.id));
   bindProposedActions(el, {
     accept: () => decideResourceCopy(offer.id, "accept"),
@@ -945,7 +944,7 @@ function cardGame(g) {
     <div class="tileTags"></div>
   `;
 
-  el.querySelector(".name").textContent = g.name || t("control.dash");
+  el.querySelector(".name").textContent = g.name || t("common.emDash");
 
   // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
   // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
@@ -1053,7 +1052,7 @@ function render() {
     canExport: false,
   });
 
-  setHint(MSG.hintSelectPlus());
+  setHint(MSG.hintRename());
 }
 
 function renderMarket() {
@@ -1079,7 +1078,7 @@ function renderMarket() {
   }
 
   setMarketButtonsState();
-  setHint(t("games.market.hint"));
+  setHint("");
 }
 
 function setMarketButtonsState() {

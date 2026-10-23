@@ -66,6 +66,7 @@ async function handle(route) {
       delete headers.apikey;
       if (!/^Bearer ey/.test(headers.authorization || "") || !userFromAuth(headers.authorization)) delete headers.authorization;
       const res = await route.fetch({ url: target, headers });
+      if (process.env.LB_DEBUG) console.log(`[lb] ${req.method()} ${url.pathname} -> ${res.status()} ${req.headers().origin || ""} auth=${(() => { try { const q = JSON.parse(Buffer.from(String(req.headers().authorization).split(" ")[1].split(".")[1], "base64url")); return q.role + "/" + q.email; } catch { return "?"; } })()} kept=${!!headers.authorization}`);
       return route.fulfill({ response: res, headers: { ...res.headers(), ...CORS } });
     }
     if (url.pathname.startsWith("/auth/v1/token")) {
@@ -94,6 +95,8 @@ async function handle(route) {
   }
 
   if (url.hostname === "cdn.jsdelivr.net" || url.hostname === "unpkg.com") return route.continue().catch(() => route.abort());
+  // serwer z helpers/local-site.js (strony z dysku, adres 127.0.0.1)
+  if (url.hostname === "127.0.0.1" && url.origin !== PGRST) return route.continue();
   return route.abort();
 }
 

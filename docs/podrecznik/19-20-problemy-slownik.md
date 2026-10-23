@@ -89,14 +89,22 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   ekranu i nie przełączaj aplikacji. Gdy używasz przycisków fizycznych albo grasz bez tabletu
   prowadzącego — zaznacz odpowiednią opcję w panelu (→ 17.1). Po powrocie do strony urządzenie
   łączy się samo w kilka sekund.
-- **Kod QR zeskanowano kilka razy** → na tym samym telefonie działa najnowsza karta, a starsze
-  pokazują komunikat oczekiwania → wracaj do tej samej karty zamiast skanować ponownie; zbędne
-  karty zamknij.
-- **„Urządzenie czeka na swoją kolej”** → to samo urządzenie (przyciski, ekran prowadzącego lub
-  Wyświetlacz) jest otwarte na innym telefonie albo w innej przeglądarce → zamknij tamtą kartę
-  albo poczekaj kilkanaście sekund, aż się rozłączy.
+- **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
+  „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.
+- **„Urządzenie otwarto w innym miejscu”** → to samo urządzenie (Przycisk, ekran prowadzącego lub
+  Wyświetlacz) otwarto w innej karcie, przeglądarce albo na innym sprzęcie → ten ekran sam nie
+  wróci do gry; aby używać go tutaj, kliknij [Używaj tutaj] — tamten ekran się wyłączy.
 - **„Obróć telefon poziomo…”** na przycisku do pojedynku → przycisk działa w poziomie → obróć
   telefon i wyłącz blokadę obrotu ekranu.
+- **„Niedostępne na telefonie”** → strona wymaga tabletu lub komputera (np. edytory logo,
+  *Panel sterowania*) → otwórz ją na tablecie albo komputerze.
+- **„Obróć urządzenie”** → strona zmieści się po obróceniu tabletu → obróć urządzenie.
+- **„Za wąskie okno”** → okno przeglądarki jest węższe, niż potrzebuje strona (np. *Panel sterowania*,
+  edytory logo), także w widoku podzielonego ekranu → poszerz okno albo wyjdź z podzielonego ekranu.
+  Listy, Wskazówki i strony do głosowania działają w każdej szerokości.
+- **„Za małe okno”** → okno w poziomie jest za niskie (poniżej 580 px, np. przez paski przeglądarki
+  albo powiększenie strony) → powiększ okno, zmniejsz powiększenie strony lub wyjdź z podzielonego
+  ekranu.
 - **Brak dźwięku** → dźwięk nie jest odblokowany albo urządzenie jest wyciszone → sprawdź, skąd
   ma płynąć dźwięk (→ 17.2), głośność urządzenia i głośność w podsumowaniu ustawień.
 

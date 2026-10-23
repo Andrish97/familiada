@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       sql_file:
-        description: 'Plik zapytania, np. scripts/db-read/e21-demo-bases-long-answers.sql'
+        description: 'Plik zapytania, np. scripts/db-read/activity-now.sql'
         required: true
 
 concurrency:

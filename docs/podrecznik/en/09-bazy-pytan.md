@@ -10,9 +10,9 @@ invited you to (→ 12). The filter above the list shows bases by role: Mine, Ed
 
 - To create a base, click the "New base" tile and enter a name (up to 80 characters).
 - To open a base, select it and choose [Browse|folder].
-- For the selected base, [Share] (→ 12.2), [Duplicate], [Export] to a
-  `.fambase` file and [Import] from a file are also available.
-- You rename a base by double-clicking it, and delete it with the trash icon — only in your own bases.
+- The owner of the selected base has [Shares] (who has access) in the top bar and, in the bottom bar,
+  [Duplicate], [Export] to a `.fambase` file, [Import] from a file and [Share] (→ 12.2).
+- You rename a base by double-clicking it (on a phone, tap twice), and delete it with the trash icon — only in your own bases.
 
 ![Question bases](zrzut:bases)
 ![New base](zrzut:bases-name-create)

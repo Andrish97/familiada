@@ -48,9 +48,12 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
    poprawia scenę/dane, uruchamia `--changed`, ogląda PNG i pokazuje je
    użytkownikowi w odpowiedzi.
 2. **GitHub po każdym pushu** zmieniającym `web/**` albo `scripts/screens/**`
-   (workflow `screens.yml`): sceny zmienionych stron we wszystkich językach,
-   galeria na gałęzi `screens-gallery` (link w podsumowaniu przebiegu) i
-   artefakt. Commity CI z `[skip ci]` (wersje `?v=`) go nie uruchamiają.
+   (workflow `screens.yml`): sceny zmienionych stron po polsku (inne języki —
+   uruchomienie ręczne), galeria na gałęzi `screens-gallery` (link
+   w podsumowaniu przebiegu) i artefakt. Galeria ma limit 30 min i jej
+   przekroczenie nie zatrzymuje kroków strony głównej i Wskazówek (zmiana
+   tłumaczeń dotyczy wszystkich scen — wcześniej 3 języki zajmowały cały
+   limit przebiegu i zrzuty Wskazówek się nie odświeżały). Commity CI z `[skip ci]` (wersje `?v=`) go nie uruchamiają.
    **Na `main`** dodatkowo: zmienione kadry strony głównej są odświeżane
    (`publish-homepage.cjs`), zapisywane commitem `Refresh homepage screenshots`
    i workflow wywołuje wdrożenie Pages — strona główna i og:image same się
@@ -75,9 +78,17 @@ na których wygląd zmiana może wpłynąć.
   fonty i dane wyświetlacza (`web/shared/fonts|data`), `web/assets/`.
 - Commit bez zmian w wyglądzie (wydajność, łącze, dokumentacja) — zero scen.
 
-Na `main` punkt odniesienia to ostatni commit, który zmienił dane zrzuty
-(`web/manual/img` albo kadry strony głównej) — przebiegi pominięte przez kolejkę
-(`concurrency` bez przerywania na `main`) nie gubią zmian. Test:
+Na `main` punkt odniesienia to kod, z którego CI ostatnio renderowało zrzuty:
+stopka `Rendered-From: <sha>` w ostatnim commicie odświeżenia (autor `github-actions`,
+`web/manual/img` albo kadry strony głównej; ręczna publikacja części zrzutów go nie
+przesuwa). Nie sam commit odświeżenia — ten trafia na `main` przez rebase, więc pod nim
+leżą commity innych sesji, których CI nie renderowało (tak zgubiły się zmiany podpowiedzi
+2026-10-23). Brak stopki — wszystkie zrzuty. Przebiegi pominięte przez kolejkę
+(`concurrency` bez przerywania na `main`) nie gubią zmian.
+
+Tłumaczenia: zmiana części słownika `web/shared/translation/<język>/<część>.js` dotyczy
+tylko stron z tą częścią w `<meta name="i18n-parts">`; `common` — każdej strony
+z tłumaczeniami, `server` — żadnej (np. zmiana `en/logos.js` — 40 scen Logo z 512). Test:
 `tests/unit/screensChanges.test.js`.
 
 ## Sceny (`scenes.cjs`)

@@ -123,6 +123,22 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Pauza na prośbę właściciela** (inne przebiegi w toku). Wznowienie od kroku 1 P5 (certyfikat origin), potem DNS + Access. Nic nie działa w tle.
 - **Supabase bez samoczynnych aktualizacji:** wersja przypięta w `familiada-server/supabase/UPSTREAM_REF` (`397cc79`, obrazy z 2026-10-16). Aktualizacja = świadoma zmiana tego pliku → `check` → próba (restore na kopii) → dopiero potem produkcja. Ewentualnie później automat, który tylko *zgłasza* nowszą wersję.
 - **Zamrożenie schematu bazy** (potwierdzone przez właściciela 2026-10-22: w czasie przenoszenia nie wprowadza zmian): od ostatniej próby generalnej z e2e do testów kontrolnych po przełączeniu — bez nowych migracji na `main`. Dane mogą się zmieniać (świeży zrzut przy przełączeniu).
+- **Wyjątek od zamrożenia (zgoda właściciela 2026-10-23):** migracja 472 (przejmowanie urządzeń Control 2, stan `replaced`). Przy przełączeniu wziąć zrzut bazy po 472.
+
+- **Naruszenie zamrożenia (2026-10-23, sesja E26 — sprzątanie bazy):** migracje
+  473–477 (`docs/audyt-sprzatania-bazy.md`) weszły na `main` o 17:17 UTC bez
+  sprawdzenia tej sekcji — agent nie znał zamrożenia. Wszystkie OK w
+  `latest.log`. Na prośbę właściciela doszła 478 (nieużywane funkcje Lead
+  Findera). Skutek dla przeprowadzki: zrzut przy przełączeniu musi być
+  **po 478** (jak dla 472), a próba generalna na `api2` była na schemacie
+  sprzed 473 — przed P6 sprawdzić, że kopia po 477 wczytuje się na nowym
+  serwerze. Do decyzji właściciela, czy uznać 473–477 za wyjątek.
+
+## E2E na nowym serwerze — odłożone (2026-10-23)
+
+- Otwarte: `api_origin` przestawia tylko spece z `serveBranchCode`, a wypożyczanie kont (E25), ich czyszczenie i skrzynka idą przez produkcyjny Worker do starej bazy. Do rozwiązania przed e2e w P5.
+- Decyzja właściciela: na razie zostawić — nowy serwer jeszcze nie działa. Wrócić przy P5.
+- Stan 2026-10-23 (sesja przeprowadzki): w praktyce działa — kopia bazy ma te same konta `e2e.*`, więc lease przez produkcyjny Worker wypożycza konta, którymi spece logują się do `api2`; ponad 230 testów na `api2` (dziennik niżej). Poza próbą zostają tylko funkcje Workera z bazą (sprawdzane po przełączeniu).
 
 ## Próba generalna — dziennik (2026-10-22)
 

@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T05492";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T20201";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-23T05492";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05492";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05492";
+} from "../../shared/js/core/auth.js?v=v2026-10-23T20201";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T20201";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T20201";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-23T05492";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-23T05492";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05492";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-23T05492";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T05492";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T05492";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05492";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-23T20201";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-23T20201";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T20201";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-23T20201";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T20201";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T20201";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T20201";
 
 
 const $ = (s) => document.querySelector(s);
@@ -367,7 +367,7 @@ async function askCaptchaToken() {
 
   _visibleCaptchaInFlight = (async () => {
   const captcha = await loadCaptchaApi();
-  if (!captcha?.render) throw new Error(t("index.captchaRequired"));
+  if (!captcha?.render) throw new Error(t("auth.captchaRequired"));
 
   const status = document.createElement("div");
   status.style.marginTop = "8px";
@@ -433,10 +433,10 @@ async function askCaptchaToken() {
       },
     });
 
-    if (!ok) throw new Error(t("index.captchaRequired"));
+    if (!ok) throw new Error(t("auth.captchaRequired"));
     if (!token) {
       console.warn("[captcha] visible token empty");
-      throw new Error(t("index.captchaRequired"));
+      throw new Error(t("auth.captchaRequired"));
     }
     return token;
   } finally {
@@ -681,8 +681,8 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
 
   if (!reserveOk) {
     const left = (nextAllowedAtMs || 0) - Date.now();
-    if (left > 0) setErr(t("index.errResendCooldown", { time: formatLeft(left) }));
-    else setErr(t("index.errResendCooldownGeneric"));
+    if (left > 0) setErr(t("auth.errResendCooldown", { time: formatLeft(left) }));
+    else setErr(t("auth.errResendCooldownGeneric"));
     return true;
   }
 
@@ -739,7 +739,7 @@ function closeUsernameSetup() {
 async function ensureUsernameAvailable(username) {
   const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
   if (error) throw error;
-  if (taken) throw new Error(t("index.errUsernameTaken"));
+  if (taken) throw new Error(t("auth.errUsernameTaken"));
 }
 
 async function saveUsername() {
@@ -748,7 +748,7 @@ async function saveUsername() {
     const username = validateUsername(usernameFirst?.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
 
-    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
+    if (userError || !userData?.user) throw new Error(t("auth.errNoSession"));
 
     await ensureUsernameAvailable(username);
 
@@ -764,7 +764,7 @@ async function saveUsername() {
     // (profiles_username_ci_uq), więc zamiast surowego błędu Postgresa pokaż
     // ten sam komunikat co przy zwykłej kolizji.
     if (res.error) {
-      if (res.error.code === "23505") throw new Error(t("index.errUsernameTaken"));
+      if (res.error.code === "23505") throw new Error(t("auth.errUsernameTaken"));
       throw res.error;
     }
 
@@ -918,7 +918,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       if (!loginOrEmail) {
         setBusy(false);
-        return setErr(t("index.errInvalidEmail"));
+        return setErr(t("auth.errInvalidEmail"));
       }
       if (!pwd) {
         setBusy(false);
@@ -930,7 +930,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (mode === "register") {
         const mail = loginOrEmail;
 
-        if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
+        if (!mail || !mail.includes("@")) return setErr(t("auth.errInvalidEmail"));
 
         const statusInfo = await withCaptcha((token) => getEmailStatus(mail, token));
         if (statusInfo.status === "confirmed") {
@@ -963,8 +963,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
           if (!reserve.ok) {
             const left = (reserve.nextAllowedAtMs || 0) - Date.now();
-            if (left > 0) return setErr(t("index.errResendCooldown", { time: formatLeft(left) }));
-            return setErr(t("index.errResendCooldownGeneric"));
+            if (left > 0) return setErr(t("auth.errResendCooldown", { time: formatLeft(left) }));
+            return setErr(t("auth.errResendCooldownGeneric"));
           }
 
           setStatus(t("index.statusRegistering"));
@@ -990,7 +990,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               p_password: pwd,
             });
             if (stageErr) throw stageErr;
-            if (!stageData?.ok) throw new Error(stageData?.error || t("index.statusError"));
+            if (!stageData?.ok) throw new Error(stageData?.error || t("auth.statusError"));
 
             let captchaToken = await getCaptchaTokenOrPrompt();
             setStatus(t("index.statusRegistering"));
@@ -1069,7 +1069,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (e) {
       if (mode === "login" && isSecurityRelevantLoginError(e)) bumpLoginFailureCount(loginOrEmail);
       console.error(e);
-      setStatus(t("index.statusError"));
+      setStatus(t("auth.statusError"));
       setErr(niceAuthError(e));
     } finally {
       setBusy(false);
@@ -1103,7 +1103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       location.href = withLangParam(gamesUrl);
     } catch (e) {
       console.error(e);
-      setStatus(t("index.statusError"));
+      setStatus(t("auth.statusError"));
       setErr(niceAuthError(e));
     } finally {
       setBusy(false);
@@ -1118,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginOrEmail = email.value.trim();
     if (!loginOrEmail) {
       setBusy(false);
-      return setErr(t("index.errResetMissingLogin"));
+      return setErr(t("auth.errResetMissingLogin"));
     }
   
     try {
@@ -1192,7 +1192,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showForgotCooldownForEmail(usedEmail);
 } catch (e) {
       console.error(e);
-      setStatus(t("index.statusError"));
+      setStatus(t("auth.statusError"));
       setErr(niceAuthError(e));
     } finally {
       setBusy(false);

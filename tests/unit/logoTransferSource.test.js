@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {standaloneLogoSource} from '../../web/shared/js/core/logo-transfer-source.js';
+import { loadDict } from "./helpers/i18n.js";
 const data='data:image/png;base64,AA==';
 test('IMAGE export embeds sender image and removes URL plus internal derivatives',async()=>{
  const source={mode:'IMAGE',imageUrl:'https://storage.example/sender/photo.png',crop:{x:2},hostRasterUrl:'private',hostRasterData:'private',editHistory:['private']};
@@ -32,7 +33,7 @@ test('the real exporter has one independent source builder and all languages exp
  const {readFile}=await import('node:fs/promises');
  const source=await readFile(new URL('../../web/logos/js/transfer.js',import.meta.url),'utf8');
  assert.match(source,/source = await standaloneLogoSource\(p.source, fetchImageAsDataUrl\)/);assert.doesNotMatch(source,/could not embed image|URL zostaje tylko/);
- for(const lang of ['pl','en','uk']){const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);assert.equal(typeof dict.logoEditor.errors.exportIncomplete,'string');}
+ for(const lang of ['pl','en','uk']){const dict = await loadDict(lang);assert.equal(typeof dict.logoEditor.errors.exportIncomplete,'string');}
 });
 test('invalid embedded-only source never produces a seemingly complete export',async()=>{
  for(const imageData of ['not image data',{invalid:true},'data:text/html,invalid'])await assert.rejects(standaloneLogoSource({mode:'IMAGE',imageData},()=>assert.fail('invalid embedded data was fetched')),/incomplete_logo_source/);
