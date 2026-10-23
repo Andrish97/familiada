@@ -103,16 +103,8 @@ export async function handleAdminApi(request, env) {
         if (Number(publicRow.control_version) !== 2) return publicRow;
         const events = Array.isArray(sessionEvents[sessionId]) ? sessionEvents[sessionId] : [];
         const stats = publicRow.stats_detail && typeof publicRow.stats_detail === "object" ? publicRow.stats_detail : {};
-        const deviceEvents = events.filter(event => event?.source && event.source !== "control").length;
-        const eventLog = {
-          status: sessionId ? (deviceEvents ? "events_recorded" : "no_events_recorded") : "session_id_missing",
-          event_count: deviceEvents,
-        };
         return {
           ...publicRow,
-          device_event_log: eventLog,
-          // Keep the old key for saved Admin exports and older clients.
-          display_event_log: eventLog,
           diag: sessionDiag[sessionId] || null,
           stats_detail: { ...stats, events },
         };

@@ -60,7 +60,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     const state = getState();
     if (!state.locks.gameStarted || state.locks.gameEnded || state.step === "r_intro") return;
     try {
-      await sb().rpc("control2_session_ping", { p_game_id: gameId, p_event: null });
+      await sb().rpc("control2_session_ping", { p_game_id: gameId });
     } catch { /* Auxiliary diagnostics never interrupt gameplay or flood console. */ }
   }
 

@@ -5571,12 +5571,6 @@ function buildSessionRunDetails(r) {
     settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
-  const deviceEventLog = r.device_event_log || r.display_event_log;
-  if (deviceEventLog?.status === "no_events_recorded") {
-    line("Brak zapisanych zdarzeń urządzeń dla tej sesji.");
-  } else if (deviceEventLog?.status === "session_id_missing") {
-    line("Nie można powiązać logu urządzeń z tą sesją.");
-  }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {

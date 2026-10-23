@@ -224,7 +224,7 @@ function buildDb(lang, extras = {}) {
     control_device_instance_register: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
     control_device_instance_heartbeat: { mode: "lease", state: "primary", epoch: 1, queue_position: null, waiting_count: 0, audio_unlocked: false },
     host2_logo_get_public: { logo: null },
-    control2_device_transport_event: true,
+    control2_device_log: 1,
     game_state_display_is_ready: true,
     poll_share_panel: sharePanel,
     get_poll_preview: `fn:(args, db) => {
@@ -348,7 +348,7 @@ function buildDb(lang, extras = {}) {
       { id: id("mkt-sent-3"), title: "Pubowy quiz czwartkowy", lang: "pl", status: "rejected", library_count: 0, moderation_note: "Za mało pytań w rundzie finałowej." },
     ], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
-    control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
+    control2_session_ping: null, control2_control_log: 1,
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
     // Głosowanie z linku (anonimowo): stan i treść ankiety.
     poll_state: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); return g ? { ok: true, state: g.status === "poll_open" ? "open" : "ended", type: g.type } : { ok: false, state: "not_found" }; }`,
