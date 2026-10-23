@@ -4,7 +4,8 @@
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T15470";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T15470";
-import { normHex, hexToRgb, rgbToHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-23T15470";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T15470";
 import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T15470";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T15470";
@@ -131,8 +132,6 @@ let _hostIframe = null;
 let _hostReady = false;
 
 // Color modal state — labels populated lazily from t()
-let colorModalTarget = null;
-let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
 // ===== ELEMENTS =====
 const titleEl = document.getElementById("gsTitle");
@@ -403,34 +402,11 @@ function getColorLabels() {
   };
 }
 
-function buildColorModalBody() {
-  const body = document.createElement("div");
-  body.className = "colorModalControls";
-  body.innerHTML = `
-    <div class="colorTopRow">
-      <div class="colorPreview" id="gsColorPreview"></div>
-      <label class="colorHexField"><span class="field-label">HEX</span><input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/><span class="hint">Format: <b>#RRGGBB</b></span></label>
-    </div>
-    <div class="sliders">
-      <label class="sliderRow"><span class="sLbl">R</span><input class="rng" id="gsColorR" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorRVal">0</span></label>
-      <label class="sliderRow"><span class="sLbl">G</span><input class="rng" id="gsColorG" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorGVal">0</span></label>
-      <label class="sliderRow"><span class="sLbl">B</span><input class="rng" id="gsColorB" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorBVal">0</span></label>
-    </div>`;
-  return body;
-}
-
 async function openColorModal(key) {
-  colorModalTarget = key;
-  const hex = localSettings.display.colors[key] || "#000000";
-  const { r, g, b } = hexToRgb(hex) || { r: 0, g: 0, b: 0 };
-  colorModalR = r; colorModalG = g; colorModalB = b;
-  const body = buildColorModalBody();
-  const refs = {
-    r: body.querySelector("#gsColorR"), g: body.querySelector("#gsColorG"), b: body.querySelector("#gsColorB"),
-    rVal: body.querySelector("#gsColorRVal"), gVal: body.querySelector("#gsColorGVal"), bVal: body.querySelector("#gsColorBVal"),
-    hex: body.querySelector("#gsColorHex"), preview: body.querySelector("#gsColorPreview"),
-  };
-  syncColorModalUI(refs);
+  const body = document.createElement("div");
+  body.innerHTML = colorPickerHTML("gsColor");
+  let picked = normHex(localSettings.display.colors[key]) || "#000000";
+  const picker = bindColorPicker(body, { value: picked, onChange: (hex) => { picked = hex; } });
   const confirmed = await confirmModal({
     title: getColorLabels()[key] || key,
     text: "",
@@ -439,47 +415,16 @@ async function openColorModal(key) {
     body,
     // Telefon: arkusz od dołu jak okno koloru tagów w menedżerze bazy.
     sheet: { backBtn: document.getElementById("btnBack") },
-    initialFocus: refs.hex,
-    onReady: () => {
-      refs.r.addEventListener("input", () => { colorModalR = Number(refs.r.value); syncColorModalUI(refs); });
-      refs.g.addEventListener("input", () => { colorModalG = Number(refs.g.value); syncColorModalUI(refs); });
-      refs.b.addEventListener("input", () => { colorModalB = Number(refs.b.value); syncColorModalUI(refs); });
-      refs.hex.addEventListener("change", () => {
-        const normalized = normHex(refs.hex.value);
-        if (!normalized) return;
-        ({ r: colorModalR, g: colorModalG, b: colorModalB } = hexToRgb(normalized));
-        syncColorModalUI(refs);
-      });
-    },
+    initialFocus: body.querySelector("#gsColorHex"),
   });
-  if (confirmed) applyColorModal();
+  picker.destroy();
+  if (confirmed) applyColor(key, picked);
 }
 
-function syncColorModalUI(refs) {
-  if (refs.r) { refs.r.value = colorModalR; if (refs.rVal) refs.rVal.textContent = colorModalR; }
-  if (refs.g) { refs.g.value = colorModalG; if (refs.gVal) refs.gVal.textContent = colorModalG; }
-  if (refs.b) { refs.b.value = colorModalB; if (refs.bVal) refs.bVal.textContent = colorModalB; }
-  const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
-  if (refs.hex) refs.hex.value = hex;
-  if (refs.preview) refs.preview.style.background = hex;
-  updateSliderTrack(refs.r, colorModalG, colorModalB, "r");
-  updateSliderTrack(refs.g, colorModalR, colorModalB, "g");
-  updateSliderTrack(refs.b, colorModalR, colorModalG, "b");
-}
-
-function updateSliderTrack(el, v1, v2, ch) {
-  if (!el) return;
-  const from = ch === "r" ? `rgb(0,${v1},${v2})` : ch === "g" ? `rgb(${v1},0,${v2})` : `rgb(${v1},${v2},0)`;
-  const to   = ch === "r" ? `rgb(255,${v1},${v2})` : ch === "g" ? `rgb(${v1},255,${v2})` : `rgb(${v1},${v2},255)`;
-  el.style.setProperty("--track", `linear-gradient(to right, ${from}, ${to})`);
-}
-
-function applyColorModal() {
-  const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
-  if (!colorModalTarget) return;
-  localSettings.display.colors[colorModalTarget] = hex;
+function applyColor(key, hex) {
+  localSettings.display.colors[key] = hex;
   markDirty();
-  content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
+  content?.querySelectorAll(`[data-color-key="${key}"]`).forEach(el => {
     el.style.background = hex;
   });
   postPreviewRow();

@@ -225,17 +225,6 @@
   .swatchBtn:active{ transform:translateY(1px); }
   .swatchBtn:focus{ outline:2px solid var(--g-35); outline-offset:2px; }
 
-  /* ===== COLOR MODAL =====
-     Jak okno koloru tagów w menedżerze bazy (decyzja 2026-10-21): karta
-     z podglądem i HEX, karta z suwakami R/G/B, cienki tor i złoty uchwyt. */
-  .colorModalControls{ display:flex; flex-direction:column; gap:12px; }
-  .colorTopRow,
-  .colorModalControls .sliders{
-    padding:12px; border-radius:var(--r-md);
-    background:var(--w-4);
-    border:1px solid var(--line2, var(--w-8));
-  }
-
   /* ===== SFX TABLE (identyczny z control-new) ===== */
   .sfx-row:last-child{
     border-bottom: none;

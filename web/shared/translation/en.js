@@ -46,6 +46,11 @@ const en = {
   "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Log in again.","decisionFailed":"Could not save your decision. Try again."}
 },
   common: {
+    colorPicker: {
+      preview: "Color preview",
+      hexLabel: "HEX",
+      hexHint: "Format: <b>#RRGGBB</b>",
+    },
     imageViewer: { title: "Preview" },
     save: "Save",
     sort: {
@@ -2916,9 +2921,6 @@ const en = {
       pickColor: "Pick color",
       colorLabel: "Color",
       colorModalTitle: "Color",
-      colorPreview: "Color preview",
-      hexLabel: "HEX",
-      hexHint: "Format: <b>#RRGGBB</b>",
       header: "Tags",
       metaHeader: "Suggested categories",
       empty: "No tags.",

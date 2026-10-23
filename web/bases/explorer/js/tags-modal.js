@@ -12,7 +12,8 @@ import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/co
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15470";
 import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15470";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
-import { normHex, hexToRgb, rgbToHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-23T15470";
 import { normalizeText } from "./data/listing.js?v=v2026-10-23T15470";
 import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-23T15470";
 
@@ -35,12 +36,6 @@ function canWrite(state) {
 
 function uniqIds(arr) {
   return Array.from(new Set((arr || []).filter(Boolean)));
-}
-
-function clamp255(n) {
-  n = Number(n);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(255, Math.round(n)));
 }
 
 function hideErr(box) {
@@ -101,10 +96,7 @@ function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
   L3:
     tagsL3Close (X)
     tagsL3Save  (Zapisz)  => akceptuje kolor i wraca do L2
-    tagsColorPreview
-    tagsColorHex
-    tagsColorR, tagsColorG, tagsColorB
-    tagsColorRVal, tagsColorGVal, tagsColorBVal
+    tagsColorBody      (wybór koloru: core/color-picker.js)
 */
 
 function els() {
@@ -141,14 +133,7 @@ function els() {
     l3Close: document.getElementById("tagsL3Close"),
     l3Save: document.getElementById("tagsL3Save"),
     l3Back: document.getElementById("tagsL3Back"),
-    colorPreview: document.getElementById("tagsColorPreview"),
-    colorHex: document.getElementById("tagsColorHex"),
-    colorR: document.getElementById("tagsColorR"),
-    colorG: document.getElementById("tagsColorG"),
-    colorB: document.getElementById("tagsColorB"),
-    colorRVal: document.getElementById("tagsColorRVal"),
-    colorGVal: document.getElementById("tagsColorGVal"),
-    colorBVal: document.getElementById("tagsColorBVal"),
+    colorBody: document.getElementById("tagsColorBody"),
   };
 }
 
@@ -188,6 +173,9 @@ async function refreshTags(state) {
 export async function openTagsModal(state, opts = {}) {
   const E = els();
   if (!E) return false;
+  // Warstwa „Kolor”: wspólny wybór koloru (core/color-picker.js).
+  if (E.colorBody) E.colorBody.innerHTML = colorPickerHTML("tagsColor");
+  const picker = bindColorPicker(E.colorBody, { value: "#4DA3FF", onChange: showPicked });
 
   const editor = canWrite(state);
 
@@ -283,10 +271,7 @@ export async function openTagsModal(state, opts = {}) {
     E.addNew?.removeEventListener("click", onAddNew);
     E.editColorTile?.removeEventListener("click", onOpenPicker);
 
-    E.colorR?.removeEventListener("input", onSliderInput);
-    E.colorG?.removeEventListener("input", onSliderInput);
-    E.colorB?.removeEventListener("input", onSliderInput);
-    E.colorHex?.removeEventListener("input", onHexInput);
+    picker.destroy();
 
     sessionLease?.release?.();
     resolvePromise(result);
@@ -314,7 +299,8 @@ export async function openTagsModal(state, opts = {}) {
   // do listy (przypisywanie) albo zamknij okno (samo dodawanie/edycja).
   function layerBack() {
     if (m.layer === 3) {
-      setPickerUI(hexToRgb(m.colorBase) || { r: 77, g: 163, b: 255 }, { silent: false });
+      picker.set(m.colorBase);
+      showPicked(picker.get());
       go(2);
       return true;
     }
@@ -485,52 +471,17 @@ export async function openTagsModal(state, opts = {}) {
     } catch {}
   }
 
-  function setPickerUI({ r, g, b }, { silent = false } = {}) {
-    r = clamp255(r);
-    g = clamp255(g);
-    b = clamp255(b);
-
-    if (E.colorR) E.colorR.value = String(r);
-    if (E.colorG) E.colorG.value = String(g);
-    if (E.colorB) E.colorB.value = String(b);
-
-    if (E.colorRVal) E.colorRVal.textContent = String(r);
-    if (E.colorGVal) E.colorGVal.textContent = String(g);
-    if (E.colorBVal) E.colorBVal.textContent = String(b);
-
-    const hex = rgbToHex(r, g, b);
-
-    // gradient tracki (tak jak miałeś)
-    if (E.colorR) {
-      const left = rgbToHex(0, g, b);
-      const right = rgbToHex(255, g, b);
-      E.colorR.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
-    }
-    if (E.colorG) {
-      const left = rgbToHex(r, 0, b);
-      const right = rgbToHex(r, 255, b);
-      E.colorG.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
-    }
-    if (E.colorB) {
-      const left = rgbToHex(r, g, 0);
-      const right = rgbToHex(r, g, 255);
-      E.colorB.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
-    }
-
-    if (E.colorHex && !silent) E.colorHex.value = hex;
-    if (E.colorPreview) E.colorPreview.style.background = hex;
-
+  function showPicked(hex) {
     m.pickedColor = hex;
-
     // od razu aktualizuj L2
     if (E.editColorDot) E.editColorDot.style.background = hex;
     if (E.editColorTile) E.editColorTile.style.setProperty("--tag-color", hex);
   }
 
   function openPickerFrom(hex) {
-    m.colorBase = String(hex || "#4DA3FF");
-    const rgb = hexToRgb(m.colorBase) || { r: 77, g: 163, b: 255 };
-    setPickerUI(rgb, { silent: false });
+    m.colorBase = normHex(hex) || "#4DA3FF";
+    picker.set(m.colorBase);
+    showPicked(picker.get());
     go(3);
   }
 
@@ -686,20 +637,6 @@ export async function openTagsModal(state, opts = {}) {
     openPickerFrom(m.pickedColor);
   }
 
-  function onSliderInput() {
-    const r = clamp255(E.colorR?.value);
-    const g = clamp255(E.colorG?.value);
-    const b = clamp255(E.colorB?.value);
-    setPickerUI({ r, g, b }, { silent: false });
-  }
-
-  function onHexInput() {
-    const v = String(E.colorHex?.value || "").trim();
-    const rgb = hexToRgb(v);
-    if (!rgb) return;
-    setPickerUI(rgb, { silent: true });
-  }
-
   // OPEN
   setOverlayOpen(E.overlay, true);
   enterModalSheet(E.overlay, {
@@ -728,12 +665,6 @@ export async function openTagsModal(state, opts = {}) {
 
   // L2: kafel koloru
   E.editColorTile?.addEventListener("click", onOpenPicker);
-
-  // L3: inputy
-  E.colorR?.addEventListener("input", onSliderInput);
-  E.colorG?.addEventListener("input", onSliderInput);
-  E.colorB?.addEventListener("input", onSliderInput);
-  E.colorHex?.addEventListener("input", onHexInput);
 
   hideErr(E.assignErr);
   hideErr(E.editErr);

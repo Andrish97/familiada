@@ -16,10 +16,11 @@ test("kolor: jeden zapis #RRGGBB, odczyt dawnych zapisów, błędny -> null", ()
   assert.equal(rgbToHex(12.6, 0, 0), "#0D0000");
 });
 
-test("kolor: Ustawienia gry i znaczniki Eksploratora bez własnych kopii funkcji", () => {
+test("kolor: Ustawienia gry i znaczniki Eksploratora — wspólny moduł i wybór koloru, bez własnych kopii", () => {
   for (const file of ["../web/games/settings/js/game-settings.js", "../web/bases/explorer/js/tags-modal.js"]) {
     const src = fs.readFileSync(new URL(file, import.meta.url.replace(/unit\/[^/]+$/, "")), "utf8");
     assert.match(src, /from "\.\.\/\.\.\/\.\.\/shared\/js\/core\/color\.js/);
-    assert.doesNotMatch(src, /function (normHex|hexToRgb|rgbToHex)\b/);
+    assert.match(src, /import \{ colorPickerHTML, bindColorPicker \} from "\.\.\/\.\.\/\.\.\/shared\/js\/core\/color-picker\.js/);
+    assert.doesNotMatch(src, /function (normHex|hexToRgb|rgbToHex|setPickerUI|syncColorModalUI)\b/);
   }
 });

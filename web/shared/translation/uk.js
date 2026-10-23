@@ -46,6 +46,11 @@ const uk = {
   "errors": {"not_sendable":"Надіслати можна лише чернетку гри (без результатів опитування).","failed":"Не вдалося надіслати копію. Спробуй ще раз.","not_friend":"Ця людина більше не є твоїм другом.","already_sent":"Копію вже надіслано.","declined_cooldown":"Поки що не можна надіслати цій людині ще одну копію.","auth_required":"Увійди знову.","decisionFailed":"Не вдалося зберегти рішення. Спробуй ще раз."}
 },
   common: {
+    colorPicker: {
+      preview: "Попередній перегляд кольору",
+      hexLabel: "HEX",
+      hexHint: "Формат: <b>#RRGGBB</b>",
+    },
     imageViewer: { title: "Перегляд" },
     save: "Зберегти",
     sort: {
@@ -2924,9 +2929,6 @@ const uk = {
       pickColor: "Вибрати колір",
       colorLabel: "Колір",
       colorModalTitle: "Колір",
-      colorPreview: "Попередній перегляд кольору",
-      hexLabel: "HEX",
-      hexHint: "Формат: <b>#RRGGBB</b>",
       header: "Теги",
       metaHeader: "Запропоновані категорії",
       empty: "Немає тегів.",

@@ -1356,9 +1356,17 @@
   .toggle-item input:checked:hover + .toggle-slider { filter: brightness(1.08); }
   .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -4px; }
 
-  /* ── Wybór koloru (jeden: ustawienia gry, znaczniki w Eksploratorze):
-     podgląd + HEX, suwaki R/G/B (tor z --track ustawia skrypt). ─────── */
-  .colorTopRow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  /* ── Wybór koloru (jeden: ustawienia gry, znaczniki w Eksploratorze;
+     znaczniki i obsługa: core/color-picker.js): dwie karty — podgląd + HEX,
+     suwaki R/G/B (tor z --track ustawia skrypt). ─────────────────────── */
+  .color-picker { display: flex; flex-direction: column; gap: 12px; }
+  .colorTopRow { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; }
+  .color-picker > :is(.colorTopRow, .sliders) {
+    padding: 12px;
+    border: 1px solid var(--w-8);
+    border-radius: var(--r-md);
+    background: var(--w-4);
+  }
   .colorHexField { flex: 1 1 auto; min-width: 0; display: grid; gap: 6px; }
   .colorHexField .inp { width: 100%; }
   .colorHexField :is(.hint, .field-label) { margin: 0; }
@@ -1370,14 +1378,7 @@
     border-radius: var(--r-md);
     background: var(--w-8);
   }
-  .sliders {
-    display: grid;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--w-14);
-    border-radius: var(--r-md);
-    background: var(--k-20);
-  }
+  .sliders { display: grid; gap: 10px; }
   .sliderRow { display: grid; grid-template-columns: 18px minmax(0, 1fr) 44px; align-items: center; gap: 10px; }
   .sLbl { font-weight: 1000; letter-spacing: .06em; }
   .sVal { text-align: right; font-weight: 900; font-variant-numeric: tabular-nums; }

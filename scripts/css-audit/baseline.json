@@ -12,7 +12,7 @@
   "colorLiteral": 36,
   "mediaWidth": 1,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 10,
+  "sharedDuplicate": 9,
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
@@ -37,7 +37,7 @@
   "inlineStyleJs": 9
  },
  "web/bases/explorer/js/tags-modal.js": {
-  "inlineStyleJs": 11
+  "inlineStyleJs": 10
  },
  "web/bases/explorer/js/ui/marquee.js": {
   "inlineStyleJs": 1
@@ -85,7 +85,7 @@
   "important": 1,
   "colorLiteral": 10,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 19
+  "sharedDuplicate": 18
  },
  "web/control/css/control2.css": {
   "important": 2,
@@ -168,7 +168,7 @@
   "styleBlock": 1
  },
  "web/games/settings/js/game-settings.js": {
-  "inlineStyleJs": 8
+  "inlineStyleJs": 7
  },
  "web/go/index.html": {
   "inlineStyleHtml": 1
@@ -336,7 +336,7 @@
   "important": 3,
   "colorLiteral": 20,
   "mediaWidth": 2,
-  "sharedDuplicate": 3
+  "sharedDuplicate": 2
  },
  "web/shared/css/image-viewer.css": {
   "important": 2,
@@ -356,6 +356,9 @@
  },
  "web/shared/js/core/blocking-screen.js": {
   "inlineStyleJs": 3
+ },
+ "web/shared/js/core/color-picker.js": {
+  "inlineStyleJs": 1
  },
  "web/shared/js/core/compose-mail.js": {
   "inlineStyleJs": 3
@@ -430,14 +433,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 228,
+  "sharedDuplicate": 229,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 264,
+  "sharedDuplicate": 265,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {

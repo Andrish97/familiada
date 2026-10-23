@@ -149,7 +149,7 @@ module.exports = [
       await view.waitForTimeout(300);
     }] },
   { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 800,
-    steps: [gsCat("display"), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
+    steps: [gsCat("display"), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator("#gsColorHex").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
   { id: "game-settings-questions", category: "Dodatkowe", title: "Ustawienia gry — pytania (finał)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],
     steps: [clickTab('.gs-sidebar-item[data-cat="questions"]')] },
   { id: "game-settings-game", category: "Dodatkowe", title: "Ustawienia gry — rozgrywka (ekran końcowy)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsTeamA", devices: ["desktop"],

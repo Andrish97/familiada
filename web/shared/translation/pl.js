@@ -46,6 +46,11 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    colorPicker: {
+      preview: "Podgląd koloru",
+      hexLabel: "HEX",
+      hexHint: "Format: <b>#RRGGBB</b>",
+    },
     imageViewer: { title: "Podgląd" },
     save: "Zapisz",
     sort: {
@@ -2919,9 +2924,6 @@ const pl = {
       pickColor: "Wybierz kolor",
       colorLabel: "Kolor",
       colorModalTitle: "Kolor",
-      colorPreview: "Podgląd koloru",
-      hexLabel: "HEX",
-      hexHint: "Format: <b>#RRGGBB</b>",
       header: "Tagi",
       metaHeader: "Proponowane kategorie",
       empty: "Brak tagów.",

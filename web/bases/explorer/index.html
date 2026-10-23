@@ -206,37 +206,7 @@
           <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <div class="colorModalBody">
-          <div class="colorTopRow tagsCard">
-            <div class="colorPreview" id="tagsColorPreview" aria-label="Podgląd koloru" data-i18n-aria-label="baseExplorer.tags.colorPreview"></div>
-
-            <div class="field sm colorHexField">
-              <div class="field-label" data-i18n="baseExplorer.tags.hexLabel">HEX</div>
-              <input class="inp" id="tagsColorHex" autocomplete="off" spellcheck="false" inputmode="text" />
-              <div class="hint" data-i18n-html="baseExplorer.tags.hexHint">Format: <b>#RRGGBB</b></div>
-            </div>
-          </div>
-  
-          <div class="sliders">
-            <div class="sliderRow">
-              <div class="sLbl">R</div>
-              <input class="rng" id="tagsColorR" type="range" min="0" max="255" step="1" />
-              <div class="sVal" id="tagsColorRVal">0</div>
-            </div>
-  
-            <div class="sliderRow">
-              <div class="sLbl">G</div>
-              <input class="rng" id="tagsColorG" type="range" min="0" max="255" step="1" />
-              <div class="sVal" id="tagsColorGVal">0</div>
-            </div>
-  
-            <div class="sliderRow">
-              <div class="sLbl">B</div>
-              <input class="rng" id="tagsColorB" type="range" min="0" max="255" step="1" />
-              <div class="sVal" id="tagsColorBVal">0</div>
-            </div>
-          </div>
-        </div>
+        <div class="colorModalBody" id="tagsColorBody"></div>
   
         <div class="tagsFoot">
           <div class="tagsFootSpacer"></div>

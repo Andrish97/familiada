@@ -395,12 +395,6 @@
       opacity: .9
   }
 
-  .colorModalBody {
-      display: flex;
-      flex-direction: column;
-      gap: 12px
-  }
-
 
   .drop-pulse {
       animation: dropPulse 420ms ease-out;
@@ -1582,20 +1576,6 @@
   .tags-modal .tagsColorDot { width: 28px; height: 28px; border-radius: var(--r-sm); flex: 0 0 auto; }
   .tags-modal .tagsColorLbl { flex: 1 1 auto; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 700; }
   .tags-modal .tagsColorGo { opacity: .7; }
-  .tags-modal .colorTopRow.tagsCard {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 12px;
-  }
-  .tags-modal .colorPreview { flex: 0 0 auto; width: 72px; height: 72px; border-radius: var(--r-md); box-shadow: none; }
-  .tags-modal .colorHexField { flex: 1 1 auto; min-width: 0; }
-  .tags-modal .colorHexField .inp { width: 100%; }
-  .tags-modal .sliders {
-    border-radius: var(--r-md);
-    background: var(--w-4);
-    border: 1px solid var(--line2, var(--w-8));
-  }
 
   /* ===== Widoki lewego panelu (ui/left-view.js, decyzja 2026-10-21) =====
      Jeden widok naraz na pełną wysokość: drzewo, tagi albo proponowane
