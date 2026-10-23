@@ -194,6 +194,48 @@ Wniosek: limit 3000 na sesję ma duży zapas (najdłuższa sesja ~330 zdarzeń
 łącznie); objętość przy 90 dniach to pojedyncze MB — bez ryzyka dla bazy.
 Obecny limit 100 w Control realnie ucina co ~14. sesję.
 
+## Realtime urządzeń — diagnoza 2026-10-23
+
+Objaw: `game-state-realtime-spike.spec.js:197` czerwony na produkcji
+(39917036457, 39915049987) i na nowym serwerze (api2, 39917039497): kanał
+`postgres_changes` z tokenem z `device-realtime-token` jest SUBSCRIBED, odczyt
+REST tym samym tokenem działa, a zmiana `game_state` nie przychodzi.
+Urządzenia nadrabiały zmiany z heartbeatu lease (`fallback_catchup`).
+
+Przyczyna (klient, nie baza ani serwer) — log `[e2e-diag]` z 39943834870:
+- claims subskrypcji `postgres_changes` ustala token **z dołączenia do
+  kanału**; późniejsze `access_token` ich nie zmienia (kanał na osobnym
+  kliencie dołączony przed ustawieniem tokenu nie dostał zmiany, choć gniazdo
+  miało już token urządzenia);
+- `SupabaseClient` przekazuje realtime-js callback `accessToken`, więc
+  `setAuth(token)` nie jest „ręczny” (`_manuallySetToken=false`) i po każdym
+  dołączeniu realtime-js woła `setAuth()` → token sesji, u urządzenia **anon**
+  (`same:false, role:anon, hasDevice:false`). Pierwsze dołączenie szło
+  z tokenem urządzenia, ale każde **ponowne** (zerwane łącze, uśpienie,
+  rejoin kanału) już jako anon: SUBSCRIBED, RLS odrzuca każdy wiersz po cichu;
+- SUBSCRIBED przychodzi przed komunikatem systemowym „Subscribed to
+  PostgreSQL”; zmiany z tej przerwy przepadały, a urządzenie wyłączało już
+  dzwonek i odpytywanie. Spec czekał 500 ms; czerwone przebiegi miały zapis
+  ~3,4 s po linku, zielony ~5,9 s.
+
+Od kiedy: wada od wdrożenia transportu (375, 2026-10-15; spec zielony
+38807831336 — pierwsze dołączenie przy wolniejszym zapisie). supabase-js
+2.117.3 → 2.118.0 bez zmian w tej części; polityka RLS tylko w 375/376,
+późniejsze zmiany heartbeat/lease (397, 424) nie dotykają ważności claims
+(odczyt REST tym samym tokenem działa). Nadrabianie widać w statystykach od
+2026-10-21, gdy 424 dało heartbeat z `game_rev` (db-read
+`realtime-delivery-by-day.sql`, 39943839445: 21.10 — 5, 22.10 — 5,
+23.10 — 10 nadrobień).
+
+Naprawa (`web/shared/js/core/game-state-subscribe.js`, bez migracji): osobny
+klient tylko dla kanału bezpośredniego z `accessToken` zwracającym token
+urządzenia (także przy ponownym dołączeniu), `setAuth()` przed `subscribe()`,
+kanał uznany za połączony dopiero po SUBSCRIBED **i** systemowym „ok”
+postgres_changes (`direct-channel-ready.js`); do tego czasu działa
+odpytywanie. Spec realtime robi to samo i sprawdza, że gniazdo trzyma token
+urządzenia; pełna runda w `control2.spec.js` sprawdza `transport_state
+connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
+
 ## Pytania do decyzji
 
 1. Retencja szczegółowych zdarzeń: 90 / 180 / 365 dni? (Podsumowanie żyje

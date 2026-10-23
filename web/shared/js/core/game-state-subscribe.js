@@ -283,10 +283,15 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directTableConnected.clear();
       const channel = client.channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}`);
       directChannel = channel;
-      const readiness = createDirectReadiness(() => { if (channel === directChannel) onDirectReady(); });
+      const readiness = createDirectReadiness(() => {
+        if (channel !== directChannel) return;
+        console.info("[device-realtime] kanał gotowy (SUBSCRIBED + PostgreSQL)");
+        onDirectReady();
+      });
       channel.on("system", {}, (payload) => {
         if (channel !== directChannel) return;
         const status = postgresSystemStatus(payload);
+        console.info(`[device-realtime] system ${payload?.extension || "-"} ${payload?.status || "-"}: ${String(payload?.message || "").slice(0, 80)}`);
         readiness.postgres(status);
         if (status === "error") onDirectFailure("POSTGRES_ERROR");
       }).on("postgres_changes", {
@@ -299,7 +304,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       }).subscribe((status) => {
         if (channel !== directChannel) return;
         directStatus = status;
-        if (status === "SUBSCRIBED" && active) readiness.joined();
+        if (status === "SUBSCRIBED" && active) {
+          console.info("[device-realtime] SUBSCRIBED");
+          readiness.joined();
+        }
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           readiness.reset();
           onDirectFailure(status);
