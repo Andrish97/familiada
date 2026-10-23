@@ -214,7 +214,7 @@ function prepareSheetLayout(overlayEl) {
   if (!header.childElementCount) header.hidden = true;
   if (!actions.childElementCount) actions.hidden = true;
   // Nagłówek i akcje we wspólnym pasku: fitSheetTop() stawia przyciski obok
-  // podpowiedzi, gdy tak zajmują mniej miejsca (uwaga użytkownika 2026-10-20).
+  // tytułu, gdy się mieszczą (uwaga użytkownika 2026-10-23).
   const top = document.createElement("div");
   top.className = "sheet-modal-top";
   top.append(header, actions);
@@ -222,8 +222,9 @@ function prepareSheetLayout(overlayEl) {
   modal.dataset.sheetLayoutReady = "1";
 }
 
-// Przyciski obok tytułu i podpowiedzi zamiast pod nimi -- tylko gdy pasek
-// wyraźnie się obniża, a podpowiedź zostaje szeroka (inaczej układ pionowy).
+// Tytuł i przyciski w jednym wierszu, dopóki się mieszczą: tytuł nie łamie
+// się ani nie ucina, przyciski nie zawijają. Podpowiedź zawsze pod nimi na
+// całą szerokość (uwaga użytkownika 2026-10-23).
 function fitSheetTop(overlayEl) {
   const top = overlayEl?.querySelector(".sheet-modal-top");
   if (!top) return;
@@ -231,10 +232,16 @@ function fitSheetTop(overlayEl) {
   const head = top.querySelector(":scope > .sheet-modal-head");
   const actions = top.querySelector(":scope > .sheet-modal-actions");
   if (!head || !actions || head.hidden || actions.hidden || !head.offsetHeight || !actions.offsetHeight) return;
-  const stacked = head.offsetHeight + actions.offsetHeight;
+  const title = head.firstElementChild;
+  if (!title) return;
+  const titleH = title.offsetHeight;
+  const actionsH = actions.offsetHeight;
   top.classList.add("is-inline");
-  const inline = top.offsetHeight;
-  if (inline >= stacked - 8 || head.offsetWidth < top.clientWidth * 0.45) top.classList.remove("is-inline");
+  const fits = title.offsetHeight <= titleH + 1
+    && title.scrollWidth <= title.clientWidth + 1
+    && actions.offsetHeight <= actionsH + 1
+    && actions.scrollWidth <= actions.clientWidth + 1;
+  if (!fits) top.classList.remove("is-inline");
 }
 
 // Pasek u góry okna od dołu: przeciągnięcie w dół (albo stuknięcie) zamyka.

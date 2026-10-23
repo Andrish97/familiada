@@ -2761,26 +2761,34 @@
       margin-bottom: 12px;
       border-bottom: 1px solid var(--line-strong);
     }
-    /* Przyciski obok tytułu (fitSheetTop w modal-sheet.js): jedna linia
-       oddzielająca pod całym paskiem. */
+    /* Tytuł i przyciski w jednym wierszu (fitSheetTop w modal-sheet.js),
+       podpowiedź w drugim wierszu na całą szerokość; jedna linia oddzielająca
+       pod całym paskiem. */
     .modal--sheet.sheet-active .sheet-modal-top.is-inline {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 12px;
+      row-gap: 8px;
       flex: 0 0 auto;
-      align-items: flex-end;
-      gap: 12px;
       padding-bottom: 12px;
       margin-bottom: 12px;
       border-bottom: 1px solid var(--line-strong);
     }
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head {
-      flex: 1 1 auto;
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head { display: contents; }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :first-child {
+      grid-column: 1;
+      grid-row: 1;
       min-width: 0;
-      padding-bottom: 0;
-      margin-bottom: 0;
-      border-bottom: 0;
+      margin: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :not(:first-child) {
+      grid-column: 1 / -1;
+      margin: 0;
     }
     .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
-      flex: 0 0 auto;
+      grid-column: 2;
+      grid-row: 1;
       padding-bottom: 0;
       margin-bottom: 0;
       border-bottom: 0;
