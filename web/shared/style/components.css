@@ -2494,9 +2494,10 @@
      się od dołu nad całą stroną (js/core/modal-sheet.js). Warunek taki
      sam jak SHEET_MQ w modal-sheet.js. Poza arkuszem opakowania są
      przezroczyste dla układu. Warstwa `states` jest PO warstwie strony:
-     stan arkusza wygrywa ze zwykłymi regułami okien stron; strona zmienia
-     arkusz własną regułą w @layer states (bardziej szczegółową). Bez
-     flagi important — okna nie mają stylów inline (atrybut hidden, klasy). */
+     stan arkusza wygrywa ze zwykłymi regułami okien stron. Strona nie
+     nadpisuje układu arkusza -- korzysta ze znaczników silnika
+     (.modal-layer, .sheet-fill, .sheet-scroll, .modal-scroll). Okna nie mają
+     stylów inline (atrybut hidden, klasy). */
   .sheet-modal-top,
   .sheet-modal-head,
   .sheet-modal-actions,
@@ -2546,6 +2547,7 @@
       padding-right: calc(16px + env(safe-area-inset-right, 0px));
       display: flex;
       flex-direction: column;
+      align-items: stretch;
       overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
       overflow: clip;
       transform: translateY(var(--sheet-drag, 0px));
@@ -2677,7 +2679,8 @@
       flex-direction: column;
       overflow: hidden;
     }
-    .modal--sheet.sheet-active .sheet-modal-body :is(.sheet-fill, .sheet-fill > .shareSection:has(> .shareList--scroll)):not([hidden]) {
+    .modal--sheet.sheet-active .sheet-modal-body .sheet-fill:not([hidden]),
+    .modal--sheet.sheet-active .sheet-fill > .shareSection:has(> .shareList--scroll):not([hidden]) {
       display: flex;
       flex-direction: column;
       flex: 0 1 auto;
@@ -2687,7 +2690,8 @@
     .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
     .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden])) > :not(.sheet-fill),
     .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
-    .modal--sheet.sheet-active .sheet-modal-body :is(.sheet-scroll, .sheet-fill > .shareSection > .shareList--scroll) {
+    .modal--sheet.sheet-active .sheet-modal-body .sheet-scroll,
+    .modal--sheet.sheet-active .sheet-fill > .shareSection > .shareList--scroll {
       flex: 1 1 auto;
       min-height: 0;
       max-height: none;
@@ -2696,6 +2700,14 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
+    /* Okno z obrazem (.modal--media, np. podgląd zrzutu): obraz od krawędzi
+       do krawędzi i na całą wysokość treści; nagłówek z marginesem. */
+    .modal--sheet.sheet-active .modal--media {
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+    .modal--sheet.sheet-active .modal--media > .sheet-modal-top { margin-inline: 16px; }
+    .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
     /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
        w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
     .modal--sheet.sheet-active .sheet-modal-body .modal-scroll {

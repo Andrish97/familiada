@@ -146,7 +146,7 @@
 
     <!-- Fullscreen preview (MODAL z X) -->
     <div class="overlay modal--sheet" id="previewOverlay" hidden>
-      <div class="modal previewModal">
+      <div class="modal modal--media previewModal">
         <div class="previewModalTitle">
           <div>
             <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
@@ -154,7 +154,7 @@
           </div>
           <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
-        <div class="previewModalCanvas">
+        <div class="previewModalCanvas sheet-fill">
           <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
         </div>
       </div>

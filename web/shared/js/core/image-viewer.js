@@ -21,13 +21,13 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
   setOverlayOpen(overlay, false);
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvHeading">
+    <div class="modal modal--media imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvHeading">
       <div class="imgv-top mHead">
         <h2 class="imgv-title mTitle" id="imgvHeading" data-i18n="common.imageViewer.title">${t("common.imageViewer.title")}</h2>
         <button class="btn sm" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
       <p class="imgv-name mSub" id="imgvName"></p>
-      <div class="imgv-stage" id="imgvStage"></div>
+      <div class="imgv-stage sheet-fill" id="imgvStage"></div>
     </div>
   `;
   (mount || document.body).insertBefore(overlay, before);
@@ -73,7 +73,7 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
       full.decode().then(() => { if (img.isConnected) img.src = src; }).catch(() => {});
     }
     const zoom = document.createElement("div");
-    zoom.className = "imgv-zoom";
+    zoom.className = "imgv-zoom sheet-fill";
     zoom.appendChild(img); stage.appendChild(zoom);
     previewZoom = initPinchZoom(zoom, img);
     lockPageZoomForPreview();

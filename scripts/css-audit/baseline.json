@@ -260,9 +260,9 @@
  },
  "web/settings/css/settings.css": {
   "colorLiteral": 70,
-  "mediaWidth": 6,
+  "mediaWidth": 5,
   "zIndexLiteral": 17,
-  "sharedDuplicate": 6,
+  "sharedDuplicate": 7,
   "unusedClass": 14
  },
  "web/settings/index.html": {

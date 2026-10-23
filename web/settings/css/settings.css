@@ -1545,8 +1545,8 @@
     min-width: 0;
   }
 
-  /* Modal preview - below topbar (arkusz na telefonie ma własne położenie z silnika) */
-  .overlay:where(:not(.sheet-active)) {
+  /* Okna pod topbarem (okno od dołu na telefonie: położenie z silnika) */
+  .overlay {
     position: fixed;
     top: 60px;
     left: 0;
@@ -1554,7 +1554,7 @@
     bottom: 0;
     z-index: 9999;
   }
-  .overlay:where(:not(.sheet-active)) .modal {
+  .overlay .modal {
     margin-top: 20px;
   }
 
@@ -1973,17 +1973,6 @@
   .stats-sessions-diagnosis-row strong{color:#ffd875;white-space:nowrap}
   .stats-session-details-cell{white-space:normal;vertical-align:middle}
   .stats-session-details-button{white-space:nowrap}
-}
-
-/* Podgląd gry rynku w arkuszu: lista pytań rośnie z oknem (dawniej shared/css/base.css). */
-@layer states {
-  @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
-    .modal--sheet .market-preview-questions {
-      max-height: none;
-      flex: 1;
-      min-height: 0;
-    }
-  }
 }
 
 /* TinyMCE (edytor maila): biblioteka wstrzykuje własny CSS bez warstw, który

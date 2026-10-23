@@ -836,17 +836,9 @@
   }
 }
 
-/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
-   warstwie strony, jak ogólne reguły arkusza w silniku. */
-@layer states {
-
-  /* W trybie okna od dołu (telefon i tablet -- SHEET_MQ w modal-sheet.js) modal.js
-     opakowuje nagłówek i treść we własne sekcje. Nie pozwól, by desktopowe
-     centrowanie zawężało te sekcje: nagłówek ma pełną szerokość, jak w podglądzie
-     zrzutu i w pozostałych oknach. */
-  #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
-    align-items: stretch;
-  }
+/* Podgląd logo. W oknie od dołu (telefon, tablet) wygląd okna daje silnik
+   (warstwa states wygrywa z tymi regułami). */
+@layer page {
 
   /* =========================================================
      FULL WIDTH MODAL (jak w games)
@@ -875,10 +867,8 @@
     align-items: center;
   }
 
-  /* Zwykłe okno (komputer): zaokrąglenie i marginesy. W oknie od dołu (telefon,
-     tablet) obowiązuje wspólny wygląd okna od dołu -- zaokrąglona tylko
-     góra, dół przy krawędzi ekranu. */
-  #previewOverlay:not(.sheet-active) .modal.previewModal{
+  /* Zaokrąglenie i marginesy okna (w oknie od dołu: silnik). */
+  #previewOverlay .modal.previewModal{
     border-radius: var(--radius-lg);
     padding: 18px;
   }
