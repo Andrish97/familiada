@@ -12,7 +12,7 @@
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 16,
-  "colorLiteral": 39,
+  "colorLiteral": 37,
   "mediaWidth": 7,
   "zIndexLiteral": 8,
   "sharedDuplicate": 17,
@@ -219,7 +219,7 @@
  },
  "web/logos/css/logo.css": {
   "important": 9,
-  "colorLiteral": 18,
+  "colorLiteral": 16,
   "rootTokens": 12,
   "mediaWidth": 1,
   "zIndexLiteral": 8,

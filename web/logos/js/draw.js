@@ -1032,7 +1032,8 @@ export function initDrawEditor(ctx) {
     for (const f of list) {
       const item = document.createElement("button");
       item.type = "button";
-      item.className = "fontPickItem" + (f.value === fontCurrent ? " on" : "");
+      item.className = "ui-select-item fontPickItem";
+      item.setAttribute("aria-selected", String(f.value === fontCurrent));
       const name = document.createElement("span");
       name.style.cssText = "flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;";
       name.textContent = f.label;
