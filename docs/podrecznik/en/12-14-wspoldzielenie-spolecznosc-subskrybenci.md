@@ -160,7 +160,7 @@ In "My submissions" you can see the status of each submission:
 ![My submissions — statuses](zrzut:logos-market-market-my-sent-all)
 
 You can [Withdraw] a published game. It disappears from the catalogue for new people, but those who
-have already added it still have it — with a "Withdrawn" label.
+have already added it still have it — with the label "ARCHIVED — removed from Community".
 
 ![Withdrawing a game](zrzut:logos-market-market-withdraw)
 
@@ -180,8 +180,8 @@ shows "Has an account — go to Friends.", and you get a friend suggestion from 
 
 ## 14.2 Inviting subscribers
 
-1. Open the *Subscribers* page and the "Invitations" tab.
-2. Enter an email address and choose [Invite].
+1. Open the *Subscribers* page (on a phone — the "Invitations" tab).
+2. In the "Add a subscriber" section, enter an email address and choose [Invite].
 
 An email "Subscription invitation from …" with a "View invitation" button
 is sent to that address. The recipient accepts or declines the invitation on the page the email
@@ -196,14 +196,17 @@ than every 5 days and at most twice in 30 days; after a decline, you can invite 
 
 ## 14.3 Subscriber list and statuses
 
-- "Invitations" tab, "Pending and declined" section: "Pending" — the invitation is waiting for
-  an answer; "Declined" — the recipient said no (shown for 5 days).
-- "Subscribers" tab: people who have accepted the invitation.
+- "Pending" section (under "Add a subscriber"): "Pending" — the invitation is waiting for an answer;
+  "Declined" — the recipient said no (shown for 5 days). The filter above the list shows only one status.
+- "Subscribers" section: people who have accepted the invitation.
+
+On a computer both parts are on one screen; on a phone, you switch between the "Subscribers" and
+"Invitations" tabs at the top.
 
 ![Subscribers and invitations](zrzut:people-subscribers-half@desktop)
 ![Invitation status filter](zrzut:subscribers-filter)
 
-For a pending invitation you can [Resend]. [Remove] ends the subscription and deletes
+For a pending invitation you can [Resend] (the circular arrow icon). The trash icon ends the subscription and deletes
 that person's pending invitations to your polls.
 
 ![Countdown to resending](zrzut:people-subscribers-resend-cooldown)
@@ -249,7 +252,6 @@ in *Account settings* (→ 5.8).
   turn notifications back on, the old invitations will not come back.
 
 ![Subscriptions and tasks](zrzut:mails-tools)
-![Tasks — polls and devices](zrzut:people-mails-items)
 ![Opting out of all notifications](zrzut:people-mails-resign-confirm)
 
 Access to the page expires after an hour of inactivity — after that, come back in through the link.

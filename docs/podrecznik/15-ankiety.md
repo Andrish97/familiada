@@ -31,8 +31,8 @@ Na karcie „Udostępnianie” są dwa sposoby:
 
 **Anonimowo** — dla każdego, kto dostanie odnośnik:
 
-- „Link do głosowania” z przyciskami [Kopiuj link] i [Otwórz] (otwiera ankietę w nowej karcie),
-- kod QR do zeskanowania telefonem; [Powiększ kod QR] pokazuje go na cały ekran.
+- [Kopiuj link] kopiuje odnośnik do głosowania, a [Otwórz] otwiera ankietę w nowej karcie,
+- kod QR do zeskanowania telefonem — kliknij go, żeby pokazać go na cały ekran.
 
 Głosujący są anonimowi — widzisz tylko liczbę głosów. W jednej przeglądarce można zagłosować raz.
 

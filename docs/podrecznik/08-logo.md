@@ -103,7 +103,7 @@ w oryginalnej postaci (→ 8.5).
 zapisywane także przy wyjściu przyciskiem [Wstecz].
 
 **Lista „Moje loga”.** Dla zaznaczonego logo dostępne są [Edytuj], [Podgląd], [Powiel],
-eksport do pliku `.famlogo`, [Importuj] oraz [Wyślij] — kopia dla znajomego (→ 11.3).
+eksport do pliku `.famlogo`, [Import] oraz [Wyślij] — kopia dla znajomego (→ 11.3).
 Nazwę zmienisz dwuklikiem (na telefonie stuknij dwa razy), a logo usuniesz ikoną kosza.
 Nie zmieniaj ręcznie zawartości plików `.famlogo` — import takiego pliku może się nie udać.
 

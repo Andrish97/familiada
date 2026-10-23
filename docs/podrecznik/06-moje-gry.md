@@ -31,6 +31,7 @@ Każda gra to kafelek z nazwą i statusem:
 | Status | Co oznacza |
 |---|---|
 | SZKIC | Gra w przygotowaniu. Możesz ją edytować. |
+| DO URUCHOMIENIA | Gra z ankietą spełnia warunki — możesz uruchomić ankietę (→ 15.1). |
 | OTWARTA | Trwa ankieta — głosujący mogą odpowiadać. Obok widać liczbę oddanych głosów. |
 | ZATRZYMANA | Zbieranie odpowiedzi jest wstrzymane. Plakietka „do podliczenia” przypomina, że możesz podliczyć głosy (→ 15.6). |
 | GOTOWA | Gra jest gotowa do rozegrania. |
@@ -50,7 +51,7 @@ Kopia otrzymana od znajomego ma oznaczenie „Od: {nazwa}”.
 
 ![Kopia od znajomego — „Od: …”](zrzut:games-prepared-received)
 
-Nad listą możesz wybrać filtr: SZKIC, OTWARTA, ZATRZYMANA, GOTOWA albo „Otrzymano”
+Nad listą możesz wybrać filtr: SZKIC, DO URUCHOMIENIA, OTWARTA, ZATRZYMANA, GOTOWA albo „Otrzymano”
 (tylko kopie od znajomych). Lista odświeża się sama.
 
 ![Filtr stanu](zrzut:games-filter-menu)

@@ -31,6 +31,7 @@ Each game is a tile with its name and status:
 | Status | What it means |
 |---|---|
 | DRAFT | The game is being prepared. You can edit it. |
+| READY TO LAUNCH | The poll game meets the requirements — you can launch the poll (→ 15.1). |
 | OPEN | The poll is running — voters can answer. The number of votes cast is shown next to it. |
 | STOPPED | Collecting answers is paused. The "to be counted" badge reminds you that you can count the votes (→ 15.6). |
 | READY | The game is ready to play. |
@@ -50,7 +51,7 @@ A copy received from a friend is marked "From: {name}".
 
 ![A copy from a friend — “From: …”](zrzut:games-prepared-received)
 
-Above the list you can choose a filter: DRAFT, OPEN, STOPPED, READY or "Received"
+Above the list you can choose a filter: DRAFT, READY TO LAUNCH, OPEN, STOPPED, READY or "Received"
 (only copies from friends). The list refreshes by itself.
 
 ![Status filter](zrzut:games-filter-menu)

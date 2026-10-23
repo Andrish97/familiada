@@ -49,8 +49,9 @@ or in the folder tree.
 | [Tags] | assigns tags to the selection (→ 9.4) |
 | [Rename] | renames a folder or changes the question text |
 | [Copy], [Cut], [Paste] | moves or copies the selection to another folder |
+| [Move to…], [Copy to…] | moves or copies the selection to a folder chosen from a list (with search) |
 | [Duplicate] | creates a copy next to the original |
-| [Delete] | deletes the selection — after confirmation, with no way to undo |
+| [Delete] | moves the selection to the Trash for 30 days — after confirmation |
 | [Create game] | creates a game from the selected questions |
 | [Refresh view] | shows the latest state of the base |
 
@@ -63,6 +64,10 @@ background moves the items to the "Root folder". Dragging onto a tag in the left
 that tag.
 
 ![Trash](zrzut:base-explorer-trash)
+
+Deleted items wait in the **Trash** (at the bottom of the folder tree) for 30 days — each shows how much
+time is left. [Restore] puts an item back, [Delete permanently] deletes it at once, and [Empty trash]
+deletes everything. Permanent deletion cannot be undone.
 
 Deleting a folder also deletes everything inside it.
 
@@ -141,7 +146,7 @@ In that case, use the button on the toolbar.
 Double-click a question or choose [Edit question]. In the "Question" window:
 
 - "Question text" — up to 100 characters,
-- [+ Answer] — up to 6 answers, each up to 17 characters,
+- [Add answer] — up to 6 answers, each up to 17 characters,
 - "Points" — optional, from 0 to 100 for each answer; a total of at most 100.
 
 ![The question window](zrzut:base-explorer-question-modal)

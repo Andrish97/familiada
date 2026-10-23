@@ -12,7 +12,9 @@ przyciskiem menu na pasku pod nagłówkiem.
 ![Ustawienia gry na telefonie](zrzut:game-settings@phone)
 
 Ustawienia przygotuj **przed rozpoczęciem rozgrywki**. Gdy gra jest otwarta w panelu sterowania,
-ustawień nie zmienisz. Jeśli zamknąłeś panel w trakcie gry, serwis pokaże „Gra w toku” z wyborem:
+ustawień nie zmienisz. Jeśli rozgrywka nadal trwa (np. zamknąłeś panel w trakcie gry), serwis pokaże
+„Gra w toku”: zapisane zmiany obejmą dopiero następną grę, a blokada rozgrywki wygaśnie sama po
+podanym czasie bezczynności. Możesz wybrać
 [Wróć] albo [Zakończ rozgrywkę i otwórz ustawienia] — ta druga opcja kończy grę, a urządzenia
 trzeba będzie podłączyć od nowa.
 
@@ -125,8 +127,9 @@ Sekcja „Ustawienia gry”:
 
 ![Sekcja „Ustawienia gry”](zrzut:play-settings-game)
 
-Mnożniki i kwoty to dodatnie liczby całkowite — na przykład 0,5 nie zadziała. Nieprawidłowej
-wartości serwis nie zapisze: po [Zapisz] pole wróci do poprzedniej wartości.
+Mnożniki i kwoty to dodatnie liczby całkowite — na przykład 0,5 nie zadziała. Przy nieprawidłowej
+wartości pole od razu pokazuje błąd, a [Zapisz] wstrzymuje zapis z prośbą o poprawienie
+zaznaczonych pól.
 
 ![Nieprawidłowa wartość](zrzut:game-settings-game-invalid)
 

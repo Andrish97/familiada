@@ -30,7 +30,8 @@ tile and confirm — you will delete the question together with its answers.
 ![Deleting a question](zrzut:games-editor-delete-question)
 
 On a narrower screen, the editor shows either the question list or the selected question; you go back
-to the list with the [Back] button.
+to the list with the [Back] button. On a phone, the question opens in a sheet from the bottom — close
+it to return to the list.
 
 ![Game editor](zrzut:game-editor)
 ![Editor on a phone — question list](zrzut:games-editor-list-phone@phone)

@@ -49,8 +49,9 @@ albo w drzewie folderów.
 | [Tagi] | przypisuje tagi do zaznaczenia (→ 9.4) |
 | [Zmień nazwę] | zmienia nazwę folderu albo treść pytania |
 | [Kopiuj], [Wytnij], [Wklej] | przenosi lub kopiuje zaznaczenie do innego folderu |
+| [Przenieś do…], [Kopiuj do…] | przenosi lub kopiuje zaznaczenie do folderu wybranego z listy (z wyszukiwaniem) |
 | [Duplikuj] | tworzy kopię obok oryginału |
-| [Usuń] | usuwa zaznaczenie — po potwierdzeniu, bez możliwości cofnięcia |
+| [Usuń] | przenosi zaznaczenie do Kosza na 30 dni — po potwierdzeniu |
 | [Utwórz grę] | tworzy grę z zaznaczonych pytań |
 | [Odśwież widok] | pokazuje najnowszy stan bazy |
 
@@ -63,6 +64,10 @@ tle przenosi elementy do „Folderu głównego”. Przeciągnięcie na tag w lew
 ten tag.
 
 ![Kosz](zrzut:base-explorer-trash)
+
+Usunięte elementy czekają w **Koszu** (na dole drzewa folderów) 30 dni — przy każdym widać, ile
+zostało. [Przywróć] odkłada element na miejsce, [Usuń trwale] usuwa go od razu, a [Opróżnij kosz]
+usuwa wszystko. Trwałego usunięcia nie da się cofnąć.
 
 Usunięcie folderu usuwa także wszystko, co jest w środku.
 
@@ -141,7 +146,7 @@ Wtedy użyj przycisku na pasku narzędzi.
 Kliknij dwukrotnie pytanie albo wybierz [Edytuj pytanie]. W oknie „Pytanie”:
 
 - „Treść pytania” — do 100 znaków,
-- [+ Odpowiedź] — do 6 odpowiedzi, każda do 17 znaków,
+- [Dodaj odpowiedź] — do 6 odpowiedzi, każda do 17 znaków,
 - „Punkty” — opcjonalnie, od 0 do 100 przy każdej odpowiedzi; suma najwyżej 100.
 
 ![Okno pytania](zrzut:base-explorer-question-modal)

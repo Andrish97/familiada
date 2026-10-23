@@ -30,7 +30,8 @@ kafelku i potwierdź — usuniesz pytanie razem z odpowiedziami.
 ![Usuwanie pytania](zrzut:games-editor-delete-question)
 
 Na węższym ekranie edytor pokazuje na zmianę listę pytań albo wybrane pytanie; do listy
-wracasz przyciskiem [Wstecz].
+wracasz przyciskiem [Wstecz]. Na telefonie pytanie otwiera się w oknie od dołu — po jego
+zamknięciu wracasz do listy.
 
 ![Edytor gry](zrzut:game-editor)
 ![Edytor na telefonie — lista pytań](zrzut:games-editor-list-phone@phone)
