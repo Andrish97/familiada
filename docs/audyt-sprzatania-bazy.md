@@ -1,6 +1,6 @@
 # Audyt sprzątania bazy (2026-10-23)
 
-Stan: **audyt zrobiony, nic nie usunięto**. Decyzje B1–B4 zapisane
+Stan: **audyt zrobiony, nic nie usunięto**. Decyzje B1–B8 zapisane
 (2026-10-23), wykonanie czeka na polecenie startu (sekcja „Decyzje”).
 
 ## Metoda
@@ -194,5 +194,16 @@ Start dopiero na wyraźne polecenie.
   `contact_report_messages` przenieść do `reports` / `messages` (nowy
   model), potem usunąć stare funkcje, gałąź `list_messages('reports')`
   i stare tabele.
-- B5–B8 oraz część A: bez decyzji (A i B3/B6/B8 zaproponowane jako
-  bezpieczne; B5 retencja i B7 `cron.job` czekają na użytkownika).
+- **B5 — indeksy, retencja bez zmian:** logi zostają na 30 dni.
+  Dodać indeks pod zapytanie e2e (`recipient_email`, `created_at`), żeby
+  nie skanować całej tabeli. Usunąć nieużywane indeksy `request_id`
+  i `queue_id`; `fn_created` i `level_created` zostają (filtry panelu).
+- **B6 — zgoda:** `VACUUM FULL` na `marketing_search_logs`.
+- **B7 — posprzątać:** usunąć `cron_embed_missing_market_games` oraz klucze
+  `edge_url` i `edge_service_role_jwt` z `app_config`. Listę `cron.job`
+  użytkownik sprawdzi, jeśli będzie trzeba. Migracja ma sama przerwać,
+  gdy jakieś zadanie cron nadal woła starą funkcję.
+- **B8 — posprzątać:** usunąć politykę `games_select_by_keys` i indeksy
+  `games_keys_control/display/host_idx` (po usunięciu funkcji z A2).
+  Indeksy Marketplace zostają.
+- Część A: zaproponowana jako bezpieczna, wykonanie razem z resztą.
