@@ -253,9 +253,8 @@
   "inlineStyleJs": 1
  },
  "web/mail/css/mail.css": {
-  "important": 2,
+  "important": 1,
   "colorLiteral": 7,
-  "mediaWidth": 3,
   "sharedDuplicate": 1,
   "unusedClass": 3
  },
@@ -357,8 +356,7 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/contacts.css": {
-  "mediaWidth": 3,
-  "zIndexLiteral": 1
+  "mediaWidth": 2
  },
  "web/shared/css/game-settings.css": {
   "important": 3,
@@ -465,14 +463,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 225,
+  "sharedDuplicate": 226,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 259,
+  "sharedDuplicate": 260,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

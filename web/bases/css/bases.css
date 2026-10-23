@@ -61,8 +61,6 @@
   ========================================================= */
 
   .tabs-card.hub-tabs.bases-tabs-card{
-    --tab-height: 36px;
-    --tab-extra: 1px;
     --radius: 12px;
     --surface: var(--surface-1);
     --border-color: var(--line2);
@@ -84,20 +82,11 @@
     wypustce i tylko dla urządzeń z myszą.
   */
 
-  /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
-  .bases-card{
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: var(--radius);
-  }
-  .bases-tabs-card:has(.slot-mine.active) .bases-card{ border-top-left-radius: 0; }
-  .bases-tabs-card:has(.slot-shared.active) .bases-card{ border-top-right-radius: 0; }
 
   /* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),
      widoczny także na aktywnej wypustce, jak w Ankietach i Subskrypcjach */
 
   /* Gość: bez udostępnień, więc bez wypustek -- zwykła, zaokrąglona karta */
-  .bases-guest .bases-tabs-card .tabs-strip{ display: none; }
-  .bases-guest .bases-tabs-card .bases-card{ border-radius: var(--radius); }
 
   /* widoczna tylko aktywna sekcja; scroll w jej gridzie */
   .bases-layout{
@@ -120,9 +109,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  @media (max-width: 980px){
-    .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
-  }
 }
 
 

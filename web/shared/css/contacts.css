@@ -4,8 +4,7 @@
   .contacts-body > main.wrap{ width: 100%; box-sizing: border-box; padding: 18px var(--page-pad-right) 18px var(--page-pad-left); flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   .contacts-body .bar{ margin-bottom: 16px; }
   .contacts-body .title{ font-size: 18px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-  .contacts-layout{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
-  .contacts-layout > .load-retry{ grid-column: 1 / -1; align-self: start; }
+  #contactsHost > .load-retry{ grid-column: 1 / -1; align-self: start; }
   .contacts-card{ min-width: 0; }
   .contacts-invite{ margin-top: 10px; }
   .contacts-invite label{ display: block; margin-bottom: 6px; }
@@ -16,7 +15,6 @@
   .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
   @media (max-width: 720px){
     .contacts-body > main.wrap{ padding: 15px; }
-    .contacts-layout{ grid-template-columns: minmax(0,1fr); gap: 14px; }
     .contacts-invite-row{ gap: 8px; }
   }
 
@@ -26,17 +24,8 @@
     .contacts-invite-row .contacts-invite-icon{ display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
   }
 
-  /* Wypustki korzystają wprost z games.css; na komputerze obie kolumny. */
-  .contacts-tabs{ margin: 0; --tab-height: 36px; --tab-extra: 1px; flex: 1 1 auto; min-height: 0; }
-  .contacts-tabs > .tabs-strip{ display: none; }
-  .contacts-card[hidden]{ display: none; }
-  @media (max-width: 720px){
-    .contacts-tabs > .tabs-strip{ display: flex; }
-    .contacts-tabs .tab-slot{ width: 100%; }
-    .contacts-tabs .tab-label{ z-index: 3; }
-    .contacts-tabs:has([data-contact-tab="invite"].active) #contactsInvite{ border-top-left-radius: 0; }
-    .contacts-tabs:has([data-contact-tab="received"].active) #contactsReceived{ border-top-right-radius: 0; }
-  }
+  /* Karta dzielona (silnik: .tabs-card--split, core/split-tabs.js). */
+  .contacts-tabs{ margin: 0; }
 
   /* Wysokość karty wypełnia obszar pracy; scroll należy do poszczególnych list.
      Podział wysokości między sekcje (decyzja 2026-10-21, docs/wzorce-ui.md):

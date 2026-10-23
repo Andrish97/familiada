@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T14183"/>
+  <meta name="app-version" content="v2026-10-23T14420"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,20 +14,20 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="contacts.friends.title">Familiada — friends</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T14183" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T14183"/>
-  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-23T14183"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T14420" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T14420"/>
+  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-23T14420"/>
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T14183" defer></script>
-  <script type="module" src="/friends/js/friends.js?v=v2026-10-23T14183" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T14183" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T14183" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T14420" defer></script>
+  <script type="module" src="/friends/js/friends.js?v=v2026-10-23T14420" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T14420" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T14420" defer></script>
 
 </head>
 
@@ -56,17 +56,17 @@
       </div>
     </div>
 
-    <div class="tabs-card contacts-tabs" data-skel-group>
+    <div class="tabs-card tabs-card--split contacts-tabs" data-skel-group>
       <div class="tabs-strip" id="contactsTabs" role="tablist">
         <div class="tab-slot">
-          <button class="tab-label" id="contactsTabInvite" type="button" role="tab" data-contact-tab="invite" aria-controls="contactsInvite"><span data-i18n="contacts.tabs.invite"></span><span class="badge" data-contact-count="invite"></span></button>
+          <button class="tab-label" id="contactsTabInvite" type="button" role="tab" data-split-tab="invite" aria-controls="contactsInvite"><span data-i18n="contacts.tabs.invite"></span><span class="badge" data-contact-count="invite"></span></button>
         </div>
         <div class="tab-slot">
-          <button class="tab-label" id="contactsTabReceived" type="button" role="tab" data-contact-tab="received" aria-controls="contactsReceived"><span data-i18n="contacts.friends.title"></span><span class="badge" data-contact-count="received"></span></button>
+          <button class="tab-label" id="contactsTabReceived" type="button" role="tab" data-split-tab="received" aria-controls="contactsReceived"><span data-i18n="contacts.friends.title"></span><span class="badge" data-contact-count="received"></span></button>
         </div>
       </div>
-      <div class="contacts-layout" id="contactsHost" data-skel-step>
-      <div class="card contacts-card" id="contactsInvite" data-contact-panel="invite">
+      <div class="split-panels" id="contactsHost" data-skel-step>
+      <div class="card contacts-card" id="contactsInvite" data-split-panel="invite">
         <section class="shareSection contacts-add">
           <h2 class="shareSectionTitle" data-i18n="contacts.friends.add"></h2>
           <form id="inviteForm" class="contacts-invite">
@@ -79,7 +79,7 @@
         </section>
         <div id="contactsOutgoing"></div>
       </div>
-      <div class="card contacts-card" id="contactsReceived" data-contact-panel="received"></div>
+      <div class="card contacts-card" id="contactsReceived" data-split-panel="received"></div>
       <div class="load-retry" id="contactsLoadRetryWrap" hidden><button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" data-i18n-icon="refresh">Ponów</button></div>
     </div>
 
@@ -90,7 +90,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T14183"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T14420"></script>
 
 </body>
 </html>

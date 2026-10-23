@@ -11,6 +11,25 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 Katalog duplikatów i kolejność ujednolicania: [`e23-katalog-komponentow.md`](e23-katalog-komponentow.md).
 
+- **Wzorce układu globalnie (decyzja użytkownika 2026-10-23):** „np. karta
+  podwójna stająca się kartą pojedynczą z dwoma wypustkami na telefonie itd.,
+  albo nawet bardziej globalnie” — powtarzające się układy (dwie karty obok
+  siebie → jedna karta z wypustkami na telefonie, lista + szczegóły, pasek
+  narzędzi) jako wspólne wzorce silnika, stosowane wszędzie, gdzie pasują.
+- **Strefa bezpieczna zawsze (decyzja użytkownika 2026-10-23):** „bardzo ważne
+  — konsekwentnie uwzględnić safe area”. Każdy element przy krawędzi ekranu
+  (topbar, stopka, arkusze, przyciski w rogach, banery, szuflady, okna od dołu)
+  liczy `env(safe-area-inset-*)`.
+- **Nic się nie obcina, nie chowa, wszystko dostępne (decyzja użytkownika
+  2026-10-23):** „w żadnym z widoków nic się nie obcinało (nienaturalnie —
+  wielokropek może być, ale nie zawsze), nie chowało, było dostępne”. Każda
+  akcja i treść osiągalna na każdym urządzeniu; wielokropek tylko tam, gdzie
+  pełny tekst jest dostępny inaczej (podpowiedź/`title`, szczegóły).
+- **Bez przewijania tam, gdzie zakazane (decyzja użytkownika 2026-10-23):**
+  „jeśli coś ma być dostępne bez przewijania (przewijanie jest niedozwolone),
+  też musisz uwzględniać; sprawdzić, gdzie według decyzji przewijanie,
+  zawijanie itd. są niedozwolone” — lista w „Zakazy przewijania i zawijania”
+  niżej, sprawdzana automatycznie (`scripts/screens/audit-layout.cjs`).
 - **Regularnie podciągać `main` (decyzja użytkownika 2026-10-23):** „co jakiś
   czas podciągaj main i patrz, czy coś się zmieniło, i też poprawiaj” — po
   każdej paczce scalić `main` do brancha; nowe/zmienione strony i style z
@@ -256,6 +275,46 @@ i zakładek (12/16/18/20/22).
 Szacunek po analizie: **15–22 dni** (więcej pracy w mechanizmach JS
 i Ustawieniach niż zakładał pierwszy plan).
 
+## Zakazy przewijania i zawijania (zebrane z decyzji, 2026-10-23)
+
+Źródła: `docs/e20-kategorie-stron.md` (kolumna „Typ scrolla”),
+`docs/e20-uwagi-do-korekty.md` (dopisek „jeden pionowy scroll na mobile”,
+uwagi o nagłówkach i stopkach), `docs/ujednolicenie-wygladu.md` (E20 —
+doprecyzowanie z 2026-10-17, tabela wzorców), `docs/control-tryb-testowy-plan.md`,
+Dziennik `docs/wdrozenia.md` (2026-10-17/18). Sprawdza je
+`node scripts/screens/audit-layout.cjs` (lista `SCROLL_POLICY` w skrypcie).
+
+**Przewijanie dokumentu (strona jako całość):**
+
+| Dozwolone | Zakazane (przewija się tylko obszar roboczy/lista) |
+| --- | --- |
+| `/`, `/marketplace/`, `/account/`, `/manual/`, `/privacy/`; `/settings/` zależnie od widoku; logowanie (`/login/…`) tylko gdy karta nie mieści się w niskim oknie | `/games/`, `/bases/`, `/logos/`, edytory (`/games/editor/`, `/bases/explorer/`, `/logos/editor/*`, `/games/settings/`), `/polls/` (także panele — przewija się wyłącznie lista odbiorców i lista pytań w „Głosy”), `/friends/`, `/subscribers/`, `/tasks/`, `/connect/`, `/mails/`, `/polls/vote/*`, `/go/`, `/404.html`, `/maintenance/`, `/control/` (obszar roboczy; tylko treść podsumowania), ekrany urządzeń (`/control/display|host|buzzer/`, `/polls/vote/qr/`, `/snake/`, `/connect/tv/`) |
+
+**Okna i arkusze:** okno mieści się w obszarze ekranu (z safe area);
+nagłówek i akcje zawsze widoczne; przewija się jeden wyznaczony obszar treści
+albo lista. Nigdy lista przewijana wewnątrz przewijanego body (zagnieżdżony
+scroll); dwie równorzędne listy — obie widoczne, każda przewija się osobno.
+Szuflada Eksploratora sama się nie przewija (drzewo i tagi osobno). Podgląd
+gry i szczegóły w Marketplace — jeden scroll treści.
+
+**Control:** panel bez przewijania na wszystkich krokach i urządzeniach
+dopuszczonych przez guard; wyjątek — sama treść podsumowania (przyciski
+dolne widoczne). Rozgrywka: nic nie ucięte, czcionka dopasowana
+(`check-control-fit.cjs`).
+
+**Zawijanie zakazane / ograniczone:**
+- Nagłówek i paski akcji nie zawijają się przedwcześnie: najpierw zawija się
+  podpowiedź (granice zdań), dopiero potem cała grupa akcji do następnego
+  wiersza (nigdy pojedynczy przycisk).
+- Stopka: lewa część zawija się tylko po lewej, prawa tylko po prawej; sekcje
+  nie mieszają się i nie spadają jedna pod drugą.
+- „Więcej” w topbarze (przycisk, plakietka, strzałka) — jeden wiersz.
+- „Moje wysłane” w Poczcie — nigdy w drugim wierszu.
+- Pasek filtrów/eksportu — jeden wiersz, jeśli się mieści.
+
+**Poziome przewijanie strony** — zakazane wszędzie (dozwolone tylko
+wewnątrz tabeli listy Eksploratora).
+
 ## Do poprawienia (zgłoszenia użytkownika)
 
 - **Ankieta — topbar bez „Więcej” (zgłoszone 2026-10-23, zrzut ~1200 px):**
@@ -323,3 +382,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | Wiersz listy: rynek | `mkt-sent-row` („Moje wysłane”) → `.shareRow` (jak listy udostępniania, kontaktów, zadań); w pliku strony zostaje zawijanie. |
 | 2026-10-23 | Wybór koloru: jeden wygląd | `colorTopRow`, `colorHexField`, `colorPreview` (72 px), `sliders` (w ramce), `sliderRow`, `sLbl`, `sVal`, `rng` — z dwóch kopii (ustawienia gry, znaczniki Eksploratora) do silnika. Logika (`game-settings.js`, `tags-modal.js`) nadal osobna — do wspólnego modułu `pickers.js` (§6.2). |
 | 2026-10-23 | Komunikaty i ekran blokady | `.field-error` (silnik, `role=alert`): błędy logowania/resetu/potwierdzenia (`err`, `modal-err`) i pól ustawień gry (`gs-field-msg`). Status potwierdzenia/resetu → `.callout` (`role=status`). Ekran blokady: karta i przyciski jak `.card`/`.btn`/`.btn.gold` (tokeny z wartościami zapasowymi dla Wyświetlacza). |
+| 2026-10-23 | Karta dzielona i wypustki | Decyzja użytkownika (karta podwójna → jedna z wypustkami na telefonie). Silnik: `.tabs-card--split` + `.split-panels` + `[data-split-panel]`, `core/split-tabs.js` (role/aria, strzałki, ?tab=); próg wspólny 600 px i telefon poziomo ≤980. Znajomi/Subskrybenci (dawniej `contacts-layout`, próg 720; JS ukrywał kartę w poziomie, gdy CSS nie pokazywał wypustek) i Poczta (dawniej karta w karcie, próg 620) — jeden wzorzec. Róg karty pod skrajną aktywną wypustką — jedna reguła silnika (`@layer states`) zamiast reguł w Grach, Bazach, Logo, Ankietach, Poczcie, Kontaktach; gość Baz ukrywa pasek atrybutem `hidden`. Wysokość wypustek: jeden token — 36 px, telefon 44 px (było 36/44/56 zależnie od strony). Zrzuty: friends, people-friends-half, mails-tools (telefon/komputer), games, bases, logos, poll-share, games-market (telefon). |

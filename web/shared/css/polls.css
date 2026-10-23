@@ -109,8 +109,6 @@
 
   /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
   .tabs-card.hub-tabs.polls-tabs-card{
-    --tab-height: 36px;
-    --tab-extra: 1px;
     --radius: 12px;
     --surface: var(--surface-1);
     --border-color: var(--line2);
@@ -127,12 +125,6 @@
   /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
   .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
   .polls-tabs-card .tab-slot.is-disabled .tab-label::before{ opacity: 0 !important; }
-  .polls-card{
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: var(--radius);
-  }
-  .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
-  .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
   /* Sekcje z wypustkami zajmują całą szerokość obszaru treści, jak w Games.
      Węższe karty wpisywania maila i Go mają osobne reguły w swoich stylach. */

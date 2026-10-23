@@ -108,11 +108,11 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-390.png'), fullPage: true });
-    await center.locator('[data-tab=items]').click();
+    await center.locator('[data-split-tab=items]').click();
     await expect(center.locator('#itemsPanel')).toBeVisible();
     await expect(center.locator('#subscriptionPanel')).toBeHidden();
     expect(new globalThis.URL(center.url()).searchParams.get('tab')).toBe('items');
-    await center.locator('[data-tab=subscriptions]').click();
+    await center.locator('[data-split-tab=subscriptions]').click();
     expect(new globalThis.URL(center.url()).searchParams.has('tab')).toBe(false);
     expect(await center.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const denied = await center.evaluate(async () => (await fetch('/_api/mail/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })).status);

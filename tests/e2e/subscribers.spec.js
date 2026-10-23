@@ -215,7 +215,7 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
       await expect(page).toHaveURL(/\/friends\/(?:\?|$)/);
       expect(new URL(page.url()).searchParams.has("s")).toBe(false);
       expect(new URL(page.url()).searchParams.get("tab")).toBe("received");
-      await expect(page.locator('[data-contact-panel="received"]')).toBeVisible();
+      await expect(page.locator('[data-split-panel="received"]')).toBeVisible();
     }
     status = "pending";
     await anonPage.goto(url);
@@ -232,7 +232,7 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
     await anonPage.locator("#btnPrimary").click();
     await expect(anonPage).toHaveURL(/\/friends\//);
     expect(new URL(anonPage.url()).searchParams.get("tab")).toBe("received");
-    await expect(anonPage.locator('[data-contact-panel="received"]')).toBeVisible();
+    await expect(anonPage.locator('[data-split-panel="received"]')).toBeVisible();
     for (status of ["declined", "cancelled"]) {
       await page.goto(url);
       await expect(page.locator(".poll-go-title")).toContainText(status === "declined" ? "Odrzucono" : "To zaproszenie wygasło");

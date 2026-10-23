@@ -67,8 +67,10 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   const base = read("shared/style/components.css");
   assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
   assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
-  assert.match(css, /tabLogoText\.active[\s\S]*border-top-left-radius: 0/);
-  assert.match(css, /tabLogoImage\.active[\s\S]*border-top-right-radius: 0/);
+  // Róg karty pod skrajną aktywną wypustką: jedna reguła silnika dla wszystkich kart.
+  assert.match(base, /tab-slot:first-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-left-radius: 0; \}/);
+  assert.match(base, /tab-slot:last-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-right-radius: 0; \}/);
+  assert.doesNotMatch(css, /border-top-(left|right)-radius: 0/);
 });
 
 test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () => {

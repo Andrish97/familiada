@@ -1,24 +1,6 @@
-/* Moje gry: zaokrąglenia karty pod wypustkami, okno podglądu gry i ankiety.
+/* Moje gry: okno podglądu gry i ankiety.
    Reszta (pasek, karta, siatka, kafle, dolny pasek) — silnik (layout.css). */
 @layer page {
-  /* Zaokrąglenia pod wypustki */
-  .tabs-card:has(#tabPollText.active) .games-card{
-    border-top-left-radius: 0;
-    border-top-right-radius: var(--radius);
-  }
-  .tabs-card:has(#tabPollPoints.active) .games-card{
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: var(--radius);
-  }
-  .tabs-card:has(#tabPrepared.active) .games-card{
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: var(--radius);
-  }
-  .tabs-card:has(#tabMarket.active) .games-card{
-    border-top-left-radius: var(--radius);
-    border-top-right-radius: 0;
-  }
-
   /* ── Preview modal ───────────────────────────────────── */
 
   .bld-preview-head {

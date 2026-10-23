@@ -753,13 +753,6 @@
     width: 100%;
   }
 
-  .logo-tabs-card:has(#tabLogoText.active) .logoCard{
-    border-top-left-radius: 0;
-  }
-
-  .logo-tabs-card:has(#tabLogoImage.active) .logoCard{
-    border-top-right-radius: 0;
-  }
 
   /* karta listy: nie rośnie poza viewport */
   .logoCard.card.games-card{

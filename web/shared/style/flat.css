@@ -2531,6 +2531,29 @@
     .tab-slot:not(.active) > .tab-label:not(.active)::after { display: none; }
   }
 
+  /* ── Karta dzielona (decyzja 2026-10-23) ─────────────────────────
+     Szeroki ekran: dwie karty obok siebie (.split-panels). Telefon (i telefon
+     poziomo): jedna karta z wypustkami — widać aktywny panel. Kontener
+     .tabs-card.tabs-card--split; panele [data-split-panel] w .split-panels;
+     przełączanie i dostępność: core/split-tabs.js (SPLIT_MQ = ten sam warunek). */
+  .tabs-card--split > .tabs-strip { display: none; }
+  .split-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+  .split-panels > [data-split-panel] { margin: 0; min-width: 0; min-height: 0; }
+  @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
+    .tabs-card--split > .tabs-strip { display: flex; }
+    .tabs-card--split > .tabs-strip > .tab-slot { flex: 1 1 0; }
+    .tabs-card--split > .tabs-strip .tab-label { width: 100%; }
+    .split-panels { grid-template-columns: minmax(0, 1fr); }
+  }
+
   /* Podpowiedź (core/tooltips.js) — dawniej osobny tooltips.css ładowany z JS. */
   .app-tooltip {
     position: fixed;
@@ -2554,6 +2577,17 @@
   .app-tooltip:not([hidden]) { animation: popover-in var(--dur-fast) var(--ease-out); }
 
 
+
+  /* Karta pod wypustkami: róg prosty po stronie aktywnej skrajnej wypustki
+     (wszystkie karty z wypustkami; warstwa states, bo strony ustawiają
+     zaokrąglenie karty w warstwie page). Karta dzielona — tylko w trybie wąskim. */
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .card { border-top-left-radius: 0; }
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .card { border-top-right-radius: 0; }
+  @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
+    .split-panels > [data-split-panel]:not(.active) { display: none; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
+  }
 
   /* ── Okno od dołu (arkusz) — telefon i tablet dotykowy ──────────
      Rozbudowane okna (.modal--sheet; nie confirm/alert/prompt) wysuwają

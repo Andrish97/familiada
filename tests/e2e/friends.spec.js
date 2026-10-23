@@ -151,7 +151,7 @@ test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser,
       await owner.page.goto(`https://www.familiada.online/${kind}/`);
       await expect(owner.page.locator('[data-id="pending-preview"]')).toContainText("Oczekuje");
       if (kind === "friends") await expect(owner.page.locator('[data-id="declined-preview"]')).toContainText("Odrzucono");
-      if (width === 390) await owner.page.locator('[data-contact-tab="received"]').click();
+      if (width === 390) await owner.page.locator('[data-split-tab="received"]').click();
       const row = owner.page.locator('[data-id="active-preview"]');
       await expect(row).toBeVisible();
       await expect(row.locator(".shareTags")).toHaveCount(0);
@@ -185,7 +185,7 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(outgoing.locator('[data-act="cancel"]')).toBeEnabled();
       await expect(outgoing.locator('[data-act="remove"]')).toHaveCount(0);
       await expect(owner.page.locator('[data-id="declined-off"] [data-act="resend"]')).toHaveCount(0);
-      if (width === 390) await owner.page.locator('[data-contact-tab="received"]').click();
+      if (width === 390) await owner.page.locator('[data-split-tab="received"]').click();
       const incoming = owner.page.locator('[data-id="declined-in"]');
       const toggle = owner.page.locator('.rowsSection--declined button.rowsSectionHead');
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -368,12 +368,13 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, 
     for (const kind of ["friends", "subscribers"]) {
       await owner.page.setViewportSize({ width: 390, height: 844 });
       await owner.page.goto(`https://www.familiada.online/${kind}/`);
-      const invite = owner.page.locator('[data-contact-tab="invite"]');
-      const received = owner.page.locator('[data-contact-tab="received"]');
+      const invite = owner.page.locator('[data-split-tab="invite"]');
+      const received = owner.page.locator('[data-split-tab="received"]');
       await expect(invite).toHaveAttribute("aria-selected", "true");
-      // Pasek wypustek ma 36 px; aktywna wypustka zachodzi o 1 px na kartę (jeden kawałek z kartą).
-      expect(Math.round((await owner.page.locator("#contactsTabs").boundingBox()).height)).toBe(36);
-      expect(Math.round((await invite.boundingBox()).height)).toBe(37);
+      // Pasek wypustek na telefonie ma 44 px (wspólny --tab-height, E23); aktywna
+      // wypustka zachodzi o 1 px na kartę (jeden kawałek z kartą).
+      expect(Math.round((await owner.page.locator("#contactsTabs").boundingBox()).height)).toBe(44);
+      expect(Math.round((await invite.boundingBox()).height)).toBe(45);
       await expect(owner.page.locator("#contactsInvite")).toBeVisible();
       await expect(owner.page.locator("#contactsReceived")).toBeHidden();
       await expect(received.locator(".badge")).toHaveText("1");
@@ -400,7 +401,7 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, 
         lists[0].scrollTop=70; lists[1].scrollTop=120;
         return { independent: lists[0].scrollTop===70 && lists[1].scrollTop===120,
           equal: Math.abs(cards[0].height-cards[1].height)<1,
-          full: cards.every(card => Math.abs(card.bottom-document.querySelector(".contacts-layout").getBoundingClientRect().bottom)<1),
+          full: cards.every(card => Math.abs(card.bottom-document.querySelector("#contactsHost").getBoundingClientRect().bottom)<1),
           pageOverflow: document.documentElement.scrollHeight>innerHeight };
       });
       expect(scrolling).toEqual({ independent:true, equal:true, full:true, pageOverflow:false });
@@ -422,7 +423,7 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, 
     }
     await owner.context.route("**/rest/v1/rpc/poll_go_resolve", route => route.fulfill({ json: {ok:true,id:"incoming",kind:"friend"} }));
     await owner.page.goto("https://www.familiada.online/friends/?f=preview");
-    await expect(owner.page.locator('[data-contact-tab="received"]')).toHaveAttribute("aria-selected", "true");
+    await expect(owner.page.locator('[data-split-tab="received"]')).toHaveAttribute("aria-selected", "true");
     await expect(owner.page.locator('[data-id="incoming"]')).toHaveClass(/rowsFocus/);
   } finally { await owner.context.close(); }
 });

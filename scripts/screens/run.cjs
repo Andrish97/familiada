@@ -15,6 +15,7 @@ const path = require("node:path");
 const { execSync } = require("node:child_process");
 const { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
+const { inspectLayout, allowDocScroll } = require("./audit-layout.cjs");
 const { buildDb } = require("./data/demo.cjs");
 let buildGameState = null; // data/game-state.mjs (ESM, ładowany w main)
 
@@ -123,6 +124,10 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
     await page.waitForTimeout(scene.settle ?? 400);
   } catch (e) { readyError = e.message.split("\n")[0]; }
   const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
+  // --audit: układ (przewijanie, obcięcia, sterowanie poza ekranem, safe area) — audit-layout.cjs.
+  const audit = args.audit && !readyError
+    ? await view.evaluate(inspectLayout, { path: pathOnly, safe: safeArea, allowDocScroll: scene.fullPage || allowDocScroll(pathOnly) }).catch((e) => [{ kind: "blad-audytu", el: "", detail: e.message.split("\n")[0] }])
+    : [];
   const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const shot = await page.screenshot({ fullPage: !!scene.fullPage, animations: "disabled" });
@@ -133,7 +138,7 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   // deviceFrame: "iphone" -- ekran telefonu w ramce iPhone'a na czarnym tle (kadr strony głównej).
   fs.writeFileSync(file, scene.deviceFrame === "iphone" ? await composeIPhone(browser, shot, scene.frameSize?.width, scene.frameSize?.height, scene.frameSize?.scale) : shot);
   await context.close();
-  return { scene: scene.id, title: scene.title, lang, device: scene.size ? `${scene.size.width}×${scene.size.height}` : deviceName, file: path.relative(outDir, file), errors, misses, readyError };
+  return { scene: scene.id, title: scene.title, lang, device: scene.size ? `${scene.size.width}×${scene.size.height}` : deviceName, file: path.relative(outDir, file), errors, misses, readyError, audit };
 }
 
 // Obliczone style widocznych elementów: klucz = ścieżka w DOM (tag#id.klasy:nth), wartości wybranych właściwości.
@@ -216,6 +221,7 @@ function gallery(outDir, results) {
           const flags = [r.readyError && "NIEGOTOWA", r.errors.length && `${r.errors.length} błędów JS`, r.misses.length && `brak danych: ${r.misses.join(", ")}`].filter(Boolean);
           console.log(`${flags.length ? "✗" : "✓"} ${scene.id} ${lang}/${device}${flags.length ? `  ${flags.join(" | ")}` : ""}`);
           for (const e of r.errors) console.log(`    JS: ${e}`);
+          for (const a of r.audit) console.log(`    ${a.kind}: ${a.el} ${a.detail}`);
         }
       }
     }
@@ -224,6 +230,12 @@ function gallery(outDir, results) {
     stopServer();
   }
   gallery(outDir, results);
+  if (args.audit) {
+    const found = results.filter((r) => r.audit.length).map(({ scene, lang, device, file, audit }) => ({ scene, lang, device, file, audit }));
+    fs.writeFileSync(path.join(outDir, "audit.json"), JSON.stringify(found, null, 1));
+    console.log(`Audyt układu: ${found.reduce((n, r) => n + r.audit.length, 0)} uwag w ${found.length}/${results.length} zrzutach (${path.join(outDir, "audit.json")})`);
+    if (args.strict && found.length) process.exitCode = 1;
+  }
   console.log(`\nGaleria: ${path.join(outDir, "index.html")} (${results.length} zrzutów)`);
   if (args.strict && results.some((r) => r.readyError || r.errors.length)) process.exitCode = 1;
 })().catch((e) => { console.error(e.stack || e); stopServer(); process.exitCode = 1; });

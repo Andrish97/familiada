@@ -1,12 +1,13 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T14183";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T14420";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-23T14183';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-23T14183';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-23T14183';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-23T14183';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-23T14183';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-23T14183';
-import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-23T14183';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-23T14420';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-23T14420';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-23T14420';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-23T14420';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-23T14420';
+import { initSplitTabs } from '../../shared/js/core/split-tabs.js?v=v2026-10-23T14420';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-23T14420';
+import { manualHref } from '../../shared/js/core/nav-map.js?v=v2026-10-23T14420';
 
 
 const $ = id => document.getElementById(id);
@@ -48,15 +49,11 @@ function stateFrom(data) {
 function badge(id, count) {
   const node = $(id); node.textContent = String(count); node.hidden = count === 0;
 }
+let split = null;
 function setTab(value) {
   selectedTab = value;
-  setUrlTab(value, 'subscriptions');
-  document.querySelectorAll('[data-tab]').forEach(node => {
-    const active = node.dataset.tab === value;
-    node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active', active);
-    node.setAttribute('aria-selected', String(active));
-  });
-  document.querySelectorAll('[data-panel]').forEach(node => node.classList.toggle('active', node.dataset.panel === value));
+  split ||= initSplitTabs(document.querySelector('.tabs-card--split'), { active: value, onChange: name => { selectedTab = name; setUrlTab(name, 'subscriptions'); } });
+  split.select(value);
 }
 function empty(id, key) { const node = document.createElement('div'); node.className = 'empty-state'; node.textContent = text(key); $(id).replaceChildren(node); }
 function actionIcon(name, label, act, href) {
@@ -168,7 +165,6 @@ $('mailPreferenceButton').addEventListener('click', () => perform(async () => {
   model = stateFrom(await api('session'));
 }));
 window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar-ready')) render(); });
-document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 
 await initI18n({ withSwitcher: true });
 // Podręcznik bez ?ret= — adres tej strony niesie token dostępu (?m=).

@@ -1,17 +1,18 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-23T14183";
-import { initPage } from "./page-init.js?v=v2026-10-23T14183";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-23T14183";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-23T14183";
-import { toast } from "./toast.js?v=v2026-10-23T14183";
-import { iconText } from "./icons.js?v=v2026-10-23T14183";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-23T14183";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-23T14183";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-23T14183";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-23T14183";
-import { goLinkToken } from "./notify-mail.js?v=v2026-10-23T14183";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-23T14183";
-import "./contact-modal.js?v=v2026-10-23T14183";
+import { sb } from "./supabase.js?v=v2026-10-23T14420";
+import { initPage } from "./page-init.js?v=v2026-10-23T14420";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-23T14420";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-23T14420";
+import { initSplitTabs } from "./split-tabs.js?v=v2026-10-23T14420";
+import { toast } from "./toast.js?v=v2026-10-23T14420";
+import { iconText } from "./icons.js?v=v2026-10-23T14420";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-23T14420";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-23T14420";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-23T14420";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-23T14420";
+import { goLinkToken } from "./notify-mail.js?v=v2026-10-23T14420";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-23T14420";
+import "./contact-modal.js?v=v2026-10-23T14420";
 
 
 export async function initContactsPage(pageId) {
@@ -28,41 +29,12 @@ export async function initContactsPage(pageId) {
   let contactsLoaded = false;
   let loadFailureNotified = false;
   let declinedCollapsed = true;
-  const mobile = matchMedia("(max-width: 720px), (max-width: 980px) and (orientation: landscape)");
   const allowedTabs = PAGES[pageId].tabs;
-  let activeTab = tabFromUrl(allowedTabs, allowedTabs[0]);
-  const tabButtons = [...document.querySelectorAll("[data-contact-tab]")];
-  const panels = [...document.querySelectorAll("[data-contact-panel]")];
-  function applyTab() {
-    for (const button of tabButtons) {
-      const active = button.dataset.contactTab === activeTab;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-      button.tabIndex = active ? 0 : -1;
-    }
-    for (const panel of panels) {
-      panel.hidden = mobile.matches && panel.dataset.contactPanel !== activeTab;
-      if (mobile.matches) {
-        panel.setAttribute("role", "tabpanel");
-        panel.setAttribute("aria-labelledby", panel.dataset.contactPanel === "invite" ? "contactsTabInvite" : "contactsTabReceived");
-      } else {
-        panel.removeAttribute("role");
-        panel.removeAttribute("aria-labelledby");
-      }
-    }
-  }
-  function selectTab(name) { activeTab = name; setTab(name, allowedTabs[0]); applyTab(); }
-  for (const button of tabButtons) {
-    button.addEventListener("click", () => selectTab(button.dataset.contactTab));
-    button.addEventListener("keydown", event => {
-      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-      event.preventDefault();
-      const index = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - allowedTabs.indexOf(activeTab);
-      selectTab(allowedTabs[index]); tabButtons[index].focus();
-    });
-  }
-  mobile.addEventListener("change", applyTab);
-  applyTab();
+  const split = initSplitTabs(document.querySelector(".tabs-card--split"), {
+    active: tabFromUrl(allowedTabs, allowedTabs[0]),
+    onChange: name => setTab(name, allowedTabs[0]),
+  });
+  const selectTab = name => { split.select(name); setTab(name, allowedTabs[0]); };
 
   async function call(name, args) {
     const { data, error } = await sb().rpc(name, args);
@@ -163,11 +135,10 @@ export async function initContactsPage(pageId) {
     for (const badge of document.querySelectorAll("[data-contact-count]")) {
       badge.textContent = counts[badge.dataset.contactCount] || "";
     }
-    applyTab();
   }
   function focusRow(id) {
     const row = host.querySelector(`.shareRow[data-id="${CSS.escape(String(id))}"]`);
-    if (row) selectTab(row.closest("[data-contact-panel]").dataset.contactPanel);
+    if (row) selectTab(row.closest("[data-split-panel]").dataset.splitPanel);
     row?.classList.add("rowsFocus");
     row?.scrollIntoView({ block: "nearest" });
   }
