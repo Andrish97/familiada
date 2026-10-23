@@ -159,7 +159,7 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await openShare(page, baseId);
-      await expect(page.locator('#shareOverlay .shareSection')).toHaveCount(3);
+      await expect(page.locator('#shareOverlay .shareSection')).toHaveCount(2);
       await expect(page.locator('#baseShareFriends [data-id="f0"] input')).toBeDisabled();
       await expect(page.locator('#baseShareFriends [data-id="f0"]')).toHaveClass(/is-cooling-down/);
       await expect(page.locator('#shareSectionsHost [data-id="pending"] [data-act="resend"]')).toBeDisabled();
