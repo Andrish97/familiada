@@ -605,8 +605,9 @@ const en = {
     errDeleteFailed: "Failed to delete account.",
   },
   deviceLease: {
-    waitingTitle: "This device is waiting",
-    waitingText: "Another tab for this device is already open in this session. To use this screen, close the other tab; this one will activate automatically.",
+    replacedTitle: "This device was opened elsewhere",
+    replacedText: "This screen no longer controls the game because the device was opened in another tab or on another device. To use it here, click below and the other screen will switch off.",
+    takeover: "Use here",
     reconnectingTitle: "Checking the device connection",
     reconnectingText: "This screen cannot control the game until its connection is confirmed. It will retry automatically.",
   },
