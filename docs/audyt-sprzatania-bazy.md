@@ -179,6 +179,19 @@ zawartości.
 **2026-10-23 (użytkownik): zapisać do zrobienia, na razie nic nie robić.**
 Start dopiero na wyraźne polecenie.
 
+**Pierwszy krok po „zaczynaj” (decyzja użytkownika 2026-10-23):** ponowić
+audyt, zanim powstanie jakakolwiek migracja, bo baza i kod mogły się
+zmienić w międzyczasie:
+1. scalić aktualny `main` i porównać nowe migracje (po 471) oraz zmiany
+   w `web/`, Workerze i funkcjach Edge z listami A i B;
+2. ponowić analizę statyczną (odwołania do każdej usuwanej funkcji,
+   tabeli i indeksu) na świeżym `schema.sql`;
+3. ponowić odczyty `db-read` (`cleanup-table-usage`, `cleanup-table-heap`,
+   `cleanup-function-usage`, `cleanup-index-usage`, `cleanup-env`);
+4. każdą różnicę względem tego dokumentu (nowe użycie, nowe dane, nowy
+   obiekt) opisać tu i zgłosić użytkownikowi przed usuwaniem tego obiektu;
+   resztę wykonywać według decyzji.
+
 - **B1 — usunąć:** cofanie zostało wycofane („cofanie zostało cofnięte”).
   Usunąć zapis historii w `game_state_write`, funkcję `game_state_undo`
   i tabelę `game_state_history`; poprawić komentarze i dokumentację, które
