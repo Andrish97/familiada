@@ -1,12 +1,13 @@
 // Tłumaczenia PL — część „bases”.
 const pl = {
-  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij"},
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij", "hint": "Wpisz nazwę lub e-mail albo zaznacz znajomych.", "shareN": "Udostępnij ({n})"},
   bases: {
     title: "Familiada — bazy pytań",
     headerTitle: "Moje bazy pytań",
     actions: {
       browse: "Przeglądaj",
       share: "Udostępnij",
+      shares: "Udostępnienia",
       export: "Eksport",
       import: "Import",
       remove: "Usuń",
@@ -42,7 +43,8 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
-      hint: "Wybrane uprawnienie dostaną wszystkie osoby, którym teraz udostępnisz bazę.",
+      manageTitle: "Udostępnienia bazy",
+      sharedHint: "Uprawnienie zmienisz przyciskiem przy osobie.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",

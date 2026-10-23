@@ -61,9 +61,6 @@ const pl = {
     "goBody": "{owner} zaprasza Cię do znajomych.",
     "open": "Otwórz Znajomych",
     "friendMailDisabled": "Udostępniono. Ta osoba zrezygnowała z powiadomień e-mail.",
-    "shareSelected": "Udostępnij zaznaczonym",
-    "shareSelectedN": "Udostępnij zaznaczonym ({n})",
-    "shareSelectedShortN": "Udostępnij ({n})"
   },
 };
 

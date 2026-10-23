@@ -61,9 +61,6 @@ const en = {
     "goBody": "{owner} invites you to be friends.",
     "open": "Open Friends",
     "friendMailDisabled": "Access granted. This person has opted out of email notifications.",
-    "shareSelected": "Share with selected",
-    "shareSelectedN": "Share with selected ({n})",
-    "shareSelectedShortN": "Share ({n})"
   },
 };
 

@@ -2652,7 +2652,6 @@ body{
 .baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
 .baseShareLookup .btn{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
 /* „Udostępnij zaznaczonym (n)”: na telefonie krótko „Udostępnij (n)”. */
-.shareSelectedShort{ display:none; }
 
 /* Wysyłanie kopii: wspólny modal i sekcje w stylu udostępniania Baz/Control. */
 .resource-send-modal{
@@ -3249,21 +3248,17 @@ button.rowsSectionHead{ cursor: pointer; }
    nie może zmniejszyć karty do samego kafla braku. Na arkuszu mobile wysokość
    kart przydzielają już jawne wiersze siatki poniżej. Sam kafel pozostaje
    naturalnej wysokości. */
-#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
-#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"],
-#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--friends,
-#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--shared {
+#shareOverlay:not(.sheet-active) .uni-body > .shareSection--shared,
+#shareSendOverlay:not(.sheet-active) .baseShareSections > .shareSection--friends,
+#shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--shared,
+#shareDeviceSendOverlay:not(.sheet-active) .uni-body > .shareSection--friends {
   min-height: 180px;
   box-sizing: border-box;
 }
-
-.modal--sheet.sheet-active #shareDeviceSubsList,
-.modal--sheet.sheet-active #shareDeviceCurrentContent {
-    max-height: min(32dvh, 260px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-}
+/* Okna „Udostępnij” (Baza, urządzenie): stopka jak w oknie odbiorców ankiety —
+   w Bazach wybór uprawnienia po lewej, Anuluj i Udostępnij po prawej. */
+.shareSendModal .uni-foot{ align-items: center; justify-content: flex-end; }
+.shareSendModal .uni-foot > .baseShareRoleSlot{ order: -1; margin-right: auto; }
 
 @media (max-width: 600px) {
   /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
@@ -3285,29 +3280,29 @@ button.rowsSectionHead{ cursor: pointer; }
     margin: 0;
   }
   .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
-  .baseShareLookup .btn .only-desktop { display: none !important; }
-  .shareSelectedFull { display: none; }
-  .shareSelectedShort { display: inline; }
 
-  /* Udostępnianie bazy: formularz ma własny wiersz, a obie listy są
-     jednocześnie widoczne i dzielą pozostałą wysokość arkusza. */
-  #shareOverlay.sheet-active .shareModal { overflow: hidden; }
-  #shareOverlay.sheet-active .sheet-modal-body,
-  #shareOverlay.sheet-active .uni-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0; }
-  #shareOverlay.sheet-active .baseShareSections {
+  /* Okna udostępniania na arkuszu: „Udostępnienia” — jedna przewijana lista;
+     „Udostępnij” — pole adresu u góry, lista znajomych bierze resztę wysokości. */
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareModal { overflow: hidden; }
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .sheet-modal-body,
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .uni-body {
+    display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0;
+  }
+  #shareSendOverlay.sheet-active .baseShareSections {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
   }
-  #shareOverlay.sheet-active .baseShareSections > .shareSection { min-height: 0; overflow: hidden; }
-  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="friends"],
-  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="shared"] {
-    display: flex;
-    flex-direction: column;
+  #shareDeviceSendOverlay.sheet-active .uni-body { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 8px; }
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareSection {
+    display: flex; flex-direction: column; min-height: 0; margin: 0; overflow: hidden;
   }
-  #shareOverlay.sheet-active .baseShareSections .shareList--scroll {
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareSection--lookup { flex: 0 0 auto; overflow: visible; }
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareSection--shared,
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareSection--friends { flex: 1 1 auto; }
+  :is(#shareOverlay, #shareSendOverlay, #shareDeviceOverlay, #shareDeviceSendOverlay).sheet-active .shareList--scroll {
     flex: 1 1 0;
     min-height: 0;
     max-height: none;
@@ -3315,33 +3310,6 @@ button.rowsSectionHead{ cursor: pointer; }
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-  }
-
-  /* Udostępnianie urządzenia: formularz i dwie sekcje list zajmują osobne
-     wiersze; przewijają się wyłącznie listy znajomych i udostępnionych. */
-  #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
-  #shareDeviceOverlay.sheet-active .sheet-modal-body {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-  #shareDeviceOverlay.sheet-active .uni-body {
-    margin-top: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
-    flex: 1 1 auto;
-    min-height: 0;
-    gap: 8px;
-    overflow: hidden;
-  }
-  #shareDeviceOverlay.sheet-active .uni-body > .shareSection {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    margin: 0;
-    overflow: hidden;
   }
   #shareDeviceOverlay.sheet-active .shareList {
     flex: 1 1 0;
