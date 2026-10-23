@@ -100,13 +100,13 @@
   .btn-group > .btn:not(:last-child) {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    border-right: 1px solid rgb(var(--rgb-white) / .15);
+    border-right: 1px solid var(--w-14);
   }
   .btn-group > .btn:not(:first-child) {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
-  .btn-group > .btn[hidden] + .btn { border-radius: var(--r-btn); }
+  .btn-group > .btn[hidden] + .btn { border-radius: var(--r-md); }
 
   /* ── Karta listy ─────────────────────────────────────────────── */
   .games-shell {
@@ -160,9 +160,9 @@
 
   /* Kafel „Dodaj”. */
   .addCard {
-    border-radius: var(--r-tile);
-    border: 1px dashed rgb(var(--rgb-gold) / .35);
-    background: rgb(var(--rgb-gold) / .06);
+    border-radius: var(--r-md);
+    border: 1px dashed var(--g-35);
+    background: var(--g-10);
     padding: 14px;
     min-height: 130px;
     cursor: pointer;
@@ -177,8 +177,8 @@
   .addCard:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lift);
-    background: rgb(var(--rgb-gold) / .1);
-    border-color: rgb(var(--rgb-gold) / .85);
+    background: var(--g-10);
+    border-color: var(--accent);
   }
   .addCard .plus {
     font-size: 28px;
@@ -255,20 +255,20 @@
   .list-search-open { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; flex: 0 0 36px; border-radius: var(--r-sm); }
   .list-search .list-search-open { min-height: 36px; }
   .list-search-open .ico { width: 18px; height: 18px; }
-  .list-search-open.is-active { color: var(--accent); border-color: var(--accent); background: rgb(var(--rgb-yellow) / .12); }
+  .list-search-open.is-active { color: var(--accent); border-color: var(--accent); background: var(--g-10); }
 
   /* Filtr i sortowanie obok wyszukiwania. */
   .list-filter.ui-select, .list-sort.ui-select { min-width: 150px; width: 150px; flex: 0 0 auto; }
   .list-filter .ui-select-btn, .list-sort .ui-select-btn { min-height: 0; }
   .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn {
-    border-color: var(--accent); background: rgb(var(--rgb-yellow) / .12);
+    border-color: var(--accent); background: var(--g-10);
   }
   @media (max-width: 600px) {
     .list-search { width: auto; flex: 1 1 auto; max-width: none; }
     .list-search .searchText { font-size: 16px; } /* 16 px: iOS nie przybliża */
     .games-bottom-left { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left > #btnReceivedFilter { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-    .games-bottom-left > #btnReceivedFilter[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: rgb(var(--rgb-yellow) / .12); }
+    .games-bottom-left > #btnReceivedFilter[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--g-10); }
     .games-bottom-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
     .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn { color: var(--accent); }
     .list-filter .ui-select-menu, .list-sort .ui-select-menu { max-height: min(55dvh, 420px); }
@@ -346,7 +346,7 @@
     top: 7px;
     bottom: 7px;
     width: 1px;
-    background: rgb(var(--rgb-white) / .22);
+    background: var(--w-25);
   }
 
   /* ── Przyciski z ikoną i menu „Więcej” w topbarze ─────────────── */
@@ -384,7 +384,7 @@
     background: var(--surface-1);
     --under: var(--surface-1);
     border: 1px solid var(--line);
-    border-radius: var(--r-btn);
+    border-radius: var(--r-md);
     box-shadow: var(--shadow-menu);
   }
   .nav-more-dropdown[hidden] { display: none; }
@@ -406,10 +406,10 @@
   .change-type { display: grid; gap: 8px; margin: 4px 0 6px; }
   .change-type-option {
     display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center;
-    padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-btn); cursor: pointer;
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer;
   }
-  .change-type-option:hover { background: rgb(var(--rgb-white) / .04); }
-  .change-type-option:has(input[type="radio"]:checked) { border-color: var(--accent); background: rgb(var(--rgb-gold-deep) / .08); }
+  .change-type-option:hover { background: var(--w-4); }
+  .change-type-option:has(input[type="radio"]:checked) { border-color: var(--accent); background: var(--g-10); }
   .change-type-option:has(input[type="radio"]:disabled) { cursor: default; opacity: .55; }
   .change-type-option input { margin: 0; accent-color: var(--accent); }
   .change-type-name { font-weight: 900; }

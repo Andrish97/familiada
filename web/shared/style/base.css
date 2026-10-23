@@ -84,12 +84,12 @@
     *::-webkit-scrollbar-track,
     *::-webkit-scrollbar-corner { background: transparent; }
     *::-webkit-scrollbar-thumb {
-      background-color: rgb(var(--rgb-white) / .22);
+      background-color: var(--w-25);
       border-radius: var(--r-pill);
       border: 3px solid transparent; /* „pływający” suwak */
       background-clip: padding-box;
     }
-    *::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--rgb-white) / .32); }
+    *::-webkit-scrollbar-thumb:hover { background-color: var(--w-25); }
   }
 
   html.pseudoFS body {

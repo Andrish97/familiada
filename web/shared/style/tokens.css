@@ -12,39 +12,47 @@
   --rgb-white: 255 255 255;
   --rgb-black: 0 0 0;
   --rgb-gold: 255 234 166;       /* złoto Familiady */
-  --rgb-gold-deep: 243 198 75;   /* zaznaczona opcja (Zmień typ, kawa) */
-  --rgb-yellow: 255 215 0;       /* aktywny filtr/sortowanie */
   --rgb-amber: 255 200 60;
   --rgb-green: 80 200 120;
   --rgb-red: 255 110 110;
-  --rgb-red-soft: 255 120 120;
   --rgb-blue: 140 200 255;
-  --rgb-focus: 120 160 255;
   --rgb-gray: 160 160 160;
   --rgb-scrim: 2 6 23;
   --rgb-toast: 12 16 36;
   --rgb-tooltip: 15 23 42;
 
+  /* ── rodziny przezroczystości (decyzja §11.2: jak najmniej wartości) ── */
+  --w-4: rgb(var(--rgb-white) / .04);    /* delikatne wypełnienie */
+  --w-8: rgb(var(--rgb-white) / .08);    /* odcień przycisku, najechanie */
+  --w-14: rgb(var(--rgb-white) / .14);   /* linie, obramowania */
+  --w-25: rgb(var(--rgb-white) / .25);   /* mocne obramowanie, suwak */
+  --k-20: rgb(var(--rgb-black) / .20);   /* wgłębienie */
+  --k-40: rgb(var(--rgb-black) / .40);   /* cień */
+  --k-70: rgb(var(--rgb-black) / .70);   /* przyciemnienie, głęboki cień */
+  --g-10: rgb(var(--rgb-gold) / .10);    /* złoty odcień tła */
+  --g-35: rgb(var(--rgb-gold) / .35);    /* złote obramowanie */
+  --g-60: rgb(var(--rgb-gold) / .60);    /* złoty tekst drugorzędny, mocny obrys */
+
   /* ── podłoża (kryjące) ──────────────────────────────────────── */
   --bg: #050914;                 /* tło strony */
-  --surface-top: #03060d;        /* topbar */
-  --surface-tile: #070b16;       /* kafel */
-  --surface-tile-hover: #0b1020;
-  --surface-raised: #0b0e1a;     /* karta A2HS */
+  --surface-top: var(--bg);      /* topbar */
+  --surface-tile: var(--bg);     /* kafel */
+  --surface-tile-hover: var(--surface-2);
+  --surface-raised: var(--surface-2); /* karta A2HS */
   --surface-1: #111827;          /* karta, menu */
   --surface-modal: #121524;      /* okno */
-  --surface-control: #141822;    /* pole wyboru */
+  --surface-control: var(--surface-1); /* pole wyboru */
   --surface-item: #1b2332;       /* pozycja menu */
   --surface-item-hover: #292f3d;
   --surface-section: #202331;    /* sekcja udostępniania (podłoże przycisków) */
-  --surface-2: rgb(var(--rgb-black) / .18);  /* sekcja zagnieżdżona w karcie */
-  --surface-sunken: rgb(var(--rgb-black) / .25);
+  --surface-2: #0b1020;          /* sekcja zagnieżdżona, kafel po najechaniu */
+  --surface-sunken: var(--k-20);
 
   /* ── linie ──────────────────────────────────────────────────── */
-  --line: rgb(var(--rgb-white) / .14);
-  --line-strong: rgb(var(--rgb-white) / .18);
-  --line-soft: rgb(var(--rgb-white) / .12);
-  --line-faint: rgb(var(--rgb-white) / .10);
+  --line: var(--w-14);
+  --line-strong: var(--w-14);
+  --line-soft: var(--w-14);
+  --line-faint: var(--w-8);
 
   /* ── tekst ──────────────────────────────────────────────────── */
   --text: #fff;
@@ -80,27 +88,23 @@
 
   /* ── przyciemnienia ─────────────────────────────────────────── */
   --scrim: rgb(var(--rgb-scrim) / .5);          /* wokół okien i menu */
-  --scrim-modal: rgb(var(--rgb-black) / .75);   /* arkusz, okno kontaktu */
-  --scrim-block: rgb(var(--rgb-black) / .78);   /* ekran blokady */
+  --scrim-modal: var(--k-70);   /* arkusz, okno kontaktu */
+  --scrim-block: var(--k-70);   /* ekran blokady */
 
   /* ── cienie ─────────────────────────────────────────────────── */
-  --shadow-menu: 0 12px 36px rgb(var(--rgb-black) / .7);
-  --shadow-popover: 0 24px 60px rgb(var(--rgb-black) / .6);
-  --shadow-card: 0 18px 36px rgb(var(--rgb-black) / .45);
-  --shadow-lift: 0 10px 24px rgb(var(--rgb-black) / .45);
-  --shadow-modal: 0 30px 90px rgb(var(--rgb-black) / .85);
-  --shadow-sheet: 0 -18px 60px rgb(var(--rgb-black) / .6);
-  --shadow-toast: 0 16px 36px rgb(var(--rgb-black) / .35);
+  --shadow-menu: 0 12px 36px var(--k-70);
+  --shadow-popover: 0 24px 60px var(--k-70);
+  --shadow-card: 0 18px 36px var(--k-40);
+  --shadow-lift: 0 10px 24px var(--k-40);
+  --shadow-modal: 0 30px 90px var(--k-70);
+  --shadow-sheet: 0 -18px 60px var(--k-70);
+  --shadow-toast: 0 16px 36px var(--k-40);
 
-  /* ── promienie ──────────────────────────────────────────────── */
-  --r-xs: 8px;
-  --r-sm: 10px;
-  --r-md: 12px;
-  --r-btn: 14px;
-  --r-lg: 16px;
-  --r-tile: 18px;
-  --r-modal: 22px;
-  --r-sheet: 28px;
+  /* ── promienie (decyzja §11.3: jak najmniej wartości) ─────────── */
+  --r-sm: 8px;                   /* małe: chipy, oznaczenia, małe przyciski */
+  --r-md: 14px;                  /* przyciski, pola, wiersze, kafle */
+  --r-lg: 20px;                  /* karty, okna, wypustki */
+  --r-sheet: 28px;               /* górne rogi arkusza na telefonie */
   --r-pill: 999px;
 
   /* ── typografia ─────────────────────────────────────────────── */
@@ -137,7 +141,7 @@
   --under: var(--bg);
 
   /* Wypustki kart */
-  --radius: 16px;
+  --radius: var(--r-lg);
   --tab-height: 36px;
   --tab-extra: 1px;
   --tab-label-font-size: 12px;
