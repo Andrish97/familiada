@@ -12,10 +12,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T02145"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T02145" />
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T02145"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T02145"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T05292"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05292" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05292"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T05292"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
@@ -23,12 +23,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T02145" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T05292" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T02145";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T05292";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-23T02145");
+    import("/control/js/app.js?v=v2026-10-23T05292");
 
   </script>
 
@@ -144,7 +144,8 @@
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 0 48px; width:48px; min-width:48px; padding:6px; justify-content:center; gap:5px; }
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { display:none; }
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow .ico { width:17px; height:17px; }
-    .c2-topbar-progress { display:flex; flex:0 0 220px; flex-direction:column; gap:2px; min-width:0; min-height:37px; overflow:hidden; }
+    /* Szerokość z treści (do 420 px), zwęża się dopiero, gdy brakuje miejsca w pasku. */
+    .c2-topbar-progress { display:flex; flex:0 1 auto; max-width:420px; flex-direction:column; gap:2px; min-width:0; min-height:37px; overflow:hidden; }
     .c2-topbar-progress .title { font-weight:700; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; }
     .c2-topbar-progress .subtitle { opacity:.75; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
@@ -548,7 +549,7 @@
     #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
     @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T02145"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T05292"/>
 
 </head>
 <body class="control-body skel-body">
@@ -667,7 +668,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T02145"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T05292"></script>
 
 </body>
 </html>
