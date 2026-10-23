@@ -15,6 +15,7 @@
 const base = require("@playwright/test");
 const client = require("./e2e-lease-client");
 const { loginAsTestUser } = require("./login");
+const { ensureApiOriginRouting } = require("./branch-code");
 const mailboxApi = require("./mailbox");
 
 const WAIT_MS = 30 * 60_000; // zasób mail ma 2 miejsca; długie spece pocztowe trzymają je kilkanaście minut
@@ -42,6 +43,24 @@ function group(identities) {
 }
 
 const test = base.test.extend({
+  // Próba generalna przeprowadzki (E2E_API_ORIGIN): każdy kontekst — także
+  // otwierany w teście przez browser.newContext() bez logowania (głosujący,
+  // ekran QR) — mówi z API próby. Bez E2E_API_ORIGIN nic nie zmienia.
+  context: async ({ context }, use) => {
+    await ensureApiOriginRouting(context);
+    await use(context);
+  },
+  browser: [async ({ browser }, use) => {
+    if (process.env.E2E_API_ORIGIN) {
+      const newContext = browser.newContext.bind(browser);
+      browser.newContext = async (...args) => {
+        const created = await newContext(...args);
+        await ensureApiOriginRouting(created);
+        return created;
+      };
+    }
+    await use(browser);
+  }, { scope: "worker" }],
   // Deklaracja potrzeb speca (opcja na poziomie workera).
   needs: [{}, { option: true, scope: "worker" }],
 
