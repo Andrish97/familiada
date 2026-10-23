@@ -169,9 +169,16 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
 - **Tłumaczenia przy każdej zmianie (decyzja użytkownika 2026-10-23):** kto zmienia
   kod lub teksty strony, pilnuje tłumaczeń w tym samym commicie:
-  - nowy lub zmieniony tekst — od razu w `web/shared/translation/{pl,en,uk}.js`
+  - nowy lub zmieniony tekst — od razu w `web/shared/translation/{pl,en,uk}/<część>.js`
     (wszystkie trzy języki, ta sama treść znaczeniowa), nigdy tekst na sztywno w JS/HTML
     (poza zapasowym tekstem w HTML przy `data-i18n`, zgodnym z PL);
+  - **części słownika (E27, decyzja użytkownika 2026-10-23):** `common` (każda strona),
+    części stron (`games`, `control`, `polls`…) i `server` (teksty serwera — strony
+    jej nie wczytują). Nowy klucz w sekcji, w której już leżą teksty tej strony;
+    moduł wspólny (`web/shared/js`) bierze teksty z `common`, nie z sekcji jednej
+    strony. Po zmianie kluczy użytych na stronie: `node scripts/i18n-parts.mjs`
+    (meta `i18n-parts` w HTML; zapadka `unit/i18nParts.test.js`). Plan:
+    `docs/tlumaczenia-podzial-plan.md`;
   - tekst, który przestał być używany — usunąć klucz z trzech języków
     (`node scripts/i18n-prune.mjs`); klucz użyty w kodzie musi istnieć w słowniku;
   - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
@@ -185,7 +192,7 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   się bez przewijania (`unit/hints.test.js`, ≤ 90 znaków). Pełne zasady:
   `docs/wzorce-ui.md` „A16. Podpowiedzi”; audyt: `docs/audyt-podpowiedzi.md`.
 - **Teksty maili (decyzja użytkownika 2026-10-21):** jedno źródło — tłumaczenia strony
-  `web/shared/translation/{pl,en,uk}.js`. Maile powiadomień składa serwer (funkcja Edge
+  `web/shared/translation/{pl,en,uk}/*.js`. Maile powiadomień składa serwer (funkcja Edge
   `send-mail`) z kopii `supabase/functions/_shared/notification-mail-texts.js`, generowanej
   przez `node scripts/sync-notification-mail-texts.mjs` (nie edytować ręcznie; test
   `notificationMail.test.js` pilnuje zgodności).

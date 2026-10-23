@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAnonymousSubmitter } from '../../web/shared/js/core/poll-anonymous.js';
+import { loadDict } from "./helpers/i18n.js";
 const ids=()=>{let i=0;return ()=>`aaaaaaaa-aaaa-aaaa-aaaa-${String(++i).padStart(12,'0')}`;};
 const storage=()=>{const data=new Map();return {getItem:key=>data.get(key),setItem:(key,value)=>data.set(key,value),data};};
 test('anonymous identity is stable per browser/game/run and vote identity is separate per form',async()=>{
@@ -34,7 +35,7 @@ test('anonymous client recovers malformed storage and tolerates denied storage w
 
 test('anonymous retry translations exist at the root in all supported languages', async()=>{
  for(const lang of ['pl','en','uk']) {
-  const {default: dictionary}=await import(`../../web/shared/translation/${lang}.js`);
+  const dictionary = await loadDict(lang);
   for(const key of ['retry','retryIn','saved','failed','ready'])assert.equal(typeof dictionary.pollAnonymous?.[key],'string',`${lang}.${key}`);
  }
 });

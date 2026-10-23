@@ -1,4 +1,4 @@
-// Usuwa z web/shared/translation/{pl,en,uk}.js klucze, których nie używa kod
+// Usuwa z web/shared/translation/<lang>/<część>.js klucze, których nie używa kod
 // (lista z scripts/i18n-unused.mjs). Wycina tekst właściwości wprost ze
 // źródła, więc reszta pliku (formatowanie, funkcje, komentarze) zostaje;
 // obiekt, z którego zniknęły wszystkie klucze, znika razem z nimi.
@@ -9,8 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LANGS, flatten, report } from "./i18n-unused.mjs";
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+import { TRANSLATION_DIR, partNames } from "./i18n-parts.mjs";
 
 // Właściwości literału obiektu: { path, start, end } (end za przecinkiem).
 export function parseProps(src, objStart, base = "") {
@@ -124,25 +123,26 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const { unused } = await report();
   console.log(`do usunięcia: ${unused.length}`);
   if (process.argv.includes("--dry")) process.exit(0);
-  for (const lang of LANGS) {
-    const file = path.join(root, `web/shared/translation/${lang}.js`);
+  for (const [lang, part] of LANGS.flatMap((l) => partNames(l).map((p) => [l, p]))) {
+    const file = path.join(TRANSLATION_DIR, lang, `${part}.js`);
     const before = (await import(`${pathToFileURL(file).href}?b=${Date.now()}`)).default;
     const src = fs.readFileSync(file, "utf8");
     const out = prune(src, unused);
-    const tmp = path.join(path.dirname(file), `.prune-${lang}.mjs`);
+    if (out === src) continue;
+    const tmp = path.join(path.dirname(file), `.prune-${part}.mjs`);
     fs.writeFileSync(tmp, out);
     const after = (await import(`${pathToFileURL(tmp).href}?a=${Date.now()}`)).default;
     fs.rmSync(tmp);
     const expected = flatten(before).filter((k) => !unused.includes(k));
     const got = flatten(after);
-    if (JSON.stringify(expected) !== JSON.stringify(got)) throw new Error(`${lang}: wynik nie zgadza się z oczekiwanym`);
+    if (JSON.stringify(expected) !== JSON.stringify(got)) throw new Error(`${lang}/${part}: wynik nie zgadza się z oczekiwanym`);
     // Wartości pozostałych kluczy bez zmian.
     for (const k of got) {
       const a = k.split(".").reduce((o, p) => o[p], before);
       const b = k.split(".").reduce((o, p) => o[p], after);
-      if (String(a) !== String(b)) throw new Error(`${lang}: zmieniona wartość ${k}`);
+      if (String(a) !== String(b)) throw new Error(`${lang}/${part}: zmieniona wartość ${k}`);
     }
     fs.writeFileSync(file, out);
-    console.log(`${lang}: ${flatten(before).length} -> ${got.length}`);
+    console.log(`${lang}/${part}: ${flatten(before).length} -> ${got.length}`);
   }
 }

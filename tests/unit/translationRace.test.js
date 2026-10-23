@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 
 // Wyprzedzone setUiLang (np. initI18n strony i równoległe pageshow) nie może
 // wrócić, zanim nowszy wybór wczyta słownik -- inaczej t() zaraz po await
@@ -22,11 +21,9 @@ test("superseded setUiLang resolves only after the newer dictionary is loaded", 
   define("CustomEvent", class { constructor(type, init) { this.type = type; this.detail = init?.detail; } });
   try {
     const i18n = await import("../../web/shared/translation/translation.js");
-    // Słownik EN już w pamięci (ten sam adres z ?v= co w loaderze), PL jeszcze
+    // Część wspólna EN już w pamięci (ten sam adres co w loaderze), PL jeszcze
     // nie: starsze wywołanie kończy import przed nowszym -- jak przy wyścigu.
-    const source = readFileSync(new URL("../../web/shared/translation/translation.js", import.meta.url), "utf8");
-    const enPath = source.match(/import\('(\.\/en\.js[^']*)'\)/)[1];
-    await import(new URL(enPath, new URL("../../web/shared/translation/", import.meta.url)).href);
+    await import(new URL("../../web/shared/translation/en/common.js", import.meta.url).href);
     const older = i18n.setUiLang("en", { persist: false, updateUrl: false, apply: false });
     const newer = i18n.setUiLang("pl", { persist: false, updateUrl: false, apply: false });
     assert.equal(await older, false);

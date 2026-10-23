@@ -1,5 +1,5 @@
 // Tłumaczenia bez martwych kluczy (audyt 2026-10-23): każdy klucz
-// z web/shared/translation/{pl,en,uk}.js jest używany przez kod, a wszystkie
+// z web/shared/translation/<lang>/*.js jest używany przez kod, a wszystkie
 // trzy języki mają ten sam zestaw kluczy. Lista nieużywanych:
 // node scripts/i18n-unused.mjs; usunięcie: node scripts/i18n-prune.mjs.
 import { test } from "node:test";
@@ -17,5 +17,5 @@ test("tłumaczenia: PL, EN i UK mają te same klucze", () => {
 });
 
 test("tłumaczenia: każdy klucz użyty w kodzie stron istnieje w słowniku", () => {
-  assert.deepEqual(result.missingInDict, [], `brak w web/shared/translation/pl.js:\n${result.missingInDict.join("\n")}`);
+  assert.deepEqual(result.missingInDict, [], `brak w web/shared/translation/pl/*.js:\n${result.missingInDict.join("\n")}`);
 });

@@ -1,13 +1,19 @@
-const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-10-23T17153')).default,
-  en: async () => (await import('./en.js?v=v2026-10-23T17153')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-23T17153')).default,
-};
-
 import { icon, iconText } from "../js/core/icons.js?v=v2026-10-23T17153";
 
+// Słownik jest podzielony na części: <lang>/<część>.js (docs/tlumaczenia-podzial-plan.md).
+// Strona wczytuje część wspólną i części z <meta name="i18n-parts" content="…">,
+// które wylicza z jej kodu scripts/i18n-parts.mjs. Części dostają tę samą wersję
+// ?v= co ten moduł.
+const LANG_META = {
+  pl: { lang: "pl", label: "Polski", icon: "flag-pl" },
+  en: { lang: "en", label: "English", icon: "lang-en" },
+  uk: { lang: "uk", label: "Українська", icon: "flag-ua" },
+};
+const ASSET_VERSION = new URL(import.meta.url).search;
 
 const LANG_ORDER = ["pl", "en", "uk"];
+let pageParts = null;
+const warnedSections = new Set();
 
 let currentLang = "pl";
 let translations = null;
@@ -45,6 +51,29 @@ function safeSetLocalStorage(key, value) {
   } catch {}
 }
 
+function readPageParts() {
+  const meta = typeof document !== "undefined" ? document.querySelector?.('meta[name="i18n-parts"]') : null;
+  const listed = String(meta?.content || "").split(/\s+/).filter((part) => part && part !== "common");
+  pageParts = ["common", ...listed];
+  return pageParts;
+}
+
+async function loadDictionary(lang, parts) {
+  const loaded = await Promise.all(parts.map(async (part) =>
+    (await import(new URL(`./${lang}/${part}.js${ASSET_VERSION}`, import.meta.url).href)).default));
+  return Object.assign({}, ...loaded);
+}
+
+// Sekcja spoza wczytanych części: strona pokazałaby surowy klucz. Zwykle
+// nieaktualna meta i18n-parts — node scripts/i18n-parts.mjs.
+function warnMissingSection(key) {
+  if (!translations || !/^[A-Za-z]\w*(\.[\w-]+)+$/.test(key)) return;
+  const section = key.split(".")[0];
+  if (section in translations || warnedSections.has(section)) return;
+  warnedSections.add(section);
+  console.error(`[i18n] brak sekcji „${section}” na tej stronie (${key}) — node scripts/i18n-parts.mjs`);
+}
+
 export function getUiLang() {
   const params = new URLSearchParams(location.search);
   const q = params.get("lang");
@@ -65,13 +94,13 @@ export function setUiLang(lang, options = {}) {
 
 async function loadUiLang(
   lang,
-  { persist = true, updateUrl = true, apply = true } = {}
+  { persist = true, updateUrl = true, apply = true, parts = null } = {}
 ) {
   const requestId = ++languageRequestId;
   const next = normalizeLang(lang);
-  const loader = LANG_LOADERS[next] || LANG_LOADERS.pl;
+  if (parts) pageParts = ["common", ...parts.filter((part) => part !== "common")];
 
-  const loaded = await loader();
+  const loaded = await loadDictionary(next, pageParts || readPageParts());
   // Przy szybkim PL -> EN -> UK wolniejszy, starszy import nie może
   // nadpisać języka wybranego później. Wraca dopiero, gdy nowszy wybór
   // wczytał słownik -- inaczej t() zaraz po await zwracałoby klucze.
@@ -80,7 +109,7 @@ async function loadUiLang(
     return false;
   }
   translations = loaded;
-  currentLang = translations?.meta?.lang || next;
+  currentLang = next;
 
   if (persist) safeSetLocalStorage("uiLang", currentLang);
 
@@ -126,7 +155,10 @@ export function t(key, vars = {}) {
       translations
     );
 
-  if (value == null) return key;
+  if (value == null) {
+    warnMissingSection(key);
+    return key;
+  }
   if (typeof value === "function") return value(vars);
 
   return String(value).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
@@ -216,16 +248,7 @@ async function injectLanguageSwitcher() {
   // Ważne: portal do body (żeby nie ucinało przez topbar/overflow/stacking)
   document.body.appendChild(menu);
 
-  // Metadane języków
-  const metas = await Promise.all(
-    LANG_ORDER.map(async (lang) => {
-      const loader = LANG_LOADERS[lang] || LANG_LOADERS.pl;
-      const data = await loader();
-      return data.meta;
-    })
-  );
-
-  metas.forEach((meta) => {
+  LANG_ORDER.map((lang) => LANG_META[lang]).forEach((meta) => {
     const opt = document.createElement("button");
     opt.type = "button";
     opt.className = "lang-option";
@@ -341,7 +364,7 @@ function updateSwitcherLabel() {
   const btn = switcherEl.querySelector(".lang-btn");
   if (!btn) return;
 
-  const meta = translations?.meta || {};
+  const meta = LANG_META[currentLang] || LANG_META.pl;
   btn.innerHTML = icon(meta.icon);
   btn.setAttribute("aria-label", t("common.languageLabel"));
 }

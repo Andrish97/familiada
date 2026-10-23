@@ -10,6 +10,7 @@ import { createEngine } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 import { readFileSync } from "node:fs";
+import { loadDict } from "./helpers/i18n.js";
 
 // Hinty idą przez t() — w gołym Node słownik trzeba wczytać ręcznie (PL),
 // z minimalnymi atrapami document/window, których setUiLang dotyka.
@@ -20,7 +21,7 @@ const translationSpec = readFileSync(HINTS_URL, "utf8").match(/from "([^"]*trans
 const { setUiLang } = await import(new URL(translationSpec, HINTS_URL).href);
 globalThis.document ??= { documentElement: {} };
 globalThis.window ??= { dispatchEvent() {} };
-await setUiLang("pl", { persist: false, updateUrl: false, apply: false });
+await setUiLang("pl", { persist: false, updateUrl: false, apply: false, parts: ["control", "gameSettings"] });
 
 function questionPool(n = 3) {
   return Array.from({ length: n }, (_, i) => ({ id: `q${i + 1}`, ord: i + 1, text: `Pytanie ${i + 1}` }));
@@ -199,7 +200,7 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
 // mieści się przy tym limicie; dłuższy tekst trzeba skrócić, nie przewijać.
 test("control.hints: każda podpowiedź ≤ 90 znaków (PL/EN/UK)", async () => {
   for (const lang of ["pl", "en", "uk"]) {
-    const dict = (await import(new URL(`../../web/shared/translation/${lang}.js`, import.meta.url).href)).default;
+    const dict = await loadDict(lang);
     for (const [key, text] of Object.entries(dict.control.hints)) {
       const sample = String(text).replace(/\{team\}|\{first\}/g, "Drużyna A").replace(/\{\w+\}/g, "200");
       assert.ok(sample.length <= 90, `${lang} control.hints.${key}: ${sample.length} znaków`);

@@ -411,7 +411,7 @@ window.addEventListener("pagehide", () => stopRetry?.(), { once: true });
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+    // initI18n() robi dynamic import części słownika — bez tego czekania
     // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
     // co dla elementów bez data-i18n (np. #closed) zwraca surowy klucz
     // (np. "pollText.alreadyVoted") zamiast tłumaczenia (patrz t() w

@@ -805,7 +805,7 @@ async function init() {
     await handleControlDeviceGateway();
     return;
   }
-  // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+  // initI18n() robi dynamic import części słownika — bez tego czekania
   // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
   // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).
   await i18nReady;

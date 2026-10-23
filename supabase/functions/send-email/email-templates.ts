@@ -1,4 +1,4 @@
-// Teksty maili żyją w ogólnych tłumaczeniach strony (translation/{pl,en,uk}.js,
+// Teksty maili żyją w tłumaczeniach strony (translation/<lang>/server.js,
 // sekcja `authEmail`). Funkcja pobiera je ze strony w trakcie działania —
 // bez kopii w repo/deployu. Gdy strona leży, a w pamięci nie ma jeszcze
 // żadnej wersji, wysyłka kończy się błędem (linki w mailu i tak prowadzą na stronę).
@@ -54,7 +54,7 @@ const globalAny = globalThis as unknown as { __familiada_email_dict?: Map<EmailL
 const cache: Map<EmailLang, CacheEntry> =
   globalAny.__familiada_email_dict || (globalAny.__familiada_email_dict = new Map());
 
-// translation/<lang>.js to `const xx = { ... }; export default xx;` bez importów.
+// translation/<lang>/server.js to `const xx = { ... }; export default xx;` bez importów.
 function evalTranslationModule(code: string): Record<string, unknown> {
   const body = code.replace(/export\s+default\s+([A-Za-z_$][\w$]*)\s*;?/, "return $1;");
   if (body === code) throw new Error("translation module has no `export default`");
@@ -64,7 +64,7 @@ function evalTranslationModule(code: string): Record<string, unknown> {
 }
 
 async function fetchDict(lang: EmailLang): Promise<Record<string, unknown>> {
-  const url = `${translationsOrigin()}/shared/translation/${lang}.js?t=${Date.now()}`;
+  const url = `${translationsOrigin()}/shared/translation/${lang}/server.js?t=${Date.now()}`;
   const res = await fetch(url, {
     headers: { accept: "text/javascript, application/javascript, */*" },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),

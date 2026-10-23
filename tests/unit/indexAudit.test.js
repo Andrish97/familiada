@@ -4,9 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-import pl from "../../web/shared/translation/pl.js";
-import en from "../../web/shared/translation/en.js";
-import uk from "../../web/shared/translation/uk.js";
+import { dictionaries } from "./helpers/i18n.js";
+const { pl, en, uk } = dictionaries;
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -55,7 +54,7 @@ test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HT
 });
 
 test("polski interfejs używa nazwy Strona główna", () => {
-  const files = ["index.html", "login/index.html", "404.html", "shared/translation/pl.js"]
+  const files = ["index.html", "login/index.html", "404.html", "shared/translation/pl/common.js", "shared/translation/pl/login.js", "shared/translation/pl/home.js"]
     .map(read).join("\n");
   assert.doesNotMatch(files, /Strona startowa/i);
   assert.equal(pl.index.backHome, "Strona główna");
