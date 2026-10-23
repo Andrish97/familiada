@@ -8,154 +8,162 @@
    Mobile landscape (<=980px): scroll na stronie, karta wg contentu,
    bez wewnętrznych scrolli.
 */
+@layer page {
+  /* =========================================================
+     SHARE MODAL + tile badges
+  ========================================================= */
 
-/* =========================================================
-   SHARE MODAL + tile badges
-========================================================= */
+  .modal.shareModal{ width: min(820px, 94vw); }
+  /* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
+  .modal-actions > .baseShareRoleSlot{ order: -1; margin-right: auto; }
+  .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
+  .baseShareSections .shareSection{ margin-top: 0; }
+  .modal-actions > .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
+  .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
+  .baseShareRoleShort{ display:none; }
+  .shareRowActions .baseShareRole{ height: auto; min-height: 34px; }
+  /* Wspólne compact rows zwężają każde .btn do przycisku ikonowego. Rola
+     „Może edytować” ma też etykietę, więc zachowuje szerokość tekstu. */
+  .shareRow--compact .shareRowActions .baseShareRole{
+    width: auto;
+    min-width: max-content;
+    min-height: 44px;
+    padding: 6px 8px;
+  }
+  @media (max-width: 600px){
+    .baseShareRoleFull{ display:none; }
+    .baseShareRoleShort{ display:inline; }
+    .shareRow--compact .shareRowActions .baseShareRole{ min-height: 40px; height: 40px; }
+    /* w wierszu listy rola jako sama ikona (oko/ołówek, opis w dymku) —
+       kafel mieści się w jednym rzędzie jak pozostałe listy */
+    .shareRow--compact .shareRowActions .baseShareRole .baseShareRoleLabel{ display: none; }
+  }
+  #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
+  #baseDeclinesHost .shareSection{ margin-top: 8px; }
+  #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
+  #baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; white-space: normal; } /* „od · odrzucono · zniknie za” w całości, jak w Zadaniach */
+  @media (max-width: 600px){
+    .modal.shareModal{ max-height: none; }
+    .baseShareLookup .inp{ flex: 1 1 0; }
+    .baseShareSections .shareList--scroll{ max-height: 180px; }
+  }
 
-.modal.shareModal{ width: min(820px, 94vw); }
-/* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
-.modal-actions > .baseShareRoleSlot{ order: -1; margin-right: auto; }
-.baseShareSections{ display: grid; gap: 16px; min-width: 0; }
-.baseShareSections .shareSection{ margin-top: 0; }
-.modal-actions > .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
-.baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
-.baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
-.baseShareRoleShort{ display:none; }
-.shareRowActions .baseShareRole{ height: auto; min-height: 34px; }
-/* Wspólne compact rows zwężają każde .btn do przycisku ikonowego. Rola
-   „Może edytować” ma też etykietę, więc zachowuje szerokość tekstu. */
-.shareRow--compact .shareRowActions .baseShareRole{
-  width: auto;
-  min-width: max-content;
-  min-height: 44px;
-  padding: 6px 8px;
-}
-@media (max-width: 600px){
-  .baseShareRoleFull{ display:none; }
-  .baseShareRoleShort{ display:inline; }
-  .shareRow--compact .shareRowActions .baseShareRole{ min-height: 40px; height: 40px; }
-  /* w wierszu listy rola jako sama ikona (oko/ołówek, opis w dymku) —
-     kafel mieści się w jednym rzędzie jak pozostałe listy */
-  .shareRow--compact .shareRowActions .baseShareRole .baseShareRoleLabel{ display: none; }
-}
-#baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
-#baseDeclinesHost .shareSection{ margin-top: 8px; }
-#baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
-#baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; white-space: normal; } /* „od · odrzucono · zniknie za” w całości, jak w Zadaniach */
-@media (max-width: 600px){
-  .modal.shareModal{ max-height: none; }
-  .baseShareLookup .inp{ flex: 1 1 0; }
-  .baseShareSections .shareList--scroll{ max-height: 180px; }
-}
+  /* .btn.xsm przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
+     control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
+     ładują tego pliku wcale (zgłoszone: przycisk tam wyglądał jak pełnowymiarowy
+     .btn). Zostaje tu zaimportowane niejawnie przez base.css, nie duplikowane. */
 
-/* .btn.xsm przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
-   control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
-   ładują tego pliku wcale (zgłoszone: przycisk tam wyglądał jak pełnowymiarowy
-   .btn). Zostaje tu zaimportowane niejawnie przez base.css, nie duplikowane. */
+  /* oznaczenia na kafelku: .tag z base.css (kolor wg data-kind w bases.js) */
 
-/* oznaczenia na kafelku: .tag z base.css (kolor wg data-kind w bases.js) */
+  /* =========================================================
+     KARTA Z WYPUSTKAMI (wszystkie szerokości)
+     Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
+  ========================================================= */
 
-/* =========================================================
-   KARTA Z WYPUSTKAMI (wszystkie szerokości)
-   Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
-========================================================= */
-
-.tabs-card.hub-tabs.bases-tabs-card{
-  --tab-height: 36px;
-  --tab-extra: 1px;
-  --radius: 12px;
-  --surface: #111827;
-  --border-color: var(--line2);
-  overflow: hidden;
-}
-
-.bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
-
-.bases-tabs-card .tab-label{
-  z-index: 4; /* label zawsze nad aktywną wypustką */
-  font-weight: 1000;
-}
-
-/*
-  games.css ma efekt hover na .tab-label::before. Na touch (sticky hover)
-  wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
-  wypustce i tylko dla urządzeń z myszą.
-*/
-
-/* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
-.bases-card{
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-}
-.bases-tabs-card:has(.slot-mine.active) .bases-card{ border-top-left-radius: 0; }
-.bases-tabs-card:has(.slot-shared.active) .bases-card{ border-top-right-radius: 0; }
-
-/* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),
-   widoczny także na aktywnej wypustce, jak w Ankietach i Subskrypcjach */
-
-/* Gość: bez udostępnień, więc bez wypustek -- zwykła, zaokrąglona karta */
-.bases-guest .bases-tabs-card .tabs-strip{ display: none; }
-.bases-guest .bases-tabs-card .bases-card{ border-radius: var(--radius); }
-
-/* widoczna tylko aktywna sekcja; scroll w jej gridzie */
-.bases-layout{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.bases-section{ display: none; }
-.bases-section.active{
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.bases-section .grid{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-@media (max-width: 980px){
-  .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
-}
-
-/* Okno udostępniania bazy (dawniej shared/css/base.css). W zwykłym widoku
-   pusta sekcja listy nie zmniejsza karty do samego kafla braku. */
-#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
-#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"] {
-  min-height: 180px;
-  box-sizing: border-box;
-}
-/* Telefon: formularz ma własny wiersz, a obie listy są jednocześnie widoczne
-   i dzielą pozostałą wysokość arkusza. */
-@media (max-width: 600px) {
-  #shareOverlay.sheet-active .shareModal { overflow: hidden; }
-  #shareOverlay.sheet-active .sheet-modal-body,
-  #shareOverlay.sheet-active .uni-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0; }
-  #shareOverlay.sheet-active .baseShareSections {
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
-    flex: 1 1 auto;
-    min-height: 0;
+  .tabs-card.hub-tabs.bases-tabs-card{
+    --tab-height: 36px;
+    --tab-extra: 1px;
+    --radius: 12px;
+    --surface: #111827;
+    --border-color: var(--line2);
     overflow: hidden;
   }
-  #shareOverlay.sheet-active .baseShareSections > .shareSection { min-height: 0; overflow: hidden; }
-  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="friends"],
-  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="shared"] {
+
+  .bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
+
+  .bases-tabs-card .tab-label:not(.active){
+    z-index: 4; /* label zawsze nad aktywną wypustką */
+  }
+  .bases-tabs-card .tab-label{
+    font-weight: 1000;
+  }
+
+  /*
+    games.css ma efekt hover na .tab-label::before. Na touch (sticky hover)
+    wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
+    wypustce i tylko dla urządzeń z myszą.
+  */
+
+  /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
+  .bases-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+  .bases-tabs-card:has(.slot-mine.active) .bases-card{ border-top-left-radius: 0; }
+  .bases-tabs-card:has(.slot-shared.active) .bases-card{ border-top-right-radius: 0; }
+
+  /* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),
+     widoczny także na aktywnej wypustce, jak w Ankietach i Subskrypcjach */
+
+  /* Gość: bez udostępnień, więc bez wypustek -- zwykła, zaokrąglona karta */
+  .bases-guest .bases-tabs-card .tabs-strip{ display: none; }
+  .bases-guest .bases-tabs-card .bases-card{ border-radius: var(--radius); }
+
+  /* widoczna tylko aktywna sekcja; scroll w jej gridzie */
+  .bases-layout{
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
   }
-  #shareOverlay.sheet-active .baseShareSections .shareList--scroll {
-    flex: 1 1 0;
+  .bases-section{ display: none; }
+  .bases-section.active{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
     min-height: 0;
-    max-height: none;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+  }
+  .bases-section .grid{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  @media (max-width: 980px){
+    .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
+  }
+
+  /* Okno udostępniania bazy (dawniej shared/css/base.css). W zwykłym widoku
+     pusta sekcja listy nie zmniejsza karty do samego kafla braku. */
+  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
+  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"] {
+    min-height: 180px;
+    box-sizing: border-box;
+  }
+  /* Telefon: formularz ma własny wiersz, a obie listy są jednocześnie widoczne
+     i dzielą pozostałą wysokość arkusza. */
+  @media (max-width: 600px) {
+    #shareOverlay.sheet-active .shareModal { overflow: hidden; }
+    #shareOverlay.sheet-active .sheet-modal-body,
+    #shareOverlay.sheet-active .uni-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 0; }
+    #shareOverlay.sheet-active .baseShareSections {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    #shareOverlay.sheet-active .baseShareSections > .shareSection { min-height: 0; overflow: hidden; }
+    #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="friends"],
+    #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="shared"] {
+      display: flex;
+      flex-direction: column;
+    }
+    #shareOverlay.sheet-active .baseShareSections .shareList--scroll {
+      flex: 1 1 0;
+      min-height: 0;
+      max-height: none;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Rola w stopce okna: odstęp ikona–napis jak inne przyciski stopki. */
+  .uni-foot .baseShareRole{ gap: .4em; }
+  /* Wiersz z aktywnym licznikiem: rola tej samej wysokości co pozostałe przyciski. */
+  .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions .baseShareRole{ height: 52px; min-height: 52px; }
 }
