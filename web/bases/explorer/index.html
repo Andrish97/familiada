@@ -114,7 +114,7 @@
   <!-- Szukaj na telefonie (ui/search.js): pole, tabletki i podpowiedzi z paska
        przenoszone na czas edycji do treści okna -->
   <div class="overlay modal--sheet sheet-fit" id="searchOverlay" style="display:none;">
-    <div class="modal search-modal" role="dialog" aria-modal="true" aria-labelledby="searchSheetTitle">
+    <div class="modal modal--narrow search-modal" role="dialog" aria-modal="true" aria-labelledby="searchSheetTitle">
       <div class="mHead">
         <div class="mTitle" id="searchSheetTitle" data-i18n="baseExplorer.search.sheetTitle">Szukaj</div>
         <button class="btn sm" id="searchSheetClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
@@ -129,7 +129,7 @@
   </div>
 
   <div class="overlay modal--sheet" id="moveOverlay" style="display:none;">
-    <div class="modal move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
+    <div class="modal modal--narrow move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
       <div class="mHead">
         <div class="mTitle" id="moveTitle">Przenieś do</div>
         <button class="btn sm" id="moveClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
@@ -149,7 +149,7 @@
   </div>
 
   <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
-    <div class="modal tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
+    <div class="modal modal--medium tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
   
       <!-- WARSTWA 1: przypisz -->
       <section id="tagsL1" class="tags-layer">
@@ -338,7 +338,7 @@
        [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
        ======================================================= -->
   <div class="overlay modal--sheet" id="questionOverlay" style="display:none;">
-    <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+    <div class="modal modal--medium tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
 
       <div class="tagsHead">
         <div class="mTitle" id="qTitle" data-i18n="baseExplorer.question.title">Pytanie</div>

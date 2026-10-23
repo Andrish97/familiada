@@ -20,9 +20,6 @@
   }
 
   /* ── Preview modal ───────────────────────────────────── */
-  .bld-preview-modal {
-    width: min(680px, 94vw);
-  }
 
   .bld-preview-head {
     display: flex;

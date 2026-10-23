@@ -914,6 +914,8 @@
     -webkit-overflow-scrolling: touch;
   }
   /* Proste okna (nazwa, krótkie potwierdzenie) — węższe. */
+  /* Szerokości okien (jedyne trzy): domyślna 860, --medium 720 (= okno uniwersalne), --narrow 560. */
+  .modal.modal--medium { width: min(720px, 94vw); }
   .modal.modal--narrow { width: min(560px, 94vw); }
 
   .mTitle {
@@ -1755,7 +1757,6 @@
 
   /* Wysyłanie kopii (resource-send.js). */
   .resource-send-modal {
-    width: min(680px, 94vw);
     max-height: 90dvh;
     display: flex;
     flex-direction: column;

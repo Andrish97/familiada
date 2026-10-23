@@ -530,9 +530,6 @@
       border-radius: var(--r-sm)
   }
 
-  .tags-modal {
-      width: min(720px,94vw)
-  }
 
   .tags-layer {
       display: block
@@ -947,9 +944,6 @@
       margin-right: 2px;
   }
 
-  .export-modal {
-      width: min(860px,94vw)
-  }
 
   .xBody,.xGrid2 {
       display: grid;
@@ -1153,9 +1147,6 @@
       color: rgba(255,180,180,.95)
   }
 
-  .question-modal {
-      width: min(720px,94vw)
-  }
 
   .qBody {
       margin-top: 10px;
@@ -1846,7 +1837,6 @@
   }
 
   /* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
-  .move-modal { width: min(560px, 94vw); }
   .moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
   .moveSearch { flex: 0 0 auto; margin-right: 0; width: 100%; box-sizing: border-box; } /* .searchBox z paska ma margin-right */
   .moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
@@ -1969,7 +1959,6 @@
   @media (max-width: 900px) {
     .toolbar > .search-row { display: none; }
   }
-  .search-modal { width: min(560px, 94vw); }
   .searchSheetBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
   .searchSheetBody .searchBox { margin: 0; flex: 0 0 auto; width: 100%; box-sizing: border-box; }
   .searchSheetBody .searchText { flex: 1 1 auto; min-width: 0; }

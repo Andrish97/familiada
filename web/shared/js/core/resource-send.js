@@ -18,7 +18,7 @@ function getDialog() {
   overlay.className = "overlay modal--sheet resource-send-overlay";
   overlay.style.display = "none";
   overlay.innerHTML = `
-    <div class="modal shareModal resource-send-modal" role="dialog" aria-modal="true" aria-labelledby="resourceSendTitle">
+    <div class="modal modal--medium shareModal resource-send-modal" role="dialog" aria-modal="true" aria-labelledby="resourceSendTitle">
       <div class="mHead">
         <h2 class="mTitle" id="resourceSendTitle"></h2>
         <button class="btn sm" type="button" data-close aria-label=""></button>

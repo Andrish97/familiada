@@ -13,7 +13,6 @@
      SHARE MODAL + tile badges
   ========================================================= */
 
-  .modal.shareModal{ width: min(820px, 94vw); }
   /* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
   .modal-actions > .baseShareRoleSlot{ order: -1; margin-right: auto; }
   .baseShareSections{ display: grid; gap: 16px; min-width: 0; }

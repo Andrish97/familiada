@@ -247,10 +247,6 @@
     align-self: flex-start;
   }
 
-  /* ===== Detail modal ===== */
-  .mkt-modal-detail {
-    width: min(680px, 94vw);
-  }
 
   .mkt-detail-head {
     display: flex;
