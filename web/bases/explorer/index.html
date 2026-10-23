@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T17414"/>
+  <meta name="app-version" content="v2026-10-23T18093"/>
 
 
   <meta charset="utf-8" />
@@ -15,24 +15,24 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17414" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T17414" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T17414" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-23T18093" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-23T18093" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17414"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17414" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T17414"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-23T18093"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17414" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
 
 </head>
 
@@ -134,12 +134,12 @@
         <div class="mTitle" id="moveTitle">Przenieś do</div>
         <button class="btn sm" id="moveClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <div class="moveBody">
+      <div class="moveBody sheet-fill">
         <label class="searchBox moveSearch">
           <i class="ico" data-icon="search"></i>
           <input id="moveSearch" class="searchText" type="search" autocomplete="off" data-i18n-placeholder="baseExplorer.move.searchPlaceholder" placeholder="Szukaj folderu…" />
         </label>
-        <div id="moveList" class="moveList" role="tree"></div>
+        <div id="moveList" class="moveList sheet-scroll" role="tree"></div>
       </div>
       <div class="modal-actions">
         <button class="btn sm" id="moveCancel" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
@@ -152,15 +152,15 @@
     <div class="modal modal--medium tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
   
       <!-- WARSTWA 1: przypisz -->
-      <section id="tagsL1" class="tags-layer">
+      <section id="tagsL1" class="modal-layer tags-layer">
         <div class="tagsHead">
           <div class="mTitle" id="tagsTitle" data-i18n="baseExplorer.tags.modalTitle">Tagi</div>
           <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <div class="tagsAssignInfo" id="tagsAssignInfo">—</div>
+        <div class="mSub tagsAssignInfo" id="tagsAssignInfo">—</div>
   
-        <div id="tagsAssignList" class="tagsPickList"></div>
+        <div id="tagsAssignList" class="tagsPickList modal-scroll"></div>
   
         <div class="tagsFoot">
           <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag" data-i18n-icon="plus">Dodaj tag</button>
@@ -172,7 +172,7 @@
       </section>
   
       <!-- WARSTWA 2: dodaj/edytuj -->
-      <section id="tagsL2" class="tags-layer" style="display:none;">
+      <section id="tagsL2" class="modal-layer tags-layer" hidden>
         <div class="tagsHead">
           <div class="mTitle" id="tagsEditTitle" data-i18n="baseExplorer.tags.editTitle">Tag</div>
           <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
@@ -199,13 +199,13 @@
       </section>
   
       <!-- WARSTWA 3: picker koloru -->
-      <section id="tagsL3" class="tags-layer" style="display:none;">
+      <section id="tagsL3" class="modal-layer tags-layer" hidden>
         <div class="tagsHead">
           <div class="mTitle" data-i18n="baseExplorer.tags.colorModalTitle">Kolor</div>
           <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <div class="colorModalBody" id="tagsColorBody"></div>
+        <div class="colorModalBody modal-scroll" id="tagsColorBody"></div>
   
         <div class="tagsFoot">
           <div class="tagsFootSpacer"></div>
@@ -232,16 +232,16 @@
         Gra powstanie z zaznaczonych pytań. Oznaczenia pokazują, czego brakuje do gotowości wybranego typu — można to uzupełnić później.
       </div>
 
-      <div class="xBody">
+      <div class="xBody sheet-fill">
         <div class="xField">
           <div class="field-label" data-i18n="baseExplorer.export.gameNameLabel">Nazwa gry</div>
           <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
         </div>
 
-        <div class="xGrid2">
-          <div class="xField">
+        <div class="xGrid2 sheet-fill">
+          <div class="xField sheet-fill">
             <div class="field-label" data-i18n="baseExplorer.export.questionsLabel">Pytania</div>
-            <div id="xList" class="xPickList"></div>
+            <div id="xList" class="xPickList sheet-scroll"></div>
           </div>
 
           <div class="xField">
@@ -321,16 +321,16 @@
 
       <!-- Ten sam układ i style co pytanie w edytorze gry (css/question-form.css);
            wiersze odpowiedzi i kafelek "+ Dodaj odpowiedź" buduje question-modal.js -->
-      <div class="qBody">
+      <div class="qBody sheet-fill">
         <div class="qBlock card card--inset qf-section">
           <div class="section-title" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
           <textarea id="qText" class="inp qf-qtext" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
         </div>
 
-        <div class="qBlock qAnswersBlock card card--inset qf-section">
+        <div class="qBlock qAnswersBlock card card--inset qf-section sheet-fill">
           <div class="qf-sum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle"></div>
 
-          <div class="qf-listShell">
+          <div class="qf-listShell sheet-scroll">
             <div id="qAnswers" class="qf-list"></div>
           </div>
         </div>
@@ -362,7 +362,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T17414"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
 
 </body>
 </html>

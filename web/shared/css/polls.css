@@ -467,47 +467,10 @@
   }
 }
 
-/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
-   warstwie strony, jak ogólne reguły arkusza w silniku. */
-@layer states {
-/* Odbiorcy ankiety w arkuszu: nagłówek i akcje stałe, przewijają się
-     wyłącznie listy (dawniej shared/css/base.css). */
-  @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
-    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) { overflow: hidden; }
-    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) > .uni-body {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .modal--sheet.sheet-active .pollRecipientsModal .shareList { max-height: none; }
-  }
+@layer page {
   @media (max-width: 600px) {
-    .pollRecipientsModal .shareList--scroll {
-      max-height: none;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-    .pollRecipientsModal .pollRecipientGroup { display: flex; flex: 1 1 0; min-height: 0; }
-    .pollRecipientsModal .pollRecipientGroup > .shareSection {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      min-height: 0;
-      margin: 0;
-    }
-    .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
+    /* Okno QR na telefonie: większe odstępy między QR, kodem i podpowiedzią
+       (jak okno urządzenia w Control). */
+    #pollQrModalOverlay .uni-body { gap: 20px; }
   }
-
-  @media (max-width: 600px){
-    /* Układ QR taki sam jak w mobilnym modalu urządzenia w Control. */
-    #pollQrModalOverlay.sheet-active .sheet-modal-body > .uni-body{
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }}
 }

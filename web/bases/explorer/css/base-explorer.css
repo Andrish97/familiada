@@ -368,11 +368,6 @@
       pointer-events: none
   }
 
-  #tagsModal .tags-layer {
-      display: block;
-      min-height: 280px
-  }
-
   #tagsModal .tags-row {
       display: flex;
       align-items: center;
@@ -401,10 +396,6 @@
       border-radius: var(--r-sm)
   }
 
-
-  .tags-layer {
-      display: block
-  }
 
   .tagsFoot,.tagsHead {
       display: flex;
@@ -1294,13 +1285,6 @@
     overflow: hidden;
   }
 
-  .tags-modal .tags-layer {
-    display: flex;
-    flex: 1 1 auto;
-    min-height: 0;
-    flex-direction: column;
-  }
-
   .tags-modal .tagsHead,
   .tags-modal .tagsFoot {
     flex: 0 0 auto;
@@ -1323,8 +1307,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .question-modal > .qBody,
-  .question-modal > .sheet-modal-body > .qBody {
+  .question-modal > .qBody {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
@@ -1346,8 +1329,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .export-modal > .xBody,
-  .export-modal > .sheet-modal-body > .xBody {
+  .export-modal > .xBody {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -1746,232 +1728,45 @@
   .searchSheetBody .searchText { flex: 1 1 auto; min-width: 0; }
 }
 
-/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
-   warstwie strony, jak ogólne reguły arkusza w silniku. */
-@layer states {
-/* Okna Eksploratora w arkuszu (telefon, tablet dotykowy) — dawniej
-     shared/css/base.css. Warstwy (tagi, eksport) mają własny nagłówek i stopkę;
-     pasek akcji przed listą, przewija się tylko lista. */
-  @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
-      .modal--sheet .tags-modal {
-          width: 100%;
-      }
-      .modal--sheet.sheet-active .tags-modal:has(> .sheet-modal-body > .tags-layer) {
-          overflow: hidden;
-      }
-      .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
-          overflow: hidden;
-      }
-      .modal--sheet.sheet-active .tags-modal .tags-layer {
-          display: flex;
-          flex: 1 1 auto;
-          min-height: 0;
-          flex-direction: column;
-      }
-      /* Warstwy Eksploratora zawierają własny nagłówek i stopkę wewnątrz
-         sekcji. Na telefonie przenieś pasek akcji przed listę/pola, ale
-         zostaw samą listę jako jedyny przewijany element. */
-      .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
-          order: 0;
-          border-bottom: 0;
-          padding-bottom: 0;
-          margin-bottom: 0;
-      }
-      .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsFoot {
-          order: 1;
-          flex: 0 0 auto;
-          margin: 0 0 10px;
-          padding: 0 0 10px;
-          border-top: 0;
-          border-bottom: 1px solid var(--line2);
-      }
-      .modal--sheet.sheet-active .tags-modal .tags-layer > :not(.tagsHead, .tagsFoot, .mSub, .tagsAssignInfo) { order: 2; }
-      .modal--sheet.sheet-active .tags-modal .tagsPickList,
-      .modal--sheet.sheet-active .tags-modal .qBody,
-      .modal--sheet.sheet-active .tags-modal .xBody,
-      .modal--sheet.sheet-active .tags-modal .colorModalBody {
-          flex: 1 1 auto;
-          min-height: 0;
-          overflow-y: auto;
-          overscroll-behavior: contain;
-          -webkit-overflow-scrolling: touch;
-      }
-      .modal--sheet.sheet-active .tags-modal .tagsPickList { max-height: none; }
-      /* W mobilnym eksporcie gry przewija się cała treść arkusza. Nie
-         zagnieżdżaj pod nią scrolla formularza ani listy pytań. */
-      .modal--sheet.sheet-active .export-modal .xBody {
-          flex: 0 0 auto;
-          min-height: auto;
-          overflow: visible;
-      }
-      .modal--sheet.sheet-active .export-modal .xPickList {
-          max-height: none;
-          overflow: visible;
-      }
-      .modal--sheet.sheet-active .tags-modal .tagsFoot {
-          flex: 0 0 auto;
-      }
-  }
-
+/* Okna Eksploratora na telefonie: układ okna od dołu daje silnik
+   (.sheet-fill/.sheet-scroll/.modal-scroll w HTML); tu tylko treść. */
+@layer page {
   /* okno od dołu leży nad stroną -- menu kontekstowe chowa się pod nim */
   body.sheet-open #contextMenu { display: none; }
 
   @media (max-width: 600px) and (orientation: portrait) {
-    /* .sheet-modal-actions rysuje jedyny separator; nie dubluj go linią
-       stopki Base Explorer. Stopki wewnątrz warstw tagów mają własną linię
-       poniżej akcji i nie są objęte tym selektorem. */
-    .modal--sheet.sheet-active .sheet-modal-actions > .tagsFoot {
-      padding-top: 0;
-      border-top: 0;
-    }
-
-    /* Warstwy tagów mają własne nagłówki i stopki. Ich arkusz jest
-       nieruchomy, a aktywna lista/picker dostaje dostępną wysokość. */
-    .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .tags-modal .tagsPickList,
-    .modal--sheet.sheet-active .tags-modal .colorModalBody {
-      max-height: none;
-      min-height: 0;
-    }
-
-    /* Formularz pytania naśladuje Edytor gry: treść pytania zostaje
-       nieruchoma, a przewija się wyłącznie lista odpowiedzi. */
-    .modal--sheet.sheet-active .question-modal > .sheet-modal-body {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .question-modal > .sheet-modal-body > .mSub {
-      flex: 0 0 auto;
-    }
-
-    .modal--sheet.sheet-active .question-modal .qBody {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-      grid-template-rows: auto minmax(0, 1fr);
-    }
-
-    .modal--sheet.sheet-active .question-modal .qAnswersBlock .qf-listShell {
-      max-height: none;
-      min-height: 0;
-    }
-
-    /* Przy dodawaniu gry nagłówek i akcje zostają nieruchome. Lista pytań
-       przewija się w swoim polu, a typ gry zajmuje osobny wiersz pod listą. */
-    .modal--sheet.sheet-active .export-modal > .sheet-modal-body {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .export-modal > .sheet-modal-body > .mSub {
-      flex: 0 0 auto;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xBody {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xGrid2 {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
-      flex: 1 1 0;
-      min-height: 72px;
-      overflow: hidden;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) .xPickList {
-      flex: 1 1 0;
-      min-height: 0;
-      max-height: none;
-      overflow-y: auto;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xField:not(:has(.xPickList)) {
-      flex: 0 0 auto;
-    }
-
-    /* Typ gry ma własny, nieprzezroczysty panel. Lista pytań kończy się
-       przed nim, a jej kafelki nie prześwitują pod przyciskami typów. */
-    .modal--sheet.sheet-active .export-modal .xTypeBox {
+    /* „Utwórz grę”: lista pytań nie znika przy niskim oknie, a typ gry ma
+       własny, nieprzezroczysty panel pod nią. */
+    .export-modal .xField:has(.xPickList) { min-height: 72px; }
+    .export-modal .xTypeBox {
       min-width: 0;
       padding: 8px;
       border-color: var(--w-14);
       background: var(--surface-1);
     }
-
-    .modal--sheet.sheet-active .export-modal .xTypeTop {
+    .export-modal .xTypeTop {
       align-items: center;
       flex-wrap: nowrap;
       gap: 6px;
     }
-
-    .modal--sheet.sheet-active .export-modal .xRange {
-      margin-top: 4px;
-    }
-
-    .modal--sheet.sheet-active .export-modal .xTypeLabels {
+    .export-modal .xRange { margin-top: 4px; }
+    .export-modal .xTypeLabels {
       gap: 4px;
       margin-top: 6px;
       font-size: 10px;
       opacity: 1;
     }
-
-    .modal--sheet.sheet-active .export-modal .xTypeLbl {
+    .export-modal .xTypeLbl {
       min-height: 40px;
       padding: 4px 2px;
       background: #182131;
     }
-
-    .modal--sheet.sheet-active .export-modal .xTypeLbl.active {
+    .export-modal .xTypeLbl.active {
       background: #3a3424;
       border-color: var(--g-60);
     }
-
-    .modal--sheet.sheet-active .export-modal .xPickList {
-      max-height: none;
-      min-height: 0;
-      overflow-y: auto;
-    }}
-
+  }
   @media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
-    /* Na niskim ekranie skraca się pole listy; panel typu nadal zostaje
-       pod nim i w całości widoczny. */
-    .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
-      min-height: 48px;
-    }}
-  /* Okno od dołu: nagłówek warstwy okna tagów leży na panelu okna (var(--surface-modal)),
-     nie na tle strony — bez ciemnego paska pod tytułem. */
-  .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
-    position: static;
-    background: transparent;
+    .export-modal .xField:has(.xPickList) { min-height: 48px; }
   }
-  /* Okno od dołu: podpowiedź warstwy („Zaznaczenie…”, „Dodaj nowy tag.”)
-     pod tytułem, nad przyciskami — jak w „Utwórz grę”. */
-  .modal--sheet.sheet-active .tags-modal .tags-layer > :is(.mSub, .tagsAssignInfo) {
-    margin: -2px 0 10px;
-  }
-  .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { margin-bottom: 6px; }
-  .modal--sheet.sheet-active .moveList { max-height: none; flex: 1 1 auto; min-height: 0; }
 }

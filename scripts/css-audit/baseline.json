@@ -9,13 +9,12 @@
  },
  "web/bases/explorer/css/base-explorer.css": {
   "colorLiteral": 36,
-  "mediaWidth": 1,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 9,
+  "sharedDuplicate": 8,
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
-  "inlineStyleHtml": 8
+  "inlineStyleHtml": 6
  },
  "web/bases/explorer/js/actions.js": {
   "inlineStyleJs": 42
@@ -36,7 +35,7 @@
   "inlineStyleJs": 9
  },
  "web/bases/explorer/js/tags-modal.js": {
-  "inlineStyleJs": 10
+  "inlineStyleJs": 7
  },
  "web/bases/explorer/js/ui/marquee.js": {
   "inlineStyleJs": 1
@@ -131,7 +130,6 @@
   "inlineStyleJs": 11
  },
  "web/games/css/games.css": {
-  "mediaWidth": 1,
   "sharedDuplicate": 1
  },
  "web/games/editor/css/editor.css": {
@@ -228,7 +226,6 @@
  },
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 8,
-  "mediaWidth": 1,
   "sharedDuplicate": 2
  },
  "web/marketplace/index.html": {
@@ -323,7 +320,6 @@
  },
  "web/shared/css/polls.css": {
   "colorLiteral": 20,
-  "mediaWidth": 1,
   "sharedDuplicate": 3
  },
  "web/shared/css/question-form.css": {
@@ -395,13 +391,13 @@
  "web/shared/style/components.css": {
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 230,
+  "sharedDuplicate": 231,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "mediaWidth": 14,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 265,
+  "sharedDuplicate": 266,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {

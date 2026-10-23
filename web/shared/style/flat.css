@@ -1108,6 +1108,15 @@
     -webkit-overflow-scrolling: touch;
   }
   .uni-inp { width: 100%; }
+  /* Warstwy jednego okna (np. tagi: lista → nowy tag → kolor): widoczna jest
+     jedna, przełącza showModalLayer() z modal-sheet.js. W oknie od dołu każda
+     warstwa ma własny nagłówek, pasek akcji i przewijaną treść. */
+  .modal-layer:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
   /* Kod połączenia urządzenia w oknie (QR w ankiecie i w Control). */
   .uni-code {
     display: flex;
@@ -2796,7 +2805,7 @@
     .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) { flex-wrap: nowrap; }
     .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0; }
     /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
-    .modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.uni-foot, .modal-actions, .tagsFoot, .mkt-detail-actions) {
       padding-top: 0;
       border-top: 0;
     }
@@ -2813,10 +2822,50 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
+    /* Treść .uni-body jak w wyśrodkowanym oknie (kolumna z odstępem), ale bez
+       własnego przewijania -- przewija się treść okna od dołu. */
     .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
-      display: block;
+      margin-top: 0;
       flex: 0 0 auto;
       min-height: auto;
+      overflow: visible;
+    }
+    /* Treść okna od dołu zostaje w miejscu, a przewija się tylko lista:
+       .sheet-fill ma wysokość treści i kurczy się do reszty okna (kolumna;
+       zagnieżdżone .sheet-fill wyznaczają drogę do listy), .sheet-scroll to
+       przewijana lista -- kurczy się pierwsza. Pozostałe elementy na tej drodze
+       mają swoją wysokość. Sekcja udostępniania (.shareSection) w .sheet-fill
+       sama jest wypełnieniem, a jej lista (.shareList--scroll) się przewija. */
+    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden])) {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body :is(.sheet-fill, .sheet-fill > .shareSection:has(> .shareList--scroll)):not([hidden]) {
+      display: flex;
+      flex-direction: column;
+      flex: 0 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
+    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden])) > :not(.sheet-fill),
+    .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
+    .modal--sheet.sheet-active .sheet-modal-body :is(.sheet-scroll, .sheet-fill > .shareSection > .shareList--scroll) {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
+       w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
+    .modal--sheet.sheet-active .sheet-modal-body .modal-scroll {
+      flex: 0 0 auto;
+      min-height: auto;
+      max-height: none;
       overflow: visible;
     }
 
@@ -2875,13 +2924,6 @@
     /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
     .topbar-sheet-back.sheet-back-active { display: inline-flex; }
     body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
-  }
-
-  /* Okno kontaktu w arkuszu: treść zostaje kolumną z odstępem 14 px. */
-  .contact-modal-overlay.sheet-active .sheet-modal-body > .uni-body.contact-form,
-  .contact-modal-overlay.sheet-active .sheet-modal-body > .uni-body.contact-success {
-    display: flex;
-    flex-direction: column;
   }
 
   /* Szuflada boczna (≤ 980 px): panel z lewej pod topbarem i tło; na

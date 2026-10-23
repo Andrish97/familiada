@@ -9,8 +9,8 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T17414";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T17414";
+import { t } from "../../translation/translation.js?v=v2026-10-23T18093";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T18093";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -19,7 +19,7 @@ import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-23T17414";
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-23T17414"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-23T18093"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -139,7 +139,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-23T17414").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-23T18093").then((module) => module.openContactModal());
 
     }, 0);
     return;
@@ -175,27 +175,42 @@ export function isSheetViewport() {
 function prepareSheetLayout(overlayEl) {
   const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
   if (!modal || modal.dataset.sheetLayoutReady === "1") return;
-  const children = [...modal.children];
+  // Okno z warstwami (.modal-layer, np. tagi: lista → nowy tag → kolor):
+  // każda warstwa dostaje własny nagłówek, pasek akcji i treść.
+  const layers = [...modal.children].filter(el => el.matches(".modal-layer"));
+  if (layers.length) {
+    sheetLayouts.set(modal, { childNodes: [...modal.childNodes], nested: [] });
+    for (const layer of layers) layoutSheetBox(layer, { layer: true });
+  } else {
+    layoutSheetBox(modal);
+  }
+  modal.prepend(sheetHandle(overlayEl));
+  modal.dataset.sheetLayoutReady = "1";
+}
+
+function layoutSheetBox(box, { layer = false } = {}) {
+  const children = [...box.children];
   const headerSelectors = [".uni-head", ".mHead", ".tagsHead", ".bld-preview-head", ".bld-preview-switch", ".mkt-detail-head", ".previewModalTitle", ".mTitle"];
   const actionSelectors = [".uni-foot", ".modal-actions", ".tagsFoot", ".mkt-detail-actions"];
   const nestedActionSelectors = [".baseShareLookup"];
   const isHeader = el => headerSelectors.some(sel => el.matches(sel));
   const isAction = el => actionSelectors.some(sel => el.matches(sel));
-  const hintNodes = [...modal.querySelectorAll(".mSub, .uni-hint, .hint")]
-    .filter(el => el.textContent.trim() && el.getClientRects().length > 0);
+  // Ukryta warstwa nie ma wymiarów -- jej podpowiedź rozpoznaje atrybut hidden.
+  const hintNodes = [...box.querySelectorAll(".mSub, .uni-hint, .hint")]
+    .filter(el => el.textContent.trim() && (layer ? !el.hidden : el.getClientRects().length > 0));
   const onlyHint = hintNodes.length === 1 ? hintNodes[0] : null;
   const isGlobalHint = onlyHint?.matches(".mSub")
     || (onlyHint?.matches(".uni-hint") && onlyHint.parentElement?.matches(".uni-body"));
   const movableHint = isGlobalHint ? onlyHint : null;
   const headerChildren = children.filter(isHeader);
   const actionChildren = children.filter(isAction);
-  const nestedActions = modal.hasAttribute("data-sheet-local-actions")
+  const nestedActions = box.hasAttribute("data-sheet-local-actions")
     ? []
-    : [...modal.querySelectorAll(nestedActionSelectors.join(","))]
+    : [...box.querySelectorAll(nestedActionSelectors.join(","))]
       .filter(el => !children.includes(el) && !el.parentElement?.closest(".sheet-modal-actions"));
   const relocated = [...nestedActions, ...(movableHint && !children.includes(movableHint) ? [movableHint] : [])];
-  sheetLayouts.set(modal, {
-    childNodes: [...modal.childNodes],
+  sheetLayouts.set(box, {
+    childNodes: [...box.childNodes],
     nested: relocated.map(el => ({ el, parent: el.parentNode, next: el.nextSibling })),
   });
   const header = document.createElement("div");
@@ -218,16 +233,28 @@ function prepareSheetLayout(overlayEl) {
   const top = document.createElement("div");
   top.className = "sheet-modal-top";
   top.append(header, actions);
-  modal.replaceChildren(sheetHandle(overlayEl), top, body);
-  modal.dataset.sheetLayoutReady = "1";
+  box.replaceChildren(top, body);
+}
+
+// Pokazuje jedną warstwę okna (.modal-layer), pozostałe chowa; w oknie od
+// dołu od razu układa jej nagłówek.
+export function showModalLayer(layer) {
+  if (!layer?.parentElement) return;
+  for (const el of layer.parentElement.children) {
+    if (el.matches(".modal-layer")) el.hidden = el !== layer;
+  }
+  const overlay = layer.closest(".modal--sheet");
+  if (overlay && overlay === activeOverlay) fitSheetTop(overlay);
 }
 
 // Tytuł i przyciski w jednym wierszu, dopóki się mieszczą: tytuł nie łamie
 // się ani nie ucina, przyciski nie zawijają. Podpowiedź zawsze pod nimi na
 // całą szerokość (uwaga użytkownika 2026-10-23).
 function fitSheetTop(overlayEl) {
-  const top = overlayEl?.querySelector(".sheet-modal-top");
-  if (!top) return;
+  for (const top of overlayEl?.querySelectorAll(".sheet-modal-top") || []) fitTopBar(top);
+}
+
+function fitTopBar(top) {
   top.classList.remove("is-inline");
   const head = top.querySelector(":scope > .sheet-modal-head");
   const actions = top.querySelector(":scope > .sheet-modal-actions");
@@ -300,14 +327,20 @@ function closeSheetAnimated() {
 
 function restoreSheetLayout(overlayEl) {
   const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
-  const original = modal && sheetLayouts.get(modal);
+  if (!modal || !sheetLayouts.has(modal)) return;
+  for (const layer of modal.querySelectorAll(":scope > .modal-layer")) restoreSheetBox(layer);
+  restoreSheetBox(modal);
+  delete modal.dataset.sheetLayoutReady;
+}
+
+function restoreSheetBox(box) {
+  const original = sheetLayouts.get(box);
   if (!original) return;
   for (const { el, parent, next } of original.nested) {
     if (parent) parent.insertBefore(el, next?.parentNode === parent ? next : null);
   }
-  modal.replaceChildren(...original.childNodes);
-  delete modal.dataset.sheetLayoutReady;
-  sheetLayouts.delete(modal);
+  box.replaceChildren(...original.childNodes);
+  sheetLayouts.delete(box);
 }
 
 // Modal zostaje otwarty niezależnie od szerokości ekranu (np. tablet

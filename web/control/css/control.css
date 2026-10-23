@@ -1066,67 +1066,17 @@
   @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
 }
 
-/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
-   warstwie strony, jak ogólne reguły arkusza w silniku. */
-@layer states {
-
-  @media (max-width: 600px) {
-      /* Arkusz mobilny spłaszcza .uni-body do bloku; w modalu QR przywróć
-         układ kolumnowy i czytelne odstępy między QR, kodem i podpowiedzią. */
-      #qrModalOverlay.sheet-active .sheet-modal-body > .uni-body {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-      }}
-
-  /* Okno udostępniania urządzenia (dawniej shared/css/base.css). W zwykłym
-     widoku pusta sekcja listy nie zmniejsza karty do samego kafla braku. */
-  #shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--friends,
-  #shareDeviceOverlay:not(.sheet-active) .uni-body > .shareSection--shared {
+/* Okna Control: układ okna od dołu daje silnik (.sheet-fill/.sheet-scroll
+   w HTML), warstwa states silnika wygrywa z tymi regułami. */
+@layer page {
+  /* Okno udostępniania urządzenia: pusta sekcja listy nie zmniejsza karty
+     do samego kafla braku. */
+  #shareDeviceOverlay .uni-body > :is(.shareSection--friends, .shareSection--shared) {
     min-height: 180px;
     box-sizing: border-box;
   }
-  .modal--sheet.sheet-active #shareDeviceSubsList,
-  .modal--sheet.sheet-active #shareDeviceCurrentContent {
-    max-height: min(32dvh, 260px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* Telefon: formularz i dwie sekcje list w osobnych wierszach; przewijają się
-     wyłącznie listy znajomych i udostępnionych. */
+  /* Okno QR na telefonie: większe odstępy między QR, kodem i podpowiedzią. */
   @media (max-width: 600px) {
-    #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
-    #shareDeviceOverlay.sheet-active .sheet-modal-body {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-    #shareDeviceOverlay.sheet-active .uni-body {
-      margin-top: 0;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
-      flex: 1 1 auto;
-      min-height: 0;
-      gap: 8px;
-      overflow: hidden;
-    }
-    #shareDeviceOverlay.sheet-active .uni-body > .shareSection {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      margin: 0;
-      overflow: hidden;
-    }
-    #shareDeviceOverlay.sheet-active .shareList {
-      flex: 1 1 0;
-      min-height: 0;
-      max-height: none;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }}
+    #qrModalOverlay .uni-body { gap: 20px; }
+  }
 }

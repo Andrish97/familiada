@@ -15,15 +15,15 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T17414";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T17414";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-23T17414";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T17414";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T17414";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T17414";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T17414";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T17414";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-23T17414";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T18093";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T18093";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-23T18093";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T18093";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T18093";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-23T18093";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-23T18093";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-23T18093";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-23T18093";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };

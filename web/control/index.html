@@ -11,31 +11,31 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17414" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17414"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T17414"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18093" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18093"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-23T18093"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17414" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17414" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18093" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18093" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T17414";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-23T18093";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-23T17414");
+    import("/control/js/app.js?v=v2026-10-23T18093");
 
   </script>
 
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T17414"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-23T18093"/>
 
 </head>
 <body class="control-body skel-body">
@@ -119,7 +119,7 @@
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <div class="uni-body">
+      <div class="uni-body sheet-fill">
         <div class="hint uni-hint" data-i18n="control.shareDeviceModal.hint">Wpisz nazwę lub e-mail albo zaznacz znajomych.</div>
         <section class="shareSection shareSection--lookup">
           <div class="section-title" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div>
@@ -136,9 +136,9 @@
           <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
         </section>
 
-        <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
+        <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared sheet-fill">
           <div class="section-title" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
-          <div id="shareDeviceCurrentContent" class="shareList"></div>
+          <div id="shareDeviceCurrentContent" class="shareList sheet-scroll"></div>
         </section>
       </div>
       <div class="uni-foot modal-actions">
@@ -154,7 +154,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T17414"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18093"></script>
 
 </body>
 </html>

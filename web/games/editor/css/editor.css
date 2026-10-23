@@ -187,33 +187,6 @@
       flex-direction: column;
   }
 
-  .qSheetBody {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      flex-direction: column
-  }
-
-  .qSheetBody .editorBox {
-      display: flex;
-      flex: 1 1 auto;
-      min-height: 0;
-      height: auto
-  }
-
-  .qSheetBody .answersBlock {
-      flex: 1 1 auto;
-      min-height: 0;
-      grid-template-rows: auto minmax(0,1fr) auto
-  }
-
-  body.editor-body .qSheetBody .qf-listShell {
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch
-  }
-
   .block {
       margin-bottom: 12px
   }
@@ -406,18 +379,5 @@
           overflow: visible;
           flex: 0 0 auto;
       }
-  }
-}
-
-/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
-   warstwie strony, jak ogólne reguły arkusza w silniku. */
-@layer states {
-
-  /* Okno pytania na telefonie (#questionSheetOverlay), jak okno pytania
-     w Eksploratorze: treść pytania i nagłówek odpowiedzi stoją, przewija się
-     sama lista odpowiedzi, a sekcja kończy się nad dolnym safe area
-     (uwaga użytkownika 2026-10-20). */
-  .modal--sheet.sheet-active .question-sheet > .sheet-modal-body {
-      overflow: hidden
   }
 }
