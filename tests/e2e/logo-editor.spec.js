@@ -62,13 +62,13 @@ test.describe("lista", () => {
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
-    await expect(page.locator("#hint")).toContainText(/rysuj/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoDraw", "::before")).toBe("block");
     expect(await corner("#tabLogoDraw", "::after")).toBe("block");
 
     await page.locator("#tabLogoImage").click();
     await expect(page).toHaveURL(/tab=image/);
-    await expect(page.locator("#hint")).toContainText(/obraz/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoImage", "::after")).toBe("none");
 
     // Karta przez replaceState: odświeżenie zostaje na karcie, a przeglądarkowe
