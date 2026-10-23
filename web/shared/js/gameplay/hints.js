@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-23T15305";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15341";
 
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
