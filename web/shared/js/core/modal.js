@@ -360,10 +360,10 @@ export function progressModal({ title, text = "", doneText } = {}) {
   const body = document.createElement("div");
   body.className = "uni-progress";
   body.innerHTML = `<div class="uni-progress-row"><div class="uni-progress-step"></div><div class="uni-progress-count"></div></div>`
-    + `<div class="uni-progress-track"><div class="uni-progress-bar"></div></div><div class="importMsg uni-progress-msg"></div>`;
+    + `<div class="progress"><div class="progress-bar"></div></div><div class="importMsg uni-progress-msg"></div>`;
   const stepEl = body.querySelector(".uni-progress-step");
   const countEl = body.querySelector(".uni-progress-count");
-  const barEl = body.querySelector(".uni-progress-bar");
+  const barEl = body.querySelector(".progress-bar");
   const msgEl = body.querySelector(".uni-progress-msg");
   const rowEl = body.querySelector(".uni-progress-row");
   const controller = {};

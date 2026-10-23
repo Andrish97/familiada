@@ -314,7 +314,7 @@
   "unusedClass": 14
  },
  "web/settings/index.html": {
-  "inlineStyleHtml": 153
+  "inlineStyleHtml": 152
  },
  "web/settings/js/admin-pwa.js": {
   "inlineStyleJs": 1
@@ -323,7 +323,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 303
+  "inlineStyleJs": 302
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,

@@ -2286,11 +2286,13 @@
   .uni-progress-row { display: flex; align-items: center; gap: 10px; }
   .uni-progress-step { font-weight: 800; letter-spacing: .04em; }
   .uni-progress-count { margin-left: auto; opacity: .8; font-variant-numeric: tabular-nums; }
-  .uni-progress-track { height: 10px; border-radius: var(--r-pill); background: var(--line-faint); overflow: hidden; }
-  .uni-progress-bar { height: 100%; width: 0; background: rgb(var(--rgb-white) / .85); transition: width var(--dur-base) ease; }
+  /* Pasek postępu (jedyny): .progress > .progress-bar; szerokość i kolor
+     ustawia skrypt (style.width, --progress-color). */
+  .progress { height: 8px; border-radius: var(--r-pill); background: var(--w-8); overflow: hidden; }
+  .progress-bar { height: 100%; width: 0; border-radius: inherit; background: var(--progress-color, var(--accent)); transition: width var(--dur-slow) ease; }
   .uni-progress-msg { min-height: 18px; }
   .uni-progress-msg[data-kind="error"] { opacity: 1; }
-  .uni-progress-bar[data-kind="error"] { background: var(--danger-solid); }
+  .progress-bar[data-kind="error"] { background: var(--danger-solid); }
 
   /* Przyciski stopki wspólnego okna: ikona i napis z odstępem. */
   .uni-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4em; }

@@ -1263,20 +1263,7 @@
 
   .pending-bar.visible { display: flex; }
 
-  .progress-bar-bg {
-    background: var(--w-8);
-    border-radius: var(--r-pill);
-    height: 4px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    background: linear-gradient(90deg, var(--accent), var(--g-35));
-    height: 100%;
-    border-radius: var(--r-pill);
-    transition: width .4s ease;
-    width: 0%;
-  }
+  .gen-progress { width: 120px; }
 
   .tip {
     background: var(--g-10);

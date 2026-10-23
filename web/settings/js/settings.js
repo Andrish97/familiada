@@ -1268,9 +1268,7 @@ function renderSegmentBars(segments, total) {
         <span style="opacity:.7">${label}</span>
         <span style="font-weight:700">${count} <span style="opacity:.45;font-weight:400;font-size:11px">${p}%</span></span>
       </div>
-      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${p}%;background:${color};border-radius:3px;transition:width .5s"></div>
-      </div>
+      <div class="progress"><div class="progress-bar" style="width:${p}%;--progress-color:${color}"></div></div>
     </div>`;
   }).join("");
 }
