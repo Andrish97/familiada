@@ -128,8 +128,9 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Naruszenie zamrożenia (2026-10-23, sesja E26 — sprzątanie bazy):** migracje
   473–477 (`docs/audyt-sprzatania-bazy.md`) weszły na `main` o 17:17 UTC bez
   sprawdzenia tej sekcji — agent nie znał zamrożenia. Wszystkie OK w
-  `latest.log`. Skutek dla przeprowadzki: zrzut przy przełączeniu musi być
-  **po 477** (jak dla 472), a próba generalna na `api2` była na schemacie
+  `latest.log`. Na prośbę właściciela doszła 478 (nieużywane funkcje Lead
+  Findera). Skutek dla przeprowadzki: zrzut przy przełączeniu musi być
+  **po 478** (jak dla 472), a próba generalna na `api2` była na schemacie
   sprzed 473 — przed P6 sprawdzić, że kopia po 477 wczytuje się na nowym
   serwerze. Do decyzji właściciela, czy uznać 473–477 za wyjątek.
 

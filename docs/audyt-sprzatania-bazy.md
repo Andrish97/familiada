@@ -255,3 +255,8 @@ zmienić w międzyczasie:
   `games_keys_control/display/host_idx` (po usunięciu funkcji z A2).
   Indeksy Marketplace zostają.
 - Część A: zaproponowana jako bezpieczna, wykonanie razem z resztą.
+
+- **2026-10-23 (użytkownik): usunąć nieużywane funkcje Lead Findera** —
+  `clear_marketing_search_logs`, `truncate_marketing_queries_log`,
+  `truncate_marketing_search_logs`, `marketing_get_verified_contacts`,
+  `market_admin_upsert` (bez wywołującego w kodzie i bazie; migracja 478).
