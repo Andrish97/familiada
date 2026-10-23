@@ -323,7 +323,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 303
+  "inlineStyleJs": 304
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
@@ -488,6 +488,9 @@
  },
  "web/shared/translation/translation.js": {
   "inlineStyleJs": 9
+ },
+ "web/shared/vendor/fabric.min.js": {
+  "inlineStyleJs": 16
  },
  "web/snake/css/snake.css": {
   "important": 2,

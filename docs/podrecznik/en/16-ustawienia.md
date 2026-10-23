@@ -5,9 +5,11 @@
 Settings apply to one specific game. You open them with the [Game settings] button
 in *My games* or with [Change settings] in the summary in the control panel (→ 17.2).
 
-*Game settings* are not available on a phone — use a tablet or a computer.
+*Game settings* work on a phone, a tablet and a computer. On a phone, choose a section with the
+menu button on the bar below the header.
 
 ![Game settings](zrzut:game-settings)
+![Game settings on a phone](zrzut:game-settings@phone)
 
 Prepare the settings **before the game starts**. While the game is open in the control panel,
 you cannot change its settings. If you closed the panel during a game, the app shows "Game in progress" with a choice:

@@ -81,7 +81,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
     assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));
     assert.match(html, /id="saveStatus"/);
     assert.doesNotMatch(html, /id="btnCreate"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|modal=/);
-    assert.equal(/fabric@/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
+    assert.equal(/\/shared\/vendor\/fabric\.min\.js/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
     assert.match(entry, new RegExp(`bootEditorPage\\(\\{ mode: "${mode}", initEditor: ${init} \\}\\)`));
   }
   const page = read("logos/js/editor-page.js");

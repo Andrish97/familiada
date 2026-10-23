@@ -618,8 +618,9 @@ const pl = {
     errDeleteFailed: "Nie udało się usunąć konta.",
   },
   deviceLease: {
-    waitingTitle: "Urządzenie czeka na swoją kolej",
-    waitingText: "Inna karta tego urządzenia jest już otwarta dla tej sesji. Jeśli chcesz korzystać z tego ekranu, zamknij poprzednią kartę — ten ekran aktywuje się automatycznie.",
+    replacedTitle: "Urządzenie otwarto w innym miejscu",
+    replacedText: "Ten ekran nie steruje już grą, bo urządzenie otwarto w innej karcie lub na innym sprzęcie. Jeśli chcesz używać go tutaj, kliknij poniżej — tamten ekran się wyłączy.",
+    takeover: "Używaj tutaj",
     reconnectingTitle: "Sprawdzam połączenie urządzenia",
     reconnectingText: "Do czasu potwierdzenia połączenia ten ekran nie steruje grą. Spróbuję połączyć się ponownie automatycznie.",
   },

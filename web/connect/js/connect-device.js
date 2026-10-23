@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T05395";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T05395";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T05395";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T05395";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T05395";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T05395";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T05395";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T05395";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-23T05395";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T05395";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T05395";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T13555";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T13555";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-23T13555";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T13555";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T13555";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T13555";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T13555";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T13555";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-23T13555";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T13555";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T13555";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -180,7 +180,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-23T13555";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });

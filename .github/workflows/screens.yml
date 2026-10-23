@@ -44,7 +44,7 @@ permissions:
 # Na main przebieg nie jest przerywany kolejnym pushem (kolejny czeka; z kilku
 # czekających zostaje najnowszy) -- inaczej przy częstych pushach kilku sesji
 # długie odświeżanie zrzutów nigdy się nie kończyło. Porównanie z ostatnim
-# commitem zmieniającym zrzuty (kroki niżej) nie gubi zmian z pominiętych przebiegów;
+# odświeżeniem zrzutów przez CI (kroki niżej) nie gubi zmian z pominiętych przebiegów;
 # które sceny -- scripts/screens/changes.cjs (bez samych wersji ?v=, wspólny kod
 # tylko dla stron, które go wczytują).
 concurrency:
@@ -164,8 +164,9 @@ jobs:
         run: |
           # Porównanie z ostatnim odświeżeniem kadrów, nie z poprzednim pushem:
           # przebieg anulowany przez kolejny push (concurrency) nie gubi zmian.
-          # Ostatni commit, który zmienił kadry (CI albo ręcznie) -- od niego liczą się zmiany.
-          LAST=$(git log -1 --format=%H HEAD -- web/assets/img/pl/shots web/assets/img/en/shots web/assets/img/uk/shots 2>/dev/null || true)
+          # Ostatnie odświeżenie kadrów przez CI -- od niego liczą się zmiany (ręczna publikacja
+          # części kadrów w commicie sesji nie przesuwa punktu odniesienia).
+          LAST=$(git log -1 --format=%H --author="github-actions" HEAD -- web/assets/img/pl/shots web/assets/img/en/shots web/assets/img/uk/shots 2>/dev/null || true)
           [ -n "$LAST" ] && BASE="$LAST"
           if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
           node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
@@ -195,8 +196,9 @@ jobs:
           ALL: ${{ inputs.help && '1' || '' }}
         run: |
           git pull --rebase origin main || true
-          # Ostatni commit, który zmienił zrzuty Wskazówek (CI albo ręcznie) -- od niego liczą się zmiany.
-          LAST=$(git log -1 --format=%H HEAD -- web/manual/img 2>/dev/null || true)
+          # Ostatnie odświeżenie zrzutów Wskazówek przez CI -- od niego liczą się zmiany (ręczna
+          # publikacja kilku zrzutów w commicie sesji nie przesuwa punktu odniesienia).
+          LAST=$(git log -1 --format=%H --author="github-actions" HEAD -- web/manual/img 2>/dev/null || true)
           if [ -n "$LAST" ]; then BASE="$LAST"; else ALL=1; fi
           if [ -n "$ALL" ]; then pick=$(node scripts/screens/publish-manual.cjs --list); else pick=$(node scripts/screens/publish-manual.cjs --list --base="$BASE"); fi
           [ -n "$pick" ] || { echo "Brak zrzutów Wskazówek do odświeżenia."; exit 0; }

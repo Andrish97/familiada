@@ -101,8 +101,8 @@ press and hold it on a phone) to see the reason. The most important rules:
 
 [Change type] changes the same game — it does not create a copy. Details → 7.8.
 
-On a phone and in a narrow browser window the [Play] and [Game settings] buttons are hidden —
-open the *Control panel* and *Game settings* on a computer or tablet.
+On a phone and in a narrow browser window the [Play] button is hidden — open the *Control panel*
+on a computer or tablet. [Game settings] also work on a phone.
 
 In the **Community Games** tab only [Play], [Preview] and [Game settings] are available.
 These games cannot be edited, duplicated, exported or sent (→ 13.4).
