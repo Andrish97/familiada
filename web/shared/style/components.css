@@ -2232,10 +2232,9 @@
      zaokrągleniem u góry, zachodzi o --tab-extra na kartę; ::before/::after
      rysują wklęsłe narożniki. Strony dopisują zaokrąglenia swojej karty. */
   .tabs-card {
-    /* Jeden promień wszystkich łuków wypustki (dwa górne i wklęsłe u podstawy):
-       najwyżej połowa wysokości wypustki, żeby górny i dolny łuk zmieściły się
-       w pełni i były identyczne (przy 36 px promień 20 px spłaszczał dolne). */
-    --tab-r: min(var(--radius), calc((var(--tab-height) + var(--tab-extra)) / 2));
+    /* Jeden promień wszystkich łuków wypustki (górne i wklęsłe u podstawy)
+       = promień rogu karty. */
+    --tab-r: var(--radius);
     width: 100%;
     margin: 0 auto; /* odstęp od paska tytułu daje .bar */
     position: relative;
@@ -2341,16 +2340,23 @@
     border-radius: var(--tab-r) var(--tab-r) 0 0;
     z-index: 3;
   }
+  /* Wklęsły narożnik = róg karty odwrócony: kwadrat --tab-r przy podstawie
+     wypustki, łuk o promieniu --tab-r ze środkiem w zewnętrznym rogu
+     kwadratu — ten sam kształt co róg karty. Łuk: przezroczyste wnętrze,
+     linia 1 px, za łukiem tło karty; przejścia po 1 px wygładzają krawędzie
+     jak zaokrąglenie obwódki. Linia nieprzezroczysta (--line-strong na tle
+     karty): tam, gdzie łuk leży na obwódce karty lub wypustki, nie pogrubia jej. */
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before,
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
+    --tab-line: color-mix(in srgb, rgb(var(--rgb-white)) 14%, var(--surface-1));
+    --tab-arc: transparent calc(var(--tab-r) - 1.5px), var(--tab-line) calc(var(--tab-r) - .5px), var(--surface-1) calc(var(--tab-r) + .5px);
     content: "";
     display: block;
     position: absolute;
     top: auto;
-    /* łuk kończy się w wierszu górnej krawędzi karty */
     bottom: 0;
     width: var(--tab-r);
-    height: calc(var(--tab-r) + var(--tab-extra) - 1px);
+    height: var(--tab-r);
     border-radius: 0;
     opacity: 1;
     transition: none;
@@ -2359,12 +2365,12 @@
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before {
     left: calc(-1 * var(--tab-r));
     right: auto;
-    background: radial-gradient(circle at 0 0, transparent calc(var(--tab-r) - 1px), var(--line-strong) calc(var(--tab-r) - 1px), var(--line-strong) var(--tab-r), var(--surface-1) calc(var(--tab-r) + .5px));
+    background: radial-gradient(circle at 0 0, var(--tab-arc));
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
     right: calc(-1 * var(--tab-r));
     left: auto;
-    background: radial-gradient(circle at 100% 0, transparent calc(var(--tab-r) - 1px), var(--line-strong) calc(var(--tab-r) - 1px), var(--line-strong) var(--tab-r), var(--surface-1) calc(var(--tab-r) + .5px));
+    background: radial-gradient(circle at 100% 0, var(--tab-arc));
   }
   /* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
   .tab-slot:first-child > .tab-label.active::before,
@@ -2431,14 +2437,14 @@
 
 @layer states {
   /* Karta pod wypustkami: róg prosty po stronie aktywnej skrajnej wypustki
-     (wszystkie karty z wypustkami; warstwa states, bo strony ustawiają
+     (wszystkie karty z wypustkami; bez :has w :has — przeglądarka by ją pominęła; warstwa states, bo strony ustawiają
      zaokrąglenie karty w warstwie page). Karta dzielona — tylko w trybie wąskim. */
-  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .card { border-top-left-radius: 0; }
-  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .card { border-top-right-radius: 0; }
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .card { border-top-left-radius: 0; }
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .card { border-top-right-radius: 0; }
   @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
     .split-panels > [data-split-panel]:not(.active) { display: none; }
-    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:first-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
-    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot:last-child:is(.active, :has(> .tab-label.active))) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
+    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
   }
 
   /* ── Okno od dołu (arkusz) — telefon i tablet dotykowy ──────────

@@ -68,8 +68,9 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
   assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
   // Róg karty pod skrajną aktywną wypustką: jedna reguła silnika dla wszystkich kart.
-  assert.match(base, /tab-slot:first-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-left-radius: 0; \}/);
-  assert.match(base, /tab-slot:last-child:is\(\.active, :has\(> \.tab-label\.active\)\)\) > \.card \{ border-top-right-radius: 0; \}/);
+  // (bez :has w :has — przeglądarka pomija taką regułę).
+  assert.match(base, /tab-slot:first-child > \.tab-label\.active\) > \.card \{ border-top-left-radius: 0; \}/);
+  assert.match(base, /tab-slot:last-child > \.tab-label\.active\) > \.card \{ border-top-right-radius: 0; \}/);
   assert.doesNotMatch(css, /border-top-(left|right)-radius: 0/);
 });
 
