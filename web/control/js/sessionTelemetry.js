@@ -1,75 +1,39 @@
 // Wyniki zapisuje baza przy zmianach game_state. Front zgłasza tylko
 // aktywność i lokalne obserwacje; telemetryka nie blokuje akcji gry.
+// Obserwacje idą dziennikiem sesji (session-log.js, control2_control_log,
+// migracje 468–469) — także przed startem gry, do sesji uruchomienia Control.
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-22T23395";
 import { createNetworkMonitor, measureNetwork } from "../../shared/js/core/network-probe.js?v=v2026-10-22T23395";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "../../shared/js/core/session-log.js?v=v2026-10-22T23395";
 
 
 export function createSessionTelemetry(gameId, getState, subscribe = () => () => {}) {
-  const pendingVisibility = [];
-  let visibilityFlush = null;
-  let visibilityRetryTimer = null;
-  let visibilityRetryIndex = 0;
-  let visibilityActive = false;
-  let previousActive = false;
-  const eventId = () => globalThis.crypto?.randomUUID?.()
-    || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  // Token użytkownika do wysyłki przy zamknięciu strony (fetch keepalive).
+  let accessToken = null;
+  const refreshToken = () => sb().auth.getSession()
+    .then(({ data }) => { accessToken = data?.session?.access_token || null; }, () => {});
+  void refreshToken();
 
-  function isVisibilityActive(state = getState()) {
-    return !!state.locks.gameStarted && !state.locks.gameEnded;
-  }
+  const log = createSessionLog({
+    rpc: "control2_control_log",
+    params: () => ({ p_game_id: gameId }),
+    accessToken: () => accessToken,
+  });
 
-  function queueVisibility(reason) {
-    if (!visibilityActive) return;
-    pendingVisibility.push({
-      event_id: eventId(),
+  let hiddenAt = document.hidden ? Date.now() : null;
+  function logVisibility(reason) {
+    const visible = document.visibilityState === "visible";
+    const event = {
+      event_type: "page_state",
       reason,
       visibility: document.visibilityState || "unknown",
       focused: !!document.hasFocus?.(),
       was_discarded: !!document.wasDiscarded,
       online: navigator.onLine !== false,
-    });
-    void flushVisibility();
-  }
-
-  function scheduleVisibilityRetry() {
-    if (!visibilityActive || !pendingVisibility.length || visibilityRetryTimer) return;
-    // The first visibility snapshot can race the database trigger that creates
-    // game_session_active. Retry quickly when the RPC returns false or fails;
-    // waiting for the five-minute heartbeat could outlast a short game.
-    const delays = [250, 1000, 3000, 10000];
-    const delay = delays[Math.min(visibilityRetryIndex, delays.length - 1)];
-    visibilityRetryIndex = Math.min(visibilityRetryIndex + 1, delays.length - 1);
-    visibilityRetryTimer = setTimeout(() => {
-      visibilityRetryTimer = null;
-      void flushVisibility();
-    }, delay);
-  }
-
-  async function flushVisibility() {
-    if (visibilityFlush || !visibilityActive || !pendingVisibility.length) return;
-    visibilityFlush = (async () => {
-      while (pendingVisibility.length && visibilityActive) {
-        const event = pendingVisibility[0];
-        try {
-          const { data, error } = await sb().rpc("control2_control_visibility_event", {
-            p_game_id: gameId, p_event: event,
-          });
-          if (error || data !== true) {
-            scheduleVisibilityRetry();
-            break;
-          }
-          if (pendingVisibility[0]?.event_id === event.event_id) pendingVisibility.shift();
-          visibilityRetryIndex = 0;
-        } catch { break; }
-      }
-    })().finally(() => { visibilityFlush = null; });
-    await visibilityFlush;
-    if (pendingVisibility.length) scheduleVisibilityRetry();
-    else {
-      clearTimeout(visibilityRetryTimer);
-      visibilityRetryTimer = null;
-      visibilityRetryIndex = 0;
-    }
+    };
+    if (visible && hiddenAt != null) event.hidden_duration_ms = Math.max(0, Date.now() - hiddenAt);
+    hiddenAt = visible ? null : (hiddenAt ?? Date.now());
+    log.push(event);
   }
 
   // Pomiar łącza Control w trakcie gry (migracja 466) — jak na urządzeniach.
@@ -81,11 +45,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     }),
     send: (phase, data) => {
       if (!networkActive) return;
-      const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const event = { event_id: eventId, phase, visibility: document.hidden ? "hidden" : "visible", ...data };
-      sb().rpc("control2_network_probe_event", {
-        p_game_id: gameId, p_device_type: "control", p_key: null, p_event: event,
-      }).abortSignal(AbortSignal.timeout(4000)).then(() => {}, () => {});
+      log.push({ event_type: "network_state", source: "probe", phase, visibility: document.hidden ? "hidden" : "visible", ...data });
     },
   });
   function syncNetwork(state) {
@@ -95,36 +55,30 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     if (next) network.start(); else network.stop();
   }
 
-  function syncVisibilityActive(state = getState()) {
-    syncNetwork(state);
-    const next = isVisibilityActive(state);
-    visibilityActive = next;
-    if (next && !previousActive) queueVisibility("initial");
-    if (!next) {
-      pendingVisibility.length = 0;
-      clearTimeout(visibilityRetryTimer);
-      visibilityRetryTimer = null;
-      visibilityRetryIndex = 0;
-    }
-    previousActive = next;
+  // Sygnał aktywności sesji rozgrywki (last_seen_at) — tylko w trakcie gry.
+  async function ping() {
+    const state = getState();
+    if (!state.locks.gameStarted || state.locks.gameEnded || state.step === "r_intro") return;
+    try {
+      await sb().rpc("control2_session_ping", { p_game_id: gameId, p_event: null });
+    } catch { /* Auxiliary diagnostics never interrupt gameplay or flood console. */ }
   }
 
   async function report(event = null) {
-    const state = getState();
-    syncVisibilityActive(state);
-    void flushVisibility();
-    if (!state.locks.gameStarted || (state.locks.gameEnded && event?.kind !== "diagnostic") || (state.step === "r_intro" && event?.kind !== "diagnostic")) return;
-    try {
-      await sb().rpc("control2_session_ping", {
-        p_game_id: gameId, p_event: event,
-      });
-    } catch { /* Auxiliary diagnostics never interrupt gameplay or flood console. */ }
+    syncNetwork(getState());
+    if (event) log.push(event);
+    void refreshToken();
+    await ping();
   }
+
+  logVisibility("initial");
+  void collectDeviceInfo().then(info => log.push(info), () => {});
+  const stopLifecycle = watchPageLifecycle(event => log.push(event), { onExit: () => log.flushOnExit() });
   const timer = setInterval(() => { void report(); }, 5 * 60 * 1000);
-  syncVisibilityActive();
-  const unsubscribe = subscribe(state => syncVisibilityActive(state));
+  syncNetwork(getState());
+  const unsubscribe = subscribe(state => syncNetwork(state));
   function visibilityChanged() {
-    if (visibilityActive) queueVisibility("visibilitychange");
+    logVisibility("visibilitychange");
     if (!document.hidden) void report();
   }
   document.addEventListener("visibilitychange", visibilityChanged);
@@ -135,11 +89,10 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
       networkActive = false;
       network.stop();
       clearInterval(timer);
-      clearTimeout(visibilityRetryTimer);
       unsubscribe?.();
+      stopLifecycle();
       document.removeEventListener("visibilitychange", visibilityChanged);
-      visibilityActive = false;
-      pendingVisibility.length = 0;
+      log.stop();
     },
   };
 }

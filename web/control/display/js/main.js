@@ -49,44 +49,6 @@ async function authDisplayOrThrow(gameId, key) {
   return row;
 }
 
-function createDisplayEventLog(gameId, key, lease) {
-  let stopped = false;
-  let sessionActive = false;
-  let pending = Promise.resolve();
-  const report = (event) => {
-    if (stopped || !sessionActive) return;
-    const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const payload = { ...event, event_id: eventId };
-    pending = pending.catch(() => {}).then(async () => {
-      let lastError = null;
-      for (const delayMs of [0, 500, 1500, 3500]) {
-        if (stopped && delayMs > 0) return;
-        if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
-        try {
-          const { data, error } = await sb().rpc("control2_display_event", {
-            p_game_id: gameId, p_key: key, p_event: payload, ...lease.actionArgs(),
-          }).abortSignal(AbortSignal.timeout(4000));
-          if (error) throw error;
-          if (data === true) return;
-          lastError = new Error("Zdarzenie nie zostało przypisane do aktywnej rozgrywki.");
-        } catch (error) { lastError = error; }
-      }
-      console.warn("[display2 diagnostics] nie udało się zapisać zdarzenia:", payload.event_type, lastError?.message || lastError);
-    }).catch(error => {
-      console.warn("[display2 diagnostics] kolejka zapisu przerwana:", error?.message || error);
-    });
-  };
-  return {
-    report,
-    setSessionActive(active) {
-      sessionActive = !!active;
-    },
-    stop() {
-      stopped = true;
-    },
-  };
-}
-
 function showBlack() {
   $("blackScreen")?.classList.remove("hidden");
   $("qrScreen")?.classList.add("hidden");
@@ -356,8 +318,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     } });
     await lease.start();
     updateDeviceLeaseOverlay(lease.state);
-    const displayEventLog = createDisplayEventLog(game.id, key, lease);
-    window.addEventListener("pagehide", displayEventLog.stop, { once: true });
+    // Zdarzenia Wyświetlacza idą dziennikiem sesji urządzenia (session-log.js).
+    const displayEventLog = { report: lease.log };
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
     // Control, wczytany niezależnie tutaj. Głośności/warianty (BEZ własnych
@@ -368,7 +330,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     await initSfx();
     const soundReactor = createDisplaySoundReactor();
     soundReactorInstance = soundReactor;
-    let displayWasStarted = false;
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
@@ -516,17 +477,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       deviceType: "display",
       key,
       getLeaseArgs: () => lease.actionArgs(),
+      log: lease.log,
       onRow: async (row) => {
         lease.setProgress({ receivedRev: Number(row.rev) || 0 });
-        const gameIsActive = !!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded;
-        lease.setTelemetryActive(gameIsActive);
-        if (gameIsActive && !displayWasStarted) {
-          displayWasStarted = true;
-          displayEventLog.setSessionActive(true);
-        } else if (!gameIsActive) {
-          displayWasStarted = false;
-          displayEventLog.setSessionActive(false);
-        }
         setSfxMuted(row.detail?.settings?.soundMuted);
         // Język idzie za operatorem w Control (control/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe

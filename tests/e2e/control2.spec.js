@@ -1081,11 +1081,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const acceptedControlVisibility = [];
     page.on("response", async (response) => {
-      if (!response.url().includes("/rpc/control2_control_visibility_event") || !response.ok()) return;
-      const payload = response.request().postDataJSON()?.p_event;
+      if (!response.url().includes("/rpc/control2_control_log") || !response.ok()) return;
+      const events = response.request().postDataJSON()?.p_events || [];
       const result = await response.json().catch(() => null);
-      if (result === true && payload?.reason === "visibilitychange") {
-        acceptedControlVisibility.push(payload.visibility);
+      if (!(Number(result) > 0)) return;
+      for (const event of events) {
+        if (event?.event_type === "page_state" && event.reason === "visibilitychange") acceptedControlVisibility.push(event.visibility);
       }
     });
     for (const visibility of ["hidden", "visible"]) {
@@ -1125,11 +1126,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const devices = [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]];
     for (const [deviceType, devicePage] of devices) {
       devicePage.on("response", async (response) => {
-        if (!response.url().includes("/rpc/control2_device_transport_event") || !response.ok()) return;
-        const payload = response.request().postDataJSON()?.p_event;
+        if (!response.url().includes("/rpc/control2_device_log") || !response.ok()) return;
+        const events = response.request().postDataJSON()?.p_events || [];
         const result = await response.json().catch(() => null);
-        if (result === true && payload?.event_type === "page_state") {
-          acceptedPageStates.push({ deviceType, visibility: payload.visibility, reason: payload.reason });
+        if (!(Number(result) > 0)) return;
+        for (const event of events) {
+          if (event?.event_type === "page_state") acceptedPageStates.push({ deviceType, visibility: event.visibility, reason: event.reason });
         }
       });
       for (const visibility of ["hidden", "visible"]) {
@@ -1146,6 +1148,17 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
         ), { timeout: 10000 }).toBe(true);
       }
     }
+
+    // Diagnostyka sesji (468–469): opis urządzenia od Control i każdego
+    // urządzenia, zdarzenia sprzed startu gry dołączone do sesji, powrót
+    // karty z czasem w tle.
+    const sessions = await readControl2Sessions(page, game.id);
+    const sessionEvents = sessions.at(-1)?.stats_detail.events || [];
+    const sources = new Set(sessionEvents.filter(event => event.category === "device_info").map(event => event.source));
+    expect([...sources].sort()).toEqual(["buzzer", "control", "display", "host"]);
+    expect(sessionEvents.some(event => event.prestart === true)).toBe(true);
+    expect(sessionEvents.some(event => event.category === "display_state" && event.source === "host"
+      && event.metrics?.visibility === "visible" && typeof event.metrics?.hidden_duration_ms === "number")).toBe(true);
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {

@@ -203,12 +203,12 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
+    log: lease.log,
     // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
     // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
       || prev.display_rendered_rev !== next.display_rendered_rev,
     onRow: (row) => {
-      lease.setTelemetryActive(!!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded);
       lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;

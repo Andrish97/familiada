@@ -288,8 +288,8 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "host", key,
     getLeaseArgs: () => lease.actionArgs(),
+    log: lease.log,
     onRow: async (row) => {
-      lease.setTelemetryActive(!!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded);
       lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control (patrz control/display/js/main.js —
       // ta sama zasada). render.js's pasmo 1/2 JEST tłumaczone przez t()
