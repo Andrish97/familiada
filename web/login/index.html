@@ -97,7 +97,7 @@
         <div class="meta">
           <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot" data-i18n-icon="envelope">Przypomnij hasło</button>
           <span class="cooldown" id="forgotCooldown" hidden></span>
-          <span class="err" id="err"></span>
+          <span class="field-error" id="err" role="alert"></span>
         </div>
       </div>
     </div>
@@ -110,7 +110,7 @@
 
       <form class="setup-form" id="usernameForm">
         <input class="inp" id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
-        <div class="modal-err" id="usernameErr"></div>
+        <div class="field-error" id="usernameErr" role="alert"></div>
         <div class="modal-actions">
           <button class="btn gold" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave" data-i18n-icon="save">Zapisz nazwę</button>
         </div>

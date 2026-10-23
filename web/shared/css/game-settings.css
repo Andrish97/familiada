@@ -542,8 +542,6 @@
 
   /* Ustawienia gry: błąd pola od razu przy polu, podpowiedź progów z pytań. */
   .inp.is-invalid { border-color: #ff8080; box-shadow: 0 0 0 1px rgba(255,128,128,.45); }
-  .gs-field-msg { display: none; margin-top: 6px; font-size: 12px; line-height: 1.35; color: #ffb3b3; }
-  .gs-field-msg.is-error { display: block; }
   .gs-field-suggest { margin-top: 6px; font-size: 12px; line-height: 1.35; opacity: .75; }
   .gs-field-suggest:empty { display: none; }
   .gs-field-suggest.is-warn { opacity: 1; color: #ffd27a; }

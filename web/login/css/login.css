@@ -81,11 +81,6 @@
   }
   .status:empty { display: none; }
 
-  .err {
-      color: #ff9d9d;
-      font-size: 12px;
-  }
-  .err:empty { display: none; }
 
   /* ── form ── */
 
@@ -171,12 +166,6 @@
       margin-top: 4px;
   }
 
-  .modal-err {
-      color: #ff9d9d;
-      font-size: 12px;
-      min-height: 16px;
-  }
-  .modal-err:empty { display: none; }
 
   /* setup mode – mobile safe */
   body.setup-mode .login-card  { display: none; }

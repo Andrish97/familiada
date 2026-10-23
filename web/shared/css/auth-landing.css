@@ -74,12 +74,6 @@
       color: var(--txt);
   }
 
-  .err {
-      margin-top: 10px;
-      color: var(--danger);
-      font-size: 13px;
-      min-height: 18px;
-  }
 
   /* ── form ── */
 

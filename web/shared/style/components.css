@@ -673,6 +673,9 @@
     line-height: 1.4;
     color: var(--text-muted);
   }
+  /* Błąd pola lub formularza (jeden): pod polem, czerwony, pusty ukryty. */
+  .field-error { margin: 6px 0 0; font-size: 12px; line-height: 1.35; color: var(--bad-text); }
+  .field-error:empty { display: none; }
   .msg {
     color: var(--accent);
     font-weight: 900;

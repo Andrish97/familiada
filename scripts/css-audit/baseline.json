@@ -204,9 +204,9 @@
   "inlineStyleJs": 15
  },
  "web/login/css/login.css": {
-  "colorLiteral": 4,
+  "colorLiteral": 2,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 10
+  "sharedDuplicate": 9
  },
  "web/login/js/login.js": {
   "inlineStyleJs": 13
@@ -349,7 +349,7 @@
  },
  "web/shared/css/auth-landing.css": {
   "colorLiteral": 4,
-  "sharedDuplicate": 6
+  "sharedDuplicate": 5
  },
  "web/shared/css/blocking-overlay.css": {
   "colorLiteral": 11,
@@ -362,7 +362,7 @@
  },
  "web/shared/css/game-settings.css": {
   "important": 3,
-  "colorLiteral": 21,
+  "colorLiteral": 20,
   "mediaWidth": 3,
   "sharedDuplicate": 3
  },
@@ -465,14 +465,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 224,
+  "sharedDuplicate": 225,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 258,
+  "sharedDuplicate": 259,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

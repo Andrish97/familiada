@@ -1605,7 +1605,7 @@ function renderGame() {
           <div class="lbl2">${t("gameSettings.game.roundMultipliers")}</div>
           <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
           <div class="hint">${t("gameSettings.game.roundMultipliersHint")}</div>
-          <div class="gs-field-msg" id="gsMultipliersMsg" role="alert"></div>
+          <div class="field-error" id="gsMultipliersMsg" role="alert"></div>
         </div>
       </div>
       <div class="sectionBlock">
@@ -1614,13 +1614,13 @@ function renderGame() {
           <div class="lbl2">${t("gameSettings.game.finalMinPoints")}</div>
           <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}" style="margin-top:6px;max-width:160px"/>
           <div class="hint">${t("gameSettings.game.finalMinPointsHint")}</div>
-          <div class="gs-field-msg" id="gsFinalMinPtsMsg" role="alert"></div>
+          <div class="field-error" id="gsFinalMinPtsMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalMinPtsSuggest"></div>
         </div>
         <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
           <div class="lbl2">${t("gameSettings.game.finalTarget")}</div>
           <input class="inp" id="gsFinalTarget" type="number" min="1" max="${ADVANCED_LIMITS.finalTarget.max}" value="${escAttr(fieldValue("gsFinalTarget", adv.finalTarget))}" style="margin-top:6px;max-width:160px"/>
-          <div class="gs-field-msg" id="gsFinalTargetMsg" role="alert"></div>
+          <div class="field-error" id="gsFinalTargetMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalTargetSuggest"></div>
         </div>
       </div>
@@ -1644,12 +1644,12 @@ function renderGame() {
           <div>
             <div class="lbl2">${t("gameSettings.game.prizeAmount")}</div>
             <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${escAttr(fieldValue("gsMainPrize", adv.mainPrizeAmount))}" style="margin-top:6px"/>
-            <div class="gs-field-msg" id="gsMainPrizeMsg" role="alert"></div>
+            <div class="field-error" id="gsMainPrizeMsg" role="alert"></div>
           </div>
           <div>
             <div class="lbl2">${t("gameSettings.game.prizeMultiplier")}</div>
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}" style="margin-top:6px"/>
-            <div class="gs-field-msg" id="gsPrizeMultiplierMsg" role="alert"></div>
+            <div class="field-error" id="gsPrizeMultiplierMsg" role="alert"></div>
           </div>
           <div class="hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
         </div>
@@ -1673,7 +1673,7 @@ function renderGame() {
     const msg = document.getElementById(`${id}Msg`);
     input?.classList.toggle("is-invalid", !!message);
     if (input) input.setAttribute("aria-invalid", message ? "true" : "false");
-    if (msg) { msg.textContent = message || ""; msg.classList.toggle("is-error", !!message); }
+    if (msg) msg.textContent = message || "";
   }
   function checkNumberField(id, key) {
     const input = document.getElementById(id);
