@@ -80,8 +80,9 @@
     font-size: 12px;
   }
 
-  .settings-locked header,
-  .settings-locked main{
+  /* Zablokowany panel: bez topbaru; main zostaje (panel ukrywa atrybut hidden,
+     stopka w main zostaje pod ekranem logowania). */
+  .settings-locked header{
     display: none;
   }
 
