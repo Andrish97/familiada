@@ -13,6 +13,14 @@
 //    overlay i nie odpytuje dalej (nigdy się nie "zwolni").
 
 const { test, expect } = require("./helpers/e2e-test");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Kod stron z brancha (jak editor/logo-editor): selektory śledzą bieżący
+// kod; service worker obsłużyłby żądania z cache z pominięciem page.route.
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["games", "games/editor", "games/settings", "logos", "polls"] });
+});
 
 // E25: konta wypożyczane na worker na wyłączność (tests/README.md „Test accounts”).
 // Testy puli logo (Warstwa B: otwarte ustawienia/Control KTÓREJKOLWIEK gry
