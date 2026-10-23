@@ -1,0 +1,182 @@
+# Silnik stylów — jak korzystać (nowa strona, nowy element)
+
+Przewodnik praktyczny. Uzasadnienia i historia: `docs/silnik-stylow-projekt.md`
+(projekt), `docs/wspolne-style-plan.md` (decyzje i dziennik E23),
+`docs/wzorce-ui.md` (wzorce wyglądu: topbar, karty, paski akcji, kafle,
+okna). Ten dokument mówi, **co wziąć i jak**, żeby nowa strona wyglądała
+i działała jak reszta bez pisania własnych kopii.
+
+## 1. Zasada
+
+Skończony zestaw elementów, ta sama nazwa dla tej samej rzeczy. Strona
+**składa** gotowe elementy silnika; jej własny plik CSS zawiera tylko
+układ tej strony (siatka, kolejność, wymiary specyficzne dla treści).
+Jeśli potrzebny element nie istnieje — dodaje się go do silnika (z wpisem
+w tym dokumencie i w `wzorce-ui.md`), nie do pliku strony.
+
+## 2. Pliki i kolejność
+
+W `<head>` każdej strony aplikacji, w tej kolejności:
+
+```html
+<link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=…"/>  <!-- ekran blokady -->
+<link rel="stylesheet" href="/shared/style/tokens.css?v=…"/>
+<link rel="stylesheet" href="/shared/style/base.css?v=…"/>
+<link rel="stylesheet" href="/shared/style/components.css?v=…"/>
+<link rel="stylesheet" href="/shared/style/layout.css?v=…"/>
+<link rel="stylesheet" href="/shared/style/utilities.css?v=…"/>
+<link rel="stylesheet" href="/<strona>/css/<strona>.css?v=…"/>      <!-- tylko układ strony -->
+```
+
+Wersje `?v=` przepisuje `node scripts/version-assets.js` (i CI) — wpisz
+dowolną, skrypt ją ujednolici. `flat.css` jest generowany
+(`node scripts/build-flat-engine.mjs`) — nie edytować.
+
+| Plik | Co zawiera |
+|---|---|
+| `tokens.css` | **jedyne** miejsce z kolorami, promieniami, cieniami, `z-index`, czasami animacji, progami. Poza warstwami (`:root`). |
+| `base.css` | deklaracja warstw, reset, typografia, `[data-skel-step]` (odsłanianie po wczytaniu) |
+| `components.css` | elementy: przyciski, pola, okna, wypustki, kafle, oznaczenia, menu, podpowiedzi… |
+| `layout.css` | szkielet stron: `.wrap`, `.bar`, `.card`, dolny pasek listy, powłoka logowania |
+| `utilities.css` | zamknięta lista klas pomocniczych (§5) |
+
+## 3. Warstwy (`@layer`) — dlaczego bez `!important`
+
+```
+@layer reset, base, components, utilities, page, states;
+```
+
+- Plik strony pisze **w `@layer page { … }`** — wygrywa z komponentami
+  silnika bez względu na specyficzność, więc **nie potrzebuje `!important`**.
+- Reguły stanów, które muszą wygrać ze stroną (arkusz okna na telefonie,
+  prosty róg karty pod skrajną wypustką), są w `@layer states`.
+- `!important` jest zabronione w plikach stron (wyjątek tylko `[hidden]`
+  w `utilities.css`). Uwaga: `!important` **odwraca** kolejność warstw —
+  ważna deklaracja z wcześniejszej warstwy wygrywa z późniejszą; to dodatkowy
+  powód, żeby go nie używać.
+
+## 4. Tokeny — zamiast liczb i kolorów
+
+- Kolory: `var(--text)`, `var(--text-muted)`, `var(--accent)` (złoto),
+  `var(--surface-1)` (karta), `var(--bg)`, linie `var(--line-strong)`,
+  stany `var(--disabled-text)`, `var(--disabled-line)`. Przezroczystości:
+  `rgb(var(--rgb-gold) / .14)` itp. lub gotowe `--w-8`, `--g-10`, `--k-20`.
+- Promienie: `--r-sm`, `--r-md`, `--r-lg`, `--radius` (karta).
+- Warstwy: `--z-local`, `--z-topbar`, `--z-notice`, `--z-overlay`, `--z-menu`…
+- Kolor wpisany na sztywno w pliku strony zatrzyma test
+  `cssAudit` (zapadka `scripts/css-audit/baseline.json`).
+
+## 5. Szkielet strony
+
+```html
+<body class="page-fit skel-body">                <!-- page-fit: strona na wysokość okna -->
+  <header class="topbar topbar-layout-4"> … 4 sekcje (wzór: web/tasks/index.html) … </header>
+  <main class="wrap">
+    <div class="bar">                             <!-- pasek tytułu: tytuł + podpowiedź + akcje -->
+      <div><div class="title">…</div><div class="hint">…</div></div>
+      <div class="cluster cluster--end"> <button class="btn sm">…</button> </div>
+    </div>
+    <section class="games-shell">
+      <div class="card games-card" data-skel-group> … treść … </div>
+    </section>
+    <div class="footer"> … </div>
+  </main>
+</body>
+```
+
+Najprostszy pełny wzór: `web/tasks/` (lista w karcie) i `web/games/`
+(karta z wypustkami + dolny pasek z filtrem, sortowaniem, wyszukiwaniem
+i akcjami). JS: `initPage()` z `core/page-init.js` (topbar, i18n,
+nawigacja, strażnik urządzenia).
+
+Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
+(`--center`, `--end`), `.stack`, `.between`, `.center`, `.grow`, `.nowrap`,
+`.truncate`, `.text-muted`, `.hidden`, `.visually-hidden`,
+`.only-mobile` / `.only-desktop` (próg 600 px).
+
+## 6. Elementy (katalog)
+
+| Potrzebuję | Użyj | Uwagi |
+|---|---|---|
+| przycisk | `.btn` (+ `.sm`, `.xs`, `.lg`, `.full`) | jeden wygląd; rozmiar klasą, nie własnym CSS |
+| główna akcja | `.btn.gold` | jedna na widok |
+| usuń / niebezpieczne | `.btn.danger` | |
+| przycisk z samą ikoną | `.btn.icon` (`.btn.sm.icon`) | kwadrat o wysokości przycisku |
+| ikona/tekst bez tła (w polu, wierszu) | `.btn-plain` + klasa rozmiaru | np. `.btn-plain.searchClear` |
+| włączony przełącznik / wybrana opcja | `.is-active` lub `aria-pressed="true"` | nie własne kolory aktywnego |
+| wyłączony | atrybut `disabled` | wygląd z `.btn:disabled` (kolory, bez `opacity`) |
+| pole tekstowe | `.inp` (`.field` z `.field-label`, `.field-error`) | |
+| pole szukania | `.searchBox.searchBox--field` + `.searchText` + `.btn-plain.searchClear` | lub cały pasek z `core/list-search.js` |
+| lista rozwijana | `.ui-select` + `core/ui-select.js` (`initUiSelect`) | |
+| przełącznik segmentowy | `.toggle-group > label.toggle-item` | |
+| suwak | `input[type=range]` (`.rng`) | tor przez `--track` |
+| wybór koloru | `colorPickerHTML(prefix)` + `bindColorPicker(root, { value, onChange })` z `core/color-picker.js` | wartości: `core/color.js` (`normHex`, `hexToRgb`, `rgbToHex`), zapis `#RRGGBB` |
+| karta | `.card` (poziom 1), `.card--inset` (w karcie), `.card--entry` (formularz wejścia) | |
+| karta z wypustkami | `.tabs-card > .tabs-strip > .tab-slot > .tab-label` + `.card` | stan: `markActiveTab(labels, active)` z `core/tabs.js`; karta w adresie: `tabFromUrl`/`setTab` |
+| dwie karty obok / wypustki na telefonie | `.tabs-card--split` + `.split-panels` + `core/split-tabs.js` | |
+| kafel zasobu | `.grid` + `.tile` (+ `.x` usuń) | jak Gry/Bazy/Loga |
+| wiersze z sekcjami (zaproszenia, zadania) | `renderRowSections` z `core/share-sections.js` | |
+| licznik | `.badge` | pusty = ukryty |
+| oznaczenie (status) | `.tag` (`--bad`, `--warn`, `--info`, `--muted`) | |
+| podpowiedź pod tytułem / polem | `.hint` | dymek: atrybut `data-tooltip` (`core/tooltips.js`) |
+| komunikat w treści | `.callout` (`--warn`, `--bad`) | |
+| komunikat po akcji | `toast()` z `core/toast.js` | |
+| pasek na górze strony | `.notice-bar` | np. przypomnienie gościa |
+| pusty stan | `.empty-state` (`--tile`, `--inline`) | |
+| okno potwierdzenia / pytanie / postęp | `confirmModal`, `alertModal`, `promptModal`, `progressModal` z `core/modal.js` | na telefonie same przechodzą w arkusz od dołu |
+| własne okno | `.overlay.modal--sheet > .modal` + `setOverlayOpen(overlay, open)` i `enterModalSheet` z `core/modal-sheet.js` | |
+| menu pod przyciskiem | `placeDropdown(anchor, el)` z `core/popover.js` | menu w punkcie: `placeAtPoint(el, x, y)` |
+| ekran blokady („tu nie wejdziesz”, zasób zajęty) | `blockingScreen(id, actions, { prefix })` + `setBlockingIcon` / `setBlockingOpen` z `core/blocking-screen.js` | |
+| strony logowania | `body.auth-body` + `.auth-shell` | |
+| przycisk w rogu (pełny ekran) | `.corner-btn` (+ `.fs-btn`) | |
+
+Brakuje czegoś? Najpierw sprawdź `components.css` (nagłówki sekcji `/* ── … */`)
+i `wzorce-ui.md`. Nowy element: do `components.css` (w `@layer components`),
+z sceną zrzutów i wpisem w tej tabeli.
+
+## 7. Zasady, które pilnują testy i audyt
+
+1. **Bez `!important`** w plikach stron (§3).
+2. **Bez kolorów na sztywno** poza `tokens.css`.
+3. **Bez stylów w JS/HTML**: żadnego `style="…"`, `el.style.x = …` na stały
+   wygląd, `style.cssText`. Dozwolone tylko wartości liczone na bieżąco
+   (pozycja, rozmiar, `transform` przy przesuwaniu) i zmienne CSS przez
+   `style.setProperty("--x", …)`. Pokazywanie/ukrywanie: atrybut `hidden`.
+4. **Android — przyciski z ikonami:** tło kryjące (odcień
+   `--btn-tint` na `--under`, jak `.btn`), bez `opacity` < 1, `filter`,
+   `backdrop-filter` i `transform` w stanach dotyku. Podświetlenie
+   najechania tylko w `@media (hover: hover) and (pointer: fine)`.
+   Wyłączony = kolory `--disabled-*`, nie `opacity`.
+5. **Strefa bezpieczna zawsze:** odstępy przy krawędziach z
+   `env(safe-area-inset-*)` (silnik robi to w `.wrap`, `.topbar`, `.footer`,
+   arkuszach — własne elementy przyklejone do krawędzi muszą to dodać).
+6. **Nic nie ucięte i nie schowane:** tekst ucięty wielokropkiem pokazuje
+   całość w podpowiedzi (silnik robi to sam); brak poziomego przewijania;
+   przewijanie dokumentu tylko na stronach z listy w `audit-layout.cjs`.
+7. **Te same nazwy:** nie twórz `mobile-only`, jeśli jest `only-mobile`;
+   nie twórz `.myCard`, jeśli wystarczy `.card` + układ.
+
+## 8. Nowa strona — kroki
+
+1. HTML: szkielet z §5, pliki z §2, elementy z §6.
+2. CSS strony: `@layer page { … }` — tylko układ.
+3. JS: `initPage()`, moduły z §6 (nie kopiuj ich kodu).
+4. Nowy katalog strony: dopisać do `CODE_DIRS` w
+   `tests/e2e/helpers/branch-code.js` (e2e z brancha).
+5. Scena zrzutów w `scripts/screens/scenes.cjs` (+ dane w
+   `scripts/screens/data/`), potem
+   `node scripts/screens/run.cjs --scenes=<id> --audit` — audyt sprawdza
+   przewijanie, ucięcia, strefę bezpieczną i przezroczystość na dotyku.
+6. `node scripts/build-flat-engine.mjs`, `node scripts/version-assets.js`,
+   unit: `cd tests && node --test unit/*.test.js` (zapadka `cssAudit`).
+7. E2E punktowo (CLAUDE.md, „Cykl wdrożenia”).
+
+## 9. Nowy element w silniku — kroki
+
+1. Sprawdź, czy nie istnieje pod inną nazwą (grep w `web/shared/style/`
+   i `wzorce-ui.md`).
+2. Dodaj w `components.css` (lub `layout.css`, jeśli to szkielet strony)
+   w odpowiedniej warstwie; wartości z tokenów.
+3. Logika współdzielona → moduł w `web/shared/js/core/` z testem unit.
+4. Wpis w §6 tutaj i w `wzorce-ui.md`; usuń dotychczasowe kopie na
+   stronach w tym samym kroku (zrzuty przed/po).

@@ -65,6 +65,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 
 ## Wygląd (decyzja 2026-10-10)
 
+- **Silnik stylów — jak korzystać (E23):** [`docs/silnik-stylow-uzycie.md`](docs/silnik-stylow-uzycie.md)
+  — pliki i warstwy, tokeny, katalog elementów i modułów JS, zasady (bez
+  `!important`, bez kolorów i stylów inline, Android), kroki dla nowej strony
+  i nowego elementu. Nowa strona składa elementy silnika; plik strony = układ.
 - Zasady: **symetria, równowaga i spójność** — elementy podobne funkcjonalnie
   (kafle, wiersze, paski akcji, okna, karty, filtry, puste stany) wyglądają
   i zachowują się tak samo na wszystkich stronach. Źródło wzorców:
