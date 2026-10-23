@@ -54,10 +54,10 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   await expect(logoTile).toBeVisible({timeout:20000});
   await expect(recipientPage.locator('#grid > :first-child')).toHaveClass(/addCard/);
   await expect(recipientPage.locator('#grid > .logoTile').first()).toHaveAttribute('data-proposed','1');
-  await expect(logoTile.locator('.logoX')).toHaveCount(0);
+  await expect(logoTile.locator('.x')).toHaveCount(0);
   await logoTile.locator('[data-accept]').click();
   await expect(recipientPage.locator('#grid .logoTile[data-proposed="1"]').filter({hasText:logo.name})).toHaveCount(0,{timeout:20000});
-  await expect(recipientPage.locator('#grid .logoTile').filter({hasText:logo.name}).locator('.logoX')).toBeVisible();
+  await expect(recipientPage.locator('#grid .logoTile').filter({hasText:logo.name}).locator('.x')).toBeVisible();
   const logoCopy=await recipientPage.evaluate(async name=>{const {data,error}=await window.__sbClient.from('user_logos').select('id,received_from_label').eq('name',name).single();if(error)throw error;return data;},logo.name);receivedLogos.push(logoCopy.id);expect(logoCopy.received_from_label).toBeTruthy();
  }finally{
   if(recipientPage&&recipientId){await cleanCopyFixtures(recipientPage).catch(()=>{});for(const id of receivedGames)await recipientPage.evaluate(async id=>{await window.__sbClient.from('games').delete().eq('id',id);},id).catch(()=>{});for(const id of receivedLogos)await recipientPage.evaluate(async id=>{await window.__sbClient.from('user_logos').delete().eq('id',id);},id).catch(()=>{});if(previousFlag!==undefined)await setMailFlag(recipientPage,recipientId,previousFlag).catch(()=>{});await page.evaluate(async id=>{await window.__sbClient.rpc('e2e_friendships_cleanup',{p_other_user_id:id});},recipientId).catch(()=>{});}

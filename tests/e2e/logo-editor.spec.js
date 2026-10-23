@@ -130,7 +130,7 @@ test.describe("lista", () => {
     const name = L.uniq("del");
     const id = await L.insertLogo(page, { name, type: "GLYPH_30x10", payload: L.textPayload() });
     await open(page);
-    await page.locator(`.logoTile[data-key="${id}"] .logoX`).click();
+    await page.locator(`.logoTile[data-key="${id}"] .x`).click();
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
     await expect(page.locator(`.logoTile[data-key="${id}"]`)).toHaveCount(0);
     expect(await L.readLogo(page, id)).toBeNull();

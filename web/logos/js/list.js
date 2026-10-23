@@ -323,7 +323,7 @@ function makeTile(logo) {
         ${logo.received_from_label ? `<div class="logoMeta">${esc(t("resourceSend.from", { name: logo.received_from_label }))}</div>` : ""}
       </div>
       <div class="logoActions">
-        <div class="logoX" role="button" tabindex="0" title="${esc(t("logoEditor.list.delete"))}" aria-label="${esc(t("logoEditor.list.delete"))}">${icon("trash")}</div>
+        <button class="x" type="button" title="${esc(t("logoEditor.list.delete"))}" aria-label="${esc(t("logoEditor.list.delete"))}">${icon("trash")}</button>
       </div>
     </div>
     <div class="logoPrev"></div>`;
@@ -332,7 +332,7 @@ function makeTile(logo) {
   addRenameGesture(tile, (e) => {
     if (!e.target?.closest(".logoActions")) openRenameModal(logo);
   });
-  tile.querySelector(".logoX").addEventListener("click", (ev) => {
+  tile.querySelector(".x").addEventListener("click", (ev) => {
     ev.stopPropagation();
     void removeLogo(logo, name);
   });

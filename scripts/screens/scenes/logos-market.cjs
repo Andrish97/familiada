@@ -217,7 +217,7 @@ module.exports = [
       await view.waitForTimeout(300);
     }] },
   { id: "logos-market-logos-delete", category: CAT, title: "Biblioteka logo — potwierdzenie usunięcia", path: "/logos/", sources: [...LIST, "web/shared/js/core/modal.js"], ready: ".logoTile",
-    steps: [openModal("#grid .logoTile .logoX", ".uni-modal")] },
+    steps: [openModal("#grid .logoTile .x", ".uni-modal")] },
   { id: "logos-market-logos-send", category: CAT, title: "Biblioteka logo — wysyłanie kopii znajomemu (wybrany znajomy, wcześniejsze wysyłki)", path: "/logos/", sources: [...LIST, "web/shared/js/core/resource-send.js", "web/shared/js/core/share-sections.js"], ready: ".logoTile",
     db: (db) => { const f = db.rpc.friends_list; db.rpc.resource_copy_history = { ok: true, items: [{ recipient_label: f[0].label, sent_at: "2026-10-18T17:40:00Z" }, { recipient_label: f[2].label, sent_at: "2026-10-12T09:15:00Z" }] }; },
     steps: [selectLogo(0), async (view) => {

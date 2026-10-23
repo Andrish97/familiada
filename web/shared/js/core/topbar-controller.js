@@ -103,9 +103,8 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   let _hiddenBtns = [];
 
   function updateMoreBadge(hiddenBtns) {
-    const hasActiveHiddenButton = hiddenBtns.some(btn => btn.classList.contains('active'));
-    btnMore?.classList.toggle('active', hasActiveHiddenButton);
-    btnMore?.classList.toggle('tab-btn', hasActiveHiddenButton);
+    const hasActiveHiddenButton = hiddenBtns.some(btn => btn.classList.contains('is-active'));
+    btnMore?.classList.toggle('is-active', hasActiveHiddenButton);
     if (!moreBadge) return;
     const sum = hiddenBtns.reduce((acc, btn) => acc + readBadgeCount(btn), 0);
     setBadgeCount(moreBadge, sum);

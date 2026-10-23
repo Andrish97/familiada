@@ -550,18 +550,6 @@
   }
   .topbar-mobile-group .btn-external{ text-align: left; } /* menu telefonu: jak pozostałe pozycje */
 
-  .tab-btn.active{
-    border-color: var(--g-60);
-    --btn-tint: var(--g-10); /* kryjące tło: css/base.css */
-    color: var(--accent);
-  }
-
-  .ui-select.active .ui-select-btn{
-    border-color: var(--g-60);
-    --btn-tint: var(--g-10); /* kryjące tło: css/base.css */
-    color: var(--accent);
-  }
-
   body.tools-fullscreen .tools-shell{
     position: fixed;
     inset: var(--topbar-h, 64px) 0 0 0;
@@ -1775,57 +1763,6 @@
     border-top: 1px solid var(--w-8);
     flex-shrink: 0;
   }
-  .msg-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: var(--r-sm);
-    border: 1px solid transparent;
-    background: transparent;
-    color: rgba(255,255,255,.45);
-    cursor: pointer;
-    transition: background .13s, color .13s, border-color .13s;
-    padding: 0;
-    flex-shrink: 0;
-  }
-  .msg-icon-btn:hover {
-    background: var(--w-8);
-    color: rgba(255,255,255,.85);
-    border-color: var(--w-8);
-  }
-  .msg-icon-btn--gold {
-    color: var(--g-60);
-    border-color: var(--g-10);
-  }
-  .msg-icon-btn--gold:hover {
-    background: var(--g-10);
-    color: var(--accent);
-    border-color: var(--g-35);
-  }
-  .msg-icon-btn--tagged {
-    color: var(--accent);
-    background: var(--g-10);
-    border-color: var(--g-35);
-  }
-  .msg-icon-btn--tagged:hover {
-    background: var(--g-10);
-  }
-  .msg-icon-btn--active {
-    color: var(--accent);
-    background: var(--g-10);
-    border-color: var(--g-35);
-  }
-  .msg-icon-btn--active:hover {
-    background: var(--g-35);
-  }
-  .msg-icon-btn--danger:hover {
-    background: rgba(220,50,50,.15);
-    color: #f88;
-    border-color: rgba(220,50,50,.25);
-  }
-
   /* Compose pane */
   .mail-compose-pane {
     flex: 1;
@@ -2305,7 +2242,6 @@
   .session-status--err  { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); color: #f87171; }
   .session-status-errors { color: #fbbf24; font-size: 12px; white-space: nowrap; }
 
-  .msg-icon-btn svg.ico { width: 16px; height: 16px; vertical-align: 0; }
 
   /* Operational presence before maintenance; matches existing settings cards. */
   .activity-row{padding:10px 12px;margin:8px 0;border:1px solid var(--w-14);border-radius:var(--r-sm);overflow-wrap:anywhere}

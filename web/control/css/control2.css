@@ -126,7 +126,6 @@
   .c2-intro-hint { font-size:1.05em; line-height:1.5; opacity:.85; max-width:520px; }
   .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15em; font-weight:800; margin-top:6px; }
   .c2-intro-score-sep { opacity:.5; font-weight:400; }
-  .c2-intro-btn { padding:14px 34px; font-size:1.1em; border-radius:var(--r-md); }
   /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
      .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
      bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
@@ -280,17 +279,7 @@
   .c2-statusbar b { color:var(--gold); font-weight:800; }
   /* "Zakończ rundę" — obok Gra:/Bank: w TYM SAMYM pasku (zgłoszone: miejsce
      obok, nie osobny wiersz nawigacji z własnym odstępem u dołu). */
-  .c2-statusbar-end { margin-left:auto; padding:8px 16px; font-size:1em; opacity:1; }
-  /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
-     "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
-     dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */
-  .c2-btn { padding:10px 14px; border-radius:var(--r-md); border:1px solid var(--line2); background:var(--w-8); color: var(--text); cursor:pointer; font-weight:800; font-size:.95em; }
-  .c2-btn:hover:not(:disabled) { filter:brightness(1.1); }
-  .c2-btn:active:not(:disabled) { transform:translateY(1px); }
-  .c2-btn:disabled { opacity:.4; cursor:default; }
-  .c2-btn.primary { border-color:var(--g-35); background:var(--g-10); color:var(--gold); }
-  /* Blokada jest stała; przyciski nawigacji nie pulsują. */
-  .c2-btn-busy:disabled { cursor:wait; }
+  .c2-statusbar-end { margin-left:auto; }
 
   /* ---- Wspólna siatka akcji rozgrywki — sześć rzędów na każdym ekranie,
      od pojedynku przez rundy i wpisywanie finału po mapowanie. Wewnętrznie

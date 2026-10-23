@@ -52,15 +52,15 @@
     <div class="topbar-section topbar-section-2">
       <a class="btn sm btn-external" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener">Supabase</a>
       <a class="btn sm btn-external" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener">Serwer</a>
-      <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button">Prace techniczne</button>
-      <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
-      <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
-      <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
-      <button class="btn sm tab-btn" id="btnTabReports" type="button"><span>Poczta Familiada</span><span class="badge" id="tabBadgeReports" aria-hidden="true"></span></button>
-      <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
-      <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
-      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button"><span>Gry Społeczności</span><span class="badge" id="tabBadgeMarketplace" aria-hidden="true"></span></button>
-      <button class="btn sm tab-btn hidden-on-mobile" id="btnTabGenerator" type="button">Gry Producenta</button>
+      <button class="btn sm is-active" id="btnTabMaintenance" type="button">Prace techniczne</button>
+      <button class="btn sm" id="btnTabStats" type="button">Statystyki</button>
+      <button class="btn sm" id="btnTabRatings" type="button">Oceny</button>
+      <button class="btn sm" id="btnTabMail" type="button">Ustawienia maili</button>
+      <button class="btn sm" id="btnTabReports" type="button"><span>Poczta Familiada</span><span class="badge" id="tabBadgeReports" aria-hidden="true"></span></button>
+      <button class="btn sm" id="btnTabMarketing" type="button">Marketing</button>
+      <button class="btn sm" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
+      <button class="btn sm" id="btnTabMarketplace" type="button"><span>Gry Społeczności</span><span class="badge" id="tabBadgeMarketplace" aria-hidden="true"></span></button>
+      <button class="btn sm hidden-on-mobile" id="btnTabGenerator" type="button">Gry Producenta</button>
       <div class="nav-more" id="navMore" style="display:none;">
         <button class="btn sm" id="btnMore" type="button"><span>Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
         <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
@@ -409,10 +409,10 @@
         </div>
 
         <div class="mail-controls" style="margin-bottom:12px">
-          <button class="btn sm tab-btn active" id="mktTabPending" type="button"><span>Do zatwierdzenia</span><span class="badge" id="badgeMarketPending" aria-hidden="true"></span></button>
-          <button class="btn sm tab-btn" id="mktTabPublished" type="button">Opublikowane</button>
-          <button class="btn sm tab-btn" id="mktTabRejected" type="button">Odrzucone</button>
-          <button class="btn sm tab-btn" id="mktTabWithdrawn" type="button">Wycofane</button>
+          <button class="btn sm is-active" id="mktTabPending" type="button"><span>Do zatwierdzenia</span><span class="badge" id="badgeMarketPending" aria-hidden="true"></span></button>
+          <button class="btn sm" id="mktTabPublished" type="button">Opublikowane</button>
+          <button class="btn sm" id="mktTabRejected" type="button">Odrzucone</button>
+          <button class="btn sm" id="mktTabWithdrawn" type="button">Wycofane</button>
           <button class="btn sm" id="btnMarketRefresh" type="button">Odśwież</button>
         </div>
 
@@ -797,7 +797,7 @@
             <div class="stats-inner-card" id="activityHistory">
               <div class="stats-inner-label">Aktywni użytkownicy</div>
           <div class="activity-chart-controls"><span id="activityChartLabel">Przedział</span>
-            <div class="ui-select active" id="activityChartPeriod">
+            <div class="ui-select is-active" id="activityChartPeriod">
               <button class="btn sm ui-select-btn" type="button" aria-labelledby="activityChartLabel activityChartSelected" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label" id="activityChartSelected">Godzinowo — 48 godzin</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
               </button><div class="ui-select-menu" role="listbox"></div>
@@ -838,7 +838,7 @@
           <div class="field">
             <label class="field-label">Szablon</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap" id="mktTemplateButtons">
-              <button class="btn sm active" type="button" data-tpl="invitation">Zaproszenie do systemu</button>
+              <button class="btn sm is-active" type="button" data-tpl="invitation">Zaproszenie do systemu</button>
               <button class="btn sm" type="button" data-tpl="newsletter">Newsletter</button>
               <button class="btn sm" type="button" data-tpl="custom">Autorska</button>
             </div>

@@ -455,7 +455,7 @@ export function createUI({ root, emit }) {
       const desc = t("control.sfxDesc." + key) || key;
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
-      const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
+      const playBtn = h("button", { class: "btn sm icon summarySoundPlay", type: "button" });
       playBtn.innerHTML = isSfxPlaying(key) ? SVG_STOP : SVG_PLAY;
       // Handlery działają na żywych elementach z e.currentTarget: po
       // uzgodnieniu DOM zmienne z tego renderu wskazują odłączone kopie.
@@ -658,7 +658,7 @@ export function createUI({ root, emit }) {
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
     // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
     // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
-    // rozgrywce (c2-btn primary c2-intro-btn — inny padding/border-radius/
+    // rozgrywce (btn gold lg — inny padding/border-radius/
     // czcionka). Ujednolicone: ten sam komponent, ta sama busy/disabled
     // gałąź co resztę (C2-02) — finalIncomplete to statyczna walidacja
     // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
@@ -672,7 +672,7 @@ export function createUI({ root, emit }) {
     });
     start.dataset.c2SummaryStart = "true";
     start.disabled = finalIncomplete || displaySoundNeedsUnlock || boardBusy();
-    start.classList.toggle("c2-btn-busy", boardBusy() && !finalIncomplete && !displaySoundNeedsUnlock);
+    start.classList.toggle("is-busy", boardBusy() && !finalIncomplete && !displaySoundNeedsUnlock);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, iconLabel("settings", t("control.summarySettingsLink")));
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
@@ -821,7 +821,7 @@ export function createUI({ root, emit }) {
   // odliczania gracza), nie tylko podczas realnego oczekiwania na sieć/
   // dźwięk. Rozdzielenie na dwa parametry naprawia to raz, w jednym miejscu,
   // zamiast w każdym z 11 wywołań osobno.
-  function navButton(label, { shortcut = "n", cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false, iconName = null, iconAfter = false } = {}) {
+  function navButton(label, { shortcut = "n", cls = "btn gold lg", onclick, disabled = false, busy = false, iconName = null, iconAfter = false } = {}) {
     const isDisabled = disabled || busy;
     const isNext = label === t("common.next");
     const children = iconName
@@ -1199,7 +1199,7 @@ export function createUI({ root, emit }) {
       const label = previewPendingRoundEndDestination(state) === "GAME_END"
         ? t("control.roundsGoToGameEndBtn") : t("control.roundsEndRound");
       statusItems.push(navButton(label, {
-        cls: "c2-btn primary c2-statusbar-end",
+        cls: "btn gold c2-statusbar-end",
         busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
       }));
@@ -1214,7 +1214,7 @@ export function createUI({ root, emit }) {
         : r.roundEndDestination === "GAME_END" ? t("control.roundsGoToGameEndBtn")
         : t("control.roundsNextRoundBtn");
       statusItems.push(navButton(label, {
-        cls: "c2-btn primary c2-statusbar-end",
+        cls: "btn gold c2-statusbar-end",
         disabled: r.revealed.length < r.answers.length,
         busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }),
@@ -1306,7 +1306,7 @@ export function createUI({ root, emit }) {
       nav: [
         navButton(t("control.restartGame"), {
           shortcut: null,
-          cls: "c2-btn c2-intro-btn",
+          cls: "btn lg",
           busy: false,
           onclick: () => emit("game.restart"),
         }),
@@ -1553,7 +1553,7 @@ export function createUI({ root, emit }) {
     const timerPhase = round === 1 ? "P1" : "P2";
     const timerRunningNow = f.runtime.timer.running && f.runtime.timer.phase === timerPhase;
     const nav = [navButton(t("common.next"), {
-      cls: "c2-btn primary",
+      cls: "btn gold",
       disabled: timerRunningNow || !f.runtime.timer[`used${timerPhase}`],
       busy: boardBusy(),
       onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
@@ -1860,7 +1860,7 @@ export function createUI({ root, emit }) {
     const finalStatusBar = h("div", { class: "c2-statusbar" }, [
       h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(f.runtime.sum) })]),
       navButton(t(canFinishFinal ? "control.finalEndBtn" : "common.next"), {
-        cls: "c2-btn primary c2-statusbar-end",
+        cls: "btn gold c2-statusbar-end",
         disabled: !row.revealedPoints,
         busy: boardBusy(),
         onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,

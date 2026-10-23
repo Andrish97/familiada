@@ -3308,7 +3308,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   // Assign/unassign ticket
   if (!msg.report_id) {
     const btnAssign = document.createElement("button");
-    btnAssign.className = "msg-icon-btn msg-icon-btn--gold";
+    btnAssign.className = "btn sm icon gold";
     btnAssign.type = "button";
     btnAssign.title = "Przydziel zgłoszenie";
     btnAssign.innerHTML = `${icon("tag")}`;
@@ -3316,7 +3316,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     leftGroup.appendChild(btnAssign);
   } else {
     const btnUnassign = document.createElement("button");
-    btnUnassign.className = "msg-icon-btn msg-icon-btn--tagged";
+    btnUnassign.className = "btn sm icon is-active";
     btnUnassign.type = "button";
     btnUnassign.title = `${escSetting(msg.ticket_number || "")} — odepnij`;
     btnUnassign.innerHTML = `${icon("tag")}`;
@@ -3326,7 +3326,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Toggle marketing flag - megaphone/bullhorn icon
   const btnMarketing = document.createElement("button");
-  btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
+  btnMarketing.className = `btn sm icon${msg.is_marketing ? " is-active" : ""}`;
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
   // Megaphone icon - rectangle handle (longer) + trapezoid horn (bigger)
@@ -3338,7 +3338,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   if (isInbound && msg.from_email) {
     const btnReply = document.createElement("button");
-    btnReply.className = "msg-icon-btn";
+    btnReply.className = "btn sm icon";
     btnReply.type = "button";
     btnReply.title = "Odpowiedz";
     btnReply.innerHTML = `${icon("reply")}`;
@@ -3347,7 +3347,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   } else if (!isInbound && msg.to_email) {
     // Reply button for outbound messages (pencil icon)
     const btnReply = document.createElement("button");
-    btnReply.className = "msg-icon-btn";
+    btnReply.className = "btn sm icon";
     btnReply.type = "button";
     btnReply.title = "Napisz odpowiedź";
     btnReply.innerHTML = `${icon("edit-paper")}`;
@@ -3363,7 +3363,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   if (!msg.deleted_at) {
     const btnTrash = document.createElement("button");
-    btnTrash.className = "msg-icon-btn msg-icon-btn--danger";
+    btnTrash.className = "btn sm icon danger";
     btnTrash.type = "button";
     btnTrash.title = "Do kosza";
     btnTrash.innerHTML = `${icon("trash")}`;
@@ -3371,7 +3371,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     rightGroup.appendChild(btnTrash);
   } else {
     const btnRestore = document.createElement("button");
-    btnRestore.className = "msg-icon-btn";
+    btnRestore.className = "btn sm icon";
     btnRestore.type = "button";
     btnRestore.title = "Przywróć";
     btnRestore.innerHTML = `${icon("restore")}`;
@@ -3379,7 +3379,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     rightGroup.appendChild(btnRestore);
 
     const btnDelete = document.createElement("button");
-    btnDelete.className = "msg-icon-btn msg-icon-btn--danger";
+    btnDelete.className = "btn sm icon danger";
     btnDelete.type = "button";
     btnDelete.title = "Usuń na zawsze";
     btnDelete.innerHTML = `${icon("trash-forever")}`;
@@ -4712,7 +4712,7 @@ function wireMarketplaceEvents() {
   ];
   for (const { id, status } of tabs) {
     document.getElementById(id)?.addEventListener("click", async () => {
-      tabs.forEach(t => document.getElementById(t.id)?.classList.toggle("active", t.id === id));
+      tabs.forEach(t => document.getElementById(t.id)?.classList.toggle("is-active", t.id === id));
       marketActiveStatus = status;
       await loadMarketplace();
     });
@@ -5231,16 +5231,16 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
   const tools = document.getElementById("btnTools");
 
-  if (btn) btn.classList.toggle("active", tab === "maintenance");
-  if (btnMail) btnMail.classList.toggle("active", tab === "mail");
-  if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
-  if (btnRatings) btnRatings.classList.toggle("active", tab === "ratings");
-  if (btnStats) btnStats.classList.toggle("active", tab === "stats");
-  if (btnGen) btnGen.classList.toggle("active", tab === "generator");
-  if (btnReports) btnReports.classList.toggle("active", tab === "reports");
-  if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
-  if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
-  if (tools) tools.classList.toggle("active", tab === "tools");
+  if (btn) btn.classList.toggle("is-active", tab === "maintenance");
+  if (btnMail) btnMail.classList.toggle("is-active", tab === "mail");
+  if (btnMarket) btnMarket.classList.toggle("is-active", tab === "marketplace");
+  if (btnRatings) btnRatings.classList.toggle("is-active", tab === "ratings");
+  if (btnStats) btnStats.classList.toggle("is-active", tab === "stats");
+  if (btnGen) btnGen.classList.toggle("is-active", tab === "generator");
+  if (btnReports) btnReports.classList.toggle("is-active", tab === "reports");
+  if (btnMarketing) btnMarketing.classList.toggle("is-active", tab === "marketing");
+  if (btnMarketingContacts) btnMarketingContacts.classList.toggle("is-active", tab === "marketingContacts");
+  if (tools) tools.classList.toggle("is-active", tab === "tools");
 
   // Hide/show panels
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
@@ -6361,7 +6361,7 @@ let mktPreviewVisible = false;
 function mktApplyTemplate(tplId) {
   mktActiveTpl = tplId;
   document.querySelectorAll("#mktTemplateButtons [data-tpl]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.tpl === tplId);
+    btn.classList.toggle("is-active", btn.dataset.tpl === tplId);
   });
   const tpl = MKT_TEMPLATES[tplId] || MKT_TEMPLATES.custom;
   const subjectEl = document.getElementById("mktSubject");

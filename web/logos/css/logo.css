@@ -87,37 +87,12 @@
     gap: 6px;
     flex-shrink: 0;
   }
-  .logoX{
-    width: 32px;
-    height: 32px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius: var(--r-sm);
-    border: 1px solid var(--bd-mid);
-    --btn-tint: var(--k-20);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
-
-    cursor:pointer;
-    user-select:none;
-    transition: background .12s, border-color .12s, opacity .12s;
-    color: var(--text);
-    padding: 0;
-    font-size: 14px;
-  }
 
   /* Edycja wymaga miejsca; próg zależy od viewportu, a nie od formatu urządzenia. */
   .le-compact #btnEdit,
   .le-compact .le-edit-only{ display: none !important; }
   html:not(.le-compact) .le-compact-only{ display: none !important; }
   .le-compact #grid > .empty-state{ grid-column: 1 / -1; }
-  .logoX:hover{
-    border-color: var(--gold);
-    --btn-tint: var(--k-40);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
-
-  }
-  .logoX.is-disabled{ opacity:.35; pointer-events:none; }
   .logoName{
     font-weight: 900;
     letter-spacing: .04em;
@@ -649,12 +624,6 @@
   }
   .imgPrevHint{ margin-top: 8px; opacity: .75; font-size: 12px; }
 
-  .imgSetBtn.on{
-    border-color: var(--g-60) !important;
-    background: var(--g-10) !important;
-    color: var(--gold) !important;
-  }
-
   /* =========================================================
      IMAGE: ramka kadru 26:11 (cropFrame) — MUSI być widoczna
   ========================================================= */
@@ -882,8 +851,8 @@
      IMAGE: wartości na przyciskach suwaków
   ========================================================= */
   .imgSetBtn{
-    display: flex !important;
-    justify-content: space-between !important;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: 6px;
     min-width: 90px;

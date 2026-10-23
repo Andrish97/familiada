@@ -666,14 +666,14 @@ export function initImageEditor(ctx) {
   function closePanels() {
     openPanel = null;
     panelsWrap?.classList.remove("is-open");
-    for (const b of panelBtns) b.classList.remove("on");
+    for (const b of panelBtns) b.classList.remove("is-active");
     for (const p of panels) p.classList.remove("is-open");
   }
 
   function openPanelAt(name, anchor) {
     if (!panelsWrap) return;
     openPanel = name;
-    for (const b of panelBtns) b.classList.toggle("on", b.dataset.panel === name);
+    for (const b of panelBtns) b.classList.toggle("is-active", b.dataset.panel === name);
     for (const p of panels) p.classList.toggle("is-open", p.dataset.panel === name);
     panelsWrap.classList.add("is-open");
 

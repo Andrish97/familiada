@@ -120,7 +120,7 @@ export function renderToolbar(state) {
           <input id="searchText" class="searchText" type="search" autocomplete="off" />
           <button id="searchSubmitBtn" class="searchClear" type="button" hidden>${icon("close")}</button>
         </div>
-        ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn search-submit left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
+        ${LEFT_VIEWS.filter((v) => v.id !== "tree").map((v) => `<button class="btn icon left-view-btn desktop-only" type="button" data-left-view="${v.id}" aria-controls="explorerLeft">${icon(v.icon)}<span class="badge"></span></button>`).join("")}
       </div>
       <div class="toolbar-btns-row">
         <div class="left-view-tabs mobile-only">

@@ -919,7 +919,7 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn sound-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
+      <button class="btn sm icon" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol sound-volume-slider" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -1399,8 +1399,8 @@ function renderRounds() {
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
-              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
-              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
+              <button class="btn sm icon roundsOrderBtn" type="button" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
+              <button class="btn sm icon roundsOrderBtn" type="button" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
             </div>
           </div>
         `).join("")}

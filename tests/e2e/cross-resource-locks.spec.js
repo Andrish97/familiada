@@ -246,7 +246,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tile).toBeVisible({ timeout: 10000 });
-    await tile.locator(".logoX").click({ timeout: 10000 });
+    await tile.locator(".x").click({ timeout: 10000 });
     // .uni-foot .btn.gold potwierdzenia usunięcia (confirmModal) — czekamy
     // aż realnie się pojawi, zanim klikniemy.
     await expect(page.locator(".uni-foot .btn.gold:visible")).toBeVisible({ timeout: 10000 });
@@ -305,10 +305,10 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     // z-index innego, niezwiązanego kafelka nad nasz — potwierdzone w CI
     // (run #61: "intercepts pointer events"; run #62: {force:true} samo
     // kliknięcie "przeszło", ale modal nigdy się nie pojawił, bo trafiło
-    // w faktycznie zasłaniający element, nie w nasz .logoX). Wywołanie
+    // w faktycznie zasłaniający element, nie w nasz .x). Wywołanie
     // .click() bezpośrednio przez DOM omija symulację myszy w ogóle —
     // gwarantowanie odpala handler na dokładnie tym elemencie.
-    await tile.locator(".logoX").evaluate((el) => el.click());
+    await tile.locator(".x").evaluate((el) => el.click());
     await expect(page.locator(".uni-foot .btn.gold:visible")).toBeVisible({ timeout: 10000 });
 
     // Run #68: kafelek czasem zostawał w DOM przez pełne 10s mimo że klik

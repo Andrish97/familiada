@@ -9,6 +9,16 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+Katalog duplikatów i kolejność ujednolicania: [`e23-katalog-komponentow.md`](e23-katalog-komponentow.md).
+
+- **Wyrównywać i poprawiać po drodze (decyzja użytkownika 2026-10-23):** „jeśli
+  coś jest nierówne, niesymetryczne itd., a warto to wyrównać, poprawić — zrób
+  (dodaj do planu)”. Przy każdej paczce oglądać zrzuty pod kątem wyrównania,
+  odstępów i symetrii; poprawki od razu, większe do „Do poprawienia”.
+- **Dostępność zawsze na plus (decyzja użytkownika 2026-10-23):** „poprawki
+  ulepszające dostęp są na plus zawsze i są pożądane” — fokus z klawiatury,
+  `aria-*`, prawdziwe `<button>` zamiast `div role=button`, kontrast, opisy
+  przycisków-ikon, `prefers-reduced-motion`.
 - **Skończony, najmniejszy zestaw elementów (decyzja użytkownika 2026-10-23):**
   „zestaw elementów ma być skończony i jak najmniejszy; używaj podobnych
   elementów tam, gdzie teraz są różne, jeśli zastosowanie pasuje”. Katalog
@@ -271,3 +281,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | „Więcej” wszędzie | Decyzja użytkownika (spójność): „Więcej” także na stronach z jednym przyciskiem (Bazy, Logo, Control, Poczta, Wskazówki) — przy braku miejsca od razu hamburger. Zrzuty 48 par identyczne. Decyzja „ujednolicać bez kompromisów” w sekcji „Decyzje”. |
 | 2026-10-23 | Nazwy: przycisk w rogu / pełny ekran | `fsBtn`, `fs-btn`, `qr-fs-btn`, `snake-corner-btn` → `.corner-btn` (kwadrat 44 px w rogu) + `.fs-btn` (pełny ekran); id `btnFS`/`fsBtn` → `btnFullscreen` (Prowadzący, Przycisk, Wyświetlacz, snake, QR ankiety, tryb testowy, spece control2/poll-qr — tylko selektor). Zrzuty: snake i QR ankiety mają wspólny przycisk (zamierzone), reszta identyczna. Decyzje „te same nazwy” i „skończony zestaw elementów” w sekcji „Decyzje”. |
 | 2026-10-23 | Przyciski: jeden zestaw | `.icon-btn` → `.btn.icon` (kwadrat 37 px, `.btn.sm.icon` 33 px); `tbBtn` (Eksplorator) → `.btn.icon` (+`danger`, niebieskie „primary” → `gold`); `ctxBtn` (pasek rysowania logo) → `.btn.xs`; `tcBtn` (podliczanie ankiety) → `.btn.sm.icon` (+`danger`); rozmiary `xsm`+`xs` → `xs`. Jeden stan „włączony”: `.btn.is-active` / `[aria-pressed="true"]` (złoty) zamiast `.on`/`.active`/niebieskiego (rynek, logi panelu admina, narzędzia rysowania, Eksplorator, pełny ekran). Wspólny fokus `:focus-visible`. Zrzuty: zmiany tylko w tych paskach (zamierzone). |
+| 2026-10-23 | Przyciski: paczka 2 | `msg-icon-btn` (poczta admina) → `.btn.sm.icon` + `gold`/`danger`/`is-active`; `sfx-preview-btn`/`sound-preview-btn`/`summarySoundPlay` (3 kopie) → `.btn.sm.icon`; `search-submit` ≡ `mkt-search-button` → `.btn.icon`; `tab-btn.active` i przyciski zakładek/szablonów panelu admina → `.btn.is-active`; `.ui-select.active` / `.mkt-filter.is-active` → `.ui-select.is-active` (silnik); `roundsOrderBtn` → `.btn.sm.icon`; `logoX` (div role=button) → `<button class="x">` jak na kaflach Gier i Baz (dostępność: prawdziwy przycisk); `imgSetBtn.on` → `.is-active`; `c2-btn`/`.primary`/`c2-intro-btn` (Control) → `.btn`/`.gold`/nowy rozmiar `.btn.lg`; `c2-btn-busy` → `.btn.is-busy`. Spece: `.logoX` → `.x` (tylko selektor). Decyzje „wyrównywać po drodze” i „dostępność zawsze na plus”. |

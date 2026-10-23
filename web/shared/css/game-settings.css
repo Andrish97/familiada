@@ -129,48 +129,10 @@
     min-width: 0;
   }
 
-  .sfx-preview-btn {
-    background: none;
-    border: 1px solid var(--w-25);
-    border-radius: var(--r-sm);
-    padding: 4px 7px;
-    cursor: pointer;
-    font-size: .85rem;
-    color: inherit;
-    line-height: 1;
-    transition: background .15s;
-  }
-  .sound-preview-btn,
-  .sfx-preview-btn {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--w-25);
-    border-radius: var(--r-sm);
-    background: none;
-    color: inherit;
-    cursor: pointer;
-    line-height: 1;
-  }
-  .sound-preview-btn:hover,
-  .sfx-preview-btn:hover { background: var(--w-8); }
-  .sound-preview-btn:disabled,
-  .sfx-preview-btn:disabled { opacity: .35; cursor: not-allowed; }
-  .sound-preview-btn .ico,
-  .sfx-preview-btn .ico { width: 12px; height: 12px; vertical-align: middle; }
-  .sfx-preview-btn:hover { background: var(--w-8); }
-  .sfx-preview-btn:disabled { opacity: .35; cursor: not-allowed; }
-  .sfx-preview-btn:disabled:hover { background: none; }
-
   .sfx-vol-wrap { display: flex; align-items: center; gap: 6px; }
   .sfx-vol,
   .sound-volume-slider { width: 90px; accent-color: var(--accent); }
-  .sound-volume-slider:focus-visible,
-  .sound-preview-btn:focus-visible,
-  .sfx-preview-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sound-volume-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .sfx-vol-label { font-size: .8rem; min-width: 36px; text-align: right; opacity: .75; }
 
   .sfx-file-wrap { display: flex; align-items: center; gap: 6px; }
@@ -404,15 +366,6 @@
   }
   .sfx-row:last-child{ border-bottom:none; }
   .sfx-row-desc{ font-size:.85rem; opacity:.85; }
-  .sfx-preview-btn{
-    background:none; border:1px solid var(--w-25);
-    border-radius:var(--r-sm); padding:4px 7px; cursor:pointer;
-    font-size:.85rem; color:inherit; line-height:1;
-    transition:background .15s;
-  }
-  .sfx-preview-btn:hover{ background:var(--w-8); }
-  .sfx-preview-btn:disabled{ opacity:.35; cursor:not-allowed; }
-  .sfx-preview-btn:disabled:hover{ background:none; }
   .sfx-vol-wrap{ display:flex; align-items:center; gap:6px; }
   .sfx-vol{ width:90px; accent-color:var(--accent); }
   .sfx-vol-label{
@@ -635,36 +588,8 @@
     text-overflow:ellipsis;
   }
   .roundsOrderActions{ display:flex; gap:4px; flex-shrink:0; }
-  .roundsOrderBtn{
-    width:28px;
-    height:28px;
-    min-width:28px;
-    border-radius:var(--r-sm);
-    border:1px solid #3a3e47;
-    background:#1a1d25;
-    color: var(--text);
-    cursor:pointer;
-    display:grid;
-    place-items:center;
-    padding:0;
-    font-size:14px;
-  }
-  .roundsOrderBtn:hover:not(:disabled){
-    background:#14171e;
-    border-color:var(--gold,var(--accent));
-    color:var(--gold,var(--accent));
-  }
-  /* bez opacity (osobna warstwa = te same artefakty) — przygaszony kolor */
-  .roundsOrderBtn:disabled{
-    color:#4a4e57;
-    border-color:#2c3038;
-    background:#1f222a;
-    cursor:default;
-  }
-
   /* Ikony z silnika (js/core/icons.js) */
-  .sfx-preview-btn .ico { width: 12px; height: 12px; vertical-align: middle; }
-  .roundsOrderHandle .ico, .roundsOrderBtn .ico { vertical-align: middle; }
+  .roundsOrderHandle .ico { vertical-align: middle; }
 
   /* Licznik znaków nazwy drużyny na Wyświetlaczu; znaki bez glifu -- ostrzeżenie. */
   .gs-team-measure.is-warn { opacity: 1; color: #ffb3b3; }
