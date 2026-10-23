@@ -937,8 +937,8 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   align-items: center;
   justify-content: center;
   width: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  /* Przybliżanie i przesuwanie robi pinch-zoom.js (transform), także myszą na komputerze. */
+  overflow: hidden;
   border-radius: 12px;
 }
 
@@ -950,6 +950,7 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   max-height: 100%;
   image-rendering: pixelated;
   flex-shrink: 0;
+  transform-origin: 0 0;
 }
 
 /* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na

@@ -8,12 +8,12 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T15305";
-import { promptModal } from "./modal.js?v=v2026-10-23T15305";
-import { icon } from "./icons.js?v=v2026-10-23T15305";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-23T15305";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-23T15305";
-import { scrollFade } from "./scroll-fade.js?v=v2026-10-23T15305";
+import { t } from "../../translation/translation.js?v=v2026-10-23T15345";
+import { promptModal } from "./modal.js?v=v2026-10-23T15345";
+import { icon } from "./icons.js?v=v2026-10-23T15345";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-23T15345";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-23T15345";
+import { scrollFade } from "./scroll-fade.js?v=v2026-10-23T15345";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
