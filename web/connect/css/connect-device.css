@@ -21,7 +21,7 @@
     margin: 0;
     padding: 12px;
     border: 1px solid var(--w-8);
-    border-radius: 14px;
+    border-radius: var(--r-md);
     background: var(--w-4);
   }
   .connect-device-inner-card[hidden] { display: none !important; }
@@ -61,7 +61,7 @@
     min-width: 36px;
     height: 38px;
     border: 1px solid var(--line2, var(--w-8));
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     display: grid;
     place-items: center;
     opacity: .75;
@@ -138,5 +138,5 @@
   .connect-device-code-hint { margin-top: 8px; }
 
   /* Przewijana lista udostępnionych urządzeń przycina wiersze jak karta (dawniej base.css). */
-  #sharedDevicesList{ border-radius: 12px; }
+  #sharedDevicesList{ border-radius: var(--r-md); }
 }

@@ -11,7 +11,7 @@
   .qf-section {
       --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
       padding: 12px;
-      border-radius: 14px;
+      border-radius: var(--r-md);
       background: var(--w-4);
       border: 1px solid var(--w-8);
       min-width: 0
@@ -28,7 +28,7 @@
       width: 100%;
       min-height: 90px;
       padding: 10px 12px;
-      border-radius: 16px;
+      border-radius: var(--r-md);
       border: 1px solid var(--line2);
       background: var(--k-20);
       color: var(--text);
@@ -52,7 +52,7 @@
 
   /* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
   .qf-listShell {
-      border-radius: 12px;
+      border-radius: var(--r-md);
       min-height: 0;
       overflow: auto
   }
@@ -65,7 +65,7 @@
       align-items: center;
       gap: 8px;
       padding: 6px 6px 6px 4px;
-      border-radius: 12px;
+      border-radius: var(--r-md);
       border: 1px solid var(--line2);
       background: var(--card2);
       min-width: 0
@@ -82,7 +82,7 @@
       box-sizing: border-box;
       padding: 0 8px;
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--r-sm);
       background: transparent;
       color: var(--text);
       outline: 0;
@@ -98,7 +98,7 @@
       height: 36px;
       box-sizing: border-box;
       padding: 0 10px 0 6px;
-      border-radius: 10px;
+      border-radius: var(--r-sm);
       border: 1px solid var(--line2);
       background: var(--k-20);
       cursor: text
@@ -152,7 +152,7 @@
   .btn.icon.qf-del {
       width: 36px;
       height: 36px;
-      border-radius: 10px
+      border-radius: var(--r-sm)
   }
 
   .no-points .qf-ptsWrap {

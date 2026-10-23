@@ -19,7 +19,7 @@
   body.pollpub-body .card {
       margin-top: auto;
       margin-bottom: auto;
-      border-radius: 22px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--line);
       background: var(--card);
       --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
@@ -74,7 +74,7 @@
 
   .abtn {
       padding: 14px;
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--w-14);
       background: var(--card2);
       color: var(--text);
@@ -132,7 +132,7 @@
   .closed {
       margin-top: 14px;
       padding: 14px;
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--g-35);
       background: var(--g-10);
       color: var(--gold);

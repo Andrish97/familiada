@@ -93,7 +93,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     border: 1px solid var(--bd-mid);
     --btn-tint: var(--k-20);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
@@ -306,7 +306,7 @@
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     border: 1px solid var(--w-14);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     color: var(--text);
     text-align: center;
   }
@@ -326,7 +326,7 @@
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     border: 1px solid var(--w-14);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     color: rgba(255,255,255,.75);
     cursor: pointer;
     display: inline-flex;
@@ -346,7 +346,7 @@
     width: 32px;
     min-width: 32px;
     padding: 0;
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     border: 1px solid var(--w-25);
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
@@ -394,7 +394,7 @@
     max-height: min(380px, calc(100vh - 24px));
     overflow: hidden;
     /* jak .ui-select-menu (kryjące tło) */
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px solid var(--line);
     background: var(--bg);
     box-shadow: 0 24px 60px var(--k-70);
@@ -446,7 +446,7 @@
     justify-content:space-between;
     gap:10px;
     padding:8px 10px;
-    border-radius:10px;
+    border-radius:var(--r-sm);
     cursor:pointer;
     background:transparent;
     border:none;
@@ -491,7 +491,7 @@
     width: min(100cqw, 100cqh * 26 / 11);
     aspect-ratio: 26 / 11;
     flex: 0 0 auto;
-    border-radius: 16px;
+    border-radius: var(--r-md);
     overflow: hidden;
     background: #0b0b0b;
     border: 1px solid var(--bd-weak);
@@ -695,7 +695,7 @@
     width: 280px;
     height: 118px; /* 280 / (26/11) */
     border: 2px solid var(--accent);
-    border-radius: 12px;
+    border-radius: var(--r-md);
     box-shadow: 0 0 0 9999px var(--k-20);
     z-index: 5;                 /* NAD obrazem */
     cursor: move;
@@ -718,7 +718,7 @@
     position:absolute;
     width: 16px;
     height: 16px;
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     background: var(--accent);
     box-shadow: 0 8px 22px var(--k-40);
   }
@@ -739,7 +739,7 @@
     inset: -14px;
   }
   @media (pointer: coarse){
-    #paneImage .cropHandle{ width: 22px; height: 22px; border-radius: 8px; }
+    #paneImage .cropHandle{ width: 22px; height: 22px; border-radius: var(--r-sm); }
     #paneImage .cropHandle.tl{ left:-11px; top:-11px; }
     #paneImage .cropHandle.tr{ right:-11px; top:-11px; }
     #paneImage .cropHandle.bl{ left:-11px; bottom:-11px; }
@@ -771,7 +771,7 @@
     display: block;
     width: min(420px, calc(100vw - 16px));
     box-sizing: border-box;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px solid var(--line);
     background: var(--bg);
     box-shadow: 0 24px 60px var(--k-70);
@@ -835,7 +835,7 @@
     --btn-tint: var(--k-20);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-    border-radius: 18px;
+    border-radius: var(--r-lg);
     padding: 14px;
     text-align: left;
     cursor: pointer;
@@ -947,7 +947,7 @@
     background:rgba(15,18,28,.96);
     backdrop-filter:blur(12px);
     border:1px solid var(--w-14);
-    border-radius:14px;
+    border-radius:var(--r-md);
     padding:10px;
     box-shadow:0 14px 36px var(--k-40);
     animation: shapeFadeIn .12s ease;
@@ -980,7 +980,7 @@
   .ctxPop{
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--r-md);
     padding: 6px;
     box-shadow: 0 24px 60px var(--k-70);
     color: var(--text);
@@ -1002,7 +1002,7 @@
     padding: 0;
     background: transparent;
     border: 0;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     color: var(--text);
     cursor: pointer;
   }
@@ -1036,7 +1036,7 @@
     height: 28px;
     padding: 0 8px;
     font-size: 12px;
-    border-radius: 6px;
+    border-radius: var(--r-sm);
   }
 }
 
@@ -1125,7 +1125,7 @@
     width: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    border-radius: 12px;
+    border-radius: var(--r-md);
   }
 
   /* canvas skaluje się do kontenera na desktopie, na touch pozwala na scroll */

@@ -36,7 +36,7 @@
 
   .gs-sidebar-item {
     padding: 10px 14px;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     border: none;
     background: none;
     color: inherit;
@@ -70,7 +70,7 @@
 
   .gs-sidebar-item.active {
     border-left: 3px solid var(--gold);
-    border-radius: 0 10px 10px 0;
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
     --btn-tint: var(--g-10);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
@@ -132,7 +132,7 @@
   .sfx-preview-btn {
     background: none;
     border: 1px solid var(--w-25);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     padding: 4px 7px;
     cursor: pointer;
     font-size: .85rem;
@@ -149,7 +149,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--w-25);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     background: none;
     color: inherit;
     cursor: pointer;
@@ -180,7 +180,7 @@
     align-items: center;
     gap: 6px;
     border: 1px solid var(--w-25);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     padding: 3px 8px;
     background: var(--w-8);
     font-size: .8rem;
@@ -225,7 +225,7 @@
   .gs-section {
     background: var(--card);
     --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
-    border-radius: 14px;
+    border-radius: var(--r-md);
     padding: 18px 20px;
     margin-bottom: 14px;
   }
@@ -259,7 +259,7 @@
   .display-preview {
     width: 100%;
     aspect-ratio: 16 / 9;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     border: 1px solid var(--w-14);
     background: var(--bg);
     overflow: hidden;
@@ -327,7 +327,7 @@
     align-items: center;
     gap: 8px;
     background: var(--w-4);
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     padding: 8px 10px;
     font-size: .85rem;
   }
@@ -376,7 +376,7 @@
     display:inline-grid;
     grid-template-columns:1fr 1fr;
     gap:0;
-    border-radius:22px;
+    border-radius:var(--r-lg);
     background:var(--k-20);
     border:2px solid var(--w-14);
     overflow:hidden;
@@ -393,8 +393,8 @@
     white-space:nowrap; text-align:center; border-radius:0;
   }
   .toggle-slider::before{ content:attr(data-text); font-size:13px; }
-  .toggle-item:first-child .toggle-slider{ border-top-left-radius:20px; border-bottom-left-radius:20px; }
-  .toggle-item:last-child .toggle-slider{ border-top-right-radius:20px; border-bottom-right-radius:20px; }
+  .toggle-item:first-child .toggle-slider{ border-top-left-radius:var(--r-lg); border-bottom-left-radius:var(--r-lg); }
+  .toggle-item:last-child .toggle-slider{ border-top-right-radius:var(--r-lg); border-bottom-right-radius:var(--r-lg); }
   .toggle-item input:checked + .toggle-slider{ background:var(--gold); color:#000; }
   .toggle-item:hover .toggle-slider{ background:var(--w-8); }
   .toggle-item input:checked:hover + .toggle-slider{ background:#ffd766; }
@@ -406,13 +406,13 @@
   }
   .colorItem{
     display:flex; align-items:center; gap:10px;
-    padding:8px 14px; border-radius:10px;
+    padding:8px 14px; border-radius:var(--r-sm);
     border:1px solid var(--w-14);
     background:var(--w-4);
   }
   .colorItem .lbl2{ font-size:14px; white-space:nowrap; }
   .swatchBtn{
-    width:22px; height:22px; border-radius:7px;
+    width:22px; height:22px; border-radius:var(--r-sm);
     border:1px solid var(--w-25);
     background:var(--w-8);
     box-shadow:0 10px 24px var(--k-40);
@@ -427,7 +427,7 @@
   .colorModalControls{ display:flex; flex-direction:column; gap:12px; }
   .colorTopRow,
   .colorModalControls .sliders{
-    padding:12px; border-radius:14px;
+    padding:12px; border-radius:var(--r-md);
     background:var(--w-4);
     border:1px solid var(--line2, var(--w-8));
   }
@@ -436,7 +436,7 @@
   .colorHexField .inp{ width:100%; }
   .colorHexField .hint{ margin:0; }
   .colorPreview{
-    width:72px; height:72px; border-radius:14px; flex:0 0 auto;
+    width:72px; height:72px; border-radius:var(--r-md); flex:0 0 auto;
     border:1px solid var(--w-14);
     background:var(--w-8);
   }
@@ -451,24 +451,24 @@
     cursor:pointer; outline:0;
   }
   .rng::-webkit-slider-runnable-track{
-    height:6px; border-radius:999px;
+    height:6px; border-radius: var(--r-pill);
     background:var(--track);
     box-shadow:0 0 0 1px var(--w-14) inset;
   }
   .rng::-webkit-slider-thumb{
     -webkit-appearance:none; appearance:none;
     width:16px; height:16px; margin-top:-5px;
-    border-radius:999px; background:#f5d26b;
+    border-radius: var(--r-pill); background:#f5d26b;
     box-shadow:0 0 0 2px var(--k-40);
   }
   .rng::-moz-range-track{
-    height:6px; border-radius:999px;
+    height:6px; border-radius: var(--r-pill);
     background:var(--track);
     box-shadow:0 0 0 1px var(--w-14) inset;
   }
   .rng::-moz-range-thumb{
     width:16px; height:16px; border:0;
-    border-radius:999px; background:#f5d26b;
+    border-radius: var(--r-pill); background:#f5d26b;
     box-shadow:0 0 0 2px var(--k-40);
   }
   .rng::-moz-range-progress{ background:0 0; }
@@ -492,7 +492,7 @@
   }
   .sfx-preview-btn{
     background:none; border:1px solid var(--w-25);
-    border-radius:6px; padding:4px 7px; cursor:pointer;
+    border-radius:var(--r-sm); padding:4px 7px; cursor:pointer;
     font-size:.85rem; color:inherit; line-height:1;
     transition:background .15s;
   }
@@ -510,7 +510,7 @@
   .sfx-file-tag{
     display:flex; align-items:center; gap:6px;
     border:1px solid var(--w-25);
-    border-radius:6px; padding:3px 8px;
+    border-radius:var(--r-sm); padding:3px 8px;
     background:var(--w-8);
     font-size:.8rem; max-width:160px;
   }
@@ -555,7 +555,7 @@
   /* ===== FINALE / ROUNDS PICKER ===== */
   .gs-picker-card{
     background:var(--w-4);
-    border-radius:10px; padding:12px 14px; margin-top:4px;
+    border-radius:var(--r-sm); padding:12px 14px; margin-top:4px;
   }
   .gs-picker-head{
     display:flex; align-items:center; justify-content:space-between;
@@ -577,7 +577,7 @@
   .gs-qrow{
     display:flex; align-items:center; gap:8px;
     background:var(--w-8);
-    border-radius:6px; padding:7px 10px;
+    border-radius:var(--r-sm); padding:7px 10px;
     cursor:grab; font-size:.83rem;
     overflow:hidden;
     user-select:none;
@@ -605,7 +605,7 @@
     background:var(--w-8);
     outline:2px dashed var(--w-25);
     outline-offset:2px;
-    border-radius:8px;
+    border-radius:var(--r-sm);
   }
   .gs-qrow.dragging{ opacity:.3; transform:scale(.97); pointer-events:none; }
   .gs-row-dragging{ opacity:.35; }
@@ -627,7 +627,7 @@
   }
   .gs-logo-tile{
     display:flex; flex-direction:column; align-items:center; gap:5px;
-    padding:7px 9px; border-radius:10px;
+    padding:7px 9px; border-radius:var(--r-sm);
     border:2px solid var(--w-14);
     background:var(--k-20); cursor:pointer;
     transition:border-color .12s, background .12s;
@@ -686,7 +686,7 @@
   .qList{
     box-sizing:border-box;
     width:100%;
-    border-radius:16px;
+    border-radius:var(--r-md);
     border:1px solid var(--w-14);
     margin-top:12px;
     display:flex;
@@ -705,7 +705,7 @@
     align-items:center;
     gap:8px;
     background:#22252d; /* kryjące (= var(--w-8) na liście) */
-    border-radius:6px;
+    border-radius:var(--r-sm);
     padding:7px 10px;
     cursor:grab;
     font-size:.83rem;
@@ -745,7 +745,7 @@
     .gs-sidebar-toggle{display:inline-flex;flex:0 0 auto}
     .gs-sidebar-backdrop{position:fixed;inset:var(--topbar-h,64px) 0 0;border:0;padding:0;background:var(--k-70);z-index:40}
     .gs-sidebar-backdrop.is-open{display:block}
-    .gs-sidebar{position:fixed;z-index:41;left:0;top:var(--topbar-h,64px);bottom:0;width:min(320px,86vw);border:1px solid var(--line);border-left:0;border-radius:0 16px 16px 0;background:var(--surface-1);box-shadow:0 18px 48px var(--k-40);transform:translateX(-105%);transition:transform .18s ease}
+    .gs-sidebar{position:fixed;z-index:41;left:0;top:var(--topbar-h,64px);bottom:0;width:min(320px,86vw);border:1px solid var(--line);border-left:0;border-radius:0 var(--r-md) var(--r-md) 0;background:var(--surface-1);box-shadow:0 18px 48px var(--k-40);transform:translateX(-105%);transition:transform .18s ease}
     .gs-sidebar.is-open{transform:translateX(0)}
     .gs-content{grid-column:1;grid-row:2;min-width:0;padding:20px var(--page-pad-right) 20px var(--page-pad-left)}
   }
@@ -765,7 +765,7 @@
        wierszy nakładały się przy przerysowaniach — pasy, połówki wierszy
        jaśniejsze (patrz css/base.css, „KRYJĄCE TŁA PRZYCISKÓW”). */
     background:#242831;
-    border-radius:6px;
+    border-radius:var(--r-sm);
     padding:7px 10px;
     cursor:grab;
     font-size:.83rem;
@@ -806,7 +806,7 @@
     width:28px;
     height:28px;
     min-width:28px;
-    border-radius:8px;
+    border-radius:var(--r-sm);
     border:1px solid #3a3e47;
     background:#1a1d25;
     color: var(--text);

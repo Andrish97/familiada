@@ -67,7 +67,7 @@
       overflow-y: auto;
       padding: 4px;
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: var(--r-md);
       background: var(--w-4);
   }
 
@@ -78,7 +78,7 @@
       width: 100%;
       padding: 8px 10px;
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--r-sm);
       background: transparent;
       color: inherit;
       font: inherit;
@@ -118,7 +118,7 @@
       display: block;
       padding: 9px 14px;
       border-left: 3px solid transparent;
-      border-radius: 10px;
+      border-radius: var(--r-sm);
       color: inherit;
       font-size: .875rem;
       font-weight: 600;
@@ -136,7 +136,7 @@
 
   .m-side-item.active {
       border-left-color: var(--gold);
-      border-radius: 0 10px 10px 0;
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
       --btn-tint: var(--g-10);
       background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg));
       color: var(--gold);
@@ -185,7 +185,7 @@
       gap: 8px;
       padding: 8px 14px;
       border: 1px solid var(--g-35);
-      border-radius: 999px;
+      border-radius: var(--r-pill);
       background: #14171d;
       color: var(--gold);
       font-weight: 800;
@@ -230,7 +230,7 @@
       margin: 14px 0 0;
       padding: 12px 16px;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: var(--r-md);
       background: var(--card2);
   }
 
@@ -262,7 +262,7 @@
   .m-part-card {
       padding: 16px 18px;
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: var(--r-md);
       background: var(--card2);
   }
 
@@ -317,7 +317,7 @@
       align-items: center;
       gap: 4px;
       padding: 0 8px 0 6px;
-      border-radius: 999px;
+      border-radius: var(--r-pill);
       background: var(--g-10);
       color: var(--gold);
       font-weight: 700;
@@ -352,7 +352,7 @@
       min-height: 1.6em;
       padding: 0 9px;
       border: 1px solid var(--g-35);
-      border-radius: 10px;
+      border-radius: var(--r-sm);
       background: var(--g-10);
       color: var(--gold);
       font-weight: 800;
@@ -369,12 +369,12 @@
       background: var(--k-20);
   }
 
-  .m-code { font-size: 13px; padding: 1px 6px; border-radius: 8px; }
+  .m-code { font-size: 13px; padding: 1px 6px; border-radius: var(--r-sm); }
 
   .m-pre {
       margin: 12px 0 14px;
       padding: 12px 14px;
-      border-radius: 14px;
+      border-radius: var(--r-md);
       overflow: auto;
       font-size: 13px;
       line-height: 1.55;
@@ -387,7 +387,7 @@
       padding: 12px 16px;
       border: 1px solid var(--line);
       border-left-width: 4px;
-      border-radius: 12px;
+      border-radius: var(--r-md);
       background: var(--w-4);
   }
   .m-note > :last-child { margin-bottom: 0; }
@@ -412,7 +412,7 @@
       -webkit-overflow-scrolling: touch;
       margin: 0 0 14px;
       border: 1px solid var(--w-8);
-      border-radius: 12px;
+      border-radius: var(--r-md);
   }
 
   .m-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -454,7 +454,7 @@
       gap: 2px;
       padding: 12px 14px;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: var(--r-md);
       color: var(--text);
       text-decoration: none;
   }
@@ -492,7 +492,7 @@
           width: min(320px, 86vw);
           border: 1px solid var(--line);
           border-left: 0;
-          border-radius: 0 16px 16px 0;
+          border-radius: 0 var(--r-md) var(--r-md) 0;
           background: var(--surface-1);
           box-shadow: 0 18px 48px var(--k-40);
           transform: translateX(-105%);
@@ -514,7 +514,7 @@
           min-width: 0;
           padding: 6px 12px;
           border: 1px solid var(--g-35);
-          border-radius: 999px;
+          border-radius: var(--r-pill);
           background: #14171d;
           color: var(--gold);
           font-weight: 800;
@@ -541,7 +541,7 @@
       width: 100%;
       padding: 0;
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: var(--r-md);
       overflow: hidden;
       background: #000;
       cursor: zoom-in;

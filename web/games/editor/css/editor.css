@@ -35,7 +35,7 @@
 
 
   .left,.rightPanel {
-      border-radius: 20px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--line);
       background: var(--card);
       --under: var(--card); /* podłoże przycisków (css/base.css) */
@@ -101,7 +101,7 @@
   .listShell {
     --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
       margin-top: 10px;
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       min-height: 0;
       flex: 1;
       overflow: auto;
@@ -128,7 +128,7 @@
 
   .qcard {
       position: relative;
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--line);
       --btn-tint: var(--w-4);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
@@ -173,7 +173,7 @@
       right: 10px;
       width: 30px;
       height: 30px;
-      border-radius: 10px;
+      border-radius: var(--r-sm);
       border: 1px solid var(--line2);
       --btn-tint: var(--w-8);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
@@ -262,7 +262,7 @@
   }
 
   .addTile {
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       border: 1px dashed var(--g-35);
       --btn-tint: var(--w-4);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
@@ -346,7 +346,7 @@
 
   .modal {
       width: min(860px,94vw);
-      border-radius: 22px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--line);
       background: var(--surface-modal);
       --under: var(--surface-modal); /* podłoże przycisków na powierzchni modala */
@@ -383,7 +383,7 @@
       min-height: 220px;
       margin-top: 12px;
       padding: 12px;
-      border-radius: 16px;
+      border-radius: var(--r-md);
       border: 1px solid var(--line2);
       background: var(--k-20);
       color: var(--text);
@@ -392,7 +392,7 @@
       font-weight: 800
   }
 
-  .txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:var(--k-20); }
+  .txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:var(--r-md); background:var(--k-20); }
   .txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
   .txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
@@ -413,7 +413,7 @@
   @media (max-width: 600px) {
       .left,.rightPanel {
           padding: 12px;
-          border-radius: 18px
+          border-radius: var(--r-lg)
       }
 
       .list {
@@ -428,7 +428,7 @@
       .qcard {
           padding: 10px;
           padding-right: 48px;
-          border-radius: 16px;
+          border-radius: var(--r-md);
           min-height: 72px
       }
 
@@ -450,12 +450,12 @@
           right: 8px;
           width: 28px;
           height: 28px;
-          border-radius: 10px
+          border-radius: var(--r-sm)
       }
 
       .addTile {
           padding: 10px;
-          border-radius: 16px;
+          border-radius: var(--r-md);
           min-height: 90px
       }
 

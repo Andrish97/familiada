@@ -2,7 +2,7 @@
 @layer page {
   /* Zwykła karta strony; karta z wypustkami (.games-card) ma wygląd z silnika. */
   .card:where(:not(.games-card)) {
-      border-radius: 20px;
+      border-radius: var(--r-lg);
       border: 1px solid var(--line);
       background: var(--card);
       --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
@@ -25,7 +25,7 @@
   .resultQ {
       border: 1px solid var(--line);
       background: var(--card2);
-      border-radius: 18px;
+      border-radius: var(--r-lg);
       padding: 12px
   }
 
@@ -100,7 +100,7 @@
   /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
 
   /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
-  .pollBar{ padding: 12px; border: 1px solid var(--line2); border-radius: 14px; background: var(--card); }
+  .pollBar{ padding: 12px; border: 1px solid var(--line2); border-radius: var(--r-md); background: var(--card); }
   .pollBarState{ flex: 1 1 240px; }
   .pollBarActions{ flex: 1 1 240px; }
   .pollBarActions .btn{ flex: 0 0 auto; }
@@ -192,7 +192,7 @@
   .pollSec{
     --under: #0b1020;
     padding: 12px;
-    border-radius: 14px;
+    border-radius: var(--r-md);
     background: var(--w-4);
     border: 1px solid var(--w-8);
     min-width: 0;
@@ -200,7 +200,7 @@
   .pollRecipientsSec{ display: flex; flex-direction: column; min-height: 0; }
   .pollRecipientsSec .subsGrid{ flex: 1 1 auto; min-height: 0; }
   @media (max-width: 980px){
-    .pollSec{ padding: 12px; background: var(--w-4); border: 1px solid var(--w-8); border-radius: 14px; }
+    .pollSec{ padding: 12px; background: var(--w-4); border: 1px solid var(--w-8); border-radius: var(--r-md); }
   }
   .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   /* Link ankiety jest dostępny akcjami, bez wyświetlania długiego adresu. */
@@ -208,7 +208,7 @@
     margin-top: 10px;
     padding: 14px 10px;
     border: 1px dashed var(--line2);
-    border-radius: 12px;
+    border-radius: var(--r-md);
     text-align: center;
     font-size: 13px;
     opacity: .75;
@@ -234,7 +234,7 @@
   .pollQrStage{
     margin-top: 10px;
     padding: 14px 10px 12px;
-    border-radius: 14px;
+    border-radius: var(--r-md);
     background: var(--w-4);
     display: flex;
     flex-direction: column;
@@ -250,7 +250,7 @@
   .qrFrameSmall{
     padding: 12px;
     background: #fff;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     line-height: 0;
   }
   .qrFrameSmall img{ display: block; width: 100%; height: auto; }
@@ -261,7 +261,7 @@
     padding: 0;
     border: 0;
     background: none;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     cursor: zoom-in;
     transition: transform .15s ease;
   }
@@ -269,7 +269,7 @@
   .qrBox.img:empty{ display: none; }
   .qrBox.img:empty + .pollQrHint{ display: none; }
   .qrBox.img:disabled{ cursor: default; }
-  .qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
+  .qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: var(--r-md); }
   .pollQrVote{ display: flex; justify-content: center; }
   @media (max-width: 980px){
     .qrBox.img{ width: min(100%, 320px); }
@@ -339,7 +339,7 @@
     height: 38px;
     box-sizing: border-box;
     padding: 0 12px;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px solid var(--w-8);
     background: var(--w-4);
     overflow: hidden;
@@ -419,8 +419,8 @@
   .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
   .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
   .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
-  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: 13px; background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--bg)); box-shadow: 0 2px 7px var(--k-20); }
-  .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--w-25); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg)); border-radius: 10px; }
+  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: var(--r-md); background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--bg)); box-shadow: 0 2px 7px var(--k-20); }
+  .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--w-25); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg)); border-radius: var(--r-sm); }
   .resultQ .aList.tally .tcBtn:hover{ background: var(--w-8); }
   .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
   /* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
@@ -448,7 +448,7 @@
     .resultQ .aList.tally .tcActionGroup{ order: 2; margin-left: 4px; padding: 0; gap: 4px; border: 0; background: none; box-shadow: none; }
     .resultQ .aList.tallyText .tcCnt{ order: 3; flex: 0 0 calc(100% - 96px); max-width: none; margin-left: 6px; text-align: left; }
     .resultQ .aList.tallyText .aVal{ order: 4; margin-left: auto; padding-right: 4px; }
-    .resultQ .aList.tally .tcBtn{ width: 32px; height: 32px; border-radius: 9px; }
+    .resultQ .aList.tally .tcBtn{ width: 32px; height: 32px; border-radius: var(--r-sm); }
   }
 
   .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
@@ -471,7 +471,7 @@
     box-sizing: border-box;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     padding: 0 6px;
     color: inherit;
     font: inherit;

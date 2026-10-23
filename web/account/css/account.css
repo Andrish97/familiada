@@ -20,7 +20,7 @@
     flex-direction: column;
     gap: 10px;
     padding: 16px;
-    border-radius: 18px;
+    border-radius: var(--r-lg);
     border: 1px solid var(--w-14);
     background: var(--card);
     box-shadow: 0 18px 40px var(--k-40);
@@ -121,7 +121,7 @@
     font-size: 12px;
     opacity: .75;
     padding: 8px 10px;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px dashed var(--g-35);
     background: var(--k-20);
   }
@@ -130,7 +130,7 @@
     display: grid;
     gap: 10px;
     padding: 12px;
-    border-radius: 16px;
+    border-radius: var(--r-md);
     border: 1px solid var(--g-10);
     background: var(--k-20);
   }
@@ -152,7 +152,7 @@
   .cooldown-banner{
     margin: 10px 0 18px;
     padding: 10px 12px;
-    border-radius: 14px;
+    border-radius: var(--r-md);
     border: 1px solid var(--w-14);
     background: var(--k-20);
     backdrop-filter: blur(10px);

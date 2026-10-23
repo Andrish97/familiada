@@ -17,7 +17,7 @@
   .poll-go-card {
     margin-top: auto;
     margin-bottom: auto;
-    border-radius: 22px;
+    border-radius: var(--r-lg);
     border: 1px solid var(--line);
     background: var(--card);
     --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */

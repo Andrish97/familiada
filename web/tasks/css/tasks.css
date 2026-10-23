@@ -14,7 +14,7 @@
   /* przewijana lista bez ramki, zaokrąglona jak wiersze (decyzja 2026-10-20) */
   .tasks-card .tasks-scroll{
     padding: 0 0 12px;
-    border-radius: 12px;
+    border-radius: var(--r-md);
   }
   .tasks-load-retry{ display:flex; justify-content:center; padding: 12px 0; }
   .tasks-card .rowsSection + .rowsSection{

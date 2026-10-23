@@ -48,7 +48,7 @@
   .bld-preview-poll .resultQ {
     border: 1px solid var(--line);
     background: var(--card2);
-    border-radius: 18px;
+    border-radius: var(--r-lg);
     padding: 12px;
   }
   .bld-preview-poll .resultQ .qTitle { font-weight: 1000; margin-bottom: 8px; line-height: 1.25; }
@@ -62,7 +62,7 @@
     height: 38px;
     box-sizing: border-box;
     padding: 0 12px;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px solid var(--line-faint);
     background: rgb(var(--rgb-white) / .05);
     overflow: hidden;
@@ -88,7 +88,7 @@
 
   .bld-q-block {
     padding: 10px 12px;
-    border-radius: 14px;
+    border-radius: var(--r-md);
     background: rgb(var(--rgb-white) / .05);
     border: 1px solid var(--line);
   }
