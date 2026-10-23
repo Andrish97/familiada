@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Lb6ChVXKkiLXt6kGmHZF2wyI7PZDWjohfcY5xAXgZIkzZzCRXn03fwkfNuNwzNx
+\restrict pWnBaU2zr9E1aNunX60H5iT5SWEyR7JK2dyrtCtagokoD4tOXABhYbZewXTxQ6N
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -839,6 +839,21 @@ BEGIN
   WHERE session_id=p_session_id AND device_type=p_device_type;
   RETURN v_candidate;
 END;
+$$;
+
+
+--
+-- Name: _control_device_replace_if_other_primary("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_device_replace_if_other_primary"("p_connection_id" "uuid", "p_primary" "uuid") RETURNS "void"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  UPDATE public.control_device_connections
+  SET state='replaced',epoch=NULL,released_at=clock_timestamp()
+  WHERE id=p_connection_id AND state='waiting'
+    AND p_primary IS NOT NULL AND p_primary<>p_connection_id;
 $$;
 
 
@@ -6179,7 +6194,7 @@ BEGIN
   SELECT * INTO v_connection FROM public.control_device_connections
   WHERE id=p_connection_id AND session_id=v_session_id AND game_id=p_game_id AND device_type=p_device_type FOR UPDATE;
   IF NOT FOUND OR v_connection.state NOT IN ('waiting','primary') THEN
-    RETURN jsonb_build_object('ok',false,'state','expired');
+    RETURN jsonb_build_object('ok',false,'state',CASE WHEN v_connection.state='replaced' THEN 'replaced' ELSE 'expired' END);
   END IF;
 
   IF v_connection.state='primary' AND v_slot.primary_connection_id=p_connection_id
@@ -6213,6 +6228,7 @@ BEGIN
     WHERE id=p_connection_id;
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  PERFORM public._control_device_replace_if_other_primary(p_connection_id,v_primary);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id,
       'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id),
@@ -6261,8 +6277,12 @@ BEGIN
   SELECT * INTO v_existing FROM public.control_device_connections WHERE id=p_connection_id;
   IF FOUND THEN
     IF v_existing.session_id<>v_session_id OR v_existing.game_id<>p_game_id
-       OR v_existing.device_type<>p_device_type
-       OR v_existing.state NOT IN ('waiting','primary') THEN RAISE EXCEPTION 'connection_expired'; END IF;
+       OR v_existing.device_type<>p_device_type THEN RAISE EXCEPTION 'connection_expired'; END IF;
+    IF v_existing.state='replaced' THEN
+      RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
+        || jsonb_build_object('mode','lease','primary',false);
+    END IF;
+    IF v_existing.state NOT IN ('waiting','primary') THEN RAISE EXCEPTION 'connection_expired'; END IF;
     IF v_existing.state='primary' AND NOT EXISTS (
       SELECT 1 FROM public.control_device_slots s
       WHERE s.session_id=v_session_id AND s.device_type=p_device_type
@@ -6289,24 +6309,27 @@ BEGIN
       CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
       CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
       v_context);
-    -- Ta sama przeglądarka otwiera urządzenie od nowa: przejęcie od razu.
-    IF v_context IS NOT NULL AND p_meta->'takeover' = 'true'::jsonb
-       AND v_slot.primary_connection_id IS NOT NULL
-       AND EXISTS (SELECT 1 FROM public.control_device_connections c
-         WHERE c.id=v_slot.primary_connection_id AND c.state='primary'
-           AND c.browser_context_id=v_context) THEN
-      UPDATE public.control_device_connections SET state='waiting',epoch=NULL,audio_unlocked=false,
-        requested_at=clock_timestamp()
-      WHERE id=v_slot.primary_connection_id;
-      v_epoch := v_slot.epoch + 1;
-      UPDATE public.control_device_connections SET state='primary',epoch=v_epoch
-      WHERE id=p_connection_id;
-      UPDATE public.control_device_slots SET primary_connection_id=p_connection_id,epoch=v_epoch,
-        lease_expires_at=clock_timestamp()+interval '12 seconds',updated_at=clock_timestamp()
-      WHERE session_id=v_session_id AND device_type=p_device_type;
+    -- Nowe otwarcie (dowolna przeglądarka): przejęcie od razu.
+    IF p_meta->'takeover' = 'true'::jsonb THEN
+      v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+      IF v_primary IS NOT NULL AND v_primary<>p_connection_id THEN
+        SELECT * INTO v_slot FROM public.control_device_slots
+        WHERE session_id=v_session_id AND device_type=p_device_type FOR UPDATE;
+        UPDATE public.control_device_connections SET state='replaced',epoch=NULL,audio_unlocked=false,
+          released_at=clock_timestamp()
+        WHERE session_id=v_session_id AND device_type=p_device_type
+          AND state IN ('primary','waiting') AND id<>p_connection_id;
+        v_epoch := v_slot.epoch + 1;
+        UPDATE public.control_device_connections SET state='primary',epoch=v_epoch
+        WHERE id=p_connection_id;
+        UPDATE public.control_device_slots SET primary_connection_id=p_connection_id,epoch=v_epoch,
+          lease_expires_at=clock_timestamp()+interval '12 seconds',updated_at=clock_timestamp()
+        WHERE session_id=v_session_id AND device_type=p_device_type;
+      END IF;
     END IF;
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  PERFORM public._control_device_replace_if_other_primary(p_connection_id,v_primary);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
 END;
@@ -20816,7 +20839,7 @@ CREATE TABLE "public"."control_device_connections" (
     CONSTRAINT "control_device_connections_received_rev_check" CHECK (("received_rev" >= 0)),
     CONSTRAINT "control_device_connections_rendered_rev_check" CHECK (("rendered_rev" >= 0)),
     CONSTRAINT "control_device_connections_started_sound_cue_seq_check" CHECK (("started_sound_cue_seq" >= 0)),
-    CONSTRAINT "control_device_connections_state_check" CHECK (("state" = ANY (ARRAY['waiting'::"text", 'primary'::"text", 'released'::"text", 'expired'::"text", 'revoked'::"text"])))
+    CONSTRAINT "control_device_connections_state_check" CHECK (("state" = ANY (ARRAY['waiting'::"text", 'primary'::"text", 'released'::"text", 'expired'::"text", 'revoked'::"text", 'replaced'::"text"])))
 );
 
 
@@ -27782,5 +27805,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Lb6ChVXKkiLXt6kGmHZF2wyI7PZDWjohfcY5xAXgZIkzZzCRXn03fwkfNuNwzNx
+\unrestrict pWnBaU2zr9E1aNunX60H5iT5SWEyR7JK2dyrtCtagokoD4tOXABhYbZewXTxQ6N
 
