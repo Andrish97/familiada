@@ -1,6 +1,5 @@
 import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-23T17153";
 import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-23T17153";
-import { t } from "/shared/translation/translation.js?v=v2026-10-23T17153";
 
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
@@ -21,11 +20,6 @@ function isIOSDevice() {
 
 function isMacSafari() {
   return /Mac/.test(navigator.platform) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
-}
-
-function tSafe(key, fallback) {
-  const value = t(key);
-  return !value || value === key ? fallback : value;
 }
 
 function isAdminStandalone() {
@@ -67,18 +61,12 @@ function registerAdminWorker() {
 
 async function showIosPrompt() {
   if (!isIOSSafari() || isStandalone() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
-  const fallback = {
-    title: "Dodaj panel admina do ekranu początkowego",
-    text: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.",
-    ok: "Pokaż instrukcję",
-    never: "Nie pokazuj więcej",
-  };
   let dismissed = false;
   await confirmModal({
-    title: tSafe("games.iosWebapp.adminTitle", fallback.title),
-    text: tSafe("games.iosWebapp.adminText", fallback.text),
-    okText: tSafe("games.iosWebapp.ok", fallback.ok),
-    cancelText: tSafe("games.iosWebapp.never", fallback.never),
+    title: "Dodaj panel admina do ekranu początkowego",
+    text: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.",
+    okText: "Pokaż instrukcję",
+    cancelText: "Nie pokazuj więcej",
     onReady: ({ cancelBtn }) => cancelBtn?.addEventListener("click", () => { dismissed = true; }, { once: true }),
   });
   if (dismissed) localStorage.setItem(INSTALL_DISMISSED_KEY, "1");
@@ -88,10 +76,10 @@ async function showAutomaticInstallPrompt() {
   if (isStandalone() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
   let installResult = null;
   const accepted = await confirmModal({
-    title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
-    text: tSafe("games.pwaInstall.adminText", "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access."),
-    okText: tSafe("games.pwaInstall.ok", "Zainstaluj"),
-    cancelText: tSafe("games.pwaInstall.cancel", "Nie pokazuj ponownie"),
+    title: "Zainstaluj panel admina",
+    text: "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access.",
+    okText: "Zainstaluj",
+    cancelText: "Nie pokazuj ponownie",
     onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
   });
   if (accepted && installResult) await installResult;
@@ -125,9 +113,9 @@ button?.addEventListener("click", async () => {
   if (isAdminStandalone() || adminInstalled) return;
   if (isStandalone() && !isAdminStandalone()) {
     await alertModal({
-      title: tSafe("games.pwaInstall.adminStandaloneTitle", "Dodaj osobny panel admina"),
-      text: tSafe("games.pwaInstall.adminStandaloneText", "Panel jest otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać panel jako osobną aplikację."),
-      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
+      title: "Dodaj osobny panel admina",
+      text: "Panel jest otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać panel jako osobną aplikację.",
+      okText: "Rozumiem",
     });
     return;
   }
@@ -137,29 +125,29 @@ button?.addEventListener("click", async () => {
     const ua = navigator.userAgent || "";
     const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
     const title = ios
-      ? tSafe("games.iosWebapp.adminTitle", "Dodaj panel admina do ekranu początkowego")
+      ? "Dodaj panel admina do ekranu początkowego"
       : macSafari
-        ? tSafe("games.pwaInstall.adminMacTitle", "Dodaj panel admina do Docka")
-        : tSafe("games.pwaInstall.unavailableTitle", "Instalacja jest teraz niedostępna");
+        ? "Dodaj panel admina do Docka"
+        : "Instalacja jest teraz niedostępna";
     const text = ios
-      ? tSafe("games.iosWebapp.adminText", "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.")
+      ? "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane."
       : macSafari
-        ? `${tSafe("games.pwaInstall.macSafari", "W Safari wybierz Plik → Dodaj do Docka.")} Logowanie Access nadal będzie wymagane.`
+        ? "W Safari wybierz Plik → Dodaj do Docka. Logowanie Access nadal będzie wymagane."
         : isAndroidChrome
-          ? tSafe("games.pwaInstall.unavailableAndroid", "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.")
-          : tSafe("games.pwaInstall.unavailableText", "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.");
+          ? "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację."
+          : "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.";
     await alertModal({
       title,
       text,
-      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
+      okText: "Rozumiem",
     });
     return;
   }
   let installResult = null;
   const accepted = await confirmModal({
-    title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
-    text: tSafe("games.pwaInstall.adminText", "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access."),
-    okText: tSafe("games.pwaInstall.ok", "Zainstaluj"),
+    title: "Zainstaluj panel admina",
+    text: "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access.",
+    okText: "Zainstaluj",
     cancelText: "Anuluj",
     onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
   });

@@ -9,6 +9,12 @@
   przez każdą stronę, więc `scripts/screens/run.cjs --changed` odświeżał
   wszystkie sceny, a e2e nie dało się pominąć „bo nic nie dotknęło speca”;
   trzy wielkie pliki były też źródłem konfliktów między sesjami.
+- **2026-10-23 (użytkownik):** panel admina (`web/settings`) jest dla
+  polskojęzycznych administratorów — jego teksty mogą być wpisane na sztywno po
+  polsku, bez kluczy tłumaczeń. Tłumaczone zostają tylko teksty, które trafiają
+  do użytkowników: maile (np. `pollSharePanel.mailDisabled` przy wysyłce) i podgląd
+  strony przerwy (`maintenance.*`). Zastosowane od razu: `admin-pwa.js` bez
+  `t()`, klucze `games.pwaInstall.admin*` i `games.iosWebapp.admin*` usunięte.
 
 ## Układ
 

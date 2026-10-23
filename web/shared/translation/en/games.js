@@ -63,11 +63,6 @@ const en = {
     pwaInstall: {
       title: "Install Familiada",
       text: "Add Familiada as an app to launch it from your home screen or desktop.",
-      adminTitle: "Install the admin panel",
-      adminText: "Add the admin panel as a separate app. Access login will still be required.",
-      adminStandaloneTitle: "Add the separate admin panel",
-      adminStandaloneText: "The panel is open inside the Familiada app. Open this page in Safari or Chrome to add the admin panel as a separate app.",
-      adminMacTitle: "Add the admin panel to the Dock",
       ok: "Install",
       cancel: "Don't show again",
       cancelBtn: "Cancel",
@@ -82,8 +77,6 @@ const en = {
         "Open Share, choose “Add to Home Screen”, then tap “Add”. Launch Familiada from its new icon.",
       ok: "Got it",
       never: "Don’t show again",
-      adminTitle: "Add the admin panel to your Home Screen",
-      adminText: "Open Share, choose “Add to Home Screen”, then tap “Add”. Launch the panel from its new icon. Access login will still be required.",
     },
     import: {
       errors: {

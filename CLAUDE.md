@@ -179,6 +179,9 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
     strony. Po zmianie kluczy użytych na stronie: `node scripts/i18n-parts.mjs`
     (meta `i18n-parts` w HTML; zapadka `unit/i18nParts.test.js`). Plan:
     `docs/tlumaczenia-podzial-plan.md`;
+  - **panel admina (decyzja użytkownika 2026-10-23):** teksty `web/settings` mogą
+    być wpisane na sztywno po polsku; tłumaczenia tylko dla tego, co trafia do
+    użytkowników (maile, podgląd strony przerwy);
   - tekst, który przestał być używany — usunąć klucz z trzech języków
     (`node scripts/i18n-prune.mjs`); klucz użyty w kodzie musi istnieć w słowniku;
   - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
