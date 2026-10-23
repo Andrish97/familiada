@@ -13,4 +13,4 @@ SELECT pg_postmaster_start_time() AS start_postgres,
        (SELECT sum(temp_bytes) FROM pg_stat_database) AS temp_bajty,
        (SELECT sum(xact_rollback) FROM pg_stat_database WHERE datname = current_database()) AS wycofane,
        (SELECT sum(xact_commit) FROM pg_stat_database WHERE datname = current_database()) AS zatwierdzone,
-       (SELECT pg_database_size('_supabase')) AS baza_logow_bajty
+       pg_has_role('pg_read_all_stats', 'MEMBER') AS widzi_cudze_sesje
