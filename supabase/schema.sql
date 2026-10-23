@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IdfeX3QqczfBO0gGm5Gyy4snr0ejJc07bbwOBmsx89nYKszgAVDBaGODWAdaDvg
+\restrict gpBBbcPuWAmVbfiaYPWQzDtSDm75dcc94hYeqTAIKmjeqHiPEPTmLTJENJwDYCP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5596,20 +5596,6 @@ BEGIN
   )
   SELECT COUNT(*) INTO v_count FROM deleted;
   RETURN v_count;
-END;
-$$;
-
-
---
--- Name: clear_marketing_search_logs(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."clear_marketing_search_logs"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-    TRUNCATE marketing_search_logs RESTART IDENTITY CASCADE;
 END;
 $$;
 
@@ -13084,61 +13070,6 @@ $$;
 
 
 --
--- Name: market_admin_upsert("text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."market_admin_upsert"("p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid", "existing" boolean)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-declare
-  v_id       uuid;
-  v_existing uuid;
-  v_slug     text;
-begin
-  if p_payload is null then
-    return query select false, 'payload_required'::text, null::uuid, false;
-    return;
-  end if;
-
-  -- generuj slug kandydacyjny, sprawdź czy taka gra już istnieje
-  v_slug := slugify(p_title);
-
-  select id into v_existing
-    from public.market_games
-   where slug = v_slug;
-
-  if v_existing is not null then
-    update public.market_games
-       set title       = p_title,
-           description = p_description,
-           lang        = p_lang,
-           payload     = p_payload,
-           origin      = 'producer',
-           updated_at  = now()
-     where id = v_existing;
-
-    return query select true, ''::text, v_existing, true;
-    return;
-  end if;
-
-  -- nowa gra
-  v_slug := public.unique_market_slug(p_title);
-
-  insert into public.market_games (
-    title, description, lang, payload, status, author_user_id, origin, slug
-  ) values (
-    p_title, p_description, p_lang, p_payload,
-    'published', auth.uid(), 'producer', v_slug
-  )
-  returning id into v_id;
-
-  return query select true, ''::text, v_id, false;
-end;
-$$;
-
-
---
 -- Name: market_admin_withdraw("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -13679,33 +13610,6 @@ begin
 
     return query select true, '';
 end;
-$$;
-
-
---
--- Name: marketing_get_verified_contacts("uuid", integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."marketing_get_verified_contacts"("p_run_id" "uuid" DEFAULT NULL::"uuid", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0, "p_only_unused" boolean DEFAULT false) RETURNS TABLE("id" "uuid", "title" "text", "short_description" "text", "email" "text", "url" "text", "is_used" boolean, "added_at" timestamp with time zone)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        vc.id,
-        vc.title,
-        vc.short_description,
-        vc.email,
-        vc.url,
-        vc.is_used,
-        vc.added_at
-    FROM marketing_verified_contacts vc
-    WHERE (p_run_id IS NULL OR vc.run_id = p_run_id)
-      AND (p_only_unused = false OR vc.is_used = false)
-    ORDER BY vc.added_at DESC
-    LIMIT p_limit
-    OFFSET p_offset;
-END;
 $$;
 
 
@@ -17958,34 +17862,6 @@ begin
     new.updated_at = now();
     return new;
 end;
-$$;
-
-
---
--- Name: truncate_marketing_queries_log(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."truncate_marketing_queries_log"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-    TRUNCATE marketing_search_queries_log RESTART IDENTITY CASCADE;
-END;
-$$;
-
-
---
--- Name: truncate_marketing_search_logs(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."truncate_marketing_search_logs"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-    TRUNCATE marketing_search_logs RESTART IDENTITY CASCADE;
-END;
 $$;
 
 
@@ -24731,5 +24607,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IdfeX3QqczfBO0gGm5Gyy4snr0ejJc07bbwOBmsx89nYKszgAVDBaGODWAdaDvg
+\unrestrict gpBBbcPuWAmVbfiaYPWQzDtSDm75dcc94hYeqTAIKmjeqHiPEPTmLTJENJwDYCP
 
