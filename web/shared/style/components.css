@@ -1701,16 +1701,13 @@
     padding: 0;
     line-height: 1;
   }
-  .star-btn:hover { transform: scale(1.15); }
+  @media (hover: hover) and (pointer: fine) { .star-btn:hover { transform: scale(1.15); } }
   .star-btn .ico {
     width: 1em;
     height: 1em;
     vertical-align: middle;
   }
-  .star-btn.active {
-    color: var(--accent);
-    filter: drop-shadow(0 0 8px var(--g-35));
-  }
+  .star-btn.active { color: var(--accent); } /* bez filter (Android) */
   .rating-comment {
     width: 100%;
     margin-bottom: 20px;
@@ -2092,7 +2089,6 @@
   .listTools .ui-select.listTools-select { width: 36px; min-width: 36px; max-width: 36px; flex: 0 0 36px; }
   .listTools .ui-select-label { display: none; }
   .listTools .ui-select-icon { display: inline-flex; }
-  .listTools .is-active.btn, .listTools .is-active .ui-select-btn { color: var(--accent); border-color: var(--accent); --btn-tint: var(--g-10); }
   .shareRow.is-search-hidden, .rowsRow.is-search-hidden { display: none; }
   .listToolsEmpty[hidden] { display: none; }
   .listToolsInline { height: 36px; margin-top: 8px; padding: 0 4px 0 10px; }

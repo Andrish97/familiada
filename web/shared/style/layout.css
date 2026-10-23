@@ -299,17 +299,12 @@
   /* Filtr i sortowanie obok wyszukiwania. */
   .list-filter.ui-select, .list-sort.ui-select { min-width: 150px; width: 150px; flex: 0 0 auto; }
   .list-filter .ui-select-btn, .list-sort .ui-select-btn { min-height: 0; }
-  .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn {
-    border-color: var(--accent); background: var(--g-10);
-  }
   @media (max-width: 600px) {
     .list-search { width: auto; flex: 1 1 auto; max-width: none; }
     .list-search .searchText { font-size: 16px; } /* 16 px: iOS nie przybliża */
     .games-bottom-left { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left > #btnReceivedFilter { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-    .games-bottom-left > #btnReceivedFilter[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--g-10); }
     .games-bottom-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
-    .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn { color: var(--accent); }
     .list-filter .ui-select-menu, .list-sort .ui-select-menu { max-height: min(55dvh, 420px); }
     .games-bottom-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
     .games-bottom-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }

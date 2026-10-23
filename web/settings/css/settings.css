@@ -367,10 +367,8 @@
 
 
 
-  .maintenance-controls.is-locked{
-    opacity: .5;
-    filter: grayscale(0.4);
-  }
+  /* bez opacity/filter (Android): przygaszone kolorem */
+  .maintenance-controls.is-locked{ color: var(--text-muted); }
 
   .maintenance-controls.is-locked #btnStartStop,
   .maintenance-controls.is-locked #btnRefresh{
