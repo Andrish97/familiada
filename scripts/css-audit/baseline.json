@@ -452,7 +452,7 @@
   "inlineStyleJs": 2
  },
  "web/shared/js/core/topbar-controller.js": {
-  "inlineStyleJs": 29
+  "inlineStyleJs": 30
  },
  "web/shared/js/core/ui-select.js": {
   "inlineStyleJs": 12

@@ -708,6 +708,25 @@ function initTopbarController() {
       requestAnimationFrame(() => _overflowState?.recalc());
     }, 120);
   }, { passive: true });
+
+  // „Więcej” na każdej stronie (E23): strony bez własnego #navMore w HTML,
+  // z co najmniej dwoma przyciskami w sekcji 2, dostają je tutaj — przyciski
+  // zwijają się zamiast zawijać pasek (przy braku miejsca nawet na jeden:
+  // hamburger).
+  if (!hasOverflowNav && section2.querySelectorAll(':scope > .btn').length > 1) {
+    const more = document.createElement('div');
+    more.className = 'nav-more';
+    more.id = 'navMore';
+    more.style.display = 'none';
+    const label = t('games.nav.more');
+    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="games.nav.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
+    more.querySelector('[data-i18n]').textContent = label && label !== 'games.nav.more' ? label : 'Więcej';
+    const dropdown = more.querySelector('#navMoreDropdown');
+    // Na telefonie przyciski siedzą w panelu (group2) i wracają do sekcji 2
+    // przy odmontowaniu — „Więcej” musi wrócić za nimi.
+    (isMobileMounted && group2 ? group2 : section2).append(more);
+    setTopbarNavPriority({ moreEl: more, moreDropdownEl: dropdown });
+  }
 }
 
 function updateTopbarHeight() {

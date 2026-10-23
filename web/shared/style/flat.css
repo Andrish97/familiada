@@ -426,6 +426,14 @@
     .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand {
       display: block; font-size: 12px; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    /* Tytuł strony zostaje jak na telefonie (sekcja 2 ma wtedy tylko tytuł). */
+    body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: "s1 s2 s3";
+    }
+    body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced .topbar-section-2 {
+      grid-area: s2; display: flex; min-width: 0; flex-wrap: nowrap;
+    }
   }
 
   /* Tytuł strony pracy w sekcji 2 topbara (edytory, ankieta). */
