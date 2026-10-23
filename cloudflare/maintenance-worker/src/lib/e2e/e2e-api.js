@@ -9,7 +9,9 @@ import { handleE2ELease, isE2EPlusAddress, e2eRunOwns } from "./e2e-lease.js";
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
-const E2E_RELEASABLE_MAIL_COOLDOWNS = new Set(["auth:guest_upgrade_email"]);
+// Zwalniane tylko dla adresów e2e+ wypożyczonych przez ten przebieg (leaseGuard);
+// reset hasła: kilka testów resetu na jednym koncie disposable (decyzja właściciela 2026-10-23).
+const E2E_RELEASABLE_MAIL_COOLDOWNS = new Set(["auth:guest_upgrade_email", "auth:reset_password"]);
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
