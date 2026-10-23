@@ -19,6 +19,11 @@ DB_CONTAINER="supabase-db"
 DB_USER="supabase_admin"
 DB_NAME="postgres"
 
+# Dostęp do bazy: domyślnie docker exec (stary serwer); na nowym serwerze konto
+# deploy podaje PSQL="sudo familiada-psql admin" i SCHEMA_DUMP="sudo familiada-schema-dump".
+PSQL="${PSQL:-docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME}"
+SCHEMA_DUMP="${SCHEMA_DUMP:-}"
+
 log() { echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $*"; }
 
 # Escape single quotes for SQL string literals
@@ -41,7 +46,7 @@ fi
 
 # Ensure tracking table exists
 log "== Ensure public.schema_migrations =="
-if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
+if ! $PSQL -v ON_ERROR_STOP=1 <<'SQL'
 create table if not exists public.schema_migrations (
   filename   text primary key,
   checksum   text not null,
@@ -58,13 +63,13 @@ log
 
 # Check existing schema state
 EXISTING_PUBLIC_TABLES="$(
-  docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -At -v ON_ERROR_STOP=1 -c \
+  $PSQL -At -v ON_ERROR_STOP=1 -c \
   "select count(*) from information_schema.tables where table_schema='public' and table_name <> 'schema_migrations';" \
   | tr -d '\r'
 )"
 
 APPLIED_COUNT="$(
-  docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -At -v ON_ERROR_STOP=1 -c \
+  $PSQL -At -v ON_ERROR_STOP=1 -c \
   "select count(*) from public.schema_migrations;" \
   | tr -d '\r'
 )"
@@ -117,7 +122,7 @@ else
 
     # Check if already applied
     row="$(
-      docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -At -v ON_ERROR_STOP=1 -c \
+      $PSQL -At -v ON_ERROR_STOP=1 -c \
       "select checksum from public.schema_migrations where filename = '$esc_base';" \
       | tr -d '\r'
     )" || true
@@ -129,7 +134,7 @@ else
           log "WARN  $base: checksum mismatch, superseded by $superseded_by — updating stored checksum"
           log "  stored : $row"
           log "  current: $checksum"
-          if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -c \
+          if ! $PSQL -v ON_ERROR_STOP=1 -c \
               "update public.schema_migrations set checksum = '$esc_sum' where filename = '$esc_base';"; then
             log "WARN  failed to update checksum for $base"
           fi
@@ -148,7 +153,7 @@ else
     # Bootstrap baseline
     if [[ "${APPLIED_COUNT:-0}" == "0" && "${EXISTING_PUBLIC_TABLES:-0}" != "0" && "$base" == *baseline* ]]; then
       log "BOOT  $base (existing DB detected)"
-      if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -c \
+      if ! $PSQL -v ON_ERROR_STOP=1 -c \
           "insert into public.schema_migrations(filename, checksum, git_sha)
            values ('$esc_base', '$esc_sum', nullif('$esc_sha',''));"; then
         log "FAIL  $base (failed to record baseline)"
@@ -161,14 +166,14 @@ else
     log "APPLY $base"
 
     sql_ok=true
-    if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+    if ! $PSQL \
         -v ON_ERROR_STOP=1 -1 -f "/dev/stdin" < "$f"; then
       log "FAIL  $base (SQL error — see output above)"
       log "ERROR $base — transaction rolled back; migration is NOT marked as applied"
       exit 6
     fi
 
-    if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+    if ! $PSQL \
         -v ON_ERROR_STOP=1 -c \
         "insert into public.schema_migrations(filename, checksum, git_sha)
          values ('$esc_base', '$esc_sum', nullif('$esc_sha',''))
@@ -185,7 +190,11 @@ fi
 log
 log "== Dump schema.sql (schema-only) =="
 
-if ! docker exec -i "$DB_CONTAINER" bash -lc '
+if [[ -n "$SCHEMA_DUMP" ]]; then
+  dump_schema() { $SCHEMA_DUMP; }
+else
+  dump_schema() {
+    docker exec -i "$DB_CONTAINER" bash -lc '
 set -euo pipefail
 pg_dump -U supabase_admin -d postgres \
   --schema=public \
@@ -193,7 +202,10 @@ pg_dump -U supabase_admin -d postgres \
   --schema-only \
   --no-owner --no-acl \
   --quote-all-identifiers
-' > "$OUT_DIR/schema.sql"; then
+'
+  }
+fi
+if ! dump_schema > "$OUT_DIR/schema.sql"; then
   log "WARN: pg_dump failed — schema.sql not written"
 fi
 
