@@ -80,9 +80,10 @@ export function initListHeaderLayout(selector = ".bar") {
 // na starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
 // z większą (decyzja użytkownika 2026-10-21, zamiast zawijania w rzędy).
 // Separator grup: 1 px kreski + 8 px odstępu (CSS .has-group-sep). Pojawia
-// się, gdy odstęp między grupami spadłby poniżej TOOLBAR_SEPARATOR_ROOM.
+// się (także na komputerze), gdy odstęp między grupami spadłby poniżej
+// TOOLBAR_SEPARATOR_ROOM -- decyzja użytkownika 2026-10-23.
 const TOOLBAR_SEPARATOR_WIDTH = 9;
-const TOOLBAR_SEPARATOR_ROOM = 24;
+const TOOLBAR_SEPARATOR_ROOM = 40;
 
 function initListBottomToolbarLayout() {
   for (const bar of document.querySelectorAll(".games-bottom")) {
@@ -201,10 +202,8 @@ function initListBottomToolbarLayout() {
       // Z napisami: pole dostaje to, co zostaje (najwyżej max-width). W układzie
       // jednego rzędu grupy mają stałą szerokość, więc ustawiamy ją wprost.
       if (search) {
-        // Wolne miejsce oddaje się polu tak, by między grupami został odstęp
-        // TOOLBAR_SEPARATOR_ROOM; gdy go brak -- miejsce na separator.
-        const spare = available - textNeeded;
-        const room = spare - TOOLBAR_SEPARATOR_ROOM >= 0 ? spare - TOOLBAR_SEPARATOR_ROOM : spare - TOOLBAR_SEPARATOR_WIDTH;
+        // Zwężone pole dochodzi do drugiej grupy -- zostawia miejsce na separator.
+        const room = available - textNeeded - TOOLBAR_SEPARATOR_WIDTH;
         const width = !useIcons && searchBox
           ? `${Math.floor(Math.min(searchBox.max, searchBox.min + Math.max(0, room)))}px` : "";
         if (search.style.flexBasis !== width) {
