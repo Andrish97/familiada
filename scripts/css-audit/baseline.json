@@ -207,7 +207,7 @@
  },
  "web/logos/css/logo.css": {
   "important": 9,
-  "colorLiteral": 16,
+  "colorLiteral": 15,
   "rootTokens": 12,
   "mediaWidth": 1,
   "zIndexLiteral": 8,
@@ -327,7 +327,7 @@
   "sharedDuplicate": 5
  },
  "web/shared/css/blocking-overlay.css": {
-  "colorLiteral": 13,
+  "colorLiteral": 16,
   "mediaWidth": 1,
   "zIndexLiteral": 1
  },

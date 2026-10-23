@@ -287,7 +287,7 @@
     position: relative;
     border-radius: var(--r-lg);
     border: 1px solid var(--w-14);
-    background: var(--k-20);
+    background: linear-gradient(var(--k-20), var(--k-20)) var(--bg); /* kryjące (Android) */
     overflow: hidden;
     cursor: zoom-in;
     display: inline-block;
@@ -326,8 +326,7 @@
     margin-block: auto;
     z-index: 2;
     cursor: pointer;
-    background: var(--k-40);
-    backdrop-filter: blur(4px);
+    background: var(--surface-1); /* kryjące, bez rozmycia (Android) */
   }
   .shot-carousel-prev { left: 10px; }
   .shot-carousel-next { right: 10px; }
@@ -344,8 +343,7 @@
     gap: 2px;
     padding: 2px 6px;
     border-radius: var(--r-pill);
-    background: var(--k-40);
-    backdrop-filter: blur(4px);
+    background: var(--surface-1);
     cursor: default;
   }
   .shot-carousel-dot {

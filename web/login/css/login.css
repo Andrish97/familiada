@@ -231,8 +231,7 @@
     color: rgba(255,255,255,.75);
     text-decoration: none;
     border: 1px solid var(--w-14);
-    background: var(--w-4);
-    backdrop-filter: blur(6px);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--bg); /* kryjące (Android) */
     transition: all .18s ease;
     box-sizing: border-box;
     min-height: 37px;

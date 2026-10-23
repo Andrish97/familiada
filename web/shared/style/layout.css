@@ -193,7 +193,7 @@
   .addCard {
     border-radius: var(--r-md);
     border: 1px dashed var(--g-35);
-    background: var(--g-10);
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-1)); /* kryjące (Android) */
     padding: 14px;
     min-height: 130px;
     cursor: pointer;

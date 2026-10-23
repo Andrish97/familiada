@@ -135,7 +135,29 @@ function inspectLayout(opts) {
       || (r.left < safe.left - 1 && safe.left) || (r.right > W - safe.right + 1 && safe.right);
     if (inSafe && (!opts.allowDocScroll || el.closest("[style*=fixed], .topbar, footer, .footer, .bottom-bar") || getComputedStyle(el).position === "fixed")) add("safe-area", el, `${Math.round(r.left)},${Math.round(r.top)}–${Math.round(r.right)},${Math.round(r.bottom)}`);
   }
-  // 4. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
+  // 4. Android (zgłoszenie 2026-10-23): przycisk z ikoną na dotyku — kryjące tło,
+  // bez opacity < 1, filter, backdrop-filter i transform (artefakty przezroczystości).
+  if (opts.touch) {
+    const alpha = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return 1; const p = m[1].split(/[ ,\/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]) : 1; };
+    for (const btn of root.querySelectorAll("button, a.btn, [role=button]")) {
+      if (!visible(btn) || !btn.querySelector("svg")) continue;
+      const bad = [];
+      for (let e = btn; e && e !== document.body; e = e.parentElement) {
+        const st = getComputedStyle(e);
+        if (Number(st.opacity) < 1) { bad.push(`opacity ${st.opacity} (${label(e)})`); break; }
+        if (st.backdropFilter && st.backdropFilter !== "none") { bad.push(`backdrop-filter (${label(e)})`); break; }
+        if (st.filter !== "none") { bad.push(`filter (${label(e)})`); break; }
+        if (e.matches(".overlay, .modal, .card, main, header")) break;
+      }
+      const st = getComputedStyle(btn);
+      const a = alpha(st.backgroundColor);
+      if (a > 0 && a < 1 && st.backgroundImage === "none") bad.push(`tło przezroczyste ${st.backgroundColor}`);
+      if (st.transform !== "none") bad.push("transform");
+      if (bad.length) add("android-przezroczystosc", btn, bad.join("; "));
+    }
+  }
+
+  // 4b. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;
     // Wiersze samego tekstu (bez plakietek z position:absolute i ikon).

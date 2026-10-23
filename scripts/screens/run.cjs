@@ -126,7 +126,7 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
   // --audit: układ (przewijanie, obcięcia, sterowanie poza ekranem, safe area) — audit-layout.cjs.
   const audit = args.audit
-    ? await view.evaluate(inspectLayout, { path: pathOnly, safe: safeArea, allowDocScroll: scene.fullPage || allowDocScroll(pathOnly), noWrap: NO_WRAP }).catch((e) => [{ kind: "blad-audytu", el: "", detail: e.message.split("\n")[0] }])
+    ? await view.evaluate(inspectLayout, { path: pathOnly, safe: safeArea, allowDocScroll: scene.fullPage || allowDocScroll(pathOnly), noWrap: NO_WRAP, touch: !!device.mobile }).catch((e) => [{ kind: "blad-audytu", el: "", detail: e.message.split("\n")[0] }])
     : [];
   const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });

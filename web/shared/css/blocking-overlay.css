@@ -12,11 +12,10 @@
   padding: max(16px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left, 0px));
   overflow: auto;
   overscroll-behavior: none;
-  background: var(--k-70, rgba(0, 0, 0, .7));
+  /* Kryjące tło bez rozmycia: przyciski z ikonami na Androidzie (2026-10-23). */
+  background: var(--bg, #050914);
   color: var(--text, #fff);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .blocking-overlay[hidden] { display: none; }
 /* Karta i przyciski jak .card / .btn / .btn.gold z silnika; plik działa też
@@ -50,11 +49,11 @@
   font-weight: 900;
   cursor: pointer;
 }
-.blocking-action:hover { filter: brightness(1.08); }
+@media (hover: hover) and (pointer: fine) { .blocking-action:hover { border-color: var(--g-60, rgba(255, 234, 166, .6)); } }
 .blocking-action:focus-visible { outline: 2px solid var(--accent, #ffeaa6); outline-offset: 2px; }
 .blocking-action.is-accent {
   border-color: var(--g-35, rgba(255, 234, 166, .35));
-  background: var(--g-10, rgba(255, 234, 166, .10));
+  background: linear-gradient(var(--g-10, rgba(255, 234, 166, .10)), var(--g-10, rgba(255, 234, 166, .10))) var(--surface-1, #111827);
   color: var(--accent, #ffeaa6);
 }
 @media (max-width: 520px) {

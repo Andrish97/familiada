@@ -1,7 +1,7 @@
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T15314";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T15314";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15314";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-23T15354";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T15354";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15354";
 
 
 let games = [];
@@ -944,7 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-23T15314';
+    a.download = 'przykladowa-gra.json?v=v2026-10-23T15354';
 
     document.body.appendChild(a);
     a.click();
