@@ -8,7 +8,7 @@ const en = {
     questionsTitle: "Questions",
     importHint: "Import works from a TXT file or pasted content.",
     importBtn: "Import",
-    empty: "Select a question on the left or add a new one.",
+    empty: "Select a question from the list or add a new one.",
     questionLabel: "Question text",
     importModal: {
       invalidChars: "Question {q}, answer {ord}: characters the Display does not have: {chars}. Remove them to import.",

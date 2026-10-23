@@ -22,7 +22,7 @@ const { startLocalSite, captureSession, useSession } = require("./helpers/local-
 const L = require("./helpers/logo-editor");
 
 const DEMO_IMAGE = path.resolve(__dirname, "../../web/logos/assets/demo-image.png");
-const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon-1024.png");
+const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon-512.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "parallel" });

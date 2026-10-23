@@ -42,7 +42,7 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
-      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.",
+      hint: "Wybrane uprawnienie dostaną wszystkie osoby, którym teraz udostępnisz bazę.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",

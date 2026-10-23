@@ -9,14 +9,14 @@
     <circle cx="160" cy="361" r="28"/>
     <circle cx="160" cy="410" r="28"/>
   </g>
-  <g fill="none" stroke="#e5f34f" stroke-linecap="round" stroke-width="20">
+  <g fill="none" stroke="#e5f34f" stroke-linecap="round" stroke-width="24">
     <path d="M246 323h164"/>
     <path d="M246 373h164"/>
     <path d="M246 423h164"/>
   </g>
   <g fill="#e5f34f">
-    <circle cx="355" cy="323" r="21"/>
-    <circle cx="306" cy="373" r="21"/>
-    <circle cx="355" cy="423" r="21"/>
+    <circle cx="355" cy="323" r="25"/>
+    <circle cx="306" cy="373" r="25"/>
+    <circle cx="355" cy="423" r="25"/>
   </g>
 </svg>

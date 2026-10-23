@@ -5,12 +5,12 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-23T17153";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-23T17153";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-23T17153";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T17153";
-import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-23T17153";
-import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T17153";
+import { normalizeText } from "../data/listing.js?v=v2026-10-23T18161";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-23T18161";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-23T18161";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-23T18161";
+import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-23T18161";
+import { enterModalSheet, exitModalSheet } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18161";
 
 const ROOT = "root";
 

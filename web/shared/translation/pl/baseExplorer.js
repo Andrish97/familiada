@@ -225,7 +225,7 @@ const pl = {
       renameFailed: "Nie udało się zmienić.",
       moveIntoSelf: "Nie można przenieść folderu do niego samego.",
       moveIntoChild: "Nie można przenieść folderu do jego podfolderu.",
-      selectItemsRight: "Zaznacz foldery lub pytania po prawej.",
+      selectItemsRight: "Najpierw zaznacz foldery lub pytania na liście.",
       noTagsSelected: "Brak wybranych tagów.",
       rootInOperation: "Folder główny nie może brać udziału w tej operacji.",
       actionFailed: "Nie udało się wykonać akcji.",
@@ -246,11 +246,11 @@ const pl = {
       treeLockedSearch:
         "W trakcie wyszukiwania drzewo jest zablokowane. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.",
       treeLockedSelection:
-        "Masz zaznaczone Tagi/Kategorie. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby używać drzewa.",
+        "Masz zaznaczone Tagi/Kategorie. Wyczyść to zaznaczenie w panelu tagów (kliknij jego puste miejsce), aby używać drzewa.",
       tagsLockedSearch:
         "W trakcie wyszukiwania panel Tagi/Kategorie jest zablokowany. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.",
       searchLockedSelection:
-        "Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby szukać.",
+        "Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść to zaznaczenie w panelu tagów (kliknij jego puste miejsce), aby szukać.",
     },
     confirm: {
       deleteOne: "Usunąć ten element? Trafi do kosza na 30 dni.",

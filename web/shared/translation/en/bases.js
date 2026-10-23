@@ -42,7 +42,7 @@ const en = {
       close: "Done",
     },
     shareModal: {
-      hint: "Enter a username or email, or select friends. Choose the permission at the bottom.",
+      hint: "Everyone you share the base with now gets the selected permission.",
       title: "Share base",
       placeholder: "Username or email...",
       roleEditor: "Can edit",

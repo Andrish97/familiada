@@ -187,11 +187,14 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
   - sprawdzenie: `node scripts/i18n-unused.mjs` (nieużywane, brakujące, różnice
     między językami) i zapadka `unit/i18nUnused.test.js`.
+  - **wyjątek — panel admina (`web/settings/`, decyzja użytkownika 2026-10-23):**
+    teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony.
 - **Podpowiedzi (decyzja użytkownika 2026-10-23):** podpowiedź jest skuteczna, jasna,
   trafna (zgodna z faktycznym działaniem i etykietą przycisku), sensowna i mówi tylko
   to, co **nieoczywiste** — oczywistych rzeczy nie podpowiadamy; ten sam tekst nie
   stoi dwa razy w jednym widoku (podpowiedź nie powtarza kafla, tytułu, nagłówka,
-  przycisku ani listy warunków). W Control podpowiedzi są krótkie i zawsze mieszczą
+  przycisku ani listy warunków); bez „na dole okna”, „po lewej” itp., gdy na telefonie
+  układ jest inny — element wskazujemy nazwą. W Control podpowiedzi są krótkie i zawsze mieszczą
   się bez przewijania (`unit/hints.test.js`, ≤ 90 znaków). Pełne zasady:
   `docs/wzorce-ui.md` „A16. Podpowiedzi”; audyt: `docs/audyt-podpowiedzi.md`.
 - **Teksty maili (decyzja użytkownika 2026-10-21):** jedno źródło — tłumaczenia strony

@@ -8,7 +8,7 @@ const pl = {
     questionsTitle: "Pytania",
     importHint: "Import działa z pliku TXT albo z wklejonej treści.",
     importBtn: "Importuj",
-    empty: "Wybierz pytanie po lewej lub dodaj nowe.",
+    empty: "Wybierz pytanie z listy lub dodaj nowe.",
     questionLabel: "Treść pytania",
     importModal: {
       invalidChars: "Pytanie {q}, odpowiedź {ord}: znaki, których nie ma Wyświetlacz: {chars}. Usuń je, aby zaimportować.",

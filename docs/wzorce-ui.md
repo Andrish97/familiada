@@ -470,6 +470,10 @@ okno, blok podpowiedzi Control, dymek). Kryteria (audyt
 - **Trafność** — zgodna z działaniem kodu i z etykietą przycisku w każdym
   języku (cytujemy dokładną etykietę albo nie cytujemy wcale); liczby ze
   stałych, nie na sztywno.
+- **Bez wskazań położenia zależnych od układu** — nie piszemy „na dole
+  okna”, „po lewej”, „po prawej”, jeśli na telefonie (arkusz, wysuwany panel,
+  pasek akcji u góry) element jest gdzie indziej; wskazujemy element nazwą
+  („w panelu tagów”, „na liście”) albo w ogóle nie wskazujemy miejsca.
 - **Sensowność** — jedna podpowiedź na jedną rzecz; ten sam wzorzec na
   wszystkich stronach ma ten sam tekst (np. `common.renameTileHint` na
   listach kafli).

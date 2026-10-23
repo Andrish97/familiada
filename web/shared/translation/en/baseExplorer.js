@@ -225,7 +225,7 @@ const en = {
       renameFailed: "Rename failed.",
       moveIntoSelf: "You cannot move a folder into itself.",
       moveIntoChild: "You cannot move a folder into its subfolder.",
-      selectItemsRight: "Select folders or questions on the right.",
+      selectItemsRight: "First select folders or questions in the list.",
       noTagsSelected: "No tags selected.",
       rootInOperation: "The root folder cannot be part of this operation.",
       actionFailed: "Action failed.",
@@ -246,11 +246,11 @@ const en = {
       treeLockedSearch:
         "While searching, the tree is locked. Click ✕ to clear, or click outside the search field.",
       treeLockedSelection:
-        "You have Tags/Categories selected. Clear the selection on the left (click the panel background) to use the tree.",
+        "You have Tags/Categories selected. Clear that selection in the tags panel (click an empty spot in it) to use the tree.",
       tagsLockedSearch:
         "While searching, the Tags/Categories panel is locked. Click ✕ to clear, or click outside the search field.",
       searchLockedSelection:
-        "You have Tags/Categories selected — search is locked. Clear the selection on the left (click the panel background) to search.",
+        "You have Tags/Categories selected — search is locked. Clear that selection in the tags panel (click an empty spot in it) to search.",
     },
     confirm: {
       deleteOne: "Delete this item? It goes to the trash for 30 days.",
