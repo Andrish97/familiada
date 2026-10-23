@@ -1,32 +1,32 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-23T16561";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-23T17045";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-23T16561";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-23T17045";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-23T16561";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-23T17045";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T16561";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-23T16561";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T16561";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-23T16561";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T16561";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-23T16561";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T16561";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T16561";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T16561";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T16561";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T16561";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T16561";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T16561";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T16561";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T16561";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T16561";
-import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-23T16561";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-23T16561";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-23T16561";
-import { sendNotificationMail, goLinkToken } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T16561";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-23T16561";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T17045";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-23T17045";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-23T17045";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-23T17045";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T17045";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-23T17045";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-23T17045";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T17045";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T17045";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T17045";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T17045";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T17045";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T17045";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-23T17045";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-23T17045";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-23T17045";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-23T17045";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-23T17045";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-23T17045";
+import { sendNotificationMail, goLinkToken } from "../../shared/js/core/notify-mail.js?v=v2026-10-23T17045";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-23T17045";
 
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
@@ -929,10 +929,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const mineOn = activeTab === "mine";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
-  for (const [btn, on] of [[tabBasesMine, mineOn], [tabBasesShared, !mineOn]]) {
-    btn?.closest(".tab-slot")?.classList.toggle("active", on);
-    btn?.setAttribute("aria-selected", on ? "true" : "false");
-  }
+  markActiveTab([tabBasesMine, tabBasesShared], mineOn ? tabBasesMine : tabBasesShared);
   // Udostępnionym bazom nie zmienia się nazwy -- wtedy bez podpowiedzi.
   setHint(mineOn ? t("common.renameTileHint") : "");
 }

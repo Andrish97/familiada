@@ -7,8 +7,11 @@
 //     <div class="tabs-strip" role="tablist"> .tab-slot > button.tab-label[data-split-tab=a] … </div>
 //     <div class="split-panels"> <section class="card" data-split-panel="a"> … </div>
 //   </div>
-// Aktywny panel, wypustka i jej slot dostają .active; role tab/tabpanel
-// i aria tylko w trybie wąskim. Strzałki, Home i End przełączają wypustki.
+// Aktywny panel, wypustka i jej slot dostają .active (wypustki: wspólne
+// markActiveTab z tabs.js — role, aria, strzałki); role tabpanel tylko
+// w trybie wąskim.
+
+import { markActiveTab } from "./tabs.js?v=v2026-10-23T17045";
 
 export const SPLIT_MQ = "(max-width: 600px), (max-width: 980px) and (orientation: landscape)";
 
@@ -27,14 +30,7 @@ export function initSplitTabs(root, { active, onChange } = {}) {
 
   function apply() {
     const narrow = mq.matches;
-    for (const tab of tabs) {
-      const on = tab.dataset.splitTab === current;
-      tab.classList.toggle("active", on);
-      tab.closest(".tab-slot")?.classList.toggle("active", on);
-      tab.setAttribute("role", "tab");
-      tab.setAttribute("aria-selected", String(on));
-      tab.tabIndex = on ? 0 : -1;
-    }
+    markActiveTab(tabs, tabs.find((tab) => tab.dataset.splitTab === current));
     for (const panel of panels) {
       const tab = tabs.find((t) => t.dataset.splitTab === panel.dataset.splitPanel);
       panel.classList.toggle("active", panel.dataset.splitPanel === current);
@@ -56,14 +52,6 @@ export function initSplitTabs(root, { active, onChange } = {}) {
   }
   for (const tab of tabs) {
     tab.addEventListener("click", () => select(tab.dataset.splitTab, { user: true }));
-    tab.addEventListener("keydown", (event) => {
-      const i = names.indexOf(current), last = names.length - 1;
-      const next = { ArrowLeft: i ? i - 1 : last, ArrowRight: i === last ? 0 : i + 1, Home: 0, End: last }[event.key];
-      if (next == null) return;
-      event.preventDefault();
-      select(names[next], { user: true });
-      tabs[next].focus();
-    });
   }
   mq.addEventListener("change", apply);
   apply();

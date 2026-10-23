@@ -9,7 +9,7 @@
 //     wraca do poprzedniej strony, nie przewija kart.
 // Testy: tests/unit/tabs.test.js.
 
-import { filterToHref } from "./list-filter.js?v=v2026-10-23T16561";
+import { filterToHref } from "./list-filter.js?v=v2026-10-23T17045";
 
 
 export const TAB_PARAM = "tab";
@@ -34,4 +34,43 @@ export function setTab(name, def) {
   if (next !== location.pathname + location.search + location.hash) {
     history.replaceState(history.state, "", next);
   }
+}
+
+// ── Wygląd i dostępność wypustek (.tabs-strip > .tab-slot > .tab-label) ──
+// Jeden sposób dla wszystkich stron: aktywna wypustka i jej slot dostają
+// .active, każda wypustka role="tab", aria-selected i tabindex (fokus tylko
+// na aktywnej); strzałki, Home i End przechodzą do sąsiedniej i ją wybierają
+// (klik — stronę przełącza jej własna obsługa kliknięcia).
+const keyedStrips = new WeakSet();
+
+function bindTabKeys(strip) {
+  if (!strip || keyedStrips.has(strip)) return;
+  keyedStrips.add(strip);
+  strip.addEventListener("keydown", (event) => {
+    const labels = [...strip.querySelectorAll(".tab-label")].filter((label) => !label.disabled && label.offsetParent);
+    const i = labels.indexOf(event.target.closest(".tab-label"));
+    if (i < 0) return;
+    const last = labels.length - 1;
+    const next = { ArrowLeft: i ? i - 1 : last, ArrowRight: i === last ? 0 : i + 1, Home: 0, End: last }[event.key];
+    if (next == null) return;
+    event.preventDefault();
+    labels[next].focus();
+    labels[next].click();
+  });
+}
+
+/** labels — wypustki jednego paska; active — wybrana (element albo null). */
+export function markActiveTab(labels, active) {
+  const list = [...labels].filter(Boolean);
+  for (const label of list) {
+    const on = label === active;
+    label.classList.toggle("active", on);
+    label.closest(".tab-slot")?.classList.toggle("active", on);
+    label.setAttribute("role", "tab");
+    label.setAttribute("aria-selected", String(on));
+    label.tabIndex = on ? 0 : -1;
+  }
+  const strip = list[0]?.closest(".tabs-strip");
+  strip?.setAttribute("role", "tablist");
+  bindTabKeys(strip);
 }

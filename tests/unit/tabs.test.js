@@ -79,3 +79,17 @@ test("drzewo eksploratora: zapis i odczyt per baza, przycinanie usuniętych fold
   assert.deepEqual([...loadTreeOpen("A", { getItem() { throw new Error("x"); } })], ["root"]);
   saveTreeOpen("A", new Set(["root"]), { setItem() { throw new Error("x"); } });
 });
+
+test("wypustki: jedna funkcja markActiveTab na stronach z wypustkami (Gry, Bazy, Ankiety, Loga, karta dzielona)", async () => {
+  const fs = await import("node:fs");
+  const read = (p) => fs.readFileSync(new URL(`../../web/${p}`, import.meta.url), "utf8");
+  for (const p of ["games/js/games.js", "bases/js/bases.js", "polls/js/polls.js", "logos/js/list.js", "shared/js/core/split-tabs.js"]) {
+    const src = read(p);
+    assert.match(src, /markActiveTab\(/, p);
+    assert.doesNotMatch(src, /setAttribute\("aria-selected"/, p);
+  }
+  const tabs = read("shared/js/core/tabs.js");
+  for (const part of ['classList.toggle("active", on)', '.tab-slot")?.classList.toggle("active", on)', 'setAttribute("role", "tab")', 'setAttribute("aria-selected", String(on))', "tabIndex = on ? 0 : -1", '"tablist"', "ArrowLeft", "Home", "End"]) {
+    assert.ok(tabs.includes(part), part);
+  }
+});
