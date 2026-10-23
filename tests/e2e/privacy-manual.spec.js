@@ -173,7 +173,7 @@ test("manual: wyszukiwanie — wyniki na żywo, wybór otwiera podrozdział z za
   await expect(page.locator(".m-doc mark.m-hit").first()).toBeInViewport();
 
   await input.fill("qqzzxx");
-  await expect(page.locator("#manualSearch .m-search-empty")).toBeVisible();
+  await expect(page.locator("#manualSearch .empty-state")).toBeVisible();
   await page.locator("#manualSearch .searchClear").click();
   await expect(page.locator("#manualSearch .m-search-results")).toBeHidden();
 

@@ -1239,7 +1239,7 @@ function renderFinale() {
           <div class="mini"><div class="hint">${t("control.finalPoolHint")}</div></div>
           <div class="qList" id="gsFinalePool">
             ${pool.length === 0
-              ? `<div class="gs-picker-empty">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
+              ? `<div class="empty-state empty-state--inline">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
               : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="${DRAGGABLE}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
@@ -1250,7 +1250,7 @@ function renderFinale() {
           <div class="mini"><div class="hint">${t("control.finalListHint")}</div></div>
           <div class="qList" id="gsGsFinalePicked">
             ${picked.length === 0
-              ? `<div class="gs-picker-empty">${DRAG ? t("control.finalPickEmpty") : t("gameSettings.finale.tapEmpty")}</div>`
+              ? `<div class="empty-state empty-state--inline">${DRAG ? t("control.finalPickEmpty") : t("gameSettings.finale.tapEmpty")}</div>`
               : picked.map(q => `<div class="qRow${DRAG ? " gs-draggable" : ""}" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>

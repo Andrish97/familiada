@@ -2210,7 +2210,7 @@
   .excluded-account-copy .stat-sub{display:block;margin-top:4px}
   .excluded-account-row>.btn{flex-shrink:0;margin-left:auto}
   [data-activity-chart] svg{width:100%;height:auto;min-height:140px}
-  .activity-chart-empty{min-height:200px;margin-top:14px;padding:24px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;border:1px dashed var(--w-14);border-radius:var(--r-md);background:var(--w-4)}
+  .activity-chart-empty{min-height:200px;margin-top:14px;flex-direction:column;gap:8px}
   .activity-chart-empty strong{font-size:14px;font-weight:700;opacity:.65}
   .activity-chart-empty span{font-size:12px;line-height:1.5;opacity:.4}
   [data-activity-chart] circle{cursor:pointer;transition:r .12s ease}
@@ -2241,7 +2241,7 @@
   .stats-session-suggestion--info strong{color:rgba(255,255,255,.85)}
   .stats-session-suggestion details{color:rgba(255,255,255,.6);font-size:11px}
   .stats-session-suggestion summary{cursor:pointer;color:rgba(255,255,255,.7)}
-  .stats-session-suggestion-empty,.stats-session-suggestion-devices{margin:4px 0;color:rgba(255,255,255,.7);font-size:12px}
+  .stats-session-suggestion-devices{margin:4px 0;color:rgba(255,255,255,.7);font-size:12px}
   .stats-sessions-diagnosis{flex:none}
   .stats-sessions-diagnosis-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px solid var(--w-8);font-size:12px}
   .stats-sessions-diagnosis-row span{color:rgba(255,255,255,.78)}

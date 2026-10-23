@@ -366,9 +366,6 @@
   .setting-item:last-child{ margin-bottom:0; }
   .setting-item .lbl2{ font-size:.87rem; margin-bottom:6px; opacity:.85; }
   .lbl2{ font-size:.87rem; opacity:.85; }
-  .gs-picker-empty{
-    opacity:.38; font-size:.8rem; padding:8px 4px; font-style:italic;
-  }
   .gs-row-dragging{ opacity:.35; }
   .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--gold,#f0b429); }
   .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--gold,#f0b429); }

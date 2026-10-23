@@ -251,7 +251,7 @@ export function renderTree(state) {
     <div class="left-panel-heading">${esc(t("baseExplorer.tree.folders"))}</div>
     <div class="treeList">
       ${rootRow}
-      ${rootHasChildren ? folders : `<div class="left-panel-empty">${esc(t("baseExplorer.tree.empty"))}</div>`}
+      ${rootHasChildren ? folders : `<div class="empty-state empty-state--inline">${esc(t("baseExplorer.tree.empty"))}</div>`}
       ${trashRow}
     </div>`;
 }
@@ -295,7 +295,7 @@ export function renderLeft(state) {
     <div class="tagList">
       <div class="left-panel-heading">${esc(t("baseExplorer.tags.header"))}</div>
       ${addBtn}
-      ${tags.length ? tagRows : `<div class="left-panel-empty">${esc(t("baseExplorer.tags.empty"))}</div>`}
+      ${tags.length ? tagRows : `<div class="empty-state empty-state--inline">${esc(t("baseExplorer.tags.empty"))}</div>`}
     </div>`;
 }
 
@@ -439,7 +439,7 @@ export function renderList(state) {
   state.visibleListKeys = items.map((it) => keyOf(it.kind, it.id));
 
   if (!items.length) {
-    elList.innerHTML = `<div class="list-empty">${esc(emptyText(state, listing))}</div>`;
+    elList.innerHTML = `<div class="list-empty empty-state">${esc(emptyText(state, listing))}</div>`;
     return;
   }
 

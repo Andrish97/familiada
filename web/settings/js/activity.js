@@ -62,7 +62,7 @@ export function startActivityPanel() {
     chart.replaceChildren();
     const items=history?.[period]||[];
     if (!items.length) {
-      const empty=document.createElement('div');empty.className='activity-chart-empty';
+      const empty=document.createElement('div');empty.className='empty-state activity-chart-empty';
       const title=document.createElement('strong');title.textContent='Brak danych';
       const hint=document.createElement('span');hint.textContent='W tym przedziale nie zarejestrowano aktywności.';
       empty.append(title,hint);chart.append(empty);return;

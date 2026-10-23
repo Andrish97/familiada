@@ -97,7 +97,6 @@
   }
 
   .connect-device-tile.mail-row--device:hover { background: rgba(121,158,183,.09); }
-  .connect-device-empty { width: 100%; }
 
   .connect-device-code-input {
     flex: 1;

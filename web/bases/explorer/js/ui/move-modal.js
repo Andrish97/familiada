@@ -88,7 +88,7 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   function resultsHtml() {
     const words = normalizeText(query).split(/\s+/).filter(Boolean);
     const hits = [...d.folderById.values()].filter((f) => reachable.has(f.id) && words.every((w) => d.folderSearchText(f.id).includes(w)));
-    if (!hits.length) return `<div class="list-empty">${esc(t("baseExplorer.move.noFolders"))}</div>`;
+    if (!hits.length) return `<div class="list-empty empty-state empty-state--inline">${esc(t("baseExplorer.move.noFolders"))}</div>`;
     const pathOf = (f) => [...d.ancestorIds(f.id)].reverse().map((id) => d.folderById.get(id)?.name || "").join(" / ");
     return hits
       .sort((a, b) => String(a.name).localeCompare(String(b.name), "pl", { sensitivity: "base" }))

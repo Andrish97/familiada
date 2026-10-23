@@ -119,7 +119,7 @@ export function initManualSearch(host, getEntries, onPick) {
           ${e.id !== e.ch ? `<span class="m-search-chapter">${esc(e.chapterTitle)}</span>` : ""}
           <span class="m-search-snippet">${snippet(e.text || e.title, words)}</span>
         </button>`).join("")
-      : `<div class="m-search-empty">${esc(t("manual.searchEmpty"))}</div>`;
+      : `<div class="empty-state empty-state--inline">${esc(t("manual.searchEmpty"))}</div>`;
   };
   const pick = (i) => {
     const e = results[i];

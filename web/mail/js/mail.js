@@ -58,7 +58,7 @@ function setTab(value) {
   });
   document.querySelectorAll('[data-panel]').forEach(node => node.classList.toggle('active', node.dataset.panel === value));
 }
-function empty(id, key) { const node = document.createElement('div'); node.className = 'mail-empty empty-state'; node.textContent = text(key); $(id).replaceChildren(node); }
+function empty(id, key) { const node = document.createElement('div'); node.className = 'empty-state'; node.textContent = text(key); $(id).replaceChildren(node); }
 function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
   node.title = text(label); node.setAttribute('aria-label', text(label)); node.innerHTML = icon(name);

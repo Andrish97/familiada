@@ -131,11 +131,6 @@
       margin: 0 0 6px;
   }
 
-  .left-panel-empty {
-      opacity: .75;
-      padding: 6px 8px;
-  }
-
   .breadcrumbs {
       border-radius: var(--r-md);
       padding: 10px 12px;
@@ -1639,7 +1634,6 @@
   #matchedCategories .row { opacity: .85; }
   #matchedCategories .row.is-selected { opacity: 1; }
   #btnAddTag { width: 100%; margin-top: 10px; }
-  .list-empty { opacity: .75; padding: 16px; }
   .crumb { cursor: pointer; }
   .crumb-sep { opacity: .5; padding: 0 6px; }
   .crumb-results { margin-left: 10px; opacity: .7; }
@@ -1827,7 +1821,6 @@
   .left-filters > .tags,
   .left-filters > .matched-categories { padding-left: 0; padding-right: 0; border-radius: 0; }
   .explorer-left .left-panel-heading { padding: 0 10px; }
-  .explorer-left .left-panel-empty { padding: 0 10px; }
   .explorer-left #btnAddTag { width: calc(100% - 20px); margin: 4px 10px 8px; }
   @media (pointer: coarse) {
     #matchedCategories .row,
@@ -1952,7 +1945,6 @@
     background: var(--w-4);
     border: 1px solid var(--line2, var(--w-8));
   }
-  .moveList > .list-empty { padding: 14px; opacity: .7; }
   /* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
      i linia nad przyciskami); w oknie od dołu stopkę układa base.css
      (.sheet-modal-actions), jak w pozostałych oknach. */

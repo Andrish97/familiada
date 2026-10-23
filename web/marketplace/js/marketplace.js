@@ -392,7 +392,7 @@ async function openDetail(id, { updateUrl = true, replaceUrl = false, trigger = 
   if (els.detailTitle) els.detailTitle.textContent = "…";
   if (els.detailMeta) els.detailMeta.textContent = "";
   if (els.detailDesc) els.detailDesc.textContent = "";
-  if (els.detailQuestions) els.detailQuestions.innerHTML = `<p class="mkt-no-q">${esc(t("marketplace.loading") || "Ładowanie…")}</p>`;
+  if (els.detailQuestions) els.detailQuestions.innerHTML = `<p class="empty-state">${esc(t("marketplace.loading") || "Ładowanie…")}</p>`;
   if (els.detailRating) els.detailRating.innerHTML = "";
   if (els.detailRaters) { els.detailRaters.hidden = true; els.detailRaters.innerHTML = ""; }
   if (els.btnAddLibrary) els.btnAddLibrary.hidden = true;
@@ -442,7 +442,7 @@ function renderDetail(g) {
   if (els.detailQuestions) {
     const qs = g.payload?.questions ?? [];
     if (!qs.length) {
-      els.detailQuestions.innerHTML = `<p class="mkt-no-q">${esc(t("marketplace.detail.noQuestions"))}</p>`;
+      els.detailQuestions.innerHTML = `<p class="empty-state">${esc(t("marketplace.detail.noQuestions"))}</p>`;
     } else {
       els.detailQuestions.innerHTML = qs.map((q, i) => {
         const answers = sortAnswersByPoints(q.answers).map(a =>

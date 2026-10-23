@@ -5465,7 +5465,7 @@ function buildSessionSuggestions(r) {
   section.appendChild(heading);
   if (!r.diag) {
     const none = document.createElement("p");
-    none.className = "stats-session-suggestion-empty";
+    none.className = "empty-state";
     none.textContent = "Brak podsumowania diagnostyki dla tej sesji.";
     section.appendChild(none);
     return section;
@@ -5482,7 +5482,7 @@ function buildSessionSuggestions(r) {
   const suggestions = diagnoseSession(r);
   if (!suggestions.length) {
     const none = document.createElement("p");
-    none.className = "stats-session-suggestion-empty";
+    none.className = "empty-state";
     none.textContent = "Nie wykryto problemów.";
     section.appendChild(none);
   }
@@ -5511,7 +5511,7 @@ function buildSessionSuggestions(r) {
   }
   if (Number(r.diag.dropped_count) > 0) {
     const dropped = document.createElement("p");
-    dropped.className = "stats-session-suggestion-empty";
+    dropped.className = "empty-state";
     dropped.textContent = `Przekroczono limit 3000 zdarzeń: pominięto ${r.diag.dropped_count} szczegółów (liczniki są pełne).`;
     section.appendChild(dropped);
   }
@@ -5528,7 +5528,7 @@ function buildSessionsDiagnosisSummary(rows) {
   heading.textContent = `Sugerowane problemy — ${result.sessions} sesji Control 2`;
   section.appendChild(heading);
   const clean = document.createElement("p");
-  clean.className = "stats-session-suggestion-empty";
+  clean.className = "empty-state";
   clean.textContent = result.sessions
     ? `Bez problemów (poza informacjami): ${result.clean} (${Math.round(result.clean / result.sessions * 100)}%)`
     : "Brak sesji z podsumowaniem diagnostyki.";

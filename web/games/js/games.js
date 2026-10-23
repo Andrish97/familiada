@@ -1605,7 +1605,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Pokaż modal natychmiast z nazwą i "Ładowanie…"
     if (previewTitle) previewTitle.textContent = gameName;
-    if (previewQuestions) previewQuestions.innerHTML = `<div class="bld-no-q">${t("games.preview.loading") || "Ładowanie…"}</div>`;
+    if (previewQuestions) previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.loading") || "Ładowanie…"}</div>`;
     if (previewOverlay) previewOverlay.style.display = "";
     enterModalSheet(previewOverlay, { backBtn: btnBackSheet, onClose: closePreview });
 
@@ -1635,7 +1635,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Renderuj pytania
     if (seq !== previewSeq || !previewQuestions) return;
     if (!questions.length) {
-      previewQuestions.innerHTML = `<div class="bld-no-q">${t("games.preview.noQuestions") || "Brak pytań."}</div>`;
+      previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.noQuestions") || "Brak pytań."}</div>`;
       return;
     }
 

@@ -1735,6 +1735,8 @@
   }
   .empty-state a { color: var(--accent); }
   .empty-state--tile { width: auto; min-height: 130px; border-radius: var(--r-md); }
+  /* W środku już obramowanej listy lub panelu: bez drugiej ramki. */
+  .empty-state--inline { min-height: 0; padding: 12px; border: 0; background: none; }
   .empty-state[hidden] { display: none; }
 
   /* Przycisk obok pola ma wysokość pola (wiersze „pole + przycisk”). */
