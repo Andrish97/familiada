@@ -37,11 +37,11 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
 
       - name: Sync migrations to server staging
         run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "mkdir -p \"$STAGING/migrations\" \"$STAGING/out\""
 
@@ -57,25 +57,25 @@ jobs:
 
       - name: Apply database migrations and dump schema (server-side)
         run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "export GITHUB_SHA='${{ github.sha }}'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
+            "export GITHUB_SHA='${{ github.sha }}' PSQL='sudo familiada-psql admin' SCHEMA_DUMP='sudo familiada-schema-dump'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
       - name: Verify active-game settings guard (rollback)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
             < docs/sql/test-active-game-settings-guard-381.sql
 
       - name: Verify Control 2 page visibility events (rollback)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
             < docs/sql/test-control2-page-visibility-393.sql
 
       - name: Fetch schema.sql and migration log
         run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
           rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/schema.sql" \
             supabase/schema.sql

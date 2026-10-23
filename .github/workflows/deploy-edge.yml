@@ -29,17 +29,17 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           # host key pinning (recommended). You can also use StrictHostKeyChecking=no, but better pin.
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
 
       - name: Cleanup old deployments
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "mkdir -p /home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/ && find /home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+            "mkdir -p /home/deploy/staging/edge/ && find /home/deploy/staging/edge/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
 
       - name: Sync functions to server staging
         run: |
           # staging dir per run
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING\""
           rsync -az --delete --checksum \
             --exclude 'main/' \
@@ -50,12 +50,12 @@ jobs:
 
       - name: Run deploy script (server-side)
         run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-edge.sh \"$STAGING\""
+            "sudo familiada-deploy-edge ${{ github.sha }}"
 
       - name: Cleanup staging
         if: always()
         run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "rm -rf \"$STAGING\""
