@@ -160,7 +160,6 @@
 
   .m-page-footer { margin-top: 40px; }
 
-  .m-side-backdrop { display: none; }
 
   /* Lista podrozdziałów w nagłówku rozdziału — tylko gdy pasek boczny jest schowany (telefon, tablet). */
   .m-head .m-sections { display: none; }
@@ -475,26 +474,6 @@
           background: var(--g-10);
       }
       .m-actionbar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 14px; }
-      .m-side-toggle { flex: 0 0 auto; }
-      .m-side-backdrop { position: fixed; inset: var(--topbar-h, 64px) 0 0; border: 0; padding: 0; background: var(--k-70); z-index: 40; }
-      .m-side-backdrop.is-open { display: block; }
-      .m-side {
-          position: fixed;
-          z-index: 41;
-          left: 0;
-          top: var(--topbar-h, 64px);
-          bottom: 0;
-          width: min(320px, 86vw);
-          border: 1px solid var(--line);
-          border-left: 0;
-          border-radius: 0 var(--r-md) var(--r-md) 0;
-          background: var(--surface-1);
-          box-shadow: 0 18px 48px var(--k-40);
-          transform: translateX(-105%);
-          visibility: hidden;
-          transition: transform .18s ease, visibility .18s;
-      }
-      .m-side.is-open { transform: translateX(0); visibility: visible; }
       .m-search { background: var(--surface-1); }
       .m-search-toggle { display: inline-flex; margin-left: auto; flex: 0 0 auto; }
       .m-head .m-sections { display: block; }

@@ -265,7 +265,7 @@
  },
  "web/manual/css/manual.css": {
   "colorLiteral": 20,
-  "zIndexLiteral": 4
+  "zIndexLiteral": 2
  },
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 8,
@@ -364,7 +364,6 @@
   "important": 3,
   "colorLiteral": 25,
   "mediaWidth": 3,
-  "zIndexLiteral": 2,
   "sharedDuplicate": 9
  },
  "web/shared/css/image-viewer.css": {
@@ -465,15 +464,15 @@
  "web/shared/style/components.css": {
   "important": 38,
   "mediaWidth": 13,
-  "zIndexLiteral": 3,
-  "sharedDuplicate": 210,
+  "zIndexLiteral": 5,
+  "sharedDuplicate": 213,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
-  "zIndexLiteral": 4,
-  "sharedDuplicate": 243,
+  "zIndexLiteral": 6,
+  "sharedDuplicate": 246,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {
