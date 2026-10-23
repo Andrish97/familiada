@@ -2393,9 +2393,10 @@
      zaokrągleniem u góry, zachodzi o --tab-extra na kartę; ::before/::after
      rysują wklęsłe narożniki. Strony dopisują zaokrąglenia swojej karty. */
   .tabs-card {
-    /* Jeden promień wszystkich łuków wypustki (górne i wklęsłe u podstawy)
-       = promień rogu karty. */
+    /* Górne łuki wypustki = promień rogu karty; wklęsłe u podstawy — połowa
+       (decyzja użytkownika 2026-10-23: ładniej wygląda). */
     --tab-r: var(--radius);
+    --tab-r-in: calc(var(--tab-r) / 2);
     width: 100%;
     margin: 0 auto; /* odstęp od paska tytułu daje .bar */
     position: relative;
@@ -2501,35 +2502,35 @@
     border-radius: var(--tab-r) var(--tab-r) 0 0;
     z-index: 3;
   }
-  /* Wklęsły narożnik = róg karty odwrócony: kwadrat --tab-r przy podstawie
-     wypustki, łuk o promieniu --tab-r ze środkiem w zewnętrznym rogu
-     kwadratu — ten sam kształt co róg karty. Łuk: przezroczyste wnętrze,
+  /* Wklęsły narożnik: kwadrat --tab-r-in (połowa promienia rogu, decyzja
+     2026-10-23) przy podstawie wypustki, łuk o promieniu --tab-r-in ze
+     środkiem w zewnętrznym rogu kwadratu. Łuk: przezroczyste wnętrze,
      linia 1 px, za łukiem tło karty; przejścia po 1 px wygładzają krawędzie
      jak zaokrąglenie obwódki. Linia nieprzezroczysta (--line-strong na tle
      karty): tam, gdzie łuk leży na obwódce karty lub wypustki, nie pogrubia jej. */
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before,
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
     --tab-line: color-mix(in srgb, rgb(var(--rgb-white)) 14%, var(--surface-1));
-    --tab-arc: transparent calc(var(--tab-r) - 1.5px), var(--tab-line) calc(var(--tab-r) - .5px), var(--surface-1) calc(var(--tab-r) + .5px);
+    --tab-arc: transparent calc(var(--tab-r-in) - 1.5px), var(--tab-line) calc(var(--tab-r-in) - .5px), var(--surface-1) calc(var(--tab-r-in) + .5px);
     content: "";
     display: block;
     position: absolute;
     top: auto;
     bottom: 0;
-    width: var(--tab-r);
-    height: var(--tab-r);
+    width: var(--tab-r-in);
+    height: var(--tab-r-in);
     border-radius: 0;
     opacity: 1;
     transition: none;
     pointer-events: none;
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::before {
-    left: calc(-1 * var(--tab-r));
+    left: calc(-1 * var(--tab-r-in));
     right: auto;
     background: radial-gradient(circle at 0 0, var(--tab-arc));
   }
   :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
-    right: calc(-1 * var(--tab-r));
+    right: calc(-1 * var(--tab-r-in));
     left: auto;
     background: radial-gradient(circle at 100% 0, var(--tab-arc));
   }

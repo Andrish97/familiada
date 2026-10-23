@@ -389,6 +389,11 @@ z krawędzią karty i z prostym (niezaokrąglonym) rogiem karty pod nimi;
 budowa i jednolitość — nie wygląd. Odrzucone: „nagłówek karty” i wypustki
 odsunięte od krawędzi.
 
+**Zmiana reguły (decyzja użytkownika 2026-10-23, później):** promień
+wklęsłych łuków u podstawy = **połowa** promienia górnych łuków wypustki
+(górne = róg karty, `--radius`): `--tab-r-in: calc(var(--tab-r) / 2)`.
+Wcześniejsza reguła „wszystkie łuki identyczne” nieaktualna.
+
 **Stan:** wygląd przywrócony 1:1 (porównanie pikselowe Gry, Gry Społeczności,
 Logo, Kontakty — bez różnic w wypustkach). Budowa jednolita: wszystko w silniku
 (`components.css` + jedna reguła rogu karty w `@layer states`, także dla karty
@@ -458,3 +463,4 @@ dla wszystkich (Bazy i Ankiety miały wcześniej 12 px zamiast 20 px).
 | 2026-10-23 | Wypustki — przywrócony stary wygląd 1:1 | Decyzja użytkownika: identycznie jak stare, prostsza i jednolita tylko budowa. Przywrócony blok silnika sprzed zmian; porównanie pikselowe ze stanem b9e0301d: wypustki bez różnic (Gry, Gry Społeczności, Logo, Kontakty); Bazy i Ankiety z promieniem 20 px jak reszta. |
 | 2026-10-23 | Wypustki — jeden promień łuków | Decyzja użytkownika: wszystkie łuki wypustki identyczne (dwa górne i wklęsłe u podstawy — trzy przy skrajnej, cztery przy środkowej). Przyczyna różnicy: pasek 36 px, promień 20 px — górny łuk zabierał 20 px, wklęsły spłaszczał się do ~15. `--tab-r = min(--radius, (wysokość + 1 px)/2)`: komputer 18,5 px wszystkie łuki, telefon (44 px) 20 px. |
 | 2026-10-23 | Wypustki: wklęsły łuk = róg karty odwrócony (ten sam promień `--tab-r` = `--radius`, linia nieprzezroczysta, wygładzone przejścia gradientu); reguła prostująca róg karty bez `:has` w `:has` (przeglądarka ją pomijała — w Grach, Bazach, Ankietach, Logo róg pod skrajną wypustką był zaokrąglony). Zrzuty: gry, bazy, loga (telefon/komputer). |
+| 2026-10-23 | Wypustki — wklęsły łuk o połowę mniejszy | Decyzja użytkownika: wewnętrzne zaokrąglenie mniejsze (połowa zewnętrznego) — ładniej. `--tab-r-in = --tab-r / 2` (10 px przy 20 px). Zrzuty: gry (wszystkie zakładki), bazy, loga — telefon i komputer. |
