@@ -30,7 +30,7 @@ test('activity API is read-only and uncached for admin requests',async()=>{
  } finally {globalThis.fetch=previous;}
 });
 
-test('Admin gameplay stats read per-session events and summary (468) and keep the legacy log key',async()=>{
+test('Admin gameplay stats read per-session events and summary (468)',async()=>{
  const previous=globalThis.fetch;
  const calls=[];
  const leaseEvent={kind:'diagnostic',category:'device_lease',source:'buzzer',at:'2026-10-15T12:00:00Z',devices:['buzzer'],metrics:{from_state:'waiting',to_state:'primary',epoch:4}};
@@ -50,8 +50,7 @@ test('Admin gameplay stats read per-session events and summary (468) and keep th
   const body=await response.json();
   assert.deepEqual(body.rows[0].stats_detail.events,[leaseEvent,controlEvent]);
   assert.deepEqual(body.rows[0].diag,diag);
-  assert.deepEqual(body.rows[0].device_event_log,{status:'events_recorded',event_count:1});
-  assert.deepEqual(body.rows[0].display_event_log,body.rows[0].device_event_log);
+  assert.equal('device_event_log' in body.rows[0],false);
   assert.deepEqual(calls.sort(),['/rest/v1/rpc/get_control2_session_diag','/rest/v1/rpc/get_control2_session_events','/rest/v1/rpc/get_stats_detail']);
  } finally {globalThis.fetch=previous;}
 });
