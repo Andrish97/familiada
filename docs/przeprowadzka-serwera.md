@@ -125,6 +125,14 @@ Logi workflow w repo prywatnym też tylko nazwy i tak/nie.
 - **Zamrożenie schematu bazy** (potwierdzone przez właściciela 2026-10-22: w czasie przenoszenia nie wprowadza zmian): od ostatniej próby generalnej z e2e do testów kontrolnych po przełączeniu — bez nowych migracji na `main`. Dane mogą się zmieniać (świeży zrzut przy przełączeniu).
 - **Wyjątek od zamrożenia (zgoda właściciela 2026-10-23):** migracja 472 (przejmowanie urządzeń Control 2, stan `replaced`). Przy przełączeniu wziąć zrzut bazy po 472.
 
+- **Naruszenie zamrożenia (2026-10-23, sesja E26 — sprzątanie bazy):** migracje
+  473–477 (`docs/audyt-sprzatania-bazy.md`) weszły na `main` o 17:17 UTC bez
+  sprawdzenia tej sekcji — agent nie znał zamrożenia. Wszystkie OK w
+  `latest.log`. Skutek dla przeprowadzki: zrzut przy przełączeniu musi być
+  **po 477** (jak dla 472), a próba generalna na `api2` była na schemacie
+  sprzed 473 — przed P6 sprawdzić, że kopia po 477 wczytuje się na nowym
+  serwerze. Do decyzji właściciela, czy uznać 473–477 za wyjątek.
+
 ## E2E na nowym serwerze — odłożone (2026-10-23)
 
 - Otwarte: `api_origin` przestawia tylko spece z `serveBranchCode`, a wypożyczanie kont (E25), ich czyszczenie i skrzynka idą przez produkcyjny Worker do starej bazy. Do rozwiązania przed e2e w P5.

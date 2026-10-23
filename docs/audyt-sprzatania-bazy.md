@@ -1,8 +1,9 @@
 # Audyt sprzątania bazy (2026-10-23)
 
-Stan (2026-10-23): **migracje 473–477 gotowe na branchu `ccr-340eeb59-hp37zo`,
-przetestowane lokalnie, czekają na wdrożenie** (aktywność na produkcji —
-decyzja użytkownika o przerwie). Sekcja „Wykonanie” niżej.
+Stan (2026-10-23): **wdrożone** — migracje 473–477 na produkcji (17:17 UTC),
+kontrola `e26-after` zera, e2e produkcji zielone. Uwaga: weszły w czasie
+zamrożenia schematu przeprowadzki (`przeprowadzka-serwera.md`). Sekcja
+„Wykonanie” niżej.
 
 ## Metoda
 
