@@ -228,3 +228,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-21 | Analiza szczegółowa | Wstrzymanie zmian na prośbę użytkownika; 4 przeglądy tylko do odczytu, wnioski w sekcji „Analiza szczegółowa”. |
 | 2026-10-21 | Projekt silnika | Analiza cz. 2 (moduły JS, szkielety stron, progi, style w HTML, testy/narzędzia/przeglądarki) → `silnik-stylow-projekt.md`; 6 decyzji do podjęcia. |
 | 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |
+| 2026-10-23 | Start realizacji, fundament, pilot | Polecenie użytkownika: intensywnie, bez pytań, wygląd prawie bez zmian, tylko branch. Silnik `web/shared/style/` (tokens, base, components, layout, utilities; `@layer`), narzędzia `compare.cjs` i `run.cjs --styles`, zapadka audytu włączona (baseline odświeżony), `styleEngine.test.js`. Pilot Zadania: zrzuty identyczne. Ustalenia: `silnik-stylow-projekt.md` §13. |

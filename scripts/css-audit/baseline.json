@@ -4,28 +4,27 @@
  },
  "web/account/css/account.css": {
   "colorLiteral": 12,
-  "rootTokens": 2,
-  "mediaWidth": 3,
+  "mediaWidth": 1,
   "sharedDuplicate": 2,
-  "unusedClass": 5
+  "unusedClass": 6
  },
  "web/bases/css/bases.css": {
   "colorLiteral": 1,
-  "rootTokens": 6,
-  "mediaWidth": 3,
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 12,
   "colorLiteral": 169,
-  "rootTokens": 12,
-  "mediaWidth": 9,
+  "mediaWidth": 6,
   "zIndexLiteral": 9,
   "sharedDuplicate": 21,
   "unusedClass": 17
  },
  "web/bases/explorer/index.html": {
   "inlineStyleHtml": 13
+ },
+ "web/bases/explorer/js/actions.js": {
+  "inlineStyleJs": 42
  },
  "web/bases/explorer/js/context-menu.js": {
   "inlineStyleJs": 6
@@ -69,7 +68,7 @@
  "web/connect/css/connect-device.css": {
   "important": 1,
   "colorLiteral": 7,
-  "mediaWidth": 2
+  "mediaWidth": 1
  },
  "web/connect/index.html": {
   "inlineStyleHtml": 1
@@ -79,7 +78,7 @@
  },
  "web/connect/tv/css/tv.css": {
   "colorLiteral": 5,
-  "rootTokens": 4
+  "rootTokens": 1
  },
  "web/connect/tv/index.html": {
   "styleBlock": 1
@@ -97,7 +96,7 @@
   "important": 8,
   "colorLiteral": 176,
   "rootTokens": 10,
-  "mediaWidth": 16,
+  "mediaWidth": 14,
   "zIndexLiteral": 3,
   "sharedDuplicate": 47,
   "unusedClass": 90
@@ -153,17 +152,15 @@
  },
  "web/games/css/games.css": {
   "important": 5,
-  "colorLiteral": 37,
-  "rootTokens": 5,
-  "mediaWidth": 7,
+  "colorLiteral": 36,
+  "rootTokens": 2,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 16
+  "sharedDuplicate": 32
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
   "colorLiteral": 38,
-  "rootTokens": 9,
-  "mediaWidth": 3,
+  "mediaWidth": 1,
   "zIndexLiteral": 1,
   "sharedDuplicate": 10
  },
@@ -187,8 +184,7 @@
   "inlineStyleJs": 49
  },
  "web/go/css/go.css": {
-  "colorLiteral": 2,
-  "rootTokens": 1
+  "colorLiteral": 2
  },
  "web/go/index.html": {
   "inlineStyleHtml": 1
@@ -197,15 +193,13 @@
   "inlineStyleJs": 1
  },
  "web/home/css/index.css": {
-  "important": 4,
+  "important": 2,
   "colorLiteral": 22,
-  "rootTokens": 1,
-  "mediaWidth": 4,
-  "zIndexLiteral": 5,
+  "zIndexLiteral": 4,
   "unusedClass": 2
  },
  "web/home/js/index.js": {
-  "inlineStyleJs": 12
+  "inlineStyleJs": 6
  },
  "web/login/confirm/index.html": {
   "inlineStyleHtml": 2
@@ -215,8 +209,6 @@
  },
  "web/login/css/login.css": {
   "colorLiteral": 25,
-  "rootTokens": 2,
-  "mediaWidth": 2,
   "zIndexLiteral": 1,
   "sharedDuplicate": 10
  },
@@ -230,12 +222,12 @@
   "inlineStyleJs": 7
  },
  "web/logos/css/logo.css": {
-  "important": 14,
-  "colorLiteral": 105,
-  "rootTokens": 23,
-  "mediaWidth": 4,
+  "important": 15,
+  "colorLiteral": 104,
+  "rootTokens": 12,
+  "mediaWidth": 2,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 7,
+  "sharedDuplicate": 3,
   "unusedClass": 5
  },
  "web/logos/editor/draw/index.html": {
@@ -260,7 +252,7 @@
   "inlineStyleJs": 8
  },
  "web/logos/js/list.js": {
-  "inlineStyleJs": 6
+  "inlineStyleJs": 7
  },
  "web/logos/js/text.js": {
   "inlineStyleJs": 1
@@ -274,19 +266,15 @@
  },
  "web/maintenance/css/maintenance.css": {
   "colorLiteral": 5,
-  "rootTokens": 4,
-  "mediaWidth": 1
+  "rootTokens": 3
  },
  "web/manual/css/manual.css": {
-  "colorLiteral": 41,
-  "rootTokens": 2,
-  "mediaWidth": 3,
-  "unusedClass": 5
+  "colorLiteral": 60,
+  "zIndexLiteral": 4,
+  "unusedClass": 1
  },
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 25,
-  "rootTokens": 3,
-  "mediaWidth": 2,
   "sharedDuplicate": 3,
   "unusedClass": 1
  },
@@ -313,7 +301,6 @@
  },
  "web/polls/vote/qr/css/poll-qr.css": {
   "colorLiteral": 5,
-  "mediaWidth": 2,
   "zIndexLiteral": 1
  },
  "web/polls/vote/qr/index.html": {
@@ -327,12 +314,11 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 300,
-  "rootTokens": 12,
-  "mediaWidth": 8,
+  "colorLiteral": 316,
+  "mediaWidth": 5,
   "zIndexLiteral": 18,
   "sharedDuplicate": 8,
-  "unusedClass": 37
+  "unusedClass": 40
  },
  "web/settings/index.html": {
   "inlineStyleHtml": 153
@@ -344,7 +330,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 301
+  "inlineStyleJs": 304
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
@@ -370,17 +356,16 @@
  },
  "web/shared/css/auth-landing.css": {
   "colorLiteral": 17,
-  "rootTokens": 8,
-  "mediaWidth": 1,
+  "rootTokens": 7,
   "sharedDuplicate": 7
  },
  "web/shared/css/base.css": {
   "important": 52,
-  "colorLiteral": 192,
-  "mediaWidth": 23,
-  "zIndexLiteral": 18,
-  "sharedDuplicate": 35,
-  "unusedClass": 12
+  "colorLiteral": 197,
+  "mediaWidth": 12,
+  "zIndexLiteral": 17,
+  "sharedDuplicate": 200,
+  "unusedClass": 14
  },
  "web/shared/css/blocking-overlay.css": {
   "colorLiteral": 11,
@@ -389,36 +374,33 @@
  },
  "web/shared/css/contacts.css": {
   "colorLiteral": 3,
-  "rootTokens": 3,
   "mediaWidth": 3,
-  "zIndexLiteral": 1,
-  "sharedDuplicate": 1
+  "zIndexLiteral": 1
  },
  "web/shared/css/game-settings.css": {
   "important": 2,
-  "colorLiteral": 96,
-  "rootTokens": 5,
+  "colorLiteral": 100,
   "mediaWidth": 4,
   "zIndexLiteral": 4,
   "sharedDuplicate": 33,
   "unusedClass": 25
  },
+ "web/shared/css/image-viewer.css": {
+  "important": 2,
+  "zIndexLiteral": 1
+ },
  "web/shared/css/poll.css": {
   "colorLiteral": 6,
-  "rootTokens": 1,
   "unusedClass": 1
  },
  "web/shared/css/polls.css": {
-  "important": 4,
+  "important": 2,
   "colorLiteral": 54,
-  "rootTokens": 8,
-  "mediaWidth": 11,
   "zIndexLiteral": 1,
   "sharedDuplicate": 4
  },
  "web/shared/css/question-form.css": {
-  "colorLiteral": 21,
-  "rootTokens": 2
+  "colorLiteral": 21
  },
  "web/shared/css/tooltips.css": {
   "important": 1,
@@ -432,7 +414,7 @@
   "inlineStyleJs": 3
  },
  "web/shared/js/core/contact-modal.js": {
-  "inlineStyleJs": 34
+  "inlineStyleJs": 22
  },
  "web/shared/js/core/device-lease.js": {
   "inlineStyleJs": 2
@@ -446,8 +428,11 @@
  "web/shared/js/core/guest-mode.js": {
   "inlineStyleJs": 1
  },
+ "web/shared/js/core/image-viewer.js": {
+  "inlineStyleJs": 6
+ },
  "web/shared/js/core/list-header-layout.js": {
-  "inlineStyleJs": 1
+  "inlineStyleJs": 3
  },
  "web/shared/js/core/mail-document.js": {
   "inlineStyleJs": 16
@@ -479,6 +464,9 @@
  "web/shared/js/core/resource-send.js": {
   "inlineStyleJs": 3
  },
+ "web/shared/js/core/swipe.js": {
+  "inlineStyleJs": 1
+ },
  "web/shared/js/core/tooltips.js": {
   "inlineStyleJs": 2
  },
@@ -497,19 +485,36 @@
  "web/shared/js/display/theme_template.js": {
   "inlineStyleJs": 1
  },
+ "web/shared/style/base.css": {
+  "important": 4
+ },
+ "web/shared/style/components.css": {
+  "important": 38,
+  "mediaWidth": 13,
+  "zIndexLiteral": 2,
+  "sharedDuplicate": 195,
+  "unusedClass": 9
+ },
+ "web/shared/style/layout.css": {
+  "important": 2,
+  "zIndexLiteral": 1,
+  "sharedDuplicate": 24
+ },
+ "web/shared/style/utilities.css": {
+  "important": 3,
+  "sharedDuplicate": 3,
+  "unusedClass": 5
+ },
  "web/shared/translation/translation.js": {
   "inlineStyleJs": 9
  },
  "web/snake/css/snake.css": {
   "important": 2,
   "colorLiteral": 19,
-  "rootTokens": 7,
   "zIndexLiteral": 8,
   "sharedDuplicate": 7
  },
  "web/tasks/css/tasks.css": {
-  "colorLiteral": 4,
-  "rootTokens": 3,
   "mediaWidth": 2
  }
 }

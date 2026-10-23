@@ -1,0 +1,169 @@
+/* Silnik stylów E23 — tokeny (docs/silnik-stylow-projekt.md §3).
+   Jedyny plik z wartościami kolorów, warstw (z-index), promieni i czasów.
+   Sam :root, bez warstw i nowych funkcji CSS — ładują go też ekrany gry
+   (TV/Tizen). Wartości przeniesione 1:1 z dawnego shared/css/base.css
+   i games.css (wygląd bez zmian); zwinięcie odcieni i promieni (§11.2–3)
+   to osobny krok ze zrzutami przed/po.
+   Przezroczystości: kanały --rgb-* w rgb(var(--rgb-x) / alfa). */
+:root {
+  color-scheme: dark;
+
+  /* ── paleta: kanały ─────────────────────────────────────────── */
+  --rgb-white: 255 255 255;
+  --rgb-black: 0 0 0;
+  --rgb-gold: 255 234 166;       /* złoto Familiady */
+  --rgb-gold-deep: 243 198 75;   /* zaznaczona opcja (Zmień typ, kawa) */
+  --rgb-yellow: 255 215 0;       /* aktywny filtr/sortowanie */
+  --rgb-amber: 255 200 60;
+  --rgb-green: 80 200 120;
+  --rgb-red: 255 110 110;
+  --rgb-red-soft: 255 120 120;
+  --rgb-blue: 140 200 255;
+  --rgb-focus: 120 160 255;
+  --rgb-gray: 160 160 160;
+  --rgb-scrim: 2 6 23;
+  --rgb-toast: 12 16 36;
+  --rgb-tooltip: 15 23 42;
+
+  /* ── podłoża (kryjące) ──────────────────────────────────────── */
+  --bg: #050914;                 /* tło strony */
+  --surface-top: #03060d;        /* topbar */
+  --surface-tile: #070b16;       /* kafel */
+  --surface-tile-hover: #0b1020;
+  --surface-raised: #0b0e1a;     /* karta A2HS */
+  --surface-1: #111827;          /* karta, menu */
+  --surface-modal: #121524;      /* okno */
+  --surface-control: #141822;    /* pole wyboru */
+  --surface-item: #1b2332;       /* pozycja menu */
+  --surface-item-hover: #292f3d;
+  --surface-section: #202331;    /* sekcja udostępniania (podłoże przycisków) */
+  --surface-2: rgb(var(--rgb-black) / .18);  /* sekcja zagnieżdżona w karcie */
+  --surface-sunken: rgb(var(--rgb-black) / .25);
+
+  /* ── linie ──────────────────────────────────────────────────── */
+  --line: rgb(var(--rgb-white) / .14);
+  --line-strong: rgb(var(--rgb-white) / .18);
+  --line-soft: rgb(var(--rgb-white) / .12);
+  --line-faint: rgb(var(--rgb-white) / .10);
+
+  /* ── tekst ──────────────────────────────────────────────────── */
+  --text: #fff;
+  --text-muted: rgb(var(--rgb-white) / .70);
+  --text-strong: #f9fafb;        /* aktywna wypustka */
+  --text-tile: #fdfdfd;          /* nazwa na kaflu */
+  --text-tile-dim: rgb(253 253 253 / .72);
+  --text-meta: rgb(236 239 244 / .9);
+  --accent: #ffeaa6;             /* złoto: tytuły, linki, aktywne */
+  --accent-warm: #ffd86e;
+  --ok-text: #7ef0a2;
+  --bad-text: #ffaaaa;
+  --bad-text-soft: #ffb3b3;
+  --bad-text-toast: #ffb8b8;
+  --info-text: #bfe3ff;
+  --muted-text: #c0c0c0;
+  --green-text: #5dc870;
+  --error: #ff6b6b;
+  --danger: #ff7777;
+  --danger-solid: #dc3545;
+  --success: #6ee7a8;
+
+  /* ── wyłączone przyciski (kryjące, bez opacity) ─────────────── */
+  --disabled-text: #6c7080;
+  --disabled-line: #1c2130;
+  --disabled-danger-text: #7a5a62;
+  --disabled-danger-line: #3a2630;
+  --disabled-green-text: #4d6e58;
+  --disabled-green-line: #213a2c;
+
+  /* Kryjąca część maski (mask-image) — nie kolor, tylko nieprzezroczystość. */
+  --mask-on: #000;
+
+  /* ── przyciemnienia ─────────────────────────────────────────── */
+  --scrim: rgb(var(--rgb-scrim) / .5);          /* wokół okien i menu */
+  --scrim-modal: rgb(var(--rgb-black) / .75);   /* arkusz, okno kontaktu */
+  --scrim-block: rgb(var(--rgb-black) / .78);   /* ekran blokady */
+
+  /* ── cienie ─────────────────────────────────────────────────── */
+  --shadow-menu: 0 12px 36px rgb(var(--rgb-black) / .7);
+  --shadow-popover: 0 24px 60px rgb(var(--rgb-black) / .6);
+  --shadow-card: 0 18px 36px rgb(var(--rgb-black) / .45);
+  --shadow-lift: 0 10px 24px rgb(var(--rgb-black) / .45);
+  --shadow-modal: 0 30px 90px rgb(var(--rgb-black) / .85);
+  --shadow-sheet: 0 -18px 60px rgb(var(--rgb-black) / .6);
+  --shadow-toast: 0 16px 36px rgb(var(--rgb-black) / .35);
+
+  /* ── promienie ──────────────────────────────────────────────── */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-btn: 14px;
+  --r-lg: 16px;
+  --r-tile: 18px;
+  --r-modal: 22px;
+  --r-sheet: 28px;
+  --r-pill: 999px;
+
+  /* ── typografia ─────────────────────────────────────────────── */
+  --font-ui: system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+
+  /* ── warstwy (wartości 1:1 z dotychczasowych; skala §3.2 później) ── */
+  --z-local: 1;
+  --z-topbar: 10;
+  --z-overlay: 50;
+  --z-popover: 60;
+  --z-float: 100;
+  --z-a2hs: 200;
+  --z-lang-float: 999;
+  --z-menu: 1000;
+  --z-sheet: 1200;
+  --z-mobile-menu: 10050;
+  --z-toast: 10100;
+
+  /* ── ruch ───────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --dur-fast: .12s;
+  --dur-base: .2s;
+  --dur-slow: .3s;
+
+  /* ── układ ──────────────────────────────────────────────────── */
+  --page-gutter: 18px;           /* boczny margines treści; ≤980 px — 15 px */
+  --page-pad-left: calc(var(--page-gutter) + env(safe-area-inset-left, 0px));
+  --page-pad-right: calc(var(--page-gutter) + env(safe-area-inset-right, 0px));
+  --topbar-ctl-h: 37px;          /* wysokość kontrolek topbara */
+
+  /* Podłoże kryjących przycisków: odcień (--btn-tint) nakładany na kolor
+     powierzchni, na której stoi przycisk. Powierzchnia ustawia --under. */
+  --under: var(--bg);
+
+  /* Wypustki kart */
+  --radius: 16px;
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --tab-label-font-size: 12px;
+  --tab-label-letter-spacing: .08em;
+
+  /* ── nazwy przejściowe (używane przez strony i moduły JS jeszcze
+     nieprzepięte; usunąć, gdy audyt pokaże 0 użyć) ───────────── */
+  --gold: var(--accent);
+  --card: var(--surface-1);
+  --card2: var(--surface-2);
+  --line2: var(--line-strong);
+  --surface: var(--surface-1);
+  --page-bg: var(--bg);
+  --border-color: var(--line-strong);
+  --inactive-text: var(--text-muted);
+  --modal-scrim: var(--scrim-modal);
+}
+
+@media (max-width: 980px) {
+  :root { --page-gutter: 15px; }
+}
+@media (max-width: 600px) {
+  :root {
+    --tab-label-font-size: 10px;
+    --tab-label-letter-spacing: .015em;
+    --tab-height: 56px;
+    --tab-extra: 2px;
+  }
+}

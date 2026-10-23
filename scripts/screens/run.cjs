@@ -122,10 +122,43 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const shot = await page.screenshot({ fullPage: !!scene.fullPage, animations: "disabled" });
+  // --styles: obliczone style widocznych elementów obok PNG (compare.cjs pokazuje różnice właściwości).
+  if (args.styles) fs.writeFileSync(file.replace(/\.png$/, ".styles.json"), JSON.stringify(await view.evaluate(dumpStyles).catch(() => ({}))));
   // deviceFrame: "iphone" -- ekran telefonu w ramce iPhone'a na czarnym tle (kadr strony głównej).
   fs.writeFileSync(file, scene.deviceFrame === "iphone" ? await composeIPhone(browser, shot, scene.frameSize?.width, scene.frameSize?.height, scene.frameSize?.scale) : shot);
   await context.close();
   return { scene: scene.id, title: scene.title, lang, device: scene.size ? `${scene.size.width}×${scene.size.height}` : deviceName, file: path.relative(outDir, file), errors, misses, readyError };
+}
+
+// Obliczone style widocznych elementów: klucz = ścieżka w DOM (tag#id.klasy:nth), wartości wybranych właściwości.
+function dumpStyles() {
+  const PROPS = ["display", "position", "z-index", "margin", "padding", "gap", "color", "background-color", "background-image",
+    "border-top", "border-right", "border-bottom", "border-left", "border-radius", "font-size", "font-weight", "letter-spacing", "line-height",
+    "text-transform", "opacity", "box-shadow", "transform", "filter", "visibility", "overflow", "white-space", "text-align", "justify-content", "align-items", "flex", "grid-template-columns"];
+  const out = {};
+  const keyOf = (el) => {
+    const parts = [];
+    for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
+      let k = e.tagName.toLowerCase();
+      if (e.id) { parts.unshift(`${k}#${e.id}`); break; }
+      const cls = [...e.classList].filter((c) => !/^(skel-step-ready|topbar-ready)$/.test(c)).slice(0, 3);
+      if (cls.length) k += `.${cls.join(".")}`;
+      const same = e.parentElement ? [...e.parentElement.children].filter((c) => c.tagName === e.tagName) : [];
+      if (same.length > 1) k += `:${same.indexOf(e) + 1}`;
+      parts.unshift(k);
+    }
+    return parts.join(">");
+  };
+  for (const el of document.querySelectorAll("body, body *")) {
+    if (el.closest("svg") && el.tagName.toLowerCase() !== "svg") continue;
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    const cs = getComputedStyle(el);
+    const v = { rect: [r.x, r.y, r.width, r.height].map((n) => Math.round(n * 10) / 10).join(",") };
+    for (const p of PROPS) v[p] = cs.getPropertyValue(p);
+    out[keyOf(el)] = v;
+  }
+  return out;
 }
 
 function gallery(outDir, results) {

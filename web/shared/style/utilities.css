@@ -1,0 +1,39 @@
+/* Silnik stylów E23 — klasy pomocnicze (docs/silnik-stylow-projekt.md §4.3).
+   Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.
+   [hidden] z !important: ukrycie wygrywa z każdym display strony i inline
+   (ważne deklaracje wcześniejszej warstwy biją późniejsze). */
+@layer utilities {
+  [hidden],
+  .hidden { display: none !important; }
+
+  .only-mobile { display: none; }
+  @media (max-width: 600px) {
+    .only-desktop { display: none; }
+    .only-mobile { display: inline-flex; }
+    /* topbar: sekcje 1 i 3 pokazują długie etykiety */
+    :is(.topbar-section-1, .topbar-section-3) .only-desktop { display: inline !important; }
+    :is(.topbar-section-1, .topbar-section-3) .only-mobile { display: none !important; }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+
+  .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
+  .grow { flex: 1 1 auto; min-width: 0; }
+  .between { justify-content: space-between; }
+  .center { align-items: center; }
+  .nowrap { white-space: nowrap; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .text-muted { color: var(--text-muted); }
+  .text-sm { font-size: 12px; }
+}

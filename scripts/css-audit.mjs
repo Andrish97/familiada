@@ -15,9 +15,11 @@ const WEB = path.join(REPO, "web");
 export const BASELINE_PATH = path.join(REPO, "scripts/css-audit/baseline.json");
 
 // Jedyne miejsce definicji tokenów (kolory, odstępy, z-index) — krok 3 planu.
-const TOKEN_FILES = new Set(["web/shared/css/base.css", "web/shared/css/tokens.css"]);
-// Progi szerokości dozwolone w @media — uzupełnia krok 3 planu.
-const ALLOWED_WIDTHS = new Set([]);
+const TOKEN_FILES = new Set(["web/shared/css/base.css", "web/shared/style/tokens.css"]);
+// Progi szerokości dozwolone w @media (silnik-stylow-projekt.md §3.3: narrow 600,
+// work 980, wide 1280; min-width = próg + 1). Silnik ma jeszcze progi przejściowe
+// (640/720/760/1200/1366 z dawnego base.css) — liczone jako naruszenia do kroku progów.
+const ALLOWED_WIDTHS = new Set([600, 601, 980, 981, 1280, 1281]);
 
 export const METRICS = {
   important: "`!important`",
@@ -78,10 +80,17 @@ function auditCss(file, css) {
   m.important = (src.match(/!important/g) || []).length;
   for (const decl of src.split(/[;{}]/)) {
     const isToken = /^\s*--[\w-]+\s*:/.test(decl);
-    if (isToken && !tokenFile) m.rootTokens++;
     if (isToken && tokenFile) continue;
-    m.colorLiteral += (decl.match(COLOR_RE) || []).length;
+    // rgb(var(--rgb-x) / alfa) to kolor z tokenu (kanały), nie literał.
+    m.colorLiteral += (decl.replace(/\brgba?\(\s*var\(/g, "").match(COLOR_RE) || []).length;
     if (/^\s*z-index\s*:\s*-?\d/.test(decl)) m.zIndexLiteral++;
+  }
+  // Paleta poza plikiem tokenów: definicje --x na :root/html. Zmienne lokalne
+  // komponentu (--btn-tint, --under na elemencie) są dozwolone.
+  if (!tokenFile) {
+    for (const rule of parseRules(src)) {
+      if (/(^|[\s,]):root\b|(^|[\s,])html\b(?![\w-])/.test(rule.selector)) m.rootTokens += (rule.body.match(/(^|;)\s*--[\w-]+\s*:/g) || []).length;
+    }
   }
   for (const q of src.matchAll(/@media([^{]*)\{/g)) {
     const widths = [...q[1].matchAll(/(?:min|max)-width\s*:\s*(\d+)px/g)].map((w) => Number(w[1]));

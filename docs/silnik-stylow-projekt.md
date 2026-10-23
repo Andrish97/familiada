@@ -1,6 +1,8 @@
 # Silnik stylów i wspólne mechanizmy — projekt (E23)
 
-Status: **projekt z decyzjami użytkownika** (2026-10-21, §11); start po E13. Bez zmian w `web/` do
+Status: **w realizacji od 2026-10-23** (polecenie użytkownika: „zacznij intensywnie,
+bez pytań, ma wyglądać mniej więcej tak samo”; branch roboczy, bez `main`) — stan i
+ustalenia wykonawcze w §13. Decyzje użytkownika 2026-10-21: §11. Bez zmian w `web/` do
 decyzji użytkownika. Plan etapu i pomiary: [`wspolne-style-plan.md`](wspolne-style-plan.md).
 Wzorce wyglądu: [`wzorce-ui.md`](wzorce-ui.md) (część do aktualizacji, patrz §10).
 
@@ -379,3 +381,57 @@ starych plików.
 | **Razem** | **≈ 41–56 dni roboczych sesji** |
 
 Bez laboratoriów.
+
+## 13. Realizacja — ustalenia wykonawcze (agent, 2026-10-23)
+
+Polecenie użytkownika (2026-10-23): pracować intensywnie i bez pytań; wygląd
+„mniej więcej taki sam, bez większych zmian”; animacje i przyspieszenia wolno;
+tylko branch roboczy, nic na `main`.
+
+Ustalenia (wynikają z zasady „wygląd bez zmian”; do zmiany przy dalszych krokach):
+
+1. **Przeniesienie zamiast przepisania wyglądu.** Silnik to uporządkowany
+   `base.css` + wspólne części `games.css` z tokenami 1:1 (te same wartości),
+   w tej samej kolejności kaskady — strona przepięta wygląda tak samo
+   (sprawdzane pikselowo). Zwinięcie odcieni/promieni (§11.2–3) i progów
+   (§3.3) to osobne kroki ze zrzutami przed/po.
+2. **Nazwy klas bez zmian** (`.btn`, `.uni-modal`, `.overlay > .modal`, `.tag`,
+   `.badge`, `.shareRow`…): używają ich wspólne moduły JS (te same na stronach
+   starych i przepiętych) i ~1800 odwołań w e2e. Nazwy z §4 (`button`,
+   `dialog`…) dopiero razem z modułami `web/shared/ui/` (§6).
+3. **Warstwy:** `@layer reset, base, components, utilities, page;` —
+   `components.css` (z `base.css`) i `layout.css` (z `games.css`) w jednej
+   warstwie, ładowane w tej kolejności (układ dopasowuje komponenty w swoim
+   kontekście przy równej specyficzności, jak dawniej `games.css` po
+   `base.css`). Osobna warstwa `layout` przed komponentami odwracała wyniki
+   kaskady. Kolejność `<link>`: tokens → base → components → layout →
+   utilities → plik strony (`@layer page { … }`).
+4. **Tokeny poza warstwami** (ładują je też ekrany gry bez `@layer`), więc
+   strona nie nadpisuje tokenów na `:root`. Przezroczystości przez kanały:
+   `rgb(var(--rgb-gold) / .35)`. Stare nazwy (`--gold`, `--card`, `--line2`…)
+   jako aliasy przejściowe w `tokens.css` do czasu przepięcia stron i JS.
+5. **`!important` zostaje tylko** w arkuszu (stan przebija wymiary inline),
+   `[hidden]`, menu konta w panelu telefonu (pozycja inline z JS) i kilku
+   regułach „tylko telefon/komputer”.
+6. **Reguły jednej strony** z dawnego `base.css` (np. `#shareOverlay`,
+   `.tags-modal`, `.pollRecipientsModal`, `.rating-badge-index`) nie
+   trafiają do silnika — przechodzą do pliku strony przy jej przepięciu.
+7. **Narzędzia:** `scripts/screens/compare.cjs` (porównanie pikselowe dwóch
+   katalogów zrzutów, obraz różnic, raport HTML) i `run.cjs --styles`
+   (obliczone style elementów obok PNG; `compare.cjs` wypisuje, które
+   właściwości się zmieniły). Audyt: tokeny w `web/shared/style/tokens.css`,
+   kolory przez kanały nie są literałami, paleta liczona tylko na `:root`;
+   zapadka `cssAudit.test.js` włączona. Test `styleEngine.test.js`: strona na
+   silniku nie ładuje starych plików, plik strony w `@layer page`.
+8. **Zaakceptowane drobne różnice** (ujednolicenie): na stronach, które
+   ładowały `games.css`, małe okna `.uni-modal` mają 720 px jak na
+   pozostałych (było 860 px przez nadpisanie `.modal` w `games.css`) i
+   stopkę okna 14 px nad kreską (było 12 px); menu konta 1 px wyżej (dawniej
+   mierzone w chwili wciśnięcia przycisku).
+9. **Animacje (dozwolone przez użytkownika):** menu konta/języka i lista
+   rozwijana wjeżdżają (`popover-in`, 0,12 s), panel hamburgera z tłem
+   (0,2 s), przejścia kolorów/ramek przycisków i pól, strzałka sekcji;
+   `prefers-reduced-motion` wyłącza wszystkie animacje globalnie.
+
+Stan stron: **Zadania** (pilot) — zrzuty identyczne co do piksela
+(Zadania, narzędzia listy, wyszukiwanie; komputer/telefon/tablet).

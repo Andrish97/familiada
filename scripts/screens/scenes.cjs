@@ -218,6 +218,17 @@ module.exports = [
       await view.waitForTimeout(300);
     }] },
   { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
+  // Wspólne okna i menu na prostej stronie (E23: porównanie silnika stylów przed/po).
+  { id: "tasks-decline-confirm", category: "Dodatkowe", title: "Zadania — potwierdzenie odrzucenia (wspólne okno)", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/modal.js"], ready: "#tasksHost > *",
+    steps: [async (view) => { await view.locator('.rowsAct').filter({ hasText: /Odrzu|Decline|Відхил/ }).first().click(); await view.locator(".overlay:visible .uni-modal").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(400); }] },
+  { id: "tasks-search", category: "Dodatkowe", title: "Zadania — wyszukiwanie w sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *",
+    steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("we"); await view.waitForTimeout(400); }] },
+  { id: "tasks-account-menu", category: "Dodatkowe", title: "Zadania — menu konta (komputer) i menu telefonu", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/topbar-controller.js"], ready: "#tasksHost > *",
+    steps: [async (view) => {
+      const toggle = view.locator(".topbar-menu-toggle");
+      if (await toggle.isVisible()) await toggle.click(); else await view.locator(".account-btn").first().click();
+      await view.waitForTimeout(500);
+    }] },
   // Pusty stan (wspólny .empty-state): wyszukiwanie bez wyników w siatce kafli i na liście wierszy.
   { id: "empty-state-games", category: "Dodatkowe", title: "Pusty stan — Moje gry, wyszukiwanie bez wyników", path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
     steps: [async (view) => {

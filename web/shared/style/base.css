@@ -1,0 +1,151 @@
+/* Silnik stylów E23 — kolejność warstw, reset i podstawy strony
+   (docs/silnik-stylow-projekt.md §2). Pliki silnika linkowane w <head>
+   w stałej kolejności, bez @import:
+     tokens.css → base.css → components.css → layout.css → utilities.css
+     → plik strony (cały w @layer page).
+   components.css i layout.css są w jednej warstwie: układ strony z listą
+   dopasowuje komponenty w swoim kontekście (.bar .btn) przy równej
+   specyficzności — kaskada jak w dawnym base.css + games.css.
+   Warstwa strony wygrywa z komponentami bez podbijania selektorów;
+   !important tylko tam, gdzie stan musi przebić styl inline (arkusz,
+   [hidden]). Tokeny (:root) są poza warstwami — strona nie nadpisuje
+   tokenów na :root (własne zmienne ustawia na swoich elementach). */
+@layer reset, base, components, utilities, page;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* Bez niebieskiej poświaty przy dotknięciu (Chrome/Safari mobilne);
+     obwódka klawiatury (:focus-visible) zostaje. */
+  html { -webkit-tap-highlight-color: transparent; }
+}
+
+@layer base {
+  html {
+    min-height: 100dvh;
+    background: var(--bg);
+  }
+  /* Zachowaj szerokość układu, gdy wysuwane menu blokuje przewijanie body. */
+  html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
+
+  body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-ui);
+    color: var(--text);
+    overscroll-behavior: none; /* gasi biały bounce */
+    transition: opacity var(--dur-slow) ease-in;
+  }
+  html.page-loading body { opacity: 0; }
+
+  body > main,
+  main {
+    flex: 1 0 auto;
+  }
+  body > main {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Stopka w main: krótka strona — stopka na dole okna (margin-top:auto
+     działa tylko w kolumnie flex); dłuższa — zwykłe przewijanie. */
+  main:has(> .footer) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Kompensacja za stały topbar. */
+  body:has(.topbar) {
+    --topbar-h: calc(max(12px, env(safe-area-inset-top)) + 56px);
+    padding-top: var(--topbar-h);
+  }
+
+  /* Ikony ze wspólnego silnika (js/core/icons.js): rozmiar z tekstu (em),
+     kolor z currentColor. */
+  svg.ico {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+
+  a.gold {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  /* Ciemne paski przewijania (Safari/macOS, Chrome). */
+  @supports selector(::-webkit-scrollbar) {
+    *::-webkit-scrollbar { width: 12px; height: 12px; }
+    *::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-corner { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      background-color: rgb(var(--rgb-white) / .22);
+      border-radius: var(--r-pill);
+      border: 3px solid transparent; /* „pływający” suwak */
+      background-clip: padding-box;
+    }
+    *::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--rgb-white) / .32); }
+  }
+
+  html.pseudoFS body {
+    height: 100dvh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  html.pseudoFS body::before {
+    content: "";
+    display: block;
+    height: 1px;
+  }
+
+  /* ── Stopniowe ładowanie (skel-body, data-skel-step, data-skel-group) ──
+     <body class="skel-body">: topbar ma stałą wysokość, sekcje 3–4 i
+     nawigacja odsłaniają się po topbar-ready; [data-skel-step] po
+     skel-step-ready; [data-skel-group] czeka na swoje kroki. */
+  body.skel-body .topbar { min-height: var(--topbar-h); }
+  body.skel-body .topbar:not(.topbar-ready) .topbar-section-1 > :not(.brand),
+  body.skel-body .topbar:not(.topbar-ready) .topbar-section-2 { visibility: hidden; }
+  body.skel-body .topbar-section-3,
+  body.skel-body .topbar-section-4 {
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+  body.skel-body .topbar.topbar-ready .topbar-section-3,
+  body.skel-body .topbar.topbar-ready .topbar-section-4 { opacity: 1; }
+
+  [data-skel-step] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+  }
+  [data-skel-step].skel-step-ready {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  [data-skel-group] { transition: opacity var(--dur-slow) ease; }
+  [data-skel-group]:has([data-skel-step]:not(.skel-step-ready)) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  /* Dotyk: bez przeciągania (page-init.js blokuje dragstart). */
+  @media (hover: none) and (pointer: coarse) {
+    [draggable="true"] { -webkit-user-drag: none; }
+  }
+
+  /* Ograniczony ruch: animacje i przejścia praktycznie natychmiastowe. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
