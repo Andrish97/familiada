@@ -217,11 +217,17 @@ test("@mailbox ankieta353: cofnięcie źródła po rejestracji usuwa partial i z
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(1);
     expect((await rpc(owner, "polls_hub_subscriber_remove", { p_id: subscription.id })).ok).toBe(true);
-    expect((await rpc(recipient, "friends_list")).some(row => row.id === proposal.id)).toBe(false);
-    expect((await rpc(recipient, "friends_accept", { p_id: proposal.id })).ok).toBe(false);
-    expect((await rpc(recipient, "friends_token_info", { p_token: proposal.token })).ok).toBe(false);
-    await recipient.goto("https://www.familiada.online/go/?f=" + proposal.token);
-    await expect(recipient.locator("#title")).toContainText(/wygas|nieważn|nieprawidł|niedostępn/i);
+    // 424 (decyzja 2026-10-20, docs/e19-znajomi-plan.md): usunięcie subskrybenta
+    // nie kasuje propozycji znajomości -- zostaje jako zwykłe zaproszenie,
+    // odpięte od subskrypcji; czekające zadania znikają (niżej).
+    expect((await rpc(recipient, "friends_list")).some(row => row.id === proposal.id)).toBe(true);
+    expect((await rpc(recipient, "friends_token_info", { p_token: proposal.token })).ok).toBe(true);
+    const detached = await owner.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("friendships").select("source_subscription_id,status,cancelled_at").eq("id", id).single();
+      if (error) throw error;
+      return data;
+    }, proposal.id);
+    expect(detached).toEqual({ source_subscription_id: null, status: "pending", cancelled_at: null });
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     expect((await rpc(owner, "poll_share_panel", { p_game_id: games[0].id })).tasks).toHaveLength(1);

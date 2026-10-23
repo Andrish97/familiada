@@ -78,7 +78,8 @@ test('atomic game import: file modal retry after lost response, foreign owner an
   stage='select file';
   const packet={game:{name:'E2E-ATOMIC-'+Date.now(),type:'prepared'},questions:Array.from({length:10},(_,i)=>({text:'Pytanie '+(i+1),answers:[{text:'Tak',fixed_points:25}]}))};
   // Login waits for the URL, before Games finishes auth and installs handlers.
-  await expect(page.locator('#grid .card').first()).toBeVisible({timeout:15000});
+  // Leased account is wiped (no games): the "New game" tile (.addCard) is drawn by the first render, after handlers.
+  await expect(page.locator('#grid .addCard').first()).toBeVisible({timeout:15000});
   await page.locator('#btnImport').click();
   await expect(page.locator('#importOverlay')).toBeVisible();
   await page.locator('#importFile').setInputFiles({name:'atomic.famgame',mimeType:'application/octet-stream',buffer:Buffer.from(JSON.stringify(packet))});

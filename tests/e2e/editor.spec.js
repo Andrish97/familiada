@@ -1290,8 +1290,8 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
     try {
       const qid = await createBaseQuestion(page, baseId, { text: "Stara treść", answers: [] });
       await openQuestionModal(page, baseId, qid);
-      await page.route("**/rest/v1/qb_questions*", (route) =>
-        route.request().method() === "PATCH" ? route.abort() : route.fallback());
+      // Zapis pytania idzie przez funkcję SQL qb_save_question (migracja 427).
+      await page.route("**/rest/v1/rpc/qb_save_question*", (route) => route.abort());
       await page.locator("#qText").fill("Nowa treść");
       await page.locator("#qSave").click();
       await expect(page.locator("#qErr")).toHaveText("Nie udało się zapisać pytania. Spróbuj ponownie.", { timeout: 10000 });
@@ -1299,7 +1299,7 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
       await expect(page.locator("#qText")).toHaveValue("Nowa treść");
       expect((await getBaseQuestion(page, qid)).text).toBe("Stara treść");
     } finally {
-      await page.unroute("**/rest/v1/qb_questions*");
+      await page.unroute("**/rest/v1/rpc/qb_save_question*");
       await deleteBase(page, baseId);
     }
   });

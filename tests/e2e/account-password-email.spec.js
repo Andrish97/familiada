@@ -3,7 +3,7 @@ const { test, expect } = require("./helpers/e2e-test");
 const path = require("node:path");
 const fs = require("node:fs");
 const { generateE2EToken } = require("./helpers/e2e-token");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, releaseMailCooldown } = require("./helpers/mailbox");
 const { withE2EBypass } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
@@ -70,6 +70,15 @@ function expectMailInLanguage(email, copy, lang, label, typeKey, { actionPattern
   expect(new URL(action).searchParams.get("lang"), `${label}: lang w linku`).toBe(lang);
 }
 
+// Blokada resetu hasła (mail_cooldowns "auth:reset_password", 1 h na adres)
+// zostaje po poprzednim teście w tym samym workerze: lease czyści ją tylko przy
+// wypożyczeniu (e2e_reset_identity), dawniej robił to restoreTestAccount przed
+// każdym testem. Bez zwolnienia login.js pokazuje "Wysłano" bez wysyłki.
+// Wymaga "auth:reset_password" w E2E_RELEASABLE_MAIL_COOLDOWNS Workera.
+async function releaseResetCooldown(account) {
+  await releaseMailCooldown(account.email, "auth:reset_password");
+}
+
 async function openLoginWithCaptchaBypass(page, context) {
   const secret = process.env.E2E_BYPASS_SECRET;
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
@@ -93,6 +102,7 @@ test("konto disposable: reset hasla przez prawdziwy e-mail i przywrocenie stanu"
   const temporaryPassword = `E2e-${Date.now()}-Aa!`;
 
   await clearMailbox(account.email);
+  await releaseResetCooldown(account);
   await waitForAuthMailSlot(account, testInfo);
   const after = new Date(Date.now() - 2_000).toISOString();
 
@@ -610,6 +620,7 @@ test("Auth: reset hasla dociera przy wylaczonych powiadomieniach", async ({ page
       if (updated.data.email_notifications !== false) throw new Error("Notification flag was not disabled");
       await sb.auth.signOut();
     });
+    await releaseResetCooldown(account);
     await waitForAuthMailSlot(account, testInfo);
     const after = new Date(Date.now() - 2_000).toISOString();
     await openLoginWithCaptchaBypass(page, context);
@@ -642,6 +653,7 @@ for (const lang of MAIL_LANGS) {
     const { authEmail, index } = await loadAuthEmailCopy(lang);
 
     await clearMailbox(account.email);
+    await releaseResetCooldown(account);
     await waitForAuthMailSlot(account, testInfo);
     const after = new Date(Date.now() - 2_000).toISOString();
 

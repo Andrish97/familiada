@@ -102,13 +102,13 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
       await ownerPage.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail }).click();
       await ownerPage.locator("#pollRecipientsAdd").click();
       await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2, { timeout: 20000 });
-      const emails = await Promise.all([
+      const mails = await Promise.all([
         mailbox.waitFor(friend, { after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
         mailbox.waitFor(subscriber, { after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
       ]);
-      expectMailDocument(emails[0], { accountFooter: true });
-      expectMailDocument(emails[1], { globalUnsub: true });
-      const links = emails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
+      expectMailDocument(mails[0], { accountFooter: true });
+      expectMailDocument(mails[1], { globalUnsub: true });
+      const links = mails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
       expect(links.every(Boolean)).toBe(true);
       const tasks = (await rpc(ownerPage, "poll_share_panel", { p_game_id: gameId })).tasks;
       const item = await ownerPage.evaluate(async gameId => {

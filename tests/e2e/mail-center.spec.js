@@ -57,8 +57,11 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#mailAddress')).toHaveText(EMAIL);
     await expect(center.locator('#subscriptionBadge')).toHaveText('1');
     await center.locator('#subscriptionList').getByRole('button', { name: 'Akceptuj', exact: true }).click();
+    // Przy 1400 px pasek zakładek (z plakietką) jest ukryty w CSS, więc samo
+    // toBeHidden nie czeka na akceptację -- czekamy na wiersz i stan sesji.
+    await expect(center.locator('#subscriptionList .mail-row--subscription')).toHaveAttribute('data-state', 'active');
     await expect(center.locator('#subscriptionBadge')).toBeHidden();
-    expect((await state(center)).subscriptions[0].status).toBe('active');
+    await expect.poll(async () => (await state(center)).subscriptions[0]?.status).toBe('active');
     const session = (await anonymous.cookies()).find(cookie => cookie.name === '__Host-familiada-mail');
     expect(session).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Strict', path: '/' });
     expect(new globalThis.URL(center.url()).searchParams.has('m')).toBe(false);
