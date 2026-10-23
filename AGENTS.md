@@ -200,6 +200,15 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
     między językami) i zapadka `unit/i18nUnused.test.js`.
   - **wyjątek — panel admina (`web/settings/`, decyzja użytkownika 2026-10-23):**
     teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony.
+- **Podręcznik przy zmianach działania (decyzja użytkownika 2026-10-23):** zmiana,
+  która wyraźnie zmienia wygląd strony albo sposób korzystania z funkcji (nowy lub
+  usunięty przycisk, inny gest, kolejność kroków, nowe ograniczenie, nowy komunikat
+  ważny dla użytkownika), w tym samym etapie aktualizuje Wskazówki: tekst
+  `docs/podrecznik/*.md` w PL, EN i UK (tylko stan obecny, bez „wcześniej”/„teraz już”),
+  sceny zrzutów użyte w treści (`![Podpis](zrzut:scena)`, nowa scena, gdy podręcznik
+  pokazuje nowy stan), potem `node scripts/manual/build-content.mjs`. Zrzuty
+  Wskazówek odświeża CI po pushu na `main`. Drobne poprawki bez wpływu na opis — bez zmian
+  w podręczniku. Plan i zasady: `docs/podrecznik-plan.md`.
 - **Podpowiedzi (decyzja użytkownika 2026-10-23):** podpowiedź jest skuteczna, jasna,
   trafna (zgodna z faktycznym działaniem i etykietą przycisku), sensowna i mówi tylko
   to, co **nieoczywiste** — oczywistych rzeczy nie podpowiadamy; ten sam tekst nie
