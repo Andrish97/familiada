@@ -562,6 +562,10 @@ export function createUI({ root, emit }) {
     const hostPreviewFrame = hostPreviewSrc ? h("iframe", { src: hostPreviewSrc, title: t("control.hostLogoPreviewTitle") }) : null;
     clear();
 
+    // Brak 5 pytań finału: komunikat w sekcji „Finał” (widoczna od razu; nie w
+    // stopce obok przycisków); „Gotowe” wskazuje go przez aria-describedby.
+    const finalWarn = finalIncomplete ? h("div", { class: "callout callout--warn", id: "c2FinalIncomplete", role: "status", text: t("control.finalPickIncompleteWarning") }) : null;
+
     const sections = [
       summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
         teamA: state.teams.defaultA === true ? t("control.teamADefault") : state.teams.teamA || t("control.teamADefault"),
@@ -578,7 +582,10 @@ export function createUI({ root, emit }) {
         ]),
       ]), "c2-summary-display"),
       soundSummarySection(state),
-      summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") }), "c2-summary-final"),
+      summarySection(t("control.summaryFinal"), h("div", { class: "c2-summary-final-body" }, [
+        h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") }),
+        finalWarn,
+      ].filter(Boolean)), "c2-summary-final"),
     ].filter(Boolean);
     // "Losuj ponownie" mieszka PRZY danej sekcji pytań (nie w stopce z resztą
     // nawigacji) — to akcja dotycząca konkretnie tej puli, nie kroku jako
@@ -671,6 +678,7 @@ export function createUI({ root, emit }) {
       },
     });
     start.dataset.c2SummaryStart = "true";
+    if (finalIncomplete) start.setAttribute("aria-describedby", "c2FinalIncomplete");
     start.disabled = finalIncomplete || displaySoundNeedsUnlock || boardBusy();
     start.classList.toggle("is-busy", boardBusy() && !finalIncomplete && !displaySoundNeedsUnlock);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, iconLabel("settings", t("control.summarySettingsLink")));
@@ -703,7 +711,6 @@ export function createUI({ root, emit }) {
       ]),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
-        finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,
       ]),
     ];
 

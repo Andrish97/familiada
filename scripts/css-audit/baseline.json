@@ -94,14 +94,16 @@
   "important": 1,
   "colorLiteral": 17,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 25
+  "sharedDuplicate": 25,
+  "unusedClass": 1
  },
  "web/control/css/control2.css": {
   "important": 2,
   "colorLiteral": 27,
   "rootTokens": 1,
   "mediaWidth": 2,
-  "sharedDuplicate": 14
+  "sharedDuplicate": 14,
+  "unusedClass": 1
  },
  "web/control/css/test-mode.css": {
   "important": 9,
@@ -466,15 +468,15 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 196,
-  "unusedClass": 2
+  "sharedDuplicate": 199,
+  "unusedClass": 3
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 226,
-  "unusedClass": 7
+  "sharedDuplicate": 229,
+  "unusedClass": 8
  },
  "web/shared/style/layout.css": {
   "important": 2,

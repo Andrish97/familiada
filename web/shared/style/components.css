@@ -1078,6 +1078,28 @@
     html.webapp .fs-btn { display: none !important; }
   }
 
+  /* ── Komunikat w treści (ostrzeżenie, błąd, informacja) ──────────
+     Ramka z lewym paskiem w kolorze stanu; zawsze przy tym, czego dotyczy. */
+  .callout {
+    padding: 10px 12px;
+    border: 1px solid var(--w-14);
+    border-left-width: 3px;
+    border-radius: var(--r-sm);
+    background: var(--w-4);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .callout--warn {
+    border-color: rgb(var(--rgb-amber) / .40);
+    border-left-color: rgb(var(--rgb-amber) / .90);
+    background: rgb(var(--rgb-amber) / .08);
+  }
+  .callout--bad {
+    border-color: rgb(var(--rgb-red) / .40);
+    border-left-color: rgb(var(--rgb-red) / .90);
+    background: rgb(var(--rgb-red) / .08);
+  }
+
   /* ── Przycisk w rogu ekranu (pełny ekran, konto na ekranach gry) ── */
   .corner-btn {
     width: 44px;

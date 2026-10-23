@@ -220,7 +220,7 @@
   /* Podsumowanie wykorzystuje szerokość karty: podgląd Display jest na
      całą szerokość, a reszta informacji układa się w dwóch kolumnach. */
   .c2-summary-grid { display:flex; flex-direction:column; gap:12px; }
-  .c2-summary-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
+  .c2-summary-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; gap:12px; }
   .c2-summary-columns > .summarySection { min-width:0; margin:0; }
   .c2-summary-columns > .c2-summary-sound { grid-column:1/-1; }
   .c2-summary-question-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
@@ -274,6 +274,7 @@
   .summarySectionTitle { font-size:calc(var(--c2-fs) * .78); }
   .summarySectionValue { font-size:calc(var(--c2-fs) * 1.05); }
   .summaryQMode { font-size:calc(var(--c2-fs) * .9); }
+  .c2-summary-final-body { display:grid; gap:8px; }
   .summaryDisplayLabel, .summaryDisplayRow { font-size:calc(var(--c2-fs) * .9); }
   /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
      (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
