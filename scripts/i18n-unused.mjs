@@ -6,7 +6,7 @@
 // poza stroną (Worker, maile). Testy się nie liczą — tekst używany tylko
 // w teście jest martwy.
 //
-// node scripts/i18n-unused.mjs          -> lista nieużywanych (pl/en/uk)
+// node scripts/i18n-unused.mjs          -> nieużywane (pl/en/uk) i użyte, a brakujące
 // node scripts/i18n-unused.mjs --json   -> { unused, missing } dla testu
 import fs from "node:fs";
 import path from "node:path";
@@ -85,6 +85,22 @@ export function findUnused(keys, corpus, prefixes) {
   });
 }
 
+// Klucze użyte w kodzie stron dosłownie (t("a.b"), data-i18n*="a.b"), których
+// nie ma w słowniku -- strona pokazałaby wtedy surowy klucz.
+export function findMissing(keys) {
+  const have = new Set(keys);
+  const files = walk(path.join(root, "web"), []);
+  const used = new Map();
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(root, f), "utf8");
+    for (const m of src.matchAll(/\bt\(\s*["']([A-Za-z][\w]*(?:\.[\w]+)+)["']|data-i18n[a-z-]*="([A-Za-z][\w]*(?:\.[\w]+)+)"/g)) {
+      const key = m[1] || m[2];
+      if (!used.has(key)) used.set(key, f);
+    }
+  }
+  return [...used].filter(([k]) => !have.has(k) && !keys.some((h) => h.startsWith(`${k}.`))).map(([k, f]) => `${k} (${f})`).sort();
+}
+
 export async function report() {
   const dicts = await loadDicts();
   const corpus = readCorpus();
@@ -96,7 +112,8 @@ export async function report() {
     const own = new Set(flatten(dicts[lang]));
     missing[lang] = [...all].filter((k) => !own.has(k)).sort();
   }
-  return { unused, missing, total: all.size };
+  const missingInDict = findMissing(flatten(dicts.pl));
+  return { unused, missing, missingInDict, total: all.size };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
@@ -106,6 +123,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   } else {
     console.log(`kluczy: ${r.total}, nieużywanych: ${r.unused.length}`);
     for (const k of r.unused) console.log(k);
+    if (r.missingInDict.length) console.log(`\nużyte w kodzie, brak w słowniku: ${r.missingInDict.length}\n${r.missingInDict.join("\n")}`);
     for (const lang of LANGS) if (r.missing[lang].length) console.log(`\nbrak w ${lang}: ${r.missing[lang].length}\n${r.missing[lang].join("\n")}`);
   }
 }

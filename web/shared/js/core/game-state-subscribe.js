@@ -13,12 +13,12 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T13220";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T13220";
-import { rt } from "./realtime.js?v=v2026-10-23T13220";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T13220";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T13220";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-23T13220";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-23T15384";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-23T15384";
+import { rt } from "./realtime.js?v=v2026-10-23T15384";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-23T15384";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-23T15384";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-23T15384";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
@@ -211,6 +211,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Tu accessToken zawsze zwraca token urządzenia.
   let directToken = null;
   let directClient = null;
+  // Lease, dla którego wystawiono token kanału (claims: połączenie + epoka).
+  let directLeaseKey = null;
+  const leaseKey = (lease) => `${lease?.p_connection_id || ""}:${lease?.p_epoch || ""}`;
   function realtimeClient() {
     if (!directClient) {
       directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -268,6 +271,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!active) return;
     const lease = getLeaseArgs();
     if (!lease?.p_connection_id || !lease?.p_epoch) return;
+    directLeaseKey = leaseKey(lease);
     try {
       const { data, error } = await sb().functions.invoke("device-realtime-token", {
         body: { game_id: gameId, device_type: deviceType, key,
@@ -398,7 +402,13 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
 
   async function start() {
-    if (active) return;
+    // Ta sama karta wróciła jako główna z nową epoką (np. po uśpieniu dłuższym
+    // niż lease): token kanału ma starą epokę i RLS odrzuca wiersze, więc
+    // kanał trzeba odbudować od razu, zamiast czekać na nadrabianie z heartbeatu.
+    if (active) {
+      if (directLeaseKey && leaseKey(getLeaseArgs()) !== directLeaseKey) resync();
+      return;
+    }
     active = true;
     sync.reset();
     await fetchGuarded("rpc_bootstrap");

@@ -340,3 +340,37 @@ test("manual: podzielony ekran tabletu — Wskazówki działają, nakładka blok
     await context.close();
   }
 });
+
+test("manual: podgląd zrzutu — na komputerze z niższym oknem cały obraz w oknie, na tablecie przybliżanie palcami", async ({ browser }) => {
+  const open = async (page) => {
+    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6#s-6-1`, { waitUntil: "domcontentloaded" });
+    const shot = page.locator(".m-shot-zoom").first();
+    await expect.poll(() => shot.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+    await shot.click();
+    await expect(page.locator("#imgvOverlay.is-open .imgv-zoom .imgv-img")).toBeVisible();
+    await page.waitForTimeout(400);
+  };
+  // Komputer, okno 1440×760: obraz w całości wewnątrz okna podglądu i ekranu.
+  const desk = await browser.newContext({ viewport: { width: 1440, height: 760 }, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(desk, { pages: ["manual"] });
+  const page = await desk.newPage();
+  try {
+    await open(page);
+    const box = await page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      return { zoom: r("#imgvOverlay .imgv-zoom"), panel: r("#imgvOverlay .imgv-panel"), h: innerHeight };
+    });
+    expect(box.zoom.bottom).toBeLessThanOrEqual(box.panel.bottom + 1);
+    expect(box.panel.bottom).toBeLessThanOrEqual(box.h);
+    expect(box.zoom.height).toBeGreaterThan(300);
+  } finally { await desk.close(); }
+  // Tablet w poziomie (dotyk): okno od dołu z polem przybliżania palcami.
+  const tab = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(tab, { pages: ["manual"] });
+  const tpage = await tab.newPage();
+  try {
+    await open(tpage);
+    await expect(tpage.locator("#imgvOverlay")).toHaveClass(/sheet-active/);
+    expect(await tpage.locator("#imgvOverlay .imgv-zoom").evaluate((el) => getComputedStyle(el).touchAction)).toBe("none");
+  } finally { await tab.close(); }
+});

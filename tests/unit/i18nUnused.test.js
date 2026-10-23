@@ -15,3 +15,7 @@ test("tłumaczenia: brak nieużywanych kluczy", () => {
 test("tłumaczenia: PL, EN i UK mają te same klucze", () => {
   for (const [lang, keys] of Object.entries(result.missing)) assert.deepEqual(keys, [], `brak w ${lang}`);
 });
+
+test("tłumaczenia: każdy klucz użyty w kodzie stron istnieje w słowniku", () => {
+  assert.deepEqual(result.missingInDict, [], `brak w web/shared/translation/pl.js:\n${result.missingInDict.join("\n")}`);
+});
