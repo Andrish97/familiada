@@ -21,12 +21,12 @@
 .maintenance-card {
   --under: #070b17; /* podłoże dla kryjących teł przycisków (css/base.css) */
   width: min(880px, 100%);
-  background: var(--maint-card);
+  /* kryjące tło bez backdrop-filter (Android: artefakty przy przyciskach) */
+  background: linear-gradient(var(--maint-card), var(--maint-card)) var(--under);
   border: 1px solid var(--line2);
   border-radius: var(--r-lg);
   padding: 32px 28px;
   box-shadow: var(--maint-shadow);
-  backdrop-filter: blur(10px);
 }
 
 .card-top {

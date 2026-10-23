@@ -698,7 +698,8 @@
   .support-size-amount { font-weight: 900; color: var(--accent); }
   .support-modal-note { margin: 2px 0 0; font-size: 12px; opacity: .65; }
 
-  /* Wyłączony: przygaszone kryjące kolory zamiast opacity. */
+  /* Wyłączony: przygaszone kryjące kolory zamiast opacity — także .x,
+     .rowsAct, .shareBulkAction i pozycja menu (Android: bez opacity). */
   .btn:disabled {
     --btn-tint: var(--w-4);
     color: var(--disabled-text);
@@ -1259,7 +1260,7 @@
   }
   .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .menu-item[aria-selected="true"] { background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-1)); color: var(--accent); }
-  .menu-item[aria-disabled="true"] { opacity: .45; cursor: default; }
+  .menu-item[aria-disabled="true"] { color: var(--disabled-text); cursor: default; }
 
   .menu-item.is-danger { color: var(--bad-text); }
   /* Dotyk i telefon: cel dotyku 44 px. */
@@ -2125,7 +2126,7 @@
     border-color: var(--accent);
     --btn-tint: var(--k-40);
   }
-  .x:disabled { opacity: .4; cursor: not-allowed; }
+  .x:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: not-allowed; }
   .grid .tile .name {
     min-width: 0;
     font-weight: 900;
@@ -2231,7 +2232,7 @@
   .shareBulkAction { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: var(--r-sm); color: var(--accent); }
   .shareBulkAction .ico { display: block; width: 17px; height: 17px; flex: 0 0 auto; }
   .shareBulkAction:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .shareBulkAction:disabled { opacity: .45; cursor: default; }
+  .shareBulkAction:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: default; }
   .shareSectionSub { margin-top: 4px; opacity: .75; font-size: 13px; }
   /* Narzędzia listy w nagłówku (attachListTools): sortowanie, filtr,
      lupa — aktywne ustawienie złote. */
@@ -2274,13 +2275,12 @@
   .shareRow.pick { cursor: pointer; }
   .shareRow.pick:hover { border-color: var(--accent); }
   .shareRow.selected { border-color: var(--accent); background: var(--g-10); }
-  .shareRow.blocked { opacity: .7; cursor: not-allowed; }
+  .shareRow.blocked { color: var(--text-muted); cursor: not-allowed; } /* bez opacity (Android) */
   .shareMain { flex: 1 1 auto; min-width: 0; }
   .shareEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13.5px; }
   .shareTags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .shareNote { margin-top: 4px; font-size: 11px; line-height: 1.3; color: var(--g-60); }
   .shareRowActions { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
-  .shareRowActions .btn:disabled { opacity: .4; cursor: not-allowed; }
   .shareRow--compact { min-height: 64px; }
   /* Wiersz kontaktu: nazwa (+ znaczniki) w pierwszej linii, e-mail /
      notatka zawsze pod spodem — wiersze tej samej wysokości. */
@@ -2350,7 +2350,7 @@
   .rowsAct { display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; }
   .rowsAct .rowsActIcon { display: inline-flex; width: 16px; height: 16px; }
   .rowsAct .rowsActIcon svg { width: 100%; height: 100%; }
-  .rowsAct:disabled { opacity: .4; cursor: not-allowed; }
+  .rowsAct:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: not-allowed; }
   @media (max-width: 640px) {
     .rowsNote--desktop { display: none; }
     .rowsNote--mobile { display: block; }

@@ -152,8 +152,8 @@
       letter-spacing: .04em;
       color: rgba(255,255,255,.55);
       user-select: none;
-      background: var(--k-20);
-      backdrop-filter: blur(10px);
+      /* kryjące, bez backdrop-filter (Android) */
+      background: linear-gradient(var(--k-20), var(--k-20)) var(--under);
       border-radius: var(--r-md) var(--r-md) 0 0
   }
 
@@ -586,8 +586,8 @@
       letter-spacing: .04em;
       color: rgba(255,255,255,.55);
       user-select: none;
-      background: var(--k-20);
-      backdrop-filter: blur(10px);
+      /* kryjące, bez backdrop-filter (Android) */
+      background: linear-gradient(var(--k-20), var(--k-20)) var(--under);
       border-bottom: 1px solid var(--w-14);
       /* position:relative for col-resizer */
       position: relative;
