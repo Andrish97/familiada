@@ -12,25 +12,28 @@
   padding: max(16px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left, 0px));
   overflow: auto;
   overscroll-behavior: none;
-  background: rgba(0, 0, 0, .78);
-  color: #fff;
+  background: var(--k-70, rgba(0, 0, 0, .7));
+  color: var(--text, #fff);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 .blocking-overlay[hidden] { display: none; }
+/* Karta i przyciski jak .card / .btn / .btn.gold z silnika; plik działa też
+   bez silnika (Wyświetlacz), stąd wartości zapasowe przy tokenach. */
 .blocking-card {
   box-sizing: border-box;
   width: 100%;
   max-width: 560px;
   padding: 18px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 18px;
-  background: #111827;
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, .14));
+  border-radius: var(--r-lg, 20px);
+  background: var(--surface-1, #111827);
+  box-shadow: var(--shadow-card, 0 18px 36px rgba(0, 0, 0, .4));
   text-align: left;
 }
 .blocking-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.blocking-icon { display: inline-flex; flex: none; width: 26px; height: 26px; color: var(--gold, #ffeaa6); }
+.blocking-icon { display: inline-flex; flex: none; width: 26px; height: 26px; color: var(--accent, #ffeaa6); }
 .blocking-icon > svg { width: 100%; height: 100%; }
 .blocking-title { margin: 0; font-size: 1rem; font-weight: 900; letter-spacing: .08em; line-height: 1.25; text-transform: uppercase; }
 .blocking-message { opacity: .9; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-line; }
@@ -39,18 +42,21 @@
   appearance: none;
   min-height: 42px;
   padding: 10px 14px;
-  border: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, .14);
-  color: #fff;
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, .14));
+  border-radius: var(--r-md, 14px);
+  background: var(--surface-item, #1b2332);
+  color: var(--text, #fff);
   font: inherit;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
-.blocking-action:hover { background: rgba(255, 255, 255, .2); }
-.blocking-action:focus-visible { outline: 2px solid var(--gold, #ffeaa6); outline-offset: 2px; }
-.blocking-action.is-accent { background: rgba(255, 220, 120, .24); }
-.blocking-action.is-accent:hover { background: rgba(255, 220, 120, .34); }
+.blocking-action:hover { filter: brightness(1.08); }
+.blocking-action:focus-visible { outline: 2px solid var(--accent, #ffeaa6); outline-offset: 2px; }
+.blocking-action.is-accent {
+  border-color: var(--g-35, rgba(255, 234, 166, .35));
+  background: var(--g-10, rgba(255, 234, 166, .10));
+  color: var(--accent, #ffeaa6);
+}
 @media (max-width: 520px) {
   .blocking-card { padding: 18px; }
   .blocking-actions { align-items: stretch; }

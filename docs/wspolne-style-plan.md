@@ -271,10 +271,9 @@ i Ustawieniach niż zakładał pierwszy plan).
 - **Scena `play-buzzer-on` (2026-10-23):** runner zrzutów zgłasza „NIEGOTOWA” także
   na czystym `main` (nie po E23) — naprawić scenę/atrapę przy najbliższej pracy
   przy Przycisku.
-- **Ekran blokady (`blocking-overlay.css`)**: własne `.blocking-card`,
-  `.blocking-action(.is-accent)` (nowy przycisk „Używaj tutaj” z `main`) — przepiąć
-  na `.card--entry`/`.btn` razem z modułem `block-screen` (plik działa też bez
-  tokenów na TV — sprawdzić Tizen).
+- **Ekran blokady (`blocking-overlay.css`)**: wygląd karty i przycisków zrównany
+  z `.card`/`.btn`/`.btn.gold` (2026-10-23); klasy zostają, bo plik ładuje też
+  Wyświetlacz bez silnika. Do zrobienia: wspólny moduł `block-screen` (§6.2).
 
 - **Funkcje koloru (2026-10-23):** `hexToRgb`/`rgbToHex`/`normHex` w ustawieniach
   gry (wielkie litery, czarny przy błędzie) i znacznikach Eksploratora (małe
@@ -323,3 +322,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-23 | Nagłówek rynku = `.bar` | `mkt-head` → `.bar` (linia pod nagłówkiem jak w Grach/Bazach), `mkt-title`/`mkt-subtitle` → `.title`/`.hint`, karta listy `mkt-games-card` z wyglądem `.card`; `.bar .title { margin: 0 }` w silniku (nagłówek `h1` bez domyślnego marginesu). |
 | 2026-10-23 | Wiersz listy: rynek | `mkt-sent-row` („Moje wysłane”) → `.shareRow` (jak listy udostępniania, kontaktów, zadań); w pliku strony zostaje zawijanie. |
 | 2026-10-23 | Wybór koloru: jeden wygląd | `colorTopRow`, `colorHexField`, `colorPreview` (72 px), `sliders` (w ramce), `sliderRow`, `sLbl`, `sVal`, `rng` — z dwóch kopii (ustawienia gry, znaczniki Eksploratora) do silnika. Logika (`game-settings.js`, `tags-modal.js`) nadal osobna — do wspólnego modułu `pickers.js` (§6.2). |
+| 2026-10-23 | Komunikaty i ekran blokady | `.field-error` (silnik, `role=alert`): błędy logowania/resetu/potwierdzenia (`err`, `modal-err`) i pól ustawień gry (`gs-field-msg`). Status potwierdzenia/resetu → `.callout` (`role=status`). Ekran blokady: karta i przyciski jak `.card`/`.btn`/`.btn.gold` (tokeny z wartościami zapasowymi dla Wyświetlacza). |
