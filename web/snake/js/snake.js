@@ -3,16 +3,16 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T13403";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-23T13403";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T13403";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T13403";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-23T13403";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T13403";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-23T13403";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-23T13403";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-23T13403";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-23T13403";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T14540";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-23T14540";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-23T14540";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-23T14540";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-23T14540";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T14540";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-23T14540";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-23T14540";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-23T14540";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-23T14540";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";

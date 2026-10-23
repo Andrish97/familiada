@@ -8,15 +8,15 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T13403";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T13403";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T13403";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T14540";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T14540";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T14540";
 
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
   buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-23T13403";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-23T14540";
 
 
 const $ = (id) => document.getElementById(id);
