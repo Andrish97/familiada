@@ -1,6 +1,6 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-23T17045";
-import { t } from "../../translation/translation.js?v=v2026-10-23T17045";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T17045";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T17414";
+import { t } from "../../translation/translation.js?v=v2026-10-23T17414";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-23T17414";
 
 let modalSeq = 0;
 
@@ -28,7 +28,7 @@ function buildModal({
   const overlay = document.createElement("div");
   overlay.className = "overlay";
   if (overlayId) overlay.id = overlayId;
-  overlay.style.background = "var(--modal-scrim)";
+  overlay.classList.add("uni-overlay"); /* tło: .overlay.uni-overlay w components.css */
   // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
   // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
   // treść strony zamiast być małym oknem, patrz js/core/modal-sheet.js.

@@ -31,7 +31,6 @@
   ========================================================= */
 
   /* atrybut hidden ma wygrywać z display ustawianym niżej */
-  .polls-body [hidden]{ display: none !important; }
 
   /* A. Pasek stanu — pełna szerokość.
      Lewa: stan słowem + krótki opis. Prawa: WSZYSTKIE akcje; główna złota,
@@ -464,7 +463,7 @@
   .shareCols.is-locked > .pollSec :is(button, a, input){ pointer-events: none; }
 /* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20). */
   @media (hover: none) and (pointer: coarse) {
-    .tcHandle { display: none !important; }
+    .tcHandle { display: none; }
   }
 }
 

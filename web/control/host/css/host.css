@@ -168,7 +168,7 @@ html.landscape .pane2 {
 }
 
 .splitLine {
-    display: none!important
+    display: none
 }
 
 .p2Hint,.pane2::before {
@@ -448,7 +448,7 @@ div#cover2Logo {
 
 @media (prefers-reduced-motion:reduce) {
     .cover2,.p2Hint {
-        transition: none!important
+        transition: none
     }
 }
 

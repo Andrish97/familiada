@@ -179,11 +179,11 @@
     }
 
     .pipeline-node-dot { 
-      display: none !important; 
+      display: none; 
     }
 
     .pipeline-line {
-      display: block !important;
+      display: block;
       height: 4px;
       border-top: 1px solid var(--g-10);
       border-bottom: 1px solid var(--g-10);

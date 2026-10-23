@@ -1,11 +1,11 @@
 @layer page {
-  html, body { overflow:hidden!important; scrollbar-gutter:auto!important; }
+  html, body { overflow:hidden; scrollbar-gutter:auto; }
   #controlStage { position:fixed; inset:0; display:grid; grid-template-columns:minmax(0,1fr); gap:0; }
   #controlStage[data-test-mode="true"] { grid-template-columns:minmax(0,1fr) var(--control-sidebar-width); }
   #controlStagePanel { min-width:0; min-height:0; }
   #controlSurface { width:var(--control-surface-width); height:var(--control-surface-height); zoom:var(--control-scale); display:flex; flex-direction:column; }
   #controlSurface > .topbar { position:relative; inset:auto; flex:none; width:100%; box-sizing:border-box; }
-  #controlStage .wrap.wide { margin:16px!important; padding:0!important; max-width:none!important; width:var(--control-panel-width)!important; height:var(--control-panel-height)!important; min-height:0!important; display:flex; flex-direction:column; }
+  #controlStage .wrap.wide { margin:16px; padding:0; max-width:none; width:var(--control-panel-width); height:var(--control-panel-height); min-height:0; display:flex; flex-direction:column; }
   #controlStage .wrap.wide > .shell { flex:1; min-height:0; }
   #controlTestDevices { display:grid; grid-template-rows:repeat(3,minmax(0,1fr)); min-width:0; min-height:0; }
   #controlTestDevices[hidden] { display:none; }
@@ -24,5 +24,5 @@
 
   #controlStage .device-row a[aria-disabled="true"] { opacity:.45; pointer-events:none; }
 
-  body:not([data-control-step="devices_display"]) #btnFriends { display:none!important; }
+  body:not([data-control-step="devices_display"]) #btnFriends { display:none; }
 }

@@ -1,18 +1,34 @@
 /* Silnik stylów E23 — klasy pomocnicze (docs/silnik-stylow-projekt.md §4.3).
    Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.
-   [hidden] z !important: ukrycie wygrywa z każdym display strony i inline
-   (ważne deklaracje wcześniejszej warstwy biją późniejsze). */
-@layer utilities {
+   [hidden] i .hidden w warstwie states (ostatniej): ukrycie wygrywa z każdym
+   display strony bez flagi important; styli inline nie używamy (atrybut hidden). */
+@layer states {
   [hidden],
-  .hidden { display: none !important; }
+  .hidden { display: none; }
+}
+
+@layer utilities {
 
   .only-mobile { display: none; }
   @media (max-width: 600px) {
     .only-desktop { display: none; }
     .only-mobile { display: inline-flex; }
-    /* topbar: sekcje 1 i 3 pokazują długie etykiety */
-    :is(.topbar-section-1, .topbar-section-3) .only-desktop { display: inline !important; }
-    :is(.topbar-section-1, .topbar-section-3) .only-mobile { display: none !important; }
+  }
+  /* Widoczność zależna od miejsca — jedyne miejsce nadpisań .only-*: w tej
+     samej warstwie wygrywa większa specyficzność, bez flagi important. */
+  .games-bottom .only-desktop { display: inline; }              /* dolny pasek listy: o etykietach decyduje is-compact-icons */
+  .games-bottom.is-compact-icons .only-desktop { display: none; }
+  @media (max-width: 600px) {
+    :is(.topbar-section-1, .topbar-section-3) .only-desktop { display: inline; } /* topbar: długie etykiety */
+    :is(.topbar-section-1, .topbar-section-3) .only-mobile { display: none; }
+    .tabs-strip .only-desktop { display: none; }                 /* wypustki: krótkie nazwy */
+    .tabs-strip .only-mobile { display: inline; }
+    .baseShareLookup .btn .only-desktop { display: none; }
+  }
+  @media (max-width: 760px) {
+    /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
+    .topbar-mobile-panel .only-desktop { display: inline; }
+    .topbar-mobile-panel .only-mobile { display: none; }
   }
 
   .visually-hidden {

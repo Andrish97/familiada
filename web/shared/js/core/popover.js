@@ -42,6 +42,12 @@ export function placeDropdown(anchor, el) {
   });
 }
 
+/** Zdejmuje położenie ustawione przez placeDropdown (np. menu przechodzi do panelu telefonu). */
+export function clearPlacement(el) {
+  if (!el) return;
+  for (const prop of ["position", "left", "top", "right", "transform", "visibility", "pointer-events"]) el.style.removeProperty(prop);
+}
+
 /** Menu w punkcie (x, y), np. menu kontekstowe — przesunięte, żeby mieściło się w oknie. */
 export function placeAtPoint(el, x, y) {
   el.style.left = "-9999px";

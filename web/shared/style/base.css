@@ -7,9 +7,8 @@
    dopasowuje komponenty w swoim kontekście (.bar .btn) przy równej
    specyficzności — kaskada jak w dawnym base.css + games.css.
    Warstwa strony wygrywa z komponentami bez podbijania selektorów;
-   warstwa states (arkusz okna na telefonie) jest po stronie — stan wygrywa;
-   !important tylko tam, gdzie stan musi przebić styl inline (arkusz,
-   [hidden]). Tokeny (:root) są poza warstwami — strona nie nadpisuje
+   warstwa states (arkusz okna na telefonie, [hidden], ograniczony ruch) jest
+   po stronie — stan wygrywa. Bez flagi important i bez stylów inline. Tokeny (:root) są poza warstwami — strona nie nadpisuje
    tokenów na :root (własne zmienne ustawia na swoich elementach). */
 @layer reset, base, components, utilities, page, states;
 
@@ -143,14 +142,18 @@
   @media (hover: none) and (pointer: coarse) {
     [draggable="true"] { -webkit-user-drag: none; }
   }
+}
 
-  /* Ograniczony ruch: animacje i przejścia praktycznie natychmiastowe. */
+/* Ograniczony ruch: animacje i przejścia praktycznie natychmiastowe. Warstwa
+   states (ostatnia) wygrywa z regułami wszystkich wcześniejszych warstw bez
+   flagi important. */
+@layer states {
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
-      animation-duration: 1ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 1ms !important;
-      scroll-behavior: auto !important;
+      animation-duration: 1ms;
+      animation-iteration-count: 1;
+      transition-duration: 1ms;
+      scroll-behavior: auto;
     }
   }
 }

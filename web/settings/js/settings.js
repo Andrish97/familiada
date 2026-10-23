@@ -14,18 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T17045";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T17045";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T17045";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T17045";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T17045";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T17045";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T17045";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T17045";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T17045";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T17045";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T17045";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T17045";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T17414";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T17414";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T17414";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T17414";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack, setOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T17414";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T17414";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-23T17414";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T17414";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-23T17414";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-23T17414";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-23T17414";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-23T17414";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -36,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T17045";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-23T17414";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T17045";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T17045";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T17045";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T17045"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-23T17414";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-23T17414";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-23T17414";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-23T17414"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T17045";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-23T17414";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1071,10 +1071,10 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T17045"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T17414"/>
 
   <style>
     body{margin:0;padding:0}
@@ -1105,13 +1105,13 @@ async function openMaintenancePreview() {
 </html>`;
 
   frame.srcdoc = previewHtml;
-  overlay.style.display = "block";
+  setOverlayOpen(overlay, true);
   enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeMaintenancePreview });
 }
 
 function closeMaintenancePreview() {
   const overlay = document.getElementById("maintenancePreviewOverlay");
-  if (overlay) overlay.style.display = "none";
+  if (overlay) setOverlayOpen(overlay, false);
   exitModalSheet(overlay);
 }
 
@@ -2427,13 +2427,13 @@ async function openMarketPreview(id) {
   if (withdrawBtn) withdrawBtn.hidden = !isPublished;
   if (deleteBtn)   deleteBtn.hidden   = false; // zawsze widoczny
 
-  overlay.style.display = "";
+  setOverlayOpen(overlay, true);
   enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeMarketPreview });
 }
 
 function closeMarketPreview() {
   const overlay = document.getElementById("marketPreviewOverlay");
-  if (overlay) overlay.style.display = "none";
+  if (overlay) setOverlayOpen(overlay, false);
   exitModalSheet(overlay);
   marketPreviewId = null;
 }
@@ -2459,14 +2459,14 @@ function openRejectModal(id) {
   marketPreviewId = id;
   const overlay = document.getElementById("marketRejectOverlay");
   const note    = document.getElementById("marketRejectNote");
-  if (overlay) overlay.style.display = "";
+  if (overlay) setOverlayOpen(overlay, true);
   if (note) note.value = "";
   enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeRejectModal });
 }
 
 function closeRejectModal() {
   const overlay = document.getElementById("marketRejectOverlay");
-  if (overlay) overlay.style.display = "none";
+  if (overlay) setOverlayOpen(overlay, false);
   exitModalSheet(overlay);
 }
 
@@ -2573,8 +2573,8 @@ async function openRatersModal(gameId, title) {
   if (!overlay || !body) return;
   if (titleEl) titleEl.textContent = title || "Oceniający";
   body.innerHTML = "Ładowanie…";
-  overlay.style.display = "";
-  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: () => { overlay.style.display = "none"; exitModalSheet(overlay); } });
+  setOverlayOpen(overlay, true);
+  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: () => { setOverlayOpen(overlay, false); exitModalSheet(overlay); } });
   try {
     const res = await adminFetch(`/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
     if (!res.ok) throw new Error(await res.text());
@@ -4043,8 +4043,8 @@ function showCompose(defaults = {}) {
       skin: "oxide-dark",
       content_css: "dark",
       content_style: `
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.4; }
-        a { color: #ffeaa6 !important; }
+        body { background: #050914; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.4; }
+        a { color: #ffeaa6; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
         code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
@@ -4720,13 +4720,13 @@ function wireMarketplaceEvents() {
   document.getElementById("btnProducerRatingsRefresh")?.addEventListener("click", () => loadProducerRatings());
   document.getElementById("btnRatersClose")?.addEventListener("click", () => {
     const ov = document.getElementById("ratersOverlay");
-    if (ov) ov.style.display = "none";
+    if (ov) setOverlayOpen(ov, false);
     exitModalSheet(ov);
   });
   document.getElementById("ratersOverlay")?.addEventListener("click", e => {
     if (e.target !== e.currentTarget) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
-    e.currentTarget.style.display = "none";
+    setOverlayOpen(e.currentTarget, false);
     exitModalSheet(e.currentTarget);
   });
 
@@ -6962,8 +6962,8 @@ function wireEvents() {
         "778ca3", "Szary"
       ],
       content_style: `
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.4; }
-        a { color: #ffeaa6 !important; }
+        body { background: #050914; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.4; }
+        a { color: #ffeaa6; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
         code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
@@ -6979,7 +6979,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T17045");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-23T17414");
 
   const MC_PAGE_SIZE = 50;
 

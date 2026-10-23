@@ -103,8 +103,8 @@
     height: auto;
     padding: 0 0 8px;
     margin: 0;
-    background: none !important;
-    border: 0 !important;
+    background: none;
+    border: 0;
     pointer-events: auto;
   }
   .imgv-overlay.sheet-active .sheet-modal-body {

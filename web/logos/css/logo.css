@@ -86,8 +86,8 @@
 
   /* Edycja wymaga miejsca; próg zależy od viewportu, a nie od formatu urządzenia. */
   .le-compact #btnEdit,
-  .le-compact .le-edit-only{ display: none !important; }
-  html:not(.le-compact) .le-compact-only{ display: none !important; }
+  .le-compact .le-edit-only{ display: none; }
+  html:not(.le-compact) .le-compact-only{ display: none; }
   .le-compact #grid > .empty-state{ grid-column: 1 / -1; }
   .logoName{
     font-weight: 900;
@@ -300,7 +300,6 @@
   #fontPick{ position: relative; display:inline-flex; align-items:center; gap:8px; }
 
   /* Popover: FIXED, pozycję ustawia JS */
-  #fontPickPop[hidden]{ display:none !important; }
 
   #fontPickPop:not([hidden]){
     position: fixed;
@@ -358,7 +357,6 @@
   .pane{ height: 100%; min-height: 0; }
 
   /* Draw font picker popover */
-  #drawFontPickPop[hidden]{ display:none !important; }
   #drawFontPickPop #drawFontList{
     display:block;
     padding:6px;
@@ -457,18 +455,18 @@
 
   /* DRAW: kursor (JS przełącza klasy na #drawStageHost) */
   #drawStageHost.cur-select  canvas,
-  #drawStageHost.cur-select  #drawStage{ cursor: default !important; }
+  #drawStageHost.cur-select  #drawStage{ cursor: default; }
 
   #drawStageHost.cur-pan     canvas,
-  #drawStageHost.cur-pan     #drawStage{ cursor: grab !important; }
+  #drawStageHost.cur-pan     #drawStage{ cursor: grab; }
   #drawStageHost.cur-pan.down canvas,
-  #drawStageHost.cur-pan.down #drawStage{ cursor: grabbing !important; }
+  #drawStageHost.cur-pan.down #drawStage{ cursor: grabbing; }
 
   #drawStageHost.cur-cross   canvas,
-  #drawStageHost.cur-cross   #drawStage{ cursor: crosshair !important; }
+  #drawStageHost.cur-cross   #drawStage{ cursor: crosshair; }
 
   #drawStageHost.cur-none    canvas,
-  #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
+  #drawStageHost.cur-none    #drawStage{ cursor: none; }
 
   /* =========================================================
      DRAW toolbar (w editorToolbar) — toolGrid + separatory

@@ -276,7 +276,6 @@
     white-space: nowrap;
   }
   .games-bottom:has(.games-bottom-left):has(.games-bottom-right) { justify-content: space-between; }
-  .games-bottom .only-desktop { display: inline !important; }
 
   /* Wyszukiwanie po nazwie w lewej części dolnego paska (list-search.js):
      rośnie do 240 px, do drugiego rzędu spada dopiero poniżej minimum. */
@@ -334,7 +333,6 @@
   .games-bottom.has-more-start.has-more-end { mask-image: linear-gradient(to right, transparent, var(--mask-on) 28px, var(--mask-on) calc(100% - 28px), transparent); }
   /* Maska tworzy osobną warstwę — otwarte menu filtra trafiałoby pod siatkę. */
   .games-bottom:has(.ui-select.open) { mask-image: none; }
-  .games-bottom.is-compact-icons .only-desktop { display: none !important; }
   .games-bottom.is-compact-icons :is(.games-bottom-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn) {
     width: 36px;
     height: 36px;

@@ -4,8 +4,8 @@
 // Ekran: core/blocking-screen.js (ten sam co blokada zasobu). „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T17045";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-23T17045";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T17414";
+import { blockingScreen, setBlockingIcon, setBlockingOpen, isBlockingOpen } from "./blocking-screen.js?v=v2026-10-23T17414";
 
 
 export const PAGE_GUARD_ID = "pageGuard";
@@ -19,7 +19,7 @@ function ensureOverlay() {
     { key: "Login", i18n: "pageGuard.login", iconName: "person", accent: true },
   ]);
   window.addEventListener("i18n:lang", () => {
-    if (overlay.style.display !== "none") applyTranslations(overlay);
+    if (isBlockingOpen(overlay)) applyTranslations(overlay);
   });
   return overlay;
 }
@@ -54,11 +54,11 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
   setBlockingIcon(overlay, iconName);
 
   const back = overlay.querySelector("#pageGuardBack");
-  back.style.display = backHref ? "" : "none";
+  back.hidden = !backHref;
   back.onclick = backHref ? () => { location.href = backHref; } : null;
 
   const login = overlay.querySelector("#pageGuardLogin");
-  login.style.display = loginHref ? "" : "none";
+  login.hidden = !loginHref;
   login.onclick = loginHref ? () => { location.href = loginHref; } : null;
 
   overlay.dataset.kind = kind;
@@ -67,7 +67,7 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
   if (redirectHref) {
     const target = withLangParam(redirectHref);
     redirectTimer = setTimeout(() => {
-      if (overlay.style.display !== "none") window.location.replace(target);
+      if (isBlockingOpen(overlay)) window.location.replace(target);
     }, Math.max(0, redirectDelayMs));
   }
   applyTranslations(overlay);

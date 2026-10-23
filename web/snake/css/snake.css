@@ -38,7 +38,7 @@ body.snake-body {
 .snake-frame .layer-bg { z-index: 1; }
 .snake-frame .layer-base { z-index: 2; overflow: visible; }
 .snake-frame .layer-displays { z-index: 3; }
-.snake-frame svg circle { transition: none !important; }
+.snake-frame svg circle { transition: none; }
 
 /* Telefon i tablet: jak zwykły Wyświetlacz -- tło motywu na cały ekran
    (także pod wcięciem i zaokrąglonymi rogami), plansza 16:9 jak największa
@@ -60,7 +60,7 @@ body.snake-body {
     overflow: visible;
   }
   .snake-frame .layer-bg { position: fixed; inset: 0; width: auto; height: auto; }
-  .snake-desktop { display: none !important; }
+  .snake-desktop { display: none; }
 }
 
 .snake-note {

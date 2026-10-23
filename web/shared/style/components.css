@@ -700,6 +700,7 @@
     z-index: var(--z-overlay);
   }
   .overlay.contact-modal-overlay { background: var(--scrim-modal); }
+  .overlay.uni-overlay { background: var(--modal-scrim); } /* okna z core/modal.js */
 
   /* Formularz okna kontaktu — rytm kart formularzy: 14 px między polami,
      8 px etykieta → pole → podpowiedź. */
@@ -1157,10 +1158,10 @@
   .a2hsText b { color: var(--text); font-weight: 700; }
   .a2hsClose { width: 100%; min-height: 44px; }
   @media (display-mode: standalone) {
-    .a2hs { display: none !important; }
+    .a2hs { display: none; }
   }
   @supports (-webkit-touch-callout: none) {
-    html.webapp .fs-btn { display: none !important; }
+    html.webapp .fs-btn { display: none; }
   }
 
   /* ── Przełącznik segmentowy (radio w pigułkach): .toggle-group > label.toggle-item
@@ -1403,11 +1404,11 @@
     flex-shrink: 0;
   }
   .account-menu[hidden] { display: none; }
-  /* Konto w menu telefonu: !important przebija pozycję ustawianą inline
-     przez topbar-controller.js. */
+  /* Konto w menu telefonu (topbar-controller.js czyści pozycję menu
+     ustawioną przez placeDropdown). */
   .account-menu--inline {
-    position: static !important;
-    display: flex !important;
+    position: static;
+    display: flex;
     flex-direction: column;
     box-shadow: none;
     border: none;
@@ -1543,9 +1544,7 @@
       border-radius: 0;
       opacity: .8;
     }
-    .topbar-mobile-panel .only-desktop { display: inline !important; }
-    .topbar-mobile-panel .only-mobile { display: none !important; }
-    .topbar-mobile-hidden { display: none !important; }
+    .topbar-mobile-hidden { display: none; }
   }
   @media (min-width: 761px) {
     .topbar-mobile-forced .topbar-menu-toggle { position: relative; padding: 10px 12px; border-radius: var(--r-md); }
@@ -1580,7 +1579,7 @@
     border: 1px solid var(--line-strong);
     border-radius: var(--r-md);
   }
-  .topbar-mobile-group .account-menu--inline { display: contents !important; }
+  .topbar-mobile-group .account-menu--inline { display: contents; }
   .topbar-mobile-group .account-btn--mobile-label {
     display: flex;
     width: 100%;
@@ -2215,7 +2214,6 @@
   .shareList--scroll:not([hidden]) { display: flex; flex-direction: column; }
   .shareList--scroll > * { flex-shrink: 0; }
   @media (max-width: 600px) {
-    .baseShareLookup .btn .only-desktop { display: none !important; }
     .shareSelectedFull { display: none; }
     .shareSelectedShort { display: inline; }
   }
@@ -2417,8 +2415,6 @@
   @media (max-width: 600px) {
     .tabs-strip { gap: 0; }
     /* Krótkie nazwy zakładek na telefonie */
-    .tabs-strip .only-desktop { display: none !important; }
-    .tabs-strip .only-mobile { display: inline !important; }
     .tab-slot {
       flex: 1 1 max-content;
       justify-content: center;
@@ -2489,9 +2485,9 @@
      się od dołu nad całą stroną (js/core/modal-sheet.js). Warunek taki
      sam jak SHEET_MQ w modal-sheet.js. Poza arkuszem opakowania są
      przezroczyste dla układu. Warstwa `states` jest PO warstwie strony:
-     stan arkusza wygrywa ze zwykłymi regułami okien stron; strona nadpisuje
-     go tylko świadomie (!important w @layer page). !important tutaj: wymiary
-     okien ustawione inline. */
+     stan arkusza wygrywa ze zwykłymi regułami okien stron; strona zmienia
+     arkusz własną regułą w @layer states (bardziej szczegółową). Bez
+     flagi important — okna nie mają stylów inline (atrybut hidden, klasy). */
   .sheet-modal-top,
   .sheet-modal-head,
   .sheet-modal-actions,
@@ -2503,18 +2499,18 @@
     body.sheet-open { overflow: hidden; }
     body.sheet-open .footer { visibility: hidden; }
 
-    body.sheet-open :is(.overlay, .market-preview-overlay).modal--sheet:not(.sheet-active) { display: none !important; }
+    body.sheet-open :is(.overlay, .market-preview-overlay).modal--sheet:not(.sheet-active) { display: none; }
 
     body.sheet-open :is(.overlay, .market-preview-overlay).modal--sheet.sheet-active {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: var(--z-sheet) !important;
-      display: flex !important;
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-sheet);
+      display: flex;
       flex-direction: column;
       justify-content: flex-end;
       align-items: center;
-      padding: 0 !important;
-      background: var(--scrim-modal) !important;
+      padding: 0;
+      background: var(--scrim-modal);
       /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
       overflow: hidden;
       overflow: clip;
@@ -2524,12 +2520,12 @@
 
     .modal--sheet.sheet-active :is(.modal, .market-preview-card) {
       position: relative;
-      width: 100% !important;
-      max-width: 760px !important;
-      height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
+      width: 100%;
+      max-width: 760px;
+      height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
       min-height: 0;
-      max-height: none !important;
-      margin: 0 !important;
+      max-height: none;
+      margin: 0;
       border-radius: var(--r-sheet) var(--r-sheet) 0 0;
       border: 0;
       border-top: 1px solid var(--line);
@@ -2554,10 +2550,10 @@
     /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
        ekranu, żeby pole i przyciski zostały nad klawiaturą. */
     .modal--sheet.sheet-active.sheet-fit .modal {
-      height: auto !important;
+      height: auto;
       min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
       justify-content: flex-start;
-      max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
+      max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
     }
 
     /* Pasek do przeciągania (zamyka: przeciągnięcie w dół albo stuknięcie). */
@@ -2580,7 +2576,7 @@
     /* Tablet: niższy panel z bocznymi krawędziami. */
     @media (min-width: 601px) {
       .modal--sheet.sheet-active :is(.modal, .market-preview-card) {
-        height: min(88dvh, 920px) !important;
+        height: min(88dvh, 920px);
         border: 1px solid var(--line);
         border-bottom: 0;
       }
@@ -2626,7 +2622,7 @@
       border-bottom: 0;
     }
     .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) { flex-wrap: nowrap; }
-    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0 !important; }
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0; }
     /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
     .modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
       padding-top: 0;
@@ -2634,7 +2630,7 @@
     }
     .modal--sheet.sheet-active .sheet-modal-actions[hidden],
     .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
-      display: none !important;
+      display: none;
       padding: 0;
       margin: 0;
       border: 0;
@@ -2657,10 +2653,10 @@
        modal-sheet.js (headerSelectors) — ta sama lista tutaj. */
     .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
       position: static;
-      border: 0 !important;
+      border: 0;
       padding-bottom: 0;
-      margin-bottom: 8px !important;
-      background: transparent !important;
+      margin-bottom: 8px;
+      background: transparent;
     }
     .modal--sheet.sheet-active .sheet-modal-head > .mSub {
       margin: 0;
@@ -2677,16 +2673,16 @@
     .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
       position: sticky;
       top: 0;
-      background: var(--bg) !important;
-      border-bottom: 1px solid var(--line-strong) !important;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line-strong);
       padding-bottom: 14px;
-      margin-bottom: 12px !important;
+      margin-bottom: 12px;
       z-index: var(--z-local);
     }
     /* Gdy arkusz ma pasek akcji, jedyny separator jest pod nim. */
     .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle),
     .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
-      border-bottom: 0 !important;
+      border-bottom: 0;
     }
     .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) .mTitle {
       text-transform: uppercase;
@@ -2694,19 +2690,19 @@
     }
     /* Wyjściem z arkusza jest przycisk w topbarze — „✕” w nagłówku zbędny
        (tylko .sheet-active: okna z .modal--sheet bez przejęcia „Wstecz”
-       zachowują „✕”). !important: niektóre „✕” mają display z reguły #id. */
-    .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none !important; }
+       zachowują „✕”). */
+    .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
 
     /* Kontakt i Prywatność nie należą do widoku arkusza. */
     body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
-    body.sheet-open .contact-footer-entry { display: none !important; }
+    body.sheet-open .contact-footer-entry { display: none; }
 
     /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
        arkusza — zastępuje markę. */
     body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
     /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
     .topbar-sheet-back.sheet-back-active { display: inline-flex; }
-    body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none !important; }
+    body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
   }
 
   /* Okno kontaktu w arkuszu: treść zostaje kolumną z odstępem 14 px. */

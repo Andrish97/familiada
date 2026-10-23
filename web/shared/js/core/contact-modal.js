@@ -1,81 +1,14 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-23T17045";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-23T17045";
-import { icon, iconText } from "./icons.js?v=v2026-10-23T17045";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-23T17045";
-import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-23T17045";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-23T17414";
+import { isSheetViewport, enterModalSheet, exitModalSheet, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-23T17414";
+import { icon, iconText } from "./icons.js?v=v2026-10-23T17414";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-23T17414";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-23T17414";
 
 
 let modalEl = null;
 let isSubmitting = false;
 // Okno kontaktu zawsze korzysta ze wspólnego okna od dołu (modal-sheet.js).
 let usedSheetMode = false;
-
-// Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
-// wspólnych stron (patrz modal-sheet.js / css/base.css "Modal sheet
-// (mobile)"). Na stronach z main.wrap/.explorer (patrz openContactModal)
-// dostaje pełne traktowanie sheet -- ten sam mechanizm co inne rozbudowane
-// modale. Na pozostałych stronach (bez main.wrap/.explorer, np.
-// index.html/login.html) zostaje przy starym, samodzielnym fullscreenie
-// poniżej.
-const MOBILE_STYLE_ID = "contactModalMobileStyle";
-function ensureMobileStyle() {
-  if (document.getElementById(MOBILE_STYLE_ID)) return;
-  const style = document.createElement("style");
-  style.id = MOBILE_STYLE_ID;
-  style.textContent = `
-    #contactModalOverlay .contact-modal-topbar[hidden] { display: none !important; }
-    #contactModalOverlay .contact-modal-topbar { position: static; width: 100%; }
-    @media (max-width: 600px) {
-      #contactModalOverlay.overlay:not(.modal--sheet) {
-        padding: 0;
-        align-items: stretch;
-        grid-template-rows: auto minmax(0, 1fr);
-        background: var(--bg);
-      }
-      #contactModalOverlay.overlay:not(.modal--sheet) .modal {
-        width: 100%;
-        max-width: none;
-        height: 100%;
-        max-height: none;
-        border-radius: 0;
-        margin: 0;
-        min-height: 0;
-        background: var(--bg);
-        --under: var(--bg);
-        border: 0;
-        box-shadow: none;
-      }
-      #contactModalOverlay.overlay:not(.modal--sheet) .mHead { order: 0; flex: 0 0 auto; }
-      #contactModalOverlay.overlay:not(.modal--sheet) #cModalFormActions,
-      #contactModalOverlay.overlay:not(.modal--sheet) #cModalSuccessActions {
-        order: 1;
-        flex: 0 0 auto;
-        margin-top: 0;
-        padding-top: 0;
-        border-top: 0;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--line2);
-      }
-      #contactModalOverlay.overlay:not(.modal--sheet) #cModalForm,
-      #contactModalOverlay.overlay:not(.modal--sheet) #cModalSuccess {
-        order: 2;
-        flex: 1 1 auto;
-        min-height: 0;
-      }
-      #contactModalOverlay.overlay:not(.modal--sheet) .mHead {
-        position: sticky;
-        top: 0;
-        background: var(--under);
-        padding: 0 0 14px;
-        border-bottom: 1px solid var(--line2);
-        z-index: 1;
-      }
-      #contactModalOverlay.overlay:not(.modal--sheet) #cModalX { display: none; }
-      #contactModalOverlay.overlay:not(.modal--sheet) .mTitle { text-transform: uppercase; letter-spacing: .1em; }
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 function buildModalHtml() {
   return `
@@ -118,9 +51,9 @@ function buildModalHtml() {
           <div id="cModalFileList" class="contact-files"></div>
         </div>
         <div id="cModalCaptcha" class="contact-captcha" hidden></div>
-        <div id="cModalError" class="contact-error" style="display:none" role="alert"></div>
+        <div id="cModalError" class="contact-error" hidden role="alert"></div>
       </div>
-      <div id="cModalSuccess" class="uni-body contact-success" style="display:none">
+      <div id="cModalSuccess" class="uni-body contact-success" hidden>
         <div class="contact-success-icon">${icon("check")}</div>
         <div class="contact-success-title" id="cModalSuccessTitle"></div>
         <div class="contact-success-ticket" id="cModalSuccessTicket"></div>
@@ -129,7 +62,7 @@ function buildModalHtml() {
         <button class="btn sm" id="cModalClose" type="button"></button>
         <button class="btn sm gold" id="cModalSubmit" type="button"></button>
       </div>
-      <div id="cModalSuccessActions" class="uni-foot modal-actions" style="display:none">
+      <div id="cModalSuccessActions" class="uni-foot modal-actions" hidden>
         <button class="btn sm gold" id="cModalDone" type="button"></button>
       </div>
     </div>`;
@@ -174,11 +107,10 @@ function setSubmitBusy(busy) {
 
 function ensureModal() {
   if (modalEl) return;
-  ensureMobileStyle();
   modalEl = document.createElement("div");
   modalEl.id = "contactModalOverlay";
   modalEl.className = "overlay contact-modal-overlay";
-  modalEl.style.display = "none";
+  modalEl.hidden = true;
   modalEl.innerHTML = buildModalHtml();
   const modal = modalEl.querySelector(":scope > .modal");
   modal?.classList.add("uni-modal");
@@ -202,7 +134,7 @@ function ensureModal() {
   document.getElementById("cModalTicket")?.addEventListener("input", () => {
     const ticket = document.getElementById("cModalTicket")?.value.trim();
     const subjectField = document.getElementById("cModalSubjectField");
-    if (subjectField) subjectField.style.display = ticket ? "none" : "";
+    if (subjectField) subjectField.hidden = !!ticket;
   });
 
   document.getElementById("cModalAttachments")?.addEventListener("change", (e) => {
@@ -223,7 +155,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-23T17045");
+    const { sb } = await import("./supabase.js?v=v2026-10-23T17414");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -241,12 +173,12 @@ export async function openContactModal(opts = {}) {
   ensureModal();
   applyLabels();
 
-  document.getElementById("cModalForm").style.display = "";
-  document.getElementById("cModalSuccess").style.display = "none";
-  document.getElementById("cModalFormActions").style.display = "";
-  document.getElementById("cModalSuccessActions").style.display = "none";
+  document.getElementById("cModalForm").hidden = false;
+  document.getElementById("cModalSuccess").hidden = true;
+  document.getElementById("cModalFormActions").hidden = false;
+  document.getElementById("cModalSuccessActions").hidden = true;
   const errEl = document.getElementById("cModalError");
-  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
+  if (errEl) { errEl.hidden = true; errEl.textContent = ""; }
 
   const fileInput = document.getElementById("cModalAttachments");
   if (fileInput) fileInput.value = "";
@@ -257,11 +189,11 @@ export async function openContactModal(opts = {}) {
   if (opts.ticket && ticketInp) {
     ticketInp.value = opts.ticket;
     const subjectField = document.getElementById("cModalSubjectField");
-    if (subjectField) subjectField.style.display = "none";
+    if (subjectField) subjectField.hidden = true;
   } else if (ticketInp) {
     ticketInp.value = "";
     const subjectField = document.getElementById("cModalSubjectField");
-    if (subjectField) subjectField.style.display = "";
+    if (subjectField) subjectField.hidden = false;
   }
 
   // Okno od dołu (telefon/tablet dotykowy) leży nad całą stroną, jak inne
@@ -271,8 +203,7 @@ export async function openContactModal(opts = {}) {
   modalEl.classList.add("modal--sheet");
   document.body.appendChild(modalEl);
 
-  modalEl.style.display = "grid";
-  document.body.style.overflow = "hidden";
+  setOverlayOpen(modalEl, true);
   enterModalSheet(modalEl, { onClose: closeContactModal });
   applyLabels();
   await prefillEmail();
@@ -283,8 +214,7 @@ export async function openContactModal(opts = {}) {
 
 export function closeContactModal() {
   if (!modalEl) return;
-  modalEl.style.display = "none";
-  document.body.style.overflow = "";
+  setOverlayOpen(modalEl, false);
   exitModalSheet(modalEl);
 }
 
@@ -298,14 +228,14 @@ async function submitContact() {
   const lang    = getUiLang();
   const errEl   = document.getElementById("cModalError");
 
-  const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.style.display = ""; } };
+  const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.hidden = false; } };
 
   if (!email || !email.includes("@")) { showErr(t("contact.modal.errEmail") || "Podaj poprawny e-mail."); return; }
   if (!message || message.length < 5) { showErr(t("contact.modal.errMessage") || "Wiadomość jest za krótka."); return; }
   if (!ticket && !subject)            { showErr(t("contact.modal.errSubject") || "Podaj temat."); return; }
 
   setSubmitBusy(true);
-  if (errEl) { errEl.style.display = "none"; }
+  if (errEl) { errEl.hidden = true; }
 
   try {
     // Convert attachments to base64
@@ -356,10 +286,10 @@ async function submitContact() {
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "send_failed");
 
-    document.getElementById("cModalForm").style.display = "none";
-    document.getElementById("cModalFormActions").style.display = "none";
-    document.getElementById("cModalSuccess").style.display = "";
-    document.getElementById("cModalSuccessActions").style.display = "";
+    document.getElementById("cModalForm").hidden = true;
+    document.getElementById("cModalFormActions").hidden = true;
+    document.getElementById("cModalSuccess").hidden = false;
+    document.getElementById("cModalSuccessActions").hidden = false;
     const ticketEl = document.getElementById("cModalSuccessTicket");
     if (ticketEl) {
       ticketEl.textContent = json.ticket_number

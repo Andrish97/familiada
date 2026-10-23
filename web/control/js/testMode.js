@@ -1,7 +1,7 @@
-import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-23T17045';
-import { t } from '../../shared/translation/translation.js?v=v2026-10-23T17045';
-import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-23T17045';
-import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-23T17045';
+import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-23T17414';
+import { t } from '../../shared/translation/translation.js?v=v2026-10-23T17414';
+import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-23T17414';
+import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-23T17414';
 
 
 export function currentControlGeometry(testMode = false, { width = innerWidth, height = innerHeight } = {}) {
@@ -47,9 +47,8 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
         for (const event of ['pointerdown', 'keydown', 'input', 'change']) {
           doc.addEventListener(event, onActivity, { passive: true, capture: true });
         }
-        const css = doc.createElement('style');
-        css.textContent = '#btnFullscreen{display:none!important}';
-        doc.head.append(css);
+        // pełny ekran nie ma sensu w podglądzie trybu testowego
+        doc.getElementById('btnFullscreen')?.remove();
       });
       slot.append(frame);
       sidebar.append(slot);

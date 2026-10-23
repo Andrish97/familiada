@@ -49,8 +49,12 @@ body {
     border-color: rgba(215,255,61,.55)
 }
 
-.hidden {
-    display: none!important
+/* Ukryte ekrany i karty QR (qr.js: classList "hidden"); #id — żeby wygrać
+   z regułami #gameScreen bez. */
+.hidden,
+#qrScreen.hidden,
+#gameScreen.hidden {
+    display: none
 }
 
 .qr-screen {
@@ -202,7 +206,7 @@ body {
 }
 
 svg circle,svg rect {
-    transition: none!important
+    transition: none
 }
 /* Powolne odsłanianie ekranu po pierwszym stanie gry/renderze. */
 [data-skel-step] {

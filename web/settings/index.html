@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T17045"/>
+  <meta name="app-version" content="v2026-10-23T17414"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,25 +15,25 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17045"/>
-  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-23T17045" crossorigin="use-credentials"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17414"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-23T17414" crossorigin="use-credentials"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17045" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-23T17045"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17414" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-23T17414"/>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17045" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-23T17045" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17414" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-23T17414" defer></script>
 
 </head>
 <body class="page-fit settings-body settings-locked no-footer-line skel-body">
@@ -995,7 +995,7 @@
       </div>
 
       <!-- ASSIGN REPORT MODAL -->
-      <div class="market-preview-overlay modal--sheet" id="assignReportModal" hidden style="z-index:1100">
+      <div class="market-preview-overlay modal--sheet" id="assignReportModal" hidden>
         <div class="market-preview-card" style="max-width:480px;width:92vw">
           <div class="mHead" style="margin-bottom:14px">
             <div style="font-size:15px;font-weight:700">Przydziel zgłoszenie</div>
@@ -1017,7 +1017,7 @@
       </div>
 
     <!-- Modal: powód odrzucenia -->
-    <div class="overlay modal--sheet" id="marketRejectOverlay" style="display:none">
+    <div class="overlay modal--sheet" id="marketRejectOverlay" hidden>
       <div class="modal">
         <div class="mHead">
           <div class="mTitle">Odrzuć zgłoszenie</div>
@@ -1033,8 +1033,8 @@
     </div>
 
     <!-- Raters modal -->
-    <div class="overlay modal--sheet" id="ratersOverlay" style="display:none">
-      <div class="modal" style="max-width:480px;width:94vw">
+    <div class="overlay modal--sheet" id="ratersOverlay" hidden>
+      <div class="modal modal--narrow">
         <div class="mHead" style="margin-bottom:16px">
           <div class="mTitle" id="ratersTitle">Oceniający</div>
           <button class="btn sm" id="btnRatersClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
@@ -1044,7 +1044,7 @@
     </div>
 
     <!-- Modal: podgląd gry z marketplace -->
-    <div class="overlay modal--sheet" id="marketPreviewOverlay" style="display:none">
+    <div class="overlay modal--sheet" id="marketPreviewOverlay" hidden>
       <div class="modal modal-wide">
         <div class="mHead" style="align-items:flex-start">
           <div>
@@ -1066,8 +1066,8 @@
     </div>
 
     <!-- Maintenance preview modal -->
-    <div class="overlay modal--sheet" id="maintenancePreviewOverlay" style="display:none;">
-      <div class="modal" style="max-width:720px;width:94vw;max-height:90vh;">
+    <div class="overlay modal--sheet" id="maintenancePreviewOverlay" hidden>
+      <div class="modal modal--medium">
         <div class="mHead">
           <div class="mTitle">Podgląd</div>
           <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>

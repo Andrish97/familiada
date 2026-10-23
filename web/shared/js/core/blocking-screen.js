@@ -5,8 +5,8 @@
 // resource-lock.js (zasób edytowany gdzie indziej). Identyfikatory części:
 // <id>Icon, <id>Title, <id>Msg, <id><key> (przyciski).
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T17045";
-import { icon } from "./icons.js?v=v2026-10-23T17045";
+import { t } from "../../translation/translation.js?v=v2026-10-23T17414";
+import { icon } from "./icons.js?v=v2026-10-23T17414";
 
 /**
  * Nakładka o danym id (tworzona raz). actions: [{ key, i18n, iconName, accent }].
@@ -37,15 +37,17 @@ export function blockingScreen(id, actions = [], { prefix = id } = {}) {
 export function setBlockingIcon(overlay, name) {
   const el = overlay.querySelector(".blocking-icon");
   el.innerHTML = icon(name);
-  el.firstElementChild?.setAttribute("style", "width:100%;height:100%");
 }
 
-/** Pokazuje/chowa nakładkę i blokuje przewijanie strony pod nią. */
+/** Pokazuje/chowa nakładkę i blokuje przewijanie strony pod nią
+ *  (klasy .is-open i html.blocking-open w blocking-overlay.css). */
 export function setBlockingOpen(overlay, open) {
-  overlay.style.display = open ? "flex" : "none";
-  for (const el of [document.documentElement, document.body]) {
-    if (!el) continue;
-    el.style.overflow = open ? "hidden" : "";
-    el.style.touchAction = open ? "none" : "";
-  }
+  overlay.classList.toggle("is-open", open);
+  const anyOpen = !!document.querySelector(".blocking-overlay.is-open");
+  document.documentElement.classList.toggle("blocking-open", anyOpen);
+}
+
+/** Czy nakładka jest pokazana. */
+export function isBlockingOpen(overlay) {
+  return !!overlay?.classList.contains("is-open");
 }

@@ -19,7 +19,6 @@
     overflow: hidden;
     margin: 0;
   }
-  .connect-device-inner-card[hidden] { display: none !important; }
   .connect-device-card-header {
     flex: 0 0 auto;
     margin: 0 0 8px;

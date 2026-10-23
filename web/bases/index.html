@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T17045"/>
+  <meta name="app-version" content="v2026-10-23T17414"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,21 +14,21 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17045" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17045"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17045"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T17414" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T17414"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T17414"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-23T17045"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-23T17414"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-23T17045" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T17045" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17045" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-23T17414" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T17414" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T17414" defer></script>
 
 </head>
 
@@ -109,7 +109,7 @@
     </section>
 
     <!-- Modal: udostępnienia -->
-    <div class="overlay modal--sheet" id="shareOverlay" style="display:none;">
+    <div class="overlay modal--sheet" id="shareOverlay" hidden>
       <div class="modal share-uni shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle" data-sheet-local-actions>
         <div class="uni-head">
           <div class="mTitle" id="shareModalTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
@@ -146,7 +146,7 @@
     </div>
 
     <!-- Modal: import JSON -->
-    <div class="overlay modal--sheet" id="importOverlay" style="display:none;">
+    <div class="overlay modal--sheet" id="importOverlay" hidden>
       <div class="modal">
         <div class="mHead">
           <div class="mTitle" data-i18n="bases.importModal.title">Import</div>
@@ -190,7 +190,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T17045"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T17414"></script>
 
 </body>
 </html>

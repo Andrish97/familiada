@@ -3,13 +3,13 @@
 // (dwuklik / podwójne stuknięcie), menu kontekstowe (PPM / przytrzymanie)
 // i sortowanie klikiem w nagłówek.
 
-import { selectionClear, selectionSetSingle, selectionToggle, selectionRange, setSort } from "../state.js?v=v2026-10-23T17045";
-import { renderList, renderSelection, LIST_COLUMNS } from "../render.js?v=v2026-10-23T17045";
-import { openFolderFromList, editQuestion } from "../commands.js?v=v2026-10-23T17045";
-import { showContextMenu } from "../context-menu.js?v=v2026-10-23T17045";
-import { attachMarquee } from "./marquee.js?v=v2026-10-23T17045";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-23T17045";
-import { isModKey } from "../platform.js?v=v2026-10-23T17045";
+import { selectionClear, selectionSetSingle, selectionToggle, selectionRange, setSort } from "../state.js?v=v2026-10-23T17414";
+import { renderList, renderSelection, LIST_COLUMNS } from "../render.js?v=v2026-10-23T17414";
+import { openFolderFromList, editQuestion } from "../commands.js?v=v2026-10-23T17414";
+import { showContextMenu } from "../context-menu.js?v=v2026-10-23T17414";
+import { attachMarquee } from "./marquee.js?v=v2026-10-23T17414";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-23T17414";
+import { isModKey } from "../platform.js?v=v2026-10-23T17414";
 
 const ROW = ".row[data-key]";
 

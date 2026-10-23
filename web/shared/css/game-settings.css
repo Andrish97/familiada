@@ -105,7 +105,7 @@
   }
 
   .gs-actionbar-msg.hidden {
-    display: none !important;
+    display: none;
   }
 
   /* ===== DŹWIĘKI ===== */
@@ -120,7 +120,6 @@
   .sfx-vol,
   .sound-volume-slider { width: 90px; }
 
-  .sfx-add-btn[hidden] { display: none !important; }
 
   .sfx-foot {
     display: flex;
@@ -526,6 +525,6 @@
   /* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20;
      dawniej shared/css/base.css). */
   @media (hover: none) and (pointer: coarse) {
-    .roundsOrderHandle { display: none !important; }
+    .roundsOrderHandle { display: none; }
   }
 }
