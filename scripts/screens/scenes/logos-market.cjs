@@ -239,7 +239,7 @@ module.exports = [
     steps: [openModal("#bigPreview", "#previewOverlay"), wait(400)] },
   { id: "logos-market-editor-phone", category: CAT, title: "Edytor logo na telefonie — blokada urządzenia", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: [...TEXT_ED, "web/shared/js/core/device-guard.js"], ready: () => true, devices: ["phone"], settle: 1500 },
   { id: "logos-market-editor-busy", category: CAT, title: "Edytor logo — logo edytowane w innej karcie (blokada)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: [...TEXT_ED, "web/shared/js/core/resource-lock.js"], ready: () => true, devices: EDITOR_DEVICES, settle: 1500,
-    db: (db) => { db.rpc.acquire_edit_lock_mode = { ok: false, error: "locked", blocker_type: "logo", blocker_context: "logo-editor" }; } },
+    db: (db) => { db.rpc.acquire_edit_locks = { ok: false, error: "locked", blocker_type: "logo", blocker_context: "logo-editor", resource: { type: "logo", id: IDS.logoText } }; } },
 
   // ================= Edytor logo — rysunek =================
   { id: "logos-market-draw-empty", category: CAT, title: "Edytor rysunku — nowe puste logo", path: `/logos/editor/draw/?id=${EMPTY_DRAW}`, sources: DRAW_ED, ready: () => !!window.__drawFabric, devices: EDITOR_DEVICES, settle: 1000, db: addEmptyLogos },

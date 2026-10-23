@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gpBBbcPuWAmVbfiaYPWQzDtSDm75dcc94hYeqTAIKmjeqHiPEPTmLTJENJwDYCP
+\restrict U0SvyE3bfXn2YjNsYgWuq6f9GbKhLJUcFco8GEBQ4qRFxo7JCYV7YgeljOhx2pg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4670,16 +4670,16 @@ begin
   if coalesce(trim(p_tab_id), '') = '' then
     return jsonb_build_object('ok', false, 'error', 'missing_tab_id');
   end if;
-  if p_mode not in ('exclusive', 'shared') then  -- 316:
+  if p_mode not in ('exclusive', 'shared') then
     return jsonb_build_object('ok', false, 'error', 'unknown_mode');
   end if;
-  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then  -- 316: + logos
+  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then
     return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
   end if;
   v_exists := case p_resource_type
     when 'game' then exists (select 1 from public.games where id = p_resource_id)
     when 'logo' then exists (select 1 from public.user_logos where id = p_resource_id)
-    when 'logos' then p_resource_id = v_uid  -- 316: id = użytkownik
+    when 'logos' then p_resource_id = v_uid
     when 'base' then exists (select 1 from public.question_bases where id = p_resource_id)
     when 'base_question' then exists (select 1 from public.qb_questions where id = p_resource_id)
     when 'base_folder' then exists (select 1 from public.qb_categories where id = p_resource_id)
@@ -4693,7 +4693,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'forbidden');
   end if;
 
-  -- 316: serializacja zajmowania w obrębie zasobu; logo i pula logo użytkownika
+  -- serializacja zajmowania w obrębie zasobu; logo i pula logo użytkownika
   -- dzielą jeden klucz, bo zasady zgodności łączą je ze sobą.
   if p_resource_type = 'logo' then
     select user_id into v_owner from public.user_logos where id = p_resource_id;
@@ -4705,7 +4705,7 @@ begin
   end if;
   perform pg_advisory_xact_lock(hashtextextended(v_key, 0));
 
-  -- 316: wygasłe trzymania innych kart tego zasobu znikają (zwalniają klucz
+  -- wygasłe trzymania innych kart tego zasobu znikają (zwalniają klucz
   -- wyłączny); wygasłe nie przeszkadzają też w edit_lock_blockers.
   delete from public.edit_locks
    where resource_type = p_resource_type
@@ -4721,8 +4721,8 @@ begin
   if found then
     return jsonb_build_object('ok', false, 'error', 'locked',
       'holder_user_id', v_row.holder_user_id, 'acquired_at', v_row.acquired_at,
-      'blocker_type', v_row.resource_type, 'blocker_mode', v_row.mode,
-      'blocker_context', v_row.holder_context);
+      'blocker_type', v_row.resource_type, 'blocker_id', v_row.resource_id,  -- 479: + blocker_id
+      'blocker_mode', v_row.mode, 'blocker_context', v_row.holder_context);
   end if;
 
   insert into public.edit_locks
@@ -4760,12 +4760,14 @@ DECLARE
   v_n int := 0;
 BEGIN
   BEGIN
-    FOR r IN SELECT DISTINCT x->>'type' AS type, (x->>'id')::uuid AS id
+    FOR r IN SELECT DISTINCT ON (x->>'type', (x->>'id')::uuid)
+                    x->>'type' AS type, (x->>'id')::uuid AS id,
+                    coalesce(nullif(x->>'mode', ''), p_mode) AS mode  -- 479: tryb per zasób
                FROM jsonb_array_elements(coalesce(p_resources, '[]'::jsonb)) x
-              ORDER BY 1, 2 LOOP
-      v_res := public.acquire_edit_lock_mode(r.type, r.id, p_tab_id, p_context, p_mode);
+              ORDER BY x->>'type', (x->>'id')::uuid LOOP
+      v_res := public.acquire_edit_lock_mode(r.type, r.id, p_tab_id, p_context, r.mode);
       IF NOT coalesce((v_res->>'ok')::boolean, false) THEN
-        v_fail := v_res || jsonb_build_object('resource', jsonb_build_object('type', r.type, 'id', r.id));
+        v_fail := v_res || jsonb_build_object('resource', jsonb_build_object('type', r.type, 'id', r.id, 'mode', r.mode));
         RAISE EXCEPTION 'edit_locks:refused';
       END IF;
       v_n := v_n + 1;
@@ -7690,6 +7692,15 @@ END; $$;
 
 
 --
+-- Name: edit_lock_absent_grace(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."edit_lock_absent_grace"() RETURNS interval
+    LANGUAGE "sql" IMMUTABLE
+    AS $$ select interval '25 seconds' $$;
+
+
+--
 -- Name: edit_locks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7914,6 +7925,54 @@ begin
     updated_at = now();
 
   return query select true, now() + interval '1 hour', 'pending'::text, v_final_intent;
+end;
+$$;
+
+
+--
+-- Name: expire_edit_locks_absent("text", "uuid", "text"[], "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."expire_edit_locks_absent"("p_resource_type" "text", "p_resource_id" "uuid", "p_present_tabs" "text"[], "p_tab_id" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_key text;
+  v_owner uuid;
+  v_n int := 0;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then
+    return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
+  end if;
+  if not public.can_edit_locked_resource(p_resource_type, p_resource_id) then
+    return jsonb_build_object('ok', false, 'error', 'forbidden');
+  end if;
+
+  -- ten sam klucz serializacji co acquire_edit_lock_mode
+  if p_resource_type = 'logo' then
+    select user_id into v_owner from public.user_logos where id = p_resource_id;
+    v_key := 'logos:' || coalesce(v_owner::text, p_resource_id::text);
+  elsif p_resource_type = 'logos' then
+    v_key := 'logos:' || p_resource_id::text;
+  else
+    v_key := p_resource_type || ':' || p_resource_id::text;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_key, 0));
+
+  delete from public.edit_locks
+   where resource_type = p_resource_type
+     and resource_id = p_resource_id
+     and holder_tab_id is distinct from p_tab_id
+     and not (holder_tab_id = any (coalesce(p_present_tabs, '{}'::text[])))
+     and heartbeat_at < now() - public.edit_lock_absent_grace();
+  get diagnostics v_n = row_count;
+
+  return jsonb_build_object('ok', true, 'removed', v_n);
 end;
 $$;
 
@@ -16413,7 +16472,8 @@ begin
   delete from public.edit_locks
   where resource_type = p_resource_type
     and resource_id = p_resource_id
-    and holder_tab_id = p_tab_id;
+    and holder_tab_id = p_tab_id
+    and holder_user_id = auth.uid();  -- 479: tylko własne
 
   return jsonb_build_object('ok', true);
 end;
@@ -24607,5 +24667,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gpBBbcPuWAmVbfiaYPWQzDtSDm75dcc94hYeqTAIKmjeqHiPEPTmLTJENJwDYCP
+\unrestrict U0SvyE3bfXn2YjNsYgWuq6f9GbKhLJUcFco8GEBQ4qRFxo7JCYV7YgeljOhx2pg
 

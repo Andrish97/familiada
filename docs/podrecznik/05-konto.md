@@ -56,7 +56,7 @@ Nazwa użytkownika powstaje automatycznie z adresu e-mail; możesz ją zmienić 
 - *Adres jest już zarejestrowany* — serwis wyświetli „Konto już istnieje. Przełączam na
   logowanie.” Zaloguj się albo odzyskaj hasło (→ 5.7).
 
-![Konto czeka na potwierdzenie — wysłać link ponownie?](zrzut:people-login-email-pending)
+![Rejestracja w toku — wysłać wiadomość ponownie?](zrzut:people-login-email-pending)
 ![Adres jest już zarejestrowany](zrzut:people-login-email-registered)
 
 ## 5.3 Logowanie i wylogowanie
@@ -88,8 +88,8 @@ Wybierz [Wejdź jako gość] na stronie *Logowanie*. Konto gościa:
 
 Serwis co jakiś czas przypomina, że konto gościa zostanie usunięte, i proponuje [Migruj teraz].
 
-![Konto gościa — zachęta do zapisania danych](zrzut:people-account-guest)
-![Jak zapisać dane gościa](zrzut:people-account-guest-info)
+![Ustawienia konta gościa — „Zapisz swoje dane” i „Usuń konto”](zrzut:people-account-guest)
+![Okno „Konto gościa” — ważne informacje i jak zachować dane](zrzut:people-account-guest-info)
 
 **Jak zachować dane gościa** — zamień konto gościa na zwykłe konto. Gry, bazy pytań,
 logo i inne pliki zostaną zachowane.

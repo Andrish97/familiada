@@ -31,8 +31,8 @@ The "Sharing" card offers two ways:
 
 **Anonymous** — for anyone who gets the link:
 
-- "Voting link" with the [Copy link] and [Open] buttons (it opens the poll in a new tab),
-- a QR code to scan with a phone; [Enlarge QR code] shows it full screen.
+- [Copy link] copies the voting link, and [Open] opens the poll in a new tab,
+- a QR code to scan with a phone — click it to show it full screen.
 
 Voters are anonymous — you only see the number of votes. People can vote once per browser.
 
@@ -170,7 +170,7 @@ with the [Play] button (→ 17). You can view the results in [Preview] in *My ga
 to "Poll".
 
 ![A finished poll — final points](zrzut:polls-ready-text)
-![Results in the game preview](zrzut:games-preview-poll)
+![Game preview — the "Poll" view with votes](zrzut:games-preview-poll)
 
 - [Restart] opens a new poll for the same game — the existing votes and results
   will be deleted.

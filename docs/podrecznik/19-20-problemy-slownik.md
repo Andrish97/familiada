@@ -33,9 +33,20 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 - **Nie mogę edytować gry** → ankieta jest otwarta lub zatrzymana, gra jest otwarta w innym
   miejscu albo trwa jej rozgrywka → przerwij lub zamknij ankietę, zamknij inne okno z tą grą,
   zakończ rozgrywkę (→ 7.5).
-- **„Ta gra jest otwarta gdzie indziej.”** → gra jest otwarta w innej karcie lub na innym
-  urządzeniu (edytor, ustawienia, ankieta, panel sterowania) → zamknij tamto okno i spróbuj
-  ponownie.
+- **„Zajęte w innym miejscu”** (np. „Ta gra jest otwarta gdzie indziej.”, „To logo jest właśnie
+  edytowane…”) → gra, logo albo baza są otwarte w innej karcie, na innym urządzeniu albo u
+  współpracownika (edytor, ustawienia, ankieta, panel sterowania) → zamknij tamto okno.
+  Strony nie trzeba odświeżać: sama sprawdza zasób i wczyta się, gdy się zwolni. Po zwykłym
+  zamknięciu tamtej karty dzieje się to od razu, a gdy karta zniknęła bez zamknięcia (awaria
+  przeglądarki, uśpiony komputer lub telefon, brak sieci) — po około 30 sekundach. Karta w tle
+  (inne okno, zminimalizowana przeglądarka) zasobu nie oddaje.
+- **„Utracono blokadę”** → ta karta przez dłuższą chwilę nie miała połączenia z serwisem (np. po
+  uśpieniu komputera), a w tym czasie zasób przejęła inna karta → odśwież stronę.
+- **„Gra w toku” w ustawieniach gry** → rozgrywka w panelu sterowania nie została zakończona →
+  zakończ ją w panelu albo wybierz [Zakończ rozgrywkę i otwórz ustawienia]; bez tego blokada
+  rozgrywki wygasa po godzinie bezczynności (→ 16.1).
+
+![Zajęte w innym miejscu](zrzut:games-editor-locked-busy)
 - **Odpowiedź się nie zapisuje** → zawiera znaki, których nie pokaże Wyświetlacz (np. emotki),
   albo jest za długa → usuń te znaki; odpowiedź może mieć do 17 znaków (→ 7.3).
 - **Import pliku nie działa** → plik nie jest grą z serwisu albo jest uszkodzony → użyj pliku
