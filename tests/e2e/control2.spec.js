@@ -1019,7 +1019,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
-    await expect(page.locator('.device-row:has(input[name="soundSource"][value="display"]) .device-opt-check-hint').last())
+    await expect(page.locator('.device-row:has(input[name="soundSource"][value="display"]) .hint').last())
       .toContainText("bez tego start gry będzie zablokowany");
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
 
