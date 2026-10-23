@@ -97,7 +97,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (started && !sessionStarted) {
       sessionStarted = true;
       network.start();
-      transportSnapshotLogged = true;
+      // Bez kanału na starcie stan transportu zapisze onDirectReady.
+      transportSnapshotLogged = directConnected;
       if (directConnected) {
         sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
       } else {
@@ -241,9 +242,13 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
             was_discarded: incident.wasDiscarded,
             error_class: incident.errorClass,
           });
+          transportSnapshotLogged = true;
         }
         directIncident = null;
-      } else if (!transportSnapshotLogged) {
+      }
+      // Kanał gotowy chwilę po starcie gry (krótka przerwa bez nadrabiania)
+      // też musi zostawić ślad, że urządzenie jedzie na postgres_changes.
+      if (!transportSnapshotLogged) {
         transportSnapshotLogged = true;
         sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
       }
@@ -307,6 +312,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         if (status === "SUBSCRIBED" && active) {
           console.info("[device-realtime] SUBSCRIBED");
           readiness.joined();
+          setTimeout(() => {
+            if (channel === directChannel && active && !readiness.ready) {
+              console.warn("[device-realtime] brak potwierdzenia PostgreSQL po 10 s; działa transport awaryjny");
+            }
+          }, 10_000);
         }
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           readiness.reset();
