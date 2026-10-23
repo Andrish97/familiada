@@ -1545,33 +1545,6 @@
     min-width: 0;
   }
 
-  /* TinyMCE toolbar - 2 lines in mail compose */
-  .mail-compose-pane .tox-toolbar {
-    height: auto;
-    min-height: 76px;
-  }
-  .mail-compose-pane .tox-toolbar__group {
-    flex-wrap: wrap;
-  }
-  .mail-compose-pane .tox-editor-header {
-    position: static;
-  }
-  .tox-statusbar {
-    display: none;
-  }
-  .tox-tinymce {
-    border-radius: var(--r-sm);
-    overflow: hidden;
-  }
-  .tox-tinymce-aux {
-    z-index: 10000;
-  }
-  .tox-toolbar__overflow {
-    display: block;
-    position: absolute;
-    z-index: 10001;
-  }
-
   /* Modal preview - below topbar (arkusz na telefonie ma własne położenie z silnika) */
   .overlay:where(:not(.sheet-active)) {
     position: fixed;
@@ -2012,3 +1985,15 @@
     }
   }
 }
+
+/* TinyMCE (edytor maila): biblioteka wstrzykuje własny CSS bez warstw, który
+   wygrywa z każdą warstwą — nadpisania są więc poza warstwami, z selektorami
+   mocniejszymi niż skórka edytora (zamiast flagi important). */
+.mail-compose-pane .tox .tox-toolbar { height: auto; min-height: 76px; } /* pasek w dwóch wierszach */
+.mail-compose-pane .tox .tox-toolbar__group { flex-wrap: wrap; }
+.mail-compose-pane .tox .tox-editor-header { position: static; }
+.tox.tox-tinymce .tox-statusbar { display: none; }
+.tox.tox-tinymce { border-radius: var(--r-sm); overflow: hidden; }
+.tox.tox-tinymce-aux { z-index: 10000; }
+.tox.tox-tinymce .tox-toolbar__overflow,
+.tox.tox-tinymce-aux .tox-toolbar__overflow { display: block; position: absolute; z-index: 10001; }

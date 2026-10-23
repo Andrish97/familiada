@@ -415,6 +415,7 @@ export function initDrawEditor(ctx) {
       canvas.defaultCursor = def;
       canvas.hoverCursor = hover;
       canvas.moveCursor = hover;
+      canvas.freeDrawingCursor = def; // pędzel/gumka: bez kursora (kropka), jak klasa cur-none
       canvas.upperCanvasEl.style.cursor = "";
     };
 
