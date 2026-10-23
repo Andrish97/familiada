@@ -137,7 +137,7 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
-  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "sectionNew": "Komu udostępnić", "share": "Udostępnij", "shareN": "Udostępnij ({n})"},
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "sectionNew": "Komu udostępnić", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij", "shareN": "Udostępnij ({n})"},
   shareSections: {
     subscribers: "Subskrybenci",
     subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",

@@ -137,7 +137,7 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
-  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "sectionNew": "Кому поширити", "share": "Поширити", "shareN": "Поширити ({n})"},
+  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "sectionNew": "Кому поширити", "lookup": "E-mail або ім’я користувача", "share": "Поширити", "shareN": "Поширити ({n})"},
   shareSections: {
     subscribers: "Підписники",
     subscribersSub: "Ще без запрошення — вибери, кого запросити.",

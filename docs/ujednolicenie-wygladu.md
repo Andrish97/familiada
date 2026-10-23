@@ -11,7 +11,9 @@ uprawnienia) myliła to, co już udostępnione, z tym, co udostępniamy teraz.
 - **Bez stopki.** Okno zamyka tylko ✕ w nagłówku (na telefonie także Wstecz
   i uchwyt arkusza) — jak okna bez akcji potwierdzającej. Żadnego „Anuluj”.
 - **Jedna sekcja „Komu udostępnić”:** pole „nazwa lub e-mail” i lista
-  znajomych do zaznaczenia razem; pod listą jeden przycisk **Udostępnij**
+  znajomych do zaznaczenia razem, ale z osobnymi podpisami („E-mail lub
+  nazwa użytkownika”, „Znajomi” z przyciskami listy), żeby było widać, że
+  druga część to znajomi (uwaga użytkownika 2026-10-23); pod listą jeden przycisk **Udostępnij**
   (licznik odbiorców w etykiecie, gdy jest ich więcej niż jeden: „Udostępnij (3)”),
   aktywny, gdy jest komu. W Bazach obok niego przełącznik uprawnienia
   (Może edytować / Tylko podgląd) — jedno uprawnienie dla wszystkich nowych

@@ -137,7 +137,7 @@ const en = {
       contactBtn: "Contact",
     },
   },
-  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "sectionNew": "Share with", "share": "Share", "shareN": "Share ({n})"},
+  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "sectionNew": "Share with", "lookup": "Email or username", "share": "Share", "shareN": "Share ({n})"},
   shareSections: {
     subscribers: "Subscribers",
     subscribersSub: "Not invited yet — pick who to invite.",

@@ -117,10 +117,13 @@
             <!-- Jedna sekcja „Komu udostępnić”: wpisany adres i zaznaczeni znajomi
                  idą jednym przyciskiem z jednym uprawnieniem (decyzja użytkownika 2026-10-23). -->
             <section class="shareSection shareSection--new" data-section="new">
-              <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="baseSharePanel.sectionNew">Komu udostępnić</h2><div id="baseShareBulkActions"></div></div>
+              <h2 class="shareSectionTitle" data-i18n="baseSharePanel.sectionNew">Komu udostępnić</h2>
+              <!-- Dwie podpisane części: adres i znajomi (uwaga użytkownika 2026-10-23). -->
+              <div class="shareSubHeading"><div class="uni-label" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</div></div>
               <div class="baseShareLookup">
                 <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
               </div>
+              <div class="shareSectionHeading shareSubHeading"><div class="uni-label" data-i18n="contacts.sections.friend">Znajomi</div><div id="baseShareBulkActions"></div></div>
               <div id="baseShareFriends" class="shareList shareList--scroll"></div>
               <div class="shareNewActions">
                 <div id="shareRole" class="baseShareRoleSlot"></div>
