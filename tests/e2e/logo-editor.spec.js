@@ -443,7 +443,7 @@ test.describe("tryb Rysunek", () => {
     await L.createNew(page, "Draw", name);
     for (const k of ["r", "o", "l", "p", "u", "s", "t", "v", "h", "b", "e", "[", "]"]) await page.keyboard.press(k);
     await page.keyboard.press("r");
-    await expect(page.locator("#tShapes")).toHaveClass(/\bon\b/);
+    await expect(page.locator("#tShapes")).toHaveAttribute("aria-pressed", "true");
     const b = await L.stage(page);
     await L.drag(page, b.x + 100, b.y + 100, b.x + 300, b.y + 250);
     await page.keyboard.press("f");
