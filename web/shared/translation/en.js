@@ -1464,7 +1464,6 @@ const en = {
       prepared: {
         title: "Prepared",
         hintTop: "The game is ready when:",
-        hintBottom: "Each answer at least {min} points, at most {sum} per question.",
       },
     },
     rules: {

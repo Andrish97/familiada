@@ -1467,7 +1467,6 @@ const pl = {
       prepared: {
         title: "Preparowana",
         hintTop: "Gra będzie gotowa, gdy:",
-        hintBottom: "Każda odpowiedź co najmniej {min} pkt, suma w pytaniu najwyżej {sum}.",
       },
     },
     rules: {
