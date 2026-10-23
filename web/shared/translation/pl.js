@@ -1,4 +1,8 @@
 const pl = {
+  adminReports: {
+    "authorDeleted": "konto usunięte",
+    "authorDeletedTitle": "Autor usunął konto {date}"
+  },
   pollSharePanel: {
     "anonymous": "Anonimowo",
     "recipients": "Odbiorcy",

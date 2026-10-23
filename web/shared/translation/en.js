@@ -1,4 +1,8 @@
 const en = {
+  adminReports: {
+    "authorDeleted": "account deleted",
+    "authorDeletedTitle": "The author deleted their account on {date}"
+  },
   pollSharePanel: {
     "anonymous": "Anonymous",
     "recipients": "Recipients",

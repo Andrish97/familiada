@@ -1,4 +1,8 @@
 const uk = {
+  adminReports: {
+    "authorDeleted": "акаунт видалено",
+    "authorDeletedTitle": "Автор видалив акаунт {date}"
+  },
   pollSharePanel: {
     "anonymous": "Анонімно",
     "recipients": "Одержувачі",
