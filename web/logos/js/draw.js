@@ -338,7 +338,7 @@ export function initDrawEditor(ctx) {
     });
     const precise = tool === TOOL.SELECT || tool === TOOL.ERASER;
     canvas.perPixelTargetFind = precise;
-    canvas.targetFindTolerance = precise ? 10 : 0;
+    canvas.setTargetFindTolerance(precise ? 10 : 0); // Fabric 7: przypisanie nie zmienia bufora trafień
     if (!selecting) canvas.discardActiveObject();
     if (tool !== TOOL.SHAPES || currentShape !== "polygon") clearPolyDraft();
     if (tool === TOOL.BRUSH) applyBrushStyle();
@@ -576,6 +576,8 @@ export function initDrawEditor(ctx) {
     o.transparentCorners = false;
     o.cornerColor = "#ffffff";
     o.cornerStrokeColor = "#2f6bff";
+    // Fabric 7 szuka uchwytów po kluczach oCoords: przeliczyć po podmianie controls
+    o.setCoords();
   }
 
   function startShape(ev) {
@@ -1428,9 +1430,10 @@ export function initDrawEditor(ctx) {
   function eraseAt(opt) {
     const size = settings.ERASER.size;
     const prevTol = canvas.targetFindTolerance;
-    canvas.targetFindTolerance = Math.max(10, size * 2);
-    const target = opt.target || canvas.findTarget(opt.e)?.target;
-    canvas.targetFindTolerance = prevTol;
+    canvas.setTargetFindTolerance(Math.max(10, size * 2));
+    // findTarget w trakcie zdarzenia zwraca wynik zapamiętany przy starej tolerancji
+    const target = opt.target || canvas.searchPossibleTargets(canvas.getObjects(), canvas.getScenePoint(opt.e)).target;
+    canvas.setTargetFindTolerance(prevTol);
     if (!target || target === polyPreview) return;
     canvas.remove(target);
     canvas.requestRenderAll();

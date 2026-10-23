@@ -649,7 +649,15 @@ test.describe("tryb Rysunek", () => {
     await page.mouse.click(b.x + 200, b.y + 150);
     await page.keyboard.type("AB");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30); // koniec edycji
-    await page.mouse.click(b.x + 210, b.y + 170); // zaznacz tekst (narzędzie Tekst)
+    // zaznacz tekst (narzędzie Tekst); wyśrodkowany napis Fabric 7 przy pisaniu trzyma środek, nie lewą krawędź
+    const mid = await page.evaluate(() => {
+      const f = window.__drawFabric;
+      const c = f.upperCanvasEl.getBoundingClientRect();
+      const p = f.getObjects()[0].getCenterPoint();
+      const v = f.viewportTransform;
+      return { x: c.left + v[4] + p.x * v[0], y: c.top + v[5] + p.y * v[3] };
+    });
+    await page.mouse.click(mid.x, mid.y);
     await page.fill("#cSz", "120");
     await page.locator("#cSz").press("Enter");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30);
@@ -696,8 +704,9 @@ test.describe("tryb Rysunek", () => {
       const f = window.__drawFabric;
       const c = f.upperCanvasEl.getBoundingClientRect();
       const o = f.getObjects()[0];
-      const r = o.getBoundingRect();
-      return { x: c.left + r.left + (o.strokeWidth * f.getZoom()) / 2, y: c.top + r.top + r.height / 2 };
+      const r = o.getBoundingRect(); // Fabric 7: współrzędne sceny -> ekran przez viewportTransform
+      const v = f.viewportTransform;
+      return { x: c.left + v[4] + (r.left + o.strokeWidth / 2) * v[0], y: c.top + v[5] + (r.top + r.height / 2) * v[3] };
     });
     await page.mouse.click(hit.x, hit.y);
     await page.keyboard.press("ArrowRight");
