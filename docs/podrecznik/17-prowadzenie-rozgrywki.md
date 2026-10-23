@@ -50,6 +50,13 @@ szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 ![Strona *Podłącz urządzenie*](zrzut:connect-device)
 ![Po wpisaniu kodu — nazwa gry i właściciel do sprawdzenia](zrzut:play-connect-confirm)
 
+Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie albo na innym sprzęcie
+(np. po ponownym zeskanowaniu kodu) od razu przejmuje jego rolę, a poprzedni ekran pokazuje
+„Urządzenie otwarto w innym miejscu”. Aby wrócić do poprzedniego ekranu, kliknij na nim
+[Używaj tutaj] — wtedy wyłączy się ten drugi.
+
+![Poprzedni ekran Przycisku — urządzenie otwarto w innym miejscu](zrzut:device-lease-replaced@phone-landscape)
+
 [Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
 nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości

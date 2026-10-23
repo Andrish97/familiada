@@ -89,12 +89,11 @@ Each item: **symptom** → possible cause → what to do.
   time and do not switch apps. If you use physical buttons or play without a host
   tablet, tick the matching option in the panel (→ 17.1). When you return to the page, the device
   reconnects on its own within a few seconds.
-- **The QR code was scanned several times** → on the same phone, the newest tab works, and the older ones
-  show a waiting message → go back to the same tab instead of scanning again; close any
-  tabs you do not need.
-- **"This device is waiting"** → the same device (buttons, host screen or
-  Display) is open on another phone or in another browser → close that tab
-  or wait a dozen or so seconds until it disconnects.
+- **The QR code was scanned several times** → the screen opened last works, the earlier ones show
+  "This device was opened elsewhere" → use the newest screen and close the tabs you do not need.
+- **"This device was opened elsewhere"** → the same device (buzzer, host screen or Display) was
+  opened in another tab, browser or on other hardware → this screen does not return to the game by
+  itself; to use it here, click [Use here] — the other screen switches off.
 - **"Turn your phone sideways…"** on the buzzer → the buzzer works in landscape → turn
   the phone and switch off the screen rotation lock.
 - **"Not available on a phone"** → the page needs a tablet or a computer (e.g. logo editors,
