@@ -159,7 +159,6 @@
     background: #ffd766;
   }
 
-
   .qList {
     box-sizing: border-box;
     width: 100%;
@@ -246,7 +245,6 @@
       width: 100%
   }
 
-
   .cardBody {
       display: flex;
       flex-direction: column;
@@ -308,7 +306,6 @@
       /* min-width: 180px; */
   }
 
-
   .summaryQMode {
       font-size: 11px;
       font-weight: 600;
@@ -321,19 +318,6 @@
   .msg {
       font-size: 12px
   }
-
-
-  .msg-pill {
-    align-items: center;
-    border-radius: var(--r-pill);
-    padding: 4px 10px;
-    border: 1px solid rgba(148,163,184,.4);
-    background: rgba(15,23,42,.75);
-    max-width: 360px;
-    min-height: 20px;
-    display: flex;
-  }
-  .msg-pill:empty { display: none; }
 
   .radio {
       gap: 8px;
@@ -382,7 +366,6 @@
       opacity: .3;
       pointer-events: none;
   }
-
 
   .dot {
     transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
@@ -446,7 +429,6 @@
       justify-content: center;
       padding: 8px 0
   }
-
 
   .uni-qr img {
     background: #fff;

@@ -323,13 +323,6 @@
     flex-wrap: wrap;
   }
 
-  .mkt-added-badge {
-    font-size: 13px;
-    font-weight: 900;
-    color: #7ef0a2;
-    opacity: .9;
-  }
-
   /* ===== Submit modal ===== */
   .mkt-lang-picker {
     display: flex;

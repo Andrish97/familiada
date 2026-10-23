@@ -92,10 +92,9 @@
  },
  "web/control/css/control.css": {
   "important": 1,
-  "colorLiteral": 17,
+  "colorLiteral": 15,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 24,
-  "unusedClass": 1
+  "sharedDuplicate": 24
  },
  "web/control/css/control2.css": {
   "important": 2,
@@ -269,7 +268,7 @@
   "zIndexLiteral": 4
  },
  "web/marketplace/css/marketplace.css": {
-  "colorLiteral": 14,
+  "colorLiteral": 13,
   "mediaWidth": 1,
   "sharedDuplicate": 3
  },
@@ -308,7 +307,7 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 77,
+  "colorLiteral": 76,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
   "sharedDuplicate": 7,

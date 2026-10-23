@@ -692,7 +692,7 @@ function renderPreviewQuestions(container, payload) {
     <div class="q-block">
       <div class="q-text">${escHtml(q.text)}</div>
       <div class="answers-grid">
-        ${(q.answers || []).map(a => `<span class="ans-chip">${escHtml(a.text)} <span class="ans-pts">${escHtml(a.fixed_points || "")}</span></span>`).join('')}
+        ${(q.answers || []).map(a => `<span class="tag tag--muted">${escHtml(a.text)} <span class="ans-pts">${escHtml(a.fixed_points || "")}</span></span>`).join('')}
       </div>
     </div>
   `).join('');
