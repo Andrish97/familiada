@@ -12,10 +12,10 @@
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 16,
-  "colorLiteral": 40,
+  "colorLiteral": 39,
   "mediaWidth": 7,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 16,
+  "sharedDuplicate": 17,
   "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
@@ -223,7 +223,7 @@
   "rootTokens": 12,
   "mediaWidth": 1,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 3
+  "sharedDuplicate": 4
  },
  "web/logos/editor/draw/index.html": {
   "inlineStyleHtml": 8
@@ -465,14 +465,14 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 213,
+  "sharedDuplicate": 216,
   "unusedClass": 2
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 246,
+  "sharedDuplicate": 248,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

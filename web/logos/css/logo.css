@@ -846,11 +846,6 @@
      dawało przyciskom różne odcienie (jak jeden gradient na całej liście).
   ========================================================= */
   .ctxPop{
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    padding: 6px;
-    box-shadow: 0 24px 60px var(--k-70);
     color: var(--text);
   }
   .shapePickerPop{

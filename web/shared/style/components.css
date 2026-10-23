@@ -1026,21 +1026,17 @@
     font-size: 12px;
     opacity: .7;
   }
-  .ui-select-menu {
+  .ui-select-menu{
     position: absolute;
     top: calc(100% + 6px);
     left: 0;
     right: 0;
-    min-width: max-content; /* przycisk z samą ikoną — menu szerokie na etykiety */
+    min-width: max-content;
+    /* przycisk z samą ikoną — menu szerokie na etykiety */
     z-index: var(--z-popover);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    padding: 6px;
     display: none;
     max-height: 260px;
     overflow: auto;
-    box-shadow: var(--shadow-popover);
   }
   .ui-select.open .ui-select-menu {
     display: block;
@@ -1271,20 +1267,24 @@
     place-items: center;
     touch-action: manipulation;
   }
-  /* Menu kryjące: półprzezroczyste tła nakładały się przy przerysowaniach. */
+  /* Wygląd każdego menu (jeden): język, konto, „Więcej”, lista wyboru,
+     menu kontekstowe, wysuwane panele paska rysowania, panel hamburgera.
+     Kryjące tło: półprzezroczyste nakładały się przy przerysowaniach. */
+  :is(.lang-menu, .account-menu, .nav-more-dropdown, .ui-select-menu, .context-menu, .ctxPop, .topbar-mobile-panel) {
+    --under: var(--surface-1);
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-menu);
+  }
   .lang-menu,
   .account-menu {
     position: fixed;
     display: grid;
     gap: 4px;
-    padding: 8px;
     min-width: 180px;
-    background: var(--surface-1);
-    --under: var(--surface-1);
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
     z-index: var(--z-menu);
-    box-shadow: var(--shadow-menu);
     animation: popover-in var(--dur-fast) var(--ease-out);
   }
   .lang-menu { max-width: calc(100vw - 24px); }

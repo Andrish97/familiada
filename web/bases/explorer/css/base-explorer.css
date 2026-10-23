@@ -346,19 +346,14 @@
       bottom: 0
   }
 
-  .context-menu {
-      position: fixed;
-      z-index: 9999;
-      min-width: 220px;
-      /* niskie okno: menu nie wychodzi poza ekran, przewija się */
+  .context-menu{
+    position: fixed;
+    z-index: 9999;
+    min-width: 220px;
+    /* niskie okno: menu nie wychodzi poza ekran, przewija się */
       max-height: calc(100vh - 16px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding: 6px;
-      border-radius: var(--r-md);
-      background: #141414; /* kryjące — patrz uwaga przy .lang-menu w base.css */
-      border: 1px solid var(--w-14);
-      box-shadow: 0 12px 30px var(--k-40)
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .cm-sep {
@@ -1359,7 +1354,7 @@
     }
     .cm-kbd { display: none; }
 
-    .context-menu {
+    .context-menu{
       max-width: calc(100vw - 16px);
       max-height: 60vh;
       overflow-y: auto;
