@@ -308,11 +308,11 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 114,
+  "colorLiteral": 77,
   "mediaWidth": 6,
   "zIndexLiteral": 17,
   "sharedDuplicate": 7,
-  "unusedClass": 17
+  "unusedClass": 14
  },
  "web/settings/index.html": {
   "inlineStyleHtml": 153
@@ -324,7 +324,7 @@
   "inlineStyleJs": 33
  },
  "web/settings/js/settings.js": {
-  "inlineStyleJs": 304
+  "inlineStyleJs": 303
  },
  "web/settings/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
@@ -467,15 +467,15 @@
   "important": 38,
   "mediaWidth": 13,
   "zIndexLiteral": 3,
-  "sharedDuplicate": 201,
+  "sharedDuplicate": 202,
   "unusedClass": 3
  },
  "web/shared/style/flat.css": {
   "important": 47,
   "mediaWidth": 13,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 231,
-  "unusedClass": 8
+  "sharedDuplicate": 232,
+  "unusedClass": 7
  },
  "web/shared/style/layout.css": {
   "important": 2,
@@ -485,7 +485,7 @@
  "web/shared/style/utilities.css": {
   "important": 3,
   "sharedDuplicate": 12,
-  "unusedClass": 5
+  "unusedClass": 4
  },
  "web/shared/translation/translation.js": {
   "inlineStyleJs": 9

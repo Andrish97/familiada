@@ -1620,6 +1620,8 @@
     vertical-align: middle;
   }
   .badge:empty { display: none; }
+  /* Liczba elementów (nie powiadomienie): neutralna. */
+  .badge--muted { background: var(--w-8); border-color: transparent; color: var(--text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
 
   .tag {
     display: inline-flex;

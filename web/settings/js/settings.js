@@ -2145,34 +2145,34 @@ function clearChildren(el) {
 
 function createPill(label, className) {
   const span = document.createElement("span");
-  span.className = `mail-pill ${className || ""}`.trim();
+  span.className = `tag tag--upper ${className || "tag--muted"}`.trim();
   span.textContent = String(label || "—");
   return span;
 }
 
 function queueStatusPillClass(statusRaw) {
   const status = String(statusRaw || "").toLowerCase();
-  if (status === "pending") return "mail-pill-status-pending";
-  if (status === "sending") return "mail-pill-status-sending";
-  if (status === "failed") return "mail-pill-status-failed";
-  return "mail-pill-status-default";
+  if (status === "pending") return "tag--gold";
+  if (status === "sending") return "tag--info";
+  if (status === "failed") return "tag--bad";
+  return "tag--muted";
 }
 
 function logLevelPillClass(levelRaw) {
   const level = String(levelRaw || "").toLowerCase();
-  if (level === "error") return "mail-pill-level-error";
-  if (level === "warn") return "mail-pill-level-warn";
-  if (level === "info") return "mail-pill-level-info";
-  if (level === "debug") return "mail-pill-level-debug";
-  return "mail-pill-level-default";
+  if (level === "error") return "tag--bad";
+  if (level === "warn") return "tag--warn";
+  if (level === "info") return "tag--info";
+  if (level === "debug") return "tag--muted";
+  return "tag--muted";
 }
 
 function logFunctionPillClass(fnRaw) {
   const fn = String(fnRaw || "").toLowerCase();
-  if (fn === "mail-worker") return "mail-pill-fn-worker";
-  if (fn === "send-mail") return "mail-pill-fn-send-mail";
-  if (fn === "send-email") return "mail-pill-fn-send-email";
-  return "mail-pill-fn-default";
+  if (fn === "mail-worker") return "tag--gold";
+  if (fn === "send-mail") return "tag--ok";
+  if (fn === "send-email") return "tag--info";
+  return "tag--muted";
 }
 
 function updateMailCategoryHighlights() {
@@ -2285,7 +2285,7 @@ function renderLogRows(rows) {
     const tdLevel = document.createElement("td");
     tdLevel.appendChild(
       isSkipped
-        ? createPill("pominięty", "mail-pill-event-skipped")
+        ? createPill("pominięty", "tag--ok")
         : createPill(String(row.level || "—"), logLevelPillClass(row.level))
     );
 
@@ -5939,9 +5939,9 @@ function fmtSessionStatus(r) {
     : SESSION_STATUS_LABELS[r.effective_status] || [r.effective_status || "—", "off"];
   const errCount = Number(r.error_count) || 0;
   const wrap = document.createElement("span");
-  wrap.style.cssText = "display:inline-flex;gap:6px;align-items:center";
+  wrap.className = "cluster";
   const badge = document.createElement("span");
-  badge.className = `session-status session-status--${kind}`;
+  badge.className = `tag ${({ live: "tag--info", done: "tag--ok", err: "tag--bad" })[kind] || "tag--muted"}`;
   badge.textContent = label;
   wrap.appendChild(badge);
   if (errCount > 0) {

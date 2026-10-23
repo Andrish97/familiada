@@ -1923,18 +1923,6 @@
   @media (pointer: coarse) { .row.tree-row, .tree-row { min-height: 36px; } }
   .tree-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .6; }
   .tree-dots { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
-  .tree-count {
-    flex: 0 0 auto;
-    min-width: 26px;
-    padding: 1px 8px;
-    border-radius: var(--r-pill);
-    background: var(--w-8);
-    font-size: 11px;
-    font-weight: 400;
-    text-align: center;
-    opacity: .75;
-    font-variant-numeric: tabular-nums;
-  }
   /* Okno: drzewo w jednej karcie (jak .shareSection); wyniki wyszukiwania bez wcięć. */
   .moveList {
     max-height: min(420px, 55vh);

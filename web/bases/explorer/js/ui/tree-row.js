@@ -41,5 +41,5 @@ export function treeRowInner({ lines = [], toggle, iconName, label, path = "", e
     + `<span class="tree-ico">${icon(iconName, { className: "list-ico" })}</span>`
     + `<span class="tree-text"><span class="tree-name title-text">${esc(label)}</span>${path ? `<span class="tree-path movePath">${esc(path)}</span>` : ""}</span>`
     + extra
-    + (count == null ? "" : `<span class="tree-count">${count}</span>`);
+    + (count == null ? "" : `<span class="badge badge--muted">${count}</span>`);
 }

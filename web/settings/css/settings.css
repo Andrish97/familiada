@@ -819,80 +819,6 @@
     color: var(--accent);
   }
 
-  .mail-pill{
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 8px;
-    border-radius: var(--r-pill);
-    border: 1px solid var(--w-14);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    line-height: 1.1;
-    background: var(--w-8);
-  }
-
-  .mail-pill-status-pending{
-    border-color: var(--g-35);
-    background: var(--g-10);
-    color: #ffe6a4;
-  }
-
-  .mail-pill-status-sending{
-    border-color: rgba(124,192,255,.45);
-    background: rgba(124,192,255,.14);
-    color: #cbe7ff;
-  }
-
-  .mail-pill-status-failed{
-    border-color: rgba(255,138,138,.45);
-    background: rgba(255,120,120,.14);
-    color: #ffc3c3;
-  }
-
-  .mail-pill-level-info{
-    border-color: rgba(124,192,255,.45);
-    background: rgba(124,192,255,.14);
-    color: #cbe7ff;
-  }
-
-  .mail-pill-level-warn{
-    border-color: var(--g-35);
-    background: var(--g-10);
-    color: #ffe6a4;
-  }
-
-  .mail-pill-level-error{
-    border-color: rgba(255,138,138,.45);
-    background: rgba(255,120,120,.14);
-    color: #ffc3c3;
-  }
-
-  .mail-pill-level-debug{
-    border-color: rgba(181,157,255,.45);
-    background: rgba(181,157,255,.14);
-    color: #dfd2ff;
-  }
-
-  .mail-pill-fn-send-mail{
-    border-color: rgba(124,255,188,.42);
-    background: rgba(124,255,188,.12);
-    color: #c9ffe7;
-  }
-
-  .mail-pill-fn-send-email{
-    border-color: rgba(124,192,255,.45);
-    background: rgba(124,192,255,.14);
-    color: #cbe7ff;
-  }
-
-  .mail-pill-fn-worker{
-    border-color: var(--g-35);
-    background: var(--g-10);
-    color: #ffe6a4;
-  }
-
   .mail-table-wrap{
     border: 1px solid var(--w-14);
     border-radius: var(--r-md);
@@ -951,12 +877,6 @@
 
   .mail-level-warn td{
     background: var(--g-10);
-  }
-
-  .mail-pill-event-skipped{
-    border-color: rgba(160,210,160,.45);
-    background: rgba(120,200,120,.12);
-    color: #b8f0b8;
   }
 
   .mail-event-skipped td{
@@ -2183,20 +2103,6 @@
 
   /* ============================================================ */
   /* Status rozgrywki w statystykach — kolorowa etykieta zamiast emotek */
-  .session-status {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-    white-space: nowrap;
-    border: 1px solid var(--w-25);
-    background: var(--w-4);
-    color: rgba(255,255,255,.6);
-  }
-  .session-status--live { background: rgba(96,165,250,.1); border-color: rgba(96,165,250,.35); color: #60a5fa; }
-  .session-status--done { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.3); color: #4ade80; }
-  .session-status--err  { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); color: #f87171; }
   .session-status-errors { color: #fbbf24; font-size: 12px; white-space: nowrap; }
 
   /* Operational presence before maintenance; matches existing settings cards. */
