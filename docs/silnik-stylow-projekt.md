@@ -479,9 +479,18 @@ strony (np. `:not(:disabled)`, `:where()`, usunięcie martwej reguły).
     zrzuty bazowe z worktree sprzed zmiany, `run.cjs --styles`, `compare.cjs`
     — różnice obliczonych stylów pokazują przyczynę każdej różnicy pikseli.
 
+17. **Zwinięte odcienie i promienie (2026-10-23, §11.2–3).** Silnik: rodziny
+    `--w-4/8/14/25`, `--k-20/40/70`, `--g-10/35/60` (≥ .8 → `--accent`),
+    żółty/ciemniejsze złoto/niebieski fokus scalone ze złotem, oznaczenia stanu
+    jedną parą tło .14 / obrys .40; podłoża `--bg`, `--surface-1`,
+    `--surface-2` (#0b1020, kryjące), `--surface-modal`; promienie
+    `--r-sm 8`, `--r-md 14`, `--r-lg 20` (+ `--r-sheet 28`, `--r-pill`).
+    Pliki stron: 848 kolorów i 290 promieni zamienione na najbliższe tokeny
+    (kolory na sztywno 1356 → 506; zostają kolory jednej strony).
+
 Dalsze kroki E23 (wg §8): mechanizmy `web/shared/ui/` (dialog, block-screen,
 messages, list-tools, tabs, popover, states, device, page-shell, pickers),
-zwinięcie odcieni i promieni (§11.2–3, zrzuty przed/po do oceny), progi
+progi
 (§3.3, `data-device`), style inline z JS/HTML do klas (§7, `settings.js`),
 plik strony = tylko układ (przeniesienie komponentów stronowych do silnika),
 `wzorce-ui.md` opisujący komponenty silnika.
