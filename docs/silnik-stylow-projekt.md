@@ -236,7 +236,7 @@ przez `style.setProperty('--x', …)`.
 | `messages.js` | `toast()`, `statusLine(el).set(msg, kind)` | `toast.js`, ~12 `setMsg/setStatus/showStatus/showError` |
 | `list-tools.js` | `initListTools({ list, search, filter, sort, empty })`, bez zależności od klas stron | `list-search`, `share-sections.attachListTools`, `list-header-layout` (`games-bottom*`), `list-filter` |
 | `tabs.js` | `initTabs(root, { param })` — URL + wygląd + ARIA | `core/tabs.js` (tylko URL) + ręczne `.active` na stronach — **wygląd i ARIA zrobione 2026-10-23:** `markActiveTab()` |
-| `popover.js` | wspólne pozycjonowanie: menu, select, podpowiedź, menu kontekstowe | `ui-select` (inline `position:fixed`), `tooltips`, `context-menu` |
+| `popover.js` | wspólne pozycjonowanie: menu, select, podpowiedź, menu kontekstowe | `ui-select` (inline `position:fixed`), `tooltips`, `context-menu` — **menu topbara, języka i kontekstowe zrobione 2026-10-23:** `placeDropdown`, `placeAtPoint` |
 | `pickers.js` | `pickColor()`, wybór daty | 2 pickery koloru, `hexToRgb` ×3 — **kolor zrobiony 2026-10-23:** `core/color.js` + `core/color-picker.js` |
 | `states.js` | `emptyState({ icon, text, action })`, `markReady(el)`, `setBusy(el)` | `.empty-state` w 8 plikach, `showEmptyResult`, szkielety w 34 plikach |
 | `device.js` | `fullscreenButton()`, `a2hsBanner()`, PWA | `fullscreen.js`, 5× `requestFullscreen`, 3 kopie A2HS, `beforeinstallprompt` w Grach |

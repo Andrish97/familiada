@@ -6,6 +6,7 @@
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
 // shared/style/components.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
+import { placeAtPoint } from "../../../shared/js/core/popover.js?v=v2026-10-23T17045";
 import { selectionSetSingle } from "./state.js?v=v2026-10-23T17045";
 import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-23T17045";
 import { buildContext } from "./actions/context.js?v=v2026-10-23T17045";
@@ -142,18 +143,6 @@ function itemHtml(item, idx) {
   </button>`;
 }
 
-function place(cm, x, y) {
-  cm.style.left = "-9999px";
-  cm.style.top = "-9999px";
-  cm.hidden = false;
-  const pad = 8;
-  const r = cm.getBoundingClientRect();
-  const left = Math.max(pad, Math.min(x, window.innerWidth - r.width - pad));
-  const top = Math.max(pad, Math.min(y, window.innerHeight - r.height - pad));
-  cm.style.left = `${left}px`;
-  cm.style.top = `${top}px`;
-}
-
 // Jak w Eksploratorze: menu na niezaznaczonym wierszu najpierw go zaznacza
 // (w tym panelu), na wierszu z zaznaczenia zostawia zaznaczenie.
 function selectTargetFirst(state, target) {
@@ -250,7 +239,7 @@ export async function showContextMenu({ state, x, y, target, fromKeyboard = fals
     backdrop().hidden = false;
     cm.hidden = false;
   } else {
-    place(cm, x, y);
+    placeAtPoint(cm, x, y);
   }
   if (fromKeyboard) cm.querySelector(".menu-item:not([aria-disabled='true'])")?.focus({ preventScroll: true });
 }

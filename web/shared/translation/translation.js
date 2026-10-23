@@ -5,6 +5,7 @@ const LANG_LOADERS = {
 };
 
 import { icon, iconText } from "../js/core/icons.js?v=v2026-10-23T17045";
+import { placeDropdown } from "../js/core/popover.js?v=v2026-10-23T17045";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
@@ -243,7 +244,7 @@ async function injectLanguageSwitcher() {
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.hidden = !menu.hidden;
-    if (!menu.hidden) repositionMenu(container, menu);
+    if (!menu.hidden) placeDropdown(container, menu);
   });
 
   // Klik poza: uwzględnij i container i menu (bo menu jest w body)
@@ -256,7 +257,7 @@ async function injectLanguageSwitcher() {
   window.addEventListener(
     "resize",
     () => {
-      if (!menu.hidden) repositionMenu(container, menu);
+      if (!menu.hidden) placeDropdown(container, menu);
     },
     { passive: true }
   );
@@ -264,7 +265,7 @@ async function injectLanguageSwitcher() {
   window.addEventListener(
     "scroll",
     () => {
-      if (!menu.hidden) repositionMenu(container, menu);
+      if (!menu.hidden) placeDropdown(container, menu);
     },
     { passive: true }
   );
@@ -286,54 +287,6 @@ async function injectLanguageSwitcher() {
 
   updateSwitcherLabel();
   return switcherEl;
-}
-
-function repositionMenu(container, menu) {
-  // Pomiar gdy hidden=true (nie ma wymiarów)
-  const wasHidden = menu.hidden;
-  if (wasHidden) {
-    menu.hidden = false;
-    menu.style.visibility = "hidden";
-    menu.style.pointerEvents = "none"; // NIE BLOKUJ KLIKÓW podczas pomiaru
-  }
-
-  // fixed overlay
-  menu.style.position = "fixed";
-
-  const cRect = container.getBoundingClientRect();
-  const mRect = menu.getBoundingClientRect();
-
-  const padding = 8;
-
-  // Preferuj wyrównanie do prawej krawędzi przycisku
-  let left = cRect.right - mRect.width;
-
-  // Clamp X
-  left = Math.min(left, window.innerWidth - mRect.width - padding);
-  left = Math.max(left, padding);
-
-  // Preferuj pod przyciskiem
-  let top = cRect.bottom + 8;
-
-  // Jeśli nie mieści się na dole -> nad przyciskiem
-  if (top + mRect.height > window.innerHeight - padding) {
-    top = cRect.top - mRect.height - 8;
-  }
-
-  // Clamp Y
-  top = Math.min(top, window.innerHeight - mRect.height - padding);
-  top = Math.max(top, padding);
-
-  menu.style.left = `${left}px`;
-  menu.style.top = `${top}px`;
-  menu.style.right = "auto";
-  menu.style.transform = "";
-
-  if (wasHidden) {
-    menu.style.visibility = "";
-    menu.style.pointerEvents = "";
-    menu.hidden = true;
-  }
 }
 
 function updateSwitcherLabel() {

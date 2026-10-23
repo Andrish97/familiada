@@ -22,7 +22,7 @@
   "inlineStyleJs": 42
  },
  "web/bases/explorer/js/context-menu.js": {
-  "inlineStyleJs": 6
+  "inlineStyleJs": 2
  },
  "web/bases/explorer/js/export-modal.js": {
   "inlineStyleJs": 6
@@ -391,6 +391,9 @@
  "web/shared/js/core/poll-results.js": {
   "inlineStyleJs": 1
  },
+ "web/shared/js/core/popover.js": {
+  "inlineStyleJs": 14
+ },
  "web/shared/js/core/swipe.js": {
   "inlineStyleJs": 1
  },
@@ -398,7 +401,7 @@
   "inlineStyleJs": 2
  },
  "web/shared/js/core/topbar-controller.js": {
-  "inlineStyleJs": 30
+  "inlineStyleJs": 21
  },
  "web/shared/js/core/ui-select.js": {
   "inlineStyleJs": 12
@@ -438,9 +441,6 @@
   "important": 3,
   "sharedDuplicate": 14,
   "unusedClass": 3
- },
- "web/shared/translation/translation.js": {
-  "inlineStyleJs": 9
  },
  "web/shared/vendor/fabric.min.js": {
   "inlineStyleJs": 16

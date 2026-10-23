@@ -5,6 +5,7 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
+import { placeDropdown } from "./popover.js?v=v2026-10-23T17045";
 import { signOut } from './auth.js?v=v2026-10-23T17045';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-23T17045';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T17045';
@@ -12,45 +13,6 @@ import { icon, iconText } from './icons.js?v=v2026-10-23T17045';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
-function repositionDropdown(anchorEl, dropdownEl) {
-  if (!anchorEl || !dropdownEl) return;
-
-  const wasHidden = dropdownEl.hidden;
-  if (wasHidden) {
-    dropdownEl.hidden = false;
-    dropdownEl.style.visibility = 'hidden';
-    dropdownEl.style.pointerEvents = 'none';
-  }
-
-  dropdownEl.style.position = 'fixed';
-
-  const cRect = anchorEl.getBoundingClientRect();
-  const mRect = dropdownEl.getBoundingClientRect();
-  const padding = 8;
-
-  let left = cRect.right - mRect.width;
-  left = Math.min(left, window.innerWidth - mRect.width - padding);
-  left = Math.max(left, padding);
-
-  let top = cRect.bottom + 8;
-  if (top + mRect.height > window.innerHeight - padding) {
-    top = cRect.top - mRect.height - 8;
-  }
-  top = Math.min(top, window.innerHeight - mRect.height - padding);
-  top = Math.max(top, padding);
-
-  dropdownEl.style.left = `${left}px`;
-  dropdownEl.style.top = `${top}px`;
-  dropdownEl.style.right = 'auto';
-  dropdownEl.style.transform = '';
-
-  if (wasHidden) {
-    dropdownEl.style.visibility = '';
-    dropdownEl.style.pointerEvents = '';
-    dropdownEl.hidden = true;
-  }
-}
-
 // ── Stan modułu ───────────────────────────────────────────────────────────────
 let _overflowState = null; // { expandAll, collapseAll, recalc }
 let _accountState = null;  // { expand, collapse }
@@ -221,7 +183,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     if (moreDropdownEl.hidden) {
       // Najpierw oblicz pozycję, gdy dropdown jest niewidoczny. Odsłonięcie
       // przed pomiarem potrafiło pokazać go na moment w lewym górnym rogu.
-      repositionDropdown(moreEl, moreDropdownEl);
+      placeDropdown(moreEl, moreDropdownEl);
       moreDropdownEl.hidden = false;
     } else {
       moreDropdownEl.hidden = true;
@@ -235,7 +197,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   });
 
   window.addEventListener('resize', () => {
-    if (!moreDropdownEl.hidden) repositionDropdown(moreEl, moreDropdownEl);
+    if (!moreDropdownEl.hidden) placeDropdown(moreEl, moreDropdownEl);
     if (!_mobileActive) recalc();
   }, { passive: true });
   window.addEventListener('nav:visibilitychange', () => {
@@ -395,7 +357,7 @@ export function setTopbarAccount(user, {
     e.stopPropagation();
     if (_mobileActive) return;
     menu.hidden = !menu.hidden;
-    if (!menu.hidden) repositionDropdown(whoEl, menu);
+    if (!menu.hidden) placeDropdown(whoEl, menu);
   });
 
   document.addEventListener('pointerdown', (e) => {
@@ -403,7 +365,7 @@ export function setTopbarAccount(user, {
   });
 
   window.addEventListener('resize', () => {
-    if (!menu.hidden && !_mobileActive) repositionDropdown(whoEl, menu);
+    if (!menu.hidden && !_mobileActive) placeDropdown(whoEl, menu);
   }, { passive: true });
 
   // Mobile API
