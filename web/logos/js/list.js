@@ -294,7 +294,7 @@ function makeProposedTile(logo, offer) {
       <div style="min-width:0">
         <div class="logoName" title="${esc(name)}">${esc(name)}</div>
       </div>
-      <div class="logoActions">${proposedActionsHtml()}</div>
+      <div class="cluster logoActions">${proposedActionsHtml()}</div>
       <div class="tileTags">${tileTagsHtml(proposedTags({ from: offer.sender_label, title: t("resourceSend.proposedTitle") }))}</div>
     </div>
     <div class="logoPrev"></div>`;
@@ -322,7 +322,7 @@ function makeTile(logo) {
         <div class="logoName" title="${esc(name)}">${esc(name)}</div>
         ${logo.received_from_label ? `<div class="logoMeta">${esc(t("resourceSend.from", { name: logo.received_from_label }))}</div>` : ""}
       </div>
-      <div class="logoActions">
+      <div class="cluster logoActions">
         <button class="x" type="button" title="${esc(t("logoEditor.list.delete"))}" aria-label="${esc(t("logoEditor.list.delete"))}">${icon("trash")}</button>
       </div>
     </div>

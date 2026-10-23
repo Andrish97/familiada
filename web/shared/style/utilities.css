@@ -28,7 +28,10 @@
   }
 
 
+  /* Rząd elementów (przyciski akcji, narzędzia): jeden odstęp, zawijanie. */
   .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
+  .cluster--end { justify-content: flex-end; }
+  .cluster--center { justify-content: center; }
   .grow { flex: 1 1 auto; min-width: 0; }
   .between { justify-content: space-between; }
   .center { align-items: center; }

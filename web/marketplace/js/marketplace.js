@@ -628,7 +628,7 @@ async function loadMySent() {
         <span class="tag tag--upper ${statusClass} mkt-status-badge">${esc(statusLabels[g.status] ?? g.status)}</span>
         ${note}
       </div>
-      <div class="mkt-sent-actions">
+      <div class="cluster mkt-sent-actions">
         <button class="btn sm" data-preview="${esc(g.id)}" type="button">${icon("eye")}<span>${esc(t("marketplace.mySent.btnPreview"))}</span></button>
         ${withdrawBtn}
       </div>

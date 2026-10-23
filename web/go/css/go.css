@@ -31,10 +31,7 @@
     line-height: 1.45;
   }
 
-  .poll-go-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+  .poll-go-actions{
     margin-top: 16px;
   }
 

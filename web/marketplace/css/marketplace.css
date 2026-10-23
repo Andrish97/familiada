@@ -235,12 +235,7 @@
     margin-top: 2px;
   }
 
-  .mkt-sent-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+
 
   /* ===== Status zgłoszenia: .tag z base.css, kolor wg statusu (marketplace.js) ===== */
   .mkt-status-badge {
@@ -268,13 +263,7 @@
 
   .mkt-detail-questions { margin-bottom: 18px; }
 
-  .mkt-detail-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+
 
   /* ===== Submit modal ===== */
   .mkt-lang-picker {

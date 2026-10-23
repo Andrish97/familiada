@@ -1977,7 +1977,7 @@ function renderProviderOrder() {
     });
 
     const actions = document.createElement("div");
-    actions.className = "provider-order-actions";
+    actions.className = "cluster provider-order-actions";
     actions.style.display = "flex";
     actions.style.gap = "6px";
 
@@ -2061,7 +2061,7 @@ function renderAiProviderOrder() {
     infoWrap.append(name, status);
 
     const actions = document.createElement("div");
-    actions.className = "provider-order-actions";
+    actions.className = "cluster provider-order-actions";
     actions.style.display = "flex";
     actions.style.gap = "4px";
 
@@ -2368,7 +2368,7 @@ async function loadMarketplace({ silent = false } = {}) {
       <td>${escSetting(g.lang.toUpperCase())}</td>
       <td>${escSetting(authorLabel)}</td>
       <td>${date}</td>
-      <td class="market-actions">${actions}</td>`;
+      <td class="cluster market-actions">${actions}</td>`;
     tbody.appendChild(tr);
   }
 

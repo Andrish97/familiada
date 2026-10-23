@@ -354,9 +354,6 @@
   }
 
   .dt-actions{
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
     margin-top: 12px;
   }
 
@@ -368,11 +365,7 @@
     opacity: .85;
   }
 
-  .panel-actions{
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+
 
   .maintenance-controls.is-locked{
     opacity: .5;
@@ -414,11 +407,7 @@
     font-size: 12px;
   }
 
-  .bypass-actions{
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+
 
   .tools-shell{
     border: 1px solid var(--line2);
@@ -648,10 +637,7 @@
     font-weight: 700;
   }
 
-  .provider-order-actions{
-    display: flex;
-    gap: 6px;
-  }
+
 
   /* Kryjące podłoże strzałek: ten sam wzorzec co .btn w base.css.
      Android potrafi nakładać półprzezroczyste warstwy przy przerysowaniu. */
@@ -1241,9 +1227,6 @@
 
   .market-actions{
     white-space: nowrap;
-    display: flex;
-    gap: 6px;
-    align-items: center;
   }
 
   .market-preview-desc{

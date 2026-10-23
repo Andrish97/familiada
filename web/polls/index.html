@@ -65,7 +65,7 @@
         <span class="subsSummary" id="subsSummary"></span>
         <span class="hint pollBarHint" id="hintTop"></span>
       </div>
-      <div class="pollBarActions" id="pollActions">
+      <div class="cluster cluster--end pollBarActions" id="pollActions">
         <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n-title="polls.actions.resumePoll" data-i18n-aria-label="polls.actions.resumePoll" title="Wznów głosowanie" aria-label="Wznów głosowanie"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.resumePoll">Wznów głosowanie</span></button>
         <button class="btn sm" id="btnLeaveTally" type="button" hidden data-i18n-title="polls.actions.leaveTally" data-i18n-aria-label="polls.actions.leaveTally" title="Wyjdź z podliczania" aria-label="Wyjdź z podliczania"><i class="ico" data-icon="arrow-left" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.leaveTally">Wyjdź z podliczania</span></button>
         <button class="btn sm gold" id="btnOpenPoll" type="button" hidden data-i18n-title="polls.actions.openPoll" data-i18n-aria-label="polls.actions.openPoll" title="Uruchom" aria-label="Uruchom"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.openPoll">Uruchom</span></button>
@@ -115,7 +115,7 @@
                     <div class="hint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
                   </div>
                   <input id="pollLink" type="hidden" />
-                  <div class="pollLinkActions">
+                  <div class="cluster pollLinkActions">
                     <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.share.copyLink" data-i18n-icon="copy">Kopiuj link</button>
                     <button class="btn sm" id="btnOpen" type="button" disabled><i class="ico" data-icon="eye"></i><span data-i18n="polls.actions.openShort">Otwórz</span></button>
                     <button class="btn sm" id="btnOpenQr" type="button" disabled><i class="ico" data-icon="qr-code"></i><span data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</span></button>
@@ -144,7 +144,7 @@
             <div class="meta" id="resultsMeta"></div>
             <div class="tallyBar" id="tallyBar" hidden>
               <div class="hint tallyHint" id="tallyHint"></div>
-              <div class="tallyTools" id="tallyTools">
+              <div class="cluster tallyTools" id="tallyTools">
                 <span class="tallySave" id="tallySave" role="status"></span>
                 <button class="btn sm" id="btnUndo" type="button" disabled data-i18n-title="polls.tally.undo" data-i18n-aria-label="polls.tally.undo" title="Cofnij" aria-label="Cofnij"><i class="ico" data-icon="undo"></i></button>
                 <button class="btn sm" id="btnRedo" type="button" disabled data-i18n-title="polls.tally.redo" data-i18n-aria-label="polls.tally.redo" title="Ponów" aria-label="Ponów"><i class="ico" data-icon="redo"></i></button>
