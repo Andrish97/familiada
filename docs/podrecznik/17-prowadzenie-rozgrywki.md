@@ -123,7 +123,9 @@ zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 Przeglądarka może wyciszyć dźwięk Wyświetlacza po jego przeładowaniu albo uśpieniu telewizora —
 wtedy przycisk [Odblokuj dźwięk] pojawi się ponownie, a panel poczeka na jego naciśnięcie.
 
-**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada i na co czeka gra; pasek pod
+**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada, jaki jest następny krok
+i reguły, których nie widać na przyciskach (np. że koniec odliczania 3 s to X, a trzeci X
+oznacza kradzież); przy zaznaczonym kafelku przypomina o drugim kliknięciu. Pasek pod
 tablicą pokazuje drużynę grającą i pulę rundy. Przycisk przejścia dalej zmienia nazwę zależnie
 od kroku (np. [Przejdź do finału]). Czynności, które zmieniają wynik — odsłonięcie odpowiedzi,
 X, przyjęcie zgłoszenia, oddanie kontroli — wymagają **dwóch kliknięć**: pierwsze zaznacza

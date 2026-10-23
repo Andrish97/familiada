@@ -123,7 +123,9 @@ timer keeps counting down. Common causes and fixes → 19.5.
 The browser may mute the Display's sound after it is reloaded or the TV goes to sleep —
 then the [Unlock sound] button appears again, and the panel waits until it is pressed.
 
-**How the panel works.** The hints column tells you who is answering now and what the game is waiting for; the bar under
+**How the panel works.** The hints column tells you who is answering now, what the next step is
+and the rules the buttons do not show (e.g. that the end of the 3 s countdown is an X, and the third X
+starts a steal); when a tile is selected, it reminds you to click it again. The bar under
 the board shows the playing team and the round pool. The button for moving on changes its name depending
 on the step (e.g. [Go to the final]). Actions that change the score — revealing an answer,
 an X, accepting a buzz, passing control — need **two clicks**: the first selects the
