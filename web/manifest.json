@@ -11,49 +11,58 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-23T17153",
+      "src": "/assets/img/icon-192.png?v=v2026-10-23T17153",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-23T17153",
-      "sizes": "256x256",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-23T17153",
+      "src": "/assets/img/icon-512.png?v=v2026-10-23T17153",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/img/icon-1024.png?v=v2026-10-23T17153",
-      "sizes": "1024x1024",
+      "src": "/assets/img/icon-maskable-192.png?v=v2026-10-23T17153",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/img/icon-maskable-512.png?v=v2026-10-23T17153",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "file_handlers": [
     {
       "action": "/games/",
       "accept": {
-        "application/json": [".famgame"]
+        "application/json": [
+          ".famgame"
+        ]
       }
     },
     {
       "action": "/bases/",
       "accept": {
-        "application/json": [".fambase"]
+        "application/json": [
+          ".fambase"
+        ]
       }
     },
     {
       "action": "/logos/",
       "accept": {
-        "application/json": [".famlogo"]
+        "application/json": [
+          ".famlogo"
+        ]
       }
     }
   ],
-  "categories": ["games", "entertainment"]
+  "categories": [
+    "games",
+    "entertainment"
+  ]
 }
