@@ -12,6 +12,9 @@
 -- (reports.author_account_deleted_at), a list_reports zwraca to pole dla
 -- plakietki „konto usunięte” w panelu. Jedna podmiana _delete_user_data,
 -- żeby 476 i 477 się nie nadpisywały.
+-- Najwyżej 3 s czekania na blokadę tabel używanych przez graczy: inaczej
+-- migracja wycofuje się w całości (bez zmian) i jest ponawiana później.
+SET LOCAL lock_timeout = '3s';
 
 ALTER TABLE public.reports ADD COLUMN author_account_deleted_at timestamptz;
 COMMENT ON COLUMN public.reports.author_account_deleted_at IS 'Kiedy autor zgłoszenia (pierwsza wiadomość) usunął konto; zgłoszenie zostaje (decyzja 2026-10-23).';

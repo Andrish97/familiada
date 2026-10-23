@@ -3,6 +3,9 @@
 -- kopia szablonów sprzed poprawki niepotrzebna. Funkcje naprawy, ich pomocnicza
 -- fam_clip_words (używana tylko przez e21_data_repair) i obie tabele znikają.
 -- Granty dla agent_reader (414) znikają razem z obiektami.
+-- Najwyżej 3 s czekania na blokadę tabel używanych przez graczy: inaczej
+-- migracja wycofuje się w całości (bez zmian) i jest ponawiana później.
+SET LOCAL lock_timeout = '3s';
 
 DROP FUNCTION public.e21_data_repair();
 

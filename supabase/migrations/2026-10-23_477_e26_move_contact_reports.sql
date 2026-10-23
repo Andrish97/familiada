@@ -11,6 +11,9 @@
 --  * contact_report_messages -> messages: inbound 'email' / outbound
 --    'compose', przypięte do zgłoszenia (moved_from_report_id pomijane).
 -- Wszystko oznaczone jako przeczytane (stare sprawy).
+-- Najwyżej 3 s czekania na blokadę tabel używanych przez graczy: inaczej
+-- migracja wycofuje się w całości (bez zmian) i jest ponawiana później.
+SET LOCAL lock_timeout = '3s';
 DO $$
 DECLARE r record; v_ticket text; n_reports integer := 0; n_messages integer := 0; c integer;
 BEGIN

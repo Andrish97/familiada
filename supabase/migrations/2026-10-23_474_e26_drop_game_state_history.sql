@@ -2,6 +2,9 @@
 -- bez migawek stanu. game_state_write nie kopiuje już poprzedniego stanu do
 -- game_state_history (każdy ruch w Control o jeden INSERT i DELETE lżejszy);
 -- game_state_undo (bez wywołującego) i sama tabela znikają.
+-- Najwyżej 3 s czekania na blokadę tabel używanych przez graczy: inaczej
+-- migracja wycofuje się w całości (bez zmian) i jest ponawiana później.
+SET LOCAL lock_timeout = '3s';
 
 CREATE OR REPLACE FUNCTION "public"."game_state_write"("p_game_id" "uuid", "p_step" "public"."game_step", "p_top_card" "public"."game_top_card", "p_phase" "public"."game_round_phase" DEFAULT NULL::"public"."game_round_phase", "p_control_team" "public"."game_team" DEFAULT NULL::"public"."game_team", "p_detail" "jsonb" DEFAULT NULL::"jsonb", "p_sound_cue_key" "text" DEFAULT NULL::"text", "p_expected_rev" bigint DEFAULT NULL::bigint) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER

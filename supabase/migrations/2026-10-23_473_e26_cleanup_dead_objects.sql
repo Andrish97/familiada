@@ -1,6 +1,9 @@
 -- E26 (audyt sprzątania 2026-10-23, docs/audyt-sprzatania-bazy.md): część A
 -- oraz B5, B6, B7, B8. Usuwa tylko obiekty bez wywołującego w kodzie i w bazie
 -- (sprawdzone ponownie po „zaczynaj”); zachowanie strony się nie zmienia.
+-- Najwyżej 3 s czekania na blokadę tabel używanych przez graczy: inaczej
+-- migracja wycofuje się w całości (bez zmian) i jest ponawiana później.
+SET LOCAL lock_timeout = '3s';
 
 -- A1. Zduplikowane indeksy (każdy zastępuje indeks/constraint o tym samym
 -- albo dłuższym kluczu z tą samą pierwszą kolumną).
