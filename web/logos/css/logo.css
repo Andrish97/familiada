@@ -586,17 +586,6 @@
     user-select: none;
   }
 
-  #paneImage .cropCaption{
-    position:absolute;
-    left:10px;
-    top:10px;
-    font-weight: 1000;
-    font-size: 12px;
-    letter-spacing: .06em;
-    color: var(--accent);
-    text-shadow: 0 2px 10px var(--k-40);
-  }
-
   #paneImage .cropHandle{
     position:absolute;
     width: 16px;
@@ -853,13 +842,13 @@
    warstwie strony, jak ogólne reguły arkusza w silniku. */
 @layer states {
 
-  /* W trybie mobilnego arkusza modal.js opakowuje nagłówek i treść we
-     własne sekcje. Nie pozwól, by desktopowe centrowanie zawężało te sekcje:
-     nagłówek podglądu ma zajmować pełną szerokość jak w pozostałych arkuszach. */
-  @media (max-width: 600px){
-    #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
-      align-items: stretch;
-    }}
+  /* W trybie okna od dołu (telefon i tablet -- SHEET_MQ w modal-sheet.js) modal.js
+     opakowuje nagłówek i treść we własne sekcje. Nie pozwól, by desktopowe
+     centrowanie zawężało te sekcje: nagłówek ma pełną szerokość, jak w podglądzie
+     zrzutu i w pozostałych oknach. */
+  #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
+    align-items: stretch;
+  }
 
   /* =========================================================
      FULL WIDTH MODAL (jak w games)
@@ -882,12 +871,18 @@
     width: min(98vw, 1800px);
     max-width: min(98vw, 1800px);
     max-height: min(90vh, 1000px);
-    border-radius: var(--radius-lg);
-    padding: 18px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  /* Zwykłe okno (komputer): zaokrąglenie i marginesy. W oknie od dołu (telefon,
+     tablet) obowiązuje wspólny wygląd okna od dołu -- zaokrąglona tylko
+     góra, dół przy krawędzi ekranu. */
+  #previewOverlay:not(.sheet-active) .modal.previewModal{
+    border-radius: var(--radius-lg);
+    padding: 18px;
   }
 
   /* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
@@ -929,8 +924,8 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
+    /* Przybliżanie i przesuwanie robi pinch-zoom.js (transform), także myszą na komputerze. */
+    overflow: hidden;
     border-radius: var(--r-md);
   }
 
@@ -942,6 +937,7 @@
     max-height: 100%;
     image-rendering: pixelated;
     flex-shrink: 0;
+    transform-origin: 0 0;
   }
 
   /* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na

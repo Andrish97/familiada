@@ -54,20 +54,21 @@ test.describe("lista", () => {
     await open(page);
     const historyBefore = await page.evaluate(() => history.length);
     await expect(page.locator("#tabLogoText")).toHaveClass(/active/);
-    await expect(page.locator("#hint")).toContainText(/klasycznym logo/i);
+    // Pasek mówi tylko o zmianie nazwy -- opis rodzaju jest na kaflu „Nowe logo…” (bez dublowania, 2026-10-23).
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     // Narożniki aktywnej wypustki to ::before/::after przycisku karty (2026-10-21).
     const corner = (sel, pseudo) => page.locator(sel).evaluate((el, p) => getComputedStyle(el, p).display, pseudo);
     expect(await corner("#tabLogoText", "::before")).toBe("none");
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
-    await expect(page.locator("#hint")).toContainText(/rysuj/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoDraw", "::before")).toBe("block");
     expect(await corner("#tabLogoDraw", "::after")).toBe("block");
 
     await page.locator("#tabLogoImage").click();
     await expect(page).toHaveURL(/tab=image/);
-    await expect(page.locator("#hint")).toContainText(/obraz/i);
+    await expect(page.locator("#hint")).toContainText(/Podwójne naciśnięcie kafla/i);
     await expect.poll(() => corner("#tabLogoImage", "::after")).toBe("none");
 
     // Karta przez replaceState: odświeżenie zostaje na karcie, a przeglądarkowe

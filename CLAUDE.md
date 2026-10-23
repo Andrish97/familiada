@@ -165,6 +165,23 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+- **Tłumaczenia przy każdej zmianie (decyzja użytkownika 2026-10-23):** kto zmienia
+  kod lub teksty strony, pilnuje tłumaczeń w tym samym commicie:
+  - nowy lub zmieniony tekst — od razu w `web/shared/translation/{pl,en,uk}.js`
+    (wszystkie trzy języki, ta sama treść znaczeniowa), nigdy tekst na sztywno w JS/HTML
+    (poza zapasowym tekstem w HTML przy `data-i18n`, zgodnym z PL);
+  - tekst, który przestał być używany — usunąć klucz z trzech języków
+    (`node scripts/i18n-prune.mjs`); klucz użyty w kodzie musi istnieć w słowniku;
+  - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
+  - sprawdzenie: `node scripts/i18n-unused.mjs` (nieużywane, brakujące, różnice
+    między językami) i zapadka `unit/i18nUnused.test.js`.
+- **Podpowiedzi (decyzja użytkownika 2026-10-23):** podpowiedź jest skuteczna, jasna,
+  trafna (zgodna z faktycznym działaniem i etykietą przycisku), sensowna i mówi tylko
+  to, co **nieoczywiste** — oczywistych rzeczy nie podpowiadamy; ten sam tekst nie
+  stoi dwa razy w jednym widoku (podpowiedź nie powtarza kafla, tytułu, nagłówka,
+  przycisku ani listy warunków). W Control podpowiedzi są krótkie i zawsze mieszczą
+  się bez przewijania (`unit/hints.test.js`, ≤ 90 znaków). Pełne zasady:
+  `docs/wzorce-ui.md` „A16. Podpowiedzi”; audyt: `docs/audyt-podpowiedzi.md`.
 - **Teksty maili (decyzja użytkownika 2026-10-21):** jedno źródło — tłumaczenia strony
   `web/shared/translation/{pl,en,uk}.js`. Maile powiadomień składa serwer (funkcja Edge
   `send-mail`) z kopii `supabase/functions/_shared/notification-mail-texts.js`, generowanej

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T15470"/>
+  <meta name="app-version" content="v2026-10-23T16561"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,20 +14,20 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="account.pageTitle">Familiada — moje konto</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15470" />
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15470" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15470"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15470"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15470"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15470"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15470"/>
-  <link rel="stylesheet" href="/account/css/account.css?v=v2026-10-23T15470"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T16561" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T16561" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T16561"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T16561"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T16561"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T16561"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T16561"/>
+  <link rel="stylesheet" href="/account/css/account.css?v=v2026-10-23T16561"/>
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15470" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15470" defer></script>
-  <script type="module" src="/account/js/account.js?v=v2026-10-23T15470" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T15470" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T16561" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T16561" defer></script>
+  <script type="module" src="/account/js/account.js?v=v2026-10-23T16561" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T16561" defer></script>
 
 </head>
 
@@ -70,7 +70,7 @@
 
       <section class="card account-panel" id="usernameSection">
         <div class="section-title" data-i18n="account.usernameTitle">Nazwa użytkownika</div>
-        <div class="section-hint" data-i18n="account.usernameHint">Widoczna dla subskrybentów i w panelu.</div>
+        <div class="section-hint" data-i18n="account.usernameHint">Widzą ją znajomi, subskrybenci i odbiorcy Twoich zaproszeń.</div>
         <input class="inp" id="username" placeholder="Nazwa użytkownika" autocomplete="username" data-i18n-placeholder="account.usernamePlaceholder"/>
         <div class="cooldown" id="usernameCooldown" hidden></div>
         <div class="cluster cluster--end account-actions">
@@ -80,8 +80,7 @@
 
       <section class="card account-panel" id="emailSection">
         <div class="section-title" data-i18n="account.emailTitle">E-mail</div>
-        <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie potwierdź ją linkiem wysłanym na nowy adres.</div>
-        <div class="section-hint" data-i18n="account.emailPostHint">Zmiana e-maila wymaga potwierdzenia linku na nowym adresie. Do tego czasu możesz logować się dotychczasowym adresem. Jeśli nie widzisz wiadomości, sprawdź spam.</div>
+        <div class="section-hint" data-i18n="account.emailHint">Adres do logowania. Zmianę potwierdzasz linkiem z nowej skrzynki — do tego czasu logujesz się dotychczasowym adresem.</div>
         <div class="section-hint" id="emailPendingHint" hidden></div>
         <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
         <div class="account-field-group" id="emailActions">
@@ -139,8 +138,7 @@
 
       <section class="card account-panel account-panel--demo" id="demoSection">
         <div class="section-title" data-i18n="account.demo.title">Materiały Demo</div>
-        <div class="section-hint" data-i18n="account.demo.hint">Przywróć przykładowe materiały startowe: bazy pytań, logo i gotowe gry różnych kategorii.</div>
-        <div class="section-hint" data-i18n="account.demo.btnHint">Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.</div>
+        <div class="section-hint" data-i18n="account.demo.hint">Przywraca przykładowe bazy pytań, logo i gry. Po kliknięciu przejdziesz do Moich gier, gdzie się wczytają.</div>
         <div class="cluster cluster--end account-actions">
           <button class="btn sm" id="demoRestoreBtn" type="button" data-i18n="account.demo.btn" data-i18n-icon="refresh">Przywróć pliki demo</button>
         </div>
@@ -152,7 +150,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15470"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T16561"></script>
 
 </body>
 </html>

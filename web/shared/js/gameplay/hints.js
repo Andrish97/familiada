@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-23T15470";
+import { t } from "../../translation/translation.js?v=v2026-10-23T16561";
 
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
@@ -26,8 +26,7 @@ export function teamName(state, code) {
 
 export function getRoundsHint(state) {
   const r = state.rounds;
-  if (state.step === "r_intro") return t("control.hints.rIntro");
-  if (state.step === "r_roundStart") return t("control.hints.rRoundStart", { roundNo: r.roundNo });
+  // Ekrany przejściowe (r_intro, r_roundStart) mają własny opis w c2-intro.
   if (state.step !== "r_duel" && state.step !== "r_play") return "";
 
   // Uwaga: hinty celowo NIE powtarzają tego, co już widać na pasku statusu
@@ -44,13 +43,16 @@ export function getRoundsHint(state) {
         ? t("control.hints.duelPhysical")
         : t("control.hints.duelWaiting");
     }
+    // Reguła pojedynku (engine.js's duelRegisterResult): najwyżej punktowana
+    // odpowiedź wygrywa od razu; inaczej odpowiada druga drużyna i wygrywa
+    // wyższa, remis -- drużyna, która odpowiadała pierwsza w tym cyklu.
     return r.duel.cycleFirstAnswered
-      ? t("control.hints.duelNowAnswering", { team: teamName(state, r.duel.currentTeam) })
+      ? t("control.hints.duelNowAnswering", { team: teamName(state, r.duel.currentTeam), first: teamName(state, r.duel.firstTeam) })
       : t("control.hints.duelAnswering", { team: teamName(state, r.duel.currentTeam) });
   }
 
   if (state.phase === "PLAY") {
-    if (!state.controlTeam) return t("control.hints.playNoTeam");
+    if (!state.controlTeam) return "";
     if (r.canEndRound) return t("control.hints.playCanEnd");
     if (r.allowPass && !r.passUsed) return t("control.hints.playOrPass");
     return t("control.hints.playPick");
@@ -76,8 +78,7 @@ export function getFinalHint(state) {
   const f = state.final;
   const step = state.step;
 
-  if (step === "f_start") return t("control.hints.fStart");
-
+  // Ekrany przejściowe (f_start, f_p2_start, f_end) mają własny opis w c2-intro.
   if (step === "f_p1_entry" || step === "f_p2_entry") {
     const round = step === "f_p1_entry" ? 1 : 2;
     const timer = f.runtime.timer;
@@ -95,14 +96,12 @@ export function getFinalHint(state) {
     return t("control.hints.entryIdle", { round });
   }
 
-  if (step === "f_p2_start") return t("control.hints.p2Start");
-
   if (step.startsWith("f_p1_map_q") || step.startsWith("f_p2_map_q")) {
     const round = step.startsWith("f_p1_map_q") ? 1 : 2;
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (f.runtime.reached200) return t("control.hints.mapReached200");
+    if (f.runtime.reached200) return t("control.hints.mapReached200", { target: state.settings.finalTarget });
     if (round === 2 && idx === 4 && row.revealedPoints) return t("control.hints.mapAllRevealed");
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
@@ -117,10 +116,9 @@ export function getFinalHint(state) {
     }
     if (!row.revealedAnswer) return t("control.hints.mapRevealAnswer");
     if (!row.revealedPoints) return t("control.hints.mapRevealPoints");
-    return t("control.hints.mapNext");
+    // Po odsłonięciu zostaje tylko „Dalej” -- oczywiste, bez podpowiedzi.
+    return "";
   }
-
-  if (step === "f_end") return t("control.hints.fEnd");
 
   return "";
 }

@@ -1,19 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T15470";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T15470";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T15470";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T15470";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-23T15470";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T15470";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T15470";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T15470";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T15470";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T15470";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-23T15470";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T15470";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T15470";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T15470";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-23T16561";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-23T16561";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-23T16561";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-23T16561";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-23T16561";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-23T16561";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-23T16561";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-23T16561";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-23T16561";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-23T16561";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-23T16561";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-23T16561";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-23T16561";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-23T16561";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).

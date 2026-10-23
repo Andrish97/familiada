@@ -7,15 +7,15 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-23T15470";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T15470";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T15470";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T15470";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T15470";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-23T15470";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-23T15470";
-import { normalizeText } from "./data/listing.js?v=v2026-10-23T15470";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-23T15470";
+import * as ops from "./ops.js?v=v2026-10-23T16561";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T16561";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T16561";
+import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-23T16561";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-23T16561";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-23T16561";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-23T16561";
+import { normalizeText } from "./data/listing.js?v=v2026-10-23T16561";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-23T16561";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
 function esc(s) {
@@ -87,7 +87,6 @@ function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
     tagsL2Close (X)
     tagsL2Save  (Zapisz)
     tagsEditTitle
-    tagsEditHelp
     tagsEditName
     tagsEditColorTile  (duży kafel – klik => L3)
     tagsEditColorDot   (kropka w kaflu)
@@ -123,7 +122,6 @@ function els() {
     l2Save: document.getElementById("tagsL2Save"),
     l2Back: document.getElementById("tagsL2Back"),
     editTitle: document.getElementById("tagsEditTitle"),
-    editHelp: document.getElementById("tagsEditHelp"),
     editName: document.getElementById("tagsEditName"),
     editColorTile: document.getElementById("tagsEditColorTile"),
     editColorDot: document.getElementById("tagsEditColorDot"),
@@ -449,12 +447,6 @@ export async function openTagsModal(state, opts = {}) {
         editMode === "edit"
           ? t("baseExplorer.tags.editModeTitle")
           : t("baseExplorer.tags.createModeTitle");
-    }
-    if (E.editHelp) {
-      E.editHelp.textContent =
-        editMode === "edit"
-          ? t("baseExplorer.tags.editModeHelp")
-          : t("baseExplorer.tags.createModeHelp");
     }
     if (E.editName) E.editName.value = m.edit.name;
 

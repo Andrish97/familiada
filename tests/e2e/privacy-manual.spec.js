@@ -340,3 +340,45 @@ test("manual: podzielony ekran tabletu — Wskazówki działają, nakładka blok
     await context.close();
   }
 });
+
+test("manual: podgląd zrzutu — na komputerze cały obraz w oknie i przybliżanie myszą, na tablecie palcami", async ({ browser }) => {
+  const open = async (page) => {
+    await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6#s-6-1`, { waitUntil: "domcontentloaded" });
+    const shot = page.locator(".m-shot-zoom").first();
+    await expect.poll(() => shot.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+    await shot.click();
+    await expect(page.locator("#imgvOverlay.is-open .imgv-zoom .imgv-img")).toBeVisible();
+    await page.waitForTimeout(400);
+  };
+  // Komputer, okno 1440×760: obraz w całości wewnątrz okna podglądu i ekranu.
+  const desk = await browser.newContext({ viewport: { width: 1440, height: 760 }, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(desk, { pages: ["manual"] });
+  const page = await desk.newPage();
+  try {
+    await open(page);
+    const box = await page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      return { zoom: r("#imgvOverlay .imgv-zoom"), panel: r("#imgvOverlay .imgv-panel"), h: innerHeight };
+    });
+    expect(box.zoom.bottom).toBeLessThanOrEqual(box.panel.bottom + 1);
+    expect(box.panel.bottom).toBeLessThanOrEqual(box.h);
+    expect(box.zoom.height).toBeGreaterThan(300);
+    // Mysz: kółko przybliża, podwójne kliknięcie wraca do całości.
+    const img = page.locator("#imgvOverlay .imgv-img");
+    const scaleOf = () => img.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+    await page.mouse.move(box.zoom.x + box.zoom.width / 2, box.zoom.y + box.zoom.height / 2);
+    await page.mouse.wheel(0, -400);
+    await expect.poll(scaleOf).toBeGreaterThan(1.2);
+    await page.mouse.dblclick(box.zoom.x + box.zoom.width / 2, box.zoom.y + box.zoom.height / 2);
+    await expect.poll(scaleOf).toBe(1);
+  } finally { await desk.close(); }
+  // Tablet w poziomie (dotyk): okno od dołu z polem przybliżania palcami.
+  const tab = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(tab, { pages: ["manual"] });
+  const tpage = await tab.newPage();
+  try {
+    await open(tpage);
+    await expect(tpage.locator("#imgvOverlay")).toHaveClass(/sheet-active/);
+    expect(await tpage.locator("#imgvOverlay .imgv-zoom").evaluate((el) => getComputedStyle(el).touchAction)).toBe("none");
+  } finally { await tab.close(); }
+});

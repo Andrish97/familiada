@@ -35,6 +35,6 @@ test('anonymous client recovers malformed storage and tolerates denied storage w
 test('anonymous retry translations exist at the root in all supported languages', async()=>{
  for(const lang of ['pl','en','uk']) {
   const {default: dictionary}=await import(`../../web/shared/translation/${lang}.js`);
-  for(const key of ['retry','retryIn','wait','failed','ready'])assert.equal(typeof dictionary.pollAnonymous?.[key],'string',`${lang}.${key}`);
+  for(const key of ['retry','retryIn','saved','failed','ready'])assert.equal(typeof dictionary.pollAnonymous?.[key],'string',`${lang}.${key}`);
  }
 });

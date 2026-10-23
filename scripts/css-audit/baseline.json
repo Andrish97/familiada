@@ -375,9 +375,6 @@
  "web/shared/js/core/guest-mode.js": {
   "inlineStyleJs": 1
  },
- "web/shared/js/core/image-viewer.js": {
-  "inlineStyleJs": 3
- },
  "web/shared/js/core/list-header-layout.js": {
   "inlineStyleJs": 3
  },
@@ -397,7 +394,7 @@
   "inlineStyleJs": 4
  },
  "web/shared/js/core/pinch-zoom.js": {
-  "inlineStyleJs": 2
+  "inlineStyleJs": 3
  },
  "web/shared/js/core/poll-results.js": {
   "inlineStyleJs": 1

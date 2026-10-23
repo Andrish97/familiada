@@ -16,18 +16,19 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T15470";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T15470";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T15470";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T15470";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T15470";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T15470";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-23T16561";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-23T16561";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-23T16561";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-23T16561";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T16561";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-23T16561";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T15470";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T15470";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T15470";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T15470";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T15470";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-23T16561";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-23T16561";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-23T16561";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-23T16561";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-23T16561";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-23T16561";
 
 
 const $ = (id) => document.getElementById(id);
@@ -996,7 +997,6 @@ export function createUI({ root, emit }) {
       gameplayShell({
         stepLabel: t("control.introStepTitle"),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsIntroBtn") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
         nav: [navButton(t("control.roundsIntroBtn"), {
@@ -1017,7 +1017,6 @@ export function createUI({ root, emit }) {
       gameplayShell({
         stepLabel: t("control.roundStepLabel", { round: r.roundNo }),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsStartTitle") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsStartHint") }),
           scoreRow,
         ].filter(Boolean))],
@@ -1280,7 +1279,6 @@ export function createUI({ root, emit }) {
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
       const introBody = [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: isFinal ? t("control.finalOutroHint") : endRevealHint(state, isFinal) }),
       ];
       // Suma finału jeszcze NIE jest wtopiona w rounds.totals na tym
@@ -1305,7 +1303,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.roundsGameEndTitle"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
       // Gra już zakończona: outro nie blokuje ani "Zacznij od nowa", ani
@@ -1338,7 +1335,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.stepFinal"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalStartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalStartHint") }),
       ])],
       nav: [navButton(t("control.finalStartBtn"), {
@@ -1542,7 +1538,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint")}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint", { max: FINAL_DISPLAY_MAX })}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
       ]),
     ];
 
@@ -1889,7 +1885,6 @@ export function createUI({ root, emit }) {
     gameplayShell({
       stepLabel: t("control.finalP2StartStepLabel"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: t("control.finalP2StartName") }),
         h("div", { class: "c2-intro-hint", text: t("control.finalP2StartHint") }),
         // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
         // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
@@ -1995,6 +1990,12 @@ export function createUI({ root, emit }) {
         : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
+    }
+    // Zaznaczony kafel (zaznacz → potwierdź, armableTile): sama złota obwódka
+    // nie mówi, że trzeba kliknąć drugi raz -- na ten czas podpowiedź o tym.
+    if (hint && root.querySelector(".c2-tile-armed")) {
+      const main = hint.querySelector(".c2-hint-main") || hint.insertBefore(h("div", { class: "c2-hint-main" }), hint.firstChild);
+      main.textContent = t("control.hints.armed");
     }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;

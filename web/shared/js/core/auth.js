@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-23T15470";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-23T15470";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T15470";
+import { icon } from "./icons.js?v=v2026-10-23T16561";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-23T16561";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-23T16561";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -146,7 +146,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-23T15470";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-23T16561";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -175,7 +175,8 @@ export function validatePassword(pwd) {
   if (!/[0-9]/.test(v)) hints.push(t("auth.passwordHintNumber"));
   if (!/[^A-Za-z0-9]/.test(v)) hints.push(t("auth.passwordHintSpecial"));
   if (hints.length) {
-    throw new Error(t("auth.passwordRules", { hints: hints.join(", ") }));
+    // Pełna lista wymagań stoi już w podpowiedzi przy polu -- błąd mówi tylko, czego brakuje.
+    throw new Error(t("auth.passwordMissing", { hints: hints.join(", ") }));
   }
   return v;
 }

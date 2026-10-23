@@ -1,5 +1,5 @@
 // js/core/realtime.js
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T15470";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-23T16561";
 
 
 // ch.httpSend() używa nowego URL /realtime/v1/api/broadcast/{topic}/events/{event}
