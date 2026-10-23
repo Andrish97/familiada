@@ -82,10 +82,10 @@
   "styleBlock": 1
  },
  "web/control/buzzer/css/buzzer.css": {
-  "colorLiteral": 19,
+  "colorLiteral": 17,
   "rootTokens": 12,
-  "zIndexLiteral": 4,
-  "sharedDuplicate": 7
+  "zIndexLiteral": 3,
+  "sharedDuplicate": 2
  },
  "web/control/buzzer/index.html": {
   "styleBlock": 1
@@ -123,10 +123,10 @@
  },
  "web/control/host/css/host.css": {
   "important": 2,
-  "colorLiteral": 14,
+  "colorLiteral": 12,
   "rootTokens": 37,
-  "zIndexLiteral": 5,
-  "sharedDuplicate": 8
+  "zIndexLiteral": 4,
+  "sharedDuplicate": 3
  },
  "web/control/host/index.html": {
   "styleBlock": 1
@@ -494,9 +494,9 @@
  },
  "web/snake/css/snake.css": {
   "important": 2,
-  "colorLiteral": 5,
-  "zIndexLiteral": 7,
-  "sharedDuplicate": 6
+  "colorLiteral": 3,
+  "zIndexLiteral": 6,
+  "sharedDuplicate": 1
  },
  "web/tasks/css/tasks.css": {
   "mediaWidth": 2

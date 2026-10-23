@@ -1195,39 +1195,34 @@
   }
 
   /* ── „Dodaj do ekranu głównego” (urządzenia) ───────────────────── */
+  /* „Dodaj do ekranu początkowego” (ekrany gry: Przycisk, Prowadzący, snake). */
   .a2hs {
     position: fixed;
     inset: 0;
-    z-index: var(--z-a2hs);
+    z-index: var(--z-toast);
     display: none;
     place-items: center;
-    background: var(--scrim);
-    padding: 18px;
+    box-sizing: border-box;
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) calc(env(safe-area-inset-right, 0px) + 20px)
+      calc(env(safe-area-inset-bottom, 0px) + 20px) calc(env(safe-area-inset-left, 0px) + 20px);
+    background: var(--k-70);
   }
   html.showA2HS .a2hs { display: grid; }
   .a2hsCard {
-    width: min(520px, 92vw);
-    border-radius: var(--r-md);
-    border: 1px solid var(--w-25);
-    background: var(--surface-raised);
-    --under: var(--surface-raised);
-    padding: 16px 16px 14px;
+    --under: var(--surface-1);
+    box-sizing: border-box;
+    width: min(100%, 400px);
+    padding: 24px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
     color: var(--text);
+    text-align: center;
   }
-  .a2hsTitle {
-    font-weight: 1000;
-    letter-spacing: .04em;
-    margin: 0 0 8px;
-  }
-  .a2hsText {
-    margin: 0;
-    opacity: .9;
-    line-height: 1.35;
-  }
-  .a2hsClose {
-    margin-top: 12px;
-    width: 100%;
-  }
+  .a2hsTitle { margin: 0 0 12px; font-size: 20px; font-weight: 900; }
+  .a2hsText { margin: 0 0 20px; color: var(--text-muted); font-size: 15px; line-height: 1.5; }
+  .a2hsText b { color: var(--text); font-weight: 700; }
+  .a2hsClose { width: 100%; min-height: 44px; }
   @media (display-mode: standalone) {
     .a2hs { display: none !important; }
   }
