@@ -1,567 +1,573 @@
 /* css/editor.css */
+@layer page {
+  body.editor-body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: #fff;
+      overflow: hidden
+  }
 
-body.editor-body {
-    min-height: 100dvh;
-    background: var(--bg);
-    color: #fff;
-    overflow: hidden
+  body.editor-body .wrap {
+      height: calc(100dvh - 72px);
+      padding-top: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+  }
+
+  .rowTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      flex-wrap: wrap
+  }
+
+
+  .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0,1fr);
+      gap: 14px;
+      margin-top: 22px;
+      min-height: 0;
+      flex: 1
+  }
+
+
+  .left,.rightPanel {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      --under: var(--card); /* podłoże przycisków (css/base.css) */
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      padding: 14px;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+  }
+
+  .left {
+    --under: var(--card); /* podłoże dla kryjących teł przycisków (css/base.css) */
+      width: 360px;
+      min-width: 360px
+  }
+
+
+  .panelHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+  }
+
+  .panelHint {
+      font-size: 12px;
+      opacity: .75;
+      text-align: right;
+      min-width: 0
+  }
+
+  /* Warunki gotowości gry (readinessChecklist) */
+  .rulesList {
+      list-style: none;
+      margin: 6px 0 8px;
+      padding: 0;
+      display: grid;
+      gap: 3px;
+      font-size: 12px
+  }
+
+  .rulesList li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.35
+  }
+
+  .rulesList li .ico { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px }
+  .rulesList li.ok { opacity: .7 }
+  .rulesList li.ok .ico { color: #7ef0a2 }
+  .rulesList li.bad .ico { color: var(--gold) }
+
+  /* jak nagłówki sekcji „Treść pytania” / „Odpowiedzi” (.qf-label) */
+  .panelTitle {
+      font-weight: 800;
+      letter-spacing: .2px
+  }
+
+  /* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
+  .listShell {
+    --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
+      margin-top: 10px;
+      border-radius: 18px;
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+  }
+
+  .list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0
+  }
+
+  .importInline {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+  }
+
+  .importInline .hint {
+      margin: 0;
+  }
+
+  .qcard {
+      position: relative;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      --btn-tint: rgba(255,255,255,.05);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
+      padding: 12px;
+      padding-right: 56px;
+      cursor: pointer;
+      overflow: hidden
+  }
+
+  .qcard .x:hover,.qcard:hover {
+      filter: brightness(1.06)
+  }
+
+  .qord {
+      opacity: .75;
+      font-size: 12px
+  }
+
+  .qprev {
+      display: block;
+      margin-top: 6px;
+      font-weight: 1000;
+      font-size: 14px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+  }
+
+  .qmeta {
+      margin-top: 6px;
+      opacity: .75;
+      font-size: 12px
+  }
+
+  .qcard .x {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      border: 1px solid var(--line2);
+      --btn-tint: rgba(255,255,255,.08);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
+      color: rgba(255,255,255,.9);
+      font-weight: 1000;
+      display: grid;
+      place-items: center;
+      cursor: pointer
+  }
+
+  .empty {
+      opacity: .8;
+      font-size: 13px;
+      padding: 16px
+  }
+
+  .rightPanel.hasQ .editorBox {
+      display: flex
+  }
+
+  .editorBox,.rightPanel.hasQ .empty {
+      display: none
+  }
+
+  .editorBox {
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+  }
+
+  .qSheetBody {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column
+  }
+
+  .qSheetBody .editorBox {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto
+  }
+
+  .qSheetBody .answersBlock {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-rows: auto minmax(0,1fr) auto
+  }
+
+  body.editor-body .qSheetBody .qf-listShell {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch
+  }
+
+  .block {
+      margin-bottom: 12px
+  }
+
+  .answersBlock {
+      margin-top: 0;
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+      flex: 1;
+      grid-template-rows: auto 1fr auto; /* nagłówek z sumą, lista, hintBottom */align-content: start; /* nie rozciągaj wierszy */
+  }
+
+  .answersTop {
+      min-height: 0;
+  }
+
+  .editor.only-questions .answersBlock {
+      display: none!important
+  }
+
+  .addTile {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      text-align: center
+  }
+
+  .addTile {
+      border-radius: 18px;
+      border: 1px dashed rgba(255,234,166,.35);
+      --btn-tint: rgba(255,255,255,.04);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
+      padding: 14px;
+      align-items: center;
+      cursor: pointer;
+      min-height: 100px
+  }
+
+  .addTile:hover {
+      filter: brightness(1.08);
+      border-color: rgba(255,234,166,.85)
+  }
+
+  .addTile .plus {
+      color: var(--gold);
+      font-size: 28px;
+      line-height: 1
+  }
+
+  .addTile .txt {
+      font-weight: 1000;
+      color: #fff
+  }
+
+  .addTile .sub {
+      opacity: .75;
+      font-size: 12px;
+      font-weight: 800
+  }
+
+  .addTile .sub {
+      color: rgba(255,255,255,.82)
+  }
+
+  .addTile:disabled,
+  .addTile[aria-disabled="true"] {
+      opacity: .85 !important;
+      color: rgba(255,255,255,.92);
+      border-color: rgba(255,255,255,.32);
+  }
+
+  .addTile:disabled .txt,
+  .addTile:disabled .sub,
+  .addTile[aria-disabled="true"] .txt,
+  .addTile[aria-disabled="true"] .sub {
+      color: rgba(255,255,255,.92);
+      opacity: 1;
+  }
+
+  .qcard:not(.addTile).good {
+      border-color: rgba(120,255,120,.45);
+      --btn-tint: rgba(120,255,120,.1);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+  }
+
+  .qcard:not(.addTile).bad {
+      border-color: rgba(255,120,120,.45);
+      --btn-tint: rgba(255,120,120,.1);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+  }
+
+  .qcard.active:not(.addTile) {
+      border-color: rgba(255,234,166,.9);
+      background-image:
+          linear-gradient(rgba(255,234,166,.10), rgba(255,234,166,.10)),
+          linear-gradient(var(--btn-tint), var(--btn-tint));
+      background-color: var(--under, #050914);
+      box-shadow: 0 0 0 2px rgba(255,234,166,.55), 0 10px 22px rgba(0,0,0,.35);
+  }
+
+  .overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--scrim);
+      display: grid;
+      place-items: center;
+      z-index: 50
+  }
+
+  .modal {
+      width: min(860px,94vw);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: #121524;
+      --under: #121524; /* podłoże przycisków na powierzchni modala */
+      box-shadow: 0 30px 90px rgba(0,0,0,.75);
+      padding: 18px;
+      max-height: 92vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch
+  }
+
+  .mTitle {
+      font-weight: 1000;
+      font-size: 18px;
+      letter-spacing: .06em;
+      color: var(--gold)
+  }
+
+  .mSub {
+      opacity: .8;
+      font-size: 13px;
+      margin-top: 6px
+  }
+
+  .importRow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px
+  }
+
+  .importTa {
+      width: 100%;
+      min-height: 220px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line2);
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+      resize: vertical;
+      font-weight: 800
+  }
+
+  .txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:rgba(0,0,0,.18); }
+  .txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
+  .txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
+  .txt-preview-list{ display:grid; gap:7px; }
+  .txt-preview-item{ padding-top:6px; border-top:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
+  .txt-preview-item strong{ display:block; }
+  .txt-preview-answers{ color:var(--muted); margin-top:2px; }
+  .txt-preview-body.is-error{ color:#fca5a5; }
+
+  .importMsg {
+      margin-left: auto;
+      opacity: .85;
+      font-weight: 900;
+      color: var(--gold);
+      padding: 6px 0
+  }
+
+  @media (max-width: 600px) {
+      .left,.rightPanel {
+          padding: 12px;
+          border-radius: 18px
+      }
+
+      .list {
+          gap: 8px;
+          padding: 0;
+      }
+
+      .importInline {
+          align-items: flex-start;
+      }
+
+      .qcard {
+          padding: 10px;
+          padding-right: 48px;
+          border-radius: 16px;
+          min-height: 72px
+      }
+
+      .qord {
+          font-size: 11px
+      }
+
+      .qmeta,.qprev {
+          font-size: 13px;
+          margin-top: 4px
+      }
+
+      .qmeta {
+          font-size: 11px
+      }
+
+      .qcard .x {
+          top: 8px;
+          right: 8px;
+          width: 28px;
+          height: 28px;
+          border-radius: 10px
+      }
+
+      .addTile {
+          padding: 10px;
+          border-radius: 16px;
+          min-height: 90px
+      }
+
+
+  }
+
+  @media (max-width:1100px) {
+      body.editor-body .layout {
+          grid-template-columns: 1fr;
+      }
+
+      body.editor-body .left {
+          width: auto;
+          min-width: 0;
+      }
+
+      body.editor-body.mobile-editing {
+          overflow: hidden;
+      }
+
+      body.editor-body.mobile-editing .left {
+          display: none;
+      }
+
+      body.editor-body.mobile-editing .rightPanel {
+          display: block;
+      }
+
+      body.editor-body:not(.mobile-editing) .rightPanel {
+          display: none;
+      }
+
+      body.editor-body.mobile-editing .rowTop .name-field {
+          display: none;
+      }
+
+
+  }
+
+  @media (max-width: 600px) and (orientation: portrait) {
+      body.editor-body {
+          overflow: hidden;
+      }
+
+      body.editor-body .wrap {
+          overflow: hidden;
+          height: calc(100dvh - 72px);
+      }
+
+      body.editor-body .layout {
+          min-height: 0;
+          flex: 1;
+      }
+
+      body.editor-body .left,
+      body.editor-body .rightPanel {
+          max-height: 100%;
+      }
+
+      body.editor-body .listShell,
+      body.editor-body .qf-listShell {
+          overflow: auto;
+      }
+
+
+  }
+
+  @media (max-height:720px) {
+      body.editor-body {
+          overflow: auto;
+      }
+
+      body.editor-body.mobile-editing {
+          overflow: auto;
+      }
+
+      body.editor-body .wrap {
+          height: auto;
+          min-height: calc(100dvh - 72px);
+          overflow: auto;
+      }
+
+      body.editor-body .layout {
+          flex: 0 0 auto;
+          min-height: auto;
+      }
+
+      body.editor-body .left,
+      body.editor-body .rightPanel {
+          height: auto;
+          min-height: auto;
+          max-height: none;
+          overflow: visible;
+      }
+
+      body.editor-body .listShell,
+      body.editor-body .qf-listShell {
+          overflow: visible;
+          flex: 0 0 auto;
+      }
+  }
 }
 
-body.editor-body .wrap {
-    height: calc(100dvh - 72px);
-    padding-top: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column
-}
-
-.rowTop {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 14px;
-    flex-wrap: wrap
-}
-
-
-.layout {
-    display: grid;
-    grid-template-columns: 360px minmax(0,1fr);
-    gap: 14px;
-    margin-top: 22px;
-    min-height: 0;
-    flex: 1
-}
-
-
-.left,.rightPanel {
-    border-radius: 20px;
-    border: 1px solid var(--line);
-    background: var(--card);
-    --under: var(--card); /* podłoże przycisków (css/base.css) */
-    box-shadow: 0 24px 60px rgba(0,0,0,.45);
-    padding: 14px;
-    min-height: 0;
-    height: 100%;
-    max-height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column
-}
-
-.left {
-  --under: var(--card); /* podłoże dla kryjących teł przycisków (css/base.css) */
-    width: 360px;
-    min-width: 360px
-}
-
-
-.panelHead {
-    display: flex;
-    justify-content: space-between;
-    align-items: center
-}
-
-.panelHint {
-    font-size: 12px;
-    opacity: .75;
-    text-align: right;
-    min-width: 0
-}
-
-/* Warunki gotowości gry (readinessChecklist) */
-.rulesList {
-    list-style: none;
-    margin: 6px 0 8px;
-    padding: 0;
-    display: grid;
-    gap: 3px;
-    font-size: 12px
-}
-
-.rulesList li {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.35
-}
-
-.rulesList li .ico { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px }
-.rulesList li.ok { opacity: .7 }
-.rulesList li.ok .ico { color: #7ef0a2 }
-.rulesList li.bad .ico { color: var(--gold) }
-
-/* jak nagłówki sekcji „Treść pytania” / „Odpowiedzi” (.qf-label) */
-.panelTitle {
-    font-weight: 800;
-    letter-spacing: .2px
-}
-
-/* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
-.listShell {
-  --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
-    margin-top: 10px;
-    border-radius: 18px;
-    min-height: 0;
-    flex: 1;
-    overflow: auto;
-}
-
-.list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 0
-}
-
-.importInline {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.importInline .hint {
-    margin: 0;
-}
-
-.qcard {
-    position: relative;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    --btn-tint: rgba(255,255,255,.05);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    padding: 12px;
-    padding-right: 56px;
-    cursor: pointer;
-    overflow: hidden
-}
-
-.qcard .x:hover,.qcard:hover {
-    filter: brightness(1.06)
-}
-
-.qord {
-    opacity: .75;
-    font-size: 12px
-}
-
-.qprev {
-    display: block;
-    margin-top: 6px;
-    font-weight: 1000;
-    font-size: 14px;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-}
-
-.qmeta {
-    margin-top: 6px;
-    opacity: .75;
-    font-size: 12px
-}
-
-.qcard .x {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
-    border: 1px solid var(--line2);
-    --btn-tint: rgba(255,255,255,.08);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    color: rgba(255,255,255,.9);
-    font-weight: 1000;
-    display: grid;
-    place-items: center;
-    cursor: pointer
-}
-
-.empty {
-    opacity: .8;
-    font-size: 13px;
-    padding: 16px
-}
-
-.rightPanel.hasQ .editorBox {
-    display: flex
-}
-
-.editorBox,.rightPanel.hasQ .empty {
-    display: none
-}
-
-.editorBox {
-    min-height: 0;
-    height: 100%;
-    flex-direction: column;
-}
-
-/* Okno pytania na telefonie (#questionSheetOverlay), jak okno pytania
-   w Eksploratorze: treść pytania i nagłówek odpowiedzi stoją, przewija się
-   sama lista odpowiedzi, a sekcja kończy się nad dolnym safe area
-   (uwaga użytkownika 2026-10-20). */
-.modal--sheet.sheet-active .question-sheet > .sheet-modal-body {
-    overflow: hidden
-}
-
-.qSheetBody {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column
-}
-
-.qSheetBody .editorBox {
-    display: flex;
-    flex: 1 1 auto;
-    min-height: 0;
-    height: auto
-}
-
-.qSheetBody .answersBlock {
-    flex: 1 1 auto;
-    min-height: 0;
-    grid-template-rows: auto minmax(0,1fr) auto
-}
-
-body.editor-body .qSheetBody .qf-listShell {
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch
-}
-
-.block {
-    margin-bottom: 12px
-}
-
-.answersBlock {
-    margin-top: 0;
-    display: grid;
-    gap: 10px;
-    min-height: 0;
-    flex: 1;
-    grid-template-rows: auto 1fr auto; /* nagłówek z sumą, lista, hintBottom */align-content: start; /* nie rozciągaj wierszy */
-}
-
-.answersTop {
-    min-height: 0;
-}
-
-.editor.only-questions .answersBlock {
-    display: none!important
-}
-
-.addTile {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-    text-align: center
-}
-
-.addTile {
-    border-radius: 18px;
-    border: 1px dashed rgba(255,234,166,.35);
-    --btn-tint: rgba(255,255,255,.04);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    padding: 14px;
-    align-items: center;
-    cursor: pointer;
-    min-height: 100px
-}
-
-.addTile:hover {
-    filter: brightness(1.08);
-    border-color: rgba(255,234,166,.85)
-}
-
-.addTile .plus {
-    color: var(--gold);
-    font-size: 28px;
-    line-height: 1
-}
-
-.addTile .txt {
-    font-weight: 1000;
-    color: #fff
-}
-
-.addTile .sub {
-    opacity: .75;
-    font-size: 12px;
-    font-weight: 800
-}
-
-.addTile .sub {
-    color: rgba(255,255,255,.82)
-}
-
-.addTile:disabled,
-.addTile[aria-disabled="true"] {
-    opacity: .85 !important;
-    color: rgba(255,255,255,.92);
-    border-color: rgba(255,255,255,.32);
-}
-
-.addTile:disabled .txt,
-.addTile:disabled .sub,
-.addTile[aria-disabled="true"] .txt,
-.addTile[aria-disabled="true"] .sub {
-    color: rgba(255,255,255,.92);
-    opacity: 1;
-}
-
-.qcard:not(.addTile).good {
-    border-color: rgba(120,255,120,.45);
-    --btn-tint: rgba(120,255,120,.1);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
-.qcard:not(.addTile).bad {
-    border-color: rgba(255,120,120,.45);
-    --btn-tint: rgba(255,120,120,.1);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
-.qcard.active:not(.addTile) {
-    border-color: rgba(255,234,166,.9);
-    background-image:
-        linear-gradient(rgba(255,234,166,.10), rgba(255,234,166,.10)),
-        linear-gradient(var(--btn-tint), var(--btn-tint));
-    background-color: var(--under, #050914);
-    box-shadow: 0 0 0 2px rgba(255,234,166,.55), 0 10px 22px rgba(0,0,0,.35);
-}
-
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--scrim);
-    display: grid;
-    place-items: center;
-    z-index: 50
-}
-
-.modal {
-    width: min(860px,94vw);
-    border-radius: 22px;
-    border: 1px solid var(--line);
-    background: #121524;
-    --under: #121524; /* podłoże przycisków na powierzchni modala */
-    box-shadow: 0 30px 90px rgba(0,0,0,.75);
-    padding: 18px;
-    max-height: 92vh;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch
-}
-
-.mTitle {
-    font-weight: 1000;
-    font-size: 18px;
-    letter-spacing: .06em;
-    color: var(--gold)
-}
-
-.mSub {
-    opacity: .8;
-    font-size: 13px;
-    margin-top: 6px
-}
-
-.importRow {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 12px
-}
-
-.importTa {
-    width: 100%;
-    min-height: 220px;
-    margin-top: 12px;
-    padding: 12px;
-    border-radius: 16px;
-    border: 1px solid var(--line2);
-    background: rgba(0,0,0,.25);
-    color: #fff;
-    outline: 0;
-    resize: vertical;
-    font-weight: 800
-}
-
-.txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:rgba(0,0,0,.18); }
-.txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-.txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
-.txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
-.txt-preview-list{ display:grid; gap:7px; }
-.txt-preview-item{ padding-top:6px; border-top:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
-.txt-preview-item strong{ display:block; }
-.txt-preview-answers{ color:var(--muted); margin-top:2px; }
-.txt-preview-body.is-error{ color:#fca5a5; }
-
-.importMsg {
-    margin-left: auto;
-    opacity: .85;
-    font-weight: 900;
-    color: var(--gold);
-    padding: 6px 0
-}
-
-@media (max-width: 600px) {
-    .left,.rightPanel {
-        padding: 12px;
-        border-radius: 18px
-    }
-
-    .list {
-        gap: 8px;
-        padding: 0;
-    }
-
-    .importInline {
-        align-items: flex-start;
-    }
-
-    .qcard {
-        padding: 10px;
-        padding-right: 48px;
-        border-radius: 16px;
-        min-height: 72px
-    }
-
-    .qord {
-        font-size: 11px
-    }
-
-    .qmeta,.qprev {
-        font-size: 13px;
-        margin-top: 4px
-    }
-
-    .qmeta {
-        font-size: 11px
-    }
-
-    .qcard .x {
-        top: 8px;
-        right: 8px;
-        width: 28px;
-        height: 28px;
-        border-radius: 10px
-    }
-
-    .addTile {
-        padding: 10px;
-        border-radius: 16px;
-        min-height: 90px
-    }
-
-
-}
-
-@media (max-width:1100px) {
-    body.editor-body .layout {
-        grid-template-columns: 1fr;
-    }
-
-    body.editor-body .left {
-        width: auto;
-        min-width: 0;
-    }
-
-    body.editor-body.mobile-editing {
-        overflow: hidden;
-    }
-
-    body.editor-body.mobile-editing .left {
-        display: none;
-    }
-
-    body.editor-body.mobile-editing .rightPanel {
-        display: block;
-    }
-
-    body.editor-body:not(.mobile-editing) .rightPanel {
-        display: none;
-    }
-
-    body.editor-body.mobile-editing .rowTop .name-field {
-        display: none;
-    }
-
-
-}
-
-@media (max-width: 600px) and (orientation: portrait) {
-    body.editor-body {
-        overflow: hidden;
-    }
-
-    body.editor-body .wrap {
-        overflow: hidden;
-        height: calc(100dvh - 72px);
-    }
-
-    body.editor-body .layout {
-        min-height: 0;
-        flex: 1;
-    }
-
-    body.editor-body .left,
-    body.editor-body .rightPanel {
-        max-height: 100%;
-    }
-
-    body.editor-body .listShell,
-    body.editor-body .qf-listShell {
-        overflow: auto;
-    }
-
-
-}
-
-@media (max-height:720px) {
-    body.editor-body {
-        overflow: auto;
-    }
-
-    body.editor-body.mobile-editing {
-        overflow: auto;
-    }
-
-    body.editor-body .wrap {
-        height: auto;
-        min-height: calc(100dvh - 72px);
-        overflow: auto;
-    }
-
-    body.editor-body .layout {
-        flex: 0 0 auto;
-        min-height: auto;
-    }
-
-    body.editor-body .left,
-    body.editor-body .rightPanel {
-        height: auto;
-        min-height: auto;
-        max-height: none;
-        overflow: visible;
-    }
-
-    body.editor-body .listShell,
-    body.editor-body .qf-listShell {
-        overflow: visible;
-        flex: 0 0 auto;
-    }
+/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
+   warstwie strony, jak ogólne reguły arkusza w silniku. */
+@layer states {
+
+  /* Okno pytania na telefonie (#questionSheetOverlay), jak okno pytania
+     w Eksploratorze: treść pytania i nagłówek odpowiedzi stoją, przewija się
+     sama lista odpowiedzi, a sekcja kończy się nad dolnym safe area
+     (uwaga użytkownika 2026-10-20). */
+  .modal--sheet.sheet-active .question-sheet > .sheet-modal-body {
+      overflow: hidden
+  }
 }

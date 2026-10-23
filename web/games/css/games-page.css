@@ -125,8 +125,12 @@
     text-align: center;
     padding: 16px 0;
   }
+}
 
-  /* Arkusz (telefon, tablet dotykowy): lista pytań podglądu rośnie z oknem
+/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
+   warstwie strony, jak ogólne reguły arkusza w silniku. */
+@layer states {
+/* Arkusz (telefon, tablet dotykowy): lista pytań podglądu rośnie z oknem
      i nie tworzy drugiego przewijania (dawniej shared/css/base.css). */
   @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
     .modal--sheet .bld-preview-questions {

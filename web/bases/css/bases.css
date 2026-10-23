@@ -124,15 +124,14 @@
   @media (max-width: 980px){
     .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
   }
+}
 
-  /* Okno udostępniania bazy (dawniej shared/css/base.css). W zwykłym widoku
-     pusta sekcja listy nie zmniejsza karty do samego kafla braku. */
-  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
-  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"] {
-    min-height: 180px;
-    box-sizing: border-box;
-  }
-  /* Telefon: formularz ma własny wiersz, a obie listy są jednocześnie widoczne
+
+
+/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
+   warstwie strony, jak ogólne reguły arkusza w silniku. */
+@layer states {
+/* Telefon: formularz ma własny wiersz, a obie listy są jednocześnie widoczne
      i dzielą pozostałą wysokość arkusza. */
   @media (max-width: 600px) {
     #shareOverlay.sheet-active .shareModal { overflow: hidden; }
@@ -166,4 +165,13 @@
   .uni-foot .baseShareRole{ gap: .4em; }
   /* Wiersz z aktywnym licznikiem: rola tej samej wysokości co pozostałe przyciski. */
   .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions .baseShareRole{ height: 52px; min-height: 52px; }
+
+
+  /* Okno udostępniania bazy (dawniej shared/css/base.css). W zwykłym widoku
+     pusta sekcja listy nie zmniejsza karty do samego kafla braku. */
+  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
+  #shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"] {
+    min-height: 180px;
+    box-sizing: border-box;
+  }
 }

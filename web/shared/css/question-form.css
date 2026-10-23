@@ -5,248 +5,249 @@
    więc oba miejsca mają ten sam układ, a nie tylko podobne style.
    Bez punktów (typowa ankieta / punktacja): klasa .no-points na dowolnym
    przodku. */
+@layer page {
+  /* Treść pytania i odpowiedzi jako dwie sekcje z otoczką, jak sekcje w innych
+     oknach (.shareSection w base.css; uwaga użytkownika 2026-10-20). */
+  .qf-section {
+      --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      min-width: 0
+  }
 
-/* Treść pytania i odpowiedzi jako dwie sekcje z otoczką, jak sekcje w innych
-   oknach (.shareSection w base.css; uwaga użytkownika 2026-10-20). */
-.qf-section {
-    --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
-    padding: 12px;
-    border-radius: 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.10);
-    min-width: 0
-}
+  /* nagłówek sekcji jak .shareSectionTitle */
+  .qf-label {
+      font-weight: 800;
+      letter-spacing: .2px;
+      margin-bottom: 10px
+  }
 
-/* nagłówek sekcji jak .shareSectionTitle */
-.qf-label {
-    font-weight: 800;
-    letter-spacing: .2px;
-    margin-bottom: 10px
-}
+  .qf-qtext {
+      width: 100%;
+      min-height: 90px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line2);
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+      resize: vertical;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35
+  }
 
-.qf-qtext {
-    width: 100%;
-    min-height: 90px;
-    padding: 10px 12px;
-    border-radius: 16px;
-    border: 1px solid var(--line2);
-    background: rgba(0,0,0,.25);
-    color: #fff;
-    outline: 0;
-    resize: vertical;
-    font: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.35
-}
+  .qf-qtext:focus {
+      border-color: rgba(255,234,166,.45)
+  }
 
-.qf-qtext:focus {
-    border-color: rgba(255,234,166,.45)
-}
+  .qf-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px
+  }
 
-.qf-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px
-}
+  /* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
+  .qf-listShell {
+      border-radius: 12px;
+      min-height: 0;
+      overflow: auto
+  }
 
-/* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
-.qf-listShell {
-    border-radius: 12px;
-    min-height: 0;
-    overflow: auto
-}
+  /* Kafel odpowiedzi jak wiersze list (.shareRow, decyzja 2026-10-20):
+     tekst odpowiedzi bez własnej ramki, punkty z dopiskiem „pkt”, kosz. */
+  .qf-row {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto auto;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 6px 6px 4px;
+      border-radius: 12px;
+      border: 1px solid var(--line2);
+      background: var(--card2);
+      min-width: 0
+  }
 
-/* Kafel odpowiedzi jak wiersze list (.shareRow, decyzja 2026-10-20):
-   tekst odpowiedzi bez własnej ramki, punkty z dopiskiem „pkt”, kosz. */
-.qf-row {
-    display: grid;
-    grid-template-columns: minmax(0,1fr) auto auto;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 6px 6px 4px;
-    border-radius: 12px;
-    border: 1px solid var(--line2);
-    background: var(--card2);
-    min-width: 0
-}
+  .qf-row:not(.qf-add):focus-within {
+      border-color: rgba(255,234,166,.45)
+  }
 
-.qf-row:not(.qf-add):focus-within {
-    border-color: rgba(255,234,166,.45)
-}
+  .qf-text {
+      width: 100%;
+      min-width: 0;
+      height: 38px;
+      box-sizing: border-box;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      outline: 0;
+      font: inherit;
+      font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
+      font-weight: 800
+  }
 
-.qf-text {
-    width: 100%;
-    min-width: 0;
-    height: 38px;
-    box-sizing: border-box;
-    padding: 0 8px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #fff;
-    outline: 0;
-    font: inherit;
-    font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
-    font-weight: 800
-}
+  .qf-ptsWrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 36px;
+      box-sizing: border-box;
+      padding: 0 10px 0 6px;
+      border-radius: 10px;
+      border: 1px solid var(--line2);
+      background: rgba(0,0,0,.25);
+      cursor: text
+  }
 
-.qf-ptsWrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    height: 36px;
-    box-sizing: border-box;
-    padding: 0 10px 0 6px;
-    border-radius: 10px;
-    border: 1px solid var(--line2);
-    background: rgba(0,0,0,.25);
-    cursor: text
-}
+  .qf-ptsWrap:focus-within {
+      border-color: rgba(255,234,166,.55)
+  }
 
-.qf-ptsWrap:focus-within {
-    border-color: rgba(255,234,166,.55)
-}
+  .qf-pts {
+      width: 3.2ch;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--gold);
+      outline: 0;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 900;
+      text-align: right;
+      font-variant-numeric: tabular-nums
+  }
 
-.qf-pts {
-    width: 3.2ch;
-    height: 100%;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--gold);
-    outline: 0;
-    font: inherit;
-    font-size: 16px;
-    font-weight: 900;
-    text-align: right;
-    font-variant-numeric: tabular-nums
-}
+  .qf-ptsSuffix {
+      font-size: 12px;
+      font-weight: 800;
+      opacity: .65
+  }
 
-.qf-ptsSuffix {
-    font-size: 12px;
-    font-weight: 800;
-    opacity: .65
-}
+  /* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
+  .qf-row:has(.qf-text.qf-invalid),.qf-ptsWrap:has(.qf-invalid) {
+      border-color: rgba(255,120,120,.75);
+      background: rgba(255,120,120,.10)
+  }
 
-/* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
-.qf-row:has(.qf-text.qf-invalid),.qf-ptsWrap:has(.qf-invalid) {
-    border-color: rgba(255,120,120,.75);
-    background: rgba(255,120,120,.10)
-}
+  /* Stałe podpowiedzi pod listą odpowiedzi (limit 17, znaki, finał 11) */
+  .qf-hints {
+      display: grid;
+      gap: 4px;
+      padding: 2px 4px 0
+  }
 
-/* Stałe podpowiedzi pod listą odpowiedzi (limit 17, znaki, finał 11) */
-.qf-hints {
-    display: grid;
-    gap: 4px;
-    padding: 2px 4px 0
-}
+  .qf-hint {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
+      opacity: .72
+  }
 
-.qf-hint {
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.4;
-    opacity: .72
-}
+  .btn.icon.qf-del {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px
+  }
 
-.btn.icon.qf-del {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px
-}
+  .no-points .qf-ptsWrap {
+      display: none
+  }
 
-.no-points .qf-ptsWrap {
-    display: none
-}
+  /* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
+  .qf-row.qf-add {
+      grid-template-columns: 36px minmax(0,1fr) auto;
+      gap: 10px;
+      min-height: 50px;
+      padding: 6px 12px 6px 0;
+      border: 1px dashed rgba(255,234,166,.35);
+      --btn-tint: rgba(255,234,166,.06);
+      background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      color: #fff;
+      font: inherit;
+      text-align: left;
+      cursor: pointer
+  }
 
-/* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
-.qf-row.qf-add {
-    grid-template-columns: 36px minmax(0,1fr) auto;
-    gap: 10px;
-    min-height: 50px;
-    padding: 6px 12px 6px 0;
-    border: 1px dashed rgba(255,234,166,.35);
-    --btn-tint: rgba(255,234,166,.06);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-    color: #fff;
-    font: inherit;
-    text-align: left;
-    cursor: pointer
-}
+  .qf-addPlus {
+      grid-column: 1;
+      justify-self: center;
+      margin-left: 12px;
+      color: var(--gold);
+      font-size: 28px;
+      line-height: 1;
+  }
 
-.qf-addPlus {
-    grid-column: 1;
-    justify-self: center;
-    margin-left: 12px;
-    color: var(--gold);
-    font-size: 28px;
-    line-height: 1;
-}
+  .qf-add:hover {
+      filter: brightness(1.08);
+      border-color: rgba(255,234,166,.85)
+  }
 
-.qf-add:hover {
-    filter: brightness(1.08);
-    border-color: rgba(255,234,166,.85)
-}
+  .qf-add .qf-addLbl {
+      font-weight: 1000
+  }
 
-.qf-add .qf-addLbl {
-    font-weight: 1000
-}
+  .qf-add .qf-addCnt {
+      margin-left: auto;
+      font-weight: 900;
+      opacity: .8
+  }
 
-.qf-add .qf-addCnt {
-    margin-left: auto;
-    font-weight: 900;
-    opacity: .8
-}
+  .qf-add:disabled {
+      cursor: not-allowed;
+      filter: none;
+      color: rgba(255,255,255,.92);
+      border-color: rgba(255,255,255,.32)
+  }
 
-.qf-add:disabled {
-    cursor: not-allowed;
-    filter: none;
-    color: rgba(255,255,255,.92);
-    border-color: rgba(255,255,255,.32)
-}
+  /* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”
+     -- czerwonym powyżej puli; bez punktów sam nagłówek. */
+  .qf-sum {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 20px
+  }
 
-/* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”
-   -- czerwonym powyżej puli; bez punktów sam nagłówek. */
-.qf-sum {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 20px
-}
+  .qf-sumTitle {
+      font-weight: 800;
+      letter-spacing: .2px
+  }
 
-.qf-sumTitle {
-    font-weight: 800;
-    letter-spacing: .2px
-}
+  /* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
+  .qf-sumChip {
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .8;
+      white-space: nowrap
+  }
 
-/* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
-.qf-sumChip {
-    font-size: 12px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    opacity: .8;
-    white-space: nowrap
-}
+  .qf-sumChip b {
+      margin-left: 4px;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums
+  }
 
-.qf-sumChip b {
-    margin-left: 4px;
-    color: var(--gold);
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0;
-    font-variant-numeric: tabular-nums
-}
+  .qf-sum.over .qf-sumChip {
+      opacity: 1;
+      color: rgba(255,170,170,.95)
+  }
 
-.qf-sum.over .qf-sumChip {
-    opacity: 1;
-    color: rgba(255,170,170,.95)
-}
+  .qf-sum.over .qf-sumChip b {
+      color: rgba(255,140,140,1)
+  }
 
-.qf-sum.over .qf-sumChip b {
-    color: rgba(255,140,140,1)
-}
-
-.no-points .qf-sumChip {
-    display: none
+  .no-points .qf-sumChip {
+      display: none
+  }
 }

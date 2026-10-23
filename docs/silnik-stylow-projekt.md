@@ -433,5 +433,27 @@ Ustalenia (wynikają z zasady „wygląd bez zmian”; do zmiany przy dalszych k
    (0,2 s), przejścia kolorów/ramek przycisków i pól, strzałka sekcji;
    `prefers-reduced-motion` wyłącza wszystkie animacje globalnie.
 
-Stan stron: **Zadania** (pilot) — zrzuty identyczne co do piksela
-(Zadania, narzędzia listy, wyszukiwanie; komputer/telefon/tablet).
+Stan stron (2026-10-23, branch `ccr-a802ffe7-hhw67a`) — przepięte, zrzuty
+porównane (komputer/telefon/tablet, wszystkie sceny strony):
+Zadania (pilot), Znajomi, Subskrybenci, Connect, logowanie, potwierdzenie
+i reset hasła, głosowanie publiczne (punkty, tekst), Moje gry, Bazy, Logo
+(lista i 3 edytory), Społeczność gier, Konto, Ankieta, Centrum maili, Go.
+
+Przy przepięciu wychodzą reguły strony, które dawniej przegrywały z
+`base.css`/`games.css` przez specyficzność, a w `@layer page` wygrywają —
+wykrywa je `compare.cjs` (różnice obliczonych stylów); poprawiane w pliku
+strony (np. `:not(:disabled)`, `:where()`, usunięcie martwej reguły).
+
+10. **Dodatkowo ujednolicone przy przepinaniu** (strony bez dawnego
+    `games.css`): odstęp treści od topbara 20 px (było 24 px, telefon 15 px),
+    podpowiedzi `.hint` 12 px jak na listach, przycisk „i” jako `.icon-btn`.
+11. **Poprawka błędu topbara** (tablet): blokada wysokości przy ładowaniu
+    (`body.skel-body .topbar`) bierze stałą `--topbar-h-min`, nie zmierzoną
+    `--topbar-h` — zmierzona „zapamiętywała” chwilowe zawinięcie paska i pod
+    topbarem zostawał pusty pas.
+12. **Pliki stron**: `web/games/css/games-page.css` (tylko Moje gry); stary
+    `games.css` i `shared/css/base.css` zostają dla stron nieprzepiętych
+    (usunięcie po ostatniej). Reguły jednej strony z `base.css` przeniesione
+    do plików stron (Bazy, Connect, Ankieta, rynek, strona główna).
+13. **Ekrany gry i QR ankiety** (TV/Tizen bez `@layer`): osobny krok — tylko
+    `tokens.css` + własny CSS bez warstw.

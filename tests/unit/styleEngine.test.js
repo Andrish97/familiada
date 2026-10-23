@@ -26,7 +26,7 @@ const enginePages = () => htmlFiles().filter((f) => stylesheets(read(f)).some((h
 
 test("silnik: tokeny poza warstwami, reszta w zadeklarowanych warstwach", () => {
   assert.doesNotMatch(read("web/shared/style/tokens.css"), /@layer/);
-  assert.match(stripComments(read("web/shared/style/base.css")), /^@layer reset, base, components, utilities, page;/);
+  assert.match(stripComments(read("web/shared/style/base.css")), /^@layer reset, base, components, utilities, page, states;/);
   for (const [file, layer] of [["base", "base"], ["components", "components"], ["layout", "components"], ["utilities", "utilities"]]) {
     assert.match(read(`web/shared/style/${file}.css`), new RegExp(`@layer ${layer} \\{`), file);
   }

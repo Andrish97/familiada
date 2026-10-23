@@ -123,7 +123,9 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const shot = await page.screenshot({ fullPage: !!scene.fullPage, animations: "disabled" });
   // --styles: obliczone style widocznych elementów obok PNG (compare.cjs pokazuje różnice właściwości).
-  if (args.styles) fs.writeFileSync(file.replace(/\.png$/, ".styles.json"), JSON.stringify(await view.evaluate(dumpStyles).catch(() => ({}))));
+  if (args.styles) {
+    try { fs.writeFileSync(file.replace(/\.png$/, ".styles.json"), JSON.stringify(await view.evaluate(dumpStyles))); } catch {}
+  }
   // deviceFrame: "iphone" -- ekran telefonu w ramce iPhone'a na czarnym tle (kadr strony głównej).
   fs.writeFileSync(file, scene.deviceFrame === "iphone" ? await composeIPhone(browser, shot, scene.frameSize?.width, scene.frameSize?.height, scene.frameSize?.scale) : shot);
   await context.close();
@@ -149,7 +151,9 @@ function dumpStyles() {
     }
     return parts.join(">");
   };
+  let n = 0;
   for (const el of document.querySelectorAll("body, body *")) {
+    if (++n > 6000) break; // pełne strony (Wskazówki) — limit rozmiaru
     if (el.closest("svg") && el.tagName.toLowerCase() !== "svg") continue;
     const r = el.getBoundingClientRect();
     if (!r.width && !r.height) continue;

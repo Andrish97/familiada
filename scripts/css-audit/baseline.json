@@ -13,9 +13,9 @@
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
-  "important": 12,
+  "important": 16,
   "colorLiteral": 169,
-  "mediaWidth": 6,
+  "mediaWidth": 7,
   "zIndexLiteral": 9,
   "sharedDuplicate": 21,
   "unusedClass": 17
@@ -198,8 +198,9 @@
  },
  "web/home/css/index.css": {
   "important": 2,
-  "colorLiteral": 22,
+  "colorLiteral": 24,
   "zIndexLiteral": 4,
+  "sharedDuplicate": 1,
   "unusedClass": 2
  },
  "web/home/js/index.js": {
@@ -368,7 +369,7 @@
   "colorLiteral": 197,
   "mediaWidth": 12,
   "zIndexLiteral": 17,
-  "sharedDuplicate": 197,
+  "sharedDuplicate": 198,
   "unusedClass": 14
  },
  "web/shared/css/blocking-overlay.css": {
@@ -381,7 +382,7 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/game-settings.css": {
-  "important": 2,
+  "important": 3,
   "colorLiteral": 100,
   "mediaWidth": 4,
   "zIndexLiteral": 4,

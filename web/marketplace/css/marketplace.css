@@ -496,8 +496,12 @@
   .mkt-stars, .mkt-rater-stars { display: inline-flex; gap: 1px; vertical-align: middle; }
   .mkt-star-btn .ico { width: 1em; height: 1em; vertical-align: middle; }
   .mkt-sent-actions .btn{ display:inline-flex; align-items:center; gap:6px; }
+}
 
-  /* Arkusz (telefon, tablet dotykowy): lista pytań szczegółów rośnie z oknem
+/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
+   warstwie strony, jak ogólne reguły arkusza w silniku. */
+@layer states {
+/* Arkusz (telefon, tablet dotykowy): lista pytań szczegółów rośnie z oknem
      i nie tworzy drugiego przewijania (dawniej shared/css/base.css). */
   @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
     .modal--sheet .mkt-detail-questions {

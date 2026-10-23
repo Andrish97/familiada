@@ -7,10 +7,11 @@
    dopasowuje komponenty w swoim kontekście (.bar .btn) przy równej
    specyficzności — kaskada jak w dawnym base.css + games.css.
    Warstwa strony wygrywa z komponentami bez podbijania selektorów;
+   warstwa states (arkusz okna na telefonie) jest po stronie — stan wygrywa;
    !important tylko tam, gdzie stan musi przebić styl inline (arkusz,
    [hidden]). Tokeny (:root) są poza warstwami — strona nie nadpisuje
    tokenów na :root (własne zmienne ustawia na swoich elementach). */
-@layer reset, base, components, utilities, page;
+@layer reset, base, components, utilities, page, states;
 
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }
