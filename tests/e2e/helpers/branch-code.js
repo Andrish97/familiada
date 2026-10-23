@@ -65,6 +65,14 @@ function localFileFor(pathname, pages) {
   return null;
 }
 
+// <meta name="i18n-parts"> z HTML brancha dla adresu strony (null, gdy brak).
+function branchI18nMeta(pathname) {
+  const rel = decodeURIComponent(pathname).replace(/^\/+/, "").replace(/\/$/, "");
+  const file = rel.endsWith(".html") ? path.join(REPO_ROOT, rel) : path.join(REPO_ROOT, rel, "index.html");
+  if (!file.startsWith(REPO_ROOT) || !fs.existsSync(file)) return null;
+  return /<meta name="i18n-parts" content="[^"]*">/.exec(fs.readFileSync(file, "utf8"))?.[0] || null;
+}
+
 /**
  * @param {import('@playwright/test').BrowserContext} context
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
@@ -87,6 +95,18 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
     const url = new URL(route.request().url());
     const file = localFileFor(url.pathname, pages);
+    // HTML z produkcji (logowanie, strony spoza `pages`) przy kodzie z brancha:
+    // dokładamy meta i18n-parts z HTML brancha, inaczej translation.js z brancha
+    // wczyta tylko część wspólną słownika (docs/tlumaczenia-podzial-plan.md).
+    if (!file && route.request().resourceType() === "document") {
+      const meta = branchI18nMeta(url.pathname);
+      if (meta) {
+        const response = await route.fetch({ headers: await route.request().allHeaders(), maxRedirects: 0 });
+        const html = await response.text();
+        if (response.status() >= 300 || html.includes('name="i18n-parts"')) return route.fulfill({ response, body: html });
+        return route.fulfill({ response, body: html.replace(/(<meta charset=[^>]*>)/i, `$1\n  ${meta}`) });
+      }
+    }
     // Pozwól kolejnym handlerom Playwrighta dodać np. kontrolowany bypass
     // konserwacji dla testu; bez nich fallback zachowuje zwykłe żądanie sieciowe.
     if (!file) return route.fallback();
