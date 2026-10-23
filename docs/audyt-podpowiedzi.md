@@ -315,3 +315,6 @@ kategorie”.
   w przeglądarce (najdłuższa nazwa drużyny, lista skrótów finału, okna
   1180×820, 1024×700 i 980×640 — najmniejsza szerokość Control) —
   wszystko się mieści.
+- **2026-10-23 (użytkownik):** zasady podpowiedzi i obowiązek pilnowania
+  tłumaczeń przy każdej zmianie dopisane do zasad agentów (`CLAUDE.md`,
+  `AGENTS.md`) i do wzorców UI (`docs/wzorce-ui.md` „A16. Podpowiedzi”).
