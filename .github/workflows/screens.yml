@@ -87,6 +87,24 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
+      # Strony używają czcionki systemowej (system-ui). Na Ubuntu to DejaVu Sans --
+      # zrzuty wyglądałyby inaczej niż na urządzeniach użytkowników i w lokalnym
+      # podglądzie; Inter jako czcionka systemowa (jak w środowisku agentów).
+      - name: Czcionka systemowa (Inter)
+        run: |
+          sudo apt-get install -y -qq fonts-inter >/dev/null
+          mkdir -p ~/.config/fontconfig
+          cat > ~/.config/fontconfig/fonts.conf <<'XML'
+          <?xml version="1.0"?>
+          <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+          <fontconfig>
+            <alias><family>sans-serif</family><prefer><family>Inter</family></prefer></alias>
+            <alias><family>system-ui</family><prefer><family>Inter</family></prefer></alias>
+          </fontconfig>
+          XML
+          fc-cache -f >/dev/null
+          echo "system-ui: $(fc-match system-ui)"
+
       - name: Zrzuty
         env:
           SCENES: ${{ inputs.scenes || 'changed' }}
