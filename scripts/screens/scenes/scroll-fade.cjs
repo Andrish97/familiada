@@ -6,7 +6,7 @@ const { id, IDS } = require("../data/demo.cjs");
 const play = require("./play.cjs");
 
 const page = (dir) => [`web/${dir}/index.html`, `web/${dir}/js/`, `web/${dir}/css/`];
-const FADE = ["web/shared/js/core/scroll-fade.js", "web/shared/css/base.css"];
+const FADE = ["web/shared/js/core/scroll-fade.js", "web/shared/style/"];
 const CAT = "Wygaszona krawędź list";
 const BOTH = ["phone", "desktop"];
 

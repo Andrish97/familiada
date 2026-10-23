@@ -69,7 +69,7 @@ test("all page folders use index.html, and Worker fetches them without redirects
 });
 
 test("settings and maintenance allow their new assets; public settings stay blocked", () => {
-  for (const ref of ["/settings/js/settings.js", "/settings/data/tools.json", "/shared/translation/pl.js", "/shared/css/base.css", "/games/css/games.css"]) assert.equal(isSettingsAsset(ref), true, ref);
+  for (const ref of ["/settings/js/settings.js", "/settings/data/tools.json", "/shared/translation/pl.js", "/shared/style/base.css", "/games/css/games.css"]) assert.equal(isSettingsAsset(ref), true, ref);
   for (const ref of ["/settings/index.html", "/settings/js/settings.js", "/settings/tools/editor_5x7.html"]) assert.equal(isBlockedPath("www.familiada.online", ref), true, ref);
   assert.equal(isStaticAssetPath("/settings/js/settings.js"), false);
   assert.equal(isStaticAssetPath("/shared/js/core/auth.js"), true);

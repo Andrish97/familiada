@@ -21,7 +21,7 @@ const iconSvg = (name) => {
     .replace(/<\?xml[^>]*>/, "")
     .replace(/<svg\b/, '<svg class="ico" width="1em" height="1em" aria-hidden="true"');
 };
-const css = ["web/shared/css/base.css", "web/manual/css/manual.css"].map((f) => fs.readFileSync(path.join(ROOT, f), "utf8")).join("\n");
+const css = ["web/shared/style/tokens.css", "web/shared/style/flat.css", "web/manual/css/manual.css"].map((f) => fs.readFileSync(path.join(ROOT, f), "utf8")).join("\n");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const TITLES = { pl: "Podręcznik użytkownika", en: "User guide", uk: "Посібник користувача" };
 

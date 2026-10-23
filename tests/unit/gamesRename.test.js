@@ -59,12 +59,12 @@ test("stare pliki strony nie istnieją, nowe tak", () => {
   for (const f of ["js/pages/builder.js", "js/pages/builder-import-export.js", "css/builder.css"]) {
     assert.equal(exists(f), false, `${f} powinien być przemianowany`);
   }
-  for (const f of ["games/index.html", "games/js/games.js", "games/js/games-import-export.js", "games/css/games-page.css"]) {
+  for (const f of ["games/index.html", "games/js/games.js", "games/js/games-import-export.js", "games/css/games.css"]) {
     assert.equal(exists(f), true, `brak ${f}`);
   }
   const html = read("games/index.html");
   assert.match(html, /src="\/games\/js\/games\.js/);
-  assert.match(html, /href="\/games\/css\/games-page\.css/); // E23: silnik + plik strony
+  assert.match(html, /href="\/games\/css\/games\.css/);
   assert.match(html, /<title data-i18n="games\.title">/);
 });
 

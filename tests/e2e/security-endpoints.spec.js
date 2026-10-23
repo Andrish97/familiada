@@ -94,7 +94,7 @@ test("P1 N3: strony HTML mają nagłówki bezpieczeństwa", async ({ request }) 
     expect(h["content-security-policy-report-only"] || "").toContain("script-src 'self'");
   }
   // Zasoby statyczne bez zmian (nagłówki tylko dla HTML).
-  const css = await request.get(`${WWW}/shared/css/base.css`);
+  const css = await request.get(`${WWW}/shared/style/base.css`);
   console.log(`[e2e-diag] security headers css -> ${css.status()} xfo=${css.headers()["x-frame-options"]}`);
   expect(css.headers()["x-frame-options"]).toBeUndefined();
 });

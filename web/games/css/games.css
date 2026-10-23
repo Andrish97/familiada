@@ -1,681 +1,147 @@
-/* css/games.css */
-
-/* =========================================================
-   FIXED CARD LAYOUT (games / bases / logo-editor list)
-   - body nie scrolluje
-   - main + karta mają stałą wysokość viewport
-   - scroll jest WYŁĄCZNIE wewnątrz .grid
-   - .games-bottom zawsze widoczny
-========================================================= */
-
-:root {
-  --radius: 16px;
-  --tab-width: 220px;
-  /* wspólne wymiary list (gry, bazy, logo) — docs/ujednolicenie-wygladu.md, 1 */
-}
-
-/* --- BODY / MAIN: viewport-locked + internal layout --- */
-body.games-body{
-  height: 100dvh;
-  min-height: 100dvh;
-  background: var(--bg);
-  color: #fff;
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;               /* 🔑 brak scrolla strony */
-}
-
-/* main.wrap musi być flex-kolumną, żeby bar + shell weszły w viewport */
-body.games-body > main.wrap{
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;               /* 🔑 scroll tylko w środku karty */
-}
-
-/* W games.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
-.wrap{
-  margin: 0 auto;
-  padding: 20px var(--page-pad-right) 18px var(--page-pad-left);
-  box-sizing: border-box;
-}
-
-
-@media (max-width: 980px){
-  .wrap{
-    padding-bottom: 15px;
+/* Moje gry: zaokrąglenia karty pod wypustkami, okno podglądu gry i ankiety.
+   Reszta (pasek, karta, siatka, kafle, dolny pasek) — silnik (layout.css). */
+@layer page {
+  /* Zaokrąglenia pod wypustki */
+  .tabs-card:has(#tabPollText.active) .games-card{
+    border-top-left-radius: 0;
+    border-top-right-radius: var(--radius);
   }
-  .bar{ gap: 8px; }
-  .bar > .actions{ gap: 4px; flex-wrap: wrap; }
-}
-@media (max-width: 600px){
-  .bar > .actions{ align-content: start; }
-  .bar .btn{ min-width: 38px; min-height: 38px; padding: 9px; }
-  .bar .action-label{
-    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  .tabs-card:has(#tabPollPoints.active) .games-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
   }
-}
+  .tabs-card:has(#tabPrepared.active) .games-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+  .tabs-card:has(#tabMarket.active) .games-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: 0;
+  }
 
-/* --- BAR (nagłówek listy) nie może rozpychać wysokości --- */
-.bar{
-  flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--line2);
-  margin-bottom: 0;
-}
+  /* ── Preview modal ───────────────────────────────────── */
+  .bld-preview-modal {
+    width: min(680px, 94vw);
+  }
 
-.bar > :first-child{ flex: 1 1 0; min-width: 0; text-align: left; }
-.bar > .actions{
-  flex: 0 0 auto; min-width: 0; max-width: 100%;
-  justify-content: flex-end; margin: 0; overflow: visible; flex-wrap: nowrap;
-}
-.bar > .actions > *{flex:0 0 auto}
-.bar.has-actions-below > :first-child{ flex: 1 1 100%; }
-.bar.has-actions-below > .actions{ flex: 1 1 100%; justify-content: flex-start; }
-.bar .title{ overflow-wrap: break-word; hyphens: auto; text-wrap: pretty; }
-.bar .hint{ overflow-wrap: normal; hyphens: auto; text-wrap: pretty; }
-.bar .hint .list-hint-phrase{ display: inline-block; max-width: 100%; white-space: normal; vertical-align: top; }
-.bar .btn{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.bar .btn .ico{ width: 17px; height: 17px; flex: 0 0 auto; }
+  .bld-preview-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
 
-.title{
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
+  .bld-preview-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .bld-preview-switch[hidden],
+  .bld-preview-questions[hidden] { display: none; }
+  .bld-preview-switch .btn { flex: 1; }
 
-.hint{
-  margin-top: 4px;
-  font-size: 12px;
-  opacity: .75;
-}
+  /* Wyniki ankiety w podglądzie (te same klasy co na stronie ankiety) */
+  #previewPollList { display: grid; gap: 12px; }
+  #previewPollMeta { opacity: .75; font-size: 12px; }
+  #previewPollMeta:empty { display: none; }
+  .bld-preview-poll .resultQ {
+    border: 1px solid var(--line);
+    background: var(--card2);
+    border-radius: 18px;
+    padding: 12px;
+  }
+  .bld-preview-poll .resultQ .qTitle { font-weight: 1000; margin-bottom: 8px; line-height: 1.25; }
+  .bld-preview-poll .resultQ .aList { display: grid; gap: 6px; }
+  .bld-preview-poll .resultQ .aRow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line-faint);
+    background: rgb(var(--rgb-white) / .05);
+    overflow: hidden;
+  }
+  .bld-preview-poll .resultQ .aBar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: linear-gradient(90deg, rgb(var(--rgb-gold) / .10), rgb(var(--rgb-gold) / .26));
+    pointer-events: none;
+  }
+  .bld-preview-poll .resultQ .aTxt { position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Górny pasek akcji: pełne napisy (także na telefonie), zawijanie całymi
-   przyciskami — do drugiego rzędu spada dopiero przycisk, który się nie mieści. */
-.actions{
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin: 10px;
-}
-.actions .btn{ white-space: nowrap; }
+  .bld-preview-questions {
+    max-height: 55vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+  }
 
-/* „Graj” | „Ustawienia gry”: „Graj” znika poniżej progu Control (nav-map),
-   „Ustawienia gry” zostaje także na telefonie — wtedy sam, z pełnym zaokrągleniem. */
-.btn-group{
-  display: inline-flex;
-  align-items: stretch;
-}
-.btn-group > .btn:not(:last-child){
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right: 1px solid rgba(255,255,255,.15);
-}
-.btn-group > .btn:not(:first-child){
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-.btn-group > .btn[hidden] + .btn{ border-radius: 14px; }
+  .bld-q-block {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgb(var(--rgb-white) / .05);
+    border: 1px solid var(--line);
+  }
 
-/* --- GAMES SHELL: wypełnia resztę ekranu --- */
-.games-shell{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+  .bld-q-text {
+    font-weight: 900;
+    font-size: 14px;
+    margin-bottom: 7px;
+  }
 
-/* =========================================================
-   GAMES CARD: stała wysokość + grid scroll + bottom fixed
-========================================================= */
-.card.games-card,
-.games-card.card{
-  --under: var(--surface); /* podłoże dla kryjących teł przycisków (css/base.css) */
-  margin-top: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 18px 18px 8px;
-  position: relative;
-  z-index: 0;
-  box-shadow: 0 18px 36px rgba(0,0,0,.45);
-  box-sizing: border-box;
+  .bld-q-answers {
+    margin: 0;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
 
-  /* 🔑 klucz: karta jako flex-kolumna, wypełnia resztę viewport */
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* scroll ma być w .grid */
-}
+  .bld-q-answers li {
+    font-size: 13px;
+    opacity: .85;
+  }
 
-/* Zaokrąglenia pod wypustki */
-.tabs-card:has(#tabPollText.active) .games-card{
-  border-top-left-radius: 0;
-  border-top-right-radius: var(--radius);
-}
-.tabs-card:has(#tabPollPoints.active) .games-card{
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-}
-.tabs-card:has(#tabPrepared.active) .games-card{
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-}
-.tabs-card:has(#tabMarket.active) .games-card{
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: 0;
-}
+  .bld-pts {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--gold);
+    opacity: .7;
+  }
 
-/* Grid staje się scroll-contenerem */
-.grid{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;                 /* 🔑 tu jest scroll */
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 14px;
-  align-content: start;           /* nie rozciąga w pionie */
-  padding: 5px;             /* drobny luz na scrollbar */
-  -webkit-overflow-scrolling: touch;
-}
-/* Przewijana siatka bez ramki: kafle chowają się pod krawędzią zaokrągloną
-   tak jak same kafle (decyzja 2026-10-20) -- Gry, Bazy, Logo. */
-.games-shell .grid:not(.subsGrid){
-  border-radius: var(--radius);
-  /* Luz na obwódkę zaznaczenia (box-shadow 2 px) i uniesienie kafla przy
-     najechaniu (2 px): bez niego krawędź przewijania ucinała górę obwódki
-     kafli z pierwszego rzędu. Ujemny margines oddaje ten luz, więc kafle
-     stoją dokładnie tam, gdzie bez niego (wyrównanie z paskiem i stopką). */
-  padding: 4px;
-  margin: -4px;
-}
-.games-shell .grid.logoGridBig{ border-radius: var(--radius-lg, var(--radius)); }
-
-.addCard:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0,0,0,.45);
-}
-
-/* Add card */
-.addCard{
-  border-radius: 18px;
-  border: 1px dashed rgba(255,234,166,.35);
-  background: rgba(255,234,166,.06);
-  padding: 14px;
-  min-height: 130px;
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  text-align: center;
-  transition: background .12s ease-out, border-color .12s ease-out, transform .12s ease-out, box-shadow .12s ease-out;
-}
-.addCard:hover{
-  background: rgba(255,234,166,.1);
-  border-color: rgba(255,234,166,.85);
-}
-.addCard .plus{
-  font-size: 28px;
-  color: var(--gold);
-  line-height: 1;
-}
-.addCard .txt{
-  font-weight: 1000;
-  letter-spacing: .06em;
-}
-.addCard .sub{
-  opacity: .78;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-/* Bottom zawsze widoczny: siedzi poza .grid i nie scrolluje */
-.games-bottom{
-  flex: 0 0 auto;
-  margin-top: 8px;                /* odstępy jak u góry listy: 8 px */
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 10px;
-  flex-wrap: nowrap; /* sekcje zostają obok siebie; zawijają się ich przyciski */
-}
-
-.games-bottom-left{
-  flex: 0 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 8px;
-  align-items: center;
-}
-
-.games-bottom-right{
-  display: flex;
-  flex-wrap: wrap; /* zawijanie całymi przyciskami, bez łamania tekstu w przycisku */
-  justify-content: flex-end;
-  gap: 8px;
-  flex: 0 1 auto;
-  min-width: 0;
-  margin-left: 0;
-}
-.games-bottom-right .btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  white-space:nowrap;
-}
-.games-bottom:has(.games-bottom-left):has(.games-bottom-right){justify-content:space-between}
-.games-bottom .only-desktop{ display: inline !important; }
-
-/* =========================================================
-   MODALS (jak było)
-========================================================= */
-.overlay{
-  position: fixed;
-  inset: 0;
-  background: var(--scrim);
-  display: grid;
-  place-items: center;
-  z-index: 50;
-}
-
-.modal{
-  width: min(860px, 94vw);
-  border-radius: 22px;
-  border: 1px solid var(--line);
-  background: #121524; /* kryjące — jak .modal w base.css */
-  --under: #121524;
-  box-shadow: 0 30px 90px rgba(0,0,0,.85);
-  padding: 18px;
-  max-height: 92vh;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mTitle{
-  font-weight: 1000;
-  font-size: 18px;
-  letter-spacing: .06em;
-  color: var(--gold);
-}
-.mSub{
-  opacity: .8;
-  font-size: 13px;
-  margin-top: 6px;
-}
-
-.importRow{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.importTa{
-  width: 100%;
-  min-height: 220px;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid var(--line2);
-  background: rgba(0,0,0,.25);
-  color: #fff;
-  outline: 0;
-  resize: vertical;
-  font-weight: 800;
-}
-
-.importMsg{
-  margin-left: auto;
-  opacity: .85;
-  font-weight: 900;
-  color: var(--gold);
-  padding: 6px 0;
-}
-
-/* =========================================================
-   ICON BUTTON (btnInstall, btnManual)
-========================================================= */
-.icon-btn {
-  min-width: 37px;
-  min-height: 37px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  font-size: 17px;
-  line-height: 1;
-}
-
-/* =========================================================
-   OVERFLOW NAV (nav-more)
-========================================================= */
-.nav-more {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-/* Licznik nie może zawijać się pod etykietę, gdy pasek robi się ciasny. */
-.nav-more > #btnMore {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 6px;
-  white-space: nowrap;
-  flex: 0 0 auto;
-}
-
-.nav-more-dropdown {
-  position: fixed;
-  z-index: 1000;
-  display: grid;
-  gap: 4px;
-  padding: 8px;
-  min-width: 180px;
-  background: #111827; /* kryjące (--card jest półprzezroczyste) */
-  --under: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
-}
-
-.nav-more-dropdown[hidden] {
-  display: none;
-}
-
-.nav-more-dropdown .btn {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.nav-more-dropdown .btn:hover {
-  background: #292f3d;
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-@media (max-width: 600px){
-
-  .grid{
-    grid-template-columns: minmax(0, 1fr);
+  .bld-no-q {
+    font-size: 13px;
+    opacity: .55;
+    text-align: center;
+    padding: 16px 0;
   }
 }
 
-/* ── Preview modal ───────────────────────────────────── */
-.bld-preview-modal {
-  width: min(680px, 94vw);
-}
-
-.bld-preview-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.bld-preview-switch {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.bld-preview-switch[hidden],
-.bld-preview-questions[hidden] { display: none; }
-.bld-preview-switch .btn { flex: 1; }
-
-/* Wyniki ankiety w podglądzie (te same klasy co na stronie ankiety) */
-#previewPollList { display: grid; gap: 12px; }
-#previewPollMeta { opacity: .75; font-size: 12px; }
-#previewPollMeta:empty { display: none; }
-.bld-preview-poll .resultQ {
-  border: 1px solid var(--line);
-  background: var(--card2);
-  border-radius: 18px;
-  padding: 12px;
-}
-.bld-preview-poll .resultQ .qTitle { font-weight: 1000; margin-bottom: 8px; line-height: 1.25; }
-.bld-preview-poll .resultQ .aList { display: grid; gap: 6px; }
-.bld-preview-poll .resultQ .aRow {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  height: 38px;
-  box-sizing: border-box;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  overflow: hidden;
-}
-.bld-preview-poll .resultQ .aBar {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 0;
-  background: linear-gradient(90deg, rgba(255,234,166,.10), rgba(255,234,166,.26));
-  pointer-events: none;
-}
-.bld-preview-poll .resultQ .aTxt { position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
-
-.bld-preview-questions {
-  max-height: 55vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-right: 4px;
-}
-
-.bld-q-block {
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid var(--line);
-}
-
-.bld-q-text {
-  font-weight: 900;
-  font-size: 14px;
-  margin-bottom: 7px;
-}
-
-.bld-q-answers {
-  margin: 0;
-  padding-left: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.bld-q-answers li {
-  font-size: 13px;
-  opacity: .85;
-}
-
-.bld-pts {
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--gold);
-  opacity: .7;
-}
-
-.bld-no-q {
-  font-size: 13px;
-  opacity: .55;
-  text-align: center;
-  padding: 16px 0;
-}
-
-/* wyszukiwanie po nazwie w lewej części dolnego paska list */
-.list-search{
-  /* rośnie do 240 px, ale umie się zwęzić: do drugiego rzędu spada dopiero,
-     gdy nie mieści się nawet w minimum */
-  flex: 1 1 140px;
-  min-width: 140px;
-  max-width: 240px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;margin:0}
-.list-search .searchText{height:100%;padding:0 4px}
-.list-search .btn{ padding: 0; min-height: 36px; }
-.list-search-open{ display: none; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
-.list-search-open .ico{width:18px;height:18px}
-.list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
-@media (max-width: 600px){
-  .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
-  .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
-}
-
-/* filtr obok wyszukiwania (list-search.js) — jak sortowanie w Subskrypcjach */
-.games-bottom-left{ flex-wrap: wrap; }
-.list-filter.ui-select, .list-sort.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
-.list-filter .ui-select-btn, .list-sort .ui-select-btn{ min-height: 0; }
-.list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{
-  border-color: var(--gold); background: rgba(255, 215, 0, .12);
-}
-@media (max-width: 600px){
-  .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
-  .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: inline-flex; align-items:center; justify-content:center; }
-  .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
-  .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
-  .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
-  .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 44px; }
-  .games-bottom-right{ flex: 0 1 auto; min-width: 0; gap: 4px; }
-  .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
-  .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
-  .list-search .searchBox{ display:none; }
-  .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
-}
-.list-empty{ cursor: default; }
-.logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
-.list-empty[hidden]{ display: none; }
-
-/* Układ wspólny dla Gier, Baz i Logo: zawsze jeden rząd. Gdy kontrolki nie
-   mieszczą się nawet jako ikony, list-header-layout.js włącza .is-scroll —
-   pasek przewija się w bok, a wygaszona krawędź pokazuje, że jest więcej. */
-.games-bottom.is-single-row > .games-bottom-left,
-.games-bottom.is-single-row > .games-bottom-right{
-  flex: 0 0 auto;
-  flex-wrap: nowrap;
-  width: max-content;
-  max-width: none;
-}
-.games-bottom.is-scroll{
-  justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-.games-bottom.is-scroll::-webkit-scrollbar{ display: none; }
-.games-bottom.has-more-end{ mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
-.games-bottom.has-more-start{ mask-image: linear-gradient(to right, transparent, #000 28px); }
-.games-bottom.has-more-start.has-more-end{ mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
-/* Maska tworzy osobną warstwę — rozwinięte menu filtra/sortowania (position:
-   fixed) trafiało pod siatkę kafli. Przy otwartym menu bez wygaszenia. */
-.games-bottom:has(.ui-select.open){ mask-image: none; }
-.games-bottom.is-compact-icons .only-desktop{ display:none !important; }
-.games-bottom.is-compact-icons .games-bottom-right .btn,
-.games-bottom.is-compact-icons .list-filter .ui-select-btn,
-.games-bottom.is-compact-icons .list-sort .ui-select-btn{
-  width:36px;
-  height:36px;
-  min-height:36px;
-  padding:0;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:0;
-}
-.games-bottom.is-compact-icons .list-filter,
-.games-bottom.is-compact-icons .list-sort{
-  width:36px;
-  min-width:36px;
-  max-width:36px;
-  flex:0 0 36px;
-}
-.games-bottom.is-compact-icons .games-bottom-left .list-search{
-  width:36px;
-  min-width:36px;
-  max-width:36px;
-  flex:0 0 36px;
-  padding:0;
-  border:0;
-  background:transparent;
-}
-.games-bottom.is-compact-icons .list-search .searchBox{ display:none !important; }
-.games-bottom.is-compact-icons .list-search .list-search-open{ display:inline-flex; }
-.games-bottom.is-compact-icons .list-filter .ui-select-label,
-.games-bottom.is-compact-icons .list-filter .ui-select-caret,
-.games-bottom.is-compact-icons .list-sort .ui-select-label,
-.games-bottom.is-compact-icons .list-sort .ui-select-caret{ display:none !important; }
-.games-bottom.is-compact-icons .games-bottom-right .btn .ico,
-.games-bottom.is-compact-icons .list-filter .ui-select-icon .ico,
-.games-bottom.is-compact-icons .list-sort .ui-select-icon .ico{ width:18px;height:18px; }
-
-/* E21: informacje o normalizacji importu (odzyskany typ, wynik bez zamknięcia) */
-.import-note { margin-top: 6px; font-size: .8rem; color: #ffd86e; }
-
-/* E21: Zmień typ -- wybór typu i opis konwersji */
-.change-type { display: grid; gap: 8px; margin: 4px 0 6px; }
-.change-type-option {
-  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center;
-  padding: 10px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; cursor: pointer;
-}
-.change-type-option:hover { background: rgba(255,255,255,.04); }
-.change-type-option:has(input[type="radio"]:checked) { border-color: var(--gold); background: rgba(243,198,75,.08); }
-.change-type-option:has(input[type="radio"]:disabled) { cursor: default; opacity: .55; }
-.change-type-option input { margin: 0; accent-color: var(--gold); }
-.change-type-name { font-weight: 900; }
-.change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
-/* Zamknięta ankieta: „Zachowaj …” tylko pod wybranym typem. */
-.change-type-keep { grid-column: 2; display: none; align-items: center; gap: 8px; margin-top: 6px; font-size: .9rem; font-weight: 700; }
-.change-type-option:has(input[type="radio"]:checked) .change-type-keep { display: flex; }
-/* Grupy prawie się stykają: przy sobie, rozdzielone cienką kreską. */
-.games-bottom.has-group-sep{ justify-content: flex-start; }
-.games-bottom.has-group-sep > .games-bottom-right{
-  position: relative;
-  padding-left: 9px;
-}
-.games-bottom.has-group-sep > .games-bottom-right::before{
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 7px;
-  bottom: 7px;
-  width: 1px;
-  background: rgba(255,255,255,.22);
+/* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
+   warstwie strony, jak ogólne reguły arkusza w silniku. */
+@layer states {
+/* Arkusz (telefon, tablet dotykowy): lista pytań podglądu rośnie z oknem
+     i nie tworzy drugiego przewijania (dawniej shared/css/base.css). */
+  @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
+    .modal--sheet .bld-preview-questions {
+      max-height: none;
+      flex: 1;
+      min-height: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body > .bld-preview-questions {
+      flex: 0 0 auto;
+      min-height: auto;
+      overflow: visible;
+    }
+  }
 }

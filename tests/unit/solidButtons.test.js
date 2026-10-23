@@ -1,5 +1,5 @@
 // Przyciski (.btn) mają kryjące tło: odcień w --btn-tint nałożony na kolor
-// podłoża --under (css/base.css). Półprzezroczyste tło (rgba) w Chrome na
+// podłoża --under (shared/style/components.css). Półprzezroczyste tło (rgba) w Chrome na
 // Androidzie nakładało się samo na siebie przy przerysowaniach — przyciski
 // robiły się jaśniejsze, każdy inaczej. Ten test pilnuje, żeby żadna reguła
 // z .btn nie ustawiała znowu background: rgba(...) wprost.
@@ -37,8 +37,10 @@ test("reguły .btn nie ustawiają półprzezroczystego tła (tylko --btn-tint)",
   assert.deepEqual(bad, [], "użyj --btn-tint zamiast background: rgba(...)");
 });
 
-test("base.css: .btn ma kryjące tło z --btn-tint i --under", () => {
-  const src = fs.readFileSync(path.join(ROOT, "shared/css/base.css"), "utf8");
+test("silnik stylów: .btn ma kryjące tło z --btn-tint i --under", () => {
+  const src = fs.readFileSync(path.join(ROOT, "shared/style/components.css"), "utf8");
   assert.match(src, /\.btn \{[^}]*background: linear-gradient\(var\(--btn-tint\), var\(--btn-tint\)\) var\(--under\)/);
-  assert.match(src, /:root \{\s*--under: #050914;/);
+  const tokens = fs.readFileSync(path.join(ROOT, "shared/style/tokens.css"), "utf8");
+  assert.match(tokens, /--bg: #050914;/);
+  assert.match(tokens, /--under: var\(--bg\);/);
 });

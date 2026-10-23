@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 const ENGINE = ["tokens", "base", "components", "layout", "utilities"].map((n) => `/shared/style/${n}.css`);
-const LEGACY = ["/shared/css/base.css", "/games/css/games.css"];
+const LEGACY = ["/shared/css/base.css"];
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "").trim();
 
 function htmlFiles(dir = path.join(root, "web"), out = []) {

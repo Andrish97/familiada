@@ -5,7 +5,7 @@
  "web/account/css/account.css": {
   "colorLiteral": 12,
   "mediaWidth": 1,
-  "sharedDuplicate": 2,
+  "sharedDuplicate": 1,
   "unusedClass": 6
  },
  "web/bases/css/bases.css": {
@@ -157,16 +157,9 @@
  "web/control/js/ui.js": {
   "inlineStyleJs": 11
  },
- "web/games/css/games-page.css": {
-  "mediaWidth": 1,
-  "sharedDuplicate": 9
- },
  "web/games/css/games.css": {
-  "important": 5,
-  "colorLiteral": 36,
-  "rootTokens": 2,
-  "zIndexLiteral": 3,
-  "sharedDuplicate": 39
+  "mediaWidth": 1,
+  "sharedDuplicate": 1
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
@@ -207,7 +200,6 @@
   "important": 2,
   "colorLiteral": 24,
   "zIndexLiteral": 4,
-  "sharedDuplicate": 1,
   "unusedClass": 2
  },
  "web/home/js/index.js": {
@@ -369,15 +361,7 @@
  },
  "web/shared/css/auth-landing.css": {
   "colorLiteral": 16,
-  "sharedDuplicate": 7
- },
- "web/shared/css/base.css": {
-  "important": 52,
-  "colorLiteral": 197,
-  "mediaWidth": 12,
-  "zIndexLiteral": 17,
-  "sharedDuplicate": 198,
-  "unusedClass": 14
+  "sharedDuplicate": 6
  },
  "web/shared/css/blocking-overlay.css": {
   "colorLiteral": 11,
@@ -409,7 +393,7 @@
   "colorLiteral": 54,
   "mediaWidth": 1,
   "zIndexLiteral": 1,
-  "sharedDuplicate": 4
+  "sharedDuplicate": 3
  },
  "web/shared/css/question-form.css": {
   "colorLiteral": 21

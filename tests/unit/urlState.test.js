@@ -63,8 +63,8 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  // Narożniki skrajnych wypustek: wspólna reguła w base.css (pierwsza/ostatnia).
-  const base = read("shared/css/base.css");
+  // Narożniki skrajnych wypustek: wspólna reguła w silniku (pierwsza/ostatnia).
+  const base = read("shared/style/components.css");
   assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
   assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
   assert.match(css, /tabLogoText\.active[\s\S]*border-top-left-radius: 0/);

@@ -39,7 +39,7 @@ test("komponent wierszy: sekcje zwijane, akcje z ikoną, usuwanie ikoną", () =>
   assert.match(src, /export function rowEl/);
   assert.match(src, /aria-expanded/);
   assert.match(src, /actionIcon === "trash"/);
-  assert.match(read("web/shared/css/base.css"), /\.rowsPage\{ width: 100%; max-width: 760px/);
+  assert.match(read("web/shared/style/components.css"), /\.rowsPage \{ width: 100%; max-width: 760px/);
 });
 
 test("tasks: tylko ankiety, bez akcji baz lub urządzeń i filtra rodzaju", () => {

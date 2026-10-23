@@ -42,7 +42,7 @@ test('logowanie pokazuje pierwszy etap po inicjalizacji języka i ukrywa go do t
 });
 
 test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
-  const css = read('shared/css/base.css');
+  const css = read('shared/style/base.css');
   const hidden = css.match(/\[data-skel-step\]\s*\{([^}]+)\}/)?.[1] || '';
   const ready = css.match(/\[data-skel-step\]\.skel-step-ready\s*\{([^}]+)\}/)?.[1] || '';
   assert.match(hidden, /visibility:\s*hidden/);

@@ -15,7 +15,7 @@ const WEB = path.join(REPO, "web");
 export const BASELINE_PATH = path.join(REPO, "scripts/css-audit/baseline.json");
 
 // Jedyne miejsce definicji tokenów (kolory, odstępy, z-index) — krok 3 planu.
-const TOKEN_FILES = new Set(["web/shared/css/base.css", "web/shared/style/tokens.css"]);
+const TOKEN_FILES = new Set(["web/shared/style/tokens.css"]);
 // Progi szerokości dozwolone w @media (silnik-stylow-projekt.md §3.3: narrow 600,
 // work 980, wide 1280; min-width = próg + 1). Silnik ma jeszcze progi przejściowe
 // (640/720/760/1200/1366 z dawnego base.css) — liczone jako naruszenia do kroku progów.

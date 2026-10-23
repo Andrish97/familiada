@@ -2,7 +2,7 @@
 // puste, z załącznikami, z błędem, z widocznym wyzwaniem Turnstile i po wysłaniu.
 // Okno otwiera stopka „Kontakt” na stronie Moje gry.
 const C = "Okno kontaktu";
-const SOURCES = ["web/shared/js/core/contact-modal.js", "web/shared/js/core/turnstile.js", "web/shared/css/base.css", "web/shared/js/core/modal-sheet.js"];
+const SOURCES = ["web/shared/js/core/contact-modal.js", "web/shared/js/core/turnstile.js", "web/shared/style/", "web/shared/js/core/modal-sheet.js"];
 const READY = "#grid .card";
 
 // Atrapy Cloudflare Turnstile: od razu token albo widoczne wyzwanie (pole jak

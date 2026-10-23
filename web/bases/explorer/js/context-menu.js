@@ -4,7 +4,7 @@
 // kontekstu co pasek i skróty.
 // Na komputerze menu przy kursorze; na telefonie i tablecie dotykowym okno
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
-// shared/css/base.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
+// shared/style/components.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
 import { selectionSetSingle } from "./state.js?v=v2026-10-23T05395";
 import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-23T05395";
