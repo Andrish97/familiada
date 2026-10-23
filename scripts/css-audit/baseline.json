@@ -58,10 +58,10 @@
   "inlineStyleJs": 1
  },
  "web/bases/index.html": {
-  "inlineStyleHtml": 13
+  "inlineStyleHtml": 5
  },
  "web/bases/js/bases.js": {
-  "inlineStyleJs": 7
+  "inlineStyleJs": 4
  },
  "web/connect/css/connect-device.css": {
   "important": 1,
@@ -170,10 +170,10 @@
   "inlineStyleJs": 3
  },
  "web/games/index.html": {
-  "inlineStyleHtml": 27
+  "inlineStyleHtml": 12
  },
  "web/games/js/games.js": {
-  "inlineStyleJs": 28
+  "inlineStyleJs": 25
  },
  "web/games/settings/index.html": {
   "inlineStyleHtml": 2,
@@ -235,7 +235,7 @@
   "inlineStyleHtml": 1
  },
  "web/logos/index.html": {
-  "inlineStyleHtml": 16
+  "inlineStyleHtml": 8
  },
  "web/logos/js/draw.js": {
   "inlineStyleJs": 17
@@ -247,7 +247,7 @@
   "inlineStyleJs": 8
  },
  "web/logos/js/list.js": {
-  "inlineStyleJs": 7
+  "inlineStyleJs": 6
  },
  "web/logos/js/text.js": {
   "inlineStyleJs": 1

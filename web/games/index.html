@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T15080"/>
+  <meta name="app-version" content="v2026-10-23T15101"/>
 
 
   <meta charset="UTF-8"/>
@@ -14,22 +14,22 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15080"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T15080"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15101"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-23T15101"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15080" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T15080"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15101" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-23T15101"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15080" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15080" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-23T15080" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T15080" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15101" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15101" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-23T15101" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T15101" defer></script>
 
 </head>
 
@@ -191,17 +191,17 @@
         </div>
 
         <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
-        <div id="exportBaseProg" style="display:none;margin-top:12px;gap:10px">
-          <div class="importRow" style="align-items:center">
-            <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-            <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        <div id="exportBaseProg" class="uni-progress" hidden>
+          <div class="uni-progress-row">
+            <div id="exportBaseProgStep" class="uni-progress-step">—</div>
+            <div id="exportBaseProgCount" class="uni-progress-count">0/0</div>
           </div>
 
-          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-            <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          <div class="progress">
+            <div id="exportBaseProgBar" class="progress-bar"></div>
           </div>
 
-          <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
+          <div class="importMsg uni-progress-msg" id="exportBaseProgMsg"></div>
         </div>
 
         <div class="importRow modal-actions">
@@ -228,18 +228,18 @@
 
         <!-- Podgląd / błąd po wczytaniu pliku -->
         <div id="importPreview" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:.88rem;display:grid;gap:4px"></div>
-        <div id="importErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+        <div id="importErr" class="field-error" role="alert" hidden></div>
 
         <!-- Pasek postępu (podczas importu) -->
-        <div id="importProg" style="display:none;margin-top:12px;gap:10px">
-          <div class="importRow" style="align-items:center">
-            <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-            <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        <div id="importProg" class="uni-progress" hidden>
+          <div class="uni-progress-row">
+            <div id="importProgStep" class="uni-progress-step">—</div>
+            <div id="importProgCount" class="uni-progress-count">0/0</div>
           </div>
-          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-            <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          <div class="progress">
+            <div id="importProgBar" class="progress-bar"></div>
           </div>
-          <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+          <div class="importMsg uni-progress-msg" id="importProgMsg"></div>
         </div>
 
         <div class="importRow modal-actions" style="margin-top:12px">
@@ -277,7 +277,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15080"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15101"></script>
 
 </body>
 </html>

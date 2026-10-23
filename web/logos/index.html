@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T15080"/>
+  <meta name="app-version" content="v2026-10-23T15101"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,23 +15,23 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15080"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T15080"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-23T15101"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-23T15101"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15080" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15080"/>
-  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-23T15080"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T15101" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T15101"/>
+  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-23T15101"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15080" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T15101" defer></script>
 
-  <script type="module" src="/logos/js/list.js?v=v2026-10-23T15080" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15080" defer></script>
+  <script type="module" src="/logos/js/list.js?v=v2026-10-23T15101" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T15101" defer></script>
 
 </head>
 
@@ -122,18 +122,18 @@
         <canvas id="logoImportPreviewCanvas" style="width:100%;display:block"></canvas>
       </div>
       <!-- Błąd -->
-      <div id="logoImportErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+      <div id="logoImportErr" class="field-error" role="alert" hidden></div>
 
       <!-- Pasek postępu (podczas zapisu) -->
-      <div id="logoImportProg" style="display:none;margin-top:12px;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="logoImportStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="logoImportCount" style="margin-left:auto;opacity:.8">0/0</div>
+      <div id="logoImportProg" class="uni-progress" hidden>
+        <div class="uni-progress-row">
+          <div id="logoImportStep" class="uni-progress-step">—</div>
+          <div id="logoImportCount" class="uni-progress-count">0/0</div>
         </div>
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="logoImportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        <div class="progress">
+          <div id="logoImportBar" class="progress-bar"></div>
         </div>
-        <div class="importMsg" id="logoImportMsg" style="min-height:18px"></div>
+        <div class="importMsg uni-progress-msg" id="logoImportMsg"></div>
       </div>
 
       <div class="importRow modal-actions" style="margin-top:12px">
@@ -168,8 +168,8 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15080"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T15080"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T15101"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T15101"></script>
 
 </body>
 </html>
