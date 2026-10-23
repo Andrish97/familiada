@@ -1785,7 +1785,7 @@
           border-top: 0;
           border-bottom: 1px solid var(--line2);
       }
-      .modal--sheet.sheet-active .tags-modal .tags-layer > :not(.tagsHead):not(.tagsFoot) { order: 2; }
+      .modal--sheet.sheet-active .tags-modal .tags-layer > :not(.tagsHead, .tagsFoot, .mSub, .tagsAssignInfo) { order: 2; }
       .modal--sheet.sheet-active .tags-modal .tagsPickList,
       .modal--sheet.sheet-active .tags-modal .qBody,
       .modal--sheet.sheet-active .tags-modal .xBody,
@@ -1810,7 +1810,6 @@
       }
       .modal--sheet.sheet-active .tags-modal .tagsFoot {
           flex: 0 0 auto;
-          margin-top: 10px;
       }
   }
 
@@ -1971,7 +1970,6 @@
   /* Okno od dołu: podpowiedź warstwy („Zaznaczenie…”, „Dodaj nowy tag.”)
      pod tytułem, nad przyciskami — jak w „Utwórz grę”. */
   .modal--sheet.sheet-active .tags-modal .tags-layer > :is(.mSub, .tagsAssignInfo) {
-    order: 0; /* base.css: :not(.tagsHead):not(.tagsFoot) { order: 2 } */
     margin: -2px 0 10px;
   }
   .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { margin-bottom: 6px; }

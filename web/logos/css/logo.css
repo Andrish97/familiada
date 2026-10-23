@@ -857,7 +857,7 @@
   ========================================================= */
 
   /* overlay wyśrodkowuje modal */
-  #previewOverlay{
+  #previewOverlay:not([hidden]){
     display: grid;
     place-items: center;
     overflow: hidden;
