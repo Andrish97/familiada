@@ -216,7 +216,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
           await renderModal();
           await refreshBadges();
           showMessage(cooldown ? (t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.") :
-            disabled ? (t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
+            disabled ? (t("contacts.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
         } catch (error) {
           showMessage(error?.message || "Błąd.", { state: "error" });
           updateSelection();
@@ -269,7 +269,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
       }
       if (mailSent === "already") showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
-      if (mailSent === "disabled") showMessage(t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
+      if (mailSent === "disabled") showMessage(t("contacts.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
       else if (mailSent !== false && mailSent !== "already") toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       showMessage(e?.message || "Błąd.", { state: "error" });

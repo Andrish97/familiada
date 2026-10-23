@@ -142,7 +142,7 @@ export function renderToolbar(state) {
   const active = hasQuery(state) && !isTrash(state);
   const btn = document.getElementById("searchSubmitBtn");
   if (btn) {
-    const label = t("baseExplorer.search.clear");
+    const label = t("common.clear");
     btn.hidden = !active;
     btn.setAttribute("aria-label", label);
     btn.setAttribute("data-tooltip", label);

@@ -266,7 +266,7 @@ async function refreshMigrateState() {
 async function handleMigrateSubmit() {
   try {
     const mail = String(migrateEmail?.value || "").trim().toLowerCase();
-    if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
+    if (!mail || !mail.includes("@")) throw new Error(t("auth.errInvalidEmail"));
 
     const pwd = migratePass1?.value || "";
     if (pwd !== (migratePass2?.value || "")) throw new Error(t("account.errPasswordMismatch"));
@@ -284,8 +284,8 @@ async function handleMigrateSubmit() {
       const left = (reserve.nextAllowedAtMs || 0) - Date.now();
       throw new Error(
         left > 0
-          ? t("index.errResendCooldown", { time: formatRemaining(left) })
-          : t("index.errResendCooldownGeneric")
+          ? t("auth.errResendCooldown", { time: formatRemaining(left) })
+          : t("auth.errResendCooldownGeneric")
       );
     }
 
@@ -323,8 +323,8 @@ async function handleMigrateResend() {
       const left = (reserve.nextAllowedAtMs || 0) - Date.now();
       throw new Error(
         left > 0
-          ? t("index.errResendCooldown", { time: formatRemaining(left) })
-          : t("index.errResendCooldownGeneric")
+          ? t("auth.errResendCooldown", { time: formatRemaining(left) })
+          : t("auth.errResendCooldownGeneric")
       );
     }
 
@@ -484,7 +484,7 @@ function startEmailStateWatcher() {
 async function ensureUsernameAvailable(username) {
   const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
   if (error) throw error;
-  if (taken) throw new Error(t("index.errUsernameTaken"));
+  if (taken) throw new Error(t("auth.errUsernameTaken"));
 }
 
 async function loadUserRating(userId) {
@@ -627,7 +627,7 @@ async function handleUsernameSave() {
   try {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
+    if (userError || !userData?.user) throw new Error(t("auth.errNoSession"));
     await ensureUsernameAvailable(username);
 
     await reserveCooldownOrThrow(CD.username);
@@ -821,7 +821,7 @@ async function handlePassSave() {
 async function handleDeleteAccount() {
   try {
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
+    if (userError || !userData?.user) throw new Error(t("auth.errNoSession"));
 
     // isGuestUser(userData.user) sam w sobie czyta TYLKO metadane JWT
     // (user_metadata.is_guest) — te potrafią być spóźnione względem
@@ -849,7 +849,7 @@ async function handleDeleteAccount() {
     } else {
       const pwd = String(deletePassword.value || "");
       if (!pwd) throw new Error(t("account.errDeletePasswordMissing"));
-      if (!userData.user.email) throw new Error(t("index.errNoSession"));
+      if (!userData.user.email) throw new Error(t("auth.errNoSession"));
 
       const { error: signInError } = await sb().auth.signInWithPassword({
         email: userData.user.email,

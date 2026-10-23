@@ -42,8 +42,11 @@ const en = {
   "mailFailed": "The copy was sent, but its email was not sent.",
   "noFriends": "You do not have any active friends yet.",
   "sent": "Sent to friends: {count}.",
-  "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Log in again.","decisionFailed":"Could not save your decision. Try again."}
-},
+  "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Log in again.","decisionFailed":"Could not save your decision. Try again."},
+    "proposed": "Proposed",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
   common: {
     refresh: "Refresh",
     renameTileHint: "Double-tap a tile to rename it.",
@@ -137,6 +140,7 @@ const en = {
       left: "© {year} Familiada — live game system",
       contactBtn: "Contact",
     },
+    "clear": "Clear"
   },
   baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "lookup": "Email or username", "share": "Share"},
   shareSections: {
@@ -173,6 +177,17 @@ const en = {
       manual: "Help",
       privacy: "Privacy",
     },
+    "menu": {
+      friends: "Friends",
+      subscribers: "Subscribers",
+      tasks: "Tasks",
+      bases: "Question bases",
+      logo: "Logos",
+      marketplace: "Community Games",
+      connectDevice: "Connect device",
+      account: "Account settings",
+      more: "More",
+    }
   },
   support: {
     footerBtn: "Buy me a coffee",
@@ -202,6 +217,7 @@ const en = {
       attachments: "Attachments (optional, max 5 files, 5 MB each)",
       chooseFiles: "Choose files",
     },
+    "rateLimited": "You can submit one report per 24 hours."
   },
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
@@ -389,6 +405,14 @@ const en = {
     passwordHintSpecial: "special character",
     passwordRules: "Password must include: {hints}.",
     passwordMissing: "Missing: {hints}.",
+    "captchaRequired": "Complete the CAPTCHA check to continue.",
+    "errInvalidEmail": "Enter a valid email.",
+    "errResendCooldown": "You can resend in {time}.",
+    "errResendCooldownGeneric": "You can resend later.",
+    "errResetMissingLogin": "Enter email or username to reset.",
+    "errUsernameTaken": "This username is already taken.",
+    "statusError": "Error.",
+    "errNoSession": "No active session."
   },
   index: {
     backHome: "Home page",
@@ -416,17 +440,12 @@ const en = {
     placeholderUsername: "Username",
     btnUsernameSave: "Save name",
     errMissingLogin: "Enter email/username and password.",
-    errInvalidEmail: "Enter a valid email.",
     errPasswordMismatch: "Passwords do not match.",
     statusRegistering: "Registering…",
     statusCheckEmail: "Check your email (activation link). If you don't see it, check your spam folder.",
     statusLoggingIn: "Logging in…",
-    statusError: "Error.",
-    errResetMissingLogin: "Enter email or username to reset.",
     statusResetSending: "Sending reset link…",
     statusResetSent: "Password reset link sent. If you don't see it, check your spam folder.",
-    errUsernameTaken: "This username is already taken.",
-    errNoSession: "No active session.",
     resetCooldown: "You can resend in {time}.",
     guestExpired: "Guest session expired after inactivity. Continue as guest again.",
     guestDeletedByInactivity: "Your guest account was deleted due to inactivity. You can create a new guest account or register.",
@@ -436,8 +455,6 @@ const en = {
     pendingGuestMigrateElsewhere: "A guest account conversion is waiting for {email}. It can only be resent from that guest account: go back to the device where it was started and use “Resend” in Account settings.",
     guestMigrateOk: "Yes, migrate data",
     guestMigrateCancel: "No",
-    errResendCooldown: "You can resend in {time}.",
-    errResendCooldownGeneric: "You can resend later.",
     pendingEmailTitle: "Registration in progress",
     pendingEmailText: "Registration or migration is already in progress for {email}.\n\nResend is available once per hour. Resend the confirmation email?",
     pendingEmailOk: "Resend email",
@@ -448,7 +465,6 @@ const en = {
     captchaText: "Complete the CAPTCHA check to continue.",
     captchaOk: "Continue",
     captchaCancel: "Cancel",
-    captchaRequired: "Complete the CAPTCHA check to continue.",
     captchaStatusPending: "CAPTCHA verification: waiting…",
     captchaStatusOk: "CAPTCHA verification: OK",
     captchaError: "CAPTCHA verification failed. Refresh the page and try again.",
@@ -745,18 +761,14 @@ const en = {
       expires: { one: "disappears in {n} day", few: "disappears in {n} days", many: "disappears in {n} days", other: "disappears in {n} days" },
     },
     badges: {
-      from: "From: {name}",
       editAccess: "You have edit access",
       viewAccess: "Read-only access",
       sharedOthers: "Shared with others ({count})",
       notShared: "Not shared",
-      proposed: "Proposed",
       proposedTitle: "Sharing request awaits your decision",
     },
     loadFailed: "Could not load question bases. Refresh the page.",
     proposed: {
-      accept: "Accept",
-      decline: "Decline",
       failed: "Action failed.",
       mismatch: "This share belongs to a different user. Make sure you are logged in to the account tied to the email that received the message.",
       cancelled: "This invite was cancelled.",
@@ -1082,9 +1094,6 @@ const en = {
         No tracking or advertising cookies are used.
       </p>
     `,
-    contact: {
-      rateLimited: "You can submit one report per 24 hours.",
-    },
   },
   questionForm: {
     addAnswer: "Add answer",
@@ -1148,6 +1157,13 @@ const en = {
     useTally: "A poll is closed by counting the votes.",
     marketNoTransfer: "A game from Community Games cannot be exported, duplicated or sent.",
     sendOnlyDraft: "Only a game draft (without poll results) can be sent.",
+    "editAfterPoll": {
+      title: "Reset poll?",
+      text: "The poll is closed. Editing removes its results: votes, respondents' answers, links and QR codes. Questions and answers stay, points are reset to zero and the game returns to draft.",
+      ok: "Reset",
+      cancel: "Cancel",
+    },
+    "resetFailed": "Could not prepare the poll for editing. Try again."
   },
   gamesImportExport: {
     defaults: {
@@ -1170,17 +1186,6 @@ const en = {
   },
   games: {
     title: "Familiada — my games",
-    nav: {
-      friends: "Friends",
-      subscribers: "Subscribers",
-      tasks: "Tasks",
-      bases: "Question bases",
-      logo: "Logos",
-      marketplace: "Community Games",
-      connectDevice: "Connect device",
-      account: "Account settings",
-      more: "More",
-    },
     header: {
       title: "My games",
     },
@@ -1392,12 +1397,6 @@ const en = {
       ok: "Continue",
       cancel: "Cancel",
     },
-    editAfterPoll: {
-      title: "Reset poll?",
-      text: "The poll is closed. Editing removes its results: votes, respondents' answers, links and QR codes. Questions and answers stay, points are reset to zero and the game returns to draft.",
-      ok: "Reset",
-      cancel: "Cancel",
-    },
     market: {
       archived: "ARCHIVED — removed from Community",
       empty: "Your library is empty.",
@@ -1512,7 +1511,6 @@ const en = {
       cannotEdit: "Cannot edit while poll is open.",
       editorError: "Editor error (console).",
       gameNotFound: "This game does not exist or you do not have access to it.",
-      resetFailed: "Could not prepare the poll for editing. Try again.",
     },
   },
   pollAnonymous: {
@@ -2019,7 +2017,6 @@ const en = {
     search: {
       results: "Results",
       placeholder: "Search...",
-      clear: "Clear",
       sheetTitle: "Search",
       done: "Done",
       sheetHelp: "Searches question and folder names. Pick tags and categories with the toolbar buttons — they work together with the text.",
@@ -2569,7 +2566,6 @@ const en = {
       noSubs: "No subscribers.",
       alreadyShared: "This device has already been shared with this person in this game session.",
       recipientDisabled: "This person has opted out of email notifications. Access will be granted without an email.",
-      friendMailDisabled: "Access granted. This person has opted out of email notifications.",
       friendMailCooldown: "Shared. Email will be available after the cooldown.",
       mailCooldownRemaining: "Email can be sent again in {time}.",
       noFriends: "There are no friends to share with.",
@@ -2767,8 +2763,9 @@ const en = {
     "goAccountBody": "The recipient has a Familiada account. Account invitations are managed in Friends.",
     "goTitle": "Friend invitation",
     "goBody": "{owner} invites you to be friends.",
-    "open": "Open Friends"
-},
+    "open": "Open Friends",
+    "friendMailDisabled": "Access granted. This person has opted out of email notifications."
+  },
 
   gameSettings: {
     pageTitle: "Game settings",

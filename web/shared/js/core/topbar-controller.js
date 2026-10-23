@@ -361,7 +361,7 @@ export function setTopbarAccount(user, {
     const btnSettings = document.createElement('button');
     btnSettings.className = 'btn account-menu-item';
     btnSettings.type = 'button';
-    btnSettings.textContent = t('games.nav.account') || 'Ustawienia konta';
+    btnSettings.textContent = t('nav.menu.account') || 'Ustawienia konta';
     btnSettings.addEventListener('click', () => {
       menu.hidden = true;
       location.href = withLangParam(accountHref);

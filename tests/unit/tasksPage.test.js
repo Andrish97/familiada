@@ -30,7 +30,7 @@ test("tasks: teksty pl/en/uk mają te same klucze", async () => {
     assert.deepEqual(keys(get(en)), keys(get(pl)), `${name} en`);
     assert.deepEqual(keys(get(uk)), keys(get(pl)), `${name} uk`);
   }
-  for (const x of [pl, en, uk]) assert.ok(x.games.nav.tasks);
+  for (const x of [pl, en, uk]) assert.ok(x.nav.menu.tasks);
 });
 
 test("komponent wierszy: sekcje zwijane, akcje z ikoną, usuwanie ikoną", () => {

@@ -329,7 +329,7 @@ async function submitContact() {
     try {
       captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang, size: "flexible" });
     } catch {
-      showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
+      showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
       return;
     }
     let res;
@@ -347,10 +347,10 @@ async function submitContact() {
       });
     }
 
-    if (res.status === 429) { showErr(t("privacy.contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
+    if (res.status === 429) { showErr(t("contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
     if (res.status === 400 || res.status === 503) {
       const failed = await res.clone().json().catch(() => ({}));
-      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("index.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
+      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
     }
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();

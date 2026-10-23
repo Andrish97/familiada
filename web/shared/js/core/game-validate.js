@@ -175,10 +175,10 @@ export async function editGate(gameId, { action = "edit", resetNow = true, check
   if (!info.needsReset) return { ok: true, reset: false };
 
   const ok = await confirmModal({
-    title: t("games.editAfterPoll.title"),
-    text: t("games.editAfterPoll.text"),
-    okText: t("games.editAfterPoll.ok"),
-    cancelText: t("games.editAfterPoll.cancel"),
+    title: t("gameValidate.editAfterPoll.title"),
+    text: t("gameValidate.editAfterPoll.text"),
+    okText: t("gameValidate.editAfterPoll.ok"),
+    cancelText: t("gameValidate.editAfterPoll.cancel"),
   });
   if (!ok) return { ok: false, reset: false };
   if (!resetNow) return { ok: true, reset: true };
@@ -191,7 +191,7 @@ export async function editGate(gameId, { action = "edit", resetNow = true, check
   const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
   if (error || !data?.ok) {
     console.error("[game-validate] reset:", error || data);
-    void alertModal({ text: t(RESET_ERRORS[data?.error] || "editor.alert.resetFailed") });
+    void alertModal({ text: t(RESET_ERRORS[data?.error] || "gameValidate.resetFailed") });
     return { ok: false, reset: false };
   }
   return { ok: true, reset: true };

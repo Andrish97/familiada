@@ -834,7 +834,7 @@ async function renderShareModal() {
           if (error || !response?.ok) { showShareMessage(baseShareError(response), "error"); return; }
           const queued = response.mail_allowed && await deliverBaseShare(response, { reminder: true });
           await renderShareModal();
-          showShareMessage(t(queued ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
+          showShareMessage(t(queued ? "bases.share.success" : "contacts.friendMailDisabled"));
         } catch { showShareMessage(t("bases.share.emailFailed"), "error"); }
         finally { button.disabled = false; }
       },
@@ -906,7 +906,7 @@ async function shareAdd(friendIds = null) {
       if (error || !row?.ok) { message = baseShareError(row); messageKind = "error"; continue; }
       try {
         const queued = await deliverBaseShare(row);
-        if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
+        if (queued === false) message = t("contacts.friendMailDisabled");
       }
       catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
       if (!friendIds) shareEmail.value = "";
@@ -1004,7 +1004,7 @@ function render() {
 
       if (b.proposed) badges.push(...proposedTags({ from: fromLabel, fromTitle: ownerMail || fromLabel, title: t("bases.badges.proposedTitle") }));
       else badges.push({
-        text: t("bases.badges.from", { name: fromLabel }),
+        text: t("resourceSend.from", { name: fromLabel }),
         title: ownerMail ? ownerMail : fromLabel,
         kind: "from",
       });

@@ -163,13 +163,13 @@ export function attachListTools(heading, list, key) {
     sortEl.querySelector(".ui-select-btn").title = t("common.sort.label");
     filterEl.querySelector(".ui-select-btn").setAttribute("aria-label", t("common.filterState"));
     filterEl.querySelector(".ui-select-btn").title = t("common.filterState");
-    const title = state.q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    const title = state.q ? t("common.clear") : t("common.searchByName");
     searchBtn.title = title;
     searchBtn.setAttribute("aria-label", title);
     empty.textContent = t("common.noResults");
     inlineInput.placeholder = t("common.searchByName");
     inlineInput.setAttribute("aria-label", t("common.searchByName"));
-    inlineClear.title = t("baseExplorer.search.clear");
+    inlineClear.title = t("common.clear");
     inlineClear.setAttribute("aria-label", inlineClear.title);
   };
 

@@ -42,8 +42,11 @@ const pl = {
   "mailFailed": "Kopia została wysłana, ale e-mail nie został wysłany.",
   "noFriends": "Nie masz jeszcze aktywnych znajomych.",
   "sent": "Wysłano do znajomych: {count}.",
-  "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
-},
+  "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."},
+    "proposed": "Propozycja",
+    "accept": "Przyjmij",
+    "decline": "Odrzuć"
+  },
   common: {
     refresh: "Odśwież",
     renameTileHint: "Podwójne naciśnięcie kafla zmienia nazwę.",
@@ -137,6 +140,7 @@ const pl = {
       left: "© {year} Familiada — system do gry na żywo",
       contactBtn: "Kontakt",
     },
+    "clear": "Wyczyść"
   },
   baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij"},
   shareSections: {
@@ -173,6 +177,17 @@ const pl = {
       manual: "Wskazówki",
       privacy: "Prywatność",
     },
+    "menu": {
+      friends: "Znajomi",
+      subscribers: "Subskrybenci",
+      tasks: "Zadania",
+      bases: "Bazy pytań",
+      logo: "Loga",
+      marketplace: "Gry Społeczności",
+      connectDevice: "Podłącz urządzenie",
+      account: "Ustawienia konta",
+      more: "Więcej",
+    }
   },
   support: {
     footerBtn: "Postaw kawę",
@@ -202,6 +217,7 @@ const pl = {
       attachments: "Załączniki (opcjonalnie, maks. 5 plików, 5 MB każdy)",
       chooseFiles: "Wybierz pliki",
     },
+    "rateLimited": "Możesz wysłać jedno zgłoszenie na 24 godziny."
   },
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
@@ -402,6 +418,14 @@ const pl = {
     passwordHintSpecial: "znak specjalny",
     passwordRules: "Hasło musi zawierać: {hints}.",
     passwordMissing: "Brakuje: {hints}.",
+    "captchaRequired": "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
+    "errInvalidEmail": "Podaj poprawny e-mail.",
+    "errResendCooldown": "Możesz wysłać ponownie za {time}.",
+    "errResendCooldownGeneric": "Możesz wysłać ponownie później.",
+    "errResetMissingLogin": "Podaj e-mail lub nazwę użytkownika do resetu.",
+    "errUsernameTaken": "Ta nazwa użytkownika jest już zajęta.",
+    "statusError": "Błąd.",
+    "errNoSession": "Brak aktywnej sesji."
   },
   index: {
     backHome: "Strona główna",
@@ -429,17 +453,12 @@ const pl = {
     placeholderUsername: "Nazwa użytkownika",
     btnUsernameSave: "Zapisz nazwę",
     errMissingLogin: "Podaj e-mail/nazwę użytkownika i hasło.",
-    errInvalidEmail: "Podaj poprawny e-mail.",
     errPasswordMismatch: "Hasła nie są takie same.",
     statusRegistering: "Rejestruję…",
     statusCheckEmail: "Sprawdź e-mail (link aktywacyjny). Jeśli nie widzisz wiadomości, zajrzyj do folderu spam.",
     statusLoggingIn: "Loguję…",
-    statusError: "Błąd.",
-    errResetMissingLogin: "Podaj e-mail lub nazwę użytkownika do resetu.",
     statusResetSending: "Wysyłam link resetu…",
     statusResetSent: "Wysłano link resetu hasła. Jeśli nie widzisz wiadomości, zajrzyj do folderu spam.",
-    errUsernameTaken: "Ta nazwa użytkownika jest już zajęta.",
-    errNoSession: "Brak aktywnej sesji.",
     resetCooldown: "Ponowna wysyłka możliwa za {time}.",
     guestExpired: "Sesja gościa wygasła po okresie braku aktywności. Wejdź ponownie jako gość.",
     guestDeletedByInactivity: "Twoje konto gościa zostało usunięte z powodu braku aktywności. Możesz utworzyć nowe konto gościa lub zarejestrować się.",
@@ -449,8 +468,6 @@ const pl = {
     pendingGuestMigrateElsewhere: "Na adres {email} czeka zamiana konta gościa. Ponowne wysłanie jest możliwe tylko z tego konta gościa: wróć na urządzenie, na którym ją zaczęto, i użyj „Wyślij ponownie” w Ustawieniach konta.",
     guestMigrateOk: "Tak, przenieś dane",
     guestMigrateCancel: "Nie",
-    errResendCooldown: "Możesz wysłać ponownie za {time}.",
-    errResendCooldownGeneric: "Możesz wysłać ponownie później.",
     pendingEmailTitle: "Rejestracja w toku",
     pendingEmailText: "Rejestracja lub migracja jest już w toku dla adresu {email}.\n\nPonowna wysyłka jest możliwa raz na 1h. Wysłać wiadomość e-mail ponownie?",
     pendingEmailOk: "Wyślij ponownie",
@@ -461,7 +478,6 @@ const pl = {
     captchaText: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
     captchaOk: "Kontynuuj",
     captchaCancel: "Anuluj",
-    captchaRequired: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
     captchaStatusPending: "Weryfikacja CAPTCHA: oczekiwanie…",
     captchaStatusOk: "Weryfikacja CAPTCHA: OK",
     captchaError: "Błąd weryfikacji CAPTCHA. Odśwież stronę i spróbuj ponownie.",
@@ -753,18 +769,14 @@ const pl = {
       expires: { one: "zniknie za {n} dzień", few: "zniknie za {n} dni", many: "zniknie za {n} dni", other: "zniknie za {n} dni" },
     },
     badges: {
-      from: "Od: {name}",
       editAccess: "Masz dostęp z edycją",
       viewAccess: "Masz dostęp tylko do odczytu",
       sharedOthers: "Udostępnione innym ({count})",
       notShared: "Nieudostępnione",
-      proposed: "Propozycja",
       proposedTitle: "Udostępnienie oczekuje na Twoją decyzję",
     },
     loadFailed: "Nie udało się wczytać baz. Odśwież stronę.",
     proposed: {
-      accept: "Przyjmij",
-      decline: "Odrzuć",
       failed: "Nie udało się wykonać akcji.",
       mismatch: "To udostępnienie dotyczy innego użytkownika. Sprawdź, czy jesteś zalogowany na konto powiązane z adresem e-mail, na który przyszła wiadomość.",
       cancelled: "Zaproszenie zostało cofnięte.",
@@ -1079,9 +1091,6 @@ const pl = {
       <h2 class="m-h2">9. Pliki cookies</h2>
       <p class="m-p">Serwis wykorzystuje wyłącznie techniczne pliki cookies niezbędne do działania aplikacji.</p>
     `,
-    contact: {
-      rateLimited: "Możesz wysłać jedno zgłoszenie na 24 godziny.",
-    },
   },
   questionForm: {
     addAnswer: "Dodaj odpowiedź",
@@ -1145,6 +1154,13 @@ const pl = {
     useTally: "Ankietę zamyka się przez podliczenie głosów.",
     marketNoTransfer: "Gry ze Społeczności nie można eksportować, powielać ani wysyłać.",
     sendOnlyDraft: "Wysłać można tylko szkic gry (bez wyników ankiety).",
+    "editAfterPoll": {
+      title: "Zresetować ankietę?",
+      text: "Ankieta jest zamknięta. Edycja usunie jej wyniki: głosy, odpowiedzi ankietowanych, linki i kody QR. Pytania i odpowiedzi zostaną, punkty zostaną wyzerowane, a gra wróci do szkicu.",
+      ok: "Resetuj",
+      cancel: "Anuluj",
+    },
+    "resetFailed": "Nie udało się przygotować ankiety do edycji. Spróbuj ponownie."
   },
   gamesImportExport: {
     defaults: {
@@ -1167,17 +1183,6 @@ const pl = {
   },
   games: {
     title: "Familiada — moje gry",
-    nav: {
-      friends: "Znajomi",
-      subscribers: "Subskrybenci",
-      tasks: "Zadania",
-      bases: "Bazy pytań",
-      logo: "Loga",
-      marketplace: "Gry Społeczności",
-      connectDevice: "Podłącz urządzenie",
-      account: "Ustawienia konta",
-      more: "Więcej",
-    },
     header: {
       title: "Moje gry",
     },
@@ -1395,12 +1400,6 @@ const pl = {
       ok: "Kontynuuj",
       cancel: "Anuluj",
     },
-    editAfterPoll: {
-      title: "Zresetować ankietę?",
-      text: "Ankieta jest zamknięta. Edycja usunie jej wyniki: głosy, odpowiedzi ankietowanych, linki i kody QR. Pytania i odpowiedzi zostaną, punkty zostaną wyzerowane, a gra wróci do szkicu.",
-      ok: "Resetuj",
-      cancel: "Anuluj",
-    },
     market: {
       archived: "ARCHIWALNA — usunięta ze Społeczności",
       empty: "Twoja biblioteka jest pusta.",
@@ -1515,7 +1514,6 @@ const pl = {
       cannotEdit: "Nie można edytować w trakcie otwartej ankiety.",
       editorError: "Błąd edytora (konsola).",
       gameNotFound: "Ta gra nie istnieje albo nie masz do niej dostępu.",
-      resetFailed: "Nie udało się przygotować ankiety do edycji. Spróbuj ponownie.",
     },
   },
   pollAnonymous: {
@@ -2022,7 +2020,6 @@ const pl = {
     search: {
       results: "Wyniki",
       placeholder: "Szukaj...",
-      clear: "Wyczyść",
       sheetTitle: "Szukaj",
       done: "Gotowe",
       sheetHelp: "Szuka w nazwach pytań i folderów. Tagi i kategorie wybierasz przyciskami w pasku — działają razem z tekstem.",
@@ -2400,7 +2397,6 @@ const pl = {
       noSubs: "Brak subskrybentów.",
       alreadyShared: "Tej osobie już udostępniono to urządzenie w tej sesji gry.",
       recipientDisabled: "Ta osoba zrezygnowała z powiadomień e-mail. Dostęp zostanie nadany bez maila.",
-      friendMailDisabled: "Udostępniono. Ta osoba zrezygnowała z powiadomień e-mail.",
       friendMailCooldown: "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.",
       mailCooldownRemaining: "E-mail będzie można wysłać za {time}.",
       noFriends: "Nie ma znajomych do udostępnienia.",
@@ -2776,8 +2772,9 @@ const pl = {
     "goAccountBody": "Odbiorca ma konto w Familiadzie. Zaproszenia dla kont obsługujesz w Znajomych.",
     "goTitle": "Zaproszenie do znajomych",
     "goBody": "{owner} zaprasza Cię do znajomych.",
-    "open": "Otwórz Znajomych"
-},
+    "open": "Otwórz Znajomych",
+    "friendMailDisabled": "Udostępniono. Ta osoba zrezygnowała z powiadomień e-mail."
+  },
 
   gameSettings: {
     pageTitle: "Ustawienia gry",

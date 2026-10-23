@@ -64,9 +64,9 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   const label = () => {
     input.placeholder = t("common.searchByName");
     input.setAttribute("aria-label", t("common.searchByName"));
-    mobileSearch.title = input.value ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.title = input.value ? t("common.clear") : t("common.searchByName");
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
-    clear.title = t("baseExplorer.search.clear");
+    clear.title = t("common.clear");
     clear.setAttribute("aria-label", clear.title);
   };
   label();
@@ -164,7 +164,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     const selectedFilterOption = filter?.options.find((option) => option.value === filterValue);
     mobileSearch.innerHTML = icon(q ? "close" : "search");
     mobileSearch.classList.toggle("is-active", !!q);
-    mobileSearch.title = q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.title = q ? t("common.clear") : t("common.searchByName");
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
     clear.hidden = !q;
     if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);

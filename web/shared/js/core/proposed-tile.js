@@ -27,15 +27,15 @@ export function tileTagsHtml(list) {
 /** „Propozycja” + „Od: X” — wspólne dla zaproszeń i kopii. */
 export function proposedTags({ from, fromTitle = "", title }) {
   return [
-    { kind: "proposed", text: t("bases.badges.proposed"), title },
-    { kind: "from", text: t("bases.badges.from", { name: from || "—" }), title: fromTitle || from || "" },
+    { kind: "proposed", text: t("resourceSend.proposed"), title },
+    { kind: "from", text: t("resourceSend.from", { name: from || "—" }), title: fromTitle || from || "" },
   ];
 }
 
 /** Przyciski ✓/✕ kafla propozycji (w miejscu kosza). */
 export function proposedActionsHtml() {
-  const accept = esc(t("bases.proposed.accept"));
-  const decline = esc(t("bases.proposed.decline"));
+  const accept = esc(t("resourceSend.accept"));
+  const decline = esc(t("resourceSend.decline"));
   return `
     <div class="tileMiniActions">
       <button class="btn xsm gold" data-accept type="button" title="${accept}" aria-label="${accept}">${icon("check")}</button>

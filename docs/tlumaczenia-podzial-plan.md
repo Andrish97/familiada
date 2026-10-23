@@ -39,7 +39,20 @@ web/shared/translation/
 
 ## Przeniesione klucze (moduły wspólne pożyczały z sekcji stron)
 
-Uzupełniane w trakcie pracy.
+| było | jest | kto używa |
+|---|---|---|
+| `games.nav.*` | `nav.menu.*` | topbar, przyciski menu na stronach |
+| `baseExplorer.search.clear` | `common.clear` | `list-search.js`, `share-sections.js`, Menedżer bazy, edytor logo |
+| `privacy.contact.rateLimited` | `contact.rateLimited` | `contact-modal.js` |
+| `games.editAfterPoll.*` | `gameValidate.editAfterPoll.*` | `game-validate.js` |
+| `editor.alert.resetFailed` | `gameValidate.resetFailed` | `game-validate.js` |
+| `control.shareDeviceModal.friendMailDisabled` | `contacts.friendMailDisabled` | `contacts-page.js`, Bazy, Control |
+| `bases.badges.from` | `resourceSend.from` (ten sam tekst już był) | `proposed-tile.js`, Bazy |
+| `bases.badges.proposed`, `bases.proposed.accept/decline` | `resourceSend.proposed/accept/decline` | `proposed-tile.js` |
+| `index.captchaRequired`, `errInvalidEmail`, `errResendCooldown(Generic)`, `errResetMissingLogin`, `errUsernameTaken`, `statusError`, `errNoSession` | `auth.*` | `auth.js`, `contact-modal.js`, Konto, Logowanie |
+
+Pożyczki między stronami (np. Ustawienia gry ← `control.*`, Gry ← `polls.results.*`)
+zostają: strona wczytuje wtedy część sąsiedniej strony (meta z generatora).
 
 ## Kroki wdrożenia
 

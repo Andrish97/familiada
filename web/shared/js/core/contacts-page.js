@@ -106,7 +106,7 @@ export async function initContactsPage(pageId) {
       const resendToken = kind === "resend" ? goLinkToken(data.link, friends ? "f" : "s") : "";
       if (resendToken) {
         const queued = await sendInviteMail({ token: resendToken, kind: friends ? "friend" : "subscriber", reminder: true, actionKey: friends ? "friend:resend" : "poll:resend" });
-        toast(t(queued ? "contacts.sent" : "control.shareDeviceModal.friendMailDisabled"));
+        toast(t(queued ? "contacts.sent" : "contacts.friendMailDisabled"));
       }
       await refresh();
     } catch (error) { await report(error); }
@@ -223,7 +223,7 @@ export async function initContactsPage(pageId) {
         catch (error) { console.warn("[contacts] mail:", error); toast(t("contacts.mailFailed"), { kind: "error" }); return; }
       }
       input.value = "";
-      toast(t(data.already ? "contacts.errors.already" : mailSkipped ? "control.shareDeviceModal.friendMailDisabled" : "contacts.sent"));
+      toast(t(data.already ? "contacts.errors.already" : mailSkipped ? "contacts.friendMailDisabled" : "contacts.sent"));
     } catch (error) { await report(error); }
     finally { button.disabled = false; }
   });
