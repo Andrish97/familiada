@@ -2827,12 +2827,16 @@ function renderMailList(rows) {
       const badge = isOpen
         ? `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.18);color:#ffeaa6">open</span>`
         : `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);opacity:.5">closed</span>`;
+      // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
+      const deletedBadge = r.author_account_deleted_at
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">konto usunięte</span>`
+        : "";
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${escSetting(r.ticket_number)}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge} ${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge}${deletedBadge} ${escSetting(r.subject || "—")}</div>
         <div class="mail-ti-preview" style="opacity:.45">${escSetting(String(r.message_count || 0))} msg</div>`;
       item.addEventListener("click", () => openReport(r.id));
       body.appendChild(item);

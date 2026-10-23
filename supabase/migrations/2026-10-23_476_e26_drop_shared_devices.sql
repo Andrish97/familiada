@@ -4,12 +4,17 @@
 -- Zadań pokazuje tylko ankiety). Urządzenia są chwilowe, więc bez przenoszenia
 -- danych: kasowania w funkcjach, część 'device' w tasks_list i tabela znikają.
 --
--- Przy okazji (B4, migracja 477): _delete_user_data nie kasuje już starych
--- contact_reports, tylko zgłoszenia w nowym modelu (reports + messages), gdy
--- ich autorem jest e-mail konta — decyzja 2026-10-07 „zgłoszenia kontaktowe
--- usuniętego konta: usuwane całe” (usuwanie-danych.md), także dla zgłoszeń
--- przeniesionych w 477. Jedna podmiana funkcji, żeby 476 i 477 się nie
--- nadpisywały.
+-- Przy okazji (B4, migracja 477; decyzja użytkownika 2026-10-23, zmienia
+-- decyzję 3 z 2026-10-07 w usuwanie-danych.md): zgłoszenia kontaktowe NIE są
+-- kasowane przy usuwaniu konta — słuszne zgłoszenie trzeba móc poprawić także
+-- wtedy, gdy autor potem usunął konto. _delete_user_data zamiast starego
+-- kasowania contact_reports oznacza zgłoszenia autora
+-- (reports.author_account_deleted_at), a list_reports zwraca to pole dla
+-- plakietki „konto usunięte” w panelu. Jedna podmiana _delete_user_data,
+-- żeby 476 i 477 się nie nadpisywały.
+
+ALTER TABLE public.reports ADD COLUMN author_account_deleted_at timestamptz;
+COMMENT ON COLUMN public.reports.author_account_deleted_at IS 'Kiedy autor zgłoszenia (pierwsza wiadomość) usunął konto; zgłoszenie zostaje (decyzja 2026-10-23).';
 
 CREATE OR REPLACE FUNCTION "public"."_delete_user_data"("p_user_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -91,19 +96,13 @@ begin
     delete from public.email_intents where lower(email) = v_email;
     delete from public.email_cooldowns where email_hash = md5(v_email);
     delete from public.mail_cooldowns where position(md5(v_email) in target_key) > 0;
-    -- zgłoszenia kontaktowe tego e-maila całe: autor = pierwsza wiadomość
-    -- zgłoszenia (jak w Workerze, email/contact.js)
-    with own as (
-      select r.id from public.reports r
-      join lateral (
-        select m.direction, m.from_email, m.to_email from public.messages m
-        where m.report_id = r.id order by m.created_at, m.id limit 1
-      ) f on true
-      where lower(trim(case when f.direction = 'inbound' then f.from_email else f.to_email end)) = v_email
-    ), gone as (
-      delete from public.messages m using own where m.report_id = own.id returning 1
-    )
-    delete from public.reports r using own where r.id = own.id;
+    -- zgłoszenia kontaktowe zostają (decyzja 2026-10-23), tylko oznaczone:
+    -- autor = pierwsza wiadomość zgłoszenia (jak w Workerze, email/contact.js)
+    update public.reports r set author_account_deleted_at = coalesce(r.author_account_deleted_at, now())
+    where lower(trim((
+      select case when m.direction = 'inbound' then m.from_email else m.to_email end
+      from public.messages m where m.report_id = r.id order by m.created_at, m.id limit 1
+    ))) = v_email;
   end loop;
 
 
@@ -419,5 +418,38 @@ BEGIN
   ORDER BY bt.created_at DESC;
  END IF;
 END $$;
+
+-- list_reports z polem author_account_deleted_at (inny typ wyniku -> DROP i CREATE;
+-- uprawnienia jak w 443: tylko service_role).
+DROP FUNCTION public.list_reports("text", integer, integer);
+CREATE FUNCTION "public"."list_reports"("p_status" "text" DEFAULT 'all'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "ticket_number" "text", "status" "text", "subject" "text", "lang" "text", "created_at" timestamp with time zone, "message_count" bigint, "last_message_at" timestamp with time zone, "author_account_deleted_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+    SELECT
+      r.id,
+      r.ticket_number,
+      r.status,
+      r.subject,
+      r.lang,
+      r.created_at,
+      COUNT(m.id)        AS message_count,
+      MAX(m.created_at)  AS last_message_at,
+      r.author_account_deleted_at
+    FROM public.reports r
+    LEFT JOIN public.messages m ON m.report_id = r.id AND m.deleted_at IS NULL
+    WHERE (p_status = 'all' OR r.status = p_status)
+      AND NOT EXISTS (SELECT 1 FROM public.messages t
+                      WHERE t.report_id = r.id AND t.direction = 'inbound' AND public.is_test_email(t.from_email))
+    GROUP BY r.id
+    ORDER BY COALESCE(MAX(m.created_at), r.created_at) DESC
+    LIMIT p_limit OFFSET p_offset;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.list_reports(text, integer, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_reports(text, integer, integer) TO service_role;
 
 DROP TABLE public.shared_devices;

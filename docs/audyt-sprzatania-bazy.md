@@ -178,9 +178,11 @@ przejmowanie urządzeń, bez związku z listami); analiza statyczna na świeżym
 Różnice względem listy (dodane przy wykonaniu):
 - `fam_clip_words` — używała jej tylko naprawa E21 (B2);
 - `contact_reports_set_updated_at` — funkcja triggera starego formularza (B4);
-- `_delete_user_data`: zamiast starych `contact_reports` kasuje zgłoszenia
-  w `reports`/`messages`, gdy autorem jest e-mail konta (decyzja 2026-10-07
-  „zgłoszenia kontaktowe usuniętego konta: usuwane całe”, `usuwanie-danych.md`);
+- `_delete_user_data`: nie kasuje już zgłoszeń. **Decyzja użytkownika
+  2026-10-23:** zgłoszenie zostaje także po usunięciu konta autora (słuszne
+  zgłoszenie trzeba móc poprawić). Usunięcie konta ustawia
+  `reports.author_account_deleted_at`, a panel admina pokazuje plakietkę
+  „konto usunięte”. Zmienia to decyzję 3 z 2026-10-07 w `usuwanie-danych.md`;
 - `e2e_shared_devices_cleanup` zostaje (spece), bez kasowania `shared_devices`
   i bez klucza `deleted` w wyniku;
 - B6: `CLUSTER … USING marketing_search_logs_pkey` zamiast `VACUUM FULL`
@@ -190,10 +192,13 @@ Różnice względem listy (dodane przy wykonaniu):
 - skrypty audytu uprawnień (`*-acl-audit`, `public-read-audit`) bez zmian —
   dla usuniętych obiektów zwracają −1 / brak.
 
-Migracje: 473 (A, B5–B8), 474 (B1), 475 (B2), 476 (B3 + kasowanie zgłoszeń
-konta), 477 (B4). Testy lokalne: `tests/sql/e26-cleanup-473-477.sql`
+Migracje: 473 (A, B5–B8), 474 (B1), 475 (B2), 476 (B3 + oznaczanie
+zgłoszeń usuniętego konta: kolumna `reports.author_account_deleted_at`,
+`list_reports` z tym polem, uprawnienia jak w 443), 477 (B4). Panel admina
+(`web/settings/js/settings.js`): plakietka „konto usunięte” na liście
+zgłoszeń; zrzut `admin-reports-deleted-author` (komputer i telefon). Testy lokalne: `tests/sql/e26-cleanup-473-477.sql`
 (przeniesienie 2 zgłoszeń / 5 wiadomości, kolizja numeru, zapis stanu gry,
-tasks_list, usunięcie konta) i `tests/sql/e26-b7-cron-473.sql` — OK.
+tasks_list, usunięcie konta zostawia zgłoszenie z oznaczeniem) i `tests/sql/e26-b7-cron-473.sql` — OK.
 Kontrola po wdrożeniu: `scripts/db-read/e26-after.sql` (oczekiwane zera).
 
 ## Uwagi

@@ -134,17 +134,33 @@ begin
   perform * from public.list_messages('reports', 50, 0);
 end $$;
 
--- B4 + decyzja 2026-10-07: usunięcie konta kasuje jego zgłoszenia całe
-do $$ begin
+-- Decyzja 2026-10-23: usunięcie konta NIE kasuje zgłoszeń, tylko je oznacza
+do $$
+declare v timestamptz;
+begin
   perform public._delete_user_data('00000000-0000-4000-8000-0000000026b2');
-  if exists (select 1 from public.reports where id = '00000000-0000-4000-8000-0000000026d1') then
-    raise exception 'zgłoszenie autora zostało po usunięciu konta';
+  select author_account_deleted_at into v from public.reports where id = '00000000-0000-4000-8000-0000000026d1';
+  if not found then raise exception 'zgłoszenie autora zniknęło po usunięciu konta'; end if;
+  if v is null then raise exception 'zgłoszenie autora bez oznaczenia'; end if;
+  if (select count(*) from public.messages where report_id = '00000000-0000-4000-8000-0000000026d1') <> 4 then
+    raise exception 'wiadomości zgłoszenia zniknęły';
   end if;
-  if exists (select 1 from public.messages where report_id = '00000000-0000-4000-8000-0000000026d1') then
-    raise exception 'wiadomości zgłoszenia zostały';
+  if (select author_account_deleted_at from public.reports where id = '00000000-0000-4000-8000-0000000026d2') is not null then
+    raise exception 'oznaczono cudze zgłoszenie';
   end if;
-  if not exists (select 1 from public.reports where id = '00000000-0000-4000-8000-0000000026d2') then
-    raise exception 'usunięto cudze zgłoszenie';
+  if (select author_account_deleted_at from public.list_reports('all', 50, 0) where ticket_number = 'OLD-26-1') is null then
+    raise exception 'list_reports bez author_account_deleted_at';
+  end if;
+  -- ponowne usunięcie nie przesuwa daty
+  perform public._delete_user_data('00000000-0000-4000-8000-0000000026b2');
+  if (select author_account_deleted_at from public.reports where id = '00000000-0000-4000-8000-0000000026d1') <> v then
+    raise exception 'data oznaczenia się zmieniła';
+  end if;
+end $$;
+do $$ begin
+  if has_function_privilege('anon', 'public.list_reports(text, integer, integer)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'public.list_reports(text, integer, integer)', 'EXECUTE') then
+    raise exception 'list_reports dostępne dla anon/authenticated';
   end if;
 end $$;
 
