@@ -257,7 +257,7 @@ module.exports = [
   { id: "games-editor-locked-stopped", category: CAT, title: "Edycja gry — zablokowana: ankieta zatrzymana", path: `/games/editor/?id=${G.wedding}`, sources: [...EDITOR, "web/shared/js/core/resource-lock.js"],
     ready: ".blocking-card" },
   { id: "games-editor-locked-busy", category: CAT, title: "Edycja gry — zablokowana: gra otwarta w innym miejscu", path: `/games/editor/?id=${IDS.game}`, sources: [...EDITOR, "web/shared/js/core/resource-lock.js"],
-    db: (db) => { db.rpc.acquire_edit_lock_mode = { ok: false, error: "locked", context: "control" }; },
+    db: (db) => { db.rpc.acquire_edit_locks = { ok: false, error: "locked", blocker_type: "game", blocker_context: "control", resource: { type: "game", id: IDS.game } }; },
     ready: ".blocking-card" },
   { id: "games-editor-reset-after-poll", category: CAT, title: "Edycja gry po ankiecie — potwierdzenie resetu wyników przed edycją", path: `/games/editor/?id=${G.school}`, sources: [...EDITOR, "web/shared/js/core/game-validate.js"],
     db: (db) => { gameRow(db, G.school).rules_state.edit = { ok: true, needs_reset: true }; },

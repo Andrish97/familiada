@@ -281,7 +281,7 @@ function buildDb(lang, extras = {}) {
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
     // E22 (431): blokady zbiorcze
-    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true },
+    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true }, expire_edit_locks_absent: { ok: true, removed: 0 },
     // E22 (430): przypisania tagów wskazanych pytań (okno tagów)
     qb_question_tag_links: `fn:(args, db) => {
       const ids = new Set(args.p_question_ids || []);
