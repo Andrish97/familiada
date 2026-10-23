@@ -171,3 +171,8 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
 - 2265 (mnożnik, 4 rundy) na `api2`: 2× przekroczony limit 240 s, potem zielony w 3,9 min (39915049987) — test na granicy limitu na obu serwerach, nie różnica serwera.
 - Test TV (100) na `api2`: pomocnik testów pobierał „/” przez `route.fetch`, który sam szedł za przekierowaniem Workera dla TV (302 → `/connect/?tv=1`), więc adres zostawał „/” — poprawione (`maxRedirects: 0`). Po poprawce kod podłączenia „nieprawidłowy” na `api2` — pułapka routingu próby (strona TV z Workera), do sprawdzenia na produkcji po przełączeniu.
 - Uwaga (stary serwer): slot replikacji Realtime ma **zaległość 1,4 GB WAL** — po przeprowadzce problem znika (nowy slot); do tego czasu obserwować miejsce na dysku.
+- **Pomiar Control stary ↔ nowy (2026-10-23):**
+  - pod obciążeniem na samym serwerze (25 zapytań naraz, `compare.yml` 39917657836): mediana 18,0 → **10,4 ms**, p95 50,9 → **22,8 ms**; pojedynczo 3,9 vs 3,8 ms; przez internet z GitHuba RPC 125 vs 127 ms, realtime 99 vs 102 ms (sieć dominuje);
+  - czas funkcji Control **w bazie** (`db-perf`, `pg_stat_statements`, średnio): `game_state_write` 5,8 → **3,9 ms**, `game_state_get` 3,1 → **1,6 ms**, `game_state_set_lock` 1,8 → **1,1 ms**, `game_state_display_complete` 2,9 → **2,1 ms**, `control_devices_snapshot` 0,76 vs 0,79 ms; ustawienia Postgresa identyczne (17.6, jit on, shared_buffers 128 MB);
+  - w e2e z runnera w USA zapis stanu gry (z siecią) na produkcji ~120 ms, na `api2` ~190 ms — różnica w drodze sieciowej (Cloudflare → serwer), nie w bazie; do ponownego pomiaru z Polski po przełączeniu (`compare.yml`).
+- Narzędzia (familiada-server, tylko odczyt, stary i nowy): `realtime-check`, `db-perf` (`server.yml` / `inventory-old.yml`).
