@@ -2,6 +2,27 @@
 
 ## Aktualny stan — przeczytaj najpierw
 
+## E23 (ujednolicenie stylów i modułów) — branch `ccr-a802ffe7-hhw67a`, stan 2026-10-23
+
+Cel: skończony, minimalny zestaw elementów i te same nazwy dla tych samych
+rzeczy (silnik `web/shared/style/`, moduły `web/shared/js/core/`). Plan
+i dziennik: `docs/wspolne-style-plan.md` (sekcje „Decyzje”, „Do poprawienia”,
+„Dziennik E23”), projekt silnika: `docs/silnik-stylow-projekt.md` (§6.2 moduły).
+
+Zrobione na branchu (2026-10-23, każde ze zrzutami i e2e punktowymi z brancha):
+wypustki (stary wygląd; wklęsły łuk = połowa promienia; jedna obsługa
+`markActiveTab`), `core/color.js` + `core/color-picker.js`, powłoka logowania
+`.auth-body`, `.btn-plain`, `.notice-bar`, jeden stan aktywny i wyłączony
+(bez `opacity`/`filter`/`backdrop-filter` — Android), `blockingScreen` także dla
+device-lease, Control w jednym `control.css`.
+
+Następne: e2e przejmowania urządzenia (`control2.spec.js`, „nowe otwarcie
+urządzenia przejmuje”) po kafelkach Control; potem wdrożenie na `main` według
+cyklu z CLAUDE.md i kontrola produkcji (logowanie — HTML z Workera dopiero po
+wdrożeniu). Dalsze moduły §6.2 (`dialog.js`, `popover.js`) i panel admina (§8a)
+— po wdrożeniu tej paczki.
+
+
 Repo Andrish97/familiada, branch `main`; stan po E14 i porządkowaniu repo.
 
 - E19 i E19N są zamknięte. E20 poprawki wizualne są wdrażane według bieżących uwag; ostatnie commity na main obejmują wspólny topbar i modal alertu Control.
