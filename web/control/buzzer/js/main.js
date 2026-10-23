@@ -10,16 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-22T22570";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-22T22570";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-22T22570";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-22T22570";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-22T22570";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-22T22570";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-22T22570";
-import { createPressController } from "./press.js?v=v2026-10-22T22570";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-22T22570";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-22T22570";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T00231";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-23T00231";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T00231";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T00231";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-23T00231";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-23T00231";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-23T00231";
+import { createPressController } from "./press.js?v=v2026-10-23T00231";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-23T00231";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-23T00231";
 
 
 function parseParams() {
@@ -203,12 +203,12 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
+    log: lease.log,
     // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
     // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
       || prev.display_rendered_rev !== next.display_rendered_rev,
     onRow: (row) => {
-      lease.setTelemetryActive(!!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded);
       lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;

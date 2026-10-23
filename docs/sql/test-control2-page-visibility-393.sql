@@ -1,5 +1,6 @@
 -- Rollback-only smoke test for migration 393: active visibility events for
--- Display, Host, Buzzer and Control appear in the Admin event log.
+-- Display, Host, Buzzer and Control appear in the Admin event log
+-- (since 468: per-session table control2_session_events).
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE FUNCTION pg_temp.check(label text, condition boolean) RETURNS void
@@ -76,12 +77,12 @@ BEGIN
 END $$;
 
 SELECT pg_temp.check('initial and hidden snapshots recorded for three devices and Control',
-  (SELECT count(*)=7 FROM public.control2_device_events
+  (SELECT count(*)=7 FROM public.control2_session_events
    WHERE game_id='b3930000-0000-0000-0000-000000000001' AND event_type='page_state'));
 SELECT pg_temp.check('Admin event export identifies device and visibility transition',
   EXISTS (
     SELECT 1 FROM jsonb_array_elements(
-      public.get_control2_display_events(ARRAY(
+      public.get_control2_session_events(ARRAY(
         SELECT session_id FROM public.game_session_active
         WHERE game_id='b3930000-0000-0000-0000-000000000001'
       ))->(SELECT session_id::text FROM public.game_session_active
@@ -95,7 +96,7 @@ SELECT pg_temp.check('Admin event export identifies device and visibility transi
 SELECT pg_temp.check('Control visibility is included in Admin event export',
   EXISTS (
     SELECT 1 FROM jsonb_array_elements(
-      public.get_control2_display_events(ARRAY(
+      public.get_control2_session_events(ARRAY(
         SELECT session_id FROM public.game_session_active
         WHERE game_id='b3930000-0000-0000-0000-000000000001'
       ))->(SELECT session_id::text FROM public.game_session_active

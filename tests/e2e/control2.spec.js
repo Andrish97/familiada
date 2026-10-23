@@ -699,7 +699,10 @@ async function readControl2Sessions(page, gameId) {
       .select("id,status,ended_at,rounds_played,rounds_score_a,rounds_score_b,team_a_score,team_b_score,final_points,stats_detail")
       .eq("game_id", gid).eq("control_version", 2).order("started_at");
     if (error) throw new Error("read production statistics: " + error.message);
-    return data;
+    // Zdarzenia sesji są w osobnej tabeli (migracja 468), nie w stats_detail.
+    const events = await window.__sbClient.rpc("control2_owner_session_events", { p_game_id: gid });
+    if (events.error) throw new Error("read session events: " + events.error.message);
+    return data.map(row => ({ ...row, stats_detail: { ...row.stats_detail, events: events.data?.[row.id] || [] } }));
   }, gameId);
 }
 
@@ -1078,11 +1081,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const acceptedControlVisibility = [];
     page.on("response", async (response) => {
-      if (!response.url().includes("/rpc/control2_control_visibility_event") || !response.ok()) return;
-      const payload = response.request().postDataJSON()?.p_event;
+      if (!response.url().includes("/rpc/control2_control_log") || !response.ok()) return;
+      const events = response.request().postDataJSON()?.p_events || [];
       const result = await response.json().catch(() => null);
-      if (result === true && payload?.reason === "visibilitychange") {
-        acceptedControlVisibility.push(payload.visibility);
+      if (!(Number(result) > 0)) return;
+      for (const event of events) {
+        if (event?.event_type === "page_state" && event.reason === "visibilitychange") acceptedControlVisibility.push(event.visibility);
       }
     });
     for (const visibility of ["hidden", "visible"]) {
@@ -1122,11 +1126,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const devices = [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]];
     for (const [deviceType, devicePage] of devices) {
       devicePage.on("response", async (response) => {
-        if (!response.url().includes("/rpc/control2_device_transport_event") || !response.ok()) return;
-        const payload = response.request().postDataJSON()?.p_event;
+        if (!response.url().includes("/rpc/control2_device_log") || !response.ok()) return;
+        const events = response.request().postDataJSON()?.p_events || [];
         const result = await response.json().catch(() => null);
-        if (result === true && payload?.event_type === "page_state") {
-          acceptedPageStates.push({ deviceType, visibility: payload.visibility, reason: payload.reason });
+        if (!(Number(result) > 0)) return;
+        for (const event of events) {
+          if (event?.event_type === "page_state") acceptedPageStates.push({ deviceType, visibility: event.visibility, reason: event.reason });
         }
       });
       for (const visibility of ["hidden", "visible"]) {
@@ -1143,6 +1148,17 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
         ), { timeout: 10000 }).toBe(true);
       }
     }
+
+    // Diagnostyka sesji (468–469): opis urządzenia od Control i każdego
+    // urządzenia, zdarzenia sprzed startu gry dołączone do sesji, powrót
+    // karty z czasem w tle.
+    const sessions = await readControl2Sessions(page, game.id);
+    const sessionEvents = sessions.at(-1)?.stats_detail.events || [];
+    const sources = new Set(sessionEvents.filter(event => event.category === "device_info").map(event => event.source));
+    expect([...sources].sort()).toEqual(["buzzer", "control", "display", "host"]);
+    expect(sessionEvents.some(event => event.prestart === true)).toBe(true);
+    expect(sessionEvents.some(event => event.category === "display_state" && event.source === "host"
+      && event.metrics?.visibility === "visible" && typeof event.metrics?.hidden_duration_ms === "number")).toBe(true);
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -3120,13 +3136,15 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 // urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
 // poza ponownym wejściem na URL urządzenia.
 
-// Modal kropki statusu (control/js/app.js's showQrModal) koduje URL
-// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
-// Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
+// Modal kropki statusu (control/js/app.js's showQrModal): Wyświetlacz ma
+// bezpośredni link "Otwórz" (#qrModalOpen); Prowadzący i Przycisk — kod QR
+// rysowany lokalnie (SVG, bez adresu w atrybucie) i sześciocyfrowy kod,
+// który operator wpisuje na urządzeniu w /connect/.
 async function readDeviceUrlFromModal(control, kind) {
   if (kind === "display") return control.locator("#qrModalOpen").getAttribute("href");
-  const src = await control.locator("#qrModalImg").getAttribute("src");
-  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+  await expect(control.locator("#qrModalImg")).toHaveAttribute("src", /^data:image\/svg/);
+  const code = String(await control.locator("#qrModalCodeVal").textContent() || "").replace(/\D/g, "");
+  return code.length === 6 ? `code:${code}` : "";
 }
 
 // Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
@@ -3146,7 +3164,15 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
   instrumentAnon(p, kind);
-  await p.goto(url, { waitUntil: "domcontentloaded" });
+  if (url.startsWith("code:")) {
+    await p.goto("/connect/", { waitUntil: "domcontentloaded" });
+    await p.locator("#connectCodeInput").fill(url.slice(5));
+    await p.locator("#btnConnectCode").click();
+    await p.locator(".uni-foot .btn.gold").click();
+    await expect.poll(() => new URL(p.url()).pathname, { timeout: 15000 }).toBe(`/control/${kind}/`);
+  } else {
+    await p.goto(url, { waitUntil: "domcontentloaded" });
+  }
   await control.locator("#qrModalClose").click();
   await expect(control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}`)).toHaveClass(/\bok\b/, { timeout: 15000 });
   return p;

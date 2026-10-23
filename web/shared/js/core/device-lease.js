@@ -1,8 +1,10 @@
-import { sb } from "./supabase.js?v=v2026-10-22T22570";
-import { t } from "../../translation/translation.js?v=v2026-10-22T22570";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-22T22570";
-import { startTicker } from "./background-ticker.js?v=v2026-10-22T22570";
-import { icon } from "./icons.js?v=v2026-10-22T22570";
+import { sb } from "./supabase.js?v=v2026-10-23T00231";
+import { t } from "../../translation/translation.js?v=v2026-10-23T00231";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-23T00231";
+import { startTicker } from "./background-ticker.js?v=v2026-10-23T00231";
+import { icon } from "./icons.js?v=v2026-10-23T00231";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-23T00231";
+import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-23T00231";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -46,15 +48,15 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
   let firstRegistration = true;
   let inFlight = false;
   let stopped = false;
-  let telemetryActive = false;
   let heartbeatAgain = false;
   let stopTicker = null;
   // Metadane strony (diagnostyka, odblokowanie dźwięku Wyświetlacza) jadą
   // tym samym heartbeatem co lease — jeden zapis, jedna transakcja w bazie.
   let extraMeta = {};
   let audioUnlockedOnServer = false;
-  let pageStateFlush = null;
-  const pendingPageStates = [];
+  let lastHeartbeatOkAt = null;
+  let hiddenAt = document.visibilityState === "hidden" ? Date.now() : null;
+  let loggedConnection = null;
   const progress = { received_rev: 0, rendered_rev: 0, started_sound_cue_seq: 0 };
 
   const meta = () => ({
@@ -72,7 +74,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     state = data.state || state;
     epoch = state === "primary" ? Number(data.epoch) : null;
     if (`${state}:${epoch}` !== previous) onState?.({ mode, state, epoch, queuePosition: data.queue_position ?? null, waitingCount: data.waiting_count ?? 0 });
-    if (!wasPrimary && state === "primary" && telemetryActive) queueInitialPageState();
+    if (!wasPrimary && state === "primary") logConnectionStart();
     // Heartbeat niesie bieżącą rewizję gry (migracja 424): urządzenie, które
     // zgubiło zmianę z kanału na żywo, może ją dociągnąć samo.
     const gameRev = Number(data.game_rev);
@@ -93,49 +95,39 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     catch { return false; }
   })();
 
+  // Diagnostyka sesji (migracje 468–469): zapis od chwili, gdy ta instancja
+  // jest główna — także przed startem gry (krok Urządzenia).
+  const log = createSessionLog({
+    rpc: "control2_device_log",
+    params: () => ({ p_game_id: gameId, p_device_type: deviceType, p_key: key, p_connection_id: connectionId, p_epoch: epoch }),
+    canSend: () => !insideControlTestFrame && mode === "lease" && state === "primary" && Number.isFinite(epoch),
+  });
+  const logEvent = (event) => { if (!insideControlTestFrame) log.push(event); };
+
   function queuePageState(reason) {
-    if (!telemetryActive || stopped || insideControlTestFrame) return;
-    pendingPageStates.push({
+    if (stopped) return;
+    const visible = document.visibilityState === "visible";
+    const event = {
       event_type: "page_state",
-      event_id: makeConnectionId(),
       reason,
       visibility: document.visibilityState || "unknown",
       focused: !!document.hasFocus?.(),
       was_discarded: !!document.wasDiscarded,
       online: navigator.onLine !== false,
-    });
-    void flushPageStates();
+    };
+    // Zapis „w tle” często nie wychodzi przed zamrożeniem strony — czas
+    // w tle i od ostatniego sygnału życia niesie zapis powrotu.
+    if (visible && hiddenAt != null) event.hidden_duration_ms = Math.max(0, Date.now() - hiddenAt);
+    if (visible && lastHeartbeatOkAt != null) event.since_heartbeat_ms = Math.max(0, Date.now() - lastHeartbeatOkAt);
+    hiddenAt = visible ? null : (hiddenAt ?? Date.now());
+    logEvent(event);
   }
 
-  function queueInitialPageState() {
-    if (pendingPageStates.some(event => event.reason === "initial")) return;
+  function logConnectionStart() {
+    if (loggedConnection === connectionId) return;
+    loggedConnection = connectionId;
     queuePageState("initial");
-  }
-
-  async function flushPageStates() {
-    if (pageStateFlush || stopped || !telemetryActive || mode !== "lease" || state !== "primary" || !Number.isFinite(epoch)) return;
-    const connection = connectionId;
-    const currentEpoch = epoch;
-    pageStateFlush = (async () => {
-      while (pendingPageStates.length && !stopped && telemetryActive) {
-        const event = pendingPageStates[0];
-        try {
-          const accepted = await call("control2_device_transport_event", {
-            p_game_id: gameId,
-            p_device_type: deviceType,
-            p_key: key,
-            p_event: event,
-            p_connection_id: connection,
-            p_epoch: currentEpoch,
-          });
-          if (accepted !== true) break;
-          if (pendingPageStates[0]?.event_id === event.event_id) pendingPageStates.shift();
-        } catch {
-          break; // Retry the queued event on the next heartbeat or visibility change.
-        }
-      }
-    })().finally(() => { pageStateFlush = null; });
-    await pageStateFlush;
+    void collectDeviceInfo().then(logEvent, () => {});
   }
 
   async function heartbeat(register = false) {
@@ -172,7 +164,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
       }
       publish(data || {});
       registerNext = false;
-      void flushPageStates();
+      lastHeartbeatOkAt = Date.now();
+      void log.flush();
       return data;
     } catch (error) {
       if (register || registerNext || mode !== "lease") registerNext = true;
@@ -210,7 +203,11 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     }
   }
 
+  let stopLifecycle = null;
+  let stopWakeLock = null;
   async function start() {
+    stopLifecycle = watchPageLifecycle(logEvent, { onExit: () => log.flushOnExit() });
+    stopWakeLock = onWakeLockChange(({ phase, error_name: errorName }) => logEvent({ event_type: "wake_lock", phase, error_name: errorName }));
     await heartbeat(true);
     stopTicker = startTicker(() => void heartbeat(false), HEARTBEAT_MS);
     document.addEventListener("visibilitychange", onVisibility);
@@ -224,6 +221,9 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
   function stop() {
     stopped = true;
     stopTicker?.();
+    stopLifecycle?.();
+    stopWakeLock?.();
+    log.stop();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("focus", onResume);
     window.removeEventListener("online", onResume);
@@ -237,13 +237,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
 
   return {
     start, stop,
-    setTelemetryActive(active) {
-      const next = !!active;
-      if (next === telemetryActive) return;
-      telemetryActive = next;
-      if (next) queueInitialPageState();
-      else pendingPageStates.length = 0;
-    },
+    /** Zdarzenie diagnostyki sesji (control2_device_log). */
+    log: logEvent,
     get mode() { return mode; },
     get state() { return state; },
     get epoch() { return epoch; },
