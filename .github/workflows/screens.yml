@@ -105,10 +105,15 @@ jobs:
           fc-cache -f >/dev/null
           echo "system-ui: $(fc-match system-ui)"
 
+      # Galeria do przeglądu: przy pushu tylko PL i najwyżej 30 min -- zmiana
+      # tłumaczeń dotyczy wszystkich scen (3 języki nie mieszczą się w limicie
+      # przebiegu), a kroki strony głównej i Wskazówek niżej muszą się wykonać.
       - name: Zrzuty
+        timeout-minutes: 30
+        continue-on-error: true
         env:
           SCENES: ${{ inputs.scenes || 'changed' }}
-          LANGS: ${{ inputs.lang || 'all' }}
+          LANGS: ${{ inputs.lang || (github.event_name == 'push' && 'pl') || 'all' }}
           DEVICES: ${{ inputs.devices || 'desktop,phone' }}
           # Push na main: zmiany tego pushu; inne gałęzie i ręcznie: względem main.
           BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before || 'origin/main' }}

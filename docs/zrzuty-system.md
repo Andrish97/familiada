@@ -48,9 +48,12 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
    poprawia scenę/dane, uruchamia `--changed`, ogląda PNG i pokazuje je
    użytkownikowi w odpowiedzi.
 2. **GitHub po każdym pushu** zmieniającym `web/**` albo `scripts/screens/**`
-   (workflow `screens.yml`): sceny zmienionych stron we wszystkich językach,
-   galeria na gałęzi `screens-gallery` (link w podsumowaniu przebiegu) i
-   artefakt. Commity CI z `[skip ci]` (wersje `?v=`) go nie uruchamiają.
+   (workflow `screens.yml`): sceny zmienionych stron po polsku (inne języki —
+   uruchomienie ręczne), galeria na gałęzi `screens-gallery` (link
+   w podsumowaniu przebiegu) i artefakt. Galeria ma limit 30 min i jej
+   przekroczenie nie zatrzymuje kroków strony głównej i Wskazówek (zmiana
+   tłumaczeń dotyczy wszystkich scen — wcześniej 3 języki zajmowały cały
+   limit przebiegu i zrzuty Wskazówek się nie odświeżały). Commity CI z `[skip ci]` (wersje `?v=`) go nie uruchamiają.
    **Na `main`** dodatkowo: zmienione kadry strony głównej są odświeżane
    (`publish-homepage.cjs`), zapisywane commitem `Refresh homepage screenshots`
    i workflow wywołuje wdrożenie Pages — strona główna i og:image same się

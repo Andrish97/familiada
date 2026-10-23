@@ -12,7 +12,7 @@ invited you to (→ 12). The filter above the list shows bases by role: Mine, Ed
 - To open a base, select it and choose [Browse|folder].
 - For the selected base, [Share] (→ 12.2), [Duplicate], [Export] to a
   `.fambase` file and [Import] from a file are also available.
-- You rename a base by double-clicking it, and delete it with the trash icon — only in your own bases.
+- You rename a base by double-clicking it (on a phone, tap twice), and delete it with the trash icon — only in your own bases.
 
 ![Question bases](zrzut:bases)
 ![New base](zrzut:bases-name-create)
