@@ -75,12 +75,6 @@
 
   .mkt-search-input { width: 100%; }
 
-  .mkt-control-label {
-    font-size: 12px;
-    font-weight: 800;
-    opacity: .7;
-  }
-
   .mkt-filter {
     min-width: 190px;
   }
@@ -424,10 +418,6 @@
     margin-bottom: 5px;
     letter-spacing: .03em;
   }
-
-
-
-
 
   /* ===== Mobile ===== */
   @media (max-width: 600px) {

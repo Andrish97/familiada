@@ -8,7 +8,6 @@
       color: var(--text);
   }
 
-
   .topbar-close-slot { display: none; }
 
   /* ---------- układ (jak Ustawienia gry: stały pasek po lewej, przewijana treść) ----------
@@ -392,7 +391,6 @@
   }
   .m-note > :last-child { margin-bottom: 0; }
   .m-warn { border-color: rgba(255,140,120,.35); border-left-color: #ff8c78; background: rgba(255,120,100,.07); }
-  .m-tip  { border-color: rgba(113,185,207,.35); border-left-color: #71b9cf; background: rgba(113,185,207,.07); }
   .m-box-title {
       display: flex;
       align-items: center;
@@ -404,7 +402,6 @@
       text-transform: uppercase;
   }
   .m-warn .m-box-title { color: #ffb4a6; }
-  .m-tip .m-box-title { color: #9cd5e5; }
   .m-box-title .ico { width: 1.1em; height: 1.1em; }
 
   .m-table-wrap {

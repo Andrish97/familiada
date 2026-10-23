@@ -405,52 +405,9 @@
       pointer-events: none
   }
 
-  .m-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 9999
-  }
-
-  .m-modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: var(--scrim)
-  }
-
-  .m-modal-card {
-      position: relative;
-      width: min(560px,calc(100vw - 24px));
-      margin: 10vh auto 0;
-      background: var(--surface-modal);
-      border: 1px solid var(--w-14);
-      border-radius: var(--r-md);
-      overflow: hidden;
-      box-shadow: 0 18px 70px var(--k-40)
-  }
-
-  .m-modal-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 14px;
-      border-bottom: 1px solid var(--w-8)
-  }
-
-  .m-modal-body {
-      padding: 14px
-  }
-
   #tagsModal .tags-layer {
       display: block;
       min-height: 280px
-  }
-
-  #tagsModal .tags-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 10px
   }
 
   #tagsModal .tags-row {
@@ -465,35 +422,6 @@
   #tagsModal .tags-row .m-note {
       margin-left: auto;
       opacity: .75
-  }
-
-  #tagsModal .tags-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-top: 14px
-  }
-
-  #tagsModal .tags-actions-spacer {
-      flex: 1
-  }
-
-  .colorModalBox {
-      background: #05050a;
-      border-radius: var(--r-lg);
-      border: 1px solid var(--w-14);
-      box-shadow: 0 18px 60px var(--k-70);
-      max-width: 560px;
-      width: calc(100% - 0px);
-      padding: 18px 18px 16px
-  }
-
-  .colorModalHead {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px
   }
 
   .colorModalTitle {
@@ -605,15 +533,6 @@
       background: 0 0
   }
 
-  .colorModalFoot {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      padding-top: 8px;
-      border-top: 1px solid var(--w-8)
-  }
-
   .drop-pulse {
       animation: dropPulse 420ms ease-out;
       border-radius: var(--r-sm)
@@ -695,38 +614,7 @@
     opacity: .75;
   }
 
-  .tagsPickItem {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      user-select: none
-  }
-
-  .tagsPickItem:hover {
-      background: var(--w-8)
-  }
-
-  .tagsPickItem .nm {
-      font-weight: 900;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1
-  }
-
-  .tagsPickItem .meta {
-      opacity: .75;
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase
-  }
-
-  .tagsPickItem input,.xPickItem input {
+  .xPickItem input {
       transform: scale(1.05)
   }
 
@@ -734,12 +622,6 @@
       display: grid;
       gap: 12px;
       margin-top: 12px
-  }
-
-  .tagsNameCenter {
-      text-align: center;
-      font-weight: 500;
-      letter-spacing: .06em
   }
 
   .tagsColorTile {
@@ -775,14 +657,6 @@
       color: var(--text)
   }
 
-  .is-system-tag {
-      opacity: .92
-  }
-
-  .is-system-tag:hover {
-      background: var(--w-4)
-  }
-
   .meta-dot {
       width: 10px;
       height: 10px;
@@ -792,7 +666,6 @@
       display: inline-block;
       box-sizing: border-box
   }
-
 
   /* =========================================================
      List – table layout (Finder-like, fixed columns)
@@ -806,7 +679,7 @@
       min-height: 0
   }
 
-  .list,.list-wrap {
+  .list {
       flex: 1 1 auto;
       min-height: 0
   }
@@ -1444,7 +1317,6 @@
       margin-bottom: 12px;
       margin-top: 12px;
   }
-
 
   /* =========================================================
      Export modal — progress (tryb B: w tym samym modalu)
@@ -2229,8 +2101,6 @@
   .searchSheetBody .searchText { flex: 1 1 auto; min-width: 0; }
 }
 
-
-
 /* Reguły stanu arkusza (telefon, tablet dotykowy): warstwa states jest po
    warstwie strony, jak ogólne reguły arkusza w silniku. */
 @layer states {
@@ -2303,7 +2173,6 @@
           margin-top: 10px;
       }
   }
-
 
   /* okno od dołu leży nad stroną -- menu kontekstowe chowa się pod nim */
   body.sheet-open #contextMenu { display: none !important; }
@@ -2451,7 +2320,6 @@
       min-height: 0;
       overflow-y: auto;
     }}
-
 
   @media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
     /* Na niskim ekranie skraca się pole listy; panel typu nadal zostaje

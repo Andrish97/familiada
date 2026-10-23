@@ -127,13 +127,6 @@
   .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15em; font-weight:800; margin-top:6px; }
   .c2-intro-score-sep { opacity:.5; font-weight:400; }
   .c2-intro-btn { padding:14px 34px; font-size:1.1em; border-radius:var(--r-md); }
-  /* Drugorzędny przycisk w c2-intro (np. "Dźwięk powtórzenia" na
-     "Rozpocznij 2 rundę") — bez złotego obramowania (nie konkuruje
-     wizualnie z głównym przyciskiem nawigacji na dole), ale WYRAŹNIE
-     widoczny — zgłoszone jako za mały, dociągnięty do tej samej skali co
-     reszta ekranów startu (blisko .c2-intro-btn, tylko bez gold/padding
-     ekstremalnego jak główna akcja). */
-  .c2-intro-secondary { font-size:1em; padding:12px 26px; border-radius:var(--r-md); opacity:1; }
   /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
      .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
      bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
@@ -321,7 +314,6 @@
   .c2-tile:disabled { opacity:.45; cursor:not-allowed; filter:saturate(.6); }
   .c2-tile-revealed { background:rgba(95,217,122,.16); border-color:rgba(95,217,122,.45); color:#a8ecba; opacity:1; }
   .c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); }
-  .c2-tile-warn { border-color:rgba(255,196,110,.4); background:rgba(255,196,110,.12); color:#ffd9a0; }
   .c2-tile-primary { border-color:var(--g-35); background:var(--g-10); color:var(--gold); }
   /* MISS zaznaczony (control/js/ui.js's renderFinalMapping) — czerwona
      ramka/tło ZOSTAJE, tylko tekst robi się złoty, dokładnie jak stare

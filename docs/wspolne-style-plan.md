@@ -224,6 +224,17 @@ i zakładek (12/16/18/20/22).
 Szacunek po analizie: **15–22 dni** (więcej pracy w mechanizmach JS
 i Ustawieniach niż zakładał pierwszy plan).
 
+## Do poprawienia (zgłoszenia użytkownika)
+
+- **Ankieta — topbar bez „Więcej” (zgłoszone 2026-10-23, zrzut ~1200 px):**
+  na stronie ankiety (`/polls/`) przyciski Znajomi/Subskrybenci zawijają się
+  w dwie linie pod tytułem zamiast zwinąć do „Więcej”. Przyczyna: „Więcej”
+  (`#navMore` + `setTopbarNavPriority` z `topbar-controller.js`) mają tylko
+  Moje gry i panel admina; pozostałe strony nie zwijają przycisków sekcji 2.
+  Poprawka we wspólnym module: kontroler topbara sam dodaje „Więcej” na
+  każdej stronie z przyciskami w sekcji 2 (krok mechanizmów E23) + scena
+  zrzutu ankiety na tablecie z długą nazwą.
+
 ## Dziennik E23
 
 | Data | Krok | Wynik |
@@ -235,3 +246,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |
 | 2026-10-23 | Start realizacji, fundament, pilot | Polecenie użytkownika: intensywnie, bez pytań, wygląd prawie bez zmian, tylko branch. Silnik `web/shared/style/` (tokens, base, components, layout, utilities; `@layer`), narzędzia `compare.cjs` i `run.cjs --styles`, zapadka audytu włączona (baseline odświeżony), `styleEngine.test.js`. Pilot Zadania: zrzuty identyczne. Ustalenia: `silnik-stylow-projekt.md` §13. |
 | 2026-10-23 | Wszystkie strony na silniku | Kolejno: Znajomi/Subskrybenci, Connect, logowanie, głosowanie, Gry, Bazy, Logo, rynek, Konto, Ankieta/maile/Go, edytory, Eksplorator, strona główna/Wskazówki/Prywatność, Control (blok `<style>` do pliku), ekrany TV i gry (silnik płaski), panel admina. Warstwa `states` dla arkusza okna. Stary `base.css` usunięty. Każda partia: zrzuty przed/po + różnice obliczonych stylów; unit zielone. Szczegóły: `silnik-stylow-projekt.md` §13. |
+| 2026-10-23 | e2e brancha, krok 2 — martwy CSS | Przebieg 39955820500 (mobile-sheet-modals: okna panelu admina + friends: wypustki) 7/7 ✓ po poprawce blokady panelu admina (`.settings-locked` ukrywa tylko topbar, stopka zostaje). Martwy CSS (audyt `--unused`, każda klasa sprawdzona grepem; klasy składane `${}` i TinyMCE `tox-*` zostają): ~1620 linii z Control v1, ustawień gry, Eksploratora, Konta, Logo, Wskazówek, rynku, ankiety i panelu admina. Zrzuty przed/po: 53 pary identyczne. Zgłoszenie użytkownika: brak „Więcej” w topbarze ankiety → „Do poprawienia”. |

@@ -5,19 +5,18 @@
  "web/account/css/account.css": {
   "colorLiteral": 3,
   "mediaWidth": 1,
-  "sharedDuplicate": 1,
-  "unusedClass": 6
+  "sharedDuplicate": 1
  },
  "web/bases/css/bases.css": {
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 16,
-  "colorLiteral": 59,
+  "colorLiteral": 58,
   "mediaWidth": 7,
-  "zIndexLiteral": 9,
-  "sharedDuplicate": 21,
-  "unusedClass": 17
+  "zIndexLiteral": 8,
+  "sharedDuplicate": 18,
+  "unusedClass": 2
  },
  "web/bases/explorer/index.html": {
   "inlineStyleHtml": 13
@@ -92,20 +91,18 @@
   "styleBlock": 1
  },
  "web/control/css/control.css": {
-  "important": 8,
-  "colorLiteral": 34,
-  "mediaWidth": 14,
-  "zIndexLiteral": 3,
-  "sharedDuplicate": 59,
-  "unusedClass": 91
+  "important": 1,
+  "colorLiteral": 23,
+  "mediaWidth": 2,
+  "zIndexLiteral": 1,
+  "sharedDuplicate": 56
  },
  "web/control/css/control2.css": {
   "important": 2,
-  "colorLiteral": 30,
+  "colorLiteral": 27,
   "rootTokens": 1,
   "mediaWidth": 2,
-  "sharedDuplicate": 14,
-  "unusedClass": 2
+  "sharedDuplicate": 14
  },
  "web/control/css/test-mode.css": {
   "important": 9,
@@ -223,12 +220,11 @@
  },
  "web/logos/css/logo.css": {
   "important": 15,
-  "colorLiteral": 25,
+  "colorLiteral": 22,
   "rootTokens": 12,
-  "mediaWidth": 2,
+  "mediaWidth": 1,
   "zIndexLiteral": 8,
-  "sharedDuplicate": 3,
-  "unusedClass": 5
+  "sharedDuplicate": 3
  },
  "web/logos/editor/draw/index.html": {
   "inlineStyleHtml": 8
@@ -269,15 +265,13 @@
   "rootTokens": 3
  },
  "web/manual/css/manual.css": {
-  "colorLiteral": 24,
-  "zIndexLiteral": 4,
-  "unusedClass": 1
+  "colorLiteral": 20,
+  "zIndexLiteral": 4
  },
  "web/marketplace/css/marketplace.css": {
   "colorLiteral": 14,
   "mediaWidth": 1,
-  "sharedDuplicate": 3,
-  "unusedClass": 1
+  "sharedDuplicate": 3
  },
  "web/marketplace/index.html": {
   "inlineStyleHtml": 11
@@ -315,11 +309,11 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 139,
+  "colorLiteral": 122,
   "mediaWidth": 6,
-  "zIndexLiteral": 18,
+  "zIndexLiteral": 17,
   "sharedDuplicate": 7,
-  "unusedClass": 40
+  "unusedClass": 17
  },
  "web/settings/index.html": {
   "inlineStyleHtml": 153
@@ -370,18 +364,14 @@
  },
  "web/shared/css/game-settings.css": {
   "important": 3,
-  "colorLiteral": 38,
-  "mediaWidth": 4,
-  "zIndexLiteral": 4,
-  "sharedDuplicate": 33,
-  "unusedClass": 25
+  "colorLiteral": 33,
+  "mediaWidth": 3,
+  "zIndexLiteral": 2,
+  "sharedDuplicate": 33
  },
  "web/shared/css/image-viewer.css": {
   "important": 2,
   "zIndexLiteral": 1
- },
- "web/shared/css/poll.css": {
-  "unusedClass": 1
  },
  "web/shared/css/polls.css": {
   "important": 3,

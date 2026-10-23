@@ -5,8 +5,6 @@
     color: var(--text);
   }
 
-
-
   .account-grid {
     margin-top: 16px;
     display: grid;
@@ -126,47 +124,6 @@
     background: var(--k-20);
   }
 
-  .pending-box{
-    display: grid;
-    gap: 10px;
-    padding: 12px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--g-10);
-    background: var(--k-20);
-  }
-
-  .pending-title{
-    font-weight: 900;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: .08em;
-  }
-
-  .pending-text{
-    font-size: 12px;
-    opacity: .85;
-    line-height: 1.35;
-  }
-
-
-  .cooldown-banner{
-    margin: 10px 0 18px;
-    padding: 10px 12px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--w-14);
-    background: var(--k-20);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    font-size: 13px;
-    opacity: .92;
-  }
-
-  .section-hint.subtle{
-    opacity: .8;
-    font-size: 12px;
-  }
-
-
   /* --- fixed control sizing (avoid multi-line buttons changing height) --- */
   .account-panel .inp,
   .cooldown {
@@ -187,14 +144,6 @@
     white-space: nowrap;
   }
 
-  .spacer{
-    width: 130px;
-    min-height: 30px;
-    pointer-events: none;
-    visibility: hidden;
-  }
-
-
   /* ==========================================
      Email notifications panel
   ========================================== */
@@ -206,7 +155,6 @@
     min-height: 44px;
     user-select: none;
   }
-
 
   /* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
   #userRatingInfo { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
