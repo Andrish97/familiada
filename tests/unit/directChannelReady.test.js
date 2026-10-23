@@ -42,3 +42,13 @@ test("błąd subskrypcji i ponowne dołączenie wymagają nowego potwierdzenia",
   r.postgres("ok");
   assert.equal(n, 3);
 });
+
+test("ponowne SUBSCRIBED bez statusu błędu czeka na nowe potwierdzenie PostgreSQL", () => {
+  let n = 0;
+  const r = createDirectReadiness(() => n++);
+  r.joined(); r.postgres("ok");
+  r.joined();
+  assert.equal(r.ready, false);
+  r.postgres("ok");
+  assert.equal(n, 2);
+});

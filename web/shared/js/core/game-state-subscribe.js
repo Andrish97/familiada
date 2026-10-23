@@ -311,6 +311,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         directStatus = status;
         if (status === "SUBSCRIBED" && active) {
           console.info("[device-realtime] SUBSCRIBED");
+          // Ponowne dołączenie: do potwierdzenia PostgreSQL działa odpytywanie.
+          if (readiness.ready) directConnected = false;
           readiness.joined();
           setTimeout(() => {
             if (channel === directChannel && active && !readiness.ready) {
@@ -479,10 +481,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
       trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
     });
-    // Kanał zgłasza SUBSCRIBED, ale nie dostarcza zmian (statystyki
-    // 2026-10-21: Prowadzący nadrabiał co ~6 s każdą zmianę). Dopóki
-    // directConnected=true, dzwonek i odpytywanie są wyłączone, więc bez
-    // odbudowy kanału każda kolejna zmiana czekałaby na heartbeat.
+    // Siatka bezpieczeństwa: kanał gotowy, a zmiana nie przyszła. Przyczynę
+    // z 2026-10-21 (rejoin z tokenem anon, SUBSCRIBED przed potwierdzeniem
+    // PostgreSQL) naprawiono 2026-10-23; to zostaje na pojedyncze zgubione
+    // zdarzenia. Dopóki directConnected=true, dzwonek i odpytywanie są
+    // wyłączone, więc bez odbudowy kanału kolejne zmiany czekałyby na heartbeat.
     if (directConnected) {
       noteDirectFailure("STALE");
       resync();

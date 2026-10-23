@@ -25,7 +25,13 @@ export function createDirectReadiness(onReady) {
     }
   }
   return {
-    joined() { joined = true; check(); },
+    joined() {
+      // Kolejne SUBSCRIBED po gotowym kanale to ponowne dołączenie: serwer
+      // zakłada subskrypcję od nowa i znów ją potwierdza.
+      if (fired) { postgresReady = false; fired = false; }
+      joined = true;
+      check();
+    },
     postgres(status) {
       if (status === "ok") { postgresReady = true; check(); }
       else if (status === "error") { postgresReady = false; fired = false; }

@@ -22,6 +22,7 @@ import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-23T12245";
 import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-23T12245";
 import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-23T12245";
+import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-23T12245";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-23T12245";
 
 
@@ -704,14 +705,31 @@ async function main() {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
   }
+  // Kanał działa dopiero po SUBSCRIBED i potwierdzeniu "Subscribed to
+  // PostgreSQL" (direct-channel-ready.js, diagnoza 2026-10-23): odczyt przy
+  // samym SUBSCRIBED gubił potwierdzenie zapisane w tej przerwie, a Control
+  // czekał na siatkę bezpieczeństwa (1-3 s). Do tego czasu działa odpytywanie.
   const completionChannel = sb().channel(`display-completion:${gameId}`);
-  completionChannel.on("postgres_changes", {
+  const completionReadiness = createDirectReadiness(() => {
+    completionRealtimeConnected = true;
+    observeRealtimeState("display_completion", "SUBSCRIBED");
+    void refreshDisplayCompletion();
+  });
+  completionChannel.on("system", {}, (payload) => {
+    const status = postgresSystemStatus(payload);
+    completionReadiness.postgres(status);
+    if (status === "error") {
+      completionRealtimeConnected = false;
+      observeRealtimeState("display_completion", "POSTGRES_ERROR");
+    }
+  }).on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
   }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"); });
   completionChannel.subscribe((status) => {
-    completionRealtimeConnected = status === "SUBSCRIBED";
+    if (status === "SUBSCRIBED") { completionReadiness.joined(); return; }
+    completionReadiness.reset();
+    completionRealtimeConnected = false;
     observeRealtimeState("display_completion", status);
-    if (completionRealtimeConnected) void refreshDisplayCompletion();
   });
   // Kanał na żywo bywa połączony, a pojedyncze potwierdzenie i tak przepada.
   // Gdy Control czeka dłużej niż 3 s (albo dłużej niż przewidziany czas
