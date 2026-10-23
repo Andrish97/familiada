@@ -5,7 +5,7 @@
   body.home-body {
     min-height: 100vh;
     margin: 0;
-    color: #fff;
+    color: var(--text);
     background: var(--bg);
   }
 
@@ -19,7 +19,7 @@
     border: 1px solid var(--line2);
     background: var(--card);
     --under: var(--card); /* podłoże przycisków (css/base.css) */
-    box-shadow: 0 18px 46px rgba(0,0,0,.55);
+    box-shadow: 0 18px 46px var(--k-40);
     display: grid;
     justify-items: center;
     text-align: center;
@@ -88,8 +88,8 @@
     flex: 1;
     height: 6px;
     border-radius: 0;
-    border-top: 1px solid rgba(255,234,166,.22);
-    border-bottom: 1px solid rgba(255,234,166,.22);
+    border-top: 1px solid var(--g-10);
+    border-bottom: 1px solid var(--g-10);
     background: transparent;
     position: relative;
     overflow: hidden;
@@ -113,9 +113,9 @@
     gap: 7px;
     padding: 5px 14px;
     background: var(--bg);
-    border: 1px solid rgba(255,234,166,.22);
+    border: 1px solid var(--g-10);
     border-radius: 20px;
-    color: rgba(255,234,166,.4);
+    color: var(--g-35);
     font-size: 10px;
     font-weight: 1000;
     letter-spacing: .1em;
@@ -130,7 +130,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    border: 1.5px solid rgba(255,234,166,.3);
+    border: 1.5px solid var(--g-35);
     background: transparent;
     flex-shrink: 0;
     transition: border-color 150ms ease, background 150ms ease;
@@ -138,9 +138,9 @@
 
   /* zalany — sekcja przejdzona */
   .pipeline-node.is-filled {
-    color: rgba(255,234,166,.7);
+    color: var(--g-60);
     border-color: var(--gold);
-    background: rgba(255,234,166,.08);
+    background: var(--g-10);
   }
   .pipeline-node.is-filled .pipeline-node-dot {
     border-color: var(--gold);
@@ -154,8 +154,8 @@
     border-color: var(--gold);
   }
   .pipeline-node.is-active .pipeline-node-dot {
-    border-color: rgba(0,0,0,.25);
-    background: rgba(0,0,0,.2);
+    border-color: var(--k-20);
+    background: var(--k-20);
   }
 
   /* MOBILE: Identyczny jak desktop, ale bez kropek i z mniejszym fontem */
@@ -185,8 +185,8 @@
     .pipeline-line {
       display: block !important;
       height: 4px;
-      border-top: 1px solid rgba(255,234,166,.12);
-      border-bottom: 1px solid rgba(255,234,166,.12);
+      border-top: 1px solid var(--g-10);
+      border-bottom: 1px solid var(--g-10);
       min-width: 4px;
     }
 
@@ -286,8 +286,8 @@
   .tile-shot {
     position: relative;
     border-radius: 18px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(0,0,0,.20);
+    border: 1px solid var(--w-14);
+    background: var(--k-20);
     overflow: hidden;
     cursor: zoom-in;
     display: inline-block;
@@ -310,7 +310,7 @@
     border-radius: 18px;
     opacity: 0;
     transition: opacity 160ms ease;
-    background: rgba(0,0,0,.15);
+    background: var(--k-20);
   }
 
   .shot-img.is-loaded { opacity: 1; }
@@ -326,7 +326,7 @@
     margin-block: auto;
     z-index: 2;
     cursor: pointer;
-    background: rgba(0,0,0,.55);
+    background: var(--k-40);
     backdrop-filter: blur(4px);
   }
   .shot-carousel-prev { left: 10px; }
@@ -344,7 +344,7 @@
     gap: 2px;
     padding: 2px 6px;
     border-radius: 999px;
-    background: rgba(0,0,0,.55);
+    background: var(--k-40);
     backdrop-filter: blur(4px);
     cursor: default;
   }
@@ -378,8 +378,8 @@
 
   @media (hover:hover) {
     .tile-shot:hover {
-      border-color: rgba(255,255,255,.18);
-      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+      border-color: var(--w-14);
+      box-shadow: 0 18px 50px var(--k-40);
       transform: translateY(-1px);
       transition: 160ms ease;
     }
@@ -475,8 +475,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 234, 166, 0.1);
-      border: 1px solid rgba(255, 234, 166, 0.2);
+      background: var(--g-10);
+      border: 1px solid var(--g-10);
       padding: 4px 10px;
       border-radius: 20px;
       font-size: 13px;

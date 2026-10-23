@@ -7,19 +7,19 @@
 ========================================================= */
 @layer page {
   :root{
-    --bd-weak: rgba(255,255,255,.10);
-    --bd-mid:  rgba(255,255,255,.14);
-    --bd-strong: rgba(255,255,255,.22);
+    --bd-weak: var(--w-8);
+    --bd-mid:  var(--w-14);
+    --bd-strong: var(--w-25);
 
-    --bg-weak: rgba(0,0,0,.10);
-    --bg-mid:  rgba(0,0,0,.14);
-    --bg-strong: rgba(0,0,0,.18);
+    --bg-weak: var(--k-20);
+    --bg-mid:  var(--k-20);
+    --bg-strong: var(--k-20);
 
     --radius-lg: 18px;
     --radius-md: 14px;
     --radius-sm: 12px;
 
-    --shadow-pop: 0 24px 80px rgba(0,0,0,.55);
+    --shadow-pop: 0 24px 80px var(--k-40);
 
     --lamp-active: #ffeb3b;
     --lamp-glow: rgba(255,235,59,.7);
@@ -64,14 +64,14 @@
   .logoTile:hover{
     border-color: var(--gold);
     background: #0b1020;
-    box-shadow: 0 10px 24px rgba(0,0,0,.45);
+    box-shadow: 0 10px 24px var(--k-40);
   }
   .logoTile.is-selected{
-    border-color: rgba(255,234,166,.9);
-    background: rgba(255,234,166,.10);
+    border-color: var(--accent);
+    background: var(--g-10);
     box-shadow:
-      0 0 0 2px rgba(255,234,166,.55),
-      0 10px 22px rgba(0,0,0,.35);
+      0 0 0 2px var(--g-60),
+      0 10px 22px var(--k-40);
   }
 
   .logoTileTop{
@@ -95,13 +95,13 @@
     justify-content:center;
     border-radius: 10px;
     border: 1px solid var(--bd-mid);
-    --btn-tint: rgba(0,0,0,.16);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    --btn-tint: var(--k-20);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     cursor:pointer;
     user-select:none;
     transition: background .12s, border-color .12s, opacity .12s;
-    color: #fff;
+    color: var(--text);
     padding: 0;
     font-size: 14px;
   }
@@ -113,8 +113,8 @@
   .le-compact #grid > .empty-state{ grid-column: 1 / -1; }
   .logoX:hover{
     border-color: var(--gold);
-    --btn-tint: rgba(0,0,0,.32);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    --btn-tint: var(--k-40);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
   }
   .logoX.is-disabled{ opacity:.35; pointer-events:none; }
@@ -198,7 +198,7 @@
   .editorToolbar{
     padding: 12px;
     border-bottom: 1px solid var(--bd-weak);
-    background: rgba(0,0,0,.06);
+    background: var(--k-20);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -219,7 +219,7 @@
   .toolSep{
     width:1px;
     height: 28px;
-    background: rgba(255,255,255,.14);
+    background: var(--w-14);
     margin: 0 2px;
   }
 
@@ -237,7 +237,7 @@
   .toolRowSep{
     width: 100%;
     height: 1px;
-    background: rgba(255,255,255,.1);
+    background: var(--w-8);
     margin: 2px 0;
   }
 
@@ -260,12 +260,12 @@
     min-height: 36px; /* = wysokość wiersza z polami: bez skoku płótna */
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,.15) transparent;
+    scrollbar-color: var(--w-14) transparent;
     padding: 4px 8px;
   }
   #toolCtxSettings::-webkit-scrollbar{ height: 4px; }
   #toolCtxSettings::-webkit-scrollbar-track{ background: transparent; }
-  #toolCtxSettings::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.15); border-radius: 2px; }
+  #toolCtxSettings::-webkit-scrollbar-thumb{ background: var(--w-14); border-radius: 2px; }
 
   /* Grupa w toolbarze */
   .ctxGroup{
@@ -283,7 +283,7 @@
     top: 4px;
     bottom: 4px;
     width: 1px;
-    background: rgba(255,255,255,.12);
+    background: var(--w-14);
   }
   /* etykiety jak w przyciskach ustawień obrazu („Jasność:”) -- jeden styl edytorów logo */
   .ctxLabel{
@@ -291,7 +291,7 @@
     font-size: 12px;
     font-weight: 800;
     opacity: .8;
-    color: #fff;
+    color: var(--text);
     flex-shrink: 0;
   }
 
@@ -302,17 +302,17 @@
     padding: 2px 6px;
     font-size: 12px;
     font-weight: 700;
-    --btn-tint: rgba(255,255,255,.08);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-    border: 1px solid rgba(255,255,255,.15);
+    border: 1px solid var(--w-14);
     border-radius: 6px;
-    color: #fff;
+    color: var(--text);
     text-align: center;
   }
-  .ctxInput::placeholder{ color: rgba(255,255,255,.3); }
-  .ctxInput:focus{ outline: none; border-color: rgba(255,255,255,.35); --btn-tint: rgba(255,255,255,.12);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+  .ctxInput::placeholder{ color: var(--w-25); }
+  .ctxInput:focus{ outline: none; border-color: var(--w-25); --btn-tint: var(--w-14);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
    }
 
   /* Przyciski (jak .btn) */
@@ -322,10 +322,10 @@
     padding: 0 8px;
     font-size: 12px;
     font-weight: 700;
-    --btn-tint: rgba(255,255,255,.08);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-    border: 1px solid rgba(255,255,255,.15);
+    border: 1px solid var(--w-14);
     border-radius: 6px;
     color: rgba(255,255,255,.75);
     cursor: pointer;
@@ -333,11 +333,11 @@
     align-items: center;
     justify-content: center;
   }
-  .ctxBtn:hover{ --btn-tint: rgba(255,255,255,.14);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-   color: #fff; }
-  .ctxBtn.on{ --btn-tint: rgba(255,255,255,.18);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+  .ctxBtn:hover{ --btn-tint: var(--w-14);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+   color: var(--text); }
+  .ctxBtn.on{ --btn-tint: var(--w-14);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
    color: #4fc3f7; border-color: rgba(79,195,247,.35); }
 
   /* Przycisk koloru - CAŁY wypełniony, prostokątny */
@@ -347,11 +347,11 @@
     min-width: 32px;
     padding: 0;
     border-radius: 6px;
-    border: 1px solid rgba(255,255,255,.25);
+    border: 1px solid var(--w-25);
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
   }
-  .ctxColorBtn:hover{ border-color: rgba(255,255,255,.5); box-shadow: 0 0 0 2px rgba(255,255,255,.1); }
+  .ctxColorBtn:hover{ border-color: rgba(255,255,255,.5); box-shadow: 0 0 0 2px var(--w-8); }
   .ctxColorBtn.black{ background: #000000; border-color: #444; }
   .ctxColorBtn.white{ background: #ffffff; border-color: #ccc; }
 
@@ -396,8 +396,8 @@
     /* jak .ui-select-menu (kryjące tło) */
     border-radius: 12px;
     border: 1px solid var(--line);
-    background: #050914;
-    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    background: var(--bg);
+    box-shadow: 0 24px 60px var(--k-70);
     box-sizing: border-box;
   }
 
@@ -406,8 +406,8 @@
     display: flex;
     gap: 10px;
     padding: 10px;
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    background: rgba(0,0,0,.10);
+    border-bottom: 1px solid var(--w-8);
+    background: var(--k-20);
   }
 
   /* scroll ma być na liście */
@@ -450,7 +450,7 @@
     cursor:pointer;
     background:transparent;
     border:none;
-    color:#fff;
+    color: var(--text);
     font-weight:900;
     font-size:12px;
     letter-spacing:.03em;
@@ -459,7 +459,7 @@
   }
   /* jak .ui-select-item */
   #drawFontPickPop .fontPickItem:hover{ background:#141822; }
-  #drawFontPickPop .fontPickItem.on{ background:#232426; color:var(--gold, #ffeaa6); }
+  #drawFontPickPop .fontPickItem.on{ background:#232426; color:var(--gold, var(--accent)); }
   #drawFontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
 
 
@@ -536,8 +536,8 @@
   }
 
   #toolsDraw .btn.icon.on{
-    border-color: rgba(255,234,166,.55);
-    --btn-tint: rgba(255,234,166,.12);
+    border-color: var(--g-60);
+    --btn-tint: var(--g-10);
     color: var(--gold);
   }
 
@@ -599,7 +599,7 @@
   #toolsDraw .toolSep{
     width: 1px;
     height: 30px;
-    background: rgba(255,255,255,.22); /* mocniej niż było */
+    background: var(--w-25); /* mocniej niż było */
     margin: 0 4px;
     align-self: center;
   }
@@ -648,7 +648,7 @@
     min-height: 0;
     border-radius: var(--radius-md);
     border: 1px solid var(--bd-weak);
-    background: rgba(0,0,0,.12);
+    background: var(--k-20);
     overflow:hidden;
     display:flex;
     align-items:center;
@@ -661,7 +661,7 @@
     min-height: 0;
     border-radius: var(--radius-md);
     border: 1px solid var(--bd-weak);
-    background: rgba(0,0,0,.12);
+    background: var(--k-20);
     overflow:hidden;
     display:flex;
     align-items:center;
@@ -678,8 +678,8 @@
   .imgPrevHint{ margin-top: 8px; opacity: .75; font-size: 12px; }
 
   .imgSetBtn.on{
-    border-color: rgba(255,234,166,.50) !important;
-    background: rgba(255,234,166,.12) !important;
+    border-color: var(--g-60) !important;
+    background: var(--g-10) !important;
     color: var(--gold) !important;
   }
 
@@ -694,9 +694,9 @@
     top: 40px;
     width: 280px;
     height: 118px; /* 280 / (26/11) */
-    border: 2px solid rgba(255,234,166,.95);
+    border: 2px solid var(--accent);
     border-radius: 12px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,.18);
+    box-shadow: 0 0 0 9999px var(--k-20);
     z-index: 5;                 /* NAD obrazem */
     cursor: move;
     touch-action: none;
@@ -710,8 +710,8 @@
     font-weight: 1000;
     font-size: 12px;
     letter-spacing: .06em;
-    color: rgba(255,234,166,.98);
-    text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    color: var(--accent);
+    text-shadow: 0 2px 10px var(--k-40);
   }
 
   #paneImage .cropHandle{
@@ -719,8 +719,8 @@
     width: 16px;
     height: 16px;
     border-radius: 6px;
-    background: rgba(255,234,166,.95);
-    box-shadow: 0 8px 22px rgba(0,0,0,.30);
+    background: var(--accent);
+    box-shadow: 0 8px 22px var(--k-40);
   }
 
   #paneImage .cropHandle.tl{ left:-8px; top:-8px; cursor:nwse-resize; }
@@ -773,9 +773,9 @@
     box-sizing: border-box;
     border-radius: 12px;
     border: 1px solid var(--line);
-    background: #050914;
-    box-shadow: 0 24px 60px rgba(0,0,0,.6);
-    color: #fff;
+    background: var(--bg);
+    box-shadow: 0 24px 60px var(--k-70);
+    color: var(--text);
     padding: 12px;
   }
 
@@ -831,9 +831,9 @@
   }
   .mTile{
     appearance: none;
-    border: 1px solid rgba(255,255,255,.14);
-    --btn-tint: rgba(0,0,0,.18);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    border: 1px solid var(--w-14);
+    --btn-tint: var(--k-20);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     border-radius: 18px;
     padding: 14px;
@@ -844,11 +844,11 @@
   }
   .mTile:hover{
     transform: translateY(-1px);
-    border-color: rgba(255,234,166,.55);
-    --btn-tint: rgba(0,0,0,.24);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    border-color: var(--g-60);
+    --btn-tint: var(--k-20);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-    box-shadow: 0 12px 28px rgba(0,0,0,.40);
+    box-shadow: 0 12px 28px var(--k-40);
   }
   .mTileTitle{
     font-weight: 1000;
@@ -946,10 +946,10 @@
     z-index:100;
     background:rgba(15,18,28,.96);
     backdrop-filter:blur(12px);
-    border:1px solid rgba(255,255,255,.14);
+    border:1px solid var(--w-14);
     border-radius:14px;
     padding:10px;
-    box-shadow:0 14px 36px rgba(0,0,0,.55);
+    box-shadow:0 14px 36px var(--k-40);
     animation: shapeFadeIn .12s ease;
   }
   @keyframes shapeFadeIn{ from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
@@ -978,12 +978,12 @@
      dawało przyciskom różne odcienie (jak jeden gradient na całej liście).
   ========================================================= */
   .ctxPop{
-    background: #050914;
+    background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 6px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.6);
-    color: #fff;
+    box-shadow: 0 24px 60px var(--k-70);
+    color: var(--text);
   }
   .shapePickerPop{
     position: fixed;
@@ -1003,11 +1003,11 @@
     background: transparent;
     border: 0;
     border-radius: 10px;
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
   }
   .shapePickerPop .spi:hover{ background: #141822; }
-  .shapePickerPop .spi[aria-selected="true"]{ background: #232426; color: var(--gold, #ffeaa6); }
+  .shapePickerPop .spi[aria-selected="true"]{ background: #232426; color: var(--gold, var(--accent)); }
 
   /* Przycisk otwierający listę (kształt, font): stała szerokość, nazwa
      ucinana wielokropkiem — dłuższe nazwy nie wychodzą poza przycisk. */
@@ -1015,7 +1015,7 @@
     width: 150px;
     justify-content: flex-start;
     gap: 6px;
-    color: #fff;
+    color: var(--text);
   }
   .ctxSelectBtn--shape{ width: 190px; }
   .ctxSelectIco{ display: inline-flex; flex-shrink: 0; }
@@ -1109,7 +1109,7 @@
   }
 
   /* kontener canvasa - scrollable on mobile.
-     Bez własnego tła (rgba(0,0,0,.25) dawało widoczny, ciemniejszy
+     Bez własnego tła (var(--k-20) dawało widoczny, ciemniejszy
      prostokąt wokół "leżącego" (landscape) podglądu w wysokim, pionowym
      kontenerze na telefonie — canvas dopasowany do szerokości zostawia
      dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła

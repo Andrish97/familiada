@@ -2,9 +2,9 @@
 @layer page {
   html:has(.login-body) {
       background:
-          radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
+          radial-gradient(circle at 20% 10%, var(--g-10), transparent 55%),
           radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
-          #050914;
+          var(--bg);
       /* Scroll trzymamy w body — html nie scroluję, overscroll na html nie pokazuje się */
       overflow: hidden;
   }
@@ -20,7 +20,7 @@
       min-height: 100dvh;
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      color: #fff;
+      color: var(--text);
       display: grid;
       grid-template-rows: 1fr auto;
       place-items: center;
@@ -54,12 +54,12 @@
   }
 
   .login-card {
-      background: rgba(255,255,255,.06);
+      background: var(--w-8);
       --under: #141822; /* podłoże przycisków (css/base.css) */
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid var(--w-14);
       border-radius: 22px;
       padding: 18px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      box-shadow: 0 24px 60px var(--k-40);
   }
 
   /* ── typography ── */
@@ -69,7 +69,7 @@
       letter-spacing: .18em;
       text-transform: uppercase;
       font-size: 18px;
-      color: #ffeaa6;
+      color: var(--accent);
   }
 
   .sub {
@@ -105,9 +105,9 @@
   input {
       padding: 12px;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.25);
-      color: #fff;
+      border: 1px solid var(--w-14);
+      background: var(--k-20);
+      color: var(--text);
       outline: 0;
   }
 
@@ -115,8 +115,8 @@
   .pass-wrap input { padding-right: 42px; }
 
   input:focus {
-      border-color: rgba(255,220,120,.5);
-      box-shadow: 0 0 0 3px rgba(255,220,120,.12);
+      border-color: var(--g-60);
+      box-shadow: 0 0 0 3px var(--g-10);
   }
 
   /* ── buttons ── */
@@ -144,7 +144,7 @@
   .link {
       border: 0;
       background: 0 0;
-      color: #ffeaa6;
+      color: var(--accent);
       cursor: pointer;
       text-decoration: underline;
       padding: 0;
@@ -170,8 +170,8 @@
   .setup-card {
       background: rgba(8,12,28,.6);
       --under: #070b19;
-      border: 1px solid rgba(255,234,166,.25);
-      box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      border: 1px solid var(--g-35);
+      box-shadow: 0 30px 80px var(--k-70);
   }
 
   .setup-title {
@@ -269,8 +269,8 @@
       color: rgba(255,255,255,.75);
       text-decoration: none;
 
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.05);
+      border: 1px solid var(--w-14);
+      background: var(--w-4);
       backdrop-filter: blur(6px);
 
       transition: all .18s ease;
@@ -285,7 +285,7 @@
   .login-back-fixed:hover {
       color: var(--gold);
       border-color: var(--gold);
-      background: rgba(255,215,0,.08);
+      background: var(--g-10);
   }
 
   .login-body .footer {

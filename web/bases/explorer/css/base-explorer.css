@@ -69,7 +69,7 @@
   }
 
   .explorer-left {
-      border-right: 1px solid rgba(255,255,255,.12);
+      border-right: 1px solid var(--w-14);
       padding-right: 12px;
       display: flex;
       flex-direction: column;
@@ -85,7 +85,7 @@
 
   .left-sep {
       height: 1px;
-      background: rgba(255,255,255,.12);
+      background: var(--w-14);
       border-radius: 999px;
       margin: 6px 2px 10px
   }
@@ -151,13 +151,13 @@
   .list-head {
       padding: 10px 16px;
       line-height: 1.2;
-      border-bottom: 1px solid rgba(255,255,255,.18);
+      border-bottom: 1px solid var(--w-14);
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: .04em;
       color: rgba(255,255,255,.55);
       user-select: none;
-      background: rgba(0,0,0,.22);
+      background: var(--k-20);
       backdrop-filter: blur(10px);
       border-radius: 12px 12px 0 0
   }
@@ -197,7 +197,7 @@
   .row {
       user-select: none;
       padding: 10px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.1)
+      border-bottom: 1px solid var(--w-8)
   }
 
   input,textarea {
@@ -205,7 +205,7 @@
   }
 
   .row:hover {
-      background: rgba(255,255,255,.05)
+      background: var(--w-4)
   }
 
   .row .col-num {
@@ -246,7 +246,7 @@
   }
 
   .is-selected {
-      outline: 2px solid rgba(255,255,255,.25)
+      outline: 2px solid var(--w-25)
   }
 
   .row.is-selected {
@@ -270,7 +270,7 @@
   }
 
   #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,.searchBox {
-      background: rgba(255,255,255,.04)
+      background: var(--w-4)
   }
 
   .searchBox {
@@ -289,7 +289,7 @@
   .search-row{display:flex;align-items:center;gap:6px;flex:0 1 240px;width:min(240px,100%);min-width:0}
   .search-submit{ width:36px; height:36px; min-height:36px; flex:0 0 36px; display:grid; place-items:center; padding:0; border-radius:10px; }
   .search-submit .ico{width:18px;height:18px}
-  .search-submit.is-active{color:var(--gold);border-color:var(--gold);background:rgba(255,215,0,.12)}
+  .search-submit.is-active{color:var(--gold);border-color:var(--gold);background:var(--g-10)}
 
   .tag-dots {
       display: inline-flex;
@@ -312,8 +312,8 @@
       height: 10px;
       border-radius: 999px;
       display: inline-block;
-      background: rgba(255,255,255,.25);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+      background: var(--w-25);
+      box-shadow: 0 0 0 1px var(--w-14) inset;
       flex: 0 0 auto
   }
 
@@ -326,7 +326,7 @@
   }
 
   .is-drop-into,.is-drop-target {
-      outline: 2px dashed rgba(255,255,255,.35)
+      outline: 2px dashed var(--w-25)
   }
 
   .is-drop-into {
@@ -365,14 +365,14 @@
       padding: 6px;
       border-radius: 12px;
       background: #141414; /* kryjące — patrz uwaga przy .lang-menu w base.css */
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 12px 30px rgba(0,0,0,.45)
+      border: 1px solid var(--w-14);
+      box-shadow: 0 12px 30px var(--k-40)
   }
 
   .cm-sep {
       height: 1px;
       margin: 6px;
-      background: rgba(255,255,255,.1);
+      background: var(--w-8);
       border-radius: 999px
   }
 
@@ -421,11 +421,11 @@
       position: relative;
       width: min(560px,calc(100vw - 24px));
       margin: 10vh auto 0;
-      background: #121524;
-      border: 1px solid rgba(255,255,255,.12);
+      background: var(--surface-modal);
+      border: 1px solid var(--w-14);
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 18px 70px rgba(0,0,0,.45)
+      box-shadow: 0 18px 70px var(--k-40)
   }
 
   .m-modal-head {
@@ -434,7 +434,7 @@
       justify-content: space-between;
       gap: 10px;
       padding: 14px;
-      border-bottom: 1px solid rgba(255,255,255,.08)
+      border-bottom: 1px solid var(--w-8)
   }
 
   .m-modal-body {
@@ -481,8 +481,8 @@
   .colorModalBox {
       background: #05050a;
       border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 18px 60px rgba(0,0,0,.85);
+      border: 1px solid var(--w-14);
+      box-shadow: 0 18px 60px var(--k-70);
       max-width: 560px;
       width: calc(100% - 0px);
       padding: 18px 18px 16px
@@ -521,9 +521,9 @@
       width: 92px;
       height: 92px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.1);
-      box-shadow: 0 18px 45px rgba(0,0,0,.55)
+      border: 1px solid var(--w-14);
+      background: var(--w-8);
+      box-shadow: 0 18px 45px var(--k-40)
   }
 
   .sliderRow,.sliders {
@@ -534,8 +534,8 @@
   .sliders {
       padding: 10px 12px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.14)
+      border: 1px solid var(--w-14);
+      background: var(--k-20)
   }
 
   .sliderRow {
@@ -571,7 +571,7 @@
       height: 6px;
       border-radius: 999px;
       background: var(--track);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset
+      box-shadow: 0 0 0 1px var(--w-14) inset
   }
 
   .rng::-webkit-slider-thumb {
@@ -582,14 +582,14 @@
       border-radius: 999px;
       background: #f5d26b;
       margin-top: -5px;
-      box-shadow: 0 0 0 2px rgba(0,0,0,.35)
+      box-shadow: 0 0 0 2px var(--k-40)
   }
 
   .rng::-moz-range-track {
       height: 6px;
       border-radius: 999px;
       background: var(--track);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset
+      box-shadow: 0 0 0 1px var(--w-14) inset
   }
 
   .rng::-moz-range-thumb {
@@ -598,7 +598,7 @@
       border-radius: 999px;
       background: #f5d26b;
       border: 0;
-      box-shadow: 0 0 0 2px rgba(0,0,0,.35)
+      box-shadow: 0 0 0 2px var(--k-40)
   }
 
   .rng::-moz-range-progress {
@@ -611,7 +611,7 @@
       justify-content: flex-end;
       gap: 10px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,.1)
+      border-top: 1px solid var(--w-8)
   }
 
   .drop-pulse {
@@ -641,7 +641,7 @@
   .tagsFoot {
       margin-top: 14px;
       padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,.12)
+      border-top: 1px solid var(--w-14)
   }
 
   .tagsFootSpacer {
@@ -650,7 +650,7 @@
 
   .tagsPickList {
       margin-top: 10px;
-      border: 1px solid rgba(255,255,255,.12);
+      border: 1px solid var(--w-14);
       border-radius: 12px;
       padding: 8px;
       max-height: 320px;
@@ -672,7 +672,7 @@
     cursor: pointer;
     user-select: none;
   }
-  .tags-modal .tags-row:hover { background: rgba(255,255,255,.06); }
+  .tags-modal .tags-row:hover { background: var(--w-8); }
   .tags-modal .tags-row input[type="checkbox"] {
     flex: 0 0 auto;
     accent-color: var(--gold);
@@ -706,7 +706,7 @@
   }
 
   .tagsPickItem:hover {
-      background: rgba(255,255,255,.06)
+      background: var(--w-8)
   }
 
   .tagsPickItem .nm {
@@ -750,21 +750,21 @@
       width: 100%;
       min-height: 92px;
       border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.04);
+      border: 1px solid var(--w-25);
+      background: var(--w-4);
       cursor: pointer
   }
 
   .tagsColorTile:hover {
-      background: rgba(255,255,255,.06);
-      border-color: rgba(255,234,166,.55)
+      background: var(--w-8);
+      border-color: var(--g-60)
   }
 
   .tagsColorDot {
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      box-shadow: 0 0 0 2px rgba(0,0,0,.25) inset
+      box-shadow: 0 0 0 2px var(--k-20) inset
   }
 
   .tagsColorLbl {
@@ -772,7 +772,7 @@
       letter-spacing: .06em;
       text-transform: uppercase;
       opacity: .9;
-      color: #fff
+      color: var(--text)
   }
 
   .is-system-tag {
@@ -780,14 +780,14 @@
   }
 
   .is-system-tag:hover {
-      background: rgba(255,255,255,.04)
+      background: var(--w-4)
   }
 
   .meta-dot {
       width: 10px;
       height: 10px;
       border-radius: 999px;
-      border: 2px solid var(--c, rgba(255,255,255,.35));
+      border: 2px solid var(--c, var(--w-25));
       background: 0 0;
       display: inline-block;
       box-sizing: border-box
@@ -853,9 +853,9 @@
       letter-spacing: .04em;
       color: rgba(255,255,255,.55);
       user-select: none;
-      background: rgba(0,0,0,.22);
+      background: var(--k-20);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,.18);
+      border-bottom: 1px solid var(--w-14);
       /* position:relative for col-resizer */
       position: relative;
   }
@@ -865,7 +865,7 @@
 
   /* column separator lines between header cells */
   .list-head th:not(:last-child) {
-      border-right: 1px solid rgba(255,255,255,.1);
+      border-right: 1px solid var(--w-8);
   }
 
   /* sortable columns */
@@ -915,11 +915,11 @@
       right: 0;
       width: 2px;
       border-radius: 999px;
-      background: rgba(255,255,255,.12);
+      background: var(--w-14);
   }
 
   .list-head th:hover .col-resizer::after {
-      background: rgba(255,255,255,.28);
+      background: var(--w-25);
   }
 
   /* ── body rows ── */
@@ -935,7 +935,7 @@
       max-height: 40px;
       padding: 0 14px;
       vertical-align: middle;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid var(--w-8);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -950,7 +950,7 @@
   }
 
   tr.row:hover td {
-      background: rgba(255,255,255,.05);
+      background: var(--w-4);
   }
 
   tr.row.is-selected td {
@@ -1033,7 +1033,7 @@
       padding: 10px 12px;
       flex-shrink: 0;
       background: #090d1a;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid var(--w-8);
   }
 
   .tbGroup {
@@ -1066,7 +1066,7 @@
   .tbSep {
       width: 1px;
       height: 28px;
-      background: rgba(255,255,255,.14);
+      background: var(--w-14);
       border-radius: 999px
   }
 
@@ -1077,9 +1077,9 @@
       align-items: center;
       justify-content: center;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      --btn-tint: rgba(255,255,255,.04);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      border: 1px solid var(--w-14);
+      --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       color: rgba(255,255,255,.85);
       cursor: pointer;
@@ -1087,8 +1087,8 @@
   }
 
   .tbBtn:hover {
-      --btn-tint: rgba(255,255,255,.07);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
   }
 
   .tbBtn:active {
@@ -1097,14 +1097,14 @@
 
   .tbBtn.primary {
       --btn-tint: rgba(120,160,255,.16);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       border-color: rgba(120,160,255,.35)
   }
 
   .tbBtn.danger {
       --btn-tint: rgba(255,120,120,.1);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       border-color: rgba(255,120,120,.25);
       color: rgba(255,200,200,.92)
@@ -1166,7 +1166,7 @@
 
   .xPickItem,.xPickList {
       display: grid;
-      border: 1px solid rgba(255,255,255,.12)
+      border: 1px solid var(--w-14)
   }
 
   .xPickList {
@@ -1186,11 +1186,11 @@
       border-radius: 10px;
       cursor: pointer;
       user-select: none;
-      background: rgba(255,255,255,.04)
+      background: var(--w-4)
   }
 
   .xPickItem:hover {
-      background: rgba(255,255,255,.06)
+      background: var(--w-8)
   }
 
   .xMeta,.xNm {
@@ -1224,10 +1224,10 @@
 
   .xTypeBox {
       min-width: 0;
-      border: 1px solid rgba(255,255,255,.12);
+      border: 1px solid var(--w-14);
       border-radius: 12px;
       padding: 12px;
-      background: rgba(255,255,255,.03)
+      background: var(--w-4)
   }
 
   .xTypeTop {
@@ -1300,8 +1300,8 @@
       align-items: center;
       justify-content: center;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.03);
+      border: 1px solid var(--w-14);
+      background: var(--w-4);
       text-align: center;
       user-select: none;
       cursor: pointer
@@ -1319,12 +1319,12 @@
   }
 
   .xCountPill,.xTypeLbl.active {
-      background: rgba(255,234,166,.1);
-      color: rgba(255,234,166,.95)
+      background: var(--g-10);
+      color: var(--accent)
   }
 
   .xTypeLbl.active {
-      border-color: rgba(255,234,166,.4)
+      border-color: var(--g-35)
   }
 
   .xCountPill {
@@ -1333,7 +1333,7 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(255,234,166,.28);
+      border: 1px solid var(--g-35);
       font-weight: 1000;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -1413,8 +1413,8 @@
 
   /* Hover – miękki glow + podbicie tła */
   .tbBtn:hover{
-    --btn-tint: rgba(255,255,255,.10);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     border-color: rgba(120,160,255,.45);
     box-shadow:
@@ -1427,12 +1427,12 @@
     transform: translateY(1px) scale(.98);
     box-shadow:
       0 0 0 1px rgba(120,160,255,.28) inset,
-      0 2px 8px rgba(0,0,0,.45);
+      0 2px 8px var(--k-40);
   }
 
   .tbBtn.primary:hover{
     --btn-tint: rgba(120,160,255,.28);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     border-color: rgba(120,160,255,.75);
     box-shadow:
@@ -1478,7 +1478,7 @@
   .export-modal .xProgBar {
     height: 10px;
     border-radius: 999px;
-    background: rgba(255,255,255,.10);
+    background: var(--w-8);
     overflow: hidden;
   }
 
@@ -1551,7 +1551,7 @@
       width: min(300px, 85vw);
       z-index: 1000;
       background: rgba(14, 14, 18, 0.98);
-      border-right: 1px solid rgba(255,255,255,.16);
+      border-right: 1px solid var(--w-14);
       padding: 16px 12px 24px;
       transform: translateX(-110%);
       transition: transform 220ms ease;
@@ -1571,7 +1571,7 @@
       right: 0;
       bottom: 0;
       z-index: 999;
-      background: rgba(0,0,0,.55);
+      background: var(--k-40);
     }
 
     .drawer-overlay[hidden] { display: none !important; }
@@ -1883,7 +1883,7 @@
 
   /* ===== Menu kontekstowe na telefonie i tablecie dotykowym: okno od dołu =====
      Ten sam wygląd co pozostałe okna od dołu (shared/css/base.css, „Okno od
-     dołu”): przyciemnione tło, panel #121524 z rogami 28 px i linią u góry,
+     dołu”): przyciemnione tło, panel var(--surface-modal) z rogami 28 px i linią u góry,
      pasek do przeciągania 44×5, wysuwanie / zjazd z animacją, safe area;
      na tablecie węższy panel z bocznymi krawędziami. Warunek jak SHEET_QUERY
      w context-menu.js. */
@@ -1891,7 +1891,7 @@
     position: fixed;
     inset: 0;
     z-index: 9998;
-    background: var(--modal-scrim, rgba(0,0,0,.55));
+    background: var(--modal-scrim, var(--k-40));
     animation: cmScrimIn .28s ease both;
   }
   .context-menu-backdrop[hidden] { display: none; }
@@ -1911,9 +1911,9 @@
     overscroll-behavior: contain;
     border-radius: 28px 28px 0 0;
     border: 0;
-    border-top: 1px solid var(--line, rgba(255,255,255,.14));
-    background: #121524;
-    box-shadow: 0 -18px 60px rgba(0,0,0,.6);
+    border-top: 1px solid var(--line, var(--w-14));
+    background: var(--surface-modal);
+    box-shadow: 0 -18px 60px var(--k-70);
     padding: 32px calc(16px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
     transform: translateY(var(--cm-drag, 0px));
     animation: cmSheetUp .34s cubic-bezier(.2,.8,.2,1) both;
@@ -1936,25 +1936,25 @@
   .context-menu.is-sheet .cm-handle::before {
     content: "";
     width: 44px; height: 5px; border-radius: 999px;
-    background: rgba(255,255,255,.28);
+    background: var(--w-25);
   }
 
   /* pozycje jak na telefonie: większe, bez skrótów klawiszowych */
   .context-menu.is-sheet .cm-item { padding: 14px 12px; font-size: 15px; }
-  .context-menu.is-sheet .cm-item:hover { background: rgba(255,255,255,.06); }
+  .context-menu.is-sheet .cm-item:hover { background: var(--w-8); }
   .context-menu.is-sheet .cm-kbd { display: none; }
 
   @media (min-width: 601px) {
     .context-menu.is-sheet {
-      border: 1px solid var(--line, rgba(255,255,255,.14));
+      border: 1px solid var(--line, var(--w-14));
       border-bottom: 0;
     }
   }
 
   @keyframes cmSheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--cm-drag, 0px)); } }
   @keyframes cmSheetDown { from { transform: translateY(var(--cm-drag, 0px)); } to { transform: translateY(100%); } }
-  @keyframes cmScrimIn { from { background-color: rgba(0,0,0,0); } }
-  @keyframes cmScrimOut { to { background-color: rgba(0,0,0,0); } }
+  @keyframes cmScrimIn { from { background-color: var(--k-20); } }
+  @keyframes cmScrimOut { to { background-color: var(--k-20); } }
   @media (prefers-reduced-motion: reduce) {
     .context-menu.is-sheet, .context-menu.is-sheet.is-closing, .context-menu-backdrop { animation-duration: 1ms !important; }
   }
@@ -1974,10 +1974,10 @@
   .tags-modal .tags-row {
     padding: 10px 12px;
     border-radius: 12px;
-    background: var(--card2, rgba(255,255,255,.03));
-    border: 1px solid var(--line2, rgba(255,255,255,.10));
+    background: var(--card2, var(--w-4));
+    border: 1px solid var(--line2, var(--w-8));
   }
-  .tags-modal .tags-row:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+  .tags-modal .tags-row:hover { border-color: var(--gold); background: var(--card2, var(--w-4)); }
   .xPickList,
   .export-modal .xPickList {
     border: 0;
@@ -1995,8 +1995,8 @@
     margin-top: 12px;
     padding: 12px;
     border-radius: 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid var(--line2, rgba(255,255,255,.10));
+    background: var(--w-4);
+    border: 1px solid var(--line2, var(--w-8));
   }
   .tags-modal .tagsCardLbl { font-weight: 800; }
   .tags-modal .tagsColorTile {
@@ -2004,10 +2004,10 @@
     min-height: 52px;
     padding: 8px 12px;
     border-radius: 12px;
-    background: var(--card2, rgba(255,255,255,.03));
-    border: 1px solid var(--line2, rgba(255,255,255,.10));
+    background: var(--card2, var(--w-4));
+    border: 1px solid var(--line2, var(--w-8));
   }
-  .tags-modal .tagsColorTile:hover { border-color: var(--gold); background: var(--card2, rgba(255,255,255,.03)); }
+  .tags-modal .tagsColorTile:hover { border-color: var(--gold); background: var(--card2, var(--w-4)); }
   .tags-modal .tagsColorDot { width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto; }
   .tags-modal .tagsColorLbl { flex: 1 1 auto; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 700; }
   .tags-modal .tagsColorGo { opacity: .7; }
@@ -2022,8 +2022,8 @@
   .tags-modal .colorHexField .inp { width: 100%; }
   .tags-modal .sliders {
     border-radius: 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid var(--line2, rgba(255,255,255,.10));
+    background: var(--w-4);
+    border: 1px solid var(--line2, var(--w-8));
   }
 
   /* ===== Widoki lewego panelu (ui/left-view.js, decyzja 2026-10-21) =====
@@ -2078,12 +2078,12 @@
   }
   .left-view-btn .badge:empty { display: none; }
   .left-view-btn.is-active,
-  .tbBtn.left-view-btn.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
+  .tbBtn.left-view-btn.is-active { color: var(--gold); border-color: var(--gold); background: var(--g-10); }
   .left-view-tabs { gap: 6px; align-items: center; }
   @media (max-width: 900px) {
     .desktop-only { display: none !important; }
     /* panel na telefonie: kryjące tło jak okna od dołu */
-    .explorer-left { background: #121524; }
+    .explorer-left { background: var(--surface-modal); }
   }
 
   /* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
@@ -2124,7 +2124,7 @@
     left: calc(var(--pad0) + var(--step) / 2 + var(--k) * var(--step));
     width: 1px;
     height: 100%;
-    background: var(--line2, rgba(255,255,255,.14));
+    background: var(--line2, var(--w-14));
   }
   .tree-g-end { height: 50%; }
   .tree-g-tee::after,
@@ -2139,7 +2139,7 @@
   .tree-g-tee::after { top: 50%; }
   .tree-g-end::after { top: 100%; }
   .row.tree-row:hover,
-  .tree-row:hover { background: rgba(255,255,255,.05); }
+  .tree-row:hover { background: var(--w-4); }
   .tree-row.is-root { font-weight: 700; }
   .row.tree-row.is-current,
   .tree-row.is-current,
@@ -2155,7 +2155,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; opacity: .75;
   }
-  .tree-toggle:hover { opacity: 1; background: rgba(255,255,255,.08); }
+  .tree-toggle:hover { opacity: 1; background: var(--w-8); }
   .tree-toggle .ico { width: 14px; height: 14px; }
   .tree-ico { display: inline-flex; flex: 0 0 auto; opacity: .9; }
   .tree-row .list-ico { width: 16px; height: 16px; }
@@ -2169,7 +2169,7 @@
     min-width: 26px;
     padding: 1px 8px;
     border-radius: 999px;
-    background: rgba(255,255,255,.06);
+    background: var(--w-8);
     font-size: 11px;
     font-weight: 400;
     text-align: center;
@@ -2183,8 +2183,8 @@
     overscroll-behavior: contain;
     padding: 6px;
     border-radius: 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid var(--line2, rgba(255,255,255,.10));
+    background: var(--w-4);
+    border: 1px solid var(--line2, var(--w-8));
   }
   .moveList > .list-empty { padding: 14px; opacity: .7; }
   /* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
@@ -2197,7 +2197,7 @@
     gap: 8px;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255,255,255,.12);
+    border-top: 1px solid var(--w-14);
   }
 
   /* ===== Wyszukiwarka (2026-10-21) =====
@@ -2216,10 +2216,10 @@
     padding: 0; border: 0; border-radius: 8px;
     background: none; color: inherit; cursor: pointer; opacity: .7;
   }
-  .searchClear:hover { opacity: 1; background: rgba(255,255,255,.08); }
+  .searchClear:hover { opacity: 1; background: var(--w-8); }
   .searchClear .ico { width: 14px; height: 14px; }
   .searchClear[hidden] { display: none; }
-  #btnSearchSheet.is-active { color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
+  #btnSearchSheet.is-active { color: var(--gold); border-color: var(--gold); background: var(--g-10); }
   @media (max-width: 900px) {
     .toolbar > .search-row { display: none; }
   }
@@ -2409,8 +2409,8 @@
     .modal--sheet.sheet-active .export-modal .xTypeBox {
       min-width: 0;
       padding: 8px;
-      border-color: rgba(255,255,255,.18);
-      background: #111827;
+      border-color: var(--w-14);
+      background: var(--surface-1);
     }
 
     .modal--sheet.sheet-active .export-modal .xTypeTop {
@@ -2443,7 +2443,7 @@
 
     .modal--sheet.sheet-active .export-modal .xTypeLbl.active {
       background: #3a3424;
-      border-color: rgba(255,234,166,.55);
+      border-color: var(--g-60);
     }
 
     .modal--sheet.sheet-active .export-modal .xPickList {
@@ -2459,7 +2459,7 @@
     .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
       min-height: 48px;
     }}
-  /* Okno od dołu: nagłówek warstwy okna tagów leży na panelu okna (#121524),
+  /* Okno od dołu: nagłówek warstwy okna tagów leży na panelu okna (var(--surface-modal)),
      nie na tle strony — bez ciemnego paska pod tytułem. */
   .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
     position: static;

@@ -3,7 +3,7 @@
   body.editor-body {
       min-height: 100dvh;
       background: var(--bg);
-      color: #fff;
+      color: var(--text);
       overflow: hidden
   }
 
@@ -39,7 +39,7 @@
       border: 1px solid var(--line);
       background: var(--card);
       --under: var(--card); /* podłoże przycisków (css/base.css) */
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      box-shadow: 0 24px 60px var(--k-40);
       padding: 14px;
       min-height: 0;
       height: 100%;
@@ -130,8 +130,8 @@
       position: relative;
       border-radius: 18px;
       border: 1px solid var(--line);
-      --btn-tint: rgba(255,255,255,.05);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       padding: 12px;
       padding-right: 56px;
@@ -175,8 +175,8 @@
       height: 30px;
       border-radius: 10px;
       border: 1px solid var(--line2);
-      --btn-tint: rgba(255,255,255,.08);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       color: rgba(255,255,255,.9);
       font-weight: 1000;
@@ -263,9 +263,9 @@
 
   .addTile {
       border-radius: 18px;
-      border: 1px dashed rgba(255,234,166,.35);
-      --btn-tint: rgba(255,255,255,.04);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+      border: 1px dashed var(--g-35);
+      --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
       padding: 14px;
       align-items: center;
@@ -275,7 +275,7 @@
 
   .addTile:hover {
       filter: brightness(1.08);
-      border-color: rgba(255,234,166,.85)
+      border-color: var(--accent)
   }
 
   .addTile .plus {
@@ -286,7 +286,7 @@
 
   .addTile .txt {
       font-weight: 1000;
-      color: #fff
+      color: var(--text)
   }
 
   .addTile .sub {
@@ -303,7 +303,7 @@
   .addTile[aria-disabled="true"] {
       opacity: .85 !important;
       color: rgba(255,255,255,.92);
-      border-color: rgba(255,255,255,.32);
+      border-color: var(--w-25);
   }
 
   .addTile:disabled .txt,
@@ -317,22 +317,22 @@
   .qcard:not(.addTile).good {
       border-color: rgba(120,255,120,.45);
       --btn-tint: rgba(120,255,120,.1);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
   }
 
   .qcard:not(.addTile).bad {
       border-color: rgba(255,120,120,.45);
       --btn-tint: rgba(255,120,120,.1);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
   }
 
   .qcard.active:not(.addTile) {
-      border-color: rgba(255,234,166,.9);
+      border-color: var(--accent);
       background-image:
-          linear-gradient(rgba(255,234,166,.10), rgba(255,234,166,.10)),
+          linear-gradient(var(--g-10), var(--g-10)),
           linear-gradient(var(--btn-tint), var(--btn-tint));
-      background-color: var(--under, #050914);
-      box-shadow: 0 0 0 2px rgba(255,234,166,.55), 0 10px 22px rgba(0,0,0,.35);
+      background-color: var(--under, var(--bg));
+      box-shadow: 0 0 0 2px var(--g-60), 0 10px 22px var(--k-40);
   }
 
   .overlay {
@@ -348,9 +348,9 @@
       width: min(860px,94vw);
       border-radius: 22px;
       border: 1px solid var(--line);
-      background: #121524;
-      --under: #121524; /* podłoże przycisków na powierzchni modala */
-      box-shadow: 0 30px 90px rgba(0,0,0,.75);
+      background: var(--surface-modal);
+      --under: var(--surface-modal); /* podłoże przycisków na powierzchni modala */
+      box-shadow: 0 30px 90px var(--k-70);
       padding: 18px;
       max-height: 92vh;
       overflow: auto;
@@ -385,19 +385,19 @@
       padding: 12px;
       border-radius: 16px;
       border: 1px solid var(--line2);
-      background: rgba(0,0,0,.25);
-      color: #fff;
+      background: var(--k-20);
+      color: var(--text);
       outline: 0;
       resize: vertical;
       font-weight: 800
   }
 
-  .txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:rgba(0,0,0,.18); }
+  .txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:var(--k-20); }
   .txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
   .txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
   .txt-preview-list{ display:grid; gap:7px; }
-  .txt-preview-item{ padding-top:6px; border-top:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
+  .txt-preview-item{ padding-top:6px; border-top:1px solid var(--w-8); overflow-wrap:anywhere; }
   .txt-preview-item strong{ display:block; }
   .txt-preview-answers{ color:var(--muted); margin-top:2px; }
   .txt-preview-body.is-error{ color:#fca5a5; }

@@ -7,7 +7,7 @@
       background: var(--card);
       --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
       padding: 14px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      box-shadow: 0 24px 60px var(--k-40);
   }
 
   .name {
@@ -81,7 +81,7 @@
   .pollBarHint{
     font-size: 12px;
     line-height: 1.3;
-    color: rgba(255,234,166,.75);
+    color: var(--g-60);
     max-width: 420px;
   }
   .pollBarHint:empty{ display: none; }
@@ -124,7 +124,7 @@
     --tab-height: 36px;
     --tab-extra: 1px;
     --radius: 12px;
-    --surface: #111827;
+    --surface: var(--surface-1);
     --border-color: var(--line2);
     overflow: hidden;
   }
@@ -193,14 +193,14 @@
     --under: #0b1020;
     padding: 12px;
     border-radius: 14px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.10);
+    background: var(--w-4);
+    border: 1px solid var(--w-8);
     min-width: 0;
   }
   .pollRecipientsSec{ display: flex; flex-direction: column; min-height: 0; }
   .pollRecipientsSec .subsGrid{ flex: 1 1 auto; min-height: 0; }
   @media (max-width: 980px){
-    .pollSec{ padding: 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 14px; }
+    .pollSec{ padding: 12px; background: var(--w-4); border: 1px solid var(--w-8); border-radius: 14px; }
   }
   .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   /* Link ankiety jest dostępny akcjami, bez wyświetlania długiego adresu. */
@@ -235,7 +235,7 @@
     margin-top: 10px;
     padding: 14px 10px 12px;
     border-radius: 14px;
-    background: rgba(255,255,255,.035);
+    background: var(--w-4);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -340,8 +340,8 @@
     box-sizing: border-box;
     padding: 0 12px;
     border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.05);
+    border: 1px solid var(--w-8);
+    background: var(--w-4);
     overflow: hidden;
     transition: padding .4s ease, opacity .3s ease, height .3s ease, margin .3s ease, border-color .2s ease, background .2s ease;
   }
@@ -349,7 +349,7 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 0;
-    background: linear-gradient(90deg, rgba(255,234,166,.10), rgba(255,234,166,.26));
+    background: linear-gradient(90deg, var(--g-10), var(--g-35));
     transition: width .6s ease;
     pointer-events: none;
   }
@@ -419,9 +419,9 @@
   .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
   .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
   .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
-  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: 13px; background: linear-gradient(rgba(255,255,255,.035), rgba(255,255,255,.035)) var(--under, #050914); box-shadow: 0 2px 7px rgba(0,0,0,.2); }
-  .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) var(--under, #050914); border-radius: 10px; }
-  .resultQ .aList.tally .tcBtn:hover{ background: rgba(255,255,255,.1); }
+  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: 13px; background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--bg)); box-shadow: 0 2px 7px var(--k-20); }
+  .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--w-25); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg)); border-radius: 10px; }
+  .resultQ .aList.tally .tcBtn:hover{ background: var(--w-8); }
   .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
   /* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
   @media (hover: hover) and (pointer: fine){
@@ -459,7 +459,7 @@
   .resultQ .aRow.tallySkipped .aTxt,
   .resultQ .aRow.tallySkipped .aVal{ color: #ffc0c4; }
   .resultQ .aRow.merge-src .tcMergeBtn,
-  .resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); color: var(--gold); box-shadow: 0 0 0 2px rgba(255,234,166,.16); }
+  .resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: var(--accent); background: var(--g-10); color: var(--gold); box-shadow: 0 0 0 2px var(--g-10); }
   .resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
   .resultQ .aList.tally .tcBtn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .resultQ .aTxtInp{
@@ -478,16 +478,16 @@
     font-weight: 900;
     outline: none;
   }
-  .resultQ .aTxtInp:hover{ border-color: rgba(255,255,255,.14); }
-  .resultQ .aTxtInp:focus{ border-color: rgba(255,234,166,.55); background: rgba(0,0,0,.25); }
+  .resultQ .aTxtInp:hover{ border-color: var(--w-14); }
+  .resultQ .aTxtInp:focus{ border-color: var(--g-60); background: var(--k-20); }
   .resultQ .aRow.out{ opacity: .55; }
   .resultQ .aRow.dragging{ opacity: .5; }
-  .resultQ .aRow.drop-target{ border-color: var(--gold); background: rgba(255,234,166,.14); }
-  .resultQ .aRow.merge-src{ border-color: rgba(255,234,166,.7); background: rgba(255,234,166,.14); }
+  .resultQ .aRow.drop-target{ border-color: var(--gold); background: var(--g-10); }
+  .resultQ .aRow.merge-src{ border-color: var(--g-60); background: var(--g-10); }
   .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
   .resultQ .aRow.tallySkipped.merge-src{
-    border-color: rgba(255,234,166,.8);
-    background: linear-gradient(rgba(255,234,166,.16), rgba(255,234,166,.16)), rgba(255,92,104,.09);
+    border-color: var(--accent);
+    background: linear-gradient(var(--g-10), var(--g-10)), rgba(255,92,104,.09);
   }
   .resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); }
   @media (prefers-reduced-motion: reduce){

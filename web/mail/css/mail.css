@@ -43,7 +43,7 @@
   .mail-row--subscription{border-left:3px solid #9a91b5;background:rgba(154,145,181,.035)}
   .mail-discover{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px 16px;font-size:12px;color:rgba(255,255,255,.55);flex:0 0 auto;text-align:center;padding:14px 24px 18px;}
   .mail-discover a{color:var(--gold);text-decoration:none;opacity:.85}
-  .mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,234,166,.05);font-size:13px}
+  .mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--g-10);font-size:13px}
   .mail-panels-card [hidden]{display:none!important}
   @media(max-width:620px){
    .mail-wrap{padding:16px var(--page-pad-right) 16px var(--page-pad-left);gap:16px}

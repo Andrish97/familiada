@@ -2,7 +2,7 @@
   .account-body {
     min-height: 100vh;
     background: var(--bg);
-    color: #fff;
+    color: var(--text);
   }
 
 
@@ -21,9 +21,9 @@
     gap: 10px;
     padding: 16px;
     border-radius: 18px;
-    border: 1px solid rgba(255,255,255,.12);
+    border: 1px solid var(--w-14);
     background: var(--card);
-    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    box-shadow: 0 18px 40px var(--k-40);
     height: 100%;
     box-sizing: border-box;
   }
@@ -122,8 +122,8 @@
     opacity: .75;
     padding: 8px 10px;
     border-radius: 12px;
-    border: 1px dashed rgba(255,234,166,.28);
-    background: rgba(0,0,0,.18);
+    border: 1px dashed var(--g-35);
+    background: var(--k-20);
   }
 
   .pending-box{
@@ -131,8 +131,8 @@
     gap: 10px;
     padding: 12px;
     border-radius: 16px;
-    border: 1px solid rgba(255,234,166,.22);
-    background: rgba(0,0,0,.22);
+    border: 1px solid var(--g-10);
+    background: var(--k-20);
   }
 
   .pending-title{
@@ -153,8 +153,8 @@
     margin: 10px 0 18px;
     padding: 10px 12px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.22);
+    border: 1px solid var(--w-14);
+    background: var(--k-20);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     font-size: 13px;

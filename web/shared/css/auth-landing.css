@@ -2,9 +2,9 @@
 @layer page {
   html:has(.landing-body) {
       background:
-          radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+          radial-gradient(circle at 20% 20%, var(--g-10), transparent 55%),
           radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
-          #050914;
+          var(--bg);
       overflow: hidden;
   }
 
@@ -16,9 +16,9 @@
 
   /* Zmienne strony na body (tokeny :root są poza warstwami i wygrywają). */
   .landing-body {
-      --card: rgba(255,255,255,.06);
-      --stroke: rgba(255,255,255,.14);
-      --led: #ffeaa6;
+      --card: var(--w-8);
+      --stroke: var(--w-14);
+      --led: var(--accent);
       --txt: #ffffff;
       --muted: rgba(255,255,255,.75);
       --danger: #ff7a7a;
@@ -54,7 +54,7 @@
       --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
       border: 1px solid var(--stroke);
       border-radius: 22px;
-      box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      box-shadow: 0 18px 50px var(--k-40);
       padding: 18px;
   }
 
@@ -80,8 +80,8 @@
       margin-top: 14px;
       padding: 12px 14px;
       border-radius: 16px;
-      border: 1px solid rgba(255,234,166,.20);
-      background: rgba(0,0,0,.18);
+      border: 1px solid var(--g-10);
+      background: var(--k-20);
       color: var(--txt);
   }
 
@@ -105,16 +105,16 @@
       box-sizing: border-box;
       padding: 12px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
+      border: 1px solid var(--w-14);
+      background: var(--k-20);
       color: var(--txt);
       outline: none;
       font-weight: 800;
   }
 
   .form input:focus {
-      border-color: rgba(255,234,166,.35);
-      box-shadow: 0 0 0 2px rgba(255,234,166,.12);
+      border-color: var(--g-35);
+      box-shadow: 0 0 0 2px var(--g-10);
   }
 
   /* ── buttons ── */

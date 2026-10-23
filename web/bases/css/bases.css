@@ -65,7 +65,7 @@
     --tab-height: 36px;
     --tab-extra: 1px;
     --radius: 12px;
-    --surface: #111827;
+    --surface: var(--surface-1);
     --border-color: var(--line2);
     overflow: hidden;
   }

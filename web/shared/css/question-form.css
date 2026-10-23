@@ -12,8 +12,8 @@
       --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
       padding: 12px;
       border-radius: 14px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.10);
+      background: var(--w-4);
+      border: 1px solid var(--w-8);
       min-width: 0
   }
 
@@ -30,8 +30,8 @@
       padding: 10px 12px;
       border-radius: 16px;
       border: 1px solid var(--line2);
-      background: rgba(0,0,0,.25);
-      color: #fff;
+      background: var(--k-20);
+      color: var(--text);
       outline: 0;
       resize: vertical;
       font: inherit;
@@ -41,7 +41,7 @@
   }
 
   .qf-qtext:focus {
-      border-color: rgba(255,234,166,.45)
+      border-color: var(--g-35)
   }
 
   .qf-list {
@@ -72,7 +72,7 @@
   }
 
   .qf-row:not(.qf-add):focus-within {
-      border-color: rgba(255,234,166,.45)
+      border-color: var(--g-35)
   }
 
   .qf-text {
@@ -84,7 +84,7 @@
       border: 0;
       border-radius: 8px;
       background: transparent;
-      color: #fff;
+      color: var(--text);
       outline: 0;
       font: inherit;
       font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
@@ -100,12 +100,12 @@
       padding: 0 10px 0 6px;
       border-radius: 10px;
       border: 1px solid var(--line2);
-      background: rgba(0,0,0,.25);
+      background: var(--k-20);
       cursor: text
   }
 
   .qf-ptsWrap:focus-within {
-      border-color: rgba(255,234,166,.55)
+      border-color: var(--g-60)
   }
 
   .qf-pts {
@@ -165,10 +165,10 @@
       gap: 10px;
       min-height: 50px;
       padding: 6px 12px 6px 0;
-      border: 1px dashed rgba(255,234,166,.35);
-      --btn-tint: rgba(255,234,166,.06);
-      background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-      color: #fff;
+      border: 1px dashed var(--g-35);
+      --btn-tint: var(--g-10);
+      background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+      color: var(--text);
       font: inherit;
       text-align: left;
       cursor: pointer
@@ -185,7 +185,7 @@
 
   .qf-add:hover {
       filter: brightness(1.08);
-      border-color: rgba(255,234,166,.85)
+      border-color: var(--accent)
   }
 
   .qf-add .qf-addLbl {
@@ -202,7 +202,7 @@
       cursor: not-allowed;
       filter: none;
       color: rgba(255,255,255,.92);
-      border-color: rgba(255,255,255,.32)
+      border-color: var(--w-25)
   }
 
   /* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”

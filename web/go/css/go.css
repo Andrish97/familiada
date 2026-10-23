@@ -3,7 +3,7 @@
   body.poll-go-body {
     min-height: 100dvh;
     background: var(--bg);
-    color: #fff;
+    color: var(--text);
     display: flex;
     flex-direction: column;
   }
@@ -22,7 +22,7 @@
     background: var(--card);
     --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
     padding: 20px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    box-shadow: 0 24px 60px var(--k-40);
   }
 
   body.poll-go-body:not(.mail-body) .poll-go-card {

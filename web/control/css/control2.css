@@ -98,7 +98,7 @@
   .c2-gameplay-body { flex:1 1 0%; width:100%; max-width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
   /* padding-top:16px == .control-main-card's własne padding-bottom:16px
      pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
-  .c2-gameplay-nav { height:62px; min-height:62px; box-sizing:border-box; display:flex; align-items:center; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:8px; flex-wrap:nowrap; }
+  .c2-gameplay-nav { height:62px; min-height:62px; box-sizing:border-box; display:flex; align-items:center; gap:8px; justify-content:flex-end; border-top:1px solid var(--w-14); padding-top:8px; flex-wrap:nowrap; }
   .c2-gameplay-nav-empty { visibility:hidden; border:0; padding:0; }
   .c2-gameplay-nav:has(.c2-statusbar) { border:0; padding:0; }
   .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar { width:100%; height:62px; min-height:62px; box-sizing:border-box; padding:8px 2px 0; flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
@@ -154,7 +154,7 @@
   /* Skróty klawiszowe (web/js/gameplay/hints.js's getFinalEntryShortcuts) — dopisane
      POD głównym hintem na wpisywaniu finału, oddzielone własną kreską, żeby
      nie zlewały się z dynamicznym tekstem hintu nad nimi. */
-  .c2-hint-shortcuts { margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:4px; }
+  .c2-hint-shortcuts { margin-top:14px; padding-top:12px; border-top:1px solid var(--w-14); display:flex; flex-direction:column; gap:4px; }
   .c2-hint-shortcuts-title { font-size:.8em; text-transform:uppercase; letter-spacing:.06em; opacity:.6; font-weight:800; }
   .c2-hint-shortcut { font-size:.92em; opacity:.75; line-height:1.35; }
   /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
@@ -170,7 +170,7 @@
   .c2-roundlayout-main { flex:1 1 0%; width:0; max-width:100%; min-width:0; min-height:0; display:flex; }
   .c2-roundlayout-main .c2-tilegrid { flex:1 1 0%; min-width:0; max-width:100%; width:100%; }
   .c2-roundlayout-main > .c2-scroll-area { flex:1; min-height:0; }
-  .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
+  .c2-roundlayout-divider { width:1px; background:var(--w-14); flex:none; }
   .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
   .c2-roundlayout-side .c2-hint { flex:1; }
   /* Urządzenia (renderDevicesStep) reużywa c2-roundlayout — cztery karty
@@ -241,9 +241,9 @@
      — pionowa, numerowana lista pod wierszem trybu (zgłoszone: poprzedni,
      zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
      pytanie we własnym wierszu, z małym okrągłym numerkiem z lewej. */
-  .c2-qpreview { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08); }
+  .c2-qpreview { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; border-top:1px solid var(--w-8); }
   .c2-qpreview-item { display:flex; align-items:baseline; gap:10px; font-size:calc(var(--c2-fs) * .92); opacity:.85; padding:4px 0; }
-  .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,234,166,.12); color:var(--gold); font-size:calc(var(--c2-fs) * .7); font-weight:800; }
+  .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--g-10); color:var(--gold); font-size:calc(var(--c2-fs) * .7); font-weight:800; }
   .c2-qpreview-text { flex:1; min-width:0; }
   /* Czcionki Urządzeń/Podsumowania dociągnięte do wielkości, którą mają już
      Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
@@ -265,7 +265,7 @@
   .device-row-line > .btn { width:100%; min-width:0; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .device-row-line > .device-connect-code { gap:.5em; padding:0 .6em; }
   .device-row-line > .device-connect-code .ico { opacity:.7; }
-  .device-row-line > .device-connect-code:hover { border-color:rgba(255,234,166,.5); }
+  .device-row-line > .device-connect-code:hover { border-color:var(--g-60); }
   /* Status połączenia: lekka plakietka z kropką zamiast dużego kafla. */
   .c2-devicerows .conn-status { padding:.35em .75em .35em .6em; border-radius:999px; gap:.45em; border-color:transparent; }
   .c2-devicerows .conn-status::before { content:""; width:.55em; height:.55em; border-radius:50%; background:currentColor; box-shadow:0 0 .5em currentColor; }
@@ -283,7 +283,7 @@
      (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
      nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
      przeczytania w całości. */
-  .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.95em; opacity:.92; flex:none; }
+  .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid var(--w-14); font-size:.95em; opacity:.92; flex:none; }
   .c2-statusbar b { color:var(--gold); font-weight:800; }
   /* "Zakończ rundę" — obok Gra:/Bank: w TYM SAMYM pasku (zgłoszone: miejsce
      obok, nie osobny wiersz nawigacji z własnym odstępem u dołu). */
@@ -291,11 +291,11 @@
   /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
      "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
      dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */
-  .c2-btn { padding:10px 14px; border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06); color:#fff; cursor:pointer; font-weight:800; font-size:.95em; }
+  .c2-btn { padding:10px 14px; border-radius:14px; border:1px solid var(--line2); background:var(--w-8); color: var(--text); cursor:pointer; font-weight:800; font-size:.95em; }
   .c2-btn:hover:not(:disabled) { filter:brightness(1.1); }
   .c2-btn:active:not(:disabled) { transform:translateY(1px); }
   .c2-btn:disabled { opacity:.4; cursor:default; }
-  .c2-btn.primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
+  .c2-btn.primary { border-color:var(--g-35); background:var(--g-10); color:var(--gold); }
   /* Blokada jest stała; przyciski nawigacji nie pulsują. */
   .c2-btn-busy:disabled { cursor:wait; }
 
@@ -309,7 +309,7 @@
     touch-action: manipulation;
     display:flex; min-width:0; max-width:100%; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere;
     padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
-    background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.02em; line-height:1.3;
+    background:var(--w-8); color: var(--text); font-weight:800; font-size:1.02em; line-height:1.3;
     cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
     transition:filter .12s ease, background .12s ease, border-color .12s ease;
   }
@@ -322,7 +322,7 @@
   .c2-tile-revealed { background:rgba(95,217,122,.16); border-color:rgba(95,217,122,.45); color:#a8ecba; opacity:1; }
   .c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); }
   .c2-tile-warn { border-color:rgba(255,196,110,.4); background:rgba(255,196,110,.12); color:#ffd9a0; }
-  .c2-tile-primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
+  .c2-tile-primary { border-color:var(--g-35); background:var(--g-10); color:var(--gold); }
   /* MISS zaznaczony (control/js/ui.js's renderFinalMapping) — czerwona
      ramka/tło ZOSTAJE, tylko tekst robi się złoty, dokładnie jak stare
      control/js/gameFinal.js's ".btn.sm.danger.gold" razem na jednym
@@ -336,7 +336,7 @@
      złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
      tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
      tego, jaki to kafel. */
-  .c2-tile-armed { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,234,166,.55) inset, 0 0 10px rgba(255,234,166,.25); }
+  .c2-tile-armed { border-color:var(--gold); box-shadow:0 0 0 2px var(--g-60) inset, 0 0 10px var(--g-35); }
   /* Puste miejsce w siatce 3x3 wyboru mapowania finału (control/js/ui.js's
      renderFinalMapping), gdy pytanie ma mniej niż 9 opcji — dokładnie jak
      stare control/js/gameFinal.js's `.mapSlot`: sam trzyma rytm siatki,
@@ -359,7 +359,7 @@
   .c2-entryrow.p2 { grid-template-columns:minmax(0,2fr) minmax(0,1.1fr) minmax(0,.85fr); }
   .c2-entrytile {
     display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; min-height:0;
-    border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
+    border-radius:14px; border:1px solid var(--line2); background:var(--w-8);
     padding:8px 14px;
   }
   .c2-entrytile-q { font-weight:800; font-size:.92em; line-height:1.25; overflow-wrap:anywhere; }
@@ -432,7 +432,7 @@
   .c2-mapinput {
     display:grid; grid-template-columns:minmax(90px,1fr) minmax(0,4fr); gap:12px;
     min-width:0; min-height:0; box-sizing:border-box;
-    border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
+    border-radius:14px; border:1px solid var(--line2); background:var(--w-8);
     padding:6px;
   }
   /* Kolumna etykiety — wyśrodkowana w bloku. */
@@ -457,12 +457,12 @@
   .c2-map-p1tile .c2-entrytile-p1ans { font-size:.92em; white-space:normal; opacity:1; overflow:visible; text-overflow:unset; }
   .c2-entrytile-input input {
     width:100%; height:100%; flex:1; box-sizing:border-box; padding:8px 12px;
-    border-radius:10px; border:1px solid rgba(255,255,255,.2);
-    background:rgba(0,0,0,.22);
+    border-radius:10px; border:1px solid var(--w-25);
+    background:var(--k-20);
     color:#bcd9ff; font-size:.95em; font-weight:700; outline:none;
   }
   .c2-entrytile-input input:focus { border-color:rgba(122,178,255,.65); background:rgba(122,178,255,.1); }
-  .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color:#fff; }
+  .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color: var(--text); }
   /* Finał: litery, które Wyświetlacz obetnie (11 miejsc), w innym kolorze.
      Pole ma przezroczysty tekst, a warstwa .c2-clip-mirror pod nim pokazuje
      te same litery w kolorach (pole tekstowe nie koloruje części tekstu). */
@@ -489,7 +489,7 @@
   }
   .c2-btn-repeat:hover:not(:disabled) { filter:brightness(1.15); }
   .c2-btn-repeat:active:not(:disabled) { transform:translateY(1px); }
-  .c2-btn-repeat.on { background:rgba(255,120,120,.34); border-color:rgba(255,120,120,.75); color:#fff; box-shadow:0 0 0 2px rgba(255,120,120,.35) inset; }
+  .c2-btn-repeat.on { background:rgba(255,120,120,.34); border-color:rgba(255,120,120,.75); color: var(--text); box-shadow:0 0 0 2px rgba(255,120,120,.35) inset; }
   .c2-btn-repeat:disabled { opacity:.4; cursor:default; }
   /* Kafel odliczania (start/countdown/zatrzymaj) — jeden pełnoszerokościowy
      wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */

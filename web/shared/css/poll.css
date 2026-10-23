@@ -24,7 +24,7 @@
       background: var(--card);
       --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
       padding: 18px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45)
+      box-shadow: 0 24px 60px var(--k-40)
   }
 
   body.pollpub-body > main.wrap > .card {
@@ -75,7 +75,7 @@
   .abtn {
       padding: 14px;
       border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.16);
+      border: 1px solid var(--w-14);
       background: var(--card2);
       color: var(--text);
       font-weight: 900;
@@ -133,8 +133,8 @@
       margin-top: 14px;
       padding: 14px;
       border-radius: 18px;
-      border: 1px solid rgba(255,234,166,.25);
-      background: rgba(255,234,166,.08);
+      border: 1px solid var(--g-35);
+      background: var(--g-10);
       color: var(--gold);
       font-weight: 900;
       line-height: 1.35

@@ -3,18 +3,17 @@
   "inlineStyleHtml": 1
  },
  "web/account/css/account.css": {
-  "colorLiteral": 12,
+  "colorLiteral": 3,
   "mediaWidth": 1,
   "sharedDuplicate": 1,
   "unusedClass": 6
  },
  "web/bases/css/bases.css": {
-  "colorLiteral": 1,
   "zIndexLiteral": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
   "important": 16,
-  "colorLiteral": 169,
+  "colorLiteral": 59,
   "mediaWidth": 7,
   "zIndexLiteral": 9,
   "sharedDuplicate": 21,
@@ -67,7 +66,7 @@
  },
  "web/connect/css/connect-device.css": {
   "important": 1,
-  "colorLiteral": 7,
+  "colorLiteral": 3,
   "mediaWidth": 1
  },
  "web/connect/index.html": {
@@ -77,14 +76,14 @@
   "inlineStyleJs": 9
  },
  "web/connect/tv/css/tv.css": {
-  "colorLiteral": 5,
+  "colorLiteral": 1,
   "rootTokens": 1
  },
  "web/connect/tv/index.html": {
   "styleBlock": 1
  },
  "web/control/buzzer/css/buzzer.css": {
-  "colorLiteral": 43,
+  "colorLiteral": 20,
   "rootTokens": 12,
   "zIndexLiteral": 5,
   "sharedDuplicate": 8
@@ -94,7 +93,7 @@
  },
  "web/control/css/control.css": {
   "important": 8,
-  "colorLiteral": 176,
+  "colorLiteral": 34,
   "mediaWidth": 14,
   "zIndexLiteral": 3,
   "sharedDuplicate": 59,
@@ -102,7 +101,7 @@
  },
  "web/control/css/control2.css": {
   "important": 2,
-  "colorLiteral": 53,
+  "colorLiteral": 30,
   "rootTokens": 1,
   "mediaWidth": 2,
   "sharedDuplicate": 14,
@@ -127,7 +126,7 @@
  },
  "web/control/host/css/host.css": {
   "important": 2,
-  "colorLiteral": 28,
+  "colorLiteral": 14,
   "rootTokens": 37,
   "zIndexLiteral": 6,
   "sharedDuplicate": 9
@@ -163,7 +162,7 @@
  },
  "web/games/editor/css/editor.css": {
   "important": 2,
-  "colorLiteral": 38,
+  "colorLiteral": 11,
   "mediaWidth": 1,
   "zIndexLiteral": 1,
   "sharedDuplicate": 10
@@ -187,9 +186,6 @@
  "web/games/settings/js/game-settings.js": {
   "inlineStyleJs": 49
  },
- "web/go/css/go.css": {
-  "colorLiteral": 2
- },
  "web/go/index.html": {
   "inlineStyleHtml": 1
  },
@@ -198,7 +194,7 @@
  },
  "web/home/css/index.css": {
   "important": 2,
-  "colorLiteral": 24,
+  "colorLiteral": 2,
   "zIndexLiteral": 4,
   "unusedClass": 2
  },
@@ -212,7 +208,7 @@
   "inlineStyleJs": 15
  },
  "web/login/css/login.css": {
-  "colorLiteral": 25,
+  "colorLiteral": 7,
   "zIndexLiteral": 1,
   "sharedDuplicate": 10
  },
@@ -227,7 +223,7 @@
  },
  "web/logos/css/logo.css": {
   "important": 15,
-  "colorLiteral": 104,
+  "colorLiteral": 25,
   "rootTokens": 12,
   "mediaWidth": 2,
   "zIndexLiteral": 8,
@@ -263,22 +259,22 @@
  },
  "web/mail/css/mail.css": {
   "important": 2,
-  "colorLiteral": 8,
+  "colorLiteral": 7,
   "mediaWidth": 3,
   "sharedDuplicate": 1,
   "unusedClass": 3
  },
  "web/maintenance/css/maintenance.css": {
-  "colorLiteral": 5,
+  "colorLiteral": 1,
   "rootTokens": 3
  },
  "web/manual/css/manual.css": {
-  "colorLiteral": 60,
+  "colorLiteral": 24,
   "zIndexLiteral": 4,
   "unusedClass": 1
  },
  "web/marketplace/css/marketplace.css": {
-  "colorLiteral": 25,
+  "colorLiteral": 14,
   "mediaWidth": 1,
   "sharedDuplicate": 3,
   "unusedClass": 1
@@ -305,7 +301,7 @@
   "inlineStyleJs": 6
  },
  "web/polls/vote/qr/css/poll-qr.css": {
-  "colorLiteral": 5,
+  "colorLiteral": 1,
   "zIndexLiteral": 1
  },
  "web/polls/vote/qr/index.html": {
@@ -319,7 +315,7 @@
  },
  "web/settings/css/settings.css": {
   "important": 68,
-  "colorLiteral": 316,
+  "colorLiteral": 139,
   "mediaWidth": 6,
   "zIndexLiteral": 18,
   "sharedDuplicate": 7,
@@ -360,7 +356,7 @@
   "styleBlock": 1
  },
  "web/shared/css/auth-landing.css": {
-  "colorLiteral": 16,
+  "colorLiteral": 4,
   "sharedDuplicate": 6
  },
  "web/shared/css/blocking-overlay.css": {
@@ -374,7 +370,7 @@
  },
  "web/shared/css/game-settings.css": {
   "important": 3,
-  "colorLiteral": 100,
+  "colorLiteral": 38,
   "mediaWidth": 4,
   "zIndexLiteral": 4,
   "sharedDuplicate": 33,
@@ -385,18 +381,17 @@
   "zIndexLiteral": 1
  },
  "web/shared/css/poll.css": {
-  "colorLiteral": 4,
   "unusedClass": 1
  },
  "web/shared/css/polls.css": {
   "important": 3,
-  "colorLiteral": 54,
+  "colorLiteral": 21,
   "mediaWidth": 1,
   "zIndexLiteral": 1,
   "sharedDuplicate": 3
  },
  "web/shared/css/question-form.css": {
-  "colorLiteral": 21
+  "colorLiteral": 6
  },
  "web/shared/css/tooltips.css": {
   "important": 1,
@@ -513,7 +508,7 @@
  },
  "web/snake/css/snake.css": {
   "important": 2,
-  "colorLiteral": 19,
+  "colorLiteral": 6,
   "zIndexLiteral": 8,
   "sharedDuplicate": 7
  },

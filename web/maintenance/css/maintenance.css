@@ -1,13 +1,13 @@
 :root {
-  --maint-card: #111827;
-  --maint-card-strong: rgba(255, 255, 255, 0.08);
-  --maint-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  --maint-card: var(--surface-1);
+  --maint-card-strong: var(--w-8);
+  --maint-shadow: 0 30px 80px var(--k-40);
 }
 
 .maintenance-body {
   min-height: 100vh;
   background: var(--bg);
-  color: #fff;
+  color: var(--text);
 }
 
 .maintenance-main {
