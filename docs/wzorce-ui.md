@@ -4,6 +4,14 @@
 > podobnych funkcjonalnie. Zmiany wyglądu konsultowane z użytkownikiem
 > **hurtowo** — paczka wg wzorca, zrzuty przed/po (390 / 1400 px), jedno pytanie.
 
+> **E23 (2026-10-23):** wspólne style są w silniku `web/shared/style/`
+> (`tokens.css`, `base.css`, `components.css`, `layout.css`, `utilities.css`;
+> ekrany TV i gry: `tokens.css` + generowany `flat.css`). Dawny
+> `shared/css/base.css` usunięty, `games/css/games.css` to tylko strona Moje gry.
+> Odwołania niżej do `base.css`/`games.css` z numerami linii są historyczne —
+> te same klasy są dziś w `components.css` (komponenty) i `layout.css` (pasek
+> listy, karta, siatka, dolny pasek). Zasady silnika: `silnik-stylow-projekt.md` §13.
+
 Etap **E18** w [`wdrozenia.md`](wdrozenia.md). Decyzja użytkownika 2026-10-09:
 ujednolicić wygląd całej aplikacji. Ten dokument ma trzy części:
 

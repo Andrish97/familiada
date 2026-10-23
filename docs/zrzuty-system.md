@@ -182,3 +182,23 @@ serwisu. Kod QR z kadru `poll-share` (ankieta demo) otwiera ukrytą grę w węż
 - Jedyne obrazy strony to kadry tego systemu: `web/assets/img/<język>/shots/`
   (+ `og/og-image.webp`). Mail marketingowy (`web/shared/js/core/marketing-mail.js`)
   też używa tych kadrów (wersje `-preview`); stare `landing-*.webp` usunięte 2026-10-20.
+
+## Porównanie przed/po (E23)
+
+Przy zmianach wspólnych stylów (silnik `web/shared/style/`) każdą stronę
+porównuje się z wersją sprzed zmiany:
+
+```bash
+git worktree add /tmp/przed <commit-sprzed>           # kod sprzed zmiany
+ln -s "$PWD/tests/node_modules" /tmp/przed/tests/node_modules
+(cd /tmp/przed && node scripts/screens/run.cjs --scenes=… --devices=desktop,phone,tablet --force-devices --styles --out=/tmp/A)
+node scripts/screens/run.cjs --scenes=… --devices=desktop,phone,tablet --force-devices --styles --out=/tmp/B
+node scripts/screens/compare.cjs /tmp/A /tmp/B --out=/tmp/C --style-lines=20
+```
+
+- `--styles` zapisuje obok PNG obliczone style widocznych elementów
+  (`*.styles.json`); `compare.cjs` wypisuje, które właściwości których
+  elementów się zmieniły — to wskazuje przyczynę różnicy pikseli.
+- Raport `/tmp/C/index.html`: przed / po / obraz różnic (czerwone piksele).
+- Kod wyjścia 1, gdy różnica przekracza `--max` (domyślnie 0,05% pikseli).
+- W środowisku agenta Chromium: `CHROMIUM_PATH=/opt/pw-browsers/chromium`.

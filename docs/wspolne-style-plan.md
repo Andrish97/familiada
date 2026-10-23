@@ -9,6 +9,11 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+- **Spójność ponad zgodność ze starymi zrzutami (decyzja użytkownika 2026-10-23):**
+  „nie musisz dostosowywać każdej strony na 100%; jeśli coś jest lepsze
+  i bardziej spójne, lepiej postawić na spójność niż zgodność ze starymi
+  screenami”. Porównanie przed/po służy do wyłapywania błędów (zepsute
+  elementy, regresje), nie do odtwarzania lokalnych odstępstw stron.
 - **2026-10-21:** wspólne style wszędzie zamiast samego sprzątania; strony
   nie definiują własnych wersji wspólnych elementów (bez lokalnych kopii
   klas i nadpisań per strona).
@@ -229,3 +234,4 @@ i Ustawieniach niż zakładał pierwszy plan).
 | 2026-10-21 | Projekt silnika | Analiza cz. 2 (moduły JS, szkielety stron, progi, style w HTML, testy/narzędzia/przeglądarki) → `silnik-stylow-projekt.md`; 6 decyzji do podjęcia. |
 | 2026-10-21 | Zakres ekranów gry | Control pełna zgodność; buzzer/host/display/TV/snake częściowo (tokeny, wspólne okna). |
 | 2026-10-23 | Start realizacji, fundament, pilot | Polecenie użytkownika: intensywnie, bez pytań, wygląd prawie bez zmian, tylko branch. Silnik `web/shared/style/` (tokens, base, components, layout, utilities; `@layer`), narzędzia `compare.cjs` i `run.cjs --styles`, zapadka audytu włączona (baseline odświeżony), `styleEngine.test.js`. Pilot Zadania: zrzuty identyczne. Ustalenia: `silnik-stylow-projekt.md` §13. |
+| 2026-10-23 | Wszystkie strony na silniku | Kolejno: Znajomi/Subskrybenci, Connect, logowanie, głosowanie, Gry, Bazy, Logo, rynek, Konto, Ankieta/maile/Go, edytory, Eksplorator, strona główna/Wskazówki/Prywatność, Control (blok `<style>` do pliku), ekrany TV i gry (silnik płaski), panel admina. Warstwa `states` dla arkusza okna. Stary `base.css` usunięty. Każda partia: zrzuty przed/po + różnice obliczonych stylów; unit zielone. Szczegóły: `silnik-stylow-projekt.md` §13. |

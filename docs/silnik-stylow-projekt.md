@@ -388,7 +388,11 @@ Polecenie użytkownika (2026-10-23): pracować intensywnie i bez pytań; wygląd
 „mniej więcej taki sam, bez większych zmian”; animacje i przyspieszenia wolno;
 tylko branch roboczy, nic na `main`.
 
-Ustalenia (wynikają z zasady „wygląd bez zmian”; do zmiany przy dalszych krokach):
+Doprecyzowanie użytkownika (2026-10-23, w trakcie): **spójność ważniejsza niż
+zgodność ze starymi zrzutami** — lokalne odstępstwa stron można zastępować
+wspólnym wyglądem; porównanie przed/po wyłapuje błędy, nie wymusza 100% zgodności.
+
+Ustalenia (pierwsza faza — przeniesienie 1:1, potem ujednolicanie):
 
 1. **Przeniesienie zamiast przepisania wyglądu.** Silnik to uporządkowany
    `base.css` + wspólne części `games.css` z tokenami 1:1 (te same wartości),
@@ -433,11 +437,13 @@ Ustalenia (wynikają z zasady „wygląd bez zmian”; do zmiany przy dalszych k
    (0,2 s), przejścia kolorów/ramek przycisków i pól, strzałka sekcji;
    `prefers-reduced-motion` wyłącza wszystkie animacje globalnie.
 
-Stan stron (2026-10-23, branch `ccr-a802ffe7-hhw67a`) — przepięte, zrzuty
-porównane (komputer/telefon/tablet, wszystkie sceny strony):
-Zadania (pilot), Znajomi, Subskrybenci, Connect, logowanie, potwierdzenie
-i reset hasła, głosowanie publiczne (punkty, tekst), Moje gry, Bazy, Logo
-(lista i 3 edytory), Społeczność gier, Konto, Ankieta, Centrum maili, Go.
+Stan (2026-10-23, branch `ccr-a802ffe7-hhw67a`): **wszystkie strony przepięte**,
+dawny `shared/css/base.css` usunięty, `games/css/games.css` = tylko Moje gry.
+Zrzuty porównane względem stanu sprzed E23 (komputer/telefon/tablet, Control
+także tablet poziomo; wszystkie sceny każdej strony). Strony aplikacji: silnik
+z warstwami; ekrany TV i gry (Connect TV, QR ankiety, przerwa, 404, Prowadzący,
+Przycisk, snake): `tokens.css` + `flat.css` (bez warstw). Wyświetlacz bez zmian
+(nie używał wspólnych stylów).
 
 Przy przepięciu wychodzą reguły strony, które dawniej przegrywały z
 `base.css`/`games.css` przez specyficzność, a w `@layer page` wygrywają —
@@ -455,5 +461,27 @@ strony (np. `:not(:disabled)`, `:where()`, usunięcie martwej reguły).
     `games.css` i `shared/css/base.css` zostają dla stron nieprzepiętych
     (usunięcie po ostatniej). Reguły jednej strony z `base.css` przeniesione
     do plików stron (Bazy, Connect, Ankieta, rynek, strona główna).
-13. **Ekrany gry i QR ankiety** (TV/Tizen bez `@layer`): osobny krok — tylko
-    `tokens.css` + własny CSS bez warstw.
+13. **Ekrany TV i gry — silnik płaski.** Tizen 6 nie zna `@layer` (pomija całą
+    treść warstwy), więc te strony linkują `tokens.css` + `flat.css`
+    — ten sam silnik bez warstw, generowany: `node scripts/build-flat-engine.mjs`
+    (test aktualności w `styleEngine.test.js`). Własny CSS tych stron bez warstw.
+14. **Warstwa `states`** (po `page`): stan arkusza okna (telefon, tablet
+    dotykowy) — ogólne reguły w `components.css`, reguły stron w `@layer states`
+    w ich plikach. Stan wygrywa ze zwykłymi regułami okien stron (jak dawniej
+    przez wysoką specyficzność); strona nadpisuje go świadomie `!important`.
+15. **Wnioski z przepinania** (powtarzalne poprawki w plikach stron): reguły,
+    które dawniej przegrywały przez specyficzność, a w `@layer page` wygrywają:
+    ogólne `input` w stronie psuły pola wyboru (`:where(:not([type=checkbox],
+    [type=radio]))`), kolory przycisku na stanie `:disabled` (`:not(:disabled)`),
+    `.card` strony nad kartą z wypustkami (`:where(:not(.games-card))`), zmienne
+    na `:root` (przenieść na `body`), martwe reguły (usunięte).
+16. **Narzędzia do dalszej pracy** (scratchpad agenta, do odtworzenia):
+    zrzuty bazowe z worktree sprzed zmiany, `run.cjs --styles`, `compare.cjs`
+    — różnice obliczonych stylów pokazują przyczynę każdej różnicy pikseli.
+
+Dalsze kroki E23 (wg §8): mechanizmy `web/shared/ui/` (dialog, block-screen,
+messages, list-tools, tabs, popover, states, device, page-shell, pickers),
+zwinięcie odcieni i promieni (§11.2–3, zrzuty przed/po do oceny), progi
+(§3.3, `data-device`), style inline z JS/HTML do klas (§7, `settings.js`),
+plik strony = tylko układ (przeniesienie komponentów stronowych do silnika),
+`wzorce-ui.md` opisujący komponenty silnika.
