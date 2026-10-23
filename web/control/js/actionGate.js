@@ -1,4 +1,4 @@
-import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-23T20201";
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-23T21405";
 
 
 export function createActionGate({ getSfxDuration }) {
