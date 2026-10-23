@@ -1,6 +1,5 @@
 /* Znajomi i Subskrybenci: dwie karty, wspólne sekcje i wiersze odbiorców. */
 @layer page {
-  .contacts-body .bar{ margin-bottom: 16px; }
   .contacts-body .title{ font-size: 18px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
   #contactsHost > .load-retry{ grid-column: 1 / -1; align-self: start; }
   .contacts-card{ min-width: 0; }

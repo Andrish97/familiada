@@ -721,7 +721,6 @@
 
   /* część z kartą ma wypełnić resztę */
   .logoShell{
-    margin-top: 8px;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;

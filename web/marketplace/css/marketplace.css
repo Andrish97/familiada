@@ -73,7 +73,6 @@
   .mkt-games-card .mkt-search-bar{ margin-bottom: 14px; }
   .mkt-search-box{ flex: 1 1 auto; min-width: 0; }
   .mkt-search-button{ display: none; }
-  .mkt-games-card{ margin-top: 8px; }
   .mkt-games-card > .mkt-info:empty{ display: none; }
   #mySentList{ display: grid; gap: 10px; }
 

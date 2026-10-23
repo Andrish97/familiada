@@ -44,7 +44,8 @@
     gap: 12px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--line-strong);
-    margin-bottom: 0;
+    /* Jeden odstęp od linii do treści (karty, wypustek, listy) na każdej stronie. */
+    margin-bottom: 12px;
   }
   .bar > :first-child { flex: 1 1 0; min-width: 0; text-align: left; }
   /* Pasek akcji w nagłówku listy: pełne napisy (także na telefonie). */
