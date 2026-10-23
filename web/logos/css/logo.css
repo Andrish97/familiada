@@ -882,12 +882,18 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   width: min(98vw, 1800px);
   max-width: min(98vw, 1800px);
   max-height: min(90vh, 1000px);
-  border-radius: var(--radius-lg);
-  padding: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Zwykłe okno (komputer): zaokrąglenie i marginesy. W oknie od dołu (telefon,
+   tablet) obowiązuje wspólny wygląd roletki z base.css -- zaokrąglona tylko
+   góra, dół przy krawędzi ekranu. */
+#previewOverlay:not(.sheet-active) .modal.previewModal{
+  border-radius: var(--radius-lg);
+  padding: 18px;
 }
 
 /* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
