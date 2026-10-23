@@ -328,9 +328,9 @@
  "web/settings/css/settings.css": {
   "important": 68,
   "colorLiteral": 316,
-  "mediaWidth": 5,
+  "mediaWidth": 6,
   "zIndexLiteral": 18,
-  "sharedDuplicate": 8,
+  "sharedDuplicate": 7,
   "unusedClass": 40
  },
  "web/settings/index.html": {

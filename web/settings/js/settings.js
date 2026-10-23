@@ -1072,7 +1072,8 @@ async function openMaintenancePreview() {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T05395"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-23T05395"/>
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T05395"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-23T05395"/>
   <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-23T05395"/>
 
   <style>
