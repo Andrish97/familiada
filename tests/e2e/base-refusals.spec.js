@@ -75,7 +75,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     const sharedRow = page.locator("#shareSectionsHost .shareRow");
     await expect(sharedRow).toHaveCount(1);
     await expect(sharedRow.locator('[data-act="resend"]')).toBeDisabled();
-    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "viewer");
+    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-value", "viewer");
     const tasks = await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: baseId });
     const taskId = tasks[0].task_id;
     const tokenInfo = await rpc(page, "base_share_panel", { p_base_id: baseId });
@@ -124,13 +124,13 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await recipient.locator('#baseDeclinesHost [data-act="undo"]').click(); await expect(proposed).toBeVisible();
     await openShares(page, baseId);
     await sharedRow.locator(".baseShareRole").click();
-    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "editor");
+    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-value", "editor");
     await proposed.locator("[data-accept]").click();
     await expect(proposed).toHaveCount(0);
     await openShares(page, baseId);
     await expect(sharedRow).toContainText("Zaakceptowano");
     await sharedRow.locator(".baseShareRole").click();
-    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "viewer");
+    await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-value", "viewer");
     const access = await rpc(page, "list_base_shares", { p_base_id: baseId });
     expect(access[0].role).toBe("viewer");
     // Accepted access belongs to the base and survives removal of its original friendship.

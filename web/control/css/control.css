@@ -619,7 +619,7 @@
   #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
   #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
   #app > .cardBody .msg-pill { font-size:calc(var(--c2-fs) * .75); }
-  #app > .cardBody .toggle-slider::before { font-size:calc(var(--c2-fs) * .92); }
+  #app > .cardBody .toggle-slider { font-size:calc(var(--c2-fs) * .92); }
   /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
      tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
      wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.

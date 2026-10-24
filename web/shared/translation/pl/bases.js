@@ -47,6 +47,7 @@ const pl = {
       sharedHint: "Uprawnienie zmienisz przyciskiem przy osobie.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
+      roleLabel: "Uprawnienie",
       roleEditor: "Może edytować",
       roleViewer: "Tylko podgląd",
       roleEditorShort: "Edycja",

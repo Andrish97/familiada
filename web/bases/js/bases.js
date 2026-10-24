@@ -1,32 +1,33 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-24T15410";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-24T15503";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-24T15410";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-24T15503";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-24T15410";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-24T15503";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T15410";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-24T15410";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T15410";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-24T15410";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T15410";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T15410";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T15410";
-import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T15410";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T15410";
-import { enterModalSheet, exitModalSheet, isSheetViewport, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T15410";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T15410";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T15410";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T15410";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T15410";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T15410";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T15410";
-import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-24T15410";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-24T15410";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-24T15410";
-import { sendNotificationMail, goLinkToken } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T15410";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-24T15410";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T15503";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-24T15503";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T15503";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-24T15503";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T15503";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T15503";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T15503";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T15503";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T15503";
+import { enterModalSheet, exitModalSheet, isSheetViewport, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T15503";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T15503";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T15503";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T15503";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T15503";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T15503";
+import { toggleGroupEl } from "../../shared/js/core/toggle-group.js?v=v2026-10-24T15503";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T15503";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-24T15503";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-24T15503";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-24T15503";
+import { sendNotificationMail, goLinkToken } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T15503";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-24T15503";
 
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
@@ -203,27 +204,19 @@ function setMsg(el, t) {
   el.textContent = t || "";
 }
 
+// Uprawnienie (Podgląd | Edycja) — przycisk dwóch stanów z core/toggle-group.js.
 function baseRoleButton(value, onChange) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "btn xs baseShareRole";
-  const update = () => {
-    const editor = value === "editor";
-    const label = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
-    const shortLabel = t(editor ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
-    button.innerHTML = `${icon(editor ? "edit-paper" : "eye")}<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
-    button.title = label;
-    button.setAttribute("aria-label", button.title);
-    button.dataset.role = value;
-  };
-  button.addEventListener("click", async () => {
-    button.disabled = true;
-    const next = value === "editor" ? "viewer" : "editor";
-    try { if (await onChange(next) !== false) value = next; }
-    finally { update(); button.disabled = false; }
+  return toggleGroupEl({
+    value,
+    size: "sm",
+    className: "baseShareRole",
+    label: t("bases.shareModal.roleLabel"),
+    options: [
+      { value: "viewer", icon: "eye", label: t("bases.shareModal.roleViewerShort"), title: t("bases.shareModal.roleViewer") },
+      { value: "editor", icon: "edit-paper", label: t("bases.shareModal.roleEditorShort"), title: t("bases.shareModal.roleEditor") },
+    ],
+    onChange,
   });
-  update();
-  return button;
 }
 function initShareRoleSelect() {
   // Jeden przełącznik (Może edytować / Tylko podgląd) w stopce okna „Udostępnij bazę”:

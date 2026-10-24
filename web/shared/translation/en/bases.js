@@ -47,6 +47,7 @@ const en = {
       sharedHint: "Change the permission with the button next to the person.",
       title: "Share base",
       placeholder: "Username or email...",
+      roleLabel: "Permission",
       roleEditor: "Can edit",
       roleViewer: "View only",
       roleEditorShort: "Edit",

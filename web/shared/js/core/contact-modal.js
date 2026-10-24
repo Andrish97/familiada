@@ -1,8 +1,8 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T15410";
-import { isSheetViewport, enterModalSheet, exitModalSheet, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T15410";
-import { icon, iconText } from "./icons.js?v=v2026-10-24T15410";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-24T15410";
-import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-24T15410";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T15503";
+import { isSheetViewport, enterModalSheet, exitModalSheet, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T15503";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T15503";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-24T15503";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-24T15503";
 
 
 let modalEl = null;
@@ -155,7 +155,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-24T15410");
+    const { sb } = await import("./supabase.js?v=v2026-10-24T15503");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;

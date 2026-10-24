@@ -13,33 +13,11 @@
      SHARE MODAL + tile badges
   ========================================================= */
 
-  /* Uprawnienie nowych udostępnień: po lewej w stopce, akcje po prawej. */
   /* Okno „Udostępnij bazę”: uprawnienie po lewej w stopce, Anuluj i Udostępnij po prawej. */
   .shareSendModal .uni-foot{ align-items: center; justify-content: flex-end; }
   .shareSendModal .uni-foot > .baseShareRoleSlot{ order: -1; margin-right: auto; }
   .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
   .baseShareSections .shareSection{ margin-top: 0; }
-  .baseShareRoleSlot .baseShareRole{ height: auto; min-height: 0; padding: 6px 10px; }
-  .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
-  .baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
-  .baseShareRoleShort{ display:none; }
-  .shareRowActions .baseShareRole{ height: auto; min-height: 34px; }
-  /* Wspólne compact rows zwężają każde .btn do przycisku ikonowego. Rola
-     „Może edytować” ma też etykietę, więc zachowuje szerokość tekstu. */
-  .shareRow--compact .shareRowActions .baseShareRole{
-    width: auto;
-    min-width: max-content;
-    min-height: 44px;
-    padding: 6px 8px;
-  }
-  @media (max-width: 600px){
-    .baseShareRoleFull{ display:none; }
-    .baseShareRoleShort{ display:inline; }
-    .shareRow--compact .shareRowActions .baseShareRole{ min-height: 40px; height: 40px; }
-    /* w wierszu listy rola jako sama ikona (oko/ołówek, opis w dymku) —
-       kafel mieści się w jednym rzędzie jak pozostałe listy */
-    .shareRow--compact .shareRowActions .baseShareRole .baseShareRoleLabel{ display: none; }
-  }
   #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
   #baseDeclinesHost .shareSection{ margin-top: 8px; }
   #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
@@ -96,10 +74,6 @@
 
 
 @layer page {
-  /* Rola w stopce okna: odstęp ikona–napis jak inne przyciski stopki. */
-  .uni-foot .baseShareRole{ gap: .4em; }
-  /* Wiersz z aktywnym licznikiem: rola tej samej wysokości co pozostałe przyciski. */
-  .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions .baseShareRole{ height: 52px; min-height: 52px; }
 
 
   /* Okno udostępniania bazy: pusta sekcja listy nie zmniejsza karty do

@@ -1368,38 +1368,59 @@
     html.webapp .fs-btn { display: none; }
   }
 
-  /* ── Przełącznik segmentowy (radio w pigułkach): .toggle-group > label.toggle-item
-     > input + span.toggle-slider[data-text]. Jedna kopia (dawniej ustawienia gry i Control). */
+  /* ── Przycisk dwóch stanów (jeden w serwisie): obie wartości widoczne
+     naraz, wybrana jak aktywny filtr (złoty odcień, napis i obrys). Kształt
+     zwykłego przycisku (.btn) podzielonego na części; --sm jak .btn.sm.
+     Znaczniki: .toggle-group > label.toggle-item > input[radio] + span.toggle-slider
+     (ikona i/lub .toggle-label); z JS — toggleGroupEl() z core/toggle-group.js.
+     Ustawienia gry, Dźwięk w Control, uprawnienie w udostępnianiu bazy. ── */
   .toggle-group {
+    --btn-tint: var(--w-8);
     display: inline-grid;
-    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     width: fit-content;
+    max-width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--surface-1));
     overflow: hidden;
-    border: 2px solid var(--w-14);
-    border-radius: var(--r-lg);
-    background: var(--k-20);
   }
-  .toggle-item { position: relative; cursor: pointer; }
+  .toggle-item { position: relative; display: flex; min-width: 0; cursor: pointer; }
+  .toggle-item + .toggle-item { border-left: 1px solid var(--line-strong); }
   .toggle-item input { position: absolute; opacity: 0; width: 0; height: 0; }
   .toggle-slider {
-    position: relative;
-    display: block;
-    padding: 10px 20px;
-    color: var(--accent);
-    font-size: 0;
-    font-weight: 700;
-    letter-spacing: .02em;
-    text-align: center;
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4em;
+    min-width: 0;
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
     white-space: nowrap;
-    transition: background var(--dur-base) ease, color var(--dur-base) ease;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
   }
-  .toggle-slider::before { content: attr(data-text); font-size: 13px; }
-  .toggle-item:first-child .toggle-slider { border-radius: var(--r-lg) 0 0 var(--r-lg); }
-  .toggle-item:last-child .toggle-slider { border-radius: 0 var(--r-lg) var(--r-lg) 0; }
-  .toggle-item:hover .toggle-slider { background: var(--w-8); }
-  .toggle-item input:checked + .toggle-slider { background: var(--accent); color: var(--bg); }
-  @media (hover: hover) and (pointer: fine) { .toggle-item input:checked:hover + .toggle-slider { filter: brightness(1.08); } }
-  .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -4px; }
+  .toggle-slider > .ico { flex: none; width: 1.15em; height: 1.15em; }
+  .toggle-group--sm .toggle-slider { padding: 7px 10px; font-size: 12px; }
+  /* Wiersz listy na telefonie: przełącznik same ikony (opis w dymku). */
+  @media (max-width: 600px) {
+    .shareRowActions .toggle-group .toggle-slider > .ico + .toggle-label { display: none; }
+  }
+  .toggle-item input:checked + .toggle-slider {
+    background: var(--g-10);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--g-60);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .toggle-item:hover input:not(:checked, :disabled) + .toggle-slider { background: var(--w-4); color: var(--text); }
+  }
+  .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .toggle-item:has(input:disabled) { cursor: not-allowed; }
+  .toggle-item input:disabled:not(:checked) + .toggle-slider { color: var(--disabled-text); }
 
   /* ── Wybór koloru (jeden: ustawienia gry, znaczniki w Eksploratorze;
      znaczniki i obsługa: core/color-picker.js): dwie karty — podgląd + HEX,
@@ -2323,6 +2344,9 @@
   .shareRow--compact .shareTags { margin-top: 0; }
   .shareRow--compact .shareNote { grid-column: 1 / -1; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .shareRow--compact .shareRowActions { align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
+  /* Przycisk dwóch stanów w wierszu: naturalna szerokość, wysokość jak pozostałe akcje. */
+  .shareRow--compact .shareRowActions .toggle-group { flex: none; }
+  .shareRow--compact .shareRowActions .toggle-slider { padding-block: 0; }
   .shareRow--compact .shareRowActions .btn { width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
   .shareRowActions .shareActionCountdown { flex-direction: column; gap: 3px; }
   .shareRowActions .shareActionCountdown:disabled { opacity: 1; border-color: var(--line-strong); }
@@ -2393,7 +2417,7 @@
   }
   @media (max-width: 720px) {
     .shareRow--compact .shareRowActions { gap: 4px; align-self: center; }
-    .shareRow--compact .shareRowActions :is(.btn, .baseShareRole) { width: 36px; min-width: 36px; min-height: 40px; height: 40px; padding: 4px; }
+    .shareRow--compact .shareRowActions .btn { width: 36px; min-width: 36px; min-height: 40px; height: 40px; padding: 4px; }
     .shareRow--compact { gap: 8px; padding: 8px; }
     .shareRow--compact .shareTags { gap: 4px; width: auto; max-width: 100%; margin-top: 0; flex-wrap: wrap; overflow: hidden; }
     .shareRow--compact .shareTags .tag { font-size: 10px; padding: 2px 6px; }

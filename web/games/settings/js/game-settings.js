@@ -1,35 +1,39 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T15410";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T15410";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T15410";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T15410";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T15410";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T15410";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T15410";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T15410";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T15410";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T15410";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T15410";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T15410";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T15410";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T15410";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T15503";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T15503";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T15503";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T15503";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T15503";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T15503";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T15503";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T15503";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T15503";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T15503";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T15503";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T15503";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T15503";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T15503";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-24T15410";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-24T15503";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T15410";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T15410";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T15410";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T15410";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T15410";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T15410";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T15410";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T15503";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T15503";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T15503";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T15503";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T15503";
+import { installToggleSwap } from "../../../shared/js/core/toggle-group.js?v=v2026-10-24T15503";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T15503";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T15503";
+
+// Przycisk dwóch stanów: klik w wybraną część przełącza na drugą (core/toggle-group.js).
+installToggleSwap();
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -641,11 +645,11 @@ function renderDisplay() {
       <div class="toggle-group gs-host-logo-mode" role="radiogroup" aria-label="${escAttr(t("gameSettings.display.hostLogoMode"))}">
         <label class="toggle-item">
           <input type="radio" name="gsHostLogoMode" value="pixel" ${localSettings.display.hostLogoMode === "pixel" ? "checked" : ""}/>
-          <span class="toggle-slider" data-text="${escAttr(t("gameSettings.display.hostLogoPixel"))}"></span>
+          <span class="toggle-slider">${escText(t("gameSettings.display.hostLogoPixel"))}</span>
         </label>
         <label class="toggle-item">
           <input type="radio" name="gsHostLogoMode" value="source" ${localSettings.display.hostLogoMode === "source" ? "checked" : ""}/>
-          <span class="toggle-slider" data-text="${escAttr(t("gameSettings.display.hostLogoSource"))}"></span>
+          <span class="toggle-slider">${escText(t("gameSettings.display.hostLogoSource"))}</span>
         </label>
       </div>
       <div class="hint">${t("gameSettings.display.hostLogoHint")}</div>
@@ -1069,11 +1073,11 @@ function renderQuestions() {
           <div class="toggle-group">
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.yes"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.finale.yes"))}</span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.no"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.finale.no"))}</span>
             </label>
           </div>
         </div>
@@ -1082,11 +1086,11 @@ function renderQuestions() {
           <div class="toggle-group">
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="random" ${finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.questions.modeRandom"))}</span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="pick" ${!finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeManual"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.questions.modeManual"))}</span>
             </label>
           </div>
           <div class="hint">${t("gameSettings.questions.finalModeHint")}</div>
@@ -1099,11 +1103,11 @@ function renderQuestions() {
           <div class="toggle-group">
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="random" ${roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.questions.modeRandom"))}</span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="pick" ${!roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeOrdered"))}"></span>
+              <span class="toggle-slider">${escText(t("gameSettings.questions.modeOrdered"))}</span>
             </label>
           </div>
           <div class="hint">${t("gameSettings.questions.roundsModeHint")}</div>

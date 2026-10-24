@@ -47,6 +47,7 @@ const uk = {
       sharedHint: "Дозвіл зміниш кнопкою біля особи.",
       title: "Поділитися базою",
       placeholder: "Ім’я користувача або e-mail...",
+      roleLabel: "Дозвіл",
       roleEditor: "Може редагувати",
       roleViewer: "Лише перегляд",
       roleEditorShort: "Редагування",

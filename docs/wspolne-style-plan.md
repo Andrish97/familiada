@@ -9,8 +9,8 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
-- **2026-10-23 — przyciski dwóch stanów (doprecyzowanie użytkownika; propozycja
-  do akceptacji po wznowieniu).** Chodzi o przycisk, który pokazuje **oba stany
+- **2026-10-23 — przyciski dwóch stanów (doprecyzowanie użytkownika; zrobione
+  2026-10-24: `.toggle-group` w silniku, `core/toggle-group.js`).** Chodzi o przycisk, który pokazuje **oba stany
   jednocześnie** (nie włącz/wyłącz): dziś `.toggle-group` — Dźwięk w kroku
   Urządzenia w Control („Panel sterowania | Wyświetlacz”), kilka w Ustawieniach
   gry — oraz rola w udostępnianiu bazy (dziś jeden przycisk zmieniający napis
