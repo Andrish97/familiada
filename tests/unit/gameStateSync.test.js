@@ -168,3 +168,22 @@ test("status odczytu rejestruje pojedynczy wynik RPC z rewizją i czasem", async
   assert.equal(statuses[0].revision, 12);
   assert.equal(typeof statuses[0].fetchMs, "number");
 });
+
+test("receivedRev obejmuje wiersz czekający na koniec animacji (heartbeat nie bierze go za zgubiony)", async () => {
+  let release;
+  const animation = new Promise((resolve) => { release = resolve; });
+  const sync = createRowSync({
+    fetchRow: async () => ({ data: row(1) }),
+    onRow: async (r) => { if (r.rev === 2) await animation; },
+  });
+  await sync.fetchGuarded();
+  sync.applyRow(row(2));
+  await tick();
+  sync.applyRow(row(3));
+  assert.equal(sync.lastRev, 2);
+  assert.equal(sync.receivedRev, 3);
+  release();
+  await tick(20);
+  assert.equal(sync.lastRev, 3);
+  assert.equal(sync.receivedRev, 3);
+});

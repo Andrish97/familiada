@@ -484,9 +484,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let behindRevision = null;
   function noteServerRevision(revision) {
     if (!active || !Number.isSafeInteger(revision)) return;
-    if (revision <= sync.lastRev) { behindRevision = null; return; }
+    // Wiersz czekający na koniec animacji (Wyświetlacz) już dotarł kanałem.
+    if (revision <= sync.receivedRev) { behindRevision = null; return; }
     if (behindRevision == null || revision < behindRevision) { behindRevision = revision; return; }
-    const missed = revision - Math.max(0, sync.lastRev);
+    const missed = revision - Math.max(0, sync.receivedRev);
     behindRevision = null;
     sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
       trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,

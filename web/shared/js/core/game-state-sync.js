@@ -131,5 +131,8 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
     pendingRefetch = false;
   }
 
-  return { fetchGuarded, applyRow, reset, get lastRev() { return lastRev; } };
+  // receivedRev: najwyższa odebrana rewizja, także czekająca na koniec
+  // animacji — porównanie z heartbeatem nie bierze jej za zgubioną.
+  return { fetchGuarded, applyRow, reset, get lastRev() { return lastRev; },
+    get receivedRev() { return Math.max(lastRev, pendingRow?.row.rev ?? -1); } };
 }
