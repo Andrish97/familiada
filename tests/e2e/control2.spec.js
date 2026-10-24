@@ -952,6 +952,16 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
 
 // ===== 1. Parowanie urządzeń =====
 
+// Diagnostyka mieszczenia listy urządzeń: wysokości kontenerów i wierszy (bez treści).
+async function devicesFitDiag(page) {
+  return page.evaluate(() => {
+    const h = (el) => (el ? Math.round(el.getBoundingClientRect().height) : null);
+    const area = document.querySelector(".c2-devices-layout .c2-scroll-area");
+    const rows = [...document.querySelectorAll(".c2-devicerows > *")].map((r) => [r.className.split(" ")[0], h(r), [...r.children].map((c) => `${String(c.className).split(" ")[0]}:${h(c)}`).join(",")]);
+    return JSON.stringify({ vw: innerWidth, vh: innerHeight, sh: area?.scrollHeight, ch: area?.clientHeight, layout: h(document.querySelector(".c2-devices-layout")), foot: h(document.querySelector(".stepFoot")), side: h(document.querySelector(".c2-roundlayout-side")), topbar: h(document.querySelector(".topbar")), card: h(document.querySelector(".control-main-card")), rows });
+  });
+}
+
 test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser, accounts, loginAs }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAs(page, page.context(), accounts.standard[0]);
@@ -1017,6 +1027,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .conn-status')).toHaveText("POŁĄCZONO", { timeout: 10000 });
     await expect(page.locator('.device-row[data-device="host"] .device-row-1 .conn-status')).toHaveClass(/\bconn-status--connected\b/);
     const deviceListFits = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    if (!deviceListFits) console.log("[e2e-diag] devices-fit", await devicesFitDiag(page));
     expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -2581,6 +2592,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // game-settings.spec.js's analogiczne przełączniki.
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
     const devicesFitAfterAudioSwitch = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    if (!devicesFitAfterAudioSwitch) console.log("[e2e-diag] devices-fit-audio", await devicesFitDiag(page));
     expect(devicesFitAfterAudioSwitch, "włączenie dźwięku z Wyświetlacza nie powinno dodawać przewijania na normalnym ekranie").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await expect(nextStep).toBeDisabled({ timeout: 10000 });
