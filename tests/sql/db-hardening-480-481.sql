@@ -1,5 +1,5 @@
--- Migracje 480–481: stała search_path, funkcje wyzwalaczy bez EXECUTE dla API.
--- Lokalna baza wg docs/sql/local-db.md (schema.sql + migracje 480, 481).
+-- Migracje 480–482: stała search_path, funkcje wyzwalaczy bez EXECUTE dla API.
+-- Lokalna baza wg docs/sql/local-db.md (schema.sql + migracje 480, 481, 482).
 \set ON_ERROR_STOP 1
 begin;
 \set a '48000000-0000-4000-8000-00000000000a'
@@ -8,11 +8,11 @@ insert into public.profiles(id,username,email) values (:'a','ala480','a480@examp
 -- schemat lokalny nie ma GRANT-ów tabel: jak na produkcji (Supabase)
 grant usage on schema auth to authenticated, anon;
 grant execute on all functions in schema auth to authenticated, anon;
-grant select, insert, update, delete on public.games to authenticated;
+grant select, insert, update, delete on public.games, public.questions to authenticated;
 do $$ begin
   if exists (select 1 from pg_extension where extname = 'pg_graphql') then raise exception 'pg_graphql nadal włączony'; end if;
   if has_function_privilege('authenticated', 'public.touch_updated_at()', 'execute') then raise exception 'wyzwalacz touch_updated_at wykonywalny przez API'; end if;
-  if has_function_privilege('anon', 'public._game_control_active(uuid)', 'execute') then raise exception '_game_control_active wykonywalna przez anon'; end if;
+  if not has_function_privilege('authenticated', 'public._game_control_active(uuid)', 'execute') then raise exception '_game_control_active (guard_game_content) bez EXECUTE'; end if;
   if not has_function_privilege('authenticated', 'public.gen_share_key(integer)', 'execute') then raise exception 'gen_share_key (DEFAULT kolumn) bez EXECUTE'; end if;
   if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
              where n.nspname = 'public' and p.proname = 'game_state_write'
@@ -25,6 +25,8 @@ set local role authenticated;
 -- Wyzwalacze BEFORE INSERT/UPDATE i AFTER DELETE gier działają bez EXECUTE roli.
 insert into public.games(id, owner_id, name) values ('48000000-0000-4000-8000-0000000000a1', :'a', 'Gra 480');
 update public.games set name = 'Gra 480b' where id = '48000000-0000-4000-8000-0000000000a1';
+-- Wyzwalacz guard_game_content (INVOKER) woła _game_control_active jako użytkownik.
+insert into public.questions(game_id, ord, text) values ('48000000-0000-4000-8000-0000000000a1', 1, 'Pytanie 480');
 do $$ declare k text; begin
   select share_key_control into k from public.games where id = '48000000-0000-4000-8000-0000000000a1';
   if coalesce(length(k), 0) < 10 then raise exception 'klucz udostępnienia nie wygenerowany'; end if;
