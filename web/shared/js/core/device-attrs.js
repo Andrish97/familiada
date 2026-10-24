@@ -7,7 +7,7 @@
 //   data-sheet       okna od dołu: dotyk (bez TV) albo okno do 600 px
 // Ładowany jako pierwszy moduł strony; body jest ukryte (page-loading),
 // dopóki strona się nie złoży, więc atrybuty są przed pierwszym widokiem.
-import { getDeviceProfile } from "./device-guard.js?v=v2026-10-24T15503";
+import { getDeviceProfile } from "./device-guard.js?v=v2026-10-24T18062";
 
 export const NARROW_MAX = 600;
 

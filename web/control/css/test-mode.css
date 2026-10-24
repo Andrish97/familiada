@@ -9,7 +9,7 @@
   #controlStage .wrap.wide > .shell { flex:1; min-height:0; }
   #controlTestDevices { display:grid; grid-template-rows:repeat(3,minmax(0,1fr)); min-width:0; min-height:0; }
   #controlTestDevices[hidden] { display:none; }
-  .control-test-device { position:relative; min-width:0; min-height:0; overflow:hidden; background:#000; }
+  .control-test-device { position:relative; min-width:0; min-height:0; overflow:hidden; background:var(--black); }
   .control-test-device iframe { position:absolute; inset:0; width:1024px; height:768px; max-width:none; border:0; transform-origin:0 0; transform:scale(var(--control-device-scale)); }
   .control-test-choice { display:flex; align-items:center; gap:12px; flex:none; }
   .control-test-choice .hint { margin:0; }

@@ -1,8 +1,8 @@
 /* Podgląd zrzutu (js/core/image-viewer.js): strona główna i Wskazówki. */
 @layer page {
   .imgv-overlay {
-    z-index: 9999;
-    background: var(--modal-scrim);
+    z-index: var(--z-top);
+    background: var(--scrim-modal);
     padding: 2vw;
   }
   .imgv-overlay.is-open { display: grid; }

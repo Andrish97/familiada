@@ -1,6 +1,6 @@
 // Loads Host theme factories from the same manifest Display uses. Each
 // entry maps a shared theme key to a Host-specific createTheme(root) module.
-const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-24T15503";
+const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-24T18062";
 
 const FALLBACK_KEY = "classic";
 const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", DOT: "#d7ff3d" };
@@ -59,9 +59,9 @@ export async function createHostThemeApplier() {
     if (key !== currentKey) currentKey = await activate(key, root);
 
     const colors = row.detail?.display?.colors || {};
-    root.style.setProperty("--h-dot", colors.DOT || DEFAULT_COLORS.DOT);
-    root.style.setProperty("--cover-grad-a", colors.A || DEFAULT_COLORS.A);
-    root.style.setProperty("--cover-grad-b", colors.B || DEFAULT_COLORS.B);
+    root.style.setProperty("--host-dot", colors.DOT || DEFAULT_COLORS.DOT);
+    root.style.setProperty("--host-cover-grad-a", colors.A || DEFAULT_COLORS.A);
+    root.style.setProperty("--host-cover-grad-b", colors.B || DEFAULT_COLORS.B);
   }
 
   return { apply };

@@ -69,12 +69,12 @@
   }
 
   .gs-sidebar-item.active {
-    border-left: 3px solid var(--gold);
+    border-left: 3px solid var(--accent);
     border-radius: 0 var(--r-sm) var(--r-sm) 0;
     --btn-tint: var(--g-10);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-    color: var(--gold);
+    color: var(--accent);
     opacity: 1;
   }
 
@@ -87,7 +87,7 @@
 
   /* ===== PASEK AKCJI (Przywróć + komunikat zapisu) ===== */
   .gs-actionbar {
-    --under: #14171d; /* podłoże dla kryjących teł przycisków (css/base.css) */
+    --under: var(--surface-1); /* podłoże dla kryjących teł przycisków (css/base.css) */
     grid-column: 1 / -1;
     grid-row: 1;
     display: flex;
@@ -135,13 +135,13 @@
     font-weight: 800;
     letter-spacing: .05em;
     text-transform: uppercase;
-    color: var(--gold);
+    color: var(--accent);
     margin-bottom: 18px;
   }
 
   .gs-section {
-    background: var(--card);
-    --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
+    background: var(--surface-1);
+    --under: var(--surface-1); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
     border-radius: var(--r-md);
     padding: 18px 20px;
     margin-bottom: 14px;
@@ -178,7 +178,7 @@
   .gs-live-preview-card { min-width: 0; }
   .gs-live-preview-title {
     margin: 0 0 6px;
-    color: var(--gold);
+    color: var(--accent);
     font-size: .78rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -258,8 +258,8 @@
   .setting-item{ margin-bottom:12px; }
   .setting-item:last-child{ margin-bottom:0; }
   .gs-row-dragging{ opacity:.35; }
-  .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--gold,#f0b429); }
-  .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--gold,#f0b429); }
+  .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--accent); }
+  .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--accent); }
   .gs-draggable{ cursor:grab; }
 
   /* ===== LOGO TILES ===== */
@@ -276,8 +276,8 @@
   }
   .gs-logo-tile:hover{ border-color:var(--w-25); background:var(--w-8); }
   .gs-logo-prev{
-    width:120px; height:56px; border-radius:5px;
-    overflow:hidden; background:#000; flex-shrink:0;
+    width:120px; height:56px; border-radius:var(--r-xs);
+    overflow:hidden; background:var(--black); flex-shrink:0;
   }
   .gs-logo-prev canvas{ width:120px; height:56px; display:block; }
   .gs-logo-name{
@@ -325,18 +325,18 @@
     flex-direction:column;
     gap:10px;
     padding:10px;
-    background:#11151d; /* kryjące (= var(--k-20) na karcie), patrz css/base.css */
+    background:var(--surface-2);
     min-height:60px;
   }
   .qList.droptarget{
-    outline:2px dashed rgba(255,255,255,.45);
+    outline:2px dashed var(--text-faint);
     outline-offset:2px;
   }
   .qRow{
     display:flex;
     align-items:center;
     gap:8px;
-    background:#22252d; /* kryjące (= var(--w-8) na liście) */
+    background:var(--surface-inset);
     border-radius:var(--r-sm);
     padding:7px 10px;
     cursor:grab;
@@ -346,11 +346,11 @@
     flex-shrink:0; /* lista ma max-height i scroll — wiersze nie mogą się ściskać */
   }
   .qRow:active{ cursor:grabbing; }
-  .qRow:hover{ background:#373a41; }
+  .qRow:hover{ background:linear-gradient(var(--w-8), var(--w-8)) var(--surface-inset); }
   .qRow .meta{
     font-weight:1000;
     font-size:.65rem;
-    color:var(--gold,#f0b429);
+    color:var(--accent);
     min-width:18px;
     text-align:center;
     flex-shrink:0;
@@ -391,7 +391,7 @@
     /* Kryjące tła zamiast rgba: w Chrome na Androidzie półprzezroczyste tła
        wierszy nakładały się przy przerysowaniach — pasy, połówki wierszy
        jaśniejsze (patrz css/base.css, „KRYJĄCE TŁA PRZYCISKÓW”). */
-    background:#242831;
+    background:var(--surface-inset);
     border-radius:var(--r-sm);
     padding:7px 10px;
     cursor:grab;
@@ -399,8 +399,8 @@
     user-select:none;
   }
   .roundsOrderItem:active{ cursor:grabbing; }
-  .roundsOrderItem:hover{ background:#3a3d45; }
-  .roundsOrderItem.dragging{ background:#1b1f27; color:rgba(255,255,255,.5); cursor:grabbing; }
+  .roundsOrderItem:hover{ background:linear-gradient(var(--w-8), var(--w-8)) var(--surface-inset); }
+  .roundsOrderItem.dragging{ background:var(--surface-2); color:var(--text-faint); cursor:grabbing; }
   .roundsOrderHandle{
     color:var(--w-25);
     font-size:.9rem;
@@ -414,7 +414,7 @@
   .roundsOrderNum{
     font-weight:1000;
     font-size:.65rem;
-    color:var(--gold,#f0b429);
+    color:var(--accent);
     min-width:18px;
     text-align:center;
     flex-shrink:0;
@@ -433,7 +433,7 @@
   .roundsOrderHandle .ico { vertical-align: middle; }
 
   /* Licznik znaków nazwy drużyny na Wyświetlaczu; znaki bez glifu -- ostrzeżenie. */
-  .gs-team-measure.is-warn { opacity: 1; color: #ffb3b3; }
+  .gs-team-measure.is-warn { opacity: 1; color: var(--bad-text); }
 
   /* ===== TELEFON (decyzja 2026-10-21: Ustawienia gry także na telefonie) =====
      Dźwięk: nazwa nad kontrolkami, lista dźwięków na całą szerokość;
@@ -512,10 +512,10 @@
   }
 
   /* Ustawienia gry: błąd pola od razu przy polu, podpowiedź progów z pytań. */
-  .inp.is-invalid { border-color: #ff8080; box-shadow: 0 0 0 1px rgba(255,128,128,.45); }
+  .inp.is-invalid { border-color: var(--danger); box-shadow: 0 0 0 1px var(--bad-line); }
   .gs-field-suggest { margin-top: 6px; font-size: 12px; line-height: 1.35; opacity: .75; }
   .gs-field-suggest:empty { display: none; }
-  .gs-field-suggest.is-warn { opacity: 1; color: #ffd27a; }
+  .gs-field-suggest.is-warn { opacity: 1; color: var(--warn-text); }
 
   /* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20;
      dawniej shared/css/base.css). */

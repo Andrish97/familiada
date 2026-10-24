@@ -39,8 +39,8 @@
       gap: 8px;
       padding: 6px 6px 6px 4px;
       border-radius: var(--r-md);
-      border: 1px solid var(--line2);
-      background: var(--card2);
+      border: 1px solid var(--line);
+      background: var(--surface-2);
       min-width: 0
   }
 
@@ -72,7 +72,7 @@
       box-sizing: border-box;
       padding: 0 10px 0 6px;
       border-radius: var(--r-sm);
-      border: 1px solid var(--line2);
+      border: 1px solid var(--line);
       background: var(--k-20);
       cursor: text
   }
@@ -87,7 +87,7 @@
       padding: 0;
       border: 0;
       background: transparent;
-      color: var(--gold);
+      color: var(--accent);
       outline: 0;
       font: inherit;
       font-size: 16px;
@@ -104,8 +104,8 @@
 
   /* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
   .qf-row:has(.qf-text.qf-invalid),.qf-ptsWrap:has(.qf-invalid) {
-      border-color: rgba(255,120,120,.75);
-      background: rgba(255,120,120,.10)
+      border-color: var(--bad-strong);
+      background: var(--bad-tint)
   }
 
   /* Stałe podpowiedzi pod listą odpowiedzi (limit 17, znaki, finał 11) */
@@ -144,7 +144,7 @@
       grid-column: 1;
       justify-self: center;
       margin-left: 12px;
-      color: var(--gold);
+      color: var(--accent);
       font-size: 28px;
       line-height: 1;
   }
@@ -166,7 +166,7 @@
 
   .qf-add:disabled {
       cursor: not-allowed;
-      color: rgba(255,255,255,.92);
+      color: var(--text-soft);
       border-color: var(--w-25)
   }
 
@@ -192,7 +192,7 @@
 
   .qf-sumChip b {
       margin-left: 4px;
-      color: var(--gold);
+      color: var(--accent);
       font-size: 13px;
       font-weight: 900;
       letter-spacing: 0;
@@ -201,11 +201,11 @@
 
   .qf-sum.over .qf-sumChip {
       opacity: 1;
-      color: rgba(255,170,170,.95)
+      color: var(--bad-text)
   }
 
   .qf-sum.over .qf-sumChip b {
-      color: rgba(255,140,140,1)
+      color: var(--bad-text)
   }
 
   .no-points .qf-sumChip {

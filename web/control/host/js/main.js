@@ -7,16 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T15503";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T15503";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T15503";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T15503";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T15503";
-import { createHostRenderer } from "./render.js?v=v2026-10-24T15503";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-24T15503";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-24T15503";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T15503";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T15503";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T18062";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T18062";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T18062";
+import { createHostRenderer } from "./render.js?v=v2026-10-24T18062";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-24T18062";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-24T18062";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18062";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T18062";
 
 
 function parseParams() {
@@ -38,19 +38,19 @@ function setupOrientationClass() {
     document.documentElement.classList.toggle("portrait", portrait);
     document.documentElement.classList.toggle("landscape", !portrait);
 
-    // html.landscape .pane1 .text czyta --outer-left/--outer-right (patrz
+    // html.landscape .pane1 .text czyta --host-outer-left/--host-outer-right (patrz
     // css/host.css) — bez nich left/right w landscape jest niepoprawnym
     // calc() i cała reguła pozycjonująca zostaje zignorowana.
     const root = document.documentElement;
     const cs = getComputedStyle(root);
-    const safeL = parseFloat(cs.getPropertyValue("--safe-left")) || 0;
-    const safeR = parseFloat(cs.getPropertyValue("--safe-right")) || 0;
+    const safeL = parseFloat(cs.getPropertyValue("--host-safe-left")) || 0;
+    const safeR = parseFloat(cs.getPropertyValue("--host-safe-right")) || 0;
     if (!portrait) {
-      root.style.setProperty("--outer-left", `${safeL}px`);
-      root.style.setProperty("--outer-right", `${safeR}px`);
+      root.style.setProperty("--host-outer-left", `${safeL}px`);
+      root.style.setProperty("--host-outer-right", `${safeR}px`);
     } else {
-      root.style.setProperty("--outer-left", "0px");
-      root.style.setProperty("--outer-right", "0px");
+      root.style.setProperty("--host-outer-left", "0px");
+      root.style.setProperty("--host-outer-right", "0px");
     }
   }
   apply();
@@ -124,7 +124,7 @@ function setupResponsivePaper() {
     // Ta sama bazowa wysokość wiersza dla obu orientacji; na małym ekranie
     // ogranicza ją krótszy bok i pionowa przestrzeń, a na tablecie rośnie.
     const line = Math.max(15, Math.min(34, window.innerWidth * 0.042, window.innerHeight / 24));
-    root.style.setProperty("--line", `${line}px`);
+    root.style.setProperty("--host-line", `${line}px`);
     // Tekst zaczyna się na granicy wiersza siatki. Linie same pozostają
     // rozciągnięte od krawędzi do krawędzi, także przez safe area.
     for (const [id, property] of [
@@ -149,7 +149,7 @@ function setupResponsivePaper() {
       const text = pane.querySelector(".text");
       if (text) {
         const syncScroll = () => {
-          const activeLine = parseFloat(getComputedStyle(root).getPropertyValue("--line")) || line;
+          const activeLine = parseFloat(getComputedStyle(root).getPropertyValue("--host-line")) || line;
           grid.style.transform = `translateY(-${text.scrollTop % activeLine}px)`;
         };
         if (!scrollBound.has(text)) {
@@ -274,7 +274,7 @@ async function main() {
   // przesunięcia (portrait/landscape mają inny kierunek) -- dokładnie jak
   // stare js/pages/host.js's window.addEventListener("resize", ...).
   // setupOrientationClass() (niżej) już nasłuchuje na resize dla samego
-  // --outer-left/--outer-right; ten listener jest celowo osobny, bo
+  // --host-outer-left/--host-outer-right; ten listener jest celowo osobny, bo
   // renderer jeszcze nie istnieje w momencie jej wywołania.
   window.addEventListener("resize", () => renderer.updateSwipeHint());
   window.addEventListener("i18n:lang", () => renderer.updateSwipeHint());

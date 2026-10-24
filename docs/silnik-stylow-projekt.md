@@ -100,6 +100,22 @@ strony) i **znaczenie** (to, czego używają komponenty i strony).
   `--z-tooltip 2100`, `--z-block 9999`.
 - Ruch: `--ease`, `--dur-fast/base/slow`; `prefers-reduced-motion` w `base`.
 
+**Realizacja §3.1–3.2 (2026-10-24).** Tokeny przejściowe (`--gold`, `--card`,
+`--line2`, `--surface-*` stron, `--muted-text`, `--success`, `--error`…)
+scalone w nazwy docelowe; strony bez kolorów na sztywno (poza panelem
+admina — §8a). Doszły tokeny stanów `--{ok,bad,warn,info}-{text,line,tint,strong}`,
+tekst `--text-soft`/`--text-faint`, `--white`/`--black`, `--surface-toast`,
+promień `--r-xs` (drobne elementy; 8 px na polu wyboru 18 px dawało koło).
+Warstwy: wartości silnika zostały (sprawdzone w e2e), strony przeszły na
+tokeny według znaczenia przy zachowanej kolejności; nowe `--z-fixed`,
+`--z-drawer`, `--z-sticky`, `--z-top`, `--z-tooltip`, `--z-block`;
+`--z-popover` 60 → 200 (ui-select nie wpisuje już `zIndex` w JS). Ekrany
+gry mają tokeny z prefiksem (`--host-line` zamiast `--line` jako długości).
+Wyświetlacz ładuje `tokens.css` (nakładka blokady bez wartości zapasowych;
+jego różowe `--bg` i nieużywane `--teamA/B` usunięte). Audyt
+(`scripts/css-audit.mjs`) pomija pliki poza silnikiem: laboratoria admina,
+Wyświetlacz, vendor, `flat.css`, generatory HTML maili.
+
 ### 3.3 Progi: mało progów + rodzaj urządzenia (decyzja 2026-10-21)
 
 Decyzja użytkownika: 8 progów to za dużo; **dotyk/rodzaj urządzenia jako

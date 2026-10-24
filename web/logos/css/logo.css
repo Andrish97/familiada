@@ -6,25 +6,6 @@
    - Font picker: popover FIXED (nie jest ucinany przez overflow), scroll w liście, X działa
 ========================================================= */
 @layer page {
-  :root{
-    --bd-weak: var(--w-8);
-    --bd-mid:  var(--w-14);
-    --bd-strong: var(--w-25);
-
-    --bg-weak: var(--k-20);
-    --bg-mid:  var(--k-20);
-    --bg-strong: var(--k-20);
-
-    --radius-lg: 18px;
-    --radius-md: 14px;
-    --radius-sm: 12px;
-
-    --shadow-pop: 0 24px 80px var(--k-40);
-
-    --lamp-active: #ffeb3b;
-    --lamp-glow: rgba(255,235,59,.7);
-  }
-
   /* =========================================================
      LIST / GRID (kafelki)
   ========================================================= */
@@ -44,11 +25,11 @@
   .logoTileTop > :first-child{ flex: 1 1 auto; min-width: 0; }
 
   .logoTile{
-    --under: #070b16; /* podłoże kryjących przycisków (css/base.css) */
+    --under: var(--bg); /* podłoże kryjących przycisków (css/base.css) */
     position: relative;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--bd-mid);
-    background: #070b16;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--bg);
     padding: 14px;
     cursor: pointer;
     display: grid;
@@ -61,8 +42,8 @@
     .logoTile:hover{ transform: translateY(-1px); }
   }
   .logoTile:hover{
-    border-color: var(--gold);
-    background: #0b1020;
+    border-color: var(--accent);
+    background: var(--surface-2);
     box-shadow: 0 10px 24px var(--k-40);
   }
 
@@ -108,9 +89,9 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--bd-weak);
-    background: var(--bg-weak);
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-faint);
+    background: var(--k-20);
     padding: 8px;
     overflow:hidden;
     min-height: 151px; /* 135px canvas + 2×8px padding — rezerwuje miejsce przed załadowaniem canvas */
@@ -161,7 +142,7 @@
   ========================================================= */
   .editorToolbar{
     padding: 12px;
-    border-bottom: 1px solid var(--bd-weak);
+    border-bottom: 1px solid var(--line-faint);
     background: var(--k-20);
     display: flex;
     flex-direction: column;
@@ -222,7 +203,7 @@
   }
   #toolCtxSettings::-webkit-scrollbar{ height: 4px; }
   #toolCtxSettings::-webkit-scrollbar-track{ background: transparent; }
-  #toolCtxSettings::-webkit-scrollbar-thumb{ background: var(--w-14); border-radius: 2px; }
+  #toolCtxSettings::-webkit-scrollbar-thumb{ background: var(--w-14); border-radius: var(--r-xs); }
 
   /* Grupa w toolbarze */
   .ctxGroup{
@@ -270,9 +251,9 @@
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
   }
-  .ctxColorBtn:hover{ border-color: rgba(255,255,255,.5); box-shadow: 0 0 0 2px var(--w-8); }
-  .ctxColorBtn.black{ background: #000000; border-color: #444; }
-  .ctxColorBtn.white{ background: #ffffff; border-color: #ccc; }
+  .ctxColorBtn:hover{ border-color: var(--w-25); box-shadow: 0 0 0 2px var(--w-8); }
+  .ctxColorBtn.black{ background: var(--black); border-color: var(--w-25); }
+  .ctxColorBtn.white{ background: var(--white); border-color: var(--w-25); }
 
   /* Checkbox */
   .ctxChk{
@@ -281,7 +262,7 @@
     gap: 4px;
     font-size: 11px;
     font-weight: 700;
-    color: rgba(255,255,255,.75);
+    color: var(--text-muted);
     cursor: pointer;
     flex-shrink: 0;
     white-space: nowrap;
@@ -298,7 +279,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 99999;
+    z-index: calc(var(--z-top) + 1);
     display: block;
     max-width: calc(100vw - 16px);
     box-sizing: border-box;
@@ -351,9 +332,9 @@
   .drawStageWrap{
     height: 100%;
     min-height: 0;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--bd-weak);
-    background: var(--bg-weak);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line-faint);
+    background: var(--k-20);
     overflow:hidden;
     display:flex;
     align-items:center;
@@ -371,8 +352,8 @@
     flex: 0 0 auto;
     border-radius: var(--r-md);
     overflow: hidden;
-    background: #0b0b0b;
-    border: 1px solid var(--bd-weak);
+    background: var(--black);
+    border: 1px solid var(--line-faint);
     position: relative;
     display: block;
   }
@@ -391,7 +372,7 @@
     width: 100%;
     height: 100%;
     display: block;
-    background: #000;
+    background: var(--black);
     touch-action: none;
     max-width: 100%;
     max-height: 100%;
@@ -487,9 +468,9 @@
   }
 
   .imgCard{
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--bd-weak);
-    background: var(--bg-weak);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line-faint);
+    background: var(--k-20);
     padding: 10px;
     display:flex;
     flex-direction: column;
@@ -509,8 +490,8 @@
     position: relative;
     flex: 1;
     min-height: 0;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--bd-weak);
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-faint);
     background: var(--k-20);
     overflow:hidden;
     display:flex;
@@ -522,8 +503,8 @@
   .imgPrevWrap{
     flex:1;
     min-height: 0;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--bd-weak);
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-faint);
     background: var(--k-20);
     overflow:hidden;
     display:flex;
@@ -599,7 +580,7 @@
 
   #imgPanels{
     position: fixed;     /* nie zależy od overflow toolbara */
-    z-index: 99999;
+    z-index: calc(var(--z-top) + 1);
     display: none;
     left: 0;
     top: 0;
@@ -662,7 +643,7 @@
   /* =========================================================
      OVERLAYS
   ========================================================= */
-  .overlay{ z-index: 9999; pointer-events: auto; }
+  .overlay{ z-index: var(--z-top); pointer-events: auto; }
 
   /* =========================================================
      LIST VIEW: karta do krawędzi ekranu + scroll w logoGridBig
@@ -719,7 +700,7 @@
     position:absolute;
     top:100%;
     left:0;
-    z-index:100;
+    z-index: var(--z-float);
     background:var(--surface-1);
     border:1px solid var(--w-14);
     border-radius:var(--r-md);
@@ -741,7 +722,7 @@
   }
   .imgSetBtnVal{
     font-weight: 700;
-    color: var(--gold);
+    color: var(--accent);
     font-size: 12px;
     letter-spacing: .02em;
   }
@@ -757,7 +738,7 @@
   }
   .shapePickerPop{
     position: fixed;
-    z-index: 1000;
+    z-index: var(--z-menu);
     display: grid;
     grid-template-columns: repeat(5, 42px);
     gap: 4px;
@@ -776,8 +757,8 @@
     color: var(--text);
     cursor: pointer;
   }
-  .shapePickerPop .spi:hover{ background: #141822; }
-  .shapePickerPop .spi[aria-selected="true"]{ background: #232426; color: var(--gold, var(--accent)); }
+  .shapePickerPop .spi:hover{ background: var(--w-4); }
+  .shapePickerPop .spi[aria-selected="true"]{ background: var(--w-8); color: var(--accent); }
 
   /* Przycisk otwierający listę (kształt, font): stała szerokość, nazwa
      ucinana wielokropkiem — dłuższe nazwy nie wychodzą poza przycisk. */
@@ -843,7 +824,7 @@
 
   /* Zaokrąglenie i marginesy okna (w oknie od dołu: silnik). */
   #previewOverlay .modal.previewModal{
-    border-radius: var(--radius-lg);
+    border-radius: var(--r-lg);
     padding: 18px;
   }
 
@@ -878,7 +859,7 @@
      dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła
      wyglądała jak osobny, niepasujący element zamiast zwykłej,
      niewidocznej przestrzeni). Tło modala (var(--bg) w trybie sheet,
-     var(--card) na desktopie) wystarcza. */
+     var(--surface-1) na desktopie) wystarcza. */
   #previewOverlay .previewModalCanvas{
     flex: 1;
     min-height: 0;

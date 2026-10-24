@@ -1,13 +1,11 @@
 {
  "web/account/css/account.css": {
-  "colorLiteral": 2,
   "sharedDuplicate": 1
  },
  "web/admin/css/settings.css": {
-  "colorLiteral": 100,
-  "zIndexLiteral": 16,
-  "sharedDuplicate": 5,
-  "unusedClass": 14
+  "colorLiteral": 99,
+  "sharedDuplicate": 4,
+  "unusedClass": 15
  },
  "web/admin/js/generator.js": {
   "inlineStyleJs": 21
@@ -15,31 +13,7 @@
  "web/admin/js/settings.js": {
   "inlineStyleJs": 17
  },
- "web/admin/tools/editor_5x7.html": {
-  "inlineStyleHtml": 11,
-  "styleBlock": 1
- },
- "web/admin/tools/exporterandeditor.html": {
-  "inlineStyleHtml": 12,
-  "styleBlock": 1
- },
- "web/admin/tools/host-logo-lab/index.html": {
-  "styleBlock": 1
- },
- "web/admin/tools/kora-builder.html": {
-  "inlineStyleHtml": 7,
-  "styleBlock": 1
- },
- "web/admin/tools/logo-background-lab/index.html": {
-  "styleBlock": 1
- },
- "web/admin/tools/theme_builder.html": {
-  "inlineStyleHtml": 17,
-  "styleBlock": 1
- },
  "web/bases/explorer/css/base-explorer.css": {
-  "colorLiteral": 28,
-  "zIndexLiteral": 6,
   "sharedDuplicate": 8,
   "unusedClass": 2
  },
@@ -76,54 +50,23 @@
  "web/bases/js/bases.js": {
   "inlineStyleJs": 3
  },
- "web/connect/css/connect-device.css": {
-  "colorLiteral": 3
- },
  "web/connect/js/connect-device.js": {
   "inlineStyleJs": 5
- },
- "web/connect/tv/css/tv.css": {
-  "colorLiteral": 1,
-  "rootTokens": 1
  },
  "web/connect/tv/index.html": {
   "styleBlock": 1
  },
  "web/control/buzzer/css/buzzer.css": {
-  "colorLiteral": 17,
-  "rootTokens": 12,
-  "zIndexLiteral": 3,
   "sharedDuplicate": 2
  },
  "web/control/buzzer/index.html": {
   "styleBlock": 1
  },
  "web/control/css/control.css": {
-  "colorLiteral": 36,
-  "rootTokens": 1,
-  "zIndexLiteral": 1,
   "sharedDuplicate": 9,
   "unusedClass": 1
  },
- "web/control/css/test-mode.css": {
-  "colorLiteral": 1
- },
- "web/control/display/css/styles.css": {
-  "colorLiteral": 20,
-  "rootTokens": 3,
-  "zIndexLiteral": 8,
-  "sharedDuplicate": 2
- },
- "web/control/display/index.html": {
-  "styleBlock": 1
- },
- "web/control/display/js/scene.js": {
-  "inlineStyleJs": 1
- },
  "web/control/host/css/host.css": {
-  "colorLiteral": 12,
-  "rootTokens": 37,
-  "zIndexLiteral": 4,
   "sharedDuplicate": 3
  },
  "web/control/host/index.html": {
@@ -148,7 +91,6 @@
   "sharedDuplicate": 1
  },
  "web/games/editor/css/editor.css": {
-  "colorLiteral": 7,
   "sharedDuplicate": 1
  },
  "web/games/js/games.js": {
@@ -161,8 +103,6 @@
   "inlineStyleJs": 7
  },
  "web/home/css/index.css": {
-  "colorLiteral": 2,
-  "zIndexLiteral": 4,
   "unusedClass": 2
  },
  "web/home/js/index.js": {
@@ -175,7 +115,6 @@
   "inlineStyleJs": 15
  },
  "web/login/css/login.css": {
-  "zIndexLiteral": 1,
   "sharedDuplicate": 6
  },
  "web/login/js/login.js": {
@@ -188,9 +127,6 @@
   "inlineStyleJs": 7
  },
  "web/logos/css/logo.css": {
-  "colorLiteral": 15,
-  "rootTokens": 12,
-  "zIndexLiteral": 8,
   "sharedDuplicate": 4
  },
  "web/logos/js/draw.js": {
@@ -203,27 +139,14 @@
   "inlineStyleJs": 5
  },
  "web/mail/css/mail.css": {
-  "colorLiteral": 7,
   "sharedDuplicate": 1,
   "unusedClass": 3
  },
- "web/maintenance/css/maintenance.css": {
-  "colorLiteral": 1,
-  "rootTokens": 3
- },
- "web/manual/css/manual.css": {
-  "colorLiteral": 20,
-  "zIndexLiteral": 2
- },
  "web/marketplace/css/marketplace.css": {
-  "colorLiteral": 8,
   "sharedDuplicate": 2
  },
  "web/polls/js/poll-tally.js": {
   "inlineStyleJs": 1
- },
- "web/polls/vote/qr/css/poll-qr.css": {
-  "colorLiteral": 1
  },
  "web/polls/vote/qr/index.html": {
   "styleBlock": 1
@@ -231,26 +154,11 @@
  "web/shared/css/auth-landing.css": {
   "sharedDuplicate": 2
  },
- "web/shared/css/blocking-overlay.css": {
-  "colorLiteral": 16,
-  "zIndexLiteral": 1
- },
  "web/shared/css/game-settings.css": {
-  "colorLiteral": 18,
   "sharedDuplicate": 2
  },
- "web/shared/css/image-viewer.css": {
-  "zIndexLiteral": 1
- },
  "web/shared/css/polls.css": {
-  "colorLiteral": 20,
   "sharedDuplicate": 3
- },
- "web/shared/css/question-form.css": {
-  "colorLiteral": 5
- },
- "web/shared/css/tv-layout.css": {
-  "rootTokens": 2
  },
  "web/shared/js/core/color-picker.js": {
   "inlineStyleJs": 1
@@ -263,12 +171,6 @@
  },
  "web/shared/js/core/list-header-layout.js": {
   "inlineStyleJs": 3
- },
- "web/shared/js/core/mail-document.js": {
-  "inlineStyleJs": 16
- },
- "web/shared/js/core/marketing-mail.js": {
-  "inlineStyleJs": 32
  },
  "web/shared/js/core/modal.js": {
   "inlineStyleJs": 3
@@ -292,41 +194,19 @@
   "inlineStyleJs": 2
  },
  "web/shared/js/core/ui-select.js": {
-  "inlineStyleJs": 12
- },
- "web/shared/js/display/theme_classic.js": {
-  "inlineStyleJs": 2
- },
- "web/shared/js/display/theme_modern.js": {
-  "inlineStyleJs": 34
- },
- "web/shared/js/display/theme_template.js": {
-  "inlineStyleJs": 1
+  "inlineStyleJs": 11
  },
  "web/shared/style/components.css": {
-  "zIndexLiteral": 5,
-  "sharedDuplicate": 232,
+  "sharedDuplicate": 22,
   "unusedClass": 5
  },
- "web/shared/style/flat.css": {
-  "zIndexLiteral": 6,
-  "sharedDuplicate": 268,
-  "unusedClass": 6
- },
  "web/shared/style/layout.css": {
-  "zIndexLiteral": 1,
-  "sharedDuplicate": 25
+  "sharedDuplicate": 3
  },
  "web/shared/style/utilities.css": {
-  "sharedDuplicate": 14,
   "unusedClass": 1
  },
- "web/shared/vendor/fabric.min.js": {
-  "inlineStyleJs": 16
- },
  "web/snake/css/snake.css": {
-  "colorLiteral": 3,
-  "zIndexLiteral": 6,
   "sharedDuplicate": 1
  }
 }

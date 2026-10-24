@@ -25,8 +25,8 @@
   .left,.rightPanel {
       border-radius: var(--r-lg);
       border: 1px solid var(--line);
-      background: var(--card);
-      --under: var(--card); /* podłoże przycisków (css/base.css) */
+      background: var(--surface-1);
+      --under: var(--surface-1); /* podłoże przycisków (css/base.css) */
       box-shadow: 0 24px 60px var(--k-40);
       padding: 14px;
       min-height: 0;
@@ -38,7 +38,7 @@
   }
 
   .left {
-    --under: var(--card); /* podłoże dla kryjących teł przycisków (css/base.css) */
+    --under: var(--surface-1); /* podłoże dla kryjących teł przycisków (css/base.css) */
       width: 360px;
       min-width: 360px
   }
@@ -75,12 +75,12 @@
 
   .rulesList li .ico { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px }
   .rulesList li.ok { opacity: .7 }
-  .rulesList li.ok .ico { color: #7ef0a2 }
-  .rulesList li.bad .ico { color: var(--gold) }
+  .rulesList li.ok .ico { color: var(--ok-text) }
+  .rulesList li.bad .ico { color: var(--accent) }
 
   /* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
   .listShell {
-    --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
+    --under: var(--surface-inset); /* podłoże kryjących przycisków (css/base.css) */
       margin-top: 10px;
       border-radius: var(--r-lg);
       min-height: 0;
@@ -156,11 +156,11 @@
       width: 30px;
       height: 30px;
       border-radius: var(--r-sm);
-      border: 1px solid var(--line2);
+      border: 1px solid var(--line);
       --btn-tint: var(--w-8);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
-      color: rgba(255,255,255,.9);
+      color: var(--text-soft);
       font-weight: 1000;
       display: grid;
       place-items: center;
@@ -213,14 +213,14 @@
   #qList > .addCard { min-height: 100px; }
 
   .qcard.good {
-      border-color: rgba(120,255,120,.45);
-      --btn-tint: rgba(120,255,120,.1);
+      border-color: var(--ok-line);
+      --btn-tint: var(--ok-tint);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
   }
 
   .qcard.bad {
-      border-color: rgba(255,120,120,.45);
-      --btn-tint: rgba(255,120,120,.1);
+      border-color: var(--bad-line);
+      --btn-tint: var(--bad-tint);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
   }
 

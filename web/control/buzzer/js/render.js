@@ -70,9 +70,9 @@ export function createButtonRenderer() {
 
   // js/pages/buzzer.js's derivePalette()/parseHexToRgb()/mixRgb() — css/buzzer.css
   // maluje przycisk (gradient + glow) wyłącznie z --team-X-hi/-lo/--glow-X, NIE
-  // z gołego --team-a/--team-b, więc bez przeliczenia tych trzech pochodnych
+  // z gołego --buzz-team-a/--buzz-team-b, więc bez przeliczenia tych trzech pochodnych
   // niestandardowy kolor drużyny (z ustawień gry) nigdy nie dotrze do przycisku
-  // — wcześniej ustawiano tu tylko --team-a/--team-b, co wizualnie nic nie robiło.
+  // — wcześniej ustawiano tu tylko --buzz-team-a/--buzz-team-b, co wizualnie nic nie robiło.
   function clamp01(x) { return Math.max(0, Math.min(1, x)); }
   function parseHexToRgb(hex) {
     let h = String(hex).trim();
@@ -105,18 +105,18 @@ export function createButtonRenderer() {
     if (!colors) return;
     const root = document.documentElement;
     if (colors.A) {
-      root.style.setProperty("--team-a", colors.A);
+      root.style.setProperty("--buzz-team-a", colors.A);
       const pa = derivePalette(colors.A);
-      root.style.setProperty("--team-a-hi", pa.hi);
-      root.style.setProperty("--team-a-lo", pa.lo);
-      root.style.setProperty("--glow-a", pa.glowRgba);
+      root.style.setProperty("--buzz-team-a-hi", pa.hi);
+      root.style.setProperty("--buzz-team-a-lo", pa.lo);
+      root.style.setProperty("--buzz-glow-a", pa.glowRgba);
     }
     if (colors.B) {
-      root.style.setProperty("--team-b", colors.B);
+      root.style.setProperty("--buzz-team-b", colors.B);
       const pb = derivePalette(colors.B);
-      root.style.setProperty("--team-b-hi", pb.hi);
-      root.style.setProperty("--team-b-lo", pb.lo);
-      root.style.setProperty("--glow-b", pb.glowRgba);
+      root.style.setProperty("--buzz-team-b-hi", pb.hi);
+      root.style.setProperty("--buzz-team-b-lo", pb.lo);
+      root.style.setProperty("--buzz-glow-b", pb.glowRgba);
     }
   }
 

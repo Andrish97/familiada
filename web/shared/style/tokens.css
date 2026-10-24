@@ -2,8 +2,10 @@
    Jedyny plik z wartościami kolorów, warstw (z-index), promieni i czasów.
    Sam :root, bez warstw i nowych funkcji CSS — ładują go też ekrany gry
    (TV/Tizen). Wartości przeniesione 1:1 z dawnego shared/css/base.css
-   i games.css (wygląd bez zmian); zwinięcie odcieni i promieni (§11.2–3)
-   to osobny krok ze zrzutami przed/po.
+   i games.css; odcienie i promienie zwinięte (§11.2–3, 2026-10-24):
+   biel 4, czerń 3, złoto 3 wartości alfa; podłoża bg / surface-1 /
+   surface-2 / surface-modal + kryjące surface-inset; tekst: text,
+   text-muted, accent, ok-text, bad-text, danger, info-text.
    Przezroczystości: kanały --rgb-* w rgb(var(--rgb-x) / alfa). */
 :root {
   color-scheme: dark;
@@ -16,10 +18,8 @@
   --rgb-green: 80 200 120;
   --rgb-red: 255 110 110;
   --rgb-blue: 140 200 255;
-  --rgb-gray: 160 160 160;
   --rgb-scrim: 2 6 23;
   --rgb-toast: 12 16 36;
-  --rgb-tooltip: 15 23 42;
 
   /* ── rodziny przezroczystości (decyzja §11.2: jak najmniej wartości) ── */
   --w-4: rgb(var(--rgb-white) / .04);    /* delikatne wypełnienie */
@@ -37,46 +37,46 @@
   --bg: #050914;                 /* tło strony */
   /* tło stron logowania (.auth-body) */
   --bg-auth: radial-gradient(circle at 20% 10%, var(--g-10), transparent 55%), radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%), var(--bg);
-  --surface-top: var(--bg);      /* topbar */
-  --surface-tile: var(--bg);     /* kafel */
-  --surface-tile-hover: var(--surface-2);
-  --surface-raised: var(--surface-2); /* karta A2HS */
   --surface-1: #111827;          /* karta, menu */
   --surface-modal: #121524;      /* okno */
-  --surface-control: var(--surface-1); /* pole wyboru */
-  --surface-item: #1b2332;       /* pozycja menu */
-  --surface-item-hover: #292f3d;
-  --surface-section: #202331;    /* sekcja udostępniania (podłoże przycisków) */
   --surface-2: #0b1020;
-  --surface-inset: #1a2130;      /* karta w karcie (surface-1 + biel 4%), kryjąca */          /* sekcja zagnieżdżona, kafel po najechaniu */
+  --surface-inset: #1a2130;      /* karta w karcie, pozycja menu (surface-1 + biel 4%, kryjąca) */
   --surface-sunken: var(--k-20);
+  --surface-toast: rgb(var(--rgb-toast) / .96);
 
   /* ── linie ──────────────────────────────────────────────────── */
   --line: var(--w-14);
-  --line-strong: var(--w-14);
-  --line-soft: var(--w-14);
   --line-faint: var(--w-8);
+
+  --white: #fff;                 /* kryjąca biel: tło kodu QR, kartki */
+  --black: #000;                 /* kryjąca czerń: tło podglądu obrazu i wideo */
 
   /* ── tekst ──────────────────────────────────────────────────── */
   --text: #fff;
+  --text-soft: rgb(var(--rgb-white) / .88);   /* tekst ciągły (Wskazówki, opisy) */
   --text-muted: rgb(var(--rgb-white) / .70);
-  --text-strong: #f9fafb;        /* aktywna wypustka */
-  --text-tile: #fdfdfd;          /* nazwa na kaflu */
-  --text-tile-dim: rgb(253 253 253 / .72);
-  --text-meta: rgb(236 239 244 / .9);
+  --text-faint: rgb(var(--rgb-white) / .55);  /* podpisy, liczniki, nieaktywne */
   --accent: #ffeaa6;             /* złoto: tytuły, linki, aktywne */
-  --accent-warm: #ffd86e;
   --ok-text: #7ef0a2;
   --bad-text: #ffaaaa;
-  --bad-text-soft: #ffb3b3;
-  --bad-text-toast: #ffb8b8;
   --info-text: #bfe3ff;
-  --muted-text: #c0c0c0;
-  --green-text: #5dc870;
-  --error: #ff6b6b;
   --danger: #ff7777;
   --danger-solid: #dc3545;
-  --success: #6ee7a8;
+  --warn-text: #ffd86e;
+
+  /* ── stany: linia (obramowanie), odcień (tło), mocny (lampka, aktywne) ── */
+  --ok-line: rgb(var(--rgb-green) / .40);
+  --ok-tint: rgb(var(--rgb-green) / .14);
+  --ok-strong: rgb(var(--rgb-green) / .75);
+  --bad-line: rgb(var(--rgb-red) / .40);
+  --bad-tint: rgb(var(--rgb-red) / .14);
+  --bad-strong: rgb(var(--rgb-red) / .75);
+  --warn-line: rgb(var(--rgb-amber) / .40);
+  --warn-tint: rgb(var(--rgb-amber) / .14);
+  --warn-strong: rgb(var(--rgb-amber) / .75);
+  --info-line: rgb(var(--rgb-blue) / .40);
+  --info-tint: rgb(var(--rgb-blue) / .14);
+  --info-strong: rgb(var(--rgb-blue) / .75);
 
   /* ── wyłączone przyciski (kryjące, bez opacity) ─────────────── */
   --disabled-text: #6c7080;
@@ -104,6 +104,7 @@
   --shadow-toast: 0 16px 36px var(--k-40);
 
   /* ── promienie (decyzja §11.3: jak najmniej wartości) ─────────── */
+  --r-xs: 4px;                   /* drobne elementy do ~24 px: pole wyboru, paski, uchwyty, wyróżnienie w tekście */
   --r-sm: 8px;                   /* małe: chipy, oznaczenia, małe przyciski */
   --r-md: 14px;                  /* przyciski, pola, wiersze, kafle */
   --r-lg: 20px;                  /* karty, okna, wypustki */
@@ -114,19 +115,25 @@
   --font-ui: system-ui, -apple-system, Segoe UI, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
 
-  /* ── warstwy (wartości 1:1 z dotychczasowych; skala §3.2 później) ── */
+  /* ── warstwy (§3.2, 2026-10-24): globalne warstwy tylko tokenem;
+     liczby 0–9 wolno tylko jako kolejność wewnątrz jednego elementu. ── */
   --z-local: 1;
   --z-topbar: 10;
+  --z-fixed: 30;                /* stałe pasy i warstwy strony (podgląd, ekran prowadzącego) */
   --z-notice: 40;               /* pasek komunikatu nad stroną */
-  --z-overlay: 50;
-  --z-popover: 60;
-  --z-float: 100;
-  --z-a2hs: 200;
+  --z-drawer: 41;               /* szuflada; zasłona pod nią: z-drawer − 1 */
+  --z-overlay: 50;              /* okna (.overlay) */
+  --z-sticky: 80;               /* przyklejone paski panelu admina */
+  --z-float: 100;               /* pływające przyciski i wyskakujące panele w stronie */
+  --z-popover: 200;             /* rozwijane listy (ui-select) */
   --z-lang-float: 999;
   --z-menu: 1000;
-  --z-sheet: 1200;
+  --z-sheet: 1200;              /* okno od dołu; okna nad szufladą Eksploratora */
+  --z-top: 9999;                /* nad oknami: menu kontekstowe, podgląd obrazu, błąd urządzenia */
   --z-mobile-menu: 10050;
   --z-toast: 10100;
+  --z-tooltip: 2147483000;
+  --z-block: 2147483647;        /* nakładka blokady (blocking-overlay.css) — nad wszystkim */
 
   /* ── ruch ───────────────────────────────────────────────────── */
   --ease-out: cubic-bezier(.2, .8, .2, 1);
@@ -150,23 +157,11 @@
   --modal-vh: 92vh;
 
   /* Wypustki kart */
-  --radius: var(--r-lg);
   --tab-height: 36px;
   --tab-extra: 1px;
   --tab-label-font-size: 12px;
   --tab-label-letter-spacing: .08em;
 
-  /* ── nazwy przejściowe (używane przez strony i moduły JS jeszcze
-     nieprzepięte; usunąć, gdy audyt pokaże 0 użyć) ───────────── */
-  --gold: var(--accent);
-  --card: var(--surface-1);
-  --card2: var(--surface-2);
-  --line2: var(--line-strong);
-  --surface: var(--surface-1);
-  --page-bg: var(--bg);
-  --border-color: var(--line-strong);
-  --inactive-text: var(--text-muted);
-  --modal-scrim: var(--scrim-modal);
 }
 
 @supports (height: calc(1dvh - env(safe-area-inset-top, 0px))) {

@@ -26,7 +26,7 @@ export const METRICS = {
   colorLiteral: "kolor wpisany na sztywno (poza definicją `--token`)",
   rootTokens: "własne definicje `--token` poza plikiem tokenów",
   mediaWidth: "`@media` z progiem szerokości spoza wspólnych",
-  zIndexLiteral: "`z-index` liczbą zamiast tokenu",
+  zIndexLiteral: "`z-index` ≥ 10 liczbą zamiast tokenu",
   sharedDuplicate: "klasa zdefiniowana też w innym pliku CSS",
   unusedClass: "klasa bez wystąpienia w HTML/JS",
   inlineStyleJs: "styl przypisany w JS (`.style.x =`, `cssText`, `style=\"`)",
@@ -34,10 +34,33 @@ export const METRICS = {
   styleBlock: "blok `<style>` w HTML",
 };
 
+// Poza silnikiem (decyzje §11.4 i §8 planu): laboratoria admina, Wyświetlacz
+// (TV, własny wygląd gry), biblioteki zewnętrzne, plik generowany (flat.css)
+// i generatory HTML maili (style w atrybutach są tam wymagane przez programy pocztowe).
+const OUTSIDE_ENGINE = [
+  "web/admin/tools/",
+  "web/control/display/",
+  "web/shared/js/display/",
+  "web/shared/vendor/",
+  "web/shared/style/flat.css",
+  "web/shared/js/core/mail-document.js",
+  "web/shared/js/core/marketing-mail.js",
+];
+// Ekrany gry (§3.1): własne tokeny z prefiksem na :root, kolory gry tylko w nich.
+const GAME_PREFIX = {
+  "web/control/host/css/host.css": "--host-",
+  "web/control/buzzer/css/buzzer.css": "--buzz-",
+  "web/snake/css/snake.css": "--snake-",
+  "web/connect/tv/css/tv.css": "--tv-",
+  "web/polls/vote/qr/css/poll-qr.css": "--qr-",
+};
+const outsideEngine = (name) => OUTSIDE_ENGINE.some((p) => name === p || name.startsWith(p));
+
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === "node_modules") continue;
     const file = path.join(dir, entry.name);
+    if (outsideEngine(rel(file) + (entry.isDirectory() ? "/" : ""))) continue;
     if (entry.isDirectory()) walk(file, out); else out.push(file);
   }
   return out;
@@ -75,21 +98,27 @@ const classesOf = (selector) => new Set([...selector.matchAll(/\.([a-zA-Z_][\w-]
 function auditCss(file, css) {
   const name = rel(file);
   const tokenFile = TOKEN_FILES.has(name);
+  const gamePrefix = GAME_PREFIX[name];
   const src = stripComments(css);
   const m = { important: 0, colorLiteral: 0, rootTokens: 0, mediaWidth: 0, zIndexLiteral: 0 };
   m.important = (src.match(/!important/g) || []).length;
   for (const decl of src.split(/[;{}]/)) {
     const isToken = /^\s*--[\w-]+\s*:/.test(decl);
     if (isToken && tokenFile) continue;
+    if (isToken && gamePrefix && decl.trim().startsWith(gamePrefix)) continue;
     // rgb(var(--rgb-x) / alfa) to kolor z tokenu (kanały), nie literał.
     m.colorLiteral += (decl.replace(/\brgba?\(\s*var\(/g, "").match(COLOR_RE) || []).length;
-    if (/^\s*z-index\s*:\s*-?\d/.test(decl)) m.zIndexLiteral++;
+    if (/^\s*z-index\s*:\s*-?\d{2,}/.test(decl)) m.zIndexLiteral++; // 0–9: kolejność w elemencie
   }
   // Paleta poza plikiem tokenów: definicje --x na :root/html. Zmienne lokalne
   // komponentu (--btn-tint, --under na elemencie) są dozwolone.
   if (!tokenFile) {
     for (const rule of parseRules(src)) {
-      if (/(^|[\s,]):root\b|(^|[\s,])html\b(?![\w-])/.test(rule.selector)) m.rootTokens += (rule.body.match(/(^|;)\s*--[\w-]+\s*:/g) || []).length;
+      const onRoot = rule.selector.split(",").some((part) => /^(?::root|html)(?:\[[^\]]*\]|:[\w-]+(?:\([^)]*\))?)*$/.test(part.trim()));
+      if (onRoot) {
+        const names = [...rule.body.matchAll(/(?:^|;)\s*(--[\w-]+)\s*:/g)].map((d) => d[1]);
+        m.rootTokens += names.filter((n) => !(gamePrefix && n.startsWith(gamePrefix))).length;
+      }
     }
   }
   for (const q of src.matchAll(/@media([^{]*)\{/g)) {

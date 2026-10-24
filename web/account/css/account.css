@@ -33,9 +33,9 @@
   }
 
   .account-panel.danger {
-    --under: #19121c;
-    border-color: rgba(255,120,120,.35);
-    background: var(--card);
+    --under: var(--surface-1);
+    border-color: var(--bad-line);
+    background: var(--surface-1);
   }
 
   .account-panel--demo {

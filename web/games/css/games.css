@@ -25,7 +25,7 @@
   #previewPollMeta:empty { display: none; }
   .bld-preview-poll .resultQ {
     border: 1px solid var(--line);
-    background: var(--card2);
+    background: var(--surface-2);
     border-radius: var(--r-lg);
     padding: 12px;
   }
@@ -42,16 +42,16 @@
     padding: 0 12px;
     border-radius: var(--r-md);
     border: 1px solid var(--line-faint);
-    background: rgb(var(--rgb-white) / .05);
+    background: var(--w-4);
     overflow: hidden;
   }
   .bld-preview-poll .resultQ .aBar {
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 0;
-    background: linear-gradient(90deg, rgb(var(--rgb-gold) / .10), rgb(var(--rgb-gold) / .26));
+    background: linear-gradient(90deg, var(--g-10), var(--g-35));
     pointer-events: none;
   }
   .bld-preview-poll .resultQ .aTxt { position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--accent); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
 }

@@ -1,43 +1,47 @@
 /* /familiada/css/host.css */
 
 :root {
-    --line: clamp(15px, 4.2vmin, 34px);
-    --font-ratio: 1.1;
-    --baseline-shift: 0.12;
-    --ios-text-shift: 0px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --outer-left: 0px;
-    --outer-right: 0px;
-    --pane2-size: 50%;
-    --pane2-size-snap: 50%;
-    --split-line-w: clamp(4px, calc(var(--line) * 0.18), 10px);
-    --host-text-top-1: calc(var(--safe-top) + var(--top-pad-1));
-    --host-text-top-2: var(--top-pad-2);
-    --split-line: var(--k-20);
-    --split-line-edge: var(--k-40);
-    --margin-x: calc(var(--line) * 2.0);
-    --text-left-1: calc(var(--line) * 2.5);
-    --text-right-1: calc(var(--line) * 1.5);
-    --text-left-2: calc(var(--line) * 1.5);
-    --text-right-2: calc(var(--line) * 1.5);
-    --top-pad-1: calc(var(--line) * 1.0);
-    --bottom-pad-1: calc(var(--line) * 2.2);
-    --top-pad-2: calc(var(--line) * 1.0);
-    --bottom-pad-2: calc(var(--line) * 2.2);
-    --cover-grad-a: #c4002f;
-    --cover-grad-b: #2a62ff;
+    --host-line: clamp(15px, 4.2vmin, 34px);
+    --host-font-ratio: 1.1;
+    --host-baseline-shift: 0.12;
+    --host-ios-text-shift: 0px;
+    --host-safe-top: env(safe-area-inset-top, 0px);
+    --host-safe-right: env(safe-area-inset-right, 0px);
+    --host-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --host-safe-left: env(safe-area-inset-left, 0px);
+    --host-outer-left: 0px;
+    --host-outer-right: 0px;
+    --host-pane2-size: 50%;
+    --host-pane2-size-snap: 50%;
+    --host-split-line-w: clamp(4px, calc(var(--host-line) * 0.18), 10px);
+    --host-text-top-1: calc(var(--host-safe-top) + var(--host-top-pad-1));
+    --host-text-top-2: var(--host-top-pad-2);
+    --host-split-line: var(--k-20);
+    --host-split-line-edge: var(--k-40);
+    --host-margin-x: calc(var(--host-line) * 2.0);
+    --host-text-left-1: calc(var(--host-line) * 2.5);
+    --host-text-right-1: calc(var(--host-line) * 1.5);
+    --host-text-left-2: calc(var(--host-line) * 1.5);
+    --host-text-right-2: calc(var(--host-line) * 1.5);
+    --host-top-pad-1: calc(var(--host-line) * 1.0);
+    --host-bottom-pad-1: calc(var(--host-line) * 2.2);
+    --host-top-pad-2: calc(var(--host-line) * 1.0);
+    --host-bottom-pad-2: calc(var(--host-line) * 2.2);
+    --host-cover-grad-a: #c4002f;
+    --host-cover-grad-b: #2a62ff;
     --host-cover-accent: #fc0;
+    --host-margin-rule: rgba(255,80,80,.55);   /* pionowy margines zeszytu */
+    --host-rule: #e7e2d3;                      /* linie zeszytu */
+    --host-green: #2ecc71;                     /* odsłonięta / trafiona odpowiedź */
+    --host-red: #ff3333;                       /* brak / błąd wpisu */
     /* Motyw wnętrza (control/host/js/hostThemeManager.js) — domyślnie papier w linie
        i atrament. Zasłona pasma 2 nie zmienia układu motywu; jej gradient
        bierze kolory drużyn z aktualnych ustawień gry. */
-    --h-paper-bg: #fffdf5;
-    --h-ink: #111;
-    --h-font: "Caveat-Variable", cursive;
-    --h-letter-spacing: normal;
-    --h-line-height-mult: 1
+    --host-paper-bg: #fffdf5;
+    --host-ink: #111;
+    --host-font: "Caveat-Variable", cursive;
+    --host-letter-spacing: normal;
+    --host-line-height-mult: 1
 }
 
 @font-face {
@@ -68,7 +72,7 @@ body,html {
     height: 100dvh;
     width: 100dvw;
     overflow: hidden;
-    background: var(--h-paper-bg);
+    background: var(--host-paper-bg);
     /* iOS Safari: prevent white bar at bottom */
     position: fixed;
     top: 0;
@@ -90,8 +94,8 @@ body,html {
 .paper {
     position: fixed;
     inset: 0;
-    z-index: 10;
-    background-color: var(--h-paper-bg)
+    z-index: var(--z-fixed);
+    background-color: var(--host-paper-bg)
 }
 
 /* Ustawienie ruled pochodzi z fabryki motywu, a nie z jego nazwy. */
@@ -103,9 +107,9 @@ html[data-host-ruled="false"] .redMargin {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--outer-left) + var(--margin-x));
+    left: calc(var(--host-outer-left) + var(--host-margin-x));
     width: 2px;
-    background: rgba(255,80,80,.55);
+    background: var(--host-margin-rule);
     pointer-events: none
 }
 
@@ -117,12 +121,12 @@ html[data-host-ruled="false"] .redMargin {
 
 html.portrait .paperSplit {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr var(--pane2-size-snap)
+    grid-template-rows: 1fr var(--host-pane2-size-snap)
 }
 
 html.landscape .paperSplit {
     grid-template-rows: 1fr;
-    grid-template-columns: 1fr var(--pane2-size-snap)
+    grid-template-columns: 1fr var(--host-pane2-size-snap)
 }
 
 .pane {
@@ -136,13 +140,13 @@ html.landscape .paperSplit {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-auto-rows: var(--line);
+    grid-auto-rows: var(--host-line);
     overflow: hidden;
     pointer-events: none
 }
 
 .lineGrid span {
-    border-bottom: 1px solid #e7e2d3
+    border-bottom: 1px solid var(--host-rule)
 }
 
 html[data-host-ruled="false"] .lineGrid { display: none }
@@ -180,26 +184,26 @@ html.landscape .pane2 {
 .pane2::before {
     content: "";
     z-index: 5;
-    background: linear-gradient(to right,var(--split-line-edge),var(--split-line),var(--split-line-edge))
+    background: linear-gradient(to right,var(--host-split-line-edge),var(--host-split-line),var(--host-split-line-edge))
 }
 
 html.portrait .pane2::before {
     left: 0;
     right: 0;
     top: 0;
-    height: var(--split-line-w)
+    height: var(--host-split-line-w)
 }
 
 html.landscape .pane2::before {
     top: 0;
     bottom: 0;
     left: 0;
-    width: var(--split-line-w);
-    background: linear-gradient(to bottom,var(--split-line-edge),var(--split-line),var(--split-line-edge))
+    width: var(--host-split-line-w);
+    background: linear-gradient(to bottom,var(--host-split-line-edge),var(--host-split-line),var(--host-split-line-edge))
 }
 
 .p2Hint,.text {
-    font-family: var(--h-font)
+    font-family: var(--host-font)
 }
 
 .text {
@@ -207,14 +211,14 @@ html.landscape .pane2::before {
   pointer-events: auto;
   margin: 0;
   display: grid;
-  grid-auto-rows: minmax(var(--line), auto);
+  grid-auto-rows: minmax(var(--host-line), auto);
   align-content: start;
   white-space: normal;
   word-break: break-word;
-  font-size: calc(var(--line)*var(--font-ratio));
-  line-height: calc(var(--line)*var(--h-line-height-mult));
-  color: var(--h-ink);
-  letter-spacing: var(--h-letter-spacing);
+  font-size: calc(var(--host-line)*var(--host-font-ratio));
+  line-height: calc(var(--host-line)*var(--host-line-height-mult));
+  color: var(--host-ink);
+  letter-spacing: var(--host-letter-spacing);
   overflow-y: auto;
   overflow-x: hidden;
   touch-action: pan-y;
@@ -229,10 +233,10 @@ html.landscape .pane2::before {
 
 /* Kolory statusu — TE SAME w każdym motywie (control/host/js/render.js's
    answerLine()/renderFinalMapping(): odsłonięta/trafiona odpowiedź,
-   brak/status wpisu w finale) — tylko neutralny atrament (--h-ink) idzie
+   brak/status wpisu w finale) — tylko neutralny atrament (--host-ink) idzie
    za motywem, znaczenie kolorów zostaje stałe niezależnie od tła. */
-.text .hostGreen { color: #2ecc71 }
-.text .hostRed { color: #ff3333 }
+.text .hostGreen { color: var(--host-green) }
+.text .hostRed { color: var(--host-red) }
 .text .hostYellow { color: gold }
 .text .hostStrike { text-decoration: line-through }
 
@@ -247,8 +251,8 @@ html.landscape .pane2::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--line);
-    line-height: calc(var(--line)*var(--h-line-height-mult));
+    min-height: var(--host-line);
+    line-height: calc(var(--host-line)*var(--host-line-height-mult));
     box-sizing: border-box;
     white-space: pre-wrap;
     overflow-wrap: anywhere
@@ -257,10 +261,10 @@ html.landscape .pane2::before {
 .hostTextCellContent {
     display: block;
     max-width: 100%;
-    transform: translateY(calc(var(--line)*var(--baseline-shift)));
+    transform: translateY(calc(var(--host-line)*var(--host-baseline-shift)));
 }
 
-.hostTextLine:empty { min-height: var(--line) }
+.hostTextLine:empty { min-height: var(--host-line) }
 
 .text .b {
     font-variation-settings: "wght"750;
@@ -269,47 +273,47 @@ html.landscape .pane2::before {
 
 .pane1 .text {
     top: var(--host-text-top-1);
-    bottom: var(--bottom-pad-1)
+    bottom: var(--host-bottom-pad-1)
 }
 
 
 /* Keep the top-right fullscreen control clear of the first visible text row.
    In portrait it sits over pane 1; in landscape it sits over pane 2. */
-html.portrait { --top-pad-1: max(calc(var(--line) * 1), 56px) }
+html.portrait { --host-top-pad-1: max(calc(var(--host-line) * 1), 56px) }
 html.landscape {
-  --host-text-top-2: calc(var(--safe-top) + var(--top-pad-2));
-  --top-pad-2: max(calc(var(--line) * 1), 56px);
+  --host-text-top-2: calc(var(--host-safe-top) + var(--host-top-pad-2));
+  --host-top-pad-2: max(calc(var(--host-line) * 1), 56px);
 }
 
 html.portrait .pane1 .text {
-    left: var(--text-left-1);
-    right: var(--text-right-1)
+    left: var(--host-text-left-1);
+    right: var(--host-text-right-1)
 }
 
 html.landscape .pane1 .text {
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad-1));
-  left: calc(var(--outer-left) + var(--text-left-1));
-  right: var(--text-right-1);
+  bottom: calc(var(--host-safe-bottom) + var(--host-bottom-pad-1));
+  left: calc(var(--host-outer-left) + var(--host-text-left-1));
+  right: var(--host-text-right-1);
 }
 
 .pane2 .text {
     top: var(--host-text-top-2);
-    bottom: calc(var(--safe-bottom) + var(--bottom-pad-2))
+    bottom: calc(var(--host-safe-bottom) + var(--host-bottom-pad-2))
 }
 
 html.portrait .p2Hint,html.portrait .pane2 .text {
-    left: var(--text-left-1);
-    right: var(--text-right-1)
+    left: var(--host-text-left-1);
+    right: var(--host-text-right-1)
 }
 
 html.landscape .p2Hint,html.landscape .pane2 .text {
-    left: var(--text-left-2);
-    right: calc(var(--outer-right) + var(--text-right-2))
+    left: var(--host-text-left-2);
+    right: calc(var(--host-outer-right) + var(--host-text-right-2))
 }
 
 .p2Hint {
-    bottom: calc(var(--safe-bottom) + 6px);
-    font-size: calc(var(--line)*.7);
+    bottom: calc(var(--host-safe-bottom) + 6px);
+    font-size: calc(var(--host-line)*.7);
     line-height: 1.15;
     color: var(--k-40);
     opacity: 0;
@@ -330,8 +334,8 @@ html.p2Open .p2Hint {
 }
 
 .cover2 {
-    z-index: 30;
-    background: linear-gradient(90deg,var(--cover-grad-a) 0%,var(--cover-grad-b) 100%);
+    z-index: calc(var(--z-fixed) + 1);
+    background: linear-gradient(90deg,var(--host-cover-grad-a) 0%,var(--host-cover-grad-b) 100%);
     transition: transform 180ms ease,opacity 160ms ease;
     will-change: transform,opacity;
     touch-action: none
@@ -361,18 +365,18 @@ html.landscape .cover2.coverOff {
     justify-content: center;
     align-items: center;
     gap: clamp(6px,1.6vh,14px);
-    padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 10px);
+    padding: calc(var(--host-safe-top) + 10px) calc(var(--host-safe-right) + 10px) calc(var(--host-safe-bottom) + 10px) calc(var(--host-safe-left) + 10px);
     box-sizing: border-box;
     min-height: 0;
     height: 100%
 }
 
 html.portrait .cover2Content {
-    padding: 10px calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 10px)
+    padding: 10px calc(var(--host-safe-right) + 10px) calc(var(--host-safe-bottom) + 10px) calc(var(--host-safe-left) + 10px)
 }
 
 html.landscape .cover2Content {
-    padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) 10px
+    padding: calc(var(--host-safe-top) + 10px) calc(var(--host-safe-right) + 10px) calc(var(--host-safe-bottom) + 10px) 10px
 }
 
 /* Podpowiedź iOS jest ograniczona do Safari na iPhonie/iPadzie przez JS. */
@@ -414,10 +418,10 @@ div#cover2Logo {
     flex: 0 0 auto;
     max-width: min(92%,720px);
     padding: 0 10px;
-    font-family: var(--h-font,"Caveat-Variable",cursive);
-    font-size: clamp(14px,calc(var(--line)*.72),30px);
+    font-family: var(--host-font);
+    font-size: clamp(14px,calc(var(--host-line)*.72),30px);
     line-height: 1.15;
-    color: var(--host-cover-accent,#fc0);
+    color: var(--host-cover-accent);
     text-shadow: 0 4px 18px var(--k-40);
     white-space: normal;
     word-break: break-word
@@ -452,11 +456,11 @@ div#cover2Logo {
     }
 }
 
-.host-pass-hint { margin-top:1em; color:#e53935; text-decoration:underline; }
+.host-pass-hint { margin-top:1em; color:var(--host-red); text-decoration:underline; }
 .device-load-error {
-  position: fixed; inset: 0; z-index: 10001; display: flex;
+  position: fixed; inset: 0; z-index: var(--z-top); display: flex;
   flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px; padding: 24px; background: #10192a; color: var(--text);
+  gap: 16px; padding: 24px; background: var(--surface-1); color: var(--text);
   text-align: center; font: 600 18px/1.4 system-ui, sans-serif;
 }
 .device-load-error[hidden] { display: none; }

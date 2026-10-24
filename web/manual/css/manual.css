@@ -89,13 +89,13 @@
   .m-search-hit.active { background: var(--g-10); }
 
   .m-search-title { font-size: .875rem; font-weight: 700; }
-  .m-search-hit.active .m-search-title { color: var(--gold); }
+  .m-search-hit.active .m-search-title { color: var(--accent); }
   .m-search-chapter { font-size: .72rem; font-weight: 600; opacity: .55; }
   .m-search-snippet { font-size: .78rem; line-height: 1.4; opacity: .75; }
   .m-search-snippet mark,
   mark.m-hit {
       padding: 0 1px;
-      border-radius: 3px;
+      border-radius: var(--r-xs);
       background: var(--g-35);
       color: inherit;
   }
@@ -106,7 +106,7 @@
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.45);
+      color: var(--text-faint);
   }
 
   .m-side-part:first-child { margin-top: 2px; }
@@ -132,11 +132,11 @@
   }
 
   .m-side-item.active {
-      border-left-color: var(--gold);
+      border-left-color: var(--accent);
       border-radius: 0 var(--r-sm) var(--r-sm) 0;
       --btn-tint: var(--g-10);
       background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg));
-      color: var(--gold);
+      color: var(--accent);
       opacity: 1;
   }
 
@@ -182,14 +182,14 @@
       padding: 8px 14px;
       border: 1px solid var(--g-35);
       border-radius: var(--r-pill);
-      background: #14171d;
-      color: var(--gold);
+      background: var(--surface-1);
+      color: var(--accent);
       font-weight: 800;
       font-size: 14px;
       text-decoration: none;
       box-shadow: 0 6px 18px var(--k-40);
   }
-  .m-return:hover { background: #1b1f27; }
+  .m-return:hover { background: var(--surface-inset); }
   .m-return .ico { width: 1em; height: 1em; }
 
   /* ---------- nagłówek rozdziału ---------- */
@@ -202,7 +202,7 @@
       font-weight: 800;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.55);
+      color: var(--text-faint);
   }
 
   .m-title {
@@ -212,14 +212,14 @@
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
-      color: var(--gold);
+      color: var(--accent);
   }
 
   .m-lead {
       margin: 0;
       font-size: 16px;
       line-height: 1.6;
-      color: rgba(255,255,255,.82);
+      color: var(--text-soft);
   }
 
   .m-sections {
@@ -227,7 +227,7 @@
       padding: 12px 16px;
       border: 1px solid var(--line);
       border-radius: var(--r-md);
-      background: var(--card2);
+      background: var(--surface-2);
   }
 
   .m-sections-title {
@@ -236,7 +236,7 @@
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.55);
+      color: var(--text-faint);
   }
 
   .m-sections ol {
@@ -248,8 +248,8 @@
   }
 
   .m-sections li { break-inside: avoid; }
-  .m-sections a { display: inline-block; padding: 3px 0; color: rgba(255,255,255,.86); text-decoration: none; font-size: 14px; }
-  .m-sections a:hover { color: var(--gold); }
+  .m-sections a { display: inline-block; padding: 3px 0; color: var(--text-soft); text-decoration: none; font-size: 14px; }
+  .m-sections a:hover { color: var(--accent); }
 
   /* ---------- spis na stronie startowej ---------- */
 
@@ -259,11 +259,11 @@
       padding: 16px 18px;
       border: 1px solid var(--line);
       border-radius: var(--r-md);
-      background: var(--card2);
+      background: var(--surface-2);
   }
 
-  .m-part-title { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--gold); }
-  .m-part-card .m-p a { color: var(--gold); text-underline-offset: 3px; }
+  .m-part-title { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--accent); }
+  .m-part-card .m-p a { color: var(--accent); text-underline-offset: 3px; }
 
   .m-part-chapters {
       list-style: none;
@@ -275,7 +275,7 @@
 
   .m-part-chapters li { break-inside: avoid; }
   .m-part-chapters a { display: inline-block; padding: 4px 0; color: var(--text); text-decoration: none; font-weight: 700; }
-  .m-part-chapters a:hover { color: var(--gold); }
+  .m-part-chapters a:hover { color: var(--accent); }
 
   /* ---------- treść ---------- */
 
@@ -290,22 +290,22 @@
       border-top: 1px solid var(--line);
       font-size: 20px;
       font-weight: 900;
-      color: var(--gold);
+      color: var(--accent);
   }
 
   .m-doc > .m-h2:first-child { margin-top: 8px; padding-top: 0; border-top: 0; }
 
   .m-h3 { margin: 22px 0 8px; font-size: 16px; font-weight: 900; }
 
-  .m-p { margin: 0 0 12px; font-size: 15px; color: rgba(255,255,255,.92); }
+  .m-p { margin: 0 0 12px; font-size: 15px; color: var(--text-soft); }
 
   .m-ol, .m-ul { margin: 0 0 14px; padding-left: 22px; }
-  .m-ol li, .m-ul li { margin: 4px 0; color: rgba(255,255,255,.92); }
+  .m-ol li, .m-ul li { margin: 4px 0; color: var(--text-soft); }
   .m-ul .m-ul, .m-ol .m-ul { margin: 4px 0 0; }
 
   .m-doc strong { font-weight: 900; color: var(--text); }
 
-  .m-doc a { color: var(--gold); text-underline-offset: 3px; }
+  .m-doc a { color: var(--accent); text-underline-offset: 3px; }
 
   /* odnośnik do rozdziału lub podrozdziału — chip ze strzałką */
   .m-ref {
@@ -315,7 +315,7 @@
       padding: 0 8px 0 6px;
       border-radius: var(--r-pill);
       background: var(--g-10);
-      color: var(--gold);
+      color: var(--accent);
       font-weight: 700;
       line-height: 1.6;
       text-decoration: none;
@@ -334,7 +334,7 @@
 
   /* nazwa strony serwisu jako odnośnik — „←” na tej stronie wraca do podręcznika */
   .m-doc a.m-go {
-      color: var(--gold);
+      color: var(--accent);
       text-decoration: underline dotted var(--g-60);
       text-underline-offset: 3px;
   }
@@ -350,7 +350,7 @@
       border: 1px solid var(--g-35);
       border-radius: var(--r-sm);
       background: var(--g-10);
-      color: var(--gold);
+      color: var(--accent);
       font-weight: 800;
       line-height: 1.2;
       white-space: nowrap;
@@ -361,7 +361,7 @@
 
   .m-code, .m-pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      border: 1px solid var(--line2);
+      border: 1px solid var(--line);
       background: var(--k-20);
   }
 
@@ -374,7 +374,7 @@
       overflow: auto;
       font-size: 13px;
       line-height: 1.55;
-      color: rgba(255,255,255,.92);
+      color: var(--text-soft);
   }
 
   /* ramki: zwykła, ostrzeżenie („Uwaga”), podpowiedź („Wskazówka”) */
@@ -387,7 +387,7 @@
       background: var(--w-4);
   }
   .m-note > :last-child { margin-bottom: 0; }
-  .m-warn { border-color: rgba(255,140,120,.35); border-left-color: #ff8c78; background: rgba(255,120,100,.07); }
+  .m-warn { border-color: var(--bad-line); border-left-color: var(--danger); background: var(--bad-tint); }
   .m-box-title {
       display: flex;
       align-items: center;
@@ -398,7 +398,7 @@
       letter-spacing: .06em;
       text-transform: uppercase;
   }
-  .m-warn .m-box-title { color: #ffb4a6; }
+  .m-warn .m-box-title { color: var(--bad-text); }
   .m-box-title .ico { width: 1.1em; height: 1.1em; }
 
   .m-table-wrap {
@@ -418,7 +418,7 @@
       font-weight: 800;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.55);
+      color: var(--text-faint);
       background: var(--k-20);
       border-bottom: 1px solid var(--w-8);
   }
@@ -428,7 +428,7 @@
       border-bottom: 1px solid var(--w-8);
       vertical-align: top;
       line-height: 1.55;
-      color: rgba(255,255,255,.9);
+      color: var(--text-soft);
   }
 
   .m-table tr:last-child td { border-bottom: none; }
@@ -456,7 +456,7 @@
   .m-pager-link:hover { border-color: var(--g-60); }
   .m-pager-link.next { text-align: right; }
   .m-pager-link.is-empty { visibility: hidden; }
-  .m-pager-label { font-size: 12px; color: rgba(255,255,255,.6); }
+  .m-pager-label { font-size: 12px; color: var(--text-faint); }
   .m-pager-title { font-weight: 800; }
 
   /* ---------- telefon i tablet: pasek wysuwany z lewej (jak w Ustawieniach gry) ---------- */
@@ -489,8 +489,8 @@
           padding: 6px 12px;
           border: 1px solid var(--g-35);
           border-radius: var(--r-pill);
-          background: #14171d;
-          color: var(--gold);
+          background: var(--surface-1);
+          color: var(--accent);
           font-weight: 800;
           font-size: 13px;
           text-decoration: none;
@@ -517,13 +517,13 @@
       border: 1px solid var(--line);
       border-radius: var(--r-md);
       overflow: hidden;
-      background: #000;
+      background: var(--black);
       cursor: zoom-in;
   }
   /* zrzut telefonu/tabletu ma już ramkę urządzenia na przezroczystym tle */
   .m-shot:not(.m-shot-desktop) .m-shot-zoom { border: 0; border-radius: 0; background: transparent; }
   .m-shot img { display: block; width: 100%; height: auto; }
-  .m-shot figcaption { margin-top: 8px; font-size: .82rem; text-align: center; color: rgba(255,255,255,.65); }
+  .m-shot figcaption { margin-top: 8px; font-size: .82rem; text-align: center; color: var(--text-muted); }
 
   .m-carousel { margin: 18px 0; outline: none; }
   .m-carousel-track {
@@ -546,5 +546,5 @@
       background: var(--w-25);
       cursor: pointer;
   }
-  .m-carousel-dot.active { background: var(--gold); }
+  .m-carousel-dot.active { background: var(--accent); }
 }

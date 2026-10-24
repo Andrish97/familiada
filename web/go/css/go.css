@@ -23,7 +23,7 @@
     font-size: 20px;
     letter-spacing: .06em;
     margin-bottom: 6px;
-    color: var(--gold);
+    color: var(--accent);
   }
 
   .poll-go-sub {

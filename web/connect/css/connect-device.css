@@ -38,11 +38,11 @@
   }
   .connect-device-tile:hover {
     background: var(--w-8);
-    border-color: var(--gold);
+    border-color: var(--accent);
   }
   .connect-device-tile.mail-row--device {
-    border-left: 3px solid #799eb7;
-    background: rgba(121,158,183,.045);
+    border-left: 3px solid var(--info-line);
+    background: var(--w-4);
   }
   .connect-device-tile .mail-kind { width: 18px; flex: 0 0 18px; opacity: .8; }
   .connect-device-tile .mail-row-copy { min-width: 0; flex: 1 1 auto; }
@@ -54,7 +54,7 @@
     width: 36px;
     min-width: 36px;
     height: 38px;
-    border: 1px solid var(--line2, var(--w-8));
+    border: 1px solid var(--line, var(--w-8));
     border-radius: var(--r-sm);
     display: grid;
     place-items: center;
@@ -90,7 +90,7 @@
     .connect-device-tile .shareNote { font-size: 11px; }
   }
 
-  .connect-device-tile.mail-row--device:hover { background: rgba(121,158,183,.09); }
+  .connect-device-tile.mail-row--device:hover { background: var(--info-tint); }
 
   .connect-device-code-input {
     flex: 1;

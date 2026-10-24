@@ -8,12 +8,6 @@ body,html {
     margin: 0
 }
 
-:root {
-    --teamA: #c4002f;
-    --teamB: #2a62ff;
-    --bg: #d21180
-}
-
 body {
     background: #000;
     overflow: hidden

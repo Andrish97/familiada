@@ -2,7 +2,7 @@
 .blocking-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2147483647;
+  z-index: var(--z-block);
   display: none;
   align-items: center;
   justify-content: center;
@@ -13,26 +13,26 @@
   overflow: auto;
   overscroll-behavior: none;
   /* Kryjące tło bez rozmycia: przyciski z ikonami na Androidzie (2026-10-23). */
-  background: var(--bg, #050914);
-  color: var(--text, #fff);
+  background: var(--bg);
+  color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .blocking-overlay[hidden] { display: none; }
-/* Karta i przyciski jak .card / .btn / .btn.gold z silnika; plik działa też
-   bez silnika (Wyświetlacz), stąd wartości zapasowe przy tokenach. */
+/* Karta i przyciski jak .card / .btn / .btn.gold z silnika; tokeny z
+   shared/style/tokens.css (ładuje go każda strona z tą nakładką). */
 .blocking-card {
   box-sizing: border-box;
   width: 100%;
   max-width: 560px;
   padding: 18px;
-  border: 1px solid var(--line-strong, rgba(255, 255, 255, .14));
-  border-radius: var(--r-lg, 20px);
-  background: var(--surface-1, #111827);
-  box-shadow: var(--shadow-card, 0 18px 36px rgba(0, 0, 0, .4));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-card);
   text-align: left;
 }
 .blocking-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.blocking-icon { display: inline-flex; flex: none; width: 26px; height: 26px; color: var(--accent, #ffeaa6); }
+.blocking-icon { display: inline-flex; flex: none; width: 26px; height: 26px; color: var(--accent); }
 .blocking-icon > svg.ico { width: 100%; height: 100%; }
 .blocking-title { margin: 0; font-size: 1rem; font-weight: 900; letter-spacing: .08em; line-height: 1.25; text-transform: uppercase; }
 .blocking-message { opacity: .9; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-line; }
@@ -42,20 +42,20 @@
   appearance: none;
   min-height: 42px;
   padding: 10px 14px;
-  border: 1px solid var(--line-strong, rgba(255, 255, 255, .14));
-  border-radius: var(--r-md, 14px);
-  background: var(--surface-item, #1b2332);
-  color: var(--text, #fff);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+  color: var(--text);
   font: inherit;
   font-weight: 900;
   cursor: pointer;
 }
-@media (hover: hover) and (pointer: fine) { .blocking-action:hover { border-color: var(--g-60, rgba(255, 234, 166, .6)); } }
-.blocking-action:focus-visible { outline: 2px solid var(--accent, #ffeaa6); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .blocking-action:hover { border-color: var(--g-60); } }
+.blocking-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .blocking-action.is-accent {
-  border-color: var(--g-35, rgba(255, 234, 166, .35));
-  background: linear-gradient(var(--g-10, rgba(255, 234, 166, .10)), var(--g-10, rgba(255, 234, 166, .10))) var(--surface-1, #111827);
-  color: var(--accent, #ffeaa6);
+  border-color: var(--g-35);
+  background: linear-gradient(var(--g-10), var(--g-10)) var(--surface-1);
+  color: var(--accent);
 }
 @media (max-width: 600px) {
   .blocking-card { padding: 18px; }

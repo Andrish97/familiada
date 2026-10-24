@@ -13,14 +13,14 @@
       justify-content:flex-start;
       min-height:var(--topbar-h);
   }
-  .poll-vote-topbar .brand{ color:var(--gold); }
+  .poll-vote-topbar .brand{ color:var(--accent); }
   .poll-vote-topbar .poll-vote-actions{ margin-left:auto; display:flex; align-items:center; gap:8px; }
 
   body.pollpub-body .brand {
       font-weight: 1000;
       letter-spacing: .18em;
       text-transform: uppercase;
-      color: var(--gold)
+      color: var(--accent)
   }
 
   body.pollpub-body .title {
@@ -85,7 +85,7 @@
       border-radius: var(--r-lg);
       border: 1px solid var(--g-35);
       background: var(--g-10);
-      color: var(--gold);
+      color: var(--accent);
       font-weight: 900;
       line-height: 1.35
   }

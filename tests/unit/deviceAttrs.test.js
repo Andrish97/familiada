@@ -20,7 +20,8 @@ function htmlFiles(dir = path.join(root, "web"), out = []) {
 }
 
 test("strony na silniku ładują device-attrs.js przed innymi modułami", () => {
-  const pages = htmlFiles().filter((f) => read(f).includes("/shared/style/tokens.css"));
+  // Wyświetlacz ładuje same tokeny (ekran gry poza silnikiem) — bez atrybutów.
+  const pages = htmlFiles().filter((f) => /\/shared\/style\/(?:base|flat)\.css/.test(read(f)));
   assert.ok(pages.length > 30);
   for (const page of pages) {
     const modules = [...read(page).matchAll(/<script[^>]*type="module"[^>]*src="([^"?]+)/g)].map((m) => m[1]);

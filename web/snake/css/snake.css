@@ -1,8 +1,11 @@
 /* snake.css -- ukryta gra w węża na kopii planszy Wyświetlacza. */
+:root {
+  --snake-accent-line: rgba(215,255,61,.55);   /* kolor motywu planszy: włączony przycisk */
+}
 body.snake-body {
   margin: 0;
   min-height: 100dvh;
-  background: #000;
+  background: var(--black);
   color: var(--text);
   overscroll-behavior: none;
 }
@@ -81,14 +84,14 @@ body.snake-body {
 }
 
 /* Przyciski w rogach: wspólne .corner-btn / .fs-btn z silnika; „włączony” w kolorze motywu. */
-.fs-btn.is-active { border-color: rgba(215,255,61,.55); color: var(--text); --btn-tint: transparent; }
+.fs-btn.is-active { border-color: var(--snake-accent-line); color: var(--text); --btn-tint: transparent; }
 
 /* Konto: obok pełnego ekranu (44 px przycisku + 8 px odstępu). */
 .snake-account {
   position: fixed;
   top: max(12px, env(safe-area-inset-top, 0px));
   right: calc(max(12px, env(safe-area-inset-right, 0px)) + 52px);
-  z-index: 9999;
+  z-index: var(--z-top);
   display: flex;
   align-items: flex-start; /* przyciski równo z pełnym ekranem, gdy komunikat ma dwie linie */
   gap: 8px;
@@ -107,7 +110,7 @@ body.snake-body {
   background: var(--k-20);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: rgba(255,255,255,.92);
+  color: var(--text-soft);
   font-size: 12px;
   line-height: 1.25;
   text-align: right;
@@ -123,7 +126,7 @@ html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden;
   top: max(12px, env(safe-area-inset-top, 0px));
   left: max(12px, env(safe-area-inset-left, 0px));
   right: auto;
-  z-index: 9999;
+  z-index: var(--z-top);
 }
 .lang-floating .btn.lang-btn {
   width: 34px;
@@ -141,7 +144,7 @@ html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden;
 }
 .lang-floating .btn.lang-btn:hover { --btn-tint: var(--k-40); }
 .lang-floating .lang-btn .ico { width: 22px; height: 22px; }
-.lang-menu { z-index: 10000; }
+.lang-menu { z-index: calc(var(--z-top) + 1); }
 
 /* Start/pauza stuknięciem tylko w dużą tablicę (pole gry). */
 .snake-big { cursor: pointer; }

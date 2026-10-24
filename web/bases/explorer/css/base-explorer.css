@@ -6,11 +6,11 @@
       }
 
       20% {
-          box-shadow: 0 0 0 3px rgba(120,180,255,.45)
+          box-shadow: 0 0 0 3px var(--info-line)
       }
 
       60% {
-          box-shadow: 0 0 0 6px rgba(120,180,255,.18)
+          box-shadow: 0 0 0 6px var(--info-tint)
       }
 
       to {
@@ -150,7 +150,7 @@
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: .04em;
-      color: rgba(255,255,255,.55);
+      color: var(--text-faint);
       user-select: none;
       /* kryjące, bez backdrop-filter (Android) */
       background: linear-gradient(var(--k-20), var(--k-20)) var(--under);
@@ -170,7 +170,7 @@
   }
 
   .list-head .active {
-      color: rgba(255,255,255,.8)
+      color: var(--text-soft)
   }
 
   .list {
@@ -237,7 +237,7 @@
 
   .row[data-kind=q] .title-text {
       font-weight: 400;
-      color: rgba(255,255,255,.88)
+      color: var(--text-soft)
   }
 
   #tree .treeList {
@@ -251,7 +251,7 @@
       padding: 6px 8px;
       min-height: 32px;
       gap: 8px;
-      border-radius: 0px
+      border-radius: 0
   }
 
   #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,.searchBox {
@@ -259,7 +259,7 @@
   }
 
   .searchBox {
-    --under: #131723; /* podłoże dla kryjących teł przycisków (css/base.css) */
+    --under: var(--surface-inset); /* podłoże dla kryjących teł przycisków (css/base.css) */
       width: auto;
       flex: 1 1 auto;
       min-width: 0;
@@ -304,7 +304,7 @@
       border: 1px dashed var(--g-60); /* jak zaznaczenie (.is-selected) */
       background: var(--g-10);
       pointer-events: none;
-      z-index: 50
+      z-index: 9
   }
 
   .is-drop-into,.is-drop-target {
@@ -325,7 +325,7 @@
       left: 8px;
       right: 8px;
       height: 2px;
-      background: rgba(255,255,255,.55)
+      background: var(--text-faint)
   }
 
   .is-drop-before::before {
@@ -338,7 +338,7 @@
 
   .context-menu{
     position: fixed;
-    z-index: 9999;
+    z-index: var(--z-top);
     min-width: 220px;
     /* niskie okno: menu nie wychodzi poza ekran, przewija się */
       max-height: calc(100vh - 16px);
@@ -556,7 +556,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: .04em;
-      color: rgba(255,255,255,.55);
+      color: var(--text-faint);
       user-select: none;
       /* kryjące, bez backdrop-filter (Android) */
       background: linear-gradient(var(--k-20), var(--k-20)) var(--under);
@@ -596,7 +596,7 @@
   }
 
   .list-head .active {
-      color: rgba(255,255,255,.8);
+      color: var(--text-soft);
   }
 
   /* ── col-resizer ── */
@@ -700,7 +700,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: rgba(255,255,255,.55);
+      background: var(--text-faint);
   }
 
   tr.row.is-drop-after td:last-child::after {
@@ -710,7 +710,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: rgba(255,255,255,.55);
+      background: var(--text-faint);
   }
 
   .tbGroup,.toolbar {
@@ -724,11 +724,11 @@
   }
 
   .toolbar {
-    --under: #090d1a; /* podłoże kryjących przycisków (css/base.css) */
+    --under: var(--surface-2); /* podłoże kryjących przycisków (css/base.css) */
       gap: 10px;
       padding: 10px 12px;
       flex-shrink: 0;
-      background: #090d1a;
+      background: var(--surface-2);
       border-bottom: 1px solid var(--w-8);
   }
 
@@ -849,14 +849,14 @@
   }
 
   .xPickItem.ok {
-      border-color: rgba(120,255,170,.35);
-      background: rgba(120,255,170,.08)
+      border-color: var(--ok-line);
+      background: var(--ok-tint)
   }
 
   /* E21: braki do gotowości typu są informacją, nie blokadą */
   .xPickItem.bad {
-      border-color: rgba(255,200,90,.35);
-      background: rgba(255,200,90,.07)
+      border-color: var(--warn-line);
+      background: var(--warn-tint)
   }
 
   .xTypeBox {
@@ -895,11 +895,11 @@
       margin-top: 10px;
       font-size: 12px;
       line-height: 1.4;
-      color: rgba(255,215,140,.95)
+      color: var(--warn-text)
   }
 
   .xSummary.is-ready {
-      color: rgba(150,255,190,.95)
+      color: var(--ok-text)
   }
 
   .xRange,.xRange .rng {
@@ -910,7 +910,7 @@
      .rng-a (ten sam dzielony ze suwakami R/G/B w kolorze tagów, gdzie
      czarno-biały/kolorowy gradient ma sens -- tu nie). */
   .xRange .rng {
-      --track: linear-gradient(to right, #f5d26b, #f5d26b);
+      --track: linear-gradient(to right, var(--accent), var(--accent));
   }
 
   .xTypeLabels {
@@ -972,9 +972,9 @@
   }
 
   .xCountPill.bad {
-      border-color: rgba(255,120,120,.4);
-      background: rgba(255,120,120,.1);
-      color: rgba(255,180,180,.95)
+      border-color: var(--bad-line);
+      background: var(--bad-tint);
+      color: var(--bad-text)
   }
 
 
@@ -1060,7 +1060,7 @@
   .export-modal .xProgBarFill {
     height: 100%;
     width: 0%;
-    background: rgba(255,255,255,.85);
+    background: var(--text-soft);
   }
 
   .export-modal .xProgMsg {
@@ -1192,7 +1192,7 @@
     }
 
     /* Modale nad drawerem; tryb sheet przełącza je do przepływu strony. */
-    .overlay { z-index: 1100; }
+    .overlay { z-index: var(--z-sheet); }
     /* wyśrodkowane okno; w oknie od dołu szerokość daje silnik (warstwa states) */
     .overlay > :is(.tags-modal, .export-modal, .question-modal) {
       width: calc(100% - 24px);
@@ -1411,8 +1411,8 @@
   .context-menu-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 9998;
-    background: var(--modal-scrim, var(--k-40));
+    z-index: calc(var(--z-top) - 1);
+    background: var(--scrim-modal, var(--k-40));
     animation: cmScrimIn .28s ease both;
   }
   .context-menu-backdrop[hidden] { display: none; }
@@ -1430,7 +1430,7 @@
     max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
     overflow-y: auto;
     overscroll-behavior: contain;
-    border-radius: 28px 28px 0 0;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     border: 0;
     border-top: 1px solid var(--line, var(--w-14));
     background: var(--surface-modal);
@@ -1493,10 +1493,10 @@
   .tags-modal .tags-row {
     padding: 10px 12px;
     border-radius: var(--r-md);
-    background: var(--card2, var(--w-4));
-    border: 1px solid var(--line2, var(--w-8));
+    background: var(--surface-2, var(--w-4));
+    border: 1px solid var(--line, var(--w-8));
   }
-  .tags-modal .tags-row:hover { border-color: var(--gold); background: var(--card2, var(--w-4)); }
+  .tags-modal .tags-row:hover { border-color: var(--accent); background: var(--surface-2, var(--w-4)); }
   .xPickList,
   .export-modal .xPickList {
     border: 0;
@@ -1515,7 +1515,7 @@
     padding: 12px;
     border-radius: var(--r-md);
     background: var(--w-4);
-    border: 1px solid var(--line2, var(--w-8));
+    border: 1px solid var(--line, var(--w-8));
   }
   .tags-modal .tagsCardLbl { font-weight: 800; }
   .tags-modal .tagsColorTile {
@@ -1523,10 +1523,10 @@
     min-height: 52px;
     padding: 8px 12px;
     border-radius: var(--r-md);
-    background: var(--card2, var(--w-4));
-    border: 1px solid var(--line2, var(--w-8));
+    background: var(--surface-2, var(--w-4));
+    border: 1px solid var(--line, var(--w-8));
   }
-  .tags-modal .tagsColorTile:hover { border-color: var(--gold); background: var(--card2, var(--w-4)); }
+  .tags-modal .tagsColorTile:hover { border-color: var(--accent); background: var(--surface-2, var(--w-4)); }
   .tags-modal .tagsColorDot { width: 28px; height: 28px; border-radius: var(--r-sm); flex: 0 0 auto; }
   .tags-modal .tagsColorLbl { flex: 1 1 auto; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 700; }
   .tags-modal .tagsColorGo { opacity: .7; }
@@ -1578,7 +1578,7 @@
   .left-view-btn .badge {
     position: absolute; top: 1px; right: 1px; margin: 0;
     min-width: 14px; height: 14px; padding: 0 3px; font-size: 9px;
-    background: #2a2614; pointer-events: none;
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--surface-1); pointer-events: none;
   }
   .left-view-btn .badge:empty { display: none; }
   .left-view-tabs { gap: 6px; align-items: center; }
@@ -1624,7 +1624,7 @@
     left: calc(var(--pad0) + var(--step) / 2 + var(--k) * var(--step));
     width: 1px;
     height: 100%;
-    background: var(--line2, var(--w-14));
+    background: var(--line, var(--w-14));
   }
   .tree-g-end { height: 50%; }
   .tree-g-tee::after,
@@ -1663,7 +1663,7 @@
     padding: 6px;
     border-radius: var(--r-md);
     background: var(--w-4);
-    border: 1px solid var(--line2, var(--w-8));
+    border: 1px solid var(--line, var(--w-8));
   }
   /* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
      i linia nad przyciskami); w oknie od dołu stopkę układa base.css
@@ -1726,10 +1726,10 @@
     .export-modal .xTypeLbl {
       min-height: 40px;
       padding: 4px 2px;
-      background: #182131;
+      background: var(--surface-inset);
     }
     .export-modal .xTypeLbl.active {
-      background: #3a3424;
+      background: linear-gradient(var(--g-10), var(--g-10)) var(--surface-inset);
       border-color: var(--g-60);
     }
   }

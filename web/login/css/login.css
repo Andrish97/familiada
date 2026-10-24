@@ -126,7 +126,7 @@
       font-weight: 1000;
       letter-spacing: .14em;
       font-size: 18px;
-      color: var(--gold);
+      color: var(--accent);
   }
 
   /* ── back button (fixed) ── */
@@ -137,7 +137,7 @@
   .login-top-right {
       position: fixed;
       top: max(20px, env(safe-area-inset-top));
-      z-index: 1000;
+      z-index: var(--z-float);
       display: flex;
       align-items: center;
       gap: 8px;

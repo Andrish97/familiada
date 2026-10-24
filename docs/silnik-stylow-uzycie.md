@@ -63,12 +63,37 @@ dowolną, skrypt ją ujednolici. `flat.css` jest generowany
 
 ## 4. Tokeny — zamiast liczb i kolorów
 
-- Kolory: `var(--text)`, `var(--text-muted)`, `var(--accent)` (złoto),
-  `var(--surface-1)` (karta), `var(--bg)`, linie `var(--line-strong)`,
-  stany `var(--disabled-text)`, `var(--disabled-line)`. Przezroczystości:
-  `rgb(var(--rgb-gold) / .14)` itp. lub gotowe `--w-8`, `--g-10`, `--k-20`.
-- Promienie: `--r-sm`, `--r-md`, `--r-lg`, `--radius` (karta).
-- Warstwy: `--z-local`, `--z-topbar`, `--z-notice`, `--z-overlay`, `--z-menu`…
+Pełna lista w `web/shared/style/tokens.css`. Spoza listy nie wybierać —
+najbliższy token (zasada §11.2–3: jak najmniej wartości).
+
+- **Podłoża (kryjące):** `--bg` (strona), `--surface-1` (karta, menu),
+  `--surface-2` (pasek, kafel ciemniejszy), `--surface-modal` (okno),
+  `--surface-inset` (karta w karcie, wiersz listy), `--surface-sunken`,
+  `--surface-toast`; `--black` / `--white` tylko dla podglądu obrazu, wideo
+  i kodu QR. Najechanie na kryjący wiersz: `linear-gradient(var(--w-8),
+  var(--w-8)) var(--surface-inset)`; przyciski — `--btn-tint` na `--under`.
+- **Przezroczystości:** biel `--w-4/8/14/25`, czerń `--k-20/40/70`,
+  złoto `--g-10/35/60`. Linie `--line` (= w-14), `--line-faint` (= w-8).
+- **Tekst:** `--text`, `--text-soft` (.88, tekst ciągły), `--text-muted`
+  (.70), `--text-faint` (.55, podpisy), `--accent` (złoto).
+- **Stany** — każdy w czterech odmianach: `--ok-text/-line/-tint/-strong`,
+  `--bad-text/-line/-tint/-strong`, `--warn-text/-line/-tint/-strong`,
+  `--info-text/-line/-tint/-strong` (tekst; obramowanie .40; tło .14;
+  lampka / aktywne .75). Mocny błąd: `--danger`, `--danger-solid`.
+  Wyłączone: `--disabled-*`.
+- **Promienie:** `--r-xs` 4 (drobne do ~24 px: pole wyboru, pasek,
+  uchwyt), `--r-sm` 8, `--r-md` 14, `--r-lg` 20 (karty, okna), `--r-sheet`
+  28 (górne rogi arkusza), `--r-pill`, `50%` dla koła.
+- **Warstwy:** globalne tylko tokenem — `--z-topbar` 10, `--z-fixed` 30,
+  `--z-notice` 40, `--z-drawer` 41 (zasłona: `calc(var(--z-drawer) - 1)`),
+  `--z-overlay` 50 (okna), `--z-sticky` 80, `--z-float` 100, `--z-popover` 200,
+  `--z-lang-float`, `--z-menu` 1000, `--z-sheet` 1200, `--z-top` 9999 (nad
+  oknami: menu kontekstowe, podgląd obrazu), `--z-mobile-menu`, `--z-toast`,
+  `--z-tooltip`, `--z-block` (nakładka blokady). Liczby 0–9 tylko jako
+  kolejność wewnątrz jednego elementu; „nad czymś” = `calc(var(--z-x) + 1)`.
+- **Ekrany gry** (Prowadzący, Przycisk, snake, TV, QR ankiety) mają własne
+  tokeny z prefiksem (`--host-*`, `--buzz-*`, `--snake-*`, `--tv-*`, `--qr-*`)
+  na `:root` swojego pliku — kolory gry (drużyny, zeszyt) tylko tam.
 - Kolor wpisany na sztywno w pliku strony zatrzyma test
   `cssAudit` (zapadka `scripts/css-audit/baseline.json`).
 

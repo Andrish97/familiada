@@ -1,4 +1,4 @@
-import { iconText } from "./icons.js?v=v2026-10-24T15503";
+import { iconText } from "./icons.js?v=v2026-10-24T18062";
 
 
 export function initUiSelect(root, { options = [], value = "", placeholder = "â€”", onChange, disabled = false } = {}) {
@@ -31,7 +31,6 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
     menu.style.left = menuLeft + "px";
     menu.style.width = menuWidth + "px";
     menu.style.right = "auto";
-    menu.style.zIndex = "200";
     if (spaceBelow >= Math.min(maxMenuHeight, spaceAbove) || spaceBelow >= spaceAbove) {
       menu.style.top = (rect.bottom + 6) + "px";
       menu.style.bottom = "auto";

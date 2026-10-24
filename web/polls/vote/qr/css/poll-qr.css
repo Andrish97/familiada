@@ -26,7 +26,7 @@ body.poll-qr-body {
     font-weight: 1000;
     letter-spacing: .2em;
     text-transform: uppercase;
-    color: var(--gold);
+    color: var(--accent);
 }
 
 .qr-hint {
@@ -40,7 +40,7 @@ body.poll-qr-body {
 
 .qr-box {
     padding: 22px;
-    background: #fff;
+    background: var(--white);
     border-radius: var(--r-lg);
     box-shadow: 0 20px 60px var(--k-40);
     line-height: 0;

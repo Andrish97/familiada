@@ -1,9 +1,3 @@
-:root {
-  --maint-card: var(--surface-1);
-  --maint-card-strong: var(--w-8);
-  --maint-shadow: 0 30px 80px var(--k-40);
-}
-
 .maintenance-body {
   min-height: 100vh;
   background: var(--bg);
@@ -19,14 +13,14 @@
 }
 
 .maintenance-card {
-  --under: #070b17; /* podłoże dla kryjących teł przycisków (css/base.css) */
+  --under: var(--surface-1); /* podłoże kryjących teł przycisków */
   width: min(880px, 100%);
   /* kryjące tło bez backdrop-filter (Android: artefakty przy przyciskach) */
-  background: linear-gradient(var(--maint-card), var(--maint-card)) var(--under);
-  border: 1px solid var(--line2);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: 32px 28px;
-  box-shadow: var(--maint-shadow);
+  box-shadow: var(--shadow-modal);
 }
 
 .card-top {
@@ -57,7 +51,7 @@
   font-size: clamp(28px, 6vw, 44px);
   font-weight: 900;
   letter-spacing: 0.12em;
-  color: var(--gold);
+  color: var(--accent);
 }
 
 .custom-maintenance-content {
@@ -69,7 +63,7 @@
 
 .countdown-inline {
   font-weight: 900;
-  color: var(--gold);
+  color: var(--accent);
   letter-spacing: 0.05em;
 }
 

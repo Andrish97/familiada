@@ -24,7 +24,9 @@ function htmlFiles(dir = path.join(root, "web"), out = []) {
 const stylesheets = (html) => [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"?]+)/g)].map((m) => m[1]);
 const FLAT = ["/shared/style/tokens.css", "/shared/style/flat.css"];
 const isFlat = (f) => stylesheets(read(f)).includes(FLAT[1]);
-const enginePages = () => htmlFiles().filter((f) => !isFlat(f) && stylesheets(read(f)).some((h) => h.startsWith("/shared/style/")));
+// Same tokeny (Wyświetlacz — ekran gry poza silnikiem) to nie strona na silniku.
+const tokensOnly = (f) => stylesheets(read(f)).filter((h) => h.startsWith("/shared/style/")).join() === FLAT[0];
+const enginePages = () => htmlFiles().filter((f) => !isFlat(f) && !tokensOnly(f) && stylesheets(read(f)).some((h) => h.startsWith("/shared/style/")));
 
 test("silnik: tokeny poza warstwami, reszta w zadeklarowanych warstwach", () => {
   assert.doesNotMatch(read("web/shared/style/tokens.css"), /@layer/);

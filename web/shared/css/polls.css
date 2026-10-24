@@ -14,7 +14,7 @@
   }
   .resultQ {
       border: 1px solid var(--line);
-      background: var(--card2);
+      background: var(--surface-2);
       border-radius: var(--r-lg);
       padding: 12px
   }
@@ -40,12 +40,12 @@
     font-size: 15px;
     letter-spacing: .12em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.85);
+    color: var(--text-soft);
   }
-  .pollBar[data-state="poll_open"] .pollStateWord{ color: #ffd86e; }
+  .pollBar[data-state="poll_open"] .pollStateWord{ color: var(--warn-text); }
   .pollBar[data-state="poll_stopped"] .pollStateWord,
-  .pollBar[data-state="tally"] .pollStateWord{ color: var(--gold); }
-  .pollBar[data-state="ready"] .pollStateWord{ color: #7ef0a2; }
+  .pollBar[data-state="tally"] .pollStateWord{ color: var(--accent); }
+  .pollBar[data-state="ready"] .pollStateWord{ color: var(--ok-text); }
   .pollStateInfo{ font-size: 13px; opacity: .8; min-width: 0; }
   .pollStateInfo:not(:empty)::before{ content: "· "; opacity: .7; }
   /* powód, dla którego akcja jest wyłączona */
@@ -67,11 +67,11 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    border-bottom: 1px solid var(--line2);
+    border-bottom: 1px solid var(--line);
     padding: 12px;
-    border: 1px solid var(--line2);
+    border: 1px solid var(--line);
     border-radius: var(--r-md);
-    background: var(--card);
+    background: var(--surface-1);
   }
   .pollBarState{
     display: flex;
@@ -90,7 +90,7 @@
     flex: 0 0 auto;
   }
   .pollBar .subsSummary{ flex-basis: 100%; }
-  .pollAbort:not(:disabled){ --btn-tint: rgba(180,50,50,.08); color: #dca4a4; border-color: rgba(180,80,80,.35); }
+  .pollAbort:not(:disabled){ --btn-tint: var(--bad-tint); color: var(--bad-text); border-color: var(--bad-line); }
   @media (max-width: 980px){
     .pollBar{ gap: 10px; padding: 10px; }
     .pollBarState{ flex-basis: 100%; }
@@ -155,7 +155,7 @@
     .polls-card .pollRecipientsSec > .pollSecHead > .pollSecTitle{ display: none; }
   }
   .pollSec{
-    --under: #0b1020;
+    --under: var(--surface-2);
     padding: 12px;
     border-radius: var(--r-md);
     background: var(--w-4);
@@ -176,7 +176,7 @@
   .pollLinkPlaceholder{
     margin-top: 10px;
     padding: 14px 10px;
-    border: 1px dashed var(--line2);
+    border: 1px dashed var(--line);
     border-radius: var(--r-md);
     text-align: center;
     font-size: 13px;
@@ -214,7 +214,7 @@
   }
   .qrFrameSmall{
     padding: 12px;
-    background: #fff;
+    background: var(--white);
     border-radius: var(--r-md);
     line-height: 0;
   }
@@ -319,7 +319,7 @@
     pointer-events: none;
   }
   .resultQ .aTxt{ position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .resultQ .aVal{ position: relative; opacity: .95; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .resultQ .aVal{ position: relative; opacity: .95; font-weight: 1000; color: var(--accent); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
 
   /* Podliczanie: te same wiersze, uchwyt / pole edycji / kosz rozsuwają się płynnie */
   .tallyBar{
@@ -335,7 +335,7 @@
     flex: 0 0 auto;
   }
   .tallySave{ font-size: 12px; opacity: .75; min-width: 0; }
-  .tallySave[data-state="failed"]{ color: #ffaaaa; opacity: 1; }
+  .tallySave[data-state="failed"]{ color: var(--bad-text); opacity: 1; }
 
   .resultQ .tallyMeta{
     display: flex;
@@ -351,14 +351,14 @@
   }
   .resultQ .tallyMeta.on{ max-height: 120px; opacity: 1; margin: -2px 0 8px; }
   .resultQ .tallyMetaInstant{ transition: none; }
-  .tallyCounter.invalid{ color: #ff9d9d; font-weight: 900; }
-  .tallySum{ color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; }
-  .tallyVotesTotal{ color: rgba(235,239,248,.62); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tallyCounter.invalid{ color: var(--bad-text); font-weight: 900; }
+  .tallySum{ color: var(--accent); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .tallyVotesTotal{ color: var(--info-text); font-weight: 700; font-variant-numeric: tabular-nums; }
   .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
   .tallyMeta .tcTieBtn{ margin-left: 0; }
   .tallyMeta .tcMergeDup, .tallyMeta .tcTieBtn{ display: inline-flex; align-items: center; gap: 6px; }
   /* E21: remis na granicy szóstki -- kto wchodzi, kto zostaje pominięty */
-  .tallyTieInfo{ flex-basis: 100%; color: #ffd86e; font-weight: 700; }
+  .tallyTieInfo{ flex-basis: 100%; color: var(--warn-text); font-weight: 700; }
   .resultQ .aRow.tallyTie{ border-style: dashed; }
 
   .resultQ .tcHandle,
@@ -417,10 +417,10 @@
   .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
   .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
   .resultQ .aRow.tallySkipped,
-  .resultQ .aRow.tallySkipped.out{ opacity: 1; border-color: rgba(255,112,122,.38); background: rgba(255,92,104,.09); }
-  .resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(255,112,122,.08), rgba(255,112,122,.2)); }
+  .resultQ .aRow.tallySkipped.out{ opacity: 1; border-color: var(--bad-line); background: var(--bad-tint); }
+  .resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, var(--bad-tint), var(--bad-tint)); }
   .resultQ .aRow.tallySkipped .aTxt,
-  .resultQ .aRow.tallySkipped .aVal{ color: #ffc0c4; }
+  .resultQ .aRow.tallySkipped .aVal{ color: var(--bad-text); }
   .resultQ .aTxtInp{
     position: relative;
     flex: 1 1 auto;
@@ -441,14 +441,14 @@
   .resultQ .aTxtInp:focus{ border-color: var(--g-60); background: var(--k-20); }
   .resultQ .aRow.out{ color: var(--text-muted); } /* bez opacity (Android) */
   .resultQ .aRow.dragging{ opacity: .5; }
-  .resultQ .aRow.drop-target{ border-color: var(--gold); background: var(--g-10); }
+  .resultQ .aRow.drop-target{ border-color: var(--accent); background: var(--g-10); }
   .resultQ .aRow.merge-src{ border-color: var(--g-60); background: var(--g-10); }
-  .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
+  .resultQ .aRow.merge-target{ border-color: var(--info-line); }
   .resultQ .aRow.tallySkipped.merge-src{
     border-color: var(--accent);
-    background: linear-gradient(var(--g-10), var(--g-10)), rgba(255,92,104,.09);
+    background: linear-gradient(var(--g-10), var(--g-10)), var(--bad-tint);
   }
-  .resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); }
+  .resultQ .aRow.tallySkipped.merge-target{ border-color: var(--info-strong); }
   @media (prefers-reduced-motion: reduce){
     .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tallyMeta{ transition: none; }
   }
