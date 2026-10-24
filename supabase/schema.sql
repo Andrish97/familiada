@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tz5NvKOfcyoXINcPnxETTDC1QphS2YN3udq95zbhFe8mvDGIwcf00rhdwh1cMD2
+\restrict EFx4Gwk5rxaEiHedJ7BGrNhYR7yRq6tBRImaFSAgpMHcRr8neUdPs7Zk7S56S8q
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2737,7 +2737,7 @@ END; $$;
 --
 
 CREATE FUNCTION "public"."_norm_email"("p" "text") RETURNS "text"
-    LANGUAGE "sql" IMMUTABLE
+    LANGUAGE "sql" IMMUTABLE COST 1
     SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   select nullif(lower(btrim(p)), '');
@@ -24784,5 +24784,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tz5NvKOfcyoXINcPnxETTDC1QphS2YN3udq95zbhFe8mvDGIwcf00rhdwh1cMD2
+\unrestrict EFx4Gwk5rxaEiHedJ7BGrNhYR7yRq6tBRImaFSAgpMHcRr8neUdPs7Zk7S56S8q
 

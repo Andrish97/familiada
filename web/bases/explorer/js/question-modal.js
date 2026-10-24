@@ -8,16 +8,16 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T21374";
-import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T21374";
-import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T21374";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T21374";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T22061";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T22061";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T22061";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T22061";
 
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
   buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-24T21374";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-24T22061";
 
 
 const $ = (id) => document.getElementById(id);
