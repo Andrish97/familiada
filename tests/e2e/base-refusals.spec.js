@@ -68,7 +68,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await openShare(page, baseId);
     const friend = page.locator(`#baseShareFriends [data-id="${recipientId}"]`);
     await friend.locator('input[type="checkbox"]').check();
-    await page.locator("#shareRole button").click(); // editor -> viewer (jeden przełącznik w stopce okna)
+    await page.locator('#shareRole label:has(input[value="viewer"])').click(); // editor -> viewer (przełącznik dwóch stanów w stopce okna)
     await page.locator("#btnShareAdd").click();
     await expect(page.locator("#shareSendOverlay")).toBeHidden();
     await openShares(page, baseId);
@@ -123,13 +123,13 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await expect(recipient.locator('#baseDeclinesHost [data-act="undo"]')).toBeVisible();
     await recipient.locator('#baseDeclinesHost [data-act="undo"]').click(); await expect(proposed).toBeVisible();
     await openShares(page, baseId);
-    await sharedRow.locator(".baseShareRole").click();
+    await sharedRow.locator('.baseShareRole label:has(input[value="editor"])').click();
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-value", "editor");
     await proposed.locator("[data-accept]").click();
     await expect(proposed).toHaveCount(0);
     await openShares(page, baseId);
     await expect(sharedRow).toContainText("Zaakceptowano");
-    await sharedRow.locator(".baseShareRole").click();
+    await sharedRow.locator('.baseShareRole label:has(input[value="viewer"])').click();
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-value", "viewer");
     const access = await rpc(page, "list_base_shares", { p_base_id: baseId });
     expect(access[0].role).toBe("viewer");
