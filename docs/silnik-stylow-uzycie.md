@@ -222,7 +222,11 @@ z sceną zrzutów i wpisem w tej tabeli.
    `--btn-tint` na `--under`, jak `.btn`), bez `opacity` < 1, `filter`,
    `backdrop-filter` i `transform` w stanach dotyku. Podświetlenie
    najechania tylko w `@media (hover: hover) and (pointer: fine)`.
-   Wyłączony = kolory `--disabled-*`, nie `opacity`.
+   Wyłączony = kolory `--disabled-*`, nie `opacity`. Kryć musi też
+   **podłoże pod przyciskiem** (pole szukania, lista, wiersz, karta z
+   odcieniem `--w-*`/`--g-*`): `linear-gradient(odcień, odcień) var(--under)`,
+   a ikona w przycisku jest przygaszana kolorem (`--text-muted`), nie
+   `opacity`. Audyt zrzutów (`--audit`, telefon) sprawdza przycisk i przodków.
 5. **Strefa bezpieczna zawsze:** odstępy przy krawędziach z
    `env(safe-area-inset-*)` (silnik robi to w `.wrap`, `.topbar`, `.footer`,
    arkuszach — własne elementy przyklejone do krawędzi muszą to dodać).
