@@ -8,7 +8,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const read = (file) => fs.readFileSync(path.join(here, '../../web', file), 'utf8');
 
 test('guard poprzedza auth i odsłonięcie topbara', () => {
-  const source = read('shared/js/core/page-init.js');
+  const all = read('shared/js/core/page-init.js');
+  const source = all.slice(all.indexOf('export async function initPage('));
   assert.ok(source.indexOf('await guard.ready') < source.indexOf('d.requireAuth(loginUrl())'));
   assert.ok(source.indexOf('await guard.ready') < source.indexOf('document.querySelector(".topbar")?.classList.add("topbar-ready")'));
 });
@@ -19,10 +20,13 @@ test('strony bez initPage używają wspólnego guarda orientacji', () => {
   const pollQr = read('polls/vote/qr/js/poll-qr.js');
   const overlay = read('shared/js/core/page-overlay.js');
   const deviceGuard = read('shared/js/core/device-guard.js');
-  for (const source of [home, login]) {
-    assert.match(source, /from .*device-guard\.js/);
-    assert.match(source, /guardViewportWidth\(\{ minWidth: 0 \}\)/);
-  }
+  assert.match(login, /from .*device-guard\.js/);
+  assert.match(login, /guardViewportWidth\(\{ minWidth: 0 \}\)/);
+  // Strony wejścia: wariant „bare” initEntryPage — guard z PAGES przed odsłonięciem.
+  const pageInit = read('shared/js/core/page-init.js');
+  const entry = pageInit.slice(pageInit.indexOf('export async function initEntryPage('), pageInit.indexOf('export async function initPage('));
+  assert.ok(entry.indexOf('guardViewportWidth(') >= 0 && entry.indexOf('guardViewportWidth(') < entry.indexOf('topbar-ready'));
+  assert.match(home, /initEntryPage\("home"/);
   assert.match(pollQr, /guardViewportWidth\(\{ minWidth: 980, minHeight: MIN_WORK_HEIGHT, minScreenShortSide: 800/);
   assert.match(deviceGuard, /profile\.formFactor === "phone" && profile\.orientation === "landscape"/);
   assert.match(deviceGuard, /if \(state !== "ok"\)[\s\S]*?hidePageGuard\(\)/);

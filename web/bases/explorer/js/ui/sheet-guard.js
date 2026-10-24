@@ -4,17 +4,16 @@
 // pokazać takie okno „z adresu” (?dialog=… po odświeżeniu albo „Dalej”
 // w historii) — bez treści, bo treść wstawia dopiero nasz kod przy otwarciu.
 // Strażnik: okno pokazane, gdy nasz kod go nie otworzył → od razu zamknij
-// (exitModalSheet cofa przy tym wpis historii). Pokazanie z adresu oznacza
-// modal-sheet.js (data-routed); otwarcie naszym kodem (setOverlayOpen) go zdejmuje.
+// (closeDialog cofa przy tym wpis historii). Pokazanie z adresu oznacza
+// modal-sheet.js (data-routed); otwarcie naszym kodem (openDialog) go zdejmuje.
 
-import { exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
+import { closeDialog, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
 
 export function guardRoutedSheet(overlay, isOpen = () => overlay?.dataset.routed !== "true") {
   if (!overlay) return;
   const dismiss = () => {
     if (isOpen() || !isOverlayOpen(overlay)) return;
-    setOverlayOpen(overlay, false);
-    exitModalSheet(overlay);
+    closeDialog(overlay);
   };
   document.addEventListener("modal-sheet:enter", (e) => {
     if (e.detail?.overlay === overlay) setTimeout(dismiss, 0);

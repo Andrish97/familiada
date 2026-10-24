@@ -1107,13 +1107,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
     listHeaderActionsBelow: document.querySelector("main .bar")?.classList.contains("has-actions-below") || false,
-    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-scroll")
+    listBottomLayout: document.querySelector(".list-toolbar")?.classList.contains("is-scroll")
       ? "scroll"
-      : document.querySelector(".games-bottom")?.classList.contains("is-single-row") ? "single-row" : "not-measured",
-    listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
+      : document.querySelector(".list-toolbar")?.classList.contains("is-single-row") ? "single-row" : "not-measured",
+    listBottomTextLabels: [...document.querySelectorAll(".list-toolbar-right .only-desktop")]
       .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
-      const bar = document.querySelector(".games-bottom");
+      const bar = document.querySelector(".list-toolbar");
       const naturalWidth = (group) => {
         if (!group) return 0;
         const widths = [...group.children].filter((child) => child.getClientRects().length)
@@ -1134,8 +1134,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         return [...rows.values()];
       };
       if (!bar) return null;
-      const left = bar.querySelector(":scope > .games-bottom-left");
-      const right = bar.querySelector(":scope > .games-bottom-right");
+      const left = bar.querySelector(":scope > .list-toolbar-left");
+      const right = bar.querySelector(":scope > .list-toolbar-right");
       return {
         available: bar.clientWidth,
         left: naturalWidth(left),

@@ -1,35 +1,35 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T18062";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T18062";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T18062";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T18062";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T18062";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T18062";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T18062";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T18062";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T18062";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T18062";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T18315";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T18315";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T18315";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T18315";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T18315";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T18315";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T18315";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T18315";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T18315";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-24T18062";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-24T18315";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T18062";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T18062";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T18062";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T18062";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T18062";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T18315";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T18315";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T18315";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T18315";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T18315";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T18315";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -167,7 +167,7 @@ function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
   el.dataset.state = isUnsaved ? "dirty" : "saved";
-  el.textContent = isUnsaved ? (t("gameSettings.unsaved") || "Niezapisane zmiany") : "";
+  el.textContent = isUnsaved ? (t("gameSettings.unsaved")) : "";
   el.classList.toggle("hidden", !isUnsaved);
 }
 
@@ -188,7 +188,7 @@ async function leaveTo(href) {
   if (leaving) return;
   leaving = true;
   if (isDirty) {
-    const confirmed = await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy chcesz opuścić stronę?" });
+    const confirmed = await confirmModal({ text: t("gameSettings.unsavedConfirm") });
     if (!confirmed) {
       leaving = false;
       return;
@@ -259,7 +259,7 @@ async function saveAll() {
         customSoundKeys = new Set(cfCheck.keys());
         if (missing.length) {
           const names = missing.map(cat => t("gameSettings.sfxDesc." + cat.key) || cat.key).join(", ");
-          await alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
+          await alertModal({ text: (t("gameSettings.saveErrorCustomNoFile")).replace("{names}", names) });
           setActiveCat("sound");
           return;
         }
@@ -411,7 +411,7 @@ async function openColorModal(key) {
     title: getColorLabels()[key] || key,
     text: "",
     okText: t("common.save"),
-    cancelText: t("common.cancel") || "Anuluj",
+    cancelText: t("common.cancel"),
     body,
     // Telefon: arkusz od dołu jak okno koloru tagów w menedżerze bazy.
     sheet: { backBtn: document.getElementById("btnBack") },
@@ -651,7 +651,7 @@ function renderDisplay() {
       <div class="hint">${t("gameSettings.display.hostLogoHint")}</div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnDisplayReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnDisplayReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection")}</button>
     </div>
   `;
 
@@ -675,7 +675,7 @@ function renderDisplay() {
   });
 
   document.getElementById("btnDisplayReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia wyglądu?" })) return;
+    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") })) return;
     localSettings.display = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.display));
     markDirty();
     renderDisplay();
@@ -779,7 +779,7 @@ async function renderSound() {
       <div class="sfx-table" id="sfxTableGs"></div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${t("gameSettings.sfxResetAll") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${t("gameSettings.sfxResetAll")}</button>
     </div>
   `;
 
@@ -820,7 +820,7 @@ async function renderSound() {
       const label = s.label?.[lang] || s.file;
       return { value: file, label };
     });
-    variantOptions.push({ value: VARIANT_CUSTOM, label: t("gameSettings.sfxCustom") || "Własny" });
+    variantOptions.push({ value: VARIANT_CUSTOM, label: t("gameSettings.sfxCustom") });
 
     // Tag z własnym plikiem (widoczny tylko gdy custom)
     const fileTagHtml = custom
@@ -832,7 +832,7 @@ async function renderSound() {
 
     // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("gameSettings.sfxChooseFile") || "Wybierz plik"}</button>`;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("gameSettings.sfxChooseFile")}</button>`;
 
     // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
     const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
@@ -981,7 +981,7 @@ async function renderSound() {
         const decoded = await ctx.decodeAudioData(buf);
         await ctx.close();
         if (decoded.duration > limitSec) {
-          alertModal({ text: (t("gameSettings.sfxTooLong") || "Maksymalna długość to {limit}s").replace("{limit}", limitSec) });
+          alertModal({ text: (t("gameSettings.sfxTooLong")).replace("{limit}", limitSec) });
           return;
         }
       } catch { /* nie blokuj jeśli AudioContext niedostępny */ }
@@ -1032,7 +1032,7 @@ async function renderSound() {
 
   // Reset wszystkich dźwięków
   document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku?" })) return;
+    if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") })) return;
 
     const customKeys = [...customFiles.keys()];
     localSettings.sound = { volumes: {}, variants: {} };
@@ -1166,7 +1166,7 @@ function renderFinale() {
           <div class="mini"><div class="hint">${t("gameSettings.finalPoolHint")}</div></div>
           <div class="qList" id="gsFinalePool">
             ${pool.length === 0
-              ? `<div class="empty-state empty-state--inline">${t("gameSettings.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
+              ? `<div class="empty-state empty-state--inline">${t("gameSettings.finalPoolEmpty")}</div>`
               : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="${DRAGGABLE}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
@@ -1583,7 +1583,7 @@ function renderGame() {
       </div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnGameReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnGameReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection")}</button>
     </div>
   `;
 
@@ -1650,7 +1650,7 @@ function renderGame() {
 
 
   document.getElementById("btnGameReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia gry?" })) return;
+    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") })) return;
     localSettings.game.advanced = { ...DEFAULT_SETTINGS.game.advanced };
     for (const id of ["gsMultipliers", "gsFinalMinPts", "gsFinalTarget", "gsMainPrize", "gsPrizeMultiplier"]) invalidInputs.delete(id);
     markDirty();
@@ -1893,7 +1893,7 @@ async function main() {
 
   // Reset to defaults
   btnResetAll?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne?" })) return;
+    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") })) return;
 
     // Wyczyść custom pliki dźwiękowe (IndexedDB + bucket)
     let customKeys = [];

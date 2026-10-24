@@ -143,7 +143,7 @@ Poniżej opisuję to, co **zostało**.
 | `.modal-err` | login.css:204 | 1 | błąd w oknie | `.status-line--error` | #ff9d9d |
 | `.gs-field-msg` (`.is-error`), `.gs-field-suggest` (`.is-warn`) | game-settings.css:718 | 1 | błąd pola | `.field__error` | #ffb3b3, #ffd27a |
 | `.mkt-submit-error`, `.mkt-submit-warn`, `.mkt-lang-picker` (ramka) | marketplace.css:396, 362, 349 | 1 | baner błędu / ostrzeżenia | nowy `.callout--bad/--warn` | r-sm / r-md, rgba na sztywno |
-| `.pending-bar`, `.bulk-bar` | settings.css:1395, 1380 | 1 | pasek ostrzeżenia / zaznaczenia | `.callout` / `.games-bottom` | |
+| `.pending-bar`, `.bulk-bar` | settings.css:1395, 1380 | 1 | pasek ostrzeżenia / zaznaczenia | `.callout` / `.list-toolbar` | |
 | `.warn`, `.panel-status`, `.status-bar`, `.gs-actionbar-msg`, `.connect-device-msg`, `.msg` (control.css:497) | settings.css:630, 453, 1434; game-settings.css:102; connect-device.css:76 | 1-53* | status | `.status-line` | `.msg` jest też w silniku (components.css:613) |
 | `.importMsg` | editor.css:405 | 9 | komunikat importu | `.importMsg` (components.css:792) | kopia |
 | `.device-load-error` | buzzer.css:162; host.css | 2 | błąd ładowania urządzenia | `.blocking-overlay` | |
@@ -153,7 +153,7 @@ Poniżej opisuję to, co **zostało**.
 | klasa | definicja | użycie | rola | proponowany | uwagi |
 |---|---|---|---|---|---|
 | `.pollBar`, `.mkt-head` | polls.css:49; marketplace.css:25 | 2 / 2 | górny pasek | `.bar` (layout.css:37) | identyczne z `.bar` (flex, space-between, gap 12); e2e `pollBar` 6 |
-| `.stepFoot`, `.gs-page-footer`, `.sfx-foot` | control.css:484; game-settings.css:19, 204 | 1 | dolny pasek | `.games-bottom` | e2e `stepFoot` 2 |
+| `.stepFoot`, `.gs-page-footer`, `.sfx-foot` | control.css:484; game-settings.css:19, 204 | 1 | dolny pasek | `.list-toolbar` | e2e `stepFoot` 2 |
 | `.gs-actionbar`, `.m-actionbar` | game-settings.css:89; manual.css:33 | 1-2 | pasek strony pracy | `.bar` | g-10 tło |
 | `.actions`, `.account-actions`, `.notfound-actions`, `.poll-go-actions`, `.mkt-detail-actions`, `.panel-actions`, `.dt-actions`, `.blocking-actions`, `.logoActions`, `.mkt-sent-actions`, `.provider-order-actions`, `.bypass-actions`, `.market-actions`, `.pollBarActions`, `.pollLinkActions`, `.tallyTools`, `.subsTools` | auth-landing.css:122; account.css:91; 404.css:25; go.css:47; marketplace.css:333, 246; settings.css:436, 421, 742, 482, 1457; blocking-overlay.css:37; logo.css:84; polls.css:88, 216, 369, 281 | po 1-2 | rząd przycisków | `.modal-actions` / nowa pomocnicza `.cluster` (§4.3) | wszystkie `flex; wrap; gap 10`, różnią się tylko `justify`; e2e `.actions` 34* |
 | `.toolbar`, `.editorToolbar` | base-explorer.css:903; logo.css:198 | 19* / 3 | pasek narzędzi edytora | nowy `.toolbar` (doc §4.1) | #090d1a vs k-20 |

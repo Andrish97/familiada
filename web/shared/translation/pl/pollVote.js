@@ -64,7 +64,6 @@ const pl = {
   },
   pollQr: {
     title: "Familiada — ankieta z kodem QR",
-    fullscreen: "Pełny ekran",
     scan: "Zeskanuj QR, aby zagłosować",
     missingUrl: "Brak URL",
     qrFailed: "Nie udało się wygenerować QR",

@@ -46,7 +46,7 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     const after = new Date(Date.now() - 2000).toISOString();
     await open(owner.page);
     await expect(owner.page.locator("#inviteForm")).toBeVisible();
-    await expect(owner.page.locator(".games-bottom")).toHaveCount(0);
+    await expect(owner.page.locator(".list-toolbar")).toHaveCount(0);
     await invite(owner.page, recipient.identity.email);
     const outgoing = owner.page.locator('.rowsSection--outgoing .shareRow').filter({ hasText: tag(recipient.identity) });
     await expect(outgoing).toHaveCount(1);

@@ -86,16 +86,16 @@ const TOOLBAR_SEPARATOR_WIDTH = 9;
 const TOOLBAR_SEPARATOR_ROOM = 40;
 
 function initListBottomToolbarLayout() {
-  for (const bar of document.querySelectorAll(".games-bottom")) {
+  for (const bar of document.querySelectorAll(".list-toolbar")) {
     let queued = false;
     let lastLayout = "";
     let lastAvailableWidth = null;
     let lastTextMeasures = null;
     const measureBox = document.createElement("div");
-    // Daj klonom tę samą bazową kaskadę .games-bottom co prawdziwemu paskowi;
+    // Daj klonom tę samą bazową kaskadę .list-toolbar co prawdziwemu paskowi;
     // bez tego mobilne .only-desktop i reguły kompaktowe nie są mierzone tak,
     // jak potem renderują się na stronie.
-    measureBox.className = "games-bottom toolbar-measure-box";
+    measureBox.className = "list-toolbar toolbar-measure-box";
     Object.assign(measureBox.style, {
       position: "fixed", left: "-100000px", top: "0", width: "max-content",
       maxWidth: "none", visibility: "hidden", pointerEvents: "none",
@@ -126,13 +126,13 @@ function initListBottomToolbarLayout() {
         label.style.setProperty("display", mode === "icons" ? "none" : "inline", "important");
       }
       if (mode === "icons") {
-        // Pomiar odbywa się poza .games-bottom, więc nie dziedziczy reguł
+        // Pomiar odbywa się poza .list-toolbar, więc nie dziedziczy reguł
         // .is-compact-icons. Odtwórz w klonie faktyczne wymiary kompaktowego
         // wariantu, w tym selecty, które normalnie mają szerokość 150 px.
         for (const label of clone.querySelectorAll(".ui-select-label, .ui-select-caret")) {
           label.style.setProperty("display", "none", "important");
         }
-        for (const control of clone.querySelectorAll(".games-bottom-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open")) {
+        for (const control of clone.querySelectorAll(".list-toolbar-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open")) {
           Object.assign(control.style, {
             width: "36px", minWidth: "36px", maxWidth: "36px",
             height: "36px", minHeight: "36px", padding: "0",
@@ -167,8 +167,8 @@ function initListBottomToolbarLayout() {
     bar.addEventListener("scroll", updateEdges, { passive: true });
     const update = () => {
       queued = false;
-      const left = bar.querySelector(":scope > .games-bottom-left");
-      const right = bar.querySelector(":scope > .games-bottom-right");
+      const left = bar.querySelector(":scope > .list-toolbar-left");
+      const right = bar.querySelector(":scope > .list-toolbar-right");
       if (!left || !right) return;
       const available = bar.clientWidth;
       if (lastAvailableWidth !== null && Math.abs(lastAvailableWidth - available) > 1) {
@@ -193,7 +193,7 @@ function initListBottomToolbarLayout() {
       if (!compact) lastTextMeasures = { left: textLeft, right: textRight, searchSlack, searchBox };
       const barStyle = getComputedStyle(bar);
       const groupGap = parseFloat(barStyle.columnGap) || parseFloat(barStyle.gap) || 0;
-      const hasTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
+      const hasTextLabels = [...bar.querySelectorAll(".list-toolbar-right .only-desktop")]
         .some((label) => label.textContent.trim());
       const textNeeded = textLeft.width + textRight.width + groupGap - searchSlack;
       const useIcons = hasTextLabels && textNeeded > available + 1;

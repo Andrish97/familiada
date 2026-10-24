@@ -319,7 +319,7 @@ na `main` bez uruchamiania testów. Zrzuty z przykładowymi danymi: 390/1400 px.
 
 Dotyczy: `/games/`, `/bases/`, `/logos/`, `/polls-hub/`, `/subscriptions/`.
 Wzór: gry i bazy (pasek `.bar`, karty `.tabs-card`, `.card.games-card`,
-siatka `.grid` kafli `.card`, dolny pasek `.games-bottom`).
+siatka `.grid` kafli `.card`, dolny pasek `.list-toolbar`).
 
 Od góry:
 
@@ -334,7 +334,7 @@ Od góry:
    odrzucenie w prawym górnym rogu `.x`, nazwa, linia meta), oznaczenia
    (tagi `.tag`) w linii meta jak w bazach; kafel „+” (`.addCard`) jak
    w grach, gdy na stronie się coś tworzy.
-4. **Dolny pasek** (`.games-bottom`) — po prawej eksport / import (gdzie
+4. **Dolny pasek** (`.list-toolbar`) — po prawej eksport / import (gdzie
    są); po lewej wyszukiwanie i filtrowanie (gdzie mają sens).
 
 | Strona | Karty | Przyciski zaznaczonego kafla (prawa strona paska) | Dół po lewej | Dół po prawej |

@@ -5,12 +5,13 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-24T18062";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-24T18062";
-import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
+import { normalizeText } from "../data/listing.js?v=v2026-10-24T18315";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-24T18315";
+import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { emptyStateHtml } from "../../../../shared/js/core/empty-state.js?v=v2026-10-24T18315";
 
 const ROOT = "root";
 
@@ -88,7 +89,7 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
   function resultsHtml() {
     const words = normalizeText(query).split(/\s+/).filter(Boolean);
     const hits = [...d.folderById.values()].filter((f) => reachable.has(f.id) && words.every((w) => d.folderSearchText(f.id).includes(w)));
-    if (!hits.length) return `<div class="list-empty empty-state empty-state--inline">${esc(t("baseExplorer.move.noFolders"))}</div>`;
+    if (!hits.length) return emptyStateHtml(t("baseExplorer.move.noFolders"), { variant: "inline", hook: "list-empty" });
     const pathOf = (f) => [...d.ancestorIds(f.id)].reverse().map((id) => d.folderById.get(id)?.name || "").join(" / ");
     return hits
       .sort((a, b) => String(a.name).localeCompare(String(b.name), "pl", { sensitivity: "base" }))
@@ -115,9 +116,7 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
       document.getElementById("moveClose").onclick = null;
       document.getElementById("moveCancel").onclick = null;
       ok.onclick = null;
-      overlay.onclick = null;
-      exitModalSheet(overlay);
-      setOverlayOpen(overlay, false);
+      closeDialog(overlay);
       // fokus wraca tam, skąd otwarto okno (menu kontekstowe znika — wtedy lista)
       const back = returnFocus?.isConnected && returnFocus.offsetParent !== null ? returnFocus : document.getElementById("list");
       back?.focus?.({ preventScroll: true });
@@ -150,11 +149,10 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
       confirm();
     };
     search.oninput = () => { query = search.value; render(); };
-    // Esc zamyka, Enter zatwierdza (fokus bywa poza oknem — na dokumencie)
+    // Enter zatwierdza (Esc i tło — wspólna obsługa okien) (fokus bywa poza oknem — na dokumencie)
     // Enter na przycisku (Anuluj, X, strzałka) działa jak ten przycisk; w polu
     // szukania z jednym wynikiem wybiera go.
     function onKey(e) {
-      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(undefined); return; }
       if (e.key !== "Enter") return;
       if (e.target?.closest?.("button") && e.target !== ok) return;
       if (picked === null && e.target === search) {
@@ -170,14 +168,12 @@ export function openMoveModal(state, { mode = "move", blockedIds = new Set(), st
     document.getElementById("moveClose").onclick = () => finish(undefined);
     document.getElementById("moveCancel").onclick = () => finish(undefined);
     ok.onclick = confirm;
-    overlay.onclick = (e) => { if (e.target === overlay) finish(undefined); };
 
     // start: folder, w którym jesteśmy (jeśli wolno go wybrać)
     if (startId && !blockedIds.has(startId)) picked = startId;
     render();
     document.dispatchEvent(new CustomEvent("explorer:close-drawer"));
-    setOverlayOpen(overlay, true);
-    enterModalSheet(overlay, { onClose: () => finish(undefined) });
+    openDialog(overlay, { onClose: () => finish(undefined) });
     list.querySelector(".is-picked")?.scrollIntoView({ block: "nearest" });
     // fokus w oknie; na dotyku bez pola tekstowego (klawiatura zasłoniłaby drzewo)
     if (window.matchMedia?.("(pointer: fine)").matches) search.focus({ preventScroll: true });

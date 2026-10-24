@@ -1,8 +1,8 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { isSheetViewport, enterModalSheet, exitModalSheet, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T18062";
-import { icon, iconText } from "./icons.js?v=v2026-10-24T18062";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-24T18062";
-import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-24T18062";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T18315";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T18315";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-24T18315";
+import { ensureSupportEntryPoint } from "./support-modal.js?v=v2026-10-24T18315";
 
 
 let modalEl = null;
@@ -83,13 +83,13 @@ function applyLabels() {
   set("cModalSuccessTitle", "contact.modal.successTitle");
   setAction("cModalDone",   "common.done", "check");
   const xBtn = document.getElementById("cModalX");
-  if (xBtn) xBtn.setAttribute("aria-label", t("common.modal.closeLabel") || "Zamknij");
+  if (xBtn) xBtn.setAttribute("aria-label", t("common.modal.closeLabel"));
   const backBtn = document.getElementById("cModalBack");
   if (backBtn) backBtn.innerHTML = iconText("arrow-left", t("common.modalBack"));
   if (isSheetViewport() && usedSheetMode) document.querySelectorAll('.sheet-back-active').forEach(button => { button.innerHTML = iconText('arrow-left', t('common.modalBack')); });
   modalEl?.querySelector('.contact-modal-topbar')?.toggleAttribute('hidden', !isSheetViewport() || usedSheetMode);
   const ticketInp = document.getElementById("cModalTicket");
-  if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
+  if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder");
 }
 
 // W trakcie wysyłki (także gdy czeka na wyzwanie Turnstile) „Wyślij” zostaje
@@ -119,13 +119,6 @@ function ensureModal() {
   modal?.setAttribute("aria-labelledby", "cModalTitle");
   document.body.appendChild(modalEl);
 
-  modalEl.addEventListener("click", (e) => {
-    if (e.target !== modalEl) return;
-    // Na telefonie modal jest pełnoekranowy — jedynym wyjściem ma być
-    // widoczny przycisk zamknięcia, nie klik w tło.
-    if (isSheetViewport()) return;
-    closeContactModal();
-  });
   document.getElementById("cModalClose")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalX")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalBack")?.addEventListener("click", closeContactModal);
@@ -155,7 +148,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-24T18062");
+    const { sb } = await import("./supabase.js?v=v2026-10-24T18315");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -203,8 +196,7 @@ export async function openContactModal(opts = {}) {
   modalEl.classList.add("modal--sheet");
   document.body.appendChild(modalEl);
 
-  setOverlayOpen(modalEl, true);
-  enterModalSheet(modalEl, { onClose: closeContactModal });
+  openDialog(modalEl, { onClose: closeContactModal });
   applyLabels();
   await prefillEmail();
   const emailInp = document.getElementById("cModalEmail");
@@ -214,8 +206,7 @@ export async function openContactModal(opts = {}) {
 
 export function closeContactModal() {
   if (!modalEl) return;
-  setOverlayOpen(modalEl, false);
-  exitModalSheet(modalEl);
+  closeDialog(modalEl);
 }
 
 async function submitContact() {
@@ -230,9 +221,9 @@ async function submitContact() {
 
   const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.hidden = false; } };
 
-  if (!email || !email.includes("@")) { showErr(t("contact.modal.errEmail") || "Podaj poprawny e-mail."); return; }
-  if (!message || message.length < 5) { showErr(t("contact.modal.errMessage") || "Wiadomość jest za krótka."); return; }
-  if (!ticket && !subject)            { showErr(t("contact.modal.errSubject") || "Podaj temat."); return; }
+  if (!email || !email.includes("@")) { showErr(t("contact.modal.errEmail")); return; }
+  if (!message || message.length < 5) { showErr(t("contact.modal.errMessage")); return; }
+  if (!ticket && !subject)            { showErr(t("contact.modal.errSubject")); return; }
 
   setSubmitBusy(true);
   if (errEl) { errEl.hidden = true; }
@@ -259,7 +250,7 @@ async function submitContact() {
     try {
       captcha_token = await getTurnstileToken(document.getElementById("cModalCaptcha"), { lang, size: "flexible" });
     } catch {
-      showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem.");
+      showErr(t("auth.captchaRequired"));
       return;
     }
     let res;
@@ -277,10 +268,10 @@ async function submitContact() {
       });
     }
 
-    if (res.status === 429) { showErr(t("contact.rateLimited") || "Zbyt wiele zgłoszeń. Spróbuj jutro."); return; }
+    if (res.status === 429) { showErr(t("contact.rateLimited")); return; }
     if (res.status === 400 || res.status === 503) {
       const failed = await res.clone().json().catch(() => ({}));
-      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("auth.captchaRequired") || "Potwierdź, że nie jesteś robotem."); return; }
+      if (String(failed?.error || "").startsWith("captcha")) { showErr(t("auth.captchaRequired")); return; }
     }
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
@@ -293,8 +284,8 @@ async function submitContact() {
     const ticketEl = document.getElementById("cModalSuccessTicket");
     if (ticketEl) {
       ticketEl.textContent = json.ticket_number
-        ? `${t("contact.modal.ticketLabel") || "Numer zgłoszenia:"} ${json.ticket_number}`
-        : (ticket ? `${t("contact.modal.addedTo") || "Dodano do zgłoszenia:"} ${ticket}` : "");
+        ? `${t("contact.modal.ticketLabel")} ${json.ticket_number}`
+        : (ticket ? `${t("contact.modal.addedTo")} ${ticket}` : "");
     }
     ["cModalEmail","cModalTicket","cModalSubject","cModalMessage"].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = "";

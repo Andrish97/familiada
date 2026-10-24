@@ -64,7 +64,6 @@ const en = {
   },
   pollQr: {
     title: "Familiada — QR code poll",
-    fullscreen: "Fullscreen",
     scan: "Scan the QR code to vote",
     missingUrl: "Missing URL",
     qrFailed: "Failed to generate QR",

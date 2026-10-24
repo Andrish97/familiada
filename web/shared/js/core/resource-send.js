@@ -1,10 +1,11 @@
-import { sb } from "./supabase.js?v=v2026-10-24T18062";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { toast } from "./toast.js?v=v2026-10-24T18062";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-24T18062";
-import { icon, iconText } from "./icons.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T18062";
-import { attachListTools } from "./share-sections.js?v=v2026-10-24T18062";
+import { sb } from "./supabase.js?v=v2026-10-24T18315";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { toast } from "./toast.js?v=v2026-10-24T18315";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-24T18315";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T18315";
+import { attachListTools } from "./share-sections.js?v=v2026-10-24T18315";
+import { emptyState } from "./empty-state.js?v=v2026-10-24T18315";
 
 
 const attempts = new Map();
@@ -42,18 +43,9 @@ function getDialog() {
   const close = () => closeDialog(overlay);
   overlay.querySelector("[data-close]").addEventListener("click", close);
   overlay.querySelector("[data-cancel]").addEventListener("click", close);
-  overlay.addEventListener("click", event => {
-    if (event.target === overlay) close();
-  });
   (document.querySelector("main.wrap") || document.body).append(overlay);
   attachListTools(overlay.querySelector(".resource-send-friends-section .shareSectionHeading"), overlay.querySelector(".resource-send-friends"), "resource-send-friends");
   return overlay;
-}
-
-function closeDialog(overlay) {
-  if (!overlay || !isOverlayOpen(overlay)) return;
-  setOverlayOpen(overlay, false);
-  exitModalSheet(overlay);
 }
 
 function setDialogLabels(overlay) {
@@ -117,10 +109,7 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
       }
 
       if (!friends.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty-state resource-send-empty";
-        empty.textContent = t("resourceSend.noFriends");
-        list.append(empty);
+        list.append(emptyState(t("resourceSend.noFriends"), { hook: "resource-send-empty" }));
       }
       for (const friend of friends) addFriendRow(list, friend);
       submit.disabled = !friends.length;
@@ -172,12 +161,7 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
         }
       };
 
-      setOverlayOpen(overlay, true);
-      enterModalSheet(overlay, {
-        backBtn: document.getElementById("btnBackSheet") || document.getElementById("btnBack"),
-        onClose: () => closeDialog(overlay),
-        historyKey: null,
-      });
+      openDialog(overlay, { historyKey: null });
     } catch (openError) {
       toast(t("resourceSend.errors.failed"), { kind: "error" });
       console.warn("[resource-send]", openError);

@@ -1,10 +1,10 @@
 // Kod QR rysowany lokalnie (SVG), jak w Control i na Wyświetlaczu — bez zewnętrznej biblioteki z CDN.
-import { qrDataUrl } from "../../../../shared/js/core/qr-code.js?v=v2026-10-24T18062";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-24T18062";
-import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-24T18062";
+import { qrDataUrl } from "../../../../shared/js/core/qr-code.js?v=v2026-10-24T18315";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-24T18315";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-24T18315";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { initFullscreenButton } from "../../../../shared/js/core/fullscreen.js?v=v2026-10-24T18315";
 
 
 // 1. Inicjalizacja i18n
@@ -146,23 +146,7 @@ if (!url && paramId && paramKey) {
 }
 
 // --- Fullscreen ---
-const btnFS = document.getElementById("btnFullscreen");
-
-function updateFsIcon(){
-  if(!btnFS) return;
-  btnFS.innerHTML = icon(document.fullscreenElement ? "fullscreen-exit" : "fullscreen-enter");
-}
-
-btnFS?.addEventListener("click", async ()=>{
-  try{
-    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch(e){
-    console.warn("[poll-qr] fullscreen error", e);
-  }
-});
-
-document.addEventListener("fullscreenchange", updateFsIcon);
+initFullscreenButton({ button: document.getElementById("btnFullscreen") });
 
 async function applyLangChange(lang) {
   await setUiLang(lang, { persist: false, updateUrl: true, apply: true });
@@ -218,7 +202,6 @@ window.addEventListener("beforeunload", () => {
   if (pollLangInterval) clearInterval(pollLangInterval);
 });
 
-updateFsIcon();
 if (!deviceInitFailed) {
   render(url).finally(() => {
     document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");

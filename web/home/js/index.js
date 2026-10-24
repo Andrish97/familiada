@@ -1,13 +1,11 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18062";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18062";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T18062";
-import { manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18062";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T18062";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18315";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18315";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T18315";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T18315";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
 
 
 async function redirectIfSession() {
@@ -411,15 +409,8 @@ function initImageViewer() {
 document.addEventListener("DOMContentLoaded", async () => {
   // Kadry zaczynają się pobierać od razu, nie czekając na tłumaczenia.
   switchLandingImages(getUiLang());
-  try {
-    await initI18n({ withSwitcher: true });
-  } catch (e) {
-    console.error("[index] i18n init failed:", e);
-  } finally {
-    // Awaria sesji lub tłumaczeń nie może zostawić pustej strony.
-    document.documentElement.classList.remove('page-loading');
-  }
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Awaria tłumaczeń nie może zostawić pustej strony (initEntryPage odsłania ją zawsze).
+  await initEntryPage("home", { ready: initI18n({ withSwitcher: true }) }).catch((e) => console.error("[index] i18n init failed:", e));
   applyTranslations();
   updateInternalLinks();
   updateStructuredFaq();
@@ -436,11 +427,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Wskazówki — ten sam przycisk „i” co na pozostałych stronach (język z bieżącej strony).
-  const btnManual = document.getElementById("btnManual");
-  const syncManual = () => btnManual?.setAttribute("href", manualHref("home"));
-  syncManual();
-  window.addEventListener("i18n:lang", syncManual);
   initPipeline();
   initShotCarousels();
   initImageViewer();

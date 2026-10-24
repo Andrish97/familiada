@@ -1,24 +1,25 @@
-import { changeGameType } from "./change-type.js?v=v2026-10-24T18062";
-import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-24T18062";
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-24T18062";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-24T18062";
-import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-24T18062";
-import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-24T18062";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18062";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-24T18062";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18062";
-import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18062";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18062";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-24T18062";
+import { changeGameType } from "./change-type.js?v=v2026-10-24T18315";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-24T18315";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-24T18315";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-24T18315";
+import { loadResourceCopyOffers, decideResourceCopy } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-24T18315";
+import { tileTagsHtml, proposedTags, proposedActionsHtml, bindProposedActions } from "../../shared/js/core/proposed-tile.js?v=v2026-10-24T18315";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18315";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-24T18315";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18315";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18315";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18315";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-24T18315";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-24T18062";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-24T18062";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
+import { initPwa, isStandalone, isIOSSafari, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-24T18315";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-24T18315";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, isOverlayOpen, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T18315";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -26,10 +27,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-24T18062";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-24T18062';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-24T18315";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-24T18315';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18062";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18315";
 
 import {
   TYPES,
@@ -38,13 +39,13 @@ import {
   validateGame,
   rulesFromState,
   editGate,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-24T18062";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18062";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-24T18062";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-24T18062";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18062";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-24T18062";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-24T18315";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18315";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-24T18315";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-24T18315";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18315";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-24T18315";
 
 
 const MSG = {
@@ -254,45 +255,18 @@ function show(el, on) {
   el.style.removeProperty("display");
 }
 
-function isIOSSafari() {
-  const ua = navigator.userAgent || "";
-  const iOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const webkit = /WebKit/.test(ua);
-  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return iOS && webkit && notChrome;
-}
-
-function tSafe(key, fallback) {
-  const v = t(key);
-  return v === key ? fallback : v;
-}
-
 const IOS_PROMPT_LS_KEY = "pwa:install_dismissed";
 
 async function maybeShowIosWebappPrompt() {
-  if (!isIOSSafari() || window.navigator.standalone) return;
+  if (!isIOSSafari() || isStandalone()) return;
   if (localStorage.getItem(IOS_PROMPT_LS_KEY)) return;
-
-  const fallback = {
-    title: "Dodaj Familiadę do ekranu głównego",
-    text:
-      "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
-      "1. Otwórz menu Udostępnij.\n" +
-      "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
-      "3. Zatwierdź dodanie.\n" +
-      "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
-    ok: "OK",
-    never: "Nie pokazuj więcej",
-  };
 
   let skipNextTime = false;
   await confirmModal({
-    title: tSafe("games.iosWebapp.title", fallback.title),
-    text: tSafe("games.iosWebapp.text", fallback.text),
-    okText: tSafe("games.iosWebapp.ok", fallback.ok),
-    cancelText: tSafe("games.iosWebapp.never", fallback.never),
+    title: t("games.iosWebapp.title"),
+    text: t("games.iosWebapp.text"),
+    okText: t("games.iosWebapp.ok"),
+    cancelText: t("games.iosWebapp.never"),
     onReady: ({ cancelBtn }) => {
       cancelBtn?.addEventListener("click", () => { skipNextTime = true; }, { once: true });
     },
@@ -331,10 +305,7 @@ function setHint(t) {
   hint.textContent = t || "";
 }
 
-function setImportMsg(t) {
-  if (!importMsg) return;
-  importMsg.textContent = t || "";
-}
+function setImportMsg(text, kind) { setMessage(importMsg, text, kind); }
 
 let importParsed = null; // aktualnie sparsowany obiekt gry
 let importCompleted = false;
@@ -360,12 +331,10 @@ function openImportModal() {
   importFilePicker.reset();
   setImportMsg("");
   showProgBlock(importProg, false);
-  show(importOverlay, true);
-  enterModalSheet(importOverlay, { backBtn: btnBackSheet, onClose: closeImportModal });
+  openDialog(importOverlay, { onClose: closeImportModal });
 }
 function closeImportModal() {
-  show(importOverlay, false);
-  exitModalSheet(importOverlay);
+  closeDialog(importOverlay);
 }
 
 // Okno nazwy (tworzenie i zmiana nazwy) -- wspólne promptModal (modal.js).
@@ -450,20 +419,15 @@ async function renameGame(gameId, newName) {
   return true;
 }
 
-function setExportBaseMsg(t) {
-  if (!exportBaseMsg) return;
-  exportBaseMsg.textContent = t || "";
-}
+function setExportBaseMsg(text, kind) { setMessage(exportBaseMsg, text, kind); }
 
 function openExportBaseModal() {
   setExportBaseMsg("");
-  show(exportBaseOverlay, true);
-  enterModalSheet(exportBaseOverlay, { backBtn: btnBackSheet, onClose: closeExportBaseModal });
+  openDialog(exportBaseOverlay, { onClose: closeExportBaseModal });
 }
 
 function closeExportBaseModal() {
-  show(exportBaseOverlay, false);
-  exitModalSheet(exportBaseOverlay);
+  closeDialog(exportBaseOverlay);
 }
 
 function escapeHtml(s) {
@@ -1318,10 +1282,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isStandalone()) return;
     let installResult = null;
     const ok = await confirmModal({
-      title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
-      text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
-      okText: t("games.pwaInstall.ok") || "Zainstaluj",
-      cancelText: t("games.pwaInstall.cancel") || "Nie pokazuj",
+      title: t("games.pwaInstall.title"),
+      text: t("games.pwaInstall.text"),
+      okText: t("games.pwaInstall.ok"),
+      cancelText: t("games.pwaInstall.cancel"),
       onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
     if (ok && installResult) await installResult;
@@ -1333,35 +1297,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!pwaApi.canInstall()) {
       if (isIOSSafari()) {
         // iOS: pokaż instrukcję dodania do ekranu głównego
-        const fallback = {
-          title: "Dodaj Familiadę do ekranu głównego",
-          text:
-            "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
-            "1. Otwórz menu Udostępnij.\n" +
-            "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
-            "3. Zatwierdź dodanie.\n" +
-            "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
-          ok: "OK",
-        };
         await alertModal({
-          title: tSafe("games.iosWebapp.title", fallback.title),
-          text: tSafe("games.iosWebapp.text", fallback.text),
-          okText: tSafe("games.iosWebapp.ok", fallback.ok),
+          title: t("games.iosWebapp.title"),
+          text: t("games.iosWebapp.text"),
+          okText: t("games.iosWebapp.ok"),
         });
       } else {
         const ua = navigator.userAgent || "";
         const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
         const isMacSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
-        const title = isMacSafari ? "Dodaj Familiadę do Docka" : tSafe("games.pwaInstall.unavailableTitle", "Instalacja jest teraz niedostępna");
+        const title = isMacSafari ? t("games.pwaInstall.macSafariTitle") : t("games.pwaInstall.unavailableTitle");
         const text = isMacSafari
-          ? tSafe("games.pwaInstall.macSafari", "W Safari wybierz Plik → Dodaj do Docka.")
+          ? t("games.pwaInstall.macSafari")
           : isAndroidChrome
-            ? tSafe("games.pwaInstall.unavailableAndroid", "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.")
-            : tSafe("games.pwaInstall.unavailableText", "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.");
+            ? t("games.pwaInstall.unavailableAndroid")
+            : t("games.pwaInstall.unavailableText");
         await alertModal({
           title,
           text,
-          okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
+          okText: t("games.iosWebapp.ok"),
         });
         return;
       }
@@ -1369,10 +1323,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     let installResult = null;
     const ok = await confirmModal({
-      title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
-      text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
-      okText: t("games.pwaInstall.ok") || "Zainstaluj",
-      cancelText: t("games.pwaInstall.cancelBtn") || "Anuluj",
+      title: t("games.pwaInstall.title"),
+      text: t("games.pwaInstall.text"),
+      okText: t("games.pwaInstall.ok"),
+      cancelText: t("games.pwaInstall.cancelBtn"),
       onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
     if (ok && installResult) await installResult;
@@ -1526,7 +1480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const id = previewPollGameId;
     if (!id || !previewPollMeta) return;
     previewPollResults.reset();
-    previewPollMeta.textContent = t("games.preview.loading") || "Ładowanie…";
+    previewPollMeta.textContent = t("games.preview.loading");
     try {
       const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: id });
       if (error) throw error;
@@ -1559,16 +1513,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const closePreview = () => {
     previewSeq++;
-    if (previewOverlay) setOverlayOpen(previewOverlay, false);
-    exitModalSheet(previewOverlay);
+    if (previewOverlay) closeDialog(previewOverlay);
   };
   document.getElementById("btnPreviewClose")?.addEventListener("click", closePreview);
   document.getElementById("btnPreviewCloseBottom")?.addEventListener("click", closePreview);
-  previewOverlay?.addEventListener("click", e => {
-    if (e.target !== previewOverlay) return;
-    if (previewOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closePreview();
-  });
 
   btnPreview?.addEventListener("click", async () => {
     let gameName = "—";
@@ -1602,9 +1550,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Pokaż modal natychmiast z nazwą i "Ładowanie…"
     if (previewTitle) previewTitle.textContent = gameName;
-    if (previewQuestions) previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.loading") || "Ładowanie…"}</div>`;
-    if (previewOverlay) setOverlayOpen(previewOverlay, true);
-    enterModalSheet(previewOverlay, { backBtn: btnBackSheet, onClose: closePreview });
+    if (previewQuestions) previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.loading")}</div>`;
+    openDialog(previewOverlay, { onClose: closePreview });
 
     let questions = [];
     try {
@@ -1632,12 +1579,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Renderuj pytania
     if (seq !== previewSeq || !previewQuestions) return;
     if (!questions.length) {
-      previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.noQuestions") || "Brak pytań."}</div>`;
+      previewQuestions.innerHTML = `<div class="empty-state">${t("games.preview.noQuestions")}</div>`;
       return;
     }
 
     const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const ptsLabel = t("games.preview.pts") || "pkt";
+    const ptsLabel = t("games.preview.pts");
     previewQuestions.innerHTML = questions.map((q, i) => {
       const answers = sortAnswersByPoints(q.answers);
       const hasPoints = answers.some(a => a.fixed_points != null && a.fixed_points > 0);
@@ -1872,22 +1819,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  exportBaseOverlay?.addEventListener("click", (e) => {
-    if (e.target !== exportBaseOverlay) return;
-    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
-    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
-    if (exportBaseOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closeExportBaseModal();
-  });
 
 
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
-  importOverlay?.addEventListener("click", (e) => {
-    if (e.target !== importOverlay) return;
-    if (importOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closeImportModal();
-  });
   btnCancelImport?.addEventListener("click", closeImportModal);
   btnImportCancelAction?.addEventListener("click", closeImportModal);
 

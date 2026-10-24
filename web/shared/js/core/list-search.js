@@ -1,6 +1,6 @@
 // list-search.js
 // Wyszukiwanie po nazwie na stronach list (gry, bazy, logo): pole w lewej
-// części dolnego paska (.games-bottom-left) filtruje kafle w siatkach strony.
+// części dolnego paska (.list-toolbar-left) filtruje kafle w siatkach strony.
 // Kafel „+” (.addCard) zostaje zawsze. Filtr działa też na kafle dorysowane
 // później (zmiana karty, odświeżenie) — MutationObserver na siatkach.
 // Szukanej frazy nie zapamiętujemy (docs/ujednolicenie-wygladu.md, sekcja 1).
@@ -8,12 +8,13 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { promptModal } from "./modal.js?v=v2026-10-24T18062";
-import { icon } from "./icons.js?v=v2026-10-24T18062";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-24T18062";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-24T18062";
-import { scrollFade } from "./scroll-fade.js?v=v2026-10-24T18062";
+import { t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { promptModal } from "./modal.js?v=v2026-10-24T18315";
+import { icon } from "./icons.js?v=v2026-10-24T18315";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-24T18315";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-24T18315";
+import { scrollFade } from "./scroll-fade.js?v=v2026-10-24T18315";
+import { emptyState } from "./empty-state.js?v=v2026-10-24T18315";
 
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -38,7 +39,7 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
  *   atrybutów (np. rynek) siatka zostaje w kolejności z serwera.
  */
 export function initListSearch({ grids, tile, name, filter, sort }) {
-  const slot = document.querySelector(".games-bottom-left");
+  const slot = document.querySelector(".list-toolbar-left");
   if (!slot) return;
   // Komputer: pole jak w oknie „Przenieś do” (lupa w polu, X czyści frazę).
   // Telefon: sam przycisk lupy otwiera okno z takim samym polem; po
@@ -147,8 +148,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   const emptyFor = (grid) => {
     let el = emptyEls.get(grid);
     if (!el) {
-      el = document.createElement("div");
-      el.className = "list-empty empty-state empty-state--tile";
+      el = emptyState("", { variant: "tile", hook: "list-empty" });
       el.hidden = true;
       emptyEls.set(grid, el);
     }

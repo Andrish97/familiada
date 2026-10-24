@@ -64,7 +64,6 @@ const uk = {
   },
   pollQr: {
     title: "Familiada — опитування з QR-кодом",
-    fullscreen: "На весь екран",
     scan: "Скануй QR, щоб проголосувати",
     missingUrl: "Немає URL",
     qrFailed: "Не вдалося згенерувати QR",

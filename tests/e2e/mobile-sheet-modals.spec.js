@@ -631,7 +631,7 @@ test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
     await loginAs(page, context, accounts.standard[0]);
     await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
     await page.locator("#grid > :is(.card,.addCard)").first().waitFor({ timeout: 30000 });
-    const bar = page.locator(".games-bottom:not(.toolbar-measure-box)");
+    const bar = page.locator(".list-toolbar:not(.toolbar-measure-box)");
     await expect(bar).toHaveClass(/is-scroll/);
     await expect(bar, "grupy przy sobie, rozdzielone separatorem").toHaveClass(/has-group-sep/);
     const state = await bar.evaluate((el) => {
@@ -646,10 +646,10 @@ test.describe("games: dolny pasek na telefonie przewija się w bok", () => {
     expect(state.scrollLeft, "start od lewej (więcej przycisków po prawej)").toBe(0);
     await expect(bar).toHaveClass(/has-more-end/);
 
-    await page.locator(".games-bottom .list-filter .ui-select-btn").click();
-    await expect(page.locator(".games-bottom .list-filter")).toHaveClass(/open/);
+    await page.locator(".list-toolbar .list-filter .ui-select-btn").click();
+    await expect(page.locator(".list-toolbar .list-filter")).toHaveClass(/open/);
     await bar.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
-    await expect(page.locator(".games-bottom .list-filter")).not.toHaveClass(/open/);
+    await expect(page.locator(".list-toolbar .list-filter")).not.toHaveClass(/open/);
     await expect(bar).toHaveClass(/has-more-start/);
     await expect(bar).not.toHaveClass(/has-more-end/);
   });

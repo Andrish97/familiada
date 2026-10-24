@@ -6,6 +6,19 @@
 
 export const TOAST_DEFAULT_MS = 3000;
 
+/**
+ * Komunikat w treści (stopka okna, pod polem, w karcie) — drugi, obok dymku,
+ * sposób pokazania wyniku. kind: "error" | "ok" | "" (wygląd: .importMsg
+ * [data-kind] w silniku). Pusty komunikat znika (atrybut hidden).
+ */
+export function setMessage(el, text = "", kind = "") {
+  if (!el) return;
+  el.textContent = text || "";
+  if (kind) el.dataset.kind = kind;
+  else delete el.dataset.kind;
+  el.hidden = !text;
+}
+
 let box = null;
 let textEl = null;
 let timer = null;

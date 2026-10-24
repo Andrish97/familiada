@@ -134,7 +134,7 @@ module.exports = [
   { id: "games-search", category: CAT, title: "Moje gry — wyszukiwanie po nazwie", path: "/games/", sources: [...GAMES, "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
     steps: [async (view, { lang }) => {
       const q = { pl: "wi", en: "ni", uk: "ві" }[lang];
-      const field = view.locator(".games-bottom .searchText").first();
+      const field = view.locator(".list-toolbar .searchText").first();
       // Wąski pasek (dłuższe napisy UK): pole szukania zwinięte do przycisku z oknem.
       if (await field.isVisible()) await field.fill(q);
       else { await view.locator(".list-search-open").click(); await view.locator(".uni-modal .uni-inp").fill(q); await view.locator(".uni-modal .uni-foot .btn.gold").click(); }

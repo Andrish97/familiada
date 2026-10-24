@@ -1,5 +1,5 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-24T18062";
-import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-24T18062";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-24T18315";
+import { initPwa, isStandalone, isIOSSafari, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-24T18315";
 
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
@@ -7,12 +7,6 @@ const INSTALL_DISMISSED_KEY = "pwa:install_dismissed";
 const ADMIN_APP_SHELL_KEY = "admin-pwa:standalone";
 let didRunUnlockedSetup = false;
 let adminInstalled = false;
-
-function isIOSSafari() {
-  const ua = navigator.userAgent || "";
-  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  return ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-}
 
 function isIOSDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -35,7 +29,7 @@ function isAdminStandalone() {
   if (!workerUrl) return false;
   try {
     const worker = new URL(workerUrl);
-    return worker.origin === location.origin && worker.pathname === "/admin/sw.js?v=v2026-10-24T18062";
+    return worker.origin === location.origin && worker.pathname === "/admin/sw.js?v=v2026-10-24T18315";
   } catch {
     return false;
   }

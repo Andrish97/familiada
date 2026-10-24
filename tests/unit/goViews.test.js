@@ -13,7 +13,7 @@ async function setup(lang,query=`b=${id}`){
  const t=(path,args={})=>{let value=path.split('.').reduce((entry,key)=>entry?.[key],dict);assert.equal(typeof value,'string',path);for(const [key,item] of Object.entries(args))value=value.replaceAll('{'+key+'}',item);return value;};
  const context=vm.createContext({...contract,anonymousPollDestination,validAnonymousPollParams,URL,URLSearchParams,setTimeout,clearTimeout,console,t,
   initI18n:async()=>{},document:{getElementById:key=>nodes[key],createElement:()=>node(),documentElement:{classList:{remove(){}}},querySelector:()=>null},
-  location:{search:'?'+query,origin:'https://www.familiada.online',href:'https://www.familiada.online/go/'},linkTo:key=>'/'+key+'/',sharingActionIcon:()=>'',icon:()=>'',getUser:async()=>null,guardViewportWidth:()=>({ready:Promise.resolve(true)})});
+  location:{search:'?'+query,origin:'https://www.familiada.online',href:'https://www.familiada.online/go/'},linkTo:key=>'/'+key+'/',sharingActionIcon:()=>'',icon:()=>'',getUser:async()=>null,guardViewportWidth:()=>({ready:Promise.resolve(true)}),initEntryPage:async()=>{}});
  const source=(await readFile(new URL('../../web/go/js/go.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace(/\ninit\(\);\s*$/,'\nglobalThis.views={handleSubInvite,handleTaskInvite,handleBaseInvite,handleFriendInvite,showResolveError,showNetworkFailure};');
  vm.runInContext(source,context);return {views:context.views,nodes,dict};
 }

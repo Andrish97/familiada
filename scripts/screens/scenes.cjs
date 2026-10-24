@@ -244,9 +244,9 @@ module.exports = [
   { id: "empty-state-games", category: "Dodatkowe", title: "Pusty stan — Moje gry, wyszukiwanie bez wyników", path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
     steps: [async (view) => {
       // Dłuższe napisy (UK) zwijają pasek do ikon: wtedy wyszukiwanie otwiera lupa.
-      const open = view.locator(".games-bottom .list-search-open");
+      const open = view.locator(".list-toolbar .list-search-open");
       if (await open.isVisible()) { await open.click(); await view.waitForTimeout(300); }
-      await view.locator(".games-bottom .searchText:visible, .searchText:visible").first().fill("zzzz");
+      await view.locator(".list-toolbar .searchText:visible, .searchText:visible").first().fill("zzzz");
       await view.waitForTimeout(500);
     }] },
   { id: "empty-state-friends", category: "Dodatkowe", title: "Pusty stan — Znajomi, wyszukiwanie bez wyników", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0, devices: ["desktop"],

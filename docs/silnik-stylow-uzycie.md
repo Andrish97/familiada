@@ -117,7 +117,7 @@ najbliższy token (zasada §11.2–3: jak najmniej wartości).
 
 Najprostszy pełny wzór: `web/tasks/` (lista w karcie) i `web/games/`
 (karta z wypustkami + dolny pasek z filtrem, sortowaniem, wyszukiwaniem
-i akcjami). JS: `initPage()` z `core/page-init.js` (topbar, i18n,
+i akcjami). JS: `initPage()` z `core/page-init.js` (strony wejścia bez konta w topbarze: `initEntryPage(id, { ready })`) (topbar, i18n,
 nawigacja, strażnik urządzenia).
 
 Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
@@ -152,10 +152,13 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 | podpowiedź pod tytułem / polem | `.hint` | dymek: atrybut `data-tooltip` (`core/tooltips.js`) |
 | komunikat w treści | `.callout` (`--warn`, `--bad`) | |
 | komunikat po akcji | `toast()` z `core/toast.js` | |
+| komunikat w treści (stopka okna, pod polem) | `.importMsg` + `setMessage(el, tekst, "error"\|"ok")` z `core/toast.js` | pusty znika; błąd czerwony |
+| pusty stan | `emptyState(tekst, { variant: "inline"\|"tile", hook })` / `emptyStateHtml(…)` z `core/empty-state.js` | `hook` — klasa-uchwyt dla logiki strony (np. `list-empty`) |
+| pełny ekran | `.fs-btn` + `initFullscreenButton({ button, a2hs, a2hsClose })` z `core/fullscreen.js` | iPhone bez API: okno `.a2hs`; awaryjnie `html.pseudoFS` |
 | pasek na górze strony | `.notice-bar` | np. przypomnienie gościa |
 | pusty stan | `.empty-state` (`--tile`, `--inline`) | |
 | okno potwierdzenia / pytanie / postęp | `confirmModal`, `alertModal`, `promptModal`, `progressModal` z `core/modal.js` | na telefonie same przechodzą w arkusz od dołu |
-| własne okno | `.overlay.modal--sheet > .modal` + `setOverlayOpen(overlay, open)` i `enterModalSheet` z `core/modal-sheet.js` | |
+| własne okno | `.overlay.modal--sheet > .modal` + `openDialog(overlay, { onClose, onBack })` / `closeDialog(overlay)` z `core/modal-sheet.js` | Esc, klik w tło i `[data-modal-cancel]` klikają X w nagłówku okna (`.mHead`/`.uni-head` z ikoną `close`) — bez własnych obsług; okno bez X (blokujące) zostaje |
 | przycisk dwóch stanów (obie wartości widoczne, np. Podgląd \| Edycja) | `.toggle-group > label.toggle-item > input[radio] + span.toggle-slider`; z JS `toggleGroupEl()` z `core/toggle-group.js` | klik w część wybiera tę wartość (klik w wybraną nic nie zmienia); `--sm` jak `.btn.sm` |
 | zaznaczenie elementu (kafel, wiersz, tag) | klasa `.is-selected`; wiersz z polem wyboru — samo zaznaczone pole | jeden wygląd w silniku, strona go nie zmienia |
 | menu pod przyciskiem | `placeDropdown(anchor, el)` z `core/popover.js` | menu w punkcie: `placeAtPoint(el, x, y)` |

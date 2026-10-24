@@ -1,10 +1,11 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T18062";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T18315";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -18,15 +19,7 @@ const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
 
 function setErr(msg) {
-  const xErr = $("xErr");
-  if (!xErr) return;
-  if (!msg) {
-    xErr.hidden = true;
-    xErr.textContent = "";
-  } else {
-    xErr.hidden = false;
-    xErr.textContent = msg;
-  }
+  setMessage($("xErr"), msg, "error");
 }
 
 function n(v) {
@@ -266,8 +259,7 @@ export function initExportModal() {
 
   function close(result = { ok: false }) {
     renderToken += 1; // przerwij dorysowywanie listy
-    setOverlayOpen(overlay, false);
-    exitModalSheet(overlay);
+    closeDialog(overlay);
     setErr("");
 
     const r = resolveClose;
@@ -312,8 +304,7 @@ export function initExportModal() {
     renderList();
     updateTypeUI();
 
-    setOverlayOpen(overlay, true);
-    enterModalSheet(overlay, { backBtn: btnBack, onClose: () => close({ ok: false }) });
+    openDialog(overlay, { onClose: () => close({ ok: false }) });
     setTimeout(() => xName?.focus(), 0);
 
     return new Promise((resolve) => {
@@ -326,14 +317,6 @@ export function initExportModal() {
     close({ ok: false });
   });
 
-  overlay.addEventListener("mousedown", (e) => {
-    if (running) return;
-    if (e.target !== overlay) return;
-    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
-    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
-    if (overlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    close({ ok: false });
-  });
 
   xTypeRange?.addEventListener("input", () => {
     const idx = Number.parseInt(xTypeRange.value, 10);

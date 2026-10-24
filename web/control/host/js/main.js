@@ -7,16 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T18062";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T18062";
-import { createHostRenderer } from "./render.js?v=v2026-10-24T18062";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-24T18062";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-24T18062";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T18062";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T18315";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T18315";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T18315";
+import { createHostRenderer } from "./render.js?v=v2026-10-24T18315";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-24T18315";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-24T18315";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T18315";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-24T18315";
 
 
 function parseParams() {
@@ -55,60 +55,6 @@ function setupOrientationClass() {
   }
   apply();
   window.addEventListener("resize", apply);
-}
-
-function isIOSSafari() {
-  const ua = navigator.userAgent || "";
-  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  return ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-}
-
-function isStandalone() {
-  return !!(navigator.standalone || window.matchMedia?.("(display-mode: standalone)").matches);
-}
-
-function setupFullscreenButton() {
-  const btn = document.getElementById("btnFullscreen");
-  const hint = document.getElementById("hostA2HS");
-  const close = document.getElementById("hostA2HSClose");
-  const ico = document.getElementById("fsIco");
-  let pseudoFS = false;
-  function syncIcon() { if (ico) ico.innerHTML = icon((document.fullscreenElement || pseudoFS) ? "fullscreen-exit" : "fullscreen-enter"); }
-  function closeHint() {
-    document.documentElement.classList.remove("showA2HS");
-    hint?.setAttribute("aria-hidden", "true");
-    btn?.focus();
-  }
-  function openHint() {
-    document.documentElement.classList.add("showA2HS");
-    hint?.setAttribute("aria-hidden", "false");
-    close?.focus();
-  }
-  close?.addEventListener("click", closeHint);
-  hint?.addEventListener("click", (event) => { if (event.target === hint) closeHint(); });
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.documentElement.classList.contains("showA2HS")) closeHint();
-  });
-  btn?.addEventListener("click", async () => {
-    if (isIOSSafari() && !isStandalone()) { openHint(); return; }
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen?.();
-      else if (pseudoFS) {
-        pseudoFS = false;
-        document.documentElement.classList.remove("pseudoFS");
-      } else {
-        const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
-        if (!request) throw new Error("Fullscreen API unavailable");
-        await request.call(document.documentElement, { navigationUI: "hide" });
-      }
-    } catch {
-      pseudoFS = !pseudoFS;
-      document.documentElement.classList.toggle("pseudoFS", pseudoFS);
-      if (pseudoFS) setTimeout(() => window.scrollTo(0, 1), 50);
-    }
-    syncIcon();
-  });
-  document.addEventListener("fullscreenchange", syncIcon);
 }
 
 function setupResponsivePaper() {
@@ -246,7 +192,7 @@ async function main() {
     if (window.parent !== window) window.parent.postMessage({ type: "familiada:host-preview-ready" }, location.origin);
     return;
   }
-  setupFullscreenButton();
+  initFullscreenButton({ button: document.getElementById("btnFullscreen"), a2hs: document.getElementById("hostA2HS"), a2hsClose: document.getElementById("hostA2HSClose") });
 
   const loadError = document.getElementById("deviceLoadError");
   document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());

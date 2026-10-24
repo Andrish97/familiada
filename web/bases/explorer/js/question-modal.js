@@ -8,25 +8,23 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18062";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18315";
 
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
   buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-24T18062";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-24T18315";
 
 
 const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
 
 function setErr(msg) {
-  const el = $("qErr");
-  if (!el) return;
-  el.hidden = !msg;
-  el.textContent = msg || "";
+  setMessage($("qErr"), msg, "error");
 }
 
 // Kształt zapisywany w qb_questions.payload: numery odpowiedzi zawsze po
@@ -136,8 +134,7 @@ export function initQuestionModal() {
 
     if (qText) qText.value = current.draft.text;
     renderAnswers();
-    setOverlayOpen(overlay, true);
-    enterModalSheet(overlay, { backBtn: btnBack, onClose: () => requestClose() });
+    openDialog(overlay, { onClose: () => requestClose() });
     setTimeout(() => qText?.focus(), 0);
 
     return new Promise((resolve) => {
@@ -146,8 +143,7 @@ export function initQuestionModal() {
   }
 
   function close(result = { ok: false }) {
-    setOverlayOpen(overlay, false);
-    exitModalSheet(overlay);
+    closeDialog(overlay);
     setErr("");
 
     const r = resolveClose;
@@ -175,13 +171,6 @@ export function initQuestionModal() {
   }
 
   qClose?.addEventListener("click", requestClose);
-  overlay.addEventListener("mousedown", (e) => {
-    if (e.target !== overlay) return;
-    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
-    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
-    if (overlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    requestClose();
-  });
 
   // maxlength w HTML nie działa przy programowym ustawieniu .value (np. wklejenie
   // przez skrypt) -- wireTextLimit pilnuje limitu w każdej ścieżce.

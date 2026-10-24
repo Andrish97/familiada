@@ -4,10 +4,10 @@
 // (pinch-zoom.js).
 // Zamyka [×], Esc, kliknięcie tła albo „Wstecz” na górnym pasku (backBtn).
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { icon } from "./icons.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-24T18062";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-24T18062";
+import { t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { icon } from "./icons.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, setOverlayOpen, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T18315";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./pinch-zoom.js?v=v2026-10-24T18315";
 
 /**
  * @param {{ mount?: HTMLElement|null, before?: Node|null, backBtn?: HTMLElement|null }} opts
@@ -77,10 +77,9 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
     zoom.appendChild(img); stage.appendChild(zoom);
     previewZoom = initPinchZoom(zoom, img);
     lockPageZoomForPreview();
-    setOverlayOpen(overlay, true);
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
-    enterModalSheet(overlay, { backBtn, onClose: close });
+    openDialog(overlay, { onClose: close });
     requestAnimationFrame(fit);
     (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
   };
@@ -88,9 +87,8 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
   const close = () => {
     if (!overlay.classList.contains("is-open")) return;
     overlay.classList.remove("is-open");
-    setOverlayOpen(overlay, false);
     overlay.setAttribute("aria-hidden", "true");
-    exitModalSheet(overlay);
+    closeDialog(overlay);
     previewZoom?.reset();
     previewZoom = null;
     unlockPageZoomAfterPreview();
@@ -105,10 +103,8 @@ export function createImageViewer({ mount = null, before = null, backBtn = null 
     e.preventDefault();
     close();
   });
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
   window.addEventListener("keydown", (e) => {
     if (!overlay.classList.contains("is-open")) return;
-    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key === "Tab") {
       // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();

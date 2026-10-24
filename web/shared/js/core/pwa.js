@@ -5,7 +5,7 @@
 
 const LS_KEY = "pwa:install_dismissed";
 
-export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-24T18062", scope = "/", registerServiceWorker = true } = {}) {
+export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-24T18315", scope = "/", registerServiceWorker = true } = {}) {
   if (registerServiceWorker && "serviceWorker" in navigator) {
     navigator.serviceWorker.register(serviceWorkerUrl, { scope }).catch(() => {});
   }
@@ -54,21 +54,24 @@ export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-24T18062", scope
   };
 }
 
+/** Strona otwarta jako zainstalowana aplikacja (ekran początkowy, PWA). */
 export function isStandalone() {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    !!window.navigator.standalone
-  );
+  return !!(window.navigator.standalone || window.matchMedia?.("(display-mode: standalone)").matches);
+}
+
+/** iPhone/iPad w Safari (bez Fullscreen API i bez beforeinstallprompt). */
+export function isIOSSafari() {
+  const ua = navigator.userAgent || "";
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
 }
 
 // A single rule for install controls: show them only when the browser can
 // install the PWA or the platform needs manual Add to Home Screen/Dock steps.
 export function canOfferPwaInstall(pwaApi) {
   const ua = navigator.userAgent || "";
-  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const iosSafari = ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
   const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
-  return !!pwaApi?.canInstall() || iosSafari || macSafari;
+  return !!pwaApi?.canInstall() || isIOSSafari() || macSafari;
 }
 
 export function isMobileDevice() {

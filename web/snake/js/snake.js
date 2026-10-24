@@ -3,16 +3,17 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18062";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-24T18062";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T18062";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-24T18062";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-24T18062";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-24T18062";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-24T18062";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-24T18315";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18315";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-24T18315";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T18315";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-24T18315";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-24T18315";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-24T18315";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-24T18315";
+import { initFullscreenButton } from "../../shared/js/core/fullscreen.js?v=v2026-10-24T18315";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";
@@ -52,57 +53,6 @@ const i18nReady = initI18n({ withSwitcher: true }).then(() => {
 // Fullscreen API -- zamiast tego okno z instrukcją „Do ekranu początkowego”
 // (z ikony strona działa jak aplikacja pełnoekranowa). Inne przeglądarki:
 // prawdziwy pełny ekran z blokadą poziomu, a gdy się nie da -- zastępczy.
-const isIOSSafari = () => {
-  const ua = navigator.userAgent || "";
-  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  return iOS && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-};
-const isStandalone = () => !!(navigator.standalone || matchMedia("(display-mode: standalone)").matches);
-
-function setupFullscreen() {
-  const btn = $("btnFullscreen");
-  const hint = $("snakeA2HS");
-  const close = $("snakeA2HSClose");
-  let pseudoFS = false;
-  const sync = () => {
-    const on = !!(document.fullscreenElement || document.webkitFullscreenElement) || pseudoFS;
-    btn.innerHTML = icon(on ? "fullscreen-exit" : "fullscreen-enter");
-    btn.classList.toggle("is-active", on);
-  };
-  const showHint = (on) => {
-    document.documentElement.classList.toggle("showA2HS", on);
-    hint.setAttribute("aria-hidden", on ? "false" : "true");
-    (on ? close : btn).focus();
-  };
-  close.addEventListener("click", () => showHint(false));
-  hint.addEventListener("click", (e) => { if (e.target === hint) showHint(false); });
-  btn.addEventListener("click", async () => {
-    if (isIOSSafari() && !isStandalone()) { showHint(true); return; }
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-      } else if (pseudoFS) {
-        pseudoFS = false;
-        document.documentElement.classList.remove("pseudoFS");
-      } else {
-        const el = document.documentElement;
-        const req = el.requestFullscreen || el.webkitRequestFullscreen;
-        if (!req) throw new Error("fullscreen unavailable");
-        await req.call(el, { navigationUI: "hide" });
-        await screen.orientation?.lock?.("landscape").catch(() => {});
-      }
-    } catch (e) {
-      pseudoFS = true;
-      document.documentElement.classList.add("pseudoFS");
-      console.warn("[snake] fullscreen fallback:", e?.message || e);
-    }
-    sync();
-  });
-  document.addEventListener("fullscreenchange", sync);
-  document.addEventListener("webkitfullscreenchange", sync);
-  sync();
-}
-
 function readLocalBest() {
   try { return Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); } catch { return 0; }
 }
@@ -112,7 +62,7 @@ function writeLocalBest(value) {
 
 async function boot() {
   await i18nReady;
-  setupFullscreen();
+  initFullscreenButton({ button: $("btnFullscreen"), a2hs: $("snakeA2HS"), a2hsClose: $("snakeA2HSClose"), landscape: true });
   const lang = getUiLang();
   const themeMgr = await createThemeManager($("baseSvg"), document.querySelector("#snakeFrame .layer-bg"));
   const displays = createDisplays({ svgGroup: $("displays"), theme: themeMgr.getActiveTheme() });

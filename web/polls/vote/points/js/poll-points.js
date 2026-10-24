@@ -1,22 +1,14 @@
 // js/pages/poll-points.js
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-24T18062";
-import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-24T18062";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-24T18062";
-import { manualHref } from "../../../../shared/js/core/nav-map.js?v=v2026-10-24T18062";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-24T18315";
+import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-24T18315";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-24T18315";
+import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-24T18315";
 
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
-const syncManual = () => document.getElementById("btnManual")?.setAttribute("href", manualHref("pollVotePoints"));
-window.addEventListener("i18n:lang", syncManual);
-
-const i18nReady = initI18n({ withSwitcher: true }).then(() => {
-  syncManual();
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
-  document.documentElement.classList.remove('page-loading');
+const i18nReady = initEntryPage("pollVotePoints", { ready: initI18n({ withSwitcher: true }) }).then(() => {
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
 

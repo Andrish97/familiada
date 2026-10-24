@@ -1,6 +1,7 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-24T18062";
-import { t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T18062";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T18315";
+import { setMessage } from "./toast.js?v=v2026-10-24T18315";
+import { t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T18315";
 
 let modalSeq = 0;
 
@@ -190,9 +191,8 @@ function openModal({
     const finish = (value) => {
       if (done) return;
       done = true;
-      if (sheet) exitModalSheet(overlay);
+      if (sheet) closeDialog(overlay);
       overlay.remove();
-      document.removeEventListener("keydown", onKeydown, true);
       try {
         document.dispatchEvent(new CustomEvent("uni-modal:closed", { detail: { value } }));
       } catch {
@@ -213,26 +213,8 @@ function openModal({
       };
       controller.close = (value = true) => finish(value);
       controller.setText = (value) => { sub.textContent = value || ""; sub.hidden = !value; };
-      controller.setMessage = (value, kind = "") => { msg.textContent = value || ""; msg.dataset.kind = kind; };
+      controller.setMessage = (value, kind = "") => setMessage(msg, value, kind);
     }
-
-    const onKeydown = (e) => {
-      if (e.key === "Escape") {
-        if (!canClose) { e.preventDefault(); return; }
-        const overlays = [...document.querySelectorAll(".overlay")];
-        if (overlays.at(-1) !== overlay) return;
-        e.preventDefault();
-        finish(false);
-      }
-    };
-
-    overlay.addEventListener("click", (e) => {
-      if (e.target !== overlay || !canClose) return;
-      // W trybie sheet modal zastępuje treść strony — jedynym wyjściem
-      // ma być przycisk wstecz w topbarze, nie klik w tło.
-      if (sheet && isSheetViewport()) return;
-      finish(false);
-    });
 
     // onOk: zapis z okna -- zwraca tekst błędu (okno zostaje, błąd w stopce)
     // albo nic/true (okno się zamyka); przyciski zablokowane na czas zapisu.
@@ -243,15 +225,14 @@ function openModal({
       busy = true;
       okBtn.disabled = true;
       if (cancelBtn) cancelBtn.disabled = true;
-      msg.textContent = "";
+      setMessage(msg);
       try {
         const res = await onOk();
-        if (typeof res === "string" && res) { msg.textContent = res; msg.dataset.kind = "error"; return; }
+        if (typeof res === "string" && res) { setMessage(msg, res, "error"); return; }
         if (res === false) return;
         finish(true);
       } catch (err) {
-        msg.textContent = String(err?.message || err || "");
-        msg.dataset.kind = "error";
+        setMessage(msg, String(err?.message || err || ""), "error");
       } finally {
         busy = false;
         okBtn.disabled = false;
@@ -267,15 +248,14 @@ function openModal({
         if (busy) return;
         busy = true;
         choiceBtns.forEach(({ btn: b }) => { b.dataset.wasDisabled = b.disabled ? "1" : ""; b.disabled = true; });
-        msg.textContent = "";
+        setMessage(msg);
         try {
           const res = await onChoice(value);
-          if (typeof res === "string" && res) { msg.textContent = res; msg.dataset.kind = "error"; return; }
+          if (typeof res === "string" && res) { setMessage(msg, res, "error"); return; }
           if (res === false) return;
           finish(value);
         } catch (err) {
-          msg.textContent = String(err?.message || err || "");
-          msg.dataset.kind = "error";
+          setMessage(msg, String(err?.message || err || ""), "error");
         } finally {
           busy = false;
           choiceBtns.forEach(({ btn: b }) => { b.disabled = b.dataset.wasDisabled === "1"; });
@@ -283,10 +263,9 @@ function openModal({
       });
     }
 
-    // ukryty X (okno postępu) -- globalny Esc z modal-sheet.js też go klika
+    // X: Esc i klik w tło klikają go (modal-sheet.js); ukryty X okna postępu
+    // zamyka dopiero po allowClose().
     closeBtn.addEventListener("click", () => { if (canClose) finish(false); });
-
-    document.addEventListener("keydown", onKeydown, true);
 
     // Modal w trybie sheet musi być dzieckiem <main class="wrap">/.explorer
     // (przed .footer), żeby reguła CSS "ukryj resztę treści strony" go
@@ -301,7 +280,7 @@ function openModal({
       document.body.appendChild(overlay);
     }
 
-    if (sheet) enterModalSheet(overlay, { backBtn: sheet.backBtn, onClose: () => finish(false), keepBackBtnText: sheet.keepBackBtnText });
+    if (sheet) openDialog(overlay, { onClose: () => finish(false) });
 
     const focusTarget = initialFocus || okBtn;
     setTimeout(() => focusTarget?.focus?.(), 0);

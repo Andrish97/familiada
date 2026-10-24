@@ -19,8 +19,8 @@
   }
   /* Widoczność zależna od miejsca — jedyne miejsce nadpisań .only-*: w tej
      samej warstwie wygrywa większa specyficzność, bez flagi important. */
-  .games-bottom .only-desktop { display: inline; }              /* dolny pasek listy: o etykietach decyduje is-compact-icons */
-  .games-bottom.is-compact-icons .only-desktop { display: none; }
+  .list-toolbar .only-desktop { display: inline; }              /* dolny pasek listy: o etykietach decyduje is-compact-icons */
+  .list-toolbar.is-compact-icons .only-desktop { display: none; }
   @media (max-width: 600px) {
     :is(.topbar-section-1, .topbar-section-3) .only-desktop { display: inline; } /* topbar: długie etykiety */
     :is(.topbar-section-1, .topbar-section-3) .only-mobile { display: none; }

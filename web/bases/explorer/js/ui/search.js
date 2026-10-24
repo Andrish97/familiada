@@ -7,10 +7,10 @@
 // (#searchOverlay), do którego na czas edycji przenosimy to samo pole z paska
 // (tam schowane) — dlatego nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-24T18062";
-import { renderAll } from "../render.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-24T18062";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-24T18315";
+import { renderAll } from "../render.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-24T18315";
 
 const TEXT_DELAY_MS = 200;
 
@@ -87,13 +87,6 @@ function wireSearchSheet(state, { clear, commit }) {
   let open = false;
   let home = null;
 
-  function onKey(e) {
-    if (e.key !== "Escape") return;
-    e.preventDefault();
-    e.stopPropagation();
-    hide();
-  }
-
   function show() {
     const box = document.getElementById("searchBox");
     if (!overlay || !body || !box || open) return;
@@ -103,9 +96,7 @@ function wireSearchSheet(state, { clear, commit }) {
     document.dispatchEvent(new CustomEvent("explorer:close-drawer"));
     home = { parent: box.parentElement, next: box.nextSibling };
     body.append(box);
-    setOverlayOpen(overlay, true);
-    enterModalSheet(overlay, { onClose: hide });
-    document.addEventListener("keydown", onKey, true);
+    openDialog(overlay, { onClose: hide });
     document.getElementById("searchText")?.focus();
   }
 
@@ -113,9 +104,7 @@ function wireSearchSheet(state, { clear, commit }) {
     if (!open) return;
     open = false;
     commit();
-    document.removeEventListener("keydown", onKey, true);
-    exitModalSheet(overlay);
-    setOverlayOpen(overlay, false);
+    closeDialog(overlay);
     const box = document.getElementById("searchBox");
     if (home?.parent && box) home.parent.insertBefore(box, home.next?.parentNode === home.parent ? home.next : null);
     renderAll(state);
@@ -126,7 +115,6 @@ function wireSearchSheet(state, { clear, commit }) {
   document.getElementById("searchSheetDone")?.addEventListener("click", hide);
   document.getElementById("searchSheetClose")?.addEventListener("click", hide);
   document.getElementById("searchSheetClear")?.addEventListener("click", () => { clear(); document.getElementById("searchText")?.focus(); });
-  overlay?.addEventListener("click", (e) => { if (e.target === overlay) hide(); });
   // Enter w polu zatwierdza i zamyka okno
   document.addEventListener("keydown", (e) => {
     if (!open || e.key !== "Enter" || e.target?.id !== "searchText") return;

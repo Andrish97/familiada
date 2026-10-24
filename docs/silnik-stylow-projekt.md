@@ -26,7 +26,7 @@ strona po stronie. Ujednolicenie „na maksa”.
   (zrzuty przed/po → e2e z brancha → `main` → kontrola).
 
 Uzasadnienie: obecne konflikty (`overlay`/`modal`/`tabs-card`/`card` przez
-`games.css`) i moduły przyklejone do klas stron (`games-bottom*`,
+`games.css`) i moduły przyklejone do klas stron (`list-toolbar*`,
 `market-preview`) wykluczają bezpieczne poprawianie w miejscu.
 
 ## 2. Pliki silnika
@@ -208,7 +208,7 @@ stany (hover, focus-visible, disabled, is-active, is-loading), RTL nie.
 | `card` | poziom 1/2, `--tabs` (wypustki A, decyzja 2026-10-21) | `.card`×3, `.tabs-card` (+ zmienne per strona), `.games-card`, `.simple-tabs` (manual — wariant) |
 | `tile` | `--add`, `--media` (logo), `--compact` | `.tile`, `.mkt-card`, `.logoTile`, `.addCard`/`.addTile`, `.connect-device-tile`, `.gs-logo-tile` |
 | `row` (wiersz listy) | `--share`, `--compact`, `--selectable` | `.shareRow`, `.rows*`, `.activity-row`, `.device-row`, explorer `.row` |
-| `toolbar` (pasek akcji) | górny, dolny, `--split` (lewa/prawa) | `.bar`, `.actions`, `.games-bottom*`, `.pollBar*`, `.mkt-head`, `.stepFoot` |
+| `toolbar` (pasek akcji) | górny, dolny, `--split` (lewa/prawa) | `.bar`, `.actions`, `.list-toolbar*`, `.pollBar*`, `.mkt-head`, `.stepFoot` |
 | `list-tools` | szukaj/filtr/sortuj | dwie wyszukiwarki (list-search, share-sections) |
 | `badge`, `tag`, `pill`, `chip` | kolory znaczeniowe | `.badge`, `.tag*`, `.mail-pill*` (12+), `.msg-pill`, `.xCountPill`, `.ans-chip`, `.qf-sumChip`, `.mkt-*-badge` |
 | `empty-state` | `--tile`, `--inline` | 7 wersji pustych stanów |
@@ -279,7 +279,7 @@ przez `style.setProperty('--x', …)`.
 | `confirm.js` | `confirm()`, `alert()`, `choice()`, `prompt()`, `progress()` na `dialog.js` | API `modal.js` (33 importy) |
 | `block-screen.js` | `showBlock({ id, icon, title, message, actions })` | `page-overlay`, `resource-lock.showBlockingOverlay`, `device-lease` (HTML w 3 plikach), `showDeviceGuard` |
 | `messages.js` | `toast()`, `statusLine(el).set(msg, kind)` | `toast.js`, ~12 `setMsg/setStatus/showStatus/showError` |
-| `list-tools.js` | `initListTools({ list, search, filter, sort, empty })`, bez zależności od klas stron | `list-search`, `share-sections.attachListTools`, `list-header-layout` (`games-bottom*`), `list-filter` |
+| `list-tools.js` | `initListTools({ list, search, filter, sort, empty })`, bez zależności od klas stron | `list-search`, `share-sections.attachListTools`, `list-header-layout` (`list-toolbar*`), `list-filter` |
 | `tabs.js` | `initTabs(root, { param })` — URL + wygląd + ARIA | `core/tabs.js` (tylko URL) + ręczne `.active` na stronach — **wygląd i ARIA zrobione 2026-10-23:** `markActiveTab()` |
 | `popover.js` | wspólne pozycjonowanie: menu, select, podpowiedź, menu kontekstowe | `ui-select` (inline `position:fixed`), `tooltips`, `context-menu` — **menu topbara, języka i kontekstowe zrobione 2026-10-23:** `placeDropdown`, `placeAtPoint` |
 | `pickers.js` | `pickColor()`, wybór daty | 2 pickery koloru, `hexToRgb` ×3 — **kolor zrobiony 2026-10-23:** `core/color.js` + `core/color-picker.js` |
@@ -287,6 +287,33 @@ przez `style.setProperty('--x', …)`.
 | `device.js` | `fullscreenButton()`, `a2hsBanner()`, PWA | `fullscreen.js`, 5× `requestFullscreen`, 3 kopie A2HS, `beforeinstallprompt` w Grach |
 | `page-shell.js` | `initPage()` dla wszystkich stron, wariant „bare” dla wejścia/urządzeń | `page-init`, `topbar-controller`, `nav-map`, `device-guard`, strony bez `initPage` (settings, mails, go, login, home, głosowanie, ekrany gry) |
 | `tooltips` | **zrobione 2026-10-23:** styl `.app-tooltip` w `components.css` (z animacją wejścia), `tooltips.css` usunięty; laboratorium `kora-builder` ma własną regułę | `tooltips.js` + `tooltips.css` ładowany z JS |
+
+**Realizacja §6.2 (2026-10-24)** — moduły w `web/shared/js/core/` (nie
+`shared/ui/`):
+- **okna:** `openDialog`/`closeDialog` w `modal-sheet.js` — jedyny sposób
+  otwierania okien (31 wywołań `enterModalSheet`/`exitModalSheet` + lokalne
+  `show()`/klasa `hidden` przepięte; `backBtn` usunięty). Esc, klik w tło
+  (tylko klik zaczęty na tle) i `[data-modal-cancel]` — jedna obsługa: klik X
+  w nagłówku. Klik w tło zamyka teraz także okna wyśrodkowane (wcześniej
+  różnie na różnych stronach); usunięto 17 lokalnych obsług tła i 6 obsług
+  Esc. Potwierdzenie nad arkuszem nie zamyka arkusza (`closeDialog`).
+- **potwierdzenia:** `modal.js` (bez zmian API) na `openDialog`, bez
+  własnych Esc/tła.
+- **ekran blokady:** już jeden (`blocking-screen.js`: strony, zasoby,
+  urządzenie, gra w toku).
+- **komunikaty:** `toast()` + `setMessage(el, tekst, rodzaj)` (stopki okien,
+  błędy Eksploratora — wcześniej złote, teraz czerwone `[data-kind=error]`).
+- **narzędzia list:** `.games-bottom*` → `.list-toolbar*` (wspólny pasek Gier,
+  Baz, Logo); `list-search`/`list-filter`/`share-sections` bez zmian.
+- **stany:** `empty-state.js` (`emptyState`, `emptyStateHtml`) — 13 miejsc.
+- **urządzenie:** `fullscreen.js` (5 kopii → 1; `shared/js/display/fullscreen.js`
+  usunięty), `pwa.js`: `isStandalone`, `isIOSSafari` (3 kopie → 1).
+- **start strony:** `initEntryPage(id, { ready })` (wariant „bare”: Go,
+  głosowanie ×2, centrum maili, strona główna). Logowanie, ekrany gry
+  i panel admina — własny start (HTML z Workera / guard ekranu / §8a).
+- Przy okazji: 68 zapasowych tekstów `t(klucz) || "…"` usunięte (`t()`
+  zwraca klucz, zapas był martwy); `var(--muted)` bez definicji (8×) →
+  `--text-muted`; test `cssTokensDefined`.
 
 Moduły bez zmian: `icons.js` (już wspólny), `nav-map.js`, logika
 `list-filter`, `share-sections` (przepięte na nowe komponenty).

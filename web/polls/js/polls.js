@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18062";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-24T18062";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18062";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-24T18062";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18062";
-import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18062";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18062";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T18062";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-24T18062";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18062";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T18062";
-import { createTally } from "./poll-tally.js?v=v2026-10-24T18062";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18315";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-24T18315";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18315";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-24T18315";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18315";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18315";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18315";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T18315";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-24T18315";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18315";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { createTally } from "./poll-tally.js?v=v2026-10-24T18315";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-24T18062";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-24T18315";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -181,16 +181,14 @@ function formatUntil(untilMs) {
 ======================= */
 
 function hidePollQrModal() {
-  if (!pollQrModalOverlay || pollQrModalOverlay.classList.contains("hidden")) return;
-  pollQrModalOverlay.classList.add("hidden");
-  exitModalSheet(pollQrModalOverlay);
+  if (!isOverlayOpen(pollQrModalOverlay)) return;
+  closeDialog(pollQrModalOverlay);
 }
 
 // Otwiera okno; na telefonie wchodzi w tryb arkusza (wyjście = „Wstecz” w topbarze).
 function openPollQrOverlay() {
   if (!pollQrModalOverlay) return;
-  pollQrModalOverlay.classList.remove("hidden");
-  enterModalSheet(pollQrModalOverlay, { backBtn: btnBack, onClose: hidePollQrModal });
+  openDialog(pollQrModalOverlay, { onClose: hidePollQrModal });
 }
 
 function setQrModalMode(vote) {
@@ -247,15 +245,11 @@ async function showPollQrModal() {
     if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
   } catch (e) {
     console.warn("[polls] showPollQrModal error", e);
-    setMsg(t("common.genericError") || "Błąd.", "error");
+    setMsg(t("common.genericError"), "error");
   }
 }
 
 pollQrModalClose?.addEventListener("click", hidePollQrModal);
-pollQrModalOverlay?.addEventListener("click", (e) => {
-  // Na telefonie (arkusz) wyjściem jest przycisk „Wstecz”, nie tło.
-  if (e.target === pollQrModalOverlay && !pollQrModalOverlay.classList.contains("sheet-active")) hidePollQrModal();
-});
 pollQrModalCopy?.addEventListener("click", async () => {
   if (!_pollQrDeviceCode) return;
   try {
@@ -832,9 +826,7 @@ async function openRecipientPicker() {
     friendIds: [...selectedFriendIds],
   };
   renderRecipientPicker();
-  setOverlayOpen(pollRecipientsOverlay, true);
-  pollRecipientsOverlay.classList.remove("hidden");
-  enterModalSheet(pollRecipientsOverlay, { backBtn: btnBack, onClose: closeRecipientPicker });
+  openDialog(pollRecipientsOverlay, { onClose: closeRecipientPicker });
 }
 
 function closeRecipientPicker() {
@@ -848,9 +840,7 @@ function closeRecipientPicker() {
     recipientPickerSnapshot = null;
     renderBar();
   }
-  setOverlayOpen(pollRecipientsOverlay, false);
-  pollRecipientsOverlay.classList.add("hidden");
-  exitModalSheet(pollRecipientsOverlay);
+  closeDialog(pollRecipientsOverlay);
 }
 
 async function acceptRecipientSelection() {
@@ -1314,9 +1304,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   [pollRecipientsClose, pollRecipientsCancel].forEach((button) => button?.addEventListener("click", closeRecipientPicker));
   pollRecipientsAdd?.addEventListener("click", () => void acceptRecipientSelection());
-  pollRecipientsOverlay?.addEventListener("click", (event) => {
-    if (event.target === pollRecipientsOverlay) closeRecipientPicker();
-  });
   btnAddRecipients?.addEventListener("click", () => void openRecipientPicker());
 
   btnCopy?.addEventListener("click", async () => {

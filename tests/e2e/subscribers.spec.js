@@ -45,7 +45,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await page.goto("https://www.familiada.online/subscribers/");
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
     await expect(page.locator("#inviteForm")).toBeVisible();
-    await expect(page.locator(".games-bottom")).toHaveCount(0);
+    await expect(page.locator(".list-toolbar")).toHaveCount(0);
     await invite(page, email);
     await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: email })).toHaveCount(1);
     await page.screenshot({ path: testInfo.outputPath("shot-subscribers-layout.png"), fullPage: true });

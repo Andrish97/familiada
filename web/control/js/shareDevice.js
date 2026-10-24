@@ -3,20 +3,20 @@
 // Dwa okna jak w Bazach (decyzja użytkownika 2026-10-23): „Udostępnienia”
 // (lista w tej sesji, cofanie) i „Udostępnij” (adres + znajomi, jeden przycisk).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T18062";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T18062";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T18315";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
 
-import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T18062";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T18315";
 
 
 function deviceTypeLabel(type) {
-  if (type === "host") return t("control.shareDeviceModal.typeHost") || "Prowadzący";
-  if (type === "buzzer") return t("control.shareDeviceModal.typeBuzzer") || "Przycisk do pojedynku";
-  if (type === "display") return t("control.shareDeviceModal.typeDisplay") || "Wyświetlacz";
+  if (type === "host") return t("control.shareDeviceModal.typeHost");
+  if (type === "buzzer") return t("control.shareDeviceModal.typeBuzzer");
+  if (type === "display") return t("control.shareDeviceModal.typeDisplay");
   return type;
 }
 
@@ -85,14 +85,12 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   }
 
   function closeModal() {
-    setOverlayOpen(overlay, false);
-    exitModalSheet(overlay);
+    closeDialog(overlay);
     renderVersion++;
     clearMessage();
   }
   function closeSendModal() {
-    setOverlayOpen(sendOverlay, false);
-    exitModalSheet(sendOverlay);
+    closeDialog(sendOverlay);
     renderVersion++;
     preflightVersion++;
     clearMessage();
@@ -101,11 +99,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   btnDone?.addEventListener("click", closeModal);
   btnSendClose?.addEventListener("click", closeSendModal);
   btnSendCancel?.addEventListener("click", closeSendModal);
-  for (const [ov, close] of [[overlay, closeModal], [sendOverlay, closeSendModal]]) {
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov && !(ov.classList.contains("modal--sheet") && isSheetViewport())) close();
-    });
-  }
 
   async function loadShares(version) {
     const { data: shares, error } = await sb().rpc("control_device_shares_list", {
@@ -143,7 +136,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       const row = shareRowEl({
         label: share.recipient_username || share.recipient_email || "—",
         tags: [{ text: kind, cls: "tag--muted" }],
-        actions: [{ key: "revoke", icon: "trash", title: t("bases.share.remove") || "Cofnij udostępnienie", onClick: revoke }],
+        actions: [{ key: "revoke", icon: "trash", title: t("bases.share.remove"), onClick: revoke }],
       });
       row.classList.add("shareDeviceRecipientRow", "shareRow--compact");
       const { element: cooldown, labelEl: countdown } = shareCooldownEl();
@@ -191,7 +184,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     if (!activeFriends.length) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
-      empty.textContent = t("control.shareDeviceModal.noFriends") || "Nie ma znajomych do udostępnienia.";
+      empty.textContent = t("control.shareDeviceModal.noFriends");
       subsList.appendChild(empty);
     }
     for (const friend of activeFriends) {
@@ -285,9 +278,9 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       shareInFlight = false;
       closeSendModal();
       await refreshBadges();
-      if (cooldown) showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
-      else if (disabled) showMessage(t("contacts.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
-      else if (already) showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
+      if (cooldown) showMessage(t("control.shareDeviceModal.friendMailCooldown"));
+      else if (disabled) showMessage(t("contacts.friendMailDisabled"));
+      else if (already) showMessage(t("control.shareDeviceModal.alreadyShared"));
       else toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       shareInFlight = false;
@@ -319,10 +312,10 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         return;
       }
       if (data.already_shared) {
-        showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
+        showMessage(t("control.shareDeviceModal.alreadyShared"));
         lookupBlocked = true; updateSelection();
       } else if (data.mail_disabled) {
-        showMessage(t("control.shareDeviceModal.recipientDisabled") || "Odbiorca ma wyłączone powiadomienia e-mail. Dostęp zostanie nadany bez maila.");
+        showMessage(t("control.shareDeviceModal.recipientDisabled"));
       } else if (data.mail_allowed === false && data.cooldown_until) {
         const until = Date.parse(data.cooldown_until) || 0;
         const remaining = Math.max(0, until - Date.now());
@@ -338,21 +331,19 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   async function open(kind) {
     if (!deviceKinds.includes(kind)) return;
     _deviceType = kind;
-    if (titleEl) titleEl.textContent = `${t("control.shareDeviceShares") || "Udostępnienia"} — ${deviceTypeLabel(kind)}`;
-    setOverlayOpen(overlay, true);
-    enterModalSheet(overlay, { backBtn, onClose: closeModal });
+    if (titleEl) titleEl.textContent = `${t("control.shareDeviceShares")} — ${deviceTypeLabel(kind)}`;
+    openDialog(overlay, { onClose: closeModal });
     await renderModal();
   }
 
   async function openSend(kind) {
     if (!deviceKinds.includes(kind)) return;
     _deviceType = kind;
-    if (sendTitleEl) sendTitleEl.textContent = `${t("control.shareDeviceModal.title") || "Udostępnij"} — ${deviceTypeLabel(kind)}`;
+    if (sendTitleEl) sendTitleEl.textContent = `${t("control.shareDeviceModal.title")} — ${deviceTypeLabel(kind)}`;
     if (emailInp) emailInp.value = "";
     lookupBlocked = false;
     updateSelection();
-    setOverlayOpen(sendOverlay, true);
-    enterModalSheet(sendOverlay, { backBtn, onClose: closeSendModal });
+    openDialog(sendOverlay, { onClose: closeSendModal });
     await renderSendModal();
   }
 

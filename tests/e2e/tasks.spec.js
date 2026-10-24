@@ -134,7 +134,7 @@ for (const viewport of [
         return;
       }
       await expect(page.locator(".rowsRow")).toHaveCount(4);
-      await expect(page.locator('input[type="search"], .list-search, .games-bottom')).toHaveCount(0);
+      await expect(page.locator('input[type="search"], .list-search, .list-toolbar')).toHaveCount(0);
       await expect(page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);
       await expect(page.locator(".rowsSection--todo .rowsRow")).toHaveCount(2);
       await expect(page.locator(".rowsSection--done .rowsList")).toBeHidden();

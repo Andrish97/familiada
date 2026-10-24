@@ -69,6 +69,7 @@ const en = {
       unavailableTitle: "Installation is unavailable right now",
       unavailableAndroid: "Chrome can't install this app right now. “Create shortcut” only adds a shortcut to the website, not an app.",
       unavailableText: "This browser hasn't made its installer available. You can use an install option in its menu only if that option is enabled.",
+      macSafariTitle: "Add Familiada to the Dock",
       macSafari: "In Safari, choose File → “Add to Dock”.",
     },
     iosWebapp: {

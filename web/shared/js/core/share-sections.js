@@ -6,10 +6,11 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-24T18062";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-24T18062";
-import "./scroll-fade.js?v=v2026-10-24T18062"; // wygaszona krawędź przewijanych list
+import { t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-24T18315";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-24T18315";
+import { emptyState } from "./empty-state.js?v=v2026-10-24T18315";
+import "./scroll-fade.js?v=v2026-10-24T18315"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -121,8 +122,7 @@ export function attachListTools(heading, list, key) {
   // przed akcjami zaznaczania i przed strzałką zwijania (ona zawsze na końcu linii)
   const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions'], :scope > .rowsSectionCaret");
   if (bulk) heading.insertBefore(tools, bulk); else heading.append(tools);
-  const empty = document.createElement("div");
-  empty.className = "shareEmpty listToolsEmpty empty-state";
+  const empty = emptyState("", { hook: "shareEmpty listToolsEmpty" });
   empty.hidden = true;
   // Pole szukania nad listą (wpisywanie na żywo) — na komputerze i telefonie,
   // jak w oknie „Przenieś do” menedżera bazy (decyzja 2026-10-21).
@@ -332,10 +332,7 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
   list.className = "shareList shareList--scroll";
   for (const row of rows) list.append(shareRowEl(row));
   if (!rows.length && emptyText) {
-    const empty = document.createElement("div");
-    empty.className = "shareEmpty empty-state";
-    empty.textContent = emptyText;
-    list.append(empty);
+    list.append(emptyState(emptyText, { hook: "shareEmpty" }));
   }
   if (typeof collapsed === "boolean") {
     // Jedna linia: [tytuł + licznik] … narzędzia listy … strzałka (na końcu).
@@ -501,10 +498,7 @@ export function renderRowSections(host, sections, opts = {}) {
     frag.append(sec);
   }
   if (!frag.childNodes.length && opts.emptyText) {
-    const d = document.createElement("div");
-    d.className = "rowsEmpty empty-state";
-    d.textContent = opts.emptyText;
-    frag.append(d);
+    frag.append(emptyState(opts.emptyText, { hook: "rowsEmpty" }));
   }
   host.replaceChildren(frag);
 }

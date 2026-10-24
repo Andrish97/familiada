@@ -18,23 +18,23 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T18062";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T18062";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-24T18062";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T18062";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T18315";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T18315";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-24T18315";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T18315";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
 
-import { renderPreview } from "./render.js?v=v2026-10-24T18062";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-24T18062";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-24T18062";
-import { cannotEditReason } from "./text.js?v=v2026-10-24T18062";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-24T18062";
+import { renderPreview } from "./render.js?v=v2026-10-24T18315";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-24T18315";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-24T18315";
+import { cannotEditReason } from "./text.js?v=v2026-10-24T18315";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-24T18315";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-24T18062";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-24T18062";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-24T18315";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-24T18315";
 
 
 const DEBOUNCE_MS = 700;
@@ -239,12 +239,10 @@ export async function bootEditorPage({ mode, initEditor }) {
     previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
     previewZoom.reset();
     lockPageZoomForPreview();
-    setOverlayOpen(el.previewOverlay, true);
-    enterModalSheet(el.previewOverlay, { backBtn: el.btnBack, onClose: closePreview });
+    openDialog(el.previewOverlay, { onClose: closePreview });
   }
   function closePreview() {
-    setOverlayOpen(el.previewOverlay, false);
-    exitModalSheet(el.previewOverlay);
+    closeDialog(el.previewOverlay);
     unlockPageZoomAfterPreview();
     previewZoom?.reset();
   }
@@ -283,10 +281,6 @@ export async function bootEditorPage({ mode, initEditor }) {
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
   el.logoName.addEventListener("input", markDirty);
   $("btnPreviewClose")?.addEventListener("click", closePreview);
-  el.previewOverlay.addEventListener("click", (ev) => {
-    if (ev.target !== el.previewOverlay || isSheetViewport()) return;
-    closePreview();
-  });
   window.addEventListener("logoeditor:openPreview", (ev) => { if (ev?.detail) openPreview(ev.detail); });
   // Schowanie karty / przejście do innej aplikacji: zapis od razu.
   document.addEventListener("visibilitychange", () => {

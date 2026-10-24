@@ -1,19 +1,20 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18062";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-24T18062";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T18062";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18062";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T18062";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18062";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18062";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T18062";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18315";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-24T18315";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T18315";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18315";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18315";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18315";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T18315";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-24T18315";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -118,15 +119,13 @@ function showToast(msg, type = "info") {
 function openMySent() {
   if (isGuest || !currentUser || !els.mySentOverlay) return;
   returnToMySent = false;
-  setOverlayOpen(els.mySentOverlay, true);
-  enterModalSheet(els.mySentOverlay, { backBtn: currentBackBtn(), onClose: closeMySent });
+  openDialog(els.mySentOverlay, { onClose: closeMySent });
   void loadMySent();
 }
 
 function closeMySent() {
   if (!els.mySentOverlay || !isOverlayOpen(els.mySentOverlay)) return;
-  setOverlayOpen(els.mySentOverlay, false);
-  exitModalSheet(els.mySentOverlay);
+  closeDialog(els.mySentOverlay);
 }
 
 // Podgląd lub zgłoszenie z okna „Moje wysłane”: jedno okno naraz, po
@@ -308,7 +307,7 @@ async function loadBrowse({ reset = false } = {}) {
   if (reset && rows.length === 0) {
     if (els.browseInfo) els.browseInfo.textContent = "";
     if (els.browseGrid) els.browseGrid.innerHTML =
-      `<div class="mkt-empty empty-state empty-state--tile">${esc(t("marketplace.empty"))}</div>`;
+      emptyStateHtml(t("marketplace.empty"), { variant: "tile", hook: "mkt-empty" });
     if (els.loadMoreWrap) els.loadMoreWrap.hidden = true;
     return;
   }
@@ -392,22 +391,20 @@ async function openDetail(id, { updateUrl = true, replaceUrl = false, trigger = 
   if (els.detailTitle) els.detailTitle.textContent = "…";
   if (els.detailMeta) els.detailMeta.textContent = "";
   if (els.detailDesc) els.detailDesc.textContent = "";
-  if (els.detailQuestions) els.detailQuestions.innerHTML = `<p class="empty-state">${esc(t("marketplace.loading") || "Ładowanie…")}</p>`;
+  if (els.detailQuestions) els.detailQuestions.innerHTML = emptyStateHtml(t("marketplace.loading"), { tag: "p" });
   if (els.detailRating) els.detailRating.innerHTML = "";
   if (els.detailRaters) { els.detailRaters.hidden = true; els.detailRaters.innerHTML = ""; }
   if (els.btnAddLibrary) els.btnAddLibrary.hidden = true;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = true;
   if (els.addedBadge) els.addedBadge.hidden = true;
-  if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, true);
-  enterModalSheet(els.gameDetailOverlay, { backBtn: currentBackBtn(), onClose: closeDetail });
+  openDialog(els.gameDetailOverlay, { onClose: closeDetail });
 
   const { data, error } = await sb().rpc("market_game_detail", { p_id: id }).single();
   if (requestId !== detailRequest) return;
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
     if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "error";
-    if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, false);
-    exitModalSheet(els.gameDetailOverlay);
+    if (els.gameDetailOverlay) closeDialog(els.gameDetailOverlay);
     detailGameId = null;
     showToast(t("marketplace.errorLoad"), "error");
     return;
@@ -442,7 +439,7 @@ function renderDetail(g) {
   if (els.detailQuestions) {
     const qs = g.payload?.questions ?? [];
     if (!qs.length) {
-      els.detailQuestions.innerHTML = `<p class="empty-state">${esc(t("marketplace.detail.noQuestions"))}</p>`;
+      els.detailQuestions.innerHTML = emptyStateHtml(t("marketplace.detail.noQuestions"), { tag: "p" });
     } else {
       els.detailQuestions.innerHTML = qs.map((q, i) => {
         const answers = sortAnswersByPoints(q.answers).map(a =>
@@ -514,8 +511,7 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
 
 function closeDetail({ updateUrl = true } = {}) {
   detailRequest++;
-  if (els.gameDetailOverlay) setOverlayOpen(els.gameDetailOverlay, false);
-  exitModalSheet(els.gameDetailOverlay);
+  if (els.gameDetailOverlay) closeDialog(els.gameDetailOverlay);
   detailGameId = null;
   detailGame = null;
   // Usuń identyfikator modala bez zmiany karty, wyszukiwania ani filtrów.
@@ -598,7 +594,7 @@ async function loadMySent() {
   const rows = Array.isArray(data) ? data : [];
   if (els.mySentInfo) els.mySentInfo.textContent = "";
   if (!rows.length) {
-    els.mySentList.innerHTML = `<div class="mkt-empty empty-state empty-state--tile">${esc(t("marketplace.mySent.empty"))}</div>`;
+    els.mySentList.innerHTML = emptyStateHtml(t("marketplace.mySent.empty"), { variant: "tile", hook: "mkt-empty" });
     return;
   }
 
@@ -706,14 +702,12 @@ async function openSubmitModal() {
     btn.classList.toggle("is-active", btn.dataset.lang === submitLang);
   });
 
-  if (els.submitOverlay) setOverlayOpen(els.submitOverlay, true);
-  enterModalSheet(els.submitOverlay, { backBtn: currentBackBtn(), onClose: closeSubmitModal });
+  openDialog(els.submitOverlay, { onClose: closeSubmitModal });
 }
 
 function closeSubmitModal() {
   if (!els.submitOverlay || !isOverlayOpen(els.submitOverlay)) return;
-  setOverlayOpen(els.submitOverlay, false);
-  exitModalSheet(els.submitOverlay);
+  closeDialog(els.submitOverlay);
   backToMySent();
 }
 
@@ -906,13 +900,6 @@ function wireEvents() {
   els.btnLoadMore?.addEventListener("click", () => loadBrowse());
   // Detail modal
   els.btnDetailClose?.addEventListener("click", closeDetail);
-  els.gameDetailOverlay?.addEventListener("click", e => {
-    if (e.target !== e.currentTarget) return;
-    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
-    // wyjściem ma być przycisk wstecz w topbarze, nie klik w tło.
-    if (els.gameDetailOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closeDetail();
-  });
   els.btnAddLibrary?.addEventListener("click", addToLibrary);
   els.btnRemoveLibrary?.addEventListener("click", removeFromLibrary);
 
@@ -920,13 +907,6 @@ function wireEvents() {
   els.btnSubmitNew?.addEventListener("click", () => leaveMySentFor(openSubmitModal));
   els.btnSubmitCancel?.addEventListener("click", closeSubmitModal);
   document.getElementById("btnSubmitClose")?.addEventListener("click", closeSubmitModal);
-  els.submitOverlay?.addEventListener("click", e => {
-    if (e.target !== e.currentTarget) return;
-    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
-    // wyjściem ma być widoczny przycisk zamknięcia/anuluj, nie klik w tło.
-    if (els.submitOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
-    closeSubmitModal();
-  });
   els.btnSubmitConfirm?.addEventListener("click", submitGame);
 
   // Lang picker in submit modal
@@ -937,17 +917,6 @@ function wireEvents() {
     els.submitLangPicker.querySelectorAll("[data-lang]").forEach(b => {
       b.classList.toggle("is-active", b === btn);
     });
-  });
-
-  // Keyboard close
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape") {
-      if (e.defaultPrevented) return;
-      e.preventDefault();
-      closeDetail();
-      closeSubmitModal();
-      closeMySent();
-    }
   });
 
   // Przycisk wstecz w przeglądarce

@@ -3,13 +3,14 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T18062";
-import { computeListing } from "./data/listing.js?v=v2026-10-24T18062";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T18062";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T18062";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T18062";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T18315";
+import { computeListing } from "./data/listing.js?v=v2026-10-24T18315";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T18315";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T18315";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T18315";
+import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-24T18315";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -251,7 +252,7 @@ export function renderTree(state) {
     <div class="left-panel-heading">${esc(t("baseExplorer.tree.folders"))}</div>
     <div class="treeList">
       ${rootRow}
-      ${rootHasChildren ? folders : `<div class="empty-state empty-state--inline">${esc(t("baseExplorer.tree.empty"))}</div>`}
+      ${rootHasChildren ? folders : emptyStateHtml(t("baseExplorer.tree.empty"), { variant: "inline" })}
       ${trashRow}
     </div>`;
 }
@@ -295,7 +296,7 @@ export function renderLeft(state) {
     <div class="tagList">
       <div class="left-panel-heading">${esc(t("baseExplorer.tags.header"))}</div>
       ${addBtn}
-      ${tags.length ? tagRows : `<div class="empty-state empty-state--inline">${esc(t("baseExplorer.tags.empty"))}</div>`}
+      ${tags.length ? tagRows : emptyStateHtml(t("baseExplorer.tags.empty"), { variant: "inline" })}
     </div>`;
 }
 
@@ -439,7 +440,7 @@ export function renderList(state) {
   state.visibleListKeys = items.map((it) => keyOf(it.kind, it.id));
 
   if (!items.length) {
-    elList.innerHTML = `<div class="list-empty empty-state">${esc(emptyText(state, listing))}</div>`;
+    elList.innerHTML = emptyStateHtml(emptyText(state, listing), { hook: "list-empty" });
     return;
   }
 

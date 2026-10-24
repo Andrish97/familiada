@@ -2,7 +2,7 @@
    (docs/silnik-stylow-projekt.md §5). Dawniej games.css — „drugi,
    nieoficjalny plik wspólny”. Ładowany PO components.css, w tej samej
    warstwie: układ dopasowuje komponenty w swoim kontekście (.bar .btn,
-   .games-bottom .ui-select) przy równej specyficzności. */
+   .list-toolbar .ui-select) przy równej specyficzności. */
 @layer components {
 
   /* Treść stron z listą: 20 px od topbara (komputer i telefon). */
@@ -239,7 +239,7 @@
   .list-empty[hidden] { display: none; }
 
   /* ── Dolny pasek karty: poza przewijaniem, zawsze widoczny ────── */
-  .games-bottom {
+  .list-toolbar {
     flex: 0 0 auto;
     margin-top: 8px;
     padding-top: 8px;
@@ -250,7 +250,7 @@
     gap: 8px 10px;
     flex-wrap: nowrap; /* sekcje obok siebie; zawijają się ich przyciski */
   }
-  .games-bottom-left {
+  .list-toolbar-left {
     flex: 0 1 auto;
     min-width: 0;
     display: flex;
@@ -259,7 +259,7 @@
     gap: 8px;
     align-items: center;
   }
-  .games-bottom-right {
+  .list-toolbar-right {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -268,14 +268,14 @@
     min-width: 0;
     margin-left: 0;
   }
-  .games-bottom-right .btn {
+  .list-toolbar-right .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     white-space: nowrap;
   }
-  .games-bottom:has(.games-bottom-left):has(.games-bottom-right) { justify-content: space-between; }
+  .list-toolbar:has(.list-toolbar-left):has(.list-toolbar-right) { justify-content: space-between; }
 
   /* Wyszukiwanie po nazwie w lewej części dolnego paska (list-search.js):
      rośnie do 240 px, do drugiego rzędu spada dopiero poniżej minimum. */
@@ -300,12 +300,12 @@
   @media (max-width: 600px) {
     .list-search { width: auto; flex: 1 1 auto; max-width: none; }
     .list-search .searchText { font-size: 16px; } /* 16 px: iOS nie przybliża */
-    .games-bottom-left { flex: 0 1 auto; min-width: 0; gap: 4px; }
-    .games-bottom-left > #btnReceivedFilter { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-    .games-bottom-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
+    .list-toolbar-left { flex: 0 1 auto; min-width: 0; gap: 4px; }
+    .list-toolbar-left > #btnReceivedFilter { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .list-toolbar-left > #btnReceivedFilter .ico { width: 18px; height: 18px; }
     .list-filter .ui-select-menu, .list-sort .ui-select-menu { max-height: min(55dvh, 420px); }
-    .games-bottom-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
-    .games-bottom-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
+    .list-toolbar-right { flex: 0 1 auto; min-width: 0; gap: 4px; }
+    .list-toolbar-left .list-search { flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
     .list-search .searchBox { display: none; }
     .list-search .list-search-open { display: inline-flex; width: 36px; height: 36px; padding: 0; }
   }
@@ -313,27 +313,27 @@
   /* Zawsze jeden rząd. Gdy kontrolki nie mieszczą się nawet jako ikony,
      list-header-layout.js włącza .is-scroll — pasek przewija się w bok,
      a wygaszona krawędź pokazuje, że jest więcej. */
-  .games-bottom.is-single-row > .games-bottom-left,
-  .games-bottom.is-single-row > .games-bottom-right {
+  .list-toolbar.is-single-row > .list-toolbar-left,
+  .list-toolbar.is-single-row > .list-toolbar-right {
     flex: 0 0 auto;
     flex-wrap: nowrap;
     width: max-content;
     max-width: none;
   }
-  .games-bottom.is-scroll {
+  .list-toolbar.is-scroll {
     justify-content: flex-start;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
   }
-  .games-bottom.is-scroll::-webkit-scrollbar { display: none; }
-  .games-bottom.has-more-end { mask-image: linear-gradient(to right, var(--mask-on) calc(100% - 28px), transparent); }
-  .games-bottom.has-more-start { mask-image: linear-gradient(to right, transparent, var(--mask-on) 28px); }
-  .games-bottom.has-more-start.has-more-end { mask-image: linear-gradient(to right, transparent, var(--mask-on) 28px, var(--mask-on) calc(100% - 28px), transparent); }
+  .list-toolbar.is-scroll::-webkit-scrollbar { display: none; }
+  .list-toolbar.has-more-end { mask-image: linear-gradient(to right, var(--mask-on) calc(100% - 28px), transparent); }
+  .list-toolbar.has-more-start { mask-image: linear-gradient(to right, transparent, var(--mask-on) 28px); }
+  .list-toolbar.has-more-start.has-more-end { mask-image: linear-gradient(to right, transparent, var(--mask-on) 28px, var(--mask-on) calc(100% - 28px), transparent); }
   /* Maska tworzy osobną warstwę — otwarte menu filtra trafiałoby pod siatkę. */
-  .games-bottom:has(.ui-select.open) { mask-image: none; }
-  .games-bottom.is-compact-icons :is(.games-bottom-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn) {
+  .list-toolbar:has(.ui-select.open) { mask-image: none; }
+  .list-toolbar.is-compact-icons :is(.list-toolbar-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn) {
     width: 36px;
     height: 36px;
     min-height: 36px;
@@ -343,13 +343,13 @@
     justify-content: center;
     gap: 0;
   }
-  .games-bottom.is-compact-icons :is(.list-filter, .list-sort) {
+  .list-toolbar.is-compact-icons :is(.list-filter, .list-sort) {
     width: 36px;
     min-width: 36px;
     max-width: 36px;
     flex: 0 0 36px;
   }
-  .games-bottom.is-compact-icons .games-bottom-left .list-search {
+  .list-toolbar.is-compact-icons .list-toolbar-left .list-search {
     width: 36px;
     min-width: 36px;
     max-width: 36px;
@@ -358,18 +358,18 @@
     border: 0;
     background: transparent;
   }
-  .games-bottom.is-compact-icons .list-search .searchBox { display: none; }
-  .games-bottom.is-compact-icons .list-search .list-search-open { display: inline-flex; }
-  .games-bottom.is-compact-icons :is(.list-filter, .list-sort) :is(.ui-select-label, .ui-select-caret) { display: none; }
-  .games-bottom.is-compact-icons :is(.games-bottom-right .btn .ico, .list-filter .ui-select-icon .ico, .list-sort .ui-select-icon .ico) { width: 18px; height: 18px; }
+  .list-toolbar.is-compact-icons .list-search .searchBox { display: none; }
+  .list-toolbar.is-compact-icons .list-search .list-search-open { display: inline-flex; }
+  .list-toolbar.is-compact-icons :is(.list-filter, .list-sort) :is(.ui-select-label, .ui-select-caret) { display: none; }
+  .list-toolbar.is-compact-icons :is(.list-toolbar-right .btn .ico, .list-filter .ui-select-icon .ico, .list-sort .ui-select-icon .ico) { width: 18px; height: 18px; }
 
   /* Grupy prawie się stykają: przy sobie, rozdzielone cienką kreską. */
-  .games-bottom.has-group-sep { justify-content: flex-start; }
-  .games-bottom.has-group-sep > .games-bottom-right {
+  .list-toolbar.has-group-sep { justify-content: flex-start; }
+  .list-toolbar.has-group-sep > .list-toolbar-right {
     position: relative;
     padding-left: 9px;
   }
-  .games-bottom.has-group-sep > .games-bottom-right::before {
+  .list-toolbar.has-group-sep > .list-toolbar-right::before {
     content: "";
     position: absolute;
     left: 0;

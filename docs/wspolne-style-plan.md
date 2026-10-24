@@ -213,7 +213,7 @@ mechanizmy JS, weryfikacja martwych i zdublowanych klas.
 ### Główna przyczyna bałaganu
 
 - **`games.css` jest drugim, nieoficjalnym plikiem wspólnym** — ładuje go
-  15 stron (paski `.bar`/`.actions`/`.games-bottom`, kopia `.overlay`/`.modal`,
+  15 stron (paski `.bar`/`.actions`/`.list-toolbar`, kopia `.overlay`/`.modal`,
   `.card`, `.tabs-card`, `.list-empty`). Strony bez niego (Społeczność,
   edytor gry, Control) mają własne odpowiedniki. Jedyne prawdziwe konflikty
   kaskady (`overlay`, `modal`, `tabs-card`, `card`) to zawsze strona +

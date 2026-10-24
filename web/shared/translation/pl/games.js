@@ -76,6 +76,7 @@ const pl = {
       unavailableTitle: "Instalacja jest teraz niedostępna",
       unavailableAndroid: "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.",
       unavailableText: "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.",
+      macSafariTitle: "Dodaj Familiadę do Docka",
       macSafari: "W Safari wybierz Plik → „Dodaj do Docka”.",
     },
     import: {

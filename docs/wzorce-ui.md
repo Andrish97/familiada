@@ -76,7 +76,7 @@ wybór audytu do akceptacji (zebrane w sekcji D).
 
 | Rodzaj | Strony | Układ |
 |---|---|---|
-| **Lista** | Gry, Bazy, Logo, Subskrypcje, Społeczność [PROPOZYCJA: Społeczność też jako lista] | topbar → `.bar` (tytuł + podpowiedź | akcje zaznaczonego kafla) → `.tabs-card` (karty) → `.games-card` z siatką `.grid` kafli `.card` → `.games-bottom` (dół: wyszukiwanie / filtr po lewej, eksport / import po prawej) |
+| **Lista** | Gry, Bazy, Logo, Subskrypcje, Społeczność [PROPOZYCJA: Społeczność też jako lista] | topbar → `.bar` (tytuł + podpowiedź | akcje zaznaczonego kafla) → `.tabs-card` (karty) → `.games-card` z siatką `.grid` kafli `.card` → `.list-toolbar` (dół: wyszukiwanie / filtr po lewej, eksport / import po prawej) |
 | **Strona pracy** | edytor gry, edytory logo, ankieta, menedżer bazy, ustawienia gry, Control | topbar z **tytułem** (sekcja 2); pod nim tylko pole nazwy / pasek stanu i sama praca; **bez dolnego paska** (akcje na górze) |
 | **Ustawienia / formularze** | Konto, Podłącz urządzenie | topbar z tytułem [PROPOZYCJA: Konto jak strona pracy — tytuł w topbarze, `USTAWIENIA KONTA`], treść w panelach `.account-panel` (karta + nagłówek wielkimi literami + opis + pola + przycisk) |
 | **Wejście / karta** | logowanie, reset, potwierdzenie, `/go/`, głosowanie `/polls/vote/*` | jedna wyśrodkowana karta (`.login-card` / `.landing-card` / `.poll-card`), bez topbara pracy; marka + treść; stopka |
@@ -157,7 +157,7 @@ Nowa strona bez topbara z „i” = ta sama grupa `data-lang-slot`, nigdy „i�
   tekst pełny na komputerze **i** na telefonie (przyciski się zawijają
   zamiast skracać do „Podgl.”, „Exp.plk”); **główna akcja** `btn sm gold`
   jako pierwsza z lewej, reszta neutralna, destrukcyjne nigdy w górnym pasku;
-- *dół* (`.games-bottom`): po lewej wyszukiwanie + filtr (+ sortowanie, jeśli
+- *dół* (`.list-toolbar`): po lewej wyszukiwanie + filtr (+ sortowanie, jeśli
   jest) — `list-search.js`; po prawej eksport / import (`btn sm`).
   Zawijanie tylko całymi przyciskami, bez wcześniejszego przeskoku do drugiego
   rzędu, gdy jest miejsce (E17c pkt 1).
@@ -402,7 +402,7 @@ udostępniania, kod urządzenia) — nie dla kart formularzy.
   desktop: kontener wycentrowany, ten sam lewy brzeg dla `.bar`, kart i stopki.
   Zero stron z własnym `padding` boku (ustawienia gry, Control, menedżer bazy).
 - **Odstępy równe i z tokenów**: 14 px między kaflami, 16 px między sekcjami /
-  panelami, 8 px wewnątrz pasków (`.bar`, `.games-bottom`), 6 px między
+  panelami, 8 px wewnątrz pasków (`.bar`, `.list-toolbar`), 6 px między
   oznaczeniami. [PROPOZYCJA: zmienne `--gap-tile:14px`, `--gap-section:16px`,
   `--gap-bar:8px`, `--page-gutter:15px` w `base.css`.]
 - Pionowo: topbar 68 px → `.bar` od tej samej wysokości na każdej stronie

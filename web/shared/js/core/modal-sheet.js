@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T18062";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-24T18062";
-import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T18062";
+import { t } from "../../translation/translation.js?v=v2026-10-24T18315";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-24T18315";
+import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T18315";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -20,7 +20,7 @@ import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T1
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-24T18062"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-24T18315"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -37,9 +37,20 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     e.preventDefault();
     closeBtn.click();
   });
-  // Okno od dołu: klik w przyciemnione tło zamyka z animacją.
+  // Klik w przyciemnione tło zamyka okno jak Esc (jedna reguła dla wszystkich
+  // okien, E23 §6.2); okno od dołu zjeżdża z animacją. Liczy się tylko klik,
+  // który zaczął się na tle (zaznaczanie tekstu w oknie kończone poza nim nie
+  // zamyka). Okna bez X (blokujące) zostają otwarte.
+  let pressedBackdrop = null;
+  document.addEventListener("pointerdown", (e) => {
+    pressedBackdrop = e.target?.classList?.contains("overlay") ? e.target : null;
+  }, true);
   document.addEventListener("click", (e) => {
-    if (activeOverlay && e.target === activeOverlay && activeOverlay.classList.contains("sheet-active")) closeSheetAnimated();
+    const overlay = e.target;
+    if (!overlay?.classList?.contains("overlay") || overlay !== pressedBackdrop) return;
+    pressedBackdrop = null;
+    if (overlay === activeOverlay && overlay.classList.contains("sheet-active")) { closeSheetAnimated(); return; }
+    visibleCloseButton(overlay)?.click();
   });
   document.addEventListener("click", (e) => {
     const cancel = e.target.closest?.("[data-modal-cancel]");
@@ -136,7 +147,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-24T18062").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-24T18315").then((module) => module.openContactModal());
 
     }, 0);
     return;
@@ -388,12 +399,33 @@ function onSheetLayoutChange({ sheet }) {
 if (typeof document !== "undefined") onDeviceChange(onSheetLayoutChange);
 globalThis.addEventListener?.("resize", () => { if (activeClose) fitSheetTop(activeOverlay); });
 
+/**
+ * Okno (dialog) — jedyny sposób otwierania i zamykania okien .overlay
+ * (E23 §6.2): pokazuje okno (atrybut hidden), na telefonie przełącza je
+ * w okno od dołu, zapisuje ?dialog= w historii (Wstecz zamyka okno).
+ *   onClose  zamyka TO okno (Wstecz przeglądarki, pasek, „Wstecz” w topbarze);
+ *            domyślnie closeDialog(overlay)
+ *   onBack   „Wstecz” w topbarze najpierw pyta stronę (true = obsłużone)
+ * Esc, klik w tło i [data-modal-cancel] klikają X okna (obsługa wyżej).
+ */
+export function openDialog(overlayEl, { onClose, onBack, historyKey = overlayEl?.id, restore = false } = {}) {
+  if (!overlayEl) return;
+  setOverlayOpen(overlayEl, true);
+  enterModalSheet(overlayEl, { onClose: onClose || (() => closeDialog(overlayEl)), onBack, historyKey, restore });
+}
+
+/** Zamyka okno otwarte przez openDialog (bez wołania onClose). */
+export function closeDialog(overlayEl) {
+  if (!overlayEl) return;
+  setOverlayOpen(overlayEl, false);
+  // Okno nad innym oknem (np. potwierdzenie nad arkuszem) nie zamyka arkusza.
+  if (!activeOverlay || activeOverlay === overlayEl) exitModalSheet(overlayEl);
+}
+
 // overlayEl: element .overlay danego modala.
 // opts.onClose: funkcja zamykająca TEN modal (pasek, klik w tło, Wstecz
-//   przeglądarki). opts.backBtn / keepBackBtnText -- dawne przejęcie
-//   przycisku wstecz w topbarze; okno od dołu leży nad topbarem, więc
-//   przycisk nie jest już przejmowany (parametry zostają dla zgodności).
-export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
+//   przeglądarki).
+function enterModalSheet(overlayEl, { onClose, onBack, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport() || overlayEl?.classList.contains("modal--keep-dialog")) return;
   prepareSheetLayout(overlayEl);
   if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
@@ -413,7 +445,7 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
     setUrlDialog(activeDialogKey, !restore);
   }
   activeBack = typeof onBack === "function" ? onBack : null;
-  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, onBack, keepBackBtnText } });
+  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { onClose, onBack } });
 
   // Przeglądarki bez overflow:clip (css/base.css): focus() pola w oknie
   // przewija tło-kontener i panel skacze na górę -- cofamy to przewinięcie.
@@ -429,7 +461,7 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 
-export function exitModalSheet(overlayEl) {
+function exitModalSheet(overlayEl) {
   const key = activeDialogKey;
   applyPresentation(false);
   restoreSheetLayout(overlayEl || activeOverlay);

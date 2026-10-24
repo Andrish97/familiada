@@ -53,7 +53,7 @@ test("tasks: tylko ankiety, bez akcji baz lub urządzeń i filtra rodzaju", () =
 test("tasks: bez wyszukiwania, dolnego paska i tekstowej etykiety typu", () => {
   const src = read("web/tasks/js/tasks.js");
   assert.doesNotMatch(src, /initListSearch|list-search|tasks\.pollType/);
-  assert.doesNotMatch(read("web/tasks/index.html"), /games-bottom/);
+  assert.doesNotMatch(read("web/tasks/index.html"), /list-toolbar/);
   assert.match(src, /noteMobile: owner/);
 });
 

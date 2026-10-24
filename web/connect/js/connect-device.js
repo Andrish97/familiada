@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18062";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18062";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T18062";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18062";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T18062";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18062";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18062";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18062";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18062";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T18315";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T18315";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T18315";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T18315";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T18315";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T18315";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -24,17 +24,17 @@ const btnConnectCode      = document.getElementById("btnConnectCode");
 const connectCodeMsg      = document.getElementById("connectCodeMsg");
 
 
-function setCodeMsg(text) { if (connectCodeMsg) connectCodeMsg.textContent = text || ""; }
+function setCodeMsg(text) { setMessage(connectCodeMsg, text); }
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
 function deviceTypeLabel(type) {
-  if (type === "host")     return t("connectDevice.deviceType.host")    || "Prowadzący";
-  if (type === "buzzer")   return t("connectDevice.deviceType.buzzer")  || "Przycisk do pojedynku";
-  if (type === "display")  return t("connectDevice.deviceType.display") || "Wyświetlacz";
-  if (type === "poll_qr")  return t("connectDevice.deviceType.pollQr")  || "Wyświetlacz QR";
+  if (type === "host")     return t("connectDevice.deviceType.host");
+  if (type === "buzzer")   return t("connectDevice.deviceType.buzzer");
+  if (type === "display")  return t("connectDevice.deviceType.display");
+  if (type === "poll_qr")  return t("connectDevice.deviceType.pollQr");
   return type;
 }
 
@@ -56,8 +56,8 @@ if (_isMobile && btnScanQr) btnScanQr.hidden = false;
 
 // ── Podgląd urządzenia po kodzie: wspólne confirmModal (modal.js) ─────────────
 async function showDevicePreview(info) {
-  const gameLabel  = t("connectDevice.enterCode.previewGame")  || "Gra:";
-  const ownerLabel = t("connectDevice.enterCode.previewOwner") || "Właściciel:";
+  const gameLabel  = t("connectDevice.enterCode.previewGame");
+  const ownerLabel = t("connectDevice.enterCode.previewOwner");
   const ok = await confirmModal({
     title: deviceTypeLabel(info.device_type),
     text: `${gameLabel} ${info.game_name || "—"}\n${ownerLabel} ${info.owner_username || "—"}`,
@@ -75,16 +75,16 @@ async function showDevicePreview(info) {
 async function handleCodeConnect() {
   const raw = String(connectCodeInput?.value || "").trim().replace(/\D/g, "");
   if (raw.length !== 6) {
-    setCodeMsg(t("connectDevice.enterCode.invalidCode") || "Wprowadź 6-cyfrowy kod.");
+    setCodeMsg(t("connectDevice.enterCode.invalidCode"));
     return;
   }
-  setCodeMsg(t("connectDevice.enterCode.resolving") || "Sprawdzanie kodu…");
+  setCodeMsg(t("connectDevice.enterCode.resolving"));
   if (btnConnectCode) btnConnectCode.disabled = true;
 
   try {
     const { data, error } = await sb().rpc("resolve_device_connect_code", { p_code: raw });
     if (error || !data?.ok) {
-      setCodeMsg(t("connectDevice.enterCode.codeNotFound") || "Nie znaleziono urządzenia dla tego kodu.");
+      setCodeMsg(t("connectDevice.enterCode.codeNotFound"));
       return;
     }
     setCodeMsg("");
@@ -104,11 +104,11 @@ connectCodeInput?.addEventListener("keydown", (e) => {
 // ── Shared devices (only logged-in non-guests) ─────────────────────────────────
 async function renderSharedDevices() {
   if (!sharedDevicesList) return;
-  sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.loading") || "Ładowanie…"}</div>`;
+  sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.loading")}</div>`;
 
   const { data, error } = await sb().rpc("list_shared_devices_for_me");
   if (error) {
-    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.error") || "Błąd ładowania."}</div>`;
+    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.error")}</div>`;
     return;
   }
 
@@ -121,7 +121,7 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `<div class="empty-state">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `<div class="empty-state">${t("connectDevice.shared.empty")}</div>`;
     return;
   }
 
@@ -132,7 +132,7 @@ async function renderSharedDevices() {
     row.dataset.shareId = String(item.share_id);
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
-    const gameName   = escapeHtml(item.game_name || t("connectDevice.shared.noName") || "—");
+    const gameName   = escapeHtml(item.game_name || t("connectDevice.shared.noName"));
     const typeLabel  = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
@@ -146,7 +146,7 @@ async function renderSharedDevices() {
 
     row.addEventListener("click", async () => {
       if (!item.game_id || !item.share_key) {
-        toast(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.", { kind: "error" });
+        toast(t("connectDevice.shared.gameNotFound"), { kind: "error" });
         return;
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
@@ -180,7 +180,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T18062";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T18315";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
@@ -261,7 +261,7 @@ async function startQrScan() {
       }
       return;
     } catch {
-      toast(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.", { kind: "error" });
+      toast(t("connectDevice.scan.cameraError"), { kind: "error" });
       return;
     }
   }
@@ -308,7 +308,7 @@ async function startQrScan() {
     if (code?.data?.startsWith("http")) {
       window.location.href = code.data;
     } else {
-      toast(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.", { kind: "error" });
+      toast(t("connectDevice.scan.noQr"), { kind: "error" });
     }
   });
 
@@ -324,8 +324,8 @@ async function startQrScan() {
   document.documentElement.classList.remove('page-loading');
   // podtytuł nie zależy od konta — razem z tytułem, przed odpowiedzią sesji
   if (pageHint) pageHint.textContent = _isMobile
-    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.")
-    : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
+    ? (t("connectDevice.header.hintMobile"))
+    : (t("connectDevice.header.hintDesktop"));
 
   const currentUser = await userP;
 

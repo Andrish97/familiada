@@ -899,14 +899,14 @@
   }
   .import-preview--media { padding: 0; overflow: hidden; }
   .import-preview--media > canvas { display: block; width: 100%; }
-  .import-preview-title { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .import-preview-title { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
   .import-preview-title + * { margin-top: 7px; }
   .import-preview-summary { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--accent); font-weight: 800; margin-bottom: 6px; }
   .import-preview-list { display: grid; gap: 7px; }
   .import-preview-list--scroll { max-height: 220px; overflow-y: auto; }
   .import-preview-item { padding-top: 6px; border-top: 1px solid var(--w-8); overflow-wrap: anywhere; }
   .import-preview-item strong { display: block; }
-  .import-preview-answers { color: var(--muted); margin-top: 2px; }
+  .import-preview-answers { color: var(--text-muted); margin-top: 2px; }
   .import-preview .is-error { color: var(--bad-text); }
   .importMsg {
     margin-left: auto;
@@ -916,6 +916,8 @@
     padding: 6px 0;
   }
   .importMsg:empty { display: none; }
+  .importMsg[data-kind="error"] { color: var(--bad-text); opacity: 1; }
+  .importMsg[data-kind="ok"] { color: var(--ok-text); }
   .importTa {
     width: 100%;
     min-height: 220px;

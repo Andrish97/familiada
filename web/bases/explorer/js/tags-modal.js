@@ -7,15 +7,15 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-24T18062";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T18062";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18062";
-import { enterModalSheet, exitModalSheet, isSheetViewport, setOverlayOpen, isOverlayOpen, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18062";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18062";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T18062";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T18062";
-import { normalizeText } from "./data/listing.js?v=v2026-10-24T18062";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-24T18062";
+import * as ops from "./ops.js?v=v2026-10-24T18315";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T18315";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { openDialog, closeDialog, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T18315";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18315";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T18315";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T18315";
+import { normalizeText } from "./data/listing.js?v=v2026-10-24T18315";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-24T18315";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
 function esc(s) {
@@ -249,10 +249,7 @@ export async function openTagsModal(state, opts = {}) {
   const donePromise = new Promise((resolve) => { resolvePromise = resolve; });
 
   function close(result) {
-    setOverlayOpen(E.overlay, false);
-    exitModalSheet(E.overlay);
-    document.removeEventListener("keydown", onKey);
-    E.overlay?.removeEventListener("click", onBackdrop);
+    closeDialog(E.overlay);
 
     E.l1Close?.removeEventListener("click", onClose);
     E.l2Close?.removeEventListener("click", onClose);
@@ -280,13 +277,6 @@ export async function openTagsModal(state, opts = {}) {
     hideErr(E.editErr);
   }
 
-  function onKey(e) {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      close(false);
-    }
-  }
-
   function onClose() {
     close(false);
   }
@@ -312,11 +302,6 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   // Klik w tło zamyka jak X (nie w arkuszu na telefonie — tam wyjściem jest Wstecz).
-  function onBackdrop(e) {
-    if (e.target !== E.overlay || isSheetViewport()) return;
-    close(false);
-  }
-
   function renderAssignInfo() {
     if (!E.assignInfo) return;
     const qN = (sel.qIds || []).length;
@@ -628,15 +613,11 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   // OPEN
-  setOverlayOpen(E.overlay, true);
-  enterModalSheet(E.overlay, {
-    backBtn: btnBack,
+  openDialog(E.overlay, {
     onClose: () => close(false),
     // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
     onBack: layerBack,
   });
-  document.addEventListener("keydown", onKey);
-  E.overlay?.addEventListener("click", onBackdrop);
 
   // X wszędzie zamyka modal
   E.l1Close?.addEventListener("click", onClose);
