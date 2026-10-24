@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bw74HFX1XoO6dfRSde55giDjo1EYfuepOC4X0DAqkB46yQVP4m5HL0scQCa3CXs
+\restrict tsdylHl6nEiYiJsU59oulgngzWcnAGHpQeINQe6lbMEe5up1Sc1FhWqFjAqwCOG
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -701,6 +701,35 @@ CREATE FUNCTION "public"."_control2_sanitize_event"("p" "jsonb") RETURNS "jsonb"
     ORDER BY key LIMIT 40
   ) x
 $_$;
+
+
+--
+-- Name: _control2_session_close("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control2_session_close"("p_session_id" "uuid", "p_reason" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  -- Rozegrany finał (f_end): gra skończona, brakowało tylko „Zakończ”
+  -- (FINISH_FINAL dolicza finał zwycięzcy). ended_at = ostatnia zmiana gry.
+  UPDATE public.game_sessions
+  SET status='final',
+      ended_at=coalesce(last_seen_at, clock_timestamp()),
+      team_a_score=team_a_score + CASE WHEN winner_team='A' THEN final_points ELSE 0 END,
+      team_b_score=team_b_score + CASE WHEN winner_team='B' THEN final_points ELSE 0 END,
+      stats_detail=coalesce(stats_detail,'{}'::jsonb) || jsonb_build_object('closed_by',p_reason)
+  WHERE id=p_session_id AND ended_at IS NULL
+    AND stats_detail->>'last_step'='f_end' AND final_points IS NOT NULL;
+  IF FOUND THEN RETURN; END IF;
+
+  UPDATE public.game_sessions
+  SET status='abandoned', ended_at=clock_timestamp(), last_seen_at=clock_timestamp(),
+      stats_detail=coalesce(stats_detail,'{}'::jsonb) || jsonb_build_object('end_reason',p_reason)
+  WHERE id=p_session_id AND ended_at IS NULL;
+END;
+$$;
 
 
 --
@@ -6432,10 +6461,7 @@ BEGIN
 
   -- Close statistics and remove the active pointer before resetting game_state;
   -- the tracker trigger then cannot misclassify this as an ordinary restart.
-  UPDATE public.game_sessions
-  SET status='abandoned', ended_at=clock_timestamp(), last_seen_at=clock_timestamp(),
-      stats_detail=coalesce(stats_detail,'{}'::jsonb) || '{"end_reason":"settings_cancelled"}'::jsonb
-  WHERE id=v_session_id AND ended_at IS NULL;
+  PERFORM public._control2_session_close(v_session_id,'settings_cancelled');
   DELETE FROM public.game_session_active WHERE game_id=p_game_id;
 
   UPDATE public.game_state
@@ -6567,13 +6593,9 @@ BEGIN
 
   -- Zachowujemy przebieg wyłącznie jako statystykę; usuwamy jego aktywny
   -- wskaźnik i stan runtime, żeby kolejny Control wrócił do parowania.
-  UPDATE public.game_sessions gs
-  SET status = 'abandoned', ended_at = now(), last_seen_at = now(),
-      stats_detail = coalesce(gs.stats_detail, '{}'::jsonb) || '{"end_reason":"control_idle_expired"}'::jsonb
+  PERFORM public._control2_session_close(active.session_id, 'control_idle_expired')
   FROM public.game_session_active active
-  WHERE active.game_id = v_session.game_id
-    AND gs.id = active.session_id
-    AND gs.ended_at IS NULL;
+  WHERE active.game_id = v_session.game_id;
   DELETE FROM public.game_session_active WHERE game_id = v_session.game_id;
 
   UPDATE public.game_state
@@ -8914,10 +8936,12 @@ BEGIN
     RAISE EXCEPTION 'invalid revision';
   END IF;
 
-  INSERT INTO public.game_state_display_completion(game_id,rendered_rev)
-    VALUES(p_game_id,p_rev)
+  INSERT INTO public.game_state_display_completion(game_id,rendered_rev,rendered_at)
+    VALUES(p_game_id,p_rev,clock_timestamp())
     ON CONFLICT(game_id) DO UPDATE
-      SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+      SET rendered_at=CASE WHEN excluded.rendered_rev>game_state_display_completion.rendered_rev
+            THEN excluded.rendered_at ELSE game_state_display_completion.rendered_at END,
+          rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
 
   -- This update emits the acknowledgment through the same RLS protected
   -- game_state stream already consumed by every device.
@@ -16612,8 +16636,10 @@ CREATE FUNCTION "public"."request_display_completion"() RETURNS "trigger"
 BEGIN
  IF TG_OP = 'INSERT' OR NEW.step IS DISTINCT FROM OLD.step OR
     NEW.sound_cue_seq IS DISTINCT FROM OLD.sound_cue_seq THEN
-  INSERT INTO public.game_state_display_completion(game_id, requested_rev) VALUES(NEW.game_id, NEW.rev)
-  ON CONFLICT(game_id) DO UPDATE SET requested_rev = excluded.requested_rev;
+  INSERT INTO public.game_state_display_completion(game_id, requested_rev, requested_at)
+  VALUES(NEW.game_id, NEW.rev, clock_timestamp())
+  ON CONFLICT(game_id) DO UPDATE
+    SET requested_rev = excluded.requested_rev, requested_at = excluded.requested_at;
  END IF;
  RETURN NEW;
 END $$;
@@ -17759,8 +17785,7 @@ BEGIN
   -- Restart is observed in the same transaction as its new blank state.
   IF NOT started THEN
     IF sid IS NOT NULL AND sess.ended_at IS NULL THEN
-      UPDATE public.game_sessions SET status='abandoned', ended_at=now(), last_seen_at=now(),
-        stats_detail=stats_detail || '{"end_reason":"restart"}'::jsonb WHERE id=sid;
+      PERFORM public._control2_session_close(sid,'restart');
     END IF;
     DELETE FROM public.game_session_active WHERE game_id=NEW.game_id;
     RETURN NEW;
@@ -18584,7 +18609,9 @@ CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') 
 CREATE TABLE "public"."game_state_display_completion" (
     "game_id" "uuid" NOT NULL,
     "rendered_rev" bigint DEFAULT 0 NOT NULL,
-    "requested_rev" bigint DEFAULT 0 NOT NULL
+    "requested_rev" bigint DEFAULT 0 NOT NULL,
+    "requested_at" timestamp with time zone,
+    "rendered_at" timestamp with time zone
 );
 
 ALTER TABLE ONLY "public"."game_state_display_completion" REPLICA IDENTITY FULL;
@@ -24727,5 +24754,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bw74HFX1XoO6dfRSde55giDjo1EYfuepOC4X0DAqkB46yQVP4m5HL0scQCa3CXs
+\unrestrict tsdylHl6nEiYiJsU59oulgngzWcnAGHpQeINQe6lbMEe5up1Sc1FhWqFjAqwCOG
 
