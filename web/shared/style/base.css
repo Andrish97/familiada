@@ -12,18 +12,9 @@
    tokenów na :root (własne zmienne ustawia na swoich elementach). */
 @layer reset, base, components, utilities, page, states;
 
-/* Płynność między stronami (View Transitions, Chrome 126+, Safari 18.2+):
-   przejście do innej strony aplikacji łagodnie przenika zamiast mignięcia
-   białym/pustym ekranem; topbar zostaje na miejscu (view-transition-name
-   w components.css). Inne przeglądarki
-   przełączają stronę jak dotąd. Ograniczony ruch w systemie -- bez przejścia.
-   (Reguła @view-transition stoi poza warstwami.) */
-@view-transition { navigation: auto; }
-@media (prefers-reduced-motion: reduce) {
-  @view-transition { navigation: none; }
-}
-::view-transition-group(root) { animation-duration: var(--dur-base); }
-::view-transition-group(topbar) { animation-duration: var(--dur-base); }
+/* Bez przejść View Transitions między stronami (2026-10-24): przy przejściu
+   na stronę bez tej reguły (/go/ → urządzenie) i przy przeładowaniu Chrome
+   rzucał nieobsłużony błąd „Transition was skipped” i opóźniał nawigację. */
 
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }

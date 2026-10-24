@@ -202,7 +202,7 @@
     margin-top: 10px;
     padding: 14px 10px 12px;
     border-radius: var(--r-md);
-    background: var(--w-4);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -383,7 +383,7 @@
   .resultQ .aList.tally .aBar,
   .resultQ .aList.tally .tcHandle,
   .resultQ .aList.tally .tcCnt{ transition: none; }
-  .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
+  .resultQ .aList.tally .tcHandle{ max-width: 24px; color: var(--text-faint); pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
   .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
   .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
   .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; margin-left: 7px; }
@@ -455,7 +455,9 @@
 
 
   /* Szkic: udostępnianie widoczne, ale zablokowane do uruchomienia ankiety. */
-  .shareCols.is-locked > .pollSec{ opacity: .55; }
+  /* Zablokowana sekcja: kolory wyłączenia jak .btn:disabled, nie opacity (Android). */
+  .shareCols.is-locked > .pollSec{ color: var(--disabled-text); }
+  .shareCols.is-locked > .pollSec .btn{ --btn-tint: var(--w-4); color: var(--disabled-text); border-color: var(--disabled-line); }
   .shareCols.is-locked > .pollSec :is(button, a, input){ pointer-events: none; }
 /* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20). */
   @media (hover: none) and (pointer: coarse) {

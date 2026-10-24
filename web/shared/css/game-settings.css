@@ -44,13 +44,13 @@
     font-weight: 600;
     text-align: left;
     cursor: pointer;
-    opacity: .55;
-    transition: opacity .15s, background .15s;
+    color: var(--text-faint); /* przygaszone kolorem, nie opacity (Android) */
+    transition: color .15s, background .15s;
     border-left: 3px solid transparent;
   }
 
   .gs-sidebar-item:hover {
-    opacity: .85;
+    color: var(--text-soft);
     --btn-tint: var(--w-4);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
@@ -63,7 +63,7 @@
   }
 
   .gs-sidebar-item-disabled {
-    opacity: .3;
+    color: var(--disabled-text);
     cursor: default;
     pointer-events: none;
   }
@@ -75,7 +75,6 @@
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
 
     color: var(--accent);
-    opacity: 1;
   }
 
   /* ===== CONTENT ===== */
@@ -490,7 +489,7 @@
     border: 1px solid var(--w-25);
     border-radius: var(--r-sm);
     padding: 3px 8px;
-    background: var(--w-8);
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under); /* kryjące (Android) */
     font-size: .8rem;
     min-width: 0;
     max-width: 100%;

@@ -768,7 +768,7 @@
       display: inline-block;
       vertical-align: middle;
       flex-shrink: 0;
-      opacity: .8;
+      color: var(--text-muted);
       /* prevent white-space:nowrap from adding line-break before icon */
       margin-right: 2px;
   }
@@ -1466,7 +1466,7 @@
     margin-top: 12px;
     padding: 12px;
     border-radius: var(--r-md);
-    background: var(--w-4);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
     border: 1px solid var(--line, var(--w-8));
   }
   .tags-modal .tagsCardLbl { font-weight: 800; }
@@ -1543,7 +1543,7 @@
   /* ===== Okno Przenieś do / Kopiuj do (ui/move-modal.js) ===== */
   .moveBody { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
   .moveSearch { flex: 0 0 auto; margin-right: 0; width: 100%; box-sizing: border-box; } /* .searchBox z paska ma margin-right */
-  .moveSearch .ico { width: 16px; height: 16px; opacity: .6; }
+  .moveSearch .ico { width: 16px; height: 16px; color: var(--text-muted); }
   /* ===== Drzewo folderów — jeden wygląd (lewy panel i okno „Przenieś do”,
      ui/tree-row.js, decyzja użytkownika 2026-10-21) =====
      Wiersze bez ramek, wcięcie co --step, linie prowadzące (.tree-guides)
@@ -1591,16 +1591,17 @@
   .tree-g-tee::after { top: 50%; }
   .tree-g-end::after { top: 100%; }
   .row.tree-row:hover,
-  .tree-row:hover { background: var(--w-4); }
+  .tree-row:hover { background: linear-gradient(var(--w-4), var(--w-4)) var(--under); }
   .tree-row.is-root { font-weight: 700; }
   .row.tree-row.is-current,
-  .tree-row.is-current { background: var(--w-8); }
-  .tree-row.is-blocked { opacity: .4; cursor: not-allowed; }
+  .tree-row.is-current { background: linear-gradient(var(--w-8), var(--w-8)) var(--under); }
+  /* Zablokowany: kolory wyłączenia, nie opacity (Android). */
+  .tree-row.is-blocked { color: var(--disabled-text); cursor: not-allowed; }
   .tree-row.is-blocked:hover { background: none; }
   .tree-toggle,
   .tree-toggle-space { position: relative; flex: 0 0 var(--step); width: var(--step); height: 22px; }
   .tree-toggle .ico { width: 14px; height: 14px; }
-  .tree-ico { display: inline-flex; flex: 0 0 auto; opacity: .9; }
+  .tree-ico { display: inline-flex; flex: 0 0 auto; color: var(--text-muted); }
   .tree-row .list-ico { width: 16px; height: 16px; }
   .tree-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
   .tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }

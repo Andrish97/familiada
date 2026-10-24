@@ -709,7 +709,7 @@
   .device-row-line--single { grid-template-columns: minmax(0, 1fr); }
   .device-row-line > .btn { width:100%; min-width:0; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .device-row-line > .device-connect-code { gap:.5em; padding:0 .6em; }
-  .device-row-line > .device-connect-code .ico { opacity:.7; }
+  .device-row-line > .device-connect-code .ico { color: var(--text-muted); }
   .device-row-line > .device-connect-code:hover { border-color:var(--g-60); }
   /* Status połączenia: lekka plakietka z kropką zamiast dużego kafla. */
   .c2-devicerows .conn-status { padding:.35em .75em .35em .6em; border-radius: var(--r-pill); gap:.45em; border-color:transparent; }

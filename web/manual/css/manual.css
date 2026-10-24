@@ -323,7 +323,7 @@
       transition: background .15s;
   }
   .m-ref:hover { background: var(--g-10); }
-  .m-ref .ico { width: .85em; height: .85em; flex-shrink: 0; opacity: .8; }
+  .m-ref .ico { width: .85em; height: .85em; flex-shrink: 0; color: var(--text-muted); }
 
   /* nazwa strony lub widoku */
   .m-page {
@@ -543,7 +543,7 @@
   .m-carousel-dot {
       width: 8px; height: 8px; padding: 0;
       border: 0; border-radius: 50%;
-      background: var(--w-25);
+      background: linear-gradient(var(--w-25), var(--w-25)) var(--under); /* kryjące (Android) */
       cursor: pointer;
   }
   .m-carousel-dot.active { background: var(--accent); }

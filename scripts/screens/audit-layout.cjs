@@ -161,7 +161,8 @@ function inspectLayout(opts) {
         if (e.matches(".overlay, .modal, main, header")) break;
       }
       const st = getComputedStyle(btn);
-      if (st.transform !== "none") bad.push("transform");
+      // Samo przesunięcie (np. wyśrodkowanie translateX(-50%)) nie tworzy artefaktów.
+      if (st.transform !== "none" && !/^matrix\(1, 0, 0, 1,/.test(st.transform)) bad.push("transform");
       if (bad.length) add("android-przezroczystosc", btn, bad.join("; "));
     }
   }

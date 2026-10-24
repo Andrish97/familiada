@@ -238,7 +238,7 @@
     height: 44px;
     border-radius: var(--r-sm);
     border: 1px solid var(--w-14);
-    background: var(--w-8);
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under); /* kryjące (Android) */
     color: var(--text);
     font-weight: 700;
     cursor: pointer;
@@ -257,7 +257,7 @@
   }
 
   .dt-day.is-active{
-    background: var(--g-10);
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under);
     border-color: var(--g-35);
     color: var(--accent);
   }

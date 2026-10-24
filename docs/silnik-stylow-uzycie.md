@@ -251,8 +251,9 @@ Jedna rodzina animacji, czasy z tokenów (`--dur-fast` .12 s, `--dur-base`
   albo `animateClose(overlay, done)` (`core/modal-sheet.js`): klasa zamykania
   trzyma ostatnią klatkę do schowania okna, koniec po `animationend`. Nie
   chować okna ręcznie (`hidden = true`) z pominięciem tych funkcji.
-- **Między stronami** — przenikanie View Transitions (`@view-transition` w
-  base.css), topbar stoi (`view-transition-name: topbar`).
+- **Między stronami** — bez View Transitions: przejście na stronę bez tej
+  reguły (`/go/` → urządzenie) i przeładowanie dawały nieobsłużony błąd
+  „Transition was skipped” i opóźniały nawigację (e2e Control, 2026-10-24).
 - **Zakładki i sekcje** — panel `[role=tabpanel]` i rozwinięta lista sekcji
   (`.rowsList.is-expanding`) wjeżdżają łagodnie (`panel-in`).
 - **Menu, listy, podpowiedzi** — `popover-in`; przyciski, pola, kafle —
