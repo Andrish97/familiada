@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Qj7ZFPqafFaYArI170PBrkjQg5m6slPbAF33Ad9jLtliAhwEoTdEUQezPfNAlMM
+\restrict 5nNuOmqwFKJxeYQD3cl28v6CWEd8OhYn90QJigtDDifBMnSdNiB0UpRyO5GbdT0
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1613,6 +1613,7 @@ END $$;
 
 CREATE FUNCTION "public"."_logo_clone_image_refs"("p_source" "jsonb") RETURNS SETOF "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
  WITH RECURSIVE nodes(value) AS (
   SELECT p_source->'fabricData'
@@ -1637,6 +1638,7 @@ $$;
 
 CREATE FUNCTION "public"."_logo_url_path"("p_url" "text", "p_user" "uuid") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   select case when p like (p_user::text || '/%') then p end
   from (select split_part(split_part(coalesce(p_url, ''), '/user-logos/', 2), '?', 1) as p) x
@@ -2707,6 +2709,7 @@ END; $$;
 
 CREATE FUNCTION "public"."_norm_email"("p" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   select nullif(lower(btrim(p)), '');
 $$;
@@ -3163,6 +3166,7 @@ end $$;
 
 CREATE FUNCTION "public"."_poll_points_close_unchecked"("p_game_id" "uuid", "p_key" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   g record;
@@ -3245,6 +3249,7 @@ END $$;
 
 CREATE FUNCTION "public"."_poll_share"("p_votes" bigint, "p_n" bigint) RETURNS integer
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT CASE WHEN coalesce(p_votes, 0) <= 0 OR coalesce(p_n, 0) <= 0 THEN 0
               ELSE greatest(1, ((100 * p_votes) / p_n)::int) END
@@ -3485,6 +3490,7 @@ END; $$;
 
 CREATE FUNCTION "public"."_poll_text_close_unchecked"("p_game_id" "uuid", "p_key" "text", "p_payload" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $_$
 declare
   g record;
@@ -3772,6 +3778,7 @@ $$;
 
 CREATE FUNCTION "public"."_qb_tag_key"("p_name" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT lower(translate(coalesce(p_name, ''), 'ĄĆĘŁŃÓŚŹŻąćęłńóśźż', 'ACELNOSZZacelnoszz'));
 $$;
@@ -4251,6 +4258,7 @@ END $$;
 
 CREATE FUNCTION "public"."_resource_clone_send_allowed"("p_kind" "text", "p_action" "text", "p_snapshot" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   IF p_kind = 'game' AND p_action = 'send'
@@ -4620,6 +4628,7 @@ $$;
 
 CREATE FUNCTION "public"."_transfer_points"("p" "jsonb") RETURNS integer
     LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $_$
 DECLARE v numeric;
 BEGIN
@@ -5444,6 +5453,7 @@ END; $$;
 
 CREATE FUNCTION "public"."bases_count_incoming_share_invites"() RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_cnt integer;
@@ -5554,6 +5564,7 @@ CREATE TABLE "public"."marketing_raw_contacts" (
 
 CREATE FUNCTION "public"."claim_next_pending_lead"() RETURNS SETOF "public"."marketing_raw_contacts"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE
   target_id uuid;
@@ -6768,6 +6779,7 @@ $$;
 
 CREATE FUNCTION "public"."cooldown_get"("p_action_keys" "text"[]) RETURNS TABLE("action_key" "text", "next_allowed_at" timestamp with time zone)
     LANGUAGE "sql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT uc.action_key, uc.next_allowed_at
   FROM public.user_cooldowns uc
@@ -6782,6 +6794,7 @@ $$;
 
 CREATE FUNCTION "public"."cooldown_release"("p_action_key" "text", "p_max_age_seconds" integer DEFAULT 60) RETURNS boolean
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE
   uid uuid;
@@ -6809,6 +6822,7 @@ $$;
 
 CREATE FUNCTION "public"."cooldown_reserve"("p_action_key" "text", "p_cooldown_seconds" integer) RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE
   uid uuid;
@@ -6879,6 +6893,7 @@ $$;
 
 CREATE FUNCTION "public"."decrement_provider_immediate"("p_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
     UPDATE public.email_providers
@@ -6894,6 +6909,7 @@ $$;
 
 CREATE FUNCTION "public"."decrement_provider_worker"("p_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
     UPDATE public.email_providers
@@ -7697,6 +7713,7 @@ END; $$;
 
 CREATE FUNCTION "public"."edit_lock_absent_grace"() RETURNS interval
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$ select interval '25 seconds' $$;
 
 
@@ -7750,6 +7767,7 @@ $$;
 
 CREATE FUNCTION "public"."edit_lock_ttl"() RETURNS interval
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$ select interval '120 seconds' $$;
 
 
@@ -7826,6 +7844,7 @@ $$;
 
 CREATE FUNCTION "public"."email_intents_set_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   new.updated_at = now();
@@ -7983,6 +8002,7 @@ $$;
 
 CREATE FUNCTION "public"."fam_answer_clean"("p" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT btrim(left(btrim(regexp_replace(coalesce(string_agg(ch, '' ORDER BY i), ''),
            '[\t\n\v\f\r    -     　﻿]+', ' ', 'g'), ' '), 17), ' ')
@@ -7998,6 +8018,7 @@ $$;
 
 CREATE FUNCTION "public"."fam_answer_invalid_chars"("p" "text") RETURNS "text"[]
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT coalesce(array_agg(ch ORDER BY pos), '{}'::text[])
   FROM (
@@ -8016,6 +8037,7 @@ $$;
 
 CREATE FUNCTION "public"."fam_display_glyph_chars"() RETURNS "text"
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $_$ SELECT '╱╲▀▁▂▃▄▅▇▊▋▍▏▐▔▕▖▗▘▙▚▛▜▝▞▟■□▢▣⌜⌝⌞⌟◢◣◤◥Ѵ█░▒ЀЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯҐ0123456789ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞĀĂĄĆĈĊČĎĐĒĔĖĘĚĜĞĠĢĤĦĨĪĬĮİĲĴĶĹĻĽĿŁŃŅŇŊŌŎŐŒŔŖŘŚŜŞŠŢŤŦŨŪŬŮŰŲŴŶŸŹŻŽƑ+=×÷∗∘∙√∛∜∫<>∣∤∥∦∧∨∩∪≤≥⊂⊃⊄⊅¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞⅟↉↊↋₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎²³¹⁰ⁱ⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ#%&*@^`|~¡¦§¨©ª¬®¯°±´¶·¸º¿ˆˇˊˋ˘˙˚˛˜‑‖‗†‡•‣‰‱‼‽⁇⁈⁉⁋⁘⁙⁚⁛⁜⁝⁞ℂℍℕ№ℙℚℝ™ℤ℮⍰⎴⎵�￾ẞ()[]{}〈〉-_‐‒–—―−"''«»‘’‚‛“”„‟‹›!,.:;?․‥…‧/\⁄∕∖ ←↑→↓⇖⇗⇘⇙$¢£¤¥€₴✓✗⧗'::text $_$;
 
 
@@ -8025,6 +8047,7 @@ CREATE FUNCTION "public"."fam_display_glyph_chars"() RETURNS "text"
 
 CREATE FUNCTION "public"."fam_display_has_glyph"("p_ch" "text") RETURNS boolean
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT char_length(n) = 1
      AND (strpos(public.fam_display_glyph_chars(), n) > 0
@@ -8953,6 +8976,7 @@ END $$;
 
 CREATE FUNCTION "public"."game_state_set_lock"("p_game_id" "uuid", "p_expected_rev" bigint, "p_lock_ms" integer) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -8994,6 +9018,7 @@ COMMENT ON FUNCTION "public"."game_state_set_lock"("p_game_id" "uuid", "p_expect
 
 CREATE FUNCTION "public"."game_state_set_sound_muted"("p_game_id" "uuid", "p_muted" boolean) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -9032,6 +9057,7 @@ COMMENT ON FUNCTION "public"."game_state_set_sound_muted"("p_game_id" "uuid", "p
 
 CREATE FUNCTION "public"."game_state_set_ui_lang"("p_game_id" "uuid", "p_ui_lang" "text") RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -9074,6 +9100,7 @@ COMMENT ON FUNCTION "public"."game_state_set_ui_lang"("p_game_id" "uuid", "p_ui_
 
 CREATE FUNCTION "public"."game_state_write"("p_game_id" "uuid", "p_step" "public"."game_step", "p_top_card" "public"."game_top_card", "p_phase" "public"."game_round_phase" DEFAULT NULL::"public"."game_round_phase", "p_control_team" "public"."game_team" DEFAULT NULL::"public"."game_team", "p_detail" "jsonb" DEFAULT NULL::"jsonb", "p_sound_cue_key" "text" DEFAULT NULL::"text", "p_expected_rev" bigint DEFAULT NULL::bigint) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -9146,6 +9173,7 @@ $$;
 
 CREATE FUNCTION "public"."game_state_write"("p_game_id" "uuid", "p_step" "public"."game_step", "p_top_card" "public"."game_top_card", "p_phase" "public"."game_round_phase" DEFAULT NULL::"public"."game_round_phase", "p_control_team" "public"."game_team" DEFAULT NULL::"public"."game_team", "p_detail" "jsonb" DEFAULT NULL::"jsonb", "p_sound_cue_key" "text" DEFAULT NULL::"text", "p_expected_rev" bigint DEFAULT NULL::bigint, "p_lock_ms" integer DEFAULT NULL::integer) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -9271,6 +9299,7 @@ $$;
 
 CREATE FUNCTION "public"."games_fill_share_keys"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   new.share_key_poll    := coalesce(new.share_key_poll,    public.gen_share_key(18));
@@ -9338,6 +9367,7 @@ $$;
 
 CREATE FUNCTION "public"."gen_connect_code"() RETURNS "text"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE
   v_code   text;
@@ -9363,6 +9393,7 @@ $$;
 
 CREATE FUNCTION "public"."gen_contact_ticket_number"() RETURNS "text"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_year text;
@@ -9381,6 +9412,7 @@ $$;
 
 CREATE FUNCTION "public"."gen_random_bytes"("n" integer) RETURNS "bytea"
     LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT extensions.gen_random_bytes(n);
 $$;
@@ -9933,6 +9965,7 @@ $$;
 
 CREATE FUNCTION "public"."get_available_ai_providers"() RETURNS TABLE("name" "text", "label" "text", "cooldown_remains" integer)
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   RETURN QUERY 
@@ -10059,6 +10092,7 @@ $$;
 
 CREATE FUNCTION "public"."get_message"("p_id" "uuid") RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "report_subject" "text", "queue_id" "uuid", "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   RETURN QUERY
@@ -10118,6 +10152,7 @@ END $$;
 
 CREATE FUNCTION "public"."get_poll_game"("p_game_id" "uuid", "p_key" "text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   g public.games;
@@ -11472,6 +11507,7 @@ $$;
 
 CREATE FUNCTION "public"."is_base_owner"("p_base_id" "uuid") RETURNS boolean
     LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   select exists (
     select 1 from public.question_bases b
@@ -11594,6 +11630,7 @@ $$;
 
 CREATE FUNCTION "public"."list_base_shares"("p_base_id" "uuid") RETURNS TABLE("user_id" "uuid", "email" "text", "role" "public"."base_share_role")
     LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   select s.user_id, p.email, s.role
   from public.question_base_shares s
@@ -11609,6 +11646,7 @@ $$;
 
 CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "is_read" boolean, "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   -- Inbox: przychodzące, nie w koszu
@@ -11733,6 +11771,7 @@ $$;
 
 CREATE FUNCTION "public"."list_shared_bases_ext"() RETURNS TABLE("id" "uuid", "name" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "shared_role" "public"."base_share_role", "proposed" boolean, "task_id" "uuid", "task_status" "text", "proposed_role" "public"."base_share_role")
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   perform public.base_share_tasks_cleanup();
@@ -12848,6 +12887,7 @@ END $$;
 
 CREATE FUNCTION "public"."mark_message_read"("p_message_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   UPDATE public.messages
@@ -13343,6 +13383,7 @@ $$;
 
 CREATE FUNCTION "public"."market_games_build_questions_text"("p_payload" "jsonb") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT COALESCE((
     SELECT string_agg(btrim(q.value->>'text'), E'\n' ORDER BY q.ordinality)
@@ -13357,6 +13398,7 @@ $$;
 
 CREATE FUNCTION "public"."market_games_compute_fingerprint"("p_questions_text" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT md5(
     regexp_replace(
@@ -13375,6 +13417,7 @@ $$;
 
 CREATE FUNCTION "public"."market_games_set_questions_fields"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE
   v_qtext text;
@@ -14369,6 +14412,7 @@ $$;
 
 CREATE FUNCTION "public"."poll_points_vote_batch"("p_game_id" "uuid", "p_key" "text", "p_voter_token" "text", "p_items" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   it jsonb;
@@ -14907,6 +14951,7 @@ $$;
 
 CREATE FUNCTION "public"."poll_task_voter_token"("p_task_id" "uuid") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   SELECT 'task:' || p_task_id::text
 $$;
@@ -14918,6 +14963,7 @@ $$;
 
 CREATE FUNCTION "public"."poll_tasks_touch_status_ts"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   if tg_op = 'UPDATE' and new.status is distinct from old.status then
@@ -14983,6 +15029,7 @@ $$;
 
 CREATE FUNCTION "public"."poll_text_submit_batch"("p_game_id" "uuid", "p_key" "text", "p_voter_token" "text", "p_items" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   it jsonb;
@@ -15159,6 +15206,7 @@ END $$;
 
 CREATE FUNCTION "public"."poll_vote_game"("p_game_id" "uuid", "p_key" "text", "p_question_id" "uuid", "p_answer_id" "uuid", "p_voter_token" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   g public.games;
@@ -16603,6 +16651,7 @@ $$;
 
 CREATE FUNCTION "public"."reset_email_limits"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
     UPDATE "public"."email_providers"
@@ -17125,6 +17174,7 @@ $$;
 
 CREATE FUNCTION "public"."set_ai_provider_cooldown"("p_name" "text", "p_seconds" integer, "p_error" "text" DEFAULT NULL::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   UPDATE "public"."marketing_ai_providers"
@@ -17176,6 +17226,7 @@ END $$;
 
 CREATE FUNCTION "public"."set_poll_qr_lang"("p_game_id" "uuid", "p_lang" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_owner uuid;
@@ -17225,6 +17276,7 @@ $$;
 
 CREATE FUNCTION "public"."set_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   new.updated_at = now();
@@ -17589,6 +17641,7 @@ END $$;
 
 CREATE FUNCTION "public"."sync_market_game_rating_stats"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 DECLARE v_id uuid;
 BEGIN
@@ -17646,6 +17699,7 @@ END $$;
 
 CREATE FUNCTION "public"."touch_game_updated_at"("p_game_id" "uuid") RETURNS "void"
     LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
   update public.games
   set updated_at = now()
@@ -17659,6 +17713,7 @@ $$;
 
 CREATE FUNCTION "public"."touch_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   new.updated_at = now();
@@ -17672,6 +17727,7 @@ end $$;
 
 CREATE FUNCTION "public"."touch_user_flags_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
   new.updated_at = now();
@@ -17869,6 +17925,7 @@ $$;
 
 CREATE FUNCTION "public"."trg_touch_game_from_answers"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_qid uuid;
@@ -17898,6 +17955,7 @@ $$;
 
 CREATE FUNCTION "public"."trg_touch_game_from_questions"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 declare
   v_game_id uuid;
@@ -17917,6 +17975,7 @@ $$;
 
 CREATE FUNCTION "public"."trg_touch_market_games_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 begin
     new.updated_at = now();
@@ -18046,6 +18105,7 @@ $$;
 
 CREATE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -24667,5 +24727,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Qj7ZFPqafFaYArI170PBrkjQg5m6slPbAF33Ad9jLtliAhwEoTdEUQezPfNAlMM
+\unrestrict 5nNuOmqwFKJxeYQD3cl28v6CWEd8OhYn90QJigtDDifBMnSdNiB0UpRyO5GbdT0
 
