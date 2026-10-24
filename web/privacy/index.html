@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link rel="preconnect" href="https://supabase.familiada.online">
-  <title data-i18n="privacy.title">Familiada Online — polityka prywatności</title>
+  <title>Familiada Online — polityka prywatności</title>
   <meta name="description" content="Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem." data-i18n-content="privacy.description">
   <link rel="canonical" href="https://www.familiada.online/privacy">
   <link rel="alternate" hreflang="pl" href="https://www.familiada.online/privacy" />
@@ -29,8 +29,8 @@
   <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T23180"/>
   <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T23180"/>
   <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-24T23180" />
+  <noscript><link rel="stylesheet" href="/manual/css/no-script.css?v=public-seo"></noscript>
   <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T23180"></script>
-  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T23180" defer></script>
   <script type="module" src="/privacy/js/privacy.js?v=v2026-10-24T23180" defer></script>
@@ -39,11 +39,11 @@
 
 </head>
 
-<body class="manual-body skel-body">
+<body class="manual-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+      <a class="btn" id="btnBack" href="/" data-i18n="common.back" data-i18n-icon="arrow-left">Wstecz</a>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
@@ -55,7 +55,7 @@
     </div>
   </header>
 
-  <main class="wrap" data-skel-step>
+  <main class="wrap skel-step-ready" data-skel-step>
     <h1 class="page-title" data-i18n="privacy.pageTitle">Familiada Online — Polityka Prywatności</h1>
 
     <section class="m-doc" data-i18n-html="privacy.content">

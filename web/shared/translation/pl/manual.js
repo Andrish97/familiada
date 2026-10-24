@@ -2,6 +2,7 @@
 const pl = {
   manual: {
     title: "Familiada — wskazówki",
+    chapterTitle: "{title} — Wskazówki Familiada Online",
     legal: "Polityka prywatności",
     pageTitle: "Wskazówki dla użytkownika",
     toc: "Spis treści",

@@ -30,7 +30,8 @@ export async function serveNotFoundPage(request, originBase, originHost, resolve
     status: 404,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store"
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex, follow"
     }
   });
 
@@ -113,6 +114,9 @@ export function pageIndexPath(pathname) {
 
 export async function fetchWith404(request, originBase, originHost, resolveOverride) {
   const url = new URL(request.url);
+  if (url.pathname === "/404.html") {
+    return serveNotFoundPage(request, originBase, originHost, resolveOverride);
+  }
   const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
   if (res.status >= 300 && res.status < 400) return res;
   if (res.status !== 404) {
@@ -124,6 +128,8 @@ export async function fetchWith404(request, originBase, originHost, resolveOverr
         headers: {
           "Content-Type": ct,
           "Cache-Control": "no-store",
+          ...(["/maintenance", "/maintenance/", "/maintenance/index.html"].includes(url.pathname)
+            ? { "X-Robots-Tag": "noindex, follow" } : {}),
           "X-GitHub-Request-Id": res.headers.get("X-GitHub-Request-Id") || ""
         }
       });

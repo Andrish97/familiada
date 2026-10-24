@@ -92,6 +92,8 @@ function wireBack(id, user, opts, d) {
   }
   if (opts.backLabel !== false) renderBackLabel(btn, id, ctx);
   btn.addEventListener("click", async (ev) => {
+    if (btn.tagName === "A" && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button > 0)) return;
+    ev.preventDefault?.();
     if (d.handleSheetBack()) return;
     const href = backHref(id, ctx());
     if (opts.onBack) { await opts.onBack(href, ev); return; }
@@ -102,9 +104,12 @@ function wireBack(id, user, opts, d) {
 function wireManual(id, user, opts) {
   const btn = elementOf(opts.manual, "btnManual");
   if (!btn) return;
-  // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
+  // Publiczne Wskazówki pozostają dostępne także bez konta.
   if (!user && PAGES.manual.access !== "public") { btn.hidden = true; return; }
+  if (btn.tagName === "A") btn.setAttribute("href", manualHref(id));
   btn.addEventListener("click", async (ev) => {
+    if (btn.tagName === "A" && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button > 0)) return;
+    ev.preventDefault?.();
     const href = manualHref(id);
     if (opts.onManual) { await opts.onManual(href, ev); return; }
     location.href = href;

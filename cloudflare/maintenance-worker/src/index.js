@@ -41,6 +41,7 @@ import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } f
 import { tvRedirect } from "./lib/origin/tv.js";
 import { withSecurityHeaders, httpsRedirect } from "./lib/core/security-headers.js";
 import { localizeHome } from "./lib/ssr/home.js";
+import { localizePublicPage, invalidManualChapter } from "./lib/ssr/public-pages.js";
 import { AUTH_ROUTES } from "./lib/auth/auth-api.js";
 
 export default {
@@ -64,7 +65,7 @@ export default {
     // Nagłówki bezpieczeństwa dla stron HTML (audyt E24, N3).
     const redirect = httpsRedirect(request);
     const response = redirect || await handleFetch(request, env, ctx);
-    return withSecurityHeaders(request, localizeHome(request, response));
+    return withSecurityHeaders(request, localizePublicPage(request, localizeHome(request, response)));
   }
 };
 
@@ -211,6 +212,10 @@ async function handleFetch(request, env, ctx) {
     return serveStaticAsset(request, url, ctx, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
   }
 
+  if (["GET", "HEAD"].includes(request.method) && invalidManualChapter(url)) {
+    return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+  }
+
   // E2E test bypass — tylko strona logowania, tylko z poprawnym jednorazowym
   // tokenem (patrz tests/README.md). Podmienia data-captcha-site-key na
   // oficjalny, zawsze-przechodzący testowy sitekey Turnstile — nic więcej.
@@ -306,8 +311,9 @@ async function handleFetch(request, env, ctx) {
   }
 
   // Dynamic sitemap — includes all published game URLs
-  if (request.method === "GET" && url.pathname === "/sitemap.xml") {
-    return serveDynamicSitemap(env, ctx);
+  if (["GET", "HEAD"].includes(request.method) && url.pathname === "/sitemap.xml") {
+    const response = await serveDynamicSitemap(env, ctx);
+    return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
   }
 
   // Boty zawsze dostają prawdziwą treść niezależnie od maintenance

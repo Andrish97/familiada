@@ -31,6 +31,8 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
   assert.equal(pageIdForPath("/logos/editor/draw"), "logoDraw");
   assert.equal(pageIdForPath("/logo/"), null);
   assert.equal(pageIdForPath("/mail/"), null);
+  assert.equal(pageIdForPath("/manual/index.html"), "manual");
+  assert.equal(pageIdForPath("/privacy/index.html"), "privacy");
 });
 
 test("każdy plik HTML ma wpis w mapie, a trasy standalone są jawnie opisane", () => {

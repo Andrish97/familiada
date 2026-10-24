@@ -1179,8 +1179,8 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 Podjęte (2026-10-07):
 - **Gość na `/`** → od razu `/games/` — konto gościa to prawie pełne konto.
-- **`/manual/`** — tylko z kontem/gościem. Publiczna jest tylko polityka
-  prywatności (oraz landing, login, Społeczność, podłączanie urządzenia).
+- **`/manual/`** — dawną decyzję o ograniczeniu do konta zastąpiła decyzja
+  2026-10-24: publiczne Wskazówki, także do indeksowania.
 - **Po zalogowaniu** zawsze `/games/`. Logowanie tylko na `/login/`.
   Wyjątek, który już działa: zaproszenie z maila do ankiety/subskrypcji.
 - **„Wstecz”** wraca przez wszystkie kroki, ale tylko po dozwolonej ścieżce
@@ -1398,3 +1398,21 @@ E19N, a wraz z nim cały etap E19, jest zamknięty produkcyjnie.
 (`?dialog=mySentOverlay`), parametr `?tab=mine` usunięty bez aliasu (zasada
 „bez fallbacków”); w mapie `marketplace` bez `tabs`, z oknem w `dialogs`.
 - **2026-10-22 — każdy kod QR ze zrzutów prowadzi do węża** (decyzja użytkownika: „wszystkie kody QR widoczne na zrzutach mają prowadzić do węża… żeby to było spójne”). Jedna reguła na początku `/go/` (`screenshotSnakeUrl` w `poll-links.js`): link z identyfikatorem demo `00000000-0000-4000-8000-…` w `id` — ankieta (`p=anon`), urządzenie (`d=host|buzzer|display`), QR na Wyświetlaczu (`d=qr`) — otwiera `/snake/?qr=<id>&lang=…` i liczy skan (`logSnake`). Wcześniej tylko ankiety; kod Prowadzącego dawał „nieprawidłowy link”.
+
+
+### 2026-10-24 — SEO publicznych dokumentów, tylko branch
+
+`/manual/` pozostaje publiczne. `ch` identyfikuje istniejący rozdział;
+nieznany (także pusty) daje 404. `from` i wspólny `ret` są kontekstem
+powrotu, nie wersją do indeksowania. Canonical: `/manual/`, opcjonalne
+`ch` i niepolski `lang`; kotwice `#s-…` bez zmian. Pełny spis, rozdziały,
+pager i link do spisu działają bez JS. W JS nadal replaceState, wyszukiwanie,
+karuzele i kontekstowy powrót. Prywatność zachowuje adresy, canonical bez
+końcowego slash i z językiem; `/manual/index.html` i `/privacy/index.html`
+rozpoznawane przez pageIdForPath. Bez nowych publicznych tras.
+
+`/404.html` daje 404/noindex także bezpośrednio; nieistniejący rozdział
+korzysta z tego samego dokumentu. Samodzielne `/maintenance/` jest noindex;
+bramka awarii nadal 503/Retry-After. Link katalog → Wskazówki jest kotwicą
+HTML z zachowaniem nawigacji mapy przy JS i zwykłego nowego okna.
+Katalog i okienka gier nie są przebudowywane. Kod nie jest na produkcji.

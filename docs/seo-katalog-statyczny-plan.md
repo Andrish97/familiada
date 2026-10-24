@@ -1,10 +1,18 @@
 # Statyczny katalog, gry i publiczne Wskazówki — propozycja
 
-Status: plan do oceny, bez wdrożenia tej przebudowy. Stan kodu sprawdzony
+Status: katalog nadal jest propozycją. Pozostałe poprawki w realizacji na branchu `codex/public-pages-seo`, bez wdrożenia na main. Stan kodu sprawdzony
 na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
 i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
 ## 1. Zakres i ustalenia użytkownika
+
+- 2026-10-24: wykonać na branchu wszystkie pozostałe poprawki, bez nowego
+  katalogu Gier Społeczności i bez publikacji na produkcji. Wskazówki i
+  prywatność otrzymują pełny HTML przez Worker, z gotowej treści Markdown
+  i słowników dołączonych do kodu, bez bazy ani nowej infrastruktury.
+- Przyszły katalog ma zachować okienko gry: bezpośredni URL dostarcza HTML
+  obecnego interfejsu z otwartym, wypełnionym okienkiem; nie narzuca osobnego
+  wyglądu całej strony. Ten etap nie zmienia katalogu ani podglądu gier.
 
 - Rozważyć statyczny katalog Gier Społeczności i poprawki pozostałych
   publicznych stron wskazanych w audycie.
@@ -198,3 +206,44 @@ Wymagane punktowe sprawdzenia:
 - Wszystkie dotknięte trasy i parametry w PAGES/pageIdForPath i dokumentacji.
 - Jedne szablony publiczne dla generatora i UI, PL/EN/UK, zrzuty telefonu
   i komputera, bramka brancha oraz kontrola po wdrożeniu.
+
+
+## 10. Paczka bez katalogu — branch `codex/public-pages-seo`
+
+Decyzja 2026-10-24: przygotować poprawki na branchu, bez publikowania main.
+
+Wykonanie Wskazówek nie wymaga magazynu odcisków: istniejący generator
+Markdown zapisuje gotowy HTML treści i opis rozdziału w modułach PL/EN/UK.
+Worker dołącza te moduły przy budowaniu i wstawia treść do szablonu Pages.
+Nie odpytuje bazy, sesji ani API podczas renderowania. Wspólny renderer
+jest używany również przy przełączaniu rozdziałów w przeglądarce, więc
+nie ma oddzielnej kopii układu dla SEO. To pełny HTML na brzegu sieci,
+nie nowy proces publikowania plików i nie statyczny katalog gier z §5.
+
+- Wszystkie 20 rozdziałów oraz spis treści w trzech językach: pełny HTML,
+  index/follow, własny tytuł/opis, canonical tylko `ch` i `lang`, hreflang,
+  HTML spisu i pagera. Link „Spis treści” w nagłówku rozdziału działa bez JS.
+- Prywatność: obecne słowniki PL/EN/UK w HTML, canonical/hreflang/OG zgodne
+  z językiem; treść polityki nie jest zmieniana w tej paczce.
+- Czytelność treści nie czeka na auth ani JS. Dodatkowy arkusz `noscript`
+  porządkuje pasek nawigacji bez JS; obecne działające linki są zachowane.
+- Metadane zmieniają się również po przejściu w JS i zmianie języka.
+  `from`, `ret`, filtry i kotwice nie tworzą indeksowanych kopii.
+- Nieznany rozdział i bezpośredni `/404.html`: HTTP 404 i noindex.
+  Samodzielna strona przerwy: noindex; rzeczywista bramka nadal 503/Retry-After.
+- Sitemap: 63 adresy Wskazówek i brakujące wersje EN/UK prywatności;
+  GET i HEAD zgodne. Istniejące wpisy i renderer gier pozostają bez przebudowy.
+- Link do Wskazówek z katalogu jest zwykłym `<a>`; stronę główną już łączą
+  linki HTML z Wskazówkami i katalogiem. Nie dodajemy sekcji wybranych gier,
+  bo wymagałaby jeszcze niezrealizowanego publicznego spisu.
+- Aktualizacja PAGES, obsługa dokumentów index.html, zachowanie kliknięcia
+  linków w nowym oknie i zamykania arkuszy; prywatne strony zachowują noindex.
+- Brak zmian bazy, R2, serwera, CSP strefy i mechanizmu publikacji gier.
+
+Lokalnie: 9/9 testów na rzeczywistym silniku Workera (każdy rozdział i oba
+UA, błędy, HEAD, sitemap, przerwa); 87/87 punktowych unitów aplikacji,
+61/61 dodatkowych sprawdzeń (część pokrywa się z poprzednimi); i18n bez
+nieużywanych kluczy, lint no-undef. Przeglądarka z wyłączonym API: 12
+przypadków PL/EN/UK z JS i bez, nawigacja bez JS oraz telefon bez poziomego
+przewijania. Zrzuty: 36 scen istniejącego interfejsu + 12 bez JS.
+Brak wdrożenia i brak kontroli produkcji tego kodu — zgodnie z poleceniem.

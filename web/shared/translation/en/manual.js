@@ -2,6 +2,7 @@
 const en = {
   manual: {
     title: "Familiada — help",
+    chapterTitle: "{title} — Familiada Online help",
     legal: "Privacy Policy",
     pageTitle: "Help for users",
     toc: "Contents",

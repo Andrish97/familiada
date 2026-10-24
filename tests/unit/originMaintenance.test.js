@@ -36,7 +36,7 @@ test('Worker serves the explicitly requested Polish page without a language redi
  const {setStateCache}=await import('../../cloudflare/maintenance-worker/src/lib/core/state.js');
  setStateCache({enabled:false,mode:'off'});
  const original=globalThis.fetch;let target;
- globalThis.fetch=async url=>{target=url;return new Response('Polski',{headers:{'Content-Type':'text/html'}});};
+ globalThis.fetch=async url=>{target=url;return new Response('Polski',{headers:{'Content-Type':'text/plain'}});};
  try {
   const response=await worker.fetch(new Request('https://www.familiada.online/manual/?lang=pl'),{MAINT_KV:{get:async()=>null}},{});
   assert.equal(response.status,200);

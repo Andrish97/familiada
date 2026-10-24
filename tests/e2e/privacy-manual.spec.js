@@ -25,6 +25,27 @@ test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async
     await expect(page.locator("h1")).toContainText(item.heading);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", new RegExp(item.description, "i"));
     await expect(page.locator(".m-doc h2")).toHaveCount(9);
+    const canonical = `${ORIGIN}/privacy${item.lang === "pl" ? "" : `?lang=${item.lang}`}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+  }
+});
+
+test("manual: publiczny rozdział i metadane działają anonimowo w PL/EN/UK", async ({ page }) => {
+  for (const lang of ["pl", "en", "uk"]) {
+    await page.goto(`${ORIGIN}/manual/?ch=6&lang=${lang}&from=9&ret=%2Fgames%2F`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".m-doc .m-h2").first()).toBeVisible();
+    const canonical = `${ORIGIN}/manual/?ch=6${lang === "pl" ? "" : `&lang=${lang}`}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+    const heading = await page.locator("#manualArticle h1").innerText();
+    await expect(page).toHaveTitle(new RegExp(heading));
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
+    await page.locator('.m-pager-link.next').click();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical.replace('ch=6', 'ch=7'));
+    await page.locator('#manualArticle a[data-ch=""]').click();
+    await expect(page.locator('.m-parts')).toBeVisible();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/manual/${lang === "pl" ? "" : `?lang=${lang}`}`);
   }
 });
 
