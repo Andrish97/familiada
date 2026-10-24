@@ -380,13 +380,13 @@ export function createUI({ root, emit }) {
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
       // Przewija się lista kart urządzeń wraz z kartą trybu testowego.
-      // Krótka podpowiedź jest zwykłym tekstem na dole, pod listą.
+      // Krótka podpowiedź pod listą: zwykła .hint jak w kartach urządzeń.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
         h("div", { class: "c2-roundlayout-main" }, [
           h("div", { class: "c2-scroll-area" }, [h("div", { class: "c2-devicerows" }, rows)]),
         ]),
         h("div", { class: `c2-roundlayout-divider${state.settings.testMode ? " test-mode-reserved" : ""}` }),
-        h("div", { class: `c2-roundlayout-side${state.settings.testMode ? " test-mode-reserved" : ""}` }, [hintBlock(t("control.deviceCodeHint"))]),
+        h("div", { class: `c2-roundlayout-side${state.settings.testMode ? " test-mode-reserved" : ""}` }, [h("p", { class: "hint", text: t("control.deviceCodeHint") })]),
       ]),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));

@@ -809,7 +809,7 @@
   .c2-devicerows .conn-status { padding:.35em .75em .35em .6em; border-radius: var(--r-pill); gap:.45em; border-color:transparent; }
   .c2-devicerows .conn-status::before { content:""; width:.55em; height:.55em; border-radius:50%; background:currentColor; box-shadow:0 0 .5em currentColor; }
   .c2-devicerows .choice-label { font-size:calc(var(--c2-fs) * .88); }
-  .c2-devicerows .hint { font-size:calc(var(--c2-fs) * .76); }
+  .c2-devicerows .hint, .c2-devices-layout .c2-roundlayout-side > .hint { font-size:calc(var(--c2-fs) * .76); }
   /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
      letter-spacing zawija się/wychodzi poza kartę w węższej, 2-kolumnowej
      siatce (zgłoszone razem z resztą czcionek na tym kroku). */

@@ -364,6 +364,7 @@ wewnątrz tabeli listy Eksploratora).
 - **Control → Urządzenia — podpowiedź pod siatką (E23, 2026-10-23):**
   „Wejdź na familiada.online…” stoi dużą czcionką nad stopką kroku, z pustym
   pasem nad nią na komputerze. Do ustawienia bliżej siatki albo jako `.hint`.
+  **Zrobione (2026-10-24):** zwykła `.hint` w rozmiarze podpowiedzi kart urządzeń.
 - **Ankieta — topbar bez „Więcej” (zgłoszone 2026-10-23, zrzut ~1200 px):**
   na stronie ankiety (`/polls/`) przyciski Znajomi/Subskrybenci zawijają się
   w dwie linie pod tytułem zamiast zwinąć do „Więcej”. Przyczyna: „Więcej”
@@ -376,7 +377,7 @@ wewnątrz tabeli listy Eksploratora).
 
 - **Scena `play-buzzer-on` (2026-10-23):** runner zrzutów zgłasza „NIEGOTOWA” także
   na czystym `main` (nie po E23) — naprawić scenę/atrapę przy najbliższej pracy
-  przy Przycisku.
+  przy Przycisku. **2026-10-24:** scena przechodzi (telefon poziomo i tablet).
 - **Ekran blokady (`blocking-overlay.css`)**: wygląd karty i przycisków zrównany
   z `.card`/`.btn`/`.btn.gold` (2026-10-23); klasy zostają, bo plik ładuje też
   Wyświetlacz bez silnika. Wspólny moduł `core/blocking-screen.js` — **zrobione
