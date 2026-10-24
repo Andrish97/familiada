@@ -196,7 +196,7 @@ Różnice względem listy (dodane przy wykonaniu):
 Migracje: 473 (A, B5–B8), 474 (B1), 475 (B2), 476 (B3 + oznaczanie
 zgłoszeń usuniętego konta: kolumna `reports.author_account_deleted_at`,
 `list_reports` z tym polem, uprawnienia jak w 443), 477 (B4). Panel admina
-(`web/settings/js/settings.js`): plakietka „konto usunięte” na liście
+(`web/admin/js/admin.js`): plakietka „konto usunięte” na liście
 zgłoszeń; zrzut `admin-reports-deleted-author` (komputer i telefon). Testy lokalne: `tests/sql/e26-cleanup-473-477.sql`
 (przeniesienie 2 zgłoszeń / 5 wiadomości, kolizja numeru, zapis stanu gry,
 tasks_list, usunięcie konta zostawia zgłoszenie z oznaczeniem) i `tests/sql/e26-b7-cron-473.sql` — OK.

@@ -8,7 +8,7 @@ przeszedł E20, wybrany test jednostkowy `progressiveLoading.test.js` oraz
 walidację artefaktu. Galeria zawiera 270 zrzutów PNG dla 32 stron w sześciu
 profilach urządzeń i okien; 109 zrzutów to modale otwarte kliknięciem akcji UI.
 Artefakt `e20-gallery-1044` ma 22 782 528 bajtów i jest dostępny przez stronę
-workflow. Panel admina `/settings/` jest pominięty, a `/games/settings/`
+workflow. Panel admina `/admin/` jest pominięty, a `/games/settings/`
 pozostaje w zakresie.
 
 Na stronie Ankiet treść nie osiągnęła stanu stabilnego na MacBooku, obu profilach
@@ -28,7 +28,7 @@ pomijane, nie są usuwane.
 
 Widoczne modale są otwierane kliknięciem rzeczywistych akcji interfejsu.
 Nie zmieniamy DOM, wartości pól, pustych stanów ani odpowiedzi API, by
-wyprodukować kadr. Panel admina `/settings/` jest wyłączony; Ustawienia gry
+wyprodukować kadr. Panel admina `/admin/` jest wyłączony; Ustawienia gry
 `/games/settings/` zostają. Konserwacja i blokady korzystają z bieżącego
 stanu backendu.
 
@@ -36,7 +36,7 @@ Widoki urządzeń nadal korzystają z emulowanych wymiarów przeglądarki oraz
 ramek i safe area zapisanych w wymaganiach E20; treść i stan aplikacji nie
 są emulowane. Workflow `38874077525` zakończył się powodzeniem. Zweryfikował
 270 PNG na 32 stronach; 109 kadrów przedstawia modale otwarte przez UI. Panel
-admina `/settings/` nie wchodzi do galerii; Ustawienia gry są uwzględnione.
+admina `/admin/` nie wchodzi do galerii; Ustawienia gry są uwzględnione.
 Szczegóły i ograniczenia nowego przebiegu opisuje sekcja poniżej.
 
 Tabela kategorii i wspólnych cech stron jest ukończona i odhaczona w głównym
@@ -45,8 +45,8 @@ renderowanie stron i pierwsze poprawki layoutu.
 
 ## Zakres przebiegu
 
-- 37 widoków aplikacji (w tym trzy widoki panelu `/settings/`), poza
-  `/settings/tools/**`.
+- 37 widoków aplikacji (w tym trzy widoki panelu `/admin/`), poza
+  `/admin/tools/**`.
 - 7 profili: MacBook, iPad portrait, iPad landscape, iPhone portrait,
   iPhone landscape, wąskie okno desktopowe o rozmiarze telefonu oraz split
   view iPada.
@@ -71,7 +71,7 @@ udostępniona jako artefakt zawierający foldery stron i same pliki PNG.
 
 ## Sprawdzone poprawki
 
-- `/settings/` ma zbyt wiele pozycji, by zmieścić je w zwykłym topbarze na
+- `/admin/` ma zbyt wiele pozycji, by zmieścić je w zwykłym topbarze na
   laptopie i iPadzie. Przy szerokości do 1800 px korzysta z hamburgera;
   panel nawigacji przewija się niezależnie, a przewijanie aktywnej treści
   ustawień pozostaje bez zmian.

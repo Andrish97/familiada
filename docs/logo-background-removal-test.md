@@ -12,7 +12,7 @@ wzorzyste i ciemne, białe detale, postrzępioną krawędź obiektu oraz obraz
 używany w demach. Obraz demo jest wczytywany z
 `web/logos/assets/demo-image.png` bez przenoszenia.
 Pliki pozostałych próbek SVG są w
-`web/settings/tools/logo-background-lab/samples/`; podczas budowania strony są
+`web/admin/tools/logo-background-lab/samples/`; podczas budowania strony są
 osadzane w scalonym HTML. Wzorzyste i ciemne obrazy
 powinny dostać ostrzeżenie, a biały detal powinien pozostać przy metodzie
 brzegowej.

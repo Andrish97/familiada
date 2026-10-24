@@ -1,8 +1,8 @@
 // admin/js/core.js — Wspólne dla paneli: elementy (els), API panelu (adminFetch/apiFetch), dymki, formatowanie, TinyMCE.
-// Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
+// Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19372";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T19372";
+import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19412";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T19412";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -13,7 +13,7 @@ if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
 export const API_BASE = "/_admin_api";
-export const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-24T19372";
+export const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-24T19412";
 
 export const POLL_MS = 15000;
 export const MINUTES_MIN = 10;
@@ -159,11 +159,11 @@ export const els = {
   maintenanceCustomCommentUk: document.getElementById("maintenanceCustomCommentUk"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
-  mailQueueEnabled: document.getElementById("mailQueueEnabled"),
   mailProviderOrderList: document.getElementById("mailProviderOrderList"),
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
   mailWorkerLimit: document.getElementById("mailWorkerLimit"),
+  mailQueueShare: document.getElementById("mailQueueShare"),
   mailCronPresetSelect: document.getElementById("mailCronPresetSelect"),
   mailCronHint: document.getElementById("mailCronHint"),
   mailCronActive: document.getElementById("mailCronActive"),

@@ -1,4 +1,4 @@
-/* css/settings.css */
+/* admin/css/admin.css */
 @layer page {
   html{
     height: 100%;
@@ -528,6 +528,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 10px;
+    align-items: start;
   }
 
   .provider-order-list{

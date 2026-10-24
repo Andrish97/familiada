@@ -63,12 +63,12 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
   return res;
 }
 
-// isMaintenanceAsset i isSettingsAsset sprawdzały dotąd (w oryginalnym,
+// isMaintenanceAsset i isAdminAsset sprawdzały dotąd (w oryginalnym,
 // jednoplikowym workerze) dokładnie tę samą listę prefiksów/plików, osobno
 // skopiowaną w dwóch miejscach -- scalone tu do jednej funkcji, teraz że
 // obie siedzą w tym samym module i duplikat jest od razu widoczny. Zero
 // zmiany zachowania: isMaintenanceAsset dalej dodatkowo przepuszcza samą
-// ścieżkę "/maintenance", isSettingsAsset zostaje bez zmian.
+// ścieżkę "/maintenance", isAdminAsset zostaje bez zmian.
 function isSharedAssetPath(pathname) {
   const allowedPrefixes = ["/shared/", "/assets/", "/maintenance/css/", "/maintenance/js/", "/404/css/", "/404/js/"];
   for (const prefix of allowedPrefixes) {
@@ -83,7 +83,7 @@ export function isMaintenanceAsset(pathname) {
   return isSharedAssetPath(pathname);
 }
 
-export function isSettingsAsset(pathname) {
+export function isAdminAsset(pathname) {
   return isSharedAssetPath(pathname)
     || ["/manifest-admin.webmanifest", "/admin/sw.js"].includes(pathname)
     || pathname.startsWith("/admin/icons/")

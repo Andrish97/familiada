@@ -588,6 +588,8 @@
      pierwszą. */
   .c2-hint { flex:none; display:flex; flex-direction:column; }
   .c2-hint-main { font-size:.98em; line-height:1.4; opacity:.85; }
+  /* Ostrzeżenie: Wyświetlacz w tle tej samej przeglądarki — nad treścią podpowiedzi. */
+  .c2-hint-warn { margin-bottom:10px; padding:8px 10px; border-radius:var(--r-sm); border:1px solid var(--warn-line); background:var(--warn-tint); color:var(--warn-text); font-size:.9em; line-height:1.35; font-weight:700; }
   .c2-final-hint { height:100%; min-height:0; box-sizing:border-box; }
   .c2-final-hint .c2-hint-main { font-size:.88em; line-height:1.3; }
   .c2-final-hint .c2-hint-shortcuts { margin-top:auto; padding-top:8px; gap:2px; flex:0 0 auto; }

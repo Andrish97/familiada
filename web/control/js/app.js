@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-24T19372";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-24T19412";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,22 +8,22 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T19372";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19372";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T19372";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19372";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19372";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T19372";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-24T19372";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-24T19372";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-24T19372";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T19372";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-24T19372";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-24T19372";
-import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-24T19372";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-24T19372";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-24T19412";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19412";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T19412";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T19412";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19412";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19412";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-24T19412";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-24T19412";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-24T19412";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-24T19412";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19412";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T19412";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-24T19412";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-24T19412";
+import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-24T19412";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-24T19412";
 
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
@@ -114,22 +114,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-24T19372";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-24T19372";
-import { createEngine } from "./engine.js?v=v2026-10-24T19372";
-import { createActionGate } from "./actionGate.js?v=v2026-10-24T19372";
-import { createDevices } from "./devices.js?v=v2026-10-24T19372";
-import { createPresence } from "./presence.js?v=v2026-10-24T19372";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-24T19372";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-24T19372";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-24T19372";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-24T19372";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-24T19372";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-24T19372";
-import { createUI } from "./ui.js?v=v2026-10-24T19372";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-24T19372";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T19372";
+import { createStore } from "./store.js?v=v2026-10-24T19412";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-24T19412";
+import { createEngine } from "./engine.js?v=v2026-10-24T19412";
+import { createActionGate } from "./actionGate.js?v=v2026-10-24T19412";
+import { createDevices } from "./devices.js?v=v2026-10-24T19412";
+import { createPresence } from "./presence.js?v=v2026-10-24T19412";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-24T19412";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-24T19412";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-24T19412";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-24T19412";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-24T19412";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-24T19412";
+import { createUI } from "./ui.js?v=v2026-10-24T19412";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-24T19412";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19412";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T19412";
 
 
 async function pickQuestionPool(state) {
@@ -523,6 +523,7 @@ async function main() {
           expected_ms: Math.round(item.expectedMs),
           actual_ms: Math.max(0, Math.round(item.completedAt - item.requestedAt)),
           ack_source: item.ackSource || null,
+          display_ack_ms: item.displayAckMs ?? null,
           display_visibility: lastDeviceDiagnostics?.display?.visibility || null,
         },
       });
@@ -542,6 +543,7 @@ async function main() {
         revision, sound: item.sound, expected_ms: Math.round(item.expectedMs),
         actual_ms: actualMs, extra_ms: Math.round(extraMs),
         ack_source: item.ackSource || null,
+        display_ack_ms: item.displayAckMs ?? null,
         completion_realtime_connected: completionRealtimeConnected,
         control_visibility: item.controlVisibility,
         control_focused: item.controlFocused,
@@ -598,7 +600,11 @@ async function main() {
         item.expectedMs = expectedMs;
         evaluateDisplayCompletion(row.rev, item);
         if (expectedMs != null && !item.reported) {
-          item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(row.rev, item), Math.max(0, expectedMs + 1500));
+          // Przed alarmem jeszcze jeden odczyt z bazy: zgubiony sygnał na
+          // żywo to nie spóźniony Wyświetlacz (eksport 24.10).
+          item.timeoutTimer = setTimeout(() => {
+            void refreshDisplayCompletion({ force: true }).finally(() => reportDisplayCompletionTimeout(row.rev, item));
+          }, Math.max(0, expectedMs + 1500));
         }
       });
       while (displayCompletionTimes.size > 40) displayCompletionTimes.delete(displayCompletionTimes.keys().next().value);
@@ -606,6 +612,14 @@ async function main() {
       lastDisplayCueSeq = row.sound_cue_seq;
     }
     if (row) previousDisplayRow = row;
+  }
+  // Wyświetlacz otwarty w tej samej przeglądarce i schowany (inna karta lub
+  // okno na wierzchu). Tryb testowy pokazuje go w ramce tej strony — pomijamy.
+  function displayHiddenSameBrowser() {
+    const display = lastDeviceDiagnostics?.display;
+    return !store.state.settings.testMode && presenceFlags.display === true
+      && display?.visibility === "hidden"
+      && compareBrowserContexts(browserContextId, display?.browserContextId) === "same_profile";
   }
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
@@ -674,8 +688,16 @@ async function main() {
   let completionReadPending = false;
   let completionRealtimeConnected = false;
   let completionReadIncident = null;
-  function applyDisplayCompletion(revision, source = "realtime") {
-    const renderedRev = Number(revision);
+  // Czas od żądania zmiany planszy do zapisu potwierdzenia przez
+  // Wyświetlacz, liczony zegarem serwera (483: requested_at/rendered_at).
+  // Odróżnia spóźniony Wyświetlacz od potwierdzenia zgubionego w drodze.
+  function displayAckMs(row, requestedRev) {
+    if (!row || Number(row.requested_rev) !== requestedRev) return null;
+    const ms = Date.parse(row.rendered_at || "") - Date.parse(row.requested_at || "");
+    return Number.isFinite(ms) && ms >= 0 ? Math.round(ms) : null;
+  }
+  function applyDisplayCompletion(row, source = "realtime") {
+    const renderedRev = Number(row?.rendered_rev);
     if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
     const completedAt = performance.now();
     for (const [requestedRev, item] of displayCompletionTimes) {
@@ -683,6 +705,7 @@ async function main() {
         item.completedAt = completedAt;
         if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
         item.ackSource = source;
+        item.displayAckMs = displayAckMs(row, requestedRev);
         evaluateDisplayCompletion(requestedRev, item);
       }
     }
@@ -691,16 +714,16 @@ async function main() {
     }
     renderCurrent();
   }
-  async function refreshDisplayCompletion() {
-    if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
+  async function refreshDisplayCompletion({ force = false } = {}) {
+    if (!completionUIReady || completionReadPending || (!force && !waitingForDisplay())) return;
     completionReadPending = true;
     try {
-      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
+      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev, requested_rev, rendered_at, requested_at").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
       if (error) {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data.rendered_rev, "fallback_read"); }
+      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data, "fallback_read"); }
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
@@ -724,7 +747,7 @@ async function main() {
     }
   }).on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
-  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"); });
+  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new, "realtime"); });
   completionChannel.subscribe((status) => {
     if (status === "SUBSCRIBED") { completionReadiness.joined(); return; }
     completionReadiness.reset();
@@ -740,7 +763,9 @@ async function main() {
     const nowMs = performance.now();
     for (const item of displayCompletionTimes.values()) {
       if (item.completedAt != null) continue;
-      if (nowMs - item.requestedAt > Math.max(3000, (item.expectedMs || 0) + 1000)) return true;
+      // Zgubione potwierdzenie na żywo kosztuje najwyżej ~0,3 s ponad czas
+      // animacji (wcześniej 1–1,5 s — eksport 24.10). Bez znanego czasu: 3 s.
+      if (nowMs - item.requestedAt > (item.expectedMs != null ? item.expectedMs + 300 : 3000)) return true;
     }
     return false;
   }
@@ -1177,7 +1202,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {

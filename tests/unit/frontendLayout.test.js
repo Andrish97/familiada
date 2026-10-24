@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pageIndexPath, fetchFromOrigin, isBlockedPath, isLockedSnake } from "../../cloudflare/maintenance-worker/src/lib/origin/origin.js";
-import { isStaticAssetPath, isSettingsAsset, isMaintenanceAsset } from "../../cloudflare/maintenance-worker/src/lib/origin/assets.js";
+import { isStaticAssetPath, isAdminAsset, isMaintenanceAsset } from "../../cloudflare/maintenance-worker/src/lib/origin/assets.js";
 
 const ROOT = fileURLToPath(new URL("../../web/", import.meta.url));
 function walk(dir, out = []) {
@@ -69,9 +69,9 @@ test("all page folders use index.html, and Worker fetches them without redirects
 });
 
 test("settings and maintenance allow their new assets; public settings stay blocked", () => {
-  for (const ref of ["/admin/js/settings.js", "/admin/data/tools.json", "/shared/translation/pl/common.js", "/shared/style/base.css", "/games/css/games.css"]) assert.equal(isSettingsAsset(ref), true, ref);
-  for (const ref of ["/admin/index.html", "/admin/js/settings.js", "/admin/tools/editor_5x7.html"]) assert.equal(isBlockedPath("www.familiada.online", ref), true, ref);
-  assert.equal(isStaticAssetPath("/admin/js/settings.js"), false);
+  for (const ref of ["/admin/js/admin.js", "/admin/data/tools.json", "/shared/translation/pl/common.js", "/shared/style/base.css", "/games/css/games.css"]) assert.equal(isAdminAsset(ref), true, ref);
+  for (const ref of ["/admin/index.html", "/admin/js/admin.js", "/admin/tools/editor_5x7.html"]) assert.equal(isBlockedPath("www.familiada.online", ref), true, ref);
+  assert.equal(isStaticAssetPath("/admin/js/admin.js"), false);
   assert.equal(isStaticAssetPath("/shared/js/core/auth.js"), true);
   assert.equal(isMaintenanceAsset("/maintenance/"), true);
   assert.equal(isMaintenanceAsset("/maintenance/js/maintenance.js"), true);

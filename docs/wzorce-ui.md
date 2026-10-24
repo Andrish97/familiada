@@ -447,7 +447,7 @@ elementu zostaje cała).
 - **Jeden kod:** `shared/js/core/scroll-fade.js` (klasy `.has-more-above` /
   `.has-more-below` na kontenerze) + reguła `.scroll-fade` w `base.css`.
   Moduł ładuje się na każdej stronie (`page-init.js`, `share-sections.js`,
-  panel admina `settings.js`) i sam podpina kontenery z rejestru
+  panel admina `admin.js`) i sam podpina kontenery z rejestru
   `SCROLL_FADE_SELECTOR` — także dorysowane później (okna, przerysowane listy).
 - **Nowa lista:** dopisz selektor do rejestru albo daj kontenerowi klasę
   `.scroll-fade` w znaczniku; strona może też wywołać `scrollFade(el)`.

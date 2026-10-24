@@ -21,7 +21,7 @@
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19412";
 
 
 const $ = (id) => document.getElementById(id);

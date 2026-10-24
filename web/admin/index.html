@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-24T19372"/>
+  <meta name="app-version" content="v2026-10-24T19412"/>
 
 
   <meta charset="UTF-8"/>
@@ -16,27 +16,27 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19372"/>
-  <link rel="apple-touch-icon" sizes="180x180" href="/admin/icons/admin-apple-touch-180.png?v=v2026-10-24T19372"/>
-  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-24T19372" crossorigin="use-credentials"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19412"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/admin/icons/admin-apple-touch-180.png?v=v2026-10-24T19412"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-24T19412" crossorigin="use-credentials"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19372" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19372"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19372"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19372"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19372"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19372"/>
-  <link rel="stylesheet" href="/admin/css/settings.css?v=v2026-10-24T19372"/>
-  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19372"></script>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19412" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19412"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19412"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19412"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19412"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19412"/>
+  <link rel="stylesheet" href="/admin/css/admin.css?v=v2026-10-24T19412"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19412"></script>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19372" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19372" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-24T19372" defer></script>
-  <script type="module" src="/admin/js/settings.js?v=v2026-10-24T19372" defer></script>
-  <script type="module" src="/admin/js/admin-pwa.js?v=v2026-10-24T19372" defer></script>
-  <script type="module" src="/admin/js/generator.js?v=v2026-10-24T19372" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19412" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19412" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-24T19412" defer></script>
+  <script type="module" src="/admin/js/admin.js?v=v2026-10-24T19412" defer></script>
+  <script type="module" src="/admin/js/admin-pwa.js?v=v2026-10-24T19412" defer></script>
+  <script type="module" src="/admin/js/generator.js?v=v2026-10-24T19412" defer></script>
 
 </head>
 <body class="settings-body settings-locked no-footer-line skel-body">
@@ -217,14 +217,6 @@
             <div class="panel-head">
               <div class="panel-title">Ustawienia wysyłki</div>
             </div>
-            <div class="field row">
-              <label class="toggle" for="mailQueueEnabled">
-                <input type="checkbox" id="mailQueueEnabled" checked/>
-                <span class="toggle-ui"></span>
-                <span class="toggle-label">Kolejkuj wysyłkę (send-mail -> mail_queue)</span>
-              </label>
-            </div>
-
             <div class="field">
               <span class="field-label">Kolejność providerów</span>
               <div class="provider-order-list" id="mailProviderOrderList"></div>
@@ -243,6 +235,11 @@
                 <label class="field-label" for="mailWorkerLimit">Ile maili na jedno uruchomienie workera</label>
                 <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
                 <div class="hint">To limit na jedno odpalenie (cron lub ręczne).</div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="mailQueueShare">Część dziennego limitu na kolejkę (%)</label>
+                <input id="mailQueueShare" type="number" min="50" max="95" step="5" value="80"/>
+                <div class="hint">Reszta to rezerwa na maile konta (potwierdzenie, hasło), które w razie potrzeby sięgają też do puli kolejki. Nowy podział działa od najbliższego nocnego odnowienia limitów.</div>
               </div>
             </div>
 

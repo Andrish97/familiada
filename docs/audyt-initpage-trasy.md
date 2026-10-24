@@ -34,7 +34,7 @@ uzasadnienia każdego wpisu samodzielnego.
 | Home, Login, Mails | Tak | Nie | Mają własne inicjalizatory. `PAGES` jest im potrzebne do linków, powrotów lub stanu URL. Home i Login mają własną obsługę sesji; Mails własny publiczny przepływ mailowy. |
 | Connect TV | Tak | Nie | Dedykowana bramka TV i osobny ekran parowania. |
 | Login confirm/reset, Go, głosowanie tekstowe/punktowe/QR, Display/Host/Buzzer, 404, Maintenance | Tak — standalone | Nie | Osobne publiczne, tokenowe, urządzeniowe albo serwisowe przepływy. Go nie jest celem `ret`, by powrót nie otwierał jednorazowego linku ponownie. |
-| Panel admina `/settings/` i narzędzia | Tak — standalone | Nie | Osobna autoryzacja/powłoka; poza zakresem galerii na polecenie użytkownika. |
+| Panel admina `/admin/` i narzędzia | Tak — standalone | Nie | Osobna autoryzacja/powłoka; poza zakresem galerii na polecenie użytkownika. |
 
 `mailCenter` jest wpisem w `PAGES` i jest wyłączony z powiadomień
 rating/guest-info w `initPage()`, ale `mail.js` nie wywołuje `initPage()`.

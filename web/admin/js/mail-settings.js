@@ -1,16 +1,18 @@
 // admin/js/mail-settings.js — Poczta: dostawcy, harmonogram, kolejka, dziennik, dostawcy AI.
-// Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
+// Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19372";
-import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19372";
-import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T19372";
-import { stopPolling } from "./maintenance.js?v=v2026-10-24T19372";
-import { closeTools } from "./tools.js?v=v2026-10-24T19372";
-import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19412";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19412";
+import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19412";
+import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T19412";
+import { stopPolling } from "./maintenance.js?v=v2026-10-24T19412";
+import { closeTools } from "./tools.js?v=v2026-10-24T19412";
+import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19412";
 
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
+// Zapisany podział dziennego limitu (procent na kolejkę); paski liczone tak jak baza.
+let mailQueueSharePct = 80;
 let aiProviderOrder = [];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
@@ -428,7 +430,7 @@ export function renderProviderOrder() {
     const remW = p.rem_worker ?? 0;
     const remI = p.rem_immediate ?? 0;
     const total = p.daily_limit ?? 0;
-    const limitW = Math.floor(total * 0.8);
+    const limitW = Math.floor(total * mailQueueSharePct / 100);
     const limitI = total - limitW;
 
     const createBar = (current, max, label) => {
@@ -458,8 +460,8 @@ export function renderProviderOrder() {
       return wrap;
     };
 
-    stats.appendChild(createBar(remW, limitW, "Worker"));
-    stats.appendChild(createBar(remI, limitI, "Immediate"));
+    stats.appendChild(createBar(remW, limitW, "Kolejka"));
+    stats.appendChild(createBar(remI, limitI, "Od razu"));
     
     info.append(label, stats);
 
@@ -467,7 +469,7 @@ export function renderProviderOrder() {
     limitInput.type = "number";
     limitInput.className = "inp sm provider-limit";
     limitInput.value = String(p.daily_limit || 1000);
-    limitInput.title = "Daily Limit";
+    limitInput.title = `Limit dzienny: ${mailQueueSharePct}% na kolejkę, reszta na maile wysyłane od razu`;
     limitInput.addEventListener("change", (e) => {
       p.daily_limit = parseInt(e.target.value) || 0;
     });
@@ -833,11 +835,13 @@ async function loadMailSettings({ silent = false } = {}) {
     const cron = data?.cron || null;
 
     mailProviderOrder = providers;
+    mailQueueSharePct = clampInt(settings.queue_share_pct, 50, 95, 80);
     renderProviderOrder();
 
     if (els.mailDelayMs) els.mailDelayMs.value = String(clampInt(settings.delay_ms, 0, 5000, 250));
     if (els.mailBatchMax) els.mailBatchMax.value = String(clampInt(settings.batch_max, 1, 500, 100));
     if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
+    if (els.mailQueueShare) els.mailQueueShare.value = String(clampInt(settings.queue_share_pct, 50, 95, 80));
     if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
 
     // Load greeting/farewell settings
@@ -890,6 +894,7 @@ async function saveMailSettings() {
   const delayMs = clampInt(els.mailDelayMs?.value, 0, 5000, 250);
   const batchMax = clampInt(els.mailBatchMax?.value, 1, 500, 100);
   const workerLimit = clampInt(els.mailWorkerLimit?.value, 1, 200, 25);
+  const queueSharePct = clampInt(els.mailQueueShare?.value, 50, 95, 80);
   const selectedPreset =
     getCronPresetById(mailCronPresetValue) ||
     getCronPresetById("5m") ||
@@ -903,6 +908,7 @@ async function saveMailSettings() {
     delay_ms: delayMs,
     batch_max: batchMax,
     worker_limit: workerLimit,
+    queue_share_pct: queueSharePct,
     email_greeting: mailGreetingValue,
     email_farewell: mailFarewellValue,
     email_greeting_custom: document.getElementById("mailGreetingCustom")?.value || "",

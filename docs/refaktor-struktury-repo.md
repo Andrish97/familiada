@@ -29,7 +29,7 @@ web/
   host/fonts/          # Caveat i JetBrains Mono, używane przez Hosta
   buzzer/index.html
   buzzer/js/
-  settings/index.html
+  admin/index.html
   settings/js/
   settings/data/
   settings/tools/
@@ -71,8 +71,8 @@ Zasoby w HTML mają adresy od korzenia witryny, aby ich ładowanie nie zależał
 od końcowego ukośnika ani od mapowania subdomeny.
 
 Worker nadal obsługuje API, subdomeny, przerwę techniczną, cache i SSR.
-Panel `settings.familiada.online/` pobiera wewnętrznie
-`/settings/index.html` z tego samego Pages. Przeglądarka pozostaje na
+Panel `admin.familiada.online/` pobiera wewnętrznie
+`/admin/index.html` z tego samego Pages. Przeglądarka pozostaje na
 subdomenie. Reguły zasobów panelu, narzędzi i strony maintenance muszą zostać
 dostosowane do nowych katalogów. Foldery panelu pozostają zablokowane na
 publicznej domenie zgodnie z dotychczasową polityką.

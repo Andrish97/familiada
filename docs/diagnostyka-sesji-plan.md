@@ -10,7 +10,7 @@ Stan: **wdrożone** (2026-10-22/23, etapy 1–4; przebiegi w Dzienniku
 - Etap 2 — migracja 469 + front: `control2_device_log` (urządzenia, główna
   instancja) i `control2_control_log` (Control), wspólny
   `web/shared/js/core/session-log.js`, nowe sygnały, zapis przed startem gry.
-- Etap 3 — panel admina: `web/settings/js/session-diagnosis.js`, sekcja
+- Etap 3 — panel admina: `web/admin/js/session-diagnosis.js`, sekcja
   „Sugerowane problemy” w przebiegu i zestawienie nad tabelą rozgrywek.
   Odstępstwo od planu: bez osobnego endpointu logu sesji — przy obecnej
   objętości (średnio ~24 zdarzenia na sesję) lista rozgrywek niesie zdarzenia
@@ -123,7 +123,7 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
 - Lista rozgrywek ładuje tylko **podsumowania** (pkt 2); pełny log jednej
   sesji osobnym endpointem `/_admin_api/stats/session-events?session_id=…`
   przy otwarciu przebiegu. Eksport JSON sesji zawiera log i podsumowanie.
-- Moduł `web/settings/js/session-diagnosis.js` (czysta funkcja, testy unit
+- Moduł `web/admin/js/session-diagnosis.js` (czysta funkcja, testy unit
   na przykładowych sesjach): z podsumowania i zdarzeń wylicza sugestie
   z poziomem pewności i dowodami (lista zdarzeń), np.:
   - urządzenie uśpione / w tle (telefon) — ukrycie lub brak sygnału →
@@ -266,3 +266,13 @@ connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
 - 2026-10-22: stare mechanizmy logowania usunąć, nie utrzymywać obok
   nowych (użytkownik). Etap 1 przełącza zapis tylko na nową tabelę; etap 4
   usuwa stare tabele, RPC i klucze, gdy front już ich nie używa.
+- 2026-10-24 (eksport rozgrywek z 24.10, polecenie użytkownika „popraw,
+  wdróż swoje sugestie; popraw blokadę wygaszania w iOS”):
+  - finał doszedł do `f_end`, a operator nie nacisnął „Zakończ” → sesja
+    zamykana (bezczynność, restart, anulowanie z ustawień) jako `final`
+    z doliczonymi punktami finału i `closed_by`; poprawka wsteczna (483);
+  - potwierdzenie planszy: znaczniki serwera `requested_at`/`rendered_at`
+    (483), Control odpytuje bazę od czasu animacji + 0,3 s i raz przed
+    alarmem `ack_timeout`; `display_ack_ms` w `late_ack`;
+  - blokada wygaszania: odmowa (Safari iOS bez gestu) i zwolnienie przez
+    system ponawiane przy najbliższym geście (`keep-alive.js`).

@@ -82,12 +82,12 @@ Example:
 ### Basic routing
 1. `https://familiada.online/` → main site
 2. `https://www.familiada.online/` → main site
-3. `https://www.familiada.online/settings/` → **404**
-4. `https://admin.familiada.online/` → settings panel
-5. `https://admin.familiada.online/settings.html` → **404**
+3. `https://www.familiada.online/admin/` → **404**
+4. `https://admin.familiada.online/` → admin panel
+5. `https://admin.familiada.online/admin.html` → **404**
 
 ### Maintenance
-1. Turn maintenance ON in settings panel.
+1. Turn maintenance ON in admin panel.
 2. `https://familiada.online/` → maintenance page (503)
 3. `https://www.familiada.online/` → maintenance page (503)
 4. Unknown subdomain (e.g. `https://x.familiada.online/`) → maintenance page (503)

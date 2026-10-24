@@ -1,8 +1,8 @@
 // Maile powiadomień (zaproszenia, udostępnienia, kopie, ankiety): przeglądarka
 // wskazuje tylko akcję i token powiadomienia z linku /go/; treść, odbiorcę
 // i linki buduje funkcja Edge send-mail z danych w bazie (audyt E24).
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-24T19372";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T19372";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-24T19412";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-24T19412";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 

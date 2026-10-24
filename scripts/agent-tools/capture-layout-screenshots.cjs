@@ -31,9 +31,9 @@ const pages = {
   logoDraw: { url: '/logos/editor/draw/?id=l1&lang=pl', ready: 'body' },
   logoImage: { url: '/logos/editor/image/?id=l1&lang=pl', ready: 'body' },
   gameSettings: { url: '/games/settings/?id=g1&lang=pl', ready: 'body' },
-  settings: { url: '/admin/?lang=pl', ready: 'body' },
-  settingsReports: { url: '/admin/?tab=reports&lang=pl', ready: 'body' },
-  settingsMail: { url: '/admin/?tab=mail&lang=pl', ready: 'body' },
+  admin: { url: '/admin/?lang=pl', ready: 'body' },
+  adminReports: { url: '/admin/?tab=reports&lang=pl', ready: 'body' },
+  adminMail: { url: '/admin/?tab=mail&lang=pl', ready: 'body' },
   account: { url: '/account/?lang=pl', ready: 'body' },
   polls: { url: '/polls/?id=g3&lang=pl', ready: 'body' },
   friends: { url: '/friends/?lang=pl', ready: '#contactsLoadMessage' },
@@ -195,7 +195,7 @@ function deviceCss(device) {
         page.on('console', (message) => { if (message.type() === 'error') console.error(`[${pageName}/${device.name}] ${message.text()}`); });
         await page.route('**/shared/vendor/supabase-js.js**', (route) => route.fulfill({ contentType: 'text/javascript', body: '/* app preview injects its own local Supabase client */' }));
         await page.route('**/_api/mail/session', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, email: 'podglad@example.invalid', notifications_enabled: true, subscriptions: [], items: [] }) }));
-        if (pageName.startsWith('settings')) {
+        if (pageName.startsWith('admin')) {
           await page.route('**/_admin_api/**', async (route) => {
             const pathname = new URL(route.request().url()).pathname;
             const body = pathname.endsWith('/me')
@@ -299,7 +299,7 @@ function deviceCss(device) {
         checkLayout(['games', 'bases', 'logo'].includes(pageName) && metrics.separatorWidth < 1, `${pageName}/${device.name}: brak separatora nad dolnym paskiem`);
         checkLayout(device.width > 1200 && Math.abs(metrics.searchButtonH - metrics.searchFieldH) > 1, `${pageName}/${device.name}: lupa i pole wyszukiwania mają różne wysokości (${metrics.searchButtonH}/${metrics.searchFieldH})`);
         checkLayout(metrics.scrollWidth > metrics.width, `${pageName}/${device.name}: poziomy overflow ${metrics.scrollWidth} > ${metrics.width}`);
-        checkLayout(pageName.startsWith('settings') && metrics.topbarNavOverflow > 1, `${pageName}/${device.name}: nawigacja panelu admina jest obcinana w topbarze (${metrics.topbarNavOverflow}px)`);
+        checkLayout(pageName.startsWith('admin') && metrics.topbarNavOverflow > 1, `${pageName}/${device.name}: nawigacja panelu admina jest obcinana w topbarze (${metrics.topbarNavOverflow}px)`);
         checkLayout(footerSafeMetrics && footerSafeMetrics.footerTop < footerSafeMetrics.height && footerSafeMetrics.footerBottom <= footerSafeMetrics.height + 1 && footerSafeMetrics.gap < metrics.safe[2] - 1, `${pageName}/${device.name}: treść stopki wchodzi w dolne safe area (${footerSafeMetrics?.gap}px < ${metrics.safe[2]}px)`);
         checkLayout(['games', 'bases', 'logo'].includes(pageName) && (metrics.contentLeft < metrics.safe[3] - 1 || metrics.contentRight > metrics.width - metrics.safe[1] + 1), `${pageName}/${device.name}: treść wchodzi w boczne safe area`);
         checkLayout(['games', 'bases', 'logo'].includes(pageName) && metrics.mainPaddingBottom < metrics.safe[2], `${pageName}/${device.name}: dół treści wchodzi w safe area`);
@@ -317,7 +317,7 @@ function deviceCss(device) {
           }
           await page.screenshot({ path: path.join(out, `games-${device.name}-search-open.png`), animations: 'disabled' });
         }
-        if (pageName.startsWith('settings') && !auditState.globalPhoneLandscape && device.width <= 1800) {
+        if (pageName.startsWith('admin') && !auditState.globalPhoneLandscape && device.width <= 1800) {
           const menu = page.locator('.topbar-menu-toggle');
           await menu.waitFor({ state: 'visible' });
           await menu.click();

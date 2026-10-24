@@ -8,6 +8,7 @@ const DEFAULT_MAIL_SETTINGS = {
   delay_ms: 250,
   batch_max: 100,
   worker_limit: 25,
+  queue_share_pct: 80,
 };
 
 
@@ -60,12 +61,6 @@ export async function handleAdminMailApi(request, env, url) {
 
       const next = {
         id: 1,
-        queue_enabled:
-          typeof body.queue_enabled === "boolean"
-            ? body.queue_enabled
-            : typeof body.queueEnabled === "boolean"
-              ? body.queueEnabled
-              : current.queue_enabled,
         delay_ms: clampInt(
           body.delay_ms ?? body.delayMs ?? current.delay_ms,
           0,
@@ -83,6 +78,12 @@ export async function handleAdminMailApi(request, env, url) {
           1,
           200,
           current.worker_limit
+        ),
+        queue_share_pct: clampInt(
+          body.queue_share_pct ?? current.queue_share_pct,
+          50,
+          95,
+          current.queue_share_pct ?? 80
         ),
         updated_at: new Date().toISOString(),
       };
@@ -269,7 +270,7 @@ export async function handleAdminMailApi(request, env, url) {
 }
 
 export async function loadMailSettings(env) {
-  const q = "select=id,delay_ms,batch_max,worker_limit,updated_at&id=eq.1&limit=1";
+  const q = "select=id,delay_ms,batch_max,worker_limit,queue_share_pct,updated_at&id=eq.1&limit=1";
   const res = await supabaseRequest(env, `/rest/v1/mail_settings?${q}`, { method: "GET" });
   if (!res.ok) {
     return { ok: false, status: res.status, error: "mail_settings_load_failed", details: summarizeSupabaseError(res) };
@@ -294,6 +295,7 @@ export async function loadMailSettings(env) {
       delay_ms: clampInt(row.delay_ms, 0, 5000, DEFAULT_MAIL_SETTINGS.delay_ms),
       batch_max: clampInt(row.batch_max, 1, 500, DEFAULT_MAIL_SETTINGS.batch_max),
       worker_limit: clampInt(row.worker_limit, 1, 200, DEFAULT_MAIL_SETTINGS.worker_limit),
+      queue_share_pct: clampInt(row.queue_share_pct, 50, 95, DEFAULT_MAIL_SETTINGS.queue_share_pct),
       updated_at: row.updated_at || null,
     },
     providers: providers

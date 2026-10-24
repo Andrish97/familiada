@@ -288,15 +288,18 @@ async function loadProviderLimits(): Promise<Map<string, { name: string; rem_wor
   return map;
 }
 
-async function decrementImmediateLimit(provider: string, limits: Map<string, { name: string; rem_worker: number; rem_immediate: number; is_active: boolean }>): Promise<void> {
+// Jeden mail z limitu dostawcy: najpierw rezerwa „od razu”, potem pula kolejki
+// (migracja 483). Zwraca false, gdy dostawca nie ma już żadnego limitu.
+async function takeImmediateLimit(provider: string): Promise<boolean> {
   if (!sbAdmin) throw new Error("missing_supabase_service_credentials");
-  const limit = limits.get(provider);
-  if (!limit) return;
   const { data } = await sbAdmin.from("email_providers").select("id").eq("name", provider).single();
-  if (data?.id) {
-    const { error } = await sbAdmin.rpc("decrement_provider_immediate", { p_id: data.id });
-    if (error) console.warn("[send-email] decrement_immediate:error", error);
+  if (!data?.id) return false;
+  const { data: pool, error } = await sbAdmin.rpc("take_provider_immediate", { p_id: data.id });
+  if (error) {
+    console.warn("[send-email] take_immediate:error", error);
+    return false;
   }
+  return pool !== "none";
 }
 
 async function sendWithFallbacks(
@@ -313,13 +316,16 @@ async function sendWithFallbacks(
 
   for (const p of order) {
     const limit = limits.get(p);
-    if (!limit || limit.rem_immediate <= 0) {
+    if (!limit || limit.rem_immediate + limit.rem_worker <= 0) {
       errs.push(`${p}:no_immediate_quota`);
       continue;
     }
     try {
       // Zmniejszamy limit za każdą podjętą próbę (zgodnie z prośbą użytkownika)
-      await decrementImmediateLimit(p, limits);
+      if (!(await takeImmediateLimit(p))) {
+        errs.push(`${p}:no_immediate_quota`);
+        continue;
+      }
 
       if (p === "brevo") await sendViaBrevo(to, subject, html);
       else if (p === "sendpulse") await sendViaSendpulse(to, subject, html);

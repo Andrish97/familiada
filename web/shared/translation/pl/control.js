@@ -44,6 +44,7 @@ const pl = {
       mapRevealAnswer: "Sprawdź zaznaczony wybór, w razie potrzeby zmień i odsłoń odpowiedź.",
       mapRevealPoints: "Odsłoń punkty.",
       armed: "Kliknij zaznaczony kafel jeszcze raz (albo Enter), żeby zatwierdzić.",
+      displayHiddenSameBrowser: "Wyświetlacz jest w tle tej przeglądarki — plansza i dźwięk będą się spóźniać.",
     },
     title: "Familiada — panel sterowania",
     logout: "Wyloguj",

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../web/admin/js");
 export const ADMIN_PANEL_MODULES = [
-  "settings.js", "core.js", "tabs.js", "maintenance.js", "mail-settings.js", "stats.js", "ratings.js",
+  "admin.js", "core.js", "tabs.js", "maintenance.js", "mail-settings.js", "stats.js", "ratings.js",
   "marketplace.js", "mailbox.js", "tools.js", "marketing.js", "marketing-contacts.js",
 ];
 
