@@ -352,6 +352,19 @@ module.exports = [
   { id: "snake-lang", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — przełącznik języka (menu otwarte)", path: "/snake/?qr=00000000-0000-4000-8000-000000000103", devices: ["desktop", "phone-landscape"],
     sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]",
     steps: [async (view) => { await view.locator(".lang-floating .lang-btn").click(); await view.locator(".lang-menu:not([hidden])").waitFor(); await view.waitForTimeout(200); }] },
+  // §8a: każdy panel admina osobną sceną (przenoszenie stylów inline do klas — zrzuty przed/po).
+  ...[
+    ["maintenance", "btnTabMaintenance", "Prace techniczne"],
+    ["stats", "btnTabStats", "Statystyki"],
+    ["ratings", "btnTabRatings", "Oceny"],
+    ["mail-settings", "btnTabMail", "Ustawienia maili"],
+    ["reports", "btnTabReports", "Poczta Familiada"],
+    ["marketing", "btnTabMarketing", "Marketing"],
+    ["marketing-contacts", "btnTabMarketingContacts", "Kontakty Marketingowe"],
+    ["marketplace", "btnTabMarketplace", "Gry Społeczności"],
+    ["generator", "btnTabGenerator", "Gry Producenta"],
+  ].map(([key, tab, title]) => ({ id: `admin-panel-${key}`, category: "Dodatkowe", title: `Panel admina — ${title}`, path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop", "phone"], settle: 800,
+    steps: [async (view) => { await view.evaluate((id) => document.getElementById(id)?.click(), tab); await view.waitForTimeout(900); }] })),
   { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#snakeTop tr").first().waitFor(); await view.locator("#snakeFunnel").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.

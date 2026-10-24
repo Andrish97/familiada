@@ -102,7 +102,13 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     });
   }
 
+  // Pomiar sam przełącza klasę .hidden przycisków — te zmiany nie mogą
+  // wracać do obserwatora liczników (pętla bez końca, zawieszona strona).
   function recalc() {
+    try { measureOverflow(); } finally { badgeObserver.takeRecords(); }
+  }
+
+  function measureOverflow() {
     if (_mobileActive) return;
 
     const section2Width = section2.getBoundingClientRect().width;
@@ -210,6 +216,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
 
   function expandAll() {
     getButtons().forEach(btn => btn?.classList.remove('hidden'));
+    badgeObserver.takeRecords();
     // Na mobile „Więcej” jest schowane — jego licznik nie może zostać,
     // bo hamburger sumuje widoczne liczniki i liczyłby je podwójnie.
     _hiddenBtns = [];

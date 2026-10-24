@@ -35,19 +35,25 @@ Uwagi użytkownika do wykonania po wznowieniu (2026-10-23):
    Ma być jeden wygląd (bardziej prostokątny, jak zaznaczanie wielu) i jedna
    reguła w silniku; użytkownik: „chyba nie rozumiesz, na jakiej zasadzie działa
    ujednolicenie” — zasada: ta sama rzecz = ten sam element silnika, strona nie
-   dokłada własnego wyglądu.
+   dokłada własnego wyglądu. **Zrobione 2026-10-24** (`.is-selected`).
 2. **Przycisk „Edycja” jako trzeci w oknie** (udostępnianie bazy) — ten sam
    problem co nagłówek okna: przyciski i tytuł mają jak najdłużej mieścić się
-   w jednym wierszu (oszczędność miejsca).
+   w jednym wierszu (oszczędność miejsca). **Zrobione 2026-10-24** — `fitTopBar`:
+   wiersz z tytułem → ciaśniej (przełącznik same ikony) → przyciski we własnym
+   wierszu bez zawijania.
 3. **Kreska nad przyciskami** w oknach — usunąć (separator ma być tylko jeden,
-   pod paskiem tytułu i przycisków).
+   pod paskiem tytułu i przycisków). **Zrobione 2026-10-24** (`.uni-foot`, `.tagsFoot`).
 4. **Strony „inne”** to tylko: Przycisk (buzzer), Prowadzący, TV, wąż, QR
    ankiety (TV = powiększony widok). 404 i przerwa techniczna to zwykłe strony —
-   mają używać zwykłego silnika z warstwami (nie `flat.css`).
+   mają używać zwykłego silnika z warstwami (nie `flat.css`). **2026-10-24:**
+   wyglądają jak zwykłe strony (te same elementy; zrzuty z warstwami identyczne
+   co do piksela), ale zostają na `flat.css` — oba adresy otwiera też telewizor,
+   którego przeglądarka pomija `@layer` (szczegóły: `wspolne-style-plan.md` „Decyzje”).
 5. **Przyciski dwóch stanów** — obecne są brzydkie; zaprojektować jeden
    mechanizm (silnik + moduł JS) i podpiąć m.in. rolę w udostępnianiu bazy
    („Może edytować” / „Tylko podgląd”). Propozycja w `docs/wspolne-style-plan.md`
-   „Decyzje” (2026-10-23, przyciski dwóch stanów) — do akceptacji.
+   „Decyzje” (2026-10-23, przyciski dwóch stanów). **Zrobione 2026-10-24**
+   (`.toggle-group`, `core/toggle-group.js`; klik w część wybiera wartość).
 6. Strony logowania (login, potwierdzenie, reset): style inline → `hidden`
    razem z wdrożeniem (HTML w e2e z brancha pochodzi z Workera produkcji).
 
