@@ -2170,7 +2170,10 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const track = await page.locator("#xTypeRange").evaluate(
         (el) => getComputedStyle(el).getPropertyValue("--track")
       );
-      expect(track).toContain("#f5d26b");
+      // złoto silnika (E23: odcienie złota zwinięte do --accent)
+      const gold = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim());
+      expect(gold).toMatch(/^#/);
+      expect(track).toContain(gold);
       expect(track).not.toContain("#000");
       expect(track).not.toContain("#fff");
     } finally {
