@@ -1,11 +1,11 @@
 // admin/js/ratings.js — Oceny: oceny aplikacji i gier producenta.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T22061";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T22061";
-import { openDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T22061";
-import { adminFetch, adminGet, els, esc, escSetting } from "./core.js?v=v2026-10-24T22061";
-import { setStatus } from "./maintenance.js?v=v2026-10-24T22061";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T22185";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T22185";
+import { openDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T22185";
+import { adminFetch, adminGet, els, esc, escSetting } from "./core.js?v=v2026-10-24T22185";
+import { setStatus } from "./maintenance.js?v=v2026-10-24T22185";
 
 export async function loadRatings({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie ocen…");

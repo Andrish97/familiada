@@ -8,7 +8,7 @@
 // control2-full-game.spec.js na żywo (Control nigdy nie widział wciśnięcia
 // Buzzera, bo nic nie ringDoorbell'owało po tamtej stronie).
 
-import { rt } from "./realtime.js?v=v2026-10-24T22061";
+import { rt } from "./realtime.js?v=v2026-10-24T22185";
 
 
 export function doorbellTopic(gameId) {
