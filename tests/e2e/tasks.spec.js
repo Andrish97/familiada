@@ -183,7 +183,8 @@ for (const viewport of [
           noteWrap: getComputedStyle(document.querySelector(".rowsNote")).whiteSpace,
         };
       });
-      expect(metrics.pageGap).toBeGreaterThanOrEqual(14);
+      // jeden odstęp pod paskiem tytułu na wszystkich stronach (silnik: .bar margin-bottom 12 px)
+      expect(metrics.pageGap).toBeGreaterThanOrEqual(12);
       expect(metrics.rowGap).toBeGreaterThanOrEqual(12);
       expect(metrics.overflow).toBe(false);
       expect(metrics.noteWrap).toBe("normal");
