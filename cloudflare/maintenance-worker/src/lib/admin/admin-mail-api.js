@@ -60,12 +60,6 @@ export async function handleAdminMailApi(request, env, url) {
 
       const next = {
         id: 1,
-        queue_enabled:
-          typeof body.queue_enabled === "boolean"
-            ? body.queue_enabled
-            : typeof body.queueEnabled === "boolean"
-              ? body.queueEnabled
-              : current.queue_enabled,
         delay_ms: clampInt(
           body.delay_ms ?? body.delayMs ?? current.delay_ms,
           0,
