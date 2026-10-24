@@ -2381,6 +2381,21 @@
     .grid :is(.tile, .addCard, .logoTile):hover { transform: none; }
   }
 
+  /* ── Wiersz bez zawijania (.fit-row, core/fit-row.js) ─────────────
+     Jeden rząd zawsze; gdy się nie mieści, .is-icons chowa napisy
+     przycisków z ikoną (zostaje ikona 36×36, nazwa w dymku). */
+  .fit-row { flex-wrap: nowrap; min-width: 0; }
+  .fit-row > .btn { flex: 0 0 auto; white-space: nowrap; }
+  .fit-row.is-icons > .btn:has(> svg.ico) {
+    width: 36px;
+    min-width: 36px;
+    padding-inline: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0; /* napis zostaje w dostępności i w dymku */
+  }
+  .fit-row.is-icons > .btn:has(> svg.ico) > svg.ico { width: 18px; height: 18px; }
+
   /* ── Sekcje udostępniania (share-sections.js) ─────────────────── */
   .shareSection {
     --under: var(--surface-inset);
@@ -2798,6 +2813,10 @@
   .app-tooltip:not([hidden]) { animation: popover-in var(--dur-fast) var(--ease-out); }
 
 
+
+  /* Pomiar .fit-row (core/fit-row.js): dzieci w pełnej szerokości, także
+     komunikaty z flex: 1 stron — w warstwie states, żeby wygrać z page. */
+  .fit-row.is-measuring > * { flex: 0 0 auto; min-width: max-content; }
 
   /* ── Zaznaczenie (jedno w całym serwisie): element .is-selected (kafel,
      wiersz listy, wiersz drzewa, tag) albo wiersz z zaznaczonym polem wyboru —

@@ -27,6 +27,8 @@ const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
 const DEVICES = {
   desktop: { width: 1440, height: 900, scale: 1, mobile: false },
   phone: { width: 390, height: 844, scale: 2, mobile: true },
+  // Mały Android (zgłoszenie 2026-10-24: pasek zawijał się przy 360 px).
+  "phone-360": { width: 360, height: 640, scale: 2, mobile: true },
   tablet: { width: 820, height: 1180, scale: 2, mobile: true },
   "phone-landscape": { width: 844, height: 390, scale: 2, mobile: true },
   "tablet-landscape": { width: 1180, height: 820, scale: 2, mobile: true },

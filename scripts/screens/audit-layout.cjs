@@ -22,7 +22,7 @@ const SCROLL_POLICY = {
 
 // Elementy, które nie mogą się zawijać (decyzje: e20-uwagi-do-korekty.md,
 // ujednolicenie-wygladu.md; lista w wspolne-style-plan.md „Zakazy…”).
-const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn"];
+const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn", ".fit-row"];
 
 // Funkcja wykonywana w stronie (page.evaluate). opts: { path, safe, allowDocScroll }.
 function inspectLayout(opts) {
@@ -247,6 +247,21 @@ function inspectLayout(opts) {
     let last = -Infinity;
     for (const t of tops) { if (t - last > lh * 0.6) lines.add(t); last = t; }
     if (lines.size > 1) add("zawiniete", el, `${lines.size} wiersze`);
+  }
+  // Rząd przycisków zawinięty na dwa wiersze (zgłoszenie 2026-10-24) i .fit-row
+  // szerszy niż jego miejsce.
+  for (const row of root.querySelectorAll("*")) {
+    const btns = [...row.children].filter((c) => c.matches(".btn, button") && visible(c));
+    if (btns.length < 2) continue;
+    const st = getComputedStyle(row);
+    if (st.display !== "flex" && st.display !== "inline-flex") continue;
+    if (st.flexDirection.startsWith("column")) continue;
+    const tops = btns.map((b) => b.getBoundingClientRect().top);
+    const h = Math.min(...btns.map((b) => b.getBoundingClientRect().height));
+    if (Math.max(...tops) - Math.min(...tops) > h * 0.6) add("przyciski-zawiniete", row, `${btns.length} przycisków w ${new Set(tops.map((t) => Math.round(t / h))).size} rzędach`);
+  }
+  for (const row of root.querySelectorAll(".fit-row")) {
+    if (visible(row) && row.scrollWidth > row.clientWidth + 1) add("fit-row-za-szeroki", row, `${row.scrollWidth}/${row.clientWidth} px`);
   }
   for (const foot of root.querySelectorAll(".footer")) {
     if (!visible(foot)) continue;
