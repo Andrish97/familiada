@@ -465,6 +465,9 @@ export function closeDialog(overlayEl, then) {
 //   przeglądarki).
 function enterModalSheet(overlayEl, { onClose, onBack, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport() || overlayEl?.classList.contains("modal--keep-dialog")) return;
+  // Zamknięcie poprzedniego okna i od razu otwarcie następnego (np. zgłoszenie
+  // → lista wysłanych): poprzednie kończy zamykanie teraz, zanim to przejmie arkusz.
+  if (activeOverlay && activeOverlay !== overlayEl) closing.get(activeOverlay)?.finish();
   prepareSheetLayout(overlayEl);
   if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
 

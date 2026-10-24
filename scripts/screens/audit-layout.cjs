@@ -139,19 +139,28 @@ function inspectLayout(opts) {
   // bez opacity < 1, filter, backdrop-filter i transform (artefakty przezroczystości).
   if (opts.touch) {
     const alpha = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return 1; const p = m[1].split(/[ ,\/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]) : 1; };
-    for (const btn of root.querySelectorAll("button, a.btn, [role=button]")) {
-      if (!visible(btn) || !btn.querySelector("svg")) continue;
+    // Gradient z półprzezroczystym kolorem bez kryjącego koloru pod spodem też prześwituje.
+    const seeThroughImage = (st) => /rgba?\([^)]*[,\/]\s*0?\.\d+\s*\)/.test(st.backgroundImage) && alpha(st.backgroundColor) < 1;
+    const hasIcon = (b) => b.querySelector("svg, img, canvas, [class*=icon], [class*=Icon]")
+      || /url\(/.test(getComputedStyle(b, "::before").maskImage + getComputedStyle(b, "::before").backgroundImage + getComputedStyle(b, "::after").maskImage)
+      || !/\p{L}{2}/u.test(b.textContent.trim());
+    for (const btn of root.querySelectorAll("button, a.btn, [role=button], [role=tab], label.btn")) {
+      if (!visible(btn) || !hasIcon(btn)) continue;
       const bad = [];
       for (let e = btn; e && e !== document.body; e = e.parentElement) {
         const st = getComputedStyle(e);
         if (Number(st.opacity) < 1) { bad.push(`opacity ${st.opacity} (${label(e)})`); break; }
         if (st.backdropFilter && st.backdropFilter !== "none") { bad.push(`backdrop-filter (${label(e)})`); break; }
         if (st.filter !== "none") { bad.push(`filter (${label(e)})`); break; }
-        if (e.matches(".overlay, .modal, .card, main, header")) break;
+        if (st.mixBlendMode && st.mixBlendMode !== "normal") { bad.push(`mix-blend-mode (${label(e)})`); break; }
+        // Pierwsze podłoże pod przyciskiem (sam przycisk albo przodek z tłem) musi kryć.
+        const a = alpha(st.backgroundColor);
+        if (a > 0 && a < 1 && st.backgroundImage === "none") { bad.push(`tło przezroczyste ${st.backgroundColor} (${label(e)})`); break; }
+        if (seeThroughImage(st)) { bad.push(`gradient przezroczysty (${label(e)})`); break; }
+        if (a === 1 || st.backgroundImage !== "none") break;
+        if (e.matches(".overlay, .modal, main, header")) break;
       }
       const st = getComputedStyle(btn);
-      const a = alpha(st.backgroundColor);
-      if (a > 0 && a < 1 && st.backgroundImage === "none") bad.push(`tło przezroczyste ${st.backgroundColor}`);
       if (st.transform !== "none") bad.push("transform");
       if (bad.length) add("android-przezroczystosc", btn, bad.join("; "));
     }

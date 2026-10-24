@@ -49,6 +49,18 @@ body {
     display: none
 }
 
+/* Wideo podtrzymania ekranu (core/keep-alive.js) — Wyświetlacz nie wczytuje
+   silnika, więc ta sama reguła co w components.css. */
+.keep-alive-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none
+}
+
 .qr-screen:not(.hidden) {
     position: fixed;
     inset: 0;

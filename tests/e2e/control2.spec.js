@@ -897,6 +897,12 @@ const TWO_QUESTIONS = [
 // czy wystrzeliło OK ale dzwonek/hydrate po stronie Control zgubił
 // potwierdzenie. Etykieta z `label` odróżnia urządzenia w jednym logu.
 function instrumentAnon(p, label) {
+  // Nawigacje urządzenia (go → strona urządzenia, przeładowania) — sama ścieżka.
+  const t0 = Date.now();
+  p.on("framenavigated", (frame) => {
+    if (frame === p.mainFrame()) console.log(`[e2e-diag:${label}] nav +${Date.now() - t0}ms ${new URL(frame.url()).pathname}`);
+  });
+  p.on("pageerror", (err) => console.log(`[e2e-diag:${label}] pageerror`, String(err?.message || err).slice(0, 300)));
   p.on("console", (msg) => {
     if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
