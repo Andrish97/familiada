@@ -725,15 +725,16 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   if (process.env.TEST_BRANCH_CODE === "0") {
     // Publiczna domena blokuje /admin/. Pobierz opublikowany zasób
     // bezpośrednio z originu Pages, tak samo jak proxy Workera.
-    const response = await request.get("https://andrish97.github.io/admin/js/admin.js", {
+    const response = await request.get("https://andrish97.github.io/admin/js/stats.js", {
       headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
     });
     expect(response.status()).toBe(200);
     source = await response.text();
   } else {
     source = await page.evaluate(async () => {
-      const response = await fetch("/admin/js/admin.js", { cache: "no-store" });
-      if (!response.ok) throw new Error(`settings.js: ${response.status}`);
+      // E23 §8a: statystyki to moduł panelu admina stats.js
+      const response = await fetch("/admin/js/stats.js", { cache: "no-store" });
+      if (!response.ok) throw new Error(`stats.js: ${response.status}`);
       return response.text();
     });
   }

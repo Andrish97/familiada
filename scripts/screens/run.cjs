@@ -35,6 +35,8 @@ const DEVICES = {
   "tablet-landscape-short": { width: 1200, height: 560, scale: 1, mobile: true, screen: { width: 1280, height: 800 } },
   "desktop-short": { width: 1400, height: 550, scale: 1, mobile: false },
   "desktop-1400": { width: 1400, height: 900, scale: 1, mobile: false },
+  // Typowy laptop (e2e Control: lista urządzeń bez przewijania przy 1366×768).
+  "laptop-1366": { width: 1366, height: 768, scale: 1, mobile: false },
   // Dotykowy tablet z niskim oknem 1400×550 (Host i Przycisk wymagają dotyku).
   "tablet-short-1400": { width: 1400, height: 550, scale: 1, mobile: true, screen: { width: 1440, height: 900 } },
 };

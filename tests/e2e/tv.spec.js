@@ -53,11 +53,11 @@ test("TV: język zmienia cały formularz i komunikaty, pilot obsługuje menu", a
   await expect(page.locator("#tvMessage")).toContainText("6-digit");
   await page.locator(".lang-btn").click();
   await page.locator('.menu-item[data-lang="uk"]').click();
-  await expect(page.locator("h1")).toHaveText("Підключіть дисплей");
+  await expect(page.locator("h1")).toHaveText("Підключи дисплей");
   await expect(page.locator("#tvMessage")).toContainText("6-значний");
   await expect(page.locator("#tvCode")).toHaveValue("12");
   await page.reload();
-  await expect(page.locator("h1")).toHaveText("Підключіть дисплей");
+  await expect(page.locator("h1")).toHaveText("Підключи дисплей");
 });
 
 

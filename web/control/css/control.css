@@ -322,6 +322,9 @@
     justify-content: space-between;
   }
 
+  /* Control mieści się bez przewijania (1366×768): opcje w wierszach urządzeń
+     zwarte, bez wysokości linii wspólnego .choice. */
+  :is(.device-row, .control-test-choice) :is(.choice, .choice-label) { line-height: normal; }
   .device-row-opt {
     border-top: 1px solid var(--w-8);
     margin-top: 6px;

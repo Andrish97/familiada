@@ -16,19 +16,19 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T19412";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19412";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T19412";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T19412";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T19412";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19412";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T20374";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T20374";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T20374";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T20374";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T20374";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T20374";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T19412";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T19412";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T19412";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T19412";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T19412";
-import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T19412";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T20374";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T20374";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T20374";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T20374";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T20374";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T20374";
 
 
 const $ = (id) => document.getElementById(id);
@@ -674,7 +674,7 @@ export function createUI({ root, emit }) {
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
     // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
     // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
-    // rozgrywce (btn gold lg — inny padding/border-radius/
+    // rozgrywce (btn gold — inny padding/border-radius/
     // czcionka). Ujednolicone: ten sam komponent, ta sama busy/disabled
     // gałąź co resztę (C2-02) — finalIncomplete to statyczna walidacja
     // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
@@ -837,7 +837,7 @@ export function createUI({ root, emit }) {
   // odliczania gracza), nie tylko podczas realnego oczekiwania na sieć/
   // dźwięk. Rozdzielenie na dwa parametry naprawia to raz, w jednym miejscu,
   // zamiast w każdym z 11 wywołań osobno.
-  function navButton(label, { shortcut = "n", cls = "btn gold lg", onclick, disabled = false, busy = false, iconName = null, iconAfter = false } = {}) {
+  function navButton(label, { shortcut = "n", cls = "btn gold", onclick, disabled = false, busy = false, iconName = null, iconAfter = false } = {}) {
     const isDisabled = disabled || busy;
     const isNext = label === t("common.next");
     const children = iconName
@@ -1317,7 +1317,7 @@ export function createUI({ root, emit }) {
       nav: [
         navButton(t("control.restartGame"), {
           shortcut: null,
-          cls: "btn lg",
+          cls: "btn",
           busy: false,
           onclick: () => emit("game.restart"),
         }),
