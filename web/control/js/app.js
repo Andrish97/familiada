@@ -613,6 +613,14 @@ async function main() {
     }
     if (row) previousDisplayRow = row;
   }
+  // Wyświetlacz otwarty w tej samej przeglądarce i schowany (inna karta lub
+  // okno na wierzchu). Tryb testowy pokazuje go w ramce tej strony — pomijamy.
+  function displayHiddenSameBrowser() {
+    const display = lastDeviceDiagnostics?.display;
+    return !store.state.settings.testMode && presenceFlags.display === true
+      && display?.visibility === "hidden"
+      && compareBrowserContexts(browserContextId, display?.browserContextId) === "same_profile";
+  }
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
   }
@@ -1194,7 +1202,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {

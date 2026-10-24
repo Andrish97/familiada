@@ -44,6 +44,7 @@ const en = {
       mapRevealAnswer: "Check the selected match, change it if needed, and reveal the answer.",
       mapRevealPoints: "Reveal the points.",
       armed: "Click the selected tile again (or press Enter) to confirm.",
+      displayHiddenSameBrowser: "The Display is in the background of this browser — board and sound will lag.",
     },
     title: "Familiada — control panel",
     logout: "Log out",

@@ -38,7 +38,8 @@ połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępni
 ![Strona dla telewizora — kod Wyświetlacza](zrzut:play-connect-tv)
 
 > Uwaga: Wyświetlacz musi być widoczny przez całą grę. Gdy jego okno lub karta są w tle,
-> przeglądarka może wstrzymać animacje i aktualizację tablicy.
+> przeglądarka może wstrzymać animacje i aktualizację tablicy. Gdy Wyświetlacz jest otwarty w tej samej
+> przeglądarce co panel sterowania i schowa się w tle, panel pokaże nad podpowiedzią ostrzeżenie.
 
 **Prowadzący** i **Przycisk** — zeskanuj [Kod QR] telefonem albo wpisz kod przez
 [Podłącz urządzenie]. Strona *Podłącz urządzenie* działa bez logowania: po wpisaniu kodu zobaczysz

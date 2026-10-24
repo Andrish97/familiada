@@ -38,7 +38,8 @@ The **Display** is always needed — you cannot continue without it.
 ![The TV page — the Display code](zrzut:play-connect-tv)
 
 > Note: the Display must stay visible for the whole game. When its window or tab is in the background,
-> the browser may pause the animations and the board updates.
+> the browser may pause the animations and the board updates. When the Display is open in the same browser
+> as the control panel and goes to the background, the panel shows a warning above the hint.
 
 **Host** and **Buzzer** — scan the [QR Code] with a phone or enter the code via
 [Connect device]. The *Connect a device* page works without signing in: after you enter the code, you will see

@@ -1998,6 +1998,12 @@ export function createUI({ root, emit }) {
       const main = hint.querySelector(".c2-hint-main") || hint.insertBefore(h("div", { class: "c2-hint-main" }), hint.firstChild);
       main.textContent = t("control.hints.armed");
     }
+    // Wyświetlacz w tle tej samej przeglądarki: przeglądarka spowalnia ukryte
+    // karty, więc plansza i dźwięk się spóźniają (eksport 24.10, 111 przełączeń
+    // okien w jednej grze). Ostrzeżenie nad treścią podpowiedzi.
+    if (hint && ctx.displayHiddenSameBrowser && !/^(devices_|setup_)/.test(s)) {
+      hint.insertBefore(h("div", { class: "c2-hint-warn", role: "status", text: t("control.hints.displayHiddenSameBrowser") }), hint.firstChild);
+    }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;
     if (savedFocus) {
