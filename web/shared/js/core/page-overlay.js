@@ -4,8 +4,8 @@
 // Ekran: core/blocking-screen.js (ten sam co blokada zasobu). „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-24T19151";
-import { blockingScreen, setBlockingIcon, setBlockingOpen, isBlockingOpen } from "./blocking-screen.js?v=v2026-10-24T19151";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-24T19372";
+import { blockingScreen, setBlockingIcon, setBlockingOpen, isBlockingOpen } from "./blocking-screen.js?v=v2026-10-24T19372";
 
 
 export const PAGE_GUARD_ID = "pageGuard";
@@ -39,11 +39,8 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
     clearTimeout(redirectTimer);
     redirectTimer = null;
   }
-  if (kind === "device" && document.body && !overlay.dataset.hidesBody) {
-    overlay.dataset.bodyVisibility = document.body.style.visibility;
-    document.body.style.visibility = "hidden";
-    overlay.dataset.hidesBody = "true";
-  }
+  // Strona pod blokadą urządzenia niewidoczna (base.css: html[data-page-guard] body).
+  if (kind === "device") document.documentElement.setAttribute("data-page-guard", "");
   const title = overlay.querySelector("#pageGuardTitle");
   const msg = overlay.querySelector("#pageGuardMsg");
   title.setAttribute("data-i18n", titleKey);
@@ -83,9 +80,5 @@ export function hidePageGuard() {
   const overlay = document.getElementById(PAGE_GUARD_ID);
   if (!overlay) return;
   setBlockingOpen(overlay, false);
-  if (overlay.dataset.hidesBody === "true" && document.body) {
-    document.body.style.visibility = overlay.dataset.bodyVisibility || "";
-    delete overlay.dataset.bodyVisibility;
-    delete overlay.dataset.hidesBody;
-  }
+  document.documentElement.removeAttribute("data-page-guard");
 }

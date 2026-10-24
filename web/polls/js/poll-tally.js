@@ -16,19 +16,20 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-24T19151";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T19151";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T19151";
-import { ANSWER_MAX, clipChars, cleanAnswerText } from "../../shared/js/core/answer-text.js?v=v2026-10-24T19151";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19372";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-24T19372";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-24T19372";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T19372";
+import { ANSWER_MAX, clipChars, cleanAnswerText } from "../../shared/js/core/answer-text.js?v=v2026-10-24T19372";
 
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
   nextTieSelection,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-24T19151";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-24T19372";
+import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
 
 // Dotyk: bez przeciągania (page-init.js), scalanie tylko przyciskiem.
 const TOUCH = !!globalThis.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
@@ -50,8 +51,7 @@ function mk(tag, cls, html) {
 }
 
 function setPct(r, pct) {
-  const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
-  if (r.bar.style.width !== w) r.bar.style.width = w;
+  setProgress(r.bar, pct, 1);
 }
 
 /**

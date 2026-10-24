@@ -1847,11 +1847,11 @@
   .seg-count { font-weight: 700; }
   .seg-pct { opacity: .45; font-weight: 400; font-size: 11px; }
   .snake-day { flex: 1; display: flex; gap: 1px; align-items: flex-end; height: 100%; }
-  .snake-bar { flex: 1; border-radius: var(--r-xs) var(--r-xs) 0 0; }
+  .snake-bar { flex: 1; height: var(--h, 0%); border-radius: var(--r-xs) var(--r-xs) 0 0; }
   .snake-bar--scan { background: var(--g-60); }
   .snake-bar--start { background: var(--ok-strong); }
   .trend-day { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
-  .trend-bar { width: 100%; background: var(--accent); border-radius: var(--r-xs) var(--r-xs) 0 0; opacity: .8; }
+  .trend-bar { width: 100%; height: var(--h, 0%); background: var(--accent); border-radius: var(--r-xs) var(--r-xs) 0 0; opacity: .8; }
   .trend-bar.has-value { min-height: 3px; }
   .stats-day-label { flex: 1; text-align: center; font-size: 9px; opacity: .4; overflow: hidden; white-space: nowrap; }
   .mkt-note { font-size: 11px; opacity: .5; }
@@ -1878,7 +1878,7 @@
   .market-preview-head { align-items: flex-start; }
   .maint-preview-frame { height: 70vh; margin-top: 12px; }
   .stats-color-dots { display: inline-flex; gap: 5px; align-items: center; }
-  .stats-color-dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--w-25); }
+  .stats-color-dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--w-25); background: var(--c); }
   .stats-detail-empty { font-size: 13px; opacity: .45; text-align: center; padding: 16px 0; }
   .stats-detail-wrap { overflow-x: auto; }
   .stats-detail-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }

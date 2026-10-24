@@ -1,16 +1,17 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T19151";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19151";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T19151";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19151";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T19151";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19151";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19372";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19372";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T19372";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19372";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T19372";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19372";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T19372";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19372";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19372";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -104,11 +105,11 @@ connectCodeInput?.addEventListener("keydown", (e) => {
 // ── Shared devices (only logged-in non-guests) ─────────────────────────────────
 async function renderSharedDevices() {
   if (!sharedDevicesList) return;
-  sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.loading")}</div>`;
+  sharedDevicesList.innerHTML = emptyStateHtml(t("connectDevice.shared.loading"));
 
   const { data, error } = await sb().rpc("list_shared_devices_for_me");
   if (error) {
-    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.error")}</div>`;
+    sharedDevicesList.innerHTML = emptyStateHtml(t("connectDevice.shared.error"));
     return;
   }
 
@@ -121,7 +122,7 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `<div class="empty-state">${t("connectDevice.shared.empty")}</div>`;
+    sharedDevicesList.innerHTML = emptyStateHtml(t("connectDevice.shared.empty"));
     return;
   }
 
@@ -180,7 +181,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T19151";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T19372";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });

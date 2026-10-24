@@ -1,11 +1,12 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T19151";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T19151";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T19151";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19151";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T19372";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19372";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19372";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T19372";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T19372";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19372";
+import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
 
 
 async function redirectIfSession() {
@@ -182,9 +183,9 @@ function initPipeline() {
 
   // Ustaw top rury śledząc dolną krawędź topbara
   function syncTop() {
-    if (!topbar) { wrap.style.top = "0px"; return; }
+    if (!topbar) { setVars(wrap, { "--pipeline-top": null }); return; }
     const topbarBottom = topbar.getBoundingClientRect().bottom;
-    wrap.style.top = Math.max(0, topbarBottom) + "px";
+    setVars(wrap, { "--pipeline-top": `${Math.max(0, topbarBottom)}px` });
     // Body rezerwuje wysokość elementów, nie ich współrzędne ekranowe.
     // Dzięki temu zmiana visualViewport nie dodaje/odejmuje pustego pasa
     // w dokumencie, a po zamknięciu arkusza wraca miejsce na pipeline.
@@ -192,7 +193,7 @@ function initPipeline() {
       const topbarHeight = topbar.getBoundingClientRect().height;
       const pipelineHeight = wrap.getBoundingClientRect().height;
       const sheetOpen = document.body.classList.contains("sheet-open");
-      document.body.style.paddingTop = Math.max(0, topbarHeight + (sheetOpen ? 0 : pipelineHeight)) + "px";
+      setVars(document.body, { "--home-top": `${Math.max(0, topbarHeight + (sheetOpen ? 0 : pipelineHeight))}px` });
     });
   }
 
@@ -232,13 +233,7 @@ function initPipeline() {
     // linia częściowa jeśli i === activeIdx (w trakcie scrollowania przez sekcję)
     lines.forEach((line, i) => {
       const fill = line.querySelector(".pipeline-line-fill");
-      if (i < activeIdx) {
-        fill.style.width = "100%";
-      } else if (i === activeIdx) {
-        fill.style.width = (progress * 100) + "%";
-      } else {
-        fill.style.width = "0%";
-      }
+      setProgress(fill, i < activeIdx ? 100 : i === activeIdx ? progress * 100 : 0, 2);
     });
   }
 

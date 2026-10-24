@@ -157,6 +157,7 @@
      rozstrzygnie (atrybut na <html> w HTML ekranów urządzeń; data-mobile-guard
      ustawia skrypt w <head> stron roboczych tylko na wąskim ekranie). */
   html[data-device-guard-pending] body,
+  html[data-page-guard] body,
   html[data-mobile-guard] body { visibility: hidden; }
   html[data-mobile-guard] { overflow: hidden; touch-action: none; }
 
@@ -1433,7 +1434,7 @@
     height: 72px;
     border: 1px solid var(--w-14);
     border-radius: var(--r-md);
-    background: var(--w-8);
+    background: var(--c, var(--w-8));
   }
   .sliders { display: grid; gap: 10px; }
   .sliderRow { display: grid; grid-template-columns: 18px minmax(0, 1fr) 44px; align-items: center; gap: 10px; }
@@ -2561,10 +2562,10 @@
   .uni-progress-row { display: flex; align-items: center; gap: 10px; }
   .uni-progress-step { font-weight: 800; letter-spacing: .04em; }
   .uni-progress-count { margin-left: auto; opacity: .8; font-variant-numeric: tabular-nums; }
-  /* Pasek postępu (jedyny): .progress > .progress-bar; szerokość i kolor
-     ustawia skrypt (style.width, --progress-color). */
+  /* Pasek postępu (jedyny): .progress > .progress-bar; skrypt ustawia tylko
+     --p (setProgress z core/ui-metrics.js) i ewentualnie --progress-color. */
   .progress { height: 8px; border-radius: var(--r-pill); background: var(--w-8); overflow: hidden; }
-  .progress-bar { height: 100%; width: 0; border-radius: inherit; background: var(--progress-color, var(--accent)); transition: width var(--dur-slow) ease; }
+  .progress-bar { height: 100%; width: var(--p, 0%); border-radius: inherit; background: var(--progress-color, var(--accent)); transition: width var(--dur-slow) ease; }
   .uni-progress-msg { min-height: 18px; }
   .uni-progress-msg[data-kind="error"] { opacity: 1; }
   .progress-bar[data-kind="error"] { background: var(--danger-solid); }

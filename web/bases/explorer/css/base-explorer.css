@@ -276,10 +276,7 @@
   .tag-dots {
       display: inline-flex;
       align-items: center;
-      gap: 6px
-  }
-
-  .tag-dots {
+      gap: 6px;
       flex: 0 0 auto
   }
 
@@ -294,7 +291,7 @@
       height: 10px;
       border-radius: var(--r-pill);
       display: inline-block;
-      background: var(--w-25);
+      background: var(--c, var(--w-25));
       box-shadow: 0 0 0 1px var(--w-14) inset;
       flex: 0 0 auto
   }
@@ -426,6 +423,8 @@
     user-select: none;
   }
   .tags-modal .tags-row:hover { background: var(--w-8); }
+  .tags-modal .tags-row.is-readonly { opacity: .75; cursor: default; }
+  .tags-modal .tags-row .m-note.is-placeholder { visibility: hidden; }
   .tags-modal .tags-row .tag-dot { flex: 0 0 12px; }
   .tags-modal .tags-row .m-p {
     flex: 1 1 auto;
@@ -472,6 +471,7 @@
   .tagsColorDot {
       width: 40px;
       height: 40px;
+      background: var(--c, transparent);
       border-radius: var(--r-sm);
       box-shadow: 0 0 0 2px var(--k-20) inset
   }
@@ -1017,51 +1017,8 @@
   }
 
   /* =========================================================
-     Export modal — progress (tryb B: w tym samym modalu)
+     Export modal — postęp: wspólny .uni-progress z silnika
   ========================================================= */
-
-  .export-modal .xProg {
-    margin-left: 10px;
-    margin-right: 10px;
-    min-width: 240px;
-    display: grid;
-    gap: 8px;
-  }
-
-  .export-modal .xProgTop {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .export-modal .xProgStep {
-    font-weight: 900;
-    letter-spacing: .04em;
-  }
-
-  .export-modal .xProgCount {
-    margin-left: auto;
-    opacity: .85;
-    font-weight: 900;
-  }
-
-  .export-modal .xProgBar {
-    height: 10px;
-    border-radius: var(--r-pill);
-    background: var(--w-8);
-    overflow: hidden;
-  }
-
-  .export-modal .xProgBarFill {
-    height: 100%;
-    width: 0%;
-    background: var(--text-soft);
-  }
-
-  .export-modal .xProgMsg {
-    min-height: 18px;
-    opacity: .85;
-  }
 
   /* Gdy modal jest w trakcie “run” — blokuj UI (poza stopką) */
   .export-modal.is-running .xBody {

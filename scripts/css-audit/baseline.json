@@ -3,50 +3,26 @@
   "unusedClass": 15
  },
  "web/admin/js/generator.js": {
-  "inlineStyleJs": 21
- },
- "web/admin/js/mail-settings.js": {
-  "inlineStyleJs": 1
+  "inlineStyleJs": 20
  },
  "web/admin/js/mailbox.js": {
   "inlineStyleJs": 3
  },
  "web/admin/js/stats.js": {
-  "inlineStyleJs": 6
+  "inlineStyleJs": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
   "sharedDuplicate": 5,
   "unusedClass": 2
  },
- "web/bases/explorer/js/actions.js": {
-  "inlineStyleJs": 42
- },
  "web/bases/explorer/js/context-menu.js": {
   "inlineStyleJs": 2
  },
- "web/bases/explorer/js/export-modal.js": {
-  "inlineStyleJs": 2
- },
  "web/bases/explorer/js/render.js": {
-  "inlineStyleJs": 9
- },
- "web/bases/explorer/js/tags-modal.js": {
-  "inlineStyleJs": 5
+  "inlineStyleJs": 4
  },
  "web/bases/explorer/js/ui/marquee.js": {
   "inlineStyleJs": 1
- },
- "web/bases/explorer/js/ui/move-modal.js": {
-  "inlineStyleJs": 1
- },
- "web/bases/explorer/js/ui/tree-row.js": {
-  "inlineStyleJs": 1
- },
- "web/bases/js/bases.js": {
-  "inlineStyleJs": 1
- },
- "web/connect/js/connect-device.js": {
-  "inlineStyleJs": 2
  },
  "web/control/buzzer/css/buzzer.css": {
   "sharedDuplicate": 1
@@ -72,29 +48,17 @@
  "web/games/editor/css/editor.css": {
   "sharedDuplicate": 1
  },
- "web/games/js/games.js": {
-  "inlineStyleJs": 2
- },
- "web/games/settings/js/game-settings.js": {
-  "inlineStyleJs": 7
- },
  "web/home/css/index.css": {
   "unusedClass": 2
- },
- "web/home/js/index.js": {
-  "inlineStyleJs": 6
  },
  "web/logos/css/logo.css": {
   "sharedDuplicate": 2
  },
  "web/logos/js/draw.js": {
-  "inlineStyleJs": 11
+  "inlineStyleJs": 1
  },
  "web/logos/js/image.js": {
-  "inlineStyleJs": 6
- },
- "web/logos/js/list.js": {
-  "inlineStyleJs": 5
+  "inlineStyleJs": 4
  },
  "web/mail/css/mail.css": {
   "unusedClass": 2
@@ -102,32 +66,14 @@
  "web/marketplace/css/marketplace.css": {
   "sharedDuplicate": 1
  },
- "web/polls/js/poll-tally.js": {
-  "inlineStyleJs": 1
- },
  "web/shared/css/game-settings.css": {
   "sharedDuplicate": 1
- },
- "web/shared/js/core/color-picker.js": {
-  "inlineStyleJs": 1
- },
- "web/shared/js/core/compose-mail.js": {
-  "inlineStyleJs": 3
  },
  "web/shared/js/core/list-header-layout.js": {
   "inlineStyleJs": 3
  },
- "web/shared/js/core/modal.js": {
-  "inlineStyleJs": 2
- },
- "web/shared/js/core/page-overlay.js": {
-  "inlineStyleJs": 2
- },
  "web/shared/js/core/pinch-zoom.js": {
   "inlineStyleJs": 3
- },
- "web/shared/js/core/poll-results.js": {
-  "inlineStyleJs": 1
  },
  "web/shared/js/core/popover.js": {
   "inlineStyleJs": 14

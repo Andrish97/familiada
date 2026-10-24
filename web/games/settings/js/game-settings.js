@@ -1,35 +1,35 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T19151";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T19151";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T19151";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T19151";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19151";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T19151";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T19151";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T19151";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T19151";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T19151";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T19151";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T19372";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T19372";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T19372";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T19372";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19372";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T19372";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T19372";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T19372";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T19372";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T19372";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T19372";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T19372";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-24T19151";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-24T19372";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T19151";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T19151";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T19151";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T19151";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19151";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T19151";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T19372";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T19372";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T19372";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T19372";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19372";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T19372";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -425,7 +425,7 @@ function applyColor(key, hex) {
   localSettings.display.colors[key] = hex;
   markDirty();
   content?.querySelectorAll(`[data-color-key="${key}"]`).forEach(el => {
-    el.style.background = hex;
+    el.style.setProperty("--c", hex);
   });
   postPreviewRow();
 }
@@ -610,7 +610,7 @@ function renderDisplay() {
   const swatches = ["A", "B", "BACKGROUND", "DOT"].map(key => `
     <div class="colorItem">
       <div class="field-label">${escText(colorLabels[key])}</div>
-      <button class="swatchBtn" data-color-key="${key}" style="background:${c[key]}" title="${key}" type="button"></button>
+      <button class="swatchBtn" data-color-key="${key}" style="--c:${c[key]}" title="${key}" type="button"></button>
     </div>
   `).join("");
 
@@ -1530,7 +1530,7 @@ function renderGame() {
         <div class="section-title">${t("gameSettings.game.roundsScoreSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.roundMultipliers")}</div>
-          <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
+          <input class="inp" id="gsMultipliers" value="${escAttr(fieldValue("gsMultipliers", adv.roundMultipliers.join(", ")))}" placeholder="1, 1, 1, 2, 3"/>
           <div class="hint">${t("gameSettings.game.roundMultipliersHint")}</div>
           <div class="field-error" id="gsMultipliersMsg" role="alert"></div>
         </div>
@@ -1539,14 +1539,14 @@ function renderGame() {
         <div class="section-title">${t("gameSettings.game.finaleSection")}</div>
         <div class="setting-item">
           <div class="field-label">${t("gameSettings.game.finalMinPoints")}</div>
-          <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}" style="margin-top:6px;max-width:160px"/>
+          <input class="inp inp--short" id="gsFinalMinPts" type="number" min="0" max="9999" value="${escAttr(fieldValue("gsFinalMinPts", adv.finalMinPoints))}"/>
           <div class="hint">${t("gameSettings.game.finalMinPointsHint")}</div>
           <div class="field-error" id="gsFinalMinPtsMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalMinPtsSuggest"></div>
         </div>
         <div class="setting-item" id="gsFinalTargetField"${hasFinal ? "" : " hidden"}>
           <div class="field-label">${t("gameSettings.game.finalTarget")}</div>
-          <input class="inp" id="gsFinalTarget" type="number" min="1" max="${ADVANCED_LIMITS.finalTarget.max}" value="${escAttr(fieldValue("gsFinalTarget", adv.finalTarget))}" style="margin-top:6px;max-width:160px"/>
+          <input class="inp inp--short" id="gsFinalTarget" type="number" min="1" max="${ADVANCED_LIMITS.finalTarget.max}" value="${escAttr(fieldValue("gsFinalTarget", adv.finalTarget))}"/>
           <div class="field-error" id="gsFinalTargetMsg" role="alert"></div>
           <div class="gs-field-suggest" id="gsFinalTargetSuggest"></div>
         </div>
@@ -1570,12 +1570,12 @@ function renderGame() {
         <div class="setting-item gs-prize-row" id="gsPrizeSettingsRow"${hasFinal && endMode === "money" ? "" : " hidden"}>
           <div>
             <div class="field-label">${t("gameSettings.game.prizeAmount")}</div>
-            <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${escAttr(fieldValue("gsMainPrize", adv.mainPrizeAmount))}" style="margin-top:6px"/>
+            <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${escAttr(fieldValue("gsMainPrize", adv.mainPrizeAmount))}"/>
             <div class="field-error" id="gsMainPrizeMsg" role="alert"></div>
           </div>
           <div>
             <div class="field-label">${t("gameSettings.game.prizeMultiplier")}</div>
-            <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}" style="margin-top:6px"/>
+            <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${escAttr(fieldValue("gsPrizeMultiplier", adv.finalPrizeMultiplier))}"/>
             <div class="field-error" id="gsPrizeMultiplierMsg" role="alert"></div>
           </div>
           <div class="hint gs-prize-hint">${t("gameSettings.game.prizeHint")}</div>

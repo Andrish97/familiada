@@ -2,9 +2,11 @@
 @layer page {
   html, body { background: var(--bg); }
 
+  /* --home-top (topbar + pasek etapów) i --pipeline-top ustawia index.js. */
   body.home-body {
     min-height: 100vh;
     margin: 0;
+    padding-top: var(--home-top, var(--topbar-h));
     color: var(--text);
     background: var(--bg);
   }
@@ -62,7 +64,7 @@
   ===================== */
   .pipeline-wrap {
     position: fixed;
-    top: 0; /* fallback — JS nadpisuje */
+    top: var(--pipeline-top, 0px);
     left: 0;
     right: 0;
     z-index: var(--z-fixed);
@@ -99,7 +101,7 @@
   .pipeline-line-fill {
     position: absolute;
     inset: 0;
-    width: 0%;
+    width: var(--p, 0%);
     background: var(--accent);
     transition: width 80ms linear;
   }

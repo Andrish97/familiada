@@ -6,16 +6,16 @@
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
 // shared/style/components.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
-import { placeAtPoint } from "../../../shared/js/core/popover.js?v=v2026-10-24T19151";
-import { selectionSetSingle } from "./state.js?v=v2026-10-24T19151";
-import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T19151";
-import { buildContext } from "./actions/context.js?v=v2026-10-24T19151";
-import { runAction } from "./actions/run.js?v=v2026-10-24T19151";
-import { formatShortcut } from "./platform.js?v=v2026-10-24T19151";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { renderSelection } from "./render.js?v=v2026-10-24T19151";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { isSheetLayout } from "../../../shared/js/core/device-attrs.js?v=v2026-10-24T19151";
+import { placeAtPoint } from "../../../shared/js/core/popover.js?v=v2026-10-24T19372";
+import { selectionSetSingle } from "./state.js?v=v2026-10-24T19372";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T19372";
+import { buildContext } from "./actions/context.js?v=v2026-10-24T19372";
+import { runAction } from "./actions/run.js?v=v2026-10-24T19372";
+import { formatShortcut } from "./platform.js?v=v2026-10-24T19372";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { renderSelection } from "./render.js?v=v2026-10-24T19372";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { isSheetLayout } from "../../../shared/js/core/device-attrs.js?v=v2026-10-24T19372";
 
 const CLOSE_MS = 230;
 // Palec puszczony po przytrzymaniu daje „klik” bez wciśnięcia w menu —

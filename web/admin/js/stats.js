@@ -1,15 +1,15 @@
 // admin/js/stats.js — Statystyki: przegląd, retencja, wykluczeni, snake, szczegóły i diagnoza rozgrywek.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T19151";
-import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T19151";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
-import { activityDetailRows } from "./activity.js?v=v2026-10-24T19151";
-import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T19151";
-import { setStatus } from "./maintenance.js?v=v2026-10-24T19151";
-import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19151";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T19372";
+import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T19372";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19372";
+import { activityDetailRows } from "./activity.js?v=v2026-10-24T19372";
+import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T19372";
+import { setStatus } from "./maintenance.js?v=v2026-10-24T19372";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19372";
 
 export async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
@@ -95,8 +95,8 @@ export async function loadSnakeStats() {
     const max = Math.max(1, ...daily.map((d) => Math.max(d.scan, d.start)));
     document.getElementById("snakeTrend").innerHTML = daily.map((d) => `
       <div class="snake-day" title="${d.day}: skany ${d.scan}, wejścia ${d.enter}, gry ${d.start}">
-        <div class="snake-bar snake-bar--scan" style="height:${Math.max(2, d.scan / max * 100)}%"></div>
-        <div class="snake-bar snake-bar--start" style="height:${Math.max(2, d.start / max * 100)}%"></div>
+        <div class="snake-bar snake-bar--scan" style="--h:${Math.max(2, d.scan / max * 100)}%"></div>
+        <div class="snake-bar snake-bar--start" style="--h:${Math.max(2, d.start / max * 100)}%"></div>
       </div>`).join("");
     document.getElementById("snakeTrendLabels").innerHTML = daily.map((d) =>
       `<div class="stats-day-label">${String(d.day).slice(8, 10)}</div>`).join("");
@@ -163,7 +163,7 @@ function renderSegmentBars(segments, total) {
         <span class="seg-label">${label}</span>
         <span class="seg-count">${count} <span class="seg-pct">${p}%</span></span>
       </div>
-      <div class="progress"><div class="progress-bar" data-tone="${tone}" style="width:${p}%"></div></div>
+      <div class="progress"><div class="progress-bar" data-tone="${tone}" style="--p:${p}%"></div></div>
     </div>`;
   }).join("");
 }
@@ -187,7 +187,7 @@ function renderTrendChart(trend) {
   chartEl.innerHTML = days.map(({ day, count }) => {
     const h = count > 0 ? Math.max(Math.round((count / maxCount) * 100), 4) : 0;
     return `<div class="trend-day">
-      <div class="trend-bar${count > 0 ? " has-value" : ""}" title="${day}: ${count}" style="height:${h}%"></div>
+      <div class="trend-bar${count > 0 ? " has-value" : ""}" title="${day}: ${count}" style="--h:${h}%"></div>
     </div>`;
   }).join("");
 
@@ -997,7 +997,7 @@ function buildColorsCell(display) {
     const dot = document.createElement("span");
     dot.title = `${DISPLAY_COLOR_LABELS[key] || key}: ${val}`;
     dot.className = "stats-color-dot";
-    dot.style.background = val;
+    dot.style.setProperty("--c", val);
     wrap.appendChild(dot);
   }
   if (!wrap.children.length) wrap.textContent = "—";

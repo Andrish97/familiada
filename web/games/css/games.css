@@ -48,7 +48,7 @@
   .bld-preview-poll .resultQ .aBar {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 0;
+    width: var(--p, 0%);
     background: linear-gradient(90deg, var(--g-10), var(--g-35));
     pointer-events: none;
   }

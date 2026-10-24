@@ -3,14 +3,14 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T19151";
-import { computeListing } from "./data/listing.js?v=v2026-10-24T19151";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T19151";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T19151";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T19151";
-import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-24T19151";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T19372";
+import { computeListing } from "./data/listing.js?v=v2026-10-24T19372";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T19372";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T19372";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T19372";
+import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-24T19372";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -64,7 +64,7 @@ function tagDotsHtml(state, tagIdSet) {
   if (!tagIdSet?.size) return "";
   const tags = (state.store?.tags || []).filter((tg) => tagIdSet.has(tg.id)); // w kolejności tagów
   const max = 3;
-  const dot = (tg) => `<span class="tag-dot" style="background:${esc(tg.color || "rgba(255,255,255,.25)")}" data-tooltip="#${esc(tg.name || t("baseExplorer.defaults.tag"))}"></span>`;
+  const dot = (tg) => `<span class="tag-dot"${tg.color ? ` style="--c:${esc(tg.color)}"` : ""} data-tooltip="#${esc(tg.name || t("baseExplorer.defaults.tag"))}"></span>`;
   const rest = tags.slice(max);
   const more = rest.length
     ? `<span class="tag-more" data-tooltip="${esc(rest.map((tg) => `#${tg.name}`).join(" "))}">+${rest.length}</span>`
@@ -285,7 +285,7 @@ export function renderLeft(state) {
     const sel = q.tagIds.includes(tg.id);
     return `
       <div class="row${sel ? " is-selected" : ""}" data-kind="tag" data-id="${esc(tg.id)}" data-key="tag:${esc(tg.id)}">
-        <span class="tag-dot" style="background:${esc(tg.color || "rgba(255,255,255,.25)")}"></span>
+        <span class="tag-dot"${tg.color ? ` style="--c:${esc(tg.color)}"` : ""}></span>
         <div class="title-text">#${esc(tg.name || t("baseExplorer.defaults.tag"))}</div>
       </div>`;
   }).join("");

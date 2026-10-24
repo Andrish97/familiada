@@ -213,7 +213,7 @@
   .swatchBtn{
     width:22px; height:22px; border-radius:var(--r-sm);
     border:1px solid var(--w-25);
-    background:var(--w-8);
+    background:var(--c, var(--w-8));
     box-shadow:0 10px 24px var(--k-40);
     cursor:pointer; flex:0 0 auto;
   }
@@ -257,6 +257,8 @@
   .sectionBlock > .section-title{ margin-bottom:10px; }
   .setting-item{ margin-bottom:12px; }
   .setting-item:last-child{ margin-bottom:0; }
+  .setting-item .field-label + .inp{ margin-top:6px; }
+  .setting-item .inp--short{ max-width:160px; }
   .gs-row-dragging{ opacity:.35; }
   .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--accent); }
   .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--accent); }

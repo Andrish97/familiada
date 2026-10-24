@@ -33,7 +33,9 @@ test('strony bez initPage używają wspólnego guarda orientacji', () => {
   assert.match(deviceGuard, /visualViewport\?\.addEventListener\("resize", refresh/);
   // Obrót i nieobsługiwany TV nie dostają „Wróć” — rozwiązaniem nie jest wyjście ze strony.
   assert.match(deviceGuard, /backHref:\s*state\s*===\s*"rotate"\s*\|\|\s*tvUnsupported\s*\?\s*null\s*:\s*backHref/);
-  assert.match(overlay, /document\.body\.style\.visibility\s*=\s*"hidden"/);
+  // Blokada urządzenia chowa stronę atrybutem na <html> (base.css: html[data-page-guard] body).
+  assert.match(overlay, /setAttribute\("data-page-guard"/);
+  assert.match(read('shared/style/base.css'), /html\[data-page-guard\] body/);
 });
 
 test('logowanie pokazuje pierwszy etap po inicjalizacji języka i ukrywa go do tego momentu', () => {

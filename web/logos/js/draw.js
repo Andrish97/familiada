@@ -15,15 +15,17 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T19151";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-24T19151";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-24T19151";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-24T19151";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-24T19151";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19372";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-24T19372";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T19372";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-24T19372";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-24T19372";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-24T19372";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-24T19372";
+import { setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -397,14 +399,14 @@ export function initDrawEditor(ctx) {
     stageHost.appendChild(layer);
   }
 
-  const hideCursorDot = () => { if (cursorDot) cursorDot.style.transform = "translate(-9999px,-9999px)"; };
+  const hideCursorDot = () => setVars(cursorDot, { "--x": null, "--y": null });
 
   function placeCursorDot(x, y) {
     if (!cursorDot || !canvas || (tool !== TOOL.BRUSH && tool !== TOOL.ERASER)) return hideCursorDot();
     const rect = canvas.upperCanvasEl.getBoundingClientRect();
     const px = x - rect.left, py = y - rect.top;
     if (px < 0 || py < 0 || px > rect.width || py > rect.height) return hideCursorDot();
-    cursorDot.style.transform = `translate(${px - cursorDot.offsetWidth / 2}px, ${py - cursorDot.offsetHeight / 2}px)`;
+    setVars(cursorDot, { "--x": `${px - cursorDot.offsetWidth / 2}px`, "--y": `${py - cursorDot.offsetHeight / 2}px` });
   }
 
   function updateCursor() {
@@ -424,9 +426,8 @@ export function initDrawEditor(ctx) {
       set("none", "none");
       const size = tool === TOOL.BRUSH ? settings.BRUSH.stroke : settings.ERASER.size;
       const d = Math.max(6, Math.round(size * canvas.getZoom()));
-      cursorDot.style.width = `${d}px`;
-      cursorDot.style.height = `${d}px`;
-      cursorDot.style.borderRadius = tool === TOOL.BRUSH ? "999px" : "2px";
+      setVars(cursorDot, { "--d": `${d}px` });
+      cursorDot.classList.toggle("is-round", tool === TOOL.BRUSH);
       placeCursorDot(lastPointer.x, lastPointer.y);
       return;
     }
@@ -826,7 +827,7 @@ export function initDrawEditor(ctx) {
     const s = settings.SHAPES;
     const shape = shapeById(currentShape);
     let html =
-      `<div class="ctxGroup" style="position:relative;"><button class="btn xs ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
+      `<div class="ctxGroup"><button class="btn xs ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
       `<span class="ctxSelectIco">${shape.icon}</span><span class="ctxSelectLabel">${t(shape.label)}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button></div>` +
       group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
       group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
@@ -978,12 +979,10 @@ export function initDrawEditor(ctx) {
     if ($("shapePickerPop")) return closeShapePicker();
     const anchor = $("cShapeBtn");
     if (!anchor) return;
-    const r = anchor.getBoundingClientRect();
     const pop = document.createElement("div");
     pop.id = "shapePickerPop";
     pop.className = "shapePickerPop ctxPop";
     pop.setAttribute("role", "listbox");
-    pop.style.cssText = `top:${r.bottom + 6}px;left:${r.left}px;`;
     pop.innerHTML = SHAPES.map((s) =>
       `<button class="spi" type="button" role="option" data-shape="${s.id}" aria-selected="${s.id === currentShape}" aria-label="${t(s.label)}" title="${t(s.label)}">${s.icon}</button>`).join("");
     pop.addEventListener("click", (e) => {
@@ -993,6 +992,7 @@ export function initDrawEditor(ctx) {
       setShape(item.dataset.shape);
     });
     document.body.appendChild(pop);
+    placeDropdown(anchor, pop, { align: "start" });
     document.addEventListener("pointerdown", onShapePickerOutside, true);
   }
 
@@ -1040,7 +1040,7 @@ export function initDrawEditor(ctx) {
       name.textContent = f.label;
       const sample = document.createElement("span");
       sample.className = "fontPickSwatch";
-      sample.style.fontFamily = f.value;
+      setVars(sample, { "--font": f.value });
       sample.textContent = T("sampleText");
       item.append(name, sample);
       item.addEventListener("click", () => {
@@ -1055,11 +1055,7 @@ export function initDrawEditor(ctx) {
     if (!fontPop || !DRAW_FONTS.length) return;
     fontCurrent = current || "";
     fontOnSelect = onSelect;
-    const r = $("toolsDraw")?.getBoundingClientRect();
-    if (r) {
-      fontPop.style.top = `${Math.round(r.bottom + 8)}px`;
-      fontPop.style.left = `${Math.max(8, Math.round(r.left))}px`;
-    }
+    placeDropdown($("toolsDraw"), fontPop, { align: "start" });
     fontPop.hidden = false;
     fontSearch.value = "";
     renderFontList();

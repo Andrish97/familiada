@@ -1,11 +1,12 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T19151";
-import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T19151";
-import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T19151";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T19372";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T19372";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T19372";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -238,14 +239,11 @@ export function initExportModal() {
     }
     if (xProgCount) xProgCount.textContent = `${Number(i || 0)}/${Number(n || 0)}`;
 
-    const nn = Number(n || 0);
-    const ii = Number(i || 0);
-    const pct = nn > 0 ? Math.max(0, Math.min(100, Math.round((ii / nn) * 100))) : 0;
-    if (xProgBarFill) xProgBarFill.style.width = `${pct}%`;
+    setBar(xProgBarFill, ratioPct(i, n));
 
     if (xProgMsg) {
       xProgMsg.textContent = msg || "";
-      xProgMsg.style.opacity = isError ? "1" : ".85";
+      xProgMsg.dataset.kind = isError ? "error" : "";
     }
   }
 

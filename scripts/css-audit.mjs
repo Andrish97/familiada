@@ -45,6 +45,7 @@ const OUTSIDE_ENGINE = [
   "web/shared/style/flat.css",
   "web/shared/js/core/mail-document.js",
   "web/shared/js/core/marketing-mail.js",
+  "web/shared/js/core/compose-mail.js",
 ];
 // Ekrany gry (§3.1): własne tokeny z prefiksem na :root, kolory gry tylko w nich.
 const GAME_PREFIX = {
@@ -144,7 +145,7 @@ function countInline(source, html) {
       styleBlock: (source.match(/<style[\s>]/g) || []).length,
     };
   }
-  return { inlineStyleJs: (source.match(/\.style\.(?!setProperty|removeProperty|getPropertyValue)[a-zA-Z]+\s*=(?!=)|\.style\.cssText\s*=|\bstyle\s*=\s*\\?["']/g) || []).length };
+  return { inlineStyleJs: (source.match(/\.style\.(?!setProperty|removeProperty|getPropertyValue)[a-zA-Z]+\s*=(?!=)|\.style\.cssText\s*=|\bstyle\s*=\s*\\?["'](?!--)/g) || []).length };
 }
 
 export function audit() {

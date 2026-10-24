@@ -7,10 +7,11 @@
 //   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
 // Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-24T19151";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19372";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-24T19372";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-24T19372";
 
 
 const ASPECT = 26 / 11;
@@ -676,17 +677,7 @@ export function initImageEditor(ctx) {
     for (const p of panels) p.classList.toggle("is-open", p.dataset.panel === name);
     panelsWrap.classList.add("is-open");
 
-    const r = anchor.getBoundingClientRect();
-    const place = (w, h) => {
-      const pad = 8;
-      panelsWrap.style.left = `${Math.round(clamp(r.left, pad, window.innerWidth - w - pad))}px`;
-      panelsWrap.style.top = `${Math.round(clamp(r.bottom + 8, pad, window.innerHeight - h - pad))}px`;
-    };
-    place(0, 0);
-    requestAnimationFrame(() => {
-      const active = panelsWrap.querySelector(".imgPanel.is-open");
-      if (active) place(active.offsetWidth || 320, active.offsetHeight || 120);
-    });
+    placeDropdown(anchor, panelsWrap, { align: "start" });
   }
 
   // =========================================================

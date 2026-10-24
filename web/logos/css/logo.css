@@ -304,7 +304,7 @@
   }
   /* Pozycja: wspólne .menu-item; tu tylko układ nazwy i próbki. */
   .fontPickPop .fontPickItem{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .fontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
+  .fontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0;font-family:var(--font, inherit); }
   .fontPickPop .fontPickEmpty{ padding: 16px; text-align: center; opacity: .6; font-size: 13px; }
 
   /* =========================================================
@@ -902,11 +902,15 @@
      kropka przesuwana przez transform. */
   .has-cursor-layer { position: relative; }
   .draw-cursor-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  /* Kropka pędzla/gumki: rozmiar --d i położenie --x/--y ustawia draw.js. */
   .draw-cursor-dot {
     position: absolute; left: 0; top: 0;
-    transform: translate(-9999px, -9999px);
+    width: var(--d, 6px); height: var(--d, 6px);
+    border-radius: var(--r-xs);
+    transform: translate(var(--x, -9999px), var(--y, -9999px));
     border: 1px solid var(--text-soft);
     box-shadow: 0 0 0 1px var(--k-40);
   }
+  .draw-cursor-dot.is-round { border-radius: var(--r-pill); }
   .fontPickName { flex: 1; text-align: left; font-family: var(--font-ui); }
 }

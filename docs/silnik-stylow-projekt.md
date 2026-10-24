@@ -336,6 +336,20 @@ wystąpienia w jej grafie modułów), duplikaty klas między plikami -41
 (zasięg `:where(.x-body)` albo przeniesienie do silnika). Teksty błędów
 Control przez tłumaczenia (`control.errors.*`).
 
+**Realizacja — wartości z JS (2026-10-24, prośba użytkownika).** Moduł
+`web/shared/js/core/ui-metrics.js`: stałe odstępów (`EDGE_PAD`, `ANCHOR_GAP`,
+`LIST_GAP`, `LIST_MIN_HEIGHT`), `clamp`, `clampPct`, `ratioPct`,
+`setProgress` (--p), `setVars`. Paski postępu (okno postępu, import/eksport
+Gier, Baz, Logo, Eksploratora — ten na wspólnym `.uni-progress`, wyniki
+ankiet, linia etapów strony głównej, limity poczty, generator) przez `--p`;
+słupki statystyk `--h`; kolory z danych `--c`; panele edytora logo (kształty,
+czcionki, panele obrazu) na `placeDropdown`; kursor pędzla `--d/--x/--y`;
+strona główna `--home-top`/`--pipeline-top`; blokada urządzenia
+`html[data-page-guard]`. Usunięty martwy `explorer/js/actions.js` (4804
+linii, nieimportowany — zastąpiony przez `actions/` i `ui/*`). Styl z JS
+172 → 65 (reszta: pomiary na żywo i okno edycji Gry Producenta — decyzja
+użytkownika).
+
 ## 7. Narzędzia i testy
 
 - **Audyt** (`scripts/css-audit.mjs`): nowy tryb dla silnika — parser

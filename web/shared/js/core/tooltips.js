@@ -1,4 +1,5 @@
 // Wygląd: .app-tooltip w silniku stylów (web/shared/style/components.css).
+import { EDGE_PAD, clamp } from "./ui-metrics.js?v=v2026-10-24T19372";
 function install() {
   if (typeof document === "undefined" || document.documentElement.dataset.tooltipSystem) return;
   document.documentElement.dataset.tooltipSystem = "ready";
@@ -51,11 +52,11 @@ function install() {
     const height = tip.offsetHeight;
     const x = pointer?.x ?? (rect.left + rect.width / 2);
     const y = pointer?.y ?? rect.top;
-    const left = Math.max(8, Math.min(innerWidth - width - 8, x - width / 2));
+    const left = clamp(x - width / 2, EDGE_PAD, innerWidth - width - EDGE_PAD);
     const above = y - height - 12;
-    const top = above >= 8 ? above : Math.min(innerHeight - height - 8, (pointer ? y + 16 : rect.bottom + 10));
+    const top = above >= EDGE_PAD ? above : Math.min(innerHeight - height - EDGE_PAD, (pointer ? y + 16 : rect.bottom + 10));
     tip.style.left = `${left}px`;
-    tip.style.top = `${Math.max(8, top)}px`;
+    tip.style.top = `${Math.max(EDGE_PAD, top)}px`;
   }
 
   function schedulePosition() {

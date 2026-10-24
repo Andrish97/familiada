@@ -1,7 +1,8 @@
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19372";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19372";
+import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T19372";
 
 
 let games = [];
@@ -41,8 +42,7 @@ function setBusy(busy) {
 function setProgress(done, total) {
   const fill = $('gen-progress-fill');
   if (!fill) return;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-  fill.style.width = `${pct}%`;
+  setBar(fill, ratioPct(done, total));
 }
 
 function makeLocalId() {
@@ -946,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-24T19151';
+    a.download = 'przykladowa-gra.json?v=v2026-10-24T19372';
 
     document.body.appendChild(a);
     a.click();

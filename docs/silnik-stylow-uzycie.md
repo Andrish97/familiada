@@ -201,6 +201,17 @@ z sceną zrzutów i wpisem w tej tabeli.
    wygląd, `style.cssText`. Dozwolone tylko wartości liczone na bieżąco
    (pozycja, rozmiar, `transform` przy przesuwaniu) i zmienne CSS przez
    `style.setProperty("--x", …)`. Pokazywanie/ukrywanie: atrybut `hidden`.
+   **Wartości z JS — `core/ui-metrics.js`:** pasek postępu `setProgress(el, pct)`
+   (CSS: `width: var(--p, 0%)` — `.progress-bar`, `.aBar`, linia etapów),
+   słupek wykresu `--h`, kolor z danych `--c` (kropki tagów, próbki kolorów,
+   podgląd koloru), inne zmienne `setVars(el, { "--x": … })`; w szablonie HTML
+   tylko `style="--x:…"`. Odstępy wyskakujących elementów: `EDGE_PAD` (8,
+   od krawędzi okna), `ANCHOR_GAP` (8, menu od przycisku), `LIST_GAP` (6,
+   lista od pola) — liczy je `popover.js` (`placeDropdown`, `placeUnder`,
+   `placeAtPoint`); nowe menu/panel pod przyciskiem — `placeDropdown`, nie
+   własne liczenie. W JS zostają tylko pomiary na żywo (ramka zaznaczania,
+   kadr obrazu, zoom, szerokość kolumn, siatka Control). Zapadka:
+   `unit/uiMetrics.test.js`.
 4. **Android — przyciski z ikonami:** tło kryjące (odcień
    `--btn-tint` na `--under`, jak `.btn`), bez `opacity` < 1, `filter`,
    `backdrop-filter` i `transform` w stanach dotyku. Podświetlenie

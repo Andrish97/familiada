@@ -1,7 +1,8 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-24T19151";
-import { setMessage } from "./toast.js?v=v2026-10-24T19151";
-import { t } from "../../translation/translation.js?v=v2026-10-24T19151";
-import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T19151";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T19372";
+import { setMessage } from "./toast.js?v=v2026-10-24T19372";
+import { t } from "../../translation/translation.js?v=v2026-10-24T19372";
+import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T19372";
+import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-24T19372";
 
 let modalSeq = 0;
 
@@ -359,8 +360,7 @@ export function progressModal({ title, text = "", doneText } = {}) {
     // bez kroku i liczby elementów (np. jeden plik) wiersz z licznikiem znika
     countEl.textContent = Number(n) > 0 ? `${Number(i) || 0}/${Number(n)}` : "";
     rowEl.hidden = !stepEl.textContent && !countEl.textContent;
-    const pct = Number(n) > 0 ? Math.round((Number(i) / Number(n)) * 100) : 0;
-    barEl.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    setProgress(barEl, ratioPct(i, n));
     msgEl.textContent = msg ? String(msg) : "";
     msgEl.dataset.kind = isError ? "error" : "";
     if (isError || done) controller.allowClose();
@@ -369,7 +369,7 @@ export function progressModal({ title, text = "", doneText } = {}) {
   controller.setMessage = (value, kind = "") => { msgEl.textContent = value || ""; msgEl.dataset.kind = kind; };
   /** Sam pasek (0–100) bez licznika, np. eksport jednego pliku. */
   controller.setPercent = (pct, { isError = false } = {}) => {
-    barEl.style.width = `${Math.max(0, Math.min(100, Number(pct) || 0))}%`;
+    setProgress(barEl, pct);
     barEl.dataset.kind = isError ? "error" : "";
     rowEl.hidden = !stepEl.textContent && !countEl.textContent;
   };

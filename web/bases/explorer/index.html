@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-24T19151"/>
+  <meta name="app-version" content="v2026-10-24T19372"/>
 
 
   <meta charset="utf-8" />
@@ -16,25 +16,25 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19151" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19151"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19151"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19151"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19151"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19151"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-24T19151" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-24T19151" />
-  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19151"></script>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19372" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19372"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19372"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19372"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19372"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19372"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-24T19372" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-24T19372" />
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19372"></script>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19151"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19372"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19151" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19372" defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-24T19151"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-24T19372"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19151" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19372" defer></script>
 
 </head>
 
@@ -285,17 +285,15 @@
 
         <div id="xErr" class="importMsg" hidden></div>
 
-        <div class="xProg" id="xProg" hidden>
-          <div class="xProgTop">
-            <div id="xProgStep" class="xProgStep">—</div>
-            <div id="xProgCount" class="xProgCount">0/0</div>
+        <div class="uni-progress" id="xProg" hidden>
+          <div class="uni-progress-row">
+            <div id="xProgStep" class="uni-progress-step">—</div>
+            <div id="xProgCount" class="uni-progress-count">0/0</div>
           </div>
-        
-          <div class="xProgBar">
-            <div id="xProgBarFill" class="xProgBarFill"></div>
+          <div class="progress">
+            <div id="xProgBarFill" class="progress-bar"></div>
           </div>
-        
-          <div id="xProgMsg" class="xProgMsg"></div>
+          <div id="xProgMsg" class="importMsg uni-progress-msg"></div>
         </div>
 
         <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
@@ -364,7 +362,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-24T19151"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-24T19372"></script>
 
 </body>
 </html>

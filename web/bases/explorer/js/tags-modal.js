@@ -7,15 +7,15 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-24T19151";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T19151";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19151";
-import { openDialog, closeDialog, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T19151";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T19151";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T19151";
-import { normalizeText } from "./data/listing.js?v=v2026-10-24T19151";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-24T19151";
+import * as ops from "./ops.js?v=v2026-10-24T19372";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T19372";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19372";
+import { openDialog, closeDialog, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T19372";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T19372";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T19372";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T19372";
+import { normalizeText } from "./data/listing.js?v=v2026-10-24T19372";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-24T19372";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
 function esc(s) {
@@ -387,11 +387,11 @@ export async function openTagsModal(state, opts = {}) {
         const ui = triToUi(tri);
 
         return `
-          <label class="tags-row" data-tag-id="${esc(tag.id)}" data-state="${tri}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
+          <label class="tags-row${editor ? "" : " is-readonly"}" data-tag-id="${esc(tag.id)}" data-state="${tri}">
             <input type="checkbox" data-tag-id="${esc(tag.id)}" aria-checked="${tri === "some" ? "mixed" : ui.checked}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
-            <span class="tag-dot" style="background:${esc(tag.color || "#777")}"></span>
+            <span class="tag-dot"${tag.color ? ` style="--c:${esc(tag.color)}"` : ""}></span>
             <span class="m-p">#${esc(tag.name || "")}</span>
-            ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
+            ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note is-placeholder" aria-hidden="true">.</span>`}
           </label>
         `;
       })
@@ -433,7 +433,7 @@ export async function openTagsModal(state, opts = {}) {
     }
     if (E.editName) E.editName.value = m.edit.name;
 
-    if (E.editColorDot) E.editColorDot.style.background = m.pickedColor;
+    E.editColorDot?.style.setProperty("--c", m.pickedColor);
     if (E.editColorTile) {
       // jeśli kafel ma mieć też kolor tła – zależy od Twojego HTML/CSS
       E.editColorTile.style.setProperty("--tag-color", m.pickedColor);
@@ -449,7 +449,7 @@ export async function openTagsModal(state, opts = {}) {
   function showPicked(hex) {
     m.pickedColor = hex;
     // od razu aktualizuj L2
-    if (E.editColorDot) E.editColorDot.style.background = hex;
+    E.editColorDot?.style.setProperty("--c", hex);
     if (E.editColorTile) E.editColorTile.style.setProperty("--tag-color", hex);
   }
 

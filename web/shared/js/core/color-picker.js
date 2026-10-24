@@ -3,8 +3,8 @@
 // w components.css). Identyfikatory części: <prefix>Preview, <prefix>Hex,
 // <prefix>R/G/B i <prefix>RVal/GVal/BVal.
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T19151";
-import { hexToRgb, rgbToHex } from "./color.js?v=v2026-10-24T19151";
+import { t } from "../../translation/translation.js?v=v2026-10-24T19372";
+import { hexToRgb, rgbToHex } from "./color.js?v=v2026-10-24T19372";
 
 const CHANNELS = ["R", "G", "B"];
 
@@ -47,7 +47,7 @@ export function bindColorPicker(root, { value, onChange } = {}) {
       if (val) val.textContent = String(rgb[i]);
     });
     if (hexInput && !keepHex) hexInput.value = hex;
-    if (preview) preview.style.background = hex;
+    preview?.style.setProperty("--c", hex);
   }
 
   function set(hex) {

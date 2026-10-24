@@ -1,14 +1,9 @@
 // Położenie wyskakujących menu (position: fixed) — jedno dla całej aplikacji:
 // menu języka, „Więcej” i konta w topbarze (placeDropdown), lista rozwijana
 // ui-select (placeUnder), menu kontekstowe (placeAtPoint). Zawsze w oknie,
-// 8 px od krawędzi.
+// EDGE_PAD od krawędzi.
 
-const PAD = 8;
-const GAP = 8;
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(v, max));
-}
+import { EDGE_PAD as PAD, ANCHOR_GAP as GAP, LIST_GAP, LIST_MIN_HEIGHT, clamp } from "./ui-metrics.js?v=v2026-10-24T19372";
 
 // Pomiar ukrytego menu: na chwilę widoczne, ale niewidzialne i bez kliknięć.
 function measured(el, fn) {
@@ -51,7 +46,7 @@ export function placeDropdown(anchor, el, { align = "end" } = {}) {
  * lewej krawędzi; nad polem, gdy pod nim jest mniej miejsca. Wysokość listy
  * ograniczona miejscem w oknie (przewija się sama).
  */
-export function placeUnder(anchor, el, { minWidth = 0, gap = 6, preferredHeight = 260 } = {}) {
+export function placeUnder(anchor, el, { minWidth = 0, gap = LIST_GAP, preferredHeight = 260 } = {}) {
   if (!anchor || !el) return;
   const a = anchor.getBoundingClientRect();
   const width = Math.min(Math.max(a.width, minWidth), innerWidth - 2 * PAD);
@@ -65,7 +60,7 @@ export function placeUnder(anchor, el, { minWidth = 0, gap = 6, preferredHeight 
     right: "auto",
     top: down ? `${a.bottom + gap}px` : "auto",
     bottom: down ? "auto" : `${innerHeight - a.top + gap}px`,
-    maxHeight: `${Math.max(down ? below : above, 80)}px`,
+    maxHeight: `${Math.max(down ? below : above, LIST_MIN_HEIGHT)}px`,
   });
 }
 

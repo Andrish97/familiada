@@ -4,8 +4,9 @@
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
 // Gotowe odpowiedzi punktowane są pokazywane malejąco według punktów;
 // otwarte wyniki zachowują kolejność źródłową albo pojawiania się wpisów.
-import { t } from "../../translation/translation.js?v=v2026-10-24T19151";
-import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-24T19151";
+import { t } from "../../translation/translation.js?v=v2026-10-24T19372";
+import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-24T19372";
+import { setProgress } from "./ui-metrics.js?v=v2026-10-24T19372";
 
 
 // poll_stopped: te same surowe wiersze co na żywo (głosy już się nie zmieniają)
@@ -26,8 +27,7 @@ export function makeResultRow(text) {
 export function setRowValue(r, value, pct, unitKey = "polls.results.votesUnitCount") {
   const next = t(unitKey, { n: value });
   if (r.val.textContent !== next) r.val.textContent = next;
-  const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
-  if (r.bar.style.width !== w) r.bar.style.width = w;
+  setProgress(r.bar, pct, 1);
 }
 
 // Zwraca { render(data) -> tekst meta, reset(), slots() }.
