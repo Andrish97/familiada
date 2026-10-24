@@ -141,7 +141,11 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   z `unit/legacy-test-accounts.json`. Spece ze starymi kontami: jeden przebieg
   naraz jak dotąd. Konta `test1`…`test17` i reguły Cloudflare `testN@`
   usunięte (2026-10-22, migracja 463) — spece ze starymi kontami nie przejdą
-  przed przepisaniem. Speców e2e nie poprawiać bez polecenia użytkownika.
+  przed przepisaniem.
+- **Poprawianie speców e2e (decyzja użytkownika 2026-10-24):** agent poprawia
+  spec bez pytania, gdy test rozjechał się z zamierzoną zmianą (próg, tekst
+  z tłumaczeń, ścieżka pliku, token koloru) — intencja testu zostaje, powód
+  w opisie commita. Dawna zasada „nie poprawiać bez polecenia” wycofana.
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
