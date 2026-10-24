@@ -1,11 +1,11 @@
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-24T21364';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-24T21364';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-24T21364';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-24T21364';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-24T21364';
-import { initSplitTabs } from '../../shared/js/core/split-tabs.js?v=v2026-10-24T21364';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-24T21364';
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T21364";
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-24T22002';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-24T22002';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-24T22002';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-24T22002';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-24T22002';
+import { initSplitTabs } from '../../shared/js/core/split-tabs.js?v=v2026-10-24T22002';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-24T22002';
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T22002";
 
 
 const $ = id => document.getElementById(id);
