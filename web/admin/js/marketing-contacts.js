@@ -1,18 +1,18 @@
 // admin/js/marketing-contacts.js — Kontakty marketingowe (lead-finder): przebiegi, tabela, dzienniki.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T21225";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21225";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21225";
-import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-24T21225";
-import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-24T21225";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T21301";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21301";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21301";
+import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-24T21301";
+import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-24T21301";
 
 // Kontakty marketingowe (lead-finder): tabela, przebiegi, dzienniki.
 export async function initMarketingContacts() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-24T21225");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-24T21301");
 
   const MC_PAGE_SIZE = 50;
 
