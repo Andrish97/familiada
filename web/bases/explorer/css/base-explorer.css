@@ -255,7 +255,7 @@
   }
 
   #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,:where(.explorer-body) .searchBox {
-      background: var(--w-4)
+      background: linear-gradient(var(--w-4), var(--w-4)) var(--under) /* kryjące (Android) */
   }
 
   :where(.explorer-body) .searchBox {
@@ -1466,9 +1466,12 @@
     margin-top: 12px;
     padding: 12px;
     border-radius: var(--r-md);
-    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
+    /* Kryjące (Android): odcień listy jako kolor; wiersze biorą go za podłoże. */
+    --list-under: color-mix(in srgb, var(--white) 4%, var(--under));
+    background: var(--list-under);
     border: 1px solid var(--line, var(--w-8));
   }
+  .moveList > * { --under: var(--list-under); }
   .tags-modal .tagsCardLbl { font-weight: 800; }
   .tags-modal .tagsColorTile {
     justify-content: flex-start;
@@ -1615,7 +1618,7 @@
     overscroll-behavior: contain;
     padding: 6px;
     border-radius: var(--r-md);
-    background: var(--w-4);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
     border: 1px solid var(--line, var(--w-8));
   }
   /* stopka okien Przenieś do i Szukaj na komputerze: jak .tagsFoot (odstęp
