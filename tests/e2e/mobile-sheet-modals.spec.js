@@ -911,7 +911,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
    stronie /login dla zwykłych kont Supabase, nie ma NIC wspólnego z
    Cloudflare Access przed panelem admina -- w tym repo nie ma dotąd
    żadnego mechanizmu e2e do autoryzacji Cloudflare Access, więc nawigacja
-   do /settings w CI może się nie udać, zanim poniższe testy cokolwiek
+   do panelu admina w CI może się nie udać, zanim poniższe testy cokolwiek
    sprawdzą (stąd test.skip() guardy).
    Dodatkowo dane potrzebne do otwarcia tych modali (oceny gier,
    zgłoszenia mailowe) są czytane przez settings.js wyłącznie przez
@@ -927,7 +927,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
    realnym dostępem admina.
 ===================================================================== */
 
-const SETTINGS_URL = "https://www.familiada.online/settings";
+const SETTINGS_URL = "https://admin.familiada.online/";
 
 async function simulateSheetOpen(page, overlaySelector) {
   await page.evaluate((sel) => {

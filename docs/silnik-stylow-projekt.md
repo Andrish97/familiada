@@ -201,8 +201,8 @@ Nowych klas pomocniczych nie dodaje się bez wpisu w tym dokumencie.
 | `page--doc` (tekst, spis treści) | Instrukcja, Prywatność, strona główna (sekcje) | urządzenie + work |
 | `page--block` (ekran blokady) — **jeden wzorzec dla przerwy i 404** (decyzja 2026-10-21) | przerwa techniczna, 404 | urządzenie + short |
 | ekrany gry (poza silnikiem, tylko `tokens.css` + wspólne okna/komunikaty) | wyświetlacz, host, buzzer, TV, QR ankiety, snake | własne |
-| `page--admin` (nawigacja paneli + tabele) — **ostatnia faza E23** (§8a) | `/settings/` | urządzenie + work, wide; kontenery |
-| **poza E23:** laboratoria `/settings/tools/*` (strony techniczne, celowo bez wspólnego silnika) | — | — |
+| `page--admin` (nawigacja paneli + tabele) — **ostatnia faza E23** (§8a) | `/admin/` | urządzenie + work, wide; kontenery |
+| **poza E23:** laboratoria `/admin/tools/*` (strony techniczne, celowo bez wspólnego silnika) | — | — |
 
 Treść ograniczona szerokością tylko tam, gdzie wzorzec tak mówi (dziś
 `.wrap` nie ma `max-width`; karty mają własne limity 520/560/680/720).
@@ -296,7 +296,7 @@ przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
    i stary `base.css`, gdy audyt pokaże 0 użyć (po panelu admina);
    aktualizacja `wzorce-ui.md`. Laboratoria mają własne style.
 
-## 8a. Panel admina `/settings/` (decyzja 2026-10-21: przepisać, ostatnia faza)
+## 8a. Panel admina `/admin/` (decyzja 2026-10-21: przepisać, ostatnia faza)
 
 Najbardziej złożona strona: `settings.js` 7508 linii (242 funkcje,
 43 szablony `innerHTML`), `settings.css` 2582 linie (66 `!important`),
@@ -315,7 +315,7 @@ starym silniku, bez zmian wyglądu:
    wspólne pomocnicze) — bez zmian zachowania i wyglądu; unit/e2e admina.
 3. **Style z HTML/JS do klas** w obecnym `settings.css` (153 `style=`,
    ~110 szablonów, 36 `cssText`) — bez zmian wyglądu.
-4. **Sceny zrzutów dla każdego panelu** (dziś jedna scena `/settings/`).
+4. **Sceny zrzutów dla każdego panelu** (dziś jedna scena `/admin/`).
 5. **Przepięcie** na silnik i wspólne mechanizmy: komponent
    `data-table`, `progress`, `status-line`, `dialog`, `list-tools`,
    pigułki statusów poczty (12+ wariantów → `badge` ze znaczeniami).
@@ -355,7 +355,7 @@ starych plików.
    (małe: pigułki w polach, chipy), `--r-md 14` (przyciski, pola,
    wiersze, kafle), `--r-lg 20` (karty, okna) + `--r-pill`. Karty
    i zakładki — jedna wartość (`--r-lg`).
-4. **Laboratoria** `/settings/tools/*` — bez podpięcia do silnika.
+4. **Laboratoria** `/admin/tools/*` — bez podpięcia do silnika.
 5. **Kolejność stron i pilot** — przyjęta domyślna z §8 (najpierw mała
    strona Zadania jako próba procesu, potem od prostych do złożonych).
 6. **E23 po E13** — E13 dotyczy treści i zachowań, E23 to lekkie
@@ -363,7 +363,7 @@ starych plików.
    po E23 poprawić punktowo.
 7. **Progi:** 3 szerokości + rodzaj urządzenia (dotyk) jako warunek (§3.3).
 8. **Przerwa i 404:** jeden wzorzec `page--block`.
-9. **Panel admina** `/settings/`: też przepisać — bardzo złożony, więc
+9. **Panel admina** `/admin/`: też przepisać — bardzo złożony, więc
    ostatnia faza E23 z przygotowaniem na starym silniku (§8a).
 
 ## 12. Szacunek

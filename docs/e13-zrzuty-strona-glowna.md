@@ -57,7 +57,7 @@ Rozmiary docelowe: widoki aplikacji **1440×900 px**, telefon **390×844 px**, g
 
 ## Instalacja panelu admina
 
-- Panel ma osobny manifest i zakres aplikacji `/settings/`, dzięki czemu można dodać osobny skrót „Panel admina”, niezależny od aplikacji Familiada.
+- Panel ma osobny manifest i zakres aplikacji `/admin/`, dzięki czemu można dodać osobny skrót „Panel admina”, niezależny od aplikacji Familiada.
 - Przycisk instalacji pojawia się po uzyskaniu dostępu do panelu. Cloudflare Access nadal chroni stronę przy każdym otwarciu; instalacja nie zapisuje ani nie omija logowania. Jeśli sesja Access wygaśnie, panel poprosi o ponowne zalogowanie.
 - Panel nie działa offline i nie buforuje danych. Na iPhonie przycisk pokazuje krótką instrukcję dodania strony do ekranu początkowego, a w Safari na Macu instrukcję dodania do Docka; na obsługiwanych przeglądarkach uruchamia natywne okno instalacji.
 

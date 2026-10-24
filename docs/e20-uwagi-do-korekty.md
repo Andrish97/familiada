@@ -232,7 +232,7 @@ branchu; dopasowanie wizualne czeka na uzgodnioną galerię.
 | Marketplace — modal szczegółów gry | Treść arkusza przewijała się razem z `.mkt-detail-questions`, które miało `overflow-y:auto` (`marketplace.css`). | Jeden scroll całej treści arkusza; lista pytań bez własnego scrolla i limitu wysokości. | Wdrożono w `web/shared/css/base.css`: `.mkt-detail-questions` ma naturalną wysokość i nie tworzy scrolla wewnątrz body. Problem gotowości szczegółów gry jest osobny. |
 | Bazy i Control — modale udostępniania | Zrobione na branchu `codex/e19-3`: nieruchome body arkusza, formularz w osobnym wierszu, obie sekcje list widoczne równocześnie, a lista znajomych i lista udostępnionych przewijają się niezależnie wewnątrz sekcji. Nagłówki i akcje pozostają poza przewijanymi listami. | CSS w `web/shared/css/base.css`; zachowano puste stany i istniejące akcje. `git diff --check` przechodzi; bez testów i galerii. Do sprawdzenia wizualnego w kolejnej uzgodnionej galerii, szczególnie ilość widocznych kafelków na niskim telefonie. | E20 #11 i #14: pusty kafel w Control oraz chaos/rozjazd modalów udostępniania Baz i Control; wcześniejsze uwagi o kaflach i przyciskach. |
 | Ankiety — modal dodawania odbiorców | Już zgodny z ustaloną regułą: body arkusza jest nieruchome, dwie grupy odbiorców dzielą przestrzeń, a każda lista przewija się osobno (`base.css`, `polls.css`). | Obie listy są widoczne jednocześnie; nagłówek modala i pasek akcji pozostają stałe. Logika odbiorców bez zmian. | Sprawdzone w kodzie; brak dodatkowej zmiany. Użyteczną wysokość list na iPhonie potwierdzić w uzgodnionej galerii. |
-| Ustawienia gry — lista pytań w kolumnie końcowej na iPadzie pionowo | `.gs-content` przewija stronę ustawień, a `.finalCol .qList` miała własne `max-height:60vh` i `overflow-y:auto` (`game-settings.css`). | W wąskim układzie `.gs-content` jest jedynym pionowym scrollem; listy pytań rosną naturalnie. | Zrobione w `web/shared/css/game-settings.css` dla szerokości do 900 px. Panel administracyjny `/settings/` pozostaje poza tą rundą i poza audytem galerii. |
+| Ustawienia gry — lista pytań w kolumnie końcowej na iPadzie pionowo | `.gs-content` przewija stronę ustawień, a `.finalCol .qList` miała własne `max-height:60vh` i `overflow-y:auto` (`game-settings.css`). | W wąskim układzie `.gs-content` jest jedynym pionowym scrollem; listy pytań rosną naturalnie. | Zrobione w `web/shared/css/game-settings.css` dla szerokości do 900 px. Panel administracyjny `/admin/` pozostaje poza tą rundą i poza audytem galerii. |
 
 **Sprawdzone jako pojedynczy scroll lub bez potwierdzonego zagnieżdżenia:**
 strony Gry, Bazy, Zadania i Logo mają listę jako jedyny scroll obszaru roboczego;
@@ -249,7 +249,7 @@ nie wskazał dodatkowych zagnieżdżonych pionowych scrolli. Eksport gry i
 warstwy modala tagów w Base Explorer mają już opisane wyżej reguły.
 
 **Wyłączone:** mobilne landscape (jak uzgodniono) oraz panel administracyjny
-`/settings/` (użytkownik wcześniej wyłączył go z tej pracy). Wskazane zmiany
+`/admin/` (użytkownik wcześniej wyłączył go z tej pracy). Wskazane zmiany
 scrolla są wdrożone na branchu; przed zamknięciem rundy trzeba jeszcze ocenić
 układy na uzgodnionej galerii. Nie uruchamiano pełnych testów ani galerii.
 

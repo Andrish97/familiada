@@ -1280,7 +1280,7 @@ akcjami. W modalu bez listy przewija się jeden obszar treści. Przy wielu
 listach, które się nie mieszczą, rozważyć przełączane sekcje, bez ucinania
 treści.
 
-Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
+Landscape jest wyłączone z tej rundy; panel admina `/admin/` pozostaje poza
 zakresem. Najwyższy priorytet miały trzy modale Base Explorer: tagi (3 warstwy),
 dodawanie gry z bazy i edycja pytania. Wdrożono: przewijanie listy taga/pytania
 i odpowiedzi wewnątrz nieruchomego arkusza, stałe akcje oraz układ odpowiedzi zgodny z mobilnym Edytorem gry. `git diff --check` przechodzi; bez galerii/testów.

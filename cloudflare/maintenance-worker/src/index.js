@@ -124,7 +124,7 @@ async function handleFetch(request, env, ctx) {
       return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
-    // allow settings-tools and assets only
+    // allow admin tools and assets only
     if (url.pathname.startsWith("/admin/tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
       const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       if (url.pathname.startsWith("/admin/tools/")) {

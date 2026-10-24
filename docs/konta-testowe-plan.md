@@ -240,7 +240,7 @@ Catch-all odrzucony — obca poczta idzie dziś do admina i Telegrama.
 
 **Dziś:** `stats_exclusions_effective` (migracja 304) — e-mail
 `^test[0-9]+@familiada.online` albo `is_test_guest`, plus ręczne
-`stats_excluded_users`; panel (`web/settings/js/settings.js` ~1320) zna
+`stats_excluded_users`; panel (`web/admin/js/settings.js` ~1320) zna
 tylko „Konto testowe” / „Gość testowy”.
 
 **Docelowo:**
