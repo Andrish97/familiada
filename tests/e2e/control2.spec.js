@@ -725,7 +725,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   if (process.env.TEST_BRANCH_CODE === "0") {
     // Publiczna domena blokuje /admin/. Pobierz opublikowany zasób
     // bezpośrednio z originu Pages, tak samo jak proxy Workera.
-    const response = await request.get("https://andrish97.github.io/settings/js/settings.js", {
+    const response = await request.get("https://andrish97.github.io/admin/js/settings.js", {
       headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
     });
     expect(response.status()).toBe(200);
@@ -836,7 +836,7 @@ test("statystyki Settings: eksport Control 2 daje JSON tylko z wybranego zakresu
   await page.goto("/", { waitUntil: "domcontentloaded" });
   let source;
   if (process.env.TEST_BRANCH_CODE === "0") {
-    const response = await request.get("https://andrish97.github.io/settings/js/stats-export.js", {
+    const response = await request.get("https://andrish97.github.io/admin/js/stats-export.js", {
       headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
     });
     expect(response.status()).toBe(200);
@@ -1638,7 +1638,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
       }
     }
 
-    await expect(page.locator(".c2-roundlayout-side")).toContainText("Osiągnięto próg finału", { timeout: 10000 });
+    await expect(page.locator(".c2-roundlayout-side")).toContainText(/Osiągnięto \d+ pkt — cel finału/, { timeout: 10000 });
     await expect(page.getByRole("button", { name: "Pokaż odpowiedź" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Pokaż punkty" })).toBeDisabled();
     await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();

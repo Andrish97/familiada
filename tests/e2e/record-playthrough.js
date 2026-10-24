@@ -1517,7 +1517,7 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   // Patrz identyczny komentarz w scenariuszu 4 — pasek z sumą finału na
   // ekranie przed odsłonięciem, widz ma zdążyć go zobaczyć.
   await control.waitForTimeout(2000);
-  await expect(control.locator(".c2-roundlayout-side")).toContainText("Osiągnięto próg finału");
+  await expect(control.locator(".c2-roundlayout-side")).toContainText(/Osiągnięto \d+ pkt — cel finału/);
   await clickPaced(control.getByRole("button", { name: "Zakończ finał", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(25960);
