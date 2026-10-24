@@ -87,8 +87,12 @@ function wireBack(id, user, opts, d) {
   const ctx = () => ({ anon: !user });
   btn.dataset.sheetBack = "1"; // znacznik dla contact-modal.js
   if (btn.tagName === "A") {
-    const href = backHref(id, ctx());
-    if (href) btn.setAttribute("href", href);
+    const sync = () => {
+      const href = backHref(id, ctx());
+      if (href) btn.setAttribute("href", href);
+    };
+    sync();
+    window.addEventListener("i18n:lang", sync);
   }
   if (opts.backLabel !== false) renderBackLabel(btn, id, ctx);
   btn.addEventListener("click", async (ev) => {
@@ -106,7 +110,11 @@ function wireManual(id, user, opts) {
   if (!btn) return;
   // Publiczne Wskazówki pozostają dostępne także bez konta.
   if (!user && PAGES.manual.access !== "public") { btn.hidden = true; return; }
-  if (btn.tagName === "A") btn.setAttribute("href", manualHref(id));
+  if (btn.tagName === "A") {
+    const sync = () => btn.setAttribute("href", manualHref(id));
+    sync();
+    window.addEventListener("i18n:lang", sync);
+  }
   btn.addEventListener("click", async (ev) => {
     if (btn.tagName === "A" && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button > 0)) return;
     ev.preventDefault?.();

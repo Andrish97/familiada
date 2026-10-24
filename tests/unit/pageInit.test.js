@@ -155,6 +155,11 @@ test("linki Wstecz i Wskazówki zachowują nowe okno, a zwykły klik wykonuje je
   assert.equal(prevented, true);
   assert.match(els.btnManual.attrs.href, /^\/manual\//);
   assert.match(loc.href, /^\/manual\//);
+  loc.pathname = "/manual/";
+  loc.search = "?ch=6&lang=en";
+  for (const fn of window.listeners["i18n:lang"] || []) fn();
+  assert.equal(els.btnBack.attrs.href, "/?lang=en");
+  assert.match(els.btnManual.attrs.href, /lang=en/);
 });
 
 test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {
