@@ -167,6 +167,25 @@ function inspectLayout(opts) {
     }
   }
 
+  // 4a. Obwódka przycisku ucięta przez przodka z overflow (zgłoszenie
+  // 2026-10-24): krawędź przycisku wystaje o 0,5–4 px poza obszar przycinania.
+  for (const btn of root.querySelectorAll("button, a.btn, [role=button], .btn, input:not([type=hidden]), select, textarea")) {
+    if (!visible(btn)) continue;
+    const r = btn.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) continue;
+    for (let e = btn.parentElement; e && e !== document.documentElement; e = e.parentElement) {
+      const st = getComputedStyle(e);
+      if (st.overflowX === "visible" && st.overflowY === "visible" && st.contain.indexOf("paint") < 0) continue;
+      const c = e.getBoundingClientRect();
+      const bl = parseFloat(st.borderLeftWidth), bt = parseFloat(st.borderTopWidth), br = parseFloat(st.borderRightWidth), bb = parseFloat(st.borderBottomWidth);
+      const clip = { left: c.left + bl, top: c.top + bt, right: c.right - br, bottom: c.bottom - bb };
+      const cut = Math.max(st.overflowX === "visible" ? 0 : Math.max(clip.left - r.left, r.right - clip.right),
+        st.overflowY === "visible" ? 0 : Math.max(clip.top - r.top, r.bottom - clip.bottom));
+      if (cut > 0.5 && cut <= 4) { add("obwodka-ucieta", btn, `${cut.toFixed(1)} px (${label(e)})`); break; }
+      if (cut > 4) break; // przewinięte poza widok — nie obwódka
+    }
+  }
+
   // 4b. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;
