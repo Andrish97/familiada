@@ -266,3 +266,13 @@ connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
 - 2026-10-22: stare mechanizmy logowania usunąć, nie utrzymywać obok
   nowych (użytkownik). Etap 1 przełącza zapis tylko na nową tabelę; etap 4
   usuwa stare tabele, RPC i klucze, gdy front już ich nie używa.
+- 2026-10-24 (eksport rozgrywek z 24.10, polecenie użytkownika „popraw,
+  wdróż swoje sugestie; popraw blokadę wygaszania w iOS”):
+  - finał doszedł do `f_end`, a operator nie nacisnął „Zakończ” → sesja
+    zamykana (bezczynność, restart, anulowanie z ustawień) jako `final`
+    z doliczonymi punktami finału i `closed_by`; poprawka wsteczna (483);
+  - potwierdzenie planszy: znaczniki serwera `requested_at`/`rendered_at`
+    (483), Control odpytuje bazę od czasu animacji + 0,3 s i raz przed
+    alarmem `ack_timeout`; `display_ack_ms` w `late_ack`;
+  - blokada wygaszania: odmowa (Safari iOS bez gestu) i zwolnienie przez
+    system ponawiane przy najbliższym geście (`keep-alive.js`).
