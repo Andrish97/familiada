@@ -631,7 +631,7 @@
   /* Statusy urządzeń w topbarze — ta sama wysokość i zaokrąglenie co
      przyciski topbara (.btn), zamiast niższych „pigułek” z control.css. */
   .topbar .top-status .dotRow { padding:10px 12px; min-height:37px; box-sizing:border-box; border-radius:var(--r-md); font-size:13px; line-height:1; }
-  .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
+  .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:6px; align-content:start; }
   .c2-devicerows .device-row { margin-bottom:0; align-content:start; padding:10px; gap:6px; }
   .c2-devicerows .control-test-choice { grid-column:1 / -1; display:flex; flex-direction:row; align-items:center; gap:16px; }
   .c2-devicerows .control-test-choice > .choice { flex:0 0 auto; }
@@ -819,9 +819,10 @@
     .c2-devices-layout .c2-roundlayout-divider { display:none; }
     .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
     .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
+    .c2-devicerows .control-test-choice { padding-block:5px; }
     .c2-devicerows .device-row-2 { gap:5px; }
     .c2-devicerows .device-row-2 .btn { padding:.4em .6em; }
-    .c2-devicerows .device-row-opt { padding-top:4px; }
+    .c2-devicerows .device-row-opt { padding-top:2px; }
     .c2-devicerows .toggle-group { margin-top:4px; }
     .c2-devices-layout .c2-roundlayout-main > .c2-scroll-area { gap:6px; }
     .c2-devicerows .device-connect-code { min-height:2.1em; padding:0 .5em; }

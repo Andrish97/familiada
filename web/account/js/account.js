@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T20525";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-24T20525";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-24T20525";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-24T20525";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T20525";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-24T20525";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T20525";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T20525";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T20525";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T20525";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T20525";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T20525";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-24T20525";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T20560";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-24T20560";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-24T20560";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-24T20560";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-24T20560";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-24T20560";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T20560";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T20560";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T20560";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T20560";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T20560";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T20560";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-24T20560";
 
 
 
