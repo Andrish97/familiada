@@ -318,7 +318,7 @@ Dziś każda strona robi to inaczej:
 | `/logos/` | `?tab=text\|draw\|image` (domyślna `text`), `pushState` |
 | `/manual/` | karta w `#hash` (`#control`), Control dodatkowo `?tab=control` |
 | `/base-explorer/` | folder `?folder=`, `pushState` |
-| `/settings/` (admin) | `?tab=`, `pushState` |
+| `/admin/` (admin) | `?tab=`, `pushState` |
 
 Jedna reguła (`setTab()` / `tabFromUrl()` we wspólnym module, lista kart
 w `PAGES[...].tabs`):
@@ -1059,7 +1059,7 @@ właściciel zmienia zasób (`games/editor`, `polls/editor`, `logo/editor`,
 | `/logos/`, `/logos/editor-<typ>/` | `/logos/`, `/logos/editor/<typ>/` | jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika (decyzja) |
 | `/login/`, `/reset/`, `/confirm/` | `/login/`, `/login/reset/`, `/login/confirm/` | reset i potwierdzenie to kroki logowania; linki z maili żyją godzinę |
 | `/account/`, `/marketplace/`, `/manual/`, `/privacy/` | bez zmian | `/privacy/` celowo stały (adres polityki bywa podawany na zewnątrz) |
-| `/settings/` (admin), `/maintenance/`, `/404` | bez zmian | |
+| `/admin/` (admin), `/maintenance/`, `/404` | bez zmian | |
 
 Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
 `/polls/`, `/subscriptions/`, `/bases/`, `/logos/`, `/marketplace/`, `/connect/`, `/go/`,

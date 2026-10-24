@@ -1437,7 +1437,7 @@ rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowani
 | Zachować istniejące style TV oraz osobne zasady Control/edytorów; nie wprowadzać globalnych zmian CSS, które psują ich układ. | Zasada obowiązuje; **regresje sprawdzić w pełnej galerii**. |
 
 **Galeria całości:** każdy rzeczywisty HTML aplikacji z wyłączeniem
-`/settings/tools/**` ma wystąpić w galerii na MacBooku, iPadzie portrait i
+`/admin/tools/**` ma wystąpić w galerii na MacBooku, iPadzie portrait i
 landscape oraz iPhonie portrait i landscape. Daje to co najmniej pięć ujęć
 na stronę; dla odmiennych stanów funkcjonalnych dodać osobne ujęcia zamiast
 powielać podobny ekran. Każdy wpis manifestu łączy stronę, profil, stan guarda,
@@ -1715,7 +1715,7 @@ Nie zagnieżdżać list w przewijanym body ani nie przewijać całego okna razem
 z nagłówkiem/akcjami. W modalu bez listy przewija się jeden obszar treści pod
 stałym nagłówkiem i akcjami.
 Gdy wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie
-ucinać ani nie ukrywać treści. Mobile landscape i panel administracyjny `/settings/`
+ucinać ani nie ukrywać treści. Mobile landscape i panel administracyjny `/admin/`
 pozostają poza zakresem tej rundy.
 
 Audyt i propozycje dla konkretnych miejsc — Base Explorer (strona, drawer,

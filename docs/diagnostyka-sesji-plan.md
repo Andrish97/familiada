@@ -10,7 +10,7 @@ Stan: **wdrożone** (2026-10-22/23, etapy 1–4; przebiegi w Dzienniku
 - Etap 2 — migracja 469 + front: `control2_device_log` (urządzenia, główna
   instancja) i `control2_control_log` (Control), wspólny
   `web/shared/js/core/session-log.js`, nowe sygnały, zapis przed startem gry.
-- Etap 3 — panel admina: `web/settings/js/session-diagnosis.js`, sekcja
+- Etap 3 — panel admina: `web/admin/js/session-diagnosis.js`, sekcja
   „Sugerowane problemy” w przebiegu i zestawienie nad tabelą rozgrywek.
   Odstępstwo od planu: bez osobnego endpointu logu sesji — przy obecnej
   objętości (średnio ~24 zdarzenia na sesję) lista rozgrywek niesie zdarzenia
@@ -123,7 +123,7 @@ heartbeatów i ACK; diagnostyka best-effort, nigdy nie blokuje gry.
 - Lista rozgrywek ładuje tylko **podsumowania** (pkt 2); pełny log jednej
   sesji osobnym endpointem `/_admin_api/stats/session-events?session_id=…`
   przy otwarciu przebiegu. Eksport JSON sesji zawiera log i podsumowanie.
-- Moduł `web/settings/js/session-diagnosis.js` (czysta funkcja, testy unit
+- Moduł `web/admin/js/session-diagnosis.js` (czysta funkcja, testy unit
   na przykładowych sesjach): z podsumowania i zdarzeń wylicza sugestie
   z poziomem pewności i dowodami (lista zdarzeń), np.:
   - urządzenie uśpione / w tle (telefon) — ukrycie lub brak sygnału →
