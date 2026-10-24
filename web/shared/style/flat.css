@@ -692,7 +692,7 @@
   .support-size { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; }
   .support-size:hover { background: var(--w-4); }
   .support-size:has(input:checked) { border-color: var(--accent); background: var(--g-10); }
-  .support-size input { margin: 0; accent-color: var(--accent); }
+  .support-size input { margin: 0; }
   .support-size-ico { display: inline-flex; width: 28px; justify-content: center; color: var(--accent); }
   .support-size-ico .ico { width: 18px; height: 18px; }
   .support-size--medium .support-size-ico .ico { width: 22px; height: 22px; }
@@ -2243,13 +2243,6 @@
     border-color: var(--accent);
     background: var(--surface-tile-hover);
   }
-  .grid .tile.selected {
-    border-color: var(--accent);
-    background: var(--g-10);
-    box-shadow:
-      0 0 0 2px var(--g-60),
-      0 10px 22px var(--k-40);
-  }
   /* Dotyk: :hover zostaje po stuknięciu — bez uniesienia kafla. */
   @media (hover: none) {
     .grid :is(.tile, .addCard, .logoTile):hover { transform: none; }
@@ -2316,7 +2309,6 @@
   .shareRow[hidden], .shareSection[hidden] { display: none; }
   .shareRow.pick { cursor: pointer; }
   .shareRow.pick:hover { border-color: var(--accent); }
-  .shareRow.selected { border-color: var(--accent); background: var(--g-10); }
   .shareRow.blocked { color: var(--text-muted); cursor: not-allowed; } /* bez opacity (Android) */
   .shareMain { flex: 1 1 auto; min-width: 0; }
   .shareEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13.5px; }
@@ -2672,6 +2664,19 @@
   .app-tooltip:not([hidden]) { animation: popover-in var(--dur-fast) var(--ease-out); }
 
 
+
+  /* ── Zaznaczenie (jedno w całym serwisie): element .is-selected (kafel,
+     wiersz listy, wiersz drzewa, tag) albo wiersz z zaznaczonym polem wyboru —
+     złota krawędź i złoty odcień tła. Wiersze bez ramki dostają obrys, kafle
+     pierścień. Strony nie mają własnego wyglądu zaznaczenia. ── */
+  .is-selected,
+  :is(.shareRow, .tags-row):has(input[type="checkbox"]:checked) {
+    border-color: var(--accent);
+    background-image: linear-gradient(var(--g-10), var(--g-10));
+  }
+  :is(tr, .row).is-selected { outline: 2px solid var(--g-60); outline-offset: -2px; }
+  tr.is-selected > td { background-image: linear-gradient(var(--g-10), var(--g-10)); }
+  :is(.tile, .logoTile).is-selected { box-shadow: 0 0 0 2px var(--g-60), 0 10px 22px var(--k-40); }
 
   /* Karta pod wypustkami: róg prosty po stronie aktywnej skrajnej wypustki
      (wszystkie karty z wypustkami; bez :has w :has — przeglądarka by ją pominęła; warstwa states, bo strony ustawiają
@@ -3438,7 +3443,7 @@
   .change-type-option:hover { background: var(--w-4); }
   .change-type-option:has(input[type="radio"]:checked) { border-color: var(--accent); background: var(--g-10); }
   .change-type-option:has(input[type="radio"]:disabled) { cursor: default; opacity: .55; }
-  .change-type-option input { margin: 0; accent-color: var(--accent); }
+  .change-type-option input { margin: 0; }
   .change-type-name { font-weight: 900; }
   .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
   /* Zamknięta ankieta: „Zachowaj …” tylko pod wybranym typem. */

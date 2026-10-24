@@ -360,13 +360,6 @@
   .shareModal .shareMain { min-width: 0; }
   .shareModal .shareEmail { overflow-wrap: anywhere; white-space: normal; }
   .shareModal .shareDeviceFriendRow { cursor: pointer; }
-  .shareModal .shareDeviceFriendRow input[type="checkbox"] {
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    accent-color: var(--gold);
-  }
   .shareModal .shareList {
     max-height: 240px;
     overflow-y: auto;
@@ -377,7 +370,6 @@
   .shareList::-webkit-scrollbar-track { background: var(--w-4); border-radius: var(--r-sm); }
   .shareList::-webkit-scrollbar-thumb { background: var(--w-14); border-radius: var(--r-sm); }
 
-  .shareDeviceFriendRow input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--gold); }
 
   @media (max-width: 600px) {
     .shareModal { width: calc(100% - 24px); padding: 15px; gap: 10px; max-height: 90dvh; }
@@ -479,10 +471,6 @@
     background: var(--w-8);
   }
 
-  .logoTile.selected {
-    border-color: var(--clr-gold, #f0b429);
-    background: rgba(240,180,41,.12);
-  }
 
   /* --- Dodatkowe poprawki czytelności --- */
   #roundQuestion {

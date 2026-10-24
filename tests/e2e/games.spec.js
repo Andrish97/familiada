@@ -446,7 +446,7 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       const games = await gamesByName(page, name);
       expect(games).toHaveLength(2);
       for (const g of games) expect(await countQA(page, g.id)).toEqual({ q: 10, a: 30 });
-      await expect(page.locator("#grid .card.selected .name")).toHaveText(name);
+      await expect(page.locator("#grid .card.is-selected .name")).toHaveText(name);
     } finally {
       await deleteGamesByName(page, name);
     }

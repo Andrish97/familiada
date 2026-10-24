@@ -1613,10 +1613,6 @@
     opacity: .55;
   }
 
-  .mc-table input[type="checkbox"] {
-    cursor: pointer;
-  }
-
   .mc-table a {
     color: #74b9ff;
     text-decoration: none;

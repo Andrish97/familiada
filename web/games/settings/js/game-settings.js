@@ -736,8 +736,8 @@ async function renderLogoGrid() {
       const id = rawId === "default" ? null : rawId;
       localSettings.display.logoId = id;
       markDirty();
-      grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
-      tile.classList.add("selected");
+      grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("is-selected"));
+      tile.classList.add("is-selected");
       postPreviewRow();
     });
   });
@@ -752,7 +752,7 @@ function makeLogoTile(id, selectedId) {
   const sel = (id === null && selectedId === null) || (id !== null && id === selectedId);
 
   const el = document.createElement("div");
-  el.className = "gs-logo-tile" + (sel ? " selected" : "");
+  el.className = "gs-logo-tile" + (sel ? " is-selected" : "");
   el.dataset.logoId = String(key);
 
   const prev = document.createElement("div");

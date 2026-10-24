@@ -426,7 +426,7 @@
   .change-type-option:hover { background: var(--w-4); }
   .change-type-option:has(input[type="radio"]:checked) { border-color: var(--accent); background: var(--g-10); }
   .change-type-option:has(input[type="radio"]:disabled) { cursor: default; opacity: .55; }
-  .change-type-option input { margin: 0; accent-color: var(--accent); }
+  .change-type-option input { margin: 0; }
   .change-type-name { font-weight: 900; }
   .change-type-desc { grid-column: 2; font-size: .88rem; line-height: 1.35; opacity: .85; }
   /* Zamknięta ankieta: „Zachowaj …” tylko pod wybranym typem. */

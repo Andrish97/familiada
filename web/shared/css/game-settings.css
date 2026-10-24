@@ -276,7 +276,6 @@
     user-select:none;
   }
   .gs-logo-tile:hover{ border-color:var(--w-25); background:var(--w-8); }
-  .gs-logo-tile.selected{ border-color:var(--gold,#f0b429); background:rgba(240,180,41,.1); }
   .gs-logo-prev{
     width:120px; height:56px; border-radius:5px;
     overflow:hidden; background:#000; flex-shrink:0;

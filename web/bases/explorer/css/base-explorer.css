@@ -240,16 +240,6 @@
       color: rgba(255,255,255,.88)
   }
 
-  .is-selected {
-      outline: 2px solid var(--w-25)
-  }
-
-  .row.is-selected {
-      outline: 2px solid rgba(120,160,255,.55);
-      outline-offset: -2px;
-      background: rgba(120,160,255,.1)
-  }
-
   #tree .treeList {
       padding-bottom: 30px;
       scroll-padding-bottom: 30px
@@ -311,8 +301,8 @@
 
   .marquee {
       position: absolute;
-      border: 1px dashed rgba(120,160,255,.9);
-      background: rgba(120,160,255,.18);
+      border: 1px dashed var(--g-60); /* jak zaznaczenie (.is-selected) */
+      background: var(--g-10);
       pointer-events: none;
       z-index: 50
   }
@@ -443,10 +433,6 @@
     user-select: none;
   }
   .tags-modal .tags-row:hover { background: var(--w-8); }
-  .tags-modal .tags-row input[type="checkbox"] {
-    flex: 0 0 auto;
-    accent-color: var(--gold);
-  }
   .tags-modal .tags-row .tag-dot { flex: 0 0 12px; }
   .tags-modal .tags-row .m-p {
     flex: 1 1 auto;
@@ -465,9 +451,6 @@
     opacity: .75;
   }
 
-  .xPickItem input {
-      transform: scale(1.05)
-  }
 
   .tagsEditGrid {
       display: grid;
@@ -675,15 +658,6 @@
 
   tr.row:hover td {
       background: var(--w-4);
-  }
-
-  tr.row.is-selected td {
-      background: rgba(120,160,255,.1);
-  }
-
-  tr.row.is-selected {
-      outline: 2px solid rgba(120,160,255,.55);
-      outline-offset: -2px;
   }
 
   /* col-num */
@@ -1624,8 +1598,7 @@
      ui/tree-row.js, decyzja użytkownika 2026-10-21) =====
      Wiersze bez ramek, wcięcie co --step, linie prowadzące (.tree-guides)
      pod strzałkami przodków, folder otwarty/zamknięty, kropki, liczba pytań.
-     Zaznaczenie jak na liście po prawej (tr.row.is-selected): niebieskie tło
-     i obrys; bieżący folder — samo tło (decyzja 2026-10-21). */
+     Zaznaczenie: wspólne .is-selected z silnika; bieżący folder — samo tło. */
   .treeList,
   .moveList { --step: 20px; --pad0: 10px; display: grid; align-content: start; gap: 0; }
   .row.tree-row,
@@ -1671,11 +1644,7 @@
   .tree-row:hover { background: var(--w-4); }
   .tree-row.is-root { font-weight: 700; }
   .row.tree-row.is-current,
-  .tree-row.is-current,
-  .row.tree-row.is-selected,
-  .tree-row.is-selected { background: rgba(120,160,255,.1); }
-  .row.tree-row.is-selected,
-  .tree-row.is-selected { outline: 2px solid rgba(120,160,255,.55); outline-offset: -2px; }
+  .tree-row.is-current { background: var(--w-8); }
   .tree-row.is-blocked { opacity: .4; cursor: not-allowed; }
   .tree-row.is-blocked:hover { background: none; }
   .tree-toggle,

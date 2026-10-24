@@ -1028,7 +1028,7 @@ function render() {
     tile.dataset.created = b.created_at || "";
     tile.dataset.updated = b.updated_at || "";
     tile.dataset.role = b.sharedRole || (b.proposed ? b.proposedRole : null) || "owner";
-    if (b.id === selectedId) tile.classList.add("selected");
+    if (b.id === selectedId) tile.classList.add("is-selected");
     // zaproszenie to zwykły kafel z tagiem (bez koloru całego kafla); znacznik tylko dla selektorów
     if (b.proposed) tile.dataset.proposed = "1";
     const badges = [];
@@ -1164,7 +1164,7 @@ function render() {
 function selectBase(id) {
   selectedId = id;
   for (const el of document.querySelectorAll(".bases-section .card[data-base-id]")) {
-    el.classList.toggle("selected", el.dataset.baseId === selectedId);
+    el.classList.toggle("is-selected", el.dataset.baseId === selectedId);
   }
   setButtonsState();
 }

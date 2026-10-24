@@ -46,7 +46,7 @@
   "styleBlock": 1
  },
  "web/bases/explorer/css/base-explorer.css": {
-  "colorLiteral": 36,
+  "colorLiteral": 28,
   "zIndexLiteral": 6,
   "sharedDuplicate": 8,
   "unusedClass": 2
@@ -108,7 +108,7 @@
   "styleBlock": 1
  },
  "web/control/css/control.css": {
-  "colorLiteral": 38,
+  "colorLiteral": 36,
   "rootTokens": 1,
   "mediaWidth": 2,
   "zIndexLiteral": 1,
@@ -252,7 +252,7 @@
   "mediaWidth": 2
  },
  "web/shared/css/game-settings.css": {
-  "colorLiteral": 20,
+  "colorLiteral": 18,
   "mediaWidth": 2,
   "sharedDuplicate": 2
  },
@@ -323,13 +323,13 @@
  "web/shared/style/components.css": {
   "mediaWidth": 13,
   "zIndexLiteral": 5,
-  "sharedDuplicate": 240,
+  "sharedDuplicate": 241,
   "unusedClass": 4
  },
  "web/shared/style/flat.css": {
   "mediaWidth": 14,
   "zIndexLiteral": 6,
-  "sharedDuplicate": 276,
+  "sharedDuplicate": 277,
   "unusedClass": 6
  },
  "web/shared/style/layout.css": {

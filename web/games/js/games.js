@@ -983,7 +983,7 @@ function cardGame(g) {
 function selectGame(id) {
   selectedId = id;
   grid?.querySelectorAll(".card[data-game-id]").forEach((el) => {
-    el.classList.toggle("selected", el.dataset.gameId === id);
+    el.classList.toggle("is-selected", el.dataset.gameId === id);
   });
   void updateActionState();
 }
@@ -991,7 +991,7 @@ function selectGame(id) {
 function selectMarketGame(marketId) {
   selectedMarketId = marketId;
   grid?.querySelectorAll(".card[data-market-id]").forEach((el) => {
-    el.classList.toggle("selected", el.dataset.marketId === marketId);
+    el.classList.toggle("is-selected", el.dataset.marketId === marketId);
   });
   setMarketButtonsState();
 }
@@ -1038,7 +1038,7 @@ function render() {
   const proposed = games.filter(g => copyOffers.has(g.id));
   for (const g of [...proposed, ...games.filter(g => !copyOffers.has(g.id))]) {
     const el = cardGame(g);
-    if (g.id === selectedId) el.classList.add("selected");
+    if (g.id === selectedId) el.classList.add("is-selected");
     grid.appendChild(el);
   }
 
@@ -1071,7 +1071,7 @@ function renderMarket() {
 
   for (const g of marketGamesAll) {
     const el = cardMarket(g);
-    if (g.key === selectedMarketId) el.classList.add("selected");
+    if (g.key === selectedMarketId) el.classList.add("is-selected");
     grid.appendChild(el);
   }
 

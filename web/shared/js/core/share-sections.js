@@ -260,7 +260,7 @@ export function shareRowEl(row) {
   el.className = "shareRow" + (row.compact ? " shareRow--compact" : "");
   if (row.id != null) el.dataset.id = String(row.id);
   if (row.state) { el.dataset.state = String(row.state.key ?? row.state); if (row.state.label) el.dataset.stateLabel = row.state.label; }
-  if (row.selected) el.classList.add("selected");
+  if (row.selected) el.classList.add("is-selected");
   if (row.disabled) el.classList.add("blocked");
   if (row.onClick && !row.disabled) el.classList.add("pick");
   if (row.role) {

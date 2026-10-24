@@ -1024,7 +1024,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
             .filter((element) => element.getClientRects().length && getComputedStyle(element).display !== "none")
             .map((element) => ({ id: element.id, className: element.className, text: element.innerText.trim().slice(0, 180) })),
           selectedRows: [...document.querySelectorAll('#list .row.is-selected')].map((row) => ({ kind: row.dataset.kind, id: row.dataset.id })),
-          selectedBaseTiles: [...document.querySelectorAll(".tile.selected[data-base-id]")].map((tile) => ({ id: tile.dataset.baseId, text: tile.querySelector(".name")?.textContent?.trim() || "" })),
+          selectedBaseTiles: [...document.querySelectorAll(".tile.is-selected[data-base-id]")].map((tile) => ({ id: tile.dataset.baseId, text: tile.querySelector(".name")?.textContent?.trim() || "" })),
           exportButtonDisabled: document.querySelector("#btnExport")?.disabled ?? null,
           tagActionDisabled: document.querySelector('#toolbar [data-act="editTags"]')?.disabled ?? null,
           resourceGuard: document.getElementById("resourceLockGuard")?.innerText?.trim().slice(0, 180) || "",
