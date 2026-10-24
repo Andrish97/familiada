@@ -1099,7 +1099,7 @@
 
   /* ── Generic modal overlay ──────────────────────────────────── */
   /* Okno „Przydziel zgłoszenie”: lista zgłoszeń jak menu, pola pod nią. */
-  .assign-report-body { display: flex; flex-direction: column; gap: 8px; }
+  .assign-report-body { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
   .assign-report-body > .field-label { margin: 6px 0 0; }
   .assign-report-list {
     max-height: 200px;

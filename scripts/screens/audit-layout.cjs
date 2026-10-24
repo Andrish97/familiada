@@ -203,7 +203,7 @@ function inspectLayout(opts) {
   // z ramką lub tłem stoją w pionie bliżej niż 4 px (bez odstępu silnika).
   const boxed = (el) => {
     const st = getComputedStyle(el);
-    if (st.position === "absolute" || st.position === "fixed") return false;
+    if (st.position === "absolute" || st.position === "fixed" || st.display.startsWith("inline")) return false;
     const bordered = ["Top", "Bottom", "Left", "Right"].filter((side) => parseFloat(st[`border${side}Width`]) > 0 && st[`border${side}Style`] !== "none").length >= 3;
     const r = parseFloat(st.borderTopLeftRadius) > 0;
     return bordered && r;
