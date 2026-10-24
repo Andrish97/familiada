@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-24T23180";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-24T23314";
 
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
@@ -7,20 +7,20 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Obecność, widoczność
 // karty i odblokowanie dźwięku zapisuje heartbeat lease (device-lease.js).
 
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-24T23180";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-24T23180";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T23180";
-import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T23180";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T23180";
-import { createScene } from "./scene.js?v=v2026-10-24T23180";
-import { createQRController } from "./qr.js?v=v2026-10-24T23180";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T23180";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-24T23180";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-24T23180";
-import { createRenderer } from "./render.js?v=v2026-10-24T23180";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-24T23180";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-24T23180";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T23180";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-24T23314";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-24T23314";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-24T23314";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T23314";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T23314";
+import { createScene } from "./scene.js?v=v2026-10-24T23314";
+import { createQRController } from "./qr.js?v=v2026-10-24T23314";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-24T23314";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-24T23314";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-24T23314";
+import { createRenderer } from "./render.js?v=v2026-10-24T23314";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-24T23314";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-24T23314";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-24T23314";
 
 
 const $ = (id) => document.getElementById(id);
