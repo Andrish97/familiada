@@ -1,7 +1,7 @@
-import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-24T22061';
-import { t } from '../../shared/translation/translation.js?v=v2026-10-24T22061';
-import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-24T22061';
-import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-24T22061';
+import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-24T22185';
+import { t } from '../../shared/translation/translation.js?v=v2026-10-24T22185';
+import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-24T22185';
+import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-24T22185';
 
 
 export function currentControlGeometry(testMode = false, { width = innerWidth, height = innerHeight } = {}) {
