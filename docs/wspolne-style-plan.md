@@ -27,6 +27,13 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
   Baz, okno tagów, listy udostępniania; strony bez własnego wyglądu checkboxa.
 - **2026-10-23 — strony bez zwykłego silnika:** tylko Przycisk, Prowadzący, TV,
   wąż i QR ankiety; 404 i przerwa techniczna przechodzą na silnik z warstwami.
+  **2026-10-24 — wykonanie:** 404 i przerwa techniczna wyglądają jak zwykłe
+  strony (te same elementy silnika; nowe sceny zrzutów `not-found`,
+  `maintenance`). Zostają na `flat.css` (ten sam silnik bez `@layer`,
+  generowany z tych samych plików), bo oba adresy otwiera też telewizor
+  (przerwa blokuje wszystkie strony, 404 po złym adresie), a przeglądarka TV
+  (Tizen ≈ Chromium 76) pomija całą treść `@layer` — strona byłaby bez stylów.
+  Próba przełączenia: zrzuty z silnikiem z warstwami identyczne co do piksela.
 
 Katalog duplikatów i kolejność ujednolicania: [`e23-katalog-komponentow.md`](e23-katalog-komponentow.md).
 

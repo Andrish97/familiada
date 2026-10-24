@@ -1,5 +1,5 @@
 // Przycisk dwóch stanów (.toggle-group w silniku): obie wartości widoczne
-// naraz, wybrana wyróżniona; przy dwóch wartościach każdy klik przełącza.
+// naraz, wybrana wyróżniona; klik w część wybiera tę wartość.
 // Wspólny dla przełączników tworzonych w JS (uprawnienie w udostępnianiu
 // bazy); znaczniki jak w Ustawieniach gry.
 import { icon } from "./icons.js?v=v2026-10-24T15503";
@@ -52,35 +52,9 @@ export function toggleGroupEl({ value, options, label = "", size = "", className
     slider.className = "toggle-slider";
     slider.innerHTML = `${opt.icon ? icon(opt.icon) : ""}<span class="toggle-label">${esc(opt.label)}</span>`;
     input.addEventListener("change", () => { if (input.checked) choose(opt.value); });
-    // Dwie wartości = jeden przycisk: klik w wybraną część też przełącza na drugą.
-    item.addEventListener("click", (e) => {
-      if (options.length !== 2 || opt.value !== current || input.disabled) return;
-      e.preventDefault();
-      choose(options.find((o) => o.value !== current).value);
-    });
     inputs.push(input);
     item.append(input, slider);
     group.append(item);
   }
   return group;
-}
-
-// Przełączniki ze znaczników (Ustawienia gry, Control): ta sama zasada —
-// przy dwóch wartościach klik w wybraną część wybiera drugą (zdarzenie change).
-let swapInstalled = false;
-export function installToggleSwap(root = document) {
-  if (swapInstalled) return;
-  swapInstalled = true;
-  root.addEventListener("click", (e) => {
-    const item = e.target.closest?.(".toggle-group > .toggle-item");
-    const group = item?.parentElement;
-    if (!group || group.children.length !== 2 || group.dataset.value !== undefined) return;
-    const input = item.querySelector("input[type=radio]");
-    if (!input?.checked || input.disabled) return;
-    const other = [...group.children].find((el) => el !== item)?.querySelector("input[type=radio]");
-    if (!other || other.disabled) return;
-    e.preventDefault();
-    other.checked = true;
-    other.dispatchEvent(new Event("change", { bubbles: true }));
-  });
 }

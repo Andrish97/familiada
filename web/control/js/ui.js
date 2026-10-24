@@ -28,11 +28,7 @@ import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T
 import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T15503";
 import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T15503";
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T15503";
-import { installToggleSwap } from "../../shared/js/core/toggle-group.js?v=v2026-10-24T15503";
 import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T15503";
-
-// Przycisk dwóch stanów: klik w wybraną część przełącza na drugą (core/toggle-group.js).
-installToggleSwap();
 
 
 const $ = (id) => document.getElementById(id);

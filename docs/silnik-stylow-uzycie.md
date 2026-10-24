@@ -131,7 +131,7 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 | pusty stan | `.empty-state` (`--tile`, `--inline`) | |
 | okno potwierdzenia / pytanie / postęp | `confirmModal`, `alertModal`, `promptModal`, `progressModal` z `core/modal.js` | na telefonie same przechodzą w arkusz od dołu |
 | własne okno | `.overlay.modal--sheet > .modal` + `setOverlayOpen(overlay, open)` i `enterModalSheet` z `core/modal-sheet.js` | |
-| przycisk dwóch stanów (obie wartości widoczne, np. Podgląd \| Edycja) | `.toggle-group > label.toggle-item > input[radio] + span.toggle-slider`; z JS `toggleGroupEl()` z `core/toggle-group.js` (statyczne: `installToggleSwap()`) | przy dwóch wartościach każdy klik przełącza; `--sm` jak `.btn.sm` |
+| przycisk dwóch stanów (obie wartości widoczne, np. Podgląd \| Edycja) | `.toggle-group > label.toggle-item > input[radio] + span.toggle-slider`; z JS `toggleGroupEl()` z `core/toggle-group.js` | klik w część wybiera tę wartość (klik w wybraną nic nie zmienia); `--sm` jak `.btn.sm` |
 | zaznaczenie elementu (kafel, wiersz, tag) | klasa `.is-selected`; wiersz z polem wyboru — samo zaznaczone pole | jeden wygląd w silniku, strona go nie zmienia |
 | menu pod przyciskiem | `placeDropdown(anchor, el)` z `core/popover.js` | menu w punkcie: `placeAtPoint(el, x, y)` |
 | ekran blokady („tu nie wejdziesz”, zasób zajęty) | `blockingScreen(id, actions, { prefix })` + `setBlockingIcon` / `setBlockingOpen` z `core/blocking-screen.js` | |

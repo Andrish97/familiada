@@ -28,12 +28,8 @@ import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T15503";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T15503";
 import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T15503";
-import { installToggleSwap } from "../../../shared/js/core/toggle-group.js?v=v2026-10-24T15503";
 import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T15503";
 import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T15503";
-
-// Przycisk dwóch stanów: klik w wybraną część przełącza na drugą (core/toggle-group.js).
-installToggleSwap();
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();

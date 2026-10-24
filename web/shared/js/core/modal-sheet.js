@@ -249,26 +249,48 @@ export function showModalLayer(layer) {
 
 // Tytuł i przyciski w jednym wierszu, dopóki się mieszczą: tytuł nie łamie
 // się ani nie ucina, przyciski nie zawijają. Podpowiedź zawsze pod nimi na
-// całą szerokość (uwaga użytkownika 2026-10-23).
+// całą szerokość (uwaga użytkownika 2026-10-23). Kolejne próby, aż coś się
+// zmieści: wiersz z tytułem, to samo z ciaśniejszymi przyciskami (przełącznik
+// dwóch stanów same ikony), przyciski we własnym wierszu bez zawijania
+// (zwykłe, potem ciaśniejsze); dopiero na końcu przyciski się zawijają
+// (uwaga użytkownika 2026-10-24).
 function fitSheetTop(overlayEl) {
   for (const top of overlayEl?.querySelectorAll(".sheet-modal-top") || []) fitTopBar(top);
 }
 
+const TOP_STEPS = [
+  ["is-inline"],
+  ["is-inline", "is-compact"],
+  ["is-oneline"],
+  ["is-oneline", "is-compact"],
+];
+
 function fitTopBar(top) {
-  top.classList.remove("is-inline");
+  const all = ["is-inline", "is-oneline", "is-compact"];
+  top.classList.remove(...all);
   const head = top.querySelector(":scope > .sheet-modal-head");
   const actions = top.querySelector(":scope > .sheet-modal-actions");
   if (!head || !actions || head.hidden || actions.hidden || !head.offsetHeight || !actions.offsetHeight) return;
   const title = head.firstElementChild;
   if (!title) return;
   const titleH = title.offsetHeight;
-  const actionsH = actions.offsetHeight;
-  top.classList.add("is-inline");
-  const fits = title.offsetHeight <= titleH + 1
-    && title.scrollWidth <= title.clientWidth + 1
-    && actions.offsetHeight <= actionsH + 1
-    && actions.scrollWidth <= actions.clientWidth + 1;
-  if (!fits) top.classList.remove("is-inline");
+  // Szerokość treści liczona z dzieci: przy justify-content:flex-end
+  // nadmiar wychodzi w lewo i scrollWidth go nie widzi.
+  const rowFits = () => [...actions.children].every((row) => {
+    if (row.hidden || !row.offsetWidth) return true;
+    const items = [...row.children].filter((el) => el.offsetWidth);
+    const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+    const need = items.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + gap * Math.max(0, items.length - 1);
+    return need <= row.clientWidth + 1;
+  });
+  for (const step of TOP_STEPS) {
+    top.classList.add(...step);
+    const fits = step.includes("is-inline")
+      ? title.offsetHeight <= titleH + 1 && title.scrollWidth <= title.clientWidth + 1 && rowFits()
+      : rowFits();
+    if (fits) return;
+    top.classList.remove(...all);
+  }
 }
 
 // Pasek u góry okna od dołu: przeciągnięcie w dół (albo stuknięcie) zamyka.
