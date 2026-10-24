@@ -9,6 +9,7 @@ import manual from '../../../web/manual/content/pl.js';
 let mf;
 let bundle;
 let failOrigin = false;
+let legacyManual = false;
 const requests = [];
 const sources = Object.fromEntries(['manual/index.html', 'privacy/index.html', '404.html', 'maintenance/index.html']
   .map((path) => [path, readFileSync(new URL(`../../../web/${path}`, import.meta.url), 'utf8')]));
@@ -17,7 +18,11 @@ const outboundService = async (request) => {
   requests.push(url.pathname);
   if (url.pathname.includes('/rest/')) throw new Error('public reading must not use the database');
   if (failOrigin) return new Response('origin unavailable', { status: 503 });
-  const source = sources[url.pathname.slice(1)];
+  let source = sources[url.pathname.slice(1)];
+  if (legacyManual && url.pathname === '/manual/index.html') source = source
+    .replace('content="index, follow"', 'content="noindex, nofollow"')
+    .replace('<body class="manual-body">', '<body class="manual-body skel-body">')
+    .replace('</head>', "<script>document.documentElement.classList.add('page-loading')</script></head>");
   return new Response(source || 'not found', { status: source ? 200 : 404, headers: { 'Content-Type': 'text/html' } });
 };
 before(async () => {
@@ -43,6 +48,7 @@ test('every guide chapter and index has full localized HTML, canonical, reciproc
     assert.match(html, /<h1 class="m-title">[^<]+<\/h1>/);
     assert.match(html, /class="m-side-item/);
     assert.match(html, /<meta name="description" content="[^"]{15}/);
+    assert.ok(html.match(/id="btnLegal"[^>]*>/)?.[0].includes(publicUrl('privacy', lang)));
     if (id) {
       assert.match(html, /<div class="m-doc">\s*</);
       assert.match(html, /class="m-pager/);
@@ -132,4 +138,16 @@ test('technical document is noindex; actual maintenance remains 503 with Retry-A
     assert.equal(response.headers.get('X-Robots-Tag'), null);
     await response.text();
   } finally { await maintenance.dispose(); }
+});
+
+test('independent deployment also opens indexing and removes content hiding in the previous Pages template', async () => {
+  legacyManual = true;
+  try {
+    const response = await mf.dispatchFetch('https://www.familiada.online/manual/?ch=6&lang=en');
+    const html = await response.text();
+    assert.equal(response.status, 200);
+    assert.doesNotMatch(html, /page-loading|skel-body|noindex/);
+    assert.match(html, /<div class="m-doc">/);
+    assert.match(html, /name="robots" content="index, follow"/);
+  } finally { legacyManual = false; }
 });

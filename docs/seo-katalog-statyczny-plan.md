@@ -240,7 +240,7 @@ nie nowy proces publikowania plików i nie statyczny katalog gier z §5.
   linków w nowym oknie i zamykania arkuszy; prywatne strony zachowują noindex.
 - Brak zmian bazy, R2, serwera, CSP strefy i mechanizmu publikacji gier.
 
-Lokalnie: 9/9 testów na rzeczywistym silniku Workera (każdy rozdział i oba
+Lokalnie: 10/10 testów na rzeczywistym silniku Workera (każdy rozdział i oba
 UA, błędy, HEAD, sitemap, przerwa); 87/87 punktowych unitów aplikacji,
 61/61 dodatkowych sprawdzeń (część pokrywa się z poprzednimi); i18n bez
 nieużywanych kluczy, lint no-undef. Przeglądarka z wyłączonym API: 12

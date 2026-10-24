@@ -68,6 +68,8 @@ export function localizePublicPage(request, response) {
     .on("#manualArticle", { element(el) { el.setInnerContent(manualArticle(manual, chapter, t, href), { html: true }); } })
     .on("#manualToc", { element(el) { el.setInnerContent(manualToc(manual, chapter?.id, href), { html: true }); } })
     .on("#manualCurrent", { element(el) { el.setInnerContent(chapter?.title || t("manual.pageTitle")); } })
+    .on("#btnLegal", { element(el) { el.setAttribute("href", publicUrl("privacy", lang)); } })
+    .on("a#btnBack", { element(el) { el.setAttribute("href", `/${lang === "pl" ? "" : `?lang=${lang}`}`); } })
     .on("[data-skel-step]", { element(el) { el.removeAttribute("data-skel-step"); } });
   const headers = new Headers(response.headers);
   headers.set("Content-Language", lang);
