@@ -188,6 +188,17 @@ function inspectLayout(opts) {
     }
   }
 
+  // 4c. Przewijany obszar bez wygaszonej krawędzi (scroll-fade.js): treść
+  // ucięta ostro przy krawędzi (zgłoszenie 2026-10-24, Dźwięk w ustawieniach gry).
+  for (const el of root.querySelectorAll("*")) {
+    if (el.scrollHeight <= el.clientHeight + 8 || el.clientHeight < 60) continue;
+    const oy = getComputedStyle(el).overflowY;
+    if (oy !== "auto" && oy !== "scroll") continue;
+    if (!visible(el) || el.classList.contains("scroll-fade") || el.closest("select, textarea, .menu, [role=listbox]")) continue;
+    if (el === document.documentElement || el === document.body) continue;
+    add("brak-wygaszenia", el, `${el.clientHeight}/${el.scrollHeight} px`);
+  }
+
   // 4b. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;

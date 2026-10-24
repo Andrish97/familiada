@@ -43,8 +43,8 @@ const edit = (page, id) => L.editLogo(page, site, id);
 
 async function pickShape(page, shape) {
   await page.keyboard.press("s");
-  await page.locator("#cShapeBtn").click();
-  await page.locator(`#shapePickerPop .spi[data-shape="${shape}"]`).click();
+  await page.locator("#cShape .ui-select-btn").click();
+  await page.locator(`#cShape .menu-item[data-value="${shape}"]`).click();
 }
 
 /* ======================= LISTA, NAZWY, IMPORT, EKSPORT ======================= */
@@ -1182,8 +1182,8 @@ test.describe("tablet (dotyk)", () => {
     expect(await objects(page)).toEqual(["path"]);
 
     await page.locator("#tShapes").tap();
-    await page.locator("#cShapeBtn").tap();
-    await page.locator('#shapePickerPop .spi[data-shape="arrow1"]').tap();
+    await page.locator("#cShape .ui-select-btn").tap();
+    await page.locator('#cShape .menu-item[data-value="arrow1"]').tap();
     const y = b.y + b.height * 0.6;
     await t.drag(b.x + b.width * 0.2, y, b.x + b.width * 0.5, y);
     expect(await objects(page)).toEqual(["path", "path:arrow1"]);
