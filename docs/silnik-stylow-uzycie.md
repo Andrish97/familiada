@@ -150,7 +150,8 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 | licznik | `.badge` | pusty = ukryty |
 | oznaczenie (status) | `.tag` (`--bad`, `--warn`, `--info`, `--muted`) | |
 | podpowiedź pod tytułem / polem | `.hint` | dymek: atrybut `data-tooltip` (`core/tooltips.js`) |
-| komunikat w treści | `.callout` (`--warn`, `--bad`) | |
+| komunikat w treści | `.callout` (`--warn`, `--bad`, `--ok`, `--info`) | ukryty atrybutem `hidden` |
+| tabela danych | `.data-table-wrap` (`--scroll`: wysokość 420 px) > `table.data-table` (`--wide`: min. 860 px, przewijanie w poziomie) | pusta: `td.data-table-empty`; nagłówek przyklejony |
 | komunikat po akcji | `toast()` z `core/toast.js` | |
 | komunikat w treści (stopka okna, pod polem) | `.importMsg` + `setMessage(el, tekst, "error"\|"ok")` z `core/toast.js` | pusty znika; błąd czerwony |
 | pusty stan | `emptyState(tekst, { variant: "inline"\|"tile", hook })` / `emptyStateHtml(…)` z `core/empty-state.js` | `hook` — klasa-uchwyt dla logiki strony (np. `list-empty`) |
