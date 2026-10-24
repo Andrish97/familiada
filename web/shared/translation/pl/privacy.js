@@ -6,7 +6,7 @@ const pl = {
     pageTitle: "Familiada Online — Polityka Prywatności",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
-      <p class="m-p">Data ostatniej aktualizacji: 15 lipca 2026 r.</p>
+      <p class="m-p">Data ostatniej aktualizacji: 24 października 2026 r.</p>
 
       <h2 class="m-h2">1. Informacje ogólne</h2>
       <p class="m-p">
@@ -28,6 +28,8 @@ const pl = {
         <li>adres e-mail</li>
         <li>nazwa użytkownika</li>
         <li>treści tworzone w aplikacji (gry, ankiety)</li>
+        <li>adresy e-mail osób zapraszanych przez użytkownika (znajomi, odbiorcy ankiet)</li>
+        <li>wiadomości wysłane przez formularz kontaktowy</li>
       </ul>
       <p class="m-p">Dane techniczne:</p>
       <ul class="m-ul">
@@ -43,6 +45,8 @@ const pl = {
         <li>realizacji funkcji aplikacji</li>
         <li>wysyłki wiadomości systemowych</li>
         <li>zapewnienia bezpieczeństwa</li>
+        <li>odpowiadania na zgłoszenia</li>
+        <li>statystyk i wykrywania błędów (bez profilowania)</li>
       </ul>
       <p class="m-p">Dane nie są sprzedawane ani wykorzystywane do marketingu zewnętrznego.</p>
 
@@ -50,19 +54,20 @@ const pl = {
       <p class="m-p">Serwis korzysta z infrastruktury:</p>
       <ul class="m-ul">
         <li>GitHub Pages (hosting interfejsu)</li>
-        <li>Cloudflare (DNS i zabezpieczenia)</li>
-        <li>Supabase (serwer aplikacji i baza danych) – serwer własny w Oracle Cloud</li>
+        <li>Cloudflare (DNS, zabezpieczenia, zaszyfrowane kopie zapasowe)</li>
+        <li>Supabase (serwer aplikacji i baza danych) – serwer własny w UE (Contabo)</li>
         <li>Zeptomail (główny dostawca e-mail)</li>
         <li>Brevo (zapasowy dostawca poczty)</li>
         <li>Mailgun (zapasowy dostawca poczty)</li>
         <li>SendPulse (zapasowy dostawca poczty)</li>
         <li>Groq (analiza powtarzalności gier społeczności – AI)</li>
         <li>DeepSeek (analiza powtarzalności gier społeczności – AI)</li>
+        <li>Hugging Face (porównywanie podobieństwa gier – AI)</li>
       </ul>
       <p class="m-p">Podmioty te przetwarzają dane wyłącznie w zakresie technicznym.</p>
 
       <h2 class="m-h2">6. Okres przechowywania</h2>
-      <p class="m-p">Dane przechowywane są przez okres posiadania konta lub do momentu jego usunięcia.</p>
+      <p class="m-p">Dane przechowywane są przez okres posiadania konta lub do momentu jego usunięcia. Zaszyfrowane kopie zapasowe są usuwane po 30 dniach.</p>
 
       <h2 class="m-h2">7. Prawa użytkownika</h2>
       <p class="m-p">Użytkownik ma prawo do:</p>

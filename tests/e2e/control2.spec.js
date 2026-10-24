@@ -723,7 +723,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   await page.goto("/", { waitUntil: "domcontentloaded" });
   let source;
   if (process.env.TEST_BRANCH_CODE === "0") {
-    // Publiczna domena blokuje /settings/. Pobierz opublikowany zasób
+    // Publiczna domena blokuje /admin/. Pobierz opublikowany zasób
     // bezpośrednio z originu Pages, tak samo jak proxy Workera.
     const response = await request.get("https://andrish97.github.io/settings/js/settings.js", {
       headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
@@ -732,7 +732,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
     source = await response.text();
   } else {
     source = await page.evaluate(async () => {
-      const response = await fetch("/settings/js/settings.js", { cache: "no-store" });
+      const response = await fetch("/admin/js/settings.js", { cache: "no-store" });
       if (!response.ok) throw new Error(`settings.js: ${response.status}`);
       return response.text();
     });
@@ -843,7 +843,7 @@ test("statystyki Settings: eksport Control 2 daje JSON tylko z wybranego zakresu
     source = await response.text();
   } else {
     source = await page.evaluate(async () => {
-      const response = await fetch("/settings/js/stats-export.js", { cache: "no-store" });
+      const response = await fetch("/admin/js/stats-export.js", { cache: "no-store" });
       if (!response.ok) throw new Error(`stats-export.js: ${response.status}`);
       return response.text();
     });

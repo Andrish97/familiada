@@ -693,7 +693,7 @@ async def run_worker(run_id, target):
         await asyncio.sleep(5); task_status = "idle"
 
 LEAD_FINDER_API_KEY = os.getenv("LEAD_FINDER_API_KEY", "").strip()
-ADMIN_ORIGIN = "https://settings.familiada.online"
+ADMIN_ORIGIN = "https://admin.familiada.online"
 
 def require_api_key(authorization: Optional[str] = Header(default=None)):
     # Ten sam klucz co sekret Workera LEAD_FINDER_API_KEY (panel pobiera go

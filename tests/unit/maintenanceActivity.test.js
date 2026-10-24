@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gameActivity } from '../../web/settings/js/activity.js';
+import { gameActivity } from '../../web/admin/js/activity.js';
 import { handleAdminApi } from '../../cloudflare/maintenance-worker/src/lib/admin/admin-api.js';
 import { ACCESS_ENV, signAccessJwt, withJwks } from './helpers/accessJwt.js';
-const ADMIN_ORIGIN='https://settings.familiada.online';
+const ADMIN_ORIGIN='https://admin.familiada.online';
 test('unconfirmed old session is possible, not confirmed active',()=>{
  assert.equal(gameActivity({control_version:1,status:'playing',operator_online:false}).label,'Możliwa trwająca gra');
  assert.equal(gameActivity({control_version:1,status:'playing',operator_online:true}).label,'Gra w toku');
@@ -14,11 +14,11 @@ test('Control2 preparation and ending do not count as ongoing games',()=>{
  assert.equal(gameActivity({control_version:2,step:'f_p1_entry',status:'final',operator_online:true}).label,'Finał w toku');
 });
 test('activity API requires admin access and never invokes database for anonymous request',async()=>{
- const response=await handleAdminApi(new Request('https://settings.familiada.online/_admin_api/activity'),{});
+ const response=await handleAdminApi(new Request('https://admin.familiada.online/_admin_api/activity'),{});
  assert.equal(response.status,401);
 });
 test('activity API is read-only and uncached for admin requests',async()=>{
- const url='https://settings.familiada.online/_admin_api/activity';
+ const url='https://admin.familiada.online/_admin_api/activity';
  const previous=globalThis.fetch;
  try {
  globalThis.fetch=withJwks();
@@ -45,7 +45,7 @@ test('Admin gameplay stats read per-session events and summary (468)',async()=>{
    if(path.endsWith('/get_control2_session_diag')) return new Response(JSON.stringify({'session-1':diag}),{headers:{'content-type':'application/json'}});
    throw new Error(`Unexpected Admin stats RPC: ${path}`);
   });
-  const response=await handleAdminApi(new Request('https://settings.familiada.online/_admin_api/stats/detail?type=gameplay',{headers:{'CF-Access-Jwt-Assertion':await signAccessJwt()}}),{...ACCESS_ENV,SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
+  const response=await handleAdminApi(new Request('https://admin.familiada.online/_admin_api/stats/detail?type=gameplay',{headers:{'CF-Access-Jwt-Assertion':await signAccessJwt()}}),{...ACCESS_ENV,SUPABASE_URL:'https://example.invalid',SUPABASE_SERVICE_ROLE_KEY:'unit'});
   assert.equal(response.status,200);
   const body=await response.json();
   assert.deepEqual(body.rows[0].stats_detail.events,[leaseEvent,controlEvent]);

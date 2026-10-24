@@ -1,5 +1,5 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-23T22365";
-import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-23T22365";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-24T01231";
+import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-24T01231";
 
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
@@ -35,7 +35,7 @@ function isAdminStandalone() {
   if (!workerUrl) return false;
   try {
     const worker = new URL(workerUrl);
-    return worker.origin === location.origin && worker.pathname === "/settings/sw.js?v=v2026-10-23T22365";
+    return worker.origin === location.origin && worker.pathname === "/admin/sw.js?v=v2026-10-24T01231";
   } catch {
     return false;
   }
@@ -55,7 +55,7 @@ function updateButton() {
 function registerAdminWorker() {
   if (document.body.classList.contains("settings-locked")) return;
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/settings/sw.js", { scope: "/" }).catch(() => {});
+    navigator.serviceWorker.register("/admin/sw.js", { scope: "/" }).catch(() => {});
   }
 }
 

@@ -72,7 +72,7 @@ test("w kodzie aplikacji nie zostało żadne odwołanie do „builder”", () =>
   const hits = [];
   for (const f of walk()) {
     read(f).split("\n").forEach((line, i) => {
-      if (!f.startsWith("settings/") && /builder/i.test(line.replace(ALLOWED, ""))) hits.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      if (!f.startsWith("admin/") && /builder/i.test(line.replace(ALLOWED, ""))) hits.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
     });
   }
   assert.deepEqual(hits, [], "znalezione pozostałości:\n" + hits.join("\n"));

@@ -325,7 +325,7 @@
  "web/polls/vote/text/js/poll-text.js": {
   "inlineStyleJs": 6
  },
- "web/settings/css/settings.css": {
+ "web/admin/css/settings.css": {
   "important": 68,
   "colorLiteral": 300,
   "rootTokens": 12,
@@ -334,37 +334,37 @@
   "sharedDuplicate": 8,
   "unusedClass": 37
  },
- "web/settings/index.html": {
+ "web/admin/index.html": {
   "inlineStyleHtml": 153
  },
- "web/settings/js/admin-pwa.js": {
+ "web/admin/js/admin-pwa.js": {
   "inlineStyleJs": 1
  },
- "web/settings/js/generator.js": {
+ "web/admin/js/generator.js": {
   "inlineStyleJs": 33
  },
- "web/settings/js/settings.js": {
+ "web/admin/js/settings.js": {
   "inlineStyleJs": 301
  },
- "web/settings/tools/editor_5x7.html": {
+ "web/admin/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
   "styleBlock": 1
  },
- "web/settings/tools/exporterandeditor.html": {
+ "web/admin/tools/exporterandeditor.html": {
   "inlineStyleHtml": 12,
   "styleBlock": 1
  },
- "web/settings/tools/host-logo-lab/index.html": {
+ "web/admin/tools/host-logo-lab/index.html": {
   "styleBlock": 1
  },
- "web/settings/tools/kora-builder.html": {
+ "web/admin/tools/kora-builder.html": {
   "inlineStyleHtml": 7,
   "styleBlock": 1
  },
- "web/settings/tools/logo-background-lab/index.html": {
+ "web/admin/tools/logo-background-lab/index.html": {
   "styleBlock": 1
  },
- "web/settings/tools/theme_builder.html": {
+ "web/admin/tools/theme_builder.html": {
   "inlineStyleHtml": 17,
   "styleBlock": 1
  },

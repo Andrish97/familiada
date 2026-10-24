@@ -52,7 +52,7 @@ test('isAdminAuthorized: sam nagłówek tożsamości lub atrapa tokenu nie wysta
   globalThis.fetch = withJwks();
   try {
     resetAccessJwksCache();
-    const url = 'https://settings.familiada.online/_admin_api/me';
+    const url = 'https://admin.familiada.online/_admin_api/me';
     assert.equal(await isAdminAuthorized(new Request(url, { headers: { 'Cf-Access-Authenticated-User-Email': 'a@b.c' } }), ACCESS_ENV), false);
     assert.equal(await isAdminAuthorized(new Request(url, { headers: { 'Cf-Access-Jwt-Assertion': 'unit' } }), ACCESS_ENV), false);
     assert.equal(await isAdminAuthorized(new Request(url, { headers: { 'Cf-Access-Jwt-Assertion': await signAccessJwt() } }), {}), false);
@@ -63,9 +63,9 @@ test('isAdminAuthorized: sam nagłówek tożsamości lub atrapa tokenu nie wysta
 });
 
 test('CSRF: zmiany tylko z Origin panelu i jako JSON', async () => {
-  const u = (p) => new URL(`https://settings.familiada.online${p}`);
+  const u = (p) => new URL(`https://admin.familiada.online${p}`);
   const req = (p, method, headers) => new Request(u(p), { method, headers });
-  const ok = { Origin: 'https://settings.familiada.online', 'Content-Type': 'application/json' };
+  const ok = { Origin: 'https://admin.familiada.online', 'Content-Type': 'application/json' };
   assert.equal(adminWriteAllowed(req('/_admin_api/state', 'GET', {}), u('/_admin_api/state')), true);
   assert.equal(adminWriteAllowed(req('/_admin_api/state', 'POST', ok), u('/_admin_api/state')), true);
   assert.equal(adminWriteAllowed(req('/_admin_api/state', 'POST', { 'Content-Type': 'application/json' }), u('/_admin_api/state')), false);

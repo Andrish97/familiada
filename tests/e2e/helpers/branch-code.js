@@ -20,7 +20,7 @@ const PROD_ORIGIN = "https://www.familiada.online";
 const PROD_API_ORIGIN = "https://api.familiada.online";
 const API_ORIGIN = (process.env.E2E_API_ORIGIN || "").replace(/\/+$/, "");
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/", "snake/"];
+const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "admin/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/", "snake/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",

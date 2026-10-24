@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Ikony aplikacji (PWA) dla Familiady i panelu admina — jedno źródło: SVG.
 //
-// Z `web/assets/img/familiada-icon.svg` i `web/settings/icons/admin-icon.svg`
+// Z `web/assets/img/familiada-icon.svg` i `web/admin/icons/admin-icon.svg`
 // renderuje w Chromium (Playwright z tests/node_modules) komplet PNG:
 //   - `any`      192/512 px — jak SVG (zaokrąglone, przezroczyste rogi),
 //   - `maskable` 192/512 px — pełne tło na cały kwadrat, rysunek wyśrodkowany
@@ -26,8 +26,8 @@ const APPS = [
     prefix: "icon",
   },
   {
-    svg: "web/settings/icons/admin-icon.svg",
-    outDir: "web/settings/icons",
+    svg: "web/admin/icons/admin-icon.svg",
+    outDir: "web/admin/icons",
     prefix: "admin",
   },
 ];

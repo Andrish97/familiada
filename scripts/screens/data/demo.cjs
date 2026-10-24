@@ -380,7 +380,7 @@ function buildDb(lang, extras = {}) {
           ...tasks.filter((x) => x.state === "todo").map((x, i) => ({ kind: "poll", id: id("8f10", i + 1), name: x.title, owner_label: x.owner_label, status: i === 0 ? "opened" : "pending", link: `/go/?t=${x.token}` })),
           { kind: "device", id: id("8f20", 1), name: p.game, owner_label: friends[0].label, device_type: "host", link: "/go/?t=00000000-0000-4000-8000-0000000000aa" },
         ] },
-      // Panel admina (/settings/): odpowiedzi API Workera za Cloudflare Access.
+      // Panel admina (/admin/): odpowiedzi API Workera za Cloudflare Access.
       "/_admin_api/me": { ok: true, email: "admin@example.com" },
       "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },
       "/_admin_api/state": { enabled: false, mode: "message", message: "" },

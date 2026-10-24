@@ -190,7 +190,7 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
     strony. Po zmianie kluczy użytych na stronie: `node scripts/i18n-parts.mjs`
     (meta `i18n-parts` w HTML; zapadka `unit/i18nParts.test.js`). Plan:
     `docs/tlumaczenia-podzial-plan.md`;
-  - **panel admina (decyzja użytkownika 2026-10-23):** teksty `web/settings` mogą
+  - **panel admina (decyzja użytkownika 2026-10-23):** teksty `web/admin` mogą
     być wpisane na sztywno po polsku; tłumaczenia tylko dla tego, co trafia do
     użytkowników (maile, podgląd strony przerwy);
   - tekst, który przestał być używany — usunąć klucz z trzech języków
@@ -198,7 +198,7 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   - zmiana tekstu użytego w mailach powiadomień → `node scripts/sync-notification-mail-texts.mjs`;
   - sprawdzenie: `node scripts/i18n-unused.mjs` (nieużywane, brakujące, różnice
     między językami) i zapadka `unit/i18nUnused.test.js`.
-  - **wyjątek — panel admina (`web/settings/`, decyzja użytkownika 2026-10-23):**
+  - **wyjątek — panel admina (`web/admin/`, decyzja użytkownika 2026-10-23):**
     teksty wpisane na sztywno po polsku, bez kluczy w tłumaczeniach strony.
 - **Podręcznik przy zmianach działania (decyzja użytkownika 2026-10-23):** zmiana,
   która wyraźnie zmienia wygląd strony albo sposób korzystania z funkcji (nowy lub

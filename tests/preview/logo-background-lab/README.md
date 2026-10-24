@@ -8,7 +8,7 @@ node tests/preview/logo-background-lab/build-settings-tool.mjs
 
 Dziesięć przykładowych obrazów jest widocznych jako klikalne kafelki na stronie.
 Pliki źródłowe SVG znajdują się w
-`web/settings/tools/logo-background-lab/samples/` i są osadzane w scalonym
+`web/admin/tools/logo-background-lab/samples/` i są osadzane w scalonym
 HTML podczas budowania. Przykłady sprawdzają białe, niebieskie, zielone i
 fioletowe jednolite tła, kremowe z cieniem,
 nietypowe i ciemne tła, białe detale oraz celowo postrzępione krawędzie

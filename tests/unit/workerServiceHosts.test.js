@@ -24,5 +24,5 @@ test("Worker przepuszcza hosty usług bez zmian", async (t) => {
 
 test("Worker odpowiada na preflight CORS dla leads", async () => {
   const response = await worker.fetch(new Request("https://leads.familiada.online/search", { method: "OPTIONS" }), {}, {});
-  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://settings.familiada.online");
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://admin.familiada.online");
 });

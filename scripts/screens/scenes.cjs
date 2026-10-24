@@ -1,7 +1,7 @@
 // Sceny zrzutów. Każda scena to jedna strona (albo jej stan) z danymi demo.
 //   id        -- nazwa katalogu wyniku i wartość dla --scenes
 //   category  -- grupa w galerii; sceny z homepage: true to kadry strony głównej
-//                (docs/e13-zrzuty-strona-glowna.md, dawny panel admina /settings/)
+//                (docs/e13-zrzuty-strona-glowna.md, dawny panel admina /admin/)
 //   path      -- adres strony (lang=… dopisuje runner)
 //   sources   -- prefiksy plików, których zmiana oznacza scenę w --changed
 //   ready     -- selektor CSS albo funkcja (w stronie) zwracająca true, gdy widok jest gotowy
@@ -337,44 +337,44 @@ module.exports = [
   { id: "snake-lang", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — przełącznik języka (menu otwarte)", path: "/snake/?qr=00000000-0000-4000-8000-000000000103", devices: ["desktop", "phone-landscape"],
     sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]",
     steps: [async (view) => { await view.locator(".lang-floating .lang-btn").click(); await view.locator(".lang-menu:not([hidden])").waitFor(); await view.waitForTimeout(200); }] },
-  { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#snakeTop tr").first().waitFor(); await view.locator("#snakeFunnel").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.
-  { id: "admin-stats-exclusions", category: "Dodatkowe", title: "Panel admina — wykluczenia ze statystyk (role kont testowych)", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-exclusions", category: "Dodatkowe", title: "Panel admina — wykluczenia ze statystyk (role kont testowych)", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#excludedList .excluded-summary").waitFor(); await view.locator("#excludedList").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   // Tabela „Rozgrywki” w szczegółach statystyk (szerokość kolumn, przycisk „Pokaż przebieg”).
-  { id: "admin-stats-gameplay-table", category: "Dodatkowe", title: "Panel admina — tabela Rozgrywki", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-gameplay-table", category: "Dodatkowe", title: "Panel admina — tabela Rozgrywki", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().waitFor(); await view.waitForTimeout(400); }] },
   // Migracja 466: pomiar łącza urządzeń w przebiegu rozgrywki.
-  { id: "admin-stats-network-probe", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki z pomiarem łącza", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-network-probe", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki z pomiarem łącza", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().click(); await view.locator(".stats-session-run-details").waitFor(); await view.waitForTimeout(400); }] },
   // Diagnostyka per sesja (etap 3): zestawienie sugerowanych problemów nad tabelą rozgrywek.
-  { id: "admin-stats-diagnosis", category: "Dodatkowe", title: "Panel admina — rozgrywki: zestawienie sugerowanych problemów", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-diagnosis", category: "Dodatkowe", title: "Panel admina — rozgrywki: zestawienie sugerowanych problemów", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-sessions-diagnosis").waitFor(); await view.waitForTimeout(400); }] },
-  { id: "admin-stats-session-suggestions", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki: sugerowane problemy", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+  { id: "admin-stats-session-suggestions", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki: sugerowane problemy", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().click(); await view.locator(".stats-session-suggestion").first().waitFor(); await view.locator(".stats-session-suggestion details").first().evaluate(el => { el.open = true; }); await view.waitForTimeout(400); }] },
   // Liczniki powiadomień na zakładkach (Poczta Familiada 5, Gry Społeczności 4); węższe okno -- suma na „Więcej”.
-  { id: "admin-badges", category: "Dodatkowe", title: "Panel admina — liczniki powiadomień na zakładkach i „Więcej”", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/topbar-controller.js"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop", "phone"],
+  { id: "admin-badges", category: "Dodatkowe", title: "Panel admina — liczniki powiadomień na zakładkach i „Więcej”", path: "/admin/", sources: ["web/admin/", "web/shared/js/core/topbar-controller.js"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop", "phone"],
     steps: [async (view, { device }) => { if (device !== "phone") { await view.setViewportSize({ width: 1180, height: 760 }); await view.waitForTimeout(500); await view.locator("#btnMore").click(); await view.waitForTimeout(300); } else { await view.locator(".topbar-menu-toggle").click(); await view.waitForTimeout(400); } }] },
-  { id: "admin-market-pending", category: "Dodatkowe", title: "Panel admina — Gry Społeczności, licznik „Do zatwierdzenia”", path: "/settings/", sources: ["web/settings/"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop"],
+  { id: "admin-market-pending", category: "Dodatkowe", title: "Panel admina — Gry Społeczności, licznik „Do zatwierdzenia”", path: "/admin/", sources: ["web/admin/"], ready: () => document.getElementById("tabBadgeMarketplace")?.textContent === "4", devices: ["desktop"],
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
   // Audyt E24 (P1): podgląd maila bez skryptów (Ś6), lead-finder przez Worker (Ś2), obejście przerwy 12 h (Ś7).
   // E26: zgłoszenie zostaje po usunięciu konta autora, z plakietką „konto usunięte”.
-  { id: "admin-reports-deleted-author", category: "Dodatkowe", title: "Panel admina — zgłoszenia: plakietka „konto usunięte”", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+  { id: "admin-reports-deleted-author", category: "Dodatkowe", title: "Panel admina — zgłoszenia: plakietka „konto usunięte”", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => {
       await view.evaluate(() => document.getElementById("btnTabReports").click());
       await view.evaluate(() => document.getElementById("mfReports").click());
       await view.locator(".mail-thread-item[data-report-id]").first().waitFor();
       await view.waitForTimeout(500);
     }] },
-  { id: "admin-mail-html", category: "Dodatkowe", title: "Panel admina — poczta: treść HTML maila (bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+  { id: "admin-mail-html", category: "Dodatkowe", title: "Panel admina — poczta: treść HTML maila (bez skryptów)", path: "/admin/", sources: ["web/admin/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => {
       await view.evaluate(() => document.getElementById("btnTabReports").click());
       await view.locator(".mail-thread-item").first().click();
       await view.locator(".mail-msg-html-frame").first().waitFor();
       await view.waitForTimeout(800);
     }] },
-  { id: "admin-mail-preview", category: "Dodatkowe", title: "Panel admina — poczta: pełny podgląd maila (dwuklik, bez skryptów)", path: "/settings/", sources: ["web/settings/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+  { id: "admin-mail-preview", category: "Dodatkowe", title: "Panel admina — poczta: pełny podgląd maila (dwuklik, bez skryptów)", path: "/admin/", sources: ["web/admin/", "web/shared/js/core/stored-mail.js"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => {
       await view.evaluate(() => document.getElementById("btnTabReports").click());
       await view.locator(".mail-thread-item").first().click();
@@ -382,9 +382,9 @@ module.exports = [
       await view.locator(".compose-preview-wrapper iframe").waitFor();
       await view.waitForTimeout(800);
     }] },
-  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — kontakty marketingowe: zlecenie lead-findera (przez Worker)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop"],
+  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — kontakty marketingowe: zlecenie lead-findera (przez Worker)", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop"],
     steps: [async (view) => { await view.locator("#btnMore").click().catch(() => {}); await view.getByText("Kontakty Marketingowe").last().click(); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "")); await view.waitForTimeout(500); }] },
-  { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/settings/", sources: ["web/settings/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+  { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "privacy", category: "Dodatkowe", title: "Polityka prywatności — początek", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2" },
   { id: "privacy-scrolled", category: "Dodatkowe", title: "Polityka prywatności — po przewinięciu (cała strona się przewija)", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator(".m-doc .m-h2").nth(5).scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },

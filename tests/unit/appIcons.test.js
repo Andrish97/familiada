@@ -20,7 +20,7 @@ function pngSize(rel) {
 
 const APPS = [
   { manifest: "manifest.json", dir: "/assets/img", prefix: "icon", pages: ["index.html", "games/index.html", "connect/index.html", "logos/index.html", "logos/editor/draw/index.html", "logos/editor/image/index.html", "logos/editor/text/index.html"] },
-  { manifest: "manifest-admin.webmanifest", dir: "/settings/icons", prefix: "admin", pages: ["settings/index.html"] },
+  { manifest: "manifest-admin.webmanifest", dir: "/admin/icons", prefix: "admin", pages: ["admin/index.html"] },
 ];
 
 for (const app of APPS) {
@@ -57,9 +57,9 @@ for (const app of APPS) {
 
 test("ikony obu aplikacji pochodzą z SVG o tym samym viewBox (ta sama ścieżka renderowania)", () => {
   const a = read("assets/img/familiada-icon.svg");
-  const b = read("settings/icons/admin-icon.svg");
+  const b = read("admin/icons/admin-icon.svg");
   assert.match(a, /viewBox="0 0 512 512"/);
   assert.match(b, /viewBox="0 0 512 512"/);
   assert.equal(fs.existsSync(path.join(web, "assets/img/icon-1024.png")), false, "stara ikona 1024 px — generować przez scripts/app-icons.cjs");
-  assert.equal(fs.existsSync(path.join(web, "settings/icons/admin-1024.png")), false, "stara ikona 1024 px — generować przez scripts/app-icons.cjs");
+  assert.equal(fs.existsSync(path.join(web, "admin/icons/admin-1024.png")), false, "stara ikona 1024 px — generować przez scripts/app-icons.cjs");
 });

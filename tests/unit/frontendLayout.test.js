@@ -52,7 +52,7 @@ test("current device pages occupy the canonical folders without legacy copies", 
 });
 
 test("all page folders use index.html, and Worker fetches them without redirects", async (t) => {
-  for (const file of files.filter(f => path.basename(f) === "index.html" && f !== path.join(ROOT, "index.html") && !f.includes("/settings/"))) {
+  for (const file of files.filter(f => path.basename(f) === "index.html" && f !== path.join(ROOT, "index.html") && !f.includes("/admin/"))) {
     const route = "/" + path.relative(ROOT, path.dirname(file));
     assert.equal(pageIndexPath(route), route + "/index.html");
     assert.equal(pageIndexPath(route + "/"), route + "/index.html");
@@ -69,9 +69,9 @@ test("all page folders use index.html, and Worker fetches them without redirects
 });
 
 test("settings and maintenance allow their new assets; public settings stay blocked", () => {
-  for (const ref of ["/settings/js/settings.js", "/settings/data/tools.json", "/shared/translation/pl/common.js", "/shared/css/base.css", "/games/css/games.css"]) assert.equal(isSettingsAsset(ref), true, ref);
-  for (const ref of ["/settings/index.html", "/settings/js/settings.js", "/settings/tools/editor_5x7.html"]) assert.equal(isBlockedPath("www.familiada.online", ref), true, ref);
-  assert.equal(isStaticAssetPath("/settings/js/settings.js"), false);
+  for (const ref of ["/admin/js/settings.js", "/admin/data/tools.json", "/shared/translation/pl/common.js", "/shared/css/base.css", "/games/css/games.css"]) assert.equal(isSettingsAsset(ref), true, ref);
+  for (const ref of ["/admin/index.html", "/admin/js/settings.js", "/admin/tools/editor_5x7.html"]) assert.equal(isBlockedPath("www.familiada.online", ref), true, ref);
+  assert.equal(isStaticAssetPath("/admin/js/settings.js"), false);
   assert.equal(isStaticAssetPath("/shared/js/core/auth.js"), true);
   assert.equal(isMaintenanceAsset("/maintenance/"), true);
   assert.equal(isMaintenanceAsset("/maintenance/js/maintenance.js"), true);

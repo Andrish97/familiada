@@ -68,7 +68,7 @@ export default {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const host = url.host.toLowerCase();
-  if (host === "www.familiada.online" || host === "familiada.online" || host === "settings.familiada.online") {
+  if (host === "www.familiada.online" || host === "familiada.online" || host === "admin.familiada.online") {
     const redirect = tvRedirect(request, url);
     if (redirect) {
       // Jeśli prace techniczne trwają, telewizor ma dostać Maintenance.
@@ -104,7 +104,7 @@ async function handleFetch(request, env, ctx) {
   }
 
   // SETTINGS HOST (admin panel, no maintenance gate)
-  if (host === "settings.familiada.online") {
+  if (host === "admin.familiada.online") {
     // Contact is public also on the admin host; all privileged routes below
     // retain their existing authentication requirements.
     if (request.method === "POST" && url.pathname === "/_api/contact") return handleContactSubmit(request, env);
@@ -114,20 +114,20 @@ async function handleFetch(request, env, ctx) {
     }
 
     // Block explicit settings paths (only "/" should work)
-    if (url.pathname === "/settings" || url.pathname === "/settings/" || url.pathname === "/settings.html") {
+    if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
       return new Response("Not Found", { status: 404 });
     }
 
     // Root on settings subdomain should open settings.html
     if (url.pathname === "/" || url.pathname === "/index.html") {
-      url.pathname = "/settings/index.html";
+      url.pathname = "/admin/index.html";
       return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // allow settings-tools and assets only
-    if (url.pathname.startsWith("/settings/tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
+    if (url.pathname.startsWith("/admin/tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
       const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-      if (url.pathname.startsWith("/settings/tools/")) {
+      if (url.pathname.startsWith("/admin/tools/")) {
         return withHeaders(res, {
           "Content-Security-Policy": "frame-ancestors 'self'",
           "X-Frame-Options": "SAMEORIGIN"
@@ -136,7 +136,7 @@ async function handleFetch(request, env, ctx) {
       if (url.pathname === "/version.txt") {
         return withHeaders(res, { "Cache-Control": "no-store" });
       }
-      if (url.pathname === "/settings/sw.js") {
+      if (url.pathname === "/admin/sw.js") {
         return withHeaders(res, { "Service-Worker-Allowed": "/" });
       }
       return res;
@@ -176,7 +176,7 @@ async function handleFetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
-          "Access-Control-Allow-Origin": "https://settings.familiada.online",
+          "Access-Control-Allow-Origin": "https://admin.familiada.online",
           "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Authorization, Content-Type",
           "Access-Control-Max-Age": "86400"

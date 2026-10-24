@@ -3,8 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
-const target = path.resolve(dir, "../../../web/settings/tools/logo-background-lab/index.html");
-const samplesDir = path.resolve(dir, "../../../web/settings/tools/logo-background-lab/samples");
+const target = path.resolve(dir, "../../../web/admin/tools/logo-background-lab/index.html");
+const samplesDir = path.resolve(dir, "../../../web/admin/tools/logo-background-lab/samples");
 const sampleFiles = {
   WHITE: "white.svg",
   SOLID_BLUE: "solid-blue.svg",

@@ -16,7 +16,7 @@ import { ticketForSender } from '../../cloudflare/maintenance-worker/src/lib/ema
 import { ACCESS_ENV, signAccessJwt, withJwks } from './helpers/accessJwt.js';
 
 const ROOT = new URL('../../', import.meta.url);
-const ADMIN = 'https://settings.familiada.online';
+const ADMIN = 'https://admin.familiada.online';
 const RUN = '0f1e2d3c-4b5a-4987-8654-3210fedcba98';
 
 // ── Ś2 ────────────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt t
 });
 
 test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () => {
-  const src = readFileSync(new URL('web/settings/js/settings.js', ROOT), 'utf8');
+  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
   assert.doesNotMatch(src, /lead-finder-token/);
   assert.doesNotMatch(src, /leads\.familiada\.online/);
   assert.match(src, /adminFetch\(`\/leads\/\$\{path\}`/);
@@ -83,7 +83,7 @@ test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () =>
 
 // ── Ś6 ────────────────────────────────────────────────────────────────────
 test('Ś6: podglądy maili w panelu bez allow-scripts', () => {
-  const src = readFileSync(new URL('web/settings/js/settings.js', ROOT), 'utf8');
+  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
   assert.doesNotMatch(src, /allow-scripts/);
   assert.equal((src.match(/frame\.sandbox = MAIL_FRAME_SANDBOX;/g) || []).length, 6);
 });
@@ -142,7 +142,7 @@ test('Ś7: /_admin_api/bypass ustawia podpisany token na 12 h', async () => {
 const html = (headers = {}) => new Response('<p>x</p>', { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', ...headers } });
 
 test('N3: nagłówki bezpieczeństwa na stronach HTML naszych hostów', () => {
-  for (const host of ['www.familiada.online', 'settings.familiada.online', 'nieznana.familiada.online']) {
+  for (const host of ['www.familiada.online', 'admin.familiada.online', 'nieznana.familiada.online']) {
     const res = withSecurityHeaders(new Request(`https://${host}/`), html());
     assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff', host);
     assert.equal(res.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
@@ -168,7 +168,7 @@ test('N3: bez zmian dla usług przepuszczanych, nie-HTML; istniejąca CSP uzupe�
   assert.equal(redirect.status, 301);
   const nf = withSecurityHeaders(new Request('https://www.familiada.online/x'), html({ 'Content-Security-Policy': "default-src 'self'" }));
   assert.equal(nf.headers.get('Content-Security-Policy'), "default-src 'self'; frame-ancestors 'self'");
-  const tools = withSecurityHeaders(new Request('https://settings.familiada.online/settings/tools/a.html'), html({ 'Content-Security-Policy': "frame-ancestors 'self'" }));
+  const tools = withSecurityHeaders(new Request('https://admin.familiada.online/admin/tools/a.html'), html({ 'Content-Security-Policy': "frame-ancestors 'self'" }));
   assert.equal(tools.headers.get('Content-Security-Policy'), "frame-ancestors 'self'");
 });
 

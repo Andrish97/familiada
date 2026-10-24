@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { diagnoseSession, summarizeSessions, describeDevice } from "../../web/settings/js/session-diagnosis.js";
+import { diagnoseSession, summarizeSessions, describeDevice } from "../../web/admin/js/session-diagnosis.js";
 
 const entry = (n, extra = {}) => ({ n, first: "2026-10-23T10:00:00Z", last: "2026-10-23T10:05:00Z", dur_ms: 0, hidden_ms: 0, max_ms: 0, ...extra });
 const ids = row => diagnoseSession(row).map(item => item.id);
