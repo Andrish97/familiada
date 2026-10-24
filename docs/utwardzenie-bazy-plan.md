@@ -21,4 +21,4 @@ bazy sprzed niej (uprawnienia po odtworzeniu wyrównane `acl-sync`).
 
 ## Dziennik
 
-- 2026-10-24 01:20 UTC: 480 i 481 zastosowane na produkcji (log: search_path 60 funkcji, wyzwalacze bez EXECUTE: 67). Aktywność przed wdrożeniem: 0. Lokalnie: `tests/sql/db-hardening-480-481.sql` OK. Testy kontrolne — w toku.
+- 2026-10-24 01:20 UTC: 480 i 481 zastosowane na produkcji (log: search_path 60 funkcji, wyzwalacze bez EXECUTE: 67). Aktywność przed wdrożeniem: 0. Lokalnie: `tests/sql/db-hardening-480-481.sql` OK. Pierwsze testy kontrolne (40049395970, 40049398079) czerwone: dodanie pytania „permission denied for function _game_control_active” — wyzwalacz `guard_game_content` jest SECURITY INVOKER (błędnie odczytany jako DEFINER). Poprawka 482 (01:30 UTC, przywrócony EXECUTE) — test SQL rozszerzony o wstawienie pytania. Po 482: blokady/bezpieczeństwo/ankiety/kopie (40050120863) i Control (40050123444) — **zielone**.
