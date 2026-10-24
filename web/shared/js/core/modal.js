@@ -1,8 +1,8 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-24T21301";
-import { setMessage } from "./toast.js?v=v2026-10-24T21301";
-import { t } from "../../translation/translation.js?v=v2026-10-24T21301";
-import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-24T21301";
-import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-24T21301";
+import { icon, iconText } from "./icons.js?v=v2026-10-24T21374";
+import { setMessage } from "./toast.js?v=v2026-10-24T21374";
+import { t } from "../../translation/translation.js?v=v2026-10-24T21374";
+import { openDialog, closeDialog, isSheetViewport, animateClose } from "./modal-sheet.js?v=v2026-10-24T21374";
+import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-24T21374";
 
 let modalSeq = 0;
 
@@ -191,8 +191,10 @@ function openModal({
     const finish = (value) => {
       if (done) return;
       done = true;
-      if (sheet) closeDialog(overlay);
-      overlay.remove();
+      // Okno znika po animacji zamknięcia (modal-sheet.js), wynik od razu.
+      const remove = () => overlay.remove();
+      if (sheet) closeDialog(overlay, remove);
+      else animateClose(overlay, remove);
       try {
         document.dispatchEvent(new CustomEvent("uni-modal:closed", { detail: { value } }));
       } catch {

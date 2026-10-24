@@ -239,6 +239,25 @@ z sceną zrzutów i wpisem w tej tabeli.
    każda klasa z pliku strony występuje w HTML lub JS, który ta strona ładuje
    (graf importów). `var(--x)` bez definicji zatrzyma test `cssTokensDefined`.
 
+## 7a. Ruch i płynność
+
+Jedna rodzina animacji, czasy z tokenów (`--dur-fast` .12 s, `--dur-base`
+.2 s, `--dur-slow` .3 s, `--ease-out`); ograniczony ruch w systemie
+(`prefers-reduced-motion`) wyłącza wszystko (base.css).
+
+- **Okna** — otwarcie: tło się rozjaśnia, okno wjeżdża lekko z dołu
+  (`modal-in`); zamknięcie odwrotnie (`is-closing`), arkusz na telefonie
+  zjeżdża w dół (`sheet-closing`). Zamyka zawsze `closeDialog(overlay, then)`
+  albo `animateClose(overlay, done)` (`core/modal-sheet.js`): klasa zamykania
+  trzyma ostatnią klatkę do schowania okna, koniec po `animationend`. Nie
+  chować okna ręcznie (`hidden = true`) z pominięciem tych funkcji.
+- **Między stronami** — przenikanie View Transitions (`@view-transition` w
+  base.css), topbar stoi (`view-transition-name: topbar`).
+- **Zakładki i sekcje** — panel `[role=tabpanel]` i rozwinięta lista sekcji
+  (`.rowsList.is-expanding`) wjeżdżają łagodnie (`panel-in`).
+- **Menu, listy, podpowiedzi** — `popover-in`; przyciski, pola, kafle —
+  przejścia kolorów, obwódek i lekkiego uniesienia.
+
 ## 8. Nowa strona — kroki
 
 1. HTML: szkielet z §5, pliki z §2, elementy z §6.

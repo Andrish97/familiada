@@ -6,11 +6,11 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T21301";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-24T21301";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-24T21301";
-import { emptyState } from "./empty-state.js?v=v2026-10-24T21301";
-import "./scroll-fade.js?v=v2026-10-24T21301"; // wygaszona krawędź przewijanych list
+import { t } from "../../translation/translation.js?v=v2026-10-24T21374";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-24T21374";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-24T21374";
+import { emptyState } from "./empty-state.js?v=v2026-10-24T21374";
+import "./scroll-fade.js?v=v2026-10-24T21374"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -484,6 +484,11 @@ export function renderRowSections(host, sections, opts = {}) {
       head.addEventListener("click", () => {
         const now = !list.hidden;
         list.hidden = now;
+        // Rozwinięcie: lista wjeżdża płynnie (tylko po kliknięciu, nie przy odświeżeniu).
+        if (!now) {
+          list.classList.add("is-expanding");
+          list.addEventListener("animationend", () => list.classList.remove("is-expanding"), { once: true });
+        }
         state[s.key] = now;
         head.setAttribute("aria-expanded", now ? "false" : "true");
         caret.innerHTML = icon(now ? "caret-down" : "caret-up");

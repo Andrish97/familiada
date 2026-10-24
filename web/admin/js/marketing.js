@@ -1,9 +1,9 @@
 // admin/js/marketing.js — Marketing: szablony, odbiorcy, podgląd i wysyłka.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-24T21301";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21301";
-import { adminFetch, esc, loadTinyMce, showToast } from "./core.js?v=v2026-10-24T21301";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-24T21374";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21374";
+import { adminFetch, esc, loadTinyMce, showToast } from "./core.js?v=v2026-10-24T21374";
 
 // ── Marketing ──────────────────────────────────────────────────────────────
 

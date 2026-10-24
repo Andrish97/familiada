@@ -16,6 +16,19 @@
    tokenów na :root (własne zmienne ustawia na swoich elementach). */
 
 
+/* Płynność między stronami (View Transitions, Chrome 126+, Safari 18.2+):
+   przejście do innej strony aplikacji łagodnie przenika zamiast mignięcia
+   białym/pustym ekranem; topbar zostaje na miejscu (view-transition-name
+   w components.css). Inne przeglądarki
+   przełączają stronę jak dotąd. Ograniczony ruch w systemie -- bez przejścia.
+   (Reguła @view-transition stoi poza warstwami.) */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
+::view-transition-group(root) { animation-duration: var(--dur-base); }
+::view-transition-group(topbar) { animation-duration: var(--dur-base); }
+
 
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -285,6 +298,7 @@
      Kryjące tło: półprzezroczysty pasek przepuszczał treść przewijaną
      pod spodem i każdy przycisk miał inny odcień. */
   .topbar {
+    view-transition-name: topbar; /* przejście między stronami: topbar stoi (base.css) */
     position: fixed;
     top: 0;
     left: 0;
@@ -863,6 +877,17 @@
   }
   .overlay.contact-modal-overlay { background: var(--scrim-modal); }
   .overlay.uni-overlay { background: var(--scrim-modal); } /* okna z core/modal.js */
+  /* Płynne okno (wyśrodkowane): tło się rozjaśnia, okno wjeżdża lekko z dołu;
+     zamknięcie odwrotnie (is-closing trzyma ostatnią klatkę do schowania —
+     closeDialog/animateClose w modal-sheet.js). Okno od dołu (arkusz) ma
+     własne animacje w warstwie states. */
+  .overlay:not([hidden]):not(.sheet-active) { animation: fade-in var(--dur-base) ease; }
+  .overlay:not([hidden]):not(.sheet-active) > .modal { animation: modal-in var(--dur-base) var(--ease-out); }
+  .overlay.is-closing:not(.sheet-active) { animation: fade-out var(--dur-fast) ease both; }
+  .overlay.is-closing:not(.sheet-active) > .modal { animation: modal-out var(--dur-fast) ease-in both; }
+  @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes modal-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes fade-out { to { opacity: 0; } }
 
   /* Formularz okna kontaktu — rytm kart formularzy: 14 px między polami,
      8 px etykieta → pole → podpowiedź. */
@@ -2481,6 +2506,10 @@
   .rowsSectionCaret svg { width: 100%; height: 100%; }
   .rowsList { display: grid; gap: 8px; margin-top: 8px; }
   .rowsList[hidden] { display: none; }
+  /* Płynność: rozwinięta sekcja i nowo pokazany panel zakładki wjeżdżają łagodnie. */
+  .rowsList.is-expanding,
+  [role="tabpanel"]:not([hidden]) { animation: panel-in var(--dur-base) var(--ease-out); }
+  @keyframes panel-in { from { opacity: 0; transform: translateY(4px); } }
   .rowsRow {
     display: flex; align-items: center; gap: 12px; min-width: 0;
     padding: 10px 12px; border-radius: var(--r-md);

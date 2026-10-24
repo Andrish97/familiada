@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-24T21301";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-24T21301";
-import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T21301";
+import { t } from "../../translation/translation.js?v=v2026-10-24T21374";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-24T21374";
+import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T21374";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -20,7 +20,7 @@ import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T2
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-24T21301"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-24T21374"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -127,6 +127,7 @@ if (typeof window !== "undefined") window.addEventListener("popstate", onModalPo
  */
 export function setOverlayOpen(el, open) {
   if (!el) return;
+  if (open) cancelClose(el);
   delete el.dataset.routed; // pokazanie „z adresu” oznacza showRoutedOverlay
   el.hidden = !open;
   el.classList.remove("hidden");
@@ -147,7 +148,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-24T21301").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-24T21374").then((module) => module.openContactModal());
 
     }, 0);
     return;
@@ -340,19 +341,10 @@ function sheetHandle(overlayEl) {
   return handle;
 }
 
-// Zamknięcie z animacją zjazdu w dół (pasek, klik w tło); potem zwykłe
-// zamknięcie okna (historia ?dialog= albo onClose strony).
-let closingTimer = null;
+// Zamknięcie paskiem albo kliknięciem w tło: zwykłe zamknięcie okna (historia
+// ?dialog= albo onClose strony); zjazd w dół robi closeDialog.
 function closeSheetAnimated() {
-  const overlay = activeOverlay;
-  if (!overlay || closingTimer) return;
-  overlay.classList.add("sheet-closing");
-  closingTimer = setTimeout(() => {
-    closingTimer = null;
-    overlay.classList.remove("sheet-closing");
-    overlay.style.removeProperty("--sheet-drag");
-    if (activeOverlay === overlay) handleSheetBack();
-  }, 230);
+  if (activeOverlay) handleSheetBack();
 }
 
 function restoreSheetLayout(overlayEl) {
@@ -414,12 +406,58 @@ export function openDialog(overlayEl, { onClose, onBack, historyKey = overlayEl?
   enterModalSheet(overlayEl, { onClose: onClose || (() => closeDialog(overlayEl)), onBack, historyKey, restore });
 }
 
-/** Zamyka okno otwarte przez openDialog (bez wołania onClose). */
-export function closeDialog(overlayEl) {
+// Animacja zamknięcia: arkusz zjeżdża (sheet-closing), okno wyśrodkowane
+// gaśnie (is-closing). Klasa trzyma ostatnią klatkę aż do schowania okna --
+// zdjęta wcześniej cofała okno na miejsce na klatkę (mrugnięcie). Koniec
+// rozpoznaje animationend; zapas czasu na wypadek braku animacji.
+const CLOSE_FALLBACK_MS = 360;
+const closing = new WeakMap(); // overlay -> { finish, dones }
+
+function reducedMotion() {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function cancelClose(overlay) {
+  const c = closing.get(overlay);
+  if (!c) return;
+  c.dones.length = 0;
+  c.finish();
+}
+
+/** Chowa okno po animacji zamknięcia; done() chowa/usuwa okno. */
+export function animateClose(overlay, done) {
+  const pending = closing.get(overlay);
+  if (pending) { pending.dones.push(done); return; }
+  if (!overlay || !overlay.isConnected || overlay.hidden || getComputedStyle(overlay).display === "none" || reducedMotion()) { done(); return; }
+  const cls = overlay.classList.contains("sheet-active") ? "sheet-closing" : "is-closing";
+  const target = overlay.querySelector(":scope > .modal") || overlay;
+  const dones = [done];
+  let timer = 0;
+  const onEnd = (e) => { if (e.target === target) finish(); };
+  function finish() {
+    if (closing.get(overlay)?.finish !== finish) return;
+    closing.delete(overlay);
+    clearTimeout(timer);
+    target.removeEventListener("animationend", onEnd);
+    for (const fn of dones) fn();
+    overlay.classList.remove("sheet-closing", "is-closing");
+    overlay.style.removeProperty("--sheet-drag");
+  }
+  closing.set(overlay, { finish, dones });
+  target.addEventListener("animationend", onEnd);
+  timer = setTimeout(finish, CLOSE_FALLBACK_MS);
+  overlay.classList.add(cls);
+}
+
+/** Zamyka okno otwarte przez openDialog (bez wołania onClose), z animacją; then() po schowaniu. */
+export function closeDialog(overlayEl, then) {
   if (!overlayEl) return;
-  setOverlayOpen(overlayEl, false);
-  // Okno nad innym oknem (np. potwierdzenie nad arkuszem) nie zamyka arkusza.
-  if (!activeOverlay || activeOverlay === overlayEl) exitModalSheet(overlayEl);
+  animateClose(overlayEl, () => {
+    setOverlayOpen(overlayEl, false);
+    // Okno nad innym oknem (np. potwierdzenie nad arkuszem) nie zamyka arkusza.
+    if (!activeOverlay || activeOverlay === overlayEl) exitModalSheet(overlayEl);
+    then?.();
+  });
 }
 
 // overlayEl: element .overlay danego modala.
