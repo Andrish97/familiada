@@ -1411,8 +1411,8 @@
   }
   .toggle-slider > .ico { flex: none; width: 1.15em; height: 1.15em; }
   /* Obrys wybranej części idzie po zaokrągleniu grupy (bez ucięć w rogach). */
-  .toggle-item:first-child > .toggle-slider { border-radius: calc(var(--r-md) - var(--r-xs)) 0 0 calc(var(--r-md) - var(--r-xs)); }
-  .toggle-item:last-child > .toggle-slider { border-radius: 0 calc(var(--r-md) - var(--r-xs)) calc(var(--r-md) - var(--r-xs)) 0; }
+  .toggle-item:first-child > .toggle-slider { border-radius: calc(var(--r-md) - 1px) 0 0 calc(var(--r-md) - 1px); }
+  .toggle-item:last-child > .toggle-slider { border-radius: 0 calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0; }
   .toggle-group--sm .toggle-slider { padding: 7px 10px; font-size: 12px; }
   /* Wiersz listy na telefonie: przełącznik same ikony (opis w dymku). */
   @media (max-width: 600px) {
@@ -3038,7 +3038,8 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
-  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top { margin-inline: 16px; }
+  /* .sheet-modal-top ma display: contents — margines dostają jego części. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top > :is(.sheet-modal-head, .sheet-modal-actions) { margin-inline: 16px; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
   /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
      w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
@@ -3098,9 +3099,6 @@
   :where(:root[data-sheet]) body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
   :where(:root[data-sheet]) body.sheet-open .contact-footer-entry { display: none; }
 
-  /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
-     arkusza — zastępuje markę. */
-  :where(:root[data-sheet]) body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
   /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
   :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }
   :where(:root[data-sheet]) body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
