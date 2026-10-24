@@ -156,7 +156,14 @@ Progi szerokości: 640/680/720/768/520 → 600; 900/1100/1120/760 (Control) →
 Wysokość: 720 (edytor gry, Eksplorator) → 500. Wyjątki — ekrany gry poza
 silnikiem z warstwami: TV 650 (decyzja), Przycisk 340, Prowadzący 280.
 Telefon poziomo dostaje teraz topbar telefonu (dawniej: komputerowy do 760 px
-szerokości), okno komputera 601–760 px — topbar komputera z „Więcej”.
+szerokości), okno komputera 601–760 px — topbar komputera z „Więcej”. Zapytania
+kontenerowe okazały się niepotrzebne: siatki kafli, formularz pytania,
+kontakty i Konto układają się same (`auto-fill`/`minmax`, brak progów
+w `question-form.css`). Zrzuty przed/po: 65 (komputer, telefon, tablet,
+telefon poziomo) — 0 różnic; 1000×700 — edytor gry, Logo (obraz)
+i podsumowanie Control w dwóch kolumnach (dawniej jedna, próg 1100/1120);
+1366×650 — edytor gry z panelami przewijanymi w środku zamiast przewijania
+strony (próg wysokości 720 → 500).
 
 **Zapytania kontenerowe** (`@container`) dla elementów, które stoją w
 kolumnach o różnej szerokości: siatki kafli, formularz pytania (edytor
