@@ -11,7 +11,7 @@ const MIN_DX = 40;
 export function onSwipe(el, onSwipe) {
   let start = null;
   let swiped = false;
-  el.style.touchAction = "pan-y pinch-zoom";
+  el.classList.add("swipe-target"); // touch-action w silniku
   el.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse") return;
     start = { x: e.clientX, y: e.clientY, id: e.pointerId };

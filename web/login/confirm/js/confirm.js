@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19012";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19151";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-24T19012";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-24T19012";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19012";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-24T19012";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-24T19012";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-24T19151";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-24T19151";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19151";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-24T19151";
 
 
 const status = document.getElementById("status");
@@ -38,14 +38,14 @@ async function handleEmailChangeFailed(toEmail, e) {
       if (intentStatus === "expired") {
         setStatus(t("confirm.emailChangeCancelled"));
         setErr(t("confirm.emailChangeCancelledHint"));
-        back.style.display = "inline-flex";
+        back.hidden = false;
         return;
       }
     } catch {}
   }
   setStatus(t("confirm.failed"));
   setErr(niceAuthError(e));
-  back.style.display = "inline-flex";
+  back.hidden = false;
 }
 
 async function requireNoActiveSessionBeforeAuthFlow() {
@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("confirm.linkInvalid"));
       setErr(decoded);
     }
-    back.style.display = "inline-flex";
+    back.hidden = false;
     return;
   }
 
@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) {
       setStatus(t("confirm.sessionSwitchCancelled"));
       setErr(t("confirm.sessionSwitchCancelledHint"));
-      back.style.display = "inline-flex";
+      back.hidden = false;
       return;
     }
   }
@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(decoded);
       setErr(t("confirm.checkOtherEmail"));
     }
-    back.style.display = "inline-flex";
+    back.hidden = false;
     return;
   }
   
@@ -236,19 +236,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             await finishEmailChangeConfirmation(data.session.user);
           }
           setStatus(t("confirm.done"));
-          go.style.display = "inline-flex";
+          go.hidden = false;
           setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
           return;
         }
         setStatus(t("confirm.savedNoSession"));
-        back.style.display = "inline-flex";
+        back.hidden = false;
         return;
       } catch (e) {
         if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
         console.error(e);
         setStatus(t("confirm.failed"));
         setErr(niceAuthError(e));
-        back.style.display = "inline-flex";
+        back.hidden = false;
         return;
       }
     }
@@ -265,27 +265,27 @@ document.addEventListener("DOMContentLoaded", async () => {
             await finishEmailChangeConfirmation(data.session.user);
           }
           setStatus(t("confirm.done"));
-          go.style.display = "inline-flex";
+          go.hidden = false;
           setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
           return;
         }
 
         setStatus(t("confirm.savedNoSession"));
-        back.style.display = "inline-flex";
+        back.hidden = false;
         return;
       } catch (e) {
         if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
         console.error(e);
         setStatus(t("confirm.failed"));
         setErr(niceAuthError(e));
-        back.style.display = "inline-flex";
+        back.hidden = false;
         return;
       }
     }
 
     setStatus(t("confirm.missingCode"));
     setErr(t("confirm.missingCodeHint"));
-    back.style.display = "inline-flex";
+    back.hidden = false;
     return;
   }
 
@@ -301,11 +301,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         await finishEmailChangeConfirmation(data.session.user);
       }
       setStatus(t("confirm.done"));
-      go.style.display = "inline-flex";
+      go.hidden = false;
       setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
     } else {
       setStatus(t("confirm.confirmedNoSession"));
-      back.style.display = "inline-flex";
+      back.hidden = false;
     }
   } catch(e){
     if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("confirm.failed"));
       setErr(msg);
     }
-    back.style.display = "inline-flex";
+    back.hidden = false;
   }
   } finally {
     document.documentElement.classList.remove('page-loading');

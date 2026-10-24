@@ -15,15 +15,15 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T19012";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-24T19012";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-24T19012";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-24T19012";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-24T19012";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T19151";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-24T19151";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-24T19151";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-24T19151";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-24T19151";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -389,11 +389,11 @@ export function initDrawEditor(ctx) {
   function ensureCursorOverlay() {
     if (cursorDot || !stageHost) return;
     const layer = document.createElement("div");
-    layer.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:25;";
+    layer.className = "draw-cursor-layer";
     cursorDot = document.createElement("div");
-    cursorDot.style.cssText = "position:absolute;left:0;top:0;transform:translate(-9999px,-9999px);border:1px solid rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.35);background:transparent;";
+    cursorDot.className = "draw-cursor-dot";
     layer.appendChild(cursorDot);
-    stageHost.style.position = "relative";
+    stageHost.classList.add("has-cursor-layer");
     stageHost.appendChild(layer);
   }
 
@@ -1036,7 +1036,7 @@ export function initDrawEditor(ctx) {
       item.className = "menu-item fontPickItem";
       item.setAttribute("aria-selected", String(f.value === fontCurrent));
       const name = document.createElement("span");
-      name.style.cssText = "flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;";
+      name.className = "fontPickName";
       name.textContent = f.label;
       const sample = document.createElement("span");
       sample.className = "fontPickSwatch";

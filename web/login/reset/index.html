@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-24T19012"/>
+  <meta name="app-version" content="v2026-10-24T19151"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,20 +15,20 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="reset.title">Familiada — reset hasła</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19012" />
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19012" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/css/auth-landing.css?v=v2026-10-24T19012"/>
-  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19012"></script>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-24T19151" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19151" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/css/auth-landing.css?v=v2026-10-24T19151"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T19151"></script>
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19012" defer></script>
-  <script type="module" src="/login/reset/js/reset.js?v=v2026-10-24T19012" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19012" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T19151" defer></script>
+  <script type="module" src="/login/reset/js/reset.js?v=v2026-10-24T19151" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T19151" defer></script>
 
 </head>
 
@@ -41,7 +41,7 @@
       <div class="callout status" id="status" role="status" data-i18n="reset.statusChecking">Sprawdzam link…</div>
       <div class="field-error" id="err" role="alert"></div>
 
-      <div class="form" id="form" style="display:none">
+      <div class="form" id="form" hidden>
         <div class="hint" id="pwdHint"></div>
         <input class="inp" id="p1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="reset.placeholderNewPassword"/>
         <input class="inp" id="p2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password" data-i18n-placeholder="reset.placeholderRepeatPassword"/>
@@ -50,7 +50,7 @@
       </div>
 
       <div class="actions">
-        <a class="btn" id="back" href="#" data-base-href="/login/" style="display:none" data-i18n="common.backToLogin">Wróć do logowania</a>
+        <a class="btn" id="back" href="#" data-base-href="/login/" hidden data-i18n="common.backToLogin">Wróć do logowania</a>
       </div>
 
       <div class="hint" data-i18n="reset.hint">
@@ -62,7 +62,7 @@
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-24T19012"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-24T19151"></script>
 
 </body>
 </html>

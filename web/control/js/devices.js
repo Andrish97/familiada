@@ -12,8 +12,9 @@
 // 2026-05-30_203) — to czysty lookup "kod -> share_key", niezwiązany z
 // komendami, nie wymaga żadnej zmiany dla v2.
 
-import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
 
 
 // Linki urządzeń wychodzą z aplikacji (mail, QR, zakładki), więc zawsze przez /go/.
@@ -33,7 +34,7 @@ export function createDevices({ game }) {
     const { data, error } = await sb().rpc("control_runtime_device_link", {
       p_game_id: game.id, p_device_type: deviceType,
     });
-    if (error || !data?.ok || !data?.token) throw new Error(data?.error || "Nie udało się utworzyć linku urządzenia.");
+    if (error || !data?.ok || !data?.token) throw new Error(data?.error || t("control.errors.deviceLink"));
     keyByType.set(deviceType, data.token);
     return data.token;
   }

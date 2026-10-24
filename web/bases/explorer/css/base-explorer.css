@@ -254,11 +254,11 @@
       border-radius: 0
   }
 
-  #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,.searchBox {
+  #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,:where(.explorer-body) .searchBox {
       background: var(--w-4)
   }
 
-  .searchBox {
+  :where(.explorer-body) .searchBox {
     --under: var(--surface-inset); /* podłoże dla kryjących teł przycisków (css/base.css) */
       width: auto;
       flex: 1 1 auto;
@@ -266,7 +266,7 @@
       flex-wrap: wrap;
   }
 
-  .searchText {
+  :where(.explorer-body) .searchText {
       flex: 1 1 140px;
       min-width: 140px;
   }
@@ -351,11 +351,6 @@
       margin: 6px;
       background: var(--w-8);
       border-radius: var(--r-pill)
-  }
-
-  .is-disabled {
-      opacity: .5;
-      pointer-events: none
   }
 
   #tagsModal .tags-row {
@@ -1002,7 +997,7 @@
    flex:0 0 1px;
   }
 
-  .searchBox {
+  :where(.explorer-body) .searchBox {
       margin-right: 10px;
   }
 
@@ -1136,7 +1131,7 @@
 
     /* SearchBox — pełna szerokość, wiersz 1 */
     .search-row { width:100%; min-width:0; flex:0 0 100%; }
-    .searchBox {
+    :where(.explorer-body) .searchBox {
       width: auto;
       flex:1 1 auto;
       min-width: 0;
@@ -1192,7 +1187,7 @@
     }
 
     /* Modale nad drawerem; tryb sheet przełącza je do przepływu strony. */
-    .overlay { z-index: var(--z-sheet); }
+    :where(.explorer-body) .overlay { z-index: var(--z-sheet); }
     /* wyśrodkowane okno; w oknie od dołu szerokość daje silnik (warstwa states) */
     .overlay > :is(.tags-modal, .export-modal, .question-modal) {
       width: calc(100% - 24px);
@@ -1683,7 +1678,7 @@
      jak pole w oknie „Przenieś do”: lupa w środku po lewej, „X” po prawej, gdy
      tekst albo filtry są włączone. Telefon: w pasku sam przycisk „Szukaj”
      (#btnSearchSheet) — pole jest w oknie (ui/search.js przenosi je z paska). */
-  .searchBox { margin-right: 0; }
+  :where(.explorer-body) .searchBox { margin-right: 0; }
   .toolbar .searchBox { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; min-width: 0; min-height: 36px; box-sizing: border-box; }
   .searchBoxIco { width: 16px; height: 16px; flex: 0 0 16px; opacity: .6; }
   .searchBox .searchText { flex: 1 1 auto; min-width: 0; }

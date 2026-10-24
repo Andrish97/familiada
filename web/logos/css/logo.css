@@ -643,7 +643,7 @@
   /* =========================================================
      OVERLAYS
   ========================================================= */
-  .overlay{ z-index: var(--z-top); pointer-events: auto; }
+  :where(.logo-body) .overlay{ z-index: var(--z-top); pointer-events: auto; }
 
   /* =========================================================
      LIST VIEW: karta do krawędzi ekranu + scroll w logoGridBig
@@ -696,18 +696,6 @@
   /* =========================================================
      SHAPE PICKER (dropdown z kształtami)
   ========================================================= */
-  .shapePicker{
-    position:absolute;
-    top:100%;
-    left:0;
-    z-index: var(--z-float);
-    background:var(--surface-1);
-    border:1px solid var(--w-14);
-    border-radius:var(--r-md);
-    padding:10px;
-    box-shadow:0 14px 36px var(--k-40);
-    animation: shapeFadeIn .12s ease;
-  }
   @keyframes shapeFadeIn{ from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
 
   /* =========================================================
@@ -909,4 +897,16 @@
     transform-origin: 0 0;
     will-change: transform;
   }
+
+  /* Kursor pędzla w edytorze rysowania (draw.js): warstwa nad płótnem,
+     kropka przesuwana przez transform. */
+  .has-cursor-layer { position: relative; }
+  .draw-cursor-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .draw-cursor-dot {
+    position: absolute; left: 0; top: 0;
+    transform: translate(-9999px, -9999px);
+    border: 1px solid var(--text-soft);
+    box-shadow: 0 0 0 1px var(--k-40);
+  }
+  .fontPickName { flex: 1; text-align: left; font-family: var(--font-ui); }
 }

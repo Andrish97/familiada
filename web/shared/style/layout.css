@@ -7,6 +7,7 @@
 
   /* Treść stron z listą: 20 px od topbara (komputer i telefon). */
   .wrap {
+    width: 100%;
     margin: 0 auto;
     padding: 20px var(--page-pad-right) 18px var(--page-pad-left);
   }
@@ -205,6 +206,7 @@
     text-align: center;
     transition: background var(--dur-fast) ease-out, border-color var(--dur-fast) ease-out, transform var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
   }
+  .addCard--static { cursor: default; pointer-events: none; }
   .addCard:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lift);

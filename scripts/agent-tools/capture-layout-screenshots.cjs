@@ -242,7 +242,7 @@ function deviceCss(device) {
           window.scrollTo(0, 0);
         });
         const metrics = await page.evaluate(() => {
-          const main = document.querySelector('main.wrap, main.maintenance-main');
+          const main = document.querySelector('main.wrap, main.block-main');
           const content = main?.querySelector('.bar, .tabs-card, .logoShell') || main;
           const box = content?.getBoundingClientRect();
           const titleBox = main?.querySelector('.bar .title')?.getBoundingClientRect();

@@ -329,14 +329,6 @@
     color: var(--accent);
   }
 
-  .preview-row{
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-size: 12px;
-    opacity: .85;
-  }
-
 
 
   /* bez opacity/filter (Android): przygaszone kolorem */
@@ -1188,7 +1180,6 @@
   .mail-ti-date { font-size: 10px; opacity: .45; flex-shrink: 0; }
   .mail-ti-subject { font-size: 11px; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
   .mail-ti-preview { font-size: 11px; opacity: .38; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mail-ti-ticket { font-size: 10px; color: var(--accent); opacity: .7; margin-top: 3px; }
 
   /* numer zgłoszenia na liście: .tag.tag--gold z base.css */
   .mail-ti-ticket-badge { margin-right: 6px; }

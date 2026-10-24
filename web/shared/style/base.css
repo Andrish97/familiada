@@ -27,6 +27,7 @@
   }
   /* Zachowaj szerokość układu, gdy wysuwane menu blokuje przewijanie body. */
   html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
+  body.explorer-drawer-open { overflow: hidden; } /* szuflada Eksploratora na telefonie */
 
   body {
     min-height: 100dvh;
@@ -148,6 +149,13 @@
    states (ostatnia) wygrywa z regułami wszystkich wcześniejszych warstw bez
    flagi important. */
 @layer states {
+  /* Strażnik urządzenia: strona ukryta, dopóki device-guard.js nie
+     rozstrzygnie (atrybut na <html> w HTML ekranów urządzeń; data-mobile-guard
+     ustawia skrypt w <head> stron roboczych tylko na wąskim ekranie). */
+  html[data-device-guard-pending] body,
+  html[data-mobile-guard] body { visibility: hidden; }
+  html[data-mobile-guard] { overflow: hidden; touch-action: none; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 1ms;

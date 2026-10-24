@@ -1,9 +1,9 @@
 // admin/js/maintenance.js — Przerwa techniczna: stan, tryby, wybór daty, podgląd strony przerwy, odpytywanie stanu.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19012";
-import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19012";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19151";
+import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19151";
 
 let currentState = null;
 let currentMode = "message";
@@ -657,7 +657,7 @@ async function openMaintenancePreview() {
   let finalContentHtml = "";
   if (useStandard) {
     finalContentHtml = `
-      <p>${escSetting(messageText)}</p>
+      <p class="block-text">${escSetting(messageText)}</p>
       <div class="countdown" id="countdown" ${mode === "countdown" || mode === "returnAt" ? "" : "hidden"}>
         ${mode === "countdown" ? "00:00:00" : (returnAtValue ? formatReturnAtValue(returnAtValue) : "—")}
       </div>
@@ -691,28 +691,23 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-24T19012"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T19012"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-24T19151"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T19151"/>
 
-  <style>
-    body{margin:0;padding:0}
-    .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
-    .countdown-inline { font-weight: bold; color: var(--accent); }
-  </style>
 </head>
-<body class="maintenance-body">
+<body class="page--block">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
     <div class="topbar-section topbar-section-1"><span class="brand">FAMILIADA</span></div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3"></div>
     <div class="topbar-section topbar-section-4"></div>
   </header>
-  <main class="maintenance-main">
-    <section class="maintenance-card" role="status" aria-live="polite">
-      <div class="card-top">
-        <h1>${escSetting(titleText)}</h1>
+  <main class="block-main">
+    <section class="block-card" role="status" aria-live="polite">
+      <div class="block-card-top">
+        <h1 class="block-title">${escSetting(titleText)}</h1>
         ${finalContentHtml}
       </div>
     </section>

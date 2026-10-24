@@ -20,9 +20,6 @@
 
   /* ── Smooth realtime status transitions ────────────────────
   ──────────────────────────────────────────────────────────── */
-  .conn-status {
-    transition: background .25s ease, border-color .25s ease, color .25s ease;
-  }
 
   .wrap.wide{
       width: 90%;
@@ -84,27 +81,6 @@
     font-weight: 800;
     color: var(--text);
     min-width: 52px;
-  }
-
-  .qList {
-    box-sizing: border-box;
-    width: 100%;
-    border-radius: var(--r-md);
-    border: 1px solid var(--w-14);
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 10px;
-    background: var(--k-20);
-    max-height: none;
-    overflow: visible;
-    min-height: 60px;
-  }
-
-  .radio input {
-      transform: translateY(1px)
   }
 
   .shell {
@@ -171,26 +147,6 @@
   /* Przyciski kroku zajmują resztę stopki, akcja główna zawsze po prawej. */
   .stepFootButtons { flex: 1; justify-content: flex-end; }
 
-  .stepFoot .msg {
-      margin-left: auto
-  }
-
-  .head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px
-  }
-
-  .name {
-      font-weight: 1000;
-      font-size: 15px;
-      letter-spacing: .04em;
-      grid-column: span 2;
-  }
-
-  .field { min-width: 220px; }
-
   .summaryQMode {
       font-size: calc(var(--c2-fs) * .9);
       font-weight: 600;
@@ -200,21 +156,7 @@
       opacity: 0.7;
   }
 
-  .msg {
-      font-size: 12px
-  }
-
-  .radio {
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--w-14);
-      background: var(--w-8);
-      cursor: pointer;
-      font-weight: 900
-  }
-
-  .dotRow,.radio,.top-status {
+  .dotRow,.top-status {
       display: flex;
       align-items: center
   }
@@ -248,11 +190,6 @@
       opacity: .85
   }
 
-  .dotRow.opted-out {
-      opacity: .3;
-      pointer-events: none;
-  }
-
   .dot {
     transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
     border: 1px solid var(--w-14);
@@ -278,13 +215,6 @@
       background: var(--g-60);
       border-color: var(--g-35);
       box-shadow: 0 0 16px var(--g-10)
-  }
-
-  .qText {
-      margin-top: 6px;
-      font-weight: 1000;
-      line-height: 1.25;
-      font-size: 16px
   }
 
   .timer3 {
@@ -443,25 +373,6 @@
     flex: 0 0 auto;
   }
 
-  .logoTile {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 10px;
-    border-radius: var(--r-md);
-    border: 2px solid var(--w-14);
-    background: var(--k-20);
-    cursor: pointer;
-    transition: border-color .12s, background .12s;
-    user-select: none;
-  }
-
-  .logoTile:hover {
-    border-color: var(--w-25);
-    background: var(--w-8);
-  }
-
 
   /* --- Dodatkowe poprawki czytelności --- */
   #roundQuestion {
@@ -609,7 +520,6 @@
   #app > .cardBody .btn { font-size:calc(var(--c2-fs) * .82); }
   #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
   #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
-  #app > .cardBody .msg-pill { font-size:calc(var(--c2-fs) * .75); }
   #app > .cardBody .toggle-slider { font-size:calc(var(--c2-fs) * .92); }
   /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
      tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
@@ -641,7 +551,7 @@
   .c2-gameplay-nav:has(.c2-statusbar) { border:0; padding:0; }
   .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar { width:100%; height:62px; min-height:62px; box-sizing:border-box; padding:8px 2px 0; flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
   .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
-  .topbar-layout-4 { flex-wrap:nowrap; }
+  :where(.control-body) .topbar-layout-4 { flex-wrap:nowrap; }
   .topbar-layout-4 .topbar-section { flex-wrap:nowrap; }
   .topbar-layout-4 .topbar-section-1 { white-space:nowrap; }
   .topbar-layout-4 .topbar-section-2 { flex-wrap:nowrap; gap:8px; }
@@ -955,7 +865,10 @@
     min-width:0; min-height:0; box-sizing:border-box;
     border-radius:var(--r-md); border:1px solid var(--line); background:var(--w-8);
     padding:6px;
+    grid-row:1; grid-column:1 / 7; /* pierwszy wiersz siatki, pełna szerokość */
   }
+  .c2-mapinput.is-beside-p1 { grid-column:1 / 5; }
+  .c2-map-p1tile { grid-row:1; grid-column:5 / 7; }
   /* Kolumna etykiety — wyśrodkowana w bloku. */
   .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
   .c2-mapinput .c2-field-label { font-size:.78em; }

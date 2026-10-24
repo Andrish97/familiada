@@ -1,4 +1,4 @@
-html[data-tv-layout="true"] .maintenance-body {
+html[data-tv-layout="true"] .page--block {
   --topbar-h: 84px;
 }
 
@@ -24,7 +24,7 @@ html[data-tv-layout="true"] .footer::before {
 }
 
 @media (max-height: 650px) {
-  html[data-tv-layout="true"] .maintenance-body {
+  html[data-tv-layout="true"] .page--block {
     --topbar-h: 64px;
   }
 

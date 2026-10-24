@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-24T19012";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-24T19151";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-24T19012";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19012";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
+} from "../../shared/js/core/auth.js?v=v2026-10-24T19151";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-24T19012";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-24T19012";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-24T19012";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19012";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-24T19151";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-24T19151";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-24T19151";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19151";
 
 
 const $ = (s) => document.querySelector(s);
@@ -285,11 +285,7 @@ async function getSilentCaptchaToken() {
     const mount = document.createElement("div");
     // Needs real dimensions — Turnstile measures container size during execution.
     // visibility:hidden keeps it invisible but renderable (unlike display:none or 0x0).
-    mount.style.position = "fixed";
-    mount.style.bottom = "0";
-    mount.style.right = "0";
-    mount.style.visibility = "hidden";
-    mount.style.pointerEvents = "none";
+    mount.className = "captcha-silent";
     mount.dataset.theme = "dark";
     document.body.appendChild(mount);
 
@@ -370,16 +366,12 @@ async function askCaptchaToken() {
   if (!captcha?.render) throw new Error(t("auth.captchaRequired"));
 
   const status = document.createElement("div");
-  status.style.marginTop = "8px";
-  status.style.opacity = "0.85";
-  status.style.fontSize = "12px";
+  status.className = "captcha-status";
   status.textContent = t("index.captchaStatusPending");
 
   const mount = document.createElement("div");
   mount.dataset.theme = "dark";
-  mount.style.minHeight = "84px";
-  mount.style.display = "grid";
-  mount.style.placeItems = "center";
+  mount.className = "captcha-mount";
   mount.appendChild(status);
 
   let token = "";
@@ -415,7 +407,7 @@ async function askCaptchaToken() {
       "error-callback": () => {
         token = "";
         status.textContent = t("index.captchaError");
-        if (okBtnRef) { okBtnRef.style.display = ""; okBtnRef.disabled = true; }
+        if (okBtnRef) { okBtnRef.hidden = false; okBtnRef.disabled = true; }
       },
     });
 
@@ -429,7 +421,7 @@ async function askCaptchaToken() {
       initialFocus: mount,
       onReady: ({ okBtn }) => {
         okBtnRef = okBtn;
-        if (okBtnRef) okBtnRef.style.display = "none";
+        if (okBtnRef) okBtnRef.hidden = true;
       },
     });
 

@@ -159,6 +159,11 @@ const pl = {
       sessionExpired: "Ta sesja rozgrywki już wygasła. Zacznij od nowa.",
     },
     devicesFinish: "Gotowe — przejdź dalej",
+    errors: {
+      sessionStart: "Nie udało się uruchomić sesji Control.",
+      sessionRenew: "Nie udało się odnowić sesji Control.",
+      deviceLink: "Nie udało się utworzyć linku urządzenia.",
+    },
     teamADefault: "Drużyna A",
     teamBDefault: "Drużyna B",
     stepFinal: "Finał",

@@ -309,7 +309,7 @@ module.exports = [
     db: (db, lang) => { db.rpc.mail_cooldown_email_check = [{ ok: true, next_allowed_at: null }]; if (sceneDb) sceneDb(db, lang); } }, { auth })),
 
   // ================= Reset hasła =================
-  { id: "people-reset-missing", guest: true, category: C, title: "Reset hasła — brak kodu w linku", path: "/login/reset/", sources: RESET, ready: "#back[style*='inline-flex']" },
+  { id: "people-reset-missing", guest: true, category: C, title: "Reset hasła — brak kodu w linku", path: "/login/reset/", sources: RESET, ready: "#back:not([hidden])" },
   via({ id: "people-reset-form", guest: true, category: C, title: "Reset hasła — formularz nowego hasła", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form" },
     { turnstile: false, auth: linkAuth }),
   via({ id: "people-reset-mismatch", guest: true, category: C, title: "Reset hasła — hasła różnią się (błąd)", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form",
@@ -318,19 +318,19 @@ module.exports = [
   via({ id: "people-reset-saved", guest: true, category: C, title: "Reset hasła — hasło zapisane", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#form", settle: 50,
     steps: [fill([["#p1", "Familiada#2026"], ["#p2", "Familiada#2026"]]), click("#save"), waitFor("#back")] },
   { turnstile: false, auth: linkAuth }),
-  via({ id: "people-reset-failed", guest: true, category: C, title: "Reset hasła — link nieważny lub wygasł", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#back[style*='inline-flex']" },
+  via({ id: "people-reset-failed", guest: true, category: C, title: "Reset hasła — link nieważny lub wygasł", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: "#back:not([hidden])" },
     { turnstile: false, auth: { exchangeCodeForSession: { error: "Email link is invalid or has expired", status: 403 } } }),
   { id: "people-reset-session-switch", category: C, title: "Reset hasła — zalogowany na innym koncie (okno przełączenia)", path: "/login/reset/?code=screensResetCode", sources: RESET, ready: MODAL },
 
   // ================= Potwierdzenie konta =================
-  { id: "people-confirm-missing", guest: true, category: C, title: "Potwierdzenie konta — brak kodu w linku", path: "/login/confirm/", sources: CONFIRM, ready: "#back[style*='inline-flex']" },
-  { id: "people-confirm-invalid", guest: true, category: C, title: "Potwierdzenie konta — link nieważny", path: "/login/confirm/?error=access_denied&error_description=Email+link+is+invalid+or+has+expired", sources: CONFIRM, ready: "#back[style*='inline-flex']" },
-  { id: "people-confirm-used", guest: true, category: C, title: "Potwierdzenie konta — link już użyty", path: "/login/confirm/?error_description=Link+has+already+been+used", sources: CONFIRM, ready: "#back[style*='inline-flex']" },
-  { id: "people-confirm-first-link", guest: true, category: C, title: "Zmiana e-maila — pierwszy link potwierdzony, czeka drugi", path: "/login/confirm/?message=Confirmation+link+accepted.+Please+proceed+to+confirm+link+sent+to+the+other+email", sources: CONFIRM, ready: "#back[style*='inline-flex']" },
+  { id: "people-confirm-missing", guest: true, category: C, title: "Potwierdzenie konta — brak kodu w linku", path: "/login/confirm/", sources: CONFIRM, ready: "#back:not([hidden])" },
+  { id: "people-confirm-invalid", guest: true, category: C, title: "Potwierdzenie konta — link nieważny", path: "/login/confirm/?error=access_denied&error_description=Email+link+is+invalid+or+has+expired", sources: CONFIRM, ready: "#back:not([hidden])" },
+  { id: "people-confirm-used", guest: true, category: C, title: "Potwierdzenie konta — link już użyty", path: "/login/confirm/?error_description=Link+has+already+been+used", sources: CONFIRM, ready: "#back:not([hidden])" },
+  { id: "people-confirm-first-link", guest: true, category: C, title: "Zmiana e-maila — pierwszy link potwierdzony, czeka drugi", path: "/login/confirm/?message=Confirmation+link+accepted.+Please+proceed+to+confirm+link+sent+to+the+other+email", sources: CONFIRM, ready: "#back:not([hidden])" },
   // Po „konto aktywne” strona sama przechodzi dalej po 0,7 s -- zrzut od razu (settle).
-  via({ id: "people-confirm-done", guest: true, category: C, title: "Potwierdzenie konta — konto aktywne (Przejdź do panelu)", path: "/login/confirm/?code=screensConfirmCode", sources: CONFIRM, ready: "#go[style*='inline-flex']", settle: 50 },
+  via({ id: "people-confirm-done", guest: true, category: C, title: "Potwierdzenie konta — konto aktywne (Przejdź do panelu)", path: "/login/confirm/?code=screensConfirmCode", sources: CONFIRM, ready: "#go:not([hidden])", settle: 50 },
     { turnstile: false, auth: linkAuth }),
-  via({ id: "people-confirm-email-change-cancelled", guest: true, category: C, title: "Zmiana e-maila — zmiana anulowana (link nieaktualny)", path: "/login/confirm/?token_hash=screensHash&type=email_change&to=jan.nowy%40example.com", sources: CONFIRM, ready: "#back[style*='inline-flex']",
+  via({ id: "people-confirm-email-change-cancelled", guest: true, category: C, title: "Zmiana e-maila — zmiana anulowana (link nieaktualny)", path: "/login/confirm/?token_hash=screensHash&type=email_change&to=jan.nowy%40example.com", sources: CONFIRM, ready: "#back:not([hidden])",
     db: (db) => { db.rpc.get_email_intent_status = "expired"; } },
   { turnstile: false, auth: { verifyOtp: { error: "Token has expired or is invalid", status: 403 } } }),
   { id: "people-confirm-session-switch", category: C, title: "Potwierdzenie konta — zalogowany na innym koncie (okno przełączenia)", path: "/login/confirm/?code=screensConfirmCode", sources: CONFIRM, ready: MODAL },

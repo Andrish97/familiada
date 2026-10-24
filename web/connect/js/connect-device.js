@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19012";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T19012";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19012";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
-import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T19012";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19012";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T19012";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19012";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-24T19151";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T19151";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
+import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-24T19151";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T19151";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-24T19151";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19151";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -90,7 +90,7 @@ async function handleCodeConnect() {
     setCodeMsg("");
     void showDevicePreview(data);
   } catch (e) {
-    setCodeMsg(e?.message || "Błąd.");
+    setCodeMsg(e?.message || t("common.genericError"));
   } finally {
     if (btnConnectCode) btnConnectCode.disabled = false;
   }
@@ -159,7 +159,7 @@ async function renderSharedDevices() {
         const device = item.device_type === "poll_qr" ? "qr" : item.device_type;
         window.location.href = `/go/?d=${device}&id=${item.game_id}&key=${item.share_key}`;
       } catch (e) {
-        toast(e?.message || "Błąd.", { kind: "error" });
+        toast(e?.message || t("common.genericError"), { kind: "error" });
       }
     });
 
@@ -169,7 +169,7 @@ async function renderSharedDevices() {
   if (focusShare) {
     const hit = sharedDevicesList.querySelector(`[data-share-id="${CSS.escape(focusShare)}"]`);
     if (hit) {
-      hit.style.borderColor = "rgba(255,234,166,.9)";
+      hit.classList.add("is-focus");
       hit.scrollIntoView({ block: "center" });
     }
   }
@@ -180,7 +180,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T19012";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-24T19151";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
@@ -189,12 +189,13 @@ async function loadJsQR() {
 function buildScanOverlay() {
   const video = document.createElement("video");
   video.setAttribute("playsinline", "");
-  video.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;";
+  video.className = "qr-scan-video";
 
   const closeBtn = document.createElement("button");
   closeBtn.innerHTML = icon("close");
   closeBtn.setAttribute("aria-label", t("common.modal.closeLabel"));
-  closeBtn.style.cssText = "position:fixed;top:calc(16px + env(safe-area-inset-top, 0px));right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
+  closeBtn.type = "button";
+  closeBtn.className = "btn icon qr-scan-close";
 
   return { video, closeBtn };
 }

@@ -5,7 +5,7 @@
 
   /* ── typography ── */
 
-  .sub {
+  :where(.auth-shell) .sub {
       opacity: .85;
       margin-top: 6px;
       margin-bottom: 14px;
@@ -13,7 +13,7 @@
 
   /* ── status / error ── */
 
-  .status {
+  :where(.auth-shell) .status {
       opacity: .75;
       font-size: 13px;
       margin-bottom: 10px;
@@ -31,7 +31,7 @@
   /* ── buttons ── */
 
   /* Dwie równe kolumny (główna akcja | przełącznik), gość na całą szerokość. */
-  .row {
+  :where(.auth-shell) .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
@@ -43,7 +43,7 @@
 
   /* ── misc ── */
 
-  .meta {
+  :where(.auth-shell) .meta {
       display: flex;
       gap: 10px;
       align-items: center;
@@ -60,7 +60,7 @@
   }
 
 
-  .cooldown {
+  :where(.auth-shell) .cooldown {
       display: block;
       margin-top: 6px;
       font-size: 12px;
@@ -91,7 +91,7 @@
       gap: 10px;
   }
 
-  .modal-actions {
+  :where(.auth-shell) .modal-actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
@@ -155,4 +155,10 @@
       .login-top-left { left: calc(14px + env(safe-area-inset-left, 0px)); }
       .login-top-right { right: calc(14px + env(safe-area-inset-right, 0px)); }
   }
+
+  /* CAPTCHA (Turnstile): niewidoczne sprawdzenie potrzebuje prawdziwych
+     wymiarów (visibility zamiast display:none); okno z widocznym zadaniem. */
+  .captcha-silent { position: fixed; right: 0; bottom: 0; visibility: hidden; pointer-events: none; }
+  .captcha-mount { display: grid; place-items: center; min-height: 84px; }
+  .captcha-status { margin-top: 8px; font-size: 12px; opacity: .85; }
 }

@@ -4,6 +4,11 @@
 > podobnych funkcjonalnie. Zmiany wyglądu konsultowane z użytkownikiem
 > **hurtowo** — paczka wg wzorca, zrzuty przed/po (390 / 1400 px), jedno pytanie.
 
+> **Stan 2026-10-24 (E23 zakończone na branchu):** katalog elementów,
+> tokeny i moduły JS — [`silnik-stylow-uzycie.md`](silnik-stylow-uzycie.md);
+> ten dokument opisuje **zasady wyglądu i zachowania** (dlaczego tak), a nazwy
+> klas i modułów są tam. Fragmenty „dziś …” niżej opisują stan sprzed E23.
+
 > **E23 (2026-10-23):** wspólne style są w silniku `web/shared/style/`
 > (`tokens.css`, `base.css`, `components.css`, `layout.css`, `utilities.css`;
 > ekrany TV i gry: `tokens.css` + generowany `flat.css`). Dawny
@@ -180,7 +185,7 @@ Jedna klasa / komponent w `base.css` (dziś `.games-body .grid .card` w
 4. **Ikony akcji w prawym górnym rogu** (`.x`: kosz, dzwonek; 32 × 32 px, ramka,
    `border-radius:10px`).
 
-Wspólne wymiary: promień 18 px, ramka `rgba(255,255,255,.22)`, tło `#070b16` (ciemniejszy poziom kafla wewnątrz karty),
+Wspólne wymiary (tokeny, `layout.css`): promień `--r-md`, ramka `--line`, tło `--bg` (ciemniejszy poziom kafla wewnątrz karty),
 `min-height:130px`, hover = złota ramka, zaznaczony = złota ramka + poświata.
 Lista Logo i Marketplace używa tej samej bazowej powierzchni i odstępu
 wewnętrznego 14 px; większy kafel Logo zachowuje wysokość wymaganą przez podgląd.
@@ -284,13 +289,13 @@ Zrzuty: sceny `people-friends-half`, `people-friends-half-declined`,
 
 ## A7. Oznaczenia i liczniki
 
-- `.tag` (`base.css:1362-1388`) — **stała informacja o obiekcie** (typ, stan,
+- `.tag` (`components.css`) — **stała informacja o obiekcie** (typ, stan,
   rola, język, „Od: …”, liczba głosów): prostokąt, wariant kolorem znaczenia:
   neutralny, `--gold` (wymaga uwagi / premium), `--ok`, `--bad`, `--warn`,
   `--info`, `--muted`; `--upper` dla wielkich liter. Każde oznaczenie na
   kaflu, w nagłówku okna, w wierszu urządzenia = `.tag`; **żadnych** własnych
   klas pigułek (`.mkt-added-badge`, `.chip` poza etykietami użytkownika).
-- `.badge` (`base.css:1328`) — **licznik do obsłużenia** (kółko z liczbą na
+- `.badge` (`components.css`) — **licznik do obsłużenia** (kółko z liczbą na
   przycisku / karcie: zaproszenia, powiadomienia). Nie używać do tekstu.
 - **Zwijana sekcja listy** (`shareSectionEl({collapsed})`, `renderRowSections`;
   „Odrzucone przeze mnie” w Bazach/Znajomych, „Zrobione” w Zadaniach, decyzja
@@ -330,7 +335,9 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 - **Błąd wymagający decyzji / z długą treścią:** `alertModal` / `confirmModal`
   (`modal.js`).
 - **Treść stanu strony** (login: „Sprawdź skrzynkę”, `#err` pod polem,
-  „brak parametru”): zostaje w treści strony. Autozapis edytora gry jest
+  „brak parametru”): zostaje w treści strony — komunikat w stopce okna lub pod
+  polem przez `setMessage(el, tekst, "error"|"ok")` (`toast.js`, błąd na
+  czerwono), ramka informacji `.callout` (`--ok`, `--info`, `--warn`, `--bad`). Autozapis edytora gry jest
   cichy i nie wyświetla „Zapisano” ani w treści, ani w toast.
 - Zakaz: `window.alert()`, pól `#status` pod przyciskami, dymków bez `kind`
   tam, gdzie to błąd.
@@ -338,14 +345,20 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 ## A10. Okna i arkusze [WZÓR: nawigacja-mapa-plan „Okna na telefonie”]
 
 - Jeden szkielet: `.overlay` > `.modal.uni-modal` (`modal.js`: `confirmModal`,
-  `alertModal`, `promptModal`; style `base.css:756-790`), nagłówek `.uni-head`
-  (`.mTitle` + ✕), treść `.uni-body`, stopka `.uni-foot` (`btn sm gold` =
-  potwierdź, `btn sm` = anuluj).
-- Rozbudowane okna formularzowe: ten sam szkielet + `modal-sheet.js`
-  (`enterModalSheet`) — na telefonie (≤ 600 px) treść zastępuje stronę,
-  wyjście = przycisk Wstecz w topbarze, powrót do strony podstawowej.
-- Blokady (urządzenie nieobsługiwane, zasób zajęty) — jeden wygląd:
-  pełnoekranowa karta z ikoną, tytułem wielkimi literami, tekstem i „Wróć”.
+  `alertModal`, `promptModal`, `choiceModal`, `progressModal`), nagłówek
+  `.uni-head`/`.mHead` (`.mTitle` + ✕), treść `.uni-body`, stopka `.uni-foot`
+  / `.modal-actions` (`btn sm gold` = potwierdź, `btn sm` = anuluj).
+- Własne okna: ten sam szkielet, otwierane **wyłącznie** `openDialog(overlay,
+  { onClose })` / `closeDialog(overlay)` (`modal-sheet.js`). Na urządzeniu
+  dotykowym albo w oknie ≤ 600 px (`data-sheet` na `<html>`) okno wjeżdża od
+  dołu; Wstecz przeglądarki i „Wstecz” w topbarze zamykają je (`?dialog=`).
+- Zamykanie jednakowe dla wszystkich okien: ✕, Esc, klik w przyciemnione tło
+  (tylko klik zaczęty na tle) i „Anuluj” z `[data-modal-cancel]`; okno bez ✕
+  (blokujące, np. postęp) zostaje otwarte.
+- Blokady (urządzenie nieobsługiwane, zasób zajęty, gra w toku) — jeden
+  moduł `blocking-screen.js`: pełnoekranowa karta z ikoną, tytułem wielkimi
+  literami, tekstem i „Wróć”. Przerwa techniczna i 404 — wzorzec strony
+  `.page--block` (`block-card`, `block-title`, `block-text`).
 - Blokada rozmiaru okna (decyzja użytkownika 2026-10-22): za wąsko →
   „Za wąskie okno”; za nisko w poziomie (strony robocze < 580 px, `MIN_WORK_HEIGHT`)
   → „Obróć urządzenie”, gdy obrót pomoże (dotykowy telefon/tablet), w innym
@@ -374,7 +387,7 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 |---|---|---|
 | Domyślny | `.btn` | 14 px promień, `font-weight:900` |
 | **Główny** | `.btn.gold` | jeden na widok; zamiast `.btn.main` (logowanie) i `.c2-btn.primary` (Control, styl inline w `control/index.html:288`) |
-| Destrukcyjny | `.btn.danger` → **czerwony obrys** (jak `.btn.pollAbort`) | dziś `.btn.danger` = czerwone wypełnienie (tylko „Usuń konto”), a `.pollAbort` ma obrys; jeden wygląd; tylko w oknach potwierdzenia i na dole formularza |
+| Destrukcyjny | `.btn.danger` — **czerwony obrys** | jeden wygląd; tylko w oknach potwierdzenia i na dole formularza |
 | Rozmiary | `.btn` (formularze, okna), `.btn.sm` (paski akcji, 13 px), `.btn.xs` (w kaflu, 11 px), `.btn.xsm` (wiersz udostępniania) | nie wymyślać `btn-sm`, `small` |
 | Ikona | `.btn.icon` (`.btn.sm.icon`) | jedna klasa, kwadrat o wysokości przycisku (37 / 33 px) |
 | Bez tła | `.btn-plain` (+ klasa rozmiaru, np. `.searchClear`) | sama ikona/tekst w polu, wierszu lub pasku (czyszczenie wyszukiwania, rozwijanie drzewa, usuń plik, zamknij baner); przygaszony kolorem |
@@ -398,7 +411,7 @@ udostępniania, kod urządzenia) — nie dla kart formularzy.
 
 ## A12. Odstępy
 
-- **15 px** marginesu bocznego strony (`.wrap` na ≤ 980 px, `base.css:1166`),
+- **15 px** marginesu bocznego strony (`.wrap` na ≤ 980 px, `layout.css`, token `--page-gutter`),
   desktop: kontener wycentrowany, ten sam lewy brzeg dla `.bar`, kart i stopki.
   Zero stron z własnym `padding` boku (ustawienia gry, Control, menedżer bazy).
 - **Odstępy równe i z tokenów**: 14 px między kaflami, 16 px między sekcjami /
@@ -410,11 +423,11 @@ udostępniania, kod urządzenia) — nie dla kart formularzy.
 
 ## A13. Pusty stan
 
-Jeden komponent `.empty-state` (przerywana ramka `1px dashed var(--line2)`,
-`border-radius:12px`, tekst 13 px `opacity .7`, centralnie; opcjonalna akcja).
-Dziś istnieje jako `.share-empty-state` (`base.css:1961`) tylko dla udostępniania.
-Pusta lista = kafel „+” (`.addCard`) + `.empty-state` pod nim z tekstem „Brak …”
-(`.list-empty` jako alias w kodzie).
+Jeden komponent `.empty-state` (warianty `--inline` w wierszu listy, `--tile`
+w siatce kafli), budowany zawsze przez `emptyState()` / `emptyStateHtml()`
+(`core/empty-state.js`; klasa-uchwyt dla logiki strony, np. `list-empty`, w
+opcji `hook`). Pusta lista = kafel „+” (`.addCard`) + pusty stan z tekstem
+„Brak …”; komunikat w miejscu kafla, którego nie da się kliknąć — `.addCard--static`.
 
 ## A14. Teksty i nazwy
 

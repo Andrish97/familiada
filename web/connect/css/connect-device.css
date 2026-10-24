@@ -124,4 +124,11 @@
 
   /* Przewijana lista udostępnionych urządzeń przycina wiersze jak karta (dawniej base.css). */
   #sharedDevicesList{ border-radius: var(--r-md); }
+
+  /* Wiersz z linku (?share=): wyróżnienie. */
+  .shareRow.is-focus { border-color: var(--g-60); }
+
+  /* Skaner kodu QR: obraz z kamery na całym ekranie, zamknięcie w rogu. */
+  .qr-scan-video { position: fixed; inset: 0; z-index: var(--z-top); width: 100%; height: 100%; object-fit: cover; background: var(--black); }
+  .qr-scan-close { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); z-index: calc(var(--z-top) + 1); }
 }

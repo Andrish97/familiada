@@ -323,6 +323,19 @@ Moduły bez zmian: `icons.js` (już wspólny), `nav-map.js`, logika
 Moduły nie budują znaczników z `style=""`; okno kontaktu i wysyłki
 przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
 
+**Realizacja — sprzątanie końcowe (2026-10-24).** Ekran blokady stron jednym
+wzorcem `.page--block` (`block-main`, `block-card`, `block-title`,
+`block-text`) — przerwa techniczna, 404, podgląd przerwy w panelu admina
+(bez własnego `<style>`), ekrany TV. Strażnik urządzenia atrybutem
+`html[data-device-guard-pending]` / `[data-mobile-guard]` w `base.css`
+(zamiast bloków `<style>` w HTML). Style z JS do klas (logowanie/captcha,
+okno gościa, skaner QR, kursor rysowania, okładka logo, mapa Control,
+przeciąganie, przewijanie strony pod szufladą Eksploratora) — `style.x =`
+172 (-66). Martwy CSS stron usunięty (test `cssDead`: klasy strony bez
+wystąpienia w jej grafie modułów), duplikaty klas między plikami -41
+(zasięg `:where(.x-body)` albo przeniesienie do silnika). Teksty błędów
+Control przez tłumaczenia (`control.errors.*`).
+
 ## 7. Narzędzia i testy
 
 - **Audyt** (`scripts/css-audit.mjs`): nowy tryb dla silnika — parser

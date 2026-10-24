@@ -144,7 +144,7 @@ html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden;
 }
 .lang-floating .btn.lang-btn:hover { --btn-tint: var(--k-40); }
 .lang-floating .lang-btn .ico { width: 22px; height: 22px; }
-.lang-menu { z-index: calc(var(--z-top) + 1); }
+:where(.snake-body) .lang-menu { z-index: calc(var(--z-top) + 1); }
 
 /* Start/pauza stuknięciem tylko w dużą tablicę (pole gry). */
 .snake-big { cursor: pointer; }

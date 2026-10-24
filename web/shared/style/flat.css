@@ -31,6 +31,7 @@
   }
   /* Zachowaj szerokość układu, gdy wysuwane menu blokuje przewijanie body. */
   html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
+  body.explorer-drawer-open { overflow: hidden; } /* szuflada Eksploratora na telefonie */
 
   body {
     min-height: 100dvh;
@@ -151,6 +152,13 @@
 /* Ograniczony ruch: animacje i przejścia praktycznie natychmiastowe. Warstwa
    states (ostatnia) wygrywa z regułami wszystkich wcześniejszych warstw bez
    flagi important. */
+
+  /* Strażnik urządzenia: strona ukryta, dopóki device-guard.js nie
+     rozstrzygnie (atrybut na <html> w HTML ekranów urządzeń; data-mobile-guard
+     ustawia skrypt w <head> stron roboczych tylko na wąskim ekranie). */
+  html[data-device-guard-pending] body,
+  html[data-mobile-guard] body { visibility: hidden; }
+  html[data-mobile-guard] { overflow: hidden; touch-action: none; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -785,11 +793,6 @@
   @media (hover: hover) and (pointer: fine) { .inp[type=file]::file-selector-button:hover { filter: brightness(1.06); } }
 
   /* ── Treść strony: margines od krawędzi okna (--page-gutter) ──── */
-  .wrap {
-    width: 100%;
-    margin: 0 auto;
-    padding: 24px var(--page-pad-right) 18px var(--page-pad-left);
-  }
   .row,
   .stack {
     display: flex;
@@ -1129,6 +1132,7 @@
   .uni-modal > .mSub,
   .uni-modal > .uni-foot { flex: 0 0 auto; }
   .uni-modal > .mSub {
+    white-space: pre-line; /* tekst okna z \n (modal.js) */
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
@@ -1314,15 +1318,6 @@
 
   @media (max-width: 600px) {
     .brand { letter-spacing: .14em; }
-  }
-
-  @media (max-width: 980px) {
-    .wrap {
-      width: 100%;
-      padding: 15px;
-      padding-left: var(--page-pad-left);
-      padding-right: var(--page-pad-right);
-    }
   }
 
   /* ── „Dodaj do ekranu głównego” (urządzenia) ───────────────────── */
@@ -1930,6 +1925,7 @@
     line-height: 1;
     text-transform: uppercase;
     white-space: nowrap;
+    transition: background .25s ease, border-color .25s ease, color .25s ease;
   }
   .conn-status--connected {
     border-color: var(--ok-line);
@@ -2017,7 +2013,6 @@
   .baseShareLookup .inp { flex: 1 1 220px; min-width: 0; }
   .baseShareLookup .btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
   /* „Udostępnij zaznaczonym (n)”: na telefonie krótko „Udostępnij (n)”. */
-  .shareSelectedShort { display: none; }
 
   /* Wysyłanie kopii (resource-send.js). */
   .resource-send-modal {
@@ -2134,6 +2129,70 @@
   .searchClear { width: 28px; height: 28px; }
   .searchClear svg { width: 16px; height: 16px; }
   .searchClear[hidden] { display: none; }
+
+  /* Błąd wczytania ekranu urządzenia (Prowadzący, Przycisk): cały ekran. */
+  .device-load-error {
+    position: fixed; inset: 0; z-index: var(--z-top); display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 24px; background: var(--surface-1); color: var(--text);
+    text-align: center; font: 600 18px/1.4 system-ui, sans-serif;
+  }
+
+  /* ── Ekran blokady strony (.page--block, decyzja §11 pkt 8): przerwa
+     techniczna i 404 — jedna karta na środku, tytuł, tekst, przyciski. Ładują
+     go też telewizory (flat.css). ── */
+  .page--block { min-height: 100vh; background: var(--bg); color: var(--text); }
+  .block-main {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px var(--page-pad-right) 40px var(--page-pad-left);
+  }
+  .block-card {
+    --under: var(--surface-1); /* podłoże kryjących teł przycisków */
+    width: min(880px, 100%);
+    padding: 32px 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--surface-1); /* kryjące, bez backdrop-filter (Android) */
+    box-shadow: var(--shadow-modal);
+  }
+  .block-card-top { display: grid; gap: 10px; justify-items: center; text-align: center; }
+  .block-title {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .block-text { max-width: 640px; margin: 0; line-height: 1.5; opacity: .85; white-space: pre-line; }
+  @media (max-width: 600px) {
+    .block-card { padding: 24px 18px; }
+  }
+  /* Niski ekran poziomo: karta przewija się sama zamiast wchodzić pod stopkę. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .page--block { min-height: 100dvh; height: 100dvh; overflow: hidden; }
+    .block-main {
+      flex: 1 1 0;
+      min-height: 0;
+      align-items: flex-start;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left, 0px));
+    }
+    .block-card { padding: 16px 18px; }
+  }
+
+  /* Przesuwanie palcem w bok (swipe.js): przewijanie w pionie i przybliżanie
+     zostają dla przeglądarki. */
+  .swipe-target { touch-action: pan-y pinch-zoom; }
+
+  /* Okno informacji dla gościa (guest-info-modal.js): ostrzeżenia, kreska, kroki przeniesienia. */
+  .guest-info { display: grid; gap: 12px; margin-top: 6px; font-size: .9rem; line-height: 1.55; }
+  .guest-info-sep { margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
+  .guest-info-title { font-weight: 700; letter-spacing: .03em; }
+  .guest-info-steps { display: grid; gap: 5px; margin: 6px 0 0; padding-left: 20px; }
 
   /* ── Dymek komunikatu po akcji (toast.js) ─────────────────────── */
   .app-toast {
@@ -2469,10 +2528,6 @@
   }
   .shareList--scroll:not([hidden]) { display: flex; flex-direction: column; }
   .shareList--scroll > * { flex-shrink: 0; }
-  @media (max-width: 600px) {
-    .shareSelectedFull { display: none; }
-    .shareSelectedShort { display: inline; }
-  }
 
   /* Wygaszona krawędź przewijanych list (scroll-fade.js): element pod
      krawędzią zanika na 32 px, tylko gdy za krawędzią coś jest. Ramka
@@ -3079,6 +3134,7 @@
 
   /* Treść stron z listą: 20 px od topbara (komputer i telefon). */
   .wrap {
+    width: 100%;
     margin: 0 auto;
     padding: 20px var(--page-pad-right) 18px var(--page-pad-left);
   }
@@ -3277,6 +3333,7 @@
     text-align: center;
     transition: background var(--dur-fast) ease-out, border-color var(--dur-fast) ease-out, transform var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
   }
+  .addCard--static { cursor: default; pointer-events: none; }
   .addCard:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lift);

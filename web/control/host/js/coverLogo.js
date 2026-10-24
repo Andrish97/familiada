@@ -18,10 +18,10 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T19012";
-import { logoFaceColor, renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-24T19012";
-import { loadJson } from "../../../shared/js/display/fonts.js?v=v2026-10-24T19012";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T19151";
+import { logoFaceColor, renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-24T19151";
+import { loadJson } from "../../../shared/js/display/fonts.js?v=v2026-10-24T19151";
 
 
 const DOT_W = 150, DOT_H = 70;
@@ -49,7 +49,7 @@ async function renderDefaultLogo(el, dotColor, shouldPaint = () => true, mode = 
   const wordmark = await renderTextLogo("FAMILIADA", logoFaceColor(dotColor));
   if (!shouldPaint()) return;
   wordmark.setAttribute("aria-label", "FAMILIADA");
-  wordmark.style.cssText = "width:100%;height:100%;object-fit:contain;display:block";
+  wordmark.classList.add("cover-logo-fill");
   el.replaceChildren(wordmark);
 }
 
@@ -95,11 +95,9 @@ async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true, mo
     if (!shouldPaint()) return;
     if (sourceRender) {
       el.replaceChildren(sourceRender);
-      sourceRender.style.cssText = "width:100%;height:100%;object-fit:contain;display:block";
-      if (logo.payload.source?.mode === "TEXT") {
-        sourceRender.style.transform = "scaleY(1.35)";
-        sourceRender.style.transformOrigin = "center";
-      }
+      sourceRender.classList.add("cover-logo-fill");
+      // Napis w logo tekstowym wyższy, jak na Wyświetlaczu.
+      sourceRender.classList.toggle("is-text", logo.payload.source?.mode === "TEXT");
     } else {
       el.replaceChildren();
     }
@@ -114,7 +112,7 @@ async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true, mo
   canvas.height = bounds.height * 6;
   drawSolidGrid(canvas, bits150, logoDot, bounds);
   el.innerHTML = "";
-  canvas.style.cssText = "width:100%;height:100%;object-fit:contain;display:block";
+  canvas.className = "cover-logo-fill";
   el.appendChild(canvas);
 }
 

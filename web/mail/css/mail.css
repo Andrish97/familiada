@@ -41,7 +41,6 @@
   .mail-row--subscription{border-left:3px solid var(--text-faint);background:var(--w-4)}
   .mail-discover{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px 16px;font-size:12px;color:var(--text-faint);flex:0 0 auto;text-align:center;padding:14px 24px 18px;}
   .mail-discover a{color:var(--accent);text-decoration:none;opacity:.85}
-  .mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--g-10);font-size:13px}
   @media(max-width:600px){
    .mail-wrap{padding:16px var(--page-pad-right) 16px var(--page-pad-left);gap:16px}
    #mailAddress{font-size:12px}

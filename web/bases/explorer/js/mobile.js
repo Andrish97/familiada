@@ -37,8 +37,7 @@ export function initDrawer({ onChange } = {}) {
     // układ i pasek narzędzi „mrugnąłby” przy każdym otwarciu.
     const root = document.documentElement;
     if (root.scrollHeight > root.clientHeight) {
-      document.body.classList.add("explorer-drawer-open");
-      document.body.style.overflow = "hidden";
+      document.body.classList.add("explorer-drawer-open"); // blokada przewijania: base.css
     }
     onChange?.();
   }
@@ -48,7 +47,6 @@ export function initDrawer({ onChange } = {}) {
     panel.classList.remove("is-open");
     overlay.classList.remove("is-open");
     document.body.classList.remove("explorer-drawer-open");
-    document.body.style.overflow = "";
     onChange?.();
   }
 

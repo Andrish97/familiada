@@ -1,7 +1,8 @@
 // Sesja runtime Control jest osobna od telemetryki game_sessions i od
 // krótkiego TTL blokady strony. Aktywność oznacza świadome działanie
 // operatora; heartbeat urządzeń ani animacje nie przesuwają terminu.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
 
 
 const IDLE_STORAGE_KEY = (gameId) => `fam:control:runtime:${gameId}`;
@@ -24,7 +25,7 @@ export function createRuntimeSession({ gameId, onExpired }) {
         p_session_id: sessionId,
       });
       if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || "Nie udało się odnowić sesji Control.");
+      if (!data?.ok) throw new Error(data?.error || t("control.errors.sessionRenew"));
 
       sessionId = data.session_id;
       if (data.device_protocol !== 2) {

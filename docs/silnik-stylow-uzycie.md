@@ -164,6 +164,11 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 | zaznaczenie elementu (kafel, wiersz, tag) | klasa `.is-selected`; wiersz z polem wyboru — samo zaznaczone pole | jeden wygląd w silniku, strona go nie zmienia |
 | menu pod przyciskiem | `placeDropdown(anchor, el)` z `core/popover.js` | menu w punkcie: `placeAtPoint(el, x, y)` |
 | ekran blokady („tu nie wejdziesz”, zasób zajęty) | `blockingScreen(id, actions, { prefix })` + `setBlockingIcon` / `setBlockingOpen` z `core/blocking-screen.js` | |
+| strona blokady (przerwa techniczna, 404) | `body.page--block` > `main.block-main` > `.block-card` > `.block-card-top` (`.block-title`, `.block-text`) | ładuje ją też telewizor (`flat.css`) |
+| strażnik urządzenia (ekran ukryty do decyzji) | `<html data-device-guard-pending>` + `device-guard.js` usuwa atrybut | strony robocze na wąskim ekranie: `data-mobile-guard`; reguły w `base.css` |
+| błąd wczytania ekranu urządzenia | `.device-load-error` | Prowadzący, Przycisk |
+| przesuwanie palcem w bok | `onSwipe(el, fn)` z `core/swipe.js` (dodaje `.swipe-target`) | |
+| pasek narzędzi listy (szukanie, filtr, sortowanie, akcje) | `.list-toolbar` (`-left`, `-right`) + `core/list-search.js` | Gry, Bazy, Logo |
 | strony logowania | `body.auth-body` + `.auth-shell` | |
 | przycisk w rogu (pełny ekran) | `.corner-btn` (+ `.fs-btn`) | |
 
@@ -208,7 +213,14 @@ z sceną zrzutów i wpisem w tej tabeli.
    całość w podpowiedzi (silnik robi to sam); brak poziomego przewijania;
    przewijanie dokumentu tylko na stronach z listy w `audit-layout.cjs`.
 7. **Te same nazwy:** nie twórz `mobile-only`, jeśli jest `only-mobile`;
-   nie twórz `.myCard`, jeśli wystarczy `.card` + układ.
+   nie twórz `.myCard`, jeśli wystarczy `.card` + układ. Strona nie
+   przestylowuje elementu silnika gołą klasą — wariant w silniku albo reguła
+   zawężona `:where(.body-strony) .klasa` (ta sama specyficzność). Wyjątek:
+   wiersz listy Eksploratora to historycznie `.row` (129 odwołań w e2e) — zmiana
+   nazwy razem z przepisaniem `base-explorer.spec.js` na `helpers/e2e-test`.
+8. **Bez martwego CSS:** test `cssDead` (`scripts/css-dead.cjs`) sprawdza, że
+   każda klasa z pliku strony występuje w HTML lub JS, który ta strona ładuje
+   (graf importów). `var(--x)` bez definicji zatrzyma test `cssTokensDefined`.
 
 ## 8. Nowa strona — kroki
 

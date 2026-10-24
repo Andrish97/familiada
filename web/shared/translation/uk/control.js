@@ -159,6 +159,11 @@ const uk = {
       sessionExpired: "Ця ігрова сесія вже завершилася. Почни знову.",
     },
     devicesFinish: "Готово — далі",
+    errors: {
+      sessionStart: "Не вдалося запустити сесію Control.",
+      sessionRenew: "Не вдалося поновити сесію Control.",
+      deviceLink: "Не вдалося створити посилання для пристрою.",
+    },
     teamADefault: "Команда A",
     teamBDefault: "Команда B",
     stepFinal: "Фінал",

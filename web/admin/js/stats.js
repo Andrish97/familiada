@@ -1,15 +1,15 @@
 // admin/js/stats.js — Statystyki: przegląd, retencja, wykluczeni, snake, szczegóły i diagnoza rozgrywek.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T19012";
-import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T19012";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
-import { activityDetailRows } from "./activity.js?v=v2026-10-24T19012";
-import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T19012";
-import { setStatus } from "./maintenance.js?v=v2026-10-24T19012";
-import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19012";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19151";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T19151";
+import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T19151";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19151";
+import { activityDetailRows } from "./activity.js?v=v2026-10-24T19151";
+import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T19151";
+import { setStatus } from "./maintenance.js?v=v2026-10-24T19151";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19151";
 
 export async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");

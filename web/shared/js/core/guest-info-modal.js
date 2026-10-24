@@ -1,15 +1,15 @@
 // js/core/guest-info-modal.js
 // Jednorazowy modal informacyjny dla konta gościa.
 
-import { alertModal } from './modal.js?v=v2026-10-24T19012';
-import { t } from '../../translation/translation.js?v=v2026-10-24T19012';
+import { alertModal } from './modal.js?v=v2026-10-24T19151';
+import { t } from '../../translation/translation.js?v=v2026-10-24T19151';
 
 
 const GUEST_INFO_SHOWN_PREFIX = 'fam:guest:info_shown:';
 
 function buildGuestInfoBody() {
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:grid;gap:12px;font-size:.9rem;line-height:1.55;margin-top:6px';
+  wrap.className = 'guest-info';
 
   ['guestInfo.warning1', 'guestInfo.warning2'].forEach((htmlKey) => {
     const row = document.createElement('div');
@@ -18,16 +18,16 @@ function buildGuestInfoBody() {
   });
 
   const sep = document.createElement('hr');
-  sep.style.cssText = 'border:none;border-top:1px solid rgba(255,255,255,.15);margin:2px 0';
+  sep.className = 'guest-info-sep';
   wrap.appendChild(sep);
 
   const migrateTitle = document.createElement('div');
-  migrateTitle.style.cssText = 'font-weight:700;letter-spacing:.03em';
+  migrateTitle.className = 'guest-info-title';
   migrateTitle.textContent = t('guestInfo.migrateTitle');
   wrap.appendChild(migrateTitle);
 
   const steps = document.createElement('ol');
-  steps.style.cssText = 'margin:6px 0 0 0;padding-left:20px;display:grid;gap:5px';
+  steps.className = 'guest-info-steps';
 
   ['step1', 'step2', 'step3', 'step4'].forEach((key) => {
     const li = document.createElement('li');

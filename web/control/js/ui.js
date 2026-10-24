@@ -16,19 +16,19 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T19012";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T19012";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T19012";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T19012";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T19151";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T19151";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T19151";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T19151";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19151";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T19012";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T19012";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T19012";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T19012";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T19012";
-import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T19012";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T19151";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T19151";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T19151";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T19151";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T19151";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T19151";
 
 
 const $ = (id) => document.getElementById(id);
@@ -1176,7 +1176,6 @@ export function createUI({ root, emit }) {
     }
 
     const roundsGrid = tileGrid(tiles);
-    roundsGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
     body.push(h("div", { class: "c2-roundlayout" }, [
       h("div", { class: "c2-roundlayout-main" }, [roundsGrid]),
       h("div", { class: "c2-roundlayout-divider" }),
@@ -1678,20 +1677,16 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
       h("div", { class: "c2-entrytile-input" }, [clipField(inp)]),
     ]);
-    wpisanoTile.style.gridRow = "1";
 
     let row1Tiles;
     if (round === 2) {
-      wpisanoTile.style.gridColumn = "1 / 5"; // 2/3
+      wpisanoTile.classList.add("is-beside-p1"); // 2/3, obok kafla „Gracz 1”
       const p1Tile = h("div", { class: "c2-entrytile c2-map-p1tile" }, [
         h("div", { class: "c2-field-label", text: t("control.finalHost.player1Label") }),
         h("div", { class: "c2-entrytile-p1ans" }, [h("b", { text: resolveP1AnswerShown(state, idx) })]),
       ]);
-      p1Tile.style.gridRow = "1";
-      p1Tile.style.gridColumn = "5 / 7"; // 1/3
       row1Tiles = [wpisanoTile, p1Tile];
     } else {
-      wpisanoTile.style.gridColumn = "1 / 7"; // pełna szerokość
       row1Tiles = [wpisanoTile];
     }
 
@@ -1847,7 +1842,6 @@ export function createUI({ root, emit }) {
     // (.c2-entrytile-input input's flex:1/height:100%) — samo pole
     // wypełnia teraz cały kafelek niezależnie od tego, ile miejsca ma wiersz.
     const mappingGrid = tileGrid([...row1Tiles, ...optionTiles, revealAnswerTile, revealPointsTile]);
-    mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     // control/js/gameFinal.js's updateSumUI() — operator widział sumę na
     // żywo przez cały mapping; w pierwszym przebiegu control2 to zniknęło

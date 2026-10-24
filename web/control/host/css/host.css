@@ -457,10 +457,8 @@ div#cover2Logo {
 }
 
 .host-pass-hint { margin-top:1em; color:var(--host-red); text-decoration:underline; }
-.device-load-error {
-  position: fixed; inset: 0; z-index: var(--z-top); display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px; padding: 24px; background: var(--surface-1); color: var(--text);
-  text-align: center; font: 600 18px/1.4 system-ui, sans-serif;
-}
 .device-load-error[hidden] { display: none; }
+
+/* Logo na zasłonie (coverLogo.js): wypełnia pole, proporcje zachowane. */
+.cover-logo-fill { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cover-logo-fill.is-text { transform: scaleY(1.35); transform-origin: center; }

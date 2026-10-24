@@ -1,11 +1,11 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19012";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T19151";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-24T19012";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19012";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-24T19012";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-24T19012";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-24T19151";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T19151";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-24T19151";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-24T19151";
 
 
 const status = document.getElementById("status");
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) {
       setStatus(t("reset.sessionSwitchCancelled"));
       setErr(t("reset.sessionSwitchCancelledHint"));
-      back.style.display = "inline-flex";
+      back.hidden = false;
       document.documentElement.classList.remove('page-loading');
       return;
     }
@@ -113,25 +113,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       setStatus(t("reset.missingCode"));
       setErr(t("reset.missingCodeHint"));
-      back.style.display = "inline-flex";
+      back.hidden = false;
       return;
     }
 
     if (!data?.session) {
       setStatus(t("reset.startFailed"));
       setErr(t("reset.noSession"));
-      back.style.display = "inline-flex";
+      back.hidden = false;
       return;
     }
 
     await syncLanguage();
     setStatus(t("reset.linkOk"));
-    form.style.display = "grid";
+    form.hidden = false;
   } catch(e){
     console.error(e);
     setStatus(t("reset.verifyFailed"));
     setErr(niceAuthError(e));
-    back.style.display = "inline-flex";
+    back.hidden = false;
     document.documentElement.classList.remove('page-loading');
     return;
   }
@@ -162,8 +162,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       setStatus(t("reset.statusSaved"));
-      form.style.display = "none";
-      back.style.display = "inline-flex";
+      form.hidden = true;
+      back.hidden = false;
 
       // wyloguj sesję recovery dla czystości
       try { await sb().auth.signOut(); } catch {}

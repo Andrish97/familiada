@@ -159,6 +159,11 @@ const en = {
       sessionExpired: "This game session has expired. Start again.",
     },
     devicesFinish: "Done — continue",
+    errors: {
+      sessionStart: "Could not start the Control session.",
+      sessionRenew: "Could not renew the Control session.",
+      deviceLink: "Could not create the device link.",
+    },
     teamADefault: "Team A",
     teamBDefault: "Team B",
     stepFinal: "Final",

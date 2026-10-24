@@ -3,14 +3,14 @@
 // Dwa okna jak w Bazach (decyzja użytkownika 2026-10-23): „Udostępnienia”
 // (lista w tej sesji, cofanie) i „Udostępnij” (adres + znajomi, jeden przycisk).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T19012";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T19012";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19012";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19012";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19151";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19151";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-24T19151";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-24T19151";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-24T19151";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19151";
 
-import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T19012";
+import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-24T19151";
 
 
 function deviceTypeLabel(type) {
@@ -127,7 +127,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     for (const share of current) {
       const revoke = async () => {
         const { data, error } = await sb().rpc("control_device_share_revoke", { p_share_id: share.share_id });
-        if (error || !data?.ok) { showMessage(error?.message || data?.error || "Błąd.", { state: "error" }); return; }
+        if (error || !data?.ok) { showMessage(error?.message || data?.error || t("common.genericError"), { state: "error" }); return; }
         await renderModal();
         await refreshBadges();
       };
@@ -285,7 +285,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     } catch (e) {
       shareInFlight = false;
       await renderSendModal();
-      showMessage(e?.message || "Błąd.", { state: "error" });
+      showMessage(e?.message || t("common.genericError"), { state: "error" });
     } finally {
       shareInFlight = false;
       updateSelection();
