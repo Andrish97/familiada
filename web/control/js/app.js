@@ -523,6 +523,7 @@ async function main() {
           expected_ms: Math.round(item.expectedMs),
           actual_ms: Math.max(0, Math.round(item.completedAt - item.requestedAt)),
           ack_source: item.ackSource || null,
+          display_ack_ms: item.displayAckMs ?? null,
           display_visibility: lastDeviceDiagnostics?.display?.visibility || null,
         },
       });
@@ -542,6 +543,7 @@ async function main() {
         revision, sound: item.sound, expected_ms: Math.round(item.expectedMs),
         actual_ms: actualMs, extra_ms: Math.round(extraMs),
         ack_source: item.ackSource || null,
+        display_ack_ms: item.displayAckMs ?? null,
         completion_realtime_connected: completionRealtimeConnected,
         control_visibility: item.controlVisibility,
         control_focused: item.controlFocused,
@@ -598,7 +600,11 @@ async function main() {
         item.expectedMs = expectedMs;
         evaluateDisplayCompletion(row.rev, item);
         if (expectedMs != null && !item.reported) {
-          item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(row.rev, item), Math.max(0, expectedMs + 1500));
+          // Przed alarmem jeszcze jeden odczyt z bazy: zgubiony sygnał na
+          // żywo to nie spóźniony Wyświetlacz (eksport 24.10).
+          item.timeoutTimer = setTimeout(() => {
+            void refreshDisplayCompletion({ force: true }).finally(() => reportDisplayCompletionTimeout(row.rev, item));
+          }, Math.max(0, expectedMs + 1500));
         }
       });
       while (displayCompletionTimes.size > 40) displayCompletionTimes.delete(displayCompletionTimes.keys().next().value);
@@ -674,8 +680,16 @@ async function main() {
   let completionReadPending = false;
   let completionRealtimeConnected = false;
   let completionReadIncident = null;
-  function applyDisplayCompletion(revision, source = "realtime") {
-    const renderedRev = Number(revision);
+  // Czas od żądania zmiany planszy do zapisu potwierdzenia przez
+  // Wyświetlacz, liczony zegarem serwera (483: requested_at/rendered_at).
+  // Odróżnia spóźniony Wyświetlacz od potwierdzenia zgubionego w drodze.
+  function displayAckMs(row, requestedRev) {
+    if (!row || Number(row.requested_rev) !== requestedRev) return null;
+    const ms = Date.parse(row.rendered_at || "") - Date.parse(row.requested_at || "");
+    return Number.isFinite(ms) && ms >= 0 ? Math.round(ms) : null;
+  }
+  function applyDisplayCompletion(row, source = "realtime") {
+    const renderedRev = Number(row?.rendered_rev);
     if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
     const completedAt = performance.now();
     for (const [requestedRev, item] of displayCompletionTimes) {
@@ -683,6 +697,7 @@ async function main() {
         item.completedAt = completedAt;
         if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
         item.ackSource = source;
+        item.displayAckMs = displayAckMs(row, requestedRev);
         evaluateDisplayCompletion(requestedRev, item);
       }
     }
@@ -691,16 +706,16 @@ async function main() {
     }
     renderCurrent();
   }
-  async function refreshDisplayCompletion() {
-    if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
+  async function refreshDisplayCompletion({ force = false } = {}) {
+    if (!completionUIReady || completionReadPending || (!force && !waitingForDisplay())) return;
     completionReadPending = true;
     try {
-      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
+      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev, requested_rev, rendered_at, requested_at").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
       if (error) {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data.rendered_rev, "fallback_read"); }
+      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data, "fallback_read"); }
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
@@ -724,7 +739,7 @@ async function main() {
     }
   }).on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
-  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"); });
+  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new, "realtime"); });
   completionChannel.subscribe((status) => {
     if (status === "SUBSCRIBED") { completionReadiness.joined(); return; }
     completionReadiness.reset();
@@ -740,7 +755,9 @@ async function main() {
     const nowMs = performance.now();
     for (const item of displayCompletionTimes.values()) {
       if (item.completedAt != null) continue;
-      if (nowMs - item.requestedAt > Math.max(3000, (item.expectedMs || 0) + 1000)) return true;
+      // Zgubione potwierdzenie na żywo kosztuje najwyżej ~0,3 s ponad czas
+      // animacji (wcześniej 1–1,5 s — eksport 24.10). Bez znanego czasu: 3 s.
+      if (nowMs - item.requestedAt > (item.expectedMs != null ? item.expectedMs + 300 : 3000)) return true;
     }
     return false;
   }

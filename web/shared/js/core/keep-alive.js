@@ -47,26 +47,68 @@ export function onWakeLockChange(listener) {
   return () => _wakeListeners.delete(listener);
 }
 
-async function requestWakeLock() {
-  try {
-    _wakeLock = await navigator.wakeLock.request("screen");
-    setWakeState("granted");
-    _wakeLock.addEventListener?.("release", () => {
-      // Ukrycie karty zwalnia blokadę zawsze; liczy się zwolnienie przy widocznej.
-      if (!document.hidden) setWakeState("released");
-    });
-  } catch (error) {
-    setWakeState("denied", { error_name: String(error?.name || "Error").slice(0, 40) });
+// Safari na iOS/iPadOS odmawia blokady bez gestu użytkownika
+// (NotAllowedError zaraz po otwarciu strony — eksport 24.10, Prowadzący na
+// iPadzie). Odmowę i zwolnienie przez system ponawiamy przy najbliższym
+// dotknięciu, kliknięciu lub klawiszu; to te zdarzenia dają aktywację.
+const GESTURE_EVENTS = ["pointerup", "touchend", "click", "keydown"];
+const _gestureRetries = new Set();
+let _gestureArmed = false;
+function onUserGesture() {
+  for (const retry of [..._gestureRetries]) {
+    _gestureRetries.delete(retry);
+    try { retry(); } catch {}
   }
+  if (!_gestureRetries.size) disarmGestureRetry();
+}
+function disarmGestureRetry() {
+  if (!_gestureArmed) return;
+  _gestureArmed = false;
+  for (const type of GESTURE_EVENTS) document.removeEventListener(type, onUserGesture, true);
+}
+function retryOnGesture(retry) {
+  _gestureRetries.add(retry);
+  if (_gestureArmed) return;
+  _gestureArmed = true;
+  for (const type of GESTURE_EVENTS) document.addEventListener(type, onUserGesture, { capture: true, passive: true });
+}
+
+let _wakeRequest = null;
+function wakeLockHeld() {
+  return !!_wakeLock && !_wakeLock.released;
+}
+function requestWakeLock() {
+  if (wakeLockHeld() || document.hidden) return Promise.resolve();
+  if (_wakeRequest) return _wakeRequest;
+  _wakeRequest = (async () => {
+    try {
+      const lock = await navigator.wakeLock.request("screen");
+      _wakeLock = lock;
+      setWakeState("granted");
+      lock.addEventListener?.("release", () => {
+        // Ukrycie karty zwalnia blokadę zawsze (wraca przy widoczności);
+        // zwolnienie przy widocznej karcie odnotowujemy i ponawiamy gestem.
+        if (document.hidden) return;
+        setWakeState("released");
+        retryOnGesture(requestWakeLock);
+      });
+    } catch (error) {
+      setWakeState("denied", { error_name: String(error?.name || "Error").slice(0, 40) });
+      retryOnGesture(requestWakeLock);
+    } finally {
+      _wakeRequest = null;
+    }
+  })();
+  return _wakeRequest;
 }
 
 async function acquireScreenWakeLock() {
   if (!navigator.wakeLock) { setWakeState("unsupported"); return; }
-  await requestWakeLock();
   // Re-acquire after tab becomes visible again (browser releases it automatically)
-  document.addEventListener("visibilitychange", async () => {
-    if (!document.hidden && (!_wakeLock || _wakeLock.released)) await requestWakeLock();
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) void requestWakeLock();
   });
+  await requestWakeLock();
 }
 
 // Odpowiednik triku znanego z bibliotek typu NoSleep.js, bez osadzania
@@ -103,7 +145,8 @@ function startVideoWakeLockFallback() {
     });
     document.body.appendChild(video);
 
-    const play = () => video.play().catch(() => {});
+    // Bez gestu iOS potrafi odrzucić odtwarzanie — wtedy ponawiamy gestem.
+    const play = () => video.play()?.catch?.(() => retryOnGesture(play));
     play();
     // Przeglądarki potrafią wstrzymać odtwarzanie ukrytej karty — tak samo
     // jak acquireScreenWakeLock() wyżej, wznawiamy po powrocie na widoczność.

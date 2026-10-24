@@ -5592,6 +5592,14 @@ function buildSessionRunDetails(r) {
     settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
+  // 483: finał doszedł do końca, a sesję zamknęła bezczynność, restart lub
+  // ustawienia — gra liczy się jako zakończona, punkty finału doliczone.
+  const closedBy = {
+    control_idle_expired: "Operator nie zamknął finału; sesję zamknięto po godzinie bezczynności.",
+    restart: "Operator nie zamknął finału; zamknięto ją przy rozpoczęciu gry od nowa.",
+    settings_cancelled: "Operator nie zamknął finału; zamknięto ją z poziomu ustawień gry.",
+  };
+  if (closedBy[info.closed_by]) line(closedBy[info.closed_by]);
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {
@@ -5755,6 +5763,12 @@ function buildSessionRunDetails(r) {
         }
       }
       if (event.category === "display_delay") {
+        // Zegar serwera (483): kiedy Wyświetlacz zapisał potwierdzenie
+        // względem żądania zmiany — odróżnia spóźniony Wyświetlacz od
+        // potwierdzenia zgubionego w drodze do Control.
+        const displayAckText = m => Number.isFinite(Number(m.display_ack_ms)) && m.display_ack_ms !== null
+          ? ` · Wyświetlacz zapisał potwierdzenie po ${formatDuration(m.display_ack_ms)}${Number(m.actual_ms) - Number(m.display_ack_ms) > 1000 ? " — reszta to droga potwierdzenia do Control" : ""}`
+          : "";
         if (metrics.reason === "ack_read_recovered") {
           return { title: "Odczyt potwierdzenia planszy wrócił", detail: `Po ${formatDuration(metrics.duration_ms)}` };
         }
@@ -5773,11 +5787,11 @@ function buildSessionRunDetails(r) {
           return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };
         }
         if (metrics.reason === "late_ack") {
-          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}${metrics.ack_source === "fallback_read" ? " · potwierdzenie odczytane z bazy (kanał na żywo go nie dostarczył)" : ""}.` };
+          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}${metrics.ack_source === "fallback_read" ? " · potwierdzenie odczytane z bazy (kanał na żywo go nie dostarczył)" : ""}${displayAckText(metrics)}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
-          detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
+          detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${displayAckText(metrics)}`,
         };
       }
       if (event.category === "device_network") {
