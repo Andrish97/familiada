@@ -56,7 +56,7 @@ test("E24: lead-finder bez klucza lub z fałszywym kluczem nie odpowiada (404 z 
 });
 
 // ── Paczka P1 (Ś2, Ś7, N3, N4) ───────────────────────────────────────────
-const SETTINGS = "https://settings.familiada.online";
+const SETTINGS = "https://admin.familiada.online";
 
 // Ś2: klucz lead-findera nie wychodzi z Workera. Bez sesji Access: www = 401
 // (API panelu tylko na hoście panelu), host panelu = bramka Access (302/403)

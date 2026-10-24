@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildControl2StatsExport } from "../../web/settings/js/stats-export.js";
+import { buildControl2StatsExport } from "../../web/admin/js/stats-export.js";
 
 function session(id, startedAt, controlVersion = 2) {
   return { id, started_at: startedAt.toISOString(), control_version: controlVersion, stats_detail: { id } };

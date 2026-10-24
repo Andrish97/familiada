@@ -8,10 +8,11 @@ import fs from 'node:fs';
 import { renderMailDocument } from '../../supabase/functions/_shared/mail-document.js';
 import { buildNotificationMail } from '../../supabase/functions/_shared/notification-mail.js';
 import { buildTexts, renderModule, TARGET } from '../../scripts/sync-notification-mail-texts.mjs';
+import { loadDict } from "./helpers/i18n.js";
 
 const ORIGIN = 'https://www.familiada.online';
 const dicts = {};
-for (const lang of ['pl', 'en', 'uk']) dicts[lang] = (await import(`../../web/shared/translation/${lang}.js`)).default;
+for (const lang of ['pl', 'en', 'uk']) dicts[lang] = await loadDict(lang);
 // t() jak w web/shared/translation/translation.js
 const tFor = (lang) => (key, vars = {}) => {
   const value = key.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), dicts[lang]);

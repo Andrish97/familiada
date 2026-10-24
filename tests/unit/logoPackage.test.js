@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import {parseLogoPackage} from '../../web/logos/js/package.js';
 import {decodeImportedLogoImage} from '../../web/shared/js/core/logo-image-data.js';
+import { loadDict } from "./helpers/i18n.js";
 
 test('one pure parser handles TEXT, IMAGE, DRAW and legacy envelopes without retaining record identities',()=>{
  for(const mode of ['TEXT','IMAGE','DRAW'])for(const legacy of [false,true]){
@@ -36,7 +37,7 @@ test('embedded images reject remote URLs, unsupported MIME, malformed base64 and
  assert.throws(()=>decodeImportedLogoImage('data:image/png;base64,'+Buffer.alloc(5*1024*1024+1).toString('base64')),/exceeds 5 MB/);
 });
 for(const lang of ['pl','en','uk'])test(`actual file parser uses the shared parser and preserves translated errors in ${lang}`,async()=>{
- const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+ const dict = await loadDict(lang);
  const t=(key,args={})=>{let value=key.split('.').reduce((item,part)=>item?.[part],dict);assert.equal(typeof value,'string',key);for(const [name,item] of Object.entries(args))value=value.replaceAll('{'+name+'}',item);return value;};
  const source=(await readFile(new URL('../../web/logos/js/transfer.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace(/export /g,'');
  const context=vm.createContext({parseLogoPackage,t});vm.runInContext(source+'\nglobalThis.parse=parseImport;',context);

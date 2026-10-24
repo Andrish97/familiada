@@ -5,11 +5,11 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-23T18502";
-import { signOut } from './auth.js?v=v2026-10-23T18502';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-23T18502';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-23T18502';
-import { icon, iconText } from './icons.js?v=v2026-10-23T18502';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-24T15410";
+import { signOut } from './auth.js?v=v2026-10-24T15410';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-24T15410';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-24T15410';
+import { icon, iconText } from './icons.js?v=v2026-10-24T15410';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -318,7 +318,7 @@ export function setTopbarAccount(user, {
     const btnSettings = document.createElement('button');
     btnSettings.className = 'btn menu-item';
     btnSettings.type = 'button';
-    btnSettings.textContent = t('games.nav.account') || 'Ustawienia konta';
+    btnSettings.textContent = t('nav.menu.account') || 'Ustawienia konta';
     btnSettings.addEventListener('click', () => {
       menu.hidden = true;
       location.href = withLangParam(accountHref);
@@ -391,7 +391,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-23T18502');
+  const { getUser } = await import('./auth.js?v=v2026-10-24T15410');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -675,9 +675,9 @@ function initTopbarController() {
     more.className = 'nav-more';
     more.id = 'navMore';
     more.hidden = true;
-    const label = t('games.nav.more');
-    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="games.nav.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
-    more.querySelector('[data-i18n]').textContent = label && label !== 'games.nav.more' ? label : 'Więcej';
+    const label = t('nav.menu.more');
+    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
+    more.querySelector('[data-i18n]').textContent = label && label !== 'nav.menu.more' ? label : 'Więcej';
     const dropdown = more.querySelector('#navMoreDropdown');
     // Na telefonie przyciski siedzą w panelu (group2) i wracają do sekcji 2
     // przy odmontowaniu — „Więcej” musi wrócić za nimi.

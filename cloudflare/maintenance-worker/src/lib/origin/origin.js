@@ -44,7 +44,7 @@ export async function serveNotFoundPage(request, originBase, originHost, resolve
 export const KNOWN_HOSTS = [
   "familiada.online",
   "www.familiada.online",
-  "settings.familiada.online",
+  "admin.familiada.online",
   "panel.familiada.online",
   "supabase.familiada.online",
   "api.familiada.online",
@@ -53,7 +53,7 @@ export const KNOWN_HOSTS = [
 const BLOCKED_PATHS = [
   {
     hosts: ["familiada.online", "www.familiada.online"],
-    paths: ["/settings", "/settings/", "/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
+    paths: ["/admin", "/admin/", "/admin.html", "/tools", "/tools/", "/admin-tools", "/admin-tools/"],
   },
 ];
 
@@ -73,7 +73,7 @@ export function isBlockedPath(host, pathname) {
     if (!rule.hosts.includes(host)) continue;
     if (rule.paths.includes(pathname)) return true;
     if (pathname.startsWith("/tools/")) return true;
-    if (pathname.startsWith("/settings-tools/") || pathname.startsWith("/settings/")) return true;
+    if (pathname.startsWith("/admin-tools/") || pathname.startsWith("/admin/")) return true;
   }
   return false;
 }

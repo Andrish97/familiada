@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGES } from "../../web/shared/js/core/nav-map.js";
+import { loadDict } from "./helpers/i18n.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
@@ -24,13 +25,13 @@ test("tasks: wpis w PAGES, trasa Workera, przycisk na liście gier", () => {
 
 test("tasks: teksty pl/en/uk mają te same klucze", async () => {
   const keys = (o, p = "") => Object.entries(o).flatMap(([k, v]) => (v && typeof v === "object" ? keys(v, `${p}${k}.`) : [`${p}${k}`])).sort();
-  const langs = await Promise.all(["pl", "en", "uk"].map((l) => import(`../../web/shared/translation/${l}.js`)));
-  const [pl, en, uk] = langs.map((m) => m.default);
+  const langs = await Promise.all(["pl", "en", "uk"].map((l) => loadDict(l)));
+  const [pl, en, uk] = langs;
   for (const [name, get] of [["tasks", (x) => x.tasks], ["shareSections.channel", (x) => x.shareSections.channel]]) {
     assert.deepEqual(keys(get(en)), keys(get(pl)), `${name} en`);
     assert.deepEqual(keys(get(uk)), keys(get(pl)), `${name} uk`);
   }
-  for (const x of [pl, en, uk]) assert.ok(x.games.nav.tasks);
+  for (const x of [pl, en, uk]) assert.ok(x.nav.menu.tasks);
 });
 
 test("komponent wierszy: sekcje zwijane, akcje z ikoną, usuwanie ikoną", () => {

@@ -834,13 +834,13 @@ flowchart LR
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
-  admin["/settings/"]
-  adminToolEditor["/settings/tools/editor_5x7.html"]
-  adminToolExporter["/settings/tools/exporterandeditor.html"]
-  adminToolHostLogo["/settings/tools/host-logo-lab/"]
-  adminToolKora["/settings/tools/kora-builder.html"]
-  adminToolLogoBackground["/settings/tools/logo-background-lab/"]
-  adminToolTheme["/settings/tools/theme_builder.html"]
+  admin["/admin/"]
+  adminToolEditor["/admin/tools/editor_5x7.html"]
+  adminToolExporter["/admin/tools/exporterandeditor.html"]
+  adminToolHostLogo["/admin/tools/host-logo-lab/"]
+  adminToolKora["/admin/tools/kora-builder.html"]
+  adminToolLogoBackground["/admin/tools/logo-background-lab/"]
+  adminToolTheme["/admin/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
@@ -918,13 +918,13 @@ flowchart LR
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
-  admin["/settings/"]
-  adminToolEditor["/settings/tools/editor_5x7.html"]
-  adminToolExporter["/settings/tools/exporterandeditor.html"]
-  adminToolHostLogo["/settings/tools/host-logo-lab/"]
-  adminToolKora["/settings/tools/kora-builder.html"]
-  adminToolLogoBackground["/settings/tools/logo-background-lab/"]
-  adminToolTheme["/settings/tools/theme_builder.html"]
+  admin["/admin/"]
+  adminToolEditor["/admin/tools/editor_5x7.html"]
+  adminToolExporter["/admin/tools/exporterandeditor.html"]
+  adminToolHostLogo["/admin/tools/host-logo-lab/"]
+  adminToolKora["/admin/tools/kora-builder.html"]
+  adminToolLogoBackground["/admin/tools/logo-background-lab/"]
+  adminToolTheme["/admin/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice

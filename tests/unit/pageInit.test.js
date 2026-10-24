@@ -7,6 +7,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { initPage } from "../../web/shared/js/core/page-init.js";
 import { loginUrl } from "../../web/shared/js/core/nav-map.js";
+import { loadDict } from "./helpers/i18n.js";
 
 function fakeEl(tag = "BUTTON") {
   const listeners = {};
@@ -232,8 +233,7 @@ test("device-guard, page-overlay i page-init nie cofają przez historię ani ref
 test("klucze pageGuard są w pl/en/uk, stare deviceGuard i guestGuard zniknęły", async () => {
   const keys = ["rotateTitle", "rotateMessage", "narrowTitle", "narrowMessage", "smallTitle", "smallMessage", "back", "guestTitle", "guestMessage", "login"];
   for (const lang of ["pl", "en", "uk"]) {
-    const mod = await import(`../../web/shared/translation/${lang}.js`);
-    const dict = mod.default || Object.values(mod)[0];
+    const dict = await loadDict(lang);
     for (const k of keys) assert.equal(typeof dict.pageGuard?.[k], "string", `${lang}.pageGuard.${k}`);
     assert.equal(dict.deviceGuard, undefined, `${lang}.deviceGuard`);
     assert.equal(dict.guestGuard, undefined, `${lang}.guestGuard`);

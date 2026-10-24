@@ -20,7 +20,7 @@ const PROD_ORIGIN = "https://www.familiada.online";
 const PROD_API_ORIGIN = "https://api.familiada.online";
 const API_ORIGIN = (process.env.E2E_API_ORIGIN || "").replace(/\/+$/, "");
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/", "snake/"];
+const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "admin/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/", "snake/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -65,11 +65,30 @@ function localFileFor(pathname, pages) {
   return null;
 }
 
+// Adres strony -> zawartość <meta name="i18n-parts"> z HTML brancha.
+function branchI18nParts() {
+  const out = {};
+  const walk = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) { if (!["img", "audio", "fonts", "vendor"].includes(ent.name)) walk(full); continue; }
+      if (!ent.name.endsWith(".html")) continue;
+      const meta = /<meta name="i18n-parts" content="([^"]*)">/.exec(fs.readFileSync(full, "utf8"));
+      if (!meta) continue;
+      const rel = path.relative(REPO_ROOT, full).split(path.sep).join("/");
+      out[rel.endsWith("index.html") ? `/${rel.slice(0, -"index.html".length)}` : `/${rel}`] = meta[1];
+    }
+  };
+  walk(REPO_ROOT);
+  return out;
+}
+
 /**
  * @param {import('@playwright/test').BrowserContext} context
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
  */
 async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
+  if (context) context.__e2eBranchRouted = true;
   if (safeAreaInsets) {
     await context.addInitScript((insets) => {
       const applyInsets = () => {
@@ -84,12 +103,47 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
       else document.addEventListener("DOMContentLoaded", applyInsets, { once: true });
     }, safeAreaInsets);
   }
+  // HTML z produkcji (logowanie, strony spoza `pages`) przy translation.js
+  // z brancha: bez meta i18n-parts strona wczytałaby tylko część wspólną
+  // słownika (docs/tlumaczenia-podzial-plan.md). Meta z HTML brancha trafia
+  // do <head> zanim wykonają się moduły strony.
+  await context.addInitScript((partsByPath) => {
+    const key = location.pathname.endsWith("/") || location.pathname.endsWith(".html") ? location.pathname : `${location.pathname}/`;
+    const content = partsByPath[key];
+    if (content == null || location.origin !== "https://www.familiada.online") return;
+    const add = () => {
+      if (!document.head || document.head.querySelector('meta[name="i18n-parts"]')) return false;
+      const meta = document.createElement("meta");
+      meta.name = "i18n-parts";
+      meta.content = content;
+      document.head.prepend(meta);
+      return true;
+    };
+    const observer = new MutationObserver(() => { if (document.head) { add(); observer.disconnect(); } });
+    observer.observe(document, { childList: true, subtree: true });
+  }, branchI18nParts());
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
     const url = new URL(route.request().url());
     const file = localFileFor(url.pathname, pages);
     // Pozwól kolejnym handlerom Playwrighta dodać np. kontrolowany bypass
     // konserwacji dla testu; bez nich fallback zachowuje zwykłe żądanie sieciowe.
-    if (!file) return route.fallback();
+    if (!file) {
+      // Próba generalna: strony z produkcji (np. logowanie przez Workera) mają
+      // CSP z connect-src tylko na api.familiada.online — podmieniamy adres API.
+      if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && route.request().resourceType?.() === "document") {
+        // maxRedirects 0: przekierowanie Workera (np. TV z „/” na /connect/?tv=1)
+        // ma zmienić adres w przeglądarce, a nie podać treść pod starym adresem.
+        const response = await route.fetch({ headers: await route.request().allHeaders(), maxRedirects: 0 });
+        if (response.status() >= 300 && response.status() < 400) return route.fulfill({ response });
+        const apiHost = new URL(API_ORIGIN).host;
+        const swap = (value) => String(value).split("api.familiada.online").join(apiHost);
+        const headers = Object.fromEntries(Object.entries(response.headers()).map(([k, v]) => [k, /content-security-policy/i.test(k) ? swap(v) : v]));
+        delete headers["content-encoding"];
+        delete headers["content-length"];
+        return route.fulfill({ response, headers, body: swap(await response.text()) });
+      }
+      return route.fallback();
+    }
     let body = fs.readFileSync(file);
     if (API_ORIGIN && API_ORIGIN !== PROD_API_ORIGIN && [".js", ".html"].includes(path.extname(file))) {
       body = body.toString("utf8").split(PROD_API_ORIGIN).join(API_ORIGIN);
@@ -129,4 +183,11 @@ async function serveBranchLoginHtml(route) {
   await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
 }
 
-module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor };
+// Próba generalna: kontekst, który test otworzył bez serveBranchCode (np. drugi
+// użytkownik z browser.newContext()), też musi mówić z API_ORIGIN.
+async function ensureApiOriginRouting(context) {
+  if (!API_ORIGIN || API_ORIGIN === PROD_API_ORIGIN || !context || context.__e2eBranchRouted) return;
+  await serveBranchCode(context, { pages: [] });
+}
+
+module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor, ensureApiOriginRouting };

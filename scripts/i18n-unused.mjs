@@ -1,4 +1,4 @@
-// Nieużywane klucze tłumaczeń (web/shared/translation/{pl,en,uk}.js).
+// Nieużywane klucze tłumaczeń (web/shared/translation/<lang>/<część>.js).
 //
 // Klucz jest używany, gdy w kodzie (web, supabase, cloudflare, scripts)
 // występuje dosłownie, gdy pasuje do prefiksu dynamicznego
@@ -10,10 +10,11 @@
 // node scripts/i18n-unused.mjs --json   -> { unused, missing } dla testu
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
+import { LANGS, loadDicts } from "./i18n-parts.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const LANGS = ["pl", "en", "uk"];
+export { LANGS, loadDicts };
 
 // Sekcje czytane w całości poza stroną: send-email (authEmail),
 // Worker (marketplaceSsr, contactEmail).
@@ -21,7 +22,7 @@ export const EXTERNAL_SECTIONS = ["authEmail", "marketplaceSsr", "contactEmail"]
 
 const SCAN_DIRS = ["web", "supabase/functions", "cloudflare", "scripts"];
 const SKIP = [
-  /^web\/shared\/translation\/(pl|en|uk)\.js$/,
+  /^web\/shared\/translation\/(pl|en|uk)\//,
   /^web\/shared\/vendor\//,
   /^scripts\/i18n-unused\.mjs$/,
   /\/node_modules\//,
@@ -47,14 +48,6 @@ export function flatten(obj, prefix = "", out = []) {
     else out.push(key);
   }
   return out;
-}
-
-export async function loadDicts() {
-  const dicts = {};
-  for (const lang of LANGS) {
-    dicts[lang] = (await import(pathToFileURL(path.join(root, `web/shared/translation/${lang}.js`)).href)).default;
-  }
-  return dicts;
 }
 
 export function readCorpus() {

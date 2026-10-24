@@ -6,10 +6,10 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-23T18502";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-23T18502";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-23T18502";
-import "./scroll-fade.js?v=v2026-10-23T18502"; // wygaszona krawędź przewijanych list
+import { t } from "../../translation/translation.js?v=v2026-10-24T15410";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-24T15410";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-24T15410";
+import "./scroll-fade.js?v=v2026-10-24T15410"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -163,13 +163,13 @@ export function attachListTools(heading, list, key) {
     sortEl.querySelector(".ui-select-btn").title = t("common.sort.label");
     filterEl.querySelector(".ui-select-btn").setAttribute("aria-label", t("common.filterState"));
     filterEl.querySelector(".ui-select-btn").title = t("common.filterState");
-    const title = state.q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    const title = state.q ? t("common.clear") : t("common.searchByName");
     searchBtn.title = title;
     searchBtn.setAttribute("aria-label", title);
     empty.textContent = t("common.noResults");
     inlineInput.placeholder = t("common.searchByName");
     inlineInput.setAttribute("aria-label", t("common.searchByName"));
-    inlineClear.title = t("baseExplorer.search.clear");
+    inlineClear.title = t("common.clear");
     inlineClear.setAttribute("aria-label", inlineClear.title);
   };
 

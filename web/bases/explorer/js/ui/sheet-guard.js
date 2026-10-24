@@ -7,7 +7,7 @@
 // (exitModalSheet cofa przy tym wpis historii). Pokazanie z adresu oznacza
 // modal-sheet.js (data-routed); otwarcie naszym kodem (setOverlayOpen) go zdejmuje.
 
-import { exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-23T18502";
+import { exitModalSheet, setOverlayOpen, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T15410";
 
 export function guardRoutedSheet(overlay, isOpen = () => overlay?.dataset.routed !== "true") {
   if (!overlay) return;

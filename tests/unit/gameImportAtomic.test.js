@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
+import { loadDict } from "./helpers/i18n.js";
 
 async function setup(lang='pl') {
- const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+ const dict = await loadDict(lang);
  const calls=[];let sequence=0;let response={data:{ok:true,id:'imported-id'}};
  const t=(key,args={})=>{let value=key.split('.').reduce((item,part)=>item?.[part],dict);assert.equal(typeof value,'string',key);for(const [name,item] of Object.entries(args))value=value.replaceAll('{'+name+'}',item);return value;};
  const context=vm.createContext({t,crypto:{randomUUID:()=>`request-${++sequence}`},sb:()=>({rpc:async(name,args)=>{calls.push({name,args});return response;}})});

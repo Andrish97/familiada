@@ -41,8 +41,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-23T18502";
-import { iconText } from "./icons.js?v=v2026-10-23T18502";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-24T15410";
+import { iconText } from "./icons.js?v=v2026-10-24T15410";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -82,7 +82,7 @@ export const PAGES = {
   friends:       { path: "/friends/", access: "user", minViewportHeight: 580, parent: "games", from: ["games", "bases", "polls", "logoEditor", "control", "manual"], manual: "10", tabs: ["invite", "received"], state: ["f", "tab"] },
   subscribers:   { path: "/subscribers/", access: "user", minViewportHeight: 580, parent: "games", from: ["games", "polls", "manual"], manual: "14", tabs: ["invite", "received"], state: ["tab"] },
   tasks:         { path: "/tasks/",             access: "user", minViewportHeight: 580,   parent: "games", from: ["games", "manual"], manual: "15.4", state: ["t"] },
-  bases:         { path: "/bases/",             access: "guest", minViewportHeight: 580,  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer", "manual"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
+  bases:         { path: "/bases/",             access: "guest", minViewportHeight: 580,  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer", "manual"], manual: "9", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "shareSendOverlay", "importOverlay"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
@@ -122,13 +122,13 @@ export const PAGES = {
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
   notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument serwowany przez fallback 404; rzeczywisty nieznany URL pozostaje w pasku adresu." },
   maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Strona serwisowa zwracana przez bramkę Maintenance zamiast żądanej strony." },
-  admin:         { path: "/settings/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
-  adminToolEditor: { path: "/settings/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolExporter: { path: "/settings/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolHostLogo: { path: "/settings/tools/host-logo-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
-  adminToolKora: { path: "/settings/tools/kora-builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolLogoBackground: { path: "/settings/tools/logo-background-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
-  adminToolTheme: { path: "/settings/tools/theme_builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  admin:         { path: "/admin/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
+  adminToolEditor: { path: "/admin/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolExporter: { path: "/admin/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolHostLogo: { path: "/admin/tools/host-logo-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolKora: { path: "/admin/tools/kora-builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolLogoBackground: { path: "/admin/tools/logo-background-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolTheme: { path: "/admin/tools/theme_builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
 };
 
 // Wspólny kontakt jest budowany dynamicznie, więc nie należy do statycznych

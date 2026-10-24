@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { loadDicts } from "../i18n-parts.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SRC = path.join(ROOT, "docs", "podrecznik");
@@ -80,8 +81,7 @@ export const refHref = (num) => (String(num).includes(".") ? `?ch=${chapterOf(nu
 /* ---------- ikony przycisków z prawdziwych stron serwisu ---------- */
 
 async function loadTranslation(lang) {
-  const file = path.join(ROOT, "web", "shared", "translation", `${lang}.js`);
-  return (await import(pathToFileURL(file).href)).default;
+  return (await loadDicts())[lang];
 }
 
 function lookup(obj, key) {

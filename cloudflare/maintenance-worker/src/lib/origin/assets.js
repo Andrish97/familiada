@@ -13,13 +13,13 @@ const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp
 // wyżej) - nie wolno mu omijać GLOBAL GATE ani być cache'owanym.
 const DYNAMIC_JSON_PATHS = new Set(["/maintenance-state.json"]);
 
-// isBlockedPath() dalej w tym pliku 404-uje /tools/* i /settings-tools/*
+// isBlockedPath() dalej w tym pliku 404-uje /tools/* i /admin-tools/*
 // na publicznym hoście (te ścieżki mają działać tylko z poziomu
-// settings.familiada.online) - ale ten skrót działa WCZEŚNIEJ w fetch(),
-// więc bez tego wykluczenia np. /settings-tools/tools.json (rozszerzenie
+// admin.familiada.online) - ale ten skrót działa WCZEŚNIEJ w fetch(),
+// więc bez tego wykluczenia np. /admin-tools/tools.json (rozszerzenie
 // .json) omijałby tamten blok i wyciekał publicznie mimo blokady.
 function isPubliclyBlockedAssetPath(pathname) {
-  return pathname.startsWith("/tools/") || pathname.startsWith("/settings-tools/") || pathname.startsWith("/settings/");
+  return pathname.startsWith("/tools/") || pathname.startsWith("/admin-tools/") || pathname.startsWith("/admin/");
 }
 
 export function isStaticAssetPath(pathname) {
@@ -85,13 +85,13 @@ export function isMaintenanceAsset(pathname) {
 
 export function isSettingsAsset(pathname) {
   return isSharedAssetPath(pathname)
-    || ["/manifest-admin.webmanifest", "/settings/sw.js"].includes(pathname)
-    || pathname.startsWith("/settings/icons/")
-    || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+    || ["/manifest-admin.webmanifest", "/admin/sw.js"].includes(pathname)
+    || pathname.startsWith("/admin/icons/")
+    || ["/admin/js/", "/admin/css/", "/admin/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
 export function isCommonAsset(pathname) {
   if (pathname === "/404.html") return true;
   if (isMaintenanceAsset(pathname)) return true;
-  return ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+  return ["/admin/js/", "/admin/css/", "/admin/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }

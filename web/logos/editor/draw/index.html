@@ -2,10 +2,11 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-23T18502"/>
+  <meta name="app-version" content="v2026-10-24T15410"/>
 
 
   <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="logos resources">
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -14,20 +15,21 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.titles.draw">Familiada — edytor logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-23T18502"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-23T18502"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-24T15410"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icon-apple-touch-180.png?v=v2026-10-24T15410"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-24T15410"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-23T18502" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-23T18502"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-23T18502"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-23T18502"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-23T18502"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-23T18502"/>
-  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-23T18502"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T15410" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T15410"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T15410"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T15410"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T15410"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T15410"/>
+  <link rel="stylesheet" href="/logos/css/logo.css?v=v2026-10-24T15410"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-23T18502" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T15410" defer></script>
 
   <!-- Fix Fabric.js 5.x bug: uses 'alphabetical' instead of 'alphabetic' -->
   <script>
@@ -41,10 +43,10 @@
   })();
   </script>
   <!-- Fabric.js (global: window.fabric) -->
-  <script src="/shared/vendor/fabric.min.js?v=v2026-10-23T18502"></script>
+  <script src="/shared/vendor/fabric.min.js?v=v2026-10-24T15410"></script>
 
-  <script type="module" src="/logos/js/editor-draw.js?v=v2026-10-23T18502" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-23T18502" defer></script>
+  <script type="module" src="/logos/js/editor-draw.js?v=v2026-10-24T15410" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T15410" defer></script>
 
 </head>
 
@@ -75,7 +77,7 @@
            #saveStatus ukryty — tylko punkt zaczepienia testów, bez informacji
            o zapisie na stronie -->
       <div class="name-field">
-        <label class="name-field-label" for="logoName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
+        <label class="name-field-label" for="logoName" data-i18n="common.nameLabel">Nazwa</label>
         <input class="inp" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder" disabled/>
         <span id="saveStatus" data-state="idle" hidden></span>
       </div>
@@ -138,7 +140,7 @@
               <div class="fontPickPanel ctxPop">
                 <div class="fontPickSearch">
                   <input id="drawFontSearchInp" class="inp" type="text" placeholder="Szukaj fontu…" data-i18n-placeholder="logoEditor.draw.ui.fontSearchPlaceholder">
-                  <button id="drawFontSearchClear" class="btn sm" type="button" aria-label="Wyczyść" data-i18n-aria-label="baseExplorer.search.clear"><i class="ico" data-icon="close"></i></button>
+                  <button id="drawFontSearchClear" class="btn sm" type="button" aria-label="Wyczyść" data-i18n-aria-label="common.clear"><i class="ico" data-icon="close"></i></button>
                 </div>
                 <div id="drawFontList" class="fontPickList"></div>
                 <div id="drawFontEmpty" class="fontPickEmpty" hidden data-i18n="logoEditor.draw.ui.fontNoResults">Brak wyników</div>
@@ -171,8 +173,8 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-23T18502"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-23T18502"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-24T15410"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-24T15410"></script>
 
 </body>
 </html>

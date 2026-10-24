@@ -9,7 +9,7 @@ const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase
 
 test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez sessionStorage)", () => {
   const files = [
-    "games/js/games.js", "bases/js/bases.js", "settings/js/settings.js", "polls/js/polls.js",
+    "games/js/games.js", "bases/js/bases.js", "admin/js/settings.js", "polls/js/polls.js",
     "logos/js/list.js",
   ];
   for (const file of files) {

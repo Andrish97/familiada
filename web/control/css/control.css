@@ -811,6 +811,8 @@
      szerokości w obu liniach; kod jest przyciskiem kopiowania. */
   .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:stretch; gap:6px; }
   .device-row-line { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
+  /* Trzecia linia z jednym przyciskiem („Udostępnij” u Prowadzącego i Przycisku). */
+  .device-row-line--single { grid-template-columns: minmax(0, 1fr); }
   .device-row-line > .btn { width:100%; min-width:0; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .device-row-line > .device-connect-code { gap:.5em; padding:0 .6em; }
   .device-row-line > .device-connect-code .ico { opacity:.7; }
@@ -1064,7 +1066,8 @@
 @layer page {
   /* Okno udostępniania urządzenia: pusta sekcja listy nie zmniejsza karty
      do samego kafla braku. */
-  #shareDeviceOverlay .uni-body > :is(.shareSection--friends, .shareSection--shared) {
+  #shareDeviceOverlay .uni-body > .shareSection--shared,
+  #shareDeviceSendOverlay .uni-body > .shareSection--friends {
     min-height: 180px;
     box-sizing: border-box;
   }

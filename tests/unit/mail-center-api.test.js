@@ -17,7 +17,7 @@ test('mail center bootstrap creates secure nonce without consuming a link',async
 });
 test('mail center mutations require exact origin and bootstrap nonce before RPC',async(t)=>{
  stub(t,()=>assert.fail('unauthorized RPC'));
- for(const headers of [{Origin:'https://attacker.example'},{Origin:'https://settings.familiada.online'},{Origin:''},{'X-Mail-CSRF':''},{Cookie:''}]) {
+ for(const headers of [{Origin:'https://attacker.example'},{Origin:'https://admin.familiada.online'},{Origin:''},{'X-Mail-CSRF':''},{Cookie:''}]) {
   const response=await handleMailCenterApi(req('notifications',{enabled:false},headers),env);assert.equal(response.status,403);
  }
  const get=await handleMailCenterApi(new Request('https://www.familiada.online/_api/mail/exchange?token='+link),env);assert.equal(get.status,405);

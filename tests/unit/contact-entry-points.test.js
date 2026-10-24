@@ -6,8 +6,8 @@ const root=path.resolve(import.meta.dirname,'../../web');
 function pages(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?pages(path.join(dir,entry.name)):entry.name==='index.html'?[path.join(dir,entry.name)]:[]);}
 test('regular application pages have contact; dedicated device screens do not',()=>{
  const devices=new Set(['control/host/index.html','control/display/index.html','control/buzzer/index.html','connect/tv/index.html']);
- const noContactModal=new Set([...devices,'maintenance/index.html','settings/index.html','polls/vote/qr/index.html','snake/index.html']);
- for(const file of pages(root).filter(file=>!file.includes('/settings/tools/'))){
+ const noContactModal=new Set([...devices,'maintenance/index.html','admin/index.html','polls/vote/qr/index.html','snake/index.html']);
+ for(const file of pages(root).filter(file=>!file.includes('/admin/tools/'))){
   const html=fs.readFileSync(file,'utf8');
   const relative=path.relative(root,file).split(path.sep).join('/');
   if(noContactModal.has(relative)){

@@ -4,10 +4,11 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import * as contract from '../../web/shared/js/core/go-contract.js';
 import {anonymousPollDestination,validAnonymousPollParams} from '../../web/shared/js/core/poll-links.js';
+import { loadDict } from "./helpers/i18n.js";
 const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 function node(){return {textContent:'',style:{},children:[],removeAttribute(){},addEventListener(){},append(...nodes){this.children.push(...nodes)},appendChild(child){this.children.push(child)},set innerHTML(value){this.children=[]},get innerHTML(){return ''}};}
 async function setup(lang,query=`b=${id}`){
- const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
+ const dict = await loadDict(lang);
  const nodes=Object.fromEntries(['title','message','actions','hint','emailRow','emailInput'].map(key=>[key,node()]));
  const t=(path,args={})=>{let value=path.split('.').reduce((entry,key)=>entry?.[key],dict);assert.equal(typeof value,'string',path);for(const [key,item] of Object.entries(args))value=value.replaceAll('{'+key+'}',item);return value;};
  const context=vm.createContext({...contract,anonymousPollDestination,validAnonymousPollParams,URL,URLSearchParams,setTimeout,clearTimeout,console,t,

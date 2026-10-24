@@ -3,9 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pl from "../../web/shared/translation/pl.js";
-import en from "../../web/shared/translation/en.js";
-import uk from "../../web/shared/translation/uk.js";
+import { dictionaries } from "./helpers/i18n.js";
+const { pl, en, uk } = dictionaries;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const get = (obj, key) => key.split(".").reduce((value, part) => value?.[part], obj);

@@ -1,35 +1,35 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-23T18502";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-23T18502";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-23T18502";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-23T18502";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-23T18502";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-23T18502";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-23T18502";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-23T18502";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-23T18502";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-23T18502";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-23T18502";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-23T18502";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-23T18502";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-23T18502";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-24T15410";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-24T15410";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-24T15410";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-24T15410";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-24T15410";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-24T15410";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T15410";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-24T15410";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-24T15410";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-24T15410";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-24T15410";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-24T15410";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-24T15410";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-24T15410";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-23T18502";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-24T15410";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-23T18502";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-23T18502";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-23T18502";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-23T18502";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-23T18502";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-23T18502";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-23T18502";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-24T15410";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-24T15410";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-24T15410";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T15410";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-24T15410";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-24T15410";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-24T15410";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -258,7 +258,7 @@ async function saveAll() {
         );
         customSoundKeys = new Set(cfCheck.keys());
         if (missing.length) {
-          const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+          const names = missing.map(cat => t("gameSettings.sfxDesc." + cat.key) || cat.key).join(", ");
           await alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
           setActiveCat("sound");
           return;
@@ -779,7 +779,7 @@ async function renderSound() {
       <div class="sfx-table" id="sfxTableGs"></div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${t("gameSettings.sfxResetAll") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -808,7 +808,7 @@ async function renderSound() {
     // Aktywny wariant: "__custom__" jeśli mamy własny plik, inaczej zapisany lub domyślny
     const activeVariant = custom ? VARIANT_CUSTOM
       : (localSettings.sound.variants[key] || (cat.sounds[0]?.file || "classic.mp3").split("?")[0]);
-    const desc = t("control.sfxDesc." + key) || key;
+    const desc = t("gameSettings.sfxDesc." + key) || key;
 
     const row = document.createElement("div");
     row.className = "sfx-row";
@@ -820,7 +820,7 @@ async function renderSound() {
       const label = s.label?.[lang] || s.file;
       return { value: file, label };
     });
-    variantOptions.push({ value: VARIANT_CUSTOM, label: t("control.sfxCustom") || "Własny" });
+    variantOptions.push({ value: VARIANT_CUSTOM, label: t("gameSettings.sfxCustom") || "Własny" });
 
     // Tag z własnym plikiem (widoczny tylko gdy custom)
     const fileTagHtml = custom
@@ -832,7 +832,7 @@ async function renderSound() {
 
     // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("gameSettings.sfxChooseFile") || "Wybierz plik"}</button>`;
 
     // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
     const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
@@ -981,7 +981,7 @@ async function renderSound() {
         const decoded = await ctx.decodeAudioData(buf);
         await ctx.close();
         if (decoded.duration > limitSec) {
-          alertModal({ text: (t("control.sfxTooLong") || "Maksymalna długość to {limit}s").replace("{limit}", limitSec) });
+          alertModal({ text: (t("gameSettings.sfxTooLong") || "Maksymalna długość to {limit}s").replace("{limit}", limitSec) });
           return;
         }
       } catch { /* nie blokuj jeśli AudioContext niedostępny */ }
@@ -1159,14 +1159,14 @@ function renderFinale() {
     <div class="gs-section">
       <div class="hint gs-list-hint">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
       <div class="gs-badge-row">
-        <span class="tag tag--gold">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
+        <span class="tag tag--gold">${t("gameSettings.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
       <div class="finalLists">
         <div class="finalCol">
-          <div class="mini"><div class="hint">${t("control.finalPoolHint")}</div></div>
+          <div class="mini"><div class="hint">${t("gameSettings.finalPoolHint")}</div></div>
           <div class="qList" id="gsFinalePool">
             ${pool.length === 0
-              ? `<div class="empty-state empty-state--inline">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
+              ? `<div class="empty-state empty-state--inline">${t("gameSettings.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
               : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="${DRAGGABLE}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
@@ -1174,10 +1174,10 @@ function renderFinale() {
           </div>
         </div>
         <div class="finalCol">
-          <div class="mini"><div class="hint">${t("control.finalListHint")}</div></div>
+          <div class="mini"><div class="hint">${t("gameSettings.finalListHint")}</div></div>
           <div class="qList" id="gsGsFinalePicked">
             ${picked.length === 0
-              ? `<div class="empty-state empty-state--inline">${DRAG ? t("control.finalPickEmpty") : t("gameSettings.finale.tapEmpty")}</div>`
+              ? `<div class="empty-state empty-state--inline">${DRAG ? t("gameSettings.finalPickEmpty") : t("gameSettings.finale.tapEmpty")}</div>`
               : picked.map(q => `<div class="qRow${DRAG ? " gs-draggable" : ""}" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
@@ -1665,7 +1665,7 @@ async function guardActiveGameSession() {
   const requestStatus = async () => {
     const { data, error } = await sb().rpc("control_game_settings_status", { p_game_id: gameId });
     if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || t("control.ingameGuard.statusError"));
+    if (!data?.ok) throw new Error(data?.error || t("gameSettings.ingameGuard.statusError"));
     return data;
   };
 
@@ -1674,12 +1674,12 @@ async function guardActiveGameSession() {
 
   // Ekran blokady (core/blocking-screen.js) + odliczanie i błąd nad przyciskami.
   const overlay = blockingScreen("ingameGuard", [
-    { key: "Back", i18n: "control.ingameGuard.back", iconName: "arrow-left" },
-    { key: "Cancel", i18n: "control.ingameGuard.cancel", iconName: "close", accent: true },
+    { key: "Back", i18n: "gameSettings.ingameGuard.back", iconName: "arrow-left" },
+    { key: "Cancel", i18n: "gameSettings.ingameGuard.cancel", iconName: "close", accent: true },
   ]);
   setBlockingIcon(overlay, "warning");
-  overlay.querySelector("#ingameGuardTitle").textContent = t("control.ingameGuard.title");
-  overlay.querySelector("#ingameGuardMsg").textContent = t("control.ingameGuard.message");
+  overlay.querySelector("#ingameGuardTitle").textContent = t("gameSettings.ingameGuard.title");
+  overlay.querySelector("#ingameGuardMsg").textContent = t("gameSettings.ingameGuard.message");
   overlay.querySelector(".blocking-actions").insertAdjacentHTML("beforebegin",
     `<div id="ingameGuardCountdown" class="msg" aria-live="polite"></div><div id="ingameGuardError" class="field-error" role="alert" hidden></div>`);
   setBlockingOpen(overlay, true);
@@ -1704,13 +1704,13 @@ async function guardActiveGameSession() {
     };
     const updateCountdown = () => {
       if (!Number.isFinite(deadline)) {
-        countdown.textContent = t("control.ingameGuard.noDeadline");
+        countdown.textContent = t("gameSettings.ingameGuard.noDeadline");
         return 0;
       }
       const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
       const minutes = Math.floor(seconds / 60);
       const remainder = seconds % 60;
-      countdown.textContent = t("control.ingameGuard.expiresIn", {
+      countdown.textContent = t("gameSettings.ingameGuard.expiresIn", {
         time: `${minutes}:${String(remainder).padStart(2, "0")}`,
       });
       return seconds;
@@ -1723,7 +1723,7 @@ async function guardActiveGameSession() {
         if (!status.in_progress) finish(true);
         else deadline = Date.parse(status.expires_at || "");
       } catch (error) {
-        errorEl.textContent = error?.message || t("control.ingameGuard.statusError");
+        errorEl.textContent = error?.message || t("gameSettings.ingameGuard.statusError");
         errorEl.hidden = false;
       } finally {
         refreshing = false;
@@ -1747,10 +1747,10 @@ async function guardActiveGameSession() {
       try {
         const { data, error } = await sb().rpc("control_game_cancel_for_settings", { p_game_id: gameId });
         if (error) throw error;
-        if (!data?.ok) throw new Error(data?.error || t("control.ingameGuard.cancelError"));
+        if (!data?.ok) throw new Error(data?.error || t("gameSettings.ingameGuard.cancelError"));
         finish(true);
       } catch (error) {
-        errorEl.textContent = error?.message || t("control.ingameGuard.cancelError");
+        errorEl.textContent = error?.message || t("gameSettings.ingameGuard.cancelError");
         errorEl.hidden = false;
         backButton.disabled = false;
         cancelButton.disabled = false;

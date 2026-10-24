@@ -57,13 +57,17 @@ Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie al
 
 ![Poprzedni ekran Przycisku — urządzenie otwarto w innym miejscu](zrzut:device-lease-replaced@phone-landscape)
 
-[Kopiuj] kopiuje kod, a [Udostępnij] wysyła urządzenie innej osobie — wpisz jej adres e-mail lub
-nazwę użytkownika albo wybierz znajomego. Odbiorca z kontem znajdzie urządzenie w
+[Kopiuj] kopiuje kod. [Udostępnienia] (obok kodu, z liczbą osób) pokazuje, komu urządzenie
+jest udostępnione w tej sesji — ikoną kosza cofniesz udostępnienie. [Udostępnij] (przy
+Wyświetlaczu obok [Otwórz], przy Prowadzącym i Przycisku pod kodami QR) wysyła urządzenie innej
+osobie — wpisz jej adres e-mail lub nazwę użytkownika albo zaznacz znajomych i wybierz
+[Udostępnij]; okno się zamknie. Odbiorca z kontem znajdzie urządzenie w
 *Podłącz urządzenie* → „Urządzenia udostępnione dla mnie”, a osoba bez konta — w wiadomości
 e-mail i na stronie *Moje powiadomienia*. Na liście udostępnionych telefon i tablet
 pokazują Prowadzącego i Przycisk, a komputer — Wyświetlacz. Udostępnianie urządzeń wymaga konta.
 
-![Udostępnianie urządzenia innej osobie](zrzut:play-control-share-device-list)
+![Udostępnienia urządzenia — komu jest udostępnione w tej sesji](zrzut:play-control-share-device-list)
+![Udostępnij urządzenie — adres lub znajomi](zrzut:control-share-send)
 
 **Bez części urządzeń:**
 
@@ -84,7 +88,7 @@ z punktami, pytania finału albo szczegóły oceny odpowiedzi. Druga część by
 i w górę, aby zasłonić; w poziomie — w prawo i w lewo. Odsłonięcie widzi tylko prowadzący.
 Po każdej zmianie etapu zasłona może wrócić.
 
-![Ekran prowadzącego — dolna część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
+![Ekran prowadzącego — prawa część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
 ![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet-landscape)
 
 **Rozłączenie urządzenia.** Gdy wymagane urządzenie przestanie odpowiadać, po kilku sekundach
@@ -123,7 +127,9 @@ zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 Przeglądarka może wyciszyć dźwięk Wyświetlacza po jego przeładowaniu albo uśpieniu telewizora —
 wtedy przycisk [Odblokuj dźwięk] pojawi się ponownie, a panel poczeka na jego naciśnięcie.
 
-**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada i na co czeka gra; pasek pod
+**Jak działa panel.** Kolumna podpowiedzi mówi, kto teraz odpowiada, jaki jest następny krok
+i reguły, których nie widać na przyciskach (np. że koniec odliczania 3 s to X, a trzeci X
+oznacza kradzież); przy zaznaczonym kafelku przypomina o drugim kliknięciu. Pasek pod
 tablicą pokazuje drużynę grającą i pulę rundy. Przycisk przejścia dalej zmienia nazwę zależnie
 od kroku (np. [Przejdź do finału]). Czynności, które zmieniają wynik — odsłonięcie odpowiedzi,
 X, przyjęcie zgłoszenia, oddanie kontroli — wymagają **dwóch kliknięć**: pierwsze zaznacza
@@ -160,13 +166,13 @@ lub animacji — poczekaj, aż panel je odblokuje.
 - [X] dodaje błąd (licznik „1 / 3”, „2 / 3”, „3 / 3”); na Wyświetlaczu pojawia się X z dźwiękiem.
 - [Rozpocznij odliczanie 3s] włącza trzysekundowe odliczanie, gdy odpowiedź się przeciąga. Po
   upływie czasu serwis sam doda X. Ponowne kliknięcie albo inna czynność wyłącza odliczanie bez X.
-- [Oddaj kontrolę] przekazuje pytanie przeciwnikom — raz w rundzie, przed pierwszą odkrytą
-  odpowiedzią. Na ekranie prowadzącego pojawia się wtedy czerwona podpowiedź.
+- [Oddaj kontrolę] przekazuje pytanie przeciwnikom — raz w rundzie, zaraz po wygranym
+  pojedynku: pierwsza odpowiedź drużyny (trafiona albo X) wyłącza tę możliwość. Na ekranie prowadzącego pojawia się wtedy czerwona podpowiedź.
 
 Prowadzący widzi pytanie i wszystkie odpowiedzi z punktami, np. „2) Rower (24)” — zielony
 wiersz to odpowiedź już pokazana publiczności. Pulę, X i wyniki drużyn sprawdza na Wyświetlaczu.
 
-![Rozgrywka — zaznaczona odpowiedź, licznik X i Oddaj kontrolę](zrzut:play-control-play-pass)
+![Rozgrywka zaraz po pojedynku — zaznaczona odpowiedź i Oddaj kontrolę](zrzut:play-control-play-pass)
 ![Odliczanie 3 s](zrzut:play-control-timer3)
 ![Wyświetlacz — odsłonięte odpowiedzi, pula i X](zrzut:play-display-play)
 ![Ekran prowadzącego — pokazane odpowiedzi na zielono](zrzut:play-host-play@tablet-landscape)
@@ -257,7 +263,7 @@ pomaga rozpoznać powtórzenie. Zegar ma 20 s.
 a przycisk zmienia się na [Zakończ finał] — operator sam wybiera moment zakończenia. Jeśli celu
 nie osiągnięto, [Zakończ finał] pojawi się po ostatnich punktach gracza 2.
 
-![Cel osiągnięty — Zakończ finał](zrzut:play-control-final-end)
+![Cel osiągnięty — Zakończ finał](zrzut:play-control-final-goal)
 
 ## 17.5 Zakończenie gry
 

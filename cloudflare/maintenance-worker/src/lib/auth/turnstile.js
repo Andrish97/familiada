@@ -10,7 +10,7 @@ import { authorizeE2EApi } from "../e2e/e2e-api.js";
 
 export const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 export const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
-const ALLOWED_HOSTNAMES = ["www.familiada.online", "familiada.online", "settings.familiada.online"];
+const ALLOWED_HOSTNAMES = ["www.familiada.online", "familiada.online", "admin.familiada.online"];
 
 // { ok: true } albo { ok: false, error: "captcha_failed" | "captcha_unavailable" }
 export async function verifyTurnstile(request, env, token) {

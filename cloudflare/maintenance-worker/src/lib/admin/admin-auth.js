@@ -77,7 +77,7 @@ export async function isAdminAuthorized(request, env) {
   return result.ok;
 }
 
-export const ADMIN_ORIGIN = "https://settings.familiada.online";
+export const ADMIN_ORIGIN = "https://admin.familiada.online";
 
 // Ochrona przed CSRF dla zmian (POST/PUT/PATCH/DELETE): żądanie musi przyjść
 // z panelu (Origin) i nieść JSON. Wyjątek typu treści: wgrywanie załącznika

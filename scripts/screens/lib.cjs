@@ -125,7 +125,7 @@ async function emulateSafeArea(context, origin, safe) {
 }
 
 // Ramka iPhone'a na czarnym tle (jak kadr głosowania w dawnym panelu admina:
-// web/settings/js/homepage-screenshots.js, composeIPhoneFrame). screen -- PNG
+// web/admin/js/homepage-screenshots.js, composeIPhoneFrame). screen -- PNG
 // ekranu telefonu; wynik -- PNG outputWidth × outputHeight.
 async function composeIPhone(browser, screen, outputWidth = 1440, outputHeight = 900, scale = 1) {
   const page = await browser.newPage({ deviceScaleFactor: 1 });

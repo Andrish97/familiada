@@ -55,15 +55,22 @@ const S = {
     d.settings.physicalBuzzer = physical;
     d.host.covered = true;
   },
-  // Rozgrywka: kontrola B, odsłonięte 1 i 2, jedna pomyłka, „Oddaj kontrolę” dostępne.
+  // Rozgrywka: kontrola B, odsłonięte 1 i 2, jedna pomyłka („Oddaj kontrolę” już niedostępne).
   play(row, d) {
     row.step = "r_play"; row.phase = "PLAY"; row.control_team = "B";
     d.rounds.roundNo = 2; d.rounds.totals = { A: 62, B: 48 };
     d.rounds.revealed = [1, 2]; d.rounds.xA = 0; d.rounds.xB = 1;
     d.rounds.bankPts = d.rounds.answers[0].fixed_points + d.rounds.answers[1].fixed_points;
-    d.rounds.allowPass = true; d.rounds.passUsed = false;
+    d.rounds.allowPass = false; d.rounds.passUsed = false;
     d.rounds.duel = { enabled: true, lastPressed: "B", firstTeam: "B", secondTeam: "A", currentTeam: "B", missSeq: 0, lastMissTeam: null };
     d.host.covered = false;
+  },
+  // Zaraz po wygranym pojedynku: odsłonięta tylko odpowiedź z pojedynku, „Oddaj kontrolę” dostępne.
+  pass(row, d) {
+    S.play(row, d);
+    d.rounds.revealed = [1]; d.rounds.xB = 0;
+    d.rounds.bankPts = d.rounds.answers[0].fixed_points;
+    d.rounds.allowPass = true;
   },
   // Przejęcie: B ma trzy pomyłki, A odpowiada raz.
   steal(row, d) {
@@ -79,6 +86,8 @@ const S = {
     S.steal(row, d);
     d.rounds.steal = { active: false, used: true, team: "A", won: false };
     d.rounds.canEndRound = true;
+    // Są jeszcze pytania -- runda kończy się przyciskiem „Zakończ rundę”, nie końcem gry.
+    d.rounds._questionPool = [{ id: "next-round" }];
   },
   // Odkrywanie reszty odpowiedzi po rundzie (REVEAL), dalej finał.
   reveal(row, d) {
@@ -232,11 +241,11 @@ module.exports = [
     steps: [async (view) => { await view.waitForTimeout(800); await view.locator(".c2-tile", { hasText: panel.pl.teams[0] }).count(); await view.locator(".c2-tile").nth(2).click(); await view.waitForTimeout(400); }] },
   { id: "play-control-duel-physical", category: CAT, title: "Control — pojedynek z przyciskiem fizycznym (operator wskazuje drużynę)", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 1000,
     db: state((row, d) => S.duel(row, d, { physical: true })) },
-  { id: "play-control-play-pass", category: CAT, title: "Control — rozgrywka: odsłonięte odpowiedzi, 1 błąd, „Oddaj kontrolę”, zaznaczona odpowiedź", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
-    db: state((row, d) => S.play(row, d)),
+  { id: "play-control-play-pass", category: CAT, title: "Control — rozgrywka zaraz po pojedynku: „Oddaj kontrolę”, zaznaczona odpowiedź", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
+    db: state((row, d) => S.pass(row, d)),
     steps: [async (view) => { await view.waitForTimeout(800); await view.locator(".c2-tile:not(.c2-tile-revealed):not([disabled])").first().click(); await view.waitForTimeout(400); }] },
   { id: "play-control-timer3", category: CAT, title: "Control — rozgrywka: odliczanie 3 s i trzy błędy", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
-    db: state((row, d) => { S.play(row, d); d.rounds.xB = 2; d.rounds.allowPass = false; d.rounds.timer3 = { running: true, endsAt: Date.now() + 60e3, resolved: null }; }) },
+    db: state((row, d) => { S.play(row, d); d.rounds.xB = 2; d.rounds.allowPass = false; d.rounds.timer3 = { running: true, endsAt: Date.now() + 4e3, resolved: null }; }) },
   { id: "play-control-steal", category: CAT, title: "Control — przejęcie (kradzież) przez drużynę przeciwną", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 1000,
     db: state((row, d) => S.steal(row, d)) },
   { id: "play-control-round-end", category: CAT, title: "Control — koniec rundy po nieudanym przejęciu („Zakończ rundę”)", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-statusbar", devices: DESKTOP, settle: 1000,
@@ -279,6 +288,9 @@ module.exports = [
     db: state((row, d, lang) => { S.finaleP2(row, d, lang); row.step = "f_p2_entry"; d.final.runtime.p2[3] = { text: "" }; d.final.runtime.timer = { running: true, phase: "P2", endsAt: Date.now() + 60e3, usedP1: true, usedP2: true }; }) },
   { id: "play-control-final-end", category: CAT, title: "Control — koniec finału przed odsłonięciem (suma finału)", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-intro", devices: DESKTOP, settle: 1000,
     db: state((row, d, lang) => { S.finaleP2Done(row, d, lang); row.step = "f_end"; d.settings.endScreenMode = "money"; }) },
+  // Cel finału osiągnięty przy ocenie gracza 2 -- dalsza ocena zablokowana, zostaje „Zakończ finał”.
+  { id: "play-control-final-goal", category: CAT, title: "Control — cel finału osiągnięty: „Zakończ finał”", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-statusbar, .c2-intro, #app", devices: DESKTOP, settle: 1200,
+    db: state((row, d, lang) => { S.finaleP2Done(row, d, lang); const m = d.final.runtime.map2[3]; m.pts += 20; d.final.runtime.sum += 20; d.final.runtime.reached200 = d.final.runtime.sum >= 200; row.step = "f_p2_map_q4"; }) },
 
   // ======================= Control: koniec gry =======================
   { id: "play-control-game-end-points", category: CAT, title: "Control — koniec gry bez finału, ekran końcowy: punkty", path: CONTROL_URL, sources: [...CONTROL, "web/shared/js/gameplay/endScreen.js"], gameState: "round", ready: ".c2-intro", devices: DESKTOP, settle: 1000,

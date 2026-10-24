@@ -85,7 +85,7 @@ Skróty klawiszowe nie działają podczas wpisywania tekstu.
 
 1. Kliknij kafelek „Nowe logo z obrazu” i wybierz [Wybierz obraz] — plik JPG, PNG, GIF
    lub WEBP, do 5 MB.
-2. Ustaw kadr: ramka „Obszar wyświetlacza” pokazuje część obrazu, która trafi na ekran.
+2. Ustaw kadr: ramka na karcie „Obszar wyświetlacza” pokazuje część obrazu, która trafi na ekran.
    Możesz obrócić obraz o 90° i wyprostować go.
 3. Dopasuj wygląd suwakami: jasność, kontrast, gamma, czerń, biel i dither (ziarnistość
    przejść tonalnych). [Odwróć] zamienia jasne miejsca z ciemnymi, [Przywróć] cofa ustawienia.
@@ -103,8 +103,8 @@ w oryginalnej postaci (→ 8.5).
 zapisywane także przy wyjściu przyciskiem [Wstecz].
 
 **Lista „Moje loga”.** Dla zaznaczonego logo dostępne są [Edytuj], [Podgląd], [Powiel],
-eksport do pliku `.famlogo`, [Importuj] oraz [Wyślij] — kopia dla znajomego (→ 11.3).
-Nazwę zmienisz dwuklikiem (na dotyku — przytrzymaniem), a logo usuniesz ikoną kosza.
+eksport do pliku `.famlogo`, [Import] oraz [Wyślij] — kopia dla znajomego (→ 11.3).
+Nazwę zmienisz dwuklikiem (na telefonie stuknij dwa razy), a logo usuniesz ikoną kosza.
 Nie zmieniaj ręcznie zawartości plików `.famlogo` — import takiego pliku może się nie udać.
 
 ![Podgląd logo](zrzut:logos-market-logos-preview)
@@ -132,4 +132,4 @@ Logo pojawia się na początku gry i na końcu, jeśli tak ustawisz ekran końco
 **Blokady.** Edycja logo i rozgrywka się wykluczają: gdy edytujesz logo, nie otworzysz
 panelu sterowania ani ustawień gry, a podczas rozgrywki lub przy otwartych ustawieniach gry
 nie edytujesz ani nie usuniesz logo. Serwis wskaże powód — zakończ jedną czynność i wróć
-do drugiej.
+do drugiej. Czekająca strona wczyta się sama, gdy tamta się zakończy (→ 19.2).

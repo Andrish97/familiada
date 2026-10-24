@@ -116,16 +116,16 @@ test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osło
     const tile = page.locator("#mineGrid .card", { hasText: name });
     await expect(tile).toBeVisible();
     await tile.tap();
-    await page.locator("#btnShare").tap();
+    await page.locator("#btnShareSend").tap();
 
-    const overlay = page.locator("#shareOverlay");
+    const overlay = page.locator("#shareSendOverlay");
     await expect(overlay).toBeVisible();
-    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareSendOverlay");
     const assertSheetFits = async (label) => {
       const sizes = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         document: document.documentElement.scrollWidth,
-        modal: document.querySelector("#shareOverlay .modal").getBoundingClientRect(),
+        modal: document.querySelector("#shareSendOverlay .modal").getBoundingClientRect(),
       }));
       expect(sizes.document, `${label}: document overflow`).toBeLessThanOrEqual(sizes.viewport + 1);
       expect(sizes.modal.left, `${label}: modal is outside viewport`).toBeGreaterThanOrEqual(-1);
@@ -139,7 +139,7 @@ test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osło
     // i parametr ?dialog= muszą przetrwać obrót tam i z powrotem.
     await page.setViewportSize({ width: 844, height: 390 });
     await expect(page.locator("#pageGuard")).toBeVisible();
-    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareSendOverlay");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-landscape-844x390.png"), fullPage: true });
 
     await page.setViewportSize(portrait);
@@ -211,8 +211,8 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     await page.locator("#mineGrid .card", { hasText: name }).click();
-    await page.locator("#btnShare").click();
-    await expect(page.locator("#shareOverlay")).toBeVisible();
+    await page.locator("#btnShareSend").click();
+    await expect(page.locator("#shareSendOverlay")).toBeVisible();
     await page.locator("#shareEmail").fill(recipientName);
     await page.locator("#btnShareAdd").click();
     await expect(page.locator(".app-toast-text")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
@@ -624,13 +624,13 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     await page.locator("#mineGrid .card", { hasText: name }).click();
-    await page.locator("#btnShare").click();
-    await expect(page.locator("#shareOverlay")).toBeVisible();
+    await page.locator("#btnShareSend").click();
+    await expect(page.locator("#shareSendOverlay")).toBeVisible();
     await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
     const shareResponsePromise = page.waitForResponse((response) =>
       response.url().includes("/rpc/base_share_to_friend") && response.request().method() === "POST"
     );
-    await page.locator("#btnBaseShareFriends").click();
+    await page.locator("#btnShareAdd").click();
     const shareResponse = await shareResponsePromise;
     expect(shareResponse.ok(), "RPC udostępnienia bazy").toBeTruthy();
     const shareData = await shareResponse.json();
@@ -638,6 +638,10 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     expect(shareRow?.ok, "zaproszenie do bazy").toBeTruthy();
     const inviteLink = shareRow?.mail_link;
     expect(inviteLink).toBeTruthy();
+    // Po wysłaniu okno się zamyka; lista udostępnionych jest w oknie „Udostępnienia”.
+    await expect(page.locator("#shareSendOverlay")).toBeHidden();
+    await page.locator("#btnShare").click();
+    await expect(page.locator("#shareOverlay")).toBeVisible();
     await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: friend.username })).toHaveCount(1, { timeout: 20_000 });
     const token = new URL(inviteLink, BASE_URL).searchParams.get("b");
     expect(token).toBeTruthy();

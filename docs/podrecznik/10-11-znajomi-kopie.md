@@ -18,7 +18,7 @@ wiadomości e-mail o ankietach i udostępnionych urządzeniach (→ 14.1).
 
 ![Znajomi](zrzut:friends)
 
-Zaproszenie pojawi się w sekcji „Oczekujące i odrzucone”. Jeśli zapraszana osoba ma włączone
+Zaproszenie pojawi się w sekcji „Oczekujące”. Jeśli zapraszana osoba ma włączone
 powiadomienia, dostanie wiadomość e-mail z przyciskiem „Otwórz zaproszenie”.
 
 Jeśli pod podanym adresem nie ma konta, serwis to podpowie i zaproponuje dodanie tej osoby
@@ -30,29 +30,32 @@ adres osoby z kontem, serwis zaproponuje zaproszenie do znajomych.
 
 ## 10.3 Obsługa zaproszeń i ich statusów
 
-**Otrzymane zaproszenia** są w zakładce „Znajomi”, w sekcji „Propozycje”:
+**Otrzymane zaproszenia** są w sekcji „Propozycje” (na telefonie — w zakładce „Znajomi”):
 
-- [Przyjmij] — osoba trafia na listę znajomych,
-- [Odrzuć] — zaproszenie przechodzi do zwiniętej sekcji „Odrzucone przeze mnie”. Przez
-  30 dni możesz je przywrócić przyciskiem [Cofnij odmowę], a potem przyjąć.
+- ✓ [Przyjmij] — osoba trafia na listę znajomych,
+- × [Odrzuć] — zaproszenie przechodzi do zwiniętej sekcji „Odrzucone”. Przez 30 dni możesz je
+  przywrócić przyciskiem [Cofnij odmowę], a potem przyjąć.
 
 ![Propozycje w zakładce „Znajomi” (telefon)](zrzut:people-friends-received@phone)
 ![Odrzucone propozycje](zrzut:people-friends-declined)
 
-**Wysłane zaproszenia** są w zakładce „Zaproszenia”, w sekcji „Oczekujące i odrzucone”:
+**Wysłane zaproszenia** są w sekcji „Oczekujące” (na telefonie — w zakładce „Zaproszenia”), ze
+statusem „Oczekuje” albo „Odrzucono”; filtr nad listą pokaże tylko jeden z nich:
 
-- oczekujące — możesz je [Wyślij ponownie] (gdy minie wymagany odstęp) albo [Cofnij],
-- odrzucone — możesz je tylko [Cofnij].
+- oczekujące — możesz je [Wyślij ponownie] (ikona strzałki w kółku, gdy minie wymagany odstęp)
+  albo cofnąć ikoną kosza,
+- odrzucone — możesz je tylko cofnąć ikoną kosza.
 
 ![Wysłane zaproszenia — odliczanie do ponownej wysyłki](zrzut:people-friends-resend-cooldown)
 
 Po odrzuceniu zaproszenia żadna z dwóch osób nie może zaprosić drugiej przez 30 dni.
 Wiadomości z zaproszeniem wysyłane są nie częściej niż co 5 dni i najwyżej dwa razy na 30 dni.
 
-Na komputerze obie zakładki są widoczne obok siebie; na telefonie przełączasz je u góry.
-Liczniki przy zakładkach pokazują oczekujące zaproszenia.
+Na komputerze wszystko jest na jednym ekranie: po lewej „Dodaj znajomego” i „Oczekujące”, po
+prawej „Znajomi”, „Propozycje” i „Odrzucone”. Na telefonie przełączasz u góry zakładki „Znajomi”
+i „Zaproszenia”; liczniki przy nich pokazują oczekujące zaproszenia.
 
-![Obie zakładki obok siebie na komputerze](zrzut:people-friends-half@desktop)
+![Znajomi na komputerze — wszystkie sekcje na jednym ekranie](zrzut:people-friends-half@desktop)
 
 ## 10.4 Zarządzanie listą znajomych
 
@@ -60,7 +63,7 @@ Lista znajomych jest w zakładce „Znajomi”. Przy każdej osobie widać nazw�
 
 Aby usunąć znajomego, wybierz [Usuń] i potwierdź. Wtedy:
 
-- osoba znika z listy i trafia do „Odrzuconych przeze mnie” — przez 30 dni możesz to
+- osoba znika z listy i trafia do sekcji „Odrzucone” — przez 30 dni możesz to
   cofnąć [Cofnij odmowę],
 - oczekujące zaproszenia do ankiet i do baz pytań między wami zostają anulowane,
 - **bazy i urządzenia, które już udostępniłeś, zostają** — dostęp do baz (→ 12.5) i urządzeń
@@ -95,6 +98,8 @@ Czym wysyłka różni się od innych sposobów przekazania:
 
 Wysyłanie wymaga konta i co najmniej jednego znajomego.
 
+![Brak znajomych](zrzut:games-send-no-friends)
+
 ## 11.2 Wysyłanie gry
 
 1. W *Moich grach* zaznacz grę i wybierz [Wyślij].
@@ -112,8 +117,6 @@ Kopia zachowuje rodzaj gry i całą treść. Wysłać można:
 Nie można wysłać gier dodanych z Gier Społeczności, materiałów demo ani gry, która jest właśnie
 otwarta w edytorze lub ustawieniach.
 
-![Brak znajomych](zrzut:games-send-no-friends)
-
 ## 11.3 Wysyłanie logo
 
 Na stronie *Moje loga* zaznacz logo, wybierz [Wyślij] i postępuj jak przy grze. Znajomy
@@ -126,12 +129,13 @@ może użyć otrzymanego logo we własnych grach (→ 8.5). Logo demo nie można
 Gdy ktoś wyśle Ci kopię, dostaniesz wiadomość e-mail „… wysłał Ci kopię” (jeśli masz włączone
 powiadomienia), a przy zakładce *Moich gier* lub *Moich log* pojawi się licznik.
 
-Kopia czeka w sekcji „Otrzymane kopie” — z nazwą i oznaczeniem „Od: …”:
+Kopia czeka na początku listy — gra w zakładce swojego rodzaju, logo w *Moich logach* — jako kafel
+z plakietką „PROPOZYCJA” i oznaczeniem „Od: …”. W rogu kafla są dwa przyciski:
 
-- [Akceptuj] — kopia trafia do Twojej biblioteki: gra do zakładki swojego rodzaju, logo do
+- ✓ [Przyjmij] — kopia trafia do Twojej biblioteki: gra do zakładki swojego rodzaju, logo do
   *Moich log*. Zostaje przy niej oznaczenie „Od: …”, a w *Moich grach* znajdziesz ją też
   filtrem „Otrzymano”.
-- [Odrzuć] — kopia znika. Ta sama osoba nie wyśle Ci jej ponownie przez 30 dni.
+- × [Odrzuć] — kopia znika. Ta sama osoba nie wyśle Ci jej ponownie przez 30 dni.
 
 ![Otrzymane kopie gier](zrzut:games-received-copies)
 ![Otrzymane kopie logo](zrzut:logos-market-logos-received)

@@ -4,6 +4,47 @@
   "mediaWidth": 1,
   "sharedDuplicate": 1
  },
+ "web/admin/css/settings.css": {
+  "colorLiteral": 68,
+  "mediaWidth": 5,
+  "zIndexLiteral": 16,
+  "sharedDuplicate": 6,
+  "unusedClass": 14
+ },
+ "web/admin/index.html": {
+  "inlineStyleHtml": 135
+ },
+ "web/admin/js/admin-pwa.js": {
+  "inlineStyleJs": 1
+ },
+ "web/admin/js/generator.js": {
+  "inlineStyleJs": 33
+ },
+ "web/admin/js/settings.js": {
+  "inlineStyleJs": 283
+ },
+ "web/admin/tools/editor_5x7.html": {
+  "inlineStyleHtml": 11,
+  "styleBlock": 1
+ },
+ "web/admin/tools/exporterandeditor.html": {
+  "inlineStyleHtml": 12,
+  "styleBlock": 1
+ },
+ "web/admin/tools/host-logo-lab/index.html": {
+  "styleBlock": 1
+ },
+ "web/admin/tools/kora-builder.html": {
+  "inlineStyleHtml": 7,
+  "styleBlock": 1
+ },
+ "web/admin/tools/logo-background-lab/index.html": {
+  "styleBlock": 1
+ },
+ "web/admin/tools/theme_builder.html": {
+  "inlineStyleHtml": 17,
+  "styleBlock": 1
+ },
  "web/bases/explorer/css/base-explorer.css": {
   "colorLiteral": 36,
   "zIndexLiteral": 6,
@@ -199,47 +240,6 @@
  "web/polls/vote/qr/index.html": {
   "styleBlock": 1
  },
- "web/settings/css/settings.css": {
-  "colorLiteral": 68,
-  "mediaWidth": 5,
-  "zIndexLiteral": 16,
-  "sharedDuplicate": 6,
-  "unusedClass": 14
- },
- "web/settings/index.html": {
-  "inlineStyleHtml": 135
- },
- "web/settings/js/admin-pwa.js": {
-  "inlineStyleJs": 1
- },
- "web/settings/js/generator.js": {
-  "inlineStyleJs": 33
- },
- "web/settings/js/settings.js": {
-  "inlineStyleJs": 282
- },
- "web/settings/tools/editor_5x7.html": {
-  "inlineStyleHtml": 11,
-  "styleBlock": 1
- },
- "web/settings/tools/exporterandeditor.html": {
-  "inlineStyleHtml": 12,
-  "styleBlock": 1
- },
- "web/settings/tools/host-logo-lab/index.html": {
-  "styleBlock": 1
- },
- "web/settings/tools/kora-builder.html": {
-  "inlineStyleHtml": 7,
-  "styleBlock": 1
- },
- "web/settings/tools/logo-background-lab/index.html": {
-  "styleBlock": 1
- },
- "web/settings/tools/theme_builder.html": {
-  "inlineStyleHtml": 17,
-  "styleBlock": 1
- },
  "web/shared/css/auth-landing.css": {
   "sharedDuplicate": 2
  },
@@ -324,13 +324,13 @@
   "mediaWidth": 13,
   "zIndexLiteral": 5,
   "sharedDuplicate": 240,
-  "unusedClass": 2
+  "unusedClass": 4
  },
  "web/shared/style/flat.css": {
   "mediaWidth": 14,
   "zIndexLiteral": 6,
   "sharedDuplicate": 276,
-  "unusedClass": 4
+  "unusedClass": 6
  },
  "web/shared/style/layout.css": {
   "zIndexLiteral": 1,

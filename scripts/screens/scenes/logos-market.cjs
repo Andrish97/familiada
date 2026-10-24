@@ -1,5 +1,5 @@
 // Seria zrzutów obszaru „logos-market”: biblioteka logo, edytory logo (tekst,
-// rysunek, obraz), Społeczność (/marketplace/) i panel admina (/settings/).
+// rysunek, obraz), Społeczność (/marketplace/) i panel admina (/admin/).
 // Prawdziwy kod stron; dane tylko w atrapie (db: …). Sceny, które już są
 // w scenes.cjs (logos, logos-draw, logos-image, logo-text, logo-draw,
 // logo-image, logo-text-space, logos-name-create, marketplace,
@@ -12,7 +12,7 @@ const TEXT_ED = ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js
 const DRAW_ED = ["web/logos/editor/draw/", "web/logos/js/draw", "web/logos/js/editor-draw.js", "web/logos/js/editor-page.js"];
 const IMAGE_ED = ["web/logos/editor/image/", "web/logos/js/image.js", "web/logos/js/editor-image.js", "web/logos/js/editor-page.js"];
 const MARKET = ["web/marketplace/"];
-const ADMIN = ["web/settings/"];
+const ADMIN = ["web/admin/"];
 const EDITOR_DEVICES = ["desktop", "tablet"];
 
 const wait = (ms) => async (view) => { await view.waitForTimeout(ms); };
@@ -239,7 +239,7 @@ module.exports = [
     steps: [openModal("#bigPreview", "#previewOverlay"), wait(400)] },
   { id: "logos-market-editor-phone", category: CAT, title: "Edytor logo na telefonie — blokada urządzenia", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: [...TEXT_ED, "web/shared/js/core/device-guard.js"], ready: () => true, devices: ["phone"], settle: 1500 },
   { id: "logos-market-editor-busy", category: CAT, title: "Edytor logo — logo edytowane w innej karcie (blokada)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: [...TEXT_ED, "web/shared/js/core/resource-lock.js"], ready: () => true, devices: EDITOR_DEVICES, settle: 1500,
-    db: (db) => { db.rpc.acquire_edit_lock_mode = { ok: false, error: "locked", blocker_type: "logo", blocker_context: "logo-editor" }; } },
+    db: (db) => { db.rpc.acquire_edit_locks = { ok: false, error: "locked", blocker_type: "logo", blocker_context: "logo-editor", resource: { type: "logo", id: IDS.logoText } }; } },
 
   // ================= Edytor logo — rysunek =================
   { id: "logos-market-draw-empty", category: CAT, title: "Edytor rysunku — nowe puste logo", path: `/logos/editor/draw/?id=${EMPTY_DRAW}`, sources: DRAW_ED, ready: () => !!window.__drawFabric, devices: EDITOR_DEVICES, settle: 1000, db: addEmptyLogos },
@@ -312,34 +312,34 @@ module.exports = [
 
   // ================= Panel admina =================
   // Istniejące: admin-stats-snake, admin-badges, admin-market-pending.
-  { id: "logos-market-admin-maintenance", category: CAT, title: "Panel admina — Prace techniczne (przerwa wyłączona)", path: "/settings/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800 },
-  { id: "logos-market-admin-maintenance-on", category: CAT, title: "Panel admina — Prace techniczne (przerwa włączona, odliczanie)", path: "/settings/", sources: ADMIN, ready: "#panelStatus", settle: 800,
+  { id: "logos-market-admin-maintenance", category: CAT, title: "Panel admina — Prace techniczne (przerwa wyłączona)", path: "/admin/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800 },
+  { id: "logos-market-admin-maintenance-on", category: CAT, title: "Panel admina — Prace techniczne (przerwa włączona, odliczanie)", path: "/admin/", sources: ADMIN, ready: "#panelStatus", settle: 800,
     db: (db) => { adminData(db); db.http["/_admin_api/state"] = { enabled: true, mode: "countdown", returnAt: "2026-10-21T18:30:00Z", endAt: "2026-10-21T18:30:00Z", message: "" }; } },
-  { id: "logos-market-admin-maintenance-preview", category: CAT, title: "Panel admina — podgląd strony przerwy technicznej", path: "/settings/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
+  { id: "logos-market-admin-maintenance-preview", category: CAT, title: "Panel admina — podgląd strony przerwy technicznej", path: "/admin/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
     steps: [wait(600), openModal("#btnMaintenancePreview", "#maintenancePreviewOverlay"), wait(600)] },
-  { id: "logos-market-admin-stats", category: CAT, title: "Panel admina — Statystyki (przegląd i retencja)", path: "/settings/?tab=stats", sources: ADMIN, ready: () => /\d/.test(document.getElementById("statUsersTotal")?.textContent || ""), db: adminData, settle: 1000 },
-  { id: "logos-market-admin-ratings", category: CAT, title: "Panel admina — Oceny (aplikacji i gier producenta)", path: "/settings/?tab=ratings", sources: ADMIN, ready: "#producerRatingsBody [data-raters-id]", db: adminData, settle: 1000 },
-  { id: "logos-market-admin-ratings-raters", category: CAT, title: "Panel admina — Oceny: okno oceniających grę producenta", path: "/settings/?tab=ratings", sources: ADMIN, ready: "#producerRatingsBody [data-raters-id]", db: adminData, settle: 600,
+  { id: "logos-market-admin-stats", category: CAT, title: "Panel admina — Statystyki (przegląd i retencja)", path: "/admin/?tab=stats", sources: ADMIN, ready: () => /\d/.test(document.getElementById("statUsersTotal")?.textContent || ""), db: adminData, settle: 1000 },
+  { id: "logos-market-admin-ratings", category: CAT, title: "Panel admina — Oceny (aplikacji i gier producenta)", path: "/admin/?tab=ratings", sources: ADMIN, ready: "#producerRatingsBody [data-raters-id]", db: adminData, settle: 1000 },
+  { id: "logos-market-admin-ratings-raters", category: CAT, title: "Panel admina — Oceny: okno oceniających grę producenta", path: "/admin/?tab=ratings", sources: ADMIN, ready: "#producerRatingsBody [data-raters-id]", db: adminData, settle: 600,
     steps: [async (view) => { await view.locator("#producerRatingsBody [data-raters-id]").first().click(); await view.locator("#ratersOverlay table").waitFor(); await view.waitForTimeout(300); }] },
-  { id: "logos-market-admin-mail", category: CAT, title: "Panel admina — Ustawienia maili (dostawcy, kolejka, logi)", path: "/settings/?tab=mail", sources: ADMIN, ready: "#mailPanel .provider-order-row", db: adminData, settle: 1000 },
-  { id: "logos-market-admin-reports", category: CAT, title: "Panel admina — Poczta Familiada (skrzynka)", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 1000 },
-  { id: "logos-market-admin-reports-message", category: CAT, title: "Panel admina — Poczta Familiada, otwarta wiadomość", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
+  { id: "logos-market-admin-mail", category: CAT, title: "Panel admina — Ustawienia maili (dostawcy, kolejka, logi)", path: "/admin/?tab=mail", sources: ADMIN, ready: "#mailPanel .provider-order-row", db: adminData, settle: 1000 },
+  { id: "logos-market-admin-reports", category: CAT, title: "Panel admina — Poczta Familiada (skrzynka)", path: "/admin/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 1000 },
+  { id: "logos-market-admin-reports-message", category: CAT, title: "Panel admina — Poczta Familiada, otwarta wiadomość", path: "/admin/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
     steps: [async (view) => { await view.locator(".mail-thread-item").first().click(); await view.waitForTimeout(1200); }] },
-  { id: "logos-market-admin-reports-assign", category: CAT, title: "Panel admina — Poczta Familiada, okno Przydziel zgłoszenie", path: "/settings/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
+  { id: "logos-market-admin-reports-assign", category: CAT, title: "Panel admina — Poczta Familiada, okno Przydziel zgłoszenie", path: "/admin/?tab=reports", sources: ADMIN, ready: ".mail-thread-item", db: adminData, settle: 800,
     steps: [async (view) => { await view.locator(".mail-thread-item").first().click(); await view.waitForTimeout(1200); }, openModal('button[aria-label="Przydziel zgłoszenie"], button[data-tooltip="Przydziel zgłoszenie"], button[title="Przydziel zgłoszenie"]', "#assignReportModal")] },
-  { id: "logos-market-admin-market-preview", category: CAT, title: "Panel admina — Gry Społeczności, podgląd zgłoszenia", path: "/settings/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
+  { id: "logos-market-admin-market-preview", category: CAT, title: "Panel admina — Gry Społeczności, podgląd zgłoszenia", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
     steps: [openModal("[data-market-preview]", "#marketPreviewOverlay")] },
-  { id: "logos-market-admin-market-reject", category: CAT, title: "Panel admina — Gry Społeczności, odrzucenie z powodem", path: "/settings/?tab=marketplace", sources: ADMIN, ready: "[data-market-reject]", db: adminData, settle: 600,
+  { id: "logos-market-admin-market-reject", category: CAT, title: "Panel admina — Gry Społeczności, odrzucenie z powodem", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-reject]", db: adminData, settle: 600,
     steps: [openModal("[data-market-reject]", "#marketRejectOverlay"), async (view) => { const f = view.locator("#marketRejectOverlay textarea, #marketRejectOverlay input[type=text]").first(); if (await f.count()) await f.fill("Za mało pytań w finale i powtórzone odpowiedzi."); await view.waitForTimeout(200); }] },
-  { id: "logos-market-admin-market-published", category: CAT, title: "Panel admina — Gry Społeczności, opublikowane", path: "/settings/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
+  { id: "logos-market-admin-market-published", category: CAT, title: "Panel admina — Gry Społeczności, opublikowane", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
     steps: [click("#mktTabPublished", 800)] },
-  { id: "logos-market-admin-marketing", category: CAT, title: "Panel admina — Marketing", path: "/settings/?tab=marketing", sources: ADMIN, ready: "#marketingPanel", db: adminData, settle: 1000 },
+  { id: "logos-market-admin-marketing", category: CAT, title: "Panel admina — Marketing", path: "/admin/?tab=marketing", sources: ADMIN, ready: "#marketingPanel", db: adminData, settle: 1000 },
   // Panel kontaktów ładuje dane dopiero przy zmianie atrybutu hidden (MutationObserver), więc krok przełącza zakładkę przyciskiem.
-  { id: "logos-market-admin-contacts", category: CAT, title: "Panel admina — Kontakty Marketingowe", path: "/settings/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
+  { id: "logos-market-admin-contacts", category: CAT, title: "Panel admina — Kontakty Marketingowe", path: "/admin/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
     steps: [async (view) => { await view.evaluate(() => document.getElementById("btnTabMarketingContacts").click()); await view.waitForFunction(() => document.querySelectorAll("#mcTableBody tr").length > 1); await view.waitForTimeout(600); }] },
   // Funkcja Edge generate-game idzie przez Worker (/_admin_api/generator/<akcja>):
   // lista gier producenta z danych sceny, pozostałe akcje zwracają { ok: true }.
-  { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/settings/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], settle: 800,
+  { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], settle: 800,
     db: (db, lang) => {
       adminData(db);
       const p = require("../data/panel.cjs")[lang];

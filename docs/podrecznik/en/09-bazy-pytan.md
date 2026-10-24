@@ -10,9 +10,9 @@ invited you to (→ 12). The filter above the list shows bases by role: Mine, Ed
 
 - To create a base, click the "New base" tile and enter a name (up to 80 characters).
 - To open a base, select it and choose [Browse|folder].
-- For the selected base, [Share] (→ 12.2), [Duplicate], [Export] to a
-  `.fambase` file and [Import] from a file are also available.
-- You rename a base by double-clicking it, and delete it with the trash icon — only in your own bases.
+- The owner of the selected base has [Shares] (who has access) in the top bar and, in the bottom bar,
+  [Duplicate], [Export] to a `.fambase` file, [Import] from a file and [Share] (→ 12.2).
+- You rename a base by double-clicking it (on a phone, tap twice), and delete it with the trash icon — only in your own bases.
 
 ![Question bases](zrzut:bases)
 ![New base](zrzut:bases-name-create)
@@ -24,7 +24,7 @@ You can move questions from a game to a base with the [Export to base] button in
 An open base works much like a file explorer on a computer:
 
 - **on the left** — the "Folders" tree, starting from the "Root folder", and below it the
-  "Tags" and "Matching categories" panels,
+  "Tags" and "Suggested categories" panels,
 - **in the middle** — the contents of the current folder: folders and questions,
 - **at the top** — the toolbar and the search field.
 
@@ -49,13 +49,14 @@ or in the folder tree.
 | [Tags] | assigns tags to the selection (→ 9.4) |
 | [Rename] | renames a folder or changes the question text |
 | [Copy], [Cut], [Paste] | moves or copies the selection to another folder |
+| [Move to…], [Copy to…] | moves or copies the selection to a folder chosen from a list (with search) |
 | [Duplicate] | creates a copy next to the original |
-| [Delete] | deletes the selection — after confirmation, with no way to undo |
+| [Delete] | moves the selection to the Trash for 30 days — after confirmation |
 | [Create game] | creates a game from the selected questions |
 | [Refresh view] | shows the latest state of the base |
 
 ![Move to…](zrzut:base-explorer-move)
-![Move to… — searching for a folder](zrzut:base-explorer-move-search)
+![Copy to… — searching for a folder](zrzut:base-explorer-move-search)
 
 **Dragging.** Drag the selection onto a folder to move it. With Ctrl held down
 (Option on a Mac) the items will be copied — a folder together with its contents. Dropping onto an empty
@@ -63,6 +64,10 @@ background moves the items to the "Root folder". Dragging onto a tag in the left
 that tag.
 
 ![Trash](zrzut:base-explorer-trash)
+
+Deleted items wait in the **Trash** (at the bottom of the folder tree) for 30 days — each shows how much
+time is left. [Restore] puts an item back, [Delete permanently] deletes it at once, and [Empty trash]
+deletes everything. Permanent deletion cannot be undone.
 
 Deleting a folder also deletes everything inside it.
 
@@ -88,7 +93,7 @@ round or event.
 ![Tag colour](zrzut:base-explorer-tags-color)
 ![Tags in the left panel](zrzut:base-explorer-left-tags)
 
-The "Matching categories" under the tags are created by the app itself — they show the questions that already meet
+The "Suggested categories" under the tags are created by the app itself — they show the questions that already meet
 the conditions of a given game type (→ 7.6):
 
 - **standard** — suitable for a standard poll,
@@ -96,7 +101,7 @@ the conditions of a given game type (→ 7.6):
 - **prepared** — they have from 3 to 6 answers with points (each at least 4, a total of at most
   100), so they are suitable for a prepared game.
 
-![Matching categories](zrzut:base-explorer-left-types)
+![Suggested categories](zrzut:base-explorer-left-types)
 
 ## 9.5 Searching and browsing questions
 
@@ -141,7 +146,7 @@ In that case, use the button on the toolbar.
 Double-click a question or choose [Edit question]. In the "Question" window:
 
 - "Question text" — up to 100 characters,
-- [+ Answer] — up to 6 answers, each up to 17 characters,
+- [Add answer] — up to 6 answers, each up to 17 characters,
 - "Points" — optional, from 0 to 100 for each answer; a total of at most 100.
 
 ![The question window](zrzut:base-explorer-question-modal)
@@ -152,7 +157,7 @@ The same limits and characters apply in the game editor (→ 7.3, 7.4). You assi
 ## 9.8 Creating a game from selected questions
 
 1. Select questions or folders and choose [Create game].
-2. In the "Export game" window, enter the game name and choose the type: standard poll, scored or
+2. In the "Create game" window, enter the game name and choose the type: standard poll, scored or
    prepared.
 3. Check the list: the selected questions (including those from selected folders) are already chosen. You can
    add or deselect questions from the whole base.
@@ -160,7 +165,7 @@ The same limits and characters apply in the game editor (→ 7.3, 7.4). You assi
    "Ready once created." or "A draft will be created. Missing for ready: …".
 5. Confirm. The game will appear in *My games*.
 
-![Game export — missing items shown at the questions](zrzut:base-explorer-create-game)
+![Create game — what is missing to be ready](zrzut:base-explorer-create-game)
 
 The game is created from exactly the selected questions — the app does not add missing ones. It does not have to meet
 the readiness conditions: you can create an incomplete draft and complete it in the editor (→ 7.6).
