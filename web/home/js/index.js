@@ -1,12 +1,13 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T20374";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T20374";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T20374";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T20374";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T20374";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T20374";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T20374";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T20374";
-import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20374";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T20525";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T20525";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T20525";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-24T20525";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T20525";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T20525";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T20525";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T20525";
+import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20525";
+import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-24T20525";
 
 
 async function redirectIfSession() {
@@ -72,25 +73,20 @@ function updateInternalLinks() {
   });
 }
 
-function updateStructuredFaq() {
-  const schema = [...document.querySelectorAll('script[type="application/ld+json"]')]
-    .find((node) => {
-      try { return JSON.parse(node.textContent)?.["@type"] === "FAQPage"; }
-      catch { return false; }
-    });
-  if (!schema) return;
-  const mainEntity = [...document.querySelectorAll(".faq-item")].map((item) => ({
-    "@type": "Question",
-    name: item.querySelector(".faq-q")?.textContent?.trim() || "",
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.querySelector(".faq-a")?.textContent?.trim() || "",
-    },
-  })).filter((item) => item.name && item.acceptedAnswer.text);
-  schema.textContent = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity,
+function updateHomeSeo() {
+  const seo = homeSeo(getUiLang(), t);
+  document.title = seo.title;
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", seo.url);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", seo.url);
+  document.querySelector('meta[property="og:locale"]')?.setAttribute("content", seo.locale);
+  const questions = [...document.querySelectorAll(".faq-item")].map((item) => ({
+    q: item.querySelector(".faq-q")?.textContent?.trim() || "",
+    a: item.querySelector(".faq-a")?.textContent?.trim() || "",
+  })).filter((item) => item.q && item.a);
+  const schemas = homeSchemas(seo, t, questions);
+  document.querySelectorAll("script[data-home-schema]").forEach((node) => {
+    const schema = schemas[node.dataset.homeSchema];
+    if (schema) node.textContent = schemaJson(schema);
   });
 }
 
@@ -408,14 +404,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initEntryPage("home", { ready: initI18n({ withSwitcher: true }) }).catch((e) => console.error("[index] i18n init failed:", e));
   applyTranslations();
   updateInternalLinks();
-  updateStructuredFaq();
+  updateHomeSeo();
 
   const lang = getUiLang();
   switchLandingImages(lang);
   window.addEventListener("i18n:lang", (e) => {
     switchLandingImages(e.detail.lang);
     updateInternalLinks();
-    updateStructuredFaq();
+    updateHomeSeo();
     document.querySelectorAll(".tile-shot").forEach((shot) => {
       const title = shot.querySelector(".shot-img")?.alt || "";
       shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));

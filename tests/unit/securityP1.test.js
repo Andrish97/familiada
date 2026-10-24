@@ -148,7 +148,10 @@ test('N3: nagłówki bezpieczeństwa na stronach HTML naszych hostów', () => {
     assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff', host);
     assert.equal(res.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
     assert.equal(res.headers.get('X-Frame-Options'), 'SAMEORIGIN');
-    assert.equal(res.headers.get('Content-Security-Policy'), "frame-ancestors 'self'");
+    const csp = res.headers.get('Content-Security-Policy');
+    for (const directive of ["frame-ancestors 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'"]) {
+      assert.ok(csp.split('; ').includes(directive), directive);
+    }
     assert.match(res.headers.get('Permissions-Policy'), /camera=\(self\)/);
     const ro = res.headers.get('Content-Security-Policy-Report-Only');
     assert.match(ro, /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net/);
@@ -168,9 +171,9 @@ test('N3: bez zmian dla usług przepuszczanych, nie-HTML; istniejąca CSP uzupe�
   const redirect = withSecurityHeaders(new Request('https://familiada.online/'), Response.redirect('https://www.familiada.online/', 301));
   assert.equal(redirect.status, 301);
   const nf = withSecurityHeaders(new Request('https://www.familiada.online/x'), html({ 'Content-Security-Policy': "default-src 'self'" }));
-  assert.equal(nf.headers.get('Content-Security-Policy'), "default-src 'self'; frame-ancestors 'self'");
+  assert.match(nf.headers.get('Content-Security-Policy'), /^default-src 'self'; frame-ancestors 'self'/);
   const tools = withSecurityHeaders(new Request('https://admin.familiada.online/admin/tools/a.html'), html({ 'Content-Security-Policy': "frame-ancestors 'self'" }));
-  assert.equal(tools.headers.get('Content-Security-Policy'), "frame-ancestors 'self'");
+  assert.equal(tools.headers.get('Content-Security-Policy').split("frame-ancestors").length, 2);
 });
 
 test('N3: Worker dokłada nagłówki do strony z Pages', async () => {

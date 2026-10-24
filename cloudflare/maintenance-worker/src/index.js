@@ -39,7 +39,8 @@ import { handleNotifySubmission } from "./lib/notifications/telegram.js";
 import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js";
 import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr/ssr.js";
 import { tvRedirect } from "./lib/origin/tv.js";
-import { withSecurityHeaders } from "./lib/core/security-headers.js";
+import { withSecurityHeaders, httpsRedirect } from "./lib/core/security-headers.js";
+import { localizeHome } from "./lib/ssr/home.js";
 import { AUTH_ROUTES } from "./lib/auth/auth-api.js";
 
 export default {
@@ -61,7 +62,9 @@ export default {
 
   async fetch(request, env, ctx) {
     // Nagłówki bezpieczeństwa dla stron HTML (audyt E24, N3).
-    return withSecurityHeaders(request, await handleFetch(request, env, ctx));
+    const redirect = httpsRedirect(request);
+    const response = redirect || await handleFetch(request, env, ctx);
+    return withSecurityHeaders(request, localizeHome(request, response));
   }
 };
 

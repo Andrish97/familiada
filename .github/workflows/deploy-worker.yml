@@ -5,6 +5,9 @@ on:
     branches: ["main"]
     paths:
       - "cloudflare/**"
+      - "web/shared/js/core/home-seo.js"
+      - "web/shared/translation/*/home.js"
+      - "web/shared/translation/*/common.js"
       - "web/shared/js/core/go-contract.js"
       - "web/shared/js/core/resource-clone-plan.js"
       - "web/shared/js/core/base-transfer-format.js"
@@ -32,6 +35,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: cloudflare/maintenance-worker
+
+      - name: Test Worker rendering and HTTPS
+        run: npm test
         working-directory: cloudflare/maintenance-worker
 
       - name: Deploy Worker

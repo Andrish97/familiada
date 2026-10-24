@@ -1,13 +1,13 @@
 // admin/js/mail-settings.js — Poczta: dostawcy, harmonogram, kolejka, dziennik, dostawcy AI.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T20374";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T20374";
-import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T20374";
-import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T20374";
-import { stopPolling } from "./maintenance.js?v=v2026-10-24T20374";
-import { closeTools } from "./tools.js?v=v2026-10-24T20374";
-import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20374";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T20525";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T20525";
+import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T20525";
+import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T20525";
+import { stopPolling } from "./maintenance.js?v=v2026-10-24T20525";
+import { closeTools } from "./tools.js?v=v2026-10-24T20525";
+import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20525";
 
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
