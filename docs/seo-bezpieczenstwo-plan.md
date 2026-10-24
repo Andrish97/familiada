@@ -2,6 +2,11 @@
 
 ## Decyzje użytkownika
 
+- Rozważyć statyczny katalog i poprawki pozostałych publicznych stron.
+  Wskazówki są dla wszystkich, mają działać i pomagać w wyszukiwaniu —
+  publiczny HTML oraz indeksowanie są celem, a nie opcją zależną od konta.
+  Propozycja architektury i etapów: [seo-katalog-statyczny-plan.md](seo-katalog-statyczny-plan.md).
+
 - 2026-10-24: wypchnąć przetestowane zmiany bezpośrednio na main i pokazać
   instrukcję Cloudflare w rozmowie; bez oczekiwania na scalenie PR.
 
