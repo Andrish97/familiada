@@ -133,8 +133,13 @@ function adminData(db) {
     { id: id("8b00", 201), title: "Різдвяна Фамільяда", lang: "uk", avg_rating: 0, rating_count: 0, library_count: 12 },
   ] };
   h["/_admin_api/marketplace/game-raters*"] = { ok: true, rows: [["ania.k", 5, 20], ["Wujek_Staszek", 5, 18], ["quizmaster", 4, 15], ["ola", 4, 11], ["kuba2009", 3, 6]].map(([username, stars, d]) => ({ username, stars, rated_at: T(d, 20) })) };
-  h["/_admin_api/mail/settings"] = { ok: true, settings: { delay_ms: 250, batch_max: 100, worker_limit: 25, email_greeting: "witaj", email_farewell: "team" },
-    providers: [{ name: "brevo", label: "Brevo", is_active: true }, { name: "mailgun", label: "Mailgun", is_active: true }, { name: "sendgrid", label: "SendGrid", is_active: false }], cron: null };
+  h["/_admin_api/mail/settings"] = { ok: true, settings: { delay_ms: 250, batch_max: 100, worker_limit: 25, queue_share_pct: 80, email_greeting: "witaj", email_farewell: "team" },
+    providers: [
+      { name: "zeptomail", label: "Zeptomail", is_active: true, daily_limit: 3000, rem_worker: 2312, rem_immediate: 588 },
+      { name: "brevo", label: "Brevo", is_active: true, daily_limit: 300, rem_worker: 240, rem_immediate: 60 },
+      { name: "mailgun", label: "Mailgun", is_active: true, daily_limit: 100, rem_worker: 80, rem_immediate: 20 },
+      { name: "sendpulse", label: "SendPulse", is_active: false, daily_limit: 400, rem_worker: 320, rem_immediate: 80 },
+    ], cron: null };
   h["/_admin_api/mail/queue*"] = { ok: true, rows: [
     { id: "q1", to_email: "anna@example.test", subject: "Zaproszenie do ankiety „Weekendowy wyjazd”", status: "pending", attempts: 0 },
     { id: "q2", to_email: "piotr@example.test", subject: "Nowa kopia gry od Jan Kowalski", status: "sent", attempts: 1 },

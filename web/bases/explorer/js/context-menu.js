@@ -6,14 +6,14 @@
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
 // shared/css/base.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
-import { selectionSetSingle } from "./state.js?v=v2026-10-24T18221";
-import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T18221";
-import { buildContext } from "./actions/context.js?v=v2026-10-24T18221";
-import { runAction } from "./actions/run.js?v=v2026-10-24T18221";
-import { formatShortcut } from "./platform.js?v=v2026-10-24T18221";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18221";
-import { renderSelection } from "./render.js?v=v2026-10-24T18221";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18221";
+import { selectionSetSingle } from "./state.js?v=v2026-10-24T18345";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T18345";
+import { buildContext } from "./actions/context.js?v=v2026-10-24T18345";
+import { runAction } from "./actions/run.js?v=v2026-10-24T18345";
+import { formatShortcut } from "./platform.js?v=v2026-10-24T18345";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T18345";
+import { renderSelection } from "./render.js?v=v2026-10-24T18345";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T18345";
 
 // Ten sam warunek co okna od dołu (SHEET_MQ w modal-sheet.js).
 const SHEET_QUERY = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";

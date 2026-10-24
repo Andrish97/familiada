@@ -14,18 +14,18 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18221";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18221";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T18221";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18221";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18221";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18221";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T18221";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18221";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18221";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-24T18221";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T18221";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T18221";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18345";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18345";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-24T18345";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18345";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18345";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18345";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T18345";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18345";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-24T18345";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-24T18345";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T18345";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T18345";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -36,15 +36,15 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-24T18221";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-24T18345";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-24T18221";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-24T18221";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-24T18221";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-24T18221"; // wygaszona krawędź przewijanych list
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-24T18345";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-24T18345";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-24T18345";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-24T18345"; // wygaszona krawędź przewijanych list
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-24T18221";
+const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-24T18345";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -194,6 +194,7 @@ const els = {
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
   mailWorkerLimit: document.getElementById("mailWorkerLimit"),
+  mailQueueShare: document.getElementById("mailQueueShare"),
   mailCronPresetSelect: document.getElementById("mailCronPresetSelect"),
   mailCronHint: document.getElementById("mailCronHint"),
   mailCronActive: document.getElementById("mailCronActive"),
@@ -234,6 +235,8 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
+// Zapisany podział dziennego limitu (procent na kolejkę); paski liczone tak jak baza.
+let mailQueueSharePct = 80;
 let aiProviderOrder = [];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
@@ -1070,9 +1073,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T18221"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-24T18221"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T18221"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T18345"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-24T18345"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T18345"/>
 
   <style>
     body{margin:0;padding:0}
@@ -1922,7 +1925,7 @@ function renderProviderOrder() {
     const remW = p.rem_worker ?? 0;
     const remI = p.rem_immediate ?? 0;
     const total = p.daily_limit ?? 0;
-    const limitW = Math.floor(total * 0.8);
+    const limitW = Math.floor(total * mailQueueSharePct / 100);
     const limitI = total - limitW;
 
     const createBar = (current, max, label) => {
@@ -1971,7 +1974,7 @@ function renderProviderOrder() {
     limitInput.style.width = "80px";
     limitInput.style.textAlign = "center";
     limitInput.value = String(p.daily_limit || 1000);
-    limitInput.title = "Limit dzienny: 80% na kolejkę, 20% na maile wysyłane od razu";
+    limitInput.title = `Limit dzienny: ${mailQueueSharePct}% na kolejkę, reszta na maile wysyłane od razu`;
     limitInput.addEventListener("change", (e) => {
       p.daily_limit = parseInt(e.target.value) || 0;
     });
@@ -4797,11 +4800,13 @@ async function loadMailSettings({ silent = false } = {}) {
     const cron = data?.cron || null;
 
     mailProviderOrder = providers;
+    mailQueueSharePct = clampInt(settings.queue_share_pct, 50, 95, 80);
     renderProviderOrder();
 
     if (els.mailDelayMs) els.mailDelayMs.value = String(clampInt(settings.delay_ms, 0, 5000, 250));
     if (els.mailBatchMax) els.mailBatchMax.value = String(clampInt(settings.batch_max, 1, 500, 100));
     if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
+    if (els.mailQueueShare) els.mailQueueShare.value = String(clampInt(settings.queue_share_pct, 50, 95, 80));
     if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
 
     // Load greeting/farewell settings
@@ -4854,6 +4859,7 @@ async function saveMailSettings() {
   const delayMs = clampInt(els.mailDelayMs?.value, 0, 5000, 250);
   const batchMax = clampInt(els.mailBatchMax?.value, 1, 500, 100);
   const workerLimit = clampInt(els.mailWorkerLimit?.value, 1, 200, 25);
+  const queueSharePct = clampInt(els.mailQueueShare?.value, 50, 95, 80);
   const selectedPreset =
     getCronPresetById(mailCronPresetValue) ||
     getCronPresetById("5m") ||
@@ -4867,6 +4873,7 @@ async function saveMailSettings() {
     delay_ms: delayMs,
     batch_max: batchMax,
     worker_limit: workerLimit,
+    queue_share_pct: queueSharePct,
     email_greeting: mailGreetingValue,
     email_farewell: mailFarewellValue,
     email_greeting_custom: document.getElementById("mailGreetingCustom")?.value || "",
@@ -6997,7 +7004,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-24T18221");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-24T18345");
 
   const MC_PAGE_SIZE = 50;
 
