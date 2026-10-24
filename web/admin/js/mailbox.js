@@ -1,16 +1,17 @@
 // admin/js/mailbox.js — Skrzynka i zgłoszenia: foldery, wiadomości, wątki, przypisania, pisanie.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-24T18460";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18460";
-import { openDialog, closeDialog, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18460";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18460";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T18460";
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-24T18460";
-import { adminFetch, btnBackSheet, escSetting, getEmailTemplates, loadTinyMce, showToast } from "./core.js?v=v2026-10-24T18460";
-import { activeTab } from "./tabs.js?v=v2026-10-24T18460";
-import { COMPOSE_LANGS, COMPOSE_LANG_META, buildEmailSignature, getComposeTemplateOptions, getFarewellOptions, getGreetingOptions, getSenderOptions, mailSourceIcon } from "./mail-settings.js?v=v2026-10-24T18460";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-24T19012";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
+import { openDialog, closeDialog, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19012";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-24T19012";
+import { adminFetch, btnBackSheet, escSetting, getEmailTemplates, loadTinyMce, showToast } from "./core.js?v=v2026-10-24T19012";
+import { activeTab } from "./tabs.js?v=v2026-10-24T19012";
+import { COMPOSE_LANGS, COMPOSE_LANG_META, buildEmailSignature, getComposeTemplateOptions, getFarewellOptions, getGreetingOptions, getSenderOptions, mailSourceIcon } from "./mail-settings.js?v=v2026-10-24T19012";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19012";
 
 // helper — fetch do /_admin_api/*
 // ============================================================
@@ -195,7 +196,7 @@ function renderMailList(rows) {
   body.innerHTML = "";
 
   if (msgActiveFolder === "trash" && !filtered.length) {
-    body.innerHTML = `<div class="mail-list-empty">Kosz jest pusty</div>
+    body.innerHTML = `${emptyStateHtml("Kosz jest pusty")}
       <div class="mail-list-note">Elementy starsze niż 30 dni są usuwane automatycznie</div>
       <div class="mail-list-note mail-list-note--action">
         <button class="btn sm mail-trash-cleanup" id="btnCleanupTrashInList" type="button">Wyczyść kosz (30d)</button>
@@ -214,7 +215,7 @@ function renderMailList(rows) {
   }
 
   if (!filtered.length) {
-    body.innerHTML = `<div class="mail-list-empty">Brak wiadomości</div>`;
+    body.innerHTML = emptyStateHtml("Brak wiadomości");
     return;
   }
 
@@ -226,11 +227,11 @@ function renderMailList(rows) {
       item.dataset.reportId = r.id;
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
       const badge = isOpen
-        ? `<span class="mail-pill mail-pill--open">open</span>`
-        : `<span class="mail-pill mail-pill--closed">closed</span>`;
+        ? `<span class="tag tag--gold">open</span>`
+        : `<span class="tag tag--muted">closed</span>`;
       // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
       const deletedBadge = r.author_account_deleted_at
-        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" class="mail-pill mail-pill--deleted">konto usunięte</span>`
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" class="tag tag--bad">konto usunięte</span>`
         : "";
       item.innerHTML = `
         <div class="mail-ti-row">
@@ -258,7 +259,7 @@ function renderMailList(rows) {
 
       // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
       const marketingBadge = isMarketingEmail(r)
-        ? `<span class="mail-pill mail-pill--marketing">marketing</span>`
+        ? `<span class="tag tag--gold">marketing</span>`
         : "";
 
       // Strip [Marketing] prefix from subject
@@ -293,7 +294,7 @@ function renderMailList(rows) {
 
     // Marketing badge for ALL marketing emails (outbound campaigns + inbound replies)
     const marketingBadge = isMarketingEmail(r)
-      ? `<span class="mail-pill mail-pill--marketing">marketing</span>`
+      ? `<span class="tag tag--gold">marketing</span>`
       : "";
 
     // Strip [Marketing] prefix from subject
@@ -549,7 +550,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   // Marketing badge for conversation header
   let marketingBadge = "";
   if (msg.is_marketing) {
-    marketingBadge = `<span class="mail-pill mail-pill--marketing mail-pill--after">marketing</span>`;
+    marketingBadge = `<span class="tag tag--gold mail-tag-after">marketing</span>`;
   }
 
   header.innerHTML = `
@@ -976,7 +977,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     msgs.appendChild(el);
   }
   if (!messages.length) {
-    msgs.innerHTML = `<div class="mail-list-empty mail-list-empty--conv">Brak wiadomości</div>`;
+    msgs.innerHTML = emptyStateHtml("Brak wiadomości");
   }
   conv.appendChild(msgs);
   setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
@@ -1059,7 +1060,7 @@ function openAssignModal(messageId) {
       list.appendChild(opt);
     }
     if (!msgReports.length) {
-      list.innerHTML = `<div class="empty-state empty-state--inline">Brak zgłoszeń. Utwórz nowe poniżej.</div>`;
+      list.innerHTML = emptyStateHtml("Brak zgłoszeń. Utwórz nowe poniżej.", { variant: "inline" });
     }
   }
 

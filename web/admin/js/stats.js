@@ -1,14 +1,15 @@
 // admin/js/stats.js — Statystyki: przegląd, retencja, wykluczeni, snake, szczegóły i diagnoza rozgrywek.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18460";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T18460";
-import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T18460";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18460";
-import { activityDetailRows } from "./activity.js?v=v2026-10-24T18460";
-import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T18460";
-import { setStatus } from "./maintenance.js?v=v2026-10-24T18460";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-24T19012";
+import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-24T19012";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
+import { activityDetailRows } from "./activity.js?v=v2026-10-24T19012";
+import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-24T19012";
+import { setStatus } from "./maintenance.js?v=v2026-10-24T19012";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19012";
 
 export async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
@@ -431,8 +432,7 @@ function buildSessionSuggestions(r) {
   heading.textContent = "Sugerowane problemy";
   section.appendChild(heading);
   if (!r.diag) {
-    const none = document.createElement("p");
-    none.className = "empty-state";
+    const none = emptyState(null, { tag: "p" });
     none.textContent = "Brak podsumowania diagnostyki dla tej sesji.";
     section.appendChild(none);
     return section;
@@ -448,8 +448,7 @@ function buildSessionSuggestions(r) {
   }
   const suggestions = diagnoseSession(r);
   if (!suggestions.length) {
-    const none = document.createElement("p");
-    none.className = "empty-state";
+    const none = emptyState(null, { tag: "p" });
     none.textContent = "Nie wykryto problemów.";
     section.appendChild(none);
   }
@@ -477,8 +476,7 @@ function buildSessionSuggestions(r) {
     section.appendChild(row);
   }
   if (Number(r.diag.dropped_count) > 0) {
-    const dropped = document.createElement("p");
-    dropped.className = "empty-state";
+    const dropped = emptyState(null, { tag: "p" });
     dropped.textContent = `Przekroczono limit 3000 zdarzeń: pominięto ${r.diag.dropped_count} szczegółów (liczniki są pełne).`;
     section.appendChild(dropped);
   }
@@ -494,8 +492,7 @@ function buildSessionsDiagnosisSummary(rows) {
   heading.className = "stats-session-events-title";
   heading.textContent = `Sugerowane problemy — ${result.sessions} sesji Control 2`;
   section.appendChild(heading);
-  const clean = document.createElement("p");
-  clean.className = "empty-state";
+  const clean = emptyState(null, { tag: "p" });
   clean.textContent = result.sessions
     ? `Bez problemów (poza informacjami): ${result.clean} (${Math.round(result.clean / result.sessions * 100)}%)`
     : "Brak sesji z podsumowaniem diagnostyki.";

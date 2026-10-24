@@ -1,11 +1,11 @@
 // admin/js/ratings.js — Oceny: oceny aplikacji i gier producenta.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18460";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
-import { openDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18460";
-import { adminFetch, adminGet, els, esc, escSetting } from "./core.js?v=v2026-10-24T18460";
-import { setStatus } from "./maintenance.js?v=v2026-10-24T18460";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T19012";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
+import { openDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19012";
+import { adminFetch, adminGet, els, esc, escSetting } from "./core.js?v=v2026-10-24T19012";
+import { setStatus } from "./maintenance.js?v=v2026-10-24T19012";
 
 export async function loadRatings({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie ocen…");
@@ -98,7 +98,7 @@ async function openRatersModal(gameId, title) {
       return;
     }
     // Dwie kolumny (data pod nazwą) — mieszczą się także na telefonie.
-    body.innerHTML = `<table class="mail-table raters-table"><thead><tr>
+    body.innerHTML = `<table class="data-table raters-table"><thead><tr>
       <th>Użytkownik</th><th>Ocena</th>
     </tr></thead><tbody>${rows.map(r =>
       `<tr>

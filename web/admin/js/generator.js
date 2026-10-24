@@ -1,7 +1,7 @@
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18460";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18460";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T19012";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
 
 
 let games = [];
@@ -18,12 +18,15 @@ const $ = id => document.getElementById(id);
 const show = id => { const el = $(id); if(el) el.hidden = false; };
 const hide = id => { const el = $(id); if(el) el.hidden = true; };
 
+// Komunikat stanu: .callout z silnika; type ok | err | info, pusty — ukryty.
+const CALLOUT_KIND = { ok: "callout--ok", err: "callout--bad", info: "callout--info" };
 function showStatus(id, msg, type, iconName = "") {
   const el = $(id);
   if(!el) return;
   if (iconName) el.innerHTML = iconText(iconName, msg);
   else el.textContent = msg;
-  el.className = 'status-bar visible ' + (type || '');
+  el.className = `callout gen-status ${CALLOUT_KIND[type] || ""}`.trim();
+  el.hidden = !msg;
 }
 
 function setBusy(busy) {
@@ -943,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-24T18460';
+    a.download = 'przykladowa-gra.json?v=v2026-10-24T19012';
 
     document.body.appendChild(a);
     a.click();

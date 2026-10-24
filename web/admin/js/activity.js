@@ -1,7 +1,8 @@
 const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia gry',bases:'Bazy pytań','base-explorer':'Edytor bazy',logo:'Logo',polls:'Ankieta',friends:'Znajomi',subscribers:'Subskrybenci',tasks:'Zadania',account:'Konto',marketplace:'Gry społeczności',manual:'Instrukcja','connect-device':'Podłącz urządzenie'};
 const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia gry','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
 const RESOURCE_NAMES = {game:'Gra',logo:'Logo',base:'Baza',base_question:'Pytanie bazy',base_folder:'Folder bazy',base_tag:'Tag bazy'};
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18460";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-24T19012";
 
 
 export function gameActivity(game) {
@@ -62,7 +63,7 @@ export function startActivityPanel() {
     chart.replaceChildren();
     const items=history?.[period]||[];
     if (!items.length) {
-      const empty=document.createElement('div');empty.className='empty-state activity-chart-empty';
+      const empty=emptyState('', { hook: 'activity-chart-empty' });
       const title=document.createElement('strong');title.textContent='Brak danych';
       const hint=document.createElement('span');hint.textContent='W tym przedziale nie zarejestrowano aktywności.';
       empty.append(title,hint);chart.append(empty);return;

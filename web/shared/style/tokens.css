@@ -123,7 +123,6 @@
   --z-notice: 40;               /* pasek komunikatu nad stroną */
   --z-drawer: 41;               /* szuflada; zasłona pod nią: z-drawer − 1 */
   --z-overlay: 50;              /* okna (.overlay) */
-  --z-sticky: 80;               /* przyklejone paski panelu admina */
   --z-float: 100;               /* pływające przyciski i wyskakujące panele w stronie */
   --z-popover: 200;             /* rozwijane listy (ui-select) */
   --z-lang-float: 999;

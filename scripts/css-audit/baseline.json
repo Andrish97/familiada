@@ -3,8 +3,6 @@
   "sharedDuplicate": 1
  },
  "web/admin/css/settings.css": {
-  "colorLiteral": 99,
-  "sharedDuplicate": 4,
   "unusedClass": 15
  },
  "web/admin/js/generator.js": {
@@ -18,9 +16,6 @@
  },
  "web/admin/js/stats.js": {
   "inlineStyleJs": 6
- },
- "web/admin/js/tools.js": {
-  "inlineStyleJs": 7
  },
  "web/bases/explorer/css/base-explorer.css": {
   "sharedDuplicate": 8,
@@ -148,7 +143,6 @@
   "inlineStyleJs": 5
  },
  "web/mail/css/mail.css": {
-  "sharedDuplicate": 1,
   "unusedClass": 3
  },
  "web/marketplace/css/marketplace.css": {
@@ -203,7 +197,7 @@
   "inlineStyleJs": 2
  },
  "web/shared/style/components.css": {
-  "sharedDuplicate": 22,
+  "sharedDuplicate": 21,
   "unusedClass": 5
  },
  "web/shared/style/layout.css": {

@@ -27,12 +27,15 @@ function measured(el, fn) {
   }
 }
 
-/** Menu pod przyciskiem anchor, wyrównane do jego prawej krawędzi; gdy nie mieści się pod — nad nim. */
-export function placeDropdown(anchor, el) {
+/**
+ * Menu pod przyciskiem anchor, wyrównane do jego prawej krawędzi (align
+ * "start" — do lewej); gdy nie mieści się pod — nad nim.
+ */
+export function placeDropdown(anchor, el, { align = "end" } = {}) {
   if (!anchor || !el) return;
   measured(el, (m) => {
     const a = anchor.getBoundingClientRect();
-    const left = clamp(a.right - m.width, PAD, innerWidth - m.width - PAD);
+    const left = clamp(align === "start" ? a.left : a.right - m.width, PAD, innerWidth - m.width - PAD);
     let top = a.bottom + GAP;
     if (top + m.height > innerHeight - PAD) top = a.top - m.height - GAP;
     top = clamp(top, PAD, innerHeight - m.height - PAD);

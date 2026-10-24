@@ -418,6 +418,8 @@ module.exports = [
     steps: [async (view) => { await view.locator("#btnMore").click().catch(() => {}); await view.getByText("Kontakty Marketingowe").last().click(); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "")); await view.waitForTimeout(500); }] },
   { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  { id: "admin-date-picker", category: "Dodatkowe", title: "Panel admina — przerwa: okno wyboru daty i godziny", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => { await view.locator('.mode-label[data-mode="returnAt"]').click(); await view.locator(".dt-open").first().click(); await view.locator("#dtModal .dt-grid button").first().waitFor(); await view.waitForTimeout(400); }] },
   { id: "not-found", category: "Dodatkowe", title: "Strona nie istnieje (404)", path: "/404.html", sources: ["web/404.html", "web/404/", "web/maintenance/css/"], ready: ".notfound-card" },
   { id: "maintenance", category: "Dodatkowe", title: "Przerwa techniczna — komunikat", path: "/maintenance/", sources: page("maintenance"), ready: ".maintenance-card", settle: 600,
     db: (db) => { db.http = { ...(db.http || {}), "/maintenance-state.json*": { enabled: true, mode: "message" } }; } },

@@ -86,7 +86,7 @@ najbliższy token (zasada §11.2–3: jak najmniej wartości).
   28 (górne rogi arkusza), `--r-pill`, `50%` dla koła.
 - **Warstwy:** globalne tylko tokenem — `--z-topbar` 10, `--z-fixed` 30,
   `--z-notice` 40, `--z-drawer` 41 (zasłona: `calc(var(--z-drawer) - 1)`),
-  `--z-overlay` 50 (okna), `--z-sticky` 80, `--z-float` 100, `--z-popover` 200,
+  `--z-overlay` 50 (okna), `--z-float` 100, `--z-popover` 200,
   `--z-lang-float`, `--z-menu` 1000, `--z-sheet` 1200, `--z-top` 9999 (nad
   oknami: menu kontekstowe, podgląd obrazu), `--z-mobile-menu`, `--z-toast`,
   `--z-tooltip`, `--z-block` (nakładka blokady). Liczby 0–9 tylko jako

@@ -1,9 +1,10 @@
 // admin/js/tools.js — Narzędzia (laboratoria /admin/tools/*): lista i otwieranie w panelu.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T18460";
-import { TOOLS_MANIFEST, els, syncTopbarHeight } from "./core.js?v=v2026-10-24T18460";
-import { activeTab, labelFromPath, setActiveTab } from "./tabs.js?v=v2026-10-24T18460";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-24T19012";
+import { TOOLS_MANIFEST, els, syncTopbarHeight } from "./core.js?v=v2026-10-24T19012";
+import { activeTab, labelFromPath, setActiveTab } from "./tabs.js?v=v2026-10-24T19012";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-24T19012";
 
 let previousTabBeforeTools = "maintenance";
 
@@ -46,24 +47,11 @@ export async function initToolsSelect() {
     return button;
   }));
 
+  // Położenie: wspólne popover.js (pod przyciskiem, od jego lewej krawędzi).
   const positionToolsMenu = () => {
     if (!els.btnTools || !els.toolsDropdown) return;
-    const anchor = els.btnTools.getBoundingClientRect();
-    const menu = els.toolsDropdown;
-    // Ustawiamy pozycję przed odsłonięciem, żeby popup nie mignął w lewym
-    // górnym rogu podczas pierwszego pomiaru.
-    menu.hidden = false;
-    menu.style.visibility = "hidden";
-    menu.style.left = "0px";
-    menu.style.top = "0px";
-    const rect = menu.getBoundingClientRect();
-    const left = Math.max(8, Math.min(anchor.left, window.innerWidth - rect.width - 8));
-    const top = anchor.bottom + 8 + rect.height <= window.innerHeight
-      ? anchor.bottom + 8
-      : Math.max(8, anchor.top - rect.height - 8);
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
-    menu.style.visibility = "";
+    els.toolsDropdown.hidden = false;
+    placeDropdown(els.btnTools, els.toolsDropdown, { align: "start" });
   };
 
   const toggleToolsMenu = () => {
@@ -92,7 +80,6 @@ export async function initToolsSelect() {
 function closeToolsMenu() {
   if (!els.toolsDropdown || !els.btnTools) return;
   els.toolsDropdown.hidden = true;
-  els.toolsDropdown.style.visibility = "";
   els.btnTools.setAttribute("aria-expanded", "false");
 }
 

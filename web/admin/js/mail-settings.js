@@ -1,12 +1,12 @@
 // admin/js/mail-settings.js — Poczta: dostawcy, harmonogram, kolejka, dziennik, dostawcy AI.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T18460";
-import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T18460";
-import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T18460";
-import { stopPolling } from "./maintenance.js?v=v2026-10-24T18460";
-import { closeTools } from "./tools.js?v=v2026-10-24T18460";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-24T19012";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T19012";
+import { API_BASE, CRON_PRESETS, MAIL_PROVIDERS, adminFetch, adminGet, adminPost, apiFetch, clampInt, els, formatDateTime, markUserAction, scrubText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19012";
+import { activeTab, setActiveTab } from "./tabs.js?v=v2026-10-24T19012";
+import { stopPolling } from "./maintenance.js?v=v2026-10-24T19012";
+import { closeTools } from "./tools.js?v=v2026-10-24T19012";
 
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
@@ -690,7 +690,7 @@ function renderQueueRows(rows) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
     td.colSpan = 8;
-    td.className = "mail-empty";
+    td.className = "data-table-empty";
     td.textContent = "Brak rekordów w kolejce dla wybranego filtra.";
     tr.appendChild(td);
     els.mailQueueBody.appendChild(tr);
@@ -750,7 +750,7 @@ function renderLogRows(rows) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
     td.colSpan = 7;
-    td.className = "mail-empty";
+    td.className = "data-table-empty";
     td.textContent = "Brak logów dla wybranego filtra.";
     tr.appendChild(td);
     els.mailLogsBody.appendChild(tr);

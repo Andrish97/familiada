@@ -1323,6 +1323,17 @@
     border-left-color: var(--bad-strong);
     background: var(--bad-tint);
   }
+  .callout--ok {
+    border-color: var(--ok-line);
+    border-left-color: var(--ok-strong);
+    background: var(--ok-tint);
+  }
+  .callout--info {
+    border-color: var(--info-line);
+    border-left-color: var(--info-strong);
+    background: var(--info-tint);
+  }
+  .callout[hidden] { display: none; }
 
   /* ── Pasek komunikatu na górze strony (np. przypomnienie dla gościa):
      tło kryjące (odcień na --bg), link i przyciski .btn-plain w tekście. */
@@ -1646,6 +1657,43 @@
     .topbar-mobile-panel .btn:hover { filter: none; }
     .topbar-mobile-panel .btn:active { transform: none; }
   }
+
+  /* ── Tabela danych (.data-table) — panel admina: kolejka, dziennik, oceny,
+     kontakty. Ramka przewija się w poziomie; --scroll ogranicza wysokość
+     (nagłówek przyklejony). Pusta tabela: komórka .data-table-empty. ── */
+  .data-table-wrap {
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--k-20);
+  }
+  .data-table-wrap--scroll { max-height: 420px; }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table--wide { min-width: 860px; } /* wiele kolumn: przewijanie w poziomie zamiast ściśnięcia */
+  .data-table :is(th, td) {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line-faint);
+    text-align: left;
+    vertical-align: top;
+  }
+  .data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-modal);
+    color: var(--text-muted);
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .data-table tbody tr:hover { background: var(--w-4); }
+  }
+  .data-table-empty { text-align: center; color: var(--text-muted); font-style: italic; }
 
   /* ── Licznik powiadomień (.badge) i oznaczenie (.tag) ──────────
      .badge — JEDEN licznik (pusty = schowany); .tag — stała informacja

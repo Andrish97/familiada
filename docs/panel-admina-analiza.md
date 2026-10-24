@@ -51,15 +51,26 @@ Testy unit czytające kod panelu: `tests/unit/helpers/admin-source.js`
 | Kontakty | — | tabela z zaznaczaniem komórek | Worker `/leads/*` |
 | Narzędzia | — | — | ramka z laboratorium |
 
-## Przepięcie na silnik (krok 5) — lista
+## Przepięcie na silnik (krok 5) — wykonane 2026-10-24
 
-1. Kolory na sztywno w `settings.css` (99) → tokeny.
-2. Nadpisania elementów silnika w pliku strony: `.topbar` (sticky zamiast
-   stałego), `.overlay` (pod topbarem), `.modal-actions`,
-   `.topbar-mobile-overlay` → zachowanie silnika.
-3. Okno wyboru daty `.dt-modal` (własna nakładka) → `.overlay` + `openDialog`.
-4. Pigułki poczty `.mail-pill--*` → `.tag` ze znaczeniami (`tag--gold` → silnik).
-5. Style w JS: `generator.js` 21, `tools.js` 7, `stats.js` 6, `mailbox.js` 3,
-   `mail-settings.js` 1.
-6. Puste stany (`mail-list-empty`, `activity-chart-empty`) → `emptyState()`.
-7. Zrzuty przed/po wszystkich scen `admin-*` (38 scen × telefon/komputer).
+1. Kolory na sztywno w `settings.css`: 99 → 0 (tokeny stanów, tła `--surface-*`,
+   tło logowania `--bg-auth`).
+2. Nadpisania silnika usunięte: topbar stały jak na innych stronach (było
+   `sticky` + `page-fit` znoszone własnymi regułami), okna na całym ekranie
+   z przyciemnieniem (były pod topbarem), `.modal-actions`,
+   `.topbar-mobile-overlay`, `.footer` z silnika; `--z-sticky` usunięty.
+3. Okno wyboru daty: `.overlay.modal--sheet` + `openDialog` (nagłówek z X,
+   Anuluj/OK z ikonami, na telefonie arkusz). Przy okazji: pokrętła godzin
+   ustawiają się po pokazaniu okna (wcześniej zawsze 00).
+4. Pigułki poczty → `.tag` (`--gold`, `--muted`, `--bad`).
+5. Pasek stanu generatora `.status-bar` → `.callout` (silnik dostał
+   `--ok` i `--info`). Menu narzędzi → `placeDropdown(…, { align: "start" })`.
+6. Tabele: komponent silnika `.data-table` (+ `.data-table-wrap`,
+   `--scroll`, `--wide`, `.data-table-empty`) zamiast `mail-table`; tabela
+   kontaktów na tej samej bazie (zostają reguły zaznaczania komórek).
+   `stats-table` to lista wartości (etykieta–liczba), nie tabela danych.
+7. Puste stany → `emptyState`/`emptyStateHtml`; martwe reguły `.mail-panel`
+   (nazwa zajęta przez centrum maili) usunięte.
+8. Zostają: style statyczne edytora gry Producenta w `generator.js` — okno
+   edytora nie istnieje w HTML (przycisk „Edytuj” rzuca błąd od zawsze);
+   decyzja użytkownika: zbudować okno czy usunąć przycisk.

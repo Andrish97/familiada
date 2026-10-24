@@ -1,9 +1,9 @@
 // admin/js/maintenance.js — Przerwa techniczna: stan, tryby, wybór daty, podgląd strony przerwy, odpytywanie stanu.
 // Część panelu admina (E23 §8a: rozbicie settings.js na moduły paneli).
 
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18460";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T18460";
-import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T18460";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T19012";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T19012";
+import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-24T19012";
 
 let currentState = null;
 let currentMode = "message";
@@ -294,16 +294,16 @@ function openPicker(prefix) {
     month: current.getMonth() + 1,
     day: current.getDate(),
   };
+  // Najpierw okno: przewinięcie pokręteł działa dopiero na widocznym elemencie.
+  openDialog(modal, { onClose: closePicker });
   initTimeWheels();
   setWheelValue("dtHourWheel", current.getHours());
   setWheelValue("dtMinuteWheel", current.getMinutes());
   renderCalendar();
-  modal.hidden = false;
 }
 
 function closePicker() {
-  const modal = document.getElementById("dtModal");
-  if (modal) modal.hidden = true;
+  closeDialog(document.getElementById("dtModal"));
 }
 
 function rearrangeDateFields(prefix, order, sepChar) {
@@ -330,17 +330,6 @@ function rearrangeDateFields(prefix, order, sepChar) {
 export function applyDateOrderByLang() {
   rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
   rearrangeDateFields("endAt", ["day", "month", "year"], ".");
-}
-
-export function applyModalLabels() {
-  const set = (id, text) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  };
-  set("dtToday", "Dziś");
-  set("dtCancel", "Anuluj");
-  set("dtOk", "OK");
-  set("dtTimeLabel", "Czas");
 }
 
 function renderCalendar() {
@@ -702,10 +691,10 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T18460"/>
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T18460"/>
-  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-24T18460"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T18460"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T19012"/>
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T19012"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-24T19012"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-24T19012"/>
 
   <style>
     body{margin:0;padding:0}
@@ -946,6 +935,7 @@ export function wireMaintenanceEvents() {
   });
 
   document.getElementById("dtCancel")?.addEventListener("click", closePicker);
+  document.getElementById("dtClose")?.addEventListener("click", closePicker);
   document.getElementById("dtToday")?.addEventListener("click", () => {
     const now = new Date();
     pickerState.year = now.getFullYear();

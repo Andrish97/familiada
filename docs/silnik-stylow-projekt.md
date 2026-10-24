@@ -108,7 +108,7 @@ tekst `--text-soft`/`--text-faint`, `--white`/`--black`, `--surface-toast`,
 promień `--r-xs` (drobne elementy; 8 px na polu wyboru 18 px dawało koło).
 Warstwy: wartości silnika zostały (sprawdzone w e2e), strony przeszły na
 tokeny według znaczenia przy zachowanej kolejności; nowe `--z-fixed`,
-`--z-drawer`, `--z-sticky`, `--z-top`, `--z-tooltip`, `--z-block`;
+`--z-drawer`, `--z-top`, `--z-tooltip`, `--z-block`;
 `--z-popover` 60 → 200 (ui-select nie wpisuje już `zIndex` w JS). Ekrany
 gry mają tokeny z prefiksem (`--host-line` zamiast `--line` jako długości).
 Wyświetlacz ładuje `tokens.css` (nakładka blokady bez wartości zapasowych;
