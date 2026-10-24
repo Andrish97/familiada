@@ -146,6 +146,9 @@ module.exports = [
     }] },
   { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
     steps: [gsCat("display"), scrollPreview] },
+  { id: "game-settings-display-modern", category: "Dodatkowe", title: "Ustawienia gry — podgląd Prowadzącego w motywie nowoczesnym", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
+    db: (db) => { const g = db.tables.games.find((x) => x.id === IDS.game); g.settings = { ...(g.settings || {}), display: { ...(g.settings?.display || {}), theme: "modern" } }; },
+    steps: [gsCat("display"), scrollPreview] },
   { id: "game-settings-prize", category: "Dodatkowe", title: "Ustawienia gry — kwota nagrody po finale (wyjaśnienie wzoru)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/gameplay/endScreen.js"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 600,
     steps: [async (view) => {
       await gsCat("questions")(view);

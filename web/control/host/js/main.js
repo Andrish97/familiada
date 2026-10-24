@@ -60,6 +60,7 @@ function setupOrientationClass() {
 
 function setupResponsivePaper() {
   const root = document.documentElement;
+  const { preview } = parseParams();
   const panes = [
     [document.querySelector(".pane1"), document.getElementById("lineGrid1")],
     [document.querySelector(".pane2"), document.getElementById("lineGrid2")],
@@ -70,7 +71,9 @@ function setupResponsivePaper() {
   function update() {
     // Ta sama bazowa wysokość wiersza dla obu orientacji; na małym ekranie
     // ogranicza ją krótszy bok i pionowa przestrzeń, a na tablecie rośnie.
-    const line = Math.max(15, Math.min(34, window.innerWidth * 0.042, window.innerHeight / 24));
+    // Podgląd (mały iframe w Control i ustawieniach gry) to pomniejszony
+    // ekran urządzenia — bez progu 15 px, który robił tam za dużą czcionkę.
+    const line = Math.max(preview ? 0 : 15, Math.min(34, window.innerWidth * 0.042, window.innerHeight / 24));
     root.style.setProperty("--host-line", `${line}px`);
     // Tekst zaczyna się na granicy wiersza siatki. Linie same pozostają
     // rozciągnięte od krawędzi do krawędzi, także przez safe area.
@@ -162,6 +165,7 @@ async function main() {
   if (preview) {
     // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
     document.getElementById("btnFullscreen")?.remove();
+    document.documentElement.toggleAttribute("data-preview", true); // host.css: bez progów px
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ previewOnly: true });
     let latestRow = null;
