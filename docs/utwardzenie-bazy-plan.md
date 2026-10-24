@@ -21,4 +21,4 @@ bazy sprzed niej (uprawnienia po odtworzeniu wyrównane `acl-sync`).
 
 ## Dziennik
 
-- (wpisy po wdrożeniu)
+- 2026-10-24 01:20 UTC: 480 i 481 zastosowane na produkcji (log: search_path 60 funkcji, wyzwalacze bez EXECUTE: 67). Aktywność przed wdrożeniem: 0. Lokalnie: `tests/sql/db-hardening-480-481.sql` OK. Testy kontrolne — w toku.
