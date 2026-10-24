@@ -29,7 +29,7 @@ web/
   host/fonts/          # Caveat i JetBrains Mono, używane przez Hosta
   buzzer/index.html
   buzzer/js/
-  settings/index.html
+  admin/index.html
   settings/js/
   settings/data/
   settings/tools/

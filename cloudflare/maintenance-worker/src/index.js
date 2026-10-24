@@ -28,7 +28,7 @@ import {
   serveNotFoundPage,
 } from "./lib/origin/origin.js";
 import {
-  isSettingsAsset,
+  isAdminAsset,
   isStaticAssetPath,
   serveStaticAsset,
   isCommonAsset,
@@ -118,14 +118,14 @@ async function handleFetch(request, env, ctx) {
       return new Response("Not Found", { status: 404 });
     }
 
-    // Root on settings subdomain should open settings.html
+    // Root on admin subdomain opens admin/index.html
     if (url.pathname === "/" || url.pathname === "/index.html") {
       url.pathname = "/admin/index.html";
       return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // allow admin tools and assets only
-    if (url.pathname.startsWith("/admin/tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
+    if (url.pathname.startsWith("/admin/tools/") || isAdminAsset(url.pathname) || url.pathname === "/version.txt") {
       const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       if (url.pathname.startsWith("/admin/tools/")) {
         return withHeaders(res, {

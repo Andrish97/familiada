@@ -8,7 +8,7 @@
 //
 // Strony objęte tym plikiem: bases, base-explorer, games, marketplace,
 // logo-editor, settings (patrz plan mobile sheet modals).
-// settings.html jest za Cloudflare Access -- jej sekcja sprawdza sam
+// admin/index.html jest za Cloudflare Access -- jej sekcja sprawdza sam
 // kontrakt CSS/HTML przez bezpośrednią manipulację DOM, nie pełny
 // przepływ UI (patrz komentarz przy tej sekcji niżej).
 
@@ -739,7 +739,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
   // bezpośrednie DELETE nawet dla właściciela (mg_no_direct_delete), więc
   // zamiast zaśmiecać marketplace trwałym wpisem testowym, sprawdzamy sam
   // kontrakt CSS/HTML (to, co robi enterModalSheet()/show()) bezpośrednio
-  // przez DOM, analogicznie do sekcji settings.html niżej w tym pliku.
+  // przez DOM, analogicznie do sekcji admin/index.html niżej w tym pliku.
   test("modal szczegółów gry (#gameDetailOverlay) w trybie sheet wypełnia viewport i chowa resztę main.wrap", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(60_000);
     await loginAs(page, context, accounts.standard[0]);
@@ -902,11 +902,11 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
 });
 
 /* =====================================================================
-   7) settings.html (panel admina) -- modale: oceniający (#ratersOverlay),
+   7) admin/index.html (panel admina) -- modale: oceniający (#ratersOverlay),
    przydzielenie zgłoszenia (#assignReportModal), odrzucenie zgłoszenia z
    marketplace (#marketRejectOverlay).
    UWAGA WAŻNA (do zweryfikowania przez kogoś z realnym dostępem admina):
-   settings.html siedzi za Cloudflare Access. Istniejący helper logowania
+   admin/index.html siedzi za Cloudflare Access. Istniejący helper logowania
    (loginAs/E2E_BYPASS_SECRET) omija WYŁĄCZNIE Turnstile na
    stronie /login dla zwykłych kont Supabase, nie ma NIC wspólnego z
    Cloudflare Access przed panelem admina -- w tym repo nie ma dotąd
@@ -914,7 +914,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
    do panelu admina w CI może się nie udać, zanim poniższe testy cokolwiek
    sprawdzą (stąd test.skip() guardy).
    Dodatkowo dane potrzebne do otwarcia tych modali (oceny gier,
-   zgłoszenia mailowe) są czytane przez settings.js wyłącznie przez
+   zgłoszenia mailowe) są czytane przez admin.js wyłącznie przez
    wewnętrzne Worker API (/_admin_api/*), nie przez window.__sbClient jak
    na innych stronach w tym pliku -- nie da się ich zaseedować tym samym
    wzorcem. Żeby mimo to pokryć samą mechanikę trybu sheet (ten sam kod co
@@ -956,7 +956,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 
   test("#ratersOverlay w trybie sheet wypełnia viewport i chowa resztę main.wrap", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access) -- patrz komentarz na górze sekcji");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access) -- patrz komentarz na górze sekcji");
 
     const overlaySel = "#ratersOverlay";
     const hasOverlay = await page.locator(overlaySel).count();
@@ -974,7 +974,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 
   test("#marketRejectOverlay w trybie sheet wypełnia viewport", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access)");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access)");
 
     const overlaySel = "#marketRejectOverlay";
     const hasOverlay = await page.locator(overlaySel).count();
@@ -992,7 +992,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 
   test("#assignReportModal (market-preview-overlay) w trybie sheet wypełnia viewport", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access)");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access)");
 
     const overlaySel = "#assignReportModal";
     const hasOverlay = await page.locator(overlaySel).count();
@@ -1011,7 +1011,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 
   test("#marketPreviewOverlay w trybie sheet wypełnia viewport", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access)");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access)");
 
     const overlaySel = "#marketPreviewOverlay";
     const hasOverlay = await page.locator(overlaySel).count();
@@ -1029,7 +1029,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
 
   test("#maintenancePreviewOverlay (podgląd strony przerwy technicznej) w trybie sheet wypełnia viewport", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access)");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access)");
 
     const overlaySel = "#maintenancePreviewOverlay";
     const hasOverlay = await page.locator(overlaySel).count();
@@ -1054,7 +1054,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
   // (.modal--sheet + .uni-head + ukryty przycisk "✕"), nie realny call site.
   test("modal statystyk/podglądu wiadomości (.uni-modal + modal--sheet) w trybie sheet wypełnia viewport i chowa \"✕\"", async ({ page }) => {
     const res = await page.goto(SETTINGS_URL, { waitUntil: "domcontentloaded" });
-    test.skip(!res || res.status() >= 400, "settings.html niedostępne w tym środowisku (Cloudflare Access)");
+    test.skip(!res || res.status() >= 400, "admin/index.html niedostępne w tym środowisku (Cloudflare Access)");
 
     const hasMain = await page.locator("main.wrap").count();
     test.skip(hasMain === 0, "main.wrap nie jest w DOM (Cloudflare Access?)");

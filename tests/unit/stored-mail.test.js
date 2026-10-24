@@ -21,7 +21,7 @@ test('stored HTML fragments keep formatting; plain messages are escaped with cor
   assert.doesNotMatch(plain,/<img/);
 });
 test('all five Settings message and thread previews use the saved document helper', () => {
-  const settings = read('web/admin/js/settings.js');
+  const settings = read('web/admin/js/admin.js');
   assert.equal((settings.match(/buildStoredMailHtml\(msg\)/g)||[]).length,5);
   assert.doesNotMatch(settings,/\.email-container \{|\* \{ background: #050914 !important/);
 });

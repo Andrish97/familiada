@@ -31,7 +31,7 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
   }
 });
 test('marketing preview and send use the same builder; skipped compose retains editor and skipped batch retains recipients', () => {
-  const settings = read('web/admin/js/settings.js');
+  const settings = read('web/admin/js/admin.js');
   const preview = settings.slice(settings.indexOf('async function mktRefreshPreview'), settings.indexOf('function mktParseEmails'));
   const send = settings.slice(settings.indexOf('async function sendMarketing'));
   for (const part of [preview,send]) {

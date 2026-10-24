@@ -1181,7 +1181,7 @@ main:has(> .footer){
         display: none !important;
     }
 
-    /* !important na position/inset/z-index: css/settings.css ma globalną
+    /* !important na position/inset/z-index: admin/css/admin.css ma globalną
        regułę .overlay{position:fixed!important;top:60px!important;...}. */
     body.sheet-open .overlay.modal--sheet.sheet-active,
     body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
@@ -1445,7 +1445,7 @@ main:has(> .footer){
        js/core/modal-sheet.js), więc własny przycisk zamknięcia "✕" w
        nagłówku modala jest w tym trybie zbędny. WAŻNE: selektor wymaga
        .sheet-active (nie samego .modal--sheet) — niektóre modale (np.
-       ratersOverlay/maintenancePreviewOverlay w settings.html) mają w HTML
+       ratersOverlay/maintenancePreviewOverlay w admin/index.html) mają w HTML
        klasę .modal--sheet, ale nigdy nie przechodzą przez enterModalSheet()
        (nie mają realnego przejęcia przycisku wstecz) — bez tego zawężenia
        ich "✕" znikałby bez ŻADNEGO zastępczego sposobu zamknięcia.
@@ -1473,7 +1473,7 @@ main:has(> .footer){
     }
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
-       (games.html, settings.html) dostają dedykowany przycisk tylko na
+       (games.html, admin/index.html) dostają dedykowany przycisk tylko na
        potrzeby sheet mode — poza nim niewidoczny, w trybie sheet
        zastępuje brand, dokładnie jak przycisk wstecz na innych stronach. */
     body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand {
@@ -1484,7 +1484,7 @@ main:has(> .footer){
        przyciskiem wstecz danego modala (klasa .sheet-back-active,
        nadawana przez js/core/modal-sheet.js) — nie za każdym razem, gdy
        jakikolwiek modal jest otwarty. Bez tego: modal, który przejmuje
-       INNY, istniejący przycisk (np. podgląd maila w settings.html
+       INNY, istniejący przycisk (np. podgląd maila w admin/index.html
        przejmuje #btnMailBackTopbar), i tak pokazywałby #btnBackSheet
        obok niego — dwa widoczne przyciski "wstecz" naraz. */
     .topbar-sheet-back.sheet-back-active {
@@ -2049,7 +2049,7 @@ html.showA2HS .a2hs {
     /* Musi być wyżej niż JAKIKOLWIEK modal na dowolnej stronie — niektóre
        strony mają własne, wysokie z-index na .overlay dla swoich potrzeb
        (np. base-explorer.css: .overlay{z-index:1100} żeby modal wyszedł
-       nad drawerem tagów; settings.css: .overlay{z-index:9999!important}
+       nad drawerem tagów; admin.css: .overlay{z-index:9999!important}
        dla zwykłego, wyśrodkowanego widoku desktopowego) — menu hamburgera
        ma być zawsze na wierzchu, gdy jest otwarte, niezależnie od tego,
        co jeszcze jest aktualnie widoczne pod spodem. */

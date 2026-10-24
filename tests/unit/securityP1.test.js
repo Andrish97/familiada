@@ -75,7 +75,7 @@ test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt t
 });
 
 test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () => {
-  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
+  const src = readFileSync(new URL('web/admin/js/admin.js', ROOT), 'utf8');
   assert.doesNotMatch(src, /lead-finder-token/);
   assert.doesNotMatch(src, /leads\.familiada\.online/);
   assert.match(src, /adminFetch\(`\/leads\/\$\{path\}`/);
@@ -83,7 +83,7 @@ test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () =>
 
 // ── Ś6 ────────────────────────────────────────────────────────────────────
 test('Ś6: podglądy maili w panelu bez allow-scripts', () => {
-  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
+  const src = readFileSync(new URL('web/admin/js/admin.js', ROOT), 'utf8');
   assert.doesNotMatch(src, /allow-scripts/);
   assert.equal((src.match(/frame\.sandbox = MAIL_FRAME_SANDBOX;/g) || []).length, 6);
 });

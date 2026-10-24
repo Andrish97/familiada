@@ -269,8 +269,8 @@ przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
   `noModalPages`, `toast`.
 - **Worker** (`assets.js`): silnik pod `/shared/` nie wymaga zmian;
   przepięte pliki stron Ustawień/przerwy — sprawdzić listy
-  `isSettingsAsset`/`isMaintenanceAsset`. Podgląd przerwy w
-  `settings.js:1054` ma ścieżki CSS na sztywno.
+  `isAdminAsset`/`isMaintenanceAsset`. Podgląd przerwy w
+  `admin.js:1054` ma ścieżki CSS na sztywno.
 - `version-assets.js` obsłuży nowe pliki sam (literały ścieżek).
 
 ## 8. Kolejność prac
@@ -298,8 +298,8 @@ przestają ręcznie przesuwać `.footer` i szukać `main.wrap`.
 
 ## 8a. Panel admina `/admin/` (decyzja 2026-10-21: przepisać, ostatnia faza)
 
-Najbardziej złożona strona: `settings.js` 7508 linii (242 funkcje,
-43 szablony `innerHTML`), `settings.css` 2582 linie (66 `!important`),
+Najbardziej złożona strona: `admin.js` 7508 linii (242 funkcje,
+43 szablony `innerHTML`), `admin.css` 2582 linie (66 `!important`),
 `index.html` 1152 linie (153 `style=`, 9 tabel), ~11 paneli (status,
 przerwa, poczta, marketing, kontakty marketingowe, Społeczność gier,
 generator, oceny, zgłoszenia, statystyki, zrzuty strony głównej),
@@ -310,10 +310,10 @@ Zasada „strona przechodzi w całości” zostaje, ale z przygotowaniem na
 starym silniku, bez zmian wyglądu:
 
 1. **Analiza panel po panelu** (osobny dokument): elementy, stany, okna,
-   tabele, zależności od TinyMCE i podglądu przerwy (`settings.js:1054`).
-2. **Rozbicie `settings.js` na moduły paneli** (jeden plik na panel +
+   tabele, zależności od TinyMCE i podglądu przerwy (`admin.js:1054`).
+2. **Rozbicie `admin.js` na moduły paneli** (jeden plik na panel +
    wspólne pomocnicze) — bez zmian zachowania i wyglądu; unit/e2e admina.
-3. **Style z HTML/JS do klas** w obecnym `settings.css` (153 `style=`,
+3. **Style z HTML/JS do klas** w obecnym `admin.css` (153 `style=`,
    ~110 szablonów, 36 `cssText`) — bez zmian wyglądu.
 4. **Sceny zrzutów dla każdego panelu** (dziś jedna scena `/admin/`).
 5. **Przepięcie** na silnik i wspólne mechanizmy: komponent

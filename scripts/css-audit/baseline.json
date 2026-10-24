@@ -325,7 +325,7 @@
  "web/polls/vote/text/js/poll-text.js": {
   "inlineStyleJs": 6
  },
- "web/admin/css/settings.css": {
+ "web/admin/css/admin.css": {
   "important": 68,
   "colorLiteral": 300,
   "rootTokens": 12,
@@ -343,7 +343,7 @@
  "web/admin/js/generator.js": {
   "inlineStyleJs": 33
  },
- "web/admin/js/settings.js": {
+ "web/admin/js/admin.js": {
   "inlineStyleJs": 301
  },
  "web/admin/tools/editor_5x7.html": {

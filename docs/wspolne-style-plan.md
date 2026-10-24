@@ -39,7 +39,7 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 ## Stan wyjściowy (pomiar 2026-10-21)
 
 - 35 plików CSS, 18,5 tys. linii; największe: `base.css` 3380,
-  `settings.css` 2582, `control.css` 2158, `base-explorer.css` 2067.
+  `admin.css` 2582, `control.css` 2158, `base-explorer.css` 2067.
 - 1511 kolorów wpisanych na sztywno, 673 użycia `var(--…)`; `:root`
   w 10 plikach (osobne palety: base, auth-landing, tv, logo, display,
   control, buzzer, host, maintenance, games).
@@ -144,7 +144,7 @@ mechanizmy JS, weryfikacja martwych i zdublowanych klas.
 | plik | lista | martwe | raczej | używane |
 |---|---|---|---|---|
 | control.css | 90 | 87 | 3 | 0 |
-| settings.css | 37 | 23 | 0 | 14 (klasy składane `${}` i TinyMCE `tox-*`) |
+| admin.css | 37 | 23 | 0 | 14 (klasy składane `${}` i TinyMCE `tox-*`) |
 | game-settings.css | 25 | 25 | 0 | 0 |
 | base-explorer.css | 15 | 15 | 0 | 0 |
 | base.css | 12 | 12 | 0 | 0 |
@@ -191,7 +191,7 @@ Ustawienia); puste stany pisane ręcznie zamiast `showEmptyResult`.
 
 ~900 przypisań w JS: ~40% pokaż/ukryj (do `[hidden]`), ~25% dynamiczne
 albo muszą zostać (maile, SVG), ~35% stały wygląd (60% z tego w
-`settings.js`). HTML: `settings/index.html` 153 `style=`; ~89 `display:none`
+`admin.js`). HTML: `admin/index.html` 153 `style=`; ~89 `display:none`
 zamiast `[hidden]`; 7 jednolinijkowych strażników `<style>` (potrzebne).
 
 ### Rozjazdy dokumentacji (`wzorce-ui.md`)
