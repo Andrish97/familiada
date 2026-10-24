@@ -2921,9 +2921,6 @@
   :where(:root[data-sheet]) body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
   :where(:root[data-sheet]) body.sheet-open .contact-footer-entry { display: none; }
 
-  /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
-     arkusza — zastępuje markę. */
-  :where(:root[data-sheet]) body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
   /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
   :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }
   :where(:root[data-sheet]) body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
