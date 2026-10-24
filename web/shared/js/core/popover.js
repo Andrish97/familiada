@@ -1,6 +1,7 @@
 // Położenie wyskakujących menu (position: fixed) — jedno dla całej aplikacji:
-// menu języka, „Więcej” i konta w topbarze (placeDropdown), menu kontekstowe
-// (placeAtPoint). Zawsze w oknie, 8 px od krawędzi.
+// menu języka, „Więcej” i konta w topbarze (placeDropdown), lista rozwijana
+// ui-select (placeUnder), menu kontekstowe (placeAtPoint). Zawsze w oknie,
+// 8 px od krawędzi.
 
 const PAD = 8;
 const GAP = 8;
@@ -42,10 +43,33 @@ export function placeDropdown(anchor, el) {
   });
 }
 
-/** Zdejmuje położenie ustawione przez placeDropdown (np. menu przechodzi do panelu telefonu). */
+/**
+ * Lista pod polem (ui-select): szerokość pola (co najmniej minWidth), od jego
+ * lewej krawędzi; nad polem, gdy pod nim jest mniej miejsca. Wysokość listy
+ * ograniczona miejscem w oknie (przewija się sama).
+ */
+export function placeUnder(anchor, el, { minWidth = 0, gap = 6, preferredHeight = 260 } = {}) {
+  if (!anchor || !el) return;
+  const a = anchor.getBoundingClientRect();
+  const width = Math.min(Math.max(a.width, minWidth), innerWidth - 2 * PAD);
+  const below = innerHeight - a.bottom - gap;
+  const above = a.top - gap;
+  const down = below >= Math.min(preferredHeight, above) || below >= above;
+  Object.assign(el.style, {
+    position: "fixed",
+    left: `${clamp(a.left, PAD, innerWidth - width - PAD)}px`,
+    width: `${width}px`,
+    right: "auto",
+    top: down ? `${a.bottom + gap}px` : "auto",
+    bottom: down ? "auto" : `${innerHeight - a.top + gap}px`,
+    maxHeight: `${Math.max(down ? below : above, 80)}px`,
+  });
+}
+
+/** Zdejmuje położenie ustawione przez placeDropdown/placeUnder (np. menu przechodzi do panelu telefonu). */
 export function clearPlacement(el) {
   if (!el) return;
-  for (const prop of ["position", "left", "top", "right", "transform", "visibility", "pointer-events"]) el.style.removeProperty(prop);
+  for (const prop of ["position", "left", "top", "right", "bottom", "width", "max-height", "transform", "visibility", "pointer-events"]) el.style.removeProperty(prop);
 }
 
 /** Menu w punkcie (x, y), np. menu kontekstowe — przesunięte, żeby mieściło się w oknie. */

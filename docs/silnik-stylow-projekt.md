@@ -306,6 +306,8 @@ przez `style.setProperty('--x', …)`.
 - **narzędzia list:** `.games-bottom*` → `.list-toolbar*` (wspólny pasek Gier,
   Baz, Logo); `list-search`/`list-filter`/`share-sections` bez zmian.
 - **stany:** `empty-state.js` (`emptyState`, `emptyStateHtml`) — 13 miejsc.
+- **położenie menu:** `popover.js` także dla listy `ui-select` (`placeUnder`;
+  wcześniej własne liczenie i `zIndex` w JS). Wyboru daty w aplikacji nie ma.
 - **urządzenie:** `fullscreen.js` (5 kopii → 1; `shared/js/display/fullscreen.js`
   usunięty), `pwa.js`: `isStandalone`, `isIOSSafari` (3 kopie → 1).
 - **start strony:** `initEntryPage(id, { ready })` (wariant „bare”: Go,

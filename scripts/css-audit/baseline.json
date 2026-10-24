@@ -193,9 +193,6 @@
  "web/shared/js/core/tooltips.js": {
   "inlineStyleJs": 2
  },
- "web/shared/js/core/ui-select.js": {
-  "inlineStyleJs": 11
- },
  "web/shared/style/components.css": {
   "sharedDuplicate": 22,
   "unusedClass": 5

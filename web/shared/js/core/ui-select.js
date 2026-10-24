@@ -1,4 +1,5 @@
 import { iconText } from "./icons.js?v=v2026-10-24T18315";
+import { placeUnder, clearPlacement } from "./popover.js?v=v2026-10-24T18315";
 
 
 export function initUiSelect(root, { options = [], value = "", placeholder = "—", onChange, disabled = false } = {}) {
@@ -16,31 +17,11 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
     if (destroyed) return;
     root.classList.remove("open");
     btn.setAttribute("aria-expanded", "false");
-    menu.style.cssText = "";
+    clearPlacement(menu);
   };
 
-  const positionMenu = () => {
-    const rect = btn.getBoundingClientRect();
-    const maxMenuHeight = 260;
-    const spaceBelow = window.innerHeight - rect.bottom - 6;
-    const spaceAbove = rect.top - 6;
-    const roomy = root.matches(".list-filter, .list-sort");
-    const menuWidth = Math.min(roomy ? Math.max(rect.width, 220) : rect.width, window.innerWidth - 16);
-    const menuLeft = roomy ? Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)) : rect.left;
-    menu.style.position = "fixed";
-    menu.style.left = menuLeft + "px";
-    menu.style.width = menuWidth + "px";
-    menu.style.right = "auto";
-    if (spaceBelow >= Math.min(maxMenuHeight, spaceAbove) || spaceBelow >= spaceAbove) {
-      menu.style.top = (rect.bottom + 6) + "px";
-      menu.style.bottom = "auto";
-      menu.style.maxHeight = Math.max(spaceBelow, 80) + "px";
-    } else {
-      menu.style.top = "auto";
-      menu.style.bottom = (window.innerHeight - rect.top + 6) + "px";
-      menu.style.maxHeight = Math.max(spaceAbove, 80) + "px";
-    }
-  };
+  // Listy filtra i sortowania są szersze od przycisku (krótkie etykiety).
+  const positionMenu = () => placeUnder(btn, menu, { minWidth: root.matches(".list-filter, .list-sort") ? 220 : 0 });
 
   const open = () => {
     if (destroyed || root.classList.contains("is-disabled")) return;
