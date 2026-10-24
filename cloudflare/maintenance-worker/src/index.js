@@ -150,17 +150,11 @@ async function handleFetch(request, env, ctx) {
     host === "panel.familiada.online" ||
     host === "supabase.familiada.online" ||
     host === "api.familiada.online" ||
-    host === "docker.familiada.online" ||
-    // Próba generalna przeprowadzki serwera (docs/przeprowadzka-serwera.md):
-    // adresy *2 wskazują nowy serwer. Usunąć po przełączeniu (P7).
-    host === "api2.familiada.online" ||
-    host === "supabase2.familiada.online" ||
-    host === "panel2.familiada.online" ||
-    host === "docker2.familiada.online"
+    host === "docker.familiada.online"
   ) {
     // Pomiar łącza urządzeń (migracja 466): odpowiedź prosto z Cloudflare,
     // bez serwera — porównywana z czasem lekkiego RPC control2_net_ping.
-    if ((host === "api.familiada.online" || host === "api2.familiada.online") && url.pathname === "/_ping") {
+    if (host === "api.familiada.online" && url.pathname === "/_ping") {
       return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" } });
     }
     // NIE dodawaj tu cf.resolveOverride wskazującego z powrotem na ten sam
@@ -178,7 +172,7 @@ async function handleFetch(request, env, ctx) {
   }
 
   // Lead Finder - passthrough for settings frontend communication
-  if (host === "leads.familiada.online" || host === "leads2.familiada.online") {
+  if (host === "leads.familiada.online") {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
