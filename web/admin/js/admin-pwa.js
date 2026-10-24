@@ -1,5 +1,5 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-24T18353";
-import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-24T18353";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-24T19071";
+import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-24T19071";
 
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
@@ -35,7 +35,7 @@ function isAdminStandalone() {
   if (!workerUrl) return false;
   try {
     const worker = new URL(workerUrl);
-    return worker.origin === location.origin && worker.pathname === "/admin/sw.js?v=v2026-10-24T18353";
+    return worker.origin === location.origin && worker.pathname === "/admin/sw.js?v=v2026-10-24T19071";
   } catch {
     return false;
   }
