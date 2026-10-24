@@ -10,8 +10,17 @@
  "web/admin/js/generator.js": {
   "inlineStyleJs": 21
  },
- "web/admin/js/settings.js": {
-  "inlineStyleJs": 17
+ "web/admin/js/mail-settings.js": {
+  "inlineStyleJs": 1
+ },
+ "web/admin/js/mailbox.js": {
+  "inlineStyleJs": 3
+ },
+ "web/admin/js/stats.js": {
+  "inlineStyleJs": 6
+ },
+ "web/admin/js/tools.js": {
+  "inlineStyleJs": 7
  },
  "web/bases/explorer/css/base-explorer.css": {
   "sharedDuplicate": 8,

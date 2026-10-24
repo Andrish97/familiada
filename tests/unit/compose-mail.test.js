@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { adminPanelSource } from "./helpers/admin-source.js";
 const read = path => fs.readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
 const common = await import('data:text/javascript;base64,' + Buffer.from(read('supabase/functions/_shared/mail-document.js')).toString('base64'));
 const source = read('web/shared/js/core/compose-mail.js');
@@ -27,7 +28,7 @@ test('manual mail removes missing quotes, adds greeting comma once and does not 
   assert.equal((html.match(/Team/g) || []).length, 1);
 });
 test('settings send and preview call the same renderer with the same language/body/quote/signature', () => {
-  const settings = read('web/admin/js/settings.js');
+  const settings = adminPanelSource();
   const sender = settings.slice(settings.indexOf('async function sendComposeWithSignature'), settings.indexOf('function showComposePreview'));
   const preview = settings.slice(settings.indexOf('function showComposePreview'), settings.indexOf('// ── Mobile mail navigation'));
   for (const part of [sender,preview]) {

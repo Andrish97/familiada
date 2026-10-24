@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { adminPanelSource } from "./helpers/admin-source.js";
 const read = path => fs.readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
 const renderer = 'data:text/javascript;base64,' + Buffer.from(read('supabase/functions/_shared/mail-document.js')).toString('base64');
 const source = read('web/shared/js/core/marketing-mail.js').replace(/from "[^\"]+"/, `from "${renderer}"`);
@@ -31,7 +32,7 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
   }
 });
 test('marketing preview and send use the same builder; skipped compose retains editor and skipped batch retains recipients', () => {
-  const settings = read('web/admin/js/settings.js');
+  const settings = adminPanelSource();
   const preview = settings.slice(settings.indexOf('async function mktRefreshPreview'), settings.indexOf('function mktParseEmails'));
   const send = settings.slice(settings.indexOf('async function sendMarketing'));
   for (const part of [preview,send]) {

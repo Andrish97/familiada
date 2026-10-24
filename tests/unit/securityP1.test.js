@@ -14,6 +14,7 @@ import {
 import { withSecurityHeaders } from '../../cloudflare/maintenance-worker/src/lib/core/security-headers.js';
 import { ticketForSender } from '../../cloudflare/maintenance-worker/src/lib/email/inbound-email.js';
 import { ACCESS_ENV, signAccessJwt, withJwks } from './helpers/accessJwt.js';
+import { adminPanelSource } from "./helpers/admin-source.js";
 
 const ROOT = new URL('../../', import.meta.url);
 const ADMIN = 'https://admin.familiada.online';
@@ -75,7 +76,7 @@ test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt t
 });
 
 test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () => {
-  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
+  const src = adminPanelSource();
   assert.doesNotMatch(src, /lead-finder-token/);
   assert.doesNotMatch(src, /leads\.familiada\.online/);
   assert.match(src, /adminFetch\(`\/leads\/\$\{path\}`/);
@@ -83,7 +84,7 @@ test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () =>
 
 // ── Ś6 ────────────────────────────────────────────────────────────────────
 test('Ś6: podglądy maili w panelu bez allow-scripts', () => {
-  const src = readFileSync(new URL('web/admin/js/settings.js', ROOT), 'utf8');
+  const src = adminPanelSource();
   assert.doesNotMatch(src, /allow-scripts/);
   assert.equal((src.match(/frame\.sandbox = MAIL_FRAME_SANDBOX;/g) || []).length, 6);
 });

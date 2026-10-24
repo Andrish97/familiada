@@ -1,15 +1,15 @@
 // web/go/js/go.js
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-24T18315";
-import { anonymousPollDestination, validAnonymousPollParams, screenshotSnakeUrl } from "../../shared/js/core/poll-links.js?v=v2026-10-24T18315";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18315";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18315";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18315";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-24T18315";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18315";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-24T18460";
+import { anonymousPollDestination, validAnonymousPollParams, screenshotSnakeUrl } from "../../shared/js/core/poll-links.js?v=v2026-10-24T18460";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T18460";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-24T18460";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T18460";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-24T18460";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T18460";
 
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-24T18315";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18315";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18315";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-24T18460";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T18460";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T18460";
 
 
 const i18nReady = initEntryPage("go", { ready: initI18n({ withSwitcher: true }) }).then(() => {
