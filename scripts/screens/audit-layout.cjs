@@ -176,6 +176,8 @@ function inspectLayout(opts) {
     for (let e = btn.parentElement; e && e !== document.documentElement; e = e.parentElement) {
       const st = getComputedStyle(e);
       if (st.overflowX === "visible" && st.overflowY === "visible" && st.contain.indexOf("paint") < 0) continue;
+      // Lista przewijana: element częściowo przewinięty to nie ucięta obwódka.
+      if (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1) break;
       const c = e.getBoundingClientRect();
       const bl = parseFloat(st.borderLeftWidth), bt = parseFloat(st.borderTopWidth), br = parseFloat(st.borderRightWidth), bb = parseFloat(st.borderBottomWidth);
       const clip = { left: c.left + bl, top: c.top + bt, right: c.right - br, bottom: c.bottom - bb };
