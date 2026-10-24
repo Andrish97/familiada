@@ -16,19 +16,20 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T21185";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T21185";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T21185";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T21185";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T21185";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21185";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-24T21225";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-24T21225";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-24T21225";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-24T21225";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-24T21225";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21225";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T21185";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T21185";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T21185";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T21185";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T21185";
-import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T21185";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-24T21225";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-24T21225";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-24T21225";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-24T21225";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-24T21225";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-24T21225";
+import { setCell } from "../../shared/js/core/geometry.js?v=v2026-10-24T21225";
 
 
 const $ = (id) => document.getElementById(id);
@@ -808,8 +809,7 @@ export function createUI({ root, emit }) {
       type: "button",
       onclick: disabled ? undefined : onclick,
     }, [typeof content === "string" ? document.createTextNode(content) : content]);
-    el.style.gridRow = String(row);
-    el.style.gridColumn = col;
+    setCell(el, row, col);
     if (disabled) el.disabled = true;
     return bindShortcut(el, shortcut, onclick);
   }
@@ -1828,8 +1828,7 @@ export function createUI({ root, emit }) {
     });
     while (optionTiles.length < 9) {
       const slotEl = h("div", { class: "c2-tile-slot" });
-      slotEl.style.gridRow = String(Math.floor(optionTiles.length / 3) + 2);
-      slotEl.style.gridColumn = THIRD(optionTiles.length % 3);
+      setCell(slotEl, Math.floor(optionTiles.length / 3) + 2, THIRD(optionTiles.length % 3));
       optionTiles.push(slotEl);
     }
 

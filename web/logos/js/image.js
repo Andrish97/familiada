@@ -7,11 +7,12 @@
 //   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
 // Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21185";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-24T21185";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T21185";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-24T21185";
-import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-24T21185";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21225";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-24T21225";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-24T21225";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-24T21225";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-24T21225";
+import { setBox } from "../../shared/js/core/geometry.js?v=v2026-10-24T21225";
 
 
 const ASPECT = 26 / 11;
@@ -310,10 +311,7 @@ export function initImageEditor(ctx) {
 
   function applyCropToDom() {
     if (!cropFrame) return;
-    cropFrame.style.left = `${Math.round(crop.x)}px`;
-    cropFrame.style.top = `${Math.round(crop.y)}px`;
-    cropFrame.style.width = `${Math.round(crop.w)}px`;
-    cropFrame.style.height = `${Math.round(crop.h)}px`;
+    setBox(cropFrame, { left: Math.round(crop.x), top: Math.round(crop.y), width: Math.round(crop.w), height: Math.round(crop.h) });
   }
 
   function syncCropImg() {

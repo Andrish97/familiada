@@ -3,24 +3,8 @@
 // ui-select (placeUnder), menu kontekstowe (placeAtPoint). Zawsze w oknie,
 // EDGE_PAD od krawędzi.
 
-import { EDGE_PAD as PAD, ANCHOR_GAP as GAP, LIST_GAP, LIST_MIN_HEIGHT, clamp } from "./ui-metrics.js?v=v2026-10-24T21185";
-
-// Pomiar ukrytego menu: na chwilę widoczne, ale niewidzialne i bez kliknięć.
-function measured(el, fn) {
-  const wasHidden = el.hidden;
-  if (wasHidden) {
-    el.hidden = false;
-    el.style.visibility = "hidden";
-    el.style.pointerEvents = "none";
-  }
-  el.style.position = "fixed";
-  fn(el.getBoundingClientRect());
-  if (wasHidden) {
-    el.style.visibility = "";
-    el.style.pointerEvents = "";
-    el.hidden = true;
-  }
-}
+import { EDGE_PAD as PAD, ANCHOR_GAP as GAP, LIST_GAP, LIST_MIN_HEIGHT, clamp } from "./ui-metrics.js?v=v2026-10-24T21225";
+import { setFloat, clearFloat, measureHidden } from "./geometry.js?v=v2026-10-24T21225";
 
 /**
  * Menu pod przyciskiem anchor, wyrównane do jego prawej krawędzi (align
@@ -28,16 +12,13 @@ function measured(el, fn) {
  */
 export function placeDropdown(anchor, el, { align = "end" } = {}) {
   if (!anchor || !el) return;
-  measured(el, (m) => {
+  setFloat(el, { left: -9999, top: 0 });
+  measureHidden(el, (m) => {
     const a = anchor.getBoundingClientRect();
     const left = clamp(align === "start" ? a.left : a.right - m.width, PAD, innerWidth - m.width - PAD);
     let top = a.bottom + GAP;
     if (top + m.height > innerHeight - PAD) top = a.top - m.height - GAP;
-    top = clamp(top, PAD, innerHeight - m.height - PAD);
-    el.style.left = `${left}px`;
-    el.style.top = `${top}px`;
-    el.style.right = "auto";
-    el.style.transform = "";
+    setFloat(el, { left, top: clamp(top, PAD, innerHeight - m.height - PAD) });
   });
 }
 
@@ -53,30 +34,24 @@ export function placeUnder(anchor, el, { minWidth = 0, gap = LIST_GAP, preferred
   const below = innerHeight - a.bottom - gap;
   const above = a.top - gap;
   const down = below >= Math.min(preferredHeight, above) || below >= above;
-  Object.assign(el.style, {
-    position: "fixed",
-    left: `${clamp(a.left, PAD, innerWidth - width - PAD)}px`,
-    width: `${width}px`,
-    right: "auto",
-    top: down ? `${a.bottom + gap}px` : "auto",
-    bottom: down ? "auto" : `${innerHeight - a.top + gap}px`,
-    maxHeight: `${Math.max(down ? below : above, LIST_MIN_HEIGHT)}px`,
+  setFloat(el, {
+    left: clamp(a.left, PAD, innerWidth - width - PAD),
+    width,
+    top: down ? a.bottom + gap : null,
+    bottom: down ? null : innerHeight - a.top + gap,
+    maxHeight: Math.max(down ? below : above, LIST_MIN_HEIGHT),
   });
 }
 
 /** Zdejmuje położenie ustawione przez placeDropdown/placeUnder (np. menu przechodzi do panelu telefonu). */
 export function clearPlacement(el) {
-  if (!el) return;
-  for (const prop of ["position", "left", "top", "right", "bottom", "width", "max-height", "transform", "visibility", "pointer-events"]) el.style.removeProperty(prop);
+  clearFloat(el);
 }
 
 /** Menu w punkcie (x, y), np. menu kontekstowe — przesunięte, żeby mieściło się w oknie. */
 export function placeAtPoint(el, x, y) {
-  el.style.left = "-9999px";
-  el.style.top = "-9999px";
+  setFloat(el, { left: -9999, top: 0 });
   el.hidden = false;
-  el.style.position = "fixed";
   const m = el.getBoundingClientRect();
-  el.style.left = `${clamp(x, PAD, innerWidth - m.width - PAD)}px`;
-  el.style.top = `${clamp(y, PAD, innerHeight - m.height - PAD)}px`;
+  setFloat(el, { left: clamp(x, PAD, innerWidth - m.width - PAD), top: clamp(y, PAD, innerHeight - m.height - PAD) });
 }

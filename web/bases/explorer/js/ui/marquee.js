@@ -6,7 +6,8 @@
 // Po przeciągnięciu przeglądarka wysyła jeszcze „click” — consumeClick()
 // pozwala go pominąć, żeby nie skasował zaznaczenia z ramki.
 
-import { isModKey } from "../platform.js?v=v2026-10-24T21185";
+import { isModKey } from "../platform.js?v=v2026-10-24T21225";
+import { setBox, anchorBox } from "../../../../shared/js/core/geometry.js?v=v2026-10-24T21225";
 
 /**
  * container   element przewijany z wierszami
@@ -17,7 +18,7 @@ import { isModKey } from "../platform.js?v=v2026-10-24T21185";
  */
 export function attachMarquee(container, { rowSelector, canStart = () => true, getBase, onSelect }) {
   if (!container) return { consumeClick: () => false };
-  if (getComputedStyle(container).position === "static") container.style.position = "relative";
+  anchorBox(container);
 
   let box = null;     // element ramki
   let start = null;   // punkt startu we współrzędnych kontenera
@@ -68,7 +69,7 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
     moved = false;
     box = document.createElement("div");
     box.className = "marquee";
-    Object.assign(box.style, { left: `${start.x}px`, top: `${start.y}px`, width: "0px", height: "0px" });
+    setBox(box, { left: start.x, top: start.y, width: 0, height: 0 });
     container.appendChild(box);
   }
 
@@ -76,7 +77,7 @@ export function attachMarquee(container, { rowSelector, canStart = () => true, g
     const cur = local(p);
     const r = rectOf(start, cur);
     if (r.right - r.left > 3 || r.bottom - r.top > 3) moved = true;
-    Object.assign(box.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.right - r.left}px`, height: `${r.bottom - r.top}px` });
+    setBox(box, { left: r.left, top: r.top, width: r.right - r.left, height: r.bottom - r.top });
 
     const cr = container.getBoundingClientRect();
     const hit = new Set();

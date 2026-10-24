@@ -1,7 +1,7 @@
 // Host-only renderer for the source preserved in a logo's payload.
 // Logo editors and their stored formats are deliberately not changed here.
 
-import { prepareFabric } from "../../../shared/js/core/fabric-compat.js?v=v2026-10-24T21185";
+import { prepareFabric } from "../../../shared/js/core/fabric-compat.js?v=v2026-10-24T21225";
 
 const FRAME_W = 1280;
 const FRAME_H = 720;
@@ -32,7 +32,7 @@ function canvasOf(width, height) {
 function loadWordmarkFont() {
   if (!fontPromise) {
     fontPromise = (async () => {
-      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-24T21185")', { weight: "200 900" });
+      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-24T21225")', { weight: "200 900" });
 
       await font.load();
       document.fonts.add(font);
@@ -47,7 +47,7 @@ function loadFabric() {
   if (!fabricPromise) {
     fabricPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-24T21185";
+      script.src = "/shared/vendor/fabric.min.js?v=v2026-10-24T21225";
       script.async = true;
       script.onload = () => globalThis.fabric?.StaticCanvas ? resolve(prepareFabric(globalThis.fabric)) : reject(new Error("Fabric.js did not initialize"));
       script.onerror = () => reject(new Error("Fabric.js could not be loaded"));
@@ -397,7 +397,7 @@ async function renderDrawLogo(logo, dot) {
     const maskId = `host-draw-mask-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
     const filterId = `${maskId}-luma`;
     const outputHeight = Math.max(1, Math.round(FRAME_W * height / width));
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${FRAME_W}" height="${outputHeight}" preserveAspectRatio="xMidYMid meet"><defs>${definitions}<filter id="${filterId}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0 0 0 1 0"/></filter><mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}" style="mask-type:luminance"><rect width="${width}" height="${height}" fill="#000"/><g filter="url(#${filterId})">${sceneContent}</g></mask></defs><rect width="${width}" height="${height}" fill="${safeXml(colorHex(dot))}" mask="url(#${maskId})"/></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${FRAME_W}" height="${outputHeight}" preserveAspectRatio="xMidYMid meet"><defs>${definitions}<filter id="${filterId}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0 0 0 1 0"/></filter><mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}" mask-type="luminance"><rect width="${width}" height="${height}" fill="#000"/><g filter="url(#${filterId})">${sceneContent}</g></mask></defs><rect width="${width}" height="${height}" fill="${safeXml(colorHex(dot))}" mask="url(#${maskId})"/></svg>`;
     const image = new Image();
     image.alt = logo?.name || ""; // ozdobny, gdy logo bez nazwy
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

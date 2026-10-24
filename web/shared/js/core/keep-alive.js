@@ -139,10 +139,7 @@ function startVideoWakeLockFallback() {
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
     video.setAttribute("aria-hidden", "true");
-    Object.assign(video.style, {
-      position: "fixed", top: "0", left: "0", width: "1px", height: "1px",
-      opacity: "0", pointerEvents: "none",
-    });
+    video.className = "keep-alive-video"; // niewidoczny 1×1 px (components.css)
     document.body.appendChild(video);
 
     // Bez gestu iOS potrafi odrzucić odtwarzanie — wtedy ponawiamy gestem.

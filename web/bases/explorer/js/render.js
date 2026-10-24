@@ -3,14 +3,15 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T21185";
-import { computeListing } from "./data/listing.js?v=v2026-10-24T21185";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T21185";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T21185";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T21185";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T21185";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T21185";
-import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-24T21185";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-24T21225";
+import { computeListing } from "./data/listing.js?v=v2026-10-24T21225";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-24T21225";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T21225";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T21225";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-24T21225";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-24T21225";
+import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-24T21225";
+import { setWidth, widthAttr } from "../../../shared/js/core/geometry.js?v=v2026-10-24T21225";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
@@ -447,7 +448,7 @@ export function renderList(state) {
   const columns = columnsFor(listing);
   const saved = loadCols();
   const narrow = isNarrow();
-  const cols = columns.map((c) => (c.key === "name" ? `<col>` : `<col style="width:${colWidth(c, saved)}px">`)).join("");
+  const cols = columns.map((c) => (c.key === "name" ? `<col>` : `<col ${widthAttr(colWidth(c, saved))}>`)).join("");
   const minW = columns.reduce((s, c) => s + (c.key === "name" ? (narrow ? c.narrowMin : c.min) : colWidth(c, saved)), 0);
 
   const head = columns.map((c) => {
@@ -495,7 +496,7 @@ export function renderList(state) {
   }).join("");
 
   elList.innerHTML = `
-    <table class="list-table" style="min-width:${minW}px">
+    <table class="list-table geo-min-w" style="--geo-min-w:${minW}px">
       <colgroup>${cols}</colgroup>
       <thead><tr class="list-head">${head}</tr></thead>
       <tbody>${rows}</tbody>
@@ -528,13 +529,13 @@ function initColumnResizers(columns) {
       const startX = ev.clientX;
       const startW = th.getBoundingClientRect().width;
       const onMove = (e) => {
-        col.style.width = `${Math.max(c.min, Math.round(startW + e.clientX - startX))}px`;
+        setWidth(col, Math.max(c.min, Math.round(startW + e.clientX - startX)));
       };
       const onUp = () => {
         handle.releasePointerCapture(ev.pointerId);
         window.removeEventListener("pointermove", onMove, true);
         window.removeEventListener("pointerup", onUp, true);
-        saveCols({ ...loadCols(), [c.key]: col.style.width });
+        saveCols({ ...loadCols(), [c.key]: col.style.getPropertyValue("--geo-w") });
       };
       window.addEventListener("pointermove", onMove, true);
       window.addEventListener("pointerup", onUp, true);
@@ -545,7 +546,7 @@ function initColumnResizers(columns) {
       const next = loadCols();
       delete next[c.key];
       saveCols(next);
-      col.style.width = `${colWidth(c, next)}px`;
+      setWidth(col, colWidth(c, next));
     });
   });
 }

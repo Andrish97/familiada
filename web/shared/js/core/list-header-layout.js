@@ -1,6 +1,7 @@
 // Nagłówek list Gier/Baz/Logo: pozwól tytułowi i podpowiedzi zawinąć się
 // przed przeniesieniem akcji. Akcje schodzą niżej, gdy nie mieszczą się nawet
 // obok minimalnej szerokości nagłówka.
+import { setWidth } from "./geometry.js?v=v2026-10-24T21225";
 export function initListHeaderLayout(selector = ".bar") {
   const bars = [...document.querySelectorAll(selector)].filter((bar) => bar.querySelector(":scope > .actions"));
   for (const bar of bars) {
@@ -95,12 +96,8 @@ function initListBottomToolbarLayout() {
     // Daj klonom tę samą bazową kaskadę .list-toolbar co prawdziwemu paskowi;
     // bez tego mobilne .only-desktop i reguły kompaktowe nie są mierzone tak,
     // jak potem renderują się na stronie.
+    // Wygląd pudełka i klonów pomiarowych: .toolbar-measure-* w silniku (components.css).
     measureBox.className = "list-toolbar toolbar-measure-box";
-    Object.assign(measureBox.style, {
-      position: "fixed", left: "-100000px", top: "0", width: "max-content",
-      maxWidth: "none", visibility: "hidden", pointerEvents: "none",
-      display: "block", flex: "none",
-    });
     bar.append(measureBox);
     const measureGroup = (group, mode = "text") => {
       if (!group) return { width: 0, items: [] };
@@ -118,34 +115,10 @@ function initListBottomToolbarLayout() {
       }
       measureBox.classList.toggle("is-compact-icons", mode === "icons");
       const clone = group.cloneNode(true);
-      Object.assign(clone.style, {
-        display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none",
-        flex: "0 0 auto", flexWrap: "nowrap", margin: "0", position: "static",
-      });
-      for (const label of clone.querySelectorAll(".only-desktop")) {
-        label.style.setProperty("display", mode === "icons" ? "none" : "inline", "important");
-      }
-      if (mode === "icons") {
-        // Pomiar odbywa się poza .list-toolbar, więc nie dziedziczy reguł
-        // .is-compact-icons. Odtwórz w klonie faktyczne wymiary kompaktowego
-        // wariantu, w tym selecty, które normalnie mają szerokość 150 px.
-        for (const label of clone.querySelectorAll(".ui-select-label, .ui-select-caret")) {
-          label.style.setProperty("display", "none", "important");
-        }
-        for (const control of clone.querySelectorAll(".list-toolbar-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open")) {
-          Object.assign(control.style, {
-            width: "36px", minWidth: "36px", maxWidth: "36px",
-            height: "36px", minHeight: "36px", padding: "0",
-            display: "grid", placeItems: "center", boxSizing: "border-box",
-          });
-        }
-        for (const select of clone.querySelectorAll(".list-filter, .list-sort")) {
-          Object.assign(select.style, {
-            width: "36px", minWidth: "36px", maxWidth: "36px", flex: "0 0 36px",
-          });
-        }
-      }
-      for (const child of clone.children) child.style.flex = "0 0 auto";
+      // Klon w jednym rzędzie, w wariancie z napisami albo samymi ikonami
+      // (.is-icons odtwarza wymiary kompaktowe: przyciski i listy 36 px).
+      clone.classList.add("toolbar-measure-clone");
+      clone.classList.toggle("is-icons", mode === "icons");
       measureBox.replaceChildren(clone);
       const items = [...clone.children].map((item) => item.getBoundingClientRect().width);
       const cloneStyle = getComputedStyle(clone);
@@ -206,10 +179,7 @@ function initListBottomToolbarLayout() {
         const room = available - textNeeded - TOOLBAR_SEPARATOR_WIDTH;
         const width = !useIcons && searchBox
           ? `${Math.floor(Math.min(searchBox.max, searchBox.min + Math.max(0, room)))}px` : "";
-        if (search.style.flexBasis !== width) {
-          search.style.flex = width ? `0 0 ${width}` : "";
-          search.style.width = width;
-        }
+        if (search.style.getPropertyValue("--geo-w") !== width) setWidth(search, width || null);
         if (width) needed = textNeeded + parseFloat(width) - searchBox.min;
       }
       if (useIcons) {

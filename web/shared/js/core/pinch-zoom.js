@@ -5,6 +5,7 @@
 // Własny pinch-zoom/pan na canvasie podglądu, niezależny od powiększania
 // całej strony przeglądarki (patrz touch-action:none w logo.css —
 // bez tego dwa palce na canvasie zoomowałyby cały layout, nie samą treść).
+import { setShift } from "./geometry.js?v=v2026-10-24T21225";
 export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
   // Model: canvas ma transform-origin 0 0, a jego NIEPRZEKSZTAŁCONY
   // lewy-górny róg leży w kontenerze w punkcie (offX, offY) — kontener
@@ -42,7 +43,7 @@ export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
     if (rafId != null) return;
     rafId = requestAnimationFrame(() => {
       rafId = null;
-      canvas.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+      setShift(canvas, { x: tx, y: ty, scale });
     });
   };
 
@@ -51,7 +52,7 @@ export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
     pointers.clear();
     pinch = null; panStart = null; geo = null;
     if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
-    canvas.style.transform = "";
+    setShift(canvas, null);
   };
 
   // Treść większa od kontenera — nie odsuwaj jej krawędzi do środka;
@@ -168,7 +169,8 @@ export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
     apply();
     updateCursor();
   };
-  const updateCursor = () => { container.style.cursor = scale > 1 ? (mousePan ? "grabbing" : "grab") : "zoom-in"; };
+  // Kursor: [data-zoom-cursor] w silniku (components.css).
+  const updateCursor = () => { container.dataset.zoomCursor = scale > 1 ? (mousePan ? "grabbing" : "grab") : "in"; };
   let mousePan = null;
   container.addEventListener("wheel", (e) => {
     e.preventDefault();

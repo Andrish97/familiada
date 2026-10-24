@@ -62,3 +62,20 @@ test("paski postępu i kolory z danych bez style.width / style.background", () =
   walk(root);
   assert.deepEqual(bad, [], "użyj setProgress(el, pct) / zmiennej --c");
 });
+
+test("pomiary na żywo tylko przez core/geometry.js: zero stylów wpisywanych z JS", () => {
+  const bad = [];
+  const re = /\.style\.(?!setProperty|removeProperty|getPropertyValue)[a-zA-Z]+\s*=(?!=)|\.style\.cssText\s*=|Object\.assign\([\w.]*\.style\b/;
+  const skip = /^(shared\/vendor|admin\/tools|control\/display|shared\/js\/display)|(mail-document|marketing-mail|compose-mail)\.js$/;
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      const rel = path.relative(root, p);
+      if (skip.test(rel)) continue;
+      if (e.isDirectory()) walk(p);
+      else if (p.endsWith(".js")) fs.readFileSync(p, "utf8").split("\n").forEach((line, i) => { if (re.test(line)) bad.push(`${rel}:${i + 1}`); });
+    }
+  };
+  walk(root);
+  assert.deepEqual(bad, [], "położenie/rozmiar: setFloat/setBox/setShift/setCell/setWidth z core/geometry.js");
+});

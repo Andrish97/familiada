@@ -6,16 +6,17 @@
 // od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
 // shared/style/components.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
 // pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
-import { placeAtPoint } from "../../../shared/js/core/popover.js?v=v2026-10-24T21185";
-import { selectionSetSingle } from "./state.js?v=v2026-10-24T21185";
-import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T21185";
-import { buildContext } from "./actions/context.js?v=v2026-10-24T21185";
-import { runAction } from "./actions/run.js?v=v2026-10-24T21185";
-import { formatShortcut } from "./platform.js?v=v2026-10-24T21185";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T21185";
-import { renderSelection } from "./render.js?v=v2026-10-24T21185";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T21185";
-import { isSheetLayout } from "../../../shared/js/core/device-attrs.js?v=v2026-10-24T21185";
+import { placeAtPoint } from "../../../shared/js/core/popover.js?v=v2026-10-24T21225";
+import { clearFloat } from "../../../shared/js/core/geometry.js?v=v2026-10-24T21225";
+import { selectionSetSingle } from "./state.js?v=v2026-10-24T21225";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-24T21225";
+import { buildContext } from "./actions/context.js?v=v2026-10-24T21225";
+import { runAction } from "./actions/run.js?v=v2026-10-24T21225";
+import { formatShortcut } from "./platform.js?v=v2026-10-24T21225";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T21225";
+import { renderSelection } from "./render.js?v=v2026-10-24T21225";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T21225";
+import { isSheetLayout } from "../../../shared/js/core/device-attrs.js?v=v2026-10-24T21225";
 
 const CLOSE_MS = 230;
 // Palec puszczony po przytrzymaniu daje „klik” bez wciśnięcia w menu —
@@ -233,8 +234,7 @@ export async function showContextMenu({ state, x, y, target, fromKeyboard = fals
 
   if (isSheet()) {
     cm.classList.add("is-sheet");
-    cm.style.left = "";
-    cm.style.top = "";
+    clearFloat(cm);
     cm.prepend(sheetHandle(cm));
     backdrop().hidden = false;
     cm.hidden = false;

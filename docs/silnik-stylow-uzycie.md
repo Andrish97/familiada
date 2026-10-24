@@ -209,9 +209,15 @@ z sceną zrzutów i wpisem w tej tabeli.
    od krawędzi okna), `ANCHOR_GAP` (8, menu od przycisku), `LIST_GAP` (6,
    lista od pola) — liczy je `popover.js` (`placeDropdown`, `placeUnder`,
    `placeAtPoint`); nowe menu/panel pod przyciskiem — `placeDropdown`, nie
-   własne liczenie. W JS zostają tylko pomiary na żywo (ramka zaznaczania,
-   kadr obrazu, zoom, szerokość kolumn, siatka Control). Zapadka:
-   `unit/uiMetrics.test.js`.
+   własne liczenie.
+   **Pomiary na żywo — `core/geometry.js`** (jedyne miejsce, które zapisuje
+   położenie i rozmiar z pomiarów): `setFloat` (element nad stroną: menu,
+   dymek, lista; sam przelicza współrzędne, gdy przodek ma `transform`),
+   `measureHidden` (pomiar ukrytego), `setBox` + `anchorBox` (ramka
+   zaznaczania, kadr), `setShift` (zoom, przesuwanie), `setCell` (komórka
+   siatki), `setWidth`/`setMinWidth`/`widthAttr` (kolumny, okno). Ustawiają
+   zmienne CSS i klasę `geo-*`; reguły w `components.css` (warstwa `states`).
+   Zapadka `unit/uiMetrics.test.js`: zero `el.style.x = …` w kodzie stron.
 4. **Android — przyciski z ikonami:** tło kryjące (odcień
    `--btn-tint` na `--under`, jak `.btn`), bez `opacity` < 1, `filter`,
    `backdrop-filter` i `transform` w stanach dotyku. Podświetlenie

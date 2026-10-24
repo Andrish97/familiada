@@ -2952,3 +2952,58 @@
     .drawer.is-open { transform: translateX(0); visibility: visible; }
   }
 }
+
+/* ── Pomiary na żywo (core/geometry.js) ────────────────────────────
+   Skrypt ustawia tylko zmienne CSS i klasę geo-*; położenie i rozmiar
+   biorą się stąd. Warstwa states: stan z pomiaru wygrywa ze zwykłymi
+   regułami stron (np. menu z position: absolute w pliku strony). */
+@layer states {
+  .geo-float {
+    position: fixed;
+    left: var(--float-x, auto);
+    top: var(--float-y, auto);
+    bottom: var(--float-bottom, auto);
+    right: auto;
+    transform: none;
+  }
+  .geo-float.geo-float--sized { width: var(--float-w, auto); max-height: var(--float-max-h, none); }
+  .geo-measuring { visibility: hidden; pointer-events: none; }
+  .geo-anchor { position: relative; }
+  .geo-box { left: var(--box-x, 0px); top: var(--box-y, 0px); width: var(--box-w, 0px); height: var(--box-h, 0px); }
+  .geo-shift { transform: translate3d(var(--shift-x, 0px), var(--shift-y, 0px), 0) scale(var(--shift-scale, 1)); }
+  .geo-cell { grid-row: var(--cell-row, auto); grid-column: var(--cell-col, auto); }
+  .geo-w { width: var(--geo-w); }
+  .geo-min-w { min-width: var(--geo-min-w); }
+  /* Pole wyszukiwania w dolnym pasku listy: szerokość z pomiaru (list-header-layout.js). */
+  .list-search.geo-w { flex: 0 0 var(--geo-w); }
+
+  /* Pomiar dolnego paska listy: pudełko poza ekranem i klony grup w jednym
+     rzędzie; .is-icons odtwarza wariant kompaktowy (przyciski i listy 36 px). */
+  .toolbar-measure-box {
+    position: fixed; left: -100000px; top: 0;
+    width: max-content; max-width: none; flex: none; display: block;
+    visibility: hidden; pointer-events: none;
+  }
+  .toolbar-measure-box .toolbar-measure-clone {
+    display: flex; flex: 0 0 auto; flex-wrap: nowrap; position: static; margin: 0;
+    width: max-content; min-width: max-content; max-width: none;
+  }
+  .toolbar-measure-box .toolbar-measure-clone > * { flex: 0 0 auto; }
+  .toolbar-measure-box .toolbar-measure-clone .only-desktop { display: inline; }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.only-desktop, .ui-select-label, .ui-select-caret) { display: none; }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.list-toolbar-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open) {
+    display: grid; place-items: center; box-sizing: border-box; padding: 0;
+    width: 36px; min-width: 36px; max-width: 36px; height: 36px; min-height: 36px;
+  }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.list-filter, .list-sort) { flex: 0 0 36px; width: 36px; min-width: 36px; max-width: 36px; }
+
+  /* Powiększanie obrazu (pinch-zoom.js): kursor wg stanu. */
+  [data-zoom-cursor="in"] { cursor: zoom-in; }
+  [data-zoom-cursor="grab"] { cursor: grab; }
+  [data-zoom-cursor="grabbing"] { cursor: grabbing; }
+}
+
+@layer components {
+  /* Wideo podtrzymujące ekran (keep-alive.js): niewidoczne, 1×1 px. */
+  .keep-alive-video { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+}

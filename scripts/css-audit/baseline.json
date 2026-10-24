@@ -2,24 +2,9 @@
  "web/admin/css/admin.css": {
   "unusedClass": 15
  },
- "web/admin/js/mailbox.js": {
-  "inlineStyleJs": 3
- },
- "web/admin/js/stats.js": {
-  "inlineStyleJs": 1
- },
  "web/bases/explorer/css/base-explorer.css": {
   "sharedDuplicate": 5,
   "unusedClass": 2
- },
- "web/bases/explorer/js/context-menu.js": {
-  "inlineStyleJs": 2
- },
- "web/bases/explorer/js/render.js": {
-  "inlineStyleJs": 4
- },
- "web/bases/explorer/js/ui/marquee.js": {
-  "inlineStyleJs": 1
  },
  "web/control/buzzer/css/buzzer.css": {
   "sharedDuplicate": 1
@@ -29,15 +14,6 @@
  },
  "web/control/host/css/host.css": {
   "sharedDuplicate": 2
- },
- "web/control/host/js/main.js": {
-  "inlineStyleJs": 1
- },
- "web/control/host/js/sourceLogo.js": {
-  "inlineStyleJs": 1
- },
- "web/control/js/ui.js": {
-  "inlineStyleJs": 4
  },
  "web/games/css/games.css": {
   "sharedDuplicate": 1
@@ -51,12 +27,6 @@
  "web/logos/css/logo.css": {
   "sharedDuplicate": 2
  },
- "web/logos/js/draw.js": {
-  "inlineStyleJs": 1
- },
- "web/logos/js/image.js": {
-  "inlineStyleJs": 4
- },
  "web/mail/css/mail.css": {
   "unusedClass": 2
  },
@@ -65,18 +35,6 @@
  },
  "web/shared/css/game-settings.css": {
   "sharedDuplicate": 1
- },
- "web/shared/js/core/list-header-layout.js": {
-  "inlineStyleJs": 3
- },
- "web/shared/js/core/pinch-zoom.js": {
-  "inlineStyleJs": 3
- },
- "web/shared/js/core/popover.js": {
-  "inlineStyleJs": 14
- },
- "web/shared/js/core/tooltips.js": {
-  "inlineStyleJs": 2
  },
  "web/shared/style/components.css": {
   "sharedDuplicate": 10,
