@@ -9,6 +9,14 @@ pochodzą wyłącznie z `web/shared/css/`. Wzorce: [`wzorce-ui.md`](wzorce-ui.md
 
 ## Decyzje
 
+- **2026-10-24 — dokończenie E23 (decyzja użytkownika).** Plan robić w całości,
+  bardzo dokładnie i spójnie; mniej testów (zrzuty i unit, e2e tylko zbiorczo
+  na końcu i na stronach najbardziej dotkniętych). Wdrożenie na `main` na samym
+  końcu, po zrobieniu całego planu. Kolejność: drobne zgłoszenia i zaległości →
+  progi szerokości (600/980/1280) → odcienie i promienie → wspólne mechanizmy JS
+  (§6.2 projektu) → panel admina §8a (analiza, rozbicie `settings.js`, przepięcie)
+  → sprzątanie (`core/modal*.js`, `wzorce-ui.md`) → e2e zbiorczo → `main` +
+  logowanie bez stylów inline → kontrola produkcji.
 - **2026-10-23 — przyciski dwóch stanów (doprecyzowanie użytkownika; zrobione
   2026-10-24: `.toggle-group` w silniku, `core/toggle-group.js`).** Chodzi o przycisk, który pokazuje **oba stany
   jednocześnie** (nie włącz/wyłącz): dziś `.toggle-group` — Dźwięk w kroku
