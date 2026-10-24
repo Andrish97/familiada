@@ -97,7 +97,14 @@ test('HSTS protects all HTTPS application responses, preserves a stronger policy
 test('baseline CSP preserves stricter origin directives', () => {
   const csp = "base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'self'";
   const response = withSecurityHeaders(new Request('https://www.familiada.online/'), new Response('body', { headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': csp } }));
-  assert.equal(response.headers.get('Content-Security-Policy'), csp);
+  assert.ok(response.headers.get('Content-Security-Policy').startsWith(csp));
+  assert.ok(!response.headers.get('Content-Security-Policy').includes('unsafe-eval'));
+  const strict = withSecurityHeaders(new Request('https://www.familiada.online/'), new Response('body', { headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'none'" } }));
+  assert.ok(!strict.headers.get('Content-Security-Policy').includes('script-src'));
+  assert.ok(!strict.headers.get('Content-Security-Policy').includes('connect-src'));
+  assert.ok(!strict.headers.get('Content-Security-Policy').includes('frame-src'));
+  const baseline = withSecurityHeaders(new Request('https://www.familiada.online/'), new Response('body', { headers: { 'Content-Type': 'text/html' } }));
+  for (const directive of ['script-src', 'connect-src', 'frame-src']) assert.ok(baseline.headers.get('Content-Security-Policy').includes(directive));
 });
 
 test('sitemap includes each localized homepage and retains published game URLs', async () => {

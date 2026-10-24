@@ -47,8 +47,11 @@
   i preload. Silniejsza istniejąca polityka zachowana. Nagłówek też na
   przekierowaniach, błędach i zasobach HTTPS.
 - Bazowa CSP Workera blokuje obiekty, ogranicza base/formularze i ramki.
-  Istniejące, bardziej restrykcyjne dyrektywy zachowane. Skrypty i ich
-  źródła nadal obserwowane przez Report-Only.
+  Zachowuje aktualne ograniczenia źródeł skryptów/połączeń/ramek ze strefy,
+  aby wyłączenie nadpisującej akcji nie osłabiło dotychczasowej ochrony.
+  Istniejące, bardziej restrykcyjne dyrektywy i default-src zachowane.
+  Szersza docelowa polityka nadal obserwowana przez Report-Only; usunięcie
+  unsafe-inline/eval wymaga osobnej migracji (nonce/hash) i testów bibliotek.
 - Zmiana nie dodaje tras: PAGES.home i pageIdForPath nadal obejmują `/`
   i `/index.html`; `lang` to wspólny parametr aplikacji. Uprawnienia,
   sesje i nawigacja do gier pozostają zgodne z centralną mapą.
@@ -81,4 +84,14 @@ audytu i niezakończone sprawy są w `bezpieczenstwo-audyt.md`.
   indeksowanie głównej strony dopiero po publikacji. Brak gwarancji
   terminu indeksowania. Nie zmieniać dat gier bez zmiany ich treści.
 
-Stan: przygotowanie na branchu; bez wdrożenia na produkcję.
+Wyniki: lokalne punktowe unity i kontrola i18n przeszły. Silnik
+Cloudflare: 4/4; po końcowym doprecyzowaniu CSP ponownie 19/19 związanych
+unitów i 4/4 workerd, lint no-undef. Obejrzano 6 zrzutów sceny home.
+E2E kodu brancha (1005ac59):
+[40124931948](https://github.com/Andrish97/familiada/actions/runs/40124931948)
+— render anonimowy, PL/EN/UK z canonicalami/JSON-LD i nagłówki obecnej
+produkcji. Ostatnia zmiana CSP nie zmieniła frontu; objęta ponownymi
+lokalnymi testami Workera. Nie jest to kontrola nowych nagłówków produkcji.
+
+Stan: [PR #123](https://github.com/Andrish97/familiada/pull/123), gotowy do
+przeglądu; bez wdrożenia na produkcję.

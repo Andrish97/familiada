@@ -18,6 +18,13 @@ const PASSTHROUGH_HOSTS = new Set([
 
 const APP_HOSTS = new Set(["familiada.online", "www.familiada.online", "admin.familiada.online"]);
 const CSP_BASELINE = ["frame-ancestors 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'"];
+// Zachowujemy obecne ograniczenia źródeł reguły strefy także po jej wyłączeniu.
+// Usunięcie unsafe-inline/eval wymaga osobnej migracji i kontroli bibliotek.
+const CSP_SOURCE_POLICY = [
+  "script-src 'unsafe-inline' 'unsafe-eval' 'self' https://cdn.jsdelivr.net https://challenges.cloudflare.com",
+  "connect-src 'self' https://api.familiada.online wss://api.familiada.online https://cdn.jsdelivr.net",
+  "frame-src 'self' https://challenges.cloudflare.com",
+];
 
 export function httpsRedirect(request) {
   const url = new URL(request.url);
@@ -79,7 +86,11 @@ export function withSecurityHeaders(request, response) {
     const csp = headers.get("Content-Security-Policy") || "";
     const directives = new Set(csp.split(";").map((part) => part.trim().split(/\s+/)[0].toLowerCase()));
     const missing = CSP_BASELINE.filter((part) => !directives.has(part.split(" ")[0]));
-    headers.set("Content-Security-Policy", [csp, ...missing].filter(Boolean).join("; "));
+    // Nie zastępujemy bardziej restrykcyjnego default-src jego luźniejszym
+    // wyjątkiem dla skryptów/połączeń/ramek.
+    const sources = directives.has("default-src") ? []
+      : CSP_SOURCE_POLICY.filter((part) => !directives.has(part.split(" ")[0]));
+    headers.set("Content-Security-Policy", [csp, ...missing, ...sources].filter(Boolean).join("; "));
     if (!headers.has("Content-Security-Policy-Report-Only")) {
       headers.set("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY);
     }
