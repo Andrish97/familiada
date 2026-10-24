@@ -159,8 +159,8 @@ Te same limity i znaki obowiązują w edytorze gry (→ 7.3, 7.4). Tagi przypisu
 1. Zaznacz pytania lub foldery i wybierz [Utwórz grę].
 2. W oknie „Utwórz grę” wpisz nazwę gry i wybierz rodzaj: ankieta tekstowa, punktacja albo
    preparowana.
-3. Sprawdź listę: zaznaczone pytania (także z zaznaczonych folderów) są już wybrane. Możesz
-   dodać lub odznaczyć pytania z całej bazy.
+3. Sprawdź listę: pokazuje tylko zaznaczone pytania (także z zaznaczonych folderów), wszystkie
+   już wybrane. Odznacz te, których nie chcesz w grze.
 4. Przy każdym pytaniu i w podsumowaniu widać, czego brakuje do gotowości — na przykład
    „Gotowa po utworzeniu.” albo „Utworzy się szkic. Do gotowości brakuje: …”.
 5. Zatwierdź. Gra pojawi się w *Moich grach*.

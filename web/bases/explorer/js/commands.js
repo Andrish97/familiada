@@ -608,8 +608,10 @@ export async function createGame(state) {
   const { folderIds, questionIds } = splitKeys(state.selection.keys);
   const folder = folderIds.length === 1 && !questionIds.length ? state.d.folderById.get(folderIds[0]) : null;
 
-  // lista okna = cała baza (można dozaznaczyć), zaznaczenie = wybrane pytania
-  const questions = (state.store.questions || []).map((r) => ({
+  // lista okna = tylko zaznaczone pytania (w kolejności bazy); w oknie można
+  // je jeszcze odznaczyć
+  const picked = new Set(qids);
+  const questions = (state.store.questions || []).filter((r) => picked.has(r.id)).map((r) => ({
     id: r.id,
     payload: (r.payload && typeof r.payload === "object") ? r.payload : { text: "", answers: [] },
     text: r.payload?.text ?? "",
@@ -618,7 +620,6 @@ export async function createGame(state) {
 
   const res = await exportModal.open({
     questions,
-    preselectIds: qids,
     ...(folder?.name ? { defaultName: folder.name } : {}),
     // gra powstaje tu (okno czeka na wynik); bez drugiego importGame
     run: async (payload, progress) => {

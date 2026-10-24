@@ -275,13 +275,11 @@ export function initExportModal() {
     setProgress({ step: t("baseExplorer.common.dash"), i: 0, n: 0, msg: "" });
     lockUi(false);
 
-    // lista okna: pytania przekazane przez menedżera (cała baza)
+    // Lista okna = dokładnie to, co użytkownik zaznaczył (pytania/foldery
+    // rozwinięte do pytań), wszystko wybrane; w oknie można tylko odznaczać.
+    // Bez dobierania i bez progu 10.
     allQuestions = Array.isArray(opts.questions) ? opts.questions.slice() : [];
-
-    // Dokładnie to, co użytkownik zaznaczył (pytania/foldery rozwinięte do
-    // pytań); bez zaznaczenia -- nic. Bez dobierania i bez progu 10.
-    const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
-    selectedIds = new Set(pre);
+    selectedIds = new Set(allQuestions.map((q) => q.id));
 
     // typ startowy z suwaka (0 = ankieta tekstowa to poprawna wartość), opts.type nadpisuje
     const rangeIdx = Number.parseInt(xTypeRange?.value ?? "2", 10);
