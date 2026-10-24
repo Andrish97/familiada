@@ -269,9 +269,11 @@ export async function serveDynamicSitemap(env, ctx) {
 
 export async function buildDynamicSitemap(env) {
   const STATIC_PAGES = [
-    { loc: "https://www.familiada.online/",          lastmod: "2026-03-14", changefreq: "monthly",  priority: "1.0" },
-    { loc: "https://www.familiada.online/marketplace", lastmod: "2026-03-14", changefreq: "weekly",   priority: "0.9" },
-    { loc: "https://www.familiada.online/privacy",    lastmod: "2026-03-14", changefreq: "yearly",   priority: "0.2" },
+    { loc: "https://www.familiada.online/",          lastmod: "2026-10-24", changefreq: "monthly",  priority: "1.0" },
+    { loc: "https://www.familiada.online/?lang=en",  lastmod: "2026-10-24", changefreq: "monthly",  priority: "0.8" },
+    { loc: "https://www.familiada.online/?lang=uk",  lastmod: "2026-10-24", changefreq: "monthly",  priority: "0.8" },
+    { loc: "https://www.familiada.online/marketplace", changefreq: "weekly", priority: "0.9" },
+    { loc: "https://www.familiada.online/privacy", changefreq: "yearly", priority: "0.2" },
   ];
 
   let games = [];
@@ -289,7 +291,7 @@ export async function buildDynamicSitemap(env) {
   const staticUrls = STATIC_PAGES.map(p => `
   <url>
     <loc>${escapeHtml(p.loc)}</loc>
-    <lastmod>${p.lastmod}</lastmod>
+    ${p.lastmod ? `<lastmod>${p.lastmod}</lastmod>` : ""}
     <changefreq>${p.changefreq}</changefreq>
     <priority>${p.priority}</priority>
   </url>`).join("");

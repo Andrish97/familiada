@@ -1,7 +1,8 @@
 // Tłumaczenia EN — część „home”.
 const en = {
   home: {
-    title: "Familiada Online — live game hosting system",
+    title: "Familiada Online — free game, questions and answers",
+    seo: { description: "Free Familiada online: create questions and answers, collect survey responses or choose a ready-made game. Host a game show at a wedding, school or party." },
     nav: {
       label: "Section navigation",
       about: "About",

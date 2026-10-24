@@ -54,6 +54,19 @@ Nie wymaga to przekierowania przeglądarki. Linki aplikacji używają `/nazwa/`.
 ### Nagłówki stron
 Worker dodaje do odpowiedzi HTML (www, apex, settings, nieznane subdomeny; bez usług panel/supabase/api/leads): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, `Content-Security-Policy: frame-ancestors 'self'`, `Permissions-Policy` i `Content-Security-Policy-Report-Only` (lista źródeł w `src/lib/core/security-headers.js`).
 
+Paczka SEO/HTTPS 2026-10-24: CSP Workera dodatkowo obejmuje `object-src 'none'`,
+`base-uri 'self'` i `form-action 'self'`. HTTP na hostach www/apex/admin jest
+przekierowywany 308 na HTTPS przed obsługą sesji i API. Odpowiedzi HTTPS tych
+hostów mają HSTS `max-age=604800` (bez subdomen/preload; istniejąca silniejsza
+polityka jest zachowana). Reguła strefy nadpisująca CSP wymaga zmiany w panelu
+Cloudflare — szczegóły i kolejność publikacji w
+[`docs/seo-bezpieczenstwo-plan.md`](../docs/seo-bezpieczenstwo-plan.md).
+
+Strona główna: Worker tłumaczy HTML, metadane i JSON-LD zgodnie z `?lang=en|uk`
+dla wszystkich odwiedzających. `/` pozostaje wersją PL; canonical i
+Content-Language odpowiadają wersji. Unity: `node --test tests/unit/homeSeo.test.js`;
+test silnika Worker: `cd cloudflare/maintenance-worker && npm ci && npm test`.
+
 ### Cloudflare Access
 Recommended setup:
 - Protect `admin.familiada.online` with Cloudflare Access policy.

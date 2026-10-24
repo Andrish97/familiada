@@ -7,6 +7,12 @@ i jak się nazywa. Strony przestają same składać `?ret=`, `?from=`, etykiety
 
 ## Decyzja 2026-10-17: mapa obejmuje każdą trasę
 
+Paczka SEO/HTTPS 2026-10-24 (`seo-bezpieczenstwo-plan.md`): adresy stron w
+`PAGES` i rozpoznawanie `pageIdForPath` pozostają bez zmian. Transport HTTP
+hostów aplikacji przechodzi na HTTPS (308, zachowuje metodę/ścieżkę/query).
+Istniejące wersje głównej strony z `?lang=en|uk` otrzymują od razu lokalny
+HTML i canonical. `lang` pozostaje wspólnym parametrem, a nie osobną stroną.
+
 Przy dodaniu, usunięciu lub zmianie strony zawsze aktualizujemy `PAGES` oraz
 `pageIdForPath` w tym samym pakiecie. Aktualizujemy też inwentarz tras,
 dokumentację i zależne testy/generatory. Dotyczy to zmian adresu, sesji,

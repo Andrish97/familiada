@@ -45,7 +45,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 test("anonim: pełny render, kontrakt statystyk i bezpieczna obsługa parametrów", async ({ page }) => {
   await openIndex(page, "?lang=pl&next=https%3A%2F%2Fevil.example");
-  await expect(page).toHaveTitle("Familiada Online — system do prowadzenia gry na żywo");
+  await expect(page).toHaveTitle("Familiada Online — darmowa gra, pytania i odpowiedzi");
   await expect(page.locator(".hero-card h1")).toContainText("przygotuj pytania i poprowadź grę");
   await expect(page).toHaveURL(/next=https%3A%2F%2Fevil\.example/);
 
@@ -99,15 +99,26 @@ test("wolny backend nie blokuje strony, a wielokrotne kliknięcie nie duplikuje 
 test("PL/EN/UK: cały zależny interfejs, tytuły, obrazy i linki zmieniają język", async ({ page }) => {
   await openIndex(page);
   const cases = [
-    { lang: "en", title: /live game hosting system/, heading: /prepare questions and run the game/, image: "/assets/img/en/", query: "en" },
-    { lang: "uk", title: /система для проведення гри наживо/, heading: /підготуй питання та проведи гру/, image: "/assets/img/uk/", query: "uk" },
-    { lang: "pl", title: /system do prowadzenia gry na żywo/, heading: /przygotuj pytania i poprowadź grę/, image: "/assets/img/pl/", query: null },
+    { lang: "en", title: /free game, questions and answers/, heading: /prepare questions and run the game/, image: "/assets/img/en/", query: "en" },
+    { lang: "uk", title: /безкоштовна гра, питання та відповіді/, heading: /підготуй питання та проведи гру/, image: "/assets/img/uk/", query: "uk" },
+    { lang: "pl", title: /darmowa gra, pytania i odpowiedzi/, heading: /przygotuj pytania i poprowadź grę/, image: "/assets/img/pl/", query: null },
   ];
 
   for (const item of cases) {
     await page.locator(".lang-btn").click();
     await page.locator(`.lang-option[data-lang="${item.lang}"]`).click();
     await expect(page).toHaveTitle(item.title);
+    const canonical = INDEX_URL + (item.query ? `?lang=${item.query}` : "");
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", await page.title());
+    const schemas = await page.locator('script[data-home-schema]').allTextContents();
+    expect(schemas).toHaveLength(3);
+    for (const raw of schemas) {
+      const schema = JSON.parse(raw);
+      expect(schema.inLanguage).toBe(item.lang);
+      expect(schema.url).toBe(canonical);
+    }
     await expect(page.locator(".hero-card h1")).toContainText(item.heading);
     await expect(page.locator(".shot-img").first()).toHaveAttribute("src", new RegExp(item.image));
     const href = new URL(await page.locator("#ctaStart").getAttribute("href"));

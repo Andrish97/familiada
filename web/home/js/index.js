@@ -8,6 +8,7 @@ import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-24T19
 import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T19071";
 import { manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-24T19071";
 import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T19071";
+import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-24T19071";
 
 
 async function redirectIfSession() {
@@ -73,25 +74,20 @@ function updateInternalLinks() {
   });
 }
 
-function updateStructuredFaq() {
-  const schema = [...document.querySelectorAll('script[type="application/ld+json"]')]
-    .find((node) => {
-      try { return JSON.parse(node.textContent)?.["@type"] === "FAQPage"; }
-      catch { return false; }
-    });
-  if (!schema) return;
-  const mainEntity = [...document.querySelectorAll(".faq-item")].map((item) => ({
-    "@type": "Question",
-    name: item.querySelector(".faq-q")?.textContent?.trim() || "",
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.querySelector(".faq-a")?.textContent?.trim() || "",
-    },
-  })).filter((item) => item.name && item.acceptedAnswer.text);
-  schema.textContent = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity,
+function updateHomeSeo() {
+  const seo = homeSeo(getUiLang(), t);
+  document.title = seo.title;
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", seo.url);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", seo.url);
+  document.querySelector('meta[property="og:locale"]')?.setAttribute("content", seo.locale);
+  const questions = [...document.querySelectorAll(".faq-item")].map((item) => ({
+    q: item.querySelector(".faq-q")?.textContent?.trim() || "",
+    a: item.querySelector(".faq-a")?.textContent?.trim() || "",
+  })).filter((item) => item.q && item.a);
+  const schemas = homeSchemas(seo, t, questions);
+  document.querySelectorAll("script[data-home-schema]").forEach((node) => {
+    const schema = schemas[node.dataset.homeSchema];
+    if (schema) node.textContent = schemaJson(schema);
   });
 }
 
@@ -422,14 +418,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
   applyTranslations();
   updateInternalLinks();
-  updateStructuredFaq();
+  updateHomeSeo();
 
   const lang = getUiLang();
   switchLandingImages(lang);
   window.addEventListener("i18n:lang", (e) => {
     switchLandingImages(e.detail.lang);
     updateInternalLinks();
-    updateStructuredFaq();
+    updateHomeSeo();
     document.querySelectorAll(".tile-shot").forEach((shot) => {
       const title = shot.querySelector(".shot-img")?.alt || "";
       shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));

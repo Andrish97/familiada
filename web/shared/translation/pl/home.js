@@ -1,7 +1,8 @@
 // Tłumaczenia PL — część „home”.
 const pl = {
   home: {
-    title: "Familiada Online — system do prowadzenia gry na żywo",
+    title: "Familiada Online — darmowa gra, pytania i odpowiedzi",
+    seo: { description: "Darmowa Familiada online: twórz pytania i odpowiedzi, zbieraj ankiety lub wybierz gotową grę. Poprowadź teleturniej na weselu, w szkole lub na imprezie." },
     nav: {
       label: "Nawigacja sekcji",
       about: "O systemie",
