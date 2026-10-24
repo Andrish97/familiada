@@ -249,5 +249,6 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
 - **Utwardzenie bazy** (480–482, `docs/utwardzenie-bazy-plan.md`) — zrobione 2026-10-24, testy kontrolne zielone.
 - **Panel admina `settings` → `admin`** (2026-10-24): `admin.familiada.online` (DNS i Access przeniesione przez właściciela; kid Access = `CF_ACCESS_AUD`), katalog `web/admin`, ścieżki `/admin/`, bez przekierowań. Worker, Pages i Lead Finder wdrożone (c1779dfede).
 - Kontrola po `admin` (40050843379): `security-endpoints`, `control-release`, `static-assets-routing` — 15/16 zielone; czerwony `static-assets-routing:71` (CSS ma `max-age=14400` zamiast `600` z Workera) — ustawienie strefy Cloudflare „Browser Cache TTL” (4 h) nadpisuje nagłówek; do zmiany na „Respect Existing Headers” (właściciel), kod bez zmian.
+- `settings`→`admin` — resztki poprawione (README Workera, komentarz, adres w `mobile-sheet-modals`, 17 bieżących dokumentów; dzienniki bez zmian); `.env` Supabase bez `settings.familiada.online` (server.yml 40118333645).
 - **Polityka prywatności** zaktualizowana (PL/EN/UK, krótko — decyzja właściciela: bez rozpisywania): serwer w UE (Contabo), zaszyfrowane kopie 30 dni, Hugging Face, formularz kontaktu i adresy zapraszanych osób, statystyki bez profilowania.
 - **Zostało:** testy TV (`#tvCode` focus); postgres_changes (osobna sesja).
