@@ -16,7 +16,7 @@
 // lub tablet, a w pionie strona się mieści), w innym razie „Za małe okno”
 // (komputer, telewizor albo strona, której obrót nie pomoże, np. próg 980 px).
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-24T16110";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-24T16580";
 
 
 export const PHONE_MAX_SHORT_SIDE = 700;
