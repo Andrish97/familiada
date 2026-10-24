@@ -96,5 +96,21 @@ E2E kodu brancha (1005ac59):
 produkcji. Ostatnia zmiana CSP nie zmieniła frontu; objęta ponownymi
 lokalnymi testami Workera. Nie jest to kontrola nowych nagłówków produkcji.
 
-Stan: użytkownik zatwierdził bezpośredni push na main; wdrożenie i kontrola
-produkcji w toku. PR #123 zastąpiony publikacją bezpośrednią.
+Stan: opublikowane bezpośrednio na main (57589bd, wersje zasobów 0b3fac1).
+[Pages 40131019304](https://github.com/Andrish97/familiada/actions/runs/40131019304)
+i [Worker 40131019369](https://github.com/Andrish97/familiada/actions/runs/40131019369)
+— sukces. Kontrola main po publikacji:
+[40131129663](https://github.com/Andrish97/familiada/actions/runs/40131129663)
+— sukces (strona główna, języki/metadane, spec zabezpieczeń).
+
+Odczyt rzeczywistej produkcji: PL/EN/UK 200, Content-Language i canonical
+zgodne z językiem, po 3 poprawne JSON-LD, HSTS max-age=604800; HTTP www
+przekierowuje 308, HTTPS apex 301 z HSTS. Mapa zawiera 95 adresów, w tym
+wersje językowe i grę dzieci-i-rodzice. Ta gra z UA Googlebot nadal zwraca
+200 i swój canonical. PR #123 automatycznie oznaczony jako scalony.
+
+Pozostaje konfiguracja właściciela w Cloudflare: końcowy CSP nadal
+nadpisany przez regułę strefy, więc nowe cztery dyrektywy nie są jeszcze
+aktywne w nagłówku produkcji. Instrukcję przekazano w rozmowie.
+Nie wybierać operacji Remove dla CSP — usunąć akcję nadpisującą ten
+nagłówek lub wyłączyć regułę, jeśli zawiera tylko tę akcję.

@@ -229,7 +229,7 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
-| 2026-10-24 | SEO/HTTPS — bezpośrednie wdrożenie | Użytkownik: „Pushnij bezpośrednio, instrukcję pokaż tu”. Zatwierdzona publikacja przetestowanych 1005ac59 + 14cc794 bezpośrednio na main; wcześniejsze E2E brancha 40124931948 ✓. | Wdrożenie i kontrola produkcji w toku. |
+| 2026-10-24 | SEO/HTTPS — bezpośrednie wdrożenie | Użytkownik: „Pushnij bezpośrednio, instrukcję pokaż tu”. Zatwierdzona publikacja przetestowanych 1005ac59 + 14cc794 bezpośrednio na main (57589bd, wersje 0b3fac1). Pages 40131019304 ✓, Worker 40131019369 ✓; kontrola main 40131129663 ✓. Odczyt produkcji potwierdza 3 języki HTML/metadanych/JSON-LD, HTTPS 308 i HSTS, mapa 95 URL. | Wdrożone i sprawdzone. CSP nadal nadpisuje reguła strefy — instrukcja dla właściciela w rozmowie i seo-bezpieczenstwo-plan.md. |
 
 | 2026-10-24 | SEO strony głównej i zabezpieczenia WWW — branch `codex/seo-home-security` | Zakres użytkownika: indeksowanie gier, strona główna i bezpieczeństwo; mapa zgłoszona, Google wykrywa strony. Potwierdzono różne odpowiedzi wg UA, HTTP www bez przekierowania i brak HSTS, metadane języków EN/UK w PL. Plan i konfiguracja CSP poza repo: `seo-bezpieczenstwo-plan.md`. Lokalnie punktowe unity (43/43 oraz 41/41, z 7 wspólnymi), i18n 0 nieużywanych, 4/4 testy prawdziwego silnika Worker/HTMLRewriter. Obejrzane 6 zrzutów sceny home (PL/EN/UK, telefon i komputer). E2E brancha 40124931948 ✓ (strona główna, języki/metadane i obecne nagłówki produkcji; commit 1005ac59). Końcowe zachowanie CSP sprawdzone lokalnie: zachowanie źródeł strefy oraz restrykcyjnego default-src, 19/19 unit i 4/4 workerd. Lint no-undef ✓. PR #123. | Bez wdrożenia na produkcję. |
 
