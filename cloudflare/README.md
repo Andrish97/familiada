@@ -67,6 +67,17 @@ dla wszystkich odwiedzających. `/` pozostaje wersją PL; canonical i
 Content-Language odpowiadają wersji. Unity: `node --test tests/unit/homeSeo.test.js`;
 test silnika Worker: `cd cloudflare/maintenance-worker && npm ci && npm test`.
 
+Paczka publicznych dokumentów (`codex/public-pages-seo`, na razie bez wdrożenia):
+`/manual/` oraz `/privacy` (także warianty ze slash i `index.html`) otrzymują
+pełny HTML PL/EN/UK z gotowych modułów treści i słowników. Odczyt dokumentu
+nie wymaga Supabase ani sesji; brak podziału według User-Agent. Wskazówki
+używają tego samego renderera co klient, `?ch=` wybiera rozdział; nieznany
+rozdział daje 404. Canonical/hreflang pomijają kontekst `from`, `ret` i filtry.
+GET/HEAD zwracają zgodne statusy i język. Sitemap zawiera wszystkie publiczne
+rozdziały i wersje językowe prywatności. `/404.html` ma 404/noindex także
+bezpośrednio; samodzielne `/maintenance/` jest noindex, a bramka przerwy
+zachowuje 503/Retry-After. Bez nowego bucketa, bindingu i zmian SSR gier.
+
 ### Cloudflare Access
 Recommended setup:
 - Protect `admin.familiada.online` with Cloudflare Access policy.

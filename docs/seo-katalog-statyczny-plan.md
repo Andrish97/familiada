@@ -247,3 +247,25 @@ nieużywanych kluczy, lint no-undef. Przeglądarka z wyłączonym API: 12
 przypadków PL/EN/UK z JS i bez, nawigacja bez JS oraz telefon bez poziomego
 przewijania. Zrzuty: 36 scen istniejącego interfejsu + 12 bez JS.
 Brak wdrożenia i brak kontroli produkcji tego kodu — zgodnie z poleceniem.
+
+
+Bramka brancha zakończona:
+
+- `9b1121fd5`: implementacja; E2E 40142990874 — pięć przypadków zielonych,
+  dwie nieaktualne asercje (wielkie litery CSS i dosłowny href).
+- `fecff5b44`: zgodność ze starszym szablonem Pages, układ bez JS, poprawione
+  asercje z zachowaniem ich celu; zły rozdział sprawdza rzeczywisty Worker
+  zamiast oczekiwania powrotu do spisu w atrapianym frontendzie.
+  [40143206972](https://github.com/Andrish97/familiada/actions/runs/40143206972)
+  — 3/3 (publiczne języki/metadane, rozdziały, kontekstowy powrót na telefonie).
+- `4bd3c1ed3`: href linków Wstecz/Wskazówki aktualizowany także po zmianie
+  języka, z zachowaniem nowego okna; unity i
+  [40143334514](https://github.com/Andrish97/familiada/actions/runs/40143334514)
+  — 2/2 (bezpieczny powrót `ret`, zamykanie podglądu ilustracji).
+
+Łącznie osiem różnych przypadków E2E zakończonych sukcesem; zielone przypadki
+nie były powtarzane bez zmiany powiązanego kodu. Najnowszy kod publicznych
+stron ponownie: workerd 6/6 + wcześniejsze 4/4 głównej, i18n bez nieużywanych
+kluczy; budowanie `wrangler deploy --dry-run` zakończone bez publikacji
+(267,67 KiB gzip). Drzewo nie zawiera plików testowego podglądu.
+Wszystko pozostaje na branchu; produkcja, baza i katalog są bez zmian.
