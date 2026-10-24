@@ -233,3 +233,13 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
   - blokady/zasoby/bezpieczeństwo (40040924628): `cross-resource-locks`, `guest-duplicate`, `polls`, `resource-copy-send`, `security-endpoints`, `support-modal` — **37 zielonych**; 2 czerwone `tv.spec.js:4` i `:33` — fokus `#tvCode` w przeglądarce (bez bazy i serwera), do osobnego sprawdzenia;
   - wcześniej: Control (`control2:1176/3563`, `control-release`) zielone; automaty `db-migrate`, `deploy-edge` (40039544425, 40039544081) i `maintenance.yml` działają przez konto `deploy`.
 - **Przełączenie zakończone.** Stary serwer: crony wyłączone, dane zostają na kilka dni (powrót: DNS + `old-crons.yml on`). Dalej P7 (klucze gha-install/gha-old, adresy `*2`, stare sekrety, hasła, kopia poza serwerem, podział sekretów, `settings`→`admin`). Lista kontrolna: próba generalna musi obejmować `security-endpoints`, pocztę i porównanie uprawnień (`acl-sync check`).
+
+## P7 — dziennik (2026-10-24)
+
+- **Uprawnienia po odtworzeniu:** po `pg_restore` role `anon`/`authenticated` miały za dużo (domyślne uprawnienia nowej bazy). Naprawione `acl-sync.yml apply` (dokładne ACL ze starej bazy, skróty zgodne); odtwarzanie stosuje `acl.sql` na stałe.
+- **Hak poczty GoTrue (401):** router funkcji wymagał JWT; łatka w `supabase/install.sh` + `FUNCTIONS_VERIFY_JWT_EXCEPT` (podpis Standard Webhooks sprawdza sama funkcja).
+- **Lead Finder** znów tylko z kluczem (Caddy), **Studio** za Access + hasło (basic auth z `DASHBOARD_*`).
+- **Konto `ops`:** klucz automatów `familiada-server` ograniczony (`command=`, tylko `upload`, `psql`, `run ZADANIE TRYB`); klucz usunięty z `andrish97`.
+- **Sprzątanie co noc 04:30** (`housekeeping`): zaszyfrowana kopia (`age`) do R2, 30 dni; Storage w niedziele; czyszczenie `cron.job_run_details` (>7 dni) i `auth.audit_log_entries` (>90 dni); prune Dockera; journald ≤ 500 MB; kontrola dysku, slotów WAL, zdrowia. Pierwszy przebieg: kopia 22 MB w R2, baza 177 MB, dysk 24%.
+- **Portainer:** konto administratora założone przez właściciela (token z logów, tylko Termux), środowisko „local”.
+- **Zostało:** podział sekretów (`functions.env`, `lead-finder.env`); hasło Cockpit (`passwd` — właściciel); utwardzenie bazy z lintów Supabase (osobny etap); `settings`→`admin` (osobny etap); testy TV (`#tvCode` focus); po kilku dniach: wyłączenie starego serwera, usunięcie sekretów `OLD_*`, klucza gha-old i `transfer.yml`; postgres_changes (osobna sesja).
