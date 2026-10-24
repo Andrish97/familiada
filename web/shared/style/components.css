@@ -2661,7 +2661,6 @@
   .sheet-modal-actions[hidden] { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
-  :where(:root[data-sheet]) body.sheet-open .footer { visibility: hidden; }
 
   :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
@@ -2678,9 +2677,9 @@
     /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
     overflow: hidden;
     overflow: clip;
-    animation: sheetScrimIn .28s ease both;
+    animation: sheetScrimIn var(--dur-sheet-in) ease both;
   }
-  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut .24s ease both; }
+  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut var(--dur-sheet-out) ease both; }
 
   :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
     position: relative;
@@ -2705,12 +2704,12 @@
     overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
     overflow: clip;
     transform: translateY(var(--sheet-drag, 0px));
-    animation: sheetUp .34s var(--ease-out) both;
+    animation: sheetUp var(--dur-sheet-in) var(--ease-sheet) both;
     will-change: transform;
   }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
-  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown .24s ease-in both; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown var(--dur-sheet-out) cubic-bezier(.4, 0, 1, 1) both; }
 
   /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
      ekranu, żeby pole i przyciski zostały nad klawiaturą. */
@@ -2918,9 +2917,6 @@
      zachowują „✕”). */
   :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
 
-  /* Kontakt i Prywatność nie należą do widoku arkusza. */
-  :where(:root[data-sheet]) body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
-  :where(:root[data-sheet]) body.sheet-open .contact-footer-entry { display: none; }
 
   /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
   :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }

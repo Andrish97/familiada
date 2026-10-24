@@ -67,11 +67,12 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    border-bottom: 1px solid var(--line);
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: var(--r-md);
     background: var(--surface-1);
+    /* Odstęp do karty z wypustkami jak .bar silnika (layout.css): 12 px. */
+    margin-bottom: 12px;
   }
   .pollBarState{
     display: flex;

@@ -199,6 +199,26 @@ function inspectLayout(opts) {
     add("brak-wygaszenia", el, `${el.clientHeight}/${el.scrollHeight} px`);
   }
 
+  // 4d. Sklejone karty (zgłoszenie 2026-10-24, Ankiety): dwa sąsiednie bloki
+  // z ramką lub tłem stoją w pionie bliżej niż 4 px (bez odstępu silnika).
+  const boxed = (el) => {
+    const st = getComputedStyle(el);
+    if (st.position === "absolute" || st.position === "fixed") return false;
+    const bordered = ["Top", "Bottom", "Left", "Right"].filter((side) => parseFloat(st[`border${side}Width`]) > 0 && st[`border${side}Style`] !== "none").length >= 3;
+    const r = parseFloat(st.borderTopLeftRadius) > 0;
+    return bordered && r;
+  };
+  const boxes = [...root.querySelectorAll("main *")].filter((el) => visible(el) && el.getBoundingClientRect().height > 20 && boxed(el))
+    .map((el) => ({ el, r: el.getBoundingClientRect() }));
+  for (const { el: b, r: rb } of boxes) {
+    for (const { el: a, r: ra } of boxes) {
+      if (a === b || a.contains(b) || b.contains(a)) continue;
+      const gapY = rb.top - ra.bottom;
+      const overlapX = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
+      if (overlapX > 40 && gapY > -1 && gapY < 4) { add("sklejone-karty", b, `${gapY.toFixed(1)} px pod ${label(a)}`); break; }
+    }
+  }
+
   // 4b. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;
