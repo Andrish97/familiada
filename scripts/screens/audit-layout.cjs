@@ -208,14 +208,24 @@ function inspectLayout(opts) {
     const r = parseFloat(st.borderTopLeftRadius) > 0;
     return bordered && r;
   };
-  const boxes = [...root.querySelectorAll("main *")].filter((el) => visible(el) && el.getBoundingClientRect().height > 20 && boxed(el))
+  // Pomija elementy przycięte przez przewijaną listę (częściowo przewinięte).
+  const clippedByScroll = (el) => {
+    const r = el.getBoundingClientRect();
+    for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      if (e.scrollHeight <= e.clientHeight + 1) continue;
+      const c = e.getBoundingClientRect();
+      if (r.top < c.top - 1 || r.bottom > c.bottom + 1) return true;
+    }
+    return false;
+  };
+  const boxes = [...root.querySelectorAll("main *, .overlay:not([hidden]) *")].filter((el) => visible(el) && el.getBoundingClientRect().height > 20 && boxed(el) && !clippedByScroll(el))
     .map((el) => ({ el, r: el.getBoundingClientRect() }));
   for (const { el: b, r: rb } of boxes) {
     for (const { el: a, r: ra } of boxes) {
       if (a === b || a.contains(b) || b.contains(a)) continue;
       const gapY = rb.top - ra.bottom;
       const overlapX = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
-      if (overlapX > 40 && gapY > -1 && gapY < 4) { add("sklejone-karty", b, `${gapY.toFixed(1)} px pod ${label(a)}`); break; }
+      if (overlapX > 40 && gapY > -1 && gapY < 3) { add("sklejone-karty", b, `${gapY.toFixed(1)} px pod ${label(a)}`); break; }
     }
   }
 

@@ -875,7 +875,7 @@
   .gen-game-list-container {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 6px; /* odstęp list silnika (LIST_GAP) */
     margin-top: 12px;
     max-height: 480px;
     overflow-y: auto;

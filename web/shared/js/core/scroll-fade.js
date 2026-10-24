@@ -29,6 +29,7 @@ export const SCROLL_FADE_SELECTOR = [
   ".sheet-modal-body",
   ".uni-body",
   ".uni-modal > .mSub",
+  ".modal-scroll",
   // edytor gry, edycja pytania (Eksplorator), ustawienia gry i Control
   ".listShell",
   "#gsContent",
@@ -50,6 +51,9 @@ export const SCROLL_FADE_SELECTOR = [
   ".mkt-detail-questions",
   ".market-preview-questions",
   "#resultsList",
+  // Wskazówki: treść rozdziału i spis
+  "#manualContent",
+  "#manualToc",
   // Logo: lista czcionek, siatka obrazów
   "#drawFontList",
   ".imgTopGrid",
