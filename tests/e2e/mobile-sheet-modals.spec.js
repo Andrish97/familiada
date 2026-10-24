@@ -931,7 +931,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
    realnym dostępem admina.
 ===================================================================== */
 
-const SETTINGS_URL = "https://www.familiada.online/settings";
+const SETTINGS_URL = "https://www.familiada.online/admin";
 
 async function simulateSheetOpen(page, overlaySelector) {
   await page.evaluate((sel) => {
