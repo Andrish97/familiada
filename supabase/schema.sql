@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tsdylHl6nEiYiJsU59oulgngzWcnAGHpQeINQe6lbMEe5up1Sc1FhWqFjAqwCOG
+\restrict tz5NvKOfcyoXINcPnxETTDC1QphS2YN3udq95zbhFe8mvDGIwcf00rhdwh1cMD2
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -16679,12 +16679,14 @@ CREATE FUNCTION "public"."reset_email_limits"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'extensions', 'pg_temp'
     AS $$
-BEGIN
-    UPDATE "public"."email_providers"
-    SET "rem_worker" = floor("daily_limit" * 0.8),
-        "rem_immediate" = "daily_limit" - floor("daily_limit" * 0.8)
-    WHERE "is_active" = true;
-END;
+declare
+  v_share numeric := coalesce((select queue_share_pct from public.mail_settings where id = 1), 80) / 100.0;
+begin
+  update public.email_providers
+  set rem_worker = floor(daily_limit * v_share),
+      rem_immediate = daily_limit - floor(daily_limit * v_share)
+  where is_active = true;
+end;
 $$;
 
 
@@ -17681,6 +17683,32 @@ BEGIN
   WHERE id = v_id;
   RETURN NULL;
 END;
+$$;
+
+
+--
+-- Name: take_provider_immediate("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."take_provider_immediate"("p_id" "uuid") RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions', 'pg_temp'
+    AS $$
+declare
+  v_pool text;
+begin
+  update public.email_providers
+  set rem_immediate = rem_immediate - 1
+  where id = p_id and rem_immediate > 0
+  returning 'immediate' into v_pool;
+  if v_pool is not null then return v_pool; end if;
+
+  update public.email_providers
+  set rem_worker = rem_worker - 1
+  where id = p_id and rem_worker > 0
+  returning 'worker' into v_pool;
+  return coalesce(v_pool, 'none');
+end;
 $$;
 
 
@@ -18842,6 +18870,8 @@ CREATE TABLE "public"."mail_settings" (
     "batch_max" integer DEFAULT 100 NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "worker_limit" integer DEFAULT 25 NOT NULL,
+    "queue_share_pct" integer DEFAULT 80 NOT NULL,
+    CONSTRAINT "mail_settings_queue_share_pct_range" CHECK ((("queue_share_pct" >= 50) AND ("queue_share_pct" <= 95))),
     CONSTRAINT "mail_settings_singleton" CHECK (("id" = 1))
 );
 
@@ -24754,5 +24784,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tsdylHl6nEiYiJsU59oulgngzWcnAGHpQeINQe6lbMEe5up1Sc1FhWqFjAqwCOG
+\unrestrict tz5NvKOfcyoXINcPnxETTDC1QphS2YN3udq95zbhFe8mvDGIwcf00rhdwh1cMD2
 
