@@ -53,6 +53,10 @@ function instrumentPage(page) {
       console.log(msg.text());
     }
   });
+  // Start wołania RPC: odróżnia „nie wystrzeliło” od „wisi bez odpowiedzi”.
+  page.on("request", (req) => {
+    if (req.url().includes("/rpc/")) console.log("[e2e-diag] rpc-start", new URL(req.url()).pathname.split("/").pop());
+  });
   page.on("response", (res) => {
     if (/\.js(?:\?|$)/.test(res.url()) && (res.headers()["content-type"] || "").includes("text/html")) {
       console.log("[e2e-diag] module returned HTML", res.status(), res.url());
