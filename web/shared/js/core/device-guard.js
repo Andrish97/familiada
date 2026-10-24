@@ -32,6 +32,27 @@ function screenSides() {
 
 const isTouch = () => navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
 
+/** Aktywne pole tekstowe (klawiatura ekranowa na dotyku może być otwarta). */
+export function editableFocused() {
+  if (typeof document === "undefined") return false;
+  const el = document.activeElement;
+  if (!el || el === document.body) return false;
+  if (el.isContentEditable) return true;
+  const tag = String(el.tagName || "").toLowerCase();
+  if (tag === "textarea" || tag === "select") return true;
+  return tag === "input" && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(el.type || "");
+}
+
+// Orientacja z ekranu, nie z okna, gdy klawiatura może być otwarta:
+// klawiatura obniża okno i telefon w pionie wyglądałby na poziomy
+// („Obróć urządzenie” w trakcie pisania, zgłoszenie 2026-10-24).
+function screenOrientation() {
+  const type = window.screen?.orientation?.type;
+  if (type) return type.startsWith("landscape") ? "landscape" : "portrait";
+  const w = window.screen?.width, h = window.screen?.height;
+  return w && h ? (w >= h ? "landscape" : "portrait") : null;
+}
+
 export function getDeviceProfile() {
   const { short, long } = screenSides();
   const hasTouch = isTouch();
@@ -48,7 +69,7 @@ export function getDeviceProfile() {
   const screenHeight = Number(window.screen?.height) || height;
   return {
     formFactor: isTv ? "tv" : touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
-    orientation: width >= height ? "landscape" : "portrait",
+    orientation: (touch && editableFocused() && screenOrientation()) || (width >= height ? "landscape" : "portrait"),
     viewportWidth: width,
     viewportHeight: height,
     screenShortSide: short,
@@ -86,13 +107,7 @@ function phoneGuardState(state, profile) {
 // Klawiatura ekranowa (dotyk + aktywne pole tekstowe) potrafi obniżyć
 // viewport; to nie jest za małe okno, więc wtedy wysokości nie sprawdzamy.
 function virtualKeyboardLikely(profile) {
-  if (!profile.touch || typeof document === "undefined") return false;
-  const el = document.activeElement;
-  if (!el || el === document.body) return false;
-  if (el.isContentEditable) return true;
-  const tag = String(el.tagName || "").toLowerCase();
-  if (tag === "textarea" || tag === "select") return true;
-  return tag === "input" && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(el.type || "");
+  return profile.touch && editableFocused();
 }
 
 /** Poziomy viewport niższy niż próg strony (pion nie ma progu wysokości). */

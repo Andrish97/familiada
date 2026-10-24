@@ -2838,6 +2838,8 @@
   .sheet-modal-actions[hidden] { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
+  /* Klawiatura ekranowa (device-attrs.js): stopka nie zabiera miejsca przy pisaniu. */
+  :where(:root[data-keyboard]) .footer { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
