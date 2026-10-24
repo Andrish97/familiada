@@ -2,6 +2,9 @@
 
 ## Decyzje użytkownika
 
+- 2026-10-24: wypchnąć przetestowane zmiany bezpośrednio na main i pokazać
+  instrukcję Cloudflare w rozmowie; bez oczekiwania na scalenie PR.
+
 - Poprawić wyszukiwalność familiada.online i indeksowanie Gier Społeczności.
 - Zakres obejmuje też stronę główną i ogólną poprawę bezpieczeństwa.
 - Mapa została zgłoszona w Search Console i Google wykrywa wiele stron.
@@ -93,5 +96,5 @@ E2E kodu brancha (1005ac59):
 produkcji. Ostatnia zmiana CSP nie zmieniła frontu; objęta ponownymi
 lokalnymi testami Workera. Nie jest to kontrola nowych nagłówków produkcji.
 
-Stan: [PR #123](https://github.com/Andrish97/familiada/pull/123), gotowy do
-przeglądu; bez wdrożenia na produkcję.
+Stan: użytkownik zatwierdził bezpośredni push na main; wdrożenie i kontrola
+produkcji w toku. PR #123 zastąpiony publikacją bezpośrednią.
