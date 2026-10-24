@@ -60,7 +60,7 @@
   }
 
   /* duży ekran: trzy kolumny (nazwa · e-mail · hasło / wiadomości · ocena · usuń konto) */
-  @media (min-width: 1400px) {
+  @media (min-width: 1281px) {
     .account-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }

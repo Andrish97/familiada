@@ -28,11 +28,9 @@
     .tabs-strip .only-mobile { display: inline; }
     .baseShareLookup .btn .only-desktop { display: none; }
   }
-  @media (max-width: 760px) {
-    /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
-    .topbar-mobile-panel .only-desktop { display: inline; }
-    .topbar-mobile-panel .only-mobile { display: none; }
-  }
+  /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
+  :where(:root[data-compact]) .topbar-mobile-panel .only-desktop { display: inline; }
+  :where(:root[data-compact]) .topbar-mobile-panel .only-mobile { display: none; }
 
   .visually-hidden {
     position: absolute;
@@ -45,7 +43,6 @@
     white-space: nowrap;
     border: 0;
   }
-
 
   /* Rząd elementów (przyciski akcji, narzędzia): jeden odstęp, zawijanie. */
   .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }

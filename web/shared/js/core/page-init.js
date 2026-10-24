@@ -38,8 +38,8 @@ import "./scroll-fade.js?v=v2026-10-24T15503"; // wygaszona krawędź przewijany
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
 // (scalanie w podliczaniu, strzałki rund, kliknięcie w finale, menu w Eksploratorze).
-const TOUCH_ONLY = "(hover: none) and (pointer: coarse)";
-if (globalThis.matchMedia?.(TOUCH_ONLY)?.matches) {
+// Dotyk: data-input na <html> (core/device-attrs.js, pierwszy moduł strony).
+if (globalThis.document?.documentElement?.dataset.input === "touch") {
   globalThis.document?.addEventListener("dragstart", (e) => e.preventDefault(), true);
 }
 

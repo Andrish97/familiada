@@ -15,9 +15,8 @@ import { formatShortcut } from "./platform.js?v=v2026-10-24T15503";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T15503";
 import { renderSelection } from "./render.js?v=v2026-10-24T15503";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-24T15503";
+import { isSheetLayout } from "../../../shared/js/core/device-attrs.js?v=v2026-10-24T15503";
 
-// Ten sam warunek co okna od dołu (SHEET_MQ w modal-sheet.js).
-const SHEET_QUERY = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
 const CLOSE_MS = 230;
 // Palec puszczony po przytrzymaniu daje „klik” bez wciśnięcia w menu —
 // pozycja wykonuje się tylko po wciśnięciu, które zaczęło się w menu
@@ -30,7 +29,8 @@ const SCROLL_GRACE_MS = 250;
 let openedAt = 0;
 let closingTimer = null;
 
-const isSheet = () => window.matchMedia?.(SHEET_QUERY).matches;
+// Ten sam warunek co okna od dołu (data-sheet, core/device-attrs.js).
+const isSheet = () => isSheetLayout();
 const menuEl = () => document.getElementById("contextMenu");
 
 function backdrop() {

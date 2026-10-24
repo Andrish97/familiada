@@ -558,7 +558,7 @@ export function initImageEditor(ctx) {
     if (!grid) return;
     // Obok siebie, chyba że ekran jest wąski albo obraz skrajnie pionowy.
     const veryTall = work && work.h / Math.max(1, work.w) > 2.0;
-    const mode = window.innerWidth < 1120 || veryTall ? "col" : "row";
+    const mode = window.innerWidth <= 980 || veryTall ? "col" : "row";
     grid.classList.toggle("is-row", mode === "row");
     grid.classList.toggle("is-col", mode === "col");
   }

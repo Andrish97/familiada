@@ -306,14 +306,12 @@
       padding-right: calc(14px + env(safe-area-inset-right, 0px));
     }
   }
-  @media (max-width: 760px) {
-    /* BEZ will-change: transform — stała warstwa rozmywała ikony przy powiększeniu. */
-    .topbar { transition: top .18s ease-out, transform .22s ease, opacity .22s ease; }
-    .topbar.is-hidden-mobile {
-      transform: translateY(-110%);
-      opacity: 0;
-      pointer-events: none;
-    }
+  /* BEZ will-change: transform — stała warstwa rozmywała ikony przy powiększeniu. */
+  :where(:root[data-compact]) .topbar { transition: top .18s ease-out, transform .22s ease, opacity .22s ease; }
+  :where(:root[data-compact]) .topbar.is-hidden-mobile {
+    transform: translateY(-110%);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .topbar-layout-4 {
@@ -338,104 +336,100 @@
     max-width: 100%;
   }
   /* Tablety: więcej miejsca dla nawigacji; „Więcej” dopiero, gdy trzeba. */
-  @media (min-width: 761px) and (max-width: 1200px) {
-    .topbar-layout-4 { column-gap: 8px; }
-    .topbar-layout-4 .topbar-section-2 { column-gap: 5px; }
+  @media (max-width: 1280px) {
+    :where(:root:not([data-compact])) .topbar-layout-4 { column-gap: 8px; }
+    :where(:root:not([data-compact])) .topbar-layout-4 .topbar-section-2 { column-gap: 5px; }
   }
 
-  @media (max-width: 760px) {
-    /* Gry mają trzy stany nawigacji (pełny pasek, „Więcej”, hamburger),
-       więc sam rozmiar telefonu nie chowa od razu przycisków. */
-    .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) {
-      grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
-      grid-template-areas: none;
-    }
-    .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section { grid-area: auto; }
-    .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) :is(.topbar-section-2, .topbar-section-4) { display: flex; }
-    .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2 { flex-wrap: nowrap; }
+  /* Gry mają trzy stany nawigacji (pełny pasek, „Więcej”, hamburger),
+     więc sam rozmiar telefonu nie chowa od razu przycisków. */
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) {
+    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+    grid-template-areas: none;
+  }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section { grid-area: auto; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) :is(.topbar-section-2, .topbar-section-4) { display: flex; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2 { flex-wrap: nowrap; }
 
-    .topbar-layout-4 {
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas: "s1 s3";
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      padding-top: max(8px, env(safe-area-inset-top));
-      padding-left: calc(10px + env(safe-area-inset-left, 0px));
-      padding-right: calc(10px + env(safe-area-inset-right, 0px));
-    }
-    .topbar-layout-4 .topbar-section-1 {
-      grid-area: s1;
-      flex-wrap: nowrap;
-      align-items: center;
-      min-width: 0;
-    }
-    .topbar-layout-4 .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
-    .topbar-layout-4 .topbar-section-2,
-    .topbar-layout-4 .topbar-section-4 { display: none; }
-    .topbar-layout-4:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
-    .topbar-layout-4.topbar-mobile-keep-brand .topbar-section-1 .brand {
-      display: block;
-      font-size: 12px;
-      letter-spacing: .1em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .topbar-layout-4 .mobile-primary-back { max-width: 58vw; }
-    .topbar-layout-4 .topbar-menu-toggle { margin-left: 0; }
+  :where(:root[data-compact]) .topbar-layout-4 {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s3";
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-1 {
+    grid-area: s1;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: 0;
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-2,
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-4 { display: none; }
+  :where(:root[data-compact]) .topbar-layout-4:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-mobile-keep-brand .topbar-section-1 .brand {
+    display: block;
+    font-size: 12px;
+    letter-spacing: .1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .mobile-primary-back { max-width: 58vw; }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-menu-toggle { margin-left: 0; }
 
-    /* Tytuł strony w topbarze także na telefonie (body.topbar-title-mobile). */
-    body.topbar-title-mobile .topbar-layout-4 {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      grid-template-areas: "s1 s2 s3";
-    }
-    body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 {
-      grid-area: s2;
-      display: flex;
-      min-width: 0;
-      flex-wrap: nowrap;
-    }
-    body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 .topbar-title {
-      flex: 1 1 auto;
-      gap: 1px;
-    }
-    body.topbar-title-mobile .topbar-title .title {
-      font-size: 13px;
-      letter-spacing: .06em;
-      line-height: 1.2;
-    }
-    body.topbar-title-mobile .topbar-title .subtitle {
-      font-size: 11px;
-      line-height: 1.2;
-    }
+  /* Tytuł strony w topbarze także na telefonie (body.topbar-title-mobile). */
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 {
+    grid-area: s2;
+    display: flex;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 .topbar-title {
+    flex: 1 1 auto;
+    gap: 1px;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-title .title {
+    font-size: 13px;
+    letter-spacing: .06em;
+    line-height: 1.2;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-title .subtitle {
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   /* Tryb hamburgera wymuszony przez kontroler (nawigacja się nie mieści). */
-  @media (min-width: 761px) {
-    .topbar-layout-4.topbar-mobile-forced {
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas: "s1 s3";
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-    }
-    .topbar-layout-4.topbar-mobile-forced .topbar-section-1 { grid-area: s1; flex-wrap: nowrap; min-width: 0; }
-    .topbar-layout-4.topbar-mobile-forced .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
-    .topbar-layout-4.topbar-mobile-forced .topbar-section-2,
-    .topbar-layout-4.topbar-mobile-forced .topbar-section-4 { display: none; }
-    .topbar-layout-4.topbar-mobile-forced:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
-    .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand {
-      display: block; font-size: 12px; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    /* Tytuł strony zostaje jak na telefonie (sekcja 2 ma wtedy tylko tytuł). */
-    body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      grid-template-areas: "s1 s2 s3";
-    }
-    body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced .topbar-section-2 {
-      grid-area: s2; display: flex; min-width: 0; flex-wrap: nowrap;
-    }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s3";
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-1 { grid-area: s1; flex-wrap: nowrap; min-width: 0; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-2,
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-4 { display: none; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand {
+    display: block; font-size: 12px; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Tytuł strony zostaje jak na telefonie (sekcja 2 ma wtedy tylko tytuł). */
+  :where(:root:not([data-compact])) body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  :where(:root:not([data-compact])) body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced .topbar-section-2 {
+    grid-area: s2; display: flex; min-width: 0; flex-wrap: nowrap;
   }
 
   /* Tytuł strony pracy w sekcji 2 topbara (edytory, ankieta). */
@@ -1306,9 +1300,8 @@
 
   .menu-item.is-danger { color: var(--bad-text); }
   /* Dotyk i telefon: cel dotyku 44 px. */
-  @media (max-width: 600px), (pointer: coarse) {
-    .menu-item { min-height: 44px; font-size: 14px; }
-  }
+  :where(:root:is([data-compact], [data-input="touch"])) .menu-item { min-height: 44px; font-size: 14px; }
+
   .ui-select.is-disabled .ui-select-btn {
     opacity: .45;
     cursor: not-allowed;
@@ -1543,7 +1536,6 @@
     z-index: var(--z-toast);
   }
 
-
   /* ── Język, menu topbara (konto, język, hamburger) ────────────── */
   .lang-switcher {
     position: relative;
@@ -1651,134 +1643,128 @@
 
   /* Hamburger: wysuwany panel z przyciskami nawigacji — tylko w trybie
      telefonu (≤760 px) albo wymuszonym przez kontroler (.topbar-mobile-forced). */
-  @media (max-width: 760px) {
-    .topbar-mobile-overlay {
-      position: fixed;
-      top: var(--topbar-h, 60px);
-      left: 0;
-      right: 0;
-      bottom: 0;
-      /* nad każdym oknem na każdej stronie */
-      z-index: var(--z-mobile-menu);
-      background: var(--scrim);
-      display: none;
-      overflow: auto;
-      padding: 10px;
-      padding-left: calc(10px + env(safe-area-inset-left, 0px));
-      padding-right: calc(10px + env(safe-area-inset-right, 0px));
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
-    .topbar-mobile-panel {
-      background: var(--surface-1);
-      --under: var(--surface-1);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
-      padding: 10px;
-      max-width: 560px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: 10px;
-      box-shadow: var(--shadow-menu);
-      max-height: calc(100dvh - var(--topbar-h, 60px) - 20px);
-      overflow: hidden;
-    }
-    .topbar-mobile-mount {
-      display: grid;
-      gap: 10px;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .topbar-mobile-close {
-      justify-self: end;
-      padding: 6px 9px;
-      border-radius: var(--r-sm);
-    }
-    body.topbar-mobile-lock { overflow: hidden; }
+  :where(:root[data-compact]) .topbar-mobile-overlay {
+    position: fixed;
+    top: var(--topbar-h, 60px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* nad każdym oknem na każdej stronie */
+    z-index: var(--z-mobile-menu);
+    background: var(--scrim);
+    display: none;
+    overflow: auto;
+    padding: 10px;
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
-  @media (min-width: 761px) {
-    .topbar-mobile-overlay.topbar-mobile-forced {
-      position: fixed; top: var(--topbar-h, 60px); left: 0; right: 0; bottom: 0; z-index: var(--z-mobile-menu);
-      background: var(--scrim); display: none; overflow: auto; padding: 10px;
-    }
-    .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-panel {
-      background: var(--surface-1); --under: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-md);
-      padding: 10px; max-width: 560px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr);
-      gap: 10px; box-shadow: var(--shadow-menu); max-height: calc(100dvh - var(--topbar-h, 60px) - 20px); overflow: hidden;
-    }
-    .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-mount { display: grid; gap: 10px; overflow: auto; -webkit-overflow-scrolling: touch; }
-    .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-close { justify-self: end; padding: 6px 9px; border-radius: var(--r-sm); }
+  :where(:root[data-compact]) .topbar-mobile-panel {
+    background: var(--surface-1);
+    --under: var(--surface-1);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 10px;
+    max-width: 560px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
+    box-shadow: var(--shadow-menu);
+    max-height: calc(100dvh - var(--topbar-h, 60px) - 20px);
+    overflow: hidden;
   }
+  :where(:root[data-compact]) .topbar-mobile-mount {
+    display: grid;
+    gap: 10px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  :where(:root[data-compact]) .topbar-mobile-close {
+    justify-self: end;
+    padding: 6px 9px;
+    border-radius: var(--r-sm);
+  }
+  :where(:root[data-compact]) body.topbar-mobile-lock { overflow: hidden; }
+
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced {
+    position: fixed; top: var(--topbar-h, 60px); left: 0; right: 0; bottom: 0; z-index: var(--z-mobile-menu);
+    background: var(--scrim); display: none; overflow: auto; padding: 10px;
+  }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-panel {
+    background: var(--surface-1); --under: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 10px; max-width: 560px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px; box-shadow: var(--shadow-menu); max-height: calc(100dvh - var(--topbar-h, 60px) - 20px); overflow: hidden;
+  }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-mount { display: grid; gap: 10px; overflow: auto; -webkit-overflow-scrolling: touch; }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-close { justify-self: end; padding: 6px 9px; border-radius: var(--r-sm); }
+
   /* Otwarcie: tło się rozjaśnia, panel wsuwa się spod topbara. */
-  @media (max-width: 760px) {
-    .topbar-mobile-overlay.is-open { display: block; animation: fade-in var(--dur-base) ease; }
-    .topbar-mobile-overlay.is-open .topbar-mobile-panel { animation: popover-in var(--dur-base) var(--ease-out); }
-  }
-  @media (min-width: 761px) {
-    .topbar-mobile-overlay.topbar-mobile-forced.is-open { display: block; animation: fade-in var(--dur-base) ease; }
-    .topbar-mobile-overlay.topbar-mobile-forced.is-open .topbar-mobile-panel { animation: popover-in var(--dur-base) var(--ease-out); }
-  }
+  :where(:root[data-compact]) .topbar-mobile-overlay.is-open { display: block; animation: fade-in var(--dur-base) ease; }
+  :where(:root[data-compact]) .topbar-mobile-overlay.is-open .topbar-mobile-panel { animation: popover-in var(--dur-base) var(--ease-out); }
+
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced.is-open { display: block; animation: fade-in var(--dur-base) ease; }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced.is-open .topbar-mobile-panel { animation: popover-in var(--dur-base) var(--ease-out); }
+
   @keyframes fade-in { from { opacity: 0; } }
 
-  @media (max-width: 760px) {
-    .topbar-menu-toggle {
-      position: relative;
-      padding: 10px 12px;
-      border-radius: var(--r-md);
-    }
-    .topbar-menu-toggle .badge {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      margin-left: 0;
-      transform: translate(0, 0);
-      pointer-events: none;
-    }
-    .topbar-mobile-tab-group {
-      display: grid;
-      gap: 8px;
-      padding: 0 0 8px;
-      border-bottom: 1px solid var(--line-faint);
-    }
-    .topbar-mobile-tab-group .simple-tabs {
-      margin: 0;
-      display: grid;
-      gap: 8px;
-    }
-    .topbar-mobile-tab-group .simple-tabs .tab {
-      width: 100%;
-      justify-content: flex-start;
-      text-align: left;
-    }
-    .topbar-mobile-group { display: contents; }
-    .topbar-mobile-sep {
-      height: 1px;
-      background: var(--line-faint);
-    }
-    .topbar-mobile-group :is(.btn, .who, .user-btn, .top-status) {
-      width: 100%;
-      justify-content: center;
-    }
-    .topbar-mobile-group .btn {
-      justify-content: flex-start;
-      text-align: left;
-    }
-    .topbar-mobile-group .who:not(.account-btn) {
-      background: transparent;
-      border: 0;
-      padding: 0;
-      border-radius: 0;
-      opacity: .8;
-    }
-    .topbar-mobile-hidden { display: none; }
+  :where(:root[data-compact]) .topbar-menu-toggle {
+    position: relative;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
   }
-  @media (min-width: 761px) {
-    .topbar-mobile-forced .topbar-menu-toggle { position: relative; padding: 10px 12px; border-radius: var(--r-md); }
-    .topbar-mobile-forced .topbar-menu-toggle .badge {
-      position: absolute; top: -6px; right: -6px; margin-left: 0; transform: translate(0, 0); pointer-events: none;
-    }
-    .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-group .btn { justify-content: flex-start; text-align: left; }
+  :where(:root[data-compact]) .topbar-menu-toggle .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    margin-left: 0;
+    transform: translate(0, 0);
+    pointer-events: none;
   }
+  :where(:root[data-compact]) .topbar-mobile-tab-group {
+    display: grid;
+    gap: 8px;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  :where(:root[data-compact]) .topbar-mobile-tab-group .simple-tabs {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+  :where(:root[data-compact]) .topbar-mobile-tab-group .simple-tabs .tab {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  :where(:root[data-compact]) .topbar-mobile-group { display: contents; }
+  :where(:root[data-compact]) .topbar-mobile-sep {
+    height: 1px;
+    background: var(--line-faint);
+  }
+  :where(:root[data-compact]) .topbar-mobile-group :is(.btn, .who, .user-btn, .top-status) {
+    width: 100%;
+    justify-content: center;
+  }
+  :where(:root[data-compact]) .topbar-mobile-group .btn {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  :where(:root[data-compact]) .topbar-mobile-group .who:not(.account-btn) {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    border-radius: 0;
+    opacity: .8;
+  }
+  :where(:root[data-compact]) .topbar-mobile-hidden { display: none; }
+
+  :where(:root:not([data-compact])) .topbar-mobile-forced .topbar-menu-toggle { position: relative; padding: 10px 12px; border-radius: var(--r-md); }
+  :where(:root:not([data-compact])) .topbar-mobile-forced .topbar-menu-toggle .badge {
+    position: absolute; top: -6px; right: -6px; margin-left: 0; transform: translate(0, 0); pointer-events: none;
+  }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-group .btn { justify-content: flex-start; text-align: left; }
+
   /* Ikony w etykietach hamburgera wyrównane razem z tekstem. */
   .topbar-mobile-group .btn {
     display: flex;
@@ -2070,9 +2056,8 @@
   .searchBox--field { height: 40px; padding: 0 6px 0 12px; gap: 8px; width: 100%; }
   .searchBox--field > svg, .searchBox--field > .ico { flex: 0 0 auto; width: 16px; height: 16px; opacity: .6; }
   .searchBox--field .searchText { height: 100%; padding: 0 2px; }
-  @media (max-width: 600px), (hover: none) and (pointer: coarse) {
-    .searchBox--field .searchText { font-size: 16px; } /* iOS nie przybliża */
-  }
+  :where(:root:is([data-compact], [data-input="touch"])) .searchBox--field .searchText { font-size: 16px; } /* iOS nie przybliża */
+
   /* ── Przycisk bez tła (.btn-plain): sama ikona albo tekst w polu, wierszu
      lub pasku — czyszczenie wyszukiwania, rozwijanie drzewa, usuń plik,
      zamknij baner. Przygaszony kolorem, nie opacity (Android: artefakty
@@ -2410,13 +2395,13 @@
   .rowsAct .rowsActIcon { display: inline-flex; width: 16px; height: 16px; }
   .rowsAct .rowsActIcon svg { width: 100%; height: 100%; }
   .rowsAct:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: not-allowed; }
-  @media (max-width: 640px) {
+  @media (max-width: 600px) {
     .rowsNote--desktop { display: none; }
     .rowsNote--mobile { display: block; }
     .rowsAct .rowsActText { display: none; }
     .rowsRow { gap: 10px; padding: 9px 10px; }
   }
-  @media (max-width: 720px) {
+  @media (max-width: 600px) {
     .shareRow--compact .shareRowActions { gap: 4px; align-self: center; }
     .shareRow--compact .shareRowActions .btn { width: 36px; min-width: 36px; min-height: 40px; height: 40px; padding: 4px; }
     .shareRow--compact { gap: 8px; padding: 8px; }
@@ -2661,10 +2646,8 @@
     align-items: stretch;
   }
   .split-panels > [data-split-panel] { margin: 0; min-width: 0; min-height: 0; }
-  @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
-    .tabs-card--split > .tabs-strip { display: flex; }
-    .split-panels { grid-template-columns: minmax(0, 1fr); }
-  }
+  :where(:root[data-compact]) .tabs-card--split > .tabs-strip { display: flex; }
+  :where(:root[data-compact]) .split-panels { grid-template-columns: minmax(0, 1fr); }
 
   /* Podpowiedź (core/tooltips.js) — dawniej osobny tooltips.css ładowany z JS. */
   .app-tooltip {
@@ -2708,11 +2691,9 @@
      zaokrąglenie karty w warstwie page). Karta dzielona — tylko w trybie wąskim. */
   .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .card { border-top-left-radius: 0; }
   .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .card { border-top-right-radius: 0; }
-  @media (max-width: 600px), (max-width: 980px) and (orientation: landscape) {
-    .split-panels > [data-split-panel]:not(.active) { display: none; }
-    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
-    .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
-  }
+  :where(:root[data-compact]) .split-panels > [data-split-panel]:not(.active) { display: none; }
+  :where(:root[data-compact]) .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
+  :where(:root[data-compact]) .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
 
   /* ── Okno od dołu (arkusz) — telefon i tablet dotykowy ──────────
      Rozbudowane okna (.modal--sheet; nie confirm/alert/prompt) wysuwają
@@ -2730,275 +2711,273 @@
   .sheet-modal-head[hidden],
   .sheet-modal-actions[hidden] { display: none; }
 
-  @media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
-    body.sheet-open { overflow: hidden; }
-    body.sheet-open .footer { visibility: hidden; }
+  :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
+  :where(:root[data-sheet]) body.sheet-open .footer { visibility: hidden; }
 
-    body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
+  :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
-    body.sheet-open .overlay.modal--sheet.sheet-active {
-      position: fixed;
-      inset: 0;
-      z-index: var(--z-sheet);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      padding: 0;
-      background: var(--scrim-modal);
-      /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
-      overflow: hidden;
-      overflow: clip;
-      animation: sheetScrimIn .28s ease both;
-    }
-    body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut .24s ease both; }
-
-    .modal--sheet.sheet-active .modal {
-      position: relative;
-      width: 100%;
-      max-width: 760px;
-      height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
-      min-height: 0;
-      max-height: none;
-      margin: 0;
-      border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      background: var(--surface-modal);
-      --under: var(--surface-modal);
-      box-shadow: var(--shadow-sheet);
-      padding: 32px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-      padding-left: calc(16px + env(safe-area-inset-left, 0px));
-      padding-right: calc(16px + env(safe-area-inset-right, 0px));
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
-      overflow: clip;
-      transform: translateY(var(--sheet-drag, 0px));
-      animation: sheetUp .34s var(--ease-out) both;
-      will-change: transform;
-    }
-    .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
-    .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
-    .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown .24s ease-in both; }
-
-    /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
-       ekranu, żeby pole i przyciski zostały nad klawiaturą. */
-    .modal--sheet.sheet-active.sheet-fit .modal {
-      height: auto;
-      min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
-      justify-content: flex-start;
-      max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
-    }
-
-    /* Pasek do przeciągania (zamyka: przeciągnięcie w dół albo stuknięcie). */
-    .sheet-handle {
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 140px; height: 30px;
-      padding: 0; border: 0; background: none;
-      cursor: grab; touch-action: none;
-      display: grid; place-items: center;
-    }
-    .sheet-handle::before {
-      content: "";
-      width: 44px; height: 5px; border-radius: var(--r-pill);
-      background: var(--w-25);
-    }
-    .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
-
-    /* Tablet: niższy panel z bocznymi krawędziami. */
-    @media (min-width: 601px) {
-      .modal--sheet.sheet-active .modal {
-        height: min(88dvh, 920px);
-        border: 1px solid var(--line);
-        border-bottom: 0;
-      }
-    }
-
-    .modal--sheet.sheet-active :is(.sheet-modal-head, .sheet-modal-actions, .sheet-modal-body) {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-head {
-      flex: 0 0 auto;
-      padding-bottom: 12px;
-    }
-    .modal--sheet.sheet-active .sheet-modal-actions {
-      flex: 0 0 auto;
-      padding-bottom: 12px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--line-strong);
-    }
-    /* Tytuł i przyciski w jednym wierszu (fitSheetTop w modal-sheet.js),
-       podpowiedź w drugim wierszu na całą szerokość; jedna linia oddzielająca
-       pod całym paskiem. */
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      column-gap: 12px;
-      row-gap: 8px;
-      flex: 0 0 auto;
-      padding-bottom: 12px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--line-strong);
-    }
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head { display: contents; }
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :first-child {
-      grid-column: 1;
-      grid-row: 1;
-      min-width: 0;
-      margin: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :not(:first-child) {
-      grid-column: 1 / -1;
-      margin: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
-      grid-column: 2;
-      grid-row: 1;
-      padding-bottom: 0;
-      margin-bottom: 0;
-      border-bottom: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) { flex-wrap: nowrap; }
-    .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) > * { flex-shrink: 0; }
-    /* Ciaśniej, żeby przyciski zmieściły się w jednym wierszu: przełącznik
-       dwóch stanów same ikony (opis w title), węższe przyciski. */
-    .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .toggle-slider > .ico + .toggle-label { display: none; }
-    .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions :is(.modal-actions, .uni-foot, .tagsFoot) { gap: 8px; }
-    .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .btn { padding-inline: 10px; }
-    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0; }
-    .modal--sheet.sheet-active .sheet-modal-actions[hidden],
-    .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
-      display: none;
-      padding: 0;
-      margin: 0;
-      border: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-body {
-      flex: 1 1 auto;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* Treść .uni-body jak w wyśrodkowanym oknie (kolumna z odstępem), ale bez
-       własnego przewijania -- przewija się treść okna od dołu. */
-    .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
-      margin-top: 0;
-      flex: 0 0 auto;
-      min-height: auto;
-      overflow: visible;
-    }
-    /* Treść okna od dołu zostaje w miejscu, a przewija się tylko lista:
-       .sheet-fill ma wysokość treści i kurczy się do reszty okna (kolumna;
-       zagnieżdżone .sheet-fill wyznaczają drogę do listy), .sheet-scroll to
-       przewijana lista -- kurczy się pierwsza. Pozostałe elementy na tej drodze
-       mają swoją wysokość. Sekcja udostępniania (.shareSection) w .sheet-fill
-       sama jest wypełnieniem, a jej lista (.shareList--scroll) się przewija. */
-    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .modal--sheet.sheet-active .sheet-modal-body .sheet-fill:not([hidden]),
-    .modal--sheet.sheet-active .sheet-fill > .shareSection:has(> .shareList--scroll):not([hidden]) {
-      display: flex;
-      flex-direction: column;
-      flex: 0 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
-    .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) > :not(.sheet-fill, .sheet-scroll),
-    .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
-    .modal--sheet.sheet-active .sheet-modal-body .sheet-scroll,
-    .modal--sheet.sheet-active .sheet-fill > .shareSection > .shareList--scroll {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* Okno z obrazem (.modal--media, np. podgląd zrzutu): obraz od krawędzi
-       do krawędzi i na całą wysokość treści; nagłówek z marginesem. */
-    .modal--sheet.sheet-active .modal--media {
-      padding-left: env(safe-area-inset-left, 0px);
-      padding-right: env(safe-area-inset-right, 0px);
-    }
-    .modal--sheet.sheet-active .modal--media > .sheet-modal-top { margin-inline: 16px; }
-    .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
-    /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
-       w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
-    .modal--sheet.sheet-active .sheet-modal-body .modal-scroll {
-      flex: 0 0 auto;
-      min-height: auto;
-      max-height: none;
-      overflow: visible;
-    }
-
-    /* Nagłówek okna w arkuszu: jak nagłówek strony („Moje gry”):
-       wersaliki i JEDNA linia pod spodem. Nagłówki rozpoznaje
-       modal-sheet.js (headerSelectors) — ta sama lista tutaj. */
-    .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
-      position: static;
-      border: 0;
-      padding-bottom: 0;
-      margin-bottom: 8px;
-      background: transparent;
-    }
-    .modal--sheet.sheet-active .sheet-modal-head > .mSub {
-      margin: 0;
-      padding: 0;
-    }
-    .modal--sheet.sheet-active .sheet-modal-head > .mTitle {
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-    .modal--sheet.sheet-active .sheet-modal-head:not(:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden]))):not(:has(+ .sheet-modal-actions > .modal-actions > :not([hidden]))) {
-      border-bottom: 1px solid var(--line-strong);
-      margin-bottom: 12px;
-    }
-    .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      border-bottom: 1px solid var(--line-strong);
-      padding-bottom: 14px;
-      margin-bottom: 12px;
-      z-index: var(--z-local);
-    }
-    /* Gdy arkusz ma pasek akcji, jedyny separator jest pod nim. */
-    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle),
-    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
-      border-bottom: 0;
-    }
-    .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) .mTitle {
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-    /* Wyjściem z arkusza jest przycisk w topbarze — „✕” w nagłówku zbędny
-       (tylko .sheet-active: okna z .modal--sheet bez przejęcia „Wstecz”
-       zachowują „✕”). */
-    .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
-
-    /* Kontakt i Prywatność nie należą do widoku arkusza. */
-    body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
-    body.sheet-open .contact-footer-entry { display: none; }
-
-    /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
-       arkusza — zastępuje markę. */
-    body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
-    /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
-    .topbar-sheet-back.sheet-back-active { display: inline-flex; }
-    body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
+  :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet.sheet-active {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0;
+    background: var(--scrim-modal);
+    /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
+    overflow: hidden;
+    overflow: clip;
+    animation: sheetScrimIn .28s ease both;
   }
+  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut .24s ease both; }
+
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: var(--surface-modal);
+    --under: var(--surface-modal);
+    box-shadow: var(--shadow-sheet);
+    padding: 32px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
+    overflow: clip;
+    transform: translateY(var(--sheet-drag, 0px));
+    animation: sheetUp .34s var(--ease-out) both;
+    will-change: transform;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown .24s ease-in both; }
+
+  /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
+     ekranu, żeby pole i przyciski zostały nad klawiaturą. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-fit .modal {
+    height: auto;
+    min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
+    justify-content: flex-start;
+    max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
+  }
+
+  /* Pasek do przeciągania (zamyka: przeciągnięcie w dół albo stuknięcie). */
+  :where(:root[data-sheet]) .sheet-handle {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 140px; height: 30px;
+    padding: 0; border: 0; background: none;
+    cursor: grab; touch-action: none;
+    display: grid; place-items: center;
+  }
+  :where(:root[data-sheet]) .sheet-handle::before {
+    content: "";
+    width: 44px; height: 5px; border-radius: var(--r-pill);
+    background: var(--w-25);
+  }
+  :where(:root[data-sheet]) .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
+
+  /* Tablet: niższy panel z bocznymi krawędziami. */
+  @media (min-width: 601px) {
+    :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
+      height: min(88dvh, 920px);
+      border: 1px solid var(--line);
+      border-bottom: 0;
+    }
+  }
+
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.sheet-modal-head, .sheet-modal-actions, .sheet-modal-body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  /* Tytuł i przyciski w jednym wierszu (fitSheetTop w modal-sheet.js),
+     podpowiedź w drugim wierszu na całą szerokość; jedna linia oddzielająca
+     pod całym paskiem. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 8px;
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head { display: contents; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :not(:first-child) {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
+    grid-column: 2;
+    grid-row: 1;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) { flex-wrap: nowrap; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) > * { flex-shrink: 0; }
+  /* Ciaśniej, żeby przyciski zmieściły się w jednym wierszu: przełącznik
+     dwóch stanów same ikony (opis w title), węższe przyciski. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .toggle-slider > .ico + .toggle-label { display: none; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions :is(.modal-actions, .uni-foot, .tagsFoot) { gap: 8px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .btn { padding-inline: 10px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions[hidden],
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
+    display: none;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Treść .uni-body jak w wyśrodkowanym oknie (kolumna z odstępem), ale bez
+     własnego przewijania -- przewija się treść okna od dołu. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
+    margin-top: 0;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+  /* Treść okna od dołu zostaje w miejscu, a przewija się tylko lista:
+     .sheet-fill ma wysokość treści i kurczy się do reszty okna (kolumna;
+     zagnieżdżone .sheet-fill wyznaczają drogę do listy), .sheet-scroll to
+     przewijana lista -- kurczy się pierwsza. Pozostałe elementy na tej drodze
+     mają swoją wysokość. Sekcja udostępniania (.shareSection) w .sheet-fill
+     sama jest wypełnieniem, a jej lista (.shareList--scroll) się przewija. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .sheet-fill:not([hidden]),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection:has(> .shareList--scroll):not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) > :not(.sheet-fill, .sheet-scroll),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .sheet-scroll,
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection > .shareList--scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Okno z obrazem (.modal--media, np. podgląd zrzutu): obraz od krawędzi
+     do krawędzi i na całą wysokość treści; nagłówek z marginesem. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top { margin-inline: 16px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
+  /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
+     w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .modal-scroll {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Nagłówek okna w arkuszu: jak nagłówek strony („Moje gry”):
+     wersaliki i JEDNA linia pod spodem. Nagłówki rozpoznaje
+     modal-sheet.js (headerSelectors) — ta sama lista tutaj. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    position: static;
+    border: 0;
+    padding-bottom: 0;
+    margin-bottom: 8px;
+    background: transparent;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > .mSub {
+    margin: 0;
+    padding: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > .mTitle {
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:not(:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden]))):not(:has(+ .sheet-modal-actions > .modal-actions > :not([hidden]))) {
+    border-bottom: 1px solid var(--line-strong);
+    margin-bottom: 12px;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-strong);
+    padding-bottom: 14px;
+    margin-bottom: 12px;
+    z-index: var(--z-local);
+  }
+  /* Gdy arkusz ma pasek akcji, jedyny separator jest pod nim. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    border-bottom: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) .mTitle {
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  /* Wyjściem z arkusza jest przycisk w topbarze — „✕” w nagłówku zbędny
+     (tylko .sheet-active: okna z .modal--sheet bez przejęcia „Wstecz”
+     zachowują „✕”). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
+
+  /* Kontakt i Prywatność nie należą do widoku arkusza. */
+  :where(:root[data-sheet]) body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
+  :where(:root[data-sheet]) body.sheet-open .contact-footer-entry { display: none; }
+
+  /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
+     arkusza — zastępuje markę. */
+  :where(:root[data-sheet]) body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
+  /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
+  :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }
+  :where(:root[data-sheet]) body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
 
   /* Szuflada boczna (≤ 980 px): panel z lewej pod topbarem i tło; na
      komputerze panel stoi w układzie strony, a przycisk i tło są ukryte.
@@ -3553,11 +3532,9 @@
     .tabs-strip .only-mobile { display: inline; }
     .baseShareLookup .btn .only-desktop { display: none; }
   }
-  @media (max-width: 760px) {
-    /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
-    .topbar-mobile-panel .only-desktop { display: inline; }
-    .topbar-mobile-panel .only-mobile { display: none; }
-  }
+  /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
+  :where(:root[data-compact]) .topbar-mobile-panel .only-desktop { display: inline; }
+  :where(:root[data-compact]) .topbar-mobile-panel .only-mobile { display: none; }
 
   .visually-hidden {
     position: absolute;
@@ -3570,7 +3547,6 @@
     white-space: nowrap;
     border: 0;
   }
-
 
   /* Rząd elementów (przyciski akcji, narzędzia): jeden odstęp, zawijanie. */
   .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }

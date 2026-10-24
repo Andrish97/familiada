@@ -136,6 +136,28 @@ Dzisiejsze 400/640/720/760/768/900/1100/1120/1200/1366/1400 znikają:
 telefon → `data-device`, układ elementu w kolumnie → `@container`
 (niżej), reszta → najbliższy z trzech progów.
 
+**Realizacja (2026-10-24).** Moduł `web/shared/js/core/device-attrs.js`
+(pierwszy moduł każdej strony na silniku — zapadka `unit/deviceAttrs.test.js`)
+ustawia na `<html>` `data-device`, `data-input`, `data-orientation` z
+`getDeviceProfile()` (`device-guard.js` — jedno źródło) oraz dwa atrybuty
+pochodne, bo dawne zapytania łączyły szerokość z rodzajem urządzenia:
+
+| atrybut | warunek | zastępuje |
+|---|---|---|
+| `data-compact` | telefon albo okno ≤ 600 px | `(max-width:600px), (max-width:980px) and (orientation:landscape)`, topbar telefonu 760/761, karta dzielona (`split-tabs.js`) |
+| `data-sheet` | dotyk (bez TV) albo okno ≤ 600 px | `(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)` — okna od dołu (`modal-sheet.js`), menu Eksploratora |
+| `data-input="touch"` | dotyk | `(pointer: coarse)` w regułach celu dotyku (razem z `data-compact`) |
+
+CSS: reguły z prefiksem `:where(:root[data-…])` — zero specyficzności, kaskada
+jak przy dawnym `@media`. JS: `isCompactLayout()`, `isSheetLayout()`,
+`onDeviceChange(fn)` (zdarzenie `device:change` przy obrocie i zmianie okna).
+Progi szerokości: 640/680/720/768/520 → 600; 900/1100/1120/760 (Control) →
+980; 761–1200 (topbar tabletu) → poza telefonem do 1280; 1400 → 1281.
+Wysokość: 720 (edytor gry, Eksplorator) → 500. Wyjątki — ekrany gry poza
+silnikiem z warstwami: TV 650 (decyzja), Przycisk 340, Prowadzący 280.
+Telefon poziomo dostaje teraz topbar telefonu (dawniej: komputerowy do 760 px
+szerokości), okno komputera 601–760 px — topbar komputera z „Więcej”.
+
 **Zapytania kontenerowe** (`@container`) dla elementów, które stoją w
 kolumnach o różnej szerokości: siatki kafli, formularz pytania (edytor
 i Eksplorator), `.cards2/.twoCol/.qrRow`/podglądy urządzeń w Control,

@@ -1733,7 +1733,7 @@
       border-color: var(--g-60);
     }
   }
-  @media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
+  @media (max-width: 600px) and (orientation: portrait) and (max-height: 500px) {
     .export-modal .xField:has(.xPickList) { min-height: 48px; }
   }
 }

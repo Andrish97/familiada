@@ -10,15 +10,13 @@
   .contacts-invite-row .btn{ flex: 0 0 auto; }
   .contacts-invite-icon{ flex: 0 0 18px; }
   .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
-  @media (max-width: 720px){
+  @media (max-width: 600px){
     .contacts-invite-row{ gap: 8px; }
   }
 
-  @media (max-width: 720px), (max-width: 980px) and (orientation: landscape){
-    .contacts-invite-row #btnInvite{ box-sizing: border-box; width: 40px; min-width: 40px; height: auto; min-height: 0; padding: 0; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; }
-    .contacts-invite-row .contacts-invite-label{ display: none; }
-    .contacts-invite-row .contacts-invite-icon{ display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
-  }
+  :where(:root[data-compact]) .contacts-invite-row #btnInvite { box-sizing: border-box; width: 40px; min-width: 40px; height: auto; min-height: 0; padding: 0; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; }
+  :where(:root[data-compact]) .contacts-invite-row .contacts-invite-label { display: none; }
+  :where(:root[data-compact]) .contacts-invite-row .contacts-invite-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
 
   /* Karta dzielona (silnik: .tabs-card--split, core/split-tabs.js). */
   .contacts-tabs{ margin: 0; }

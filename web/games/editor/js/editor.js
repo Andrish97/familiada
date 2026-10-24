@@ -404,7 +404,7 @@ async function boot() {
   const rightPanel = document.querySelector(".rightPanel");
   const gameName = $("gameName");
 
-  const isMobileLayout = () => window.matchMedia("(max-width:1100px)").matches;
+  const isMobileLayout = () => window.matchMedia("(max-width: 980px)").matches;
   const activeQuestion = () => questions.find((x) => x.id === activeQId) || null;
 
   /* ---------- header ---------- */

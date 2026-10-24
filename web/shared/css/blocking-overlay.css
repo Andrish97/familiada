@@ -57,7 +57,7 @@
   background: linear-gradient(var(--g-10, rgba(255, 234, 166, .10)), var(--g-10, rgba(255, 234, 166, .10))) var(--surface-1, #111827);
   color: var(--accent, #ffeaa6);
 }
-@media (max-width: 520px) {
+@media (max-width: 600px) {
   .blocking-card { padding: 18px; }
   .blocking-actions { align-items: stretch; }
   .blocking-action { flex: 1 1 auto; }

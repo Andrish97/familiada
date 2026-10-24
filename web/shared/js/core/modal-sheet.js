@@ -11,6 +11,7 @@
 
 import { t } from "../../translation/translation.js?v=v2026-10-24T15503";
 import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-24T15503";
+import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-24T15503";
 
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
@@ -50,12 +51,8 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
   });
 }
 
-// Telefon albo tablet dotykowy -- ten sam warunek co w css/base.css
-// („Okno od dołu”).
-const SHEET_MQ = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
-const sheetMql = typeof window !== "undefined" && window.matchMedia
-  ? window.matchMedia(SHEET_MQ)
-  : { matches: false, addEventListener() {}, addListener() {} };
+// Okno od dołu: data-sheet na <html> (core/device-attrs.js — dotyk albo
+// okno do 600 px); ten sam atrybut czyta CSS.
 
 let activeClose = null;
 let activeBack = null;
@@ -166,7 +163,7 @@ export function setModalSheetPage(pageId) {
 }
 
 export function isSheetViewport() {
-  return sheetMql.matches;
+  return isSheetLayout();
 }
 
 // Arkusze mają wspólny szkielet tylko w prezentacji mobilnej: sam nagłówek,
@@ -378,14 +375,17 @@ function applyPresentation(matches) {
   activeOverlay?.classList.toggle("sheet-active", matches);
 }
 
-function onSheetMqChange(e) {
+let sheetWas = typeof document !== "undefined" && isSheetLayout();
+function onSheetLayoutChange({ sheet }) {
+  if (sheet === sheetWas) return;
+  sheetWas = sheet;
   if (!activeClose) return; // żaden sheet modal aktualnie otwarty
-  if (e.matches) prepareSheetLayout(activeOverlay);
+  if (sheet) prepareSheetLayout(activeOverlay);
   else restoreSheetLayout(activeOverlay);
-  applyPresentation(e.matches);
-  if (e.matches) fitSheetTop(activeOverlay);
+  applyPresentation(sheet);
+  if (sheet) fitSheetTop(activeOverlay);
 }
-sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
+if (typeof document !== "undefined") onDeviceChange(onSheetLayoutChange);
 globalThis.addEventListener?.("resize", () => { if (activeClose) fitSheetTop(activeOverlay); });
 
 // overlayEl: element .overlay danego modala.

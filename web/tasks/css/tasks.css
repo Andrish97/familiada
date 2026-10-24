@@ -33,7 +33,7 @@
   .tasks-card .rowsAct{
     min-height: 36px;
   }
-  @media (max-width: 640px){
+  @media (max-width: 600px){
     .tasks-card .rowsAct{
       width: 40px;
       min-width: 40px;
@@ -59,7 +59,7 @@
   }
 
   /* Telefon: krótka treść, bez dat, ograniczona wysokość kafelka. */
-  @media (max-width: 640px){
+  @media (max-width: 600px){
     .tasks-card .rowsRow{ gap: 8px; }
     .tasks-card .rowsAvatar{ width: 30px; height: 30px; }
     .tasks-card .rowsAvatar > svg{ width: 20px; height: 20px; }

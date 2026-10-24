@@ -104,7 +104,7 @@
 
   /* Komputer i tablet poziomo: lewo–prawo (decyzja 2026-10-21) — po lewej
      węższa karta z kodem, po prawej udostępnione urządzenia na całą wysokość. */
-  @media (min-width: 721px) {
+  @media (min-width: 601px) {
     .connect-device-main-card .tasks-scroll {
       display: grid;
       grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);

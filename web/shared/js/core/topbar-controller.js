@@ -1,7 +1,7 @@
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
-//  - Mobile (do 760 px): panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
+//  - Układ telefonu (data-compact: telefon albo okno do 600 px): panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
@@ -10,6 +10,7 @@ import { signOut } from './auth.js?v=v2026-10-24T15503';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-24T15503';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-24T15503';
 import { icon, iconText } from './icons.js?v=v2026-10-24T15503';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-24T15503';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -423,8 +424,8 @@ function initTopbarController() {
 
   const hasOverflowNav = !!document.getElementById('navMore');
   if (hasOverflowNav) topbar.classList.add('topbar-has-overflow-nav');
-  const mobileMq = window.matchMedia('(max-width: 760px)');
-  const useMediaMobileMode = () => mobileMq.matches && !hasOverflowNav;
+  // Układ telefonu: data-compact (core/device-attrs.js), ten sam atrybut co CSS.
+  const useMediaMobileMode = () => isCompactLayout() && !hasOverflowNav;
   const section2Placeholder = document.createComment('topbar-section-2-restore');
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
@@ -645,13 +646,9 @@ function initTopbarController() {
 
   syncMode();
 
-  if (typeof mobileMq.addEventListener === 'function') {
-    mobileMq.addEventListener('change', syncMode);
-  } else {
-    mobileMq.addListener?.(syncMode);
-  }
+  onDeviceChange(syncMode);
 
-  // Na części tabletów obrót ekranu nie zawsze odpala matchMedia "change"
+  // Na części tabletów obrót ekranu nie zawsze odpala zdarzenia zmiany
   // niezawodnie — przyciski zostają wtedy zablokowane w nieaktualnym stanie
   // (schowane, a hamburger też już niewidoczny wg CSS) aż do przeładowania.
   // orientationchange jako dodatkowy, redundantny trigger; opóźnienie, bo
