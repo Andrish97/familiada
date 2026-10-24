@@ -5,19 +5,19 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T21033";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T21033";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T21033";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-24T21033";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T21033";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T21033";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T21033";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-24T21033";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-24T21364";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-24T21364";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-24T21364";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-24T21364";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-24T21364";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-24T21364";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-24T21364";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-24T21364";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-24T21033"),
-  en: () => import("../content/en.js?v=v2026-10-24T21033"),
-  uk: () => import("../content/uk.js?v=v2026-10-24T21033"),
+  pl: () => import("../content/pl.js?v=v2026-10-24T21364"),
+  en: () => import("../content/en.js?v=v2026-10-24T21364"),
+  uk: () => import("../content/uk.js?v=v2026-10-24T21364"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
