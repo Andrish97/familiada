@@ -1,8 +1,8 @@
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T20560";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T20560";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T20560";
-import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20560";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21033";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T21033";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21033";
+import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T21033";
 
 
 let games = [];
@@ -946,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-24T20560';
+    a.download = 'przykladowa-gra.json?v=v2026-10-24T21033';
 
     document.body.appendChild(a);
     a.click();
