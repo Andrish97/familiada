@@ -5,23 +5,17 @@
   "sharedDuplicate": 1
  },
  "web/admin/css/settings.css": {
-  "colorLiteral": 68,
+  "colorLiteral": 100,
   "mediaWidth": 5,
   "zIndexLiteral": 16,
   "sharedDuplicate": 6,
   "unusedClass": 14
  },
- "web/admin/index.html": {
-  "inlineStyleHtml": 135
- },
- "web/admin/js/admin-pwa.js": {
-  "inlineStyleJs": 1
- },
  "web/admin/js/generator.js": {
-  "inlineStyleJs": 33
+  "inlineStyleJs": 21
  },
  "web/admin/js/settings.js": {
-  "inlineStyleJs": 283
+  "inlineStyleJs": 17
  },
  "web/admin/tools/editor_5x7.html": {
   "inlineStyleHtml": 11,
@@ -330,7 +324,7 @@
   "mediaWidth": 14,
   "zIndexLiteral": 6,
   "sharedDuplicate": 277,
-  "unusedClass": 7
+  "unusedClass": 6
  },
  "web/shared/style/layout.css": {
   "zIndexLiteral": 1,
@@ -339,7 +333,7 @@
  "web/shared/style/utilities.css": {
   "mediaWidth": 1,
   "sharedDuplicate": 14,
-  "unusedClass": 2
+  "unusedClass": 1
  },
  "web/shared/vendor/fabric.min.js": {
   "inlineStyleJs": 16

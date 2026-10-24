@@ -42,8 +42,8 @@
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
     <div class="topbar-section topbar-section-1">
       <!-- Mobile mail nav — replaces brand when in reports panel on mobile -->
-      <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
-        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none" aria-label="Wstecz"><i class="ico" data-icon="arrow-left"></i></button>
+      <div class="mail-nav-topbar" id="mailNavTopbar" hidden>
+        <button class="btn sm" id="btnMailBackTopbar" type="button" hidden aria-label="Wstecz"><i class="ico" data-icon="arrow-left"></i></button>
         <button class="btn sm gold" id="btnMailComposeTopbar" type="button" aria-label="Napisz wiadomość"><i class="ico" data-icon="edit-paper"></i></button>
       </div>
       <div class="brand" id="settingsBrand">FAMILIADA</div>
@@ -71,7 +71,7 @@
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn icon" id="btnInstallAdmin" type="button" style="display:none" title="Zainstaluj panel admina" aria-label="Zainstaluj panel admina"><i class="ico" data-icon="download"></i></button>
+      <button class="btn icon" id="btnInstallAdmin" type="button" hidden title="Zainstaluj panel admina" aria-label="Zainstaluj panel admina"><i class="ico" data-icon="download"></i></button>
     </div>
     <div class="topbar-section topbar-section-4">
       <button class="btn sm" id="btnLogout" type="button" data-topbar-auth-ready="1">Wyloguj Access</button>
@@ -151,35 +151,35 @@
             <span class="mode-status-value" id="modeStatusValue">—</span>
           </div>
 
-          <div class="field" style="margin-top:16px">
+          <div class="field maint-std-field">
             <label class="cb-label">
               <input type="checkbox" id="maintenanceUseStandardText" checked />
               <span class="cb-text">Standardowy tekst dla każdego z trybów</span>
             </label>
           </div>
 
-          <div class="field" id="maintenanceCustomCommentWrap" style="margin-top:12px" hidden>
+          <div class="field maint-comment-field" id="maintenanceCustomCommentWrap" hidden>
             <span class="field-label field-title">Własny komentarz</span>
             
-            <div class="lang-field" style="margin-top:8px">
+            <div class="lang-field">
               <div class="lang-field-label">Polski (PL)</div>
-              <textarea class="inp" id="maintenanceCustomCommentPl" rows="2" placeholder="Dodatkowa informacja dla użytkowników..." style="resize:vertical"></textarea>
+              <textarea class="inp" id="maintenanceCustomCommentPl" rows="2" placeholder="Dodatkowa informacja dla użytkowników..."></textarea>
             </div>
             
-            <div class="lang-field" style="margin-top:8px">
+            <div class="lang-field">
               <div class="lang-field-label">English (EN)</div>
-              <textarea class="inp" id="maintenanceCustomCommentEn" rows="2" placeholder="Additional information for users..." style="resize:vertical"></textarea>
+              <textarea class="inp" id="maintenanceCustomCommentEn" rows="2" placeholder="Additional information for users..."></textarea>
             </div>
             
-            <div class="lang-field" style="margin-top:8px">
+            <div class="lang-field">
               <div class="lang-field-label">Українська (UK)</div>
-              <textarea class="inp" id="maintenanceCustomCommentUk" rows="2" placeholder="Додаткова інформація для користувачів..." style="resize:vertical"></textarea>
+              <textarea class="inp" id="maintenanceCustomCommentUk" rows="2" placeholder="Додаткова інформація для користувачів..."></textarea>
             </div>
             
-            <span class="hint" style="margin-top:8px">Użyj #timer, aby wstawić odliczanie/czas powrotu.</span>
+            <span class="hint maint-timer-hint">Użyj #timer, aby wstawić odliczanie/czas powrotu.</span>
           </div>
 
-          <div class="field" style="margin-top:12px">
+          <div class="field maint-preview-field">
             <button class="btn sm" id="btnMaintenancePreview" type="button"><i class="ico" data-icon="eye"></i> Podgląd strony maintenance</button>
           </div>
         </div>
@@ -271,7 +271,7 @@
               <button class="btn sm" id="btnMailReloadSettings" type="button">Odśwież</button>
             </div>
 
-            <div class="panel-status" style="margin-top:12px">
+            <div class="panel-status mail-cron-status">
               <span class="status-label">Cron</span>
               <span class="status-value" id="mailSettingsStatus">—</span>
             </div>
@@ -399,16 +399,16 @@
           <div class="panel-sub">Moderacja zgłoszeń i gry producenta</div>
         </div>
 
-        <div class="field" style="margin:12px 0 16px">
+        <div class="field market-telegram-field">
           <label class="field-label">Powiadomienia push — Telegram</label>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div class="cluster">
             <button class="btn sm" id="btnTelegramTest" type="button">Wyślij test</button>
             <span class="hint" id="telegramStatus"></span>
           </div>
           <div class="hint">Token i Chat ID skonfigurowane jako Worker secrets (<code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>).</div>
         </div>
 
-        <div class="mail-controls" style="margin-bottom:12px">
+        <div class="mail-controls panel-controls">
           <button class="btn sm is-active" id="mktTabPending" type="button"><span>Do zatwierdzenia</span><span class="badge" id="badgeMarketPending" aria-hidden="true"></span></button>
           <button class="btn sm" id="mktTabPublished" type="button">Opublikowane</button>
           <button class="btn sm" id="mktTabRejected" type="button">Odrzucone</button>
@@ -443,10 +443,10 @@
             <div class="panel-sub">Generowanie i zarządzanie grami producenta</div>
           </div>
           <div class="settings-card-title">Sesja</div>
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-            <div class="field" style="flex:1;min-width:120px">
+          <div class="cluster gen-session-row">
+            <div class="field gen-lang-field">
               <label class="field-label">Język</label>
-              <div class="ui-select" id="gen-manage-lang" style="width:100%">
+              <div class="ui-select gen-lang-select" id="gen-manage-lang">
                 <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">—</span>
                   <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
@@ -455,20 +455,14 @@
               </div>
             </div>
             <button class="btn sm" id="gen-load-btn">Wczytaj</button>
-            <span id="gen-groq-counter" style="display:none;font-size:11px;color:var(--muted);margin-left:4px"></span>
-          </div>
-          <div class="pending-bar" id="gen-pending-bar" style="display:none">
-            <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="gen-pending-count"></span>
-            <button class="btn sm" id="gen-clear-pending-btn">Cofnij</button>
-            <button class="btn sm danger" id="gen-save-btn"><i class="ico" data-icon="save"></i> Zapisz zmiany</button>
           </div>
           <div class="status-bar" id="gen-session-status"></div>
         </div>
 
         <!-- Manage existing -->
-        <div class="card card--inset settings-card" id="gen-manage-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-manage-card" hidden>
           <div class="settings-card-title">Gry w katalogu Gry Społeczności</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+          <div class="cluster gen-scan-row">
             <button class="btn sm btn-blue" id="gen-scan-btn" disabled><i class="ico" data-icon="search"></i> Skanuj</button>
           </div>
           <div class="bulk-bar" id="gen-bulk-bar">
@@ -479,70 +473,70 @@
             <button class="btn sm danger" id="gen-delete-sel-btn"><i class="ico" data-icon="trash"></i> Usuń zaznaczone</button>
           </div>
           <div id="gen-game-list" class="gen-game-list-container">
-            <div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div>
+            <div class="gen-list-empty">Wczytaj listę aby zobaczyć gry</div>
           </div>
           <div class="status-bar" id="gen-manage-status"></div>
         </div>
 
         <!-- Import -->
-        <div class="card card--inset settings-card" id="gen-import-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-import-card" hidden>
           <div class="settings-card-title">Import gier z JSON</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <label class="btn sm" style="cursor:pointer">
+          <div class="cluster">
+            <label class="btn sm">
               Wybierz pliki JSON
-              <input type="file" id="gen-import-file" accept=".json" multiple style="display:none">
+              <input type="file" id="gen-import-file" accept=".json" multiple hidden>
             </label>
             <button class="btn sm" id="gen-import-example-btn" type="button">Pobierz przykładowy</button>
-            <span style="font-size:12px;opacity:.5">lub wklej JSON poniżej</span>
+            <span class="gen-note">lub wklej JSON poniżej</span>
           </div>
-          <textarea id="gen-import-paste" class="inp" rows="5" style="width:100%;box-sizing:border-box" placeholder='[{"title":"...","lang":"pl","description":"...","payload":{"questions":[...]}}]  lub pojedynczy obiekt'></textarea>
-          <div style="display:flex;gap:8px;align-items:center">
+          <textarea id="gen-import-paste" class="inp" rows="5" placeholder='[{"title":"...","lang":"pl","description":"...","payload":{"questions":[...]}}]  lub pojedynczy obiekt'></textarea>
+          <div class="cluster">
             <button class="btn sm gold" id="gen-import-btn">Importuj</button>
             <span class="status-bar" id="gen-import-status"></span>
           </div>
         </div>
 
         <!-- Generate -->
-        <div class="card card--inset settings-card" id="gen-input-card" style="display:none">
+        <div class="card card--inset settings-card" id="gen-input-card" hidden>
           <div class="settings-card-title">Kolejka generowania gier</div>
-          <div style="margin-bottom:12px">
+          <div class="gen-count-row">
             <div class="field">
               <label class="field-label">Liczba gier</label>
               <input type="number" id="gen-count" value="5" min="1" max="100">
             </div>
           </div>
-          <div class="field" style="margin-bottom:10px">
+          <div class="field gen-topic-field">
             <label class="field-label">Temat (opcjonalnie)</label>
             <textarea id="gen-topic" placeholder="Zostaw puste = AI dobierze unikalne tematy…" class="inp"></textarea>
           </div>
           <div class="tip">Nowe gry zostaną dodane do kolejki i wygenerowane w tle. Po zakończeniu pojawią się w Grach Społeczności.</div>
-          <div id="gen-queue-status" style="margin-top:10px"></div>
+          <div id="gen-queue-status" class="gen-queue-status"></div>
         </div>
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn gold" id="gen-enqueue-btn" style="display:none;flex:1">
+        <div class="cluster">
+          <button class="btn gold grow" id="gen-enqueue-btn" hidden>
             <i class="ico" data-icon="play"></i>
             Dodaj do kolejki generowania
           </button>
-          <button class="btn sm danger" id="gen-cancel-btn" style="display:none"><i class="ico" data-icon="cancel"></i> Anuluj generowanie</button>
+          <button class="btn sm danger" id="gen-cancel-btn" hidden><i class="ico" data-icon="cancel"></i> Anuluj generowanie</button>
         </div>
 
         <!-- Generated results -->
-        <div class="card card--inset settings-card" id="gen-results-section" style="display:none;margin-top:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
-            <div class="settings-card-title" style="margin-bottom:0">Wygenerowane gry</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span id="gen-results-counter" style="font-size:12px;color:var(--muted)"></span>
+        <div class="card card--inset settings-card" id="gen-results-section" hidden>
+          <div class="cluster between gen-results-head">
+            <div class="settings-card-title">Wygenerowane gry</div>
+            <div class="cluster">
+              <span id="gen-results-counter" class="text-sm text-muted"></span>
               <div class="progress gen-progress"><div class="progress-bar" id="gen-progress-fill"></div></div>
             </div>
           </div>
           <div id="gen-results-list"></div>
-          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-green" id="gen-push-approved-btn" style="flex:1;min-width:180px" disabled>
+          <div class="cluster gen-results-actions">
+            <button class="btn btn-green gen-push-btn" id="gen-push-approved-btn" disabled>
               <i class="ico" data-icon="envelope-out"></i>
               Dodaj zatwierdzone do listy
             </button>
-            <button class="btn sm" id="gen-approve-all-btn" style="font-size:13px;padding:10px 16px">Zatwierdź wszystkie</button>
+            <button class="btn" id="gen-approve-all-btn">Zatwierdź wszystkie</button>
           </div>
           <div class="status-bar" id="gen-push-status"></div>
         </div>
@@ -554,7 +548,7 @@
 
           <!-- Sidebar -->
           <div class="mail-sidebar">
-            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px"><i class="ico" data-icon="edit-paper"></i> <span>Napisz wiadomość</span></button>
+            <button class="btn gold sm mail-compose-btn" id="btnMailCompose" type="button"><i class="ico" data-icon="edit-paper"></i> <span>Napisz wiadomość</span></button>
             <nav class="mail-folders">
               <div class="mail-folder active" data-folder="inbox" id="mfInbox">
                 <span class="mail-folder-icon"><i class="ico" data-icon="envelope-in"></i></span>
@@ -593,8 +587,8 @@
           <!-- Conversation / Compose pane -->
           <div class="mail-conv" id="mailConv">
             <div class="mail-conv-placeholder" id="mailConvPlaceholder">
-              <div style="font-size:48px;margin-bottom:12px;opacity:.3"><i class="ico" data-icon="envelope"></i></div>
-              <div style="opacity:.4;font-size:13px">Wybierz wątek</div>
+              <div class="mail-conv-placeholder-icon"><i class="ico" data-icon="envelope"></i></div>
+              <div class="mail-conv-placeholder-text">Wybierz wątek</div>
             </div>
           </div>
         </div>
@@ -608,18 +602,18 @@
             <div class="panel-sub">Co użytkownicy myślą o systemie</div>
           </div>
           
-          <div class="mail-controls" style="margin-bottom:12px">
+          <div class="mail-controls panel-controls">
             <button class="btn sm" id="btnRatingsRefresh" type="button">Odśwież</button>
-            <div id="ratingsGlobalStats" style="font-weight: 900; color: var(--gold); margin-left: 12px; display: inline-flex; align-items: center; gap: 10px;"></div>
+            <div id="ratingsGlobalStats" class="ratings-global-stats"></div>
           </div>
 
           <div class="mail-table-wrap">
             <table class="mail-table">
               <thead>
                 <tr>
-                  <th style="width: 150px">Data</th>
-                  <th style="width: 180px">Użytkownik</th>
-                  <th style="width: 120px">Gwiazdki</th>
+                  <th class="rt-col-date">Data</th>
+                  <th class="rt-col-user">Użytkownik</th>
+                  <th class="rt-col-stars">Gwiazdki</th>
                   <th>Komentarz</th>
                 </tr>
               </thead>
@@ -662,7 +656,7 @@
           </div>
           
 
-          <div class="mail-controls" style="margin-bottom:12px">
+          <div class="mail-controls panel-controls">
             <button class="btn sm" id="btnStatsRefresh" type="button">Odśwież</button>
           </div>
 
@@ -747,26 +741,26 @@
             <div class="stats-inner-grid">
               <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Lejek (osoby: unikalne przeglądarki)</div>
-                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <table class="stats-table">
                   <tbody id="snakeFunnel">
-                    <tr><td colspan="4" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
+                    <tr><td colspan="4" class="stats-loading">Ładowanie…</td></tr>
                   </tbody>
                 </table>
                 <div class="stat-sub dim" id="snakeScores">Najlepszy wynik: — | Średni: —</div>
               </div>
               <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Najlepsi gracze z kontem</div>
-                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <table class="stats-table">
                   <tbody id="snakeTop">
-                    <tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
+                    <tr><td colspan="3" class="stats-loading">Ładowanie…</td></tr>
                   </tbody>
                 </table>
               </div>
             </div>
             <div class="card card--inset stats-inner-card">
               <div class="stats-inner-label">Skany i gry — ostatnie 14 dni</div>
-              <div id="snakeTrend" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
-              <div id="snakeTrendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
+              <div id="snakeTrend" class="stats-trend"></div>
+              <div id="snakeTrendLabels" class="stats-trend-labels"></div>
             </div>
           </div>
 
@@ -776,23 +770,23 @@
             <div class="stats-inner-grid">
               <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Lejek &amp; Retencja</div>
-                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <table class="stats-table">
                   <tbody id="retentionTable">
-                    <tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
+                    <tr><td colspan="3" class="stats-loading">Ładowanie…</td></tr>
                   </tbody>
                 </table>
               </div>
               <div class="card card--inset stats-inner-card">
                 <div class="stats-inner-label">Segmenty użytkowników</div>
-                <div id="segmentBars" style="display:flex;flex-direction:column;gap:10px">
-                  <div style="opacity:.4;font-size:12px">Ładowanie…</div>
+                <div id="segmentBars" class="stats-segments">
+                  <div class="stats-loading">Ładowanie…</div>
                 </div>
               </div>
             </div>
             <div class="card card--inset stats-inner-card">
               <div class="stats-inner-label">Nowi użytkownicy — ostatnie 14 dni</div>
-              <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
-              <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
+              <div id="trendChart" class="stats-trend"></div>
+              <div id="trendLabels" class="stats-trend-labels"></div>
             </div>
             <div class="card card--inset stats-inner-card" id="activityHistory">
               <div class="stats-inner-label">Aktywni użytkownicy</div>
@@ -811,18 +805,18 @@
           <div class="stats-section">
             <div class="stats-section-label">Wykluczenia ze statystyk</div>
             <div class="card card--inset stats-inner-card">
-              <div style="display:flex;gap:8px;margin-bottom:14px">
-                <input class="inp" id="excludeUsernameInput" type="text" placeholder="Nazwa użytkownika…" style="flex:1"/>
+              <div class="stats-exclude-row">
+                <input class="inp grow" id="excludeUsernameInput" type="text" placeholder="Nazwa użytkownika…"/>
                 <button class="btn sm gold" id="btnExcludeAdd" type="button">Wyklucz</button>
               </div>
-              <div id="excludeMsg" style="font-size:12px;margin-bottom:10px;min-height:16px"></div>
-              <div id="excludedList" style="display:flex;flex-direction:column;gap:6px">
-                <div style="opacity:.4;font-size:12px">Ładowanie…</div>
+              <div id="excludeMsg" class="stats-exclude-msg"></div>
+              <div id="excludedList" class="stats-excluded-list">
+                <div class="stats-loading">Ładowanie…</div>
               </div>
             </div>
           </div>
 
-          <div class="hint" id="statsUpdateTs" style="margin-top:20px;text-align:right">Ostatnia aktualizacja: —</div>
+          <div class="hint stats-updated" id="statsUpdateTs">Ostatnia aktualizacja: —</div>
         </div>
       </div>
 
@@ -837,7 +831,7 @@
           <!-- Szablon -->
           <div class="field">
             <label class="field-label">Szablon</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="mktTemplateButtons">
+            <div class="cluster" id="mktTemplateButtons">
               <button class="btn sm is-active" type="button" data-tpl="invitation">Zaproszenie do systemu</button>
               <button class="btn sm" type="button" data-tpl="newsletter">Newsletter</button>
               <button class="btn sm" type="button" data-tpl="custom">Autorska</button>
@@ -847,56 +841,56 @@
           <!-- Temat -->
           <div class="field">
             <label class="field-label" for="mktSubject">Temat wiadomości</label>
-            <input class="inp" id="mktSubject" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" placeholder="Temat…">
-            <span class="hint" id="mktSubjectHint" style="font-size:11px;opacity:.5"></span>
+            <input class="inp" id="mktSubject" type="text" autocomplete="off" placeholder="Temat…">
+            <span class="hint mkt-note" id="mktSubjectHint"></span>
           </div>
 
           <!-- Treść (widoczna dla newsletter/custom) -->
           <div class="field" id="mktBodyWrap">
             <label class="field-label" for="mktBody">Treść wiadomości</label>
-            <div id="mktBody" style="min-height:300px"></div>
+            <div id="mktBody" class="mkt-mail-body"></div>
           </div>
 
           <!-- Podgląd HTML -->
-          <div class="field" id="mktPreviewWrap" style="display:none">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-              <label class="field-label" style="margin:0">Podgląd e-maila</label>
+          <div class="field" id="mktPreviewWrap" hidden>
+            <div class="mkt-field-head">
+              <label class="field-label">Podgląd e-maila</label>
               <button class="btn sm" type="button" id="btnMktPreview">Odśwież podgląd</button>
             </div>
-            <iframe id="mktPreviewFrame" style="width:100%;min-height:420px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914"></iframe>
+            <iframe id="mktPreviewFrame" class="mail-preview-frame mkt-preview-frame"></iframe>
           </div>
-          <div style="margin-bottom:12px">
+          <div class="mkt-preview-toggle">
             <button class="btn sm" type="button" id="btnMktTogglePreview">Pokaż podgląd</button>
           </div>
 
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:8px 0 16px">
+          <hr class="mkt-sep">
 
           <!-- Odbiorcy -->
           <div class="field">
             <label class="field-label">Odbiorcy</label>
-            <span class="hint" style="display:block;margin-bottom:6px">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
-            <textarea class="inp" id="mktEmailInput" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
-              <input type="file" id="mktFileInput" accept=".txt,.csv" style="display:none">
-              <label for="mktFileInput" class="btn sm" style="cursor:pointer">Wczytaj z pliku</label>
+            <span class="hint mkt-recipients-hint">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
+            <textarea class="inp" id="mktEmailInput" rows="4" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
+            <div class="cluster mkt-file-row">
+              <input type="file" id="mktFileInput" accept=".txt,.csv" hidden>
+              <label for="mktFileInput" class="btn sm">Wczytaj z pliku</label>
               <button class="btn sm" type="button" id="btnMktParseEmails">Waliduj listę</button>
-              <span id="mktEmailCount" style="font-size:12px;opacity:.5"></span>
+              <span id="mktEmailCount" class="mkt-email-count"></span>
             </div>
           </div>
 
           <!-- Lista zwalidowanych adresów -->
-          <div id="mktEmailListWrap" style="display:none">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-              <label class="field-label" style="margin:0">Zwalidowana lista</label>
+          <div id="mktEmailListWrap" hidden>
+            <div class="mkt-field-head">
+              <label class="field-label">Zwalidowana lista</label>
               <button class="btn sm" type="button" id="btnMktClearList">Wyczyść</button>
             </div>
-            <div id="mktEmailList" style="max-height:180px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.7;word-break:break-all;background:rgba(0,0,0,.2)"></div>
-            <div id="mktEmailStats" style="margin-top:6px;font-size:11px;opacity:.5"></div>
+            <div id="mktEmailList" class="mkt-email-list"></div>
+            <div id="mktEmailStats" class="mkt-email-stats"></div>
           </div>
 
           <!-- Send -->
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
-            <span id="mktSendStatus" style="font-size:12px;opacity:.6"></span>
+          <div class="cluster cluster--end mkt-send-row">
+            <span id="mktSendStatus" class="mkt-send-status"></span>
             <button class="btn sm gold" type="button" id="btnMktSend">Wyślij do odbiorców</button>
           </div>
         </div>
@@ -914,9 +908,9 @@
           <div class="mc-controls">
             <div class="mc-field-inline">
               <label for="mcTargetCount">Ilość kontaktów:</label>
-              <input class="inp" id="mcTargetCount" type="number" min="1" max="500" value="50" style="width:80px">
+              <input class="inp mc-target-count" id="mcTargetCount" type="number" min="1" max="500" value="50">
               <button class="btn sm gold" id="mcActionBtn" type="button"><i class="ico" data-icon="play"></i> Uruchom</button>
-              <button class="btn sm danger" id="mcCancelBtn" type="button" style="display:none"><i class="ico" data-icon="cancel"></i> Anuluj</button>
+              <button class="btn sm danger" id="mcCancelBtn" type="button" hidden><i class="ico" data-icon="cancel"></i> Anuluj</button>
               <button class="btn sm" id="mcRefreshBtn" type="button"><i class="ico" data-icon="refresh"></i> Odśwież</button>
             </div>
           </div>
@@ -928,67 +922,67 @@
           </div>
 
           <!-- Logs -->
-          <div style="margin-top:1.5rem">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div class="panel-title" style="font-size:1rem">Logi</div>
+          <div class="mc-section">
+            <div class="mc-section-head">
+              <div class="panel-title">Logi</div>
             </div>
 
-            <div id="mcLogsContainer" style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.6">
-              <div style="text-align:center;opacity:.5">Wybierz zlecenie aby zobaczyć logi</div>
+            <div id="mcLogsContainer">
+              <div class="mc-empty">Wybierz zlecenie aby zobaczyć logi</div>
             </div>
-            <div style="margin-top:8px">
-              <label style="font-size:12px;opacity:.6;display:flex;align-items:center;gap:6px">
+            <div class="mc-auto-refresh">
+              <label>
                 <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie (5s)
               </label>
             </div>
           </div>
 
           <!-- Verified contacts table -->
-          <div style="margin-top:1.5rem">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-              <div class="panel-title" style="font-size:1rem">Zweryfikowane kontakty</div>
-              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                <div style="position:relative;display:inline-flex;align-items:center">
-                  <input class="inp" id="mcSearchInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Szukaj…" style="min-width:160px;padding-right:26px">
-                  <button type="button" id="mcSearchClearBtn" aria-label="Wyczyść" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:rgba(255,255,255,.55);font-size:16px;line-height:1;cursor:pointer;padding:4px"><i class="ico" data-icon="close"></i></button>
+          <div class="mc-section">
+            <div class="mc-section-head mc-section-head--tools">
+              <div class="panel-title">Zweryfikowane kontakty</div>
+              <div class="cluster mc-tools">
+                <div class="mc-search">
+                  <input class="inp" id="mcSearchInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Szukaj…">
+                  <button type="button" id="mcSearchClearBtn" class="mc-search-clear" aria-label="Wyczyść" hidden><i class="ico" data-icon="close"></i></button>
                 </div>
-                <div class="ui-select" id="mcFilterUsed" style="min-width:120px">
+                <div class="ui-select mc-filter-used" id="mcFilterUsed">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
                     <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none"><i class="ico" data-icon="globe"></i> Odwiedź</a>
-                <button class="btn sm" id="mcCopyBtn" type="button" style="display:none"><i class="ico" data-icon="copy"></i> Kopiuj</button>
+                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" hidden><i class="ico" data-icon="globe"></i> Odwiedź</a>
+                <button class="btn sm" id="mcCopyBtn" type="button" hidden><i class="ico" data-icon="copy"></i> Kopiuj</button>
                 <button class="btn sm" id="mcMarkUsedBtn" type="button"><i class="ico" data-icon="check"></i> Użyte</button>
                 <button class="btn sm danger" id="mcDeleteBtn" type="button"><i class="ico" data-icon="trash"></i> Usuń</button>
-                <span id="mcSelectionInfo" style="font-size:12px;opacity:.5"></span>
+                <span id="mcSelectionInfo" class="mc-meta"></span>
               </div>
             </div>
 
             <!-- Excel-like table -->
-            <div style="overflow:auto;border-radius:8px;border:1px solid rgba(255,255,255,.08)">
-              <table class="mc-table" id="mcContactsTable" style="width:100%;border-collapse:collapse;font-size:13px">
+            <div class="mc-table-wrap">
+              <table class="mc-table" id="mcContactsTable">
                 <thead>
-                  <tr style="background:rgba(255,255,255,.05)">
-                    <th class="mc-sortable" data-col="title" style="padding:6px;text-align:left;width:25%;cursor:pointer;user-select:none">Tytuł</th>
-                    <th class="mc-sortable" data-col="email" style="padding:6px;text-align:left;width:20%;cursor:pointer;user-select:none">E-mail</th>
-                    <th class="mc-sortable" data-col="url" style="padding:6px;text-align:left;width:25%;cursor:pointer;user-select:none">URL</th>
-                    <th class="mc-sortable" data-col="added_at" style="padding:6px;text-align:left;width:15%;cursor:pointer;user-select:none">Dodano</th>
-                    <th class="mc-sortable" data-col="is_used" style="padding:6px;text-align:center;width:50px;cursor:pointer;user-select:none">Użyto</th>
+                  <tr>
+                    <th class="mc-sortable mc-col-title" data-col="title">Tytuł</th>
+                    <th class="mc-sortable mc-col-email" data-col="email">E-mail</th>
+                    <th class="mc-sortable mc-col-url" data-col="url">URL</th>
+                    <th class="mc-sortable mc-col-added-at" data-col="added_at">Dodano</th>
+                    <th class="mc-sortable mc-col-is-used" data-col="is_used">Użyto</th>
                   </tr>
                 </thead>
                 <tbody id="mcTableBody">
-                  <tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Ładowanie...</td></tr>
+                  <tr><td colspan="5" class="mc-empty mc-empty--cell">Ładowanie...</td></tr>
                 </tbody>
               </table>
             </div>
 
             <!-- Pagination -->
-            <div style="display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+            <div class="mc-pager">
               <button class="btn sm" id="mcPrevPage" type="button"><i class="ico" data-icon="arrow-left"></i> Poprzednia</button>
-              <span id="mcPageInfo" style="font-size:12px;opacity:.6">Strona 1 / 1</span>
+              <span id="mcPageInfo" class="mc-page-info">Strona 1 / 1</span>
               <button class="btn sm" id="mcNextPage" type="button">Następna <i class="ico" data-icon="arrow-right"></i></button>
             </div>
           </div>
@@ -1028,8 +1022,8 @@
           <button class="btn sm" id="btnMarketRejectClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="mSub">Podaj powód (opcjonalnie — trafi do autora).</div>
-        <textarea class="inp" id="marketRejectNote" rows="4" style="width:100%;box-sizing:border-box;margin-top:8px" placeholder="Powód odrzucenia…"></textarea>
-        <div class="modal-actions" style="margin-top:12px">
+        <textarea class="inp" id="marketRejectNote" rows="4" placeholder="Powód odrzucenia…"></textarea>
+        <div class="modal-actions">
           <button class="btn sm" id="btnMarketRejectCancel" type="button">Anuluj</button>
           <button class="btn sm gold" id="btnMarketRejectConfirm" type="button">Odrzuć</button>
         </div>
@@ -1039,18 +1033,18 @@
     <!-- Raters modal -->
     <div class="overlay modal--sheet" id="ratersOverlay" hidden>
       <div class="modal modal--narrow">
-        <div class="mHead" style="margin-bottom:16px">
+        <div class="mHead">
           <div class="mTitle" id="ratersTitle">Oceniający</div>
           <button class="btn sm" id="btnRatersClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
         </div>
-        <div id="ratersBody" style="max-height:60vh;overflow:auto"></div>
+        <div id="ratersBody" class="raters-body"></div>
       </div>
     </div>
 
     <!-- Modal: podgląd gry z marketplace -->
     <div class="overlay modal--sheet" id="marketPreviewOverlay" hidden>
       <div class="modal modal-wide">
-        <div class="mHead" style="align-items:flex-start">
+        <div class="mHead market-preview-head">
           <div>
             <div class="mTitle" id="marketPreviewTitle">—</div>
             <div class="mSub" id="marketPreviewMeta">—</div>
@@ -1076,7 +1070,7 @@
           <div class="mTitle">Podgląd</div>
           <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
         </div>
-        <iframe id="maintenancePreviewFrame" style="width:100%;height:70vh;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914;margin-top:12px"></iframe>
+        <iframe id="maintenancePreviewFrame" class="mail-preview-frame maint-preview-frame"></iframe>
       </div>
     </div>
 

@@ -363,8 +363,12 @@ module.exports = [
     ["marketing-contacts", "btnTabMarketingContacts", "Kontakty Marketingowe"],
     ["marketplace", "btnTabMarketplace", "Gry Społeczności"],
     ["generator", "btnTabGenerator", "Gry Producenta"],
-  ].map(([key, tab, title]) => ({ id: `admin-panel-${key}`, category: "Dodatkowe", title: `Panel admina — ${title}`, path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop", "phone"], settle: 800,
-    steps: [async (view) => { await view.evaluate((id) => document.getElementById(id)?.click(), tab); await view.waitForTimeout(900); }] })),
+  ].map(([key, tab, title]) => ({ id: `admin-panel-${key}`, category: "Dodatkowe", title: `Panel admina — ${title}`, path: "/admin/", sources: ["web/admin/"], ready: () => !!document.getElementById("btnTabStats") && !document.body.classList.contains("settings-locked"), devices: ["desktop", "phone"], settle: 800,
+    steps: [async (view) => {
+      await view.evaluate((id) => document.getElementById(id)?.click(), tab);
+      await view.waitForFunction((id) => document.getElementById(id)?.classList.contains("is-active"), tab, { timeout: 8000 });
+      await view.waitForTimeout(900);
+    }] })),
   { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#snakeTop tr").first().waitFor(); await view.locator("#snakeFunnel").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   // E25: wykluczenia ze statystyk z rolą konta testowego i podsumowaniem według ról.

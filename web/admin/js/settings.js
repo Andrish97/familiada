@@ -1183,30 +1183,29 @@ async function loadSnakeStats() {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     const { kinds = {}, scores = {}, top: best = [], players = 0, daily = [] } = data.stats || {};
-    const cell = "padding:5px 0;text-align:right";
     const row = (label, k) => {
       const v = kinds[k] || {};
-      return `<tr><td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
-        <td style="${cell};font-weight:700">${v.total ?? 0}</td>
-        <td style="${cell};font-size:12px;opacity:.8">osoby: ${v.visitors ?? 0}</td>
-        <td style="${cell};font-size:12px;opacity:.6">dziś ${v.today ?? 0} · 7 dni ${v.last_7d ?? 0}</td></tr>`;
+      return `<tr><td class="st-label">${label}</td>
+        <td class="st-num">${v.total ?? 0}</td>
+        <td class="st-num st-sub">osoby: ${v.visitors ?? 0}</td>
+        <td class="st-num st-dim">dziś ${v.today ?? 0} · 7 dni ${v.last_7d ?? 0}</td></tr>`;
     };
     funnel.innerHTML = row("Zeskanowania QR", "scan") + row("Wejścia na stronę gry", "enter") + row("Rozpoczęte gry", "start") + row("Zakończone gry", "finish");
     document.getElementById("snakeScores").textContent = `Najlepszy wynik: ${scores.max ?? 0} | Średni: ${scores.avg ?? 0} | Gracze z kontem: ${players}`;
     top.innerHTML = best.length
-      ? best.map((p, i) => `<tr><td style="padding:5px 0;opacity:.6;font-size:12px">${i + 1}. ${esc(p.username || "—")}</td>
-          <td style="${cell};font-weight:700">${p.best}</td><td style="${cell};font-size:12px;opacity:.6">gier: ${p.games}</td></tr>`).join("")
-      : `<tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Nikt z kontem jeszcze nie zagrał.</td></tr>`;
+      ? best.map((p, i) => `<tr><td class="st-label">${i + 1}. ${esc(p.username || "—")}</td>
+          <td class="st-num">${p.best}</td><td class="st-num st-dim">gier: ${p.games}</td></tr>`).join("")
+      : `<tr><td colspan="3" class="stats-loading">Nikt z kontem jeszcze nie zagrał.</td></tr>`;
     const max = Math.max(1, ...daily.map((d) => Math.max(d.scan, d.start)));
     document.getElementById("snakeTrend").innerHTML = daily.map((d) => `
-      <div title="${d.day}: skany ${d.scan}, wejścia ${d.enter}, gry ${d.start}" style="flex:1;display:flex;gap:1px;align-items:flex-end;height:100%">
-        <div style="flex:1;height:${Math.max(2, d.scan / max * 100)}%;background:rgba(255,234,166,.75);border-radius:2px 2px 0 0"></div>
-        <div style="flex:1;height:${Math.max(2, d.start / max * 100)}%;background:rgba(215,255,61,.75);border-radius:2px 2px 0 0"></div>
+      <div class="snake-day" title="${d.day}: skany ${d.scan}, wejścia ${d.enter}, gry ${d.start}">
+        <div class="snake-bar snake-bar--scan" style="height:${Math.max(2, d.scan / max * 100)}%"></div>
+        <div class="snake-bar snake-bar--start" style="height:${Math.max(2, d.start / max * 100)}%"></div>
       </div>`).join("");
     document.getElementById("snakeTrendLabels").innerHTML = daily.map((d) =>
-      `<div style="flex:1;text-align:center;font-size:9px;opacity:.4">${String(d.day).slice(8, 10)}</div>`).join("");
+      `<div class="stats-day-label">${String(d.day).slice(8, 10)}</div>`).join("");
   } catch (e) {
-    funnel.innerHTML = `<tr><td colspan="4" style="opacity:.6;font-size:12px;padding:8px 0">Błąd: ${esc(e.message)}</td></tr>`;
+    funnel.innerHTML = `<tr><td colspan="4" class="stats-loading stats-error">Błąd: ${esc(e.message)}</td></tr>`;
     top.innerHTML = "";
   }
 }
@@ -1224,31 +1223,31 @@ function renderRetentionTable(data) {
   const d7pct  = retention.d7.cohort  ? Math.round(retention.d7.returned  / retention.d7.cohort  * 100) : null;
   const d30pct = retention.d30.cohort ? Math.round(retention.d30.returned / retention.d30.cohort * 100) : null;
 
-  const sep = `<tr><td colspan="3" style="padding:4px 0 2px"><div style="border-top:1px solid rgba(255,255,255,.08)"></div></td></tr>`;
-  const row = (label, value, percent, color) => `
+  const sep = `<tr class="stats-sep"><td colspan="3"><div></div></td></tr>`;
+  const row = (label, value, percent, tone) => `
     <tr>
-      <td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
-      <td style="padding:5px 0;text-align:right;font-weight:700">${value}</td>
-      <td style="padding:5px 0;text-align:right;padding-left:10px;font-size:12px;color:${color || "inherit"};opacity:.8">${percent}</td>
+      <td class="st-label">${label}</td>
+      <td class="st-num">${value}</td>
+      <td class="st-num st-pct"${tone ? ` data-tone="${tone}"` : ""}>${percent}</td>
     </tr>`;
 
   tbody.innerHTML = `
-    ${row("1. Zarejestrowani", funnel.registered, "100%", "inherit")}
-    ${row("2. Stworzyli grę", funnel.game_created, pct(funnel.game_created, total), funnel.game_created / total >= 0.3 ? "#4caf50" : "#ffc107")}
-    ${row("3. Uruchomili rozgrywkę", funnel.game_played, pct(funnel.game_played, total), funnel.game_played / total >= 0.1 ? "#4caf50" : funnel.game_played > 0 ? "#ffc107" : "#ff5722")}
-    ${row("Nigdy aktywni", funnel.never_active, pct(funnel.never_active, total), "#ff5722")}
+    ${row("1. Zarejestrowani", funnel.registered, "100%", "")}
+    ${row("2. Stworzyli grę", funnel.game_created, pct(funnel.game_created, total), funnel.game_created / total >= 0.3 ? "ok" : "warn")}
+    ${row("3. Uruchomili rozgrywkę", funnel.game_played, pct(funnel.game_played, total), funnel.game_played / total >= 0.1 ? "ok" : funnel.game_played > 0 ? "warn" : "bad")}
+    ${row("Nigdy aktywni", funnel.never_active, pct(funnel.never_active, total), "bad")}
     ${sep}
     ${row(
-      `Retencja D7 <span style="opacity:.4;font-size:11px">(z ${retention.d7.cohort})</span>`,
+      `Retencja D7 <span class="st-note">(z ${retention.d7.cohort})</span>`,
       retention.d7.returned,
       d7pct !== null ? d7pct + "%" : "—",
-      d7pct >= 30 ? "#4caf50" : d7pct >= 10 ? "#ffc107" : "#ff5722"
+      d7pct >= 30 ? "ok" : d7pct >= 10 ? "warn" : "bad"
     )}
     ${row(
-      `Retencja D30 <span style="opacity:.4;font-size:11px">(z ${retention.d30.cohort})</span>`,
+      `Retencja D30 <span class="st-note">(z ${retention.d30.cohort})</span>`,
       retention.d30.returned,
       d30pct !== null ? d30pct + "%" : "—",
-      d30pct >= 20 ? "#4caf50" : d30pct >= 5 ? "#ffc107" : "#ff5722"
+      d30pct >= 20 ? "ok" : d30pct >= 5 ? "warn" : "bad"
     )}`;
 }
 
@@ -1256,19 +1255,19 @@ function renderSegmentBars(segments, total) {
   const el = document.getElementById("segmentBars");
   if (!el) return;
   const items = [
-    { label: "Aktywni ≤7d",     count: segments.active_7d,    color: "#4caf50" },
-    { label: "Aktywni 8–30d",   count: segments.active_8_30d, color: "#ffc107" },
-    { label: "Uśpieni 30d+",    count: segments.dormant,      color: "#ff5722" },
-    { label: "Brak aktywności", count: segments.never,        color: "rgba(255,255,255,.25)" },
+    { label: "Aktywni ≤7d",     count: segments.active_7d,    tone: "ok" },
+    { label: "Aktywni 8–30d",   count: segments.active_8_30d, tone: "warn" },
+    { label: "Uśpieni 30d+",    count: segments.dormant,      tone: "bad" },
+    { label: "Brak aktywności", count: segments.never,        tone: "none" },
   ];
-  el.innerHTML = items.map(({ label, count, color }) => {
+  el.innerHTML = items.map(({ label, count, tone }) => {
     const p = total > 0 ? Math.round(count / total * 100) : 0;
     return `<div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-        <span style="opacity:.7">${label}</span>
-        <span style="font-weight:700">${count} <span style="opacity:.45;font-weight:400;font-size:11px">${p}%</span></span>
+      <div class="seg-head">
+        <span class="seg-label">${label}</span>
+        <span class="seg-count">${count} <span class="seg-pct">${p}%</span></span>
       </div>
-      <div class="progress"><div class="progress-bar" style="width:${p}%;--progress-color:${color}"></div></div>
+      <div class="progress"><div class="progress-bar" data-tone="${tone}" style="width:${p}%"></div></div>
     </div>`;
   }).join("");
 }
@@ -1291,14 +1290,14 @@ function renderTrendChart(trend) {
 
   chartEl.innerHTML = days.map(({ day, count }) => {
     const h = count > 0 ? Math.max(Math.round((count / maxCount) * 100), 4) : 0;
-    return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
-      <div title="${day}: ${count}" style="width:100%;height:${h}%;background:var(--gold);border-radius:2px 2px 0 0;opacity:.8;min-height:${count > 0 ? "3px" : "0"}"></div>
+    return `<div class="trend-day">
+      <div class="trend-bar${count > 0 ? " has-value" : ""}" title="${day}: ${count}" style="height:${h}%"></div>
     </div>`;
   }).join("");
 
   labelsEl.innerHTML = days.map(({ day }, i) => {
     const show = i === 0 || i === 6 || i === 13;
-    return `<div style="flex:1;font-size:9px;opacity:.4;text-align:center;overflow:hidden;white-space:nowrap">${show ? day.slice(5) : ""}</div>`;
+    return `<div class="stats-day-label">${show ? day.slice(5) : ""}</div>`;
   }).join("");
 }
 
@@ -1306,7 +1305,7 @@ function renderExcludedList(users) {
   const el = document.getElementById("excludedList");
   if (!el) return;
   if (!users.length) {
-    el.innerHTML = `<div style="opacity:.4;font-size:12px">Brak wykluczonych kont.</div>`;
+    el.innerHTML = `<div class="stats-loading">Brak wykluczonych kont.</div>`;
     return;
   }
   el.replaceChildren();
@@ -1356,16 +1355,16 @@ async function addExcludedUser() {
   try {
     const data = await adminPost("/stats/excluded", { username }, "result");
     if (!data.ok) {
-      msg.style.color = "#ff5722";
+      msg.dataset.tone = "bad";
       msg.textContent = data.err === "not_found" ? "Nie znaleziono użytkownika." : data.err;
       return;
     }
-    msg.style.color = "#4caf50";
+    msg.dataset.tone = "ok";
     msg.textContent = `Wykluczono: ${username}`;
     input.value = "";
     await loadExcludedUsers();
   } catch (e) {
-    msg.style.color = "#ff5722";
+    msg.dataset.tone = "bad";
     msg.textContent = "Błąd: " + (e.message || e);
   }
 }
@@ -1408,7 +1407,7 @@ async function loadRatings({ silent = false } = {}) {
     // Load detailed ratings
     const rows = (await adminGet("/ratings", "rows")) || [];
     if (rows.length === 0) {
-      if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:.5">Brak ocen.</td></tr>';
+      if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" class="table-empty">Brak ocen.</td></tr>';
       return;
     }
 
@@ -1419,10 +1418,10 @@ async function loadRatings({ silent = false } = {}) {
         const stars = icon("star").repeat(r.stars) + icon("star-empty").repeat(5 - r.stars);
         return `
           <tr>
-            <td style="font-size:11px;opacity:.7">${date}</td>
-            <td style="font-weight:900">${esc(user)}</td>
-            <td style="color:var(--gold)">${stars}</td>
-            <td style="font-size:13px">${esc(r.comment || "-")}</td>
+            <td class="rt-date">${date}</td>
+            <td class="rt-user">${esc(user)}</td>
+            <td class="rt-stars">${stars}</td>
+            <td class="rt-comment">${esc(r.comment || "-")}</td>
           </tr>
         `;
       }).join("");
@@ -1882,10 +1881,8 @@ function renderProviderOrder() {
   
   mailProviderOrder.forEach((p, idx) => {
     const row = document.createElement("div");
-    row.className = "provider-order-row";
-    row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
-    // podłoże kryjących przycisków (css/base.css) = kolor wiersza
-    row.style.setProperty("--under", p.is_active ? "#0f131d" : "#1b121c");
+    row.className = "provider-order-row mail-provider-row";
+    row.classList.toggle("is-off", !p.is_active);
 
     const activeCheck = document.createElement("input");
     activeCheck.type = "checkbox";
@@ -1893,31 +1890,22 @@ function renderProviderOrder() {
     activeCheck.title = "Active";
     activeCheck.addEventListener("change", (e) => {
       p.is_active = e.target.checked;
-      row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
-      row.style.setProperty("--under", p.is_active ? "#0f131d" : "#1b121c");
+      row.classList.toggle("is-off", !p.is_active);
     });
 
     const rank = document.createElement("div");
     rank.className = "provider-order-rank";
-    rank.style.width = "20px";
-    rank.style.fontSize = "12px";
-    rank.style.opacity = "0.5";
     rank.textContent = String(idx + 1);
 
     const info = document.createElement("div");
-    info.style.flex = "1";
+    info.className = "grow";
     
     const label = document.createElement("div");
-    label.style.fontWeight = "600";
+    label.className = "provider-label";
     label.textContent = p.label || p.name;
     
     const stats = document.createElement("div");
-    stats.style.fontSize = "11px";
-    stats.style.opacity = "0.7";
-    stats.style.marginTop = "4px";
-    stats.style.display = "flex";
-    stats.style.flexDirection = "column";
-    stats.style.gap = "4px";
+    stats.className = "provider-stats";
 
     const remW = p.rem_worker ?? 0;
     const remI = p.rem_immediate ?? 0;
@@ -1927,32 +1915,24 @@ function renderProviderOrder() {
 
     const createBar = (current, max, label) => {
       const perc = max > 0 ? Math.round((current / max) * 100) : 0;
-      const color = perc > 20 ? "#4ade80" : perc > 5 ? "#fbbf24" : "#f87171";
+      const tone = perc > 20 ? "ok" : perc > 5 ? "warn" : "bad";
       const wrap = document.createElement("div");
-      wrap.style.display = "flex";
-      wrap.style.alignItems = "center";
-      wrap.style.gap = "6px";
+      wrap.className = "provider-bar";
       
       const lbl = document.createElement("span");
-      lbl.style.width = "65px";
+      lbl.className = "provider-bar-label";
       lbl.textContent = label;
       
       const barBg = document.createElement("div");
-      barBg.style.flex = "1";
-      barBg.style.height = "6px";
-      barBg.style.background = "rgba(255,255,255,0.1)";
-      barBg.style.borderRadius = "3px";
-      barBg.style.overflow = "hidden";
+      barBg.className = "progress provider-bar-track";
       
       const barFill = document.createElement("div");
+      barFill.className = "progress-bar";
+      barFill.dataset.tone = tone;
       barFill.style.width = `${perc}%`;
-      barFill.style.height = "100%";
-      barFill.style.background = color;
-      barFill.style.transition = "width 0.3s ease";
       
       const val = document.createElement("span");
-      val.style.width = "60px";
-      val.style.textAlign = "right";
+      val.className = "provider-bar-value";
       val.textContent = `${current}/${max}`;
       
       barBg.appendChild(barFill);
@@ -1967,9 +1947,7 @@ function renderProviderOrder() {
 
     const limitInput = document.createElement("input");
     limitInput.type = "number";
-    limitInput.className = "inp sm";
-    limitInput.style.width = "80px";
-    limitInput.style.textAlign = "center";
+    limitInput.className = "inp sm provider-limit";
     limitInput.value = String(p.daily_limit || 1000);
     limitInput.title = "Daily Limit";
     limitInput.addEventListener("change", (e) => {
@@ -1978,8 +1956,6 @@ function renderProviderOrder() {
 
     const actions = document.createElement("div");
     actions.className = "cluster provider-order-actions";
-    actions.style.display = "flex";
-    actions.style.gap = "6px";
 
     const up = document.createElement("button");
     up.type = "button";
@@ -2027,43 +2003,40 @@ function renderAiProviderOrder() {
 
     const rank = document.createElement("div");
     rank.className = "provider-order-rank";
-    rank.style.fontWeight = "bold";
     rank.textContent = String(idx + 1);
 
     const infoWrap = document.createElement("div");
-    infoWrap.style.flex = "1";
+    infoWrap.className = "grow";
 
     const name = document.createElement("div");
     name.className = "provider-order-name";
     name.textContent = aiProviderLabel(p);
 
     const status = document.createElement("div");
-    status.style.fontSize = "11px";
+    status.className = "provider-status";
     
     const now = new Date();
     const cooldown = p.cooldown_until ? new Date(p.cooldown_until) : null;
     
     if (!p.is_active) {
       status.textContent = "Wyłączony";
-      status.style.color = "#ff4d4d";
+      status.dataset.tone = "bad";
     } else if (cooldown && cooldown > now) {
       // pełne minuty w górę, potem podział (3 h nie daje „2h 60m”)
       const totalMins = Math.ceil((cooldown - now) / 60000);
       const hours = Math.floor(totalMins / 60);
       const mins = totalMins % 60;
       status.textContent = `Zablokowany (Quota) - jeszcze ${hours}h ${mins}m`;
-      status.style.color = "#ffa500";
+      status.dataset.tone = "warn";
     } else {
       status.textContent = "Aktywny";
-      status.style.color = "#00ff00";
+      status.dataset.tone = "ok";
     }
     
     infoWrap.append(name, status);
 
     const actions = document.createElement("div");
     actions.className = "cluster provider-order-actions";
-    actions.style.display = "flex";
-    actions.style.gap = "4px";
 
     const up = document.createElement("button");
     up.type = "button";
@@ -2342,7 +2315,7 @@ async function loadMarketplace({ silent = false } = {}) {
   tbody.innerHTML = "";
   if (!data.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="text-align:center;opacity:.6">Brak pozycji.</td>`;
+    tr.innerHTML = `<td colspan="5" class="table-empty table-empty--plain">Brak pozycji.</td>`;
     tbody.appendChild(tr);
     if (info) info.textContent = "";
     return;
@@ -2351,7 +2324,7 @@ async function loadMarketplace({ silent = false } = {}) {
   for (const g of data) {
     const tr = document.createElement("tr");
     const date = g.created_at ? new Date(g.created_at).toLocaleDateString() : "—";
-    const note = g.moderation_note ? ` <span style="opacity:.6;font-size:.85em">(${escSetting(g.moderation_note)})</span>` : "";
+    const note = g.moderation_note ? ` <span class="market-note">(${escSetting(g.moderation_note)})</span>` : "";
 
     let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">Podgląd</button>`;
     if (marketActiveStatus === "pending") {
@@ -2547,7 +2520,7 @@ async function loadProducerRatings() {
     const { rows } = await res.json();
     if (info) info.textContent = "";
     if (!rows || !rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;opacity:.6">Brak gier producenta.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="table-empty table-empty--plain">Brak gier producenta.</td></tr>`;
       return;
     }
     tbody.innerHTML = rows.map(g => `<tr>
@@ -2584,12 +2557,12 @@ async function openRatersModal(gameId, title) {
       return;
     }
     // Dwie kolumny (data pod nazwą) — mieszczą się także na telefonie.
-    body.innerHTML = `<table class="mail-table" style="min-width:0"><thead><tr>
+    body.innerHTML = `<table class="mail-table raters-table"><thead><tr>
       <th>Użytkownik</th><th>Ocena</th>
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
-        <td>${escSetting(r.username || "?")}<div style="opacity:.6;font-size:12px">${new Date(r.rated_at).toLocaleString()}</div></td>
-        <td style="white-space:nowrap">${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
+        <td>${escSetting(r.username || "?")}<div class="raters-date">${new Date(r.rated_at).toLocaleString()}</div></td>
+        <td class="nowrap">${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
       </tr>`
     ).join("")}</tbody></table>`;
   } catch (err) {
@@ -2793,10 +2766,10 @@ function renderMailList(rows) {
   body.innerHTML = "";
 
   if (msgActiveFolder === "trash" && !filtered.length) {
-    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">Kosz jest pusty</div>
-      <div style="padding:0 20px 16px;text-align:center;opacity:.25;font-size:11px">Elementy starsze niż 30 dni są usuwane automatycznie</div>
-      <div style="padding:0 20px 16px;text-align:center">
-        <button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">Wyczyść kosz (30d)</button>
+    body.innerHTML = `<div class="mail-list-empty">Kosz jest pusty</div>
+      <div class="mail-list-note">Elementy starsze niż 30 dni są usuwane automatycznie</div>
+      <div class="mail-list-note mail-list-note--action">
+        <button class="btn sm mail-trash-cleanup" id="btnCleanupTrashInList" type="button">Wyczyść kosz (30d)</button>
       </div>`;
     document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
     return;
@@ -2805,14 +2778,14 @@ function renderMailList(rows) {
   // Trash with items: add cleanup button at bottom
   if (msgActiveFolder === "trash" && filtered.length) {
     const trashFooter = document.createElement("div");
-    trashFooter.style.cssText = "padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto";
-    trashFooter.innerHTML = `<button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">Wyczyść kosz (30d)</button>`;
+    trashFooter.className = "mail-trash-footer";
+    trashFooter.innerHTML = `<button class="btn sm mail-trash-cleanup" id="btnCleanupTrashInList" type="button">Wyczyść kosz (30d)</button>`;
     body.parentNode.appendChild(trashFooter);
     document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
   }
 
   if (!filtered.length) {
-    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">Brak wiadomości</div>`;
+    body.innerHTML = `<div class="mail-list-empty">Brak wiadomości</div>`;
     return;
   }
 
@@ -2824,19 +2797,19 @@ function renderMailList(rows) {
       item.dataset.reportId = r.id;
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
       const badge = isOpen
-        ? `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.18);color:#ffeaa6">open</span>`
-        : `<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.07);opacity:.5">closed</span>`;
+        ? `<span class="mail-pill mail-pill--open">open</span>`
+        : `<span class="mail-pill mail-pill--closed">closed</span>`;
       // Zgłoszenie zostaje po usunięciu konta autora (decyzja 2026-10-23) -- tylko plakietka.
       const deletedBadge = r.author_account_deleted_at
-        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" style="font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,120,120,.14);color:#ffb3b3">konto usunięte</span>`
+        ? `<span title="Autor usunął konto ${escSetting(new Date(r.author_account_deleted_at).toLocaleDateString("pl-PL"))}" class="mail-pill mail-pill--deleted">konto usunięte</span>`
         : "";
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${escSetting(r.ticket_number)}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:6px;align-items:center">${badge}${deletedBadge} ${escSetting(r.subject || "—")}</div>
-        <div class="mail-ti-preview" style="opacity:.45">${escSetting(String(r.message_count || 0))} msg</div>`;
+        <div class="mail-ti-subject mail-ti-subject--report">${badge}${deletedBadge} ${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-preview mail-ti-preview--dim">${escSetting(String(r.message_count || 0))} msg</div>`;
       item.addEventListener("click", () => openReport(r.id));
       body.appendChild(item);
     }
@@ -2856,7 +2829,7 @@ function renderMailList(rows) {
 
       // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
       const marketingBadge = isMarketingEmail(r)
-        ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3)">marketing</span>`
+        ? `<span class="mail-pill mail-pill--marketing">marketing</span>`
         : "";
 
       // Strip [Marketing] prefix from subject
@@ -2869,8 +2842,8 @@ function renderMailList(rows) {
           <span class="mail-ti-from">${fromTo}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${ticketBadge}${marketingBadge}${escSetting(displaySubject || "—")}</div>
-        <div class="mail-ti-preview" style="opacity:.45">${isInbound ? 'Odpowiedź na kampanię' : 'Kampania marketingowa'}</div>`;
+        <div class="mail-ti-subject mail-ti-subject--tags">${ticketBadge}${marketingBadge}${escSetting(displaySubject || "—")}</div>
+        <div class="mail-ti-preview mail-ti-preview--dim">${isInbound ? 'Odpowiedź na kampanię' : 'Kampania marketingowa'}</div>`;
       item.addEventListener("click", () => openMessage(r.id));
       body.appendChild(item);
     }
@@ -2891,7 +2864,7 @@ function renderMailList(rows) {
 
     // Marketing badge for ALL marketing emails (outbound campaigns + inbound replies)
     const marketingBadge = isMarketingEmail(r)
-      ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-right:4px">marketing</span>`
+      ? `<span class="mail-pill mail-pill--marketing">marketing</span>`
       : "";
 
     // Strip [Marketing] prefix from subject
@@ -2947,7 +2920,7 @@ function renderMailList(rows) {
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
         <span class="mail-ti-date">${dateStr}</span>
       </div>
-      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${ticketBadge}${marketingBadge}${escSetting(displaySubject || "—")}</div>
+      <div class="mail-ti-subject mail-ti-subject--tags">${ticketBadge}${marketingBadge}${escSetting(displaySubject || "—")}</div>
       <div class="mail-ti-preview">${escSetting(previewText)}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
@@ -2979,7 +2952,7 @@ async function openMessage(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+  conv.innerHTML = `<div class="mail-conv-placeholder">Ładowanie…</div>`;
 
   try {
     const res = await adminFetch(`/messages/detail?id=${encodeURIComponent(id)}`);
@@ -3086,16 +3059,16 @@ function showAttachmentPreview(url, filename) {
   if (!overlay) {
     overlay = document.createElement("div");
     overlay.id = "attPreviewOverlay";
-    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;";
+    overlay.className = "att-preview-overlay";
     overlay.addEventListener("click", () => {
       URL.revokeObjectURL(overlay.querySelector("img")?.src || "");
       overlay.remove();
     });
     document.body.appendChild(overlay);
   }
-  overlay.innerHTML = `<div style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:8px;">
-    <img src="${url}" alt="${escSetting(filename)}" style="max-width:100%;max-height:80vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
-    <a href="${url}" download="${escSetting(filename)}" style="font-size:11px;color:rgba(255,255,255,.6);text-decoration:none;" onclick="event.stopPropagation()">Pobierz</a>
+  overlay.innerHTML = `<div class="att-preview">
+    <img src="${url}" alt="${escSetting(filename)}">
+    <a href="${url}" download="${escSetting(filename)}" onclick="event.stopPropagation()">Pobierz</a>
   </div>`;
 }
 
@@ -3116,7 +3089,6 @@ function renderSimpleMessageContent(bubble, msg) {
     bodyEl.appendChild(frame);
   } else {
     bodyEl.className = "mail-msg-body";
-    bodyEl.style.whiteSpace = "pre-wrap";
     bodyEl.textContent = msg.body || "";
   }
   bubble.appendChild(bodyEl);
@@ -3148,7 +3120,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   // Marketing badge for conversation header
   let marketingBadge = "";
   if (msg.is_marketing) {
-    marketingBadge = `<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-left:6px">marketing</span>`;
+    marketingBadge = `<span class="mail-pill mail-pill--marketing mail-pill--after">marketing</span>`;
   }
 
   header.innerHTML = `
@@ -3170,7 +3142,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   for (const threadMsg of earlierMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
-    threadBubble.style.opacity = "0.6";
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }
@@ -3191,7 +3162,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     bodyEl.appendChild(frame);
   } else {
     bodyEl.className = "mail-msg-body";
-    bodyEl.style.whiteSpace = "pre-wrap";
     bodyEl.textContent = msg.body || "";
   }
   bubble.appendChild(bodyEl);
@@ -3205,14 +3175,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const emailHtml = buildStoredMailHtml(msg);
 
     const frame = document.createElement("iframe");
-    frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
+    frame.className = "mail-html-frame";
     frame.sandbox = MAIL_FRAME_SANDBOX;
     frame.srcdoc = emailHtml;
 
     // Create wrapper with dark background (matches email theme #050914)
     const wrapper = document.createElement("div");
     wrapper.className = "compose-preview-wrapper";
-    wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
     
     // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
     // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
@@ -3232,7 +3201,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   const nonInline = attachments.filter(a => !a.inline);
   if (nonInline.length) {
     const attList = document.createElement("div");
-    attList.style.cssText = "margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;";
+    attList.className = "att-list";
     for (const att of nonInline) {
       const chip = document.createElement("a");
       chip.href = "#";
@@ -3241,22 +3210,22 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
       const isPdf   = att.mime_type === "application/pdf";
 
       if (isExpired) {
-        chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-        chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+        chip.className = "att-chip is-expired";
+        chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span class="att-chip-note">— załącznik wygasł</span>`;
       } else {
-        chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
+        chip.className = "att-chip";
         const attIcon = isImage
           ? `${icon("image")}`
           : isPdf
           ? `${icon("file-doc")}`
           : `${icon("paperclip")}`;
-        chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split('/')[1] || '')}</span>`;
+        chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span class="att-chip-type">${escSetting(att.mime_type.split('/')[1] || '')}</span>`;
         chip.addEventListener("click", async (e) => {
           e.preventDefault();
           try {
-            chip.style.opacity = "0.5";
+            chip.setAttribute("aria-busy", "true");
             const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
-            chip.style.opacity = "";
+            chip.removeAttribute("aria-busy");
             if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
@@ -3270,7 +3239,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
               a2.href = url; a2.download = att.filename; a2.click();
               setTimeout(() => URL.revokeObjectURL(url), 10000);
             }
-          } catch(e) { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+          } catch(e) { chip.removeAttribute("aria-busy"); showToast("Błąd pobierania.", "error"); }
         });
       }
       attList.appendChild(chip);
@@ -3289,7 +3258,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   for (const threadMsg of laterMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
-    threadBubble.style.opacity = "0.6";
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }
@@ -3300,11 +3268,10 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   // Action bar — icon buttons (fixed at bottom, outside scrollable area)
   const actions = document.createElement("div");
   actions.className = "mail-msg-actions";
-  actions.style.cssText = "flex-shrink:0;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);";
 
   // Left group: assign/unassign + marketing toggle + reply
   const leftGroup = document.createElement("div");
-  leftGroup.style.cssText = "display:flex;gap:4px;align-items:center;";
+  leftGroup.className = "mail-msg-actions-group";
 
   // Assign/unassign ticket
   if (!msg.report_id) {
@@ -3360,7 +3327,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Right group: trash / restore + delete
   const rightGroup = document.createElement("div");
-  rightGroup.style.cssText = "display:flex;gap:4px;align-items:center;margin-left:auto;";
+  rightGroup.className = "mail-msg-actions-group mail-msg-actions-group--end";
 
   if (!msg.deleted_at) {
     const btnTrash = document.createElement("button");
@@ -3413,7 +3380,7 @@ async function openReport(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+  conv.innerHTML = `<div class="mail-conv-placeholder">Ładowanie…</div>`;
 
   try {
     const res = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
@@ -3457,7 +3424,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   const header = document.createElement("div");
   header.className = "mail-conv-header";
   header.innerHTML = `
-    <div class="mail-conv-subject">${escSetting(ticketNum)} <span style="font-size:12px;opacity:.6">${escSetting(statusLabel)}</span></div>
+    <div class="mail-conv-subject">${escSetting(ticketNum)} <span class="mail-conv-status">${escSetting(statusLabel)}</span></div>
     <div class="mail-conv-meta">${escSetting(report?.subject || "—")}</div>
     <div class="mail-conv-actions">
       ${report
@@ -3495,7 +3462,6 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       bodyEl.appendChild(frame);
     } else {
       bodyEl.className = "mail-msg-body";
-      bodyEl.style.whiteSpace = "pre-wrap";
       bodyEl.textContent = msg.body || "";
     }
     el.appendChild(bodyEl);
@@ -3509,14 +3475,13 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       const emailHtml = buildStoredMailHtml(msg);
 
       const frame = document.createElement("iframe");
-      frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
+      frame.className = "mail-html-frame";
       frame.sandbox = MAIL_FRAME_SANDBOX;
       frame.srcdoc = emailHtml;
 
       // Create wrapper with dark background (matches email theme #050914)
       const wrapper = document.createElement("div");
       wrapper.className = "compose-preview-wrapper";
-      wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
       
       // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
       // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
@@ -3536,7 +3501,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     const msgAtts = (attsByMsg[msg.id] || []).filter(a => !a.inline);
     if (msgAtts.length) {
       const attList = document.createElement("div");
-      attList.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;";
+      attList.className = "att-list att-list--report";
       for (const att of msgAtts) {
         const chip = document.createElement("a");
         chip.href = "#";
@@ -3544,20 +3509,20 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         const isImage = att.mime_type?.startsWith("image/");
         const isPdf   = att.mime_type === "application/pdf";
         if (isExpired) {
-          chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-          chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+          chip.className = "att-chip is-expired";
+          chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span class="att-chip-note">— załącznik wygasł</span>`;
         } else {
-          chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
+          chip.className = "att-chip";
           const attIcon = isImage
             ? `${icon("image")}`
             : `${icon("paperclip")}`;
-          chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split("/")[1] || "")}</span>`;
+          chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span class="att-chip-type">${escSetting(att.mime_type.split("/")[1] || "")}</span>`;
           chip.addEventListener("click", async (e) => {
             e.preventDefault();
             try {
-              chip.style.opacity = "0.5";
+              chip.setAttribute("aria-busy", "true");
               const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
-              chip.style.opacity = "";
+              chip.removeAttribute("aria-busy");
               if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
               const blob = await res.blob();
               const url = URL.createObjectURL(blob);
@@ -3571,7 +3536,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
                 a2.href = url; a2.download = att.filename; a2.click();
                 setTimeout(() => URL.revokeObjectURL(url), 10000);
               }
-            } catch(e) { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+            } catch(e) { chip.removeAttribute("aria-busy"); showToast("Błąd pobierania.", "error"); }
           });
         }
         attList.appendChild(chip);
@@ -3582,16 +3547,16 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     msgs.appendChild(el);
   }
   if (!messages.length) {
-    msgs.innerHTML = `<div style="padding:20px;text-align:center;opacity:.3;font-size:12px">Brak wiadomości</div>`;
+    msgs.innerHTML = `<div class="mail-list-empty mail-list-empty--conv">Brak wiadomości</div>`;
   }
   conv.appendChild(msgs);
   setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
 
   // Reply button - opens full compose window
   const replyButtonSection = document.createElement("div");
-  replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
+  replyButtonSection.className = "report-reply-section";
   replyButtonSection.innerHTML = `
-    <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
+    <button class="btn gold report-reply-btn" id="btnReportReply" type="button">
       ${icon("edit-paper")} Odpowiedz
     </button>
   `;
@@ -3797,7 +3762,7 @@ async function trashMessage(messageId) {
     showToast("Do kosza", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div class="mail-conv-placeholder-icon">${icon("envelope")}</div><div class="mail-conv-placeholder-text">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3833,7 +3798,7 @@ async function deleteForever(messageId) {
     showToast("Usuń na zawsze", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div class="mail-conv-placeholder-icon">${icon("envelope")}</div><div class="mail-conv-placeholder-text">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3885,8 +3850,8 @@ function showCompose(defaults = {}) {
   if (hasQuote) {
     const dateStr = defaults.quoteDate ? new Date(defaults.quoteDate).toLocaleString("pl-PL") : "";
     const fromStr = defaults.quoteFrom ? `${escSetting(defaults.quoteFrom)}, ${dateStr}` : dateStr;
-    quoteBlockHtml = `<div id="composeQuoteBlock" style="display:none;margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
-      <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
+    quoteBlockHtml = `<div id="composeQuoteBlock" class="compose-quote" hidden>
+      <div class="compose-quote-from">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
 
   // Body without signature - signature is added on send/preview
@@ -3895,66 +3860,66 @@ function showCompose(defaults = {}) {
   conv.innerHTML = `
     <div class="mail-compose-pane">
       <div id="composePaneInner" class="mail-conv-header">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding:16px 16px 0 16px">
-          <div style="font-size:14px;font-weight:700">Napisz wiadomość</div>
-          <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'" aria-label="Zamknij">${icon("close")}</button>
+        <div class="compose-head">
+          <div class="compose-title">Napisz wiadomość</div>
+          <button id="btnComposeClose" class="compose-close" type="button" title="Zamknij" aria-label="Zamknij">${icon("close")}</button>
         </div>
 
-        <div style="padding:0 16px">
-          <div class="field" style="margin-bottom:12px">
+        <div class="compose-body">
+          <div class="field">
             <label class="field-label">Do (e-mail)</label>
-            <input class="inp" id="composeToInput" type="email" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl" ${hasQuote ? 'disabled style="opacity:.5"' : ''}>
+            <input class="inp" id="composeToInput" type="email" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl" ${hasQuote ? 'disabled' : ''}>
           </div>
-          <div class="field" style="margin-bottom:12px">
+          <div class="field">
             <label class="field-label">Temat</label>
-            <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
+            <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
           </div>
 
-          <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-            <div class="lang-switcher" id="composeLangSwitcher" style="position:relative">
+          <div class="compose-lang-row">
+            <div class="lang-switcher compose-lang" id="composeLangSwitcher">
               <button type="button" class="btn lang-btn" id="composeLangBtn" aria-label="Zmień język treści powitania, pożegnania, nadawcy i szablonu" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">${icon("flag-pl")}</button>
-              <div class="lang-menu" id="composeLangMenu" hidden style="position:absolute;top:100%;right:0;left:auto;margin-top:6px"></div>
+              <div class="lang-menu" id="composeLangMenu" hidden></div>
             </div>
           </div>
-          <div class="mail-inline-grid" style="margin-bottom:12px">
+          <div class="mail-inline-grid">
             <div class="field">
-              <label class="field-label" style="font-size:12px">Powitanie</label>
-              <div class="ui-select" id="composeGreetingSelect" style="width:100%">
+              <label class="field-label">Powitanie</label>
+              <div class="ui-select" id="composeGreetingSelect">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak powitania</span>
                   <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
-              <input class="inp" id="composeGreetingCustom" type="text" placeholder="Wpisz własne powitanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
+              <input class="inp" id="composeGreetingCustom" type="text" placeholder="Wpisz własne powitanie" hidden>
             </div>
             <div class="field">
-              <label class="field-label" style="font-size:12px">Pożegnanie</label>
-              <div class="ui-select" id="composeFarewellSelect" style="width:100%">
+              <label class="field-label">Pożegnanie</label>
+              <div class="ui-select" id="composeFarewellSelect">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak pożegnania</span>
                   <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
-              <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box;resize:vertical"></textarea>
+              <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" hidden></textarea>
             </div>
             <div class="field">
-              <label class="field-label" style="font-size:12px">Nadawca</label>
-              <div class="ui-select" id="composeSenderSelect" style="width:100%">
+              <label class="field-label">Nadawca</label>
+              <div class="ui-select" id="composeSenderSelect">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak nadawcy</span>
                   <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
-              <input class="inp" id="composeSenderCustom" type="text" placeholder="Wpisz własnego nadawcę" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
+              <input class="inp" id="composeSenderCustom" type="text" placeholder="Wpisz własnego nadawcę" hidden>
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:12px">
-            <label class="field-label" style="font-size:12px">Szablon odpowiedzi</label>
-            <div class="ui-select" id="composeTemplateSelect" style="width:100%">
+          <div class="field">
+            <label class="field-label">Szablon odpowiedzi</label>
+            <div class="ui-select" id="composeTemplateSelect">
               <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
                 <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
@@ -3963,32 +3928,32 @@ function showCompose(defaults = {}) {
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
-            <label class="field-label" style="margin-bottom:6px;display:block">
+          <div class="field compose-message-field">
+            <label class="field-label">
               Treść
               ${hasQuote ? `
-                <span style="opacity:.5;font-size:11px;margin-left:8px">Użyj #quote aby wstawić cytat</span>
-                <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+                <span class="compose-quote-hint">Użyj #quote aby wstawić cytat</span>
+                <button type="button" class="btn xs compose-quote-btn" id="btnInsertQuote" title="Wstaw #quote w miejscu kursora">#quote</button>
               ` : ""}
             </label>
-            <div id="composeMessageArea" style="min-height:300px"></div>
+            <div id="composeMessageArea" class="compose-message-area"></div>
           </div>
 
-          <div class="field attachments-section" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-            <label class="field-label attachments-label" style="margin-bottom:8px;display:block">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
-            <input type="file" id="composeAttachmentInput" multiple style="display:none">
-            <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none">
+          <div class="field attachments-section">
+            <label class="field-label attachments-label">Załączniki <span class="attachments-limit">(maks. 10 MB)</span></label>
+            <input type="file" id="composeAttachmentInput" multiple hidden>
+            <label for="composeAttachmentInput" class="attachments-pick">
               ${icon("paperclip")}
               Wybierz pliki
             </label>
-            <div id="composeAttachmentList" class="attachments-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+            <div id="composeAttachmentList" class="attachments-list"></div>
           </div>
 
           <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
           <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
           <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
 
-          <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+          <div class="cluster cluster--end compose-foot">
             <button class="btn sm" id="btnComposePreview" type="button">${icon("eye")} Podgląd</button>
             <span class="hint" id="composeSendStatus"></span>
             <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
@@ -4063,7 +4028,7 @@ function showCompose(defaults = {}) {
           const content = editor.getContent();
           if (content.includes("#quote")) {
             const quoteBlock = document.getElementById("composeQuoteBlock");
-            if (quoteBlock) quoteBlock.style.display = "";
+            if (quoteBlock) quoteBlock.hidden = false;
           }
         });
       },
@@ -4081,7 +4046,7 @@ function showCompose(defaults = {}) {
     onChange: (val) => {
       const customInput = document.getElementById("composeGreetingCustom");
       if (customInput) {
-        customInput.style.display = (val === "custom") ? "" : "none";
+        customInput.hidden = val !== "custom";
         if (val === "custom") customInput.focus();
       }
     },
@@ -4095,7 +4060,7 @@ function showCompose(defaults = {}) {
     onChange: (val) => {
       const customInput = document.getElementById("composeFarewellCustom");
       if (customInput) {
-        customInput.style.display = (val === "custom") ? "" : "none";
+        customInput.hidden = val !== "custom";
         if (val === "custom") customInput.focus();
       }
     },
@@ -4109,7 +4074,7 @@ function showCompose(defaults = {}) {
     onChange: (val) => {
       const customInput = document.getElementById("composeSenderCustom");
       if (customInput) {
-        customInput.style.display = (val === "custom") ? "" : "none";
+        customInput.hidden = val !== "custom";
         if (val === "custom") customInput.focus();
       }
     },
@@ -4120,21 +4085,21 @@ function showCompose(defaults = {}) {
     const customInput = document.getElementById("composeGreetingCustom");
     if (customInput && defaults.greetingValue === "custom") {
       customInput.value = defaults.greetingCustom;
-      customInput.style.display = "";
+      customInput.hidden = false;
     }
   }
   if (defaults.farewellCustom) {
     const customInput = document.getElementById("composeFarewellCustom");
     if (customInput && defaults.farewellValue === "custom") {
       customInput.value = defaults.farewellCustom;
-      customInput.style.display = "";
+      customInput.hidden = false;
     }
   }
   if (defaults.senderCustom) {
     const customInput = document.getElementById("composeSenderCustom");
     if (customInput && defaults.senderValue === "custom") {
       customInput.value = defaults.senderCustom;
-      customInput.style.display = "";
+      customInput.hidden = false;
     }
   }
 
@@ -4166,27 +4131,13 @@ function showCompose(defaults = {}) {
     list.innerHTML = "";
     _composeCurrentAttachments.forEach((f, index) => {
       const span = document.createElement("span");
-      span.style.display = "inline-flex";
-      span.style.alignItems = "center";
-      span.style.gap = "6px";
-      span.style.padding = "4px 10px";
-      span.style.borderRadius = "12px";
-      span.style.background = "rgba(255,255,255,0.08)";
-      span.style.fontSize = "12px";
-      span.style.color = "rgba(255,255,255,0.8)";
+      span.className = "compose-att";
       span.textContent = f.name;
 
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
-      removeBtn.style.background = "none";
-      removeBtn.style.border = "none";
-      removeBtn.style.cursor = "pointer";
-      removeBtn.style.color = "rgba(255,255,255,0.5)";
-      removeBtn.style.fontWeight = "900";
-      removeBtn.style.fontSize = "14px";
+      removeBtn.className = "compose-att-remove";
       removeBtn.innerHTML = icon("close", { label: "Usuń" });
-      removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
-      removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {
         _composeCurrentAttachments.splice(index, 1);
         updateAttachmentList();
@@ -4348,7 +4299,7 @@ function closeCompose() {
   } else {
     const conv = document.getElementById("mailConv");
     if (!conv) return;
-    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div class="mail-conv-placeholder-icon">${icon("envelope")}</div><div class="mail-conv-placeholder-text">Wybierz wątek</div></div>`;
     msgActiveId = null;
 
     // On mobile: switch back to list view
@@ -4504,14 +4455,13 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
 
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
-  frame.style.cssText = "width:100%;height:500px;border:none;display:block";
+  frame.className = "mail-html-frame";
   frame.sandbox = MAIL_FRAME_SANDBOX;
   frame.srcdoc = emailHtml;
   
   // Create wrapper with dark background (matches email theme #050914)
   const wrapper = document.createElement("div");
   wrapper.className = "compose-preview-wrapper";
-  wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
   
   // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
   // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
@@ -4547,27 +4497,27 @@ function setMailView(view) {
   const isMobile = window.matchMedia("(max-width: 980px)").matches;
 
   if (!isMobile) {
-    if (navTopbar) navTopbar.style.display = "none";
-    if (brand) brand.style.display = "";
+    if (navTopbar) navTopbar.hidden = true;
+    if (brand) brand.hidden = false;
     return;
   }
 
   // On mobile: show mail nav, hide brand
-  if (navTopbar) navTopbar.style.display = "flex";
-  if (brand) brand.style.display = "none";
+  if (navTopbar) navTopbar.hidden = false;
+  if (brand) brand.hidden = true;
 
   // Show/hide back button based on view
-  if (btnBack) btnBack.style.display = (view === "folders") ? "none" : "";
+  if (btnBack) btnBack.hidden = view === "folders";
 
   // Show compose in folders and list views, hide in conv
-  if (btnCompose) btnCompose.style.display = (view === "folders" || view === "list") ? "" : "none";
+  if (btnCompose) btnCompose.hidden = !(view === "folders" || view === "list");
 }
 
 function hideMailNav() {
   const navTopbar = document.getElementById("mailNavTopbar");
   const brand = document.getElementById("settingsBrand");
-  if (navTopbar) navTopbar.style.display = "none";
-  if (brand) brand.style.display = "";
+  if (navTopbar) navTopbar.hidden = true;
+  if (brand) brand.hidden = false;
 }
 
 function mailViewBack() {
@@ -4622,7 +4572,7 @@ function wireReportsEvents() {
       msgActiveId = null;
       const conv = document.getElementById("mailConv");
       if (conv) {
-        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div class="mail-conv-placeholder-icon">${icon("envelope")}</div><div class="mail-conv-placeholder-text">Wybierz wątek</div></div>`;
       }
       await loadMailFolder();
     });
@@ -4810,11 +4760,11 @@ async function loadMailSettings({ silent = false } = {}) {
     const farewellCustomEl = document.getElementById("mailFarewellCustom");
     if (greetingCustomEl) {
       greetingCustomEl.value = mailGreetingCustomValue;
-      greetingCustomEl.style.display = (mailGreetingValue === "custom") ? "" : "none";
+      greetingCustomEl.hidden = mailGreetingValue !== "custom";
     }
     if (farewellCustomEl) {
       farewellCustomEl.value = mailFarewellCustomValue;
-      farewellCustomEl.style.display = (mailFarewellValue === "custom") ? "" : "none";
+      farewellCustomEl.hidden = mailFarewellValue !== "custom";
     }
 
     mailCronSupported = cron?.supported !== false;
@@ -5266,16 +5216,6 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
-
-  // Force display style for panels (mobile compatibility)
-  if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
-  if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
-  if (els.ratingsPanel) els.ratingsPanel.style.display = tab === "ratings" ? "" : "none";
-  if (els.statsPanel) els.statsPanel.style.display = tab === "stats" ? "" : "none";
-  if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
-  if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
-  if (els.marketingPanel) els.marketingPanel.style.display = tab === "marketing" ? "" : "none";
-  if (els.marketingContactsPanel) els.marketingContactsPanel.style.display = tab === "marketingContacts" ? "" : "none";
 
   // When entering reports panel, init mail view
   if (tab === "reports") {
@@ -6036,7 +5976,7 @@ const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
 function buildColorsCell(display) {
   const colors = display && typeof display === "object" ? display.colors : null;
   const wrap = document.createElement("span");
-  wrap.style.cssText = "display:inline-flex;gap:5px;align-items:center";
+  wrap.className = "stats-color-dots";
   if (!colors || typeof colors !== "object" || JSON.stringify(colors) === JSON.stringify(DISPLAY_COLOR_DEFAULTS)) {
     wrap.textContent = "—";
     return wrap;
@@ -6046,7 +5986,8 @@ function buildColorsCell(display) {
     if (!val || val === DISPLAY_COLOR_DEFAULTS[key] || !HEX_COLOR_RE.test(val)) continue;
     const dot = document.createElement("span");
     dot.title = `${DISPLAY_COLOR_LABELS[key] || key}: ${val}`;
-    dot.style.cssText = `display:inline-block;width:13px;height:13px;border-radius:50%;background:${val};border:1px solid rgba(255,255,255,.3)`;
+    dot.className = "stats-color-dot";
+    dot.style.background = val;
     wrap.appendChild(dot);
   }
   if (!wrap.children.length) wrap.textContent = "—";
@@ -6085,23 +6026,22 @@ const STATS_DETAIL_PER_PAGE = 25;
 function buildStatsTable(cfg, rows) {
   if (!rows.length) {
     const empty = document.createElement("div");
-    empty.style.cssText = "font-size:13px;opacity:.45;text-align:center;padding:16px 0";
+    empty.className = "stats-detail-empty";
     empty.textContent = "Brak danych.";
     return empty;
   }
 
   const wrap = document.createElement("div");
-  wrap.style.cssText = "overflow-x:auto";
+  wrap.className = "stats-detail-wrap";
 
   const table = document.createElement("table");
-  table.style.cssText = "width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap";
+  table.className = "stats-detail-table";
 
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
   cfg.cols.forEach(col => {
     const th = document.createElement("th");
     th.textContent = col;
-    th.style.cssText = "padding:6px 10px;text-align:left;opacity:.5;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.1)";
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -6110,14 +6050,12 @@ function buildStatsTable(cfg, rows) {
   const tbody = document.createElement("tbody");
   rows.forEach((r, i) => {
     const tr = document.createElement("tr");
-    tr.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,.02)";
     cfg.row(r).forEach(cell => {
       const td = document.createElement("td");
       if (cell instanceof Node) {
         td.appendChild(cell);
         if (cell.classList?.contains("stats-session-details-button")) td.classList.add("stats-session-details-cell");
       } else td.textContent = cell;
-      td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:240px;overflow:hidden;text-overflow:ellipsis";
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -6129,8 +6067,7 @@ function buildStatsTable(cfg, rows) {
 
 function buildStatsPagination(page, pages, onPage) {
   const nav = document.createElement("div");
-  nav.className = "logs-page-nav";
-  nav.style.cssText = "margin-top:10px";
+  nav.className = "logs-page-nav stats-detail-pager";
 
   const prevBtn = document.createElement("button");
   prevBtn.className = "btn sm";
@@ -6153,7 +6090,7 @@ function buildStatsPagination(page, pages, onPage) {
     nav.appendChild(btn);
     if (start > 2) {
       const dots = document.createElement("span");
-      dots.style.cssText = "padding:0 4px;opacity:.4;font-size:12px";
+      dots.className = "logs-page-dots";
       dots.textContent = "…";
       nav.appendChild(dots);
     }
@@ -6170,7 +6107,7 @@ function buildStatsPagination(page, pages, onPage) {
   if (end < pages) {
     if (end < pages - 1) {
       const dots = document.createElement("span");
-      dots.style.cssText = "padding:0 4px;opacity:.4;font-size:12px";
+      dots.className = "logs-page-dots";
       dots.textContent = "…";
       nav.appendChild(dots);
     }
@@ -6214,24 +6151,22 @@ async function openStatsDetailModal(type) {
   let allRows = [];
 
   const infoEl = document.createElement("div");
-  infoEl.style.cssText = "font-size:11px;opacity:.4;margin-bottom:6px;min-height:16px";
+  infoEl.className = "stats-detail-info";
 
   const tableWrap = document.createElement("div");
-  tableWrap.style.cssText = "min-height:60px;overflow-y:auto;flex:1";
-  tableWrap.className = "scroll-fade";
+  tableWrap.className = "scroll-fade stats-detail-scroll";
   tableWrap.textContent = "Ładowanie…";
 
   const pageWrap = document.createElement("div");
 
   const body = document.createElement("div");
-  body.style.cssText = "min-width:min(680px,88vw);display:flex;flex-direction:column;max-height:calc(82vh - 140px);overflow:hidden";
+  body.className = "stats-detail-body";
 
   const exportControls = document.createElement("div");
-  exportControls.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px";
+  exportControls.className = "cluster stats-detail-export";
   exportControls.hidden = type !== "gameplay";
   const exportPeriod = document.createElement("div");
-  exportPeriod.className = "ui-select";
-  exportPeriod.style.minWidth = "220px";
+  exportPeriod.className = "ui-select stats-detail-period";
   exportPeriod.innerHTML = `
     <button class="btn sm ui-select-btn" type="button" aria-label="Zakres eksportu przebiegów Control 2" aria-haspopup="listbox" aria-expanded="false">
       <span class="ui-select-label"></span>
@@ -6268,17 +6203,12 @@ async function openStatsDetailModal(type) {
     body,
     sheet: { backBtn: btnBackSheet },
     onReady: ({ okBtn, overlay }) => {
-      if (okBtn?.parentElement) okBtn.parentElement.style.display = "none";
+      if (okBtn?.parentElement) okBtn.parentElement.hidden = true;
       // Ten modal bywa wyższy niż widoczny obszar na małych ekranach (mobile) —
       // pozwól całemu tłu się przewinąć, żeby nagłówek z X zawsze był osiągalny.
       // Skopiowane tylko na ten overlay, żeby nie dotykać wspólnej klasy .overlay
       // używanej przez ~20 innych stron.
-      if (overlay) {
-        overlay.style.overflowY = "auto";
-        overlay.style.padding = "24px 12px";
-        overlay.style.boxSizing = "border-box";
-        overlay.style.alignItems = "safe center";
-      }
+      overlay?.classList.add("stats-detail-overlay");
     },
   });
 
@@ -6397,7 +6327,7 @@ function mktApplyTemplate(tplId) {
   if (subjectEl && !subjectEl._userEdited) {
     subjectEl.value = tpl.subject;
   }
-  if (bodyWrap) bodyWrap.style.display = tpl.hasBody ? "" : "none";
+  if (bodyWrap) bodyWrap.hidden = !tpl.hasBody;
   if (subjectHint) subjectHint.textContent = tpl.hasBody ? "" : ("Temat ustawiony automatycznie — możesz go zmienić.");
   if (mktPreviewVisible) mktRefreshPreview();
 }
@@ -6429,11 +6359,11 @@ function mktParseEmails() {
   const listEl   = document.getElementById("mktEmailList");
   const statsEl  = document.getElementById("mktEmailStats");
   const countEl  = document.getElementById("mktEmailCount");
-  if (listWrap) listWrap.style.display = valid.length || invalid.length ? "" : "none";
+  if (listWrap) listWrap.hidden = !(valid.length || invalid.length);
   if (listEl) {
     listEl.innerHTML = valid.map(e =>
-      `<span style="display:inline-block;margin:1px 4px 1px 0;padding:2px 8px;border-radius:4px;background:rgba(255,234,166,.12);color:#ffeaa6;font-size:11px">${esc(e)}</span>`
-    ).join("") + (invalid.length ? `<div style="margin-top:6px;color:rgba(255,80,80,.8);font-size:11px">Niepoprawne: ${invalid.map(esc).join(", ")}</div>` : "");
+      `<span class="mkt-email-chip">${esc(e)}</span>`
+    ).join("") + (invalid.length ? `<div class="mkt-email-invalid">Niepoprawne: ${invalid.map(esc).join(", ")}</div>` : "");
   }
   const statsText = valid.length
     ? `${valid.length} poprawnych${invalid.length ? `, ${invalid.length} niepoprawnych` : ""}`
@@ -6523,7 +6453,7 @@ function wireMarketingEvents() {
     const area = document.getElementById("mktEmailInput");
     if (area) area.value = "";
     const listWrap = document.getElementById("mktEmailListWrap");
-    if (listWrap) listWrap.style.display = "none";
+    if (listWrap) listWrap.hidden = true;
     const countEl = document.getElementById("mktEmailCount");
     if (countEl) countEl.textContent = "";
   });
@@ -6533,7 +6463,7 @@ function wireMarketingEvents() {
     mktPreviewVisible = !mktPreviewVisible;
     const wrap = document.getElementById("mktPreviewWrap");
     const btn  = document.getElementById("btnMktTogglePreview");
-    if (wrap) wrap.style.display = mktPreviewVisible ? "" : "none";
+    if (wrap) wrap.hidden = !mktPreviewVisible;
     if (btn) btn.textContent = mktPreviewVisible
       ? ("Ukryj podgląd")
       : ("Pokaż podgląd");
@@ -7019,13 +6949,13 @@ function wireEvents() {
       case "running":
         actionBtn.innerHTML = iconText("pause", "Wstrzymaj");
         actionBtn.className = "btn sm warning";
-        cancelBtn.style.display = "";
+        cancelBtn.hidden = false;
         targetInput.disabled = true;
         break;
       case "paused":
         actionBtn.innerHTML = iconText("play", "Wznów");
         actionBtn.className = "btn sm gold";
-        cancelBtn.style.display = "";
+        cancelBtn.hidden = false;
         targetInput.disabled = true;
         break;
       case "cancelled":
@@ -7034,7 +6964,7 @@ function wireEvents() {
       default:
         actionBtn.innerHTML = iconText("play", "Uruchom");
         actionBtn.className = "btn sm gold";
-        cancelBtn.style.display = "none";
+        cancelBtn.hidden = true;
         targetInput.disabled = false;
         break;
     }
@@ -7128,7 +7058,7 @@ function wireEvents() {
       mcRenderContacts(total || 0);
       mcUpdateSortHeaders();
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="mc-empty mc-empty--cell">Błąd: ${e.message}</td></tr>`;
     }
   }
 
@@ -7160,7 +7090,7 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="mc-empty mc-empty--cell">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       mcUpdateSelectionInfo();
       return;
@@ -7174,7 +7104,7 @@ function wireEvents() {
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
@@ -7383,13 +7313,13 @@ function wireEvents() {
         info.textContent = '';
       }
     }
-    if (copyBtn) copyBtn.style.display = cells.length ? '' : 'none';
+    if (copyBtn) copyBtn.hidden = !cells.length;
     if (urlBtn) {
       if (cells.length === 1 && cells[0].col === 2) {
         const contact = mcState.contacts[cells[0].row];
-        if (contact?.url) { urlBtn.href = contact.url; urlBtn.style.display = ''; return; }
+        if (contact?.url) { urlBtn.href = contact.url; urlBtn.hidden = false; return; }
       }
-      urlBtn.style.display = 'none';
+      urlBtn.hidden = true;
     }
   }
 
@@ -7446,11 +7376,11 @@ function wireEvents() {
       // Odwróć, aby najstarsze były na górze, najnowsze na dole (chronologicznie)
       mcState.logs = (data || []).reverse();
       mcRenderLogs();
-    } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
+    } catch(e) { el.innerHTML = `<div class="mc-empty">Błąd: ${e.message}</div>`; }
   }
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
-    if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
+    if (!mcState.logs.length) { el.innerHTML = '<div class="mc-empty">Brak logów</div>'; return; }
     el.innerHTML = mcState.logs.slice().map(l => {
       const time = new Date(l.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
       const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[l.level] || "info";
@@ -7496,7 +7426,7 @@ function wireEvents() {
     const searchInput = document.getElementById("mcSearchInput");
     const searchClearBtn = document.getElementById("mcSearchClearBtn");
     searchInput?.addEventListener("input", (e) => {
-      if (searchClearBtn) searchClearBtn.style.display = e.target.value ? "" : "none";
+      if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
       clearTimeout(mcSearchTimer);
       mcSearchTimer = setTimeout(() => {
         mcSearchValue = e.target.value;
@@ -7507,7 +7437,7 @@ function wireEvents() {
     searchClearBtn?.addEventListener("click", () => {
       if (!searchInput) return;
       searchInput.value = "";
-      searchClearBtn.style.display = "none";
+      searchClearBtn.hidden = true;
       clearTimeout(mcSearchTimer);
       mcSearchValue = "";
       mcState.page = 1;
@@ -7559,7 +7489,7 @@ function wireEvents() {
     function fallbackCopy(txt) {
       const ta = document.createElement('textarea');
       ta.value = txt;
-      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      ta.className = "offscreen-copy";
       document.body.appendChild(ta);
       ta.focus(); ta.select();
       const ok = document.execCommand('copy');

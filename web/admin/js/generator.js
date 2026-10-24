@@ -15,8 +15,8 @@ let cancelGenerate = false;
 
 // Helpers
 const $ = id => document.getElementById(id);
-const show = id => { const el = $(id); if(el) el.style.display = 'block'; };
-const hide = id => { const el = $(id); if(el) el.style.display = 'none'; };
+const show = id => { const el = $(id); if(el) el.hidden = false; };
+const hide = id => { const el = $(id); if(el) el.hidden = true; };
 
 function showStatus(id, msg, type, iconName = "") {
   const el = $(id);
@@ -32,7 +32,7 @@ function setBusy(busy) {
     if (el) el.disabled = busy;
   });
   const list = $('gen-game-list');
-  if (list) list.style.opacity = busy ? '0.5' : '1';
+  list?.setAttribute('aria-busy', busy ? 'true' : 'false');
 }
 
 function setProgress(done, total) {
@@ -98,7 +98,7 @@ async function generateGames() {
   cancelGenerate = false;
   const cancelBtn = $('gen-cancel-btn');
   if (cancelBtn) {
-    cancelBtn.style.display = '';
+    cancelBtn.hidden = false;
     cancelBtn.onclick = (e) => {
       e.preventDefault();
       cancelGenerate = true;
@@ -176,7 +176,7 @@ async function generateGames() {
   }
   setBusy(false);
   const cancelBtn2 = $('gen-cancel-btn');
-  if (cancelBtn2) { cancelBtn2.style.display = 'none'; cancelBtn2.onclick = null; }
+  if (cancelBtn2) { cancelBtn2.hidden = true; cancelBtn2.onclick = null; }
 }
 
 async function deleteGame(id) {
@@ -207,7 +207,6 @@ function updateBulkBar() {
   const countEl = $('gen-bulk-count');
   if (!bar || !countEl) return;
   const count = selectedIds.size;
-  bar.style.display = 'flex';
   bar.classList.add('visible');
   countEl.textContent = `${count} zaznaczonych`;
 
@@ -445,7 +444,7 @@ function renderWeakInfo(container, report) {
   }
   const items = report.reasons.slice(0, 6).map(r => `<li>${escHtml(r)}</li>`).join("");
   const more = report.reasons.length > 6 ? `<li>… i ${report.reasons.length - 6} więcej</li>` : "";
-  container.innerHTML = `<div>${escHtml(report.summary)}</div><ul style="margin:6px 0 0 16px">${items}${more}</ul>`;
+  container.innerHTML = `<div>${escHtml(report.summary)}</div><ul>${items}${more}</ul>`;
 }
 
 async function scanForDuplicates() {
@@ -514,7 +513,7 @@ function renderGameList() {
         <span class="game-title">${escHtml(game.title)}</span>
         ${hasDup ? `<span class="tag tag--warn">DUP</span>` : ``}
         ${isWeak ? `<span class="tag tag--bad">SŁABE</span>` : ``}
-        <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
+        <span class="game-title game-meta">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${escHtml(game.id)}">Unikalność</button>
         <button class="btn sm" data-action="edit" data-id="${escHtml(game.id)}">Edytuj</button>
         <button class="btn sm danger" data-id="${escHtml(game.id)}">Usuń</button>
@@ -522,7 +521,7 @@ function renderGameList() {
       </div>
       <div class="game-preview">
         <div class="preview-desc">${escHtml(game.description)}</div>
-        <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
+        <div class="preview-weak"></div>
         <div class="preview-questions"></div>
       </div>
     `;
@@ -578,7 +577,7 @@ function renderGeneratedList() {
 
   list.innerHTML = '';
   if (!generated.length) {
-    list.innerHTML = '<div style="opacity:.6;font-size:12px;padding:10px 0">Brak wygenerowanych gier.</div>';
+    list.innerHTML = '<div class="gen-results-empty">Brak wygenerowanych gier.</div>';
     return;
   }
 
@@ -594,13 +593,13 @@ function renderGeneratedList() {
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${g.id}" ${g.approved ? 'checked' : ''} />
         <span class="game-title">${escHtml(cand.title || '—')}</span>
-        <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${dupLine} · ${w.summary}</span>
+        <span class="game-title game-meta">${dupLine} · ${w.summary}</span>
         <button class="btn sm danger" data-action="reject" data-id="${g.id}" ${g.generating ? 'disabled' : ''}>Odrzuć</button>
         <span class="game-chevron">${icon("caret-right")}</span>
       </div>
       <div class="game-preview">
         <div class="preview-desc">${escHtml(cand.description)}</div>
-        <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
+        <div class="preview-weak"></div>
         <div class="preview-questions"></div>
       </div>
     `;

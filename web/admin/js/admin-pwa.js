@@ -46,7 +46,7 @@ function updateButton() {
   const locked = document.body.classList.contains("settings-locked");
   const standaloneAdmin = isAdminStandalone();
   const installAvailable = canOfferPwaInstall(pwaApi);
-  button.style.display = locked || standaloneAdmin || adminInstalled || !installAvailable ? "none" : "";
+  button.hidden = locked || standaloneAdmin || adminInstalled || !installAvailable;
   button.disabled = false;
   button.title = "Zainstaluj panel admina";
   button.setAttribute("aria-label", button.title);
