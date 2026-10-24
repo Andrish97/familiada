@@ -1421,6 +1421,16 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
     const transport = transportOf(await readControl2Sessions(page, game.id));
     console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
+    if (Object.values(transport).some(item => item.catchup > 0)) {
+      // Szczegóły nadrabiania: rewizje i czasy (bez treści gry).
+      const evs = ((await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [])
+        .filter(event => ["display", "host", "buzzer"].includes(event.source) && event.category !== "device_heartbeat")
+        .map(event => ({ t: event.created_at, s: event.source, c: event.category, p: event.metrics?.phase,
+          tr: event.metrics?.trigger, rev: event.metrics?.revision ?? event.metrics?.latest_revision,
+          prev: event.metrics?.previous_revision, miss: event.metrics?.missed_revisions,
+          rms: event.metrics?.render_ms, fms: event.metrics?.fetch_ms, st: event.metrics?.status }));
+      console.log(`[e2e-diag] device events ${JSON.stringify(evs).slice(0, 6000)}`);
+    }
     for (const [source, item] of Object.entries(transport)) {
       expect(item.catchup, `${source}: zmiany doszły kanałem bezpośrednim, bez nadrabiania z heartbeatu`).toBe(0);
     }
