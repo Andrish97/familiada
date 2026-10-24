@@ -1,4 +1,4 @@
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-24T18141";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-24T18153";
 
 // Słownik jest podzielony na części: <lang>/<część>.js (docs/tlumaczenia-podzial-plan.md).
 // Strona wczytuje część wspólną i części z <meta name="i18n-parts" content="…">,
