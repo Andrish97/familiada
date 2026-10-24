@@ -7,6 +7,17 @@
 const { id, IDS } = require("../data/demo.cjs");
 
 const CAT = "logos-market";
+
+// Gry Producenta: lista gier producenta z danych sceny, pozostałe akcje { ok: true }.
+function SCENE_GENERATOR_DB(db, lang) {
+  adminData(db);
+  const p = require("../data/panel.cjs")[lang];
+  const market = require("../data/content.cjs")[lang].market.filter(([, , author]) => !author);
+  db.http["/_admin_api/generator/*"] = { ok: true };
+  db.http["/_admin_api/generator/list-producer-games"] = market.map(([title, description], i) => ({ id: `prod${i + 1}`, title, description, lang,
+    payload: { questions: (i === 1 ? p.gameQuestions.slice(0, 6) : p.gameQuestions).map(([text, answers]) => ({ text, answers: answers.map(([a, pts]) => ({ text: a, fixed_points: pts })) })) } }));
+}
+
 const LIST = ["web/logos/index.html", "web/logos/js/list.js", "web/logos/css/", "web/logos/js/db.js", "web/logos/js/transfer.js"];
 const TEXT_ED = ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"];
 const DRAW_ED = ["web/logos/editor/draw/", "web/logos/js/draw", "web/logos/js/editor-draw.js", "web/logos/js/editor-page.js"];
@@ -345,18 +356,20 @@ module.exports = [
   // Funkcja Edge generate-game idzie przez Worker (/_admin_api/generator/<akcja>):
   // lista gier producenta z danych sceny, pozostałe akcje zwracają { ok: true }.
   { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], settle: 800,
-    db: (db, lang) => {
-      adminData(db);
-      const p = require("../data/panel.cjs")[lang];
-      const market = require("../data/content.cjs")[lang].market.filter(([, , author]) => !author);
-      db.http["/_admin_api/generator/*"] = { ok: true };
-      db.http["/_admin_api/generator/list-producer-games"] = market.map(([title, description], i) => ({ id: `prod${i + 1}`, title, description, lang,
-        payload: { questions: (i === 1 ? p.gameQuestions.slice(0, 6) : p.gameQuestions).map(([text, answers]) => ({ text, answers: answers.map(([a, pts]) => ({ text: a, fixed_points: pts })) })) } }));
-    },
+    db: (db, lang) => SCENE_GENERATOR_DB(db, lang),
     steps: [async (view) => {
       await view.locator("#gen-load-btn").click();
       await view.locator("#gen-game-list .game-item").first().waitFor();
       await view.locator("#gen-game-list .game-item .game-chevron").first().click().catch(() => {});
       await view.waitForTimeout(400);
+    }] },
+  { id: "logos-market-admin-generator-edit", category: CAT, title: "Panel admina — Gry Producenta: okno edycji gry", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop", "phone"], settle: 800,
+    db: (db, lang) => SCENE_GENERATOR_DB(db, lang),
+    steps: [async (view) => {
+      await view.locator("#gen-load-btn").click();
+      await view.locator('#gen-game-list [data-action="edit"]').first().waitFor();
+      await view.locator('#gen-game-list [data-action="edit"]').first().click();
+      await view.locator("#gameEditorOverlay:not([hidden])").waitFor();
+      await view.waitForTimeout(500);
     }] },
 ];

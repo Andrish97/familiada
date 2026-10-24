@@ -3,7 +3,7 @@
 // ui-select (placeUnder), menu kontekstowe (placeAtPoint). Zawsze w oknie,
 // EDGE_PAD od krawędzi.
 
-import { EDGE_PAD as PAD, ANCHOR_GAP as GAP, LIST_GAP, LIST_MIN_HEIGHT, clamp } from "./ui-metrics.js?v=v2026-10-24T20560";
+import { EDGE_PAD as PAD, ANCHOR_GAP as GAP, LIST_GAP, LIST_MIN_HEIGHT, clamp } from "./ui-metrics.js?v=v2026-10-24T21185";
 
 // Pomiar ukrytego menu: na chwilę widoczne, ale niewidzialne i bez kliknięć.
 function measured(el, fn) {

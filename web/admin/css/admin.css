@@ -1039,6 +1039,38 @@
   /* Komunikat stanu generatora: .callout z silnika (showStatus w generator.js). */
   .gen-status { margin-top: 10px; }
 
+  /* Okno edycji gry Producenta: tytuł i język w jednym rzędzie, pytania jako
+     karty z numerowanymi odpowiedziami; liczniki znaków i suma punktów
+     zmieniają kolor przez data-state (ok | warn | bad). */
+  .ge-body,
+  .ge-questions,
+  .ge-question,
+  .ge-a-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .ge-body { gap: 12px; }
+  /* Wyśrodkowane okno: przewija się treść, nagłówek i stopka zostają
+     (w arkuszu na telefonie przewija się całe okno — silnik). */
+  :where(:root:not([data-sheet])) .ge-modal { display: flex; flex-direction: column; overflow: hidden; }
+  :where(:root:not([data-sheet])) .ge-modal > .ge-body { flex: 1 1 auto; min-height: 0; overflow: auto; margin-block: 12px; }
+  .ge-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 220px); gap: 12px; align-items: start; }
+  .ge-meta > .field, .ge-body > .field { margin-top: 0; } /* odstęp daje gap siatki */
+  .ge-questions { gap: 10px; }
+  .ge-question { gap: 8px; }
+  .ge-q-row, .ge-a-row { display: flex; gap: 8px; align-items: center; }
+  .ge-a-list { gap: 6px; }
+  .ge-q-row > .inp, .ge-a-row > .inp:not(.ge-a-pts) { flex: 1 1 auto; min-width: 0; }
+  .ge-num { min-width: 20px; font-size: 11px; font-weight: 700; color: var(--text-faint); }
+  .ge-a-row .ge-num { min-width: 14px; font-weight: 400; }
+  .ge-a-pts { flex: 0 0 64px; width: 64px; }
+  .ge-len, .ge-count, .ge-pts-sum { font-size: 11px; white-space: nowrap; color: var(--text-faint); }
+  .ge-pts-sum { font-weight: 700; }
+  :is(.ge-len, .ge-count, .ge-pts-sum)[data-state="bad"] { color: var(--bad-text); font-weight: 700; }
+  :is(.ge-len, .ge-count, .ge-pts-sum)[data-state="warn"] { color: var(--warn-text); }
+  :is(.ge-len, .ge-count, .ge-pts-sum)[data-state="ok"] { color: var(--ok-text); }
+  .ge-modal .modal-actions > .gen-status { margin: 0 auto 0 0; }
+  @media (max-width: 600px) {
+    .ge-meta { grid-template-columns: minmax(0, 1fr); }
+  }
+
   /* =========================================================
      MARKETPLACE ADMIN PANEL
   ========================================================= */

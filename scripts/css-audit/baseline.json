@@ -2,9 +2,6 @@
  "web/admin/css/admin.css": {
   "unusedClass": 15
  },
- "web/admin/js/generator.js": {
-  "inlineStyleJs": 20
- },
  "web/admin/js/mailbox.js": {
   "inlineStyleJs": 3
  },

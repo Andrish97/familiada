@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-24T20560"/>
+  <meta name="app-version" content="v2026-10-24T21185"/>
 
 
   <meta charset="UTF-8"/>
@@ -16,27 +16,27 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-24T20560"/>
-  <link rel="apple-touch-icon" sizes="180x180" href="/admin/icons/admin-apple-touch-180.png?v=v2026-10-24T20560"/>
-  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-24T20560" crossorigin="use-credentials"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-24T21185"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/admin/icons/admin-apple-touch-180.png?v=v2026-10-24T21185"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-24T21185" crossorigin="use-credentials"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T20560" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T20560"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T20560"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T20560"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T20560"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T20560"/>
-  <link rel="stylesheet" href="/admin/css/admin.css?v=v2026-10-24T20560"/>
-  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T20560"></script>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-24T21185" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-24T21185"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-24T21185"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-24T21185"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-24T21185"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-24T21185"/>
+  <link rel="stylesheet" href="/admin/css/admin.css?v=v2026-10-24T21185"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-24T21185"></script>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T20560" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T20560" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-24T20560" defer></script>
-  <script type="module" src="/admin/js/admin.js?v=v2026-10-24T20560" defer></script>
-  <script type="module" src="/admin/js/admin-pwa.js?v=v2026-10-24T20560" defer></script>
-  <script type="module" src="/admin/js/generator.js?v=v2026-10-24T20560" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-24T21185" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-24T21185" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-24T21185" defer></script>
+  <script type="module" src="/admin/js/admin.js?v=v2026-10-24T21185" defer></script>
+  <script type="module" src="/admin/js/admin-pwa.js?v=v2026-10-24T21185" defer></script>
+  <script type="module" src="/admin/js/generator.js?v=v2026-10-24T21185" defer></script>
 
 </head>
 <body class="settings-body settings-locked no-footer-line skel-body">
@@ -1057,6 +1057,46 @@
           <button class="btn sm" id="btnMarketPreviewWithdraw" type="button">Wycofaj</button>
           <button class="btn sm" id="btnMarketPreviewReject" type="button">Odrzuć</button>
           <button class="btn sm gold" id="btnMarketPreviewApprove" type="button">Zatwierdź</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: edycja gry Producenta (Gry Społeczności) -->
+    <div class="overlay modal--sheet" id="gameEditorOverlay" hidden>
+      <div class="modal modal-wide ge-modal" role="dialog" aria-modal="true" aria-labelledby="geModalTitle">
+        <div class="mHead">
+          <div class="mTitle" id="geModalTitle">Edytuj grę</div>
+          <button class="btn sm" id="btnGameEditorClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="ge-body modal-scroll">
+          <div class="ge-meta">
+            <div class="field ge-title-field">
+              <label class="field-label" for="ge-title">Tytuł</label>
+              <input class="inp" id="ge-title" type="text" maxlength="120" autocomplete="off"/>
+              <div class="hint ge-count" id="ge-title-hint"></div>
+            </div>
+            <div class="field ge-lang-field">
+              <span class="field-label">Język</span>
+              <div class="ui-select" id="ge-lang">
+                <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">—</span>
+                  <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="ge-description">Opis</label>
+            <textarea class="inp" id="ge-description" rows="3"></textarea>
+            <div class="hint ge-count" id="ge-desc-hint"></div>
+          </div>
+          <div class="ge-questions" id="ge-questions"></div>
+        </div>
+        <div class="modal-actions">
+          <div class="callout gen-status" id="ge-status" role="status" hidden></div>
+          <button class="btn sm" id="btnGameEditorCancel" type="button">Anuluj</button>
+          <button class="btn sm gold" id="btnGameEditorSave" type="button"><i class="ico" data-icon="check"></i> Zapisz</button>
         </div>
       </div>
     </div>

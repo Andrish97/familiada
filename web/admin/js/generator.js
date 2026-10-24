@@ -1,8 +1,9 @@
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T20560";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T20560";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T20560";
-import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T20560";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-24T21185";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-24T21185";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-24T21185";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-24T21185";
+import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-24T21185";
 
 
 let games = [];
@@ -700,69 +701,58 @@ function renderPreviewQuestions(container, payload) {
   `).join('');
 }
 
-// Game Editor
+// Okno edycji gry Producenta (#gameEditorOverlay, openDialog z silnika).
 let editorGameId = null;
+let editorLangSelect = null;
+
+// Stan licznika: data-state (ok | warn | bad) — kolor daje CSS (.ge-len, .ge-count, .ge-pts-sum).
+function setCount(el, text, state = "") {
+  el.textContent = text;
+  if (state) el.dataset.state = state;
+  else delete el.dataset.state;
+}
 
 function openGameEditor(game) {
   editorGameId = game.id;
-  const overlay = $('gameEditorOverlay');
   $('ge-title').value = game.title || '';
   $('ge-description').value = game.description || '';
-  $('ge-lang').value = game.lang || 'pl';
+  editorLangSelect?.setValue(game.lang || 'pl', { silent: true });
   renderEditorQuestions(game.payload?.questions || []);
   showStatus('ge-status', '', '');
-  $('ge-title').addEventListener('input', updateTitleLen);
-  $('ge-description').addEventListener('input', updateDescLen);
-  overlay.style.display = 'flex';
+  openDialog($('gameEditorOverlay'), { onClose: closeGameEditor });
 }
 
 function closeGameEditor() {
-  $('gameEditorOverlay').style.display = 'none';
+  const overlay = $('gameEditorOverlay');
+  if (overlay && !overlay.hidden) closeDialog(overlay);
   editorGameId = null;
 }
 
 function renderEditorQuestions(questions) {
   const container = $('ge-questions');
-  container.innerHTML = '';
-  questions.forEach((q, qi) => {
-    const qDiv = document.createElement('div');
-    qDiv.className = 'card card--inset settings-card';
-    qDiv.style.gap = '8px';
-    qDiv.innerHTML = `
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:11px;font-weight:700;opacity:.5;min-width:20px">${qi + 1}.</span>
-        <input class="inp ge-q-text" data-qi="${qi}" value="${escHtml(q.text)}" style="flex:1">
-        <span class="ge-q-len" data-qi="${qi}" style="font-size:11px;opacity:.45;white-space:nowrap"></span>
+  container.innerHTML = questions.map((q, qi) => `
+    <div class="card card--inset ge-question">
+      <div class="ge-q-row">
+        <span class="ge-num">${qi + 1}.</span>
+        <input class="inp ge-q-text" data-qi="${qi}" value="${escHtml(q.text)}" aria-label="Pytanie ${qi + 1}">
+        <span class="ge-len ge-q-len" data-qi="${qi}"></span>
       </div>
-      <div class="ge-answers" data-qi="${qi}" style="display:grid;gap:6px">
+      <div class="ge-a-list" data-qi="${qi}">
         ${(q.answers || []).map((a, ai) => `
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:11px;opacity:.4;min-width:14px">${ai + 1}</span>
-            <input class="inp ge-a-text" data-qi="${qi}" data-ai="${ai}" value="${escHtml(a.text)}" style="flex:1">
-            <span class="ge-a-len" data-qi="${qi}" data-ai="${ai}" style="font-size:11px;opacity:.45;white-space:nowrap"></span>
-            <input class="inp ge-a-pts" data-qi="${qi}" data-ai="${ai}" type="number" value="${escHtml(a.fixed_points ?? '')}" style="width:60px" placeholder="pkt">
+          <div class="ge-a-row">
+            <span class="ge-num">${ai + 1}</span>
+            <input class="inp ge-a-text" data-qi="${qi}" data-ai="${ai}" value="${escHtml(a.text)}" aria-label="Odpowiedź ${ai + 1}">
+            <span class="ge-len ge-a-len" data-qi="${qi}" data-ai="${ai}"></span>
+            <input class="inp ge-a-pts" data-qi="${qi}" data-ai="${ai}" type="number" min="0" max="100" value="${escHtml(a.fixed_points ?? '')}" placeholder="pkt" aria-label="Punkty odpowiedzi ${ai + 1}">
           </div>
         `).join('')}
       </div>
-      <div style="display:flex;gap:10px;align-items:center;font-size:11px">
-        <span class="ge-pts-sum" data-qi="${qi}"></span>
-      </div>
-    `;
-    container.appendChild(qDiv);
-  });
-  // attach live validation
-  container.querySelectorAll('.ge-q-text').forEach(el => {
-    updateQLen(el);
-    el.addEventListener('input', () => updateQLen(el));
-  });
-  container.querySelectorAll('.ge-a-text').forEach(el => {
-    updateALen(el);
-    el.addEventListener('input', () => updateALen(el));
-  });
-  container.querySelectorAll('.ge-a-pts').forEach(el => {
-    updatePtsSum(el.dataset.qi);
-    el.addEventListener('input', () => updatePtsSum(el.dataset.qi));
-  });
+      <span class="ge-pts-sum" data-qi="${qi}"></span>
+    </div>
+  `).join('');
+  container.querySelectorAll('.ge-q-text').forEach(updateQLen);
+  container.querySelectorAll('.ge-a-text').forEach(updateALen);
+  questions.forEach((_, qi) => updatePtsSum(qi));
   updateDescLen();
   updateTitleLen();
 }
@@ -770,47 +760,31 @@ function renderEditorQuestions(questions) {
 function updateQLen(el) {
   const len = el.value.trim().length;
   const span = document.querySelector(`.ge-q-len[data-qi="${el.dataset.qi}"]`);
-  if (!span) return;
-  span.textContent = `${len} zn.`;
-  span.style.color = len < 10 ? 'var(--red, #f55)' : 'inherit';
+  if (span) setCount(span, `${len} zn.`, len < 10 ? 'bad' : '');
 }
 
 function updateALen(el) {
   const len = el.value.trim().length;
   const span = document.querySelector(`.ge-a-len[data-qi="${el.dataset.qi}"][data-ai="${el.dataset.ai}"]`);
-  if (!span) return;
-  span.textContent = `${len}`;
-  span.style.color = len === 0 ? 'var(--red, #f55)' : 'inherit';
+  if (span) setCount(span, `${len}`, len === 0 ? 'bad' : '');
 }
 
 function updatePtsSum(qi) {
-  const pts = [...document.querySelectorAll(`.ge-a-pts[data-qi="${qi}"]`)]
-    .map(el => Number(el.value) || 0);
-  const sum = pts.reduce((a, b) => a + b, 0);
+  const sum = [...document.querySelectorAll(`.ge-a-pts[data-qi="${qi}"]`)]
+    .reduce((acc, el) => acc + (Number(el.value) || 0), 0);
   const span = document.querySelector(`.ge-pts-sum[data-qi="${qi}"]`);
-  if (!span) return;
-  const ok = sum >= 80 && sum <= 100;
-  span.textContent = `Suma pkt: ${sum}/100`;
-  span.style.color = ok ? 'var(--green, #4c4)' : 'var(--red, #f55)';
-  span.style.fontWeight = ok ? '' : '700';
+  if (span) setCount(span, `Suma pkt: ${sum}/100`, sum >= 80 && sum <= 100 ? 'ok' : 'bad');
 }
 
 function updateDescLen() {
-  const el = $('ge-description');
-  const hint = $('ge-desc-hint');
-  if (!el || !hint) return;
-  const len = el.value.trim().length;
-  hint.textContent = `${len} zn.${len < 30 ? ' (min. 30)' : len < 60 ? ' (krótki)' : ''}`;
-  hint.style.color = len < 30 ? 'var(--red, #f55)' : len < 60 ? 'var(--yellow, #fa0)' : 'inherit';
+  const len = $('ge-description').value.trim().length;
+  setCount($('ge-desc-hint'), `${len} zn.${len < 30 ? ' (min. 30)' : len < 60 ? ' (krótki)' : ''}`,
+    len < 30 ? 'bad' : len < 60 ? 'warn' : '');
 }
 
 function updateTitleLen() {
-  const el = $('ge-title');
-  const hint = $('ge-title-hint');
-  if (!el || !hint) return;
-  const len = el.value.trim().length;
-  hint.textContent = `${len} zn.${len < 6 ? ' (min. 6)' : ''}`;
-  hint.style.color = len < 6 ? 'var(--red, #f55)' : 'inherit';
+  const len = $('ge-title').value.trim().length;
+  setCount($('ge-title-hint'), `${len} zn.${len < 6 ? ' (min. 6)' : ''}`, len < 6 ? 'bad' : '');
 }
 
 function escHtml(s) {
@@ -820,7 +794,7 @@ function escHtml(s) {
 function collectEditorData() {
   const title = $('ge-title').value.trim();
   const description = $('ge-description').value.trim();
-  const lang = $('ge-lang').value;
+  const lang = editorLangSelect?.getValue() || 'pl';
   const qTexts = [...document.querySelectorAll('.ge-q-text')];
   const questions = qTexts.map((qEl) => {
     const qi = Number(qEl.dataset.qi);
@@ -946,21 +920,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-24T20560';
+    a.download = 'przykladowa-gra.json?v=v2026-10-24T21185';
 
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   });
 
-  const editorClose = $('btnGameEditorClose');
-  if (editorClose) editorClose.addEventListener('click', closeGameEditor);
-  const editorCancel = $('btnGameEditorCancel');
-  if (editorCancel) editorCancel.addEventListener('click', closeGameEditor);
-  const editorSave = $('btnGameEditorSave');
-  if (editorSave) editorSave.addEventListener('click', saveGameEditor);
-  const editorOverlay = $('gameEditorOverlay');
-  if (editorOverlay) editorOverlay.addEventListener('click', (e) => { if (e.target === editorOverlay) closeGameEditor(); });
+  // Okno edycji: Esc, tło i X obsługuje openDialog; pola nasłuchiwane raz.
+  $('btnGameEditorClose')?.addEventListener('click', closeGameEditor);
+  $('btnGameEditorCancel')?.addEventListener('click', closeGameEditor);
+  $('btnGameEditorSave')?.addEventListener('click', saveGameEditor);
+  $('ge-title')?.addEventListener('input', updateTitleLen);
+  $('ge-description')?.addEventListener('input', updateDescLen);
+  $('ge-questions')?.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.classList.contains('ge-q-text')) updateQLen(el);
+    else if (el.classList.contains('ge-a-text')) updateALen(el);
+    else if (el.classList.contains('ge-a-pts')) updatePtsSum(el.dataset.qi);
+  });
+  editorLangSelect = initUiSelect($('ge-lang'), {
+    options: [
+      { value: 'pl', label: 'Polski', icon: 'flag-pl' },
+      { value: 'uk', label: 'Українська', icon: 'flag-ua' },
+      { value: 'en', label: 'English', icon: 'lang-en' },
+    ],
+    value: 'pl',
+  });
   const selIssuesBtn = $('gen-select-issues-btn');
   if (selIssuesBtn) selIssuesBtn.addEventListener('click', (e) => { e.preventDefault(); selectIssues(); });
   const selAllBtn = $('gen-sel-all-btn');
