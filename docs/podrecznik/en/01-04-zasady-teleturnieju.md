@@ -1,6 +1,6 @@
 # Part I — Game show rules
 
-Based on the [Familiada game show regulations](https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf)
+Based on the [Familiada game show regulations](https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf)
 (Telewizja Polska S.A.).
 
 # 1. What is Familiada?
@@ -182,8 +182,9 @@ can end the final right away, without revealing the remaining questions (→ 17.
 ## 4.4 Grand prize and settling the score
 
 - If the finalists score 200 points or more, the family wins the **grand prize —
-  25,000 PLN**, added to the money won earlier.
-- If not — the family gets the money collected during the game: **the number of points multiplied by 3**.
+  25,000 PLN**, added to the money won earlier (round points ×3).
+- If not, the family receives **the points from rounds before the final ×3**. Final points
+  are not included in this multiplication; they only determine whether the grand prize is awarded.
 
 **In the app:** the end screen can show the logo, the points or the prize amount (→ 16.6). You set
 the grand prize amount and the multiplier yourself (default 25,000 and ×3). The amount is

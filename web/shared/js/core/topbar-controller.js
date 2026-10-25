@@ -1,4 +1,4 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T17592";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T18265";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -6,12 +6,12 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T17592";
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T17592";
-import { signOut } from './auth.js?v=v2026-10-25T17592';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T17592';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T17592';
-import { icon, iconText } from './icons.js?v=v2026-10-25T17592';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T17592';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T18265";
+import { signOut } from './auth.js?v=v2026-10-25T18265';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T18265';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T18265';
+import { icon, iconText } from './icons.js?v=v2026-10-25T18265';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T18265';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -408,7 +408,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T17592');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T18265');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();

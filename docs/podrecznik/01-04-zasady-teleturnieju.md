@@ -1,6 +1,6 @@
 # Część I — Zasady teleturnieju
 
-Opis na podstawie [Regulaminu teleturnieju „FAMILIADA”](https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf)
+Opis na podstawie [Regulaminu teleturnieju „FAMILIADA”](https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf)
 (Telewizja Polska S.A.).
 
 # 1. Czym jest Familiada?
@@ -182,8 +182,9 @@ może zakończyć finał od razu, bez odsłaniania pozostałych pytań (→ 17.4
 ## 4.4 Nagroda główna i rozliczenie wyniku
 
 - Jeśli finaliści zdobędą 200 punktów lub więcej, rodzina wygrywa **nagrodę główną —
-  25 000 zł**, dodaną do pieniędzy wygranych wcześniej.
-- Jeśli nie — rodzina dostaje pieniądze zebrane w grze: **liczbę punktów mnożoną przez 3**.
+  25 000 zł**, dodaną do pieniędzy wygranych wcześniej (punkty z rund ×3).
+- Jeśli nie — rodzina otrzymuje **punkty z rund przed finałem ×3**. Punkty zdobyte w finale
+  nie wchodzą do tego mnożenia; rozstrzygają tylko, czy przyznano nagrodę główną.
 
 **W serwisie:** ekran końcowy może pokazać logo, punkty albo kwotę nagrody (→ 16.6). Kwotę
 nagrody głównej i mnożnik ustawiasz sam (domyślnie 25 000 i ×3). Kwota to punkty

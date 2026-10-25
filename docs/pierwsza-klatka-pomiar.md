@@ -69,3 +69,8 @@ zgłasza walidację i podsumowanie jako zależność paska/karty, a wyniki nadal
 odsłania osobno. Ta sama próba po zmianie: **0 / 0 / 0,00085**. Szkic
 punktowy i ankieta zatrzymana z opóźnieniami: na obu telefonach 0,
 na komputerze odpowiednio 0,00100 i 0,00082. Nowa scena utrwala wolny odczyt.
+
+
+Końcowy zbiór po dodaniu sceny regresji i ponowieniu widoków Ankiety:
+**974/974 pomiary**, żaden ponad 0,01, maksimum 0,006484. Inwentarz zawiera
+543 wpisy scen. Pełny unit po scaleniu aktualnego main: 864/864.

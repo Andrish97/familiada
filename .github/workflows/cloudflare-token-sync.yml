@@ -1,0 +1,30 @@
+name: Cloudflare — przekaż istniejący token na serwer
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Klucz SSH i przypięty host
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN: ${{ secrets.SERVER_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+      - name: Zapisz token w chronionym pliku (bez wartości w logach)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familiada-cloudflare-token check
+          printf '%s' "$CLOUDFLARE_API_TOKEN" | ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familiada-cloudflare-token store
+      - name: Usuń klucz SSH
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519

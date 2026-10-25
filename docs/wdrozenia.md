@@ -290,8 +290,21 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - E2E po scaleniu: UI 40219691538 ✓ 3/3. Control 40219693950: asercja
   zerowego nadrabiania — Host nadrobił pojedyncze rewizje 5 i 10 z dzwonka;
   Display/Buzzer 0, wszystkie kanały connected. Bez zmiany asercji.
-- Status: finalny branch do UI + testu ładowania Ankiety, potem Control
-  osobno po zakończeniu UI; dalej main/Pages i te same spece na produkcji.
+- UI na finalnej logice `f4bdbbebc7`: **40220957780 ✓ 4/4** (Gry, okno
+  mobilne, ładowanie Ankiety i ponowienie). Osobny Control 40221102773:
+  ponownie asercja 0 catchup, tym razem Display 1, Host/Buzzer 0.
+- Test transportu dostosowany do naprawy słabego łącza z 25.10: dzwonek może
+  wygrać wyścig z postgres_changes. Zamiast wnioskować o awarii z licznika
+  nadrabiania, test wymaga faktycznej wiadomości postgres_changes na każdym
+  urządzeniu. Obserwator przekazuje zdarzenie do oryginalnej obsługi SDK;
+  lokalny Chromium + prawdziwy vendor potwierdził odbiór i zachowanie obsługi.
+  Wykrycie martwego kanału oraz wszystkie asercje rundy/wznowienia pozostają.
+- Scalenie kolejnego main `ad26b3ba4c`: backend prywatnego panelu, zrzuty i
+  treści Wskazówek oraz wersje; brak zmian semantycznych w kodzie testowanych
+  stron. Resolver rozwiązał wyłącznie wersje. Pełny unit **864/864** ✓ (47,3 s).
+- Końcowy zbiór pomiarów: **974/974**, bez przekroczeń 0,01; max 0,006484.
+- Status: UI brancha zielone; ponowny Control z obserwacją rzeczywistych
+  wiadomości, potem main/Pages i te same spece kontrolne na produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |
@@ -1925,3 +1938,5 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 | 2026-10-25 | Cloudflare — ponowna identyfikacja po zmianie uprawnień | Właściciel potwierdził dodanie User/API Tokens/Read do familiada-worker-deploy. Odczyty 40216860390 i 40217023422: token GitHuba nadal active, ID kończy się f0e69f94; szczegóły i lista tokenów HTTP 403 (lista: kod 9109). Sprawdzono schemat API Cloudflare: endpointy wspierają Bearer i wymagają api.token.read/list. | Nazwa tokenu nadal niepotwierdzona; poproszono o to samo tymczasowe uprawnienie dla Edit Cloudflare Workers. Nie usuwać tokenów na podstawie samej nazwy/uprawnień. Token z datą właściciel zidentyfikował jako automatyczny token Cloudflare Agent; nie jest tokenem wdrożeniowym. |
 
 | 2026-10-25 | Cloudflare — nazwa tokenu wdrażania potwierdzona | Po zatwierdzeniu obu zmian przez właściciela: 40217250880 i 40217410046 success. Token GitHuba f0e69f94 to Edit Cloudflare Workers (szczegóły i lista zgodne). Obsługuje deploy-worker i maintenance/KV. familiada-worker-deploy (d3d9d078): brak zdarzeń zwróconych przez filtr audit logs za 2026-09-25–2026-10-26; brak osobnego użycia w sprawdzonych automatach obu repo. | Edit Cloudflare Workers zostaje; po diagnozie usunąć z niego tymczasowe User/API Tokens/Read. familiada-worker-deploy nie jest potrzebny obecnym automatom Familiady; historia dotyczy wskazanego okresu, nie stanowi audytu cudzych integracji. Token Cloudflare Agent potrzebny tylko przy używaniu tego asystenta. Agent nie zmieniał ani nie usuwał tokenów. |
+
+| 2026-10-25 | Prywatny panel — wznowienie i wspólny token wdrażania | Właściciel polecił kontynuować i użyć istniejącego Edit Cloudflare Workers. Secrets API prywatnego repo nadal 403; wybrano przekazanie obecnego tokenu przez ograniczone polecenie SSH do root-only pliku na serwerze, bez wartości w logach. Server deploy check 40219284275 success. Lokalnie 858/858 unit, w tym szyfrowana koperta RSA-OAEP/AES-GCM dla istniejących sekretów aplikacji, krótkie okno i odmowy. | Instalacja helpera → synchronizacja tokenu → przygotowanie originu i prywatnego Workera. Podpis ciasteczka przerwy bez rotacji; historia repo nadal osobną operacją. DB read 40219193696: brak nowego przebiegu LF; wyszukiwania nie uruchamiano za właściciela. |
