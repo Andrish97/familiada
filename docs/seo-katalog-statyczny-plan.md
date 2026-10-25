@@ -425,3 +425,7 @@ Test powiększania czeka na gotowość JS, a nie samą obecność obrazu SSR.
 Regresja `cloudflare/maintenance-worker/test/public-browser.mjs` wstrzymuje
 moduł treści: zachowanie elementu obrazu i wczesna nawigacja, 390/1400 px,
 4/4. Unity powiązane 43/43. Zwykły wygląd i opis obsługi bez zmian.
+
+Poprawka `a4863c843`: Worker 10/10, przeglądarka 4/4, unity 43/43;
+branch E2E [40169011626](https://github.com/Andrish97/familiada/actions/runs/40169011626)
+2/2 — gotowa do publikacji i ponownego sprawdzenia na produkcji.
