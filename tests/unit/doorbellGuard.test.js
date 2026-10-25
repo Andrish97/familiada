@@ -45,3 +45,30 @@ test("dzwonek: rewizja odebrana w czasie grace nie uruchamia fallbacku", () => {
   assert.deepEqual(missed, []);
   guard.stop();
 });
+
+test("dzwonek: spóźniony wiersz Realtime czyści serię fallbacków przed odbudową kanału", () => {
+  let receivedRev = 3;
+  let timerCallback = null;
+  let fetches = 0;
+  let stale = 0;
+  const guard = createDoorbellGuard({
+    graceMs: 100,
+    getReceivedRev: () => receivedRev,
+    isDirectConnected: () => true,
+    fetchNow: () => { fetches++; },
+    onStale: () => { stale++; },
+    setTimer: callback => { timerCallback = callback; return fetches + 1; },
+    clearTimer: () => {},
+  });
+
+  guard.ring(4);
+  timerCallback();
+  assert.equal(fetches, 1);
+  receivedRev = 4;
+  guard.noteReceived(4);
+  guard.ring(5);
+  timerCallback();
+  assert.equal(fetches, 2);
+  assert.equal(stale, 0);
+  guard.stop();
+});

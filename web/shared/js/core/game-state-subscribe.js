@@ -19,9 +19,9 @@ import { rt } from "./realtime.js?v=v2026-10-25T18561";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18561";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18561";
 import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18561";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T204805";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T205220";
 import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T18561";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T204805";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T205220";
 
 const HEARTBEAT_REV_GRACE_MS = 250;
 
@@ -357,6 +357,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         const row = payload?.new;
         const rev = Number(row?.rev);
         if (row && Number.isFinite(rev)) {
+          doorbell.noteReceived(rev);
           noteDirectRevision(rev);
           sync.applyRow({ ...row, rev }, "postgres_changes");
           revisionWatchdog.observeReceivedRevision();
@@ -550,7 +551,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Po krótkim oknie na dostarczenie wiersza przez kanał watchdog nadrabia
   // stan, zamiast czekać na kolejny heartbeat.
   function noteServerRevision(revision) {
-    if (active) revisionWatchdog.noteServerRevision(revision);
+    // Gdy kanał nie jest jeszcze potwierdzony, działa poller awaryjny.
+    // Watchdog ma pilnować kanału, który zgłasza gotowość, a po cichu gubi
+    // zmiany — nie może ścigać się z początkowym bootstrapem/subskrypcją.
+    if (active && directConnected) revisionWatchdog.noteServerRevision(revision);
   }
 
     return { start, stop, applyRow, refetchNow, noteServerRevision,

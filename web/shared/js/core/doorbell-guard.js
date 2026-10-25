@@ -9,13 +9,15 @@
 export function createDoorbellGuard({ graceMs = 100, getReceivedRev, isDirectConnected, fetchNow, onMissed = () => {}, onStale = () => {}, setTimer = setTimeout, clearTimer = clearTimeout }) {
   let timer = null;
   let misses = 0;
+  let latestMissedRev = null;
 
   function check(rev) {
     timer = null;
-    if (getReceivedRev() >= rev) { misses = 0; return; }
+    if (getReceivedRev() >= rev) { misses = 0; latestMissedRev = null; return; }
     const missedRevisions = rev - Math.max(0, getReceivedRev());
     onMissed({ latest_revision: rev, missed_revisions: missedRevisions, grace_ms: graceMs });
     misses += 1;
+    latestMissedRev = Math.max(latestMissedRev ?? rev, rev);
     if (misses >= 2 && isDirectConnected()) {
       misses = 0;
       onStale();
@@ -35,7 +37,17 @@ export function createDoorbellGuard({ graceMs = 100, getReceivedRev, isDirectCon
     clearTimer(timer);
     timer = null;
     misses = 0;
+    latestMissedRev = null;
   }
 
-  return { ring, stop };
+  // Próg RPC może minąć tuż przed Realtime. Gdy spóźniony wiersz jednak
+  // dotrze, nie traktuj wcześniejszego fallbacku jako kolejnej awarii kanału.
+  function noteReceived(revision) {
+    if (Number.isSafeInteger(revision) && latestMissedRev != null && revision >= latestMissedRev) {
+      misses = 0;
+      latestMissedRev = null;
+    }
+  }
+
+  return { ring, noteReceived, stop };
 }
