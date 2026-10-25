@@ -280,8 +280,16 @@ Zmieniono próg dzwonka na 400 ms, a watchdoga rewizji na 700 ms. E2E
 `40246357739` przeszedł: Display miał 0 nadrabiań, Host i Buzzer również
 0; urządzenia odebrały odpowiednio 10, 10 i 29 natywnych ramek
 Postgres Changes. Kontrolowane rozłączenie Display i wznowienie także
-przeszły. To potwierdza poprawę w tym scenariuszu testowym; nie wyklucza
-problemów sieci lub przeglądarki w historycznych sesjach użytkowników.
+przeszły. Powtórka `40246805594` dała ten sam wynik: 0 nadrabiań na każdym
+urządzeniu, 10/10/29 natywnych ramek oraz udane kontrolowane wznowienie.
+
+Read-only check serwera po powtórce (`familiada-server` run
+`40246982124`) wykazał Realtime `v2.143.3` jako healthy, 0 restartów,
+`oom=false`; logi Envoy zawierały połączenia WebSocket z odpowiedzią 101.
+Nie znaleziono w tym sprawdzeniu błędu serwera skorelowanego z E2E. To
+potwierdza poprawę i brak awarii w tym scenariuszu testowym; nie wyklucza
+problemów sieci lub przeglądarki w historycznych sesjach użytkowników ani
+nie dowodzi, że serwer nigdy nie doświadcza krótkich opóźnień.
 
 ## Pytania do decyzji
 
