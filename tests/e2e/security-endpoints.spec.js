@@ -187,13 +187,34 @@ test("P2 Worker: formularz kontaktu bez tokenu Turnstile = 400", async ({ reques
   }
 });
 
-// Panel przeniesiony do prywatnego repo i na serwer. Stary origin Pages
-// nie może nadal udostępniać jego HTML, modułów lub manifestu.
-test("prywatny panel: stare pliki usunięte z originu Pages", async ({ request }) => {
+// Bezpośredni origin z takim samym SNI/Host i rozwiązywaniem DNS jak Worker.
+// Zwykły URL *.github.io przekierowuje do domeny własnej — nie sprawdza pliku.
+function pagesOriginStatus(pathname) {
+  const https = require("node:https");
+  const dns = require("node:dns");
+  return new Promise((resolve, reject) => {
+    const req = https.get({
+      hostname: "familiada.online", path: pathname,
+      lookup: (_host, options, done) => dns.lookup("andrish97.github.io", { ...options, family: 4 }, done),
+    }, res => {
+      res.resume();
+      resolve({status: res.statusCode, github: !!res.headers["x-github-request-id"]});
+    });
+    req.setTimeout(15000, () => req.destroy(new Error("timeout originu Pages")));
+    req.on("error", reject);
+  });
+}
+
+test("prywatny panel: stare pliki usunięte z originu Pages", async () => {
+  // Znany publiczny plik potwierdza właściwy origin, zanim sprawdzimy odmowy.
+  const control = await pagesOriginStatus("/index.html");
+  expect(control.github).toBe(true);
+  expect(control.status).toBe(200);
   for (const path of ["/admin/index.html", "/admin/js/admin.js", "/manifest-admin.webmanifest"]) {
-    const res = await request.get(`https://andrish97.github.io${path}`, { headers: { Host: "familiada.online" }, maxRedirects: 0 });
-    log(`old Pages ${path}`, res.status());
-    expect(res.status()).toBe(404);
+    const res = await pagesOriginStatus(path);
+    log(`old Pages ${path}`, res.status);
+    expect(res.github).toBe(true);
+    expect(res.status).toBe(404);
   }
 });
 
@@ -203,5 +224,7 @@ test("prywatny origin i zamknięte przekazanie kluczy odmawiają bez sekretów",
   expect(origin.status()).toBe(404);
   const handoff = await request.post(`${WWW}/_internal/admin-secret-handoff`, { data: {} });
   log("secret handoff closed", handoff.status());
-  expect(handoff.status()).toBe(404);
+  // Po usunięciu handlera POST odmawia statyczny origin Pages (405)
+  // lub router nieznanej ścieżki (404); żaden nie wykonuje przekazania.
+  expect([404, 405]).toContain(handoff.status());
 });
