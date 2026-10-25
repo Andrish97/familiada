@@ -1725,8 +1725,21 @@ async function main() {
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);
       void sessionTelemetry.report({ kind: "error", message: `${action}: ${e.message || e}` });
-      void alertModal({ text: `Błąd: ${e.message || e}` });
+      // Zapis nie doszedł (sieć, limit czasu) albo nie wiadomo, czy doszedł:
+      // lokalny stan jest już zmieniony optymistycznie. Pobierz prawdę z
+      // serwera, żeby panel nie pokazywał czegoś, czego Wyświetlacz nie ma
+      // (badanie Control na słabym łączu, 25.10).
+      const networkFailure = isNetworkFailure(e);
+      if (networkFailure) void store.hydrate().then(() => renderCurrent(), () => {});
+      void alertModal({ text: networkFailure ? t("control.actionNetworkFailed") : `${t("control.actionFailed")} ${e.message || e}` });
     }
+  }
+
+  function isNetworkFailure(error) {
+    const name = String(error?.name || "");
+    const message = String(error?.message || "");
+    return name === "TypeError" || name === "AbortError" || name === "TimeoutError"
+      || /Failed to fetch|NetworkError|Load failed|network|timed out|aborted/i.test(message);
   }
 
   const btnMute = document.getElementById("btnMute");
