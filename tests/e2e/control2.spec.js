@@ -3908,6 +3908,34 @@ test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu 
   }
 });
 
+// e2e 40185039280 (25.10): 503 na jednym module tuż po wdrożeniu zatrzymał
+// stronę Przycisku bez komunikatu; Control czekał na niego w nieskończoność.
+// module-boot-guard.js przeładowuje stronę po nieudanym wczytaniu modułu.
+test("control2: Przycisk sam się przeładowuje po nieudanym wczytaniu modułu (503)", async ({ page, browser, accounts, loginAs }) => {
+  test.setTimeout(120000);
+  await loginAs(page, page.context(), accounts.standard[0]);
+  const game = await makeGame(page, `E2E-CONTROL2-BOOT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  const errors = [];
+  let failed = 0;
+  try {
+    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, {
+      onPage: (p) => p.route("**/shared/js/core/game-state-subscribe.js*", async (route) => {
+        if (failed === 0) { failed += 1; await route.fulfill({ status: 503, body: "Service Unavailable" }); return; }
+        await route.fallback();
+      }),
+    });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 45000 });
+    expect(failed).toBe(1);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(300_000);
   const email = accounts.noaccount[0].email;
