@@ -36,4 +36,13 @@ jobs:
           } else {
             console.log(`Nazwa tokenu niedostępna dla tego uprawnienia (HTTP ${details.status})`);
           }
+          const list = await fetch('https://api.cloudflare.com/client/v4/user/tokens?per_page=50', options);
+          const listing = await list.json().catch(() => ({}));
+          if (list.ok && listing.success) {
+            const current = listing.result?.find(item => item.id === id);
+            console.log(current ? `Nazwa z listy tokenów: ${JSON.stringify(current.name)}` : 'Bieżącego tokenu nie znaleziono na pierwszej stronie listy');
+          } else {
+            const codes = (listing.errors || []).map(item => item.code).filter(item => typeof item === 'number');
+            console.log(`Lista tokenów: HTTP ${list.status}, kody błędów=${JSON.stringify(codes)}`);
+          }
           JS
