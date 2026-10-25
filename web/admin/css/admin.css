@@ -1590,7 +1590,6 @@
   .mc-target-count { width: 80px; }
   .mc-section { margin-top: 1.5rem; }
   .mc-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .mc-section-head--tools { flex-wrap: wrap; gap: 8px; }
   .mc-section-head > .panel-title { font-size: 1rem; }
   .mc-tools { --gap: 6px; }
   .mc-search { position: relative; display: inline-flex; align-items: center; }

@@ -1,5 +1,5 @@
 // admin/js/marketing-contacts.js — Marketing: kategorie Lead Findera, wyszukiwanie,
-// tabela kontaktów z widokami kategorii, eksport/import CSV, adresy do wysyłki.
+// tabela kontaktów z widokami kategorii, adresy do wysyłki.
 // Plan: docs/lead-finder-nowy-plan.md (Lead Finder 3). Wysyłka: marketing.js.
 
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T15291";
@@ -8,7 +8,6 @@ import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T1529
 import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T15291";
 import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-25T15291";
 import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T15291";
-import { importRows, parseCsv } from "./marketing-csv.js?v=v2026-10-25T15291";
 
 const MC_PAGE_SIZE = 50;
 const MC_SENT_FILTERS = [
@@ -573,42 +572,6 @@ export async function initMarketingContacts() {
   });
 
   document.addEventListener("mkt-sent", () => { mcLoadContacts(); });
-
-  // ── Eksport / import CSV ────────────────────────────────────────────────
-  document.getElementById("mcExportBtn")?.addEventListener("click", async () => {
-    try {
-      const res = await adminFetch(`/marketing/contacts/export${mcState.view ? `?category=${encodeURIComponent(mcState.view)}` : ""}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `kontakty-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    } catch (e) { alertModal({ text: "Błąd eksportu: " + e.message }); }
-  });
-
-  document.getElementById("mcImportInput")?.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    const rows = importRows(parseCsv(await file.text()));
-    if (!rows.length) { alertModal({ text: "Plik nie ma wierszy z kolumną id (CSV z eksportu)." }); return; }
-    const del = rows.filter((r) => r.decision === "delete").length;
-    if (!await confirmModal({ text: `Import: ${rows.length} wierszy, w tym ${del} do usunięcia. Kontynuować?` })) return;
-    let done = { updated: 0, deleted: 0, categories: 0 };
-    try {
-      for (let i = 0; i < rows.length; i += 500) {
-        const r = await adminPost("/marketing/contacts/import", { rows: rows.slice(i, i + 500) });
-        done = { updated: done.updated + (r.updated || 0), deleted: done.deleted + (r.deleted || 0), categories: done.categories + (r.categories || 0) };
-      }
-      alertModal({ text: `Zaimportowano: zmienione ${done.updated}, usunięte ${done.deleted}, nowe kategorie ${done.categories}.` });
-    } catch (err) { alertModal({ text: "Błąd importu: " + err.message }); }
-    await mcLoadCategories();
-    mcLoadContacts();
-  });
 
   // ── Logi ────────────────────────────────────────────────────────────────
   async function mcLoadLogs() {

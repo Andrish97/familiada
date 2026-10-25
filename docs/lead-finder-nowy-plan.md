@@ -18,8 +18,9 @@ Zastępuje wcześniejsze wersje tego planu (LF2). Analiza starego systemu:
   zaznaczane ręcznie). Widać, czy ktoś odpowiedział. Można wysłać ponownie.
 - **Wysyłka z tabeli:** strony „Marketing” i „Kontakty marketingowe” w panelu
   łączą się w jedną — zaznaczam kontakty i wysyłam, bez kopiowania adresów.
-- **Stare kontakty — jednorazowy przegląd lepszym modelem:** eksport z panelu
-  (plik), przegląd poza systemem, import z powrotem. Nie DeepSeek (szkoda jego
+- **Stare kontakty — jednorazowy przegląd lepszym modelem:** eksport,
+  przegląd poza systemem, import z powrotem — jednorazowo przez agenta, **bez
+  przycisków w panelu** (decyzja 2026-10-25: „po co przycisk na jeden raz”). Nie DeepSeek (szkoda jego
   zasobów), nie Anthropic (brak kredytów). Potem kontakty po prostu są
   w tabeli — bez przycisku „Przejrzyj kontakty”.
 - **Stare wysyłki:** wysłano wszystkim oznaczonym jako „użyte”; agent dopasuje
@@ -59,7 +60,6 @@ Dla każdej aktywnej kategorii:
   Kategoria, Wysłano (liczba, data), Odpowiedź; filtry „niewysłane”,
   „wysłane bez odpowiedzi”, „odpowiedzieli”.
 - Zaznaczone → szablon wiadomości (obecny edytor) → wyślij / wyślij ponownie.
-- Eksport CSV (wszystkie albo widok) i import CSV (zachowaj/usuń, kategoria).
 
 ## Etapy
 

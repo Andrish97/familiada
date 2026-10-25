@@ -9,14 +9,13 @@ import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 const MC_PAGE_SIZE = 50;
 const MC_SORT_COLS = new Set(["title", "email", "url", "added_at", "last_sent_at", "reaction", "sent_count"]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MC_EXPORT_COLUMNS = ["id", "name", "email", "url", "category", "description", "sent_count", "last_sent_at", "reaction", "decision"];
 
 function cleanIds(ids) {
   return Array.isArray(ids) ? [...new Set(ids.map(String).filter((id) => UUID_RE.test(id)))].slice(0, 500) : [];
 }
 
 // Filtry widoku tabeli (Lead Finder 3): kategoria (uuid | none), stan wysyłki,
-// wyszukiwanie. Wspólne dla listy, adresów do wysyłki i eksportu.
+// wyszukiwanie. Wspólne dla listy i adresów do wysyłki.
 export function contactFilters(searchParams) {
   const q = new URLSearchParams();
   const category = String(searchParams.get("category") || "");
@@ -35,23 +34,6 @@ export function contactFilters(searchParams) {
     q.set("or", `(title.ilike.${v},email.ilike.${v},url.ilike.${v})`);
   }
   return q;
-}
-
-function csvCell(v) {
-  const s = v == null ? "" : String(v);
-  // Ochrona przed formułami w arkuszu (=, +, -, @ na początku).
-  const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
-  return /[",;\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
-
-export function contactsCsv(rows, categories) {
-  const names = new Map((categories || []).map((c) => [c.id, c.name]));
-  const lines = [MC_EXPORT_COLUMNS.join(",")];
-  for (const r of rows) {
-    lines.push([r.id, r.title, r.email, r.url, names.get(r.category_id) || "", r.short_description, r.sent_count,
-      r.last_sent_at || "", r.reaction || "", ""].map(csvCell).join(","));
-  }
-  return "﻿" + lines.join("\r\n") + "\r\n";
 }
 
 async function categoriesList(env) {
@@ -95,42 +77,6 @@ export async function handleAdminMarketingApi(request, env, url) {
     const total = parseInt(String(res.contentRange || "").split("/")[1] || "0", 10) || 0;
     const emails = [...new Set((Array.isArray(res.data) ? res.data : []).map((r) => String(r.email || "").trim().toLowerCase()).filter(Boolean))];
     return json({ ok: true, emails, total });
-  }
-
-  // GET /_admin_api/marketing/contacts/export?category= -- CSV do przeglądu poza
-  // systemem (kolumna decision: zostaw/usuń) i ponownego importu.
-  if (url.pathname === "/_admin_api/marketing/contacts/export" && request.method === "GET") {
-    const categories = await categoriesList(env);
-    if (!categories) return json({ ok: false, error: "categories_failed" }, 500);
-    const q = contactFilters(url.searchParams);
-    q.set("select", "id,title,email,url,category_id,short_description,sent_count,last_sent_at,reaction");
-    q.set("order", "added_at.asc,id.asc");
-    const rows = [];
-    for (let from = 0; from < 20000; from += 1000) {
-      const res = await supabaseRequest(env, `/rest/v1/marketing_verified_contacts?${q}`, { headers: { Range: `${from}-${from + 999}` } });
-      if (!res.ok) return json({ ok: false, error: "export_failed", details: summarizeSupabaseError(res) }, res.status || 500);
-      const chunk = Array.isArray(res.data) ? res.data : [];
-      rows.push(...chunk);
-      if (chunk.length < 1000) break;
-    }
-    return new Response(contactsCsv(rows, categories), {
-      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="kontakty.csv"', "Cache-Control": "no-store" },
-    });
-  }
-
-  // POST /_admin_api/marketing/contacts/import { rows: [{id, decision, name?, category?}] }
-  if (url.pathname === "/_admin_api/marketing/contacts/import" && request.method === "POST") {
-    const body = await readJson(request);
-    const rows = Array.isArray(body?.rows) ? body.rows.slice(0, 1000).filter((r) => r && UUID_RE.test(String(r.id || ""))).map((r) => ({
-      id: String(r.id).toLowerCase(),
-      decision: r.decision === "delete" || r.decision === "keep" ? r.decision : "",
-      ...(r.name ? { name: String(r.name).slice(0, 200) } : {}),
-      ...(r.category ? { category: String(r.category).slice(0, 80) } : {}),
-    })) : [];
-    if (!rows.length) return json({ ok: false, error: "missing_rows" }, 400);
-    const res = await supabaseRpc(env, "marketing_import_contacts", { p_rows: rows });
-    if (!res.ok) return json({ ok: false, error: "import_failed", details: summarizeSupabaseError(res) }, res.status || 500);
-    return json({ ok: true, ...(res.data || {}) });
   }
 
   // GET /_admin_api/marketing/categories -- z liczbą kontaktów
