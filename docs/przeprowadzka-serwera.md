@@ -62,7 +62,7 @@ Zacznij od planu etapów i spisu ze starego serwera (tylko odczyt). Pisz po pols
 
 ## Wnioski z 2026-10-21 (rotacja kluczy)
 
-- Klucz `LEAD_FINDER_API_KEY` jest też w `/etc/caddy/Caddyfile` (blok `leads.familiada.online`) — przy zmianie klucza zmienić także tam.
+- Lead Finder bez adresu publicznego (2026-10-25): steruje nim funkcja Edge `lead-finder` w sieci Dockera; `leads.familiada.online` usunięty z Caddy i Workera. Klucz `LEAD_FINDER_API_KEY`: `lead-finder.env`, `functions.env` (kopiuje `apps/install.sh`) i sekret Workera.
 - Przeładowanie Caddy zrywa konsolę właściciela, która idzie przez Caddy — zmiany Caddy robić automatem albo poleceniem odpornym na rozłączenie.
 - Na starym serwerze kopie `Caddyfile.bak-20261021195900` i `.bak-rotate-*` zawierają stary klucz — do usunięcia.
 
