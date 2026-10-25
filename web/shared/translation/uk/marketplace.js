@@ -40,6 +40,7 @@ const uk = {
       ratersTitle: "Хто оцінив",
     },
     errors: {
+      duplicate_content: "Цей набір запитань і відповідей уже надіслано або опубліковано.",
       not_authenticated: "Потрібно увійти.",
       game_not_available: "Ця гра більше недоступна.",
       game_not_found: "Цю гру не знайдено.",

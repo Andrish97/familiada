@@ -1,3 +1,4 @@
+import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js";
 // admin/js/marketplace.js — Społeczność gier: przegląd, akceptacja, odrzucenie, wycofanie.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
@@ -14,6 +15,9 @@ import { loadMarketPendingBadge } from "./mailbox.js?v=v2026-10-25T08394";
 
 let marketActiveStatus = "pending";
 let marketPreviewId = null;
+let marketPreviewRequest = 0;
+let marketPreviewReviewKey = null;
+let marketApproveBusy = false;
 
 export async function loadMarketplace({ silent = false } = {}) {
   const tbody = document.getElementById("marketTableBody");
@@ -74,6 +78,8 @@ async function openMarketPreview(id) {
   if (!overlay) return;
 
   marketPreviewId = id;
+  const requestId = ++marketPreviewRequest;
+  marketPreviewReviewKey = null;
 
   // Pobierz szczegół
   let game;
@@ -82,6 +88,7 @@ async function openMarketPreview(id) {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     game = json.game;
+    if (requestId !== marketPreviewRequest || marketPreviewId !== id) return;
   } catch (err) {
     showToast(String(err?.message || err), "error");
     return;
@@ -122,29 +129,86 @@ async function openMarketPreview(id) {
   if (deleteBtn)   deleteBtn.hidden   = false; // zawsze widoczny
 
   openDialog(overlay, { onClose: closeMarketPreview });
+  const reportBox = document.getElementById("marketPreviewUniqueness");
+  if (approveBtn) approveBtn.disabled = true;
+  if (reportBox) reportBox.textContent = "Sprawdzam kopie i podobne pytania…";
+  try {
+    const report = await checkMarketGame(id);
+    if (requestId !== marketPreviewRequest || marketPreviewId !== id) return;
+    marketPreviewReviewKey = report.review_key;
+    if (reportBox) reportBox.innerHTML = uniquenessReportHtml(report);
+    if (approveBtn) approveBtn.disabled = exactCopy(report);
+  } catch {
+    if (requestId !== marketPreviewRequest || marketPreviewId !== id) return;
+    if (reportBox) reportBox.innerHTML = uniquenessReportHtml(null);
+  }
 }
 
 function closeMarketPreview() {
   const overlay = document.getElementById("marketPreviewOverlay");
   if (overlay) closeDialog(overlay);
   marketPreviewId = null;
+  marketPreviewRequest++;
+  marketPreviewReviewKey = null;
+}
+
+async function checkMarketGame(id) {
+  const response = await adminFetch("/marketplace/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  const report = await response.json();
+  if (!response.ok || !report.ok) throw new Error("Nie udało się sprawdzić podobieństwa.");
+  return report;
 }
 
 async function approveMarketGame(id) {
+  if (marketApproveBusy) return;
+  marketApproveBusy = true;
+  let hiddenPreview = false;
+  const previewRequest = marketPreviewRequest;
+  const previewId = marketPreviewId;
   try {
+    const report = await checkMarketGame(id);
+    if (previewRequest !== marketPreviewRequest || previewId !== marketPreviewId) return;
+    if (marketPreviewId === id && marketPreviewReviewKey && marketPreviewReviewKey !== report.review_key) {
+      await openMarketPreview(id);
+      showToast("Wynik porównania zmienił się. Przejrzyj aktualny raport przed publikacją.");
+      return;
+    }
+    if (marketPreviewId === id) {
+      const box = document.getElementById("marketPreviewUniqueness");
+      if (box) box.innerHTML = uniquenessReportHtml(report);
+    }
+    if (exactCopy(report)) throw new Error(uniquenessErrorMessage("duplicate_content"));
+    let reviewKey;
+    if (needsReview(report)) {
+      if (marketPreviewId !== id) {
+        await openMarketPreview(id);
+        showToast("Przejrzyj raport podobieństwa przed publikacją.");
+        return;
+      }
+      const preview = document.getElementById("marketPreviewOverlay");
+      if (preview && !preview.hidden) {
+        // Krótkie potwierdzenie otwieramy po schowaniu arkusza podglądu.
+        await new Promise(resolve => closeDialog(preview, resolve));
+        hiddenPreview = true;
+      }
+      const accepted = await confirmModal({ title: "Sprawdź podobieństwo przed publikacją", text: `${uniquenessSummary(report)} Raport jest dostępny w podglądzie gry. Czy po jego sprawdzeniu chcesz opublikować grę?`, okText: "Opublikuj", cancelText: "Wróć do raportu" });
+      if (!accepted) { await openMarketPreview(id); return; }
+      reviewKey = report.review_key;
+    }
     const res = await adminFetch("/marketplace/review", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action: "approve" }),
+      body: JSON.stringify({ id, action: "approve", uniqueness_review_key: reviewKey }),
     });
     const json = await res.json();
-    if (!json.ok) throw new Error(json.error || "approve_failed");
+    if (!json.ok) throw new Error(json.error === "uniqueness_review_required" ? "Wynik porównania zmienił się. Otwórz aktualny raport i potwierdź ponownie." : uniquenessErrorMessage(json.error || "approve_failed"));
     showToast("Gra została zatwierdzona");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
     showToast(String(err?.message || err), "error");
-  }
+    if (hiddenPreview) await openMarketPreview(id);
+  } finally { marketApproveBusy = false; }
 }
 
 function openRejectModal(id) {

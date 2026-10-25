@@ -77,6 +77,8 @@ Usunięcie kogoś ze znajomych nie odbiera mu dostępu do baz — zrób to osobn
 
 Podgląd Twojego nieopublikowanego zgłoszenia jest prywatny. Jego adres zawiera `?game=` i działa po zalogowaniu na Twoje konto. Opublikowana gra ma publiczny adres `/marketplace/game/…`, który możesz udostępnić innym.
 
+Zestawu pytań i odpowiedzi, który oczekuje na weryfikację lub jest opublikowany, nie można zgłosić ponownie. Zmiana tytułu, kolejności albo samej punktacji nie tworzy nowej gry. Jeśli zestaw został już zgłoszony lub opublikowany, zobaczysz komunikat o kopii.
+
 ## 13.1 Czym są Gry Społeczności
 
 Gry Społeczności to publiczny katalog gotowych gier, przygotowanych przez użytkowników

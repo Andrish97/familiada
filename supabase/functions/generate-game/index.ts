@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { checkGameUniqueness, indexSemanticQuestions, isExactCopyError } from "./uniqueness.ts";
 
 // Wołają tylko serwery: Worker (/_admin_api/generator/*, panel admina za
 // Cloudflare Access) i cron w bazie (invoke_embed_missing_market_games).
@@ -23,67 +24,6 @@ function authorizeInternal(req: Request): Response | null {
   const given = req.headers.get("x-internal-secret") || "";
   if (!timingSafeEqual(given, secret)) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   return null;
-}
-
-// ─── Embedding ────────────────────────────────────────────────────────────────
-
-function l2Normalize(vec: number[]): number[] {
-  let sumSq = 0;
-  for (const x of vec) sumSq += x * x;
-  const norm = Math.sqrt(sumSq) || 1;
-  return vec.map((x) => x / norm);
-}
-
-function toVectorLiteral(vec: number[]): string {
-  return `[${vec.join(",")}]`;
-}
-
-function buildQuestionsText(payload: any): string {
-  const qs = payload?.questions || [];
-  if (!Array.isArray(qs)) return "";
-  return qs.map((q: any) => String(q?.text || "").trim()).filter(Boolean).join("\n");
-}
-
-function buildEmbeddingText(payload: any, title?: string, description?: string): string {
-  const parts: string[] = [];
-  if (title) parts.push(String(title).trim());
-  if (description) parts.push(String(description).trim());
-  const questions = buildQuestionsText(payload);
-  if (questions) parts.push(questions);
-  return parts.join("\n");
-}
-
-async function generateEmbedding(text: string, timeoutMs = 12000): Promise<number[] | null> {
-  const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
-  if (!token || !text.trim()) return null;
-
-  const input = text.length > 6000 ? text.slice(0, 6000) : text;
-  const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(
-      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs: input, options: { wait_for_model: true } }),
-        signal: ac.signal,
-      },
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
-    const rows = data as number[][];
-    if (!rows.length || rows[0].length !== 384) return null;
-    const sums = new Array<number>(384).fill(0);
-    for (const row of rows) for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
-    return l2Normalize(sums.map((x) => x / rows.length));
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 // ─── Groq ─────────────────────────────────────────────────────────────────────
@@ -390,9 +330,6 @@ serve(async (req: Request) => {
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
       if (!normalized) throw new Error("Invalid payload.");
 
-      const embeddingText = buildEmbeddingText(normalized, normalized.title, normalized.description);
-      const embedding = await generateEmbedding(embeddingText, 12000);
-
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
         author_user_id: null,
@@ -401,7 +338,6 @@ serve(async (req: Request) => {
         description: normalized.description ?? "",
         lang,
         payload: normalized,
-        embedding: embedding ? toVectorLiteral(embedding) : null,
         status: "published",
         moderation_note: null,
         storage_path: null,
@@ -417,11 +353,8 @@ serve(async (req: Request) => {
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
       if (!normalized) throw new Error("Invalid payload.");
 
-      const embeddingText = buildEmbeddingText(normalized, normalized.title, normalized.description);
-      const embedding = await generateEmbedding(embeddingText, 12000);
-
       const { data, error } = await supabase.from("market_games")
-        .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: embedding ? toVectorLiteral(embedding) : null })
+        .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: null })
         .eq("id", id).eq("origin", "producer")
         .select("id, title, description, lang, payload").single();
 
@@ -437,106 +370,26 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    // ── Sprawdź unikalność (osobna akcja admina) ──────────────────────────────
+    // Pełny raport: zawsze dokładne i tekstowe + dostępne porównanie znaczenia.
     if (action === "check-uniqueness") {
-      const { id } = body;
-      const { data: g, error: gErr } = await supabase
-        .from("market_games")
-        .select("id, lang, title, description, payload, embedding, questions_text")
-        .eq("id", id).single();
-      if (gErr) throw gErr;
-
-      const questionsText = String(g.questions_text || "") || buildQuestionsText(g.payload);
-      const embeddingText = buildEmbeddingText(g.payload, g.title, g.description) || questionsText;
-      let embeddingLiteral: string | null = typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
-
-      // Sprawdź identyczne/podobne tytuły
-      const titleNorm = String(g.title || "").trim().toLowerCase();
-      const { data: titleMatches } = await supabase
-        .from("market_games")
-        .select("id, title, lang")
-        .eq("lang", g.lang)
-        .neq("id", g.id)
-        .in("status", ["published", "pending"])
-        .ilike("title", titleNorm);
-      const exactTitleDups = (titleMatches || []).map((m: any) => ({ ...m, similarity: 1.0, match_type: "title_exact" }));
-
-      if (!embeddingLiteral) {
-        const maybe = await generateEmbedding(embeddingText, 8000);
-        if (maybe) {
-          embeddingLiteral = toVectorLiteral(maybe);
-          await supabase.from("market_games").update({ embedding: embeddingLiteral }).eq("id", g.id);
-        }
-      }
-
-      if (embeddingLiteral) {
-        const { data: matches, error: simError } = await supabase.rpc("market_find_similar_embeddings", {
-          p_lang: g.lang, p_embedding: embeddingLiteral, p_threshold: 0.78, p_limit: 8,
-        });
-        if (simError) throw simError;
-        const semMatches = (matches || []).filter((m: any) => m.id !== g.id);
-        const allIds = new Set(semMatches.map((m: any) => m.id));
-        const merged = [...semMatches, ...exactTitleDups.filter((m: any) => !allIds.has(m.id))];
-        return new Response(JSON.stringify({ ok: true, matches: merged, mode: "embeddings" }), {
-          headers: { ...CORS, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
-        p_lang: g.lang, p_questions_text: questionsText, p_threshold: 0.45, p_limit: 8,
-      });
-      if (simError) throw simError;
-      const trgmMatches = (matches || []).filter((m: any) => m.id !== g.id);
-      const allIds = new Set(trgmMatches.map((m: any) => m.id));
-      const merged = [...trgmMatches, ...exactTitleDups.filter((m: any) => !allIds.has(m.id))];
-      return new Response(JSON.stringify({ ok: true, matches: merged, mode: "trgm" }), {
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+      const report = await checkGameUniqueness(supabase, key => Deno.env.get(key), { id: body.id });
+      return new Response(JSON.stringify(report), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
-
-    // ── Embed brakujących ─────────────────────────────────────────────────────
+    if (action === "check-candidate") {
+      const normalized = normalizeGamePayload({ title: body.title, description: body.description, questions: body.payload?.questions });
+      if (!normalized) throw new Error("Invalid payload.");
+      const report = await checkGameUniqueness(supabase, key => Deno.env.get(key), { payload: normalized, lang: body.lang });
+      return new Response(JSON.stringify(report), { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
     if (action === "embed-missing") {
-      const { lang, limit } = body;
-      const batchSize = Math.max(1, Math.min(50, Number(limit) || 20));
-
-      if (!Deno.env.get("HUGGINGFACE_API_TOKEN")) {
-        return new Response(JSON.stringify({ ok: false, err: "missing_HUGGINGFACE_API_TOKEN" }), {
-          headers: { ...CORS, "Content-Type": "application/json" },
-        });
-      }
-
-      let query = supabase.from("market_games")
-        .select("id, lang, title, description, questions_text, payload")
-        .is("embedding", null)
-        .in("status", ["published", "pending"])
-        .order("created_at", { ascending: true })
-        .limit(batchSize);
-      if (lang && lang !== "all") query = query.eq("lang", lang);
-
-      const { data: rows, error: selErr } = await query;
-      if (selErr) throw selErr;
-
-      let processed = 0;
-      const startedAt = Date.now();
-      for (const row of rows || []) {
-        if (Date.now() - startedAt > 45000) break;
-        const text = buildEmbeddingText(row.payload, row.title, row.description) || String(row.questions_text || "") || buildQuestionsText(row.payload);
-        if (!text) continue;
-        const emb = await generateEmbedding(text, 8000);
-        if (emb) {
-          await supabase.from("market_games").update({ embedding: toVectorLiteral(emb) }).eq("id", row.id);
-          processed++;
-        }
-      }
-
-      return new Response(JSON.stringify({ ok: true, processed, duration_ms: Date.now() - startedAt }), {
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+      const result = await indexSemanticQuestions(supabase, key => Deno.env.get(key), { limit: Number(body.limit) || 5 });
+      return new Response(JSON.stringify(result), { headers: { ...CORS, "Content-Type": "application/json" }, status: result.ok ? 200 : 503 });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: CORS });
 
   } catch (e) {
+    if (isExactCopyError(e)) return new Response(JSON.stringify({ ok: false, error: "duplicate_content" }), { status: 409, headers: { ...CORS, "Content-Type": "application/json" } });
     const message = e instanceof Error ? e.message : String(e);
     if (isGroqRateLimit(message)) {
       const waitMs = parseGroqWaitMs(message) ?? 6000;

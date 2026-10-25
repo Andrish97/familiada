@@ -46,3 +46,45 @@ Zasady przyjęte do implementacji:
 ## Dziennik
 
 2026-10-25: start implementacji; brak zmian działania produkcji.
+
+
+2026-10-25 — wykonanie na branchu (produkcja bez zmian):
+- 486: kanoniczny SHA-256 pytania/odpowiedzi, projekcja per pytanie,
+  raport dokładny/tekstowy/znaczeniowy, jawne pokrycie i klucz wersji
+  zatwierdzenia. Wektory zależą od pytania z odpowiedziami; zmiana punktów
+  nie wymaga ponownego liczenia, zmiana pytania/odpowiedzi tak. Zapis CAS.
+- 487: unikalny indeks aktywnej treści obejmuje też wyścig, zmianę języka,
+  autora i ID; wrappery zachowują kontrakt RPC, zwracają duplicate_content.
+  Zapis bezpośrednio z konta użytkownika zamknięty — zgłoszenia przez RPC.
+- Edge i panel: raporty par pytań/odpowiedzi, świeży skan i weryfikacja
+  aktualnego klucza korpusu przed akceptacją. Potwierdzenie moderatora
+  przy podobieństwie/niepełnym modelu, żadnego automatycznego usuwania.
+- Usługa CPU services/market-semantic: przypięty model i biblioteki,
+  własny sekret, tylko prywatna sieć, brak logów treści i zewnętrznego API
+  podczas pracy. Przyjęto wariant lokalny do przygotowania implementacji;
+  użytkownik nadal może zmienić tę preferencję z pytania asynchronicznego.
+- Porównano dwa modele i oba warianty wejścia. Sam tekst pytania dawał
+  mylące podobieństwa szablonu. Wybrano MiniLM multilingual z pytaniem
+  i odpowiedziami, próg 0,70, co najmniej 3/10 dopasowanych pytań.
+  Kontrolowane kopie z parafrazami: 29/30 pytań, 0/30 kontroli negatywnych;
+  rzeczywisty SQL wykrył wszystkie 6 gier w 3 parach PL/EN/UK (nie jako
+  identyczny content). To mały zbiór, nie gwarancja każdej parafrazy.
+- Prawdziwy opublikowany katalog, lokalny SQL + rzeczywiste wektory:
+  90/90 pełnych raportów, 14 gier ma po 1 kandydacie do porównania;
+  brak identycznych kopii. Bez oznaczania tych wskazań jako dowodu kopii.
+- Lokalne testy SQL 486/487 i dwie równoczesne transakcje ✓. JS unit 14/14
+  nowych/powiązanych, szersza bramka 47/47 przed ostatnimi poprawkami.
+  Browser panelu: telefon/komputer, raport → anuluj → ponownie potwierdź,
+  poprawny klucz zatwierdzenia, 2/2. Zrzuty 18 PL/EN/UK, panel i błąd kopii.
+- Obraz Docker zbudowany. Rzeczywisty kontener: 1 CPU, 1 GiB, użytkownik
+  bez roota, read-only; health, 3 języki, 384 wymiarów, 401 dla złego
+  sekretu ✓. Pamięć po próbie ok. 612 MiB, szczyt cgroup ok. 623 MiB.
+  Trwa końcowe sprawdzenie maksymalnej partii i ostatniej wersji kodu.
+
+Blokada wdrożenia infrastruktury: repo Andrish97/familiada-server zwraca
+404 przez CLI i aplikację GitHub. Lista dostępnych repo integracji nie
+zawiera tego repo. Konto deploy ma ograniczone sudo do istniejących
+instalatorów, więc potrzebny jest dostęp do repo konfiguracji. Wysłano
+pytanie asynchroniczne o udostępnienie/nazwę; dalsze testy lokalne trwają.
+Nie wdrożono 486/487, kodu Edge ani frontu. Workflow market-model-preflight
+służy wyłącznie odczytowi numerycznych zasobów serwera, bez zmian.

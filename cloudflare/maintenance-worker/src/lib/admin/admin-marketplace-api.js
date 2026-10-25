@@ -1,9 +1,22 @@
 // src/lib/admin-marketplace-api.js -- /_admin_api/marketplace/*.
 import { json, readJsonOr400 } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
+import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
+
+async function gameUniqueness(env, id) {
+  if (!env.GENERATE_GAME_SECRET) return { ok: false, status: 503, data: { error: "generator_not_configured" } };
+  return supabaseRequest(env, "/functions/v1/generate-game", { method: "POST", headers: { "X-Internal-Secret": env.GENERATE_GAME_SECRET }, body: { action: "check-uniqueness", id } });
+}
 
 export async function handleAdminMarketplaceApi(request, env, url) {
+  if (url.pathname === "/_admin_api/marketplace/check") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(body?.id || ""))) return json({ ok: false, error: "invalid_id" }, 400);
+    const result = await gameUniqueness(env, String(body.id));
+    return json(result.data || { ok: false, error: "uniqueness_unavailable" }, result.ok ? 200 : result.status || 503);
+  }
   // GET /_admin_api/marketplace/list?status=pending|published|rejected|withdrawn
   if (url.pathname === "/_admin_api/marketplace/list") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
@@ -66,6 +79,14 @@ export async function handleAdminMarketplaceApi(request, env, url) {
       return json({ ok: false, error: "Invalid action — must be approve or reject" }, 400);
     }
 
+    if (action === "approve") {
+      const checked = await gameUniqueness(env, String(body.id));
+      if (!checked.ok || !checked.data?.ok) return json({ ok: false, error: "uniqueness_unavailable" }, 503);
+      const report = checked.data;
+      if (report.matches?.some(match => match.exact_content)) return json({ ok: false, error: "duplicate_content", report }, 409);
+      if ((report.matches?.length || !report.semantic?.complete) && body.uniqueness_review_key !== report.review_key)
+        return json({ ok: false, error: "uniqueness_review_required", report }, 409);
+    }
     const res = await supabaseRpc(env, "market_admin_review", {
       p_id:     String(body.id),
       p_action: action,

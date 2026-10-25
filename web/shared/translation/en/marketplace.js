@@ -40,6 +40,7 @@ const en = {
       ratersTitle: "Who rated",
     },
     errors: {
+      duplicate_content: "This set of questions and answers has already been submitted or published.",
       not_authenticated: "You must be logged in.",
       game_not_available: "This game is no longer available.",
       game_not_found: "This game could not be found.",

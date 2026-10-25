@@ -8,12 +8,23 @@ const { id, IDS } = require("../data/demo.cjs");
 
 const CAT = "logos-market";
 
+function uniquenessDemo(db, complete = false) {
+  const questions = db.tables.questions.filter(q => q.game_id === IDS.game).slice(0, 3);
+  return { ok: true, revision: "demo-source", review_key: "demo-source:demo-corpus", question_count: 10,
+    semantic: { status: complete ? "complete" : "incomplete", complete, source_indexed: complete ? 10 : 0, source_total: 10, corpus_indexed: complete ? 900 : 320, corpus_total: 900 },
+    matches: [{ id: "demo-other", title: "Pytania na rodzinne spotkanie", lang: "pl", exact_content: false, matched_questions: 3, identical_questions: 1,
+      question_pairs: questions.map((q, i) => ({ source_pos: i + 1, candidate_pos: 7 - i, source_text: q.text, candidate_text: i ? ["", "Jakie rzeczy pakujesz na krótki wyjazd?", "Po jaki napój sięgasz po przebudzeniu?"][i] : q.text, method: i ? "semantic" : "exact_question", score: .91 })) }] };
+}
+
 // Gry Producenta: lista gier producenta z danych sceny, pozostałe akcje { ok: true }.
 function SCENE_GENERATOR_DB(db, lang) {
   adminData(db);
   const p = require("../data/panel.cjs")[lang];
   const market = require("../data/content.cjs")[lang].market.filter(([, , author]) => !author);
   db.http["/_admin_api/generator/*"] = { ok: true };
+  db.http["/_admin_api/generator/check-uniqueness"] = uniquenessDemo(db, true);
+  db.http["/_admin_api/generator/check-candidate"] = uniquenessDemo(db, true);
+  db.http["/_admin_api/generator/embed-missing"] = { ok: true, processed: 0, complete: true };
   db.http["/_admin_api/generator/list-producer-games"] = market.map(([title, description], i) => ({ id: `prod${i + 1}`, title, description, lang,
     payload: { questions: (i === 1 ? p.gameQuestions.slice(0, 6) : p.gameQuestions).map(([text, answers]) => ({ text, answers: answers.map(([a, pts]) => ({ text: a, fixed_points: pts })) })) } }));
 }
@@ -178,6 +189,7 @@ function adminData(db) {
   h["/_admin_api/marketplace/list?status=published*"] = { ok: true, rows: [market(5, "Familiada weselna", "dj_marek", "published", 12), market(6, "Biuro od kuchni", "hr_magda", "published", 9), market(7, "Wakacje nad morzem", "tomek_quiz", "published", 4)] };
   h["/_admin_api/marketplace/detail*"] = { ok: true, game: { ...market(1, "Rodzinny quiz", "ania.k", "pending", 20), description: "Dziesięć pytań na rodzinne spotkanie — od jedzenia po wakacje.",
     payload: { questions: db.tables.questions.filter((q) => q.game_id === IDS.game).sort((a, b) => a.ord - b.ord).slice(0, 5).map((q) => ({ text: q.text, answers: db.tables.answers.filter((a) => a.question_id === q.id).sort((a, b) => a.ord - b.ord).map((a) => ({ text: a.text, fixed_points: a.fixed_points })) })) } } };
+  h["/_admin_api/marketplace/check"] = uniquenessDemo(db);
   const aiProviders = [
     { name: "gemini", label: "Gemini", priority: 0, is_active: true, cooldown_until: null },
     { name: "groq", label: "Groq", priority: 1, is_active: true, cooldown_until: new Date(Date.now() + (2 * 60 + 37) * 60e3).toISOString() },
@@ -316,6 +328,17 @@ module.exports = [
       await view.locator("#submitConfirm").check().catch(() => {});
       await view.waitForTimeout(300);
     }] },
+  { id: "logos-market-market-submit-duplicate", category: CAT, title: "Społeczność — komunikat o kopii zestawu", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
+    db: db => { db.rpc.market_submit_game = [{ ok: false, err: "duplicate_content", market_id: null }]; },
+    steps: [openModal("#btnMySent", "#mySentOverlay"), wait(600), openModal("#btnSubmitNew", "#submitOverlay"), async (view, { lang }) => {
+      await view.locator("#submitGameSelect .ui-select-btn").click();
+      await view.locator("#submitGameSelect [role=option]").first().click();
+      await view.locator("#submitTitle").fill(require("../data/panel.cjs")[lang].game);
+      await view.locator("#submitDesc").fill(SUBMIT_DESC[lang] || SUBMIT_DESC.pl);
+      await view.locator("#submitConfirm").check();
+      await view.locator("#btnSubmitConfirm").click();
+      await view.locator("#submitError:not([hidden])").waitFor();
+    }] },
   { id: "logos-market-market-submit-none", category: CAT, title: "Społeczność — zgłoszenie: brak gier gotowych do wysłania", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
     db: (db) => { db.tables.games = []; },
     steps: [openModal("#btnMySent", "#mySentOverlay"), wait(600), openModal("#btnSubmitNew", "#submitOverlay")] },
@@ -344,6 +367,10 @@ module.exports = [
     steps: [async (view) => { await view.locator(".mail-thread-item").first().click(); await view.waitForTimeout(1200); }, openModal('button[aria-label="Przydziel zgłoszenie"], button[data-tooltip="Przydziel zgłoszenie"], button[title="Przydziel zgłoszenie"]', "#assignReportModal")] },
   { id: "logos-market-admin-market-preview", category: CAT, title: "Panel admina — Gry Społeczności, podgląd zgłoszenia", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
     steps: [openModal("[data-market-preview]", "#marketPreviewOverlay")] },
+  { id: "logos-market-admin-market-uniqueness", category: CAT, title: "Panel admina — podobne pytania i niepełne porównanie znaczenia", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
+    steps: [openModal("[data-market-preview]", "#marketPreviewOverlay"), async view => { await view.locator("#marketPreviewUniqueness details summary").first().click(); await view.locator("#marketPreviewUniqueness").evaluate(el => { el.parentElement.scrollTop = 0; }); }] },
+  { id: "logos-market-admin-market-uniqueness-confirm", category: CAT, title: "Panel admina — potwierdzenie po sprawdzeniu raportu", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData,
+    steps: [openModal("[data-market-preview]", "#marketPreviewOverlay"), async view => { await view.locator("#marketPreviewUniqueness details").first().waitFor(); await view.waitForFunction(() => !document.getElementById("btnMarketPreviewApprove").disabled); await view.locator("#btnMarketPreviewApprove").click(); await view.locator(".uni-modal").waitFor({ state: "visible" }); }] },
   { id: "logos-market-admin-market-reject", category: CAT, title: "Panel admina — Gry Społeczności, odrzucenie z powodem", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-reject]", db: adminData, settle: 600,
     steps: [openModal("[data-market-reject]", "#marketRejectOverlay"), async (view) => { const f = view.locator("#marketRejectOverlay textarea, #marketRejectOverlay input[type=text]").first(); if (await f.count()) await f.fill("Za mało pytań w finale i powtórzone odpowiedzi."); await view.waitForTimeout(200); }] },
   { id: "logos-market-admin-market-published", category: CAT, title: "Panel admina — Gry Społeczności, opublikowane", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
@@ -362,6 +389,8 @@ module.exports = [
       await view.locator("#gen-game-list .game-item .game-chevron").first().click().catch(() => {});
       await view.waitForTimeout(400);
     }] },
+  { id: "logos-market-admin-generator-uniqueness", category: CAT, title: "Panel admina — świeży skan i pary podobnych pytań", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", db: (db, lang) => SCENE_GENERATOR_DB(db, lang),
+    steps: [async view => { await view.locator("#gen-load-btn").click(); await view.locator("#gen-game-list .game-item").first().waitFor(); await view.locator("#gen-scan-btn").click(); await view.locator("#gen-scan-btn").waitFor({ state: "visible" }); await view.waitForFunction(() => !document.getElementById("gen-scan-btn").disabled); await view.locator("#gen-game-list .game-chevron").first().click(); await view.locator("#gen-game-list .preview-uniqueness details summary").first().click(); }] },
   { id: "logos-market-admin-generator-edit", category: CAT, title: "Panel admina — Gry Producenta: okno edycji gry", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop", "phone"], settle: 800,
     db: (db, lang) => SCENE_GENERATOR_DB(db, lang),
     steps: [async (view) => {

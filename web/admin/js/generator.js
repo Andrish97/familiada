@@ -1,3 +1,4 @@
+import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js";
 
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T08394";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T08394";
@@ -38,6 +39,8 @@ function setBusy(busy) {
   });
   const list = $('gen-game-list');
   list?.setAttribute('aria-busy', busy ? 'true' : 'false');
+  if (list) list.inert = busy;
+  if ($('gen-results-list')) $('gen-results-list').inert = busy;
 }
 
 function setProgress(done, total) {
@@ -63,7 +66,7 @@ async function callEdgeAction(action, body = {}) {
   });
   let data = null;
   try { data = await res.json(); } catch { data = null; }
-  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  if (!res.ok || (data?.ok === false && !data.retry)) throw new Error(uniquenessErrorMessage(data?.error || data?.err || `HTTP ${res.status}`));
   return data;
 }
 
@@ -195,7 +198,7 @@ async function deleteGame(id) {
   try {
     await callEdgeAction('delete-game', { id });
     games = games.filter(g => g.id !== id);
-    uniquenessCache.delete(id);
+    uniquenessCache.clear();
     weaknessCache.delete(id);
     selectedIds.delete(id);
     renderGameList();
@@ -241,7 +244,7 @@ function selectIssues() {
   for (const g of games) {
     const r = weaknessCache.get(g.id) || analyzeWeakness(g);
     weaknessCache.set(g.id, r);
-    const hasDup = Array.isArray(uniquenessCache.get(g.id)) && uniquenessCache.get(g.id).length > 0;
+    const hasDup = exactCopy(uniquenessCache.get(g.id));
     if (r.level !== 'ok' || hasDup) selectedIds.add(g.id);
   }
   renderGameList();
@@ -268,7 +271,7 @@ async function deleteSelected() {
       await callEdgeAction('delete-game', { id });
       deletedCount++;
       games = games.filter(g => g.id !== id);
-      uniquenessCache.delete(id);
+      uniquenessCache.clear();
       weaknessCache.delete(id);
       selectedIds.delete(id);
       updateBulkBar();
@@ -453,22 +456,31 @@ function renderWeakInfo(container, report) {
 
 async function scanForDuplicates() {
   setBusy(true);
-  const lang = genLangSelect?.getValue();
-  showStatus('gen-session-status', 'Dobiłem embeddingi (synonimy/parafrazy) i skanuję unikalność...', 'info');
+  uniquenessCache.clear();
+  showStatus('gen-session-status', 'Przygotowuję porównanie znaczenia pytań...', 'info');
+  let incomplete = 0;
   try {
-    await callEdgeAction('embed-missing', { lang, limit: 25 });
-    for (const g of games) {
-      if (uniquenessCache.has(g.id)) continue;
-      const res = await callEdgeAction('check-uniqueness', { id: g.id });
-      uniquenessCache.set(g.id, Array.isArray(res?.matches) ? res.matches : []);
-      renderGameList();
+    // Każda partia jest osobnym żądaniem. Brak postępu kończy uzupełnianie.
+    for (let batch = 0; batch < 100; batch++) {
+      let result;
+      try { result = await callEdgeAction('embed-missing', { limit: 5 }); }
+      catch { break; }
+      if (result.complete || (!result.processed && !result.games)) break;
+      showStatus('gen-session-status', `Przygotowuję porównanie znaczenia: partia ${batch + 1}.`, 'info');
     }
-    showStatus('gen-session-status', `Skanowanie zakończone.`, 'ok');
+    let checked = 0;
+    for (const g of games) {
+      const report = await callEdgeAction('check-uniqueness', { id: g.id });
+      uniquenessCache.set(g.id, report);
+      if (!report.semantic?.complete) incomplete++;
+      checked++;
+      renderGameList();
+      showStatus('gen-session-status', `Sprawdzono ${checked}/${games.length} gier.`, 'info');
+    }
+    showStatus('gen-session-status', incomplete ? `Sprawdzono ${games.length} gier. Porównanie znaczenia niepełne dla ${incomplete}; szczegóły w raportach.` : `Sprawdzono ${games.length} gier z pełnym porównaniem znaczenia.`, incomplete ? 'info' : 'ok');
   } catch (e) {
     showStatus('gen-session-status', `Błąd skanowania: ${e.message}`, 'err', 'error');
-  } finally {
-    setBusy(false);
-  }
+  } finally { setBusy(false); }
 }
 
 async function checkUniqueness(id) {
@@ -476,9 +488,9 @@ async function checkUniqueness(id) {
   showStatus('gen-session-status', 'Sprawdzam podobne gry...', 'info');
   try {
     const res = await callEdgeAction('check-uniqueness', { id });
-    uniquenessCache.set(id, Array.isArray(res?.matches) ? res.matches : []);
+    uniquenessCache.set(id, res);
     renderGameList();
-    showStatus('gen-session-status', 'Gotowe.', 'ok');
+    showStatus('gen-session-status', uniquenessSummary(res), res.semantic?.complete ? 'ok' : 'info');
   } catch (e) {
     showStatus('gen-session-status', `Błąd: ${e.message}`, 'err', 'error');
   } finally {
@@ -498,12 +510,10 @@ function renderGameList() {
 
   games.forEach(game => {
     const item = document.createElement('div');
-    const matches = uniquenessCache.get(game.id);
-    const hasDup = Array.isArray(matches) && matches.length > 0;
-    const top = Array.isArray(matches) && matches.length ? matches[0] : null;
-    const topLine = top
-      ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${escHtml(top.title)} · ${escHtml(top.origin)}`
-      : (matches ? 'Podobne: brak (>=45%)' : 'Podobne: nie sprawdzono');
+    const report = uniquenessCache.get(game.id);
+    const matches = report?.matches || [];
+    const hasDup = exactCopy(report);
+    const topLine = escHtml(uniquenessSummary(report));
 
     const weak = weaknessCache.get(game.id) || analyzeWeakness(game);
     weaknessCache.set(game.id, weak);
@@ -515,7 +525,7 @@ function renderGameList() {
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${escHtml(game.id)}" ${checked} />
         <span class="game-title">${escHtml(game.title)}</span>
-        ${hasDup ? `<span class="tag tag--warn">DUP</span>` : ``}
+        ${hasDup ? `<span class="tag tag--bad">KOPIA</span>` : matches.length ? `<span class="tag tag--warn">PODOBNE</span>` : ``}
         ${isWeak ? `<span class="tag tag--bad">SŁABE</span>` : ``}
         <span class="game-title game-meta">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${escHtml(game.id)}">Unikalność</button>
@@ -526,6 +536,7 @@ function renderGameList() {
       <div class="game-preview">
         <div class="preview-desc">${escHtml(game.description)}</div>
         <div class="preview-weak"></div>
+        <div class="preview-uniqueness">${report ? uniquenessReportHtml(report) : ""}</div>
         <div class="preview-questions"></div>
       </div>
     `;
@@ -588,8 +599,7 @@ function renderGeneratedList() {
   for (const g of generated) {
     const cand = g.candidate || {};
     const w = analyzeWeakness({ title: cand.title, description: cand.description, payload: cand.payload });
-    const top = Array.isArray(g.matches) && g.matches.length ? g.matches[0] : null;
-    const dupLine = top ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${escHtml(top.title)} · ${escHtml(top.origin)}` : 'Podobne: brak';
+    const dupLine = escHtml(uniquenessSummary(g.report));
 
     const item = document.createElement('div');
     item.className = `game-item ${g.approved ? 'approved' : ''} ${g.generating ? 'generating' : ''}`;
@@ -604,6 +614,7 @@ function renderGeneratedList() {
       <div class="game-preview">
         <div class="preview-desc">${escHtml(cand.description)}</div>
         <div class="preview-weak"></div>
+        <div class="preview-uniqueness">${g.report ? uniquenessReportHtml(g.report) : ""}</div>
         <div class="preview-questions"></div>
       </div>
     `;
@@ -657,9 +668,22 @@ async function publishApproved() {
     await alertModal({ title: "Publikacja", text: "Brak zatwierdzonych gier." });
     return;
   }
+  setBusy(true);
+  try {
+    for (const item of items) item.report = await callEdgeAction('check-candidate', { ...item.candidate, payload: item.candidate.payload });
+  } catch (error) {
+    showStatus('gen-session-status', `Nie można sprawdzić gier: ${error.message}`, 'err');
+    return;
+  } finally { setBusy(false); }
+  renderGeneratedList();
+  if (items.some(item => exactCopy(item.report))) {
+    showStatus('gen-session-status', 'Publikacja zatrzymana: lista zawiera dokładną kopię. Sprawdź raporty.', 'err');
+    return;
+  }
+  const reviewCount = items.filter(item => needsReview(item.report)).length;
   const ok = await confirmModal({
     title: "Publikacja",
-    text: `Opublikować zatwierdzone gry (${items.length})?`,
+    text: `Opublikować zatwierdzone gry (${items.length})?${reviewCount ? ` Dla ${reviewCount} gier wykryto podobieństwo albo niepełne porównanie znaczenia. Raporty są dostępne w podglądach. Potwierdź po ich sprawdzeniu.` : ''}`,
     okText: "Opublikuj",
     cancelText: "Anuluj",
   });
@@ -822,7 +846,7 @@ async function saveGameEditor() {
       if (idx !== -1) {
         games[idx] = { ...games[idx], ...updated };
         weaknessCache.delete(editorGameId);
-        uniquenessCache.delete(editorGameId);
+        uniquenessCache.clear();
         renderGameList();
       }
     }

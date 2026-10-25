@@ -2047,3 +2047,8 @@
 .tox.tox-tinymce-aux { z-index: calc(var(--z-top) + 2); }
 .tox.tox-tinymce .tox-toolbar__overflow,
 .tox.tox-tinymce-aux .tox-toolbar__overflow { display: block; position: absolute; z-index: 1; }
+
+/* Porównanie pytań w raportach moderatora — wyłącznie układ. */
+.uniqueness-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.uniqueness-match { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .uniqueness-pair { grid-template-columns: minmax(0, 1fr); } }

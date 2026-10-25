@@ -77,6 +77,8 @@ Removing someone from your friends does not revoke their access to bases — do 
 
 The preview of your unpublished submission is private. Its address contains `?game=` and works when you are signed in to your account. A published game has a public `/marketplace/game/…` address that you can share with others.
 
+A set of questions and answers that is awaiting review or already published cannot be submitted again. Changing the title, order or points alone does not create a new game. If the set has already been submitted or published, you will see a duplicate notice.
+
 ## 13.1 What Community Games are
 
 Community Games is a public catalogue of ready-made games, prepared by users

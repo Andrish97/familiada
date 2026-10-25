@@ -100,8 +100,8 @@ async function removeLibraryCopy(page, id) {
   expect(rows?.[0]?.ok, JSON.stringify(rows)).toBe(true);
 }
 
-async function createPlayableGame(page, name) {
-  return page.evaluate(async ({ name }) => {
+async function createPlayableGame(page, name, questionPrefix = name) {
+  return page.evaluate(async ({ name, questionPrefix }) => {
     const sb = window.__sbClient;
     const { data: auth } = await sb.auth.getUser();
     const { data: game, error: gameError } = await sb.from("games").insert({
@@ -110,7 +110,7 @@ async function createPlayableGame(page, name) {
     if (gameError) throw new Error(gameError.message);
 
     const questions = Array.from({ length: 10 }, (_, index) => ({
-      game_id: game.id, ord: index + 1, text: `${name} pytanie ${index + 1}`,
+      game_id: game.id, ord: index + 1, text: `${questionPrefix} pytanie ${index + 1}`,
     }));
     const { data: inserted, error: qError } = await sb.from("questions").insert(questions).select("id,ord");
     if (qError) throw new Error(qError.message);
@@ -120,7 +120,7 @@ async function createPlayableGame(page, name) {
     const { error: aError } = await sb.from("answers").insert(answers);
     if (aError) throw new Error(aError.message);
     return game.id;
-  }, { name });
+  }, { name, questionPrefix });
 }
 
 test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", async ({ page }) => {
@@ -355,6 +355,26 @@ test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", asyn
   } finally {
     await cleanup(page);
   }
+});
+
+test("unikalność treści: kopia pod nowym ID, tytułem i językiem jest blokowana", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
+  await page.goto(URL, { waitUntil: "domcontentloaded" });
+  await cleanup(page);
+  const name = `${PREFIX}UNIQUE-${Date.now()}`;
+  try {
+    const first = await createPlayableGame(page, name);
+    const copy = await createPlayableGame(page, `${name}-copy`, name);
+    const submit = id => rpc(page, "market_submit_game", { p_game_id: id, p_title: id === first ? name : `${name}-renamed`, p_description: "Test kontroli kopii", p_lang: id === first ? "pl" : "uk", p_payload: {} });
+    expect((await submit(first))[0].ok).toBe(true);
+    expect((await submit(copy))[0]).toMatchObject({ ok: false, err: "duplicate_content", market_id: null });
+    const rows = await page.evaluate(async prefix => {
+      const { data, error } = await window.__sbClient.from("market_games").select("id").like("title", `${prefix}%`);
+      if (error) throw error;
+      return data;
+    }, name);
+    expect(rows).toHaveLength(1);
+  } finally { await cleanup(page); }
 });
 
 test("backend nie ujawnia listy oceniających anonimowi ani zwykłemu użytkownikowi", async ({ page, context, accounts, loginAs }) => {

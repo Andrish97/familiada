@@ -1,0 +1,38 @@
+{
+  "pl": [
+    ["Co jesz na śniadanie?", "Z czego składa się twój pierwszy posiłek dnia?"],
+    ["Co zabierasz na plażę?", "Jakie rzeczy pakujesz na wypoczynek nad morzem?"],
+    ["Co robisz w wolną sobotę?", "Jak spędzasz weekend bez obowiązków?"],
+    ["Jakie zwierzę spotkasz w lesie?", "Wymień mieszkańca puszczy."],
+    ["Co trzymasz w lodówce?", "Jakie produkty wymagają chłodzenia?"],
+    ["Jak podróżujesz do pracy?", "Czym dojeżdżasz do biura?"],
+    ["Co kupujesz w piekarni?", "Po jakie wypieki chodzisz do sklepu?"],
+    ["Jaki prezent dajesz na urodziny?", "Czym obdarowujesz solenizanta?"],
+    ["Co zakładasz gdy pada deszcz?", "Jaki ubiór chroni przed opadami?"],
+    ["Gdzie szukasz zgubionych kluczy?", "W których miejscach mogą leżeć zaginione klucze?"]
+  ],
+  "en": [
+    ["What do you eat for breakfast?", "What is in your first meal of the day?"],
+    ["What do you take to the beach?", "Which items do you pack for a day by the sea?"],
+    ["What do you do on a free Saturday?", "How do you spend a weekend without obligations?"],
+    ["Name an animal found in the forest.", "Which creatures live in the woods?"],
+    ["What do you keep in the fridge?", "Which food products need refrigeration?"],
+    ["How do you travel to work?", "What transport do you use for your commute to the office?"],
+    ["What do you buy at a bakery?", "Which baked goods do you shop for?"],
+    ["What gift do you give on a birthday?", "What do you present to someone celebrating their birthday?"],
+    ["What do you wear when it rains?", "Which clothes protect you from the rain?"],
+    ["Where do you look for lost keys?", "In which places might your missing keys be lying?"]
+  ],
+  "uk": [
+    ["Що ти їси на сніданок?", "З чого складається твій перший прийом їжі за день?"],
+    ["Що ти береш на пляж?", "Які речі пакуєш для відпочинку біля моря?"],
+    ["Що робиш у вільну суботу?", "Як проводиш вихідні без обов’язків?"],
+    ["Яку тварину можна зустріти в лісі?", "Назви мешканця лісу."],
+    ["Що ти тримаєш у холодильнику?", "Які харчові продукти потребують охолодження?"],
+    ["Як ти їздиш на роботу?", "Яким транспортом добираєшся до офісу?"],
+    ["Що купуєш у пекарні?", "По яку випічку ходиш до крамниці?"],
+    ["Який подарунок даруєш на день народження?", "Чим обдаровуєш іменинника?"],
+    ["Що вдягаєш, коли йде дощ?", "Який одяг захищає від опадів?"],
+    ["Де шукаєш загублені ключі?", "У яких місцях можуть лежати зниклі ключі?"]
+  ]
+}

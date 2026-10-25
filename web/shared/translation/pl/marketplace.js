@@ -40,6 +40,7 @@ const pl = {
       ratersTitle: "Kto ocenił",
     },
     errors: {
+      duplicate_content: "Taki zestaw pytań i odpowiedzi został już zgłoszony lub opublikowany.",
       not_authenticated: "Musisz być zalogowany.",
       game_not_available: "Ta gra nie jest już dostępna.",
       game_not_found: "Nie znaleziono tej gry.",

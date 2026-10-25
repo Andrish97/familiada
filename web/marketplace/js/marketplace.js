@@ -697,6 +697,7 @@ async function submitGame() {
   const res = Array.isArray(data) ? data[0] : data;
   if (!res?.ok) {
     const errCode = res?.err || "submit_failed";
+    if (errCode === "duplicate_content") { showSubmitError(marketErrorMessage(errCode)); return; }
     const errKey = `marketplace.submit.err.${errCode}`;
     const errMsg = t(errKey);
     showSubmitError(errMsg === errKey ? t("marketplace.submit.err.submit_failed") : errMsg);

@@ -13,6 +13,7 @@ export const GENERATOR_ACTIONS = new Set([
   "update-producer-game",
   "delete-game",
   "check-uniqueness",
+  "check-candidate",
   "embed-missing",
 ]);
 
