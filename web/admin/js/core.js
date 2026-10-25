@@ -1,8 +1,8 @@
 // admin/js/core.js — Wspólne dla paneli: elementy (els), API panelu (adminFetch/apiFetch), dymki, formatowanie, TinyMCE.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T12284";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-25T12284";
+import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T13033";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-25T13033";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -13,7 +13,7 @@ if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
 export const API_BASE = "/_admin_api";
-export const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-25T12284";
+export const TOOLS_MANIFEST = "/admin/data/tools.json?v=v2026-10-25T13033";
 
 export const POLL_MS = 15000;
 export const MINUTES_MIN = 10;
