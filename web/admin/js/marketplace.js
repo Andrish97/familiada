@@ -1,13 +1,13 @@
-import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js?v=v2026-10-25T14465";
+import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js?v=v2026-10-25T15281";
 // admin/js/marketplace.js — Społeczność gier: przegląd, akceptacja, odrzucenie, wycofanie.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T14465";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T14465";
-import { adminFetch, escSetting, showToast } from "./core.js?v=v2026-10-25T14465";
-import { testTelegram } from "./mail-settings.js?v=v2026-10-25T14465";
-import { loadProducerRatings } from "./ratings.js?v=v2026-10-25T14465";
-import { loadMarketPendingBadge } from "./mailbox.js?v=v2026-10-25T14465";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T15281";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T15281";
+import { adminFetch, escSetting, showToast } from "./core.js?v=v2026-10-25T15281";
+import { testTelegram } from "./mail-settings.js?v=v2026-10-25T15281";
+import { loadProducerRatings } from "./ratings.js?v=v2026-10-25T15281";
+import { loadMarketPendingBadge } from "./mailbox.js?v=v2026-10-25T15281";
 
 // ============================================================
 // MARKETPLACE ADMIN

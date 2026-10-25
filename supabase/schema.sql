@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aADk2liZgpeF88zEDeTYJ2XOelTJqqViwK9kacUwfD1mg9OKFmbt6It7vcpDcsx
+\restrict vNTWK6wRIyCBhdUYwdDHpreFAq06YmuDSvjWFlNgNAe0ebKg1oUJlOagEqHES0S
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -14047,6 +14047,21 @@ $$;
 
 
 --
+-- Name: marketing_categories_list(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_categories_list"() RETURNS TABLE("id" "uuid", "name" "text", "is_active" boolean, "description" "text", "queries" "text"[], "pkd" "text"[], "expanded_at" timestamp with time zone, "created_at" timestamp with time zone, "contacts" integer)
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT k.id, k.name, k.is_active, k.description, k.queries, k.pkd, k.expanded_at, k.created_at,
+         (SELECT count(*)::int FROM public.marketing_verified_contacts c WHERE c.category_id = k.id)
+    FROM public.marketing_categories k
+   ORDER BY k.created_at, k.name;
+$$;
+
+
+--
 -- Name: marketing_contact_counts(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -14064,6 +14079,55 @@ CREATE FUNCTION "public"."marketing_contact_counts"() RETURNS TABLE("total" inte
          count(*) FILTER (WHERE reaction = 'bounced')::int
     FROM public.marketing_verified_contacts;
 $$;
+
+
+--
+-- Name: marketing_import_contacts("jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_import_contacts"("p_rows" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  n_upd int := 0;
+  n_del int := 0;
+  n_cat int := 0;
+BEGIN
+  IF jsonb_typeof(p_rows) <> 'array' OR jsonb_array_length(p_rows) > 1000 THEN
+    RAISE EXCEPTION 'marketing_import_contacts: oczekiwano tablicy do 1000 wierszy';
+  END IF;
+
+  CREATE TEMP TABLE _imp ON COMMIT DROP AS
+  SELECT (r->>'id')::uuid AS id,
+         lower(coalesce(r->>'decision', '')) AS decision,
+         nullif(left(btrim(coalesce(r->>'name', '')), 200), '') AS name,
+         nullif(left(btrim(coalesce(r->>'category', '')), 80), '') AS category
+    FROM jsonb_array_elements(p_rows) r
+   WHERE coalesce(r->>'id', '') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+
+  DELETE FROM public.marketing_verified_contacts c USING _imp i WHERE c.id = i.id AND i.decision = 'delete';
+  GET DIAGNOSTICS n_del = ROW_COUNT;
+
+  INSERT INTO public.marketing_categories(name)
+  SELECT DISTINCT ON (lower(i.category)) i.category FROM _imp i
+   WHERE i.decision <> 'delete' AND i.category IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM public.marketing_categories k WHERE lower(btrim(k.name)) = lower(i.category))
+  ORDER BY lower(i.category);
+  GET DIAGNOSTICS n_cat = ROW_COUNT;
+
+  UPDATE public.marketing_verified_contacts c
+     SET title = coalesce(i.name, c.title),
+         category_id = coalesce((SELECT k.id FROM public.marketing_categories k WHERE lower(btrim(k.name)) = lower(i.category)), c.category_id),
+         quality = CASE WHEN i.decision = 'keep' THEN 'good' ELSE c.quality END,
+         reviewed_at = CASE WHEN i.decision = 'keep' THEN now() ELSE c.reviewed_at END
+    FROM _imp i
+   WHERE c.id = i.id AND i.decision <> 'delete'
+     AND (i.name IS NOT NULL OR i.category IS NOT NULL OR i.decision = 'keep');
+  GET DIAGNOSTICS n_upd = ROW_COUNT;
+
+  RETURN jsonb_build_object('updated', n_upd, 'deleted', n_del, 'categories', n_cat);
+END $_$;
 
 
 --
@@ -19355,8 +19419,26 @@ CREATE TABLE "public"."marketing_candidates" (
     "region" "text",
     "status" "text" DEFAULT 'new'::"text" NOT NULL,
     "reject_reason" "text",
+    "category_id" "uuid",
     CONSTRAINT "marketing_candidates_source_check" CHECK (("source" = ANY (ARRAY['search'::"text", 'ceidg'::"text"]))),
     CONSTRAINT "marketing_candidates_status_check" CHECK (("status" = ANY (ARRAY['new'::"text", 'classifying'::"text", 'accepted'::"text", 'rejected'::"text"])))
+);
+
+
+--
+-- Name: marketing_categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_categories" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "is_active" boolean DEFAULT true NOT NULL,
+    "description" "text",
+    "queries" "text"[] DEFAULT '{}'::"text"[] NOT NULL,
+    "pkd" "text"[] DEFAULT '{}'::"text"[] NOT NULL,
+    "expanded_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "marketing_categories_name_check" CHECK ((("length"("btrim"("name")) >= 1) AND ("length"("btrim"("name")) <= 80)))
 );
 
 
@@ -19449,6 +19531,7 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "last_sent_at" timestamp with time zone,
     "reaction" "text",
     "reaction_at" timestamp with time zone,
+    "category_id" "uuid",
     CONSTRAINT "marketing_verified_contacts_quality_check" CHECK ((("quality" IS NULL) OR ("quality" = ANY (ARRAY['good'::"text", 'junk'::"text"])))),
     CONSTRAINT "marketing_verified_contacts_reaction_check" CHECK ((("reaction" IS NULL) OR ("reaction" = ANY (ARRAY['replied'::"text", 'declined'::"text", 'bounced'::"text"]))))
 );
@@ -20676,6 +20759,14 @@ ALTER TABLE ONLY "public"."marketing_candidates"
 
 
 --
+-- Name: marketing_categories marketing_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_categories"
+    ADD CONSTRAINT "marketing_categories_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: marketing_cities marketing_cities_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -21485,6 +21576,13 @@ CREATE INDEX "idx_marketing_raw_status" ON "public"."marketing_raw_contacts" USI
 
 
 --
+-- Name: idx_marketing_verified_category; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_category" ON "public"."marketing_verified_contacts" USING "btree" ("category_id");
+
+
+--
 -- Name: idx_marketing_verified_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -21755,6 +21853,13 @@ CREATE INDEX "marketing_candidates_domain_idx" ON "public"."marketing_candidates
 --
 
 CREATE INDEX "marketing_candidates_status_idx" ON "public"."marketing_candidates" USING "btree" ("status", "created_at");
+
+
+--
+-- Name: marketing_categories_name_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "marketing_categories_name_key" ON "public"."marketing_categories" USING "btree" ("lower"("btrim"("name")));
 
 
 --
@@ -23396,6 +23501,22 @@ ALTER TABLE ONLY "public"."market_games"
 
 
 --
+-- Name: marketing_candidates marketing_candidates_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_candidates"
+    ADD CONSTRAINT "marketing_candidates_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."marketing_categories"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: marketing_verified_contacts marketing_verified_contacts_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_verified_contacts"
+    ADD CONSTRAINT "marketing_verified_contacts_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."marketing_categories"("id") ON DELETE SET NULL;
+
+
+--
 -- Name: message_attachments message_attachments_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -24522,6 +24643,12 @@ ALTER TABLE "public"."marketing_ai_providers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."marketing_candidates" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: marketing_categories; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_categories" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: marketing_cities; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -25342,5 +25469,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aADk2liZgpeF88zEDeTYJ2XOelTJqqViwK9kacUwfD1mg9OKFmbt6It7vcpDcsx
+\unrestrict vNTWK6wRIyCBhdUYwdDHpreFAq06YmuDSvjWFlNgNAe0ebKg1oUJlOagEqHES0S
 
