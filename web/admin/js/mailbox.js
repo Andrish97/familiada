@@ -1,17 +1,17 @@
 // admin/js/mailbox.js — Skrzynka i zgłoszenia: foldery, wiadomości, wątki, przypisania, pisanie.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T10311";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-25T10311";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-25T10311";
-import { openDialog, closeDialog, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T10311";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T10311";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-25T10311";
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-25T10311";
-import { adminFetch, btnBackSheet, escSetting, getEmailTemplates, loadTinyMce, showToast } from "./core.js?v=v2026-10-25T10311";
-import { activeTab } from "./tabs.js?v=v2026-10-25T10311";
-import { COMPOSE_LANGS, COMPOSE_LANG_META, buildEmailSignature, getComposeTemplateOptions, getFarewellOptions, getGreetingOptions, getSenderOptions, mailSourceIcon } from "./mail-settings.js?v=v2026-10-25T10311";
-import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T10311";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T10361";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-25T10361";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-25T10361";
+import { openDialog, closeDialog, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T10361";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T10361";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-25T10361";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-25T10361";
+import { adminFetch, btnBackSheet, escSetting, getEmailTemplates, loadTinyMce, showToast } from "./core.js?v=v2026-10-25T10361";
+import { activeTab } from "./tabs.js?v=v2026-10-25T10361";
+import { COMPOSE_LANGS, COMPOSE_LANG_META, buildEmailSignature, getComposeTemplateOptions, getFarewellOptions, getGreetingOptions, getSenderOptions, mailSourceIcon } from "./mail-settings.js?v=v2026-10-25T10361";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T10361";
 
 // helper — fetch do /_admin_api/*
 // ============================================================

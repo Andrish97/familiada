@@ -1,9 +1,9 @@
 // admin/js/tabs.js — Zakładki panelu: aktywna karta, adres (?tab=), przełączanie paneli.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-25T10311";
-import { els } from "./core.js?v=v2026-10-25T10311";
-import { hideMailNav, setMailView } from "./mailbox.js?v=v2026-10-25T10311";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-25T10361";
+import { els } from "./core.js?v=v2026-10-25T10361";
+import { hideMailNav, setMailView } from "./mailbox.js?v=v2026-10-25T10361";
 
 export let activeTab = "maintenance";
 
