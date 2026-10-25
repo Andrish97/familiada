@@ -1993,3 +1993,6 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Prywatny panel — właściciel uporządkował DNS | Właściciel potwierdził zmianę admin na adres serwera z proxy Cloudflare. Punktowa kontrola HTTP po zmianie: panel i jego API 302 do właściwej bramki Access, nagłówek Cloudflare obecny; strona publiczna 200, prywatny origin bez sekretu 404, stan maintenance 200/wyłączone. | Adres panelu i ochrona zachowane; bez zmian stanu przerwy. |
+
+
+| 2026-10-25 | Prywatny panel — ponowne usunięcie manifestu po równoległym scaleniu | Podczas kontroli DNS wykryto przywrócony przez inne scalenie web/manifest-admin.webmanifest (następnie wersjonowany przez CI). Kod panelu nadal prywatny; usunięto ponownie jedyny publiczny manifest. | Utrzymać usunięcie manifestu przy scalaniu starszych gałęzi; manifest wraz z ikonami jest wyłącznie w prywatnym repo. Kontrola starego originu po Pages. |
