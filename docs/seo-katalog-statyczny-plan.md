@@ -339,11 +339,12 @@ flowchart LR
    zgłoszeń. Ten stan nie trafia do publicznego SSR ani sitemap. Nie można
    po prostu zacząć 404-ować każdego niepublicznego sluga przed startem JS,
    bo zepsuje to obecny refresh podglądu autora. Najprościej rozdzielić
-   adresy w tym samym katalogu: publiczne `/marketplace/game/slug`, a
-   prywatny podgląd autora jako stan `?preview=<id>` istniejącego okienka,
-   bez indeksowania. To zmiana URL/state wymagająca PAGES, dokumentacji,
-   testów i aktualizacji Wskazówek PL/EN/UK; finalny parametr ustalić przy
-   implementacji. Nie dodaje nowej strony ani publicznej kopii treści.
+   te stany w tym samym katalogu: publiczne `/marketplace/game/slug`, a
+   prywatny podgląd autora przez już obsługiwany parametr `?game=<id>`,
+   bez indeksowania i bez przepisywania na publiczny slug dla niepublicznej
+   gry. Zachować zwykłe opublikowane gry pod canonicalnym slugiem.
+   Parametr gry jako stan prywatnego podglądu wymaga wpisu w PAGES, testów,
+   dokumentacji i Wskazówek PL/EN/UK. Nie dodaje strony ani nowego parametru.
 6. **Bez cache HTML na początek.** Każde publiczne wejście odczytuje
    aktualny stan bazy, HTML ma `no-store`; brak R2, KV z odciskami, kolejki,
    webhooków i synchronizacji plików. Po zatwierdzeniu wycofania kolejne
@@ -397,3 +398,9 @@ Cache dołożyć dopiero, gdy pomiar wskaże taką potrzebę. Krótki TTL oznacz
 jawnie zaakceptowane opóźnienie wycofania; natychmiastowa kontrola statusu
 przed podaniem cache nadal wymaga bazy. Odporność publicznego katalogu na
 awarię całego VPS to osobny powód powrotu do R2 i §5, nie warunek poprawy SEO.
+
+
+2026-10-25: integracja `e70c80ab5` z aktualnym main zweryfikowana: unity
+69/69, workerd 10/10, branch E2E
+[40168072561](https://github.com/Andrish97/familiada/actions/runs/40168072561)
+5/5. Zgoda na publikację dotyczy §10; §11 pozostaje planem dla gier.
