@@ -71,8 +71,17 @@
   }
 
   // ---------- filtry PostgREST ----------
+  const canonical = (value) => JSON.stringify(value, (_, v) => v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(key => [key, v[key]])) : v);
+  function equal(a, b) {
+    if (a && typeof a === 'object') {
+      try { return canonical(a) === canonical(typeof b === 'string' ? JSON.parse(b) : b); }
+      catch { return false; }
+    }
+    return String(a) === String(b);
+  }
   const ops = {
-    eq: (a, b) => String(a) === String(b), neq: (a, b) => String(a) !== String(b),
+    eq: equal, neq: (a, b) => !equal(a, b),
     gt: (a, b) => a > b, gte: (a, b) => a >= b, lt: (a, b) => a < b, lte: (a, b) => a <= b,
     is: (a, b) => (b === null ? a == null : a === b),
     in: (a, b) => (Array.isArray(b) ? b : String(b).replace(/^\(|\)$/g, "").split(",")).map(String).includes(String(a)),

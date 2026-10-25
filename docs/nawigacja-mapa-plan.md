@@ -1125,6 +1125,13 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-25 — animowane stany kontrolek**: strzałki konta, Więcej i
+  wspólnych selektorów odzwierciedlają aria-expanded. Konto i Więcej
+  obsługują również Enter/Spację oraz Escape. Te same istniejące kontrolki
+  i menu, bez nowych tras lub zmian PAGES, ret, sesji i dostępu. Hasło
+  synchronizuje type z aria-pressed; zapis i Powiel pokazują faktyczny stan
+  operacji. Wymiary elementów pozostają stałe.
+
 - **2026-10-25 — wysuwane menu** (decyzja właściciela): główna nawigacja
   wysuwa się **z prawej** pod topbarem, także w prywatnym panelu admina.
   Widoczny przełącznik hamburger/X jest jedynym przyciskiem zamykania;

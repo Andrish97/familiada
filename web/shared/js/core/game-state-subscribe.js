@@ -13,15 +13,16 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T22074";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T22074";
-import { rt } from "./realtime.js?v=v2026-10-25T22074";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T22074";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T22074";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T22074";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T22074";
-import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T22074";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T22074";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T23195";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T23195";
+import { rt } from "./realtime.js?v=v2026-10-25T23195";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T23195";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T23195";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T23195";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T23195";
+import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T23195";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T23195";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-25T23195";
 
 const HEARTBEAT_REV_GRACE_MS = 250;
 
@@ -33,6 +34,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   const directTableChannels = new Map();
   const directTableConnected = new Map();
   let tokenTimer = null;
+  const directRetry = createDirectRetryScheduler({
+    run: () => { void startDirect(); },
+    isActive: () => active,
+    isConnected: () => directConnected,
+  });
   // Po wybudzeniu telefonu sieć wraca po chwili: pierwsze pobranie tokenu
   // zwykle się nie udaje. Krótkie, rosnące odstępy skracają czas bez
   // bezpośredniego kanału z 15 s do 1–3 s.
@@ -279,6 +285,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
 
   function onDirectReady() {
     if (!active) return;
+    directRetry.reset();
     const recoveredAt = directIncidentAt;
     directConnected = true;
     directIncidentAt = null;
@@ -313,14 +320,25 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     fetchGuarded("rpc_channel_recovery");
   }
 
+  function scheduleDirectRetry() {
+    const retryMs = directRetry.schedule();
+    if (retryMs !== null) {
+      sendDiagnostic("transport_state", "reconnect_scheduled", "postgres_changes", {
+        status: directStatus, retry_ms: retryMs,
+      });
+    }
+  }
+
   function onDirectFailure(status) {
     noteDirectFailure(status);
     if (active) fetchGuarded("rpc_channel_failure");
+    scheduleDirectRetry();
     console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
   }
 
   async function startDirect() {
     if (!active) return;
+    directRetry.cancel();
     const lease = getLeaseArgs();
     if (!lease?.p_connection_id || !lease?.p_epoch) return;
     directLeaseKey = leaseKey(lease);
@@ -378,6 +396,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
           setTimeout(() => {
             if (channel === directChannel && active && !readiness.ready) {
               console.warn("[device-realtime] brak potwierdzenia PostgreSQL po 10 s; działa transport awaryjny");
+              onDirectFailure("POSTGRES_TIMEOUT");
             }
           }, 10_000);
         }
@@ -434,6 +453,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
 
   async function stopDirect() {
     directConnected = false;
+    directRetry.cancel();
     clearTimeout(tokenTimer);
     tokenTimer = null;
     const client = directClient;
@@ -532,6 +552,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     tokenAuthIncidentOpen = false;
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = null;
+    directRetry.cancel();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("pageshow", resyncAfterLease);
     window.removeEventListener("online", resyncAfterLease);

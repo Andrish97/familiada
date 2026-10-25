@@ -1,5 +1,5 @@
-import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-25T22074";
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-25T22074";
+import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-25T23195";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-25T23195";
 
 // Słownik jest podzielony na części: <lang>/<część>.js (docs/tlumaczenia-podzial-plan.md).
 // Strona wczytuje część wspólną i części z <meta name="i18n-parts" content="…">,
@@ -11,7 +11,7 @@ const LANG_META = {
   uk: { lang: "uk", label: "Українська", icon: "flag-ua" },
 };
 const ASSET_VERSION = new URL(import.meta.url).search;
-import { placeDropdown } from "../js/core/popover.js?v=v2026-10-25T22074";
+import { placeDropdown } from "../js/core/popover.js?v=v2026-10-25T23195";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
@@ -196,7 +196,7 @@ export function applyTranslations(root = document) {
     if (!key || el.tagName === "TITLE") return;
     const before = el.getAttribute("data-i18n-icon");
     const after = el.getAttribute("data-i18n-icon-after");
-    if (before || after) el.innerHTML = iconText(before || after, t(key, defaultVars), { after: !before });
+    if (before || after) el.innerHTML = iconText(before || after, t(key, defaultVars), { after: !before, animation: el.dataset.iconAnimation || "" });
     else el.textContent = t(key, defaultVars);
   });
 

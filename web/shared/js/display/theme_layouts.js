@@ -1,4 +1,4 @@
-import { ARTWORK } from "./theme_artwork.js?v=v2026-10-25T22074";
+import { ARTWORK } from "./theme_artwork.js?v=v2026-10-25T23195";
 
 const BACKGROUNDS = { wings: "#152238", radar: "#103d43", cabinet: "#352719", ribbon: "#36233f", bridge: "#252e35" };
 const DISPLAYS = {

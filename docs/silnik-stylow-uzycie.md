@@ -380,3 +380,19 @@ używają `--dur-base` / `--ease-out`, tłumionych przez reduced-motion.
 Stopka zachowuje pierwotne wymiary i odstępy: ikona kawy 1.45em,
 bez powiększania Kontaktu i bez dodatkowych wymiarów przycisków. Animacja
 zmienia tylko krzywiznę pary. Nie zwiększaj stopki, aby uwidocznić animację.
+
+### Dalsze profile animowanych części
+
+| Nazwa / profil | Sterowanie | Integracja |
+|---|---|---|
+| caret-down / disclosure | aria-expanded | initUiSelect dokłada animowaną strzałkę; topbar synchronizuje stan z menu.hidden |
+| eye / password | aria-pressed | initPasswordToggles zmienia type i stan przycisku, zachowując ten sam SVG |
+| save / save | aria-busy; data-icon-state=saved | check dopiero po potwierdzonym zapisie; dirty/error/conflict go nie pokazują |
+| copy lub duplicate / copy | aria-busy | kartki rozsuwają się tylko w czasie prawdziwej operacji, bez udawania sukcesu |
+
+Dla treści tłumaczonej: data-i18n-icon="save" razem z
+data-icon-animation="save". iconText przyjmuje animation tak jak icon.
+Dla znacznika i: data-icon="duplicate" data-icon-animation="copy".
+Generator używa kanonicznych SVG, a renderowanie nadaje osobne ID maskom
+każdej instancji. Prefers-reduced-motion zachowuje końcowy stan bez ruchu.
+Nowa animacja nie może zmienić wymiarów przycisku, pola, wiersza ani stopki.

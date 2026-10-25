@@ -1,6 +1,7 @@
 // Tłumaczenia PL — część wspólna — wczytuje ją każda strona.
 const pl = {
   common: {
+    passwordVisibility: "Pokaż hasło",
     menuOpen: "Otwórz menu",
     menuClose: "Zamknij menu",
     colorPicker: {

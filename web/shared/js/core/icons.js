@@ -1,156 +1,156 @@
-import { ICON_PARTS } from "./icon-parts.js?v=v2026-10-25T22074";
-import { observeIconMotion, forgetIconMotion } from "./icon-motion.js?v=v2026-10-25T22074";
+import { ICON_PARTS } from "./icon-parts.js?v=v2026-10-25T23195";
+import { observeIconMotion, forgetIconMotion } from "./icon-motion.js?v=v2026-10-25T23195";
 // Wspólny silnik ikon. Rysunki są osobnymi plikami SVG w /assets/icons/;
 // ten moduł mapuje ich nazwy na pliki i przygotowuje znaczniki do wstawienia.
 // Współdzielony odczyt przez <use> pozwala przeglądarce cache'ować pliki,
 // a kolor currentColor dziedziczy się z elementu wywołującego.
 
 // Jeden system podpowiedzi dla stron korzystających ze wspólnych kontrolek.
-import "./tooltips.js?v=v2026-10-25T22074";
-import "./range-fill.js?v=v2026-10-25T22074";
+import "./tooltips.js?v=v2026-10-25T23195";
+import "./range-fill.js?v=v2026-10-25T23195";
 
 export const ICONS = Object.freeze({
   // Akcje
-  close: "/assets/icons/actions/close.svg?v=v2026-10-25T22074",
-  trash: "/assets/icons/actions/trash.svg?v=v2026-10-25T22074",
-  "trash-forever": "/assets/icons/actions/trash-forever.svg?v=v2026-10-25T22074",
-  check: "/assets/icons/actions/check.svg?v=v2026-10-25T22074",
-  cancel: "/assets/icons/actions/cancel.svg?v=v2026-10-25T22074",
-  error: "/assets/icons/actions/error.svg?v=v2026-10-25T22074",
-  warning: "/assets/icons/actions/warning.svg?v=v2026-10-25T22074",
-  info: "/assets/icons/actions/info.svg?v=v2026-10-25T22074",
-  save: "/assets/icons/actions/save.svg?v=v2026-10-25T22074",
-  refresh: "/assets/icons/actions/refresh.svg?v=v2026-10-25T22074",
-  restore: "/assets/icons/actions/restore.svg?v=v2026-10-25T22074",
-  undo: "/assets/icons/actions/undo.svg?v=v2026-10-25T22074",
-  redo: "/assets/icons/actions/redo.svg?v=v2026-10-25T22074",
+  close: "/assets/icons/actions/close.svg?v=v2026-10-25T23195",
+  trash: "/assets/icons/actions/trash.svg?v=v2026-10-25T23195",
+  "trash-forever": "/assets/icons/actions/trash-forever.svg?v=v2026-10-25T23195",
+  check: "/assets/icons/actions/check.svg?v=v2026-10-25T23195",
+  cancel: "/assets/icons/actions/cancel.svg?v=v2026-10-25T23195",
+  error: "/assets/icons/actions/error.svg?v=v2026-10-25T23195",
+  warning: "/assets/icons/actions/warning.svg?v=v2026-10-25T23195",
+  info: "/assets/icons/actions/info.svg?v=v2026-10-25T23195",
+  save: "/assets/icons/actions/save.svg?v=v2026-10-25T23195",
+  refresh: "/assets/icons/actions/refresh.svg?v=v2026-10-25T23195",
+  restore: "/assets/icons/actions/restore.svg?v=v2026-10-25T23195",
+  undo: "/assets/icons/actions/undo.svg?v=v2026-10-25T23195",
+  redo: "/assets/icons/actions/redo.svg?v=v2026-10-25T23195",
 
   // Edycja
-  "edit-paper": "/assets/icons/editing/edit-paper.svg?v=v2026-10-25T22074",
-  pencil: "/assets/icons/editing/pencil.svg?v=v2026-10-25T22074",
-  copy: "/assets/icons/editing/copy.svg?v=v2026-10-25T22074",
-  duplicate: "/assets/icons/editing/duplicate.svg?v=v2026-10-25T22074",
-  cut: "/assets/icons/editing/cut.svg?v=v2026-10-25T22074",
-  paste: "/assets/icons/editing/paste.svg?v=v2026-10-25T22074",
-  plus: "/assets/icons/editing/plus.svg?v=v2026-10-25T22074",
-  tag: "/assets/icons/editing/tag.svg?v=v2026-10-25T22074",
-  merge: "/assets/icons/editing/merge.svg?v=v2026-10-25T22074",
-  cursor: "/assets/icons/editing/cursor.svg?v=v2026-10-25T22074",
-  hand: "/assets/icons/editing/hand.svg?v=v2026-10-25T22074",
-  text: "/assets/icons/editing/text.svg?v=v2026-10-25T22074",
-  brush: "/assets/icons/editing/brush.svg?v=v2026-10-25T22074",
-  eraser: "/assets/icons/editing/eraser.svg?v=v2026-10-25T22074",
-  shapes: "/assets/icons/editing/shapes.svg?v=v2026-10-25T22074",
-  "change-type": "/assets/icons/editing/change-type.svg?v=v2026-10-25T22074",
-  "tie-switch": "/assets/icons/editing/tie-switch.svg?v=v2026-10-25T22074",
-  "rotate-left": "/assets/icons/editing/rotate-left.svg?v=v2026-10-25T22074",
-  "rotate-right": "/assets/icons/editing/rotate-right.svg?v=v2026-10-25T22074",
-  grip: "/assets/icons/editing/grip.svg?v=v2026-10-25T22074",
+  "edit-paper": "/assets/icons/editing/edit-paper.svg?v=v2026-10-25T23195",
+  pencil: "/assets/icons/editing/pencil.svg?v=v2026-10-25T23195",
+  copy: "/assets/icons/editing/copy.svg?v=v2026-10-25T23195",
+  duplicate: "/assets/icons/editing/duplicate.svg?v=v2026-10-25T23195",
+  cut: "/assets/icons/editing/cut.svg?v=v2026-10-25T23195",
+  paste: "/assets/icons/editing/paste.svg?v=v2026-10-25T23195",
+  plus: "/assets/icons/editing/plus.svg?v=v2026-10-25T23195",
+  tag: "/assets/icons/editing/tag.svg?v=v2026-10-25T23195",
+  merge: "/assets/icons/editing/merge.svg?v=v2026-10-25T23195",
+  cursor: "/assets/icons/editing/cursor.svg?v=v2026-10-25T23195",
+  hand: "/assets/icons/editing/hand.svg?v=v2026-10-25T23195",
+  text: "/assets/icons/editing/text.svg?v=v2026-10-25T23195",
+  brush: "/assets/icons/editing/brush.svg?v=v2026-10-25T23195",
+  eraser: "/assets/icons/editing/eraser.svg?v=v2026-10-25T23195",
+  shapes: "/assets/icons/editing/shapes.svg?v=v2026-10-25T23195",
+  "change-type": "/assets/icons/editing/change-type.svg?v=v2026-10-25T23195",
+  "tie-switch": "/assets/icons/editing/tie-switch.svg?v=v2026-10-25T23195",
+  "rotate-left": "/assets/icons/editing/rotate-left.svg?v=v2026-10-25T23195",
+  "rotate-right": "/assets/icons/editing/rotate-right.svg?v=v2026-10-25T23195",
+  grip: "/assets/icons/editing/grip.svg?v=v2026-10-25T23195",
 
   // Pliki i transfer
-  "file-plus": "/assets/icons/files/file-plus.svg?v=v2026-10-25T22074",
-  "file-doc": "/assets/icons/files/file-doc.svg?v=v2026-10-25T22074",
-  "file-expired": "/assets/icons/files/file-expired.svg?v=v2026-10-25T22074",
-  folder: "/assets/icons/files/folder.svg?v=v2026-10-25T22074",
-  "folder-open": "/assets/icons/files/folder-open.svg?v=v2026-10-25T22074",
-  "folder-plus": "/assets/icons/files/folder-plus.svg?v=v2026-10-25T22074",
-  categories: "/assets/icons/files/categories.svg?v=v2026-10-25T22074",
-  paperclip: "/assets/icons/files/paperclip.svg?v=v2026-10-25T22074",
-  image: "/assets/icons/files/image.svg?v=v2026-10-25T22074",
-  download: "/assets/icons/files/download.svg?v=v2026-10-25T22074",
-  upload: "/assets/icons/files/upload.svg?v=v2026-10-25T22074",
+  "file-plus": "/assets/icons/files/file-plus.svg?v=v2026-10-25T23195",
+  "file-doc": "/assets/icons/files/file-doc.svg?v=v2026-10-25T23195",
+  "file-expired": "/assets/icons/files/file-expired.svg?v=v2026-10-25T23195",
+  folder: "/assets/icons/files/folder.svg?v=v2026-10-25T23195",
+  "folder-open": "/assets/icons/files/folder-open.svg?v=v2026-10-25T23195",
+  "folder-plus": "/assets/icons/files/folder-plus.svg?v=v2026-10-25T23195",
+  categories: "/assets/icons/files/categories.svg?v=v2026-10-25T23195",
+  paperclip: "/assets/icons/files/paperclip.svg?v=v2026-10-25T23195",
+  image: "/assets/icons/files/image.svg?v=v2026-10-25T23195",
+  download: "/assets/icons/files/download.svg?v=v2026-10-25T23195",
+  upload: "/assets/icons/files/upload.svg?v=v2026-10-25T23195",
 
   // Nawigacja i ustawienia
-  home: "/assets/icons/navigation/home.svg?v=v2026-10-25T22074",
-  drawer: "/assets/icons/navigation/drawer.svg?v=v2026-10-25T22074",
-  "drawer-export": "/assets/icons/navigation/drawer-export.svg?v=v2026-10-25T22074",
-  hamburger: "/assets/icons/navigation/hamburger.svg?v=v2026-10-25T22074",
-  "arrow-up": "/assets/icons/navigation/arrow-up.svg?v=v2026-10-25T22074",
-  "arrow-down": "/assets/icons/navigation/arrow-down.svg?v=v2026-10-25T22074",
-  "arrow-right": "/assets/icons/navigation/arrow-right.svg?v=v2026-10-25T22074",
-  "arrow-left": "/assets/icons/navigation/arrow-left.svg?v=v2026-10-25T22074",
-  sort: "/assets/icons/navigation/sort.svg?v=v2026-10-25T22074",
-  filter: "/assets/icons/navigation/filter.svg?v=v2026-10-25T22074",
-  "caret-down": "/assets/icons/navigation/caret-down.svg?v=v2026-10-25T22074",
-  "caret-up": "/assets/icons/navigation/caret-up.svg?v=v2026-10-25T22074",
-  "caret-right": "/assets/icons/navigation/caret-right.svg?v=v2026-10-25T22074",
-  "caret-left": "/assets/icons/navigation/caret-left.svg?v=v2026-10-25T22074",
-  "fullscreen-enter": "/assets/icons/navigation/fullscreen-enter.svg?v=v2026-10-25T22074",
-  "fullscreen-exit": "/assets/icons/navigation/fullscreen-exit.svg?v=v2026-10-25T22074",
-  settings: "/assets/icons/navigation/settings.svg?v=v2026-10-25T22074",
+  home: "/assets/icons/navigation/home.svg?v=v2026-10-25T23195",
+  drawer: "/assets/icons/navigation/drawer.svg?v=v2026-10-25T23195",
+  "drawer-export": "/assets/icons/navigation/drawer-export.svg?v=v2026-10-25T23195",
+  hamburger: "/assets/icons/navigation/hamburger.svg?v=v2026-10-25T23195",
+  "arrow-up": "/assets/icons/navigation/arrow-up.svg?v=v2026-10-25T23195",
+  "arrow-down": "/assets/icons/navigation/arrow-down.svg?v=v2026-10-25T23195",
+  "arrow-right": "/assets/icons/navigation/arrow-right.svg?v=v2026-10-25T23195",
+  "arrow-left": "/assets/icons/navigation/arrow-left.svg?v=v2026-10-25T23195",
+  sort: "/assets/icons/navigation/sort.svg?v=v2026-10-25T23195",
+  filter: "/assets/icons/navigation/filter.svg?v=v2026-10-25T23195",
+  "caret-down": "/assets/icons/navigation/caret-down.svg?v=v2026-10-25T23195",
+  "caret-up": "/assets/icons/navigation/caret-up.svg?v=v2026-10-25T23195",
+  "caret-right": "/assets/icons/navigation/caret-right.svg?v=v2026-10-25T23195",
+  "caret-left": "/assets/icons/navigation/caret-left.svg?v=v2026-10-25T23195",
+  "fullscreen-enter": "/assets/icons/navigation/fullscreen-enter.svg?v=v2026-10-25T23195",
+  "fullscreen-exit": "/assets/icons/navigation/fullscreen-exit.svg?v=v2026-10-25T23195",
+  settings: "/assets/icons/navigation/settings.svg?v=v2026-10-25T23195",
 
   // Komunikacja
-  envelope: "/assets/icons/communication/envelope.svg?v=v2026-10-25T22074",
-  "envelope-in": "/assets/icons/communication/envelope-in.svg?v=v2026-10-25T22074",
-  "envelope-out": "/assets/icons/communication/envelope-out.svg?v=v2026-10-25T22074",
-  megaphone: "/assets/icons/communication/megaphone.svg?v=v2026-10-25T22074",
-  reply: "/assets/icons/communication/reply.svg?v=v2026-10-25T22074",
-  bell: "/assets/icons/communication/bell.svg?v=v2026-10-25T22074",
-  coffee: "/assets/icons/communication/coffee.svg?v=v2026-10-25T22074",
+  envelope: "/assets/icons/communication/envelope.svg?v=v2026-10-25T23195",
+  "envelope-in": "/assets/icons/communication/envelope-in.svg?v=v2026-10-25T23195",
+  "envelope-out": "/assets/icons/communication/envelope-out.svg?v=v2026-10-25T23195",
+  megaphone: "/assets/icons/communication/megaphone.svg?v=v2026-10-25T23195",
+  reply: "/assets/icons/communication/reply.svg?v=v2026-10-25T23195",
+  bell: "/assets/icons/communication/bell.svg?v=v2026-10-25T23195",
+  coffee: "/assets/icons/communication/coffee.svg?v=v2026-10-25T23195",
 
   // Urządzenia
-  gamepad: "/assets/icons/devices/gamepad.svg?v=v2026-10-25T22074",
-  person: "/assets/icons/devices/person.svg?v=v2026-10-25T22074",
-  people: "/assets/icons/devices/people.svg?v=v2026-10-25T22074",
-  host: "/assets/icons/devices/host.svg?v=v2026-10-25T22074",
-  buzzer: "/assets/icons/devices/buzzer.svg?v=v2026-10-25T22074",
-  display: "/assets/icons/devices/display.svg?v=v2026-10-25T22074",
-  phone: "/assets/icons/devices/phone.svg?v=v2026-10-25T22074",
-  "qr-code": "/assets/icons/devices/qr-code.svg?v=v2026-10-25T22074",
+  gamepad: "/assets/icons/devices/gamepad.svg?v=v2026-10-25T23195",
+  person: "/assets/icons/devices/person.svg?v=v2026-10-25T23195",
+  people: "/assets/icons/devices/people.svg?v=v2026-10-25T23195",
+  host: "/assets/icons/devices/host.svg?v=v2026-10-25T23195",
+  buzzer: "/assets/icons/devices/buzzer.svg?v=v2026-10-25T23195",
+  display: "/assets/icons/devices/display.svg?v=v2026-10-25T23195",
+  phone: "/assets/icons/devices/phone.svg?v=v2026-10-25T23195",
+  "qr-code": "/assets/icons/devices/qr-code.svg?v=v2026-10-25T23195",
 
   // Zbiorcze akcje list odbiorców
-  "select-all": "/assets/icons/sharing/select-all.svg?v=v2026-10-25T22074",
-  "clear-selection": "/assets/icons/sharing/clear-selection.svg?v=v2026-10-25T22074",
+  "select-all": "/assets/icons/sharing/select-all.svg?v=v2026-10-25T23195",
+  "clear-selection": "/assets/icons/sharing/clear-selection.svg?v=v2026-10-25T23195",
 
   // Multimedia i oceny
-  "speaker-on": "/assets/icons/media/speaker-on.svg?v=v2026-10-25T22074",
-  "speaker-off": "/assets/icons/media/speaker-off.svg?v=v2026-10-25T22074",
-  play: "/assets/icons/media/play.svg?v=v2026-10-25T22074",
-  stop: "/assets/icons/media/stop.svg?v=v2026-10-25T22074",
-  pause: "/assets/icons/media/pause.svg?v=v2026-10-25T22074",
-  star: "/assets/icons/ratings/star.svg?v=v2026-10-25T22074",
-  "star-empty": "/assets/icons/ratings/star-empty.svg?v=v2026-10-25T22074",
-  "star-half": "/assets/icons/ratings/star-half.svg?v=v2026-10-25T22074",
+  "speaker-on": "/assets/icons/media/speaker-on.svg?v=v2026-10-25T23195",
+  "speaker-off": "/assets/icons/media/speaker-off.svg?v=v2026-10-25T23195",
+  play: "/assets/icons/media/play.svg?v=v2026-10-25T23195",
+  stop: "/assets/icons/media/stop.svg?v=v2026-10-25T23195",
+  pause: "/assets/icons/media/pause.svg?v=v2026-10-25T23195",
+  star: "/assets/icons/ratings/star.svg?v=v2026-10-25T23195",
+  "star-empty": "/assets/icons/ratings/star-empty.svg?v=v2026-10-25T23195",
+  "star-half": "/assets/icons/ratings/star-half.svg?v=v2026-10-25T23195",
 
   // Pozostałe narzędzia
-  "align-left": "/assets/icons/editor/align-left.svg?v=v2026-10-25T22074",
-  "align-center": "/assets/icons/editor/align-center.svg?v=v2026-10-25T22074",
-  "align-right": "/assets/icons/editor/align-right.svg?v=v2026-10-25T22074",
-  "zoom-in": "/assets/icons/editor/zoom-in.svg?v=v2026-10-25T22074",
-  "zoom-out": "/assets/icons/editor/zoom-out.svg?v=v2026-10-25T22074",
-  search: "/assets/icons/editor/search.svg?v=v2026-10-25T22074",
-  polls: "/assets/icons/editor/polls.svg?v=v2026-10-25T22074",
-  globe: "/assets/icons/editor/globe.svg?v=v2026-10-25T22074",
-  shield: "/assets/icons/editor/shield.svg?v=v2026-10-25T22074",
-  calendar: "/assets/icons/editor/calendar.svg?v=v2026-10-25T22074",
-  hourglass: "/assets/icons/editor/hourglass.svg?v=v2026-10-25T22074",
-  camera: "/assets/icons/editor/camera.svg?v=v2026-10-25T22074",
-  eye: "/assets/icons/editor/eye.svg?v=v2026-10-25T22074",
-  "eye-off": "/assets/icons/editor/eye-off.svg?v=v2026-10-25T22074",
-  "swatch-white": "/assets/icons/editor/swatch-white.svg?v=v2026-10-25T22074",
-  "swatch-black": "/assets/icons/editor/swatch-black.svg?v=v2026-10-25T22074",
+  "align-left": "/assets/icons/editor/align-left.svg?v=v2026-10-25T23195",
+  "align-center": "/assets/icons/editor/align-center.svg?v=v2026-10-25T23195",
+  "align-right": "/assets/icons/editor/align-right.svg?v=v2026-10-25T23195",
+  "zoom-in": "/assets/icons/editor/zoom-in.svg?v=v2026-10-25T23195",
+  "zoom-out": "/assets/icons/editor/zoom-out.svg?v=v2026-10-25T23195",
+  search: "/assets/icons/editor/search.svg?v=v2026-10-25T23195",
+  polls: "/assets/icons/editor/polls.svg?v=v2026-10-25T23195",
+  globe: "/assets/icons/editor/globe.svg?v=v2026-10-25T23195",
+  shield: "/assets/icons/editor/shield.svg?v=v2026-10-25T23195",
+  calendar: "/assets/icons/editor/calendar.svg?v=v2026-10-25T23195",
+  hourglass: "/assets/icons/editor/hourglass.svg?v=v2026-10-25T23195",
+  camera: "/assets/icons/editor/camera.svg?v=v2026-10-25T23195",
+  eye: "/assets/icons/editor/eye.svg?v=v2026-10-25T23195",
+  "eye-off": "/assets/icons/editor/eye-off.svg?v=v2026-10-25T23195",
+  "swatch-white": "/assets/icons/editor/swatch-white.svg?v=v2026-10-25T23195",
+  "swatch-black": "/assets/icons/editor/swatch-black.svg?v=v2026-10-25T23195",
 
   // Języki
-  "flag-pl": "/assets/icons/languages/flag-pl.svg?v=v2026-10-25T22074",
-  "flag-ua": "/assets/icons/languages/flag-ua.svg?v=v2026-10-25T22074",
-  "lang-en": "/assets/icons/languages/lang-en.svg?v=v2026-10-25T22074",
+  "flag-pl": "/assets/icons/languages/flag-pl.svg?v=v2026-10-25T23195",
+  "flag-ua": "/assets/icons/languages/flag-ua.svg?v=v2026-10-25T23195",
+  "lang-en": "/assets/icons/languages/lang-en.svg?v=v2026-10-25T23195",
 
   // Podglądy narzędzia Kształty w edytorze logo
-  "logo-shape-line": "/assets/icons/logo-shapes/line.svg?v=v2026-10-25T22074",
-  "logo-shape-rect": "/assets/icons/logo-shapes/rect.svg?v=v2026-10-25T22074",
-  "logo-shape-round-rect": "/assets/icons/logo-shapes/round-rect.svg?v=v2026-10-25T22074",
-  "logo-shape-ellipse": "/assets/icons/logo-shapes/ellipse.svg?v=v2026-10-25T22074",
-  "logo-shape-triangle": "/assets/icons/logo-shapes/triangle.svg?v=v2026-10-25T22074",
-  "logo-shape-diamond": "/assets/icons/logo-shapes/diamond.svg?v=v2026-10-25T22074",
-  "logo-shape-pentagon": "/assets/icons/logo-shapes/pentagon.svg?v=v2026-10-25T22074",
-  "logo-shape-hexagon": "/assets/icons/logo-shapes/hexagon.svg?v=v2026-10-25T22074",
-  "logo-shape-star5": "/assets/icons/logo-shapes/star5.svg?v=v2026-10-25T22074",
-  "logo-shape-arrow1": "/assets/icons/logo-shapes/arrow1.svg?v=v2026-10-25T22074",
-  "logo-shape-arrow2": "/assets/icons/logo-shapes/arrow2.svg?v=v2026-10-25T22074",
-  "logo-shape-arrow1-fill": "/assets/icons/logo-shapes/arrow1-fill.svg?v=v2026-10-25T22074",
-  "logo-shape-arrow2-fill": "/assets/icons/logo-shapes/arrow2-fill.svg?v=v2026-10-25T22074",
-  "logo-shape-heart": "/assets/icons/logo-shapes/heart.svg?v=v2026-10-25T22074",
-  "logo-shape-polygon": "/assets/icons/logo-shapes/polygon.svg?v=v2026-10-25T22074",
+  "logo-shape-line": "/assets/icons/logo-shapes/line.svg?v=v2026-10-25T23195",
+  "logo-shape-rect": "/assets/icons/logo-shapes/rect.svg?v=v2026-10-25T23195",
+  "logo-shape-round-rect": "/assets/icons/logo-shapes/round-rect.svg?v=v2026-10-25T23195",
+  "logo-shape-ellipse": "/assets/icons/logo-shapes/ellipse.svg?v=v2026-10-25T23195",
+  "logo-shape-triangle": "/assets/icons/logo-shapes/triangle.svg?v=v2026-10-25T23195",
+  "logo-shape-diamond": "/assets/icons/logo-shapes/diamond.svg?v=v2026-10-25T23195",
+  "logo-shape-pentagon": "/assets/icons/logo-shapes/pentagon.svg?v=v2026-10-25T23195",
+  "logo-shape-hexagon": "/assets/icons/logo-shapes/hexagon.svg?v=v2026-10-25T23195",
+  "logo-shape-star5": "/assets/icons/logo-shapes/star5.svg?v=v2026-10-25T23195",
+  "logo-shape-arrow1": "/assets/icons/logo-shapes/arrow1.svg?v=v2026-10-25T23195",
+  "logo-shape-arrow2": "/assets/icons/logo-shapes/arrow2.svg?v=v2026-10-25T23195",
+  "logo-shape-arrow1-fill": "/assets/icons/logo-shapes/arrow1-fill.svg?v=v2026-10-25T23195",
+  "logo-shape-arrow2-fill": "/assets/icons/logo-shapes/arrow2-fill.svg?v=v2026-10-25T23195",
+  "logo-shape-heart": "/assets/icons/logo-shapes/heart.svg?v=v2026-10-25T23195",
+  "logo-shape-polygon": "/assets/icons/logo-shapes/polygon.svg?v=v2026-10-25T23195",
 
 });
 
@@ -160,6 +160,14 @@ const esc = (v) => String(v).replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&
 const assetHref = (name) => `${ICONS[name]}#icon`;
 
 /** Zwraca SVG używające osobnego pliku z assets/icons. */
+let partInstance = 0;
+function inlineParts(markup) {
+  const prefix = `icon-part-${++partInstance}-`;
+  return markup.replace(/\bid="([^"]+)"/g, (_, id) => `id="${prefix}${id}"`)
+    .replace(/url\(#([^)]+)\)/g, (_, id) => `url(#${prefix}${id})`)
+    .replace(/href="#([^"]+)"/g, (_, id) => `href="#${prefix}${id}"`);
+}
+
 export function icon(name, { className = "", label = "", animation = "" } = {}) {
   const asset = ICONS[name];
   if (!asset) {
@@ -171,7 +179,7 @@ export function icon(name, { className = "", label = "", animation = "" } = {}) 
   const parts = animation ? ICON_PARTS[name] : null;
   if (animation && parts?.animation !== animation) throw new RangeError(`Nieznana animacja ikony: ${name}/${animation}`);
   const motion = parts ? ` data-icon-animation="${animation}"` : "";
-  const drawing = parts ? parts.markup : `<use href="${assetHref(name)}"></use>`;
+  const drawing = parts ? inlineParts(parts.markup) : `<use href="${assetHref(name)}"></use>`;
   return `<svg class="${esc(cls)}" viewBox="0 0 24 24" width="1em" height="1em" ${a11y} focusable="false"${motion}>${drawing}</svg>`;
 }
 
@@ -194,8 +202,8 @@ export function starRating(value, { max = 5, label = "" } = {}) {
 }
 
 /** Ikona + tekst (tekst jest escapowany) — do przycisków ustawianych z JS. */
-export function iconText(name, text, { after = false } = {}) {
-  const i = icon(name), txt = esc(text ?? "");
+export function iconText(name, text, { after = false, animation = "" } = {}) {
+  const i = icon(name, { animation }), txt = esc(text ?? "");
   if (!i) return txt;
   return after ? `${txt} ${i}` : `${i} ${txt}`;
 }
@@ -218,7 +226,10 @@ if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") 
   const start = () => {
     hydrateIcons(document);
     new MutationObserver((muts) => {
-      for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) hydrateIcons(n);
+      for (const m of muts) {
+        for (const n of m.addedNodes) if (n.nodeType === 1) hydrateIcons(n);
+        for (const n of m.removedNodes) if (n.nodeType === 1) forgetIconMotion(n);
+      }
     }).observe(document.documentElement, { childList: true, subtree: true });
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

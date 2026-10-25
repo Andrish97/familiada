@@ -1,4 +1,4 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T22074";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T23195";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -6,12 +6,12 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T22074";
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T22074";
-import { signOut } from './auth.js?v=v2026-10-25T22074';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T22074';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T22074';
-import { icon, iconText } from './icons.js?v=v2026-10-25T22074';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T22074';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T23195";
+import { signOut } from './auth.js?v=v2026-10-25T23195';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T23195';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T23195';
+import { icon, iconText } from './icons.js?v=v2026-10-25T23195';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T23195';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -19,6 +19,15 @@ import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25
 let _overflowState = null; // { expandAll, collapseAll, recalc }
 let _accountState = null;  // { expand, collapse }
 let _mobileActive = false;
+
+// Ten sam stan steruje dostępnością i ruchem strzałki, także przy zamknięciu z zewnątrz.
+function bindDisclosureState(trigger, popup, inline = () => false) {
+  const sync = () => trigger?.setAttribute('aria-expanded', String(!popup.hidden && !inline()));
+  if (popup.id) trigger?.setAttribute('aria-controls', popup.id);
+  new MutationObserver(sync).observe(popup, { attributes: true, attributeFilter: ['hidden', 'class'] });
+  sync();
+  return sync;
+}
 
 // ── Liczniki powiadomień (.badge) ─────────────────────────────────────────────
 // Wspólny zapis/odczyt licznika .badge: pusty tekst gdy 0 (CSS chowa pusty
@@ -63,6 +72,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   document.body.appendChild(moreDropdownEl);
   moreDropdownEl.className = 'nav-more-dropdown';
   moreDropdownEl.hidden = true;
+  bindDisclosureState(btnMore, moreDropdownEl);
 
   let _hiddenBtns = [];
 
@@ -195,7 +205,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     });
   }
 
-  btnMore?.addEventListener('pointerdown', (e) => {
+  const toggleMore = (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     if (moreDropdownEl.hidden) {
@@ -205,6 +215,15 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
       moreDropdownEl.hidden = false;
     } else {
       moreDropdownEl.hidden = true;
+    }
+  };
+  btnMore?.addEventListener('pointerdown', toggleMore);
+  btnMore?.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleMore(event); }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !event.defaultPrevented && !_mobileActive && !moreDropdownEl.hidden) {
+      event.preventDefault(); moreDropdownEl.hidden = true; btnMore?.focus();
     }
   });
 
@@ -321,7 +340,7 @@ export function setTopbarAccount(user, {
   whoSpan.textContent = username;
   const chevron = document.createElement('span');
   chevron.className = 'account-chevron';
-  chevron.innerHTML = icon('caret-down');
+  chevron.innerHTML = icon('caret-down', { animation: 'disclosure' });
   whoEl.append(whoSpan, chevron);
   whoEl.classList.add('account-btn', 'btn');
   if (!whoEl.matches('button')) whoEl.tabIndex = 0;
@@ -332,6 +351,8 @@ export function setTopbarAccount(user, {
   menu.id = 'topbarAccountMenu';
   menu.hidden = true;
   whoEl.after(menu);
+  const syncAccountExpanded = bindDisclosureState(whoEl, menu, () => menu.classList.contains('account-menu--inline'));
+  if (!whoEl.matches('button')) whoEl.setAttribute('role', 'button');
 
   if (withAccountSettings) {
     const btnSettings = document.createElement('button');
@@ -368,11 +389,20 @@ export function setTopbarAccount(user, {
   menu.appendChild(btnAction);
 
   // Desktop: dropdown
-  whoEl.addEventListener('pointerdown', (e) => {
+  const toggleAccount = (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     menu.hidden = !menu.hidden;
     if (!menu.hidden) placeDropdown(whoEl, menu);
+  };
+  whoEl.addEventListener('pointerdown', toggleAccount);
+  whoEl.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleAccount(event); }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !event.defaultPrevented && !_mobileActive && !menu.hidden) {
+      event.preventDefault(); menu.hidden = true; whoEl.focus();
+    }
   });
 
   document.addEventListener('pointerdown', (e) => {
@@ -391,12 +421,14 @@ export function setTopbarAccount(user, {
     menu.hidden = false;
     menu.classList.add('account-menu--inline');
     whoEl.classList.add('account-btn--mobile-label');
+    syncAccountExpanded();
   }
 
   function collapse() {
     menu.classList.remove('account-menu--inline');
     menu.hidden = true;
     whoEl.classList.remove('account-btn--mobile-label');
+    syncAccountExpanded();
   }
 
   _accountState = { expand, collapse };
@@ -412,7 +444,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T22074');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T23195');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -726,7 +758,7 @@ function initTopbarController() {
     more.id = 'navMore';
     more.hidden = true;
     const label = t('nav.menu.more');
-    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
+    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more"></span> ${icon('caret-down', { animation: 'disclosure' })}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
     more.querySelector('[data-i18n]').textContent = label && label !== 'nav.menu.more' ? label : 'Więcej';
     const dropdown = more.querySelector('#navMoreDropdown');
     // Na telefonie przyciski siedzą w panelu (group2) i wracają do sekcji 2

@@ -1,6 +1,6 @@
 // theme_manager.js
 // Menadżer motywów – rejestr z themes.json, dynamiczne ładowanie, THEME command
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-25T22074";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-25T23195";
 
 
 let THEMES = {};
@@ -21,7 +21,7 @@ async function initRegistry() {
     console.warn("[theme_manager] Fallback do static:", e.message);
   }
   if (Object.keys(THEMES).length === 0) {
-    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-25T22074");
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-25T23195");
 
     THEMES.classic = createThemeClassic;
     THEME_META = [{ key: "classic", label: "display.theme.classic" }];

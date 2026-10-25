@@ -9,6 +9,11 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const sources = {
   hamburger: { file: 'navigation/hamburger.svg', animation: 'menu' },
   coffee: { file: 'communication/coffee.svg', animation: 'steam' },
+  'caret-down': { file: 'navigation/caret-down.svg', animation: 'disclosure' },
+  eye: { file: 'editor/eye.svg', animation: 'password' },
+  save: { file: 'actions/save.svg', animation: 'save' },
+  copy: { file: 'editing/copy.svg', animation: 'copy' },
+  duplicate: { file: 'editing/duplicate.svg', animation: 'copy' },
 };
 export const output = path.join(root, 'web/shared/js/core/icon-parts.js');
 export function buildIconParts() {

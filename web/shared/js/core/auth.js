@@ -1,8 +1,8 @@
-import { redirectPage } from "./page-layout.js?v=v2026-10-25T22074";
+import { redirectPage } from "./page-layout.js?v=v2026-10-25T23195";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-25T22074";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T22074";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T22074";
+import { icon } from "./icons.js?v=v2026-10-25T23195";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T23195";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T23195";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -147,7 +147,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T22074";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T23195";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -596,21 +596,21 @@ export async function updateUserLanguage(language) {
   }
 }
 
-const EYE_OPEN = icon("eye");
-const EYE_CLOSED = icon("eye-off");
+const PASSWORD_ICON = icon("eye", { animation: "password" });
 
 export function resetPasswordToggles() {
   document.querySelectorAll(".pass-wrap input").forEach((input) => {
     input.type = "password";
   });
   document.querySelectorAll(".pass-toggle").forEach((btn) => {
-    btn.innerHTML = EYE_OPEN;
+    btn.setAttribute("aria-pressed", "false");
   });
 }
 
 export function initPasswordToggles() {
   // Group password inputs by their closest common parent
-  const allInputs = [...document.querySelectorAll('input[type="password"]')];
+  const allInputs = [...document.querySelectorAll('input[type="password"]')]
+    .filter(input => !input.closest('.pass-wrap'));
   const groups = new Map();
   allInputs.forEach((input) => {
     const parent = input.parentElement;
@@ -628,8 +628,11 @@ export function initPasswordToggles() {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "pass-toggle";
-      btn.setAttribute("aria-label", "Pokaż/ukryj hasło");
-      btn.innerHTML = EYE_OPEN;
+      btn.dataset.i18nAriaLabel = "common.passwordVisibility";
+      btn.setAttribute("aria-label", t("common.passwordVisibility"));
+      btn.setAttribute("aria-pressed", "false");
+      if (input.id) btn.setAttribute("aria-controls", input.id);
+      btn.innerHTML = PASSWORD_ICON;
       wrap.appendChild(btn);
 
       btn.addEventListener("click", () => {
@@ -638,7 +641,7 @@ export function initPasswordToggles() {
         inputs.forEach((i) => { i.type = show ? "text" : "password"; });
         // Update all buttons in the group
         inputs.forEach((i) => {
-          i.parentElement.querySelector(".pass-toggle").innerHTML = show ? EYE_CLOSED : EYE_OPEN;
+          i.parentElement.querySelector(".pass-toggle").setAttribute("aria-pressed", String(show));
         });
       });
     });

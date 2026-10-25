@@ -2242,3 +2242,59 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Po scaleniu aktualnego main **823/823 unit**. Kod stopki i jej testów po
   zielonym 40238074611 zmieniony wyłącznie wersjami zasobów; publikacja
   przywróconego wyglądu i potem kontrola produkcji 4 testów.
+
+### 2026-10-25 — więcej animacji stanu (w trakcie)
+
+- Na polecenie właściciela: strzałki selektorów/konta/Więcej, oko hasła,
+  zapis ustawień i Powiel Gier/Baz/Logo. Wspólne profile w silniku, stały
+  viewBox i wymiary, rzeczywiste aria-expanded/pressed/busy i wynik zapisu.
+- Lokalne **826/826 unit** (unikalne maski, profile i rzeczywisty CAS w atrapie),
+  przeglądarka: hasło 390/1400, selektor/konto, zapis i Powiel ✓. Osiem
+  zrzutów 390/1400 + audyt 0 uwag; cztery ujęcia auth/save odtworzono po
+  poprawce atrapy JSONB i użyciu istniejącej atrapy Turnstile. Nie zmieniano
+  aplikacji dla zrzutów. Prywatnie 91 unit i 7 punktowych browser ✓.
+- Przywrócenie stopki ma produkcyjny **40238851673 ✓ 4/4**; odczyt CSS:
+  oryginalne 1.45em, bez powiększenia Kontaktu. To ostateczny wariant;
+  nie publikować odrzuconej gałęzi feat/compact-coffee.
+
+- Publiczny branch 40240536543: oko i hamburger ✓ 2/2; dwa testy wymagające
+  zalogowania zatrzymane w helperze login przed badanymi akcjami. Przyczyną
+  pages:['login'] dla adresu /login bez slash: lokalny HTML nie zawierał klucza
+  testowej captchy Workera. Usunięto niepotrzebne podstawianie tego HTML;
+  wspólny kod nadal z brancha. Ponawiane wyłącznie dwa nieukończone testy.
+- Prywatny branch CI **40240583138 ✓ 91 unit + 25 browser**, server/check
+  **40240583124 ✓**. Dwa zrzuty selektora 390/1400 obejrzane.
+
+- Ponowienie **40240883411**: selektor/konto ✓ 1/1, zapis w drugim teście
+  również potwierdzony przez bazę i ikonę; test zatrzymał się dopiero na
+  oczekiwaniu powrotu do Gier. Domyślny parent Ustawień to Control, więc
+  scenariusz dostał jawny ret=/games/. Zachowanie aplikacji i mapa bez zmian.
+  Ponawiany tylko test zapisu/Powiel; oko, hamburger i strzałki są zielone.
+- Prywatny pakiet opublikowany: production **40240924445 ✓**, main 7cf7cff.
+
+| 2026-10-25 | Marketing — uporządkowany wygląd filtrów | Na zgłoszenie właściciela przebudowano blok filtrów: wspólna karta, równe pola z etykietami, lżejsza typografia dat, czytelny zakres także po zwinięciu, układy komputer/telefon/tablet. Wybranie działania zamyka Więcej przed potwierdzeniem (naprawiona kolizja menu z oknem na telefonie). Server 3f0a8ec, production 40239271693 success; CI 40238809930 i 40239041141 success: 89 unit + 23 browser, build/check. CSS bez zmiany progów; korekta pośredniego progu na wspólny 980. Zrzuty stanów otwartego/zwiniętego 1400/390 i tablet obejrzane. Origin SHA/private-cache i 404/404/200; po wdrożeniu Access 302, origin 404, www 200. | Odświeżyć panel. Zachowano działanie sortowania, zakresów i przygotowania adresów widoku. Bez realnej wysyłki, zmian bazy/API/LF ani maintenance. |
+
+- Końcowy test zapisu/Powiel **40241138133 ✓ 1/1**. Z wcześniejszymi
+  zielonymi z 40240536543 (oko, hamburger) i 40240883411 (strzałki) daje
+  komplet 4 scenariuszy. Po scaleniu aktualnego main **828/828 unit**;
+  konflikty importów wyłącznie ?v= rozwiązał resolver, oba dopiski dziennika
+  zachowane. Wspólne kontrolki po merge zmienione tylko wersjami zasobów.
+- Prywatna production **40240924445 ✓ 91 unit**, Access po publikacji 302;
+  branch CI **40240583138 ✓ 91 unit + 25 browser**, read-only check
+  **40240583124 ✓**. Prywatny zakres zakończony; publiczne Pages i kontrola.
+
+- Publiczne animacje opublikowane: Pages **40241370158 ✓**, Worker
+  **40241370147 ✓**, kod f4b5ba7c3b (CI 279c0402d3). Odczyt produkcji:
+  cztery nowe profile dostępne, stopka oryginalne 1.45em, Kontakt bez
+  powiększenia. Kontrola produkcyjna tych samych czterech scenariuszy w toku.
+
+- Zamknięcie dodatkowych animacji: produkcyjny **40241473501 ✓ 4/4** na
+  rzeczywiście opublikowanych plikach main (oko, strzałki, zapis/Powiel,
+  hamburger). Publiczne Pages **40241370158 ✓**, Worker **40241370147 ✓**;
+  po scaleniu **828/828 unit**. Prywatna bramka **91 unit + 25 browser**,
+  production **40240924445 ✓**, Access 302, właściwe wydanie i odmowy
+  originu. Zrzuty obejrzane; audyt publicznych ujęć 0 uwag. **Zrobione.**
+- Stopka przywrócona 1:1 do bloku sprzed powiększenia, para zachowana;
+  potwierdzają ją wcześniejsze 40238851673 ✓ 4/4 i odczyt CSS po tej paczce.
+  Warianty 36/24 px pozostają odrzucone. Dalszych animacji z audytu nie
+  wdrażać automatycznie po zamknięciu tej uzgodnionej paczki.

@@ -1,6 +1,7 @@
 // Tłumaczenia EN — część wspólna — wczytuje ją każda strona.
 const en = {
   common: {
+    passwordVisibility: "Show password",
     menuOpen: "Open menu",
     menuClose: "Close menu",
     colorPicker: {
