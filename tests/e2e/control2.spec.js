@@ -1267,18 +1267,30 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // (diagnoza 2026-10-23: kanał SUBSCRIBED bez dostarczanych zmian).
     const transportOf = sessions => {
       const events = (sessions[0]?.stats_detail.events || []).filter(event => ["display", "host", "buzzer"].includes(event.source));
-      const pick = (source, phase) => events.filter(event => event.source === source && event.metrics?.phase === phase).length;
-      return Object.fromEntries(["display", "host", "buzzer"].map(source => [source, {
-        connected: events.filter(event => event.source === source && event.category === "device_transport"
-          && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
-        catchup: pick(source, "fallback_catchup"),
-        recovered: pick(source, "recovered"),
-      }]));
+      return Object.fromEntries(["display", "host", "buzzer"].map(source => {
+        const sourceEvents = events.filter(event => event.source === source);
+        const catchups = sourceEvents.filter(event => event.metrics?.phase === "fallback_catchup");
+        const lateDirect = sourceEvents.filter(event => event.metrics?.phase === "direct_after_fallback");
+        return [source, {
+          connected: sourceEvents.filter(event => event.category === "device_transport"
+            && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
+          catchup: catchups.length,
+          heartbeatCatchup: catchups.filter(event => event.metrics?.trigger === "lease_heartbeat").length,
+          unexplainedCatchup: catchups.filter(event => event.metrics?.trigger !== "doorbell"
+            || !lateDirect.some(late => late.metrics?.fallback_revision === event.metrics?.latest_revision)).length,
+          recovered: sourceEvents.filter(event => event.metrics?.phase === "recovered").length,
+        }];
+      }));
     };
     await expect.poll(async () => {
       const transport = transportOf(await readControl2Sessions(page, game.id));
       return Object.values(transport).every(item => item.connected > 0);
     }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+    await expect.poll(async () => {
+      const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+      return events.some(event => event.source === "control" && event.category === "state_sync"
+        && event.metrics?.phase === "doorbell_sent" && Number.isSafeInteger(event.metrics?.revision));
+    }, { timeout: 15000, message: "Control powinien zalogować wysłany dzwonek z rewizją" }).toBe(true);
     const transport = transportOf(await readControl2Sessions(page, game.id));
     console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
     if (Object.values(transport).some(item => item.catchup > 0)) {
@@ -1292,7 +1304,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       console.log(`[e2e-diag] device events ${JSON.stringify(evs).slice(0, 6000)}`);
     }
     for (const [source, item] of Object.entries(transport)) {
-      expect(item.catchup, `${source}: zmiany doszły kanałem bezpośrednim, bez nadrabiania z heartbeatu`).toBe(0);
+      expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
+      expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
     }
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
