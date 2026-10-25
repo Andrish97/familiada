@@ -10,6 +10,7 @@ import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from 
 import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-25T17592";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T17592";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T17592";
+import { holdSkeletonLayout } from "../../shared/js/core/page-layout.js?v=v2026-10-25T17592";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T17592";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T17592";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-25T17592";
@@ -1089,17 +1090,24 @@ async function refresh() {
 
   renderShareSection(st, st === STATUS.DRAFT ? "" : pollLink(game));
   renderBar();
-  // Podstawowe dane gry, zakładki i obsługa akcji są gotowe; wyniki pozostają
-  // w osobnym etapie do czasu odczytu odpowiedzi.
+  // Powód blokady akcji i podsumowanie odbiorców ustalają wysokość paska.
+  // Silnik odsłoni ten etap po ich odczycie; wyniki mają osobną gotowość.
+  const baseLayoutReady = Promise.all([
+    game.type === TYPES.PREPARED ? Promise.resolve(null) : validateGame(game.id),
+    sharingAvailable(st) ? safeLoadSubs() : Promise.resolve(),
+  ]).then(([chk]) => {
+    if (seq === refreshSeq) { lastCheck = chk; renderBar(); }
+    return chk;
+  });
+  holdSkeletonLayout([pollBar, cardMain], baseLayoutReady);
   pollBar?.classList.add("skel-step-ready");
   cardMain?.classList.add("skel-step-ready");
 
   try {
     const [chk] = await Promise.all([
-      game.type === TYPES.PREPARED ? Promise.resolve(null) : validateGame(game.id),
+      baseLayoutReady,
       previewResults(),
       st === STATUS.POLL_OPEN ? refreshVotes() : Promise.resolve(),
-      sharingAvailable(st) ? safeLoadSubs() : Promise.resolve(),
     ]);
     if (seq !== refreshSeq) return;
     lastCheck = chk;

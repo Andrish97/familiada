@@ -2,6 +2,7 @@
 // odsłonięciem. Dane nie są bramką: data-skel-step odsłania je niezależnie.
 const measurements = new Set();
 const waiting = new Set();
+const stepHolds = new WeakMap();
 let scheduled = false;
 let shown = false;
 let domReady = false;
@@ -22,6 +23,25 @@ export function holdPageLayout(promise) {
     requestReveal();
   });
   return promise;
+}
+
+/** Geometria etapu zależna od danych. Powłoka i pozostałe etapy nie czekają. */
+export function holdSkeletonLayout(elements, preparation) {
+  const steps = (Array.isArray(elements) ? elements : [elements])
+    .filter((step) => step && !step.classList.contains("skel-step-ready"));
+  for (const step of steps) {
+    const state = stepHolds.get(step) || { pending: 0, requested: false };
+    state.pending++;
+    stepHolds.set(step, state);
+  }
+  Promise.resolve(preparation).catch(() => {}).finally(() => {
+    for (const step of steps) {
+      const state = stepHolds.get(step);
+      state.pending--;
+      if (!state.pending && state.requested) step.classList.add("skel-step-ready");
+    }
+  });
+  return preparation;
 }
 
 function measurePage() {
@@ -55,13 +75,19 @@ if (typeof document !== "undefined" && document.documentElement && typeof Mutati
   const start = () => { domReady = true; requestReveal(); };
   new MutationObserver((records) => {
     requestReveal();
-    if (!shown) return;
-    const readyStep = records.some((record) => record.type === "attributes"
-      && record.target.matches?.("[data-skel-step].skel-step-ready")
-      && !(record.oldValue || "").split(/\s+/).includes("skel-step-ready"));
-    // Nowy etap po danych: pomiar w mikrozadaniu, przed pierwszym renderem
-    // odsłoniętej zawartości, bez ponownego chowania powłoki strony.
-    if (readyStep) measurePage();
+    let readyStep = false;
+    for (const record of records) {
+      if (record.type !== "attributes" || !record.target.matches?.("[data-skel-step].skel-step-ready")
+          || (record.oldValue || "").split(/\s+/).includes("skel-step-ready")) continue;
+      const state = stepHolds.get(record.target);
+      if (state?.pending) {
+        state.requested = true;
+        record.target.classList.remove("skel-step-ready");
+      } else readyStep = true;
+    }
+    // Nowy etap po danych: pomiar w mikrozadaniu przed jego renderem,
+    // bez ponownego chowania gotowej powłoki lub innych etapów.
+    if (shown && readyStep) measurePage();
   }).observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class"] });
   const loaded = document.readyState === "complete"
     || globalThis.performance?.getEntriesByType?.("navigation")[0]?.domContentLoadedEventStart > 0;

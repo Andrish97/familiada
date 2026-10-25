@@ -150,6 +150,15 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
   Silnik mierzy nowo odsłaniany etap przed jego renderem. `skel-step-ready`
   w początkowym HTML służy wersji bez JS; bootstrap resetuje ten znacznik
   podczas parsowania, a kod strony potwierdza gotowość po inicjalizacji.
+- Jeśli wysokość etapu zależy od dodatkowego odczytu (np. przyczyna blokady
+  akcji, podsumowanie), zgłoś `holdSkeletonLayout(elementy, promise)` zanim
+  dodasz `skel-step-ready`. Silnik wstrzyma tylko te jeszcze nieodsłonięte
+  etapy, przygotuje geometrię i odsłoni je po obietnicy; powłoka i inne etapy
+  nie czekają. Gotowego etapu nie chowa ponownie, błąd zwalnia bramkę.
+  Obietnica powinna obejmować także render danych ustalających wysokość.
+  Przykład: pasek i karta Ankiety czekają na walidację oraz podsumowanie,
+  natomiast wyniki pozostają osobnym etapem. Scena regresji:
+  `polls-draft-text-blocked-slow` (dane +250 ms, także 360 px).
 - Zachowaj docelowy rozmiar miejsca na dane (flex, min-height, zarezerwowany
   wiersz podsumowania). `visibility` i `opacity` zachowują geometrię;
   `hidden` usuwa element z układu, więc nie zastępuje miejsca na dane.

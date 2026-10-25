@@ -155,6 +155,8 @@ module.exports = [
     steps: [async (view) => { await view.waitForFunction(() => !document.getElementById("btnOpenPoll")?.disabled, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
   { ...P, id: "polls-draft-text-blocked", title: "Ankieta tekstowa — SZKIC zablokowany (za mało pytań, podpowiedź przy „Uruchom”)", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/game-validate.js"], ready: "#cardMain.skel-step-ready", db: noTasks,
     steps: [async (view) => { await view.waitForFunction(() => document.getElementById("hintTop")?.textContent.trim().length > 0, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
+  { ...P, id: "polls-draft-text-blocked-slow", title: "Ankieta tekstowa — powód blokady po wolnym odczycie", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/page-layout.js"], devices: ["desktop", "phone", "phone-360"], ready: "#cardMain.skel-step-ready",
+    db: (db) => { noTasks(db); db.latency = 250; } },
   { ...P, id: "polls-recipients-modal-empty", title: "Okno „Dodaj odbiorców” — brak znajomych i subskrybentów", path: `/polls/?id=${IDS.textPoll}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready",
     db: (db) => { db.rpc.poll_share_panel = { ok: true, friends: [], subscribers: [], tasks: [] }; },
     steps: [async (view) => {

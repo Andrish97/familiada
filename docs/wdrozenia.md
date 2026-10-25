@@ -276,8 +276,22 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   (nowa funkcja z main), bez zmiany asercji. Bootstrap nie chowa ponownie
   już otwartej karty przy późnym imporcie; sprawdzone unit i Chromium.
 - Pełny unit po scaleniu i poprawce atrap: **859/859** ✓ (46,6 s).
-- Status: końcowy branch do ponownego punktowego e2e, potem
-  main/Pages → te same spece na produkcji.
+- Ostatnia próba wolnego szkicu Ankiety ujawniła późniejszą podpowiedź
+  walidacji: CLS 0,01817 / 0,02265 / 0,01388 (390/360/1400). Wspólny
+  `holdSkeletonLayout(elementy, promise)` w silniku opóźnia tylko jeszcze
+  nieodsłonięty etap. Ankieta zgłasza walidację i podsumowanie jako zależność
+  geometrii, a wyniki pozostają osobnym etapem. Po poprawce 0 / 0 / 0,00085.
+  Nowa scena `polls-draft-text-blocked-slow`: dane +250 ms i 360 px.
+- Powtórka wszystkich widoków `/polls/` po tej zmianie: **54 kadry**, audyt
+  **0 uwag**, max CLS 0,000573. Razem inwentarz **543 sceny / 974 kadry**;
+  pozostałe strony nie używają nowej bramki etapów i ich sprawdzony tor
+  inicjalizacji pozostaje bez zmian. Dwa nowe testy: niezależność etapów,
+  wiele zależności i błąd. Pełny unit **861/861** ✓ (103,5 s).
+- E2E po scaleniu: UI 40219691538 ✓ 3/3. Control 40219693950: asercja
+  zerowego nadrabiania — Host nadrobił pojedyncze rewizje 5 i 10 z dzwonka;
+  Display/Buzzer 0, wszystkie kanały connected. Bez zmiany asercji.
+- Status: finalny branch do UI + testu ładowania Ankiety, potem Control
+  osobno po zakończeniu UI; dalej main/Pages i te same spece na produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |

@@ -60,3 +60,12 @@ danych 250 ms, UK, 390/360/1400 px. W Grach, Bazach i Logo etap danych był
 jeszcze niegotowy, gdy powłoka była już widoczna; po jego odsłonięciu CLS 0.
 Maksimum 24 prób: 0,00172 (ustawienia gry, 360 px). Control i ekran guarda
 ze słownikiem opóźnionym o 900 ms: 0/0/0.
+
+
+Dodatkowe opóźnione stany Ankiety ujawniły przyczynę blokady przychodzącą
+po odsłonięciu szkicu (0,01817 / 0,02265 / 0,01388). `holdSkeletonLayout`
+z rejestru silnika wiąże gotowość etapu z obietnicą jego geometrii. Ankieta
+zgłasza walidację i podsumowanie jako zależność paska/karty, a wyniki nadal
+odsłania osobno. Ta sama próba po zmianie: **0 / 0 / 0,00085**. Szkic
+punktowy i ankieta zatrzymana z opóźnieniami: na obu telefonach 0,
+na komputerze odpowiednio 0,00100 i 0,00082. Nowa scena utrwala wolny odczyt.

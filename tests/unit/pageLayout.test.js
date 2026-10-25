@@ -8,17 +8,18 @@ const read = file => fs.readFileSync(new URL(`../../${file}`, import.meta.url), 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function layoutHarness() {
   const frames = [], events = [], listeners = {};
+  let mutation;
   const attributes = new Set(['data-layout-pending']);
   const root = { classList: { contains: () => false }, removeAttribute: attr => attributes.delete(attr) };
   const context = vm.createContext({
     document: { documentElement: root, readyState: 'interactive', addEventListener: (event, cb) => { listeners[event] = cb; } },
-    MutationObserver: class { observe() {} },
+    MutationObserver: class { constructor(fn) { mutation = fn; } observe() {} },
     performance: { getEntriesByType: () => [{ domContentLoadedEventStart: 0 }] },
     requestAnimationFrame: cb => frames.push(cb),
     window: { dispatchEvent: event => events.push(event.type) }, Event, console,
   });
-  vm.runInContext(`${read('web/shared/js/core/page-layout.js').replace(/export /g, '')}; globalThis.api = { registerPageLayout, holdPageLayout };`, context);
-  return { context, frames, events, listeners, attributes, api: context.api };
+  vm.runInContext(`${read('web/shared/js/core/page-layout.js').replace(/export /g, '')}; globalThis.api = { registerPageLayout, holdPageLayout, holdSkeletonLayout };`, context);
+  return { context, frames, events, listeners, attributes, mutation: records => mutation(records), api: context.api };
 }
 
 test('pierwsza klatka czeka na DOMContentLoaded, tłumaczenia i obydwa pomiary', async () => {
@@ -50,6 +51,42 @@ test('błąd inicjalizacji zwalnia bramkę; nowa obietnica między klatkami wstr
   reject(new Error('offline')); await tick();
   h.frames.shift()(); h.frames.shift()();
   assert.equal(h.attributes.has('data-layout-pending'), false);
+});
+
+test('odczyt geometrii wstrzymuje tylko własny etap, a gotowe etapy i powłoka pozostają widoczne', async () => {
+  const h = layoutHarness();
+  h.listeners.DOMContentLoaded(); h.frames.shift()(); h.frames.shift()();
+  const step = (ready = false) => {
+    const classes = new Set(ready ? ['skel-step-ready'] : []);
+    return { matches: () => classes.has('skel-step-ready'), classList: {
+      contains: key => classes.has(key), add: key => classes.add(key), remove: key => classes.delete(key),
+    } };
+  };
+  const pending = step(), loaded = step(true);
+  let resolve;
+  h.api.holdSkeletonLayout([pending, loaded], new Promise(done => { resolve = done; }));
+  pending.classList.add('skel-step-ready');
+  h.mutation([{ type: 'attributes', target: pending, oldValue: '' }]);
+  assert.equal(pending.classList.contains('skel-step-ready'), false);
+  assert.equal(loaded.classList.contains('skel-step-ready'), true);
+  assert.equal(h.attributes.has('data-layout-pending'), false);
+  resolve(); await tick();
+  assert.equal(pending.classList.contains('skel-step-ready'), true);
+});
+
+test('błąd danych zwalnia etap po wszystkich zgłoszeniach geometrii', async () => {
+  const h = layoutHarness(), classes = new Set();
+  const step = { matches: () => classes.has('skel-step-ready'), classList: {
+    contains: key => classes.has(key), add: key => classes.add(key), remove: key => classes.delete(key),
+  } };
+  let first, fail;
+  h.api.holdSkeletonLayout(step, new Promise(done => { first = done; }));
+  h.api.holdSkeletonLayout(step, new Promise((_, reject) => { fail = reject; }));
+  classes.add('skel-step-ready'); h.mutation([{ type: 'attributes', target: step, oldValue: '' }]);
+  first(); await tick();
+  assert.equal(classes.has('skel-step-ready'), false);
+  fail(new Error('offline')); await tick();
+  assert.equal(classes.has('skel-step-ready'), true);
 });
 
 test('bootstrap ustawia telefon przed body, resetuje etap HTML i ma niezależny bezpiecznik', () => {
