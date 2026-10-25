@@ -376,3 +376,8 @@ setOpen, isOpen. Zamknięty panel na wąskim ekranie jest inert, na komputerze
 wraca do układu. `drawer:open` zamyka pozostałe panele, także topbar.
 Lewa strona paneli roboczych pozostaje zgodna z układem strony. Obie strony
 używają `--dur-base` / `--ease-out`, tłumionych przez reduced-motion.
+
+Stopka: `.btn-support-footer` ma ikonę 36 px i pole dotyku co najmniej
+44 × 44 px, niezależnie od małego tekstu stopki. `.footer-actions` utrzymuje
+Kontakt i kawę w jednej linii z równymi polami dotyku. Nie skaluj pary
+osobno ani nie zmniejszaj ikony przez font-size tekstu stopki.

@@ -2187,3 +2187,8 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   ikonie; TinyMCE przeciążony przyciskami, z obcymi kolorami. Powiększyć
   wejście w stopce; prywatny edytor: jeden podstawowy pasek, pozostałe
   narzędzia we wbudowanym overflow, spójne tła/stany/okna z tokenów.
+
+- Lokalnie większa ikona **36 px**, pole dotyku kawy i Kontaktu min. **44 px**;
+  zrzuty 390/360/1400 z audytem **0 uwag**, **816/816 unit**. Rysunek i
+  mechanizm pary bez zmian. Prywatny edytor: **85 unit**, 4 testy motywu i
+  3 Autorskiej zielone, 4 zrzuty obejrzane. Branchy przed publikacją.

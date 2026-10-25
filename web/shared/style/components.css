@@ -491,6 +491,7 @@
     font-weight: 900;
   }
   @media (hover: hover) and (pointer: fine) { .footer a:hover { filter: brightness(1.08); } }
+  .footer-actions .btn-contact-footer { display: inline-flex; align-items: center; min-height: 44px; }
   .footer-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 12px; }
   @media (max-width: 600px) {
     .footer {
@@ -516,9 +517,9 @@
     text-decoration: none;
   }
   @media (hover: hover) and (pointer: fine) { .btn-contact-footer:hover { filter: brightness(1.08); } }
-  .btn-support-footer { display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
+  .btn-support-footer { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: none; border: none; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
   @media (hover: hover) and (pointer: fine) { .btn-support-footer:hover { filter: brightness(1.08); } }
-  .btn-support-footer .ico { width: 1.45em; height: 1.45em; flex: 0 0 auto; }
+  .btn-support-footer .ico { width: 36px; height: 36px; flex: 0 0 auto; }
   /* Wybór kawy: lista opcji jak w oknie „Zmień typ”. */
   .support-sizes { display: grid; gap: 8px; }
   .support-size { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; }
