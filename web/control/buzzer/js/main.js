@@ -10,16 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T06442";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T06442";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T06442";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T06442";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T06442";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-25T06442";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T06442";
-import { createPressController } from "./press.js?v=v2026-10-25T06442";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T06442";
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T06442";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T10311";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T10311";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T10311";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T10311";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T10311";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-25T10311";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T10311";
+import { createPressController } from "./press.js?v=v2026-10-25T10311";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T10311";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T10311";
 
 
 function parseParams() {
@@ -125,7 +125,16 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
+    beforeResync: () => lease.refresh(),
     log: lease.log,
+    // Potwierdzenie Wyświetlacza prosto z tabeli potwierdzeń (RLS dla
+    // urządzeń, migracja 376): Przycisk sprawdza gotowość od razu, bez
+    // czekania na zmianę całego wiersza game_state (badanie 25.10).
+    onDirectTables: {
+      game_state_display_completion: ({ status }) => {
+        if (status === "CHANGE" || status === "SUBSCRIBED") void checkDisplayReady();
+      },
+    },
     // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
     // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until

@@ -242,6 +242,8 @@ const pl = {
     summaryStepperTitle: "Podsumowanie ustawień",
     finalPickIncompleteWarning: "Finał wymaga 5 pytań. Uzupełnij pulę rund albo wybierz 5 pytań ręcznie.",
     deviceOfflineWarning: "Rozłączone urządzenia: {devices}. Akcje gry są zablokowane do ponownego połączenia.",
+    actionNetworkFailed: "Nie udało się zapisać akcji: połączenie z serwerem zawiodło. Stan gry odświeżono — sprawdź go i spróbuj ponownie.",
+    actionFailed: "Nie udało się wykonać akcji:",
     deviceLostTitle: "Utracono połączenie",
     deviceLostText: "Połączenie z urządzeniami: {devices} zostało zerwane.\n\nSprawdź połączenie internetowe panelu sterowania oraz urządzeń. Jeśli połączenie nie wznowi się za chwilę, podłącz urządzenia ponownie za pomocą przycisków na górnym pasku.\n\nAkcje gry pozostają zablokowane do powrotu wszystkich wymaganych urządzeń. Odliczanie czasu trwa dalej.",
     keyboardShortcutsTitle: "Skróty klawiszowe",

@@ -13,15 +13,16 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T06442";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T06442";
-import { rt } from "./realtime.js?v=v2026-10-25T06442";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T06442";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T06442";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T06442";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T10311";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T10311";
+import { rt } from "./realtime.js?v=v2026-10-25T10311";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T10311";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T10311";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T10311";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T10311";
 
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
   let pollTimer = null;
   let directChannel = null;
@@ -192,12 +193,19 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   });
   const fetchGuarded = sync.fetchGuarded;
 
+  // Dzwonek Control jest sprawdzany także przy połączonym kanale
+  // bezpośrednim (doorbell-guard.js): zgubiona przez postgres_changes zmiana
+  // nie czeka już na heartbeat lease.
+  const doorbell = createDoorbellGuard({
+    getReceivedRev: () => sync.receivedRev,
+    isDirectConnected: () => active && directConnected,
+    fetchNow: () => { if (active) void fetchGuarded(directConnected ? "rpc_doorbell" : "rpc_broadcast"); },
+    onMissed: (metrics) => sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", { trigger: "doorbell", ...metrics }),
+    onStale: () => { if (!active) return; noteDirectFailure("STALE"); resync(); },
+  });
   function subscribeDoorbell() {
     const channel = rt(doorbellTopic(gameId));
-    channel.onBroadcast("rev", (msg) => {
-      const rev = msg?.payload?.rev;
-      if (!directConnected && typeof rev === "number" && rev > sync.lastRev) fetchGuarded("rpc_broadcast");
-    });
+    channel.onBroadcast("rev", (msg) => doorbell.ring(msg?.payload?.rev));
     for (const [event, handler] of Object.entries(onBroadcast)) {
       if (typeof handler === "function") channel.onBroadcast(event, handler);
     }
@@ -424,8 +432,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     // Karta mogła zostać zamrożona przez przeglądarkę. Po powrocie na ekran
     // odbuduj kanał i pobierz stan, bo sam status WebSocketu może być nieaktualny.
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("pageshow", resync);
-    window.addEventListener("online", resync);
+    window.addEventListener("pageshow", resyncAfterLease);
+    window.addEventListener("online", resyncAfterLease);
     // Siatka bezpieczeństwa na zgubiony dzwonek. Działa tylko, gdy kanał
     // bezpośredni leży — co 1,5 s, bo przy 5 s Wyświetlacz dostał START_ROUND
     // z 4,4 s opóźnieniem po CHANNEL_ERROR (test produkcyjny 2026-10-22).
@@ -444,12 +452,21 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directIncident.hiddenDurationMs += Math.max(0, Math.round(performance.now() - Math.max(hiddenAt, directIncident.startedAt)));
     }
     hiddenAt = null;
-    resync();
+    resyncAfterLease();
+  }
+  // Po powrocie karty najpierw potwierdzenie roli (lease może mieć nową
+  // epokę albo przejść w oczekiwanie — wtedy właściciel subskrypcji ją
+  // zatrzyma lub uruchomi od nowa), dopiero potem odczyt i kanał.
+  function resyncAfterLease() {
+    if (!active) return;
+    if (!beforeResync) { resync(); return; }
+    void Promise.resolve().then(beforeResync).catch(() => {}).then(() => { if (active) resync(); });
   }
 
   function stop() {
     if (!active) return;
     active = false;
+    doorbell.stop();
     sessionStarted = false;
     network.stop();
     directIncidentAt = null;
@@ -460,8 +477,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = null;
     document.removeEventListener("visibilitychange", onVisibility);
-    window.removeEventListener("pageshow", resync);
-    window.removeEventListener("online", resync);
+    window.removeEventListener("pageshow", resyncAfterLease);
+    window.removeEventListener("online", resyncAfterLease);
     rt(doorbellTopic(gameId)).reset();
     void stopDirect();
   }

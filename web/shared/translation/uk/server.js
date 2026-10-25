@@ -78,17 +78,6 @@ const uk = {
     replyQuoteLabel: "Твоє звернення [{ticket}]:",
     composeSubject: "Повідомлення від Familiada",
   },
-  marketplaceSsr: {
-    listTitle: "Familiada — Ігри Спільноти",
-    listDesc: "Переглядай та завантажуй безкоштовні ігри Familiada від спільноти.",
-    back: "← Назад до Ігор Спільноти",
-    questions: "Питання",
-    topAnswers: "Найчастіші відповіді",
-    by: "від",
-    originProducer: "Виробник",
-    originCommunity: "Спільнота",
-    play: "Грати",
-  },
   sharingMail: {
   "friendReminderSubject": "{owner} нагадує про запрошення в друзі",
   "friendReminderBody": "Запрошення від {owner} ще чекає на твоє рішення. Ти можеш прийняти або відхилити його.",

@@ -1,5 +1,10 @@
 /* css/marketplace.css */
 @layer page {
+  .mkt-card { text-decoration: none; }
+  .mkt-card-title, .mkt-detail-head .mTitle { margin: 0; }
+  .mkt-detail-questions .q-preview-text { margin-top: 0; }
+  .mkt-nojs-back { display: none; }
+
   /* ===== Body / layout ===== */
   body.mkt-body {
     height: auto;

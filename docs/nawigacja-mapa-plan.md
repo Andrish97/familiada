@@ -1417,3 +1417,22 @@ bramka awarii nadal 503/Retry-After. Link katalog → Wskazówki jest kotwicą
 HTML z zachowaniem nawigacji mapy przy JS i zwykłego nowego okna.
 Katalog i okienka gier nie są przebudowywane. Publiczne dokumenty wdrożone
 2026-10-25; kontrola main 40169213382 przeszła.
+
+
+### 2026-10-25 — publiczny HTML Gier Społeczności
+
+Katalog `/marketplace` (także `/`, `index.html`) i publiczne
+`/marketplace/game/<slug>`: ten sam HTML dla botów i ludzi, bez zależności
+od auth. Slug publiczny tylko dla `published`; nieznany/wycofany = 404,
+awaria źródła = 503. Języki UI katalogu mają własne canonicale; canonical
+gry to jej slug bez parametrów UI/filtrów/ret/dialog. Nie generujemy trzech
+tłumaczeń pytań ani hreflangów gry na podstawie samych etykiet interfejsu.
+
+Prywatny podgląd własnego zgłoszenia korzysta z istniejącego `?game=<uuid>`
+(kontekst w PAGES.state), z noindex/nofollow. Niepublikowany slug nie jest
+publicznym adresem podglądu. Odczyt prywatnych danych nadal wymaga auth
+w RPC. Po publikacji gra używa zwykłego publicznego sluga. Karty są linkami;
+zwykłe kliknięcie otwiera okienko, nowa karta i odświeżenie są standardowe.
+Zamknięcie przywraca adres/metadata katalogu i zachowuje filtry. Bez JS
+powrót jest linkiem do katalogu. Bramka Maintenance obejmuje oba UA równo,
+także publiczną grę (usuwa dotychczasowy niezamierzony wyjątek trasy gry).

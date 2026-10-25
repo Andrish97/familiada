@@ -241,6 +241,8 @@ const en = {
     summaryStepperTitle: "Settings summary",
     finalPickIncompleteWarning: "The finale needs 5 questions. Add more round questions or select 5 questions manually.",
     deviceOfflineWarning: "Disconnected devices: {devices}. Game actions are blocked until reconnection.",
+    actionNetworkFailed: "The action could not be saved: the connection to the server failed. The game state has been refreshed — check it and try again.",
+    actionFailed: "The action could not be completed:",
     deviceLostTitle: "Connection lost",
     deviceLostText: "Connection to these devices was lost: {devices}.\n\nCheck the internet connection of the Control panel and the devices. If the connection does not return shortly, reconnect the devices using the buttons on the top bar.\n\nGame actions remain blocked until all required devices return. Timers keep running.",
     keyboardShortcutsTitle: "Keyboard shortcuts",

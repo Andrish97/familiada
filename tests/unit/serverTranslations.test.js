@@ -7,7 +7,7 @@ import { dictionaries } from "./helpers/i18n.js";
 const { pl, en, uk } = dictionaries;
 
 // Teksty używane poza stroną: edge function send-email (sekcja authEmail)
-// i Cloudflare Worker (contactEmail, marketplaceSsr). Obie strony pobierają
+// i Cloudflare Worker (contactEmail). Obie strony pobierają
 // translation/<lang>/server.js z originu w trakcie działania, więc brak klucza
 // w którymś języku wychodzi dopiero na produkcji — stąd ten test.
 
@@ -43,13 +43,11 @@ test("worker: każdy klucz contactEmail użyty w kodzie istnieje w PL/EN/UK", ()
   }
 });
 
-test("worker: każdy klucz marketplaceSsr użyty w kodzie istnieje w PL/EN/UK", () => {
-  const keys = usedTrKeys([`${WORKER}/lib/ssr/ssr.js`]);
-  assert.ok(keys.length >= 9, `za mało kluczy: ${keys}`);
-  for (const lang of LANGS) {
-    const missing = keys.filter((k) => typeof DICTS[lang].marketplaceSsr?.[k] !== "string" || !DICTS[lang].marketplaceSsr[k]);
-    assert.deepEqual(missing, [], lang);
-  }
+test("publiczny renderer Marketplace używa wspólnych tłumaczeń PL/EN/UK", async () => {
+  const { marketText } = await import(`../../${WORKER}/lib/ssr/marketplace.js`);
+  const keys = [...read("marketplace/js/public.js").matchAll(/\bt\("(marketplace\.[^"]+)"/g)].map(m => m[1]);
+  assert.ok(keys.length > 5);
+  for (const lang of LANGS) for (const key of keys) assert.notEqual(marketText(lang)(key), key, `${lang}.${key}`);
 });
 
 test("send-email: każdy typ maila ma komplet pól authEmail w PL/EN/UK", () => {
@@ -74,7 +72,7 @@ test("send-email: każdy typ maila ma komplet pól authEmail w PL/EN/UK", () => 
 });
 
 test("sekcje serwerowe mają te same klucze i placeholdery we wszystkich językach", () => {
-  for (const section of ["authEmail", "contactEmail", "marketplaceSsr"]) {
+  for (const section of ["authEmail", "contactEmail"]) {
     const flat = (obj, prefix = "", out = {}) => {
       for (const [k, v] of Object.entries(obj)) {
         const key = prefix ? `${prefix}.${k}` : k;
@@ -106,7 +104,7 @@ test("ukraińskie teksty serwerowe nie mieszają cyrylicy z łacinką w jednym s
       for (const [k, v] of Object.entries(obj)) walk(v, `${key}.${k}`);
     }
   };
-  for (const section of ["authEmail", "contactEmail", "marketplaceSsr"]) walk(uk[section], section);
+  for (const section of ["authEmail", "contactEmail"]) walk(uk[section], section);
   assert.deepEqual(bad, []);
 });
 
@@ -115,7 +113,7 @@ test("ukraińskie teksty serwerowe nie mieszają cyrylicy z łacinką w jednym s
 test("parser workera czyta sekcje identycznie jak prawdziwy import, w PL/EN/UK", () => {
   for (const lang of LANGS) {
     const code = read(`shared/translation/${lang}/server.js`);
-    for (const section of ["contactEmail", "marketplaceSsr", "authEmail"]) {
+    for (const section of ["contactEmail", "authEmail"]) {
       assert.deepEqual(extractSection(code, section), DICTS[lang][section], `${lang}.${section}`);
     }
   }
@@ -136,7 +134,7 @@ test("formatText podstawia placeholdery jak t() na stronie", () => {
 
 // ── działanie z podmienionym fetch ──────────────────────────────────────────
 
-function mockFetch(t, { originDown = false, game = null } = {}) {
+function mockFetch(t, { originDown = false } = {}) {
   const originalFetch = globalThis.fetch;
   const calls = [];
   globalThis.fetch = async (url) => {
@@ -146,9 +144,6 @@ function mockFetch(t, { originDown = false, game = null } = {}) {
     if (m) {
       if (originDown) throw new TypeError("network down");
       return new Response(read(`shared/translation/${m[1]}/server.js`), { status: 200, headers: { "Content-Type": "application/javascript" } });
-    }
-    if (u.includes("/rest/v1/rpc/")) {
-      return new Response(JSON.stringify(game ? [game] : []), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     throw new Error(`unexpected fetch: ${u}`);
   };
@@ -182,28 +177,14 @@ test("buildContactEmail: każdy typ maila w PL/EN/UK używa tekstów z tłumacze
   }
 });
 
-test("SSR strony gry: etykiety w języku gry dla PL/EN/UK", async (t) => {
-  const { serveGameDetailSsr } = await import(`../../${WORKER}/lib/ssr/ssr.js`);
-  const env = { SUPABASE_URL: "https://supabase.test", SUPABASE_SERVICE_ROLE_KEY: "k" };
+test("publiczny HTML kart i pytań używa etykiet interfejsu PL/EN/UK", async () => {
+  const { marketText } = await import(`../../${WORKER}/lib/ssr/marketplace.js`);
+  const { cardHtml, questionsHtml } = await import("../../web/marketplace/js/public.js");
   for (const lang of LANGS) {
-    for (const origin of ["producer", "community"]) {
-      const game = {
-        id: "g1", slug: "gra", status: "published", title: "Gra", description: "", lang, origin,
-        author_username: "ala", payload: { questions: [{ text: "Q?", answers: [{ text: "A", fixed_points: 40 }] }] },
-      };
-      await t.test(`${lang} ${origin}`, async (st) => {
-        mockFetch(st, { game });
-        const req = new Request("https://www.familiada.online/marketplace/game/gra");
-        const res = await serveGameDetailSsr(req, env, new URL(req.url), "https://familiada.online", "familiada.online", "x");
-        assert.equal(res.status, 200);
-        const html = await res.text();
-        const tr = DICTS[lang].marketplaceSsr;
-        for (const label of [tr.back, tr.topAnswers, tr.by, tr.play, tr.questions.toLowerCase()]) {
-          assert.ok(html.includes(label), `${lang}: brak "${label}"`);
-        }
-        assert.ok(html.includes(origin === "producer" ? tr.originProducer : tr.originCommunity));
-      });
-    }
+    const t = marketText(lang);
+    const g = {id:"g1",slug:"gra",title:"Gra",description:"",lang,origin:"producer",payload:{questions:[{text:"Q?",answers:[{text:"A",fixed_points:40}]}]}};
+    assert.ok(cardHtml(g,t,lang).includes(t("marketplace.producerBadge")));
+    assert.ok(questionsHtml(g,t).includes(t("marketplace.detail.points",{count:40})));
   }
 });
 

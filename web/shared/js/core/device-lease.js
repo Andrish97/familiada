@@ -1,10 +1,10 @@
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T06442";
-import { t } from "../../translation/translation.js?v=v2026-10-25T06442";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-25T06442";
-import { startTicker } from "./background-ticker.js?v=v2026-10-25T06442";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-25T06442";
-import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-25T06442";
-import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-25T06442";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T10311";
+import { t } from "../../translation/translation.js?v=v2026-10-25T10311";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-25T10311";
+import { startTicker } from "./background-ticker.js?v=v2026-10-25T10311";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-25T10311";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-25T10311";
+import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-25T10311";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -53,6 +53,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
   // głównej instancji wybudzona karta zostaje wyparta i nie wraca sama.
   let firstRegistration = true;
   let inFlight = false;
+  // Bieżący heartbeat — refresh() czeka na niego zamiast wysyłać drugi.
+  let inFlightPromise = null;
   let stopped = false;
   let heartbeatAgain = false;
   let stopTicker = null;
@@ -147,6 +149,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
       return null;
     }
     inFlight = true;
+    let settle;
+    inFlightPromise = new Promise((resolve) => { settle = resolve; });
     try {
       let shouldRegister = register || registerNext || mode !== "lease";
       const params = () => ({
@@ -184,6 +188,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
       return null;
     } finally {
       inFlight = false;
+      settle();
+      inFlightPromise = null;
       if (heartbeatAgain && !stopped) {
         heartbeatAgain = false;
         void heartbeat(false);
@@ -268,8 +274,19 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
   }
   takeoverHandler = takeover;
 
+  // Potwierdzenie roli po powrocie karty (game-state-subscribe.js's
+  // beforeResync): telefon schowany na 10–25 s wraca z wygasłym lease,
+  // a odczyt stanu i token kanału ze starą epoką dostawały odmowę
+  // (eksport 25.10). Czeka na heartbeat w toku albo wysyła nowy.
+  async function refresh() {
+    if (stopped) return state;
+    if (inFlight) await inFlightPromise;
+    else await heartbeat(false);
+    return state;
+  }
+
   return {
-    start, stop, takeover,
+    start, stop, takeover, refresh,
     /** Zdarzenie diagnostyki sesji (control2_device_log). */
     log: logEvent,
     get mode() { return mode; },

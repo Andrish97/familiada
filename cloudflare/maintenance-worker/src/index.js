@@ -37,9 +37,10 @@ import {
 import { hasAdminBypass } from "./lib/admin/admin-auth.js";
 import { handleNotifySubmission } from "./lib/notifications/telegram.js";
 import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js";
-import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr/ssr.js";
+import { isBot, serveDynamicSitemap } from "./lib/ssr/ssr.js";
 import { tvRedirect } from "./lib/origin/tv.js";
 import { withSecurityHeaders, httpsRedirect } from "./lib/core/security-headers.js";
+import { isMarketPath, servePublicMarketplace } from "./lib/ssr/marketplace.js";
 import { localizeHome } from "./lib/ssr/home.js";
 import { localizePublicPage, invalidManualChapter } from "./lib/ssr/public-pages.js";
 import { AUTH_ROUTES } from "./lib/auth/auth-api.js";
@@ -271,6 +272,21 @@ async function handleFetch(request, env, ctx) {
 
   const isBypass = await hasAdminBypass(request, env);
 
+  if (["GET", "HEAD"].includes(request.method) && isMarketPath(url.pathname)) {
+    const state = await getState(env);
+    if (state.enabled && state.mode !== "off" && !isBypass && !await authorizeE2EApi(request, env)) {
+      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+    return servePublicMarketplace(request, env, url);
+  }
+
+  // Dynamic sitemap — includes all published game URLs
+  if (["GET", "HEAD"].includes(request.method) && url.pathname === "/sitemap.xml") {
+    const response = await serveDynamicSitemap(env, ctx);
+    return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
+  }
+
+
   // Bypass → przepuszcza WSZYSTKO (nawet przy włączonym maintenance)
   if (isBypass) {
     return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
@@ -297,30 +313,8 @@ async function handleFetch(request, env, ctx) {
     return handleContactSubmit(request, env);
   }
 
-  // Game detail pages — SSR dla botów, marketplace SPA dla ludzi
-  if ((request.method === "GET" || request.method === "HEAD") && url.pathname.startsWith("/marketplace/game/")) {
-    if (isBot(request)) {
-      return serveGameDetailSsr(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-    }
-    // Ludzie dostają statyczny dokument SPA pod czystym adresem gry;
-    // przeglądarka zachowuje oryginalną ścieżkę /marketplace/game/<slug>,
-    // więc aplikacja odtworzy modal także po bezpośrednim wejściu i refreshu.
-    const mpUrl = new URL(url);
-    mpUrl.pathname = "/marketplace/index.html";
-    return fetchFromOrigin(request, mpUrl, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-  }
-
-  // Dynamic sitemap — includes all published game URLs
-  if (["GET", "HEAD"].includes(request.method) && url.pathname === "/sitemap.xml") {
-    const response = await serveDynamicSitemap(env, ctx);
-    return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
-  }
-
   // Boty zawsze dostają prawdziwą treść niezależnie od maintenance
   if (request.method === "GET" && isBot(request)) {
-    if (url.pathname === "/marketplace" || url.pathname === "/marketplace/") {
-      return serveMarketplaceSsr(request, env, url);
-    }
     const p = url.pathname;
     if (p === "/" || p === "/index.html" || p.startsWith("/privacy")) {
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);

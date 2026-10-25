@@ -29,3 +29,12 @@ test("potwierdzenie starszego zapisu nie przenosi rewizji docelowej wiersza opty
   assert.equal(confirmed.rev, 4);
   assert.equal("__target_rev" in confirmed, false, "pomiar planszy liczy od potwierdzonej rewizji");
 });
+
+test("pending() widzi każdy zapis w toku lub w kolejce", () => {
+  const order = createWriteOrder();
+  assert.equal(order.pending(), false);
+  order.enqueue();
+  assert.equal(order.pending(), true);
+  order.settle();
+  assert.equal(order.pending(), false);
+});

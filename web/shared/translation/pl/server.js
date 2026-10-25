@@ -78,17 +78,6 @@ const pl = {
     replyQuoteLabel: "Twoje zgłoszenie [{ticket}]:",
     composeSubject: "Wiadomość od Familiada",
   },
-  marketplaceSsr: {
-    listTitle: "Familiada Marketplace",
-    listDesc: "Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność.",
-    back: "← Wróć do Marketplace",
-    questions: "Pytania",
-    topAnswers: "Najczęstsze odpowiedzi",
-    by: "autor",
-    originProducer: "Producent",
-    originCommunity: "Społeczność",
-    play: "Graj w tę grę",
-  },
   sharingMail: {
   "friendReminderSubject": "{owner} przypomina o zaproszeniu do znajomych",
   "friendReminderBody": "Zaproszenie od {owner} nadal czeka na Twoją decyzję. Możesz je zaakceptować lub odrzucić.",

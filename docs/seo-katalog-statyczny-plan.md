@@ -1,8 +1,12 @@
-# Statyczny katalog, gry i publiczne Wskazówki — propozycja
+# Publiczny HTML katalogu, gier i Wskazówek — wdrożenie
 
-Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów wdrożona i sprawdzona 2026-10-25 (9dbb9f1ab, poprawka abad78242). Stan kodu sprawdzony
-na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
-i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
+Status: prostszy wariant Gier Społeczności z §11 **wdrożony i sprawdzony
+2026-10-25**. Realizacja i wyniki: §13–14. Katalog i gry mają pełny HTML
+z Workera, wspólny dla ludzi i botów, z zachowaniem okienek; bez R2,
+generowania osobnych plików i cache HTML. Publiczne Wskazówki i prywatność
+wdrożone wcześniej (9dbb9f1ab, poprawka abad78242). Wariant trwałych
+odcisków R2 w §3–6 pozostaje opcją, nie jest częścią wdrożenia.
+Strona główna i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
 ## 1. Zakres i ustalenia użytkownika
 
@@ -27,8 +31,8 @@ i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 - **Wskazówki są udostępnione wszystkim, mają działać i pomagać w
   wyszukiwaniu.** Ich obecne `noindex, nofollow` jest sprzeczne z celem;
   publiczne rozdziały mają otrzymać indeksowalny HTML.
-- §10 opisuje wdrożone publiczne dokumenty. §11 to nowa propozycja dla
-  gier, bez wdrożenia nowej infrastruktury i przebudowy katalogu.
+- §10 opisuje wdrożone publiczne dokumenty. §11 opisuje zatwierdzony
+  i wdrożony wariant dla gier; wyniki kontroli w §13–14.
 
 ## 2. Co faktycznie wymaga zmiany
 
@@ -284,7 +288,7 @@ zmieniane; publikacja dokumentów nastąpiła po zgodzie 2026-10-25.
 
 ## 11. Prostszy plan dla gier — rekomendacja 2026-10-25
 
-Status: zatwierdzone do realizacji 2026-10-25. Użytkownik: „Możesz wdrażać zgodnie z procedurą”.
+Status: wdrożone i sprawdzone 2026-10-25 (§14). Zgoda użytkownika: „Możesz wdrażać zgodnie z procedurą”.
 Osobny etap po zakończonym wdrożeniu publicznych dokumentów. §3–6
 opisują alternatywę dla trwałych plików; R2 nie jest wymaganiem SEO.
 Na pierwszy etap zalecany jest **obecny Worker + publiczny odczyt bazy +
@@ -456,3 +460,111 @@ Wskazówek i zachowany URL przykładowej gry. Worker 10/10; regresja
 przeglądarkowa ze wstrzymaniem treści 4/4; powiązane unity 43/43, zrzuty
 telefonu i komputera obejrzane. Wdrożenie §10 zakończone. §11 pozostaje
 planem; gry i baza nie zostały przebudowane.
+
+## 13. Realizacja Gier Społeczności — 2026-10-25
+
+Zatwierdzone „Możesz wdrażać zgodnie z procedurą”. Branch
+`codex/marketplace-public-html`, wariant §11 bez R2 i bez cache HTML.
+
+- Migracja 485 `market_public_catalog`: lista tylko `published`, slugi,
+  publiczne pola i liczniki, bez limitu 100 funkcji `market_browse`.
+  Lokalny PG16: 105 wpisów, wykluczenie pozostałych statusów, cofnięcie
+  publikacji i DELETE od razu wykluczają wpis, brak prywatnych pól.
+  Main 91ad8fd0b, DB 40170614000 ✓, log APPLY/OK 06:53:59–06:54:00 UTC.
+  Rzeczywisty odczyt anon: 90 rekordów, wszystkie ze slugiem, brak pól
+  moderacji/email/payload/stanu konta.
+- Worker i przeglądarka mają wspólny renderer kart, pytań i metadanych.
+  Istniejący szablon, style i okienka, H1 gry i H2 pytań/kart, prawdziwe
+  linki. Pełna lista w publicznym HTML, także gdy ponad 100 wpisów.
+- Canonical katalogu zależy od języka UI. Canonical gry to slug bez
+  parametrów; brak fikcyjnych hreflangów gry. Schema Game, bez FAQPage.
+- Worker używa tylko klucza anon, nie przekazuje sesji, filtruje wynik
+  szczegółów do `published`, do HTML/bootstrap trafia jawna lista pól.
+  Odczyty API i szablonu równolegle, timeout 6 s, błąd 503/Retry-After.
+- Brak cache katalogu, gry i sitemap; publiczne CSS/JS nadal mają cache.
+  Mapa bierze publiczną listę, nie RPC admina. Liczniki nie są lastmod.
+- JS przejmuje gotowy HTML bez czyszczenia pytań i ponownego odczytu listy;
+  przed gotowością modelu linki są zwykłymi linkami. Kontrolki JS czekają
+  wyłączone do gotowości, a akcje konta na auth. Bez JS działa katalog,
+  pytania i odnośnik powrotu. Wyłączone animacje wejścia w trybie bez JS.
+- Prywatne zgłoszenia pozostają dostępne autorowi pod `?game=<id>`, z
+  noindex i kontrolą uprawnień RPC. Nowy stan w PAGES, aktualizacja tras
+  i Wskazówek PL/EN/UK. Niepubliczny slug daje 404 także przeglądarce.
+- Usunięto oddzielny prosty HTML dla botów i nieużywane tłumaczenia SSR.
+  Bramka Maintenance obejmuje katalog/grę identycznie dla obu UA.
+
+Lokalnie: workerd 17/17 (PL/EN/UK, oba UA, XSS, 105 kart, HEAD/404,
+wycofanie, noindex prywatnego podglądu, 503, sitemap i Maintenance).
+Rzeczywista przeglądarka z atrapą API: 12 przypadków (PL/EN/UK × telefon/
+komputer × JS/bez JS), bez utraty pytań przy przejęciu, z zamykaniem,
+otwieraniem i metadanymi. Powiązane unity 39/39 oraz 53/53 (część wspólna),
+lint i i18n OK. Zrzuty katalogu/Moje wysłane PL/EN/UK, 390 i 1400 px oraz
+publicznej gry bez JS. Kolejny krok: punktowe E2E kodu brancha na bazie
+po migracji, dopiero potem Pages/Worker i kontrola rzeczywistej produkcji.
+
+Branch E2E [40172770513](https://github.com/Andrish97/familiada/actions/runs/40172770513)
+— sukces 5/5 (anonimowy katalog i nawigacja, mobilne filtry, biblioteka,
+ocena, zgłoszenie i prywatny podgląd). Integracja 38f4c2bd8; późniejszy
+main zmienił w plikach katalogu wyłącznie wersje zasobów. Po scaleniu
+z d9835ea83 powiązane unity 42/42, bez powtarzania zielonego E2E brancha.
+Kolejny krok: publikacja Pages i Workera, kontrola rzeczywistego main.
+
+Publikacja 805b3a809: Pages 40173140276 ✓, Worker 40173140243 ✓.
+Produkcja: 16 odczytów HTTP ✓ (oba UA identyczne, 3 języki, canonicale,
+HEAD/404, prywatny preview noindex; sitemap 162 URL = m.in. 90 gier i 63
+Wskazówki). Kontrola main 40173217637: 3/3 pierwsze ✓, ocena ✗, zgłoszenie
+nieuruchomione przez serial. Rzeczywisty SSR umożliwił klik przed końcem
+odczytu biblioteki; późniejszy odczyt danych konta przerysował kontrolki
+oceny w trakcie zapisu. Poprawka ogranicza ten odczyt do przejętego obiektu
+SSR, chroni tożsamość i rewizję widoku. E2E oceny korzysta z produkcyjnego
+HTML i zasobów brancha, z kontrolowanym opóźnieniem biblioteki.
+Dodatkowo przejęcie gotowej gry nie zależy od zgodności języka SSR z
+preferencją przeglądarki; lokalizowane punkty bez odłączania pytań.
+Regresja przeglądarkowa rozszerzona do 16/16 (w tym angielska preferencja
+przy domyślnym polskim HTML i odciętym API przeglądarki).
+
+Poprawka adfd17279, integracja b2b82dcd4: branch E2E
+[40173651438](https://github.com/Andrish97/familiada/actions/runs/40173651438)
+✓ 2/2 — ocena z kontrolowanym opóźnieniem biblioteki i HTML SSR, zgłoszenie
+z prywatnym podglądem po odświeżeniu. Worker 17/17, przeglądarka 16/16,
+powiązane unity po integracji 42/42. Promocja poprawki na main, potem
+kontrola tych dwóch scenariuszy i biblioteki na rzeczywistej produkcji.
+
+## 14. Zamknięcie Gier Społeczności — 2026-10-25
+
+Main poprawki `69ee8cbd1` (wersje CI `e46d213a5`):
+[Pages 40173791848](https://github.com/Andrish97/familiada/actions/runs/40173791848)
+i [Worker 40173791897](https://github.com/Andrish97/familiada/actions/runs/40173791897)
+— sukces. Migracja 485 zastosowana wcześniej; żadnych nowych sekretów,
+zasobów R2 ani konfiguracji serwera.
+
+Kontrola rzeczywistego main, bez podmiany frontu:
+[40173859449](https://github.com/Andrish97/familiada/actions/runs/40173859449)
+✓ 3/3: dodanie atomowe/idempotentne do biblioteki, zmiana oceny 2→4
+(UI i baza, opóźniona biblioteka), zgłoszenie pending i prywatny podgląd
+po odświeżeniu. Testy nie wysyłają powiadomień o zgłoszeniu. Dwa scenariusze
+anonimowe (telefon, filtry, wyszukiwanie, klawiatura/język/historia)
+przeszły wcześniej na rzeczywistym main w 40173217637; poprawka nie zmieniła
+ich obsługi. Zielone testy brancha: 40172770513 (5/5) i 40173651438 (2/2).
+
+Dodatkowa prawdziwa przeglądarka na produkcji: 4/4 — 390/1400 px,
+JS/bez JS, bezpośredni URL gry, pytania, canonical, zamknięcie/powrót,
+ponowne otwarcie linkiem, brak błędów i poziomego przepełnienia. Przy JS
+pytanie z SSR zachowuje swój element także przy innej preferencji języka.
+Zrzut produkcyjnego telefonu oraz 12 zrzutów okienka z danymi demo
+PL/EN/UK obejrzane; scena i dane atrapy dostosowane do nowego publicznego
+RPC. Lokalne bramki poprawki: Worker 17/17, przeglądarka 16/16, unity 42/42.
+
+HTTP produkcji: 16 sprawdzeń ✓, identyczny HTML obu User-Agent w PL/EN/UK,
+publiczne canonicale/indeksowanie, HEAD/404, prywatny podgląd noindex;
+sitemap 162 URL, w tym dokładnie 90 opublikowanych gier i 63 adresy
+Wskazówek, bez starego Cache API. Lokalny SQL sprawdza wycofanie/DELETE
+i ponad 100 wpisów. Pomiar HTTP z tego środowiska: mediana katalogu
+0,66 s, gry 0,37 s (6 odczytów każdego, dwa UA i 3 języki); to pomiar
+kontrolny, nie gwarancja czasu odpowiedzi. HTML nadal zależy od API/VPS;
+awaria daje 503 z Retry-After, nie pustą stronę 200.
+
+Wdrożenie zakończone. W Search Console sprawdzić opublikowany adres
+`https://www.familiada.online/marketplace/game/dzieci-i-rodzice` i po
+potwierdzeniu treści poprosić o indeksowanie. Istniejący adres sitemap
+pozostaje ten sam. Decyzja i termin indeksowania należą do Google.
