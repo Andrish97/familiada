@@ -1,10 +1,10 @@
 // admin/js/tools.js — Narzędzia (laboratoria /admin/tools/*): lista i otwieranie w panelu.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-25T16285";
-import { TOOLS_MANIFEST, els, syncTopbarHeight } from "./core.js?v=v2026-10-25T16285";
-import { activeTab, labelFromPath, setActiveTab } from "./tabs.js?v=v2026-10-25T16285";
-import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-25T16285";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-25T16362";
+import { TOOLS_MANIFEST, els, syncTopbarHeight } from "./core.js?v=v2026-10-25T16362";
+import { activeTab, labelFromPath, setActiveTab } from "./tabs.js?v=v2026-10-25T16362";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-25T16362";
 
 let previousTabBeforeTools = "maintenance";
 
