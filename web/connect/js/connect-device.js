@@ -1,17 +1,17 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T19500";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T19500";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-25T19500";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T19500";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T19500";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T19500";
-import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-25T19500";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T19500";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-25T19500";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-25T19500";
-import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T19500";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-25T19500";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T19524";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T19524";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-25T19524";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T19524";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T19524";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T19524";
+import { toast, setMessage } from "../../shared/js/core/toast.js?v=v2026-10-25T19524";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T19524";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-25T19524";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-25T19524";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T19524";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-25T19524";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -181,7 +181,7 @@ async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-25T19500";
+    s.src = "/shared/vendor/jsQR.min.js?v=v2026-10-25T19524";
     s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
