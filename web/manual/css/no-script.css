@@ -1,6 +1,6 @@
 /* Publiczne dokumenty bez JS: pozostają tylko działające linki i treść. */
 @layer page {
-  .manual-body { padding-top: 0; }
+  body.manual-body { padding-top: 0; }
   .manual-body .topbar-layout-4 { position: static; display: flex; flex-wrap: wrap; flex-shrink: 0; }
   .manual-body .topbar-section-1,
   .manual-body .topbar-section-2 { display: flex; flex-wrap: wrap; }
