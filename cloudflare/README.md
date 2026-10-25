@@ -37,6 +37,26 @@ Nie wymaga to przekierowania przeglądarki. Linki aplikacji używają `/nazwa/`.
 - Brak fallbacków zasobów pod dawnymi ścieżkami oraz brak przekierowania `/builder`.
 - Frontend jest publikowany z `web/`; ta nazwa nie jest częścią adresów URL.
 
+### Publiczny katalog Gier Społeczności
+`/marketplace/` i `/marketplace/game/<slug>` otrzymują ten sam pełny HTML
+niezależnie od User-Agent. Worker składa istniejący szablon Pages wspólnym
+rendererem `web/marketplace/js/public.js`; pytania są w dotychczasowym oknie.
+Przeglądarka przejmuje HTML bez ponownego pobierania listy. Zwykłe linki
+oraz odczyt katalogu i pytań działają również bez JavaScriptu.
+
+Źródłem listy i sitemap jest `market_public_catalog` (migracja 485),
+szczegółów — `market_game_by_slug`. Worker używa wyłącznie istniejącego
+`SUPABASE_ANON_KEY`; do HTML trafiają tylko jawnie dozwolone publiczne pola
+opublikowanych gier. Prywatny podgląd `?game=<id>` pozostaje chroniony RPC
+użytkownika i ma `noindex`. Niepubliczny slug zwraca 404, awaria API/szablonu
+503 z `Retry-After`. HTML i sitemap mają `no-store`; nie ma R2 ani osobnych
+odcisków. Bramka przerwy technicznej obejmuje katalog i gry.
+
+Testy Workera: `npm test` w `cloudflare/maintenance-worker`.
+Regresja przeglądarki (PL/EN/UK, 390/1400 px, JS/bez JS): po instalacji
+zależności `tests` i Workera uruchomić z głównego repo
+`node cloudflare/maintenance-worker/test/market-browser.mjs`.
+
 ### Admin API (settings host)
 - `GET  /_admin_api/me` → 200 if authorized by Cloudflare Access
 - `GET  /_admin_api/state` → current state

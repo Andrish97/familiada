@@ -8,7 +8,7 @@
 // pełny nowy wiersz, błąd zawsze rzuca (z rozróżnieniem stale_write, żeby
 // UI mogło pokazać "gra sterowana z innej zakładki" zamiast zgadywać).
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T07230";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T07304";
 
 
 export class StaleWriteError extends Error {
@@ -35,6 +35,11 @@ function throwForRpcError(error) {
   throw error;
 }
 
+// Na zerwanym łączu zapis bez limitu wisiał do czasu, aż przeglądarka sama
+// porzuci połączenie (minuty). Po limicie Control dociąga stan z serwera
+// (app.js), więc zapis, który jednak doszedł, nie zostanie zgubiony.
+const WRITE_TIMEOUT_MS = 15_000;
+
 export function createPersist(gameId) {
   async function write({ step, topCard, phase, controlTeam, detail, soundCueKey, expectedRev, lockMs }) {
     const { data, error } = await sb().rpc("game_state_write", {
@@ -47,7 +52,7 @@ export function createPersist(gameId) {
       p_sound_cue_key: soundCueKey ?? null,
       p_expected_rev: expectedRev ?? null,
       p_lock_ms: lockMs ?? null,
-    });
+    }).abortSignal(AbortSignal.timeout(WRITE_TIMEOUT_MS));
     if (error) throwForRpcError(error);
     return data;
   }

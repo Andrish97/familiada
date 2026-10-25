@@ -497,3 +497,10 @@ otwieraniem i metadanymi. Powiązane unity 39/39 oraz 53/53 (część wspólna),
 lint i i18n OK. Zrzuty katalogu/Moje wysłane PL/EN/UK, 390 i 1400 px oraz
 publicznej gry bez JS. Kolejny krok: punktowe E2E kodu brancha na bazie
 po migracji, dopiero potem Pages/Worker i kontrola rzeczywistej produkcji.
+
+Branch E2E [40172770513](https://github.com/Andrish97/familiada/actions/runs/40172770513)
+— sukces 5/5 (anonimowy katalog i nawigacja, mobilne filtry, biblioteka,
+ocena, zgłoszenie i prywatny podgląd). Integracja 38f4c2bd8; późniejszy
+main zmienił w plikach katalogu wyłącznie wersje zasobów. Po scaleniu
+z d9835ea83 powiązane unity 42/42, bez powtarzania zielonego E2E brancha.
+Kolejny krok: publikacja Pages i Workera, kontrola rzeczywistego main.

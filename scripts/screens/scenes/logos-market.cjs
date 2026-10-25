@@ -73,14 +73,14 @@ const chooseImportFile = (content, name) => async (view, { lang }) => {
 
 // ---------- Społeczność ----------
 const SUBMIT_DESC = { pl: "Dziesięć pytań na rodzinne spotkanie — od jedzenia po wakacje.", en: "Ten questions for a family get-together — from food to holidays.", uk: "Десять питань для родинної зустрічі — від їжі до відпустки." };
-const MARKET_GAME = id("8b00", 1); // pierwsza gra PL z market_browse (demo.cjs)
+const MARKET_GAME = id("8b00", 1); // pierwsza gra PL z market_public_catalog (demo.cjs)
 function marketDetail(db, extra = {}) {
   const qs = db.tables.questions.filter((q) => q.game_id === IDS.game).sort((a, b) => a.ord - b.ord).slice(0, 6)
     .map((q) => ({ text: q.text, answers: db.tables.answers.filter((a) => a.question_id === q.id).sort((a, b) => a.ord - b.ord).map((a) => ({ text: a.text, fixed_points: a.fixed_points })) }));
   db.rpc.market_detail_extra = extra;
   db.rpc.market_detail_questions = qs;
   db.rpc.market_game_detail = `fn:(args, db) => {
-    const all = [...db.rpc.market_browse, ...(db.rpc.market_my_submissions || [])];
+    const all = [...db.rpc.market_public_catalog, ...(db.rpc.market_my_submissions || [])];
     const g = all.find((x) => x.id === args.p_id);
     if (!g) return null;
     return { status: "published", origin: "community", author_username: "", description: "", avg_rating: 0, rating_count: 0, library_count: 0, ...g,
@@ -279,7 +279,6 @@ module.exports = [
 
   // ================= Społeczność =================
   { id: "logos-market-market-search-empty", category: CAT, title: "Społeczność — wyszukiwanie bez wyników", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
-    db: (db) => { db.rpc.market_browse_rows = db.rpc.market_browse; db.rpc.market_browse = `fn:(args, db) => db.rpc.market_browse_rows.filter((g) => !args.p_search || (g.title + " " + g.description).toLowerCase().includes(args.p_search.toLowerCase()))`; },
     steps: [async (view, { device }) => {
       const input = view.locator("#searchInput");
       if (await input.isVisible()) await input.fill("zzzz");
@@ -321,9 +320,9 @@ module.exports = [
     db: (db) => { db.tables.games = []; },
     steps: [openModal("#btnMySent", "#mySentOverlay"), wait(600), openModal("#btnSubmitNew", "#submitOverlay")] },
   { id: "logos-market-market-guest", guest: true, category: CAT, title: "Społeczność — odwiedzający bez konta", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
-    db: (db) => { db.rpc.market_browse = db.rpc.market_browse.map((g) => ({ ...g, in_library: false })); } },
+    db: (db) => { db.rpc.market_public_catalog = db.rpc.market_public_catalog.map((g) => ({ ...g, in_library: false })); } },
   { id: "logos-market-market-guest-detail", guest: true, category: CAT, title: "Społeczność — szczegóły gry bez konta (bez oceniania)", path: "/marketplace/", sources: MARKET, ready: ".mkt-card",
-    db: (db) => { db.rpc.market_browse = db.rpc.market_browse.map((g) => ({ ...g, in_library: false })); marketDetail(db); },
+    db: (db) => { db.rpc.market_public_catalog = db.rpc.market_public_catalog.map((g) => ({ ...g, in_library: false })); marketDetail(db); },
     steps: [async (view) => { await view.locator(".mkt-card").nth(1).click(); await view.locator("#gameDetailOverlay[data-detail-state=ready]").waitFor(); await view.waitForTimeout(500); }] },
 
   // ================= Panel admina =================
