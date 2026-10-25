@@ -522,9 +522,9 @@
      rozmiar w całym panelu — czcionka --c2-btn-fs skaluje się z --c2-fs,
      wypełnienie w em, więc wysokość jest wszędzie ta sama. Rzędy przycisków
      nie rozciągają ich w pionie. */
-  body { --c2-btn-fs:calc(var(--c2-fs) * .92); }
-  #app .btn { font-size:var(--c2-btn-fs); padding:.55em .9em; line-height:1.15; }
-  #app .btn.icon { padding:.575em; } /* kwadrat tej samej wysokości co przycisk z napisem */
+  body { --c2-btn-fs:calc(var(--c2-fs) * .88); }
+  #app .btn { font-size:var(--c2-btn-fs); padding:.45em .85em; line-height:1.15; }
+  #app .btn.icon { padding:.475em; } /* kwadrat tej samej wysokości co przycisk z napisem */
   #app .btn > svg.ico { width:1.1em; height:1.1em; }
   #app .device-connect-code-val { line-height:1; }
   #app :is(.stepFoot, .stepFootButtons, .c2-summary-row) { align-items:center; }
