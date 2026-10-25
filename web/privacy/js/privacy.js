@@ -5,12 +5,12 @@
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 //   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
-import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T16362";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T16362";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T16362";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T16515";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T16515";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T16515";
 
 
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T16362";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T16515";
 
 window.dispatchEvent(new Event("resize"));
 
