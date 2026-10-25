@@ -1340,6 +1340,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
           connected: sourceEvents.filter(event => event.category === "device_transport"
             && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
           catchup: catchups.length,
+          doorbellCatchup: catchups.filter(event => event.metrics?.trigger === "doorbell").length,
           heartbeatCatchup: catchups.filter(event => event.metrics?.trigger === "lease_heartbeat").length,
           unexplainedCatchup: catchups.filter(event => event.metrics?.trigger !== "doorbell"
             && event.metrics?.trigger !== "lease_heartbeat"
@@ -1398,6 +1399,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       console.log(`[e2e-diag] device events ${JSON.stringify(evs)}`);
     }
     for (const [source, item] of Object.entries(transport)) {
+      expect(item.doorbellCatchup, `${source}: przy zdrowym łączu dzwonek nie powinien wyprzedzać Realtime`).toBeLessThanOrEqual(1);
       expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
       expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
     }
