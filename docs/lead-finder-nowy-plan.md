@@ -88,7 +88,9 @@ Dla każdej aktywnej kategorii:
   Odsiew placówek publicznych usunięty z kodu (decyduje kategoria).
   Historia zapytań: `search:<kategoria>:<strona>:<fraza>`,
   `ceidg:<kategoria>:<pkd>:<strona>`.
-- Sieć Dockera: gałęzie WIP, czeka na klucz w `functions.env`.
+- Sieć Dockera: klucz w `functions.env` (właściciel, 2026-10-25), funkcja Edge
+  `lead-finder` wdrożona (`02e0ecd5`), Worker przez funkcję; Caddy bez `leads`
+  i kontener bez portu na hoście — `familiada-server` (`wip-lead-finder-internal`).
 
 ## Uwaga prawna
 
