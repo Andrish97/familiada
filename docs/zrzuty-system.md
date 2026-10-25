@@ -35,6 +35,15 @@ Opcje: `--lang=pl|en|uk|all` (domyślnie `pl`), `--devices=desktop,phone,tablet,
 (domyślnie `desktop,phone` = 1440×900 i 390×844), `--base=<ref>`, `--out=<katalog>`,
 `--verbose` (ostrzeżenia i błędy konsoli strony), `--strict` (kod ≠ 0 przy problemach).
 
+Przy poprawkach pierwszej klatki użyj `--audit`: pomiar layout-shift zaczyna
+się przed skryptami strony i kończy przed krokami sceny. CLS po odsłonięciu
+> 0,01 daje uwagę `skok-po-zaladowaniu` (z `--strict`: błąd). Szczegóły
+w `layout-load.json`: czas zdjęcia `page-loading`, rzeczywistego odsłonięcia
+po `data-layout-pending`, sumy przed/po i źródła z geometrią, bez tekstów.
+`--latency=250` opóźnia odpowiedzi atrapy; `--part=1/2` oraz `--part=2/2`
+dzielą wybrane sceny na dwie rozłączne części. Uruchamiać najwyżej dwie
+przeglądarki naraz.
+
 Wynik: `scripts/screens/out/<scena>/<język>-<urządzenie>.png` (sceny z własnym
 rozmiarem: `<język>.png`), galeria `out/index.html` i `out/README.md`.
 

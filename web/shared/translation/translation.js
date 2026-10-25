@@ -1,3 +1,4 @@
+import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-25T17010";
 import { icon, iconText } from "../js/core/icons.js?v=v2026-10-25T17010";
 
 // Słownik jest podzielony na części: <lang>/<część>.js (docs/tlumaczenia-podzial-plan.md).
@@ -89,7 +90,7 @@ export function getUiLang() {
 }
 
 export function setUiLang(lang, options = {}) {
-  const load = loadUiLang(lang, options);
+  const load = holdPageLayout(loadUiLang(lang, options));
   latestLanguageLoad = load.catch(() => false);
   return load;
 }

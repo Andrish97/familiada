@@ -1,3 +1,4 @@
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T17010";
 // Nagłówek list Gier/Baz/Logo: pozwól tytułowi i podpowiedzi zawinąć się
 // przed przeniesieniem akcji. Akcje schodzą niżej, gdy nie mieszczą się nawet
 // obok minimalnej szerokości nagłówka.
@@ -68,6 +69,7 @@ export function initListHeaderLayout(selector = ".bar") {
     new ResizeObserver(schedule).observe(bar);
     new MutationObserver(schedule).observe(bar, { childList: true, subtree: true, characterData: true });
     window.addEventListener("i18n:lang", schedule);
+    registerPageLayout(update);
     schedule();
   }
 
@@ -220,6 +222,7 @@ function initListBottomToolbarLayout() {
       bar.classList.remove("is-compact-icons");
       schedule();
     });
+    registerPageLayout(update);
     schedule();
   }
 }

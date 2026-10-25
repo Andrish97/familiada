@@ -229,6 +229,27 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — pierwsza widoczna klatka wspólnego silnika
+
+- Zlecenie: pomiar przed poprawką, brak skoków po pokazaniu strony,
+  zachowanie stopniowego ładowania, wspólny silnik zamiast poprawek stron.
+- Branch `fix/first-visible-layout`, baza `e95f8d8969` (czysty main).
+- Pomiar Playwright z atrapą na 10 stronach × 390/360/1400 px. Szybki odczyt
+  zwykle maskował wyścig; opóźnienie topbara 900 ms i danych 250 ms ujawniło
+  Gry desktop CLS 0,09880, ankietę mobile 0,01271/0,01596 oraz Wskazówki.
+  Wyniki i przyczyny: `docs/pierwsza-klatka-pomiar.md`.
+- Wspólny bootstrap przed CSS (te same funkcje profilu co guard), bramka
+  DOM/i18n/powłoki + dwa pomiary, rejestr pomiarów, niezależny bezpiecznik 5 s,
+  gotowość etapów potwierdzana po hydracji. Topbar reaguje przed renderem na
+  zmianę widoczności przycisków i nie zawija się przejściowo. Wspólne
+  podsumowanie ankiety rezerwuje wiersz. Zasada w §5a podręcznika silnika.
+- Punktowe 58 unit ✓, pełny unit finalnego kodu 859/859 ✓ (98,7 s). Nowy audyt CLS
+  `skok-po-zaladowaniu` z progiem 0,01; pełna galeria `--changed --audit`
+  obejmuje wszystkie 542 sceny, uruchomiona w dwóch rozłącznych częściach.
+- Status: pełny unit zielony, galeria w toku; commit kodu do e2e brancha.
+  Dalej e2e brancha → main/Pages → te same spece na produkcji.
+
+
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |
 | 2026-10-25 | Lead Finder tylko z DeepSeekiem; obraz OG w mailu odświeżany | Decyzje użytkownika: (1) obraz w mailu ma się zmieniać razem z systemem — `og-image-mail.webp` generuje teraz `publish-homepage.cjs` razem z `og-image` (CI zrzutów); (2) bez wyboru dostawców AI, tylko DeepSeek z napisem w panelu — usunięta lista kolejności (panel, `mail-settings.js`, Worker `/ai-providers/order`), usługa woła tylko DeepSeek (`lf/classify.py`), migracja 493 (deepseek włączony, reszta wyłączona; test `tests/sql/lead-finder-deepseek-493.sql`); (3) w mailu bez powtórzenia opisu planszy. Testy Pythona 14/14, unit 846/847 (znany `marketUniqueness`), zrzut `admin-leads`. | — |
 | 2026-10-25 | Mail marketingowy „Zaproszenie” — nowa treść | Prośba użytkownika: treść dopasowana do obecnego systemu, pierwszy obraz = grafika OG zamiast ankiety na telefonie. `og-image-mail.webp` (1032×542, 67 KB, z `og-image.webp`), potem Panel sterowania i Widok prowadzącego; ramka „Pytania na trzy sposoby” (Gry Społeczności, Bazy pytań, ankieta); bez „branży eventowej” (kategorie są różne); temat „familiada.online — bezpłatny system do prowadzenia Familiady na żywo”. Test `marketing-mail.test.js` ✓, podgląd maila sprawdzony. | — |

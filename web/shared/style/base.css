@@ -42,7 +42,7 @@
     overscroll-behavior: none; /* gasi biały bounce */
     transition: opacity var(--dur-slow) ease-in;
   }
-  html.page-loading body { opacity: 0; }
+  html.page-loading body, html[data-layout-pending] body { opacity: 0; }
 
   body > main,
   main {

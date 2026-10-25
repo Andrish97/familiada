@@ -29,6 +29,7 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
+import { holdPageLayout } from "./page-layout.js?v=v2026-10-25T17010";
 import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-25T17010";
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-25T17010";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-25T17010";
@@ -214,6 +215,16 @@ export async function initEntryPage(id, { ready } = {}) {
 }
 
 export async function initPage(id, opts = {}) {
+  let finishLayout;
+  holdPageLayout(new Promise((resolve) => { finishLayout = resolve; }));
+  try {
+    return await initializePage(id, opts, finishLayout);
+  } finally {
+    finishLayout();
+  }
+}
+
+async function initializePage(id, opts, finishLayout) {
   const p = PAGES[id];
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
   const d = opts.deps || await loadDeps();
@@ -268,6 +279,8 @@ export async function initPage(id, opts = {}) {
     });
     return null;
   }
+
+  finishLayout();
 
   // Account notices are shared across authenticated pages, not tied to the
   // Games library. Await the same blocking modal flow everywhere so users

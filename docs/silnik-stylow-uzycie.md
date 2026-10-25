@@ -19,6 +19,8 @@ w tym dokumencie i w `wzorce-ui.md`), nie do pliku strony.
 W `<head>` każdej strony aplikacji, w tej kolejności:
 
 ```html
+<!-- po meta viewport, przed arkuszami; klasyczny, bez async i defer -->
+<script src="/shared/js/core/page-boot.js?v=…"></script>
 <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=…"/>  <!-- ekran blokady -->
 <link rel="stylesheet" href="/shared/style/tokens.css?v=…"/>
 <link rel="stylesheet" href="/shared/style/base.css?v=…"/>
@@ -124,6 +126,37 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 (`--center`, `--end`), `.stack`, `.between`, `.center`, `.grow`, `.nowrap`,
 `.truncate`, `.text-muted`, `.hidden`, `.visually-hidden`,
 `.only-mobile` / `.only-desktop` (próg 600 px).
+
+### 5a. Pierwsza widoczna klatka i stopniowe ładowanie (decyzja 2026-10-25)
+
+- `page-boot.js` ustawia atrybuty urządzenia przed renderem. Klasyfikacja jest
+  wspólna dla CSS, `device-attrs.js` i guarda; moduł aktualizuje ją po zmianach.
+- `page-loading` pozostaje sygnałem strony „tłumaczenia gotowe”. Wspólna bramka
+  `data-layout-pending` czeka dodatkowo na DOMContentLoaded, konfigurację
+  powłoki z `initPage` i dwa przebiegi pomiarów przed odsłonięciem.
+- Moduł zmieniający geometrię rejestruje **synchroniczny, powtarzalny pomiar**:
+  `registerPageLayout(measure)` z `core/page-layout.js`. Pomiar nie pobiera
+  danych i nie otwiera okien; rejestracja zwraca funkcję odpięcia. Tak działają
+  topbar, fit-row, nagłówki i paski list oraz wygaszanie przewijania.
+- Praca asynchroniczna potrzebna do geometrii powłoki używa
+  `holdPageLayout(promise)`. Tłumaczenia i `initPage` zgłaszają się same.
+  **Nie zgłaszać tu list i wyników z bazy**: powłoka pokazuje się, gdy dane
+  jeszcze się pobierają. Błąd obietnicy zwalnia bramkę. Niezależny bezpiecznik
+  klasycznego skryptu zdejmuje ukrywanie po 5 s także przy błędzie modułów;
+  guard urządzenia nadal ma pierwszeństwo.
+- Stopniowe ładowanie pozostaje: `data-skel-step`, `skel-step-ready`, grupy
+  i `topbar-ready`. Wstaw treść i podepnij akcje, potem oznacz etap jako gotowy.
+  Silnik mierzy nowo odsłaniany etap przed jego renderem. `skel-step-ready`
+  w początkowym HTML służy wersji bez JS; bootstrap resetuje ten znacznik
+  podczas parsowania, a kod strony potwierdza gotowość po inicjalizacji.
+- Zachowaj docelowy rozmiar miejsca na dane (flex, min-height, zarezerwowany
+  wiersz podsumowania). `visibility` i `opacity` zachowują geometrię;
+  `hidden` usuwa element z układu, więc nie zastępuje miejsca na dane.
+- `run.cjs --audit` obserwuje layout-shift od startu dokumentu do gotowego
+  widoku, przed kliknięciami sceny. `skok-po-zaladowaniu`: suma po odsłonięciu
+  > 0,01 jest błędem. `layout-load.json` zawiera czasy odsłonięcia, sumy przed
+  i po oraz geometrię źródeł. `--latency=250` sprawdza stopniowe ładowanie,
+  `--part=1/2` i `--part=2/2` dzielą pełny przebieg na dwie części.
 
 ## 6. Elementy (katalog)
 

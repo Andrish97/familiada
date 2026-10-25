@@ -19,68 +19,11 @@
 import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-25T17010";
 
 
-export const PHONE_MAX_SHORT_SIDE = 700;
+import "./page-boot.js?v=v2026-10-25T17010";
+export const { getDeviceProfile, editableFocused, PHONE_MAX_SHORT_SIDE } = globalThis.FamiliadaDevice;
 export const MIN_WORK_WIDTH = 980;
 export const MIN_WORK_HEIGHT = 580;
 export const TV_HD_RESOLUTION = Object.freeze({ width: 1280, height: 720 });
-
-function screenSides() {
-  const w = window.screen?.width || window.innerWidth;
-  const h = window.screen?.height || window.innerHeight;
-  return { short: Math.min(w, h), long: Math.max(w, h) };
-}
-
-const isTouch = () => navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
-
-/** Aktywne pole tekstowe (klawiatura ekranowa na dotyku może być otwarta). */
-export function editableFocused() {
-  if (typeof document === "undefined") return false;
-  const el = document.activeElement;
-  if (!el || el === document.body) return false;
-  if (el.isContentEditable) return true;
-  const tag = String(el.tagName || "").toLowerCase();
-  if (tag === "textarea" || tag === "select") return true;
-  return tag === "input" && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(el.type || "");
-}
-
-// Orientacja z ekranu, nie z okna, gdy klawiatura może być otwarta:
-// klawiatura obniża okno i telefon w pionie wyglądałby na poziomy
-// („Obróć urządzenie” w trakcie pisania, zgłoszenie 2026-10-24).
-function screenOrientation() {
-  const type = window.screen?.orientation?.type;
-  if (type) return type.startsWith("landscape") ? "landscape" : "portrait";
-  const w = window.screen?.width, h = window.screen?.height;
-  return w && h ? (w >= h ? "landscape" : "portrait") : null;
-}
-
-export function getDeviceProfile() {
-  const { short, long } = screenSides();
-  const hasTouch = isTouch();
-  const primaryCoarse = !!window.matchMedia?.("(pointer: coarse)").matches;
-  const primaryHover = !!window.matchMedia?.("(hover: hover)").matches;
-  // A touchscreen laptop usually has a fine, hover-capable primary pointer;
-  // a phone/tablet is normally operated through a coarse, non-hover pointer.
-  const touch = primaryCoarse && !primaryHover || (!window.matchMedia && hasTouch);
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const isTv = /SmartTV|SMART-TV|Tizen|web0s|WebOS|HbbTV|BRAVIA|Android TV|GoogleTV|Roku|Viera|NetCast/i.test(navigator.userAgent || "");
-  const dpr = window.devicePixelRatio || 1;
-  const screenWidth = Number(window.screen?.width) || width;
-  const screenHeight = Number(window.screen?.height) || height;
-  return {
-    formFactor: isTv ? "tv" : touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
-    orientation: (touch && editableFocused() && screenOrientation()) || (width >= height ? "landscape" : "portrait"),
-    viewportWidth: width,
-    viewportHeight: height,
-    screenShortSide: short,
-    screenLongSide: long,
-    screenPixelWidth: Math.round(screenWidth * dpr),
-    screenPixelHeight: Math.round(screenHeight * dpr),
-    touch,
-    hasTouch,
-    isTv,
-  };
-}
 
 /** Czy format urządzenia to telefon; niezależne od viewportu i orientacji. */
 export function isPhoneScreen() {
