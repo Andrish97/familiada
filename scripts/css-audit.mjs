@@ -148,6 +148,13 @@ function countInline(source, html) {
   return { inlineStyleJs: (source.match(/\.style\.(?!setProperty|removeProperty|getPropertyValue)[a-zA-Z]+\s*=(?!=)|\.style\.cssText\s*=|\bstyle\s*=\s*\\?["'](?!--)/g) || []).length };
 }
 
+// Warianty klas tworzone przez szablon (jak w css-dead.cjs).
+export function classIsUsed(cls, code) {
+  if (code.includes(cls)) return true;
+  const family = cls.replace(/-[\w]+$/, '');
+  return family !== cls && code.includes(family + '-${');
+}
+
 export function audit() {
   const files = walk(WEB);
   const cssFiles = files.filter((f) => f.endsWith(".css"));
@@ -162,7 +169,7 @@ export function audit() {
   const unused = {};
   for (const c of css) {
     const dup = [...c.simple].filter((s) => owners.get(s) > 1).length;
-    const missing = [...c.classes].filter((cls) => !code.includes(cls)).sort();
+    const missing = [...c.classes].filter((cls) => !classIsUsed(cls, code)).sort();
     unused[c.name] = missing;
     result[c.name] = { ...c.metrics, sharedDuplicate: dup, unusedClass: missing.length };
   }

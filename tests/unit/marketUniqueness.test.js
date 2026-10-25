@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
-import { uniquenessSummary, uniquenessReportHtml, exactCopy } from '../../web/admin/js/uniqueness.js';
 const require = createRequire(import.meta.url);
 const { transformSync, buildSync } = require('esbuild');
 const source = fs.readFileSync(new URL('../../supabase/functions/generate-game/uniqueness.ts', import.meta.url), 'utf8');
@@ -59,12 +58,7 @@ test('błąd bazowego porównania jest błędem, a nie pustą listą kopii', asy
  await assert.rejects(m.checkGameUniqueness(client,()=>undefined,{id:'g'}),/market_uniqueness_report_failed/);
 });
 
-test('panel rozróżnia niepełny wynik i dokładną kopię oraz ucieka treści pytań', () => {
- const partial={ok:true,matches:[],semantic:{complete:false,status:'unavailable',corpus_indexed:0,corpus_total:20}};
- assert.match(uniquenessSummary(partial),/niepełne/);assert.match(uniquenessReportHtml(partial),/niedostępne/);
- const copy={...partial,question_count:10,matches:[{title:'<img src=x>',lang:'pl',exact_content:true,matched_questions:10,question_pairs:[{source_pos:1,candidate_pos:2,source_text:'<script>bad()</script>',candidate_text:'& q',method:'semantic'}]}]};
- assert.equal(exactCopy(copy),true);const html=uniquenessReportHtml(copy);assert.ok(!html.includes('<script>'));assert.ok(html.includes('&lt;img'));assert.ok(html.includes('zbliżone znaczenie'));
-});
+
 
 test('wdrożenie etapami: stary panel dostaje żądanie odświeżenia, nowy otrzymuje raport', async () => {
  const entry = new URL('../../supabase/functions/generate-game/index.ts', import.meta.url);

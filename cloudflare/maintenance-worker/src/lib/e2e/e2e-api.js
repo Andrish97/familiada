@@ -1,7 +1,7 @@
 // src/lib/e2e-api.js -- /_e2e_api/* test-only endpoints + /login captcha bypass.
 // See tests/README.md for the full mechanism description.
 import { json } from "../core/http.js";
-import { readJson } from "../admin/admin-auth.js";
+import { readJson } from "../core/http.js";
 import { supabaseRequest, supabaseRpc } from "../core/supabase.js";
 import { fetchFromOrigin } from "../origin/origin.js";
 import { handleE2ELease, isE2EPlusAddress, e2eRunOwns } from "./e2e-lease.js";

@@ -1834,42 +1834,6 @@
     .topbar-mobile-panel .btn:active { transform: none; }
   }
 
-  /* ── Tabela danych (.data-table) — panel admina: kolejka, dziennik, oceny,
-     kontakty. Ramka przewija się w poziomie; --scroll ogranicza wysokość
-     (nagłówek przyklejony). Pusta tabela: komórka .data-table-empty. ── */
-  .data-table-wrap {
-    overflow: auto;
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    background: var(--k-20);
-  }
-  .data-table-wrap--scroll { max-height: 420px; }
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .data-table--wide { min-width: 860px; } /* wiele kolumn: przewijanie w poziomie zamiast ściśnięcia */
-  .data-table :is(th, td) {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--line-faint);
-    text-align: left;
-    vertical-align: top;
-  }
-  .data-table th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--surface-modal);
-    color: var(--text-muted);
-    font-weight: 800;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .data-table tbody tr:hover { background: var(--w-4); }
-  }
-  .data-table-empty { text-align: center; color: var(--text-muted); font-style: italic; }
 
   /* ── Licznik powiadomień (.badge) i oznaczenie (.tag) ──────────
      .badge — JEDEN licznik (pusty = schowany); .tag — stała informacja
@@ -3760,7 +3724,4 @@
   .grow { flex: 1 1 auto; min-width: 0; }
   .between { justify-content: space-between; }
   .center { align-items: center; }
-  .nowrap { white-space: nowrap; }
   .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .text-muted { color: var(--text-muted); }
-  .text-sm { font-size: 12px; }

@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adminPanelSource } from "./helpers/admin-source.js";
 const read = path => fs.readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
 const renderer = 'data:text/javascript;base64,' + Buffer.from(read('supabase/functions/_shared/mail-document.js')).toString('base64');
 const source = read('web/shared/js/core/stored-mail.js').replace(/from "[^\"]+"/, `from "${renderer}"`);
@@ -20,9 +19,4 @@ test('stored HTML fragments keep formatting; plain messages are escaped with cor
   assert.ok(plain.includes('<html lang="pl">'));
   assert.ok(plain.includes('&lt;img src=x&gt; &amp; text'));
   assert.doesNotMatch(plain,/<img/);
-});
-test('all five Settings message and thread previews use the saved document helper', () => {
-  const settings = adminPanelSource();
-  assert.equal((settings.match(/buildStoredMailHtml\(msg\)/g)||[]).length,5);
-  assert.doesNotMatch(settings,/\.email-container \{|\* \{ background: #050914 !important/);
 });

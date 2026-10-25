@@ -1,6 +1,5 @@
-// src/lib/admin-auth.js -- admin bypass cookie + Cloudflare Access checks.
-import { getCookie } from "../core/http.js";
-import { verifyAccessJwt } from "./access-jwt.js";
+// Wspólny podpis ciasteczka przerwy. API panelu jest w prywatnym Workerze.
+import { getCookie } from "./http.js";
 
 // Ciasteczko obejścia przerwy (audyt E24, Ś7): zamiast stałego sekretu
 // podpisany token "v1.<ważność ms>.<HMAC-SHA256 base64url>". Kluczem HMAC
@@ -63,48 +62,3 @@ export async function hasAdminBypass(request, env) {
   return false;
 }
 
-export function accessJwtFromRequest(request) {
-  return String(request.headers.get("Cf-Access-Jwt-Assertion") || "").trim();
-}
-
-// Jedyna warstwa uwierzytelnienia API panelu: podpisany token Cloudflare
-// Access (sama obecność nagłówków nie wystarcza -- można je dopisać przy
-// żądaniu omijającym Access, np. przez *.workers.dev).
-export async function isAdminAuthorized(request, env) {
-  const token = accessJwtFromRequest(request);
-  if (!token) return false;
-  const result = await verifyAccessJwt(token, env);
-  return result.ok;
-}
-
-export const ADMIN_ORIGIN = "https://admin.familiada.online";
-
-// Ochrona przed CSRF dla zmian (POST/PUT/PATCH/DELETE): żądanie musi przyjść
-// z panelu (Origin) i nieść JSON. Wyjątek typu treści: wgrywanie załącznika
-// (multipart/form-data) -- tam wystarcza zgodny Origin.
-export function adminWriteAllowed(request, url) {
-  const method = String(request.method || "GET").toUpperCase();
-  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return true;
-  if (request.headers.get("Origin") !== ADMIN_ORIGIN) return false;
-  const type = String(request.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
-  if (type === "application/json") return true;
-  return url.pathname === "/_admin_api/attachments/upload" && type === "multipart/form-data";
-}
-
-export async function readJson(request) {
-  try {
-    return await request.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function setAdminBypassCookieForAllDomains(env) {
-  // __Secure- pozwala na Domain=.familiada.online (shared for apex + www)
-  const token = await createAdminBypassToken(env);
-  return `__Secure-fml_admin=${token}; Path=/; Domain=familiada.online; Secure; HttpOnly; SameSite=Strict; Max-Age=${ADMIN_BYPASS_TTL_SECONDS}`;
-}
-
-export function clearAdminBypassCookieForAllDomains() {
-  return `__Secure-fml_admin=; Path=/; Domain=familiada.online; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
-}

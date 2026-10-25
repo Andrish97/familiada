@@ -25,11 +25,6 @@ const APPS = [
     outDir: "web/assets/img",
     prefix: "icon",
   },
-  {
-    svg: "web/admin/icons/admin-icon.svg",
-    outDir: "web/admin/icons",
-    prefix: "admin",
-  },
 ];
 
 const ANY_SIZES = [192, 512];

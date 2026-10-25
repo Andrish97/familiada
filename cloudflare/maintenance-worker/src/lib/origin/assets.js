@@ -63,12 +63,7 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
   return res;
 }
 
-// isMaintenanceAsset i isAdminAsset sprawdzały dotąd (w oryginalnym,
-// jednoplikowym workerze) dokładnie tę samą listę prefiksów/plików, osobno
-// skopiowaną w dwóch miejscach -- scalone tu do jednej funkcji, teraz że
-// obie siedzą w tym samym module i duplikat jest od razu widoczny. Zero
-// zmiany zachowania: isMaintenanceAsset dalej dodatkowo przepuszcza samą
-// ścieżkę "/maintenance", isAdminAsset zostaje bez zmian.
+// Zasoby strony przerwy i wspólny silnik wyglądu. Panel ma własny origin.
 function isSharedAssetPath(pathname) {
   const allowedPrefixes = ["/shared/", "/assets/", "/maintenance/css/", "/maintenance/js/", "/404/css/", "/404/js/"];
   for (const prefix of allowedPrefixes) {
@@ -83,15 +78,8 @@ export function isMaintenanceAsset(pathname) {
   return isSharedAssetPath(pathname);
 }
 
-export function isAdminAsset(pathname) {
-  return isSharedAssetPath(pathname)
-    || ["/manifest-admin.webmanifest", "/admin/sw.js"].includes(pathname)
-    || pathname.startsWith("/admin/icons/")
-    || ["/admin/js/", "/admin/css/", "/admin/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
-}
-
 export function isCommonAsset(pathname) {
   if (pathname === "/404.html") return true;
   if (isMaintenanceAsset(pathname)) return true;
-  return ["/admin/js/", "/admin/css/", "/admin/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+  return ["/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }

@@ -124,13 +124,6 @@ export const PAGES = {
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
   notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument noindex ze statusem 404 także pod własnym adresem; nieznany URL pozostaje w pasku adresu." },
   maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Samodzielny dokument noindex; bramka przerwy zwraca 503 i Retry-After pod żądanym URL." },
-  admin:         { path: "/admin/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
-  adminToolEditor: { path: "/admin/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolExporter: { path: "/admin/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolHostLogo: { path: "/admin/tools/host-logo-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
-  adminToolKora: { path: "/admin/tools/kora-builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
-  adminToolLogoBackground: { path: "/admin/tools/logo-background-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
-  adminToolTheme: { path: "/admin/tools/theme_builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
 };
 
 // Wspólny kontakt jest budowany dynamicznie, więc nie należy do statycznych

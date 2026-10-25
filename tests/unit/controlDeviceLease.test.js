@@ -16,6 +16,7 @@ function sessionLogStubs(sink = { events: [], options: null }) {
     },
     collectDeviceInfo: async () => ({ event_type: "device_info", device_class: "phone" }),
     watchPageLifecycle: () => () => {},
+    watchRuntimeErrors: () => () => {},
     onWakeLockChange: () => () => {},
   };
 }

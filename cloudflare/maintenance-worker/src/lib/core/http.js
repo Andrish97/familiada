@@ -43,3 +43,8 @@ export function getCookie(request, name) {
   }
   return null;
 }
+
+// Parsowanie pomocnicze dla API testowego: zły JSON daje null.
+export async function readJson(request) {
+  try { return await request.json(); } catch { return null; }
+}

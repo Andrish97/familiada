@@ -5,10 +5,8 @@ const pl = {
     pageTitle: "Familiada — przerwa techniczna",
     messageText:
       "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
-    returnAtTitle: "Trwa przerwa techniczna",
     returnAtText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownTitle: "Trwa przerwa techniczna",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Serwis jest ponownie dostępny. Odśwież stronę.",

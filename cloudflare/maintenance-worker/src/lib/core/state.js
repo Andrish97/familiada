@@ -46,8 +46,7 @@ export async function getState(env) {
 
 // Force a fresh KV read on this isolate's next getState() call -- used
 // after any admin write that changes the stored state (POST /state, /off).
-// Extracted out of handleAdminApi() as an explicit function instead of that
-// module reaching in to mutate _stateCacheAt directly.
+// Explicit invalidation keeps state access independent of its caller.
 export function invalidateStateCache() {
   _stateCacheAt = 0;
 }

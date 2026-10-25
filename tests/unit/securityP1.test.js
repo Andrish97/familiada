@@ -1,97 +1,17 @@
-// Audyt E24, paczka P1: proxy lead-findera (Ś2), podpisane ciasteczko obejścia
-// przerwy (Ś7), nagłówki bezpieczeństwa stron (N3), dopinanie poczty do
-// zgłoszeń tylko od adresu zgłoszenia (N6), sekret storage-cleanup (N4),
-// podgląd maili bez skryptów (Ś6).
+// Audyt E24: publiczny podpis obejścia przerwy, nagłówki bezpieczeństwa,
+// ochrona dopinania poczty i sekret storage-cleanup. Testy API panelu są
+// w prywatnym repo familiada-server.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHmac } from 'node:crypto';
-import { handleAdminApi } from '../../cloudflare/maintenance-worker/src/lib/admin/admin-api.js';
-import { leadFinderTarget } from '../../cloudflare/maintenance-worker/src/lib/admin/admin-leads-api.js';
 import {
   createAdminBypassToken, verifyAdminBypassToken, hasAdminBypass, ADMIN_BYPASS_TTL_SECONDS,
-} from '../../cloudflare/maintenance-worker/src/lib/admin/admin-auth.js';
+} from '../../cloudflare/maintenance-worker/src/lib/core/maintenance-bypass.js';
 import { withSecurityHeaders } from '../../cloudflare/maintenance-worker/src/lib/core/security-headers.js';
 import { ticketForSender } from '../../cloudflare/maintenance-worker/src/lib/email/inbound-email.js';
-import { ACCESS_ENV, signAccessJwt, withJwks } from './helpers/accessJwt.js';
-import { adminPanelSource } from "./helpers/admin-source.js";
 
 const ROOT = new URL('../../', import.meta.url);
-const ADMIN = 'https://admin.familiada.online';
-const RUN = '0f1e2d3c-4b5a-4987-8654-3210fedcba98';
-
-// ── Ś2 ────────────────────────────────────────────────────────────────────
-test('Ś2: lista dozwolonych ścieżek lead-findera', () => {
-  const q = new URLSearchParams();
-  assert.deepEqual(leadFinderTarget('GET', 'search-runs/status', q), { action: 'status' });
-  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=70')), { action: 'start', target_count: 70 });
-  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=99999')), { action: 'start', target_count: 1000 });
-  for (const action of ['pause', 'resume', 'cancel']) {
-    assert.deepEqual(leadFinderTarget('POST', `search-runs/${RUN}/${action}`, q), { action, run_id: RUN });
-  }
-  assert.equal(leadFinderTarget('GET', 'search-runs', q), null);
-  assert.equal(leadFinderTarget('POST', 'search-runs/status', q), null);
-  assert.equal(leadFinderTarget('POST', `search-runs/${RUN}/delete`, q), null);
-  assert.equal(leadFinderTarget('POST', 'search-runs/../../health/pause', q), null);
-  assert.equal(leadFinderTarget('GET', 'health', q), null);
-  // Przegląd kontaktów przez usługę wycofany (LF3).
-  assert.equal(leadFinderTarget('POST', 'contacts-review', q), null);
-});
-
-test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt tokenu zniknął', async () => {
-  const env = { ...ACCESS_ENV, LEAD_FINDER_API_KEY: 'klucz-lf', SUPABASE_URL: 'https://api.test', SUPABASE_SERVICE_ROLE_KEY: 'srk' };
-  const prev = globalThis.fetch;
-  const calls = [];
-  globalThis.fetch = withJwks(async (url, init) => {
-    const h = new Headers(init.headers);
-    calls.push({ url: String(url), method: init.method, secret: h.get('X-Internal-Secret'), body: init.body ? JSON.parse(init.body) : null });
-    return new Response(JSON.stringify({ status: 'idle', run_id: null }), { headers: { 'content-type': 'application/json' } });
-  });
-  try {
-    const jwt = await signAccessJwt();
-    const res = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs/status`, { headers: { 'Cf-Access-Jwt-Assertion': jwt } }), env);
-    assert.equal(res.status, 200);
-    assert.deepEqual(await res.json(), { status: 'idle', run_id: null });
-    // Przez funkcję Edge lead-finder (usługa tylko w sieci Dockera), klucz w X-Internal-Secret.
-    assert.deepEqual(calls, [{ url: 'https://api.test/functions/v1/lead-finder', method: 'POST', secret: 'klucz-lf', body: { action: 'status' } }]);
-
-    const start = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs?target_count=5`, {
-      method: 'POST', headers: { 'Cf-Access-Jwt-Assertion': jwt, Origin: ADMIN, 'Content-Type': 'application/json' },
-    }), env);
-    assert.equal(start.status, 200);
-    assert.deepEqual(calls[1].body, { action: 'start', target_count: 5 });
-    assert.equal(calls[1].secret, 'klucz-lf');
-
-    const anon = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs/status`), env);
-    assert.equal(anon.status, 401);
-    const csrf = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs?target_count=5`, {
-      method: 'POST', headers: { 'Cf-Access-Jwt-Assertion': jwt, Origin: 'https://evil.example', 'Content-Type': 'application/json' },
-    }), env);
-    assert.equal(csrf.status, 403);
-    const unknown = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/health`, { headers: { 'Cf-Access-Jwt-Assertion': jwt } }), env);
-    assert.equal(unknown.status, 404);
-    const token = await handleAdminApi(new Request(`${ADMIN}/_admin_api/config/lead-finder-token`, { headers: { 'Cf-Access-Jwt-Assertion': jwt } }), env);
-    assert.equal(token.status, 404);
-    assert.doesNotMatch(await token.text(), /klucz-lf/);
-    const noKey = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs/status`, { headers: { 'Cf-Access-Jwt-Assertion': jwt } }), { ...ACCESS_ENV });
-    assert.equal(noKey.status, 503);
-    assert.equal(calls.length, 2);
-  } finally { globalThis.fetch = prev; }
-});
-
-test('Ś2: panel nie pobiera klucza ani nie woła leads.familiada.online', () => {
-  const src = adminPanelSource();
-  assert.doesNotMatch(src, /lead-finder-token/);
-  assert.doesNotMatch(src, /leads\.familiada\.online/);
-  assert.match(src, /adminFetch\(`\/leads\/\$\{path\}`/);
-});
-
-// ── Ś6 ────────────────────────────────────────────────────────────────────
-test('Ś6: podglądy maili w panelu bez allow-scripts', () => {
-  const src = adminPanelSource();
-  assert.doesNotMatch(src, /allow-scripts/);
-  assert.equal((src.match(/frame\.sandbox = MAIL_FRAME_SANDBOX;/g) || []).length, 6);
-});
 
 // ── Ś7 ────────────────────────────────────────────────────────────────────
 const BYPASS_ENV = { ADMIN_BYPASS_TOKEN: 'stary-staly-sekret' };
@@ -122,25 +42,6 @@ test('Ś7: stare ciasteczko z surowym sekretem nie działa, nowe działa', async
   const token = await createAdminBypassToken(BYPASS_ENV);
   assert.equal(await hasAdminBypass(cookieReq(`a=b; __Secure-fml_admin=${token}`), BYPASS_ENV), true);
   assert.equal(await hasAdminBypass(cookieReq(`__Secure-fml_admin=${token}`), {}), false);
-});
-
-test('Ś7: /_admin_api/bypass ustawia podpisany token na 12 h', async () => {
-  const env = { ...ACCESS_ENV, ...BYPASS_ENV };
-  const prev = globalThis.fetch;
-  globalThis.fetch = withJwks();
-  try {
-    const res = await handleAdminApi(new Request(`${ADMIN}/_admin_api/bypass`, {
-      method: 'POST', headers: { 'Cf-Access-Jwt-Assertion': await signAccessJwt(), Origin: ADMIN, 'Content-Type': 'application/json' },
-    }), env);
-    assert.equal(res.status, 200);
-    const cookie = res.headers.get('Set-Cookie');
-    assert.match(cookie, /^__Secure-fml_admin=v1\.\d+\.[A-Za-z0-9_-]+; /);
-    assert.match(cookie, /Max-Age=43200/);
-    assert.match(cookie, /HttpOnly/);
-    assert.doesNotMatch(cookie, /stary-staly-sekret/);
-    const value = cookie.split(';')[0].split('=')[1];
-    assert.equal(await hasAdminBypass(cookieReq(`__Secure-fml_admin=${value}`), env), true);
-  } finally { globalThis.fetch = prev; }
 });
 
 // ── N3 ────────────────────────────────────────────────────────────────────
