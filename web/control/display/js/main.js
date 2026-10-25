@@ -14,7 +14,7 @@ import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/dev
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T18561";
 import { createScene } from "./scene.js?v=v2026-10-25T18561";
 import { createQRController } from "./qr.js?v=v2026-10-25T18561";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T205905";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T22553";
 import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-25T18561";
 import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T18561";
 import { createRenderer } from "./render.js?v=v2026-10-25T18561";

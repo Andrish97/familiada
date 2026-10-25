@@ -13,16 +13,16 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T18561";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T18561";
-import { rt } from "./realtime.js?v=v2026-10-25T18561";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18561";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18561";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18561";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T205905";
-import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T18561";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T205905";
-import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-25T18561";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T22553";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T22553";
+import { rt } from "./realtime.js?v=v2026-10-25T22553";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T22553";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T22553";
+import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails } from "./direct-channel-ready.js?v=v2026-10-25T22553";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T22553";
+import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T22553";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T22553";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-25T22553";
 
 const HEARTBEAT_REV_GRACE_MS = 250;
 
@@ -142,6 +142,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
           startOnline: navigator.onLine !== false,
           hiddenDurationMs: 0,
           wasDiscarded: !!document.wasDiscarded, errorClass: null,
+          socketClose: recentSocketClose(),
         };
       }
     } else if (!started && sessionStarted) {
@@ -211,6 +212,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         hiddenDurationMs: 0,
         wasDiscarded: !!document.wasDiscarded,
         errorClass: error ? String(error.name || "Error").slice(0, 80) : null,
+        socketClose: recentSocketClose(),
       };
     } else if (directIncident) {
       directIncident.transitionCount += 1;
@@ -269,6 +271,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Tu accessToken zawsze zwraca token urządzenia.
   let directToken = null;
   let directClient = null;
+  let lastSocketClose = null;
+  const recentSocketClose = () => lastSocketClose && performance.now() - lastSocketClose.at <= 5_000
+    ? { ...lastSocketClose.details } : {};
   // Lease, dla którego wystawiono token kanału (claims: połączenie + epoka).
   let directLeaseKey = null;
   const leaseKey = (lease) => `${lease?.p_connection_id || ""}:${lease?.p_epoch || ""}`;
@@ -276,6 +281,14 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!directClient) {
       directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         accessToken: async () => directToken || SUPABASE_ANON_KEY,
+      });
+      directClient.realtime.onClose((event) => {
+        // Usunięcie kanału przy zwykłym odświeżeniu tokenu zamyka socket
+        // celowo; nie traktuj czystego close 1000 jako awarii transportu.
+        if (event?.code === 1000 && event?.wasClean) return;
+        const details = realtimeSocketCloseDetails(event);
+        lastSocketClose = { at: performance.now(), details };
+        if (directIncident) Object.assign(directIncident.socketClose, details);
       });
       // debug helper (jak globalThis.__sbClient w supabase.js)
       globalThis.__sbDeviceRealtime = directClient;
@@ -303,6 +316,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
             hidden_duration_ms: incident.hiddenDurationMs + (hiddenAt == null ? 0 : Math.max(0, Math.round(performance.now() - Math.max(hiddenAt, incident.startedAt)))),
             was_discarded: incident.wasDiscarded,
             error_class: incident.errorClass,
+            ...incident.socketClose,
           });
           transportSnapshotLogged = true;
         }
@@ -329,8 +343,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }
   }
 
-  function onDirectFailure(status) {
-    noteDirectFailure(status);
+  function onDirectFailure(status, error = null) {
+    noteDirectFailure(status, error);
     if (active) fetchGuarded("rpc_channel_failure");
     scheduleDirectRetry();
     console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
@@ -385,7 +399,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
           revisionWatchdog.observeReceivedRevision();
         }
         else if (payload?.eventType === "DELETE") fetchGuarded("rpc_delete_recovery");
-      }).subscribe((status) => {
+      }).subscribe((status, error) => {
         if (channel !== directChannel) return;
         directStatus = status;
         if (status === "SUBSCRIBED" && active) {
@@ -402,7 +416,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         }
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           readiness.reset();
-          onDirectFailure(status);
+          onDirectFailure(status, error);
         }
       });
       for (const [table, handler] of Object.entries(onDirectTables)) {

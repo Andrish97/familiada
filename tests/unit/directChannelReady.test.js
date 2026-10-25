@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createDirectReadiness, postgresSystemStatus } from "../../web/shared/js/core/direct-channel-ready.js";
+import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails } from "../../web/shared/js/core/direct-channel-ready.js";
+
+test("metadane zamknięcia WebSocket są ograniczone i oczyszczone", () => {
+  assert.deepEqual(realtimeSocketCloseDetails({ code: 1006, wasClean: false, reason: "network unavailable" }), {
+    socket_close_code: 1006, socket_close_clean: false, socket_close_reason: "network-unavailable",
+  });
+  assert.equal(realtimeSocketCloseDetails({ code: 1000, wasClean: true, reason: "eyJhbGciOi.token" }).socket_close_reason, "redacted");
+  assert.deepEqual(realtimeSocketCloseDetails({ code: 42, wasClean: "yes", reason: "" }), {});
+});
 
 test("komunikat systemowy postgres_changes: ok, błąd albo obcy", () => {
   assert.equal(postgresSystemStatus({ extension: "postgres_changes", status: "ok", message: "Subscribed to PostgreSQL" }), "ok");
