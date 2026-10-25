@@ -1996,3 +1996,6 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Prywatny panel — ponowne usunięcie manifestu po równoległym scaleniu | Podczas kontroli DNS wykryto przywrócony przez inne scalenie web/manifest-admin.webmanifest (następnie wersjonowany przez CI). Kod panelu nadal prywatny; usunięto ponownie jedyny publiczny manifest. | Utrzymać usunięcie manifestu przy scalaniu starszych gałęzi; manifest wraz z ikonami jest wyłącznie w prywatnym repo. Kontrola starego originu po Pages. |
+
+
+| 2026-10-25 | Panel po zmianie DNS — kontrola zamknięta | Pages 40225875929 success po ponownym usunięciu manifestu. Punktowe E2E main 40225962643 success 1/1: rzeczywisty origin Pages nie serwuje starego HTML, JS ani manifestu panelu; kontrolny indeks originu 200. Unit ikon 3/3. Wcześniejsza kontrola po DNS: Access 302, www 200, prywatny origin bez sekretu 404, maintenance wyłączone. | Zmiana DNS potwierdzona przez właściciela; ochrona i działanie zachowane. Brak pomiaru porównawczego pozwalającego przypisać odczuwalne przyspieszenie samemu hostingowi. |
