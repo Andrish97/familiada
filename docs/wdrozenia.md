@@ -2192,3 +2192,11 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   zrzuty 390/360/1400 z audytem **0 uwag**, **816/816 unit**. Rysunek i
   mechanizm pary bez zmian. Prywatny edytor: **85 unit**, 4 testy motywu i
   3 Autorskiej zielone, 4 zrzuty obejrzane. Branchy przed publikacją.
+
+- Publiczna bramka kawy: **40236412493 ✓ 4/4** (para, stopka/wybór kawy,
+  telefon i FAQ w 3 językach). Pierwszy dispatch 40236376524 anulowany przed
+  testami: filtr nazw nie obejmował trzech testów wsparcia; poprawiony zbiorczy
+  przebieg obejmuje wszystkie cztery. Scalone wyłącznie nowe obrazy Wskazówek
+  z main; kod tych testów bez zmian, bez zbędnego powtarzania zielonych.
+- Prywatny edytor: branch CI **40236348759 ✓ 85 unit + 20 browser**, check
+  **40236378726 ✓**. Main 640a016, production **40236470765** w toku.
