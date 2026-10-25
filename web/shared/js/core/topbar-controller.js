@@ -671,6 +671,7 @@ function initTopbarController() {
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
+    event.preventDefault();
     close();
     toggleBtn?.focus();
   });
