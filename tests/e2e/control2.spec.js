@@ -1277,7 +1277,21 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
           catchup: catchups.length,
           heartbeatCatchup: catchups.filter(event => event.metrics?.trigger === "lease_heartbeat").length,
           unexplainedCatchup: catchups.filter(event => event.metrics?.trigger !== "doorbell"
-            || !lateDirect.some(late => late.metrics?.fallback_revision === event.metrics?.latest_revision)).length,
+            && event.metrics?.trigger !== "lease_heartbeat"
+            || !lateDirect.some(late => late.metrics?.trigger === event.metrics?.trigger
+              && late.metrics?.fallback_revision === event.metrics?.latest_revision)).length,
+          catchupContext: catchups.map(event => ({ trigger: event.metrics?.trigger, rev: event.metrics?.latest_revision,
+            missed: event.metrics?.missed_revisions, visibility: event.metrics?.visibility,
+            focused: event.metrics?.focused, online: event.metrics?.online })),
+          lateDirect: lateDirect.map(event => ({ trigger: event.metrics?.trigger,
+            fallback_revision: event.metrics?.fallback_revision, direct_revision: event.metrics?.direct_revision,
+            fallback_to_direct_ms: event.metrics?.fallback_to_direct_ms, visibility: event.metrics?.visibility,
+            focused: event.metrics?.focused, online: event.metrics?.online })),
+          recoveredContext: sourceEvents.filter(event => event.category === "device_transport"
+            && event.metrics?.phase === "recovered").map(event => ({ first_status: event.metrics?.first_status,
+            duration_ms: event.metrics?.duration_ms, start_visibility: event.metrics?.start_visibility,
+            start_online: event.metrics?.start_online, hidden_duration_ms: event.metrics?.hidden_duration_ms,
+            error_class: event.metrics?.error_class })),
           recovered: sourceEvents.filter(event => event.metrics?.phase === "recovered").length,
         }];
       }));

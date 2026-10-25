@@ -249,7 +249,8 @@ migracji:
   wysłania;
 - urządzenie zapisuje `fallback_catchup` z rewizją i progiem oczekiwania;
 - jeśli później nadejdzie Postgres Changes, zapisuje
-  `direct_after_fallback` z rewizją i czasem od fallbacku;
+  `direct_after_fallback` z rewizją, źródłem fallbacku (`doorbell` albo
+  `lease_heartbeat`) i czasem od fallbacku;
 - gdy RPC faktycznie zastosuje nowszy stan, `fallback_applied` podaje
   `fetch_ms`, czas oczekiwania w kolejce (`received_ms`) i render (`render_ms`);
 - nietypowo wolne bezpośrednie zdarzenia (`received_ms` ≥ 250 ms lub

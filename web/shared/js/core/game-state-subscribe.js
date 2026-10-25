@@ -20,6 +20,7 @@ import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18561";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18561";
 import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18561";
 import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T18561";
+import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T18561";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
@@ -46,6 +47,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let hiddenAt = document.visibilityState === "hidden" ? performance.now() : null;
   let lastRenderedRev = -1;
   let sync;
+  const fallbackRevisionTracker = createFallbackRevisionTracker();
   // Pomiar łącza w trakcie gry (migracja 466): tylko start, spowolnienie
   // i powrót do normy; zapis jak diagnostyka — nigdy nie blokuje gry.
   const network = createNetworkMonitor({
@@ -73,6 +75,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function sendDiagnostic(eventType, phase, transport, metrics = {}) {
     if (!active || !sessionStarted) return;
     log({ event_type: eventType, phase, transport, client_time_ms: Date.now(), ...transportContext(), ...metrics });
+  }
+  function noteDirectRevision(revision) {
+    for (const metrics of fallbackRevisionTracker.noteDirect(revision)) {
+      sendDiagnostic("state_sync", "direct_after_fallback", "postgres_changes", metrics);
+    }
   }
   function noteReadStatus(result) {
     if (!sessionStarted) return;
@@ -212,8 +219,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     getReceivedRev: () => sync.receivedRev,
     isDirectConnected: () => active && directConnected,
     fetchNow: () => { if (active) void fetchGuarded(directConnected ? "rpc_doorbell" : "rpc_broadcast"); },
-    onMissed: (metrics) => sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", { trigger: "doorbell", ...metrics }),
-    onLate: (metrics) => sendDiagnostic("state_sync", "direct_after_fallback", "postgres_changes", metrics),
+    onMissed: (metrics) => {
+      fallbackRevisionTracker.noteFallback(metrics.latest_revision, "doorbell");
+      sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", { trigger: "doorbell", ...metrics });
+    },
     onStale: () => { if (!active) return; noteDirectFailure("STALE"); resync(); },
   });
   function subscribeDoorbell() {
@@ -330,7 +339,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         const row = payload?.new;
         const rev = Number(row?.rev);
         if (row && Number.isFinite(rev)) {
-          doorbell.observeRevision(rev);
+          noteDirectRevision(rev);
           sync.applyRow({ ...row, rev }, "postgres_changes");
         }
         else if (payload?.eventType === "DELETE") fetchGuarded("rpc_delete_recovery");
@@ -483,6 +492,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!active) return;
     active = false;
     doorbell.stop();
+    fallbackRevisionTracker.clear();
     sessionStarted = false;
     network.stop();
     directIncidentAt = null;
@@ -522,6 +532,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (behindRevision == null || revision < behindRevision) { behindRevision = revision; return; }
     const missed = revision - Math.max(0, sync.receivedRev);
     behindRevision = null;
+    fallbackRevisionTracker.noteFallback(revision, "lease_heartbeat");
     sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
       trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
     });
