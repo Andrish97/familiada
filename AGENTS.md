@@ -22,6 +22,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   Podział tłumaczeń na części (E27): `docs/tlumaczenia-podzial-plan.md`.
   Sprzątanie bazy (audyt 2026-10-23, do decyzji): `docs/audyt-sprzatania-bazy.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
+  Lead Finder 2 (nowy system bez odwiedzania stron): `docs/lead-finder-nowy-plan.md`.
 - **Kompletna mapa stron i nawigacji (decyzja 2026-10-17):** dodanie,
   usunięcie, zmiana adresu albo zachowania dowolnej strony wymaga równoczesnej
   aktualizacji centralnej mapy nawigacji `web/shared/js/core/nav-map.js`

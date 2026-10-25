@@ -22,6 +22,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   Podział tłumaczeń na części (E27): `docs/tlumaczenia-podzial-plan.md`.
   Sprzątanie bazy (audyt 2026-10-23, do decyzji): `docs/audyt-sprzatania-bazy.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
+  Lead Finder 2 (nowy system bez odwiedzania stron): `docs/lead-finder-nowy-plan.md`.
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
 
