@@ -2,7 +2,7 @@ const { test, expect } = require('./helpers/e2e-test');
 const { serveBranchCode } = require('./helpers/branch-code');
 test.use({ serviceWorkers: 'block', needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE === '1') await serveBranchCode(context, { pages: ['login', 'games', 'games/settings'] });
+  if (process.env.TEST_BRANCH_CODE === '1') await serveBranchCode(context, { pages: ['games', 'games/settings'] });
 });
 
 test('ikony stanu: oko zmienia części i typ hasła bez wymiany SVG lub zmiany rozmiaru', async ({ page }) => {

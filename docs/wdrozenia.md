@@ -2245,3 +2245,11 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Przywrócenie stopki ma produkcyjny **40238851673 ✓ 4/4**; odczyt CSS:
   oryginalne 1.45em, bez powiększenia Kontaktu. To ostateczny wariant;
   nie publikować odrzuconej gałęzi feat/compact-coffee.
+
+- Publiczny branch 40240536543: oko i hamburger ✓ 2/2; dwa testy wymagające
+  zalogowania zatrzymane w helperze login przed badanymi akcjami. Przyczyną
+  pages:['login'] dla adresu /login bez slash: lokalny HTML nie zawierał klucza
+  testowej captchy Workera. Usunięto niepotrzebne podstawianie tego HTML;
+  wspólny kod nadal z brancha. Ponawiane wyłącznie dwa nieukończone testy.
+- Prywatny branch CI **40240583138 ✓ 91 unit + 25 browser**, server/check
+  **40240583124 ✓**. Dwa zrzuty selektora 390/1400 obejrzane.
