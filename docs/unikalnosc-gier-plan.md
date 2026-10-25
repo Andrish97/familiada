@@ -148,3 +148,9 @@ realną produkcję przez numeryczne db-read; inni użytkownicy nadal bez dostęp
 Przed publikacją: numer 486 zajął niezależny etap Wyświetlacza na main.
 Niewdrożone pliki tego etapu przenumerowano na 487 (model danych) i 488
 (blokada treści); wcześniejsze wpisy dziennika używają numeracji roboczej.
+
+Capacity READ ONLY 40192840935 ✓: 4 CPU, 8 326 938 624 B RAM,
+5 765 394 432 B dostępne, swap 4 294 963 200 B, dysk wolny
+78 116 810 752 B. Lokalny model z limitem 1 CPU/1 GiB ma zapas;
+przed instalacją uwzględnić bieżące obciążenie i zasady prywatnego repo.
+Pierwszy etap 487 opublikowany 64207656a; oczekiwanie na log migracji.
