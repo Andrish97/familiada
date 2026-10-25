@@ -19,7 +19,7 @@ test("dzwonek: brak rewizji po grace uruchamia awaryjne pobranie", () => {
   guard.ring(4);
   timerCallback();
   assert.equal(fetches, 1);
-  assert.deepEqual(missed, [{ latest_revision: 4, missed_revisions: 1, grace_ms: 100 }]);
+  assert.deepEqual(missed, [{ latest_revision: 4, missed_revisions: 1, grace_ms: 400 }]);
   guard.stop();
 });
 

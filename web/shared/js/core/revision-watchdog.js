@@ -1,9 +1,10 @@
 // Gdy heartbeat potwierdza nowszą rewizję niż kanał Realtime, daj kanałowi
-// krótką chwilę na dostarczenie wiersza. Nie czekaj na następny heartbeat
-// (3 s): po grace okresie pobierz stan i odbuduj kanał.
+// do 700 ms na dostarczenie wiersza. Nie czekaj na następny heartbeat (3 s):
+// po tym oknie pobierz stan i odbuduj kanał. Krótszy próg 250 ms powodował
+// fałszywe odbudowy przy zmierzonym opóźnieniu Postgres Changes 180–350 ms.
 export function createRevisionWatchdog({
   getReceivedRev,
-  graceMs = 250,
+  graceMs = 700,
   onMissed = () => {},
   setTimer = setTimeout,
   clearTimer = clearTimeout,
@@ -34,6 +35,7 @@ export function createRevisionWatchdog({
       onMissed({
         latest_revision: missedRevision,
         missed_revisions: missedRevision - Math.max(0, getReceivedRev()),
+        grace_ms: graceMs,
       });
     }, graceMs);
   }

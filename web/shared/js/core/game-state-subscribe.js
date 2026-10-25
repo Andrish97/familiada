@@ -13,18 +13,18 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T22553";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T22553";
-import { rt } from "./realtime.js?v=v2026-10-25T22553";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T22553";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T22553";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T23450";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T23450";
+import { rt } from "./realtime.js?v=v2026-10-25T23450";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T23450";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T23450";
 import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./direct-channel-ready.js?v=v2026-10-25T23350";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T22553";
-import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T22553";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T22553";
-import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-25T22553";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T23450";
+import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T23450";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T23450";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-25T23450";
 
-const HEARTBEAT_REV_GRACE_MS = 250;
+const HEARTBEAT_REV_GRACE_MS = 700;
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
@@ -64,7 +64,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
         trigger: "lease_heartbeat", latest_revision, missed_revisions, grace_ms: HEARTBEAT_REV_GRACE_MS,
       });
-      // Heartbeat potwierdził nowszy stan. Jeśli 250 ms później kanał nadal
+      // Heartbeat potwierdził nowszy stan. Jeśli 700 ms później kanał nadal
       // go nie dostarczył, pobierz stan i odbuduj cichy lub stary kanał.
       if (directConnected) {
         noteDirectFailure("STALE");

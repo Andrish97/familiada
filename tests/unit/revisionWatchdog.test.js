@@ -5,11 +5,13 @@ import { createRevisionWatchdog } from "../../web/shared/js/core/revision-watchd
 function createTimerHarness() {
   let callback = null;
   let cleared = 0;
+  let delay = null;
   return {
-    setTimer(fn) { callback = fn; return 1; },
+    setTimer(fn, ms) { callback = fn; delay = ms; return 1; },
     clearTimer() { cleared++; callback = null; },
     fire() { const fn = callback; callback = null; fn?.(); },
     cleared: () => cleared,
+    delay: () => delay,
   };
 }
 
@@ -46,8 +48,9 @@ test("heartbeat watchdog: nadrabia po krótkim grace zamiast czekać na kolejny 
   watchdog.noteServerRevision(6);
   watchdog.noteServerRevision(7);
   assert.deepEqual(missed, []);
+  assert.equal(timer.delay(), 700);
   timer.fire();
-  assert.deepEqual(missed, [{ latest_revision: 7, missed_revisions: 2 }]);
+  assert.deepEqual(missed, [{ latest_revision: 7, missed_revisions: 2, grace_ms: 700 }]);
 });
 
 test("heartbeat watchdog: starszy odczyt heartbeat nie kasuje nowszej oczekującej rewizji", () => {
@@ -64,5 +67,5 @@ test("heartbeat watchdog: starszy odczyt heartbeat nie kasuje nowszej oczekując
   watchdog.noteServerRevision(7);
   watchdog.noteServerRevision(6);
   timer.fire();
-  assert.deepEqual(missed, [{ latest_revision: 7, missed_revisions: 2 }]);
+  assert.deepEqual(missed, [{ latest_revision: 7, missed_revisions: 2, grace_ms: 700 }]);
 });
