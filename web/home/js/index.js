@@ -1,13 +1,13 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-25T06371";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T06371";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06371";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T06371";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-25T06371";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06371";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06371";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06371";
-import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T06371";
-import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-25T06371";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-25T06390";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T06390";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06390";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T06390";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-25T06390";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06390";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06390";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06390";
+import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T06390";
+import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-25T06390";
 
 
 async function redirectIfSession() {
