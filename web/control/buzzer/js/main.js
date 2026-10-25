@@ -125,7 +125,16 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
+    beforeResync: () => lease.refresh(),
     log: lease.log,
+    // Potwierdzenie Wyświetlacza prosto z tabeli potwierdzeń (RLS dla
+    // urządzeń, migracja 376): Przycisk sprawdza gotowość od razu, bez
+    // czekania na zmianę całego wiersza game_state (badanie 25.10).
+    onDirectTables: {
+      game_state_display_completion: ({ status }) => {
+        if (status === "CHANGE" || status === "SUBSCRIBED") void checkDisplayReady();
+      },
+    },
     // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
     // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until

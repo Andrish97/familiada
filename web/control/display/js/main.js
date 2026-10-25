@@ -477,6 +477,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       deviceType: "display",
       key,
       getLeaseArgs: () => lease.actionArgs(),
+      beforeResync: () => lease.refresh(),
       log: lease.log,
       onRow: async (row) => {
         lease.setProgress({ receivedRev: Number(row.rev) || 0 });

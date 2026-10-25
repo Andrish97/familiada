@@ -140,3 +140,40 @@ test("dziennik sesji urządzenia: start instancji głównej, parametry lease i c
   assert.equal(sink.events.at(-1).event_type, "runtime_error");
   lease.stop();
 });
+
+test("refresh() po powrocie karty czeka na heartbeat w toku i zwraca nową rolę (bez drugiego żądania)", async () => {
+  const calls = [];
+  let release;
+  let response = { mode: "lease", state: "primary", epoch: 1 };
+  const client = {
+    rpc(name) {
+      calls.push(name);
+      return { abortSignal: async () => {
+        if (name === "control_device_instance_heartbeat") await new Promise(resolve => { release = resolve; });
+        return { data: response, error: null };
+      } };
+    },
+  };
+  const context = {
+    sb: () => client, t: key => key,
+    document: { visibilityState: "visible", hasFocus: () => true, addEventListener() {}, removeEventListener() {}, getElementById: () => null },
+    window: { addEventListener() {}, removeEventListener() {} },
+    crypto: { randomUUID: () => "connection-r" }, AbortSignal,
+    getDevicePresenceMeta: () => ({}), startTicker: () => () => {}, ...sessionLogStubs(), navigator: { onLine: true },
+  };
+  const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
+  const lease = create({ gameId: "game", deviceType: "buzzer", key: "key" });
+  await lease.start();
+  lease.setMeta({});
+  await new Promise(resolve => setImmediate(resolve));
+  response = { mode: "lease", state: "waiting", epoch: null };
+  let settled = null;
+  const refreshed = lease.refresh().then(state => { settled = state; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, null, "czeka na heartbeat w toku");
+  release();
+  await refreshed;
+  assert.equal(settled, "waiting");
+  assert.deepEqual(calls, ["control_device_instance_register", "control_device_instance_heartbeat"]);
+  lease.stop();
+});

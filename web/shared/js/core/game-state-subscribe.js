@@ -22,7 +22,7 @@ import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-re
 import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T08394";
 
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
   let pollTimer = null;
   let directChannel = null;
@@ -432,8 +432,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     // Karta mogła zostać zamrożona przez przeglądarkę. Po powrocie na ekran
     // odbuduj kanał i pobierz stan, bo sam status WebSocketu może być nieaktualny.
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("pageshow", resync);
-    window.addEventListener("online", resync);
+    window.addEventListener("pageshow", resyncAfterLease);
+    window.addEventListener("online", resyncAfterLease);
     // Siatka bezpieczeństwa na zgubiony dzwonek. Działa tylko, gdy kanał
     // bezpośredni leży — co 1,5 s, bo przy 5 s Wyświetlacz dostał START_ROUND
     // z 4,4 s opóźnieniem po CHANNEL_ERROR (test produkcyjny 2026-10-22).
@@ -452,7 +452,15 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directIncident.hiddenDurationMs += Math.max(0, Math.round(performance.now() - Math.max(hiddenAt, directIncident.startedAt)));
     }
     hiddenAt = null;
-    resync();
+    resyncAfterLease();
+  }
+  // Po powrocie karty najpierw potwierdzenie roli (lease może mieć nową
+  // epokę albo przejść w oczekiwanie — wtedy właściciel subskrypcji ją
+  // zatrzyma lub uruchomi od nowa), dopiero potem odczyt i kanał.
+  function resyncAfterLease() {
+    if (!active) return;
+    if (!beforeResync) { resync(); return; }
+    void Promise.resolve().then(beforeResync).catch(() => {}).then(() => { if (active) resync(); });
   }
 
   function stop() {
@@ -469,8 +477,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = null;
     document.removeEventListener("visibilitychange", onVisibility);
-    window.removeEventListener("pageshow", resync);
-    window.removeEventListener("online", resync);
+    window.removeEventListener("pageshow", resyncAfterLease);
+    window.removeEventListener("online", resyncAfterLease);
     rt(doorbellTopic(gameId)).reset();
     void stopDirect();
   }
