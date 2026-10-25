@@ -15,7 +15,12 @@ test("display themes: switching preserves all six panels; gaps orbit and reduced
   await expect(page.locator("#gameScreen")).toBeVisible();
   // Exercise the real scene API: theme.set snapshots and restores the pixels.
   await page.evaluate(async () => {
-    const { createScene } = await import("/control/display/js/scene.js");
+    // Use the same version as the running page. Importing the bare URL can
+    // retrieve a cached module from before deployment and mix dependency graphs.
+    const mainScript = [...document.scripts].find(script => new URL(script.src, location.href).pathname === "/control/display/js/main.js");
+    if (!mainScript) throw new Error("Missing Display entry module");
+    const version = new URL(mainScript.src).search;
+    const { createScene } = await import("/control/display/js/scene.js" + version);
     const scene = await createScene();
     window.__themeScene = scene;
     scene.api.big.put(1, 1, "A");

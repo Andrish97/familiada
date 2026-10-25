@@ -30,3 +30,8 @@ zapis wszystkich motywów, własnego tła i kolorów drużyn; scena Display.
 Po testach dopisane wersje URL rejestru motywów (zgodne z istniejącym Host).
 Zrzuty 6 motywów 1400 px oraz ustawień 390/1440 px, PL/EN/UK.
 Wdrożenie według bramek z `AGENTS.md`.
+
+Pages 40246463317 success. Produkcyjny zapis ustawień w 40246531710 success;
+Display przerwany na inicjalizacji testu przez nawigację. Test importował
+niewersjonowany scene.js obok wersjonowanego grafu strony. Poprawiony import
+używa wersji entrypointu; do powtórzenia wyłącznie Display.
