@@ -1267,6 +1267,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       const socketProbe = await displayPage.evaluate(() => ({
         observer_attached: window.__sbDeviceRealtimeCloseObserverAttached,
         app_close: window.__sbDeviceRealtimeLastClose || null,
+        close_decision: window.__sbDeviceRealtimeLastCloseDecision || null,
         connection_state: window.__sbDeviceRealtime?.realtime?.connectionState?.() || null,
       })).catch(() => null);
       const allDeviceTransportEvents = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];

@@ -97,8 +97,18 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
   // Zapis przez dziennik sesji urządzenia (session-log.js, control2_device_log).
   function sendDiagnostic(eventType, phase, transport, metrics = {}) {
-    if (!active || !sessionStarted) return;
+    const allowed = active && sessionStarted;
+    if (eventType === "transport_state" && phase === "socket_closed") {
+      globalThis.__sbDeviceRealtimeLastCloseDecision = {
+        active, session_started: sessionStarted, allowed,
+        direct_status: directStatus, direct_connected: directConnected,
+        incident_open: directIncidentAt != null,
+        lease_present: !!getLeaseArgs()?.p_connection_id && Number.isFinite(getLeaseArgs()?.p_epoch),
+      };
+    }
+    if (!allowed) return false;
     log({ event_type: eventType, phase, transport, client_time_ms: Date.now(), ...transportContext(), ...metrics });
+    return true;
   }
   function noteDirectRevision(revision) {
     for (const metrics of fallbackRevisionTracker.noteDirect(revision)) {
