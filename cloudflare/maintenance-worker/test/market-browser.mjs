@@ -22,7 +22,7 @@ const out=process.env.MARKET_SCREEN_DIR;
 if(out)fs.mkdirSync(out,{recursive:true});
 let checks=0;
 try{
- for(const lang of ['pl','en','uk'])for(const width of [390,1400])for(const js of [false,true]){
+ for(const lang of ['pl','en','uk','browser-en'])for(const width of [390,1400])for(const js of [false,true]){
   const context=await browser.newContext({viewport:{width,height:900},isMobile:width===390,hasTouch:width===390,javaScriptEnabled:js,serviceWorkers:'block'});
   context.setDefaultTimeout(12000);context.setDefaultNavigationTimeout(20000);
   const errors=[];let publicCalls=0,blocked=true;
@@ -47,7 +47,9 @@ try{
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   try{
    console.log(`START ${lang}/${width}/${js}`);
-   await page.goto(`https://www.familiada.online/marketplace/game/${row.slug}?lang=${lang}`,{waitUntil:'domcontentloaded'});
+   const uiLang=lang==='browser-en'?'en':lang;
+   if(lang==='browser-en')await context.addInitScript(()=>localStorage.setItem('uiLang','en'));
+   await page.goto(`https://www.familiada.online/marketplace/game/${row.slug}${lang==='browser-en'?'':`?lang=${lang}`}`,{waitUntil:'domcontentloaded'});
    const question=await page.locator('#detailQuestions .q-preview-text').first().elementHandle();assert.ok(question);
    await page.locator('#gameDetailOverlay').waitFor({state:'visible'});
    assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),'https://www.familiada.online/marketplace/game/'+row.slug);
@@ -58,7 +60,7 @@ try{
     if(width===390)await page.locator('#gameDetailOverlay .sheet-handle').click();else await page.locator('#btnDetailClose').click();
     await page.locator('#gameDetailOverlay').waitFor({state:'hidden'});
     assert.equal(new URL(page.url()).pathname,'/marketplace/');
-    assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),'https://www.familiada.online/marketplace'+(lang==='pl'?'':'?lang='+lang));
+    assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),'https://www.familiada.online/marketplace'+(uiLang==='pl'?'':'?lang='+uiLang));
     blocked=false;
     await page.locator('#browseGrid a.mkt-card').first().click();
     await page.locator('#gameDetailOverlay[data-detail-state=ready]').waitFor({state:'visible'});

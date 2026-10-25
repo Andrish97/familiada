@@ -245,12 +245,24 @@ test("konto: dodanie jest atomowe i idempotentne, kopia ma poprawny typ i zawart
 
 test("konto: ocenę można zmienić, a UI i baza pokazują nową wartość", async ({ page, context, accounts, loginAs }) => {
   await loginAs(page, context, accounts.standard[0]);
+  // HTML SSR z opublikowanego Workera, pozostałe zasoby nadal z brancha.
+  // Wcześnie widoczne karty pozwalają otworzyć grę przed końcem danych konta.
+  await page.route(/^https:\/\/www\.familiada\.online\/marketplace(?:[/?]|$)/, route =>
+    route.request().resourceType() === "document" ? route.continue() : route.fallback());
+  let releaseLibrary;
+  const libraryGate = new Promise(resolve => { releaseLibrary = resolve; });
+  await page.route("**/rest/v1/rpc/market_my_library", async route => {
+    await libraryGate;
+    await route.continue();
+  });
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   await cleanup(page);
   const game = await publishedGame(page);
 
   try {
     await page.locator(`#browseGrid .mkt-card[data-id="${game.id}"]`).click();
+    await expect(page.locator('.mkt-star-btn[data-stars="2"]')).toBeVisible();
+    releaseLibrary();
     await page.locator('.mkt-star-btn[data-stars="2"]').click();
     await expect(page.locator('.mkt-star-btn[data-stars="2"]')).toHaveAttribute("aria-pressed", "true");
     await page.locator('.mkt-star-btn[data-stars="4"]').click();
@@ -263,6 +275,7 @@ test("konto: ocenę można zmienić, a UI i baza pokazują nową wartość", asy
     }, game.id);
     expect(stars).toBe(4);
   } finally {
+    releaseLibrary();
     await cleanup(page);
   }
 });

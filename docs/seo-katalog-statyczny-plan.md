@@ -504,3 +504,17 @@ ocena, zgłoszenie i prywatny podgląd). Integracja 38f4c2bd8; późniejszy
 main zmienił w plikach katalogu wyłącznie wersje zasobów. Po scaleniu
 z d9835ea83 powiązane unity 42/42, bez powtarzania zielonego E2E brancha.
 Kolejny krok: publikacja Pages i Workera, kontrola rzeczywistego main.
+
+Publikacja 805b3a809: Pages 40173140276 ✓, Worker 40173140243 ✓.
+Produkcja: 16 odczytów HTTP ✓ (oba UA identyczne, 3 języki, canonicale,
+HEAD/404, prywatny preview noindex; sitemap 162 URL = m.in. 90 gier i 63
+Wskazówki). Kontrola main 40173217637: 3/3 pierwsze ✓, ocena ✗, zgłoszenie
+nieuruchomione przez serial. Rzeczywisty SSR umożliwił klik przed końcem
+odczytu biblioteki; późniejszy odczyt danych konta przerysował kontrolki
+oceny w trakcie zapisu. Poprawka ogranicza ten odczyt do przejętego obiektu
+SSR, chroni tożsamość i rewizję widoku. E2E oceny korzysta z produkcyjnego
+HTML i zasobów brancha, z kontrolowanym opóźnieniem biblioteki.
+Dodatkowo przejęcie gotowej gry nie zależy od zgodności języka SSR z
+preferencją przeglądarki; lokalizowane punkty bez odłączania pytań.
+Regresja przeglądarkowa rozszerzona do 16/16 (w tym angielska preferencja
+przy domyślnym polskim HTML i odciętym API przeglądarki).

@@ -46,7 +46,7 @@ export function cardHtml(g,t,lang) {
 export function questionsHtml(g,t) {
   return (g.payload?.questions || []).map((q,i) => `<section class="q-preview-item">
     <h2 class="q-preview-text">${i+1}. ${esc(q.text)}</h2><ol class="q-preview-answers">
-    ${sortAnswersByPoints(q.answers).map((a) => `<li>${esc(a.text)} <span class="q-preview-pts">(${esc(t("marketplace.detail.points",{count:a.fixed_points ?? 0}))})</span></li>`).join("")}</ol></section>`).join("");
+    ${sortAnswersByPoints(q.answers).map((a) => `<li>${esc(a.text)} <span class="q-preview-pts" data-points="${esc(a.fixed_points ?? 0)}">(${esc(t("marketplace.detail.points",{count:a.fixed_points ?? 0}))})</span></li>`).join("")}</ol></section>`).join("");
 }
 export function selectRows(rows,{search="",filter="all",sort="recommended",lang="pl"}={}) {
   const query=search.trim().toLocaleLowerCase();

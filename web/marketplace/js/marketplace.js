@@ -372,7 +372,7 @@ function renderDetail(g, { preserveQuestions = false } = {}) {
   const detailRaters = els.detailRaters;
   if (els.detailTitle) els.detailTitle.textContent = g.title;
   if (els.detailMeta) {
-    const isProducer = g.origin === "producer" || !g.author_username;
+    const isProducer = g.origin === "producer";
     if (isProducer) {
       els.detailMeta.innerHTML = `${esc(g.lang.toUpperCase())} · <span class="tag tag--gold mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`;
     } else {
@@ -386,6 +386,10 @@ function renderDetail(g, { preserveQuestions = false } = {}) {
     els.detailQuestions.lang = g.lang;
     els.detailQuestions.innerHTML = questionsHtml(g, t) || emptyStateHtml(t("marketplace.detail.noQuestions"), { tag: "p" });
   }
+
+  if (preserveQuestions) els.detailQuestions?.querySelectorAll("[data-points]").forEach(el => {
+    el.textContent = `(${t("marketplace.detail.points", { count: Number(el.dataset.points) })})`;
+  });
 
   // Rating display + input
   if (detailRating) {
@@ -937,11 +941,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
   // Zgodny odcisk przejmujemy bez ponownego odczytu i czyszczenia pytań.
-  const bootGame = initialPublic?.lang === getUiLang() ? initialPublic.game : null;
+  const bootGame = initialPublic?.game;
   if (bootGame) {
     detailGame = bootGame;
     detailGameId = bootGame.id;
     openDialog(els.gameDetailOverlay, { onClose: closeDetail, restore: true });
+    renderDetail(bootGame, { preserveQuestions: true });
     syncMarketSeo(getUiLang(), t, bootGame);
   } else {
     const params = new URL(location.href).searchParams;
@@ -960,12 +965,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   isGuest = !currentUser || isGuestUser(currentUser);
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
   if (currentUser) {
+    // Szczegóły otwarte przez użytkownika mają już odpowiedź jego RPC.
+    // Po auth uzupełnij kontrolki, bez drugiego odczytu nadpisującego ocenę.
+    if (detailGame && detailGame !== bootGame) renderDetail(detailGame, { preserveQuestions: true });
     const { data } = await sb().rpc("market_my_library");
     for (const row of data || []) refreshCardInLibrary(row.market_game_id, true);
     const id = detailGameId;
-    if (id) {
+    if (bootGame && detailGame === bootGame && id === bootGame.id) {
+      const requestId = detailRequest;
       const { data: personal } = await sb().rpc("market_game_detail", { p_id: id }).single();
-      if (personal && detailGameId === id) { detailGame = personal; renderDetail(personal, { preserveQuestions: true }); }
+      if (personal && detailGame === bootGame && detailGameId === id && detailRequest === requestId) { detailGame = personal; renderDetail(personal, { preserveQuestions: true }); }
     }
   }
 
