@@ -3,15 +3,15 @@
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
 // zaznaczenia przełącza tylko klasy (renderSelection), bez przebudowy.
 
-import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-25T20450";
-import { computeListing } from "./data/listing.js?v=v2026-10-25T20450";
-import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-25T20450";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T20450";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-25T20450";
-import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-25T20450";
-import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-25T20450";
-import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-25T20450";
-import { setWidth, widthAttr } from "../../../shared/js/core/geometry.js?v=v2026-10-25T20450";
+import { TYPE_DEFS, isTrash, currentFolderId, hasQuery } from "./state.js?v=v2026-10-25T20493";
+import { computeListing } from "./data/listing.js?v=v2026-10-25T20493";
+import { SUGGESTED_TYPES } from "./data/derived.js?v=v2026-10-25T20493";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T20493";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-25T20493";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-25T20493";
+import { treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./ui/tree-row.js?v=v2026-10-25T20493";
+import { emptyStateHtml } from "../../../shared/js/core/empty-state.js?v=v2026-10-25T20493";
+import { setWidth, widthAttr } from "../../../shared/js/core/geometry.js?v=v2026-10-25T20493";
 
 /* ================= DOM ================= */
 const elToolbar = document.getElementById("toolbar");
