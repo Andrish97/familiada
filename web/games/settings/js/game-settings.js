@@ -14,6 +14,7 @@ import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T22074";
 import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-25T22074";
 import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-25T22074";
+import { chooseDisplayTheme } from "../../../shared/js/display/theme-config.js?v=v2026-10-25T22074";
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-25T22074";
 import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-25T22074";
 
@@ -665,11 +666,23 @@ function renderDisplay() {
     postPreviewRow();
   }));
 
+  const syncBackgroundSwatch = (key) => {
+    const swatch = content.querySelector('.swatchBtn[data-color-key="BACKGROUND"]');
+    const unused = themeRaw.find(entry => entry.key === key)?.usesBackground === false;
+    swatch.disabled = unused;
+    swatch.title = unused ? t("gameSettings.display.backgroundUnused") : colorLabels.BACKGROUND;
+    swatch.style.setProperty("--c", localSettings.display.colors.BACKGROUND);
+  };
+  syncBackgroundSwatch(effectiveTheme);
+
   initUiSelect(document.getElementById("gsThemeSelect"), {
     options: themeList.map(th => ({ value: th.key, label: th.label })),
     value: effectiveTheme,
     onChange: (val) => {
-      localSettings.display.theme = val || null;
+      const next = chooseDisplayTheme(localSettings.display, themeRaw.find(entry => entry.key === val), themeList[0]?.key);
+      if (next === localSettings.display) return;
+      localSettings.display = next;
+      syncBackgroundSwatch(val);
       markDirty();
       postPreviewRow();
     },

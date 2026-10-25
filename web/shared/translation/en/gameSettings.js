@@ -42,6 +42,7 @@ const en = {
       defaultHint: "If you don't enter team names, the default values will be shown: {a} and {b}",
     },
     display: {
+      backgroundUnused: "This theme uses team colors and does not use the background color.",
       logo: "Logo",
       logoDefault: "Default",
       logoLoading: "Loading logo…",

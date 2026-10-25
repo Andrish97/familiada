@@ -7,14 +7,14 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 ## Motywy wyświetlacza — 2026-10-25
 
-Na branchu: trzy nowe motywy oraz przerwy obiegające paski Modern.
-Pierwszą animację z falowaniem odrzucono po doprecyzowaniu użytkownika.
-Wzorzec ruchu: nagranie finału TVP z nowego studia 2025; podgląd animowany
-przygotowany lokalnie. Test Chromium przełączania sześciu paneli i ograniczonego
-ruchu: 1/1; testy jednostkowe wyświetlacza: 17/17.
-Zrzuty: Modern, Neon, Studio, Złoty (1400 px), ustawienia (390/1400 px).
-Decyzje i zakres: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
-Branch: `codex/display-themes-modern-motion`.
+Użytkownik zaakceptował podgląd v7 i zlecił wdrożenie. Na branchu
+`codex/display-themes-modern-motion`: Skrzydła, Radar, Kaseton, Wstęga,
+Most oraz szczeliny Modern wychodzące spod górnego licznika symetrycznie w dół.
+Kontrolki w konstrukcji; domyślne tło opcjonalne, kolory A/B zachowane.
+Pierwsze propozycje Neon/Studio/Złoty odrzucone i usunięte.
+Test Chromium geometrii sześciu paneli, animacji i koloru kontrolek: 1/1.
+Unit punktowo: 43/43. Zrzuty wszystkich motywów i ustawień 390/1400 px.
+W toku bramka E2E przed Pages. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
 
 ## Zasady
 

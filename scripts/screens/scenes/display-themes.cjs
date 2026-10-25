@@ -1,5 +1,5 @@
 const { IDS } = require("../data/demo.cjs");
-const themes = ["modern", "neon", "studio", "gold"];
+const themes = ["modern", "wings", "radar", "cabinet", "ribbon", "bridge"];
 
 module.exports = themes.flatMap((theme) => [
   {
@@ -11,6 +11,8 @@ module.exports = themes.flatMap((theme) => [
       const { buildGameState } = await import("../data/game-state.mjs");
       const row = buildGameState(lang, "round");
       row.detail.display.theme = theme;
+      const registry = require("../../../web/shared/data/display-themes.json");
+      row.detail.display.colors.BACKGROUND = registry.themes.find(e => e.key === theme)?.defaultBackground || row.detail.display.colors.BACKGROUND;
       await view.waitForTimeout(1200);
       await view.evaluate(row => window.postMessage({ type: "familiada:preview-row", row }, "*"), row);
       await view.waitForSelector(`#baseSvg[data-display-theme="${theme}"]`);
@@ -25,13 +27,16 @@ module.exports = themes.flatMap((theme) => [
     ready: "#gsContentInner",
     db: db => {
       const game = db.tables.games.find(g => g.id === IDS.game);
-      game.settings.display = { ...game.settings.display, theme };
+      const registry = require("../../../web/shared/data/display-themes.json");
+      const bg = registry.themes.find(e => e.key === theme)?.defaultBackground;
+      game.settings.display = { ...game.settings.display, theme, colors: { ...game.settings.display?.colors, ...(bg ? { BACKGROUND: bg } : {}) } };
     },
-    steps: [async view => {
+    steps: [async (view, { page }) => {
       const toggle = view.locator("#gsSidebarToggle");
       if (await toggle.isVisible()) await toggle.click();
       await view.locator('.gs-sidebar-item[data-cat="display"]').click();
       await view.locator("#gsThemeSelect .ui-select-btn").click();
+      await page.mouse.move(5, 5);
     }],
   },
 ]);

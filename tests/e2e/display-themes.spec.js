@@ -28,7 +28,7 @@ test("display themes: switching preserves all six panels; gaps orbit and reduced
     scene.api.indicator.set("ON_B");
     window.__themePixels = scene.api.snapshotAll();
   });
-  for (const name of ["modern", "neon", "studio", "gold", "classic", "modern"]) {
+  for (const name of ["modern", "wings", "radar", "cabinet", "ribbon", "bridge", "classic", "modern"]) {
     const result = await page.evaluate(name => {
       const { api, themeMgr } = window.__themeScene;
       api.theme.set(name);
@@ -40,13 +40,23 @@ test("display themes: switching preserves all six panels; gaps orbit and reduced
     }, name);
     expect(result).toEqual({ active: name, preserved: true, controls: { A: false, B: true } });
   }
-  const stripes = page.locator(".modern-stripe");
-  await expect(stripes).toHaveCount(18);
+  const stripes = page.locator(".modern-slot");
+  await expect(stripes).toHaveCount(4);
+  const paths = await stripes.evaluateAll(els => els.map(el => ({ path: el.getAttribute("d"), length: el.getAttribute("pathLength") })));
+  expect(paths.every(p => p.path.startsWith("M640 ") && p.length === "3000")).toBe(true);
   const before = await stripes.first().evaluate(el => getComputedStyle(el).strokeDashoffset);
   await expect.poll(() => stripes.first().evaluate(el => getComputedStyle(el).strokeDashoffset)).not.toBe(before);
   // Geometry stays fixed: the dash phase changes, with no scale or opacity pulse.
   await expect(stripes.first()).toHaveCSS("transform", "none");
   await expect(stripes.first()).toHaveCSS("opacity", "1");
+  const modernColors = await page.locator('#team stop').evaluateAll(els => els.map(el => el.getAttribute('stop-color')));
+  await page.evaluate(() => window.__themeScene.api.color.set("BG", "#abcdef"));
+  expect(await page.locator('#team stop').evaluateAll(els => els.map(el => el.getAttribute('stop-color')))).toEqual(modernColors);
+  expect(await page.locator('[data-modern-lines]').evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
+  await page.evaluate(() => { const { api } = window.__themeScene; api.theme.set("radar"); api.color.set("A", "#25a56a"); api.indicator.set("ON_A"); });
+  await expect(page.locator('.display-theme-indicator.a')).toHaveCSS("color", "rgb(37, 165, 106)");
+  expect(await page.locator('#baseSvg text').allTextContents()).not.toContain("GRA");
+  await page.evaluate(() => window.__themeScene.api.theme.set("modern"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(stripes.first()).toHaveCSS("animation-name", "none");
   const stopped = await stripes.first().evaluate(el => getComputedStyle(el).strokeDashoffset);

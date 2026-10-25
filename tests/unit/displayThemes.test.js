@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createTheme } from "../../web/shared/js/display/theme_modern.js";
 
 function elements() {
-  return { svg: { innerHTML: "", setAttribute() {}, querySelector: () => null }, bg: { innerHTML: "", style: {} } };
+  return { svg: { innerHTML: "", setAttribute() {}, querySelector: () => null, querySelectorAll: () => [], style: { setProperty() {} }, classList: { toggle() {} } }, bg: { innerHTML: "", style: {} } };
 }
 
 test("all registered themes provide six panels and host factories", async () => {
@@ -62,10 +62,24 @@ test("reduced motion applies the active team color immediately without animation
   try {
     const { svg, bg } = elements();
     const theme = createTheme(svg, bg);
-    const before = bg.style.background;
     theme.updateControls({ A: true });
-    assert.notEqual(bg.style.background, before);
+    assert.equal(theme.getControls().A, true);
     assert.match(svg.innerHTML, /prefers-reduced-motion/);
     theme.destroy();
   } finally { globalThis.matchMedia = previous; }
+});
+
+
+test("explicit theme choice applies only its optional background; same selection preserves custom background", async () => {
+  const { chooseDisplayTheme } = await import("../../web/shared/js/display/theme-config.js");
+  const display = { theme: "classic", logoId: "logo", colors: { A: "#25a56a", B: "#ef8e24", DOT: "#d7ff3d", BACKGROUND: "#123456" } };
+  const chosen = chooseDisplayTheme(display, { key: "wings", defaultBackground: "#152238" });
+  assert.equal(chosen.colors.BACKGROUND, "#152238");
+  assert.equal(chosen.colors.A, display.colors.A);
+  assert.equal(chosen.colors.B, display.colors.B);
+  assert.equal(chosen.logoId, display.logoId);
+  assert.equal(display.colors.BACKGROUND, "#123456");
+  chosen.colors.BACKGROUND = "#987654";
+  assert.equal(chooseDisplayTheme(chosen, { key: "wings", defaultBackground: "#152238" }), chosen);
+  assert.equal(chooseDisplayTheme(chosen, { key: "modern" }).colors.BACKGROUND, "#987654");
 });

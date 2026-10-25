@@ -1,30 +1,28 @@
 # Motywy wyświetlacza
 
-## Decyzje
+## Decyzje — 2026-10-25
 
-- 2026-10-25: użytkownik zlecił dodanie motywów wyświetlacza oraz animacji
-  pasków w Modern, inspirowanych nową Familiadą.
-- Warianty implementacyjne: Neon (ciemny, turkusowe obramowania), Studio
-  (granat, proste ramki), Złoty (ciepłe metaliczne ramki). Klasyczny pozostaje
-  domyślny. Każdy wariant zachowuje kolory drużyn, planszę i sześć paneli.
-- Modern i nowe warianty: poziome pasma mają wędrujące przerwy na
-  zamkniętych torach; obieg `stroke-dashoffset` daje ruch dookoła, bez
-  pulsowania ani skalowania. Ograniczony ruch systemu wyłącza dekoracyjne animacje
-  i płynne przejście koloru. Punktacja i odsłanianie odpowiedzi bez zmian.
-- Wspólny rejestr `display-themes.json` udostępnia wybór w ustawieniach,
-  podglądach i urządzeniach, z etykietami PL/EN/UK. Prowadzący korzysta
-  z czytelnego ciemnego wariantu Modern dla nowych motywów.
+Użytkownik zaakceptował podgląd v7 i polecił wdrożenie.
+
+- Zachowane sześć wyświetlaczy treści, ich rozmiary i geometria kropek.
+- Pięć nowych konstrukcji: Skrzydła, Radar, Kaseton, Wstęga i Most.
+  Kontrolki to odpowiednio paski pod nazwami, pierścienie, listwy,
+  świetlne krawędzie oraz wsporniki. Bez osobnych kontrolek „GRA”.
+- Domyślne tło jest opcjonalną metadaną motywu. Wybór innego motywu
+  ustawia jego domyślne tło, o ile je ma. Wczytanie gry i ponowne wybranie
+  tego samego motywu zachowują zapisany kolor. Kolory A/B i kropek bez zmian.
+- Modern nie używa koloru tła. Jego kolory pochodzą z drużyn; przejęcie
+  kontroli zachowuje płynne przejście. Poziome kreski są nieruchome.
+- Dwie szczeliny w Modern: przebiegi wychodzą spod małego górnego licznika,
+  rozchodzą się symetrycznie w dół. Około trzech kolorowych odcinków
+  na owalu, oddzielonych czernią. Połowa owalu pokonywana w 18 s;
+  wzór powtarza się co 12 s. Ograniczony ruch zatrzymuje dekoracyjne animacje.
+- Klasyczny pozostaje domyślnym motywem. Nowe motywy mają czytelny ciemny
+  wariant Prowadzącego. Wspólny rejestr i etykiety PL/EN/UK.
+- Pierwsze propozycje Neon/Studio/Złoty oraz falowanie poziomych pasków
+  zostały odrzucone i nie są częścią wdrożenia.
 
 ## Stan
 
 Implementacja na `codex/display-themes-modern-motion`; testy i zrzuty w toku.
 Wdrożenie według bramek z `AGENTS.md`.
-
-## Wzorzec ruchu
-
-Doprecyzowanie użytkownika: paski mają przemieszczać swoje przerwy dookoła.
-Pierwszy wariant z falowaniem i refleksami odrzucony. Wzorzec znaleziony
-samodzielnie: finał z nowego studia 2025, „Trzeci finał Beskidek!”,
-https://www.facebook.com/reel/679891908203361/ — ujęcie tablicy około 1:49.
-Porównano kolejne klatki: przesuwają się zakończenia pasm; brak pulsowania.
-Geometria w implementacji jest przybliżeniem tego efektu, nie kopią zasobów TVP.

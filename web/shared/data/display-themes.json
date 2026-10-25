@@ -9,7 +9,9 @@
         "uk": "Класична"
       },
       "module": "./theme_classic.js?v=v2026-10-25T22074",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-25T22074"
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-25T22074",
+      "defaultBackground": "#d21180",
+      "usesBackground": true
     },
     {
       "key": "modern",
@@ -19,37 +21,68 @@
         "uk": "Сучасна"
       },
       "module": "./theme_modern.js?v=v2026-10-25T22074",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074"
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": false
     },
     {
-      "key": "neon",
+      "key": "wings",
       "label": {
-        "pl": "Neon",
-        "en": "Neon",
-        "uk": "Неон"
+        "pl": "Skrzydła",
+        "en": "Wings",
+        "uk": "Крила"
       },
-      "module": "./theme_neon.js?v=v2026-10-25T22074",
-      "hostModule": "/control/host/js/themes/neon.js?v=v2026-10-25T22074"
+      "module": "./theme_wings.js?v=v2026-10-25T22074",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": true,
+      "defaultBackground": "#152238"
     },
     {
-      "key": "studio",
+      "key": "radar",
       "label": {
-        "pl": "Studio",
-        "en": "Studio",
-        "uk": "Студія"
+        "pl": "Radar",
+        "en": "Radar",
+        "uk": "Радар"
       },
-      "module": "./theme_studio.js?v=v2026-10-25T22074",
-      "hostModule": "/control/host/js/themes/studio.js?v=v2026-10-25T22074"
+      "module": "./theme_radar.js?v=v2026-10-25T22074",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": true,
+      "defaultBackground": "#103d43"
     },
     {
-      "key": "gold",
+      "key": "cabinet",
       "label": {
-        "pl": "Złoty",
-        "en": "Gold",
-        "uk": "Золота"
+        "pl": "Kaseton",
+        "en": "Cabinet",
+        "uk": "Панель"
       },
-      "module": "./theme_gold.js?v=v2026-10-25T22074",
-      "hostModule": "/control/host/js/themes/gold.js?v=v2026-10-25T22074"
+      "module": "./theme_cabinet.js?v=v2026-10-25T22074",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": true,
+      "defaultBackground": "#352719"
+    },
+    {
+      "key": "ribbon",
+      "label": {
+        "pl": "Wstęga",
+        "en": "Ribbon",
+        "uk": "Стрічка"
+      },
+      "module": "./theme_ribbon.js?v=v2026-10-25T22074",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": true,
+      "defaultBackground": "#36233f"
+    },
+    {
+      "key": "bridge",
+      "label": {
+        "pl": "Most",
+        "en": "Bridge",
+        "uk": "Міст"
+      },
+      "module": "./theme_bridge.js?v=v2026-10-25T22074",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22074",
+      "usesBackground": true,
+      "defaultBackground": "#252e35"
     }
   ]
 }
