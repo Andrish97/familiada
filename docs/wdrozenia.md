@@ -243,7 +243,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   **40228094314 ✓** (`589ceae46c`). Kontrola main w e21 używa rzeczywistych
   plików produkcji; przechwytywanie kodu działa tylko przy TEST_BRANCH_CODE=1
   (zachowanie brancha bez zmian). Ponowny pełny unit **812/812 ✓**.
-  Status: te same dwa testy kontrolnie na produkcji.
+  Produkcja **40228203045 ✓ 2/2** na rzeczywistych plikach opublikowanej strony.
+  Dodatkowo odczyt publicznego słownika potwierdził oba nowe teksty
+  (`v2026-10-25T19524`). Status: **zrobione**.
 
 
 
