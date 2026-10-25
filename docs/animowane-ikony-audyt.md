@@ -2,10 +2,10 @@
 
 ## Decyzje użytkownika
 
-Wspólny silnik ma obsługiwać animowane części SVG. W tej paczce wdrażamy
-hamburger zmieniający się w krzyżyk oraz kawę: filiżanka i spodek stoją,
-para płynnie zmienia kształt fali. Pozostałe zastosowania stanowią kolejkę,
-nie polecenie jednoczesnego animowania całego interfejsu.
+Wspólny silnik obsługuje animowane części SVG: hamburger, parę kawy,
+strzałki rozwijania, oko hasła, zapis ustawień i Powiel. Filiżanka i spodek
+stoją, para płynnie zmienia kształt fali. Dalsze zastosowania mają osobne
+priorytety w tabeli.
 
 Animacja nie zmienia pola ikony, fontu, wymiarów przycisku ani układu.
 Dziedziczy currentColor. Ograniczony ruch wyłącza animację, zachowuje czytelny
@@ -22,10 +22,10 @@ nazwy składane ze stanu nie są liczone. Poniżej miejsca i warunki wdrożenia.
 |---|---|---|---|
 | Wdrożone | Hamburger, wspólny topbar | Trzy kreski → dwie przekątne; odwrócenie po zamknięciu | `topbar-controller.js`, aria-expanded; klik, klawiatura, Escape, zamknięcie przełącznikiem/tłem i nawigacja |
 | Wdrożone | Kawa, wspólna stopka | Dwie krzywe pary zmieniają falę, filiżanka stoi | `support-modal.js`, widoczność SVG/karty i prefers-reduced-motion; rozmiary kaw w oknie statyczne |
-| Wdrożone w bieżącej paczce | Strzałki wspólnych list, konta i Więcej | Obrót grotu przy otwarciu/zamknięciu | `ui-select.js`, `topbar-controller.js`, aria-expanded; stałe wymiary przycisku |
-| Wdrożone w bieżącej paczce | Zapis ustawień gry | Ruch szczeliny podczas pracy, check po sukcesie | `game-settings.js`: aria-busy oraz wynik CAS; nowa edycja usuwa check, błąd go nie pokazuje |
-| Wdrożone w bieżącej paczce | Powiel w Grach, Bazach i Logo | Rozsunięcie kartek na czas oczekiwania | Istniejące aria-busy w `resource-duplicate.js`; koniec ruchu nie udaje sukcesu, wynik opisuje rzeczywista operacja |
-| Wdrożone w bieżącej paczce | Pokaż/ukryj hasło | Tęczówka i rysowane przekreślenie | Wspólne `auth.js` (initPasswordToggles): rzeczywisty type, aria-pressed, jeden zachowany SVG; etykieta PL/EN/UK |
+| Wdrożone | Strzałki wspólnych list, konta i Więcej | Obrót grotu przy otwarciu/zamknięciu | `ui-select.js`, `topbar-controller.js`, aria-expanded; stałe wymiary przycisku |
+| Wdrożone | Zapis ustawień gry | Ruch szczeliny podczas pracy, check po sukcesie | `game-settings.js`: aria-busy oraz wynik CAS; nowa edycja usuwa check, błąd go nie pokazuje |
+| Wdrożone | Powiel w Grach, Bazach i Logo | Rozsunięcie kartek na czas oczekiwania | Istniejące aria-busy w `resource-duplicate.js`; koniec ruchu nie udaje sukcesu, wynik opisuje rzeczywista operacja |
+| Wdrożone | Pokaż/ukryj hasło | Tęczówka i rysowane przekreślenie | Wspólne `auth.js` (initPasswordToggles): rzeczywisty type, aria-pressed, jeden zachowany SVG; etykieta PL/EN/UK |
 | Opcjonalne | Dźwięk i wyciszenie | Fale znikają/pojawiają się | Panel Control i ustawienia; faktyczny stan mute, bez powiązania z czasem audio |
 | Opcjonalne | Foldery drzewa baz | Obrót strzałki i otwarcie konturu | `bases/explorer/js/ui/tree.js`; aria-expanded / stan drzewa, nie na każdy rerender listy |
 | Opcjonalne | Wysyłanie / import / eksport | Ruch strzałki podczas rzeczywistej pracy | aria-busy/Promise; 10 użyć upload/6 plików i 5 download/3 pliki; bez fikcyjnego procentu |
@@ -74,3 +74,8 @@ przewijania selektora pozostaje zachowana.
 Stopka: ostateczna decyzja właściciela przywraca **dokładnie oryginalny rozmiar
 1.45em i wymiary Kontaktu**, pozostawiając animację pary. Nie powiększać jej
 ponownie w celu uwidocznienia ruchu.
+
+Potwierdzenie wdrożenia dodatkowych profili: publiczne Pages **40241370158**,
+kontrola produkcji **40241473501 ✓ 4/4**, jednostkowe po merge **828/828**.
+Prywatnie CI **40240583138 ✓ 91 unit + 25 browser**, production
+**40240924445 ✓**. Status paczki: **zrobione**.

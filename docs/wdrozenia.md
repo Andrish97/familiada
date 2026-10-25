@@ -2271,3 +2271,19 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Prywatna production **40240924445 ✓ 91 unit**, Access po publikacji 302;
   branch CI **40240583138 ✓ 91 unit + 25 browser**, read-only check
   **40240583124 ✓**. Prywatny zakres zakończony; publiczne Pages i kontrola.
+
+- Publiczne animacje opublikowane: Pages **40241370158 ✓**, Worker
+  **40241370147 ✓**, kod f4b5ba7c3b (CI 279c0402d3). Odczyt produkcji:
+  cztery nowe profile dostępne, stopka oryginalne 1.45em, Kontakt bez
+  powiększenia. Kontrola produkcyjna tych samych czterech scenariuszy w toku.
+
+- Zamknięcie dodatkowych animacji: produkcyjny **40241473501 ✓ 4/4** na
+  rzeczywiście opublikowanych plikach main (oko, strzałki, zapis/Powiel,
+  hamburger). Publiczne Pages **40241370158 ✓**, Worker **40241370147 ✓**;
+  po scaleniu **828/828 unit**. Prywatna bramka **91 unit + 25 browser**,
+  production **40240924445 ✓**, Access 302, właściwe wydanie i odmowy
+  originu. Zrzuty obejrzane; audyt publicznych ujęć 0 uwag. **Zrobione.**
+- Stopka przywrócona 1:1 do bloku sprzed powiększenia, para zachowana;
+  potwierdzają ją wcześniejsze 40238851673 ✓ 4/4 i odczyt CSS po tej paczce.
+  Warianty 36/24 px pozostają odrzucone. Dalszych animacji z audytu nie
+  wdrażać automatycznie po zamknięciu tej uzgodnionej paczki.
