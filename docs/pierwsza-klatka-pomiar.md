@@ -74,3 +74,16 @@ na komputerze odpowiednio 0,00100 i 0,00082. Nowa scena utrwala wolny odczyt.
 Końcowy zbiór po dodaniu sceny regresji i ponowieniu widoków Ankiety:
 **974/974 pomiary**, żaden ponad 0,01, maksimum 0,006484. Inwentarz zawiera
 543 wpisy scen. Pełny unit po scaleniu aktualnego main: 864/864.
+
+
+Dodatkowe zgłoszenia: atomowe przekierowania oraz brak akcji konta w hamburgerze.
+Home/Login/Go (QR z kadru → Snake), 390/360/1400 px, dane 450 ms i HTML celu
+700 ms: przed poprawką 59–68 widocznych klatek źródła, po poprawce 0/9 prób.
+Poszerzona macierz 12 stanów × 3 szerokości: **36/36 ✓**. Obejmuje też
+prawidłowe bramki ankiety, urządzenia, poczty, brak sesji, `next`, `force_auth`
+i pozostające na miejscu stany błędów. Te ostatnie są normalnie widoczne.
+Home/Login/Go mają dodatkowo 12 zrzutów z CLS 0. Menu konta Gier/Zadań:
+6 kadrów, audyt 0 uwag, ustawienia konta i wylogowanie widoczne. Nowa scena
+menu zwiększa bieżący publiczny inwentarz do 501 wpisów. Publiczny panel
+administracyjny w międzyczasie przeniesiono poza repo; 974 wcześniejsze pomiary
+pozostają historycznym wynikiem pełnego audytu. Końcowy unit: **812/812**.

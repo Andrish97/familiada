@@ -60,7 +60,7 @@ export function buttonBlocked(spec) {
 
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null, initialRedirects: ["games", "login"] },
-  login:         { path: "/login/",             access: "public", parent: "home", manual: "5", initialRedirects: ["games", "tasks", "friends", "bases"] },
+  login:         { path: "/login/",             access: "public", parent: "home", manual: "5", initialRedirects: ["games", "tasks", "friends", "bases", "snake"] },
   loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
   loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
   games:         { path: "/games/",             access: "guest", minViewportHeight: 580,  parent: null, from: ["manual"], manual: "6", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
