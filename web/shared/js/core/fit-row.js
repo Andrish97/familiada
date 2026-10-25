@@ -3,7 +3,8 @@
 // na telefonie łamał się na dwa rzędy). Element z klasą .fit-row stoi zawsze
 // w jednym rzędzie; gdy przyciski z ikoną i napisem się nie mieszczą, dostaje
 // .is-icons — napisy chowają się, zostają ikony (nazwa w dymku i dla czytnika
-// ekranu). Wygląd: components.css „Wiersz bez zawijania”.
+// ekranu); główny przycisk (.gold) chowa napis dopiero, gdy i to nie wystarczy
+// (.is-icons-all). Wygląd: components.css „Wiersz bez zawijania”.
 //
 // Podpinany sam (jak scroll-fade.js): każdy .fit-row w dokumencie, także
 // dodany później. Przeliczenie raz na klatkę po zmianie rozmiaru lub treści.
@@ -27,8 +28,12 @@ function update(row) {
     const text = btn.textContent.trim();
     if (text && btn.querySelector("svg.ico") && !btn.title) btn.title = text;
   }
-  row.classList.remove("is-icons");
-  if (!fits(row)) row.classList.add("is-icons");
+  // Stopnie: napisy → ikony w przyciskach pobocznych (główny .gold zostaje
+  // z napisem) → ikony we wszystkich.
+  row.classList.remove("is-icons", "is-icons-all");
+  if (fits(row)) return;
+  row.classList.add("is-icons");
+  if (!fits(row)) row.classList.add("is-icons-all");
 }
 
 function schedule(row) {

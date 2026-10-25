@@ -80,7 +80,7 @@ function buildModal({
   if (body) bodyWrap.appendChild(body);
 
   const foot = document.createElement("div");
-  foot.className = "importRow uni-foot modal-actions";
+  foot.className = "importRow uni-foot modal-actions fit-row"; // jeden rząd (core/fit-row.js)
 
   const okBtn = document.createElement("button");
   okBtn.className = "btn sm gold";
