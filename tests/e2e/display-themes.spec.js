@@ -10,8 +10,16 @@ test.beforeEach(async ({ context }) => {
 
 test("display themes: switching preserves all six panels; gaps orbit and reduced motion stops them", async ({ page }) => {
   const errors = [];
-  page.on("pageerror", error => errors.push(error.message));
+  page.on("pageerror", error => { errors.push(error.message); console.log("[e2e-diag] Display error:", error.message); });
+  page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.log("[e2e-diag] Display navigation:", new URL(frame.url()).pathname); });
+  page.on("response", response => { if (response.status() >= 400) console.log("[e2e-diag] Display HTTP:", response.status(), new URL(response.url()).pathname); });
+  await page.addInitScript(() => {
+    window.addEventListener("message", event => {
+      if (event.data?.type === "familiada:preview-ready") window.__displayPreviewReady = true;
+    });
+  });
   await page.goto("/control/display/?preview=1&lang=pl");
+  await page.waitForFunction(() => window.__displayPreviewReady === true);
   await expect(page.locator("#gameScreen")).toBeVisible();
   // Exercise the real scene API: theme.set snapshots and restores the pixels.
   await page.evaluate(async () => {
