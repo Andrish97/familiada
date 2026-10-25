@@ -6,6 +6,10 @@ i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
 ## 1. Zakres i ustalenia użytkownika
 
+- 2026-10-25: zatwierdzono wdrożenie prostszego planu gier z §11 według
+  procedury: dodająca migracja, testy brancha, main, kontrola produkcji.
+  Okienka zostają, brak R2 i generatora plików; HTML bez cache na start.
+
 - 2026-10-25: zgoda na wdrożenie przetestowanych publicznych dokumentów.
   Dla gier przygotować plan i ocenić prostsze wykonanie; bez zgody na
   implementację nowego katalogu w tej paczce.
@@ -280,8 +284,8 @@ zmieniane; publikacja dokumentów nastąpiła po zgodzie 2026-10-25.
 
 ## 11. Prostszy plan dla gier — rekomendacja 2026-10-25
 
-Status: propozycja po pytaniu użytkownika „czy nie da się tego zrobić prościej”.
-Nie jest częścią zatwierdzonego wdrożenia publicznych dokumentów. §3–6
+Status: zatwierdzone do realizacji 2026-10-25. Użytkownik: „Możesz wdrażać zgodnie z procedurą”.
+Osobny etap po zakończonym wdrożeniu publicznych dokumentów. §3–6
 opisują alternatywę dla trwałych plików; R2 nie jest wymaganiem SEO.
 Na pierwszy etap zalecany jest **obecny Worker + publiczny odczyt bazy +
 pełny HTML tego samego interfejsu**, bez nowego hostingu i procesu publikacji.
