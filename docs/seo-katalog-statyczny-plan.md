@@ -1,18 +1,30 @@
 # Statyczny katalog, gry i publiczne Wskazówki — propozycja
 
-Status: plan do oceny, bez wdrożenia tej przebudowy. Stan kodu sprawdzony
+Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów wdrożona i sprawdzona 2026-10-25 (9dbb9f1ab, poprawka abad78242). Stan kodu sprawdzony
 na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
 i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
 ## 1. Zakres i ustalenia użytkownika
+
+- 2026-10-25: zgoda na wdrożenie przetestowanych publicznych dokumentów.
+  Dla gier przygotować plan i ocenić prostsze wykonanie; bez zgody na
+  implementację nowego katalogu w tej paczce.
+
+- 2026-10-24: wykonać na branchu wszystkie pozostałe poprawki, bez nowego
+  katalogu Gier Społeczności i bez publikacji na produkcji. Wskazówki i
+  prywatność otrzymują pełny HTML przez Worker, z gotowej treści Markdown
+  i słowników dołączonych do kodu, bez bazy ani nowej infrastruktury.
+- Przyszły katalog ma zachować okienko gry: bezpośredni URL dostarcza HTML
+  obecnego interfejsu z otwartym, wypełnionym okienkiem; nie narzuca osobnego
+  wyglądu całej strony. Ten etap nie zmienia katalogu ani podglądu gier.
 
 - Rozważyć statyczny katalog Gier Społeczności i poprawki pozostałych
   publicznych stron wskazanych w audycie.
 - **Wskazówki są udostępnione wszystkim, mają działać i pomagać w
   wyszukiwaniu.** Ich obecne `noindex, nofollow` jest sprzeczne z celem;
   publiczne rozdziały mają otrzymać indeksowalny HTML.
-- Ten dokument określa proponowane wykonanie. Nie zatwierdza nowej
-  konfiguracji Cloudflare ani nie zmienia działającej aplikacji.
+- §10 opisuje wdrożone publiczne dokumenty. §11 to nowa propozycja dla
+  gier, bez wdrożenia nowej infrastruktury i przebudowy katalogu.
 
 ## 2. Co faktycznie wymaga zmiany
 
@@ -40,7 +52,9 @@ i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 | Gotowy HTML w osobnym R2, obsługiwany przez Worker | Zmiany katalogu niezależne od wdrożeń aplikacji; brak zapytania do bazy przy odczycie gotowej gry | Nowy bucket/binding, proces publikowania i kontrola spójności |
 | Obecny renderer Workera rozszerzony na wszystkich, z cache | Najmniejsza przebudowa, pełny HTML dla ludzi i botów | To SSR z cache, a nie trwały statyczny katalog; zimny odczyt nadal wymaga bazy |
 
-**Rekomendacja dla docelowego, rzeczywiście statycznego katalogu: R2 + Worker.**
+**Wariant trwałych plików: R2 + Worker.** Po ponownej ocenie 2026-10-25
+rekomendacją pierwszego etapu jest prostszy SSR z §11; poniższy wariant
+pozostaje opcją przy potrzebie niezależności od API/VPS.
 Strona, style i JS pozostają na GitHub Pages. Nowy, osobny bucket zawiera
 wyłącznie publiczne artefakty SEO, bez mieszania ich z kopiami zapasowymi.
 Nie publikujemy `r2.dev` ani bezpośredniego publicznego dostępu do bucketa.
@@ -198,3 +212,243 @@ Wymagane punktowe sprawdzenia:
 - Wszystkie dotknięte trasy i parametry w PAGES/pageIdForPath i dokumentacji.
 - Jedne szablony publiczne dla generatora i UI, PL/EN/UK, zrzuty telefonu
   i komputera, bramka brancha oraz kontrola po wdrożeniu.
+
+
+## 10. Paczka bez katalogu — branch `codex/public-pages-seo`
+
+Decyzja 2026-10-24: przygotować poprawki na branchu, bez publikowania main.
+
+Wykonanie Wskazówek nie wymaga magazynu odcisków: istniejący generator
+Markdown zapisuje gotowy HTML treści i opis rozdziału w modułach PL/EN/UK.
+Worker dołącza te moduły przy budowaniu i wstawia treść do szablonu Pages.
+Nie odpytuje bazy, sesji ani API podczas renderowania. Wspólny renderer
+jest używany również przy przełączaniu rozdziałów w przeglądarce, więc
+nie ma oddzielnej kopii układu dla SEO. To pełny HTML na brzegu sieci,
+nie nowy proces publikowania plików i nie statyczny katalog gier z §5.
+
+- Wszystkie 20 rozdziałów oraz spis treści w trzech językach: pełny HTML,
+  index/follow, własny tytuł/opis, canonical tylko `ch` i `lang`, hreflang,
+  HTML spisu i pagera. Link „Spis treści” w nagłówku rozdziału działa bez JS.
+- Prywatność: obecne słowniki PL/EN/UK w HTML, canonical/hreflang/OG zgodne
+  z językiem; treść polityki nie jest zmieniana w tej paczce.
+- Czytelność treści nie czeka na auth ani JS. Dodatkowy arkusz `noscript`
+  porządkuje pasek nawigacji bez JS; obecne działające linki są zachowane.
+- Metadane zmieniają się również po przejściu w JS i zmianie języka.
+  `from`, `ret`, filtry i kotwice nie tworzą indeksowanych kopii.
+- Nieznany rozdział i bezpośredni `/404.html`: HTTP 404 i noindex.
+  Samodzielna strona przerwy: noindex; rzeczywista bramka nadal 503/Retry-After.
+- Sitemap: 63 adresy Wskazówek i brakujące wersje EN/UK prywatności;
+  GET i HEAD zgodne. Istniejące wpisy i renderer gier pozostają bez przebudowy.
+- Link do Wskazówek z katalogu jest zwykłym `<a>`; stronę główną już łączą
+  linki HTML z Wskazówkami i katalogiem. Nie dodajemy sekcji wybranych gier,
+  bo wymagałaby jeszcze niezrealizowanego publicznego spisu.
+- Aktualizacja PAGES, obsługa dokumentów index.html, zachowanie kliknięcia
+  linków w nowym oknie i zamykania arkuszy; prywatne strony zachowują noindex.
+- Brak zmian bazy, R2, serwera, CSP strefy i mechanizmu publikacji gier.
+
+Lokalnie: 10/10 testów na rzeczywistym silniku Workera (każdy rozdział i oba
+UA, błędy, HEAD, sitemap, przerwa); 87/87 punktowych unitów aplikacji,
+61/61 dodatkowych sprawdzeń (część pokrywa się z poprzednimi); i18n bez
+nieużywanych kluczy, lint no-undef. Przeglądarka z wyłączonym API: 12
+przypadków PL/EN/UK z JS i bez, nawigacja bez JS oraz telefon bez poziomego
+przewijania. Zrzuty: 36 scen istniejącego interfejsu + 12 bez JS.
+Stan etapu 2026-10-24: bez wdrożenia, zgodnie z ówczesnym poleceniem;
+publikacja po zgodzie 2026-10-25 jest opisana poniżej.
+
+
+Bramka brancha zakończona:
+
+- `9b1121fd5`: implementacja; E2E 40142990874 — pięć przypadków zielonych,
+  dwie nieaktualne asercje (wielkie litery CSS i dosłowny href).
+- `fecff5b44`: zgodność ze starszym szablonem Pages, układ bez JS, poprawione
+  asercje z zachowaniem ich celu; zły rozdział sprawdza rzeczywisty Worker
+  zamiast oczekiwania powrotu do spisu w atrapianym frontendzie.
+  [40143206972](https://github.com/Andrish97/familiada/actions/runs/40143206972)
+  — 3/3 (publiczne języki/metadane, rozdziały, kontekstowy powrót na telefonie).
+- `4bd3c1ed3`: href linków Wstecz/Wskazówki aktualizowany także po zmianie
+  języka, z zachowaniem nowego okna; unity i
+  [40143334514](https://github.com/Andrish97/familiada/actions/runs/40143334514)
+  — 2/2 (bezpieczny powrót `ret`, zamykanie podglądu ilustracji).
+
+Łącznie osiem różnych przypadków E2E zakończonych sukcesem; zielone przypadki
+nie były powtarzane bez zmiany powiązanego kodu. Najnowszy kod publicznych
+stron ponownie: workerd 6/6 + wcześniejsze 4/4 głównej, i18n bez nieużywanych
+kluczy; budowanie `wrangler deploy --dry-run` zakończone bez publikacji
+(267,67 KiB gzip). Drzewo nie zawiera plików testowego podglądu.
+Stan 2026-10-24: całość pozostawała na branchu. Baza i katalog nie były
+zmieniane; publikacja dokumentów nastąpiła po zgodzie 2026-10-25.
+
+## 11. Prostszy plan dla gier — rekomendacja 2026-10-25
+
+Status: propozycja po pytaniu użytkownika „czy nie da się tego zrobić prościej”.
+Nie jest częścią zatwierdzonego wdrożenia publicznych dokumentów. §3–6
+opisują alternatywę dla trwałych plików; R2 nie jest wymaganiem SEO.
+Na pierwszy etap zalecany jest **obecny Worker + publiczny odczyt bazy +
+pełny HTML tego samego interfejsu**, bez nowego hostingu i procesu publikacji.
+
+### Co rzeczywiście jest potrzebne
+
+Robot i człowiek mają otrzymać pod istniejącym URL gotowy katalog lub treść
+gry w otwartym okienku, wraz z prawidłowym tytułem i canonicalem. HTML nie
+musi istnieć jako plik na dysku. Można zbudować go na żądanie, podobnie do
+publicznych Wskazówek, ale z danymi publicznych gier pobranymi z obecnego API.
+Nie wystarczy przekazać wszystkim obecnego prostego dokumentu dla botów:
+nie ma interfejsu aplikacji, a gra jest tam błędnie opisana jako FAQ.
+
+```mermaid
+flowchart LR
+  A[Istniejący URL katalogu lub gry] --> B[Obecny Worker]
+  B --> C[Publiczny odczyt obecnej bazy na własnym serwerze]
+  C --> B
+  B --> D[Obecny szablon Pages z wypełnionymi kartami lub okienkiem]
+  D --> E[JS: filtry, konto, oceny i biblioteka]
+```
+
+### Zakres pierwszej paczki
+
+1. **Jeden model publicznych danych.** Worker pobiera je z publicznym
+   kluczem anon, bez przekazywania sesji/cookies użytkownika i bez używania
+   listy administracyjnej z e-mailami/notatkami. Istniejący `market_browse`
+   nie zwraca sluga i ucina wynik do 100 pozycji, więc nie daje poprawnego
+   adresu karty. Najczytelniej dodać jedno małe, tylko odczytowe RPC
+   `market_public_catalog`: wyłącznie opublikowane pozycje, slug, tytuł,
+   opis, język i dozwolona publiczna nazwa autora; ewentualnie publiczne
+   liczniki. Bez payloadów całej biblioteki i bez danych konta. Przy obecnym
+   rozmiarze można zwrócić wszystkie nagłówki w jednym odczycie; przyszła
+   paginacja musi mieć linki HTML, bez cichego obcięcia listy. To dodająca
+   migracja, bez zmiany typu zwracanego obecnych RPC.
+2. **Wspólny renderer interfejsu.** Wydzielić HTML kart oraz pytań/odpowiedzi
+   z obecnego JS do modułu używanego przez Worker i przeglądarkę. Użyć
+   obecnego silnika stylów, nie tworzyć osobnego wyglądu dla Google.
+   Karta jest `<a href="/marketplace/game/slug">`; zwykły klik otwiera
+   okienko, Ctrl/środkowy przycisk/nowa karta działają standardowo.
+3. **Bezpośredni URL gry.** Worker pobiera publiczną grę po slugu
+   (istniejące `market_game_by_slug` z anon, plus jawne sprawdzenie
+   `status=published`) i wypełnia obecny szablon z otwartym okienkiem.
+   Nadaje grze własny title, opis, canonical, H1 oraz publiczne dane
+   strukturalne zgodne z grą, bez automatycznego FAQ. Język treści gry
+   pozostaje jej rzeczywistym językiem; język przycisków może być PL/EN/UK.
+   Parametr języka UI nie udaje tłumaczenia pytań. Dokładna polityka
+   canonicala tych wariantów ma być wspólna dla renderera i klienta.
+4. **Dołączenie JS bez kasowania treści.** Inicjalizacja przejmuje już
+   wypełnione karty i okienko. Nie może czyścić ich na „Ładowanie…” ani
+   uzależniać czytania od logowania. Dane osobiste (`in_library`, własne
+   gwiazdki, oceniający dostępni autorowi) są pobierane oddzielnie po auth.
+   Otwieranie/zamykanie, Back/Forward i zmiana języka synchronizują URL
+   oraz metadane. Bez JS działają linki do katalogu i zamknięcie okienka
+   jako zwykły powrót do katalogu; pytania/odpowiedzi pozostają czytelne.
+5. **Prywatny podgląd autora.** Zachować obecne uwierzytelnione RPC własnych
+   zgłoszeń. Ten stan nie trafia do publicznego SSR ani sitemap. Nie można
+   po prostu zacząć 404-ować każdego niepublicznego sluga przed startem JS,
+   bo zepsuje to obecny refresh podglądu autora. Najprościej rozdzielić
+   te stany w tym samym katalogu: publiczne `/marketplace/game/slug`, a
+   prywatny podgląd autora przez już obsługiwany parametr `?game=<id>`,
+   bez indeksowania i bez przepisywania na publiczny slug dla niepublicznej
+   gry. Zachować zwykłe opublikowane gry pod canonicalnym slugiem.
+   Parametr gry jako stan prywatnego podglądu wymaga wpisu w PAGES, testów,
+   dokumentacji i Wskazówek PL/EN/UK. Nie dodaje strony ani nowego parametru.
+6. **Bez cache HTML na początek.** Każde publiczne wejście odczytuje
+   aktualny stan bazy, HTML ma `no-store`; brak R2, KV z odciskami, kolejki,
+   webhooków i synchronizacji plików. Po zatwierdzeniu wycofania kolejne
+   odczyty nie publikują gry — także po RPC autora, admina lub usunięciu
+   w kaskadzie. Rozpoczętej wcześniej odpowiedzi i otwartego okienka nie da
+   się cofnąć. Cache statycznych CSS/JS/obrazów zostaje bez zmian.
+7. **Mapa i błędy.** Sitemap korzysta z tego samego publicznego źródła
+   listy, bez administracyjnych pól. Na początku również bez starego cache
+   wpisów gier. Brak/wycofanie = 404; timeout/awaria bazy = 503 i Retry-After,
+   nie pusta lista z 200 i nie rekurencyjny `fetch(request)` tego samego
+   Workera. Ograniczyć czas pobrania. `lastmod` gier na razie pominąć:
+   obecny `updated_at` zmienia się od liczników; brak daty jest lepszy od
+   fałszywej. Osobna data zmiany treści nie blokuje tej paczki.
+8. **Przełączenie po sprawdzeniu obu widoków.** Usunąć wybór HTML katalogu
+   i gry według User-Agent. Nie zmieniać bramki przerwy, uprawnień akcji
+   konta, logowania ani widoków urządzeń. Sprawdzić też, że reguły strefy
+   Cloudflare nie wymuszają cache wbrew `no-store`.
+
+### Czego dzięki temu nie trzeba utrzymywać
+
+| Wariant | Publikowanie zmian gier | Nowe elementy | Zachowanie przy awarii API |
+|---|---|---|---|
+| Zalecany pierwszy etap: Worker SSR bez cache HTML | Zmiana w bazie jest źródłem kolejnego odczytu | Małe RPC listy + wspólny renderer i inicjalizacja JS | Kontrolowane 503; bez generowania pustych stron |
+| Gotowe HTML na własnym serwerze | Publikator po każdej zmianie widoczności, atomowe podmiany plików | Generator, kolejka/retry lub pełna przebudowa, katalog plików, reguły Caddy/Workera | Pliki mogą działać, jeżeli działa serwer WWW; wspólna awaria VPS wyłącza również pliki |
+| Gotowe HTML w R2 | Publikator, trwałe zadania i kontrola aktywnej wersji | R2, binding, generator, spis, retry i kontrola wycofań | Gotowe strony mogą działać niezależnie od VPS; aktualizacje wymagają bazy/publikatora |
+
+Własny serwer już obsługuje API/bazę. Nie trzeba teraz przenosić na niego
+frontendu ani uruchamiać Node tylko dla SEO. SSR dokłada odczyt bazy do
+wejścia publicznego; to jego koszt i ograniczenie dostępności. Przy obecnej
+skali jest rozsądnym punktem startu, lecz pomiar opóźnień i obciążenia jest
+warunkiem wdrożenia, nie założeniem o nieograniczonej wydajności.
+
+### Weryfikacja i kolejność
+
+- Najpierw test publicznego źródła danych: wyłącznie `published`, brak
+  prywatnych pól, stabilne slugi, pełna lista bez limitu 100.
+- Wspólny renderer i przejęcie HTML w JS: jeden etap z testami wszystkich
+  trybów (anon, konto, autor, nowa karta, refresh, Back/Forward, zamknięcie,
+  filtr, język). Osobno sprawdzić prywatny podgląd po odświeżeniu.
+- Rzeczywisty Worker: ten sam HTML dla obu UA, treść bez JS, GET/HEAD,
+  canonical zgodny z URL, XSS w tytułach/opisach/odpowiedziach; biblioteka
+  i własne oceny nigdy nie trafiają do współdzielonego dokumentu.
+- SQL i publiczne odczyty po akceptacji, wycofaniu autora/admina i kasowaniu;
+  timeout/awaria API = 503. Żadnych utrwalonych publicznych kopii zgłoszeń.
+- Punktowe E2E, PL/EN/UK, telefon/komputer, pomiar TTFB i liczby wywołań API.
+  Dopiero po tej bramce przełączenie produkcji i sprawdzenie sitemap.
+- Po publikacji odczyt HTML w Search Console. Pełny HTML ułatwia Google
+  odczyt treści; nie jest obietnicą indeksowania wszystkich gier.
+
+Cache dołożyć dopiero, gdy pomiar wskaże taką potrzebę. Krótki TTL oznacza
+jawnie zaakceptowane opóźnienie wycofania; natychmiastowa kontrola statusu
+przed podaniem cache nadal wymaga bazy. Odporność publicznego katalogu na
+awarię całego VPS to osobny powód powrotu do R2 i §5, nie warunek poprawy SEO.
+
+
+2026-10-25: integracja `e70c80ab5` z aktualnym main zweryfikowana: unity
+69/69, workerd 10/10, branch E2E
+[40168072561](https://github.com/Andrish97/familiada/actions/runs/40168072561)
+5/5. Zgoda na publikację dotyczy §10; §11 pozostaje planem dla gier.
+
+
+Publikacja §10 2026-10-25: Pages
+[40168515253](https://github.com/Andrish97/familiada/actions/runs/40168515253)
+i Worker
+[40168514623](https://github.com/Andrish97/familiada/actions/runs/40168514623)
+— sukces. Odczyt produkcji: 22 przypadki (PL/EN/UK, oba UA, canonicale,
+404/HEAD i noindex dokumentów technicznych, sitemap z 63 adresami Wskazówek)
+— sukces. Przy wdrożeniu zmieniony także wewnętrzny klucz Cache API mapy,
+żeby starszy spis nie przetrwał na innych POP przez godzinę. Regresja starego
+cache i cały zestaw Workera 10/10. Publiczny URL sitemap nie zmienia się.
+
+
+Kontrola main 40168599886 ujawniła różnicę względem testu samego frontu:
+SSR udostępnia linki i obrazy przed końcem importu treści w przeglądarce.
+Poprawka przejmuje zgodny język/rozdział bez wymiany DOM; obsługę nawigacji
+JS podpina po gotowości modelu, wcześniej działają zwykłe odnośniki HTML.
+Test powiększania czeka na gotowość JS, a nie samą obecność obrazu SSR.
+Regresja `cloudflare/maintenance-worker/test/public-browser.mjs` wstrzymuje
+moduł treści: zachowanie elementu obrazu i wczesna nawigacja, 390/1400 px,
+4/4. Unity powiązane 43/43. Zwykły wygląd i opis obsługi bez zmian.
+
+Poprawka `a4863c843`: Worker 10/10, przeglądarka 4/4, unity 43/43;
+branch E2E [40169011626](https://github.com/Andrish97/familiada/actions/runs/40169011626)
+2/2 — gotowa do publikacji i ponownego sprawdzenia na produkcji.
+
+
+## 12. Zamknięcie wdrożenia publicznych dokumentów — 2026-10-25
+
+Poprawka przejęcia SSR `a4863c843` opublikowana jako `abad78242`:
+[Pages 40169123102](https://github.com/Andrish97/familiada/actions/runs/40169123102)
+i [Worker 40169123107](https://github.com/Andrish97/familiada/actions/runs/40169123107)
+— sukces. Wersje zasobów CI: `00d285406`.
+
+Kontrola rzeczywistego main:
+[40169213382](https://github.com/Andrish97/familiada/actions/runs/40169213382)
+3/3 (publiczne języki/metadane i nawigacja, wyszukiwanie, powiększanie
+ilustracji na telefonie). Prywatność PL/EN/UK i bezpieczny powrót `ret`
+przeszły już w 40168599886; poprawka nie zmieniła ich kodu.
+
+Ponowne odczyty produkcji: 22 przypadki ✓, identyczny publiczny HTML obu
+UA w PL/EN/UK, canonicale, 404/HEAD/noindex techniczne, sitemap 63 adresy
+Wskazówek i zachowany URL przykładowej gry. Worker 10/10; regresja
+przeglądarkowa ze wstrzymaniem treści 4/4; powiązane unity 43/43, zrzuty
+telefonu i komputera obejrzane. Wdrożenie §10 zakończone. §11 pozostaje
+planem; gry i baza nie zostały przebudowane.

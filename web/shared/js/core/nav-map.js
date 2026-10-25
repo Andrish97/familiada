@@ -41,8 +41,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-25T06103";
-import { iconText } from "./icons.js?v=v2026-10-25T06103";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-25T06271";
+import { iconText } from "./icons.js?v=v2026-10-25T06271";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -115,13 +115,15 @@ export const PAGES = {
     from: ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "control", "gameSettings", "marketplace", "connectDevice", "manual", "privacy"],
     manual: "5",
   },
-  manual:        { path: "/manual/",            access: "public",  parent: "games", parentAnon: "home", from: [], state: ["ch"], buttons: {
+  // ch identyfikuje publiczny rozdział (nieznany = 404); from to kontekst powrotu,
+  // nie wersja dokumentu do indeksowania. Język jest wspólnym parametrem mapy.
+  manual:        { path: "/manual/",            access: "public",  parent: "games", parentAnon: "home", from: [], state: ["ch", "from"], buttons: {
     btnLegal: { to: "privacy" },
   } },
   mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], manual: "14.5", tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
-  notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument serwowany przez fallback 404; rzeczywisty nieznany URL pozostaje w pasku adresu." },
-  maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Strona serwisowa zwracana przez bramkę Maintenance zamiast żądanej strony." },
+  notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument noindex ze statusem 404 także pod własnym adresem; nieznany URL pozostaje w pasku adresu." },
+  maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Samodzielny dokument noindex; bramka przerwy zwraca 503 i Retry-After pod żądanym URL." },
   admin:         { path: "/admin/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
   adminToolEditor: { path: "/admin/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
   adminToolExporter: { path: "/admin/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
@@ -228,6 +230,8 @@ function parseInternal(raw) {
 // Strona jest serwowana także bez końcowego "/" (np. /game-settings), więc
 // adres bieżącej strony porównujemy z tym "/" dopisanym.
 export function pageIdForPath(pathname) {
+  // Publiczny HTML dokumentów pod index.html ma tę samą tożsamość nawigacji.
+  if (["/manual/index.html", "/privacy/index.html"].includes(pathname)) pathname = pathname.replace(/index\.html$/, "");
   const withSlash = pathname.endsWith("/") || /\.[a-z0-9]+$/i.test(pathname) ? pathname : `${pathname}/`;
   let sub = null;
   for (const [id, p] of Object.entries(PAGES)) {

@@ -29,13 +29,13 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-25T06103";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-25T06103";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-25T06103";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-25T06103";
-import { guardViewportWidth } from "./device-guard.js?v=v2026-10-25T06103";
-import "./scroll-fade.js?v=v2026-10-25T06103"; // wygaszona krawędź przewijanych list (wszystkie strony)
-import "./fit-row.js?v=v2026-10-25T06103"; // wiersze przycisków bez zawijania (.fit-row)
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-25T06271";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-25T06271";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-25T06271";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-25T06271";
+import { guardViewportWidth } from "./device-guard.js?v=v2026-10-25T06271";
+import "./scroll-fade.js?v=v2026-10-25T06271"; // wygaszona krawędź przewijanych list (wszystkie strony)
+import "./fit-row.js?v=v2026-10-25T06271"; // wiersze przycisków bez zawijania (.fit-row)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
@@ -47,10 +47,10 @@ if (globalThis.document?.documentElement?.dataset.input === "touch") {
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-25T06103"),
-    import("./topbar-controller.js?v=v2026-10-25T06103"),
-    import("./modal-sheet.js?v=v2026-10-25T06103"),
-    import("./device-guard.js?v=v2026-10-25T06103"),
+    import("./auth.js?v=v2026-10-25T06271"),
+    import("./topbar-controller.js?v=v2026-10-25T06271"),
+    import("./modal-sheet.js?v=v2026-10-25T06271"),
+    import("./device-guard.js?v=v2026-10-25T06271"),
 
   ]);
   return {
@@ -68,10 +68,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-25T06103");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-25T06271");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-25T06103");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-25T06271");
     await initRatingSystem(user);
   }
 }
@@ -88,11 +88,17 @@ function wireBack(id, user, opts, d) {
   const ctx = () => ({ anon: !user });
   btn.dataset.sheetBack = "1"; // znacznik dla contact-modal.js
   if (btn.tagName === "A") {
-    const href = backHref(id, ctx());
-    if (href) btn.setAttribute("href", href);
+    const sync = () => {
+      const href = backHref(id, ctx());
+      if (href) btn.setAttribute("href", href);
+    };
+    sync();
+    window.addEventListener("i18n:lang", sync);
   }
   if (opts.backLabel !== false) renderBackLabel(btn, id, ctx);
   btn.addEventListener("click", async (ev) => {
+    if (btn.tagName === "A" && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button > 0)) return;
+    ev.preventDefault?.();
     if (d.handleSheetBack()) return;
     const href = backHref(id, ctx());
     if (opts.onBack) { await opts.onBack(href, ev); return; }
@@ -103,9 +109,16 @@ function wireBack(id, user, opts, d) {
 function wireManual(id, user, opts) {
   const btn = elementOf(opts.manual, "btnManual");
   if (!btn) return;
-  // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
+  // Publiczne Wskazówki pozostają dostępne także bez konta.
   if (!user && PAGES.manual.access !== "public") { btn.hidden = true; return; }
+  if (btn.tagName === "A") {
+    const sync = () => btn.setAttribute("href", manualHref(id));
+    sync();
+    window.addEventListener("i18n:lang", sync);
+  }
   btn.addEventListener("click", async (ev) => {
+    if (btn.tagName === "A" && (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button > 0)) return;
+    ev.preventDefault?.();
     const href = manualHref(id);
     if (opts.onManual) { await opts.onManual(href, ev); return; }
     location.href = href;
@@ -232,7 +245,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-25T06103")
+      void import("./nav-contact-badges.js?v=v2026-10-25T06271")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }

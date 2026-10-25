@@ -6,6 +6,11 @@ on:
     paths:
       - "cloudflare/**"
       - "web/shared/js/core/home-seo.js"
+      - "web/shared/js/core/public-seo.js"
+      - "web/manual/content/**"
+      - "web/manual/js/render.js"
+      - "web/shared/translation/*/manual.js"
+      - "web/shared/translation/*/privacy.js"
       - "web/shared/translation/*/home.js"
       - "web/shared/translation/*/common.js"
       - "web/shared/js/core/go-contract.js"

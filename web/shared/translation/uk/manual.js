@@ -2,6 +2,7 @@
 const uk = {
   manual: {
     title: "Familiada — підказки",
+    chapterTitle: "{title} — Підказки Familiada Online",
     legal: "Політика конфіденційності",
     pageTitle: "Підказки для користувача",
     toc: "Зміст",

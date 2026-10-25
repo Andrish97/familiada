@@ -142,6 +142,26 @@ test("onManual dostaje adres instrukcji", async () => {
   assert.match(got, /^\/manual\/\?ch=7&ret=/);
 });
 
+test("linki Wstecz i Wskazówki zachowują nowe okno, a zwykły klik wykonuje jedną akcję", async () => {
+  const { deps } = makeDeps();
+  els.btnBack = fakeEl("A");
+  els.btnManual = fakeEl("A");
+  await initPage("manual", { deps });
+  let prevented = false;
+  await els.btnBack.listeners.click[0]({ ctrlKey: true, preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+  assert.equal(loc.href, "");
+  await els.btnManual.listeners.click[0]({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.match(els.btnManual.attrs.href, /^\/manual\//);
+  assert.match(loc.href, /^\/manual\//);
+  loc.pathname = "/manual/";
+  loc.search = "?ch=6&lang=en";
+  for (const fn of window.listeners["i18n:lang"] || []) fn();
+  assert.equal(els.btnBack.attrs.href, "/?lang=en");
+  assert.match(els.btnManual.attrs.href, /lang=en/);
+});
+
 test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {
   const { deps, calls } = makeDeps();
   loc.pathname = "/control/";

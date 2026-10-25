@@ -321,6 +321,11 @@ export function parseManual(markdownFiles, icons) {
     emit();
     c.sections = sections;
     c.html = html.join("\n");
+    // Opis rozdziału pochodzi z tej samej treści co dokument, nie z osobnej kopii SEO.
+    const summary = c.html.match(/<p class="m-p">([\s\S]*?)<\/p>/)?.[1] || c.sections.map((s) => s.title).join(". ");
+    c.description = summary.replace(/<[^>]+>/g, " ")
+      .replace(/&(amp|lt|gt|quot|nbsp);/g, (_, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', nbsp: " " }[e]))
+      .replace(/\s+/g, " ").trim().slice(0, 180);
     delete c.bodyLines;
   }
   return { parts: parts.filter((p) => p.chapters.length), chapters };

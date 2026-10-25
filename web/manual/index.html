@@ -3,7 +3,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-25T06103"/>
+  <meta name="app-version" content="v2026-10-25T06271"/>
 
 
   <meta charset="UTF-8" />
@@ -13,38 +13,38 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <link rel="preconnect" href="https://supabase.familiada.online">
-  <meta name="robots" content="noindex, nofollow" />
-  <title data-i18n="manual.title">Familiada — wskazówki</title>
+  <meta name="robots" content="index, follow" />
+  <title>Familiada — wskazówki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-25T06103" />
+  <link rel="icon" href="/favicon.ico?v=v2026-10-25T06271" />
 
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-25T06103" />
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-25T06103"/>
-  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-25T06103"/>
-  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-25T06103"/>
-  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-25T06103"/>
-  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-25T06103"/>
-  <link rel="stylesheet" href="/shared/css/image-viewer.css?v=v2026-10-25T06103" />
-  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-25T06103" />
-  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-25T06103"></script>
-  <script>document.documentElement.classList.add('page-loading')</script>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-25T06271" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-25T06271"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-25T06271"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-25T06271"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-25T06271"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-25T06271"/>
+  <link rel="stylesheet" href="/shared/css/image-viewer.css?v=v2026-10-25T06271" />
+  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-25T06271" />
+  <noscript><link rel="stylesheet" href="/manual/css/no-script.css?v=v2026-10-25T06271"></noscript>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-25T06271"></script>
 
-  <script src="/shared/vendor/supabase-js.js?v=v2026-10-25T06103" defer></script>
-  <script type="module" src="/manual/js/manual.js?v=v2026-10-25T06103" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-25T06103" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-25T06103" defer></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-25T06271" defer></script>
+  <script type="module" src="/manual/js/manual.js?v=v2026-10-25T06271" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-25T06271" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-25T06271" defer></script>
 
 </head>
 
-<body class="manual-body skel-body">
+<body class="manual-body">
   <header class="topbar topbar-layout-4" id="mainTopbar">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+      <a class="btn" id="btnBack" href="/" data-i18n="common.back" data-i18n-icon="arrow-left">Wstecz</a>
       <button class="btn topbar-sheet-back" id="btnImageViewerBack" type="button" data-i18n-icon="arrow-left" data-i18n="common.modalBack">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <button class="btn" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
+      <a class="btn" id="btnLegal" href="/privacy" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</a>
     </div>
     <div class="topbar-section topbar-section-3">
       <div class="topbar-close-slot" aria-hidden="true"></div>
@@ -66,7 +66,7 @@
     <button class="drawer-scrim" id="manualTocBackdrop" type="button" tabindex="-1" aria-hidden="true"></button>
     <nav class="drawer m-side" id="manualToc" aria-label="Spis treści wskazówek" data-i18n-aria-label="manual.tocLabel"></nav>
 
-    <main class="m-content" id="manualContent" data-skel-step>
+    <main class="m-content skel-step-ready" id="manualContent" data-skel-step>
       <article class="m-article" id="manualArticle" aria-live="polite"></article>
       <div class="footer m-page-footer">
         <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
@@ -74,7 +74,7 @@
       </div>
     </main>
   </div>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-25T06103"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-25T06271"></script>
 
 </body>
 </html>

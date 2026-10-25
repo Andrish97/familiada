@@ -25,6 +25,27 @@ test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async
     await expect(page.locator("h1")).toContainText(item.heading);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", new RegExp(item.description, "i"));
     await expect(page.locator(".m-doc h2")).toHaveCount(9);
+    const canonical = `${ORIGIN}/privacy${item.lang === "pl" ? "" : `?lang=${item.lang}`}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+  }
+});
+
+test("manual: publiczny rozdział i metadane działają anonimowo w PL/EN/UK", async ({ page }) => {
+  for (const lang of ["pl", "en", "uk"]) {
+    await page.goto(`${ORIGIN}/manual/?ch=6&lang=${lang}&from=9&ret=%2Fgames%2F`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".m-doc .m-h2").first()).toBeVisible();
+    const canonical = `${ORIGIN}/manual/?ch=6${lang === "pl" ? "" : `&lang=${lang}`}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+    const heading = await page.locator("#manualArticle h1").textContent();
+    await expect(page).toHaveTitle(new RegExp(heading));
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
+    await page.locator('.m-pager-link.next').click();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical.replace('ch=6', 'ch=7'));
+    await page.locator('#manualArticle a[data-ch=""]').click();
+    await expect(page.locator('.m-parts')).toBeVisible();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/manual/${lang === "pl" ? "" : `?lang=${lang}`}`);
   }
 });
 
@@ -118,7 +139,7 @@ test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik 
   await expect(page.locator(".m-doc .m-control").first()).toBeVisible();
   await expect(page.locator(".m-doc .m-control svg.ico").first()).toBeVisible();
 
-  await page.locator('.m-doc a.m-ref[href="?ch=7#s-7-1"]').first().click();
+  await page.locator('.m-doc a.m-ref[href*="ch=7"][href$="#s-7-1"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
   await expect(page).toHaveURL(/[?&]ch=7&from=6\.1#s-7-1$/);
   await expect(page.locator("#s-7-1")).toBeInViewport();
@@ -134,9 +155,8 @@ test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".m-article h1")).toContainText("Ustawienia rozgrywki");
 
-  await page.goto(`${ORIGIN}/manual/?lang=pl&ch=99`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator(".m-part-card")).toHaveCount(3);
-  await expect(page).not.toHaveURL(/[?&]ch=/);
+  // Nieznany rozdział daje teraz 404 w Workerze. Ten kontrakt sprawdza
+  // public-pages.test.mjs; serveBranchCode testuje tu samą nawigację frontu.
 });
 
 test("manual: przycisk pomocy strony otwiera jej rozdział, Wstecz wraca", async ({ page, context, accounts, loginAs }) => {
@@ -284,6 +304,8 @@ test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, ob
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
     const page = await context.newPage();
     await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
+    // Treść SSR jest czytelna wcześniej; powiększanie wymaga gotowego JS.
+    await expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true");
     const shot = page.locator(".m-shot-zoom").first();
     await shot.scrollIntoViewIfNeeded();
     await shot.click();
@@ -304,7 +326,7 @@ test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, ob
 test("manual: telefon — „Wróć do: …” w pasku ze „Spis treści” po odnośniku w treści", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
-  await page.locator('.m-doc a.m-ref[href="?ch=7#s-7-1"]').first().click();
+  await page.locator('.m-doc a.m-ref[href*="ch=7"][href$="#s-7-1"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
   const back = page.locator("#manualReturnBar");
   await expect(back).toBeVisible();

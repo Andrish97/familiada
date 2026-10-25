@@ -3,6 +3,8 @@ import { getSupabaseConfig, supabaseRpc } from "../core/supabase.js";
 import { escapeHtml } from "../core/utils.js";
 import { serveNotFoundPage } from "../origin/origin.js";
 import { getTranslationSection } from "../core/translations.js";
+import { MANUAL_CHAPTERS } from "./public-pages.js";
+import { PUBLIC_LANGS, publicUrl } from "../../../../../web/shared/js/core/public-seo.js";
 
 export const BOT_UA_PATTERNS = [
   "googlebot", "google-inspectiontool", "mediapartners-google", "googleweblight",
@@ -255,7 +257,9 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
   });
 }
 
-export const SITEMAP_CACHE_KEY = new Request("https://www.familiada.online/sitemap.xml");
+// Nowy format zawiera publiczne rozdziały. Nie odziedzicz starej mapy z Cache API
+// po deployu Workera; publiczny adres /sitemap.xml pozostaje bez zmian.
+export const SITEMAP_CACHE_KEY = new Request("https://www.familiada.online/sitemap.xml?format=public-documents-v1");
 
 export async function serveDynamicSitemap(env, ctx) {
   const edgeCache = caches.default;
@@ -274,6 +278,10 @@ export async function buildDynamicSitemap(env) {
     { loc: "https://www.familiada.online/?lang=uk",  lastmod: "2026-10-24", changefreq: "monthly",  priority: "0.8" },
     { loc: "https://www.familiada.online/marketplace", changefreq: "weekly", priority: "0.9" },
     { loc: "https://www.familiada.online/privacy", changefreq: "yearly", priority: "0.2" },
+    ...["en", "uk"].map((lang) => ({ loc: publicUrl("privacy", lang), changefreq: "yearly", priority: "0.2" })),
+    ...PUBLIC_LANGS.flatMap((lang) => [null, ...MANUAL_CHAPTERS].map((id) => ({
+      loc: publicUrl("manual", lang, id), changefreq: "monthly", priority: "0.5",
+    }))),
   ];
 
   let games = [];

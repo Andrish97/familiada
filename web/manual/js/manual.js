@@ -5,19 +5,22 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06103";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06103";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06103";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T06103";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T06103";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06103";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06103";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T06103";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06271";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06271";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06271";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T06271";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T06271";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06271";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06271";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T06271";
+
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T06271";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T06271";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-25T06103"),
-  en: () => import("../content/en.js?v=v2026-10-25T06103"),
-  uk: () => import("../content/uk.js?v=v2026-10-25T06103"),
+  pl: () => import("../content/pl.js?v=v2026-10-25T06271"),
+  en: () => import("../content/en.js?v=v2026-10-25T06271"),
+  uk: () => import("../content/uk.js?v=v2026-10-25T06271"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
@@ -48,7 +51,6 @@ const chapterHref = (id, hash = "", from = null) => {
 };
 let returnTo = null;
 const findChapter = (id) => manual?.chapters.find((c) => c.id === id) || null;
-const partOf = (id) => manual?.parts.find((p) => p.chapters.includes(id)) || null;
 const titleOf = (id) => {
   const ch = findChapter(String(id).split(".")[0]);
   if (!ch) return "";
@@ -86,63 +88,21 @@ const sectionId = (id) => `s-${id.replace(/\./g, "-")}`;
 // Lewy pasek jak w Ustawieniach gry: części jako etykiety, rozdziały jako pozycje,
 // podrozdziały otwartego rozdziału jako wcięte pozycje. Bez numerów — numer jest tylko adresem.
 function renderToc() {
-  tocList.innerHTML = manual.parts.map((part) => `
-    <div class="m-side-part">${esc(part.title)}</div>
-    ${part.chapters.map((id) => {
-      const ch = findChapter(id);
-      const active = current === id;
-      const sections = active ? ch.sections.filter((s) => s.level === 2) : [];
-      return `<a class="m-side-item${active ? " active" : ""}" href="${chapterHref(id)}" data-ch="${esc(id)}"${active ? ' aria-current="page"' : ""}>${esc(ch.title)}</a>
-        ${sections.map((s) => `<a class="m-side-item m-side-sub" href="${chapterHref(id, `#${sectionId(s.id)}`)}" data-ch="${esc(id)}" data-sec="${esc(s.id)}">${esc(s.title)}</a>`).join("")}`;
-    }).join("")}`).join("");
+  tocList.innerHTML = manualToc(manual, current, chapterHref);
 }
 
 function renderStart() {
-  article.innerHTML = `
-    <header class="m-head">
-      <h1 class="m-title">${esc(t("manual.pageTitle"))}</h1>
-      <p class="m-lead">${esc(t("manual.startLead"))}</p>
-    </header>
-    <div class="m-parts">
-      ${manual.parts.map((part) => `
-        <section class="m-part-card">
-          <h2 class="m-part-title">${esc(part.title)}</h2>
-          ${part.intro || ""}
-          <ol class="m-part-chapters">
-            ${part.chapters.map((id) => `<li><a href="${chapterHref(id)}" data-ch="${esc(id)}">${esc(findChapter(id).title)}</a></li>`).join("")}
-          </ol>
-        </section>`).join("")}
-    </div>`;
+  article.innerHTML = manualArticle(manual, null, t, chapterHref);
+}
+
+function returnHtml() {
+  return returnTo && titleOf(returnTo)
+    ? `<div class="m-return-bar"><a class="m-return" href="${hrefFor(returnTo)}" data-return="1"><i data-icon="arrow-left"></i><span>${esc(t("manual.backTo", { title: titleOf(returnTo) }))}</span></a></div>`
+    : "";
 }
 
 function renderChapter(ch) {
-  const order = manual.chapters.map((c) => c.id);
-  const idx = order.indexOf(ch.id);
-  const prev = idx > 0 ? findChapter(order[idx - 1]) : null;
-  const next = idx < order.length - 1 ? findChapter(order[idx + 1]) : null;
-  const part = partOf(ch.id);
-  const sections = ch.sections.filter((s) => s.level === 2);
-  const pager = (c, cls, label) => c
-    ? `<a class="m-pager-link ${cls}" href="${chapterHref(c.id)}" data-ch="${esc(c.id)}"><span class="m-pager-label">${esc(label)}</span><span class="m-pager-title">${esc(c.title)}</span></a>`
-    : `<span class="m-pager-link ${cls} is-empty"></span>`;
-  const back = returnTo && titleOf(returnTo)
-    ? `<div class="m-return-bar"><a class="m-return" href="${hrefFor(returnTo)}" data-return="1"><i data-icon="arrow-left"></i><span>${esc(t("manual.backTo", { title: titleOf(returnTo) }))}</span></a></div>`
-    : "";
-  article.innerHTML = `
-    ${back}
-    <header class="m-head">
-      ${part ? `<div class="m-crumb">${esc(part.title)}</div>` : ""}
-      <h1 class="m-title">${esc(ch.title)}</h1>
-      ${sections.length > 1 ? `<nav class="m-sections" aria-label="${esc(t("manual.sections"))}">
-        <div class="m-sections-title">${esc(t("manual.sections"))}</div>
-        <ol>${sections.map((s) => `<li><a href="#${sectionId(s.id)}" data-sec="${esc(s.id)}">${esc(s.title)}</a></li>`).join("")}</ol>
-      </nav>` : ""}
-    </header>
-    <div class="m-doc">${ch.html}</div>
-    <nav class="m-pager">
-      ${pager(prev, "prev", t("manual.prev"))}
-      ${pager(next, "next", t("manual.next"))}
-    </nav>`;
+  article.innerHTML = returnHtml() + manualArticle(manual, ch, t, chapterHref);
 }
 
 // Karuzela widoków: przewijanie z przyciąganiem (przesunięcie palcem na telefonie),
@@ -260,11 +220,17 @@ function syncReturn() {
   }
 }
 
-function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false } = {}) {
+function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false, hydrate = false } = {}) {
   const ch = id ? findChapter(id) : null;
   current = ch ? ch.id : null;
   returnTo = ch && from && titleOf(from) ? from : null;
-  if (ch) renderChapter(ch); else renderStart();
+  const reuse = hydrate && article.dataset.manualLang === getUiLang()
+    && article.dataset.manualChapter === (ch?.id || "");
+  if (reuse) {
+    // Nie odłączaj widocznych obrazów/linków przy przejęciu gotowego HTML.
+    article.insertAdjacentHTML("afterbegin", returnHtml());
+  } else if (ch) renderChapter(ch); else renderStart();
+  syncPublicSeo("manual", getUiLang(), ch ? t("manual.chapterTitle", { title: ch.title }) : t("manual.title"), ch?.description || t("manual.startLead"), ch);
   syncReturn();
   renderToc();
   currentLabel.textContent = ch ? ch.title : t("manual.pageTitle");
@@ -276,7 +242,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null, ke
     const next = chapterHref(current, ch ? hash : "", returnTo);
     if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, "", next);
   }
-  scrollToHash(ch ? hash : "", smooth);
+  if (!reuse || hash) scrollToHash(ch ? hash : "", smooth);
+  else markSection();
 }
 
 function setTocOpen(open) {
@@ -306,7 +273,7 @@ function wireNavigation() {
     ev.preventDefault();
     const id = url.searchParams.get(CHAPTER_PARAM) || (url.search ? null : current);
     // Odnośnik w treści zapamiętuje miejsce wyjścia; spis treści, pager i „Wróć” — nie.
-    const from = a.classList.contains("m-ref") ? sectionOf(a) : null;
+    const from = a.classList.contains("m-ref") && !a.hasAttribute("data-ch") ? sectionOf(a) : null;
     if (id === current && url.hash && !from) {
       history.replaceState(history.state, "", chapterHref(current, url.hash, a.dataset.return ? null : returnTo));
       if (a.dataset.return) { returnTo = null; article.querySelector(".m-return-bar")?.remove(); syncReturn(); }
@@ -320,13 +287,13 @@ function wireNavigation() {
   content.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(markSection); }, { passive: true });
 }
 
-async function renderForLang() {
+async function renderForLang({ hydrate = false } = {}) {
   manual = await loadContent(getUiLang());
   searchIndexEntries = buildIndex(manual);
   // Tekst wpisany, zanim treść się wczytała, dostaje wyniki od razu po zbudowaniu indeksu.
   if (search?.input.value) search.refresh();
   const params = new URLSearchParams(location.search);
-  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true });
+  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true, hydrate });
 }
 
 /* ================= Init ================= */
@@ -351,9 +318,11 @@ async function init() {
   });
   await i18nP;
   wireSearch();
-  wireNavigation();
   try {
-    await renderForLang();
+    await renderForLang({ hydrate: true });
+    // Wcześniej linki HTML działają normalnie, bez przechwytywania kliknięć.
+    wireNavigation();
+    document.documentElement.dataset.manualReady = "true";
   } finally {
     document.documentElement.classList.remove("page-loading");
     document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
