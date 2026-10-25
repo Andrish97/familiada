@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FvOfGVWjh9Nu41847T8VOIXJKLqRFFTFKdR7S6DnaENPSQaW1XYvThDLGiQibkU
+\restrict 5zg6q8uHn9s2ylIAvuP2Dztcr0xp6y14mxvpseTo1z6sy6VtlXP32FsflTsuXpq
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8882,7 +8882,7 @@ COMMENT ON COLUMN "public"."game_state"."locked_until" IS 'Do kiedy trwa dźwię
 -- Name: COLUMN "game_state"."display_rendered_rev"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN "public"."game_state"."display_rendered_rev" IS 'Highest game_state revision acknowledged as rendered by the primary Display; mirrored to game_state for device Realtime delivery.';
+COMMENT ON COLUMN "public"."game_state"."display_rendered_rev" IS 'Nieużywane od migracji 486 (potwierdzenie tylko w game_state_display_completion); do usunięcia przy sprzątaniu.';
 
 
 --
@@ -8950,11 +8950,10 @@ BEGIN
             THEN excluded.rendered_at ELSE game_state_display_completion.rendered_at END,
           rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
 
-  -- This update emits the acknowledgment through the same RLS protected
-  -- game_state stream already consumed by every device.
-  UPDATE public.game_state
-    SET display_rendered_rev=greatest(display_rendered_rev,p_rev)
-    WHERE game_id=p_game_id AND display_rendered_rev<p_rev;
+  -- 486: bez lustra w game_state.display_rendered_rev. Każde potwierdzenie
+  -- wysyłało cały wiersz game_state przez Realtime do Wyświetlacza,
+  -- Prowadzącego i Przycisku; jedyny odbiorca (Przycisk) słucha teraz
+  -- tabeli potwierdzeń (onDirectTables) i sprawdza gotowość RPC.
 END $$;
 
 
@@ -24808,5 +24807,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FvOfGVWjh9Nu41847T8VOIXJKLqRFFTFKdR7S6DnaENPSQaW1XYvThDLGiQibkU
+\unrestrict 5zg6q8uHn9s2ylIAvuP2Dztcr0xp6y14mxvpseTo1z6sy6VtlXP32FsflTsuXpq
 
