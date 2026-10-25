@@ -5,7 +5,11 @@ import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue
 
 async function gameUniqueness(env, id) {
   if (!env.GENERATE_GAME_SECRET) return { ok: false, status: 503, data: { error: "generator_not_configured" } };
-  return supabaseRequest(env, "/functions/v1/generate-game", { method: "POST", headers: { "X-Internal-Secret": env.GENERATE_GAME_SECRET }, body: { action: "check-uniqueness", id } });
+  const result = await supabaseRequest(env, "/functions/v1/generate-game", { method: "POST", headers: { "X-Internal-Secret": env.GENERATE_GAME_SECRET }, body: { action: "check-uniqueness", id } });
+  if (!result.ok || !result.data?.ok || typeof result.data.review_key !== "string" || !result.data.review_key ||
+      !Array.isArray(result.data.matches) || typeof result.data.semantic?.complete !== "boolean")
+    return { ok: false, status: 503, data: { ok: false, error: "uniqueness_unavailable" } };
+  return result;
 }
 
 export async function handleAdminMarketplaceApi(request, env, url) {

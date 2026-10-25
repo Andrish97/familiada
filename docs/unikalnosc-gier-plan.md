@@ -88,3 +88,28 @@ instalatorów, więc potrzebny jest dostęp do repo konfiguracji. Wysłano
 pytanie asynchroniczne o udostępnienie/nazwę; dalsze testy lokalne trwają.
 Nie wdrożono 486/487, kodu Edge ani frontu. Workflow market-model-preflight
 służy wyłącznie odczytowi numerycznych zasobów serwera, bez zmian.
+
+
+Końcowa bramka lokalna: 50/50 unit (w tym 15 dla raportu/modelu/API),
+Worker 17/17. Native browser 2/2: telefon/komputer, zmiana wersji korpusu
+zatrzymuje potwierdzenie, powrót do raportu i potwierdzenie nowego klucza
+bez publikacji przed zgodą. Zrzuty: 18 + 2 potwierdzenia. Zabezpieczono
+również przejściowo stary format Edge podczas niezależnych wdrożeń:
+brak klucza wersji/pokrycia daje 503, nie możliwość zatwierdzenia.
+Maksymalna partia kontenera 32 × 1024 znaki przeszła pod limitem 1 CPU/
+1 GiB w 1,08 s, bez OOM; szczyt pamięci cgroup ok. 678 MiB. Obraz końcowy
+07473b70e34f8d970edf9d5c0301e5bc53a488b7c7ecdaacf78a49505c680f42.
+Przygotowany workflow capacity nie jest uruchomiony — nowy plik nie jest
+jeszcze na main; zasobów VPS nadal nie zmierzono.
+
+Kontrola końcowego obrazu także z `--network none` ✓: health, model QA-v1,
+3 języki, 384 wymiary i autoryzacja, 1 CPU/1 GiB, bez sieci. Wyłączona
+telemetria runtime. TypeScript modułu i lint no-undef ✓. Repo konfiguracji
+ponownie sprawdzone — nadal 404. Zabezpieczono również zmianę wersji korpusu
+między podglądem a kliknięciem i dialog na telefonie (potwierdzenie dopiero
+po schowaniu arkusza; Anuluj odtwarza raport).
+Bramka CI kodu brancha dotyczy zgodności publicznego katalogu i zgłoszenia
+z obecną bazą. Nowy test `unikalność treści` wymaga 487 i ma zostać wykonany
+po migracji razem z kontrolą produkcji; lokalny odpowiednik z wyścigiem
+już przeszedł. Pozostałe testy raportów moderatora mają kontrolowany backend,
+bez logowania prawdziwego człowieka przez Cloudflare Access.

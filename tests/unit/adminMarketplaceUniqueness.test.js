@@ -8,7 +8,7 @@ const request=async(path,body)=>new Request('https://admin.familiada.online/_adm
 async function check(report,body,expected,sqlExpected){
  const previous=globalThis.fetch;let sql=0;
  globalThis.fetch=withJwks(async(url,options)=>{
-  if(String(url).endsWith('/functions/v1/generate-game')){assert.equal(new Headers(options.headers).get('X-Internal-Secret'),'fixture-internal');return Response.json(report);}
+  if(String(url).endsWith('/functions/v1/generate-game')){assert.equal(new Headers(options.headers).get('X-Internal-Secret'),'fixture-internal');return Response.json({...(!report.legacy?{review_key:'fixture:corpus'}:{}),...report});}
   sql++;return Response.json([{ok:true,err:''}]);
  });
  try{const response=await handleAdminApi(await request('review',{id,action:'approve',...body}),env);assert.equal(response.status,expected);assert.equal(sql,sqlExpected);return await response.json();}
@@ -21,3 +21,5 @@ test('moderator: niepełny lub podobny wynik wymaga potwierdzenia właściwej we
 });
 test('moderator: pełny wynik bez zbieżności pozwala zaakceptować',async()=>{await check({ok:true,matches:[],semantic:{complete:true}},{},200,1);});
 test('moderator: błąd sprawdzania nie pozwala zaakceptować',async()=>{await check({ok:false,error:'unavailable'},{},503,0);});
+
+test('moderator: stary format odpowiedzi w trakcie wdrożenia nie pozwala zaakceptować',async()=>{await check({legacy:true,ok:true,matches:[],mode:'trgm'},{},503,0);});

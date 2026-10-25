@@ -31,6 +31,9 @@ export async function handleAdminGeneratorApi(request, env, url) {
     headers: { "X-Internal-Secret": secret },
     body: { ...params, action },
   });
+  if (res.ok && ["check-uniqueness", "check-candidate"].includes(action) &&
+      (!res.data?.ok || typeof res.data.review_key !== "string" || !res.data.review_key || !Array.isArray(res.data.matches) || typeof res.data.semantic?.complete !== "boolean"))
+    return json({ ok: false, error: "uniqueness_unavailable" }, 503);
   if (res.data !== null && typeof res.data === "object") return json(res.data, res.status);
   return json({ ok: false, error: res.ok ? "invalid_response" : `generator_http_${res.status}` }, res.ok ? 502 : res.status);
 }
