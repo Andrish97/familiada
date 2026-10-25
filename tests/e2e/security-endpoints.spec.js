@@ -187,14 +187,14 @@ test("P2 Worker: formularz kontaktu bez tokenu Turnstile = 400", async ({ reques
   }
 });
 
-// Bezpośredni origin z takim samym SNI/Host i rozwiązywaniem DNS jak Worker.
+// Bezpośredni origin Pages: Host domeny własnej, certyfikat serwera GitHuba.
 // Zwykły URL *.github.io przekierowuje do domeny własnej — nie sprawdza pliku.
 function pagesOriginStatus(pathname) {
   const https = require("node:https");
   const dns = require("node:dns");
   return new Promise((resolve, reject) => {
     const req = https.get({
-      hostname: "familiada.online", path: pathname,
+      hostname: "familiada.online", servername: "andrish97.github.io", path: pathname,
       lookup: (_host, options, done) => dns.lookup("andrish97.github.io", { ...options, family: 4 }, done),
     }, res => {
       res.resume();
