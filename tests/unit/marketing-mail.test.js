@@ -17,11 +17,15 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
     assert.doesNotMatch(html,/text-transform:uppercase|backdrop-filter/);
     assert.equal((html.match(/<!doctype html>/gi)||[]).length,1);
     if (template === 'invitation') {
-      assert.ok(html.includes('Gotowe gry w Grach Społeczności'));
+      assert.ok(html.includes('Pytania na trzy sposoby'));
       assert.ok(html.includes('Widok prowadzącego i Przycisk do pojedynku'));
-      assert.equal((html.match(/<img /g)||[]).length,4);
-      // Kadry systemu zrzutów (scripts/screens), wersje podglądu.
-      for (const image of ['poll-vote-mobile','control-round','display-round','host-round']) {
+      assert.equal((html.match(/<img /g)||[]).length,3);
+      // Pierwszy obraz: grafika OG strony (wersja do maila), potem kadry systemu zrzutów.
+      const first = html.match(/<img [^>]*src="([^"]+)"/)[1];
+      assert.match(first, /^https:\/\/familiada\.online\/assets\/img\/og\/og-image-mail\.webp/);
+      assert.ok(fs.existsSync(new URL('../../web/assets/img/og/og-image-mail.webp', import.meta.url)));
+      assert.ok(!html.includes('poll-vote-mobile'));
+      for (const image of ['control-round','host-round']) {
         const file = `assets/img/pl/shots/${image}-preview.webp`;
         assert.ok(html.includes(`https://familiada.online/${file}`));
         assert.ok(fs.existsSync(new URL('../../web/' + file, import.meta.url)));

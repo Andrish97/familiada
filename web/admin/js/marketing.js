@@ -9,7 +9,7 @@ import { adminFetch, esc, loadTinyMce, showToast } from "./core.js?v=v2026-10-25
 
 const MKT_TEMPLATES = {
   invitation: {
-    subject: "familiada.online — profesjonalny system do Twoich wydarzeń",
+    subject: "familiada.online — bezpłatny system do prowadzenia Familiady na żywo",
     hasBody: false,
   },
   newsletter: {
