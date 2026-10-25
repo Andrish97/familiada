@@ -2,12 +2,12 @@
 // tabela kontaktów z widokami kategorii, adresy do wysyłki.
 // Plan: docs/lead-finder-nowy-plan.md (Lead Finder 3). Wysyłka: marketing.js.
 
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T16015";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T16015";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T16015";
-import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T16015";
-import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-25T16015";
-import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T16015";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T16233";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T16233";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T16233";
+import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T16233";
+import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-25T16233";
+import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T16233";
 
 const MC_PAGE_SIZE = 50;
 const MC_SENT_FILTERS = [
