@@ -97,18 +97,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
   // Zapis przez dziennik sesji urządzenia (session-log.js, control2_device_log).
   function sendDiagnostic(eventType, phase, transport, metrics = {}) {
-    const allowed = active && sessionStarted;
-    if (eventType === "transport_state" && phase === "socket_closed") {
-      globalThis.__sbDeviceRealtimeLastCloseDecision = {
-        active, session_started: sessionStarted, allowed,
-        direct_status: directStatus, direct_connected: directConnected,
-        incident_open: directIncidentAt != null,
-        lease_present: !!getLeaseArgs()?.p_connection_id && Number.isFinite(getLeaseArgs()?.p_epoch),
-      };
-    }
-    if (!allowed) return false;
+    if (!active || !sessionStarted) return;
     log({ event_type: eventType, phase, transport, client_time_ms: Date.now(), ...transportContext(), ...metrics });
-    return true;
   }
   function noteDirectRevision(revision) {
     for (const metrics of fallbackRevisionTracker.noteDirect(revision)) {
@@ -318,12 +308,20 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!active) return;
     directRetry.reset();
     const recoveredAt = directIncidentAt;
+    const incident = directIncident;
+    const incidentMetrics = recoveredAt != null && incident ? {
+      reconnect_ms: Math.max(0, Math.round(performance.now() - recoveredAt)),
+      previous_status: incident.firstStatus,
+      transition_count: incident.transitionCount,
+      catchup_count: incident.catchupCount,
+      missed_revisions: incident.missedRevisions,
+      ...incident.socketClose,
+    } : {};
     directConnected = true;
     directIncidentAt = null;
     if (sessionStarted) {
       if (recoveredAt != null) {
-        const incident = directIncident;
-        const durationMs = Math.round(performance.now() - recoveredAt);
+        const durationMs = incidentMetrics.reconnect_ms;
         if (incident && (durationMs >= 2000 || incident.catchupCount > 0 || incident.firstStatus === "TOKEN_ERROR")) {
           sendDiagnostic("transport_state", "recovered", "postgres_changes", {
             status: "SUBSCRIBED", duration_ms: durationMs, first_status: incident.firstStatus,
@@ -344,7 +342,12 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       // też musi zostawić ślad, że urządzenie jedzie na postgres_changes.
       if (!transportSnapshotLogged) {
         transportSnapshotLogged = true;
-        sendDiagnostic("transport_state", "connected", "postgres_changes", { status: "SUBSCRIBED" });
+        // Krótkie zerwanie nie dostaje osobnego phase=recovered (żeby nie
+        // mnożyć wpisów przy szybkiej rotacji kanału), ale wpis connected
+        // musi zachować kontekst przerwy i kod zamknięcia gniazda.
+        sendDiagnostic("transport_state", "connected", "postgres_changes", {
+          status: "SUBSCRIBED", ...incidentMetrics,
+        });
       }
     }
     // Close the bootstrap/subscription race, then let direct row events

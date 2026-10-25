@@ -1257,17 +1257,20 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       await expect.poll(async () => {
         const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
         socketEvents = events.filter(event => event.source === "display" && event.category === "device_transport"
-          && ["socket_closed", "recovered"].includes(event.metrics?.phase));
-        return events.some(event => event.source === "display" && event.category === "device_transport"
-          && event.metrics?.phase === "socket_closed")
-          && events.some(event => event.source === "display" && event.category === "device_transport"
-            && event.metrics?.phase === "recovered" && Number.isInteger(event.metrics?.socket_close_code));
-      }, { timeout: 45000, message: "Display powinien odzyskać kanał i zapisać kod zamknięcia WebSocket" }).toBe(true);
+          && ["socket_closed", "recovered", "connected"].includes(event.metrics?.phase));
+        const closed = socketEvents.some(event => event.metrics?.phase === "socket_closed"
+          && Number.isInteger(event.metrics?.socket_close_code));
+        const reconnected = socketEvents.some(event => event.metrics?.phase === "recovered"
+          && Number.isInteger(event.metrics?.socket_close_code))
+          || socketEvents.some(event => event.metrics?.phase === "connected"
+            && Number.isInteger(event.metrics?.socket_close_code)
+            && Number.isFinite(event.metrics?.reconnect_ms));
+        return closed && reconnected;
+      }, { timeout: 45000, message: "Display powinien zapisać kod zamknięcia i powiązać go z ponownym połączeniem" }).toBe(true);
     } catch (error) {
       const socketProbe = await displayPage.evaluate(() => ({
         observer_attached: window.__sbDeviceRealtimeCloseObserverAttached,
         app_close: window.__sbDeviceRealtimeLastClose || null,
-        close_decision: window.__sbDeviceRealtimeLastCloseDecision || null,
         connection_state: window.__sbDeviceRealtime?.realtime?.connectionState?.() || null,
       })).catch(() => null);
       const allDeviceTransportEvents = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
@@ -1275,7 +1278,9 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         socketProbe,
         selected: socketEvents.map(event => ({ phase: event.metrics?.phase, metrics: event.metrics })),
         device_transport: allDeviceTransportEvents.filter(event => event.source === "display" && event.category === "device_transport")
-          .map(event => ({ phase: event.metrics?.phase, status: event.metrics?.status, code: event.metrics?.socket_close_code })),
+          .map(event => ({ phase: event.metrics?.phase, status: event.metrics?.status,
+            code: event.metrics?.socket_close_code, reconnect_ms: event.metrics?.reconnect_ms,
+            previous_status: event.metrics?.previous_status })),
       })}`);
       throw error;
     }
