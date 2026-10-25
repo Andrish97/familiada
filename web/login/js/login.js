@@ -1,5 +1,6 @@
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-25T22543";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-25T18561";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-25T22543";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +23,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-25T18561";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T18561";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T18561";
+} from "../../shared/js/core/auth.js?v=v2026-10-25T22543";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T22543";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T22543";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-25T18561";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-25T18561";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T18561";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-25T18561";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T18561";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T18561";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T18561";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22543";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-25T22543";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T22543";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-25T22543";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T22543";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T22543";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22543";
 
 
 const $ = (s) => document.querySelector(s);
@@ -804,47 +805,7 @@ function applyMode() {
   resetPasswordToggles();
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    await initI18n({ withSwitcher: true });
-  } catch (e) {
-    console.error("[i18n] init failed", e);
-    try { applyTranslations(document); } catch {}
-  }
-  document.documentElement.classList.remove('page-loading');
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
-  // Podręcznik: adres z mapy (ret wraca na logowanie, język z bieżącej strony).
-  const btnManual = document.getElementById("btnManual");
-  const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
-  syncManual();
-  window.addEventListener("i18n:lang", syncManual);
-  const syncLanguage = () => updateUserLanguage(getUiLang());
-  applyMode();
-  initPasswordToggles();
-  setStatus(t("index.statusChecking"));
-  // Pierwszy etap logowania: szkielet formularza jest gotowy po i18n i
-  // przygotowaniu trybu, bez czekania na późniejsze żądania auth/captcha.
-  document.querySelector("body > [data-skel-step]")?.classList.add("skel-step-ready");
-  if (guestExpired) {
-    void alertModal({ text: t("index.guestExpired") });
-  }
-  if (forceAuth) {
-    void alertModal({ text: t("index.forceAuthInfo") });
-  }
-  
-  const usernameForm = document.querySelector("#usernameForm");
-  
-  usernameForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isBusy) return;
-    setBusy(true);
-    try {
-      await saveUsername();
-    } finally {
-      setBusy(false);
-    }
-  });
-
+async function resolveInitialRoute(syncLanguage) {
   const u = await getUser();
   if (!u && hasGuestLocalMarker()) {
     // If we just initiated a guest upgrade, do not show the "deleted by inactivity" message.
@@ -872,15 +833,65 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (setupUsername || !u.username) {
         openUsernameSetup();
       } else if (hasNextTarget) {
-        location.href = buildNextUrl();
+        redirectPage(buildNextUrl());
       } else {
-        location.href = withLangParam(gamesUrl);
+        redirectPage(withLangParam(gamesUrl));
       }
-      return;
+      return !(setupUsername || !u.username);
     }
   }
 
   if (!u || !isGuestUser(u)) setStatus(t("index.statusLoggedOut"));
+
+  return false;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await initI18n({ withSwitcher: true });
+  } catch (e) {
+    console.error("[i18n] init failed", e);
+    try { applyTranslations(document); } catch {}
+  }
+  document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Podręcznik: adres z mapy (ret wraca na logowanie, język z bieżącej strony).
+  const btnManual = document.getElementById("btnManual");
+  const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
+  syncManual();
+  window.addEventListener("i18n:lang", syncManual);
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  applyMode();
+  initPasswordToggles();
+  setStatus(t("index.statusChecking"));
+  // Formularz jest przygotowany, ale bramka trasy poniżej czeka na decyzję
+  // sesji. Captcha i późniejsze dane nie opóźniają odsłonięcia logowania.
+  document.querySelector("body > [data-skel-step]")?.classList.add("skel-step-ready");
+  if (guestExpired) {
+    void alertModal({ text: t("index.guestExpired") });
+  }
+  if (forceAuth) {
+    void alertModal({ text: t("index.forceAuthInfo") });
+  }
+  
+  const usernameForm = document.querySelector("#usernameForm");
+  
+  usernameForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (isBusy) return;
+    setBusy(true);
+    try {
+      await saveUsername();
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  const redirected = await holdPageLayout(resolveInitialRoute(syncLanguage).catch((error) => {
+    console.warn("[login] session check failed", error?.name);
+    return false;
+  }));
+  if (redirected) return;
 
   // Preload captcha API script only — token is fetched on first user interaction
   if (captchaSiteKey) void loadCaptchaApi();

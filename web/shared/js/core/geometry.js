@@ -19,6 +19,11 @@ function vars(el, map) {
   }
 }
 
+// Początek szuflady pod zmienną wysokością jej paska narzędzi.
+export function setDrawerTop(el, top) {
+  if (el) vars(el, { '--drawer-top': top });
+}
+
 // Przodek z transform/filter/perspective tworzy dla position: fixed własny
 // układ odniesienia (np. wysuwany panel Poczty) — wtedy współrzędne okna
 // trzeba przeliczyć względem niego.

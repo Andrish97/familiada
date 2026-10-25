@@ -1,3 +1,4 @@
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T22543";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -5,12 +6,12 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T18561";
-import { signOut } from './auth.js?v=v2026-10-25T18561';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T18561';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T18561';
-import { icon, iconText } from './icons.js?v=v2026-10-25T18561';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T18561';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T22543";
+import { signOut } from './auth.js?v=v2026-10-25T22543';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T22543';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T22543';
+import { icon, iconText } from './icons.js?v=v2026-10-25T22543';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T22543';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -18,6 +19,15 @@ import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25
 let _overflowState = null; // { expandAll, collapseAll, recalc }
 let _accountState = null;  // { expand, collapse }
 let _mobileActive = false;
+
+// Ten sam stan steruje dostępnością i ruchem strzałki, także przy zamknięciu z zewnątrz.
+function bindDisclosureState(trigger, popup, inline = () => false) {
+  const sync = () => trigger?.setAttribute('aria-expanded', String(!popup.hidden && !inline()));
+  if (popup.id) trigger?.setAttribute('aria-controls', popup.id);
+  new MutationObserver(sync).observe(popup, { attributes: true, attributeFilter: ['hidden', 'class'] });
+  sync();
+  return sync;
+}
 
 // ── Liczniki powiadomień (.badge) ─────────────────────────────────────────────
 // Wspólny zapis/odczyt licznika .badge: pusty tekst gdy 0 (CSS chowa pusty
@@ -62,6 +72,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   document.body.appendChild(moreDropdownEl);
   moreDropdownEl.className = 'nav-more-dropdown';
   moreDropdownEl.hidden = true;
+  bindDisclosureState(btnMore, moreDropdownEl);
 
   let _hiddenBtns = [];
 
@@ -78,17 +89,14 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   // aktualizują — bez tego dropdown pokazywał nieaktualne liczby).
   const badgeObserver = new MutationObserver(() => {
     if (_mobileActive) return;
-    if (_hiddenBtns.length) recalc();
-    else updateMoreBadge([]);
+    recalc();
   });
-  getButtons().forEach(btn => {
-    if (btn) badgeObserver.observe(btn, {
+  badgeObserver.observe(section2, {
       subtree: true,
       characterData: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['class'],
-    });
+      attributeFilter: ['class', 'hidden', 'data-nav-hidden'],
   });
 
   function getVisibleBtns() {
@@ -106,7 +114,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   // Pomiar sam przełącza klasę .hidden przycisków — te zmiany nie mogą
   // wracać do obserwatora liczników (pętla bez końca, zawieszona strona).
   function recalc() {
-    try { measureOverflow(); } finally { badgeObserver.takeRecords(); }
+    try { measureOverflow(); updateTopbarHeight(); } finally { badgeObserver.takeRecords(); }
   }
 
   function measureOverflow() {
@@ -116,7 +124,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     // Topbar Ustawień jest początkowo display:none pod ekranem logowania.
     // Pomiar zerowej szerokości błędnie uruchamiał hamburger i zostawiał go
     // po późniejszym odblokowaniu panelu.
-    if (!section2.isConnected || section2Width <= 0) return;
+    // Widoczna sekcja może mieć 0 px, gdy konto zajęło całe wolne miejsce.
+    // To właśnie wymaga hamburgera; pomijamy wyłącznie brak układu (display:none).
+    if (!section2.isConnected || !section2.getClientRects().length) return;
 
     const btns = getVisibleBtns();
     btns.forEach(btn => btn.classList.remove('hidden'));
@@ -195,7 +205,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     });
   }
 
-  btnMore?.addEventListener('pointerdown', (e) => {
+  const toggleMore = (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     if (moreDropdownEl.hidden) {
@@ -205,6 +215,15 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
       moreDropdownEl.hidden = false;
     } else {
       moreDropdownEl.hidden = true;
+    }
+  };
+  btnMore?.addEventListener('pointerdown', toggleMore);
+  btnMore?.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleMore(event); }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !event.defaultPrevented && !_mobileActive && !moreDropdownEl.hidden) {
+      event.preventDefault(); moreDropdownEl.hidden = true; btnMore?.focus();
     }
   });
 
@@ -321,7 +340,7 @@ export function setTopbarAccount(user, {
   whoSpan.textContent = username;
   const chevron = document.createElement('span');
   chevron.className = 'account-chevron';
-  chevron.innerHTML = icon('caret-down');
+  chevron.innerHTML = icon('caret-down', { animation: 'disclosure' });
   whoEl.append(whoSpan, chevron);
   whoEl.classList.add('account-btn', 'btn');
   if (!whoEl.matches('button')) whoEl.tabIndex = 0;
@@ -332,6 +351,8 @@ export function setTopbarAccount(user, {
   menu.id = 'topbarAccountMenu';
   menu.hidden = true;
   whoEl.after(menu);
+  const syncAccountExpanded = bindDisclosureState(whoEl, menu, () => menu.classList.contains('account-menu--inline'));
+  if (!whoEl.matches('button')) whoEl.setAttribute('role', 'button');
 
   if (withAccountSettings) {
     const btnSettings = document.createElement('button');
@@ -368,14 +389,25 @@ export function setTopbarAccount(user, {
   menu.appendChild(btnAction);
 
   // Desktop: dropdown
-  whoEl.addEventListener('pointerdown', (e) => {
+  const toggleAccount = (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     menu.hidden = !menu.hidden;
     if (!menu.hidden) placeDropdown(whoEl, menu);
+  };
+  whoEl.addEventListener('pointerdown', toggleAccount);
+  whoEl.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleAccount(event); }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !event.defaultPrevented && !_mobileActive && !menu.hidden) {
+      event.preventDefault(); menu.hidden = true; whoEl.focus();
+    }
   });
 
   document.addEventListener('pointerdown', (e) => {
+    // Na telefonie konto jest stałą częścią hamburgera, nie dropdownem.
+    if (_mobileActive) return;
     if (!whoEl.contains(e.target) && !menu.contains(e.target)) menu.hidden = true;
   });
 
@@ -389,12 +421,14 @@ export function setTopbarAccount(user, {
     menu.hidden = false;
     menu.classList.add('account-menu--inline');
     whoEl.classList.add('account-btn--mobile-label');
+    syncAccountExpanded();
   }
 
   function collapse() {
     menu.classList.remove('account-menu--inline');
     menu.hidden = true;
     whoEl.classList.remove('account-btn--mobile-label');
+    syncAccountExpanded();
   }
 
   _accountState = { expand, collapse };
@@ -410,7 +444,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T18561');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T22543');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -444,7 +478,7 @@ function initTopbarController() {
   const menuContentSelector =
     'button, a, [role="button"], [role="tab"], .btn, .user-btn, .lang-switcher, .top-status';
 
-  let overlay, panel, closeBtn, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
+  let overlay, panel, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
   let isMobileMounted = false;
   let navRequiresMobile = false;
 
@@ -478,7 +512,7 @@ function initTopbarController() {
   const hasVisibleMenuItems = () => {
     if (!isMobileMounted || !mount) return false;
     return (tabGroup?.childElementCount || 0) > 0 ||
-      [...mount.querySelectorAll(menuContentSelector)].some(isVisible);
+      [...mount.querySelectorAll(menuContentSelector)].some(el => !isHiddenWithin(el, mount));
   };
 
   const hasMenuContent = () => {
@@ -490,13 +524,24 @@ function initTopbarController() {
   };
 
   const close = () => {
+    const focusInMenu = overlay?.contains(document.activeElement);
     overlay?.classList.remove('is-open');
+    if (overlay) overlay.inert = true;
     document.body.classList.remove('topbar-mobile-lock');
+    document.documentElement.removeAttribute('data-menu-scrollbar');
+    toggleBtn?.setAttribute('aria-expanded', 'false');
+    toggleBtn?.setAttribute('aria-label', t('common.menuOpen'));
+    if (focusInMenu) toggleBtn?.focus();
   };
 
   const open = () => {
+    document.documentElement.toggleAttribute('data-menu-scrollbar', window.innerWidth > document.documentElement.clientWidth);
+    document.dispatchEvent(new CustomEvent('drawer:open', { detail: { panel: overlay } }));
+    if (overlay) overlay.inert = false;
     overlay?.classList.add('is-open');
     document.body.classList.add('topbar-mobile-lock');
+    toggleBtn?.setAttribute('aria-expanded', 'true');
+    toggleBtn?.setAttribute('aria-label', t('common.menuClose'));
   };
 
   const mountMobile = () => {
@@ -507,16 +552,12 @@ function initTopbarController() {
 
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
+    overlay.id = 'topbarMobileMenu';
+    overlay.inert = true;
     if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
     panel.className = 'topbar-mobile-panel';
-
-    closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'btn topbar-mobile-close';
-    closeBtn.innerHTML = icon('close');
-    closeBtn.setAttribute('aria-label', t('common.modal.closeLabel'));
 
     mount = document.createElement('div');
     mount.className = 'topbar-mobile-mount';
@@ -573,14 +614,17 @@ function initTopbarController() {
 
     if (!hasAnything) { unmountMobile(); return; }
 
-    panel.append(closeBtn, mount);
+    panel.append(mount);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger')}</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBtn.setAttribute('aria-controls', overlay.id);
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.setAttribute('aria-label', t('common.menuOpen'));
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger', { animation: 'menu' })}</span><span class="badge" aria-hidden="true"></span>`;
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
@@ -592,8 +636,9 @@ function initTopbarController() {
       action.blur();
       close();
     }, true);
-    toggleBtn.addEventListener('pointerdown', open);
-    closeBtn.addEventListener('pointerdown', close);
+    toggleBtn.addEventListener('click', () => {
+      if (toggleBtn.getAttribute('aria-expanded') === 'true') close(); else open();
+    });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     if (!section2.querySelector(':scope > .topbar-title')) section2.hidden = true;
@@ -639,7 +684,7 @@ function initTopbarController() {
 
     try { badgeObserver?.disconnect(); } catch {}
     badgeObserver = toggleBadge = null;
-    overlay = panel = closeBtn = mount = tabGroup = group2 = group4 = sep = toggleBtn = null;
+    overlay = panel = mount = tabGroup = group2 = group4 = sep = toggleBtn = null;
 
     // Przelicz overflow po przywróceniu section-2
     _overflowState?.collapseAll();
@@ -653,6 +698,28 @@ function initTopbarController() {
   window.addEventListener('topbar:mobile-required', (event) => {
     navRequiresMobile = !!event.detail?.required;
     syncMode();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+      toggleBtn?.focus();
+    } else if (event.key === 'Tab') {
+      // Nawigacja klawiaturą pozostaje w otwartym menu i jego przełączniku.
+      const items = [toggleBtn, ...overlay.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')]
+        .filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+      const index = items.indexOf(document.activeElement);
+      event.preventDefault();
+      items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length]?.focus();
+    }
+  });
+  document.addEventListener('drawer:open', event => {
+    if (event.detail?.panel !== overlay) close();
+  });
+  window.addEventListener('i18n:lang', () => {
+    toggleBtn?.setAttribute('aria-label', t(toggleBtn.getAttribute('aria-expanded') === 'true' ? 'common.menuClose' : 'common.menuOpen'));
   });
 
   syncMode();
@@ -691,7 +758,7 @@ function initTopbarController() {
     more.id = 'navMore';
     more.hidden = true;
     const label = t('nav.menu.more');
-    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more"></span> ${icon('caret-down')}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
+    more.innerHTML = `<button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more"></span> ${icon('caret-down', { animation: 'disclosure' })}<span class="badge" id="moreBadge" aria-hidden="true"></span></button><div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>`;
     more.querySelector('[data-i18n]').textContent = label && label !== 'nav.menu.more' ? label : 'Więcej';
     const dropdown = more.querySelector('#navMoreDropdown');
     // Na telefonie przyciski siedzą w panelu (group2) i wracają do sekcji 2
@@ -709,6 +776,12 @@ function updateTopbarHeight() {
   const height = Math.ceil(topbar.getBoundingClientRect().height);
   document.body.style.setProperty('--topbar-h', `${height}px`);
 }
+
+registerPageLayout(() => {
+  initTopbarController();
+  _overflowState?.recalc();
+  updateTopbarHeight();
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   initTopbarController();

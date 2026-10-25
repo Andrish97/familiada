@@ -222,6 +222,14 @@ module.exports = [
     steps: [async (view) => { await view.locator("#btnManual").hover(); await view.waitForTimeout(400); }] },
 { id: "tasks-search", category: "Dodatkowe", title: "Zadania — wyszukiwanie w sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *",
     steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("we"); await view.waitForTimeout(400); }] },
+{ id: "games-account-menu", category: "Dodatkowe", title: "Gry — hamburger z ustawieniami konta i wylogowaniem", path: "/games/", sources: [...page("games"), "web/shared/js/core/topbar-controller.js"], ready: "#grid .card",
+    steps: [async (view) => {
+      const toggle = view.locator(".topbar-menu-toggle");
+      if (await toggle.isVisible()) await toggle.click(); else await view.locator(".account-btn").first().click();
+      await view.locator("#topbarAccountMenu .menu-item").first().waitFor({ state: "visible" });
+      await view.locator("#topbarAccountMenu .menu-item").last().waitFor({ state: "visible" });
+      await view.waitForTimeout(300);
+    }] },
 { id: "tasks-account-menu", category: "Dodatkowe", title: "Zadania — menu konta (komputer) i menu telefonu", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/topbar-controller.js"], ready: "#tasksHost > *",
     steps: [async (view) => {
       const toggle = view.locator(".topbar-menu-toggle");
@@ -271,7 +279,7 @@ module.exports = [
 { id: "base-explorer-tags-color", category: "Dodatkowe", title: "Eksplorator bazy — okno tagów: wybór koloru", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click(); await view.locator('#toolbar button[data-act="editTags"]').click(); await view.locator("#tagsAddNew").click(); await view.locator("#tagsEditColorTile").click(); await view.locator("#tagsL3").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(500); }] },
 { id: "base-explorer-drawer", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel na telefonie (hamburger)", devices: ["phone", "tablet"], path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
-    steps: [async (view) => { await view.locator("#btnDrawerToggle").click(); await view.waitForTimeout(500); }] },
+    steps: [async (view) => { if (await view.locator("#btnDrawerToggle").isVisible()) await view.locator("#btnDrawerToggle").click(); await view.waitForTimeout(300); }] },
 { id: "base-explorer-left-tags", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok tagów (przycisk przy wyszukiwarce / na telefonie)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('[data-left-view="tags"]:visible').click(); await view.locator('#tags .row[data-kind="tag"]').first().click(); await view.waitForTimeout(500); }] },
 { id: "base-explorer-left-types", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok proponowanych kategorii", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
@@ -339,22 +347,23 @@ module.exports = [
 { id: "not-found", category: "Dodatkowe", title: "Strona nie istnieje (404)", path: "/404.html", sources: ["web/404.html", "web/404/", "web/maintenance/css/"], ready: ".notfound-card" },
 { id: "maintenance", category: "Dodatkowe", title: "Przerwa techniczna — komunikat", path: "/maintenance/", sources: page("maintenance"), ready: ".block-card", settle: 600,
     db: (db) => { db.http = { ...(db.http || {}), "/maintenance-state.json*": { enabled: true, mode: "message" } }; } },
-{ id: "privacy", category: "Dodatkowe", title: "Polityka prywatności — początek", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2" },
-{ id: "privacy-scrolled", category: "Dodatkowe", title: "Polityka prywatności — po przewinięciu (cała strona się przewija)", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator(".m-doc .m-h2").nth(5).scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
-{ id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
-{ id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
-{ id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: ".m-return" },
-{ id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
-{ id: "manual-shots", category: "Dodatkowe", title: "Podręcznik — karuzela widoków przy prowadzeniu rundy", path: "/manual/?ch=17#s-17-3", sources: [...page("manual"), "web/manual/content/", "web/manual/img/"], ready: ".m-carousel-nav", steps: [async (view) => { await view.locator(".m-carousel img").first().evaluate((img) => img.decode()); await view.waitForTimeout(300); }] },
-{ id: "manual-shot-zoom", category: "Dodatkowe", title: "Wskazówki — podgląd zrzutu (jak na stronie głównej; telefon: okno od dołu z przybliżaniem)", path: "/manual/?ch=6#s-6-1", sources: [...page("manual"), "web/manual/content/", "web/manual/img/", "web/shared/js/core/image-viewer.js", "web/shared/css/image-viewer.css"], ready: ".m-shot-zoom img", steps: [async (view) => { await view.locator(".m-shot-zoom").first().click(); await view.locator("#imgvOverlay.is-open .imgv-img").evaluate((img) => img.decode()); await view.waitForTimeout(400); }] },
-{ id: "manual-problems-devices", category: "Dodatkowe", title: "Wskazówki — 19.5 problemy z urządzeniami (komunikaty blokady okna)", path: "/manual/?ch=19#s-19-5", sources: [...page("manual"), "web/manual/content/"], ready: "#s-19-5" },
-{ id: "manual-support", category: "Dodatkowe", title: "Wskazówki — O projekcie i wsparcie (rozdz. 21)", path: "/manual/?ch=21", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
-{ id: "manual-guard-narrow", devices: ["tablet"], category: "Dodatkowe", title: "Wskazówki — nakładka „Za wąskie okno” (wspólny styl blokady)", path: "/manual/?ch=6", sources: [...page("manual"), "web/shared/css/blocking-overlay.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.evaluate(async () => { const m = await import("/shared/js/core/device-guard.js"); m.showDeviceGuard("narrow", "/"); }); await view.waitForTimeout(400); }] },
-{ id: "manual-search", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie (wyniki na żywo)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież")] },
-{ id: "manual-search-empty", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie bez wyników (wspólny pusty stan)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", devices: ["desktop", "phone"], steps: [manualSearch("qqzzxx")] },
-{ id: "manual-search-hit", category: "Dodatkowe", title: "Podręcznik — wybrany wynik z zaznaczonymi trafieniami", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież"), async (view) => { await view.locator("#manualSearch .searchText").press("Enter"); await view.locator("mark.m-hit").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
-{ id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
-{ id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,
+  { id: "privacy", category: "Dodatkowe", title: "Polityka prywatności — początek", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2" },
+  { id: "privacy-scrolled", category: "Dodatkowe", title: "Polityka prywatności — po przewinięciu (cała strona się przewija)", path: "/privacy/", sources: [...page("privacy"), "web/manual/css/manual.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator(".m-doc .m-h2").nth(5).scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
+  { id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
+  { id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: () => [...document.querySelectorAll("[data-return]")].some((el) => el.getClientRects().length && !el.hidden) },
+  { id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { if (await view.locator("#manualTocToggle").isVisible()) await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
+  { id: "manual-shots", category: "Dodatkowe", title: "Podręcznik — karuzela widoków przy prowadzeniu rundy", path: "/manual/?ch=17#s-17-3", sources: [...page("manual"), "web/manual/content/", "web/manual/img/"], ready: ".m-carousel-nav", steps: [async (view) => { await view.locator(".m-carousel img").first().scrollIntoViewIfNeeded(); await view.locator(".m-carousel img").first().evaluate((img) => img.decode()); await view.waitForTimeout(300); }] },
+  { id: "manual-shot-zoom", category: "Dodatkowe", title: "Wskazówki — podgląd zrzutu (jak na stronie głównej; telefon: okno od dołu z przybliżaniem)", path: "/manual/?ch=6#s-6-1", sources: [...page("manual"), "web/manual/content/", "web/manual/img/", "web/shared/js/core/image-viewer.js", "web/shared/css/image-viewer.css"], ready: ".m-shot-zoom img", steps: [async (view) => { await view.locator(".m-shot-zoom").first().click(); await view.locator("#imgvOverlay.is-open .imgv-img").evaluate((img) => img.decode()); await view.waitForTimeout(400); }] },
+  { id: "manual-problems-devices", category: "Dodatkowe", title: "Wskazówki — 19.5 problemy z urządzeniami (komunikaty blokady okna)", path: "/manual/?ch=19#s-19-5", sources: [...page("manual"), "web/manual/content/"], ready: "#s-19-5" },
+  { id: "manual-support", category: "Dodatkowe", title: "Wskazówki — O projekcie i wsparcie (rozdz. 21)", path: "/manual/?ch=21", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
+  { id: "manual-guard-narrow", devices: ["tablet"], category: "Dodatkowe", title: "Wskazówki — nakładka „Za wąskie okno” (wspólny styl blokady)", path: "/manual/?ch=6", sources: [...page("manual"), "web/shared/css/blocking-overlay.css"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.evaluate(async () => { const m = await import("/shared/js/core/device-guard.js"); m.showDeviceGuard("narrow", "/"); }); await view.waitForTimeout(400); }] },
+  { id: "manual-search", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie (wyniki na żywo)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież")] },
+  { id: "manual-search-empty", category: "Dodatkowe", title: "Podręcznik — wyszukiwanie bez wyników (wspólny pusty stan)", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", devices: ["desktop", "phone"], steps: [manualSearch("qqzzxx")] },
+  { id: "manual-search-hit", category: "Dodatkowe", title: "Podręcznik — wybrany wynik z zaznaczonymi trafieniami", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-part-card", steps: [manualSearch("kradzież"), async (view) => { await view.locator("#manualSearch .searchText").press("Enter"); await view.locator("mark.m-hit").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
+  { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  // Karty formularzy: zmiana e-maila w toku (Anuluj zmianę + Wyślij ponownie), hasło, usuwanie konta — cała strona.
+  { id: "account-email-pending", category: "Dodatkowe", title: "Konto — zmiana e-maila w toku, hasło i usuwanie konta (cała strona)", path: "/account/", sources: page("account"), fullPage: true,
     db: (db) => { db.user = { ...db.user, new_email: "nowy.adres@example.com" }; },
     ready: () => !document.getElementById("emailPendingActions")?.hidden },
 { id: "account-guest", category: "Dodatkowe", title: "Konto gościa — zapis danych (migracja) i usuwanie konta", path: "/account/", sources: page("account"), fullPage: true,
@@ -421,3 +430,9 @@ if (fs.existsSync(areaDir)) {
   }
 }
 
+
+module.exports.push({ id: "settings-drawer", category: "Dodatkowe", title: "Ustawienia gry — wysuwane sekcje",
+  path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/drawer.js"],
+  ready: "#gsContentInner", devices: ["phone"], steps: [async view => {
+    if (await view.locator("#gsSidebarToggle").isVisible()) await view.locator("#gsSidebarToggle").click(); await view.waitForTimeout(300);
+  }] });

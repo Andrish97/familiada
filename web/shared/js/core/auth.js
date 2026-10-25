@@ -1,7 +1,8 @@
+import { redirectPage } from "./page-layout.js?v=v2026-10-25T22543";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-25T18561";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T18561";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T18561";
+import { icon } from "./icons.js?v=v2026-10-25T22543";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T22543";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T22543";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -146,7 +147,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T18561";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T22543";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -321,7 +322,7 @@ export async function getUser() {
 export async function requireAuth(redirect) {
   const u = await getUser();
   if (!u) {
-    location.href = withLangParam(redirect);
+    redirectPage(withLangParam(redirect));
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
@@ -331,7 +332,7 @@ export async function requireAuth(redirect) {
       const { data: expired } = await sb().rpc("guest_is_expired", { p_user_id: u.id });
       if (expired === true) {
         await sb().auth.signOut();
-        location.href = withLangParam("/login/?guest_expired=1");
+        redirectPage(withLangParam("/login/?guest_expired=1"));
         return null;
       }
       await sb().rpc("guest_touch", { p_ttl_days: 5 });
@@ -343,12 +344,12 @@ export async function requireAuth(redirect) {
   const username = await fetchUsername(u);
   // Guest accounts may not have a persisted username yet; do not bounce them.
   if (!username && !u?.is_guest) {
-    location.href = withLangParam("/login/?setup=username");
+    redirectPage(withLangParam("/login/?setup=username"));
     return null;
   }
   // After guest -> registered upgrade, keep forcing a real username.
   if (!u?.is_guest && String(username || "").toLowerCase().startsWith("guest_")) {
-    location.href = withLangParam("/login/?setup=username&guest_username=1");
+    redirectPage(withLangParam("/login/?setup=username&guest_username=1"));
     return null;
   }
   return { ...u, username };
@@ -595,21 +596,21 @@ export async function updateUserLanguage(language) {
   }
 }
 
-const EYE_OPEN = icon("eye");
-const EYE_CLOSED = icon("eye-off");
+const PASSWORD_ICON = icon("eye", { animation: "password" });
 
 export function resetPasswordToggles() {
   document.querySelectorAll(".pass-wrap input").forEach((input) => {
     input.type = "password";
   });
   document.querySelectorAll(".pass-toggle").forEach((btn) => {
-    btn.innerHTML = EYE_OPEN;
+    btn.setAttribute("aria-pressed", "false");
   });
 }
 
 export function initPasswordToggles() {
   // Group password inputs by their closest common parent
-  const allInputs = [...document.querySelectorAll('input[type="password"]')];
+  const allInputs = [...document.querySelectorAll('input[type="password"]')]
+    .filter(input => !input.closest('.pass-wrap'));
   const groups = new Map();
   allInputs.forEach((input) => {
     const parent = input.parentElement;
@@ -627,8 +628,11 @@ export function initPasswordToggles() {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "pass-toggle";
-      btn.setAttribute("aria-label", "Pokaż/ukryj hasło");
-      btn.innerHTML = EYE_OPEN;
+      btn.dataset.i18nAriaLabel = "common.passwordVisibility";
+      btn.setAttribute("aria-label", t("common.passwordVisibility"));
+      btn.setAttribute("aria-pressed", "false");
+      if (input.id) btn.setAttribute("aria-controls", input.id);
+      btn.innerHTML = PASSWORD_ICON;
       wrap.appendChild(btn);
 
       btn.addEventListener("click", () => {
@@ -637,7 +641,7 @@ export function initPasswordToggles() {
         inputs.forEach((i) => { i.type = show ? "text" : "password"; });
         // Update all buttons in the group
         inputs.forEach((i) => {
-          i.parentElement.querySelector(".pass-toggle").innerHTML = show ? EYE_CLOSED : EYE_OPEN;
+          i.parentElement.querySelector(".pass-toggle").setAttribute("aria-pressed", String(show));
         });
       });
     });

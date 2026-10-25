@@ -229,6 +229,235 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — animowane części ikon: audyt, hamburger i para kawy
+
+- Zlecenie użytkownika: audyt zastosowań animowanych części SVG i pierwsze
+  wdrożenie hamburgera oraz kawy. Doprecyzowanie: filiżanka stoi, para nad
+  nią płynnie zmienia falę. Branch `feat/animated-icon-parts`.
+- Decyzje i audyt: `docs/animowane-ikony-audyt.md`. Wspólny silnik, stały
+  viewBox/rozmiar/currentColor; stan menu jest źródłem kształtu hamburgera.
+  Ruch pary tylko w widocznym obszarze i aktywnej karcie, wyłączony dla
+  prefers-reduced-motion. Bez nowych animacji pozostałych ikon w tej paczce.
+- Silnik i audyt gotowe: ruch części SVG, bez runtime-fetch. Chromium na
+  390/360/1400 px: menu zmienia stan, krzywa pary zmienia kształt, reduced
+  motion zatrzymuje ją, brak błędów JS. Unit **814/814 ✓**.
+- Zrzuty 15 kadrów menu/stopki/okna kawy; brak przekroczeń CLS. Dwie istniejące
+  uwagi dotyczą zawijania CTA Home, niezwiązane z ikonami.
+- Branch e2e 40230197325 zatrzymał się przy zbieraniu testów (needs w describe);
+  deklarację lease przeniesiono na poziom pliku. 40230454872: okno kawy **3/3 ✓**;
+  dwa nowe testy ujawniły rezerwację 12 px guttera na stronie bez scrollbara
+  oraz ostatnią klatkę SMIL po endElement. Gutter jest teraz rezerwowany tylko,
+  gdy rzeczywiście istniał scrollbar; SMIL pauzuje i wznawia własną oś czasu,
+  zachowując fazę fali. Ponowny unit **814/814 ✓**, smoke 390/360/1400 ✓.
+- 40231091388: para **1/1 ✓**, hamburger ujawnił istniejący przypadek 360 px:
+  długa nazwa konta zostawiała sekcji nawigacji dokładnie 0 px. Pomiar uznawał
+  ją za ukrytą i nie uruchamiał hamburgera. Teraz pomijany jest tylko brak
+  renderowanego prostokąta (display:none), a widoczna sekcja 0 px poprawnie
+  przechodzi do menu. Unit po poprawce **814/814 ✓**.
+- Hamburger **40231973821 ✓ 1/1**, para **40231091388 ✓ 1/1**, okno kawy
+  **40230454872 ✓ 3/3**. Po scaleniu aktualnego main (tylko obrazy, dokumenty
+  i wersje) pełny unit ponownie **814/814 ✓**. Nie powtarzano zielonych speców,
+  których kod się nie zmienił. Pages **40232581204 ✓** (`82605a98d8`),
+  kontrola rzeczywistej produkcji **40232849277 ✓ 5/5**.
+- Ostatnie doprecyzowanie: Escape obsłużony przez menu oznacza preventDefault,
+  by nie zamykać dodatkowo okna pod nim. Unit **814/814 ✓**, branch
+  **40232960922 ✓ 1/1**. Pages **40233133027 ✓** (`31830e051a`),
+  produkcyjny test menu **40233368390 ✓ 1/1**. Status: **zrobione**.
+- Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
+  `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
+  repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.
+
+
+### 2026-10-25 — jednoznaczny opis zmiany typu gry
+
+- Zgłoszenie użytkownika: dwukrotne „zostaną” sugerowało zachowanie także
+  usuwanych danych. Dwa opisy PL brzmią teraz: „Zachowasz pytania.
+  Odpowiedzi i punkty usuniemy.” oraz „Zachowasz pytania i odpowiedzi.
+  Punkty usuniemy.” EN/UK już rozróżniają zachowanie i usunięcie.
+- Branch `fix/change-type-copy`; znaczenie i konwersja danych bez zmian.
+  Dostosowano dwa istniejące oczekiwania e21 do poprawionego tekstu.
+- Pełny unit **812/812 ✓**; okno na 390/360/1400 px: **3/3 zrzuty**,
+  audyt **0 uwag**. Branch e21 **40227951311 ✓ 2/2**: konwersja preparowanej
+  do tekstowej oraz zachowanie punktów zamkniętej ankiety. Pages
+  **40228094314 ✓** (`589ceae46c`). Kontrola main w e21 używa rzeczywistych
+  plików produkcji; przechwytywanie kodu działa tylko przy TEST_BRANCH_CODE=1
+  (zachowanie brancha bez zmian). Ponowny pełny unit **812/812 ✓**.
+  Produkcja **40228203045 ✓ 2/2** na rzeczywistych plikach opublikowanej strony.
+  Dodatkowo odczyt publicznego słownika potwierdził oba nowe teksty
+  (`v2026-10-25T19524`). Status: **zrobione**.
+
+
+
+### 2026-10-25 — niewidoczne przekierowania przy wejściu
+
+- Dodatkowe zlecenie użytkownika: Home zalogowanego miga przed Games;
+  poprawić także podobne automatyczne przejścia.
+- Branch `fix/atomic-redirects`. Wspólna blokada `redirectPage` zachowuje
+  ukrycie źródła po decyzji, nawet po zwolnieniu bramki pierwszej klatki.
+  Home czeka na sesję równolegle z i18n; Login na sesję/next (bez niezaufanej
+  kopii sesji w HTML), Go na rozstrzygnięcie bramki. requireAuth i przekierowania
+  gościa korzystają z tego samego mechanizmu. Stany interaktywne pozostają.
+- Chromium, 390/360/1400 px, opóźnienie danych 450 ms i HTML celu 700 ms:
+  Home/Login/Go przed zmianą **59–68 widocznych klatek źródła**, po zmianie
+  **0 we wszystkich 9 próbach**. Osobny spec e2e obejmuje także `next=friends`,
+  `force_auth` oraz błędny link Go. Skeleton nadal działa niezależnie.
+- Kontrola poprzedniego wdrożenia: Pages **40225432566 ✓**, UI produkcji
+  **40225815161 ✓ 4/4**. Control **40226069927 ✗**: licznik podpięty do
+  pojedynczego obiektu kanału zgubił obserwację po odtworzeniu kanału.
+  Pełna gra do tego miejsca działała, heartbeat/unexplainedCatchup = 0.
+  Licznik przeniesiono do obserwacji faktycznych ramek WebSocket w Playwright;
+  obejmuje reconnect i nawigacje, bez zmiany danych/SDK i bez osłabiania asercji.
+- Unit **812/812 ✓**. Zrzuty 12 kadrów Home/Login/Go: brak przekroczeń
+  skok-po-zaladowaniu; dwa istniejące ostrzeżenia zawijania CTA Home mobile,
+  lokalny zewnętrzny Turnstile niedostępny (stan zastany).
+- Kolejne zgłoszenie: w hamburgerze brak ustawień konta i wylogowania.
+  Potwierdzone w Chromium: obie akcje istniały, lecz `pointerdown` otwierający
+  hamburger uruchamiał desktopową obsługę kliknięcia poza dropdownem i chował
+  całą sekcję. Na mobile sekcja konta jest stała; obsługa zamykania dropdownu
+  działa teraz tylko na desktopie. Nowa scena `games-account-menu` i e2e
+  dwukrotnego otwarcia na 390/360/1400 px sprawdzają widoczność obu akcji.
+- Branch `3e39a47081`: UI **40226827228 ✓ 5/5**, pełna runda Control
+  **40226829390 ✓ 1/1**. Korekta licznika prawdziwych ramek potwierdzona.
+- Po poprawce hamburgera: pełny unit ponownie **812/812 ✓**; Gry i Zadania,
+  390/360/1400 px: **6/6 zrzutów**, audyt **0 uwag**, obie akcje widoczne.
+- Status: ponowny punktowy test rozszerzonego speca menu, potem publikacja
+  i kontrola produkcji. GH_TOKEN CLI wygasł (401), ale skonfigurowane
+  uwierzytelnienie środowiska działa przez REST bez starego nagłówka CLI;
+  dispatch testu 40227197939 uruchomiony, dostęp przywrócony bez udziału użytkownika.
+- Poszerzona lokalna macierz **36/36 ✓**: Home, Login/next/force_auth,
+  requireAuth, bramki ankiety/urządzenia/poczty oraz stany anonimowe i błędne,
+  390/360/1400 px. Poprawne przekierowania: 0 klatek źródła; stany pozostające
+  na miejscu widoczne. Dane 450 ms, dokument celu 700 ms.
+- Scalono `51428c6df0`: dokumentacja, wersje i trzy odświeżone obrazy Home.
+  Resolver rozwiązał wyłącznie konflikty wersji; kod obu poprawek zachowany.
+- Końcowy spec przekierowań i konta **40227197939 ✓ 1/1** (9 przekierowań,
+  dwukrotne otwarcie menu na 390/360/1400 px, force_auth, błędny Go).
+  UI 40226827228 5/5 i Control 40226829390 1/1 pozostają ważne — scalenie
+  zmieniło tylko dokumentację, wersje i obrazy Home; poprawka konta dotyczy
+  mobilnego zamykania dropdownu, nie transportu/rozgrywki Control.
+- Pełny unit po scaleniu **812/812 ✓** (20,7 s). Pages
+  **40227384980 ✓** (`cbbf53c6a6`), produkcyjne UI **40227463237 ✓ 5/5**,
+  Control **40227465117 ✓ 1/1**, próba 2. Próba 1 potwierdziła odbiór
+  postgres_changes na wszystkich urządzeniach i brak heartbeat/catchup,
+  lecz odczyt statystyk po zamierzonym reloadzie trafił w kolejną nawigację
+  (`Execution context was destroyed`). Ponowiono tylko nieudany job,
+  bez zmian kodu i bez powtarzania zielonego UI. Status: **zrobione**.
+
+### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
+
+- Próba publikacji po zielonym Control 40222927342 została odrzucona jako
+  non-fast-forward. Nowy main `34162dedda` przeniósł publiczny panel admina
+  do prywatnego systemu oraz doprecyzował klasyfikację catchup w teście Control.
+- Zachowano usunięcie `web/admin` i scen panelu. W Control połączono obie
+  kontrole: rzeczywisty odbiór postgres_changes oraz brak heartbeat/wyjaśnienie
+  spóźnionych rewizji. Wspólne części silnika pierwszej klatki zachowane.
+- Resolver błędnie automatycznie dodawał pliki konfliktu modyfikacja/usunięcie
+  bez markerów. Został poprawiony: brak obu stron indeksu oznacza decyzję
+  ręczną. Trzy testy na repozytoriach tymczasowych: modify/delete, delete/modify,
+  wersje + zachowanie niezależnej logiki. Usunięcie panelu jawnie zatwierdzone;
+  `git ls-files web/admin` puste. Bez odtwarzania usuniętego publicznego kodu.
+- Unit po scaleniu **809/809** ✓ (28,3 s; testy prywatnego panelu usunięte na
+  main). Nowe zrzuty publiczne: **9/9**, 390/360/1400 px, audyt 0 uwag.
+  Wcześniejsze 974 pomiary obejmowały także dawny publiczny panel; bieżący
+  inwentarz publiczny ma 500 wpisów scen. UI publicznych stron bez zmian.
+- Control na połączonym kodzie **40224637995 ✓ 1/1**; UI **40220957780 ✓ 4/4**.
+  Kolejny main `1f6833d329` wniósł dokumentację, test originu Pages i wersje,
+  bez zmian semantycznych w `web/`; zielonych speców nie powtarzano.
+  Unit po uzgodnieniu wersji **809/809** ✓ (21,3 s).
+- Zamknięte na produkcji: Pages **40227384980 ✓**, UI
+  **40227463237 ✓ 5/5**, Control **40227465117 ✓ 1/1**, próba 2
+  (pierwsza trafiła odczytem po reloadzie w trwającą nawigację).
+
+
+### 2026-10-25 — pierwsza widoczna klatka wspólnego silnika
+
+- Zlecenie: pomiar przed poprawką, brak skoków po pokazaniu strony,
+  zachowanie stopniowego ładowania, wspólny silnik zamiast poprawek stron.
+- Branch `fix/first-visible-layout`, baza `e95f8d8969` (czysty main).
+- Pomiar Playwright z atrapą na 10 stronach × 390/360/1400 px. Szybki odczyt
+  zwykle maskował wyścig; opóźnienie topbara 900 ms i danych 250 ms ujawniło
+  Gry desktop CLS 0,09880, ankietę mobile 0,01271/0,01596 oraz Wskazówki.
+  Wyniki i przyczyny: `docs/pierwsza-klatka-pomiar.md`.
+- Wspólny bootstrap przed CSS (te same funkcje profilu co guard), bramka
+  DOM/i18n/powłoki + dwa pomiary, rejestr pomiarów, niezależny bezpiecznik 5 s,
+  gotowość etapów potwierdzana po hydracji. Topbar reaguje przed renderem na
+  zmianę widoczności przycisków i nie zawija się przejściowo. Wspólne
+  podsumowanie ankiety rezerwuje wiersz. Zasada w §5a podręcznika silnika.
+- Punktowe 58 unit ✓, pełny unit finalnego kodu 859/859 ✓ (98,7 s). Nowy audyt CLS
+  `skok-po-zaladowaniu` z progiem 0,01; pełna galeria `--changed --audit`
+  obejmuje wszystkie 542 sceny, uruchomiona w dwóch rozłącznych częściach.
+- Kod `7b05cb8fe3`. Branch e2e 40216076232 ✓ **3/3** (lista Gier z
+  opóźnionym odczytem/błędem, filtr i sortowanie, mobilne okno nazwy) oraz
+  40216078769 ✓ **1/1** (pełna runda 4 urządzeń i wznowienie Control).
+- Scena `manual-shots` czekała bez końca na decode obrazu lazy poza ekranem;
+  przewija go przed decode. `manual-return` czeka na widoczny link powrotu
+  także w mobilnym pasku. Kroki scen mają limit 45 s. Pomiar guarda startuje
+  od pokazania nakładki. Ponowny pełny unit 859/859 ✓ (94,5 s).
+- Scalenie `origin/main` (`eb822245d3`) → `2cff3e4e79`, bez konfliktów;
+  obce zmiany tylko w Lead Finderze/workflow diagnostycznym i dokumentacji,
+  bez wpływu na zielone spece frontendu — nie powtarzać testów brancha.
+- Pełna galeria `--changed --audit`: 478 + 493 = **971 kadrów / 542 sceny**,
+  bez `skok-po-zaladowaniu` (**971/971 pomiarów**, w tym 8 uzupełnionych
+  punktowo po błędach starych selektorów). CLS max **0,006484**. Pozostałe uwagi: 113 + 187, poza zakresem CLS.
+- Porównanie wszystkich 36 tras: **52 pary**, 51 identycznych, jedna różnica
+  **1 piksela**, zero ponad próg. Skeleton: **24/24** (8 stron × 390/360/1400,
+  UK, dane +250 ms), CLS max 0,00172; Gry/Bazy/Logo widoczne przed danymi.
+  Słownik +900 ms: Control/guard 390/360/1400 — CLS 0.
+- Próba na bazie potwierdziła wcześniejsze błędy Turnstile, iframe poczty
+  i nieaktualne selektory `manual-games` / `games-duplicate-done`.
+  Bazowe Wskazówki z tym samym audytem: CLS 0,05467 desktop / 0,07113 phone;
+  po poprawce 0. Uzupełnione brakujące RPC atrapy `initiate_email_change_intent`
+  (SQL void); scena migracji gościa ponownie bez braków i bez uwag audytu.
+- Pełny unit po ostatniej korekcie runnera: **859/859** ✓ (74,2 s).
+- Nowszy main `e86f84b5c1`: zmiany semantyczne tylko w diagnostyce/rendererze
+  urządzeń Control; pozostały front to wersje zasobów. Konflikty `?v=`:
+  diff3 → resolver (wyłącznie wersje) → version-assets → flat.css.
+  Uzupełniona atrapa `watchRuntimeErrors` w istniejących testach lease
+  (nowa funkcja z main), bez zmiany asercji. Bootstrap nie chowa ponownie
+  już otwartej karty przy późnym imporcie; sprawdzone unit i Chromium.
+- Pełny unit po scaleniu i poprawce atrap: **859/859** ✓ (46,6 s).
+- Ostatnia próba wolnego szkicu Ankiety ujawniła późniejszą podpowiedź
+  walidacji: CLS 0,01817 / 0,02265 / 0,01388 (390/360/1400). Wspólny
+  `holdSkeletonLayout(elementy, promise)` w silniku opóźnia tylko jeszcze
+  nieodsłonięty etap. Ankieta zgłasza walidację i podsumowanie jako zależność
+  geometrii, a wyniki pozostają osobnym etapem. Po poprawce 0 / 0 / 0,00085.
+  Nowa scena `polls-draft-text-blocked-slow`: dane +250 ms i 360 px.
+- Powtórka wszystkich widoków `/polls/` po tej zmianie: **54 kadry**, audyt
+  **0 uwag**, max CLS 0,000573. Razem inwentarz **543 sceny / 974 kadry**;
+  pozostałe strony nie używają nowej bramki etapów i ich sprawdzony tor
+  inicjalizacji pozostaje bez zmian. Dwa nowe testy: niezależność etapów,
+  wiele zależności i błąd. Pełny unit **861/861** ✓ (103,5 s).
+- E2E po scaleniu: UI 40219691538 ✓ 3/3. Control 40219693950: asercja
+  zerowego nadrabiania — Host nadrobił pojedyncze rewizje 5 i 10 z dzwonka;
+  Display/Buzzer 0, wszystkie kanały connected. Bez zmiany asercji.
+- UI na finalnej logice `f4bdbbebc7`: **40220957780 ✓ 4/4** (Gry, okno
+  mobilne, ładowanie Ankiety i ponowienie). Osobny Control 40221102773:
+  ponownie asercja 0 catchup, tym razem Display 1, Host/Buzzer 0.
+- Test transportu dostosowany do naprawy słabego łącza z 25.10: dzwonek może
+  wygrać wyścig z postgres_changes. Zamiast wnioskować o awarii z licznika
+  nadrabiania, test wymaga faktycznej wiadomości postgres_changes na każdym
+  urządzeniu. Obserwator przekazuje zdarzenie do oryginalnej obsługi SDK;
+  lokalny Chromium + prawdziwy vendor potwierdził odbiór i zachowanie obsługi.
+  Wykrycie martwego kanału oraz wszystkie asercje rundy/wznowienia pozostają.
+- Scalenie kolejnego main `ad26b3ba4c`: backend prywatnego panelu, zrzuty i
+  treści Wskazówek oraz wersje; brak zmian semantycznych w kodzie testowanych
+  stron. Resolver rozwiązał wyłącznie wersje. Pełny unit **864/864** ✓ (47,3 s).
+- Końcowy zbiór pomiarów: **974/974**, bez przekroczeń 0,01; max 0,006484.
+- Control z rzeczywistym odbiorem: **40222245868 ✓ 1/1**, bez retry;
+  postgres_changes: Display 10, Host 10, Buzzer 28. Pełna runda i wznowienie
+  potwierdzone. UI 40220957780 ✓ 4/4 pozostaje zielone.
+- Przed publikacją doszedł main `b2a84d3ab1` z korelacją diagnostyki dzwonka
+  (`13efd5fc54`). Zachowano nowe metryki w specu i własną obserwację kanału;
+  resolver rozwiązał wyłącznie wersje. Pełny unit **860/860** ✓ (49,0 s;
+  main uprościł testy doorbellGuard). Bez zmian geometrii stron.
+- Control po ostatnim scaleniu: **40222927342 ✓ 1/1**. Bramka brancha
+  spełniona: UI 40220957780 4/4 + Control 40222927342 1/1; pełny unit
+  860/860. Kod `2126329c63` gotowy do publikacji.
+- Zamknięte: pełna kontrola produkcji w nowszym wpisie „niewidoczne
+  przekierowania”: UI 40227463237 5/5 + Control 40227465117 1/1 ✓.
+
+
+
 | 2026-10-25 | Control 2 — korelacja opóźnionego Realtime w logach | Wdrożono na main `13efd5fc54`, Pages `40222221847` ✓. Control loguje wysłany dzwonek z rewizją; urządzenia zapisują próg 400 ms, rewizję nadrobioną RPC, późny odbiór przez Postgres Changes oraz osobno czas pobrania, kolejki i renderu. Bez migracji. Unity `doorbellGuard` + `gameStateSync` 14/14; branch E2E `40222055549` ✓. Pierwsza kontrola Pages `40222281282` wykazała Display: fallback dzwonka dla rewizji 8, po którym dotarła ta sama rewizja przez Postgres Changes; RPC zdążyło zastosować rewizję 9. Asercję E2E doprecyzowano i wypchnięto jako `2ae929808d` (bez zmian frontu); branch `40222638855` ✓. Kontrola main `40222828929` wykryła Host: `lease_heartbeat`, jedna pominięta rewizja 9, następnie `rpc_resume` rewizją 10 i odzyskanie kanału. | Nowe pomiary zbierają się w statystykach; pojedynczy test kontrolny pokazał też prawdziwy fallback heartbeat u Hosta. Przyczyna źródłowa tego incydentu nie jest jeszcze ustalona; analizować nowe przebiegi według `trigger`, rewizji i czasów. |
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |
@@ -1872,3 +2101,189 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Prywatny panel — maintenance potwierdzone, bramka publikacji | Prywatna production 40222895555 i CI 40222894573/40222895087 success (69 unit + 2 przeglądarkowe). Odczyt produkcji 40223021152: wspólne MAINT_KV obu Workerów, stan publiczny zgodny, przerwa wyłączona, bez zapisów. Branch E2E 40223007752 success 2/2 (nawigacja i powroty), wybrane unity zielone. Po scaleniu równoległych zmian main: 800/800 unit; konflikty usuniętych plików panelu dotyczyły wyłącznie wersji zasobów. | Publikacja cleanup na main, potem kontrola security-endpoints i usunięcie wyłącznie niepotrzebnych kluczy admin API z publicznego Workera. |
+
+
+| 2026-10-25 | Prywatny panel — przeniesienie zakończone | Prywatny PR server#1 scalony (995736a), production 40222895555 i CI 40223428282 success (69 unit + 2 przeglądarkowe). Publiczne Pages 40223155138 i Worker 40223155163 success; kod/admin API usunięte z bieżącego publicznego repo i Pages. Cleanup 40223250548 success: tylko dwa zbędne klucze admin API usunięte z publicznego Workera. Maintenance-check 40223441610: wspólne KV, publiczny stan zgodny, przerwa wyłączona, bez zapisów. Kontrola security: 10 dotychczasowych testów przez proxy sesji, odmowy prywatnego originu/przekazania w 40224031784, bezpośredni origin Pages + nawigacja main 40224190421 success 3/3 (indeks 200, stary HTML/JS/manifest 404). Zrzuty panelu 1400/390 oraz publiczne gry/Eksplorator obejrzane; 800 publicznych unit i 17 renderowania Workera ✓. | Panel steruje wspólnym maintenance i dotychczasowymi funkcjami z prywatnego systemu. DNS bez zmiany; trasę przejmuje prywatny Worker. Historia Git pozostaje osobnym etapem. |
+
+| 2026-10-25 | Prywatny panel — bieżąca galeria bez jego zrzutów | screens-gallery zwykły commit f39ed76771f6: usunięto 1392 PNG panelu i odnośniki w 146 indeksach 73 wydań. Check po operacji: 0 plików panelu; publiczne zrzuty zachowane. Nie przepisywano historii. | Dawne commity, pozostałe historyczne referencje i stare artefakty wymagają osobnego etapu analizy/czyszczenia; bieżący kod panelu i jego testy/sceny są w prywatnym repo. |
+
+
+| 2026-10-25 | Prywatny panel — właściciel uporządkował DNS | Właściciel potwierdził zmianę admin na adres serwera z proxy Cloudflare. Punktowa kontrola HTTP po zmianie: panel i jego API 302 do właściwej bramki Access, nagłówek Cloudflare obecny; strona publiczna 200, prywatny origin bez sekretu 404, stan maintenance 200/wyłączone. | Adres panelu i ochrona zachowane; bez zmian stanu przerwy. |
+
+
+| 2026-10-25 | Prywatny panel — ponowne usunięcie manifestu po równoległym scaleniu | Podczas kontroli DNS wykryto przywrócony przez inne scalenie web/manifest-admin.webmanifest (następnie wersjonowany przez CI). Kod panelu nadal prywatny; usunięto ponownie jedyny publiczny manifest. | Utrzymać usunięcie manifestu przy scalaniu starszych gałęzi; manifest wraz z ikonami jest wyłącznie w prywatnym repo. Kontrola starego originu po Pages. |
+
+
+| 2026-10-25 | Panel po zmianie DNS — kontrola zamknięta | Pages 40225875929 success po ponownym usunięciu manifestu. Punktowe E2E main 40225962643 success 1/1: rzeczywisty origin Pages nie serwuje starego HTML, JS ani manifestu panelu; kontrolny indeks originu 200. Unit ikon 3/3. Wcześniejsza kontrola po DNS: Access 302, www 200, prywatny origin bez sekretu 404, maintenance wyłączone. | Zmiana DNS potwierdzona przez właściciela; ochrona i działanie zachowane. Brak pomiaru porównawczego pozwalającego przypisać odczuwalne przyspieszenie samemu hostingowi. |
+
+
+| 2026-10-25 | Lead Finder — zaznaczenie kategorii uwzględniane przy starcie | Poprawka prywatnego panelu (server 54d4512): zapis zaznaczenia aktualizuje stan sprawdzany przed startem; start czeka na zapis, błąd przywraca poprzedni wybór. Regresja odtworzona przed poprawką. Production 40226710636 success; CI 40226710455/40226709262 success: 69 unit (w tym CSS), 6 testów przeglądarkowych, w tym 4 scenariusze kategorii. Zrzuty 1400/390 obejrzane, origin 404 bez/z błędnym sekretem, 200 z poprawnym, Access 302. | Właściciel odświeża otwarty panel i ponawia start. Wyszukiwania ani wysyłki nie uruchamiano za właściciela; bez zmian usługi LF i bazy. |
+
+
+| 2026-10-25 | Prywatny Marketing — prostsza obsługa i korespondencja kontaktu | Wdrożenie server bb81708, production 40230764119 success. Kategorie/status/sortowanie w listach, wybór kontaktów checkboxami zamiast arkusza, uporządkowane działania i Więcej; Odwiedź dla jednej osoby. Nazwa/Rozmowa otwierają w Poczcie Familiady zapisane wysłane i odebrane maile danej osoby, ze starszą historią i powrotem. Frazy kategorii zwinięte z liczbą, pełna lista przewijana. CI 40230763632/40230762128: 75 unit, 12 przeglądarkowych, CSS bez zwiększania progów; zrzuty 1400/390 obejrzane. Odczyt 40229857187: próbny kontakt ma 1 wysłaną i 1 otrzymaną wiadomość, adres zgodny; bez treści w logach. Po wdrożeniu panel i rozmowy przez Access 302, prywatny origin bez sekretu 404; origin z sekretem 200 i właściwe SHA. | Właściciel odświeża panel. Brak archiwalnej treści starej wysyłki jest jawnie opisany. Bez uruchamiania wyszukiwania lub wysyłki, bez zmian bazy/usługi LF. Kod i szczegóły wyłącznie w prywatnym repo. |
+
+
+| 2026-10-25 | Zaproszenie marketingowe — poprawiony nagłówek | „Pytania na trzy sposoby” zastąpione przez „Trzy sposoby na przygotowanie gry” w aktywnym prywatnym szablonie i publicznej kopii wspólnego modułu. Zaktualizowane istniejące asercje: prywatnie 2/2, publicznie 2/2, po scaleniu wersji także brak konfliktów. Podgląd maila 1400/390 obejrzany. Private production 40231963637 i CI 40231963015/40231961534 success; podgląd i wysyłka nadal używają tego samego buildera. | Poprawka wdrożona w prywatnym panelu; publiczna kopia nie jest używana przez stronę i nie wymaga Pages. Odświeżyć otwartą kartę panelu. Bez wysyłania wiadomości. |
+
+
+### 2026-10-25 — prywatny TinyMCE: wspólny motyw silnika
+
+- Na dodatkowe zgłoszenie właściciela poprawiono oba edytory wyłącznie w
+  `Andrish97/familiada-server`: skrzynkę i Marketing. Jeden adapter opcji,
+  kolory/fonty/obramowania/tła/okna z tokenów, CSS iframe bez dopisywania do
+  wysyłanego HTML. Naprawiony automatyczny scroll TinyMCE 7.9.3 pod palcem.
+- Zachowano równoległe zmiany Marketingu, rozmów i nagłówka zaproszenia.
+  Prywatny pakiet otrzymał przypięte części ikon i animowany hamburger;
+  nie dodawano nowego przycisku kawy do prywatnej stopki.
+- Prywatnie **84/84 unit**, **17/17 przeglądarkowych** z prawdziwym TinyMCE,
+  w tym edytor/menu/okno na 390 i 1400 px. CI main **40233222927 ✓**,
+  serwer check **40232621976 ✓**, produkcja **40233222220 ✓** (`ea720aa`).
+  SHA wydania potwierdzony, odmowy originu 404, poprawny sekret 200,
+  private/no-store, Access 302. Brak wysyłki i zmian maintenance.
+- Szczegóły prywatnie: docs/admin-private-plan.md; status: **zrobione**.
+
+### 2026-10-25 — wysuwane menu: w trakcie
+
+- Decyzja właściciela: główne menu z prawej (korekta kierunku), bez drugiego
+  krzyżyka; ujednolicić także pozostałe wysuwane panele. Realizacja w silniku,
+  równolegle w prywatnym pakiecie admina. Drzewo baz/sekcje/spis zachowują lewą.
+- Bramka: zrzuty 390/360/1400, unit, punktowe E2E z brancha, Pages i kontrola
+  tych samych speców na produkcji. Prywatnie unit/browser + check/production.
+
+- Bramka lokalna: **815/815 unit**, regresja przeglądarkowa wszystkich czterech
+  paneli na 390 i 360 px (prawdziwy kod, atrapa Supabase), desktop 1400,
+  reduced motion, klawiatura, licznik aktualizowany przy zamkniętym menu.
+  Prywatnie **84/84 unit**, test menu 1/1, zrzut obejrzany. Audyt rozpoznaje
+  `.drawer-scrim` jako tło, nie przycisk z ikoną w strefie bezpiecznej.
+
+- Branch E2E **40234872626 ✓ 3/3** (hamburger, spis, atomowa nawigacja).
+  Prywatny branch CI **40234865542 ✓ 84 unit + 17 browser**, check
+  **40234874849 ✓**. Panel opublikowany na main 14c8819, production w toku.
+- Po ocenie zrzutów: wspólny drawer mierzy początek pod własnym paskiem
+  narzędzi przez geometry.js i registerPageLayout; X sekcji/spisu pozostaje
+  widoczny. Ponownie **815/815 unit**, lokalne panele 390/360 + desktop ✓,
+  sześć zrzutów telefonów z audytem **0 uwag**. Powtórzyć tylko test spisu,
+  bo menu główne/atomowe przekierowania nie zostały zmienione tą korektą.
+
+- Końcowy branch po scaleniu bieżącego main: **40235146124 ✓** (spis z
+  dostępnym X, 390/360, Escape/tło i współpraca z menu głównym). Unit po
+  scaleniu **815/815**; zmiany realtime z równoległej sesji zachowane.
+  Prywatny main 14c8819: production **40235056371 ✓**, Access 302,
+  CI 84 unit + 17 browser. Publikacja publicznego main i kontrola 3 testów.
+
+- Publiczne Pages **40235227172 ✓** (kod 5d7963c38d, znacznik zasobów
+  27594b7c2e), Worker **40235227300 ✓**. Odczyt publicznego CSS potwierdził
+  prawą szufladę i brak starego przycisku zamknięcia. Kontrola main
+  **40235293025**: te same trzy scenariusze na opublikowanych plikach.
+
+| 2026-10-25 | Prywatny Marketing — Autorska w dwóch trybach i układ rozmowy | Decyzja właściciela: usunąć zbędny Newsletter; Autorska ma Edytor do pisania i Kod HTML do wklejania fragmentu/całego dokumentu. Osobne szkice przy przełączaniu, wspólny podgląd i wysyłka aktywnego trybu. Podgląd izolowany bez skryptów; transport zachowuje stopkę preferencji. Zgłoszony zrzut rozmowy: powrót dostał własny wiersz z odstępem, HTML szerszy i wyższy podgląd. Lokalnie 9 punktowych browser + 4 edytora success, CSS 3/3 po poprawce analizy komentarza; 6 zrzutów 1400/390 obejrzanych. Publiczna kopia buildera: 3/3, po scaleniu także brak konfliktów. | Kod panelu i sceny prywatnie; bez realnej wysyłki, zmian bazy, LF ani maintenance. Server 312b733, production 40235289031 success; CI 40234942955 i 40235137267 success: 85 unit + 20 browser, build/check. Origin potwierdził SHA, private/no-store i 404/404/200; po wdrożeniu panel/API 302 do Access, origin 404, www 200. Odświeżyć panel. |
+
+- Zamknięcie menu: produkcyjny **40235293025 ✓ 3/3**, rzeczywiste pliki
+  main. Pages/Worker i prywatna publikacja opisane wyżej; status **zrobione**.
+
+### 2026-10-25 — czytelniejsza kawka i prostszy edytor (w trakcie)
+
+- Zgłoszenie właściciela: animacji pary prawie nie widać przy obecnej małej
+  ikonie; TinyMCE przeciążony przyciskami, z obcymi kolorami. Powiększyć
+  wejście w stopce; prywatny edytor: jeden podstawowy pasek, pozostałe
+  narzędzia we wbudowanym overflow, spójne tła/stany/okna z tokenów.
+
+- Lokalnie większa ikona **36 px**, pole dotyku kawy i Kontaktu min. **44 px**;
+  zrzuty 390/360/1400 z audytem **0 uwag**, **816/816 unit**. Rysunek i
+  mechanizm pary bez zmian. Prywatny edytor: **85 unit**, 4 testy motywu i
+  3 Autorskiej zielone, 4 zrzuty obejrzane. Branchy przed publikacją.
+
+- Publiczna bramka kawy: **40236412493 ✓ 4/4** (para, stopka/wybór kawy,
+  telefon i FAQ w 3 językach). Pierwszy dispatch 40236376524 anulowany przed
+  testami: filtr nazw nie obejmował trzech testów wsparcia; poprawiony zbiorczy
+  przebieg obejmuje wszystkie cztery. Scalone wyłącznie nowe obrazy Wskazówek
+  z main; kod tych testów bez zmian, bez zbędnego powtarzania zielonych.
+- Prywatny edytor: branch CI **40236348759 ✓ 85 unit + 20 browser**, check
+  **40236378726 ✓**. Main 640a016, production **40236470765** w toku.
+
+- Uproszczony edytor wdrożony: private production **40236470765 ✓**,
+  main 640a016, 85 unit, kontrola wydania/originu i private cache, domena
+  po publikacji Access 302. Szczegóły prywatnie, status **zrobione**.
+- Publiczny main z równoległymi znacznikami wersji scalony bez utraty zmian;
+  końcowe **816/816 unit**. Bramka kawy 40236412493 nadal ważna (po niej
+  doszły wyłącznie obrazy, dokumentacja i wersje zasobów). Publikacja Pages.
+
+- Właściciel odrzucił również propozycję 24 px i polecenie jest jednoznaczne:
+  przywrócić dokładnie wcześniejszy wygląd całej stopki i Kontaktu, animacje
+  zachować. Przywrócony cały blok stylów stopki z e1068dc463 (sprzed powiększenia).
+  Kawa 1.45em, bez min-height/width 44 i bez zmian Kontaktu. Warianty 36/24
+  nie są docelowe; feat/compact-coffee nie publikować. Więcej animacji pozostaje
+  następnym aktywnym zakresem, bez zmiany geometrii stopki.
+
+- Cofnięcie powiększenia: porównanie z e1068dc463 potwierdziło identyczną
+  wysokość stopki, grupy akcji i ikony dla 360/390/1400, bez overflow.
+  **816/816 unit**, trzy zrzuty + audyt **0 uwag**. Bramka restore-footer.
+
+| 2026-10-25 | Marketing — daty kontaktów, migracja 497 | Decyzja właściciela: filtrowanie i sortowanie po dodaniu lub ostatniej wiadomości. Dodający widok tylko dla service_role: ostatnia korespondencja w obu kierunkach, dokładny adres, pominięty kosz, data dawnej wysyłki bez treści zachowana. Daty kalendarzowe Europe/Warsaw, dwa indeksy wiadomości. Test SQL 497 na lokalnym Postgres 16 w Dockerze: oba kierunki, obcy adres/wzorce, kosz, brak historii, stara wysyłka, zakres i DST oraz uprawnienia — OK, rollback. Użyto dokładnych definicji dwóch zależnych tabel z schema.sql. | Najpierw migracja i log OK, potem wdrożenie prywatnego API/UI. Baza i kod dotychczasowego panelu zgodne wstecz; brak wysyłki i zmian maintenance. |
+
+| 2026-10-25 | Marketing — filtrowanie i sortowanie dat wdrożone | Migracja 497: db-migrate 40237695553 success, latest.log OK. Prywatny server e232d60, production 40238015053 success; CI 40237835130 i 40238014654 success: 89 unit + 23 browser, build/check. Dodanie i ostatnia wiadomość sortowane w obie strony, brak historii na końcu; zakres Od/Do według polskich dni, widoczne daty i ten sam filtr przy przygotowaniu adresów całego widoku. Read-only 40237908054: 4 sortowania po 50 wierszy i 2 zakresy poprawne, adresy zgodne; bez treści i adresów w logach. Zrzuty 1400/390 obejrzane. Origin potwierdza SHA/private cache oraz 404/404/200; po wdrożeniu panel/API 302 do Access, origin 404, www 200. | Odświeżyć panel; sortowanie w liście nad kontaktami, filtrowanie w Zakres dat. Bez wysyłki, uruchamiania LF ani zmiany maintenance. |
+
+- Restore-footer branch **40238074611 ✓ 4/4**. Animacja i obsługa wsparcia
+  zachowane przy przywróconych wymiarach. Równoległe zmiany main (realtime,
+  migracja 497 i dziennik Marketingu) zachowane; konflikty wyłącznie dopisków
+  dziennika. Finalna bramka jednostkowa po scaleniu, publikacja.
+
+- Po scaleniu aktualnego main **823/823 unit**. Kod stopki i jej testów po
+  zielonym 40238074611 zmieniony wyłącznie wersjami zasobów; publikacja
+  przywróconego wyglądu i potem kontrola produkcji 4 testów.
+
+### 2026-10-25 — więcej animacji stanu (w trakcie)
+
+- Na polecenie właściciela: strzałki selektorów/konta/Więcej, oko hasła,
+  zapis ustawień i Powiel Gier/Baz/Logo. Wspólne profile w silniku, stały
+  viewBox i wymiary, rzeczywiste aria-expanded/pressed/busy i wynik zapisu.
+- Lokalne **826/826 unit** (unikalne maski, profile i rzeczywisty CAS w atrapie),
+  przeglądarka: hasło 390/1400, selektor/konto, zapis i Powiel ✓. Osiem
+  zrzutów 390/1400 + audyt 0 uwag; cztery ujęcia auth/save odtworzono po
+  poprawce atrapy JSONB i użyciu istniejącej atrapy Turnstile. Nie zmieniano
+  aplikacji dla zrzutów. Prywatnie 91 unit i 7 punktowych browser ✓.
+- Przywrócenie stopki ma produkcyjny **40238851673 ✓ 4/4**; odczyt CSS:
+  oryginalne 1.45em, bez powiększenia Kontaktu. To ostateczny wariant;
+  nie publikować odrzuconej gałęzi feat/compact-coffee.
+
+- Publiczny branch 40240536543: oko i hamburger ✓ 2/2; dwa testy wymagające
+  zalogowania zatrzymane w helperze login przed badanymi akcjami. Przyczyną
+  pages:['login'] dla adresu /login bez slash: lokalny HTML nie zawierał klucza
+  testowej captchy Workera. Usunięto niepotrzebne podstawianie tego HTML;
+  wspólny kod nadal z brancha. Ponawiane wyłącznie dwa nieukończone testy.
+- Prywatny branch CI **40240583138 ✓ 91 unit + 25 browser**, server/check
+  **40240583124 ✓**. Dwa zrzuty selektora 390/1400 obejrzane.
+
+- Ponowienie **40240883411**: selektor/konto ✓ 1/1, zapis w drugim teście
+  również potwierdzony przez bazę i ikonę; test zatrzymał się dopiero na
+  oczekiwaniu powrotu do Gier. Domyślny parent Ustawień to Control, więc
+  scenariusz dostał jawny ret=/games/. Zachowanie aplikacji i mapa bez zmian.
+  Ponawiany tylko test zapisu/Powiel; oko, hamburger i strzałki są zielone.
+- Prywatny pakiet opublikowany: production **40240924445 ✓**, main 7cf7cff.
+
+| 2026-10-25 | Marketing — uporządkowany wygląd filtrów | Na zgłoszenie właściciela przebudowano blok filtrów: wspólna karta, równe pola z etykietami, lżejsza typografia dat, czytelny zakres także po zwinięciu, układy komputer/telefon/tablet. Wybranie działania zamyka Więcej przed potwierdzeniem (naprawiona kolizja menu z oknem na telefonie). Server 3f0a8ec, production 40239271693 success; CI 40238809930 i 40239041141 success: 89 unit + 23 browser, build/check. CSS bez zmiany progów; korekta pośredniego progu na wspólny 980. Zrzuty stanów otwartego/zwiniętego 1400/390 i tablet obejrzane. Origin SHA/private-cache i 404/404/200; po wdrożeniu Access 302, origin 404, www 200. | Odświeżyć panel. Zachowano działanie sortowania, zakresów i przygotowania adresów widoku. Bez realnej wysyłki, zmian bazy/API/LF ani maintenance. |
+
+- Końcowy test zapisu/Powiel **40241138133 ✓ 1/1**. Z wcześniejszymi
+  zielonymi z 40240536543 (oko, hamburger) i 40240883411 (strzałki) daje
+  komplet 4 scenariuszy. Po scaleniu aktualnego main **828/828 unit**;
+  konflikty importów wyłącznie ?v= rozwiązał resolver, oba dopiski dziennika
+  zachowane. Wspólne kontrolki po merge zmienione tylko wersjami zasobów.
+- Prywatna production **40240924445 ✓ 91 unit**, Access po publikacji 302;
+  branch CI **40240583138 ✓ 91 unit + 25 browser**, read-only check
+  **40240583124 ✓**. Prywatny zakres zakończony; publiczne Pages i kontrola.
+
+- Publiczne animacje opublikowane: Pages **40241370158 ✓**, Worker
+  **40241370147 ✓**, kod f4b5ba7c3b (CI 279c0402d3). Odczyt produkcji:
+  cztery nowe profile dostępne, stopka oryginalne 1.45em, Kontakt bez
+  powiększenia. Kontrola produkcyjna tych samych czterech scenariuszy w toku.
+
+- Zamknięcie dodatkowych animacji: produkcyjny **40241473501 ✓ 4/4** na
+  rzeczywiście opublikowanych plikach main (oko, strzałki, zapis/Powiel,
+  hamburger). Publiczne Pages **40241370158 ✓**, Worker **40241370147 ✓**;
+  po scaleniu **828/828 unit**. Prywatna bramka **91 unit + 25 browser**,
+  production **40240924445 ✓**, Access 302, właściwe wydanie i odmowy
+  originu. Zrzuty obejrzane; audyt publicznych ujęć 0 uwag. **Zrobione.**
+- Stopka przywrócona 1:1 do bloku sprzed powiększenia, para zachowana;
+  potwierdzają ją wcześniejsze 40238851673 ✓ 4/4 i odczyt CSS po tej paczce.
+  Warianty 36/24 px pozostają odrzucone. Dalszych animacji z audytu nie
+  wdrażać automatycznie po zamknięciu tej uzgodnionej paczki.

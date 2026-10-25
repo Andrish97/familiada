@@ -1,5 +1,7 @@
 # 6. Moje gry
 
+Na telefonie przycisk menu z trzema kreskami wysuwa nawigację z prawej strony. Zmienia się w krzyżyk; naciśnij go ponownie, aby zamknąć menu. Możesz też dotknąć tła poza panelem lub użyć klawisza Escape.
+
 ## 6.1 Do czego służy strona „Moje gry”
 
 *Moje gry* to strona, na którą trafiasz po zalogowaniu i od której zaczyna się większość

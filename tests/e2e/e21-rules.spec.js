@@ -13,7 +13,9 @@ test.use({ serviceWorkers: "block" });
 test.use({ needs: { standard: 1 } });
 test.describe.configure({ retries: 0 });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["games", "games/editor"] });
+  if (process.env.TEST_BRANCH_CODE === "1") {
+    await serveBranchCode(context, { pages: ["games", "games/editor"] });
+  }
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
 });
 
@@ -154,7 +156,7 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
     await expect(page.locator('.change-type input[value="prepared"]')).toBeDisabled();
     const option = page.locator(".change-type-option", { has: page.locator('input[value="poll_text"]') });
     await option.click();
-    await expect(option.locator(".change-type-desc")).toContainText("Odpowiedzi i punkty zostaną usunięte");
+    await expect(option.locator(".change-type-desc")).toContainText("Odpowiedzi i punkty usuniemy");
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect.poll(async () => page.evaluate(async (id) => {
@@ -196,7 +198,7 @@ test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez 
     await expect(keep).toBeVisible();
     // domyślnie odznaczone: wyniki ankiety znikają
     await expect(keep).not.toBeChecked();
-    await expect(option.locator(".change-type-desc")).toContainText("Punkty zostaną usunięte");
+    await expect(option.locator(".change-type-desc")).toContainText("Punkty usuniemy");
     await keep.check();
     await expect(option.locator(".change-type-desc")).toHaveText("Pytania, odpowiedzi i punkty z ankiety zostaną.");
     await page.locator(".uni-foot .btn.gold:visible").click();

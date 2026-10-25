@@ -150,6 +150,8 @@ Punkty finału nie wchodzą do mnożenia; służą tylko do sprawdzenia celu.
 - Jeśli ustawienia zmieniono w międzyczasie w innym oknie, serwis o tym uprzedzi przed zapisem.
 
 ![Wyjście z niezapisanymi zmianami](zrzut:play-settings-unsaved)
+- Po udanym zapisie w ikonie [Zapisz] pojawia się znacznik potwierdzenia. Kolejna zmiana pola usuwa znacznik.
+
 ![Przywrócenie ustawień domyślnych](zrzut:play-settings-reset-all)
 
 - [Graj] przechodzi od razu do panelu sterowania (→ 17). Gra musi być gotowa do rozegrania

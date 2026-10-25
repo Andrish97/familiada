@@ -1163,9 +1163,23 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    // Licznik po stronie Playwright przeżywa przeładowanie urządzenia przez
+    // service workera oraz odtworzenie kanału po reconnect. Czyta tylko typ
+    // i topic rzeczywistych ramek; nie zmienia SDK ani obsługi wiadomości.
+    const nativeCounts = { display: 0, host: 0, buzzer: 0 };
+    const observeNative = (source) => (devicePage) => devicePage.on("websocket", (socket) => {
+      socket.on("framereceived", ({ payload }) => {
+        try {
+          const frame = JSON.parse(String(payload));
+          const event = Array.isArray(frame) ? frame[3] : frame.event;
+          const topic = Array.isArray(frame) ? frame[2] : frame.topic;
+          if (event === "postgres_changes" && String(topic).includes("game-state-direct")) nativeCounts[source]++;
+        } catch {}
+      });
+    });
+    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors, { onPage: observeNative("display") });
+    const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors, { onPage: observeNative("host") });
+    const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, { onPage: observeNative("buzzer") });
 
     // Potwierdź, że prawdziwe strony urządzeń dołączyły do kanału
     // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
@@ -1177,6 +1191,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         timeout: 15000,
         message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
       }).toEqual(expect.arrayContaining([expect.stringMatching(/:joined$/)]));
+
+
     }
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -1279,8 +1295,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       return { roundNo: data.detail?.rounds?.roundNo, scoreA: data.detail?.rounds?.totals?.A };
     }, game.id), { timeout: 10000 }).toEqual({ roundNo: 2, scoreA: 90 });
 
-    // Urządzenia jadą na postgres_changes, nie na transporcie zapasowym
-    // (diagnoza 2026-10-23: kanał SUBSCRIBED bez dostarczanych zmian).
+    // Kanały muszą dostarczać rzeczywiste zmiany, nie tylko SUBSCRIBED
+    // (diagnoza 2026-10-23). Dzwonek może równolegle naprawiać opóźnienia.
     const transportOf = sessions => {
       const events = (sessions[0]?.stats_detail.events || []).filter(event => ["display", "host", "buzzer"].includes(event.source));
       return Object.fromEntries(["display", "host", "buzzer"].map(source => {
@@ -1347,6 +1363,16 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
       expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
     }
+    // Dzwonek może odczytać rewizję przed ramką postgres_changes (naprawa
+    // słabego łącza 2026-10-25). Catchup nie dowodzi awarii kanału. Wymagamy
+    // jego rzeczywistej wiadomości, żeby zapasowy transport nie ukrył regresji
+    // „SUBSCRIBED, ale bez danych”; cała runda nadal sprawdza stan urządzeń.
+    for (const source of Object.keys(nativeCounts)) {
+      await expect.poll(() => nativeCounts[source], {
+        timeout: 10000, message: `${source}: bezpośredni kanał dostarczył postgres_changes`,
+      }).toBeGreaterThan(0);
+    }
+    console.log(`[e2e-diag] native postgres_changes ${JSON.stringify(nativeCounts)}`);
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);
@@ -3363,13 +3389,9 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     const syncSessions = await readControl2Sessions(page, game.id);
     const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic"
       && ["state_sync", "device_state_sync"].includes(event.category));
-    console.log(`[statistics-review] reconnect sync events ${JSON.stringify(syncEvents.map(event => ({ source: event.source,
-      category: event.category, phase: event.metrics?.phase, trigger: event.metrics?.trigger,
-      revision: event.metrics?.revision ?? event.metrics?.latest_revision, previous_revision: event.metrics?.previous_revision,
-      received_ms: event.metrics?.received_ms, fetch_ms: event.metrics?.fetch_ms, status: event.metrics?.status })))}`);
-    await attachStatistics(testInfo, "reconnect", syncSessions);
     expect(syncEvents.some(event => ["requested", "acknowledged"].includes(event.metrics?.phase))).toBe(false);
     expect(syncEvents.length).toBeLessThan(10);
+    await attachStatistics(testInfo, "reconnect", syncSessions);
     expect(syncSessions).toHaveLength(1);
     expect(syncSessions[0].rounds_played).toBe(1);
     expect(syncSessions[0].ended_at).toBeNull();

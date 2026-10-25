@@ -1,35 +1,36 @@
+import { bindDrawer } from "../../../shared/js/core/drawer.js?v=v2026-10-25T22543";
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T18561";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-25T18561";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-25T18561";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T18561";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T18561";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T18561";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T18561";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-25T18561";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-25T18561";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T18561";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-25T18561";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-25T18561";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-25T18561";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-25T18561";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T22543";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-25T22543";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-25T22543";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T22543";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T22543";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T22543";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T22543";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-25T22543";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-25T22543";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T22543";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-25T22543";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-25T22543";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-25T22543";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-25T22543";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-25T18561";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-25T22543";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-25T18561";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T18561";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-25T18561";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T18561";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-25T18561";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T18561";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-25T18561";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-25T22543";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T22543";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-25T22543";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T22543";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-25T22543";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T22543";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-25T22543";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -161,12 +162,13 @@ let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 function setSaveState(state) {
   const el = document.getElementById("gsFooterMsg");
   if (el) el.dataset.state = state;
+  if (btnSaveAll) btnSaveAll.dataset.iconState = state;
 }
 
 function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
-  el.dataset.state = isUnsaved ? "dirty" : "saved";
+  setSaveState(isUnsaved ? "dirty" : "saved");
   el.textContent = isUnsaved ? (t("gameSettings.unsaved")) : "";
   el.classList.toggle("hidden", !isUnsaved);
 }
@@ -207,6 +209,8 @@ async function saveAll() {
     return isDirty ? saveAll() : true;
   }
   if (btnSaveAll) btnSaveAll.disabled = true;
+  btnSaveAll?.setAttribute("aria-busy", "true");
+  setSaveState("saving");
   const seq = changeSeq;
   let ok = false;
   saving = (async () => {
@@ -315,6 +319,8 @@ async function saveAll() {
   } finally {
     saving = null;
     if (btnSaveAll) btnSaveAll.disabled = false;
+    btnSaveAll?.removeAttribute("aria-busy");
+    if (btnSaveAll?.dataset.iconState === "saving") setSaveState(isDirty ? "dirty" : "idle");
   }
   return ok && !isDirty;
 }
@@ -1869,25 +1875,16 @@ async function main() {
 
   updateSubTabStates();
 
+  const sectionDrawer = bindDrawer({ panel: sidebar, backdrop: sidebarBackdrop, toggle: sidebarToggle });
+
   // Sidebar clicks
   sidebar?.addEventListener("click", e => {
     const btn = e.target.closest(".gs-sidebar-item");
     if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
     const cat = btn.dataset.cat;
     if (cat) setActiveCat(cat);
-    sidebar?.classList.remove("is-open");
-    sidebarBackdrop?.classList.remove("is-open");
-    sidebarToggle?.setAttribute("aria-expanded", "false");
+    sectionDrawer?.close();
   });
-  const toggleSidebar = (open = !sidebar?.classList.contains("is-open")) => {
-    sidebar?.classList.toggle("is-open", open);
-    sidebarBackdrop?.classList.toggle("is-open", open);
-    sidebarToggle?.setAttribute("aria-expanded", String(open));
-  };
-  sidebarToggle?.addEventListener("click", () => toggleSidebar());
-  sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
-
   // Save button
   btnSaveAll?.addEventListener("click", saveAll);
 

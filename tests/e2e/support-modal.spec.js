@@ -10,7 +10,7 @@ const SUPPORT = "https://buycoffee.to/familiada.online";
 test.use({ serviceWorkers: "block" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["index", "privacy"] });
+  if (process.env.TEST_BRANCH_CODE === "1") await serveBranchCode(context, { pages: ["index", "privacy"] });
   await context.route("https://buycoffee.to/**", (route) =>
     route.fulfill({ status: 200, contentType: "text/html", body: "<title>buycoffee stub</title>" }));
 });

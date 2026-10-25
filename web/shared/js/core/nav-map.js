@@ -30,6 +30,8 @@
 //                   custom  true — przed przejściem strona coś sprawdza (wybrana
 //                           gra, validateGame…); initPage tylko chowa przycisk wg
 //                           roles i device, a kliknięcie i adres daje strona
+//   initialRedirects  możliwe cele niewidocznego przekierowania przy wejściu;
+//                 decyzja i nawigacja przed odsłonięciem źródła (page-layout.js)
 //   locks         blokady zasobów, które strona trzyma (docs/blokady-zasobow.md,
 //                 sekcja 6) — sama deklaracja, mechanizm jest w resource-lock.js:
 //                   type    "game" | "logo" | "base" | "logos" (pula logo użytkownika)
@@ -41,8 +43,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-25T18561";
-import { iconText } from "./icons.js?v=v2026-10-25T18561";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-25T22543";
+import { iconText } from "./icons.js?v=v2026-10-25T22543";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -57,8 +59,8 @@ export function buttonBlocked(spec) {
 }
 
 export const PAGES = {
-  home:          { path: "/",                   access: "public", parent: null },
-  login:         { path: "/login/",             access: "public", parent: "home", manual: "5" },
+  home:          { path: "/",                   access: "public", parent: null, initialRedirects: ["games", "login"] },
+  login:         { path: "/login/",             access: "public", parent: "home", manual: "5", initialRedirects: ["games", "tasks", "friends", "bases", "snake"] },
   loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
   loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
   games:         { path: "/games/",             access: "guest", minViewportHeight: 580,  parent: null, from: ["manual"], manual: "6", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
@@ -106,7 +108,7 @@ export const PAGES = {
   controlHost:   { path: "/control/host/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok hosta sterowania otwierany przez połączone urządzenie." },
   controlBuzzer: { path: "/control/buzzer/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok buzzera otwierany przez połączone urządzenie." },
   snake:         { path: "/snake/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Ukryta gra w węża z kodu QR na kadrze strony głównej; nie jest celem zwykłego powrotu." },
-  go:            { path: "/go/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
+  go:            { path: "/go/", access: "public", initialRedirects: ["pollVotePoints", "pollVoteText", "pollVoteQr", "controlDisplay", "controlHost", "controlBuzzer", "mailCenter", "snake"], parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
   pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], manual: "15.3", kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
   pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], manual: "15.3", kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
   pollVoteQr:    { path: "/polls/vote/qr/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny ekran QR dla głosowania, z własnym guardem urządzenia." },

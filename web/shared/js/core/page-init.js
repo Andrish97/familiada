@@ -29,13 +29,14 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-25T18561";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-25T18561";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-25T18561";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-25T18561";
-import { guardViewportWidth } from "./device-guard.js?v=v2026-10-25T18561";
-import "./scroll-fade.js?v=v2026-10-25T18561"; // wygaszona krawędź przewijanych list (wszystkie strony)
-import "./fit-row.js?v=v2026-10-25T18561"; // wiersze przycisków bez zawijania (.fit-row)
+import { holdPageLayout, redirectPage } from "./page-layout.js?v=v2026-10-25T22543";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-25T22543";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-25T22543";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-25T22543";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-25T22543";
+import { guardViewportWidth } from "./device-guard.js?v=v2026-10-25T22543";
+import "./scroll-fade.js?v=v2026-10-25T22543"; // wygaszona krawędź przewijanych list (wszystkie strony)
+import "./fit-row.js?v=v2026-10-25T22543"; // wiersze przycisków bez zawijania (.fit-row)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
@@ -47,10 +48,10 @@ if (globalThis.document?.documentElement?.dataset.input === "touch") {
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-25T18561"),
-    import("./topbar-controller.js?v=v2026-10-25T18561"),
-    import("./modal-sheet.js?v=v2026-10-25T18561"),
-    import("./device-guard.js?v=v2026-10-25T18561"),
+    import("./auth.js?v=v2026-10-25T22543"),
+    import("./topbar-controller.js?v=v2026-10-25T22543"),
+    import("./modal-sheet.js?v=v2026-10-25T22543"),
+    import("./device-guard.js?v=v2026-10-25T22543"),
 
   ]);
   return {
@@ -68,10 +69,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-25T18561");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-25T22543");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-25T18561");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-25T22543");
     await initRatingSystem(user);
   }
 }
@@ -197,7 +198,7 @@ function wireAccount(user, opts, d) {
  * „i” → Wskazówki (manualHref, po zmianie języka też), topbar i strona
  * odsłonięte po tłumaczeniach (ready) — także gdy tłumaczenia zawiodą.
  */
-export async function initEntryPage(id, { ready } = {}) {
+export async function initEntryPage(id, { ready, route } = {}) {
   const p = PAGES[id];
   if (!p) throw new Error(`initEntryPage: nieznana strona "${id}"`);
   guardViewportWidth({ minWidth: p.minViewportWidth || 0, minHeight: p.minViewportHeight || 0, ...(p.deviceGuard || {}) });
@@ -205,7 +206,10 @@ export async function initEntryPage(id, { ready } = {}) {
   const syncManual = () => btnManual?.setAttribute("href", manualHref(id));
   window.addEventListener("i18n:lang", syncManual);
   try {
-    await ready;
+    const [language, decision] = await holdPageLayout(Promise.allSettled([ready, route]));
+    if (decision.status === "rejected") throw decision.reason;
+    if (language.status === "rejected") throw language.reason;
+    return !decision.value;
   } finally {
     syncManual();
     document.querySelector(".topbar")?.classList.add("topbar-ready");
@@ -214,6 +218,16 @@ export async function initEntryPage(id, { ready } = {}) {
 }
 
 export async function initPage(id, opts = {}) {
+  let finishLayout;
+  holdPageLayout(new Promise((resolve) => { finishLayout = resolve; }));
+  try {
+    return await initializePage(id, opts, finishLayout);
+  } finally {
+    finishLayout();
+  }
+}
+
+async function initializePage(id, opts, finishLayout) {
   const p = PAGES[id];
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
   const d = opts.deps || await loadDeps();
@@ -245,7 +259,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-25T18561")
+      void import("./nav-contact-badges.js?v=v2026-10-25T22543")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
@@ -254,7 +268,7 @@ export async function initPage(id, opts = {}) {
 
   if (p.access === "user" && isGuestUser(user)) {
     if (p.guestRedirect) {
-      location.replace(linkTo(p.guestRedirect));
+      redirectPage(linkTo(p.guestRedirect));
       return null;
     }
     showPageGuard({
@@ -268,6 +282,8 @@ export async function initPage(id, opts = {}) {
     });
     return null;
   }
+
+  finishLayout();
 
   // Account notices are shared across authenticated pages, not tied to the
   // Games library. Await the same blocking modal flow everywhere so users

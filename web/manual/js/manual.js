@@ -1,3 +1,4 @@
+import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-25T22543";
 // manual/js/manual.js
 // Podręcznik (E13): części → rozdziały → podrozdziały. Treść z content/{lang}.js
 // (generowana z docs/podrecznik przez scripts/manual/build-content.mjs).
@@ -5,22 +6,22 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T18561";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T18561";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T18561";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T18561";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T18561";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T18561";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T18561";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T18561";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T22543";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T22543";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T22543";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22543";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22543";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T22543";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T22543";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T22543";
 
-import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T18561";
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T18561";
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T22543";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T22543";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-25T18561"),
-  en: () => import("../content/en.js?v=v2026-10-25T18561"),
-  uk: () => import("../content/uk.js?v=v2026-10-25T18561"),
+  pl: () => import("../content/pl.js?v=v2026-10-25T22543"),
+  en: () => import("../content/en.js?v=v2026-10-25T22543"),
+  uk: () => import("../content/uk.js?v=v2026-10-25T22543"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
@@ -246,11 +247,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null, ke
   else markSection();
 }
 
-function setTocOpen(open) {
-  toc.classList.toggle("is-open", open);
-  tocBackdrop.classList.toggle("is-open", open);
-  tocToggle.setAttribute("aria-expanded", String(open));
-}
+let tocDrawer;
+function setTocOpen(open) { tocDrawer?.setOpen(open); }
 
 function wireNavigation() {
   // Odnośniki wewnątrz podręcznika (spis, karty części, „→ 7.3”, poprzedni/następny).
@@ -299,13 +297,11 @@ async function renderForLang({ hydrate = false } = {}) {
 /* ================= Init ================= */
 // Przyciski panelu działają od pierwszej chwili — także gdy treść i tłumaczenia jeszcze się wczytują.
 function wirePanel() {
-  tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
+  tocDrawer = bindDrawer({ panel: toc, backdrop: tocBackdrop, toggle: tocToggle });
   document.getElementById("manualSearchToggle")?.addEventListener("click", () => {
     setTocOpen(true);
     toc.querySelector(".searchText")?.focus();
   });
-  tocBackdrop.addEventListener("click", () => setTocOpen(false));
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
 }
 
 async function init() {

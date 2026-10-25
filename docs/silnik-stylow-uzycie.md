@@ -19,6 +19,8 @@ w tym dokumencie i w `wzorce-ui.md`), nie do pliku strony.
 W `<head>` każdej strony aplikacji, w tej kolejności:
 
 ```html
+<!-- po meta viewport, przed arkuszami; klasyczny, bez async i defer -->
+<script src="/shared/js/core/page-boot.js?v=…"></script>
 <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=…"/>  <!-- ekran blokady -->
 <link rel="stylesheet" href="/shared/style/tokens.css?v=…"/>
 <link rel="stylesheet" href="/shared/style/base.css?v=…"/>
@@ -124,6 +126,58 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 (`--center`, `--end`), `.stack`, `.between`, `.center`, `.grow`, `.nowrap`,
 `.truncate`, `.text-muted`, `.hidden`, `.visually-hidden`,
 `.only-mobile` / `.only-desktop` (próg 600 px).
+
+### 5a. Pierwsza widoczna klatka i stopniowe ładowanie (decyzja 2026-10-25)
+
+- `page-boot.js` ustawia atrybuty urządzenia przed renderem. Klasyfikacja jest
+  wspólna dla CSS, `device-attrs.js` i guarda; moduł aktualizuje ją po zmianach.
+  Późny import na już otwartej stronie nie uruchamia bramki startowej.
+- `page-loading` pozostaje sygnałem strony „tłumaczenia gotowe”. Wspólna bramka
+  `data-layout-pending` czeka dodatkowo na DOMContentLoaded, konfigurację
+  powłoki z `initPage` i dwa przebiegi pomiarów przed odsłonięciem.
+- Moduł zmieniający geometrię rejestruje **synchroniczny, powtarzalny pomiar**:
+  `registerPageLayout(measure)` z `core/page-layout.js`. Pomiar nie pobiera
+  danych i nie otwiera okien; rejestracja zwraca funkcję odpięcia. Tak działają
+  topbar, fit-row, nagłówki i paski list oraz wygaszanie przewijania.
+- Praca asynchroniczna potrzebna do geometrii powłoki używa
+  `holdPageLayout(promise)`. Tłumaczenia i `initPage` zgłaszają się same.
+  **Nie zgłaszać tu list i wyników z bazy**: powłoka pokazuje się, gdy dane
+  jeszcze się pobierają. Błąd obietnicy zwalnia bramkę. Niezależny bezpiecznik
+  klasycznego skryptu zdejmuje ukrywanie po 5 s także przy błędzie modułów;
+  guard urządzenia nadal ma pierwszeństwo.
+- Niewidoczne przekierowania rozstrzygaj przed odsłonięciem. Strona wejścia
+  przekazuje `route: promise` do `initEntryPage`; wynik `true` oznacza
+  przekierowanie (funkcja zwraca wtedy `false`). Inne inicjalizatory rejestrują
+  całą decyzję przez `holdPageLayout`. Także błąd tłumaczeń czeka na decyzję
+  trasy; listy danych nie należą do tej bramki.
+- Do automatycznej nawigacji używaj `redirectPage(href)` z `page-layout.js`.
+  `data-page-redirect` trzyma źródło ukryte także po `finally` inicjalizatora
+  i po bezpieczniku bootstrapu, aż przeglądarka otworzy cel. Nawigacja używa
+  `replace`, więc Wstecz nie ponawia bramki. Wyjątek przeglądarki, powrót
+  z bfcache i niezależny limit 10 s dla przerwanej nawigacji zwalniają stan.
+  Nie stosuj do potwierdzeń z widocznym odliczaniem ani zwykłych kliknięć.
+- Stopniowe ładowanie pozostaje: `data-skel-step`, `skel-step-ready`, grupy
+  i `topbar-ready`. Wstaw treść i podepnij akcje, potem oznacz etap jako gotowy.
+  Silnik mierzy nowo odsłaniany etap przed jego renderem. `skel-step-ready`
+  w początkowym HTML służy wersji bez JS; bootstrap resetuje ten znacznik
+  podczas parsowania, a kod strony potwierdza gotowość po inicjalizacji.
+- Jeśli wysokość etapu zależy od dodatkowego odczytu (np. przyczyna blokady
+  akcji, podsumowanie), zgłoś `holdSkeletonLayout(elementy, promise)` zanim
+  dodasz `skel-step-ready`. Silnik wstrzyma tylko te jeszcze nieodsłonięte
+  etapy, przygotuje geometrię i odsłoni je po obietnicy; powłoka i inne etapy
+  nie czekają. Gotowego etapu nie chowa ponownie, błąd zwalnia bramkę.
+  Obietnica powinna obejmować także render danych ustalających wysokość.
+  Przykład: pasek i karta Ankiety czekają na walidację oraz podsumowanie,
+  natomiast wyniki pozostają osobnym etapem. Scena regresji:
+  `polls-draft-text-blocked-slow` (dane +250 ms, także 360 px).
+- Zachowaj docelowy rozmiar miejsca na dane (flex, min-height, zarezerwowany
+  wiersz podsumowania). `visibility` i `opacity` zachowują geometrię;
+  `hidden` usuwa element z układu, więc nie zastępuje miejsca na dane.
+- `run.cjs --audit` obserwuje layout-shift od startu dokumentu do gotowego
+  widoku, przed kliknięciami sceny. `skok-po-zaladowaniu`: suma po odsłonięciu
+  > 0,01 jest błędem. `layout-load.json` zawiera czasy odsłonięcia, sumy przed
+  i po oraz geometrię źródeł. `--latency=250` sprawdza stopniowe ładowanie,
+  `--part=1/2` i `--part=2/2` dzielą pełny przebieg na dwie części.
 
 ## 6. Elementy (katalog)
 
@@ -263,6 +317,23 @@ Jedna rodzina animacji, czasy z tokenów (`--dur-fast` .12 s, `--dur-base`
 - **Menu, listy, podpowiedzi** — `popover-in`; przyciski, pola, kafle —
   przejścia kolorów, obwódek i lekkiego uniesienia.
 
+### Animowane części ikon (2026-10-25)
+
+`icon("hamburger", { animation: "menu" })` morfuje kreski według
+`aria-expanded` najbliższego przycisku. `icon("coffee", { animation: "steam" })`
+zmienia krzywe pary przy nieruchomej filiżance. HTML przy hydracji:
+`<i data-icon="coffee" data-icon-animation="steam"></i>`.
+
+Rysunek pochodzi z jednego pliku SVG. Po zmianie części:
+`node scripts/build-icon-parts.mjs`; wygenerowany `icon-parts.js` jest
+sprawdzany przez unit. Zwykłe ikony nadal używają zewnętrznego SVG.
+Brak pobierania lub wymiany rysunku po odsłonięciu strony. Geometria pola
+24×24, rozmiar em i currentColor są wspólne. Animacja nie ustawia stylów inline.
+`icon-motion.js` zatrzymuje SMIL pary poza obszarem widoku, przy ukrytej
+karcie i ograniczonym ruchu; odpina usunięte elementy. Hamburger w reduced
+motion natychmiast pokazuje poprawny stan. W przeglądarce bez odpowiednich
+API pozostaje statyczny rysunek. Audyt kandydatów: `animowane-ikony-audyt.md`.
+
 ## 8. Nowa strona — kroki
 
 1. HTML: szkielet z §5, pliki z §2, elementy z §6.
@@ -287,3 +358,41 @@ Jedna rodzina animacji, czasy z tokenów (`--dur-fast` .12 s, `--dur-base`
 3. Logika współdzielona → moduł w `web/shared/js/core/` z testem unit.
 4. Wpis w §6 tutaj i w `wzorce-ui.md`; usuń dotychczasowe kopie na
    stronach w tym samym kroku (zrzuty przed/po).
+
+### Wysuwane menu i panele boczne (2026-10-25)
+
+Główna nawigacja topbara używa `.topbar-mobile-overlay` i
+`.topbar-mobile-panel`: panel od prawej krawędzi pod topbarem, do 320 px /
+86vw, ze strefą bezpieczną. Nie dodawaj osobnego krzyżyka; stan przycisku
+hamburger/X wynika z `aria-expanded`. Tło i Escape też zamykają menu.
+
+Panele robocze używają `.drawer` / `.drawer-scrim` i `bindDrawer` z
+`core/drawer.js`: podaj panel, backdrop i opcjonalny toggle; `beforeOpen`
+służy do dodatkowej pracy przed otwarciem, `onChange` do odświeżenia stanu strony.
+`anchor` wskazuje pasek narzędzi (domyślnie rodzic toggle); wspólny pomiar
+z `registerPageLayout` i ResizeObserver ustawia przez geometry.js początek
+panelu oraz tła pod paskiem. Przełącznik/X pozostaje dostępny. API: open, close,
+setOpen, isOpen. Zamknięty panel na wąskim ekranie jest inert, na komputerze
+wraca do układu. `drawer:open` zamyka pozostałe panele, także topbar.
+Lewa strona paneli roboczych pozostaje zgodna z układem strony. Obie strony
+używają `--dur-base` / `--ease-out`, tłumionych przez reduced-motion.
+
+Stopka zachowuje pierwotne wymiary i odstępy: ikona kawy 1.45em,
+bez powiększania Kontaktu i bez dodatkowych wymiarów przycisków. Animacja
+zmienia tylko krzywiznę pary. Nie zwiększaj stopki, aby uwidocznić animację.
+
+### Dalsze profile animowanych części
+
+| Nazwa / profil | Sterowanie | Integracja |
+|---|---|---|
+| caret-down / disclosure | aria-expanded | initUiSelect dokłada animowaną strzałkę; topbar synchronizuje stan z menu.hidden |
+| eye / password | aria-pressed | initPasswordToggles zmienia type i stan przycisku, zachowując ten sam SVG |
+| save / save | aria-busy; data-icon-state=saved | check dopiero po potwierdzonym zapisie; dirty/error/conflict go nie pokazują |
+| copy lub duplicate / copy | aria-busy | kartki rozsuwają się tylko w czasie prawdziwej operacji, bez udawania sukcesu |
+
+Dla treści tłumaczonej: data-i18n-icon="save" razem z
+data-icon-animation="save". iconText przyjmuje animation tak jak icon.
+Dla znacznika i: data-icon="duplicate" data-icon-animation="copy".
+Generator używa kanonicznych SVG, a renderowanie nadaje osobne ID maskom
+każdej instancji. Prefers-reduced-motion zachowuje końcowy stan bez ruchu.
+Nowa animacja nie może zmienić wymiarów przycisku, pola, wiersza ani stopki.

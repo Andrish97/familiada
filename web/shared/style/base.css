@@ -30,7 +30,7 @@
     background: var(--bg);
   }
   /* Zachowaj szerokość układu, gdy wysuwane menu blokuje przewijanie body. */
-  html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
+  html[data-menu-scrollbar]:has(body.topbar-mobile-lock), html:has(body.explorer-drawer-open) { scrollbar-gutter: stable; }
   body.explorer-drawer-open { overflow: hidden; } /* szuflada Eksploratora na telefonie */
 
   body {
@@ -42,7 +42,8 @@
     overscroll-behavior: none; /* gasi biały bounce */
     transition: opacity var(--dur-slow) ease-in;
   }
-  html.page-loading body { opacity: 0; }
+  html[data-page-redirect] body { opacity: 0; pointer-events: none; }
+  html.page-loading body, html[data-layout-pending] body { opacity: 0; }
 
   body > main,
   main {
@@ -76,6 +77,49 @@
     flex-shrink: 0;
     overflow: visible;
   }
+
+  /* Części hamburgera pozostają w stałym viewBox; stan jest na przycisku. */
+  .ico[data-icon-animation="menu"] [data-icon-part] {
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+  }
+  .ico[data-icon-animation="menu"] [data-icon-part="top"] { transform-origin: 12px 6px; }
+  .ico[data-icon-animation="menu"] [data-icon-part="middle"] { transform-origin: 12px 12px; }
+  .ico[data-icon-animation="menu"] [data-icon-part="bottom"] { transform-origin: 12px 18px; }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="top"] {
+    transform: translateY(6px) rotate(45deg);
+  }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="middle"] {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="bottom"] {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  /* Animacje opisują stan, bez zmiany viewBox i wymiarów sterowania. */
+  .ico[data-icon-animation="disclosure"] [data-icon-part="chevron"] {
+    transform-origin: 12px 12px;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  :where([aria-expanded="true"]) .ico[data-icon-animation="disclosure"] [data-icon-part="chevron"] { transform: rotate(180deg); }
+  .ico[data-icon-animation="password"] [data-icon-part="iris"] {
+    transform-origin: 12px 12px;
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+  }
+  .ico[data-icon-animation="password"] [data-icon-part="slash"],
+  .ico[data-icon-animation="save"] [data-icon-part="check"] {
+    transition: stroke-dashoffset var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+  }
+  :where([aria-pressed="true"]) .ico[data-icon-animation="password"] [data-icon-part="iris"] { opacity: 0; transform: scaleY(.1); }
+  :where([aria-pressed="true"]) .ico[data-icon-animation="password"] [data-icon-part="slash"],
+  :where([data-icon-state="saved"]) .ico[data-icon-animation="save"] [data-icon-part="check"] { opacity: 1; stroke-dashoffset: 0; }
+  .ico[data-icon-animation="save"] [data-icon-part="slot"],
+  .ico[data-icon-animation="copy"] :is([data-icon-part="front"], [data-icon-part="back"]) {
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+  }
+  :where([aria-busy="true"]) .ico[data-icon-animation="save"] [data-icon-part="slot"] { transform: translateY(1.5px); opacity: .4; }
+  :where([aria-busy="true"]) .ico[data-icon-animation="copy"] [data-icon-part="back"] { transform: translate(-1px, -1px); }
+  :where([aria-busy="true"]) .ico[data-icon-animation="copy"] [data-icon-part="front"] { transform: translate(1px, 1px); }
 
   a.gold {
     color: var(--accent);

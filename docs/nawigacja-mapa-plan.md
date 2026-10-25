@@ -1125,6 +1125,22 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-25 — animowane stany kontrolek**: strzałki konta, Więcej i
+  wspólnych selektorów odzwierciedlają aria-expanded. Konto i Więcej
+  obsługują również Enter/Spację oraz Escape. Te same istniejące kontrolki
+  i menu, bez nowych tras lub zmian PAGES, ret, sesji i dostępu. Hasło
+  synchronizuje type z aria-pressed; zapis i Powiel pokazują faktyczny stan
+  operacji. Wymiary elementów pozostają stałe.
+
+- **2026-10-25 — wysuwane menu** (decyzja właściciela): główna nawigacja
+  wysuwa się **z prawej** pod topbarem, także w prywatnym panelu admina.
+  Widoczny przełącznik hamburger/X jest jedynym przyciskiem zamykania;
+  dodatkowo tło i Escape. Pozostałe panele (drzewo bazy, sekcje ustawień,
+  spis Wskazówek) zachowują lewą stronę i wspólny ruch/tło/zamykanie.
+  To zmiana prezentacji istniejących tras; PAGES, uprawnienia, ret i adresy
+  pozostają bez zmian. Zamknięty panel jest inert; po zamknięciu fokus
+  wraca z panelu do przycisku. Otwarcie jednego zamyka poprzedni.
+
 - **2026-10-22 — guard sprawdza też wysokość** (decyzja użytkownika; przypadek:
   tablet w poziomie, krótszy bok ≥ 700, szerokość ≥ 980, ale viewport ok. 550 px
   wysokości przez paski przeglądarki/powiększenie — Moje gry w jednym ściśniętym
@@ -1430,3 +1446,27 @@ prywatnym Workerem i plikami z repo familiada-server. Dawne lokalne trasy
 `web/admin/` i jego narzędzia nie są stronami tej aplikacji ani wpisami PAGES.
 Na domenie publicznej ich ścieżki pozostają zablokowane. Mapa i testy
 prywatnego panelu należą do jego repo.
+
+
+### Atomowe przekierowania przy wejściu (2026-10-25)
+
+Decyzja użytkownika: źródło niewidocznej nawigacji nie może mignąć przed
+celem. `PAGES.initialRedirects` wymienia możliwe cele dla Home, Login i Go;
+uprawnienia `access` nadal opisują przekierowanie na logowanie przez auth.
+Home czeka na backendowe sprawdzenie sesji równolegle z językiem, Login na
+sesję i istniejący `next`, Go na decyzję bramki. Nie ufamy lokalnej kopii
+sesji w HTML logowania. `force_auth`, ustawienie nazwy, błędne/zakończone
+linki i komunikaty po potwierdzeniu zachowują własny widok. Mechanizm jest
+w `page-layout.js` (holdPageLayout + redirectPage), kontrakt w §5a instrukcji
+silnika. Brak zmiany adresów, parametrów, ról i docelowych uprawnień.
+
+
+### Stan menu topbara (2026-10-25)
+
+Wspólny przycisk menu przechodzi z trzech kresek w krzyżyk według
+aria-expanded; ponowne naciśnięcie, X panelu i Escape zamykają menu.
+Escape obsłużony przez menu nie zamyka dodatkowo okna pod nim. Wszystkie
+przyciski nadal korzystają z tych samych wpisów PAGES, ról i adresów;
+stan menu jest lokalny i nie zmienia URL ani łańcucha ret. Żadna trasa
+nie została dodana/usunięta. Testy 390/360 obejmują też brak miejsca na
+sekcję nawigacji przy długiej nazwie konta.

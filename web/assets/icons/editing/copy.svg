@@ -6,8 +6,9 @@
       <rect x="7.1" y="7.1" width="14.8" height="14.8" rx="3.2" fill="black"/>
     </mask>
   </defs>
-  <g mask="url(#behind-front-card)">
+  <g data-icon-part="back" mask="url(#behind-front-card)">
     <rect x="3" y="3" width="13" height="13" rx="3"/>
   </g>
-  <rect x="8" y="8" width="13" height="13" rx="2.5"/>
+  <g data-icon-part="front"><rect x="8" y="8" width="13" height="13" rx="2.5"/>
+  </g>
 </svg>

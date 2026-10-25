@@ -1,3 +1,4 @@
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T22543";
 // fit-row.js
 // Wiersz przycisków bez zawijania (zgłoszenie 2026-10-24: pasek ustawień gry
 // na telefonie łamał się na dwa rzędy). Element z klasą .fit-row stoi zawsze
@@ -8,6 +9,10 @@
 //
 // Podpinany sam (jak scroll-fade.js): każdy .fit-row w dokumencie, także
 // dodany później. Przeliczenie raz na klatkę po zmianie rozmiaru lub treści.
+
+registerPageLayout(() => {
+  for (const row of document.querySelectorAll(".fit-row")) update(row);
+});
 
 const tracked = new WeakSet();
 const pending = new Set();
@@ -31,9 +36,10 @@ function update(row) {
   // Stopnie: napisy → ikony w przyciskach pobocznych (główny .gold zostaje
   // z napisem) → ikony we wszystkich.
   row.classList.remove("is-icons", "is-icons-all");
-  if (fits(row)) return;
-  row.classList.add("is-icons");
-  if (!fits(row)) row.classList.add("is-icons-all");
+  if (!fits(row)) {
+    row.classList.add("is-icons");
+    if (!fits(row)) row.classList.add("is-icons-all");
+  }
 }
 
 function schedule(row) {
@@ -50,7 +56,16 @@ const ro = typeof ResizeObserver === "function"
   ? new ResizeObserver((entries) => { for (const e of entries) schedule(e.target); })
   : null;
 const mo = typeof MutationObserver === "function"
-  ? new MutationObserver((records) => { for (const r of records) { const row = r.target.closest?.(".fit-row"); if (row) schedule(row); } })
+  ? new MutationObserver((records) => {
+    const withoutMeasuredClasses = (value) => (value || "").split(/\s+/).filter((c) => !["is-icons", "is-icons-all", "is-measuring"].includes(c)).join(" ");
+    for (const r of records) {
+      const row = r.target.closest?.(".fit-row");
+      if (!row) continue;
+      if (r.target === row && r.attributeName === "class"
+          && withoutMeasuredClasses(r.oldValue) === withoutMeasuredClasses(row.className)) continue;
+      schedule(row);
+    }
+  })
   : null;
 
 /** Podpina wiersz (wielokrotne wywołanie nic nie robi). */
@@ -58,7 +73,7 @@ export function fitRow(row) {
   if (!row || tracked.has(row)) return;
   tracked.add(row);
   ro?.observe(row);
-  mo?.observe(row, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden"] });
+  mo?.observe(row, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "hidden"] });
   schedule(row);
 }
 

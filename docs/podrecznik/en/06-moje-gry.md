@@ -1,5 +1,7 @@
 # 6. My games
 
+On a phone, the three-line menu button slides navigation in from the right. It changes into a cross; press it again to close the menu. You can also tap the background outside the panel or press Escape.
+
 ## 6.1 What the "My games" page is for
 
 *My games* is the page you land on after logging in, and where most of your work starts.

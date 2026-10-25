@@ -218,8 +218,8 @@ const pl = {
       failed: "Nie udało się zmienić typu gry. Spróbuj ponownie.",
       summary: {
         same: "Obecny typ.",
-        toText: "Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.",
-        toPoints: "Pytania i odpowiedzi zostaną. Punkty zostaną usunięte.",
+        toText: "Zachowasz pytania. Odpowiedzi i punkty usuniemy.",
+        toPoints: "Zachowasz pytania i odpowiedzi. Punkty usuniemy.",
         toPrepared: "Pytania i odpowiedzi zostaną.",
         keepAll: "Pytania, odpowiedzi i punkty z ankiety zostaną.",
         keepAnswers: "Pytania i odpowiedzi z ankiety zostaną. Punkty da nowa ankieta.",
