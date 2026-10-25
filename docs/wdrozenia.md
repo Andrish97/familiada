@@ -2207,3 +2207,14 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Publiczny main z równoległymi znacznikami wersji scalony bez utraty zmian;
   końcowe **816/816 unit**. Bramka kawy 40236412493 nadal ważna (po niej
   doszły wyłącznie obrazy, dokumentacja i wersje zasobów). Publikacja Pages.
+
+- Właściciel odrzucił również propozycję 24 px i polecenie jest jednoznaczne:
+  przywrócić dokładnie wcześniejszy wygląd całej stopki i Kontaktu, animacje
+  zachować. Przywrócony cały blok stylów stopki z e1068dc463 (sprzed powiększenia).
+  Kawa 1.45em, bez min-height/width 44 i bez zmian Kontaktu. Warianty 36/24
+  nie są docelowe; feat/compact-coffee nie publikować. Więcej animacji pozostaje
+  następnym aktywnym zakresem, bez zmiany geometrii stopki.
+
+- Cofnięcie powiększenia: porównanie z e1068dc463 potwierdziło identyczną
+  wysokość stopki, grupy akcji i ikony dla 360/390/1400, bez overflow.
+  **816/816 unit**, trzy zrzuty + audyt **0 uwag**. Bramka restore-footer.

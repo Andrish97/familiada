@@ -61,8 +61,8 @@ test('animowane części: para zmienia krzywą, filiżanka stoi, ograniczony ruc
   const button = page.locator('.btn-support-footer');
   await button.scrollIntoViewIfNeeded();
   const svg = button.locator('svg[data-icon-animation="steam"]');
-  expect((await svg.boundingBox()).width).toBeGreaterThanOrEqual(36);
-  expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(44);
+  expect((await svg.boundingBox()).width).toBeLessThanOrEqual(18);
+  expect((await button.boundingBox()).height).toBeLessThanOrEqual(18);
   await expect(svg).toHaveAttribute('data-icon-running', '');
   const sample = () => svg.evaluate(el => {
     const wave = el.querySelector('[data-icon-part="steam-1"]');
