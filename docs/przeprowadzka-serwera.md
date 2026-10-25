@@ -253,3 +253,17 @@ Właściciel 2026-10-22: „to trzeba zrobić podczas finalnej migracji — zapa
 - **Polityka prywatności** zaktualizowana (PL/EN/UK, krótko — decyzja właściciela: bez rozpisywania): serwer w UE (Contabo), zaszyfrowane kopie 30 dni, Hugging Face, formularz kontaktu i adresy zapraszanych osób, statystyki bez profilowania.
 - **Ustawienia maili (decyzje właściciela 2026-10-24):** usunięty martwy przełącznik „Kolejkuj wysyłkę” (kolumny `queue_enabled` nie było, `send-mail` zawsze kolejkuje); paski „Kolejka”/„Od razu”; procent podziału dziennego limitu w panelu (`mail_settings.queue_share_pct`, 50–95, domyślnie 80, migracja 483); maile konta (`send-email`) biorą najpierw z rezerwy, potem z puli kolejki (`take_provider_immediate`) — kolejka nie sięga po rezerwę. Kontrola poczty po wdrożeniu (40121588160): `account-password-email`, `e2e-lease`, `mail-queue-flags` — **zielone**. Limity dostawców ustawione przez właściciela: ZeptoMail 3000 (kredyty), Brevo 300, Mailgun 100, SendPulse 400 (też 50/h — ostatni na liście).
 - **Zostało:** testy TV (`#tvCode` focus); postgres_changes (osobna sesja).
+
+## Model znaczenia gier (2026-10-25)
+
+Decyzja właściciela: kod modułu w repo familiada (`services/market-semantic`),
+osobny `deploy-market-semantic.yml` jak Lead Finder. Repo serwera zawiera
+wyłącznie compose, rootowy instalator i kontrolę. Nowe ograniczone narzędzie
+konta deploy: `familiada-deploy-market-semantic <pełny SHA>`; bez ogólnego
+sudo i Dockera. Osobny projekt compose na sieci `supabase_default`, bez
+publicznego portu, Caddy i DNS; 1 CPU/1 GiB, użytkownik 10001, read-only.
+Sekret generuje serwer i przekazuje do `functions.env`; wartości nie trafiają
+do GitHub. Tryb `server.yml market-semantic check` jest tylko odczytem,
+`run` uzupełnia wektory przez istniejące Edge i sprawdza raporty. Pierwszy
+check brancha 40198106609 ✓; testy konfiguracji/indeksacji 8/8.
+Stan końcowy wdrożenia: docs/unikalnosc-gier-plan.md.

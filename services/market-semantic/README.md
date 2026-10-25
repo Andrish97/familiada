@@ -67,18 +67,22 @@ services/market-semantic`. W środowisku proxy z własnym CA dodać
 `--secret id=proxy_ca,src=<plik-CA>`; mount służy tylko pobieraniu i nie
 zostaje w obrazie. Zachować właściwy bundle CA, nie wyłączać TLS.
 
-Stan: migracje 487/488 oraz obsługujący je kod są już wdrożone; kontrola
-produkcji 40193541789 ✓ 6/6. Model nie jest jeszcze zainstalowany, pokrycie
-wynosi 0/900 pytań (DB read 40193544729). Dalsza kolejność: instrukcje
-prywatnego repo → konfiguracja i start usługi → ustawienie URL/tokenu Edge →
-uzupełnienie wszystkich pytań przez panel/cron → kontrola pełnego pokrycia
-i raportów na produkcji. Pomiar 40192840935: 4 CPU, ~7,8 GiB RAM,
-~5,4 GiB dostępne; przygotowany kontener ma limit 1 CPU/1 GiB.
-Wycofanie obrazu usługi nie wyłącza dokładnej blokady i tekstowego porównania;
-stan znaczenia jest jawnie niepełny/niedostępny. Nie usuwać indeksu ochrony
-jako obejścia błędu modelu.
+Wdrożenie kodu modułu obsługuje `.github/workflows/deploy-market-semantic.yml`
+w tym repo: push do main ze zmianą modułu albo ręczne uruchomienie. Używa
+istniejącego konta deploy i ograniczonego instalatora
+`familiada-deploy-market-semantic <pełny SHA>`. Instalator, compose i konfiguracja
+serwera są w prywatnym `Andrish97/familiada-server`; moduł pozostaje tutaj.
+Nie wymaga nowego sekretu GitHub ani rekordu DNS.
 
-W tej sesji repo `Andrish97/familiada-server` zwracało 404 w CLI i integracji.
-Wdrożenie serwerowe wymaga dostępu do prawidłowego repo infrastruktury;
-konto deploy nie ma ogólnego sudo ani prawa dodania dowolnego kontenera
-(`docs/przeprowadzka-serwera.md`). Nie należy obchodzić tych ograniczeń.
+Instalator buduje obraz przypisany do SHA, sprawdza gotowość, autoryzację
+i kontrolny zbiór PL/EN/UK, konfiguruje osobny token wyłącznie na serwerze,
+odświeża kontener funkcji Edge, uzupełnia brakujące wektory i sprawdza raporty
+w trzech językach. W logu są wyłącznie liczniki i wersje; treści oraz tokeny
+nie trafiają do Actions. Poprzedni obraz służy do powrotu przy nieudanym starcie.
+Kolejne wdrożenie nie obraca sekretu i nie liczy ponownie gotowych kontekstów.
+
+Migracje 487/488 i aplikacja są wdrożone. Wdrożenie modelu trwa po udostępnieniu
+repo serwera; końcowy stan i numery przebiegów: `docs/unikalnosc-gier-plan.md`.
+Pomiar zasobów 40192840935: 4 CPU, ~7,8 GiB RAM, ~5,4 GiB dostępne;
+kontener ma limit 1 CPU/1 GiB. Wycofanie obrazu nie wyłącza dokładnej blokady
+ani tekstowego porównania; niepełny wynik znaczenia jest jawny w panelu.

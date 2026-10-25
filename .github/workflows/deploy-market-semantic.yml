@@ -1,0 +1,60 @@
+name: Deploy Market Semantic Service (Docker)
+on:
+  push:
+    branches: [main]
+    paths:
+      - services/market-semantic/**
+      - .github/workflows/deploy-market-semantic.yml
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: deploy-market-semantic
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: SSH i rsync
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y rsync openssh-client
+      - name: Tożsamość istniejącego konta deploy
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN: ${{ secrets.SERVER_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN" >> ~/.ssh/known_hosts
+      - name: Kod modułu do stagingu
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER_DEPLOY: ${{ secrets.SERVER_USER }}
+        run: |
+          STAGING="/home/deploy/staging/market-semantic/$GITHUB_SHA"
+          ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$USER_DEPLOY@$HOST" "mkdir -p '$STAGING'"
+          rsync -az --delete --checksum --exclude '__pycache__' --exclude '.git' \
+            -e 'ssh -i ~/.ssh/id_deploy -o BatchMode=yes' \
+            services/market-semantic/ "$USER_DEPLOY@$HOST:$STAGING/"
+      - name: Instalacja, indeksacja i kontrola przez ograniczony instalator
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER_DEPLOY: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            "$USER_DEPLOY@$HOST" "sudo familiada-deploy-market-semantic $GITHUB_SHA"
+      - name: Sprzątanie stagingu i klucza
+        if: always()
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER_DEPLOY: ${{ secrets.SERVER_USER }}
+        run: |
+          if [ -f ~/.ssh/id_deploy ]; then
+            ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$USER_DEPLOY@$HOST" \
+              "rm -rf '/home/deploy/staging/market-semantic/$GITHUB_SHA'" || true
+            rm -f ~/.ssh/id_deploy
+          fi
