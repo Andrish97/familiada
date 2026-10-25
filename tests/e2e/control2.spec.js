@@ -1238,14 +1238,19 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
 
-    // Kontrolowana utrata sieci jednego urządzenia w aktywnej rundzie:
-    // fallback ma utrzymać stan, a po powrocie kanał ma się odtworzyć i zalogować
-    // kod zamknięcia WebSocket (żeby odróżnić błąd socketu od błędu kanału).
+    // Kontrolowana utrata sieci jednego urządzenia w aktywnej rundzie.
+    // Chromium nie zawsze zamyka już otwarty WebSocket przy samym setOffline,
+    // więc zamykamy jego natywne gniazdo jawnie, gdy urządzenie jest offline.
+    // To pozwala sprawdzić kod zamknięcia i automatyczne ponowne dołączenie.
     await displayPage.context().setOffline(true);
-    // Chromium może zostawić istniejące WebSocket otwarte po krótkim offline.
-    // Trzymaj przerwę dłużej niż heartbeat Realtime (25 s), żeby wymusić
-    // rzeczywiste wykrycie zerwania, a nie tylko chwilowy brak pakietów.
-    await displayPage.waitForTimeout(30000);
+    const forcedSocketClose = await displayPage.evaluate(() => {
+      const socket = window.__sbDeviceRealtime?.realtime?.socketAdapter?.socket?.conn;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+      socket.close(4000, "e2e_network_interrupt");
+      return true;
+    });
+    expect(forcedSocketClose, "E2E powinien zamknąć aktywny WebSocket Displaya").toBe(true);
+    await displayPage.waitForTimeout(3500);
     await displayPage.context().setOffline(false);
     let socketEvents = [];
     try {
