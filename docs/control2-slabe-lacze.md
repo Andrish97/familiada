@@ -84,6 +84,13 @@ Po:
 | Limit czasu zapisu 15 s, `hydrate()` po błędzie sieci, komunikat PL/EN/UK | `persist.js`, `app.js`, `translation/*/control.js` |
 | Test e2e słabego łącza (+700 ms na każde zapytanie REST, zerwany zapis) | `tests/e2e/control2.spec.js` |
 
+## Wdrożenie i pomiar
+
+Migracja 484 (OK 07:03:04), Pages 40172168296, e2e brancha 40171769425 i
+produkcji 40172214348 zielone. Test słabego łącza (+700 ms na każde
+zapytanie REST Control i urządzeń): zgłoszenie Przyciskiem → zatwierdzone
+5,2 s, odsłonięcie → kolejna akcja 4,4 s (w tym ~1,8 s animacji z dźwiękiem).
+
 ## Do zrobienia osobno
 
 - Wygładzić powrót telefonu po wygaśnięciu lease (odczyt i token dopiero
