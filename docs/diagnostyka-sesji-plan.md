@@ -282,3 +282,9 @@ connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
   limit 1,2 s na sygnał startu animacji liczony od potwierdzenia zapisu
   Control (twardy limit 3 s bez potwierdzenia), `since_request_ms`;
   `AbortError` z obsługi wiersza nie jest błędem renderu.
+- 2026-10-25 (polecenie użytkownika: Control ma działać przy słabym
+  internecie, „zbadać dokładnie”): raport `docs/control2-slabe-lacze.md`.
+  Dzwonek Control zawsze sprawdzany przez urządzenia (0,4 s na kanał, potem
+  RPC); blokada tylko w `game_state_write` (bez `set_lock` po akcji);
+  migawka urządzeń z `game_rev` i potwierdzeniem (484); limit 15 s na zapis
+  i `hydrate()` po błędzie sieci; e2e słabego łącza (+700 ms).

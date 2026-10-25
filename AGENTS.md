@@ -18,6 +18,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
   Test accounts — role i lease (E25): `docs/konta-testowe-plan.md`.
   Diagnostyka rozgrywek Control 2 per sesja: `docs/diagnostyka-sesji-plan.md`.
+  Control 2 na słabym łączu (badanie 2026-10-25, przepływ akcji): `docs/control2-slabe-lacze.md`.
   Podział tłumaczeń na części (E27): `docs/tlumaczenia-podzial-plan.md`.
   Sprzątanie bazy (audyt 2026-10-23, do decyzji): `docs/audyt-sprzatania-bazy.md`.
   Podręcznik (E13): plan rozdziałów `docs/podrecznik-plan.md`.
