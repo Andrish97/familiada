@@ -428,6 +428,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
 
   function resync() {
     if (!active) return;
+    // Rewizja odebrana dopiero po odbudowie kanału nie dowodzi, że poprzedni
+    // kanał dostarczył zdarzenie z opóźnieniem. Zamknij korelacje starej
+    // generacji przed pobraniem RPC i ponownym SUBSCRIBE.
+    fallbackRevisionTracker.clear();
     fetchGuarded("rpc_resume");
     rt(doorbellTopic(gameId)).reset();
     subscribeDoorbell();

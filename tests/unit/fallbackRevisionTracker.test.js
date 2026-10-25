@@ -24,3 +24,12 @@ test("nowsza bezpośrednia rewizja potwierdza nadrobienie wcześniejszego fallba
     { trigger: "lease_heartbeat", fallback_revision: 9, direct_revision: 10, fallback_to_direct_ms: 510 },
   ]);
 });
+
+test("rewizja odebrana po odbudowie kanału nie jest liczona jako spóźniona dostawa starego kanału", () => {
+  let now = 10;
+  const tracker = createFallbackRevisionTracker({ now: () => now });
+  tracker.noteFallback(8, "lease_heartbeat");
+  tracker.clear(); // resync: poprzedni kanał został zamknięty przed RPC resume
+  now = 520;
+  assert.deepEqual(tracker.noteDirect(9), []);
+});
