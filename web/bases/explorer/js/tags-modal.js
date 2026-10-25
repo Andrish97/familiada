@@ -7,15 +7,15 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-25T19243";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T19243";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T19243";
-import { openDialog, closeDialog, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-25T19243";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T19243";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T19243";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T19243";
-import { normalizeText } from "./data/listing.js?v=v2026-10-25T19243";
-import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-25T19243";
+import * as ops from "./ops.js?v=v2026-10-25T19291";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T19291";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T19291";
+import { openDialog, closeDialog, showModalLayer } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-25T19291";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T19291";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T19291";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T19291";
+import { normalizeText } from "./data/listing.js?v=v2026-10-25T19291";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-25T19291";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
 function esc(s) {
