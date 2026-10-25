@@ -292,10 +292,13 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       }).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
       }, payload => {
-        if (Number(payload?.new?.display_rendered_rev) > 0) {
-          window.__scopedRealtimeRenderedRev = payload.new.display_rendered_rev;
-        }
         if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
+      }).on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+      }, payload => {
+        if (Number(payload?.new?.rendered_rev) > 0) {
+          window.__scopedRealtimeRenderedRev = payload.new.rendered_rev;
+        }
       });
       // SUBSCRIBED to tylko dołączenie; subskrypcja w bazie jest gotowa po
       // komunikacie systemowym "Subscribed to PostgreSQL".
