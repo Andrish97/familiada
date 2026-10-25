@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ICONS, ICON_NAMES, icon } from "../../web/shared/js/core/icons.js";
+import { ICONS, ICON_NAMES, icon, iconText } from "../../web/shared/js/core/icons.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 
@@ -113,4 +113,27 @@ test('części animacji pochodzą z aktualnych SVG, a profile są jawne', async 
   assert.match(coffee, /data-icon-part="cup"/);
   assert.doesNotMatch(icon('coffee'), /data-icon-animation/);
   assert.throws(() => icon('save', { animation: 'steam' }), RangeError);
+});
+
+
+test('profile stanu zachowują rozmiar SVG i działają w ikonach z tłumaczonym tekstem', () => {
+  for (const [name, animation, part] of [['caret-down', 'disclosure', 'chevron'], ['eye', 'password', 'slash'], ['save', 'save', 'check'], ['duplicate', 'copy', 'front']]) {
+    const markup = icon(name, { animation });
+    assert.match(markup, /viewBox="0 0 24 24" width="1em" height="1em"/);
+    assert.ok(markup.includes(`data-icon-part="${part}"`));
+    assert.ok(markup.includes(`data-icon-animation="${animation}"`));
+    assert.doesNotMatch(markup, /<use/);
+  }
+  assert.match(iconText('save', '<Zapisz>', { animation: 'save', after: true }), /^&lt;Zapisz&gt; <svg/);
+});
+
+test('maski kilku animowanych kopii mają osobne identyfikatory i własne odwołania', () => {
+  const all = ['copy', 'duplicate', 'copy', 'duplicate'].map(name => icon(name, { animation: 'copy' }));
+  const ids = all.map(svg => svg.match(/<mask id="([^"]+)"/)[1]);
+  assert.equal(new Set(ids).size, all.length);
+  all.forEach((svg, i) => {
+    assert.ok(svg.includes(`mask="url(#${ids[i]})"`));
+    assert.match(svg, /data-icon-part="back"/);
+    assert.match(svg, /data-icon-part="front"/);
+  });
 });

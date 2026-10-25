@@ -162,12 +162,13 @@ let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 function setSaveState(state) {
   const el = document.getElementById("gsFooterMsg");
   if (el) el.dataset.state = state;
+  if (btnSaveAll) btnSaveAll.dataset.iconState = state;
 }
 
 function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
-  el.dataset.state = isUnsaved ? "dirty" : "saved";
+  setSaveState(isUnsaved ? "dirty" : "saved");
   el.textContent = isUnsaved ? (t("gameSettings.unsaved")) : "";
   el.classList.toggle("hidden", !isUnsaved);
 }
@@ -208,6 +209,8 @@ async function saveAll() {
     return isDirty ? saveAll() : true;
   }
   if (btnSaveAll) btnSaveAll.disabled = true;
+  btnSaveAll?.setAttribute("aria-busy", "true");
+  setSaveState("saving");
   const seq = changeSeq;
   let ok = false;
   saving = (async () => {
@@ -316,6 +319,8 @@ async function saveAll() {
   } finally {
     saving = null;
     if (btnSaveAll) btnSaveAll.disabled = false;
+    btnSaveAll?.removeAttribute("aria-busy");
+    if (btnSaveAll?.dataset.iconState === "saving") setSaveState(isDirty ? "dirty" : "idle");
   }
   return ok && !isDirty;
 }

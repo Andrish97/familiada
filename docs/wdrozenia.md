@@ -2231,3 +2231,17 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Po scaleniu aktualnego main **823/823 unit**. Kod stopki i jej testów po
   zielonym 40238074611 zmieniony wyłącznie wersjami zasobów; publikacja
   przywróconego wyglądu i potem kontrola produkcji 4 testów.
+
+### 2026-10-25 — więcej animacji stanu (w trakcie)
+
+- Na polecenie właściciela: strzałki selektorów/konta/Więcej, oko hasła,
+  zapis ustawień i Powiel Gier/Baz/Logo. Wspólne profile w silniku, stały
+  viewBox i wymiary, rzeczywiste aria-expanded/pressed/busy i wynik zapisu.
+- Lokalne **826/826 unit** (unikalne maski, profile i rzeczywisty CAS w atrapie),
+  przeglądarka: hasło 390/1400, selektor/konto, zapis i Powiel ✓. Osiem
+  zrzutów 390/1400 + audyt 0 uwag; cztery ujęcia auth/save odtworzono po
+  poprawce atrapy JSONB i użyciu istniejącej atrapy Turnstile. Nie zmieniano
+  aplikacji dla zrzutów. Prywatnie 91 unit i 7 punktowych browser ✓.
+- Przywrócenie stopki ma produkcyjny **40238851673 ✓ 4/4**; odczyt CSS:
+  oryginalne 1.45em, bez powiększenia Kontaktu. To ostateczny wariant;
+  nie publikować odrzuconej gałęzi feat/compact-coffee.

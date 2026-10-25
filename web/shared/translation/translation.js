@@ -196,7 +196,7 @@ export function applyTranslations(root = document) {
     if (!key || el.tagName === "TITLE") return;
     const before = el.getAttribute("data-i18n-icon");
     const after = el.getAttribute("data-i18n-icon-after");
-    if (before || after) el.innerHTML = iconText(before || after, t(key, defaultVars), { after: !before });
+    if (before || after) el.innerHTML = iconText(before || after, t(key, defaultVars), { after: !before, animation: el.dataset.iconAnimation || "" });
     else el.textContent = t(key, defaultVars);
   });
 

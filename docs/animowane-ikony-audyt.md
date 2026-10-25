@@ -22,10 +22,10 @@ nazwy składane ze stanu nie są liczone. Poniżej miejsca i warunki wdrożenia.
 |---|---|---|---|
 | Wdrożone | Hamburger, wspólny topbar | Trzy kreski → dwie przekątne; odwrócenie po zamknięciu | `topbar-controller.js`, aria-expanded; klik, klawiatura, Escape, zamknięcie przełącznikiem/tłem i nawigacja |
 | Wdrożone | Kawa, wspólna stopka | Dwie krzywe pary zmieniają falę, filiżanka stoi | `support-modal.js`, widoczność SVG/karty i prefers-reduced-motion; rozmiary kaw w oknie statyczne |
-| Następne | Strzałki list rozwijanych | Obrót grotu przy otwarciu/zamknięciu | `list-search.js`, `ui-select.js`, aria-expanded; 14 dosłownych użyć caret-down/7 plików |
-| Następne | Zapis ustawień i logo | Krótka sygnalizacja pracy, po sukcesie narysowanie check | `game-settings.js` saving, `logos/js/editor-page.js` saving/status; dopiero po wyniku serwera, nie po samym kliknięciu |
-| Następne | Kopiowanie / Powiel | Rozsunięcie kartek, potem potwierdzenie | `resource-duplicate.js` aria-busy i rozstrzygnięcie Promise; nie odtwarzać sukcesu przy błędzie |
-| Następne | Pokaż/ukryj hasło | Powieka / przekreślenie zmienia stan | `login/js/login.js` (initPasswordToggles); stan pola type i etykieta dostępności, bez dekoracyjnej pętli |
+| Wdrożone w bieżącej paczce | Strzałki wspólnych list, konta i Więcej | Obrót grotu przy otwarciu/zamknięciu | `ui-select.js`, `topbar-controller.js`, aria-expanded; stałe wymiary przycisku |
+| Wdrożone w bieżącej paczce | Zapis ustawień gry | Ruch szczeliny podczas pracy, check po sukcesie | `game-settings.js`: aria-busy oraz wynik CAS; nowa edycja usuwa check, błąd go nie pokazuje |
+| Wdrożone w bieżącej paczce | Powiel w Grach, Bazach i Logo | Rozsunięcie kartek na czas oczekiwania | Istniejące aria-busy w `resource-duplicate.js`; koniec ruchu nie udaje sukcesu, wynik opisuje rzeczywista operacja |
+| Wdrożone w bieżącej paczce | Pokaż/ukryj hasło | Tęczówka i rysowane przekreślenie | Wspólne `auth.js` (initPasswordToggles): rzeczywisty type, aria-pressed, jeden zachowany SVG; etykieta PL/EN/UK |
 | Opcjonalne | Dźwięk i wyciszenie | Fale znikają/pojawiają się | Panel Control i ustawienia; faktyczny stan mute, bez powiązania z czasem audio |
 | Opcjonalne | Foldery drzewa baz | Obrót strzałki i otwarcie konturu | `bases/explorer/js/ui/tree.js`; aria-expanded / stan drzewa, nie na każdy rerender listy |
 | Opcjonalne | Wysyłanie / import / eksport | Ruch strzałki podczas rzeczywistej pracy | aria-busy/Promise; 10 użyć upload/6 plików i 5 download/3 pliki; bez fikcyjnego procentu |
@@ -62,3 +62,15 @@ ujednolicenie TinyMCE mają własną weryfikację w repo familiada-server.
   zamykaną tym samym hamburgerem/X. Usunięto dodatkowy krzyżyk panelu.
   Animowane kreski obejmują także sekcje ustawień i spis Wskazówek;
   drzewo baz zachowuje przyciski widoków drzewo/tagi/kategorie.
+
+### Kolejna paczka: stany kontrolek (2026-10-25)
+
+Decyzja właściciela: więcej animacji. Cztery dodatkowe profile są uruchamiane
+przez rzeczywiste stany kontrolek, bez powiększania ikon i bez pętli dekoracyjnej.
+Maski kopii dostają unikalne ID przy każdym renderowaniu. Strzałki i wspólny
+silnik są synchronizowane również z prywatnym pakietem admina; jego poprawka
+przewijania selektora pozostaje zachowana.
+
+Stopka: ostateczna decyzja właściciela przywraca **dokładnie oryginalny rozmiar
+1.45em i wymiary Kontaktu**, pozostawiając animację pary. Nie powiększać jej
+ponownie w celu uwidocznienia ruchu.

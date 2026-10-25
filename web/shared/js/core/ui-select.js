@@ -1,4 +1,4 @@
-import { iconText } from "./icons.js?v=v2026-10-25T22030";
+import { icon, iconText } from "./icons.js?v=v2026-10-25T22030";
 import { placeUnder, clearPlacement } from "./popover.js?v=v2026-10-25T22030";
 
 
@@ -8,6 +8,8 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
   const label = root.querySelector(".ui-select-label");
   const menu = root.querySelector(".ui-select-menu");
   if (!btn || !label || !menu) return null;
+  const caret = btn.querySelector(".ui-select-caret");
+  if (caret) caret.innerHTML = icon("caret-down", { animation: "disclosure" });
 
   let currentOptions = [];
   let currentValue = "";

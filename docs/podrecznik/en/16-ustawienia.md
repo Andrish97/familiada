@@ -148,6 +148,8 @@ screen shows the logo. Final points are not multiplied; they only determine whet
 - If the settings were changed in the meantime in another window, the app warns you before saving.
 
 ![Leaving with unsaved changes](zrzut:play-settings-unsaved)
+- After a successful save, the [Save] icon shows a check mark. Editing another field clears it.
+
 ![Restoring the default settings](zrzut:play-settings-reset-all)
 
 - [Play] takes you straight to the control panel (→ 17). The game must be ready to play

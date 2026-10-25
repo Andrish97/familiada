@@ -160,6 +160,14 @@ const esc = (v) => String(v).replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&
 const assetHref = (name) => `${ICONS[name]}#icon`;
 
 /** Zwraca SVG używające osobnego pliku z assets/icons. */
+let partInstance = 0;
+function inlineParts(markup) {
+  const prefix = `icon-part-${++partInstance}-`;
+  return markup.replace(/\bid="([^"]+)"/g, (_, id) => `id="${prefix}${id}"`)
+    .replace(/url\(#([^)]+)\)/g, (_, id) => `url(#${prefix}${id})`)
+    .replace(/href="#([^"]+)"/g, (_, id) => `href="#${prefix}${id}"`);
+}
+
 export function icon(name, { className = "", label = "", animation = "" } = {}) {
   const asset = ICONS[name];
   if (!asset) {
@@ -171,7 +179,7 @@ export function icon(name, { className = "", label = "", animation = "" } = {}) 
   const parts = animation ? ICON_PARTS[name] : null;
   if (animation && parts?.animation !== animation) throw new RangeError(`Nieznana animacja ikony: ${name}/${animation}`);
   const motion = parts ? ` data-icon-animation="${animation}"` : "";
-  const drawing = parts ? parts.markup : `<use href="${assetHref(name)}"></use>`;
+  const drawing = parts ? inlineParts(parts.markup) : `<use href="${assetHref(name)}"></use>`;
   return `<svg class="${esc(cls)}" viewBox="0 0 24 24" width="1em" height="1em" ${a11y} focusable="false"${motion}>${drawing}</svg>`;
 }
 
@@ -194,8 +202,8 @@ export function starRating(value, { max = 5, label = "" } = {}) {
 }
 
 /** Ikona + tekst (tekst jest escapowany) — do przycisków ustawianych z JS. */
-export function iconText(name, text, { after = false } = {}) {
-  const i = icon(name), txt = esc(text ?? "");
+export function iconText(name, text, { after = false, animation = "" } = {}) {
+  const i = icon(name, { animation }), txt = esc(text ?? "");
   if (!i) return txt;
   return after ? `${txt} ${i}` : `${i} ${txt}`;
 }
@@ -218,7 +226,10 @@ if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") 
   const start = () => {
     hydrateIcons(document);
     new MutationObserver((muts) => {
-      for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) hydrateIcons(n);
+      for (const m of muts) {
+        for (const n of m.addedNodes) if (n.nodeType === 1) hydrateIcons(n);
+        for (const n of m.removedNodes) if (n.nodeType === 1) forgetIconMotion(n);
+      }
     }).observe(document.documentElement, { childList: true, subtree: true });
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
