@@ -59,6 +59,8 @@ class Engine:
         self.categories = []
         self.fetch_budget = 0
         self.attempts = {}
+        self.search_down = 0          # kolejne zapytania bez wyników z odmową silników
+        self.search_reasons = {}      # silnik -> powód odmowy (do logu)
 
     # --- stan ---
 
@@ -166,13 +168,23 @@ class Engine:
         self.stats['search_queries'] += 1
         try:
             results, dead = await search_src.search(self.client, self.searx_url, phrase, int(page),
-                                                    timeout=cfg('TIMEOUT_SEARCH', 25))
+                                                    timeout=cfg('TIMEOUT_SEARCH', 25),
+                                                    engines=str(cfg('SEARCH_ENGINES', '')).strip())
         except Exception as e:  # SearXNG niedostępny, zły JSON
             self.stats['errors'] += 1
             log.error(f'Wyszukiwarka: {str(e)[:200]}')
             return 0
         self.stats['search_results'] += len(results)
-        self.stats['search_engine_errors'] += dead
+        self.stats['search_engine_errors'] += len(dead)
+        if not results and dead:
+            # Silniki odmówiły (blokada, CAPTCHA, limit) — zapytanie wraca do puli
+            # na kolejny przebieg, zamiast przepaść jako „zrobione”.
+            self.search_down += 1
+            for eng in dead:
+                if isinstance(eng, (list, tuple)) and eng:
+                    self.search_reasons[str(eng[0])] = str(eng[1] if len(eng) > 1 else '')[:80]
+            return 0
+        self.search_down = 0
         for res in results:
             c = search_src.result_to_candidate(res)
             if c:
@@ -181,8 +193,6 @@ class Engine:
             else:
                 self.stats['dropped_no_email'] += 1
         await self._log_query(q, found, added)
-        if not results:
-            log.info(f'Brak wyników ({dead} silników bez odpowiedzi): „{phrase}”')
         return added
 
     async def ceidg_producer(self):
@@ -319,6 +329,11 @@ class Engine:
                 turn += 1
                 if picked:
                     await asyncio.gather(*(self.run_search_query(q) for q in picked))
+                    if self.search_down >= cfg('SEARCH_DOWN_LIMIT', 8):
+                        reasons = ', '.join(f'{k} ({v})' if v else k for k, v in sorted(self.search_reasons.items())) or 'brak szczegółów'
+                        log.error(f'Wyszukiwarka nie zwraca wyników — silniki odmawiają: {reasons}. '
+                                  'Wstrzymuję wyszukiwarkę w tym przebiegu (frazy wracają do puli).')
+                        queues = {k: [] for k in queues}
                 sources_left = any(queues.values()) or not ceidg_task.done()
                 # Ocena: pełne paczki, a gdy źródła się skończyły — także niepełne.
                 judged = False

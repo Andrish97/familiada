@@ -30,12 +30,15 @@ def result_to_candidate(res):
     }
 
 
-async def search(client, base_url, query, pageno=1, timeout=25):
-    """Zwraca (wyniki, liczba silników bez odpowiedzi)."""
-    r = await client.get(f'{base_url}/search', params={
-        'q': query, 'format': 'json', 'language': 'pl-PL', 'pageno': pageno, 'safesearch': 0,
-    }, timeout=timeout)
+async def search(client, base_url, query, pageno=1, timeout=25, engines=''):
+    """Zwraca (wyniki, silniki bez odpowiedzi: [[nazwa, powód], …])."""
+    params = {'q': query, 'format': 'json', 'language': 'pl-PL', 'pageno': pageno, 'safesearch': 0}
+    if engines:
+        # Tylko silniki, które nie blokują serwera (config.txt SEARCH_ENGINES).
+        params['engines'] = engines
+    r = await client.get(f'{base_url}/search', params=params, timeout=timeout)
     if r.status_code != 200:
         raise httpx.HTTPStatusError(f'SearXNG {r.status_code}', request=r.request, response=r)
     data = r.json()
-    return data.get('results') or [], len(data.get('unresponsive_engines') or [])
+    dead = data.get('unresponsive_engines') or []
+    return data.get('results') or [], dead

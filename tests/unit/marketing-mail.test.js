@@ -18,6 +18,9 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
     assert.equal((html.match(/<!doctype html>/gi)||[]).length,1);
     if (template === 'invitation') {
       assert.ok(html.includes('Pytania na trzy sposoby'));
+      // Mail informuje o darmowym systemie — nie jest ofertą (prośba właściciela).
+      assert.ok(html.includes('To nie jest oferta handlowa'));
+      assert.ok(!/Państwa ofercie/.test(html));
       assert.ok(html.includes('Widok prowadzącego i Przycisk do pojedynku'));
       assert.equal((html.match(/<img /g)||[]).length,3);
       // Pierwszy obraz: grafika OG strony (wersja do maila), potem kadry systemu zrzutów.

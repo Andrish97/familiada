@@ -10,8 +10,13 @@ PROVIDER_COOLDOWN_LONG=300       # Cooldown po błędach 5xx/timeout (sekundy)
 PROVIDER_COOLDOWN_QUOTA=86400    # Cooldown po limicie dziennym/braku środków (sekundy)
 
 # === Źródła ===
-SEARCH_PARALLEL=4                # Ile fraz wyszukiwarki naraz
+SEARCH_PARALLEL=2                # Ile fraz wyszukiwarki naraz (więcej = blokady „too many requests”)
+# Silniki SearXNG, które nie blokują serwera (próba 2026-10-25, server.yml apps check):
+# yandex i seznam zwracają wyniki; duckduckgo, startpage, brave, qwant, mojeek,
+# presearch, aol, karmasearch — CAPTCHA/odmowa. Pusto = domyślne silniki SearXNG.
+SEARCH_ENGINES=yandex,seznam,bing,google,wiby
 SEARCH_PAGES=2                   # Stron wyników na frazę
+SEARCH_DOWN_LIMIT=8              # Tyle zapytań z rzędu bez wyników (odmowa silników) = wyszukiwarka wstrzymana w przebiegu
 TIMEOUT_SEARCH=25                # Timeout zapytania SearXNG (sekundy)
 CEIDG_DETAIL_DELAY=4             # Odstęp między szczegółami wpisów CEIDG (limit ~50/3 min)
 

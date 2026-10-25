@@ -272,16 +272,33 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(pipeline.search_queries(cats[1], 2)[:2], ['search:k3:1:a', 'search:k3:1:b'])
         self.assertEqual(pipeline.ceidg_queries(cats[0]), ['ceidg:k1:93.29.Z:1'])
 
+    def test_search_down_queries_return_to_pool(self):
+        db, e = self.db, self.engine
+        db.tables['marketing_categories'] = [
+            {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': 'x', 'queries': [f'q{i}' for i in range(20)], 'pkd': [], 'expanded_at': 'x', 'created_at': 1}]
+
+        async def blocked(client, base, phrase, pageno=1, timeout=25, engines=''):
+            return [], [['google', 'CAPTCHA'], ['bing', 'timeout']]
+        orig_search, orig_cls = search.search, pipeline.Classifier
+        search.search, pipeline.Classifier = blocked, FakeClassifier
+        try:
+            run(e.run_search(5))
+        finally:
+            search.search, pipeline.Classifier = orig_search, orig_cls
+        self.assertEqual(db.tables['marketing_search_queries_log'], [])  # nic nie „zużyte”
+        self.assertLessEqual(e.stats['search_queries'], 12)  # wstrzymane po serii odmów
+        self.assertEqual(e.search_reasons, {'google': 'CAPTCHA', 'bing': 'timeout'})
+
     def test_run_search_end_to_end(self):
         db, e = self.db, self.engine
         db.tables['marketing_categories'] = [
             {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': 'x', 'queries': ['dj wesele'], 'pkd': [], 'expanded_at': 'x', 'created_at': 1}]
 
-        async def fake_search(client, base, phrase, pageno=1, timeout=25):
+        async def fake_search(client, base, phrase, pageno=1, timeout=25, engines=''):
             if pageno > 1:
-                return [], 0
+                return [], []
             return [{'url': 'https://djmax.pl', 'title': 'DJ Max', 'content': 'kontakt biuro@djmax.pl'},
-                    {'url': 'https://www.facebook.com/x', 'title': 'Profil', 'content': ''}], 1
+                    {'url': 'https://www.facebook.com/x', 'title': 'Profil', 'content': ''}], [['google', 'CAPTCHA']]
         orig_search, orig_cls = search.search, pipeline.Classifier
         search.search, pipeline.Classifier = fake_search, FakeClassifier
         try:
