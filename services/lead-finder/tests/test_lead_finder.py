@@ -40,6 +40,21 @@ class FiltersTest(unittest.TestCase):
 
 
 class SourcesTest(unittest.TestCase):
+    def test_search_uses_searxng_engine_settings(self):
+        class Client:
+            async def get(client, url, params, timeout):
+                self.assertEqual(url, 'http://searxng:8080/search')
+                self.assertNotIn('engines', params)
+                self.assertEqual((params['q'], params['pageno']), ('DJ kontakt', 2))
+                self.assertEqual(params['format'], 'json')
+                class Response:
+                    status_code = 200
+                    def json(self):
+                        return {'results': [{'url': 'https://dj.pl'}], 'unresponsive_engines': []}
+                return Response()
+        results, dead = run(search.search(Client(), 'http://searxng:8080', 'DJ kontakt', 2))
+        self.assertEqual((results, dead), ([{'url': 'https://dj.pl'}], []))
+
     def test_result_to_candidate(self):
         c = search.result_to_candidate({'url': 'https://www.djmax.pl/oferta', 'title': 'DJ Max',
                                         'content': 'Wesela, kontakt: biuro@djmax.pl'})
@@ -277,7 +292,7 @@ class PipelineTest(unittest.TestCase):
         db.tables['marketing_categories'] = [
             {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': 'x', 'queries': [f'q{i}' for i in range(20)], 'pkd': [], 'expanded_at': 'x', 'created_at': 1}]
 
-        async def blocked(client, base, phrase, pageno=1, timeout=25, engines=''):
+        async def blocked(client, base, phrase, pageno=1, timeout=25):
             return [], [['google', 'CAPTCHA'], ['bing', 'timeout']]
         orig_search, orig_cls = search.search, pipeline.Classifier
         search.search, pipeline.Classifier = blocked, FakeClassifier
@@ -294,7 +309,7 @@ class PipelineTest(unittest.TestCase):
         db.tables['marketing_categories'] = [
             {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': 'x', 'queries': ['dj wesele'], 'pkd': [], 'expanded_at': 'x', 'created_at': 1}]
 
-        async def fake_search(client, base, phrase, pageno=1, timeout=25, engines=''):
+        async def fake_search(client, base, phrase, pageno=1, timeout=25):
             if pageno > 1:
                 return [], []
             return [{'url': 'https://djmax.pl', 'title': 'DJ Max', 'content': 'kontakt biuro@djmax.pl'},

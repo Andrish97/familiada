@@ -8,6 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.txt ./
+# Parametry /app/config.txt montuje Compose z prywatnego familiada-server.
 RUN rm -f requirements.txt
 COPY lf ./lf
 COPY main.py .
