@@ -4,8 +4,8 @@
 // samymi klasami (.tree-row w base-explorer.css): linie prowadzące wcięć
 // z --depth, strzałka, folder otwarty/zamknięty, nazwa, kropki i liczba pytań.
 
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T11114";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T11114";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T11250";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T11250";
 
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
