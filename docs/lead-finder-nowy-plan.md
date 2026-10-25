@@ -117,8 +117,9 @@ w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG).
   i Seznam. Lead Finder nie przekazuje własnej listy `engines`.
 - Wdrożenie konfiguracji: `server.yml` → `apps` → najpierw `check`, potem
   `production`. Sekrety pozostają w `/srv/familiada/secrets/lead-finder.env`.
-- Panel i administracyjna część Workera mają trafić do prywatnego
-  `familiada-server`; plan oddzielenia w prywatnym
+- Panel i administracyjna część Workera działają z prywatnego
+  `familiada-server`, na serwerze i za Access; publiczny Worker zachowuje
+  funkcje strony oraz maintenance. Szczegóły wyłącznie w prywatnym
   `familiada-server/docs/admin-private-plan.md`.
 
 ### Czynności właściciela
@@ -148,3 +149,8 @@ samo rozwiązanie nazwy nie oznacza pozostawienia publicznej usługi.
 Decyzja właściciela: najpierw sprawdza działanie Lead Findera, potem
 przenoszenie panelu i podział Workera; token Cloudflare doda później.
 Nie uruchamiać wyszukiwania ani wysyłki za właściciela.
+
+Po poleceniu właściciela wznowiono i wykonano przeniesienie panelu oraz API
+do prywatnego systemu, bez zmiany DNS. Parametry i ustawienia SearXNG nadal
+są wersjonowane w repo serwera, kod LF pozostaje w services/lead-finder.
+Przenosiny nie uruchamiają wyszukiwania ani wysyłki za właściciela.
