@@ -13,13 +13,13 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T13033";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T13033";
-import { rt } from "./realtime.js?v=v2026-10-25T13033";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T13033";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T13033";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T13033";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T13033";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T14135";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T14135";
+import { rt } from "./realtime.js?v=v2026-10-25T14135";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T14135";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T14135";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T14135";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T14135";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {

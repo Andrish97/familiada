@@ -5,22 +5,22 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T13033";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T13033";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T13033";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T13033";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T13033";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T13033";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T13033";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T13033";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T14135";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T14135";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T14135";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T14135";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T14135";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T14135";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T14135";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T14135";
 
-import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T13033";
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T13033";
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T14135";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T14135";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-25T13033"),
-  en: () => import("../content/en.js?v=v2026-10-25T13033"),
-  uk: () => import("../content/uk.js?v=v2026-10-25T13033"),
+  pl: () => import("../content/pl.js?v=v2026-10-25T14135"),
+  en: () => import("../content/en.js?v=v2026-10-25T14135"),
+  uk: () => import("../content/uk.js?v=v2026-10-25T14135"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").

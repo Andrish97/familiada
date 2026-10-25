@@ -1,20 +1,20 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T13033";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T13033";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T13033";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T13033";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-25T13033";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-25T13033";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T13033";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-25T13033";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-25T13033";
-import { openDialog, closeDialog, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T13033";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T13033";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T13033";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-25T13033";
-import { cardInner, gamePath, publicRow, questionsHtml, starsHtml, selectRows, syncMarketSeo } from "./public.js?v=v2026-10-25T13033";
-import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T13033";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T14135";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T14135";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T14135";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T14135";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-25T14135";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-25T14135";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T14135";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-25T14135";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-25T14135";
+import { openDialog, closeDialog, setOverlayOpen, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T14135";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T14135";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T14135";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-25T14135";
+import { cardInner, gamePath, publicRow, questionsHtml, starsHtml, selectRows, syncMarketSeo } from "./public.js?v=v2026-10-25T14135";
+import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-25T14135";
 
 
 let initialPublic = null;
