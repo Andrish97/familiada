@@ -115,6 +115,14 @@ zapytanie REST Control i urządzeń): zgłoszenie Przyciskiem → zatwierdzone
    do funkcji wymaga logów serwera bazy (`log_min_error_statement`) —
    dostęp ma właściciel.
 
+4. **Nieudane wczytanie modułu = martwa strona urządzenia.** Kontrola
+   produkcji 40185039280: 503 na `game-state-subscribe.js` tuż po
+   wdrożeniu zatrzymał cały graf modułów Przycisku (bez komunikatu; Control
+   czekał na urządzenie). Na słabym łączu to samo daje zgubione żądanie
+   przy otwieraniu. `module-boot-guard.js` (zwykły skrypt przed modułami
+   Control, Wyświetlacza, Prowadzącego i Przycisku): przeładowanie po 1/3/8 s,
+   potem `#deviceLoadError` z „Odśwież”. e2e z wymuszonym 503.
+
 ## Do zrobienia osobno
 
 - Usunąć kolumnę `game_state.display_rendered_rev` (sprzątanie po 486,
