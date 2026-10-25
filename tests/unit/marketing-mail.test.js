@@ -16,7 +16,7 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
     assert.doesNotMatch(html,/text-transform:uppercase|backdrop-filter/);
     assert.equal((html.match(/<!doctype html>/gi)||[]).length,1);
     if (template === 'invitation') {
-      assert.ok(html.includes('Pytania na trzy sposoby'));
+      assert.ok(html.includes('Trzy sposoby na przygotowanie gry'));
       // Mail informuje o darmowym systemie — nie jest ofertą (prośba właściciela).
       assert.ok(html.includes('To nie jest oferta handlowa'));
       assert.ok(!/Państwa ofercie/.test(html));
