@@ -10,7 +10,7 @@
 //                    pole przewija się do widoku w swoim kontenerze
 // Ładowany jako pierwszy moduł strony; body jest ukryte (page-loading),
 // dopóki strona się nie złoży, więc atrybuty są przed pierwszym widokiem.
-import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-25T15433";
+import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-25T16015";
 
 export const NARROW_MAX = 600;
 
