@@ -1,22 +1,28 @@
-// admin/js/marketing-contacts.js — Kontakty marketingowe (lead-finder): przebiegi, tabela, dzienniki.
-// Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
+// admin/js/marketing-contacts.js — Marketing: kategorie Lead Findera, wyszukiwanie,
+// tabela kontaktów z widokami kategorii, eksport/import CSV, adresy do wysyłki.
+// Plan: docs/lead-finder-nowy-plan.md (Lead Finder 3). Wysyłka: marketing.js.
 
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T14465";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T14465";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T14465";
 import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T14465";
 import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-25T14465";
+import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T14465";
+import { importRows, parseCsv } from "./marketing-csv.js?v=v2026-10-25T14465";
 
-// Kontakty marketingowe (lead-finder): tabela, przebiegi, dzienniki.
+const MC_PAGE_SIZE = 50;
+const MC_SENT_FILTERS = [
+  { value: "", label: "Wszystkie" },
+  { value: "unsent", label: "Niewysłane" },
+  { value: "waiting", label: "Wysłane, bez odpowiedzi" },
+  { value: "replied", label: "Odpowiedzieli" },
+  { value: "blocked", label: "Odmowa lub odbity" },
+];
+const MC_REACTION_LABEL = { replied: "Odpowiedź", declined: "Odmowa", bounced: "Odbity" };
+const MC_REACTION_CLASS = { replied: " mc-reaction--replied", declined: " mc-reaction--declined", bounced: " mc-reaction--bounced" };
+
 export async function initMarketingContacts() {
-  // ═══════════════════════════════════════════════════════════
-  // MARKETING CONTACTS
-  // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-25T14465");
-
-  const MC_PAGE_SIZE = 50;
-
-  // Lead-finder przez Worker (/_admin_api/leads/*): klucz usługi zostaje po
+  // Lead Finder przez Worker (/_admin_api/leads/*): klucz usługi zostaje po
   // stronie serwera (audyt E24, Ś2). Zwraca odpowiedź usługi (JSON).
   async function mcLeads(path, method = "GET") {
     const res = await adminFetch(`/leads/${path}`, { method });
@@ -25,38 +31,135 @@ export async function initMarketingContacts() {
     if (!res.ok) throw new Error(data?.detail || data?.error || `HTTP ${res.status}`);
     return data || {};
   }
-  let mcFilterUsedValue = "";
-  let mcFilterQualityValue = "";
-  let mcFilterReactionValue = "";
-  const MC_QUALITY_LABEL = { good: "Dobry", junk: "Śmieć" };
-  const MC_REACTION_LABEL = { replied: "Odpowiedź", declined: "Odmowa", bounced: "Odbity" };
-  const MC_QUALITY_CLASS = { good: " mc-quality--good", junk: " mc-quality--junk" };
-  const MC_REACTION_CLASS = { replied: " mc-reaction--replied", declined: " mc-reaction--declined", bounced: " mc-reaction--bounced" };
+  let mcSentFilter = "";
   let mcSearchValue = "";
   let mcState = {
-    runs: [],
+    categories: [],
+    view: "",            // "" = wszystkie, "none" = bez kategorii, inaczej id kategorii
     contacts: [],
     selectedCells: [],
     page: 1,
-    sortCol: 'added_at',
-    sortDir: 'desc',
+    sortCol: "added_at",
+    sortDir: "desc",
     logs: [],
     logRun: null,
     logTimer: null,
-    status: "idle"
+    status: "idle",
   };
 
+  function mcEsc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function mcDate(v) { return v ? new Date(v).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "2-digit" }) : ""; }
+  function plural(n, one, few, many) {
+    const d = n % 10, t = n % 100;
+    return n === 1 ? one : d >= 2 && d <= 4 && (t < 12 || t > 14) ? few : many;
+  }
+  function catName(id) { return mcState.categories.find((c) => c.id === id)?.name || ""; }
+
+  // ── Kategorie ───────────────────────────────────────────────────────────
+  async function mcLoadCategories() {
+    try {
+      mcState.categories = (await adminGet("/marketing/categories", "rows")) || [];
+    } catch (e) {
+      mcState.categories = [];
+      document.getElementById("mcCatList").innerHTML = `<div class="mc-empty">Błąd: ${mcEsc(e.message)}</div>`;
+      return;
+    }
+    mcRenderCategories();
+    mcRenderViews();
+  }
+
+  function mcRenderCategories() {
+    const el = document.getElementById("mcCatList");
+    if (!mcState.categories.length) {
+      el.innerHTML = '<div class="mc-empty">Brak kategorii — dodaj pierwszą, np. „DJ na wesela”.</div>';
+      return;
+    }
+    el.innerHTML = mcState.categories.map((c) => {
+      const nq = c.queries?.length || 0;
+      const state = c.expanded_at ? `${nq} ${plural(nq, "fraza", "frazy", "fraz")}, PKD: ${c.pkd?.length || 0}` : "AI przygotuje frazy przy wyszukiwaniu";
+      return `<div class="mc-cat-row" data-id="${c.id}">
+        <label class="mc-cat-toggle"><input type="checkbox" data-act="active" ${c.is_active ? "checked" : ""}> <span class="mc-cat-name">${mcEsc(c.name)}</span></label>
+        <span class="mc-meta">${c.contacts ?? 0} ${plural(c.contacts ?? 0, "kontakt", "kontakty", "kontaktów")} · ${mcEsc(state)}</span>
+        <button class="btn sm" type="button" data-act="details" aria-label="Szczegóły">${icon("eye")}</button>
+        <button class="btn sm danger" type="button" data-act="delete" aria-label="Usuń kategorię">${icon("trash")}</button>
+        <div class="mc-cat-details" hidden>
+          ${c.description ? `<p class="mc-cat-desc">${mcEsc(c.description)}</p>` : ""}
+          ${c.queries?.length ? `<div class="mc-meta">Frazy: ${c.queries.map(mcEsc).join(" · ")}</div>` : ""}
+          ${c.pkd?.length ? `<div class="mc-meta">PKD: ${c.pkd.map(mcEsc).join(", ")}</div>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  async function mcAddCategory() {
+    const input = document.getElementById("mcCatName");
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+      await adminPost("/marketing/categories", { name });
+      input.value = "";
+      await mcLoadCategories();
+    } catch (e) { alertModal({ text: "Błąd: " + e.message }); }
+  }
+
+  document.getElementById("mcCatAddBtn")?.addEventListener("click", mcAddCategory);
+  document.getElementById("mcCatName")?.addEventListener("keydown", (e) => { if (e.key === "Enter") mcAddCategory(); });
+  document.getElementById("mcCatList")?.addEventListener("click", async (e) => {
+    const row = e.target.closest(".mc-cat-row");
+    const act = e.target.closest("[data-act]")?.dataset.act;
+    if (!row || !act) return;
+    const id = row.dataset.id;
+    if (act === "details") { const d = row.querySelector(".mc-cat-details"); d.hidden = !d.hidden; return; }
+    if (act === "delete") {
+      if (!await confirmModal({ text: `Usunąć kategorię „${catName(id)}”? Kontakty zostają (bez kategorii).` })) return;
+      try { await adminPost("/marketing/categories/delete", { id }); } catch (err) { alertModal({ text: "Błąd: " + err.message }); }
+      if (mcState.view === id) mcState.view = "";
+      await mcLoadCategories();
+      mcLoadContacts();
+    }
+  });
+  document.getElementById("mcCatList")?.addEventListener("change", async (e) => {
+    if (e.target.dataset.act !== "active") return;
+    const id = e.target.closest(".mc-cat-row")?.dataset.id;
+    try { await adminPost("/marketing/categories/update", { id, is_active: e.target.checked }); }
+    catch (err) { alertModal({ text: "Błąd: " + err.message }); e.target.checked = !e.target.checked; }
+  });
+
+  // ── Widoki tabeli: Wszystkie + kategorie ────────────────────────────────
+  function mcRenderViews() {
+    const el = document.getElementById("mcViews");
+    const views = [{ id: "", name: "Wszystkie" }, ...mcState.categories, { id: "none", name: "Bez kategorii" }];
+    el.innerHTML = views.map((v) =>
+      `<button class="btn sm${mcState.view === v.id ? " is-active" : ""}" type="button" role="tab" data-view="${v.id}">${mcEsc(v.name)}${v.contacts != null ? ` <span class="badge">${v.contacts}</span>` : ""}</button>`
+    ).join("");
+  }
+  document.getElementById("mcViews")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-view]");
+    if (!btn) return;
+    mcState.view = btn.dataset.view;
+    mcState.page = 1;
+    mcState.selectedCells = [];
+    mcRenderViews();
+    mcLoadContacts();
+  });
+
+  function mcQuery() {
+    const q = new URLSearchParams({ page: String(mcState.page), sort: mcState.sortCol, dir: mcState.sortDir });
+    if (mcState.view) q.set("category", mcState.view);
+    if (mcSentFilter) q.set("sent", mcSentFilter);
+    const search = mcSearchValue.trim();
+    if (search) q.set("search", search);
+    return q;
+  }
+
+  // ── Wyszukiwanie (przebiegi Lead Findera) ───────────────────────────────
   function mcUpdateButtons() {
     const actionBtn = document.getElementById("mcActionBtn");
     const cancelBtn = document.getElementById("mcCancelBtn");
     const targetInput = document.getElementById("mcTargetCount");
-    const reviewBtn = document.getElementById("mcReviewBtn");
     if (!actionBtn || !cancelBtn) return;
-
     actionBtn.disabled = false;
     cancelBtn.disabled = false;
-    if (reviewBtn) reviewBtn.disabled = mcState.status !== "idle" && mcState.status !== "completed" && mcState.status !== "cancelled";
-
     switch (mcState.status) {
       case "starting":
       case "running":
@@ -71,9 +174,6 @@ export async function initMarketingContacts() {
         cancelBtn.hidden = false;
         targetInput.disabled = true;
         break;
-      case "cancelled":
-      case "completed":
-      case "idle":
       default:
         actionBtn.innerHTML = iconText("play", "Uruchom");
         actionBtn.className = "btn sm gold";
@@ -89,148 +189,129 @@ export async function initMarketingContacts() {
       const data = await mcLeads("search-runs/status");
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
-      mcUpdateButtons();
-    } catch(e) {
+    } catch {
       mcState.status = "idle";
-      mcUpdateButtons();
     }
+    mcUpdateButtons();
   }
 
   async function mcStartRun() {
     const actionBtn = document.getElementById("mcActionBtn");
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
+    if (!mcState.categories.some((c) => c.is_active)) {
+      alertModal({ text: "Dodaj albo włącz co najmniej jedną kategorię wyszukiwania." });
+      mcUpdateButtons();
+      return;
+    }
     actionBtn.disabled = true;
     try {
       mcState.logs = [];
       mcRenderLogs();
       const data = await mcLeads(`search-runs?target_count=${count}`, "POST");
-      actionBtn.innerHTML = iconText("check", "Wyszukiwanie uruchomione");
-      setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
+      mcState.status = "running";
       mcState.logRun = data.run_id;
+      mcUpdateButtons();
       mcStartLogAutoRefresh();
-    } catch(e) {
+    } catch (e) {
       alertModal({ text: "Błąd: " + e.message });
       mcUpdateButtons();
     }
   }
 
-  window.mcAction = async function() {
+  document.getElementById("mcActionBtn")?.addEventListener("click", async () => {
     const actionBtn = document.getElementById("mcActionBtn");
     const cancelBtn = document.getElementById("mcCancelBtn");
     actionBtn.disabled = true;
     cancelBtn.disabled = true;
-
-    if (mcState.status !== "running" && mcState.status !== "paused") {
+    if (mcState.status !== "running" && mcState.status !== "paused" && mcState.status !== "starting") {
       await mcStartRun();
       return;
     }
-
     try {
-      if (mcState.status === "running") {
-        actionBtn.innerHTML = iconText("pause", "Wstrzymywanie…");
-        await mcLeads(`search-runs/${mcState.logRun}/pause`, "POST").catch(() => { throw new Error("Nie udało się wstrzymać zlecenia"); });
-        mcState.status = "paused";
-        mcStopLogAutoRefresh();
-      } else {
-        actionBtn.innerHTML = iconText("play", "Wznawianie…");
-        await mcLeads(`search-runs/${mcState.logRun}/resume`, "POST").catch(() => { throw new Error("Nie udało się wznowić zlecenia"); });
+      if (mcState.status === "paused") {
+        await mcLeads(`search-runs/${mcState.logRun}/resume`, "POST");
         mcState.status = "running";
         mcStartLogAutoRefresh();
+      } else {
+        await mcLeads(`search-runs/${mcState.logRun}/pause`, "POST");
+        mcState.status = "paused";
+        mcStopLogAutoRefresh();
       }
       mcUpdateButtons();
-    } catch(e) {
+    } catch (e) {
       alertModal({ text: "Błąd: " + e.message });
       await mcLoadRuns();
     }
-  };
+  });
 
-  window.mcCancel = async function() {
-    if(!await confirmModal({ text: "Anulować zlecenie?" })) return;
-    const actionBtn = document.getElementById("mcActionBtn");
-    const cancelBtn = document.getElementById("mcCancelBtn");
-    actionBtn.disabled = true;
-    cancelBtn.disabled = true;
-    
+  document.getElementById("mcCancelBtn")?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: "Anulować wyszukiwanie?" })) return;
     await mcLeads(`search-runs/${mcState.logRun}/cancel`, "POST").catch(() => {});
     mcState.status = "idle";
     mcUpdateButtons();
     mcStopLogAutoRefresh();
     mcLoadContacts();
-  };
+  });
 
+  // ── Tabela ──────────────────────────────────────────────────────────────
   async function mcLoadContacts() {
     const tbody = document.getElementById("mcTableBody");
-    console.log('[MC] mcLoadContacts called, page:', mcState.page, 'panel hidden:', document.getElementById("marketingContactsPanel")?.hidden);
     try {
-      const q = new URLSearchParams({ page: String(mcState.page), sort: mcState.sortCol, dir: mcState.sortDir });
-      if (mcFilterUsedValue !== "") q.set("used", mcFilterUsedValue);
-      if (mcFilterQualityValue !== "") q.set("quality", mcFilterQualityValue);
-      if (mcFilterReactionValue !== "") q.set("reaction", mcFilterReactionValue);
-      const search = mcSearchValue.trim();
-      if (search) q.set("search", search);
-      const { rows, total } = await adminGet(`/marketing/contacts?${q}`);
+      const { rows, total } = await adminGet(`/marketing/contacts?${mcQuery()}`);
       mcState.contacts = rows || [];
-      mcRenderContacts(total || 0);
+      mcState.total = total || 0;
+      mcRenderContacts();
       mcUpdateSortHeaders();
-    } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="7" class="mc-empty mc-empty--cell">Błąd: ${mcEsc(e.message)}</td></tr>`;
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="6" class="mc-empty mc-empty--cell">Błąd: ${mcEsc(e.message)}</td></tr>`;
     }
   }
 
   function mcUpdateSortHeaders() {
-    document.querySelectorAll('.mc-sortable').forEach(th => {
+    document.querySelectorAll(".mc-sortable").forEach((th) => {
       const col = th.dataset.col;
-      const arrow = col === mcState.sortCol ? ' ' + icon(mcState.sortDir === 'asc' ? 'caret-up' : 'caret-down') : '';
+      const arrow = col === mcState.sortCol ? " " + icon(mcState.sortDir === "asc" ? "caret-up" : "caret-down") : "";
       th.innerHTML = th.dataset.label + arrow;
     });
   }
 
   function mcInitSorting() {
-    document.querySelectorAll('.mc-sortable').forEach(th => {
+    document.querySelectorAll(".mc-sortable").forEach((th) => {
       th.dataset.label = th.textContent.trim();
-      th.addEventListener('click', () => {
+      th.addEventListener("click", () => {
         const col = th.dataset.col;
-        if (mcState.sortCol === col) {
-          mcState.sortDir = mcState.sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          mcState.sortCol = col;
-          mcState.sortDir = 'desc';
-        }
+        if (mcState.sortCol === col) mcState.sortDir = mcState.sortDir === "asc" ? "desc" : "asc";
+        else { mcState.sortCol = col; mcState.sortDir = "desc"; }
         mcState.page = 1;
         mcLoadContacts();
       });
     });
   }
 
-  function mcRenderContacts(totalCount) {
-    const tbody = document.getElementById("mcTableBody");
-    if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="mc-empty mc-empty--cell">Brak kontaktów</td></tr>';
-      mcUpdatePagination(0);
-      mcUpdateSelectionInfo();
-      return;
-    }
-    tbody.innerHTML = mcState.contacts.map((c, i) => {
-      const usedClass = c.is_used ? 'mc-used' : '';
-      const usedText = c.is_used ? `${icon('check', { label: 'użyte' })}<span hidden>✓</span>` : '';
-      const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
-      return `<tr class="${usedClass}" data-id="${c.id}">
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${usedText}</td>
-        <td class="mc-cell mc-selectable${MC_QUALITY_CLASS[c.quality] || ''}" data-row="${i}" data-col="5" title="${mcEsc(c.quality_reason || '')}">${MC_QUALITY_LABEL[c.quality] || '—'}</td>
-        <td class="mc-cell mc-selectable${MC_REACTION_CLASS[c.reaction] || ''}" data-row="${i}" data-col="6">${mcReactionText(c)}</td>
-      </tr>`;
-    }).join("");
-    mcUpdatePagination(totalCount);
-    mcSetupTableSelection();
+  function mcSentText(c) {
+    if (!c.sent_count) return "—";
+    const when = mcDate(c.last_sent_at);
+    return c.sent_count > 1 ? `×${c.sent_count}${when ? ", " + when : ""}` : (when || "tak");
   }
 
-  function mcReactionText(c) {
-    if (c.reaction) return MC_REACTION_LABEL[c.reaction] || mcEsc(c.reaction);
-    return c.sent_count > 0 ? `Wysłano ×${c.sent_count}` : '—';
+  function mcRenderContacts() {
+    const tbody = document.getElementById("mcTableBody");
+    mcState.selectedCells = [];
+    if (!mcState.contacts.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="mc-empty mc-empty--cell">Brak kontaktów</td></tr>';
+    } else {
+      tbody.innerHTML = mcState.contacts.map((c, i) => `<tr class="${c.sent_count ? "mc-used" : ""}" data-id="${c.id}">
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="0" title="${mcEsc(c.short_description || "")}">${mcEsc(c.title || "")}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email || "")}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url || "")}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(catName(c.category_id))}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${mcSentText(c)}</td>
+        <td class="mc-cell mc-selectable${MC_REACTION_CLASS[c.reaction] || ""}" data-row="${i}" data-col="5">${MC_REACTION_LABEL[c.reaction] || "—"}</td>
+      </tr>`).join("");
+    }
+    mcUpdatePagination(mcState.total || 0);
+    mcUpdateSelectionInfo();
+    mcUpdateRowButtons();
   }
 
   function mcSetupTableSelection() {
@@ -252,7 +333,7 @@ export async function initMarketingContacts() {
         if (el) el.classList.add('mc-cell-selected');
       });
       mcUpdateSelectionInfo();
-      mcUpdateMarkUsedBtn();
+      mcUpdateRowButtons();
     }
 
     function selectRange(r1, c1, r2, c2) {
@@ -392,7 +473,7 @@ export async function initMarketingContacts() {
     document.addEventListener('mousedown', e => {
       if (!e.target.closest('#mcContactsTable') &&
           !e.target.closest('#mcVisitUrlBtn') &&
-          !e.target.closest('#mcMarkUsedBtn') &&
+          !e.target.closest('#mcToRecipientsBtn') &&
           !e.target.closest('#mcDeleteBtn') &&
           !e.target.closest('#mcCopyBtn')) {
         mcState.selectedCells = [];
@@ -420,7 +501,11 @@ export async function initMarketingContacts() {
     });
   }
 
-  function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+  function mcSelectedContacts() {
+    const rows = new Set(mcState.selectedCells.map((c) => c.row));
+    return [...rows].map((i) => mcState.contacts[i]).filter(Boolean);
+  }
 
   function mcUpdateSelectionInfo() {
     const info = document.getElementById("mcSelectionInfo");
@@ -428,60 +513,34 @@ export async function initMarketingContacts() {
     const copyBtn = document.getElementById("mcCopyBtn");
     const cells = mcState.selectedCells;
     if (info) {
-      if (cells.length) {
-        const rowCount = new Set(cells.map(c => c.row)).size;
-        info.textContent = cells.length === 1 ? '1 komórka' : `${cells.length} komórek, ${rowCount} wierszy`;
-      } else {
-        info.textContent = '';
-      }
+      const rowCount = new Set(cells.map((c) => c.row)).size;
+      info.textContent = cells.length ? (rowCount === 1 ? "1 wiersz" : `${rowCount} wierszy`) : "";
     }
     if (copyBtn) copyBtn.hidden = !cells.length;
     if (urlBtn) {
-      if (cells.length === 1 && cells[0].col === 2) {
-        const contact = mcState.contacts[cells[0].row];
-        if (contact?.url) { urlBtn.href = contact.url; urlBtn.hidden = false; return; }
-      }
-      urlBtn.hidden = true;
+      const contact = cells.length === 1 && cells[0].col === 2 ? mcState.contacts[cells[0].row] : null;
+      if (contact?.url && /^https?:\/\//i.test(contact.url)) { urlBtn.href = contact.url; urlBtn.hidden = false; }
+      else urlBtn.hidden = true;
     }
   }
 
-  function mcUpdateMarkUsedBtn() {
-    const btn = document.getElementById("mcMarkUsedBtn");
-    if (!btn) return;
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    const setLabel = (used) => { btn.innerHTML = used ? iconText("check", "Użyte") : iconText("cancel", "Nieużyte"); };
-    if (!rows.size) { setLabel(true); return; }
-    const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
-    if (!selected.length) { setLabel(true); return; }
-    // mcMarkUsed: gdy wszystkie są użyte — zdejmuje oznaczenie, w pozostałych
-    // przypadkach (także mieszany wybór) oznacza wszystkie jako użyte.
-    setLabel(!selected.every(c => c.is_used));
-  }
-
-  async function mcMarkUsed() {
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) return;
-    try {
-      const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
-      if (!selected.length) return;
-      const allUsed = selected.every(c => c.is_used);
-      const ids = selected.map(c => c.id);
-      await adminPost("/marketing/contacts/used", { ids, used: !allUsed });
-      mcState.selectedCells = [];
-      mcLoadContacts();
-    } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
+  function mcUpdateRowButtons() {
+    const any = mcSelectedContacts().length > 0;
+    const toRec = document.getElementById("mcToRecipientsBtn");
+    const del = document.getElementById("mcDeleteBtn");
+    if (toRec) toRec.hidden = !any;
+    if (del) del.hidden = !any;
   }
 
   async function mcDeleteSelected() {
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) return;
-    if (!await confirmModal({ text: `Usunąć ${rows.size} kontaktów?` })) return;
+    const selected = mcSelectedContacts();
+    if (!selected.length) return;
+    if (!await confirmModal({ text: `Usunąć ${selected.length} kontaktów?` })) return;
     try {
-      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-      await adminPost("/marketing/contacts/delete", { ids });
-      mcState.selectedCells = [];
+      await adminPost("/marketing/contacts/delete", { ids: selected.map((c) => c.id) });
       mcLoadContacts();
-    } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
+      mcLoadCategories();
+    } catch (e) { alertModal({ text: "Błąd: " + e.message }); }
   }
 
   function mcUpdatePagination(total) {
@@ -491,22 +550,82 @@ export async function initMarketingContacts() {
     document.getElementById("mcNextPage").disabled = mcState.page >= pages;
   }
 
+  // ── Do wysyłki: zaznaczone albo cały widok ──────────────────────────────
+  function mcSendable(c) { return c.email && c.reaction !== "declined" && c.reaction !== "bounced"; }
+
+  document.getElementById("mcToRecipientsBtn")?.addEventListener("click", () => {
+    const emails = mcSelectedContacts().filter(mcSendable).map((c) => c.email);
+    const n = addMarketingRecipients(emails);
+    if (!n) alertModal({ text: "Zaznaczone adresy są już na liście albo odmówiły / odbiły." });
+  });
+
+  document.getElementById("mcViewToRecipientsBtn")?.addEventListener("click", async () => {
+    try {
+      const q = mcQuery();
+      q.delete("page");
+      const data = await adminGet(`/marketing/contacts/emails?${q}`);
+      const emails = data.emails || [];
+      if (!emails.length) { alertModal({ text: "W tym widoku nie ma adresów do wysyłki." }); return; }
+      const more = data.total > emails.length ? ` Widok ma ${data.total} adresów — jedna wysyłka to najwyżej ${emails.length}.` : "";
+      if (!await confirmModal({ text: `Dodać ${emails.length} adresów z widoku do wysyłki?${more}` })) return;
+      addMarketingRecipients(emails);
+    } catch (e) { alertModal({ text: "Błąd: " + e.message }); }
+  });
+
+  document.addEventListener("mkt-sent", () => { mcLoadContacts(); });
+
+  // ── Eksport / import CSV ────────────────────────────────────────────────
+  document.getElementById("mcExportBtn")?.addEventListener("click", async () => {
+    try {
+      const res = await adminFetch(`/marketing/contacts/export${mcState.view ? `?category=${encodeURIComponent(mcState.view)}` : ""}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `kontakty-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) { alertModal({ text: "Błąd eksportu: " + e.message }); }
+  });
+
+  document.getElementById("mcImportInput")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const rows = importRows(parseCsv(await file.text()));
+    if (!rows.length) { alertModal({ text: "Plik nie ma wierszy z kolumną id (CSV z eksportu)." }); return; }
+    const del = rows.filter((r) => r.decision === "delete").length;
+    if (!await confirmModal({ text: `Import: ${rows.length} wierszy, w tym ${del} do usunięcia. Kontynuować?` })) return;
+    let done = { updated: 0, deleted: 0, categories: 0 };
+    try {
+      for (let i = 0; i < rows.length; i += 500) {
+        const r = await adminPost("/marketing/contacts/import", { rows: rows.slice(i, i + 500) });
+        done = { updated: done.updated + (r.updated || 0), deleted: done.deleted + (r.deleted || 0), categories: done.categories + (r.categories || 0) };
+      }
+      alertModal({ text: `Zaimportowano: zmienione ${done.updated}, usunięte ${done.deleted}, nowe kategorie ${done.categories}.` });
+    } catch (err) { alertModal({ text: "Błąd importu: " + err.message }); }
+    await mcLoadCategories();
+    mcLoadContacts();
+  });
+
+  // ── Logi ────────────────────────────────────────────────────────────────
   async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
     try {
       const data = await adminGet("/marketing/logs", "rows");
-      // Odwróć, aby najstarsze były na górze, najnowsze na dole (chronologicznie)
       mcState.logs = (data || []).reverse();
       mcRenderLogs();
-    } catch(e) { el.innerHTML = `<div class="mc-empty">Błąd: ${e.message}</div>`; }
+    } catch (e) { el.innerHTML = `<div class="mc-empty">Błąd: ${mcEsc(e.message)}</div>`; }
   }
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
     if (!mcState.logs.length) { el.innerHTML = '<div class="mc-empty">Brak logów</div>'; return; }
-    el.innerHTML = mcState.logs.slice().map(l => {
-      const time = new Date(l.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
-      const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[l.level] || "info";
-      const levelText = {info:"INFO",success:"OK",warning:"WARN",error:"ERR"}[l.level] || l.level;
+    el.innerHTML = mcState.logs.map((l) => {
+      const time = new Date(l.created_at).toLocaleString("pl-PL", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+      const levelClass = { info: "info", success: "success", warning: "warning", error: "error" }[l.level] || "info";
+      const levelText = { info: "INFO", success: "OK", warning: "WARN", error: "ERR" }[l.level] || l.level;
       return `<div class="mc-log-entry"><span class="mc-log-time">${time}</span><span class="mc-log-level ${levelClass}">${levelText}</span><span class="mc-log-message">${mcEsc(l.message)}</span></div>`;
     }).join("");
     el.scrollTop = el.scrollHeight;
@@ -515,22 +634,17 @@ export async function initMarketingContacts() {
   function mcStartLogAutoRefresh() {
     if (mcState.logTimer) return;
     mcState.logTimer = setInterval(async () => {
-      try {
-        let data;
-        try { data = await mcLeads("search-runs/status"); } catch {
-          mcStopLogAutoRefresh();
-          return;
-        }
-        mcState.status = data.status || "idle";
-        mcState.logRun = data.run_id;
-        mcUpdateButtons();
-        if (mcState.page === 1) mcLoadContacts();
-        if (mcState.status !== "running" && mcState.status !== "starting") {
-          mcStopLogAutoRefresh();
-        }
-      } catch(e) {}
+      let data;
+      try { data = await mcLeads("search-runs/status"); } catch { mcStopLogAutoRefresh(); return; }
+      mcState.status = data.status || "idle";
+      mcState.logRun = data.run_id;
+      mcUpdateButtons();
+      if (mcState.page === 1) mcLoadContacts();
+      if (mcState.status !== "running" && mcState.status !== "starting") {
+        mcStopLogAutoRefresh();
+        mcLoadCategories();
+      }
     }, 3000);
-    // Logi co 2 s (tabela tylko przez Worker, bez Realtime)
     mcState.logPollTimer = setInterval(() => mcLoadLogs(), 2000);
   }
 
@@ -539,24 +653,8 @@ export async function initMarketingContacts() {
     if (mcState.logPollTimer) { clearInterval(mcState.logPollTimer); mcState.logPollTimer = null; }
   }
 
-  // Init MC events
-  document.getElementById("mcActionBtn")?.addEventListener("click", () => window.mcAction());
-  document.getElementById("mcCancelBtn")?.addEventListener("click", () => window.mcCancel());
-  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
-  document.getElementById("mcReviewBtn")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: "Przejrzeć zapisane kontakty? Śmieci zostaną oznaczone w kolumnie Jakość, nic nie zostanie usunięte." })) return;
-    try {
-      mcState.logs = [];
-      mcRenderLogs();
-      const data = await mcLeads("contacts-review", "POST");
-      mcState.logRun = data.run_id;
-      mcState.status = "running";
-      mcUpdateButtons();
-      mcStartLogAutoRefresh();
-    } catch (e) {
-      alertModal({ text: "Błąd: " + e.message });
-    }
-  });
+  // ── Zdarzenia ───────────────────────────────────────────────────────────
+  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadCategories(); mcLoadContacts(); mcLoadLogs(); });
   {
     let mcSearchTimer = null;
     const searchInput = document.getElementById("mcSearchInput");
@@ -564,11 +662,7 @@ export async function initMarketingContacts() {
     searchInput?.addEventListener("input", (e) => {
       if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
       clearTimeout(mcSearchTimer);
-      mcSearchTimer = setTimeout(() => {
-        mcSearchValue = e.target.value;
-        mcState.page = 1;
-        mcLoadContacts();
-      }, 300);
+      mcSearchTimer = setTimeout(() => { mcSearchValue = e.target.value; mcState.page = 1; mcLoadContacts(); }, 300);
     });
     searchClearBtn?.addEventListener("click", () => {
       if (!searchInput) return;
@@ -581,97 +675,49 @@ export async function initMarketingContacts() {
       searchInput.focus();
     });
   }
-  initUiSelect(document.getElementById("mcFilterUsed"), {
-    options: [
-      { value: "", label: "Wszystkie" },
-      { value: "false", label: "Nieużywane" },
-      { value: "true", label: "Używane" },
-    ],
+  initUiSelect(document.getElementById("mcFilterSent"), {
+    options: MC_SENT_FILTERS,
     value: "",
-    onChange: (val) => { mcFilterUsedValue = val; mcState.page = 1; mcLoadContacts(); },
+    onChange: (val) => { mcSentFilter = val; mcState.page = 1; mcLoadContacts(); },
   });
-  initUiSelect(document.getElementById("mcFilterQuality"), {
-    options: [
-      { value: "", label: "Każda jakość" },
-      { value: "good", label: "Dobre" },
-      { value: "junk", label: "Śmieci" },
-      { value: "none", label: "Nieprzejrzane" },
-    ],
-    value: "",
-    onChange: (val) => { mcFilterQualityValue = val; mcState.page = 1; mcLoadContacts(); },
-  });
-  initUiSelect(document.getElementById("mcFilterReaction"), {
-    options: [
-      { value: "", label: "Każda reakcja" },
-      { value: "waiting", label: "Czekają na odpowiedź" },
-      { value: "replied", label: "Odpowiedzieli" },
-      { value: "declined", label: "Odmówili" },
-      { value: "bounced", label: "Odbite" },
-    ],
-    value: "",
-    onChange: (val) => { mcFilterReactionValue = val; mcState.page = 1; mcLoadContacts(); },
-  });
-  document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
   document.getElementById("mcCopyBtn")?.addEventListener("click", () => {
     if (!mcState.selectedCells.length) return;
     const tbody = document.getElementById("mcTableBody");
     const rows = {};
-    mcState.selectedCells.forEach(({row, col}) => { (rows[row] = rows[row] || []).push(col); });
+    mcState.selectedCells.forEach(({ row, col }) => { (rows[row] = rows[row] || []).push(col); });
     const sortedRows = Object.keys(rows).map(Number).sort((a, b) => a - b);
-    const allCols = [...new Set(mcState.selectedCells.map(c => c.col))].sort((a, b) => a - b);
-    const text = sortedRows.map(r =>
-      allCols.map(c => {
-        const el = tbody?.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
-        return el ? el.textContent.trim() : '';
-      }).join('\t')
-    ).join('\n');
-
+    const allCols = [...new Set(mcState.selectedCells.map((c) => c.col))].sort((a, b) => a - b);
+    const text = sortedRows.map((r) => allCols.map((c) => {
+      const el = tbody?.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
+      return el ? el.textContent.trim() : "";
+    }).join("\t")).join("\n");
     const btn = document.getElementById("mcCopyBtn");
-    function flash(ok) {
-      if (!btn) return;
+    const flash = (ok) => {
       const orig = btn.innerHTML;
-      btn.innerHTML = ok ? iconText('check', 'Skopiowano') : iconText('error', 'Błąd');
+      btn.innerHTML = ok ? iconText("check", "Skopiowano") : iconText("error", "Błąd");
       setTimeout(() => { btn.innerHTML = orig; }, 1200);
-    }
-
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(() => flash(true)).catch(() => {
-        try { fallbackCopy(text); flash(true); } catch { flash(false); }
-      });
-    } else {
-      try { fallbackCopy(text); flash(true); } catch { flash(false); }
-    }
-
-    function fallbackCopy(txt) {
-      const ta = document.createElement('textarea');
-      ta.value = txt;
-      ta.className = "offscreen-copy";
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      const ok = document.execCommand('copy');
-      ta.remove();
-      if (!ok) throw new Error('execCommand failed');
-    }
+    };
+    navigator.clipboard?.writeText(text).then(() => flash(true), () => flash(false));
   });
-  document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
+  document.getElementById("mcPrevPage")?.addEventListener("click", () => { if (mcState.page > 1) { mcState.page--; mcLoadContacts(); } });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
-  document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if(e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });
+  document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if (e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });
   mcInitSorting();
+  mcSetupTableSelection();
 
-  // Load MC data when entering tab
-  const origSetTab = window.setActiveTabMC;
-  const mcObserver = new MutationObserver(async () => {
-    if (!document.getElementById("marketingContactsPanel")?.hidden) {
-      mcLoadContacts();
-      await mcLoadRuns();
-      mcLoadLogs();
-      if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
-      await loadAiProviderOrder();
-      }
-
-  });
-  const mcPanel = document.getElementById("marketingContactsPanel");
-  if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
+  // Dane przy wejściu na kartę Marketing.
+  const panel = document.getElementById("marketingPanel");
+  const onShow = async () => {
+    if (panel?.hidden) return;
+    await mcLoadCategories();
+    mcLoadContacts();
+    await mcLoadRuns();
+    mcLoadLogs();
+    if (mcState.status === "running" && document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
+    await loadAiProviderOrder();
+  };
+  if (panel) new MutationObserver(onShow).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
   mcUpdateButtons();
+  onShow();
 }

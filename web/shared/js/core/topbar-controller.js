@@ -156,14 +156,25 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
       return;
     }
 
-    if (totalWidth <= availableWidth) {
+    // Suma szerokości to przybliżenie — na styk przyciski potrafiły wyjść poza
+    // sekcję (na „Wyloguj”) albo zawinąć się do drugiego wiersza. Przed
+    // uznaniem, że wszystko się mieści, sprawdzamy faktyczne położenie.
+    const s2Rect = section2.getBoundingClientRect();
+    const firstTop = btns[0]?.getBoundingClientRect().top ?? 0;
+    const reallyFits = () => [...btns, ...fixedItems].every((el) => {
+      const r = el.getBoundingClientRect();
+      return r.right <= s2Rect.right + 0.5 && Math.abs(r.top - firstTop) <= 1;
+    });
+    if (totalWidth <= availableWidth && reallyFits()) {
       _hiddenBtns = [];
       updateMoreBadge([]);
       return;
     }
 
     const hidden = [];
-    let remaining = totalWidth;
+    // Bez rozjazdu sumy i układu „remaining” liczy od pełnej szerokości; gdy
+    // układ się nie zmieścił mimo sumy, schowany zostaje co najmniej jeden przycisk.
+    let remaining = Math.max(totalWidth, availableWidth - moreWidth - gap + 1);
     for (let i = btns.length - 1; i >= 0; i--) {
       if (remaining + moreWidth + gap <= availableWidth) break;
       btns[i].classList.add('hidden');

@@ -1602,8 +1602,6 @@
   .mc-empty--cell { padding: 1.5rem; }
   .mc-auto-refresh { margin-top: 8px; }
   .mc-auto-refresh > label { font-size: 12px; opacity: .6; display: flex; align-items: center; gap: 6px; }
-  .mc-table td[data-col="4"] { text-align: center; }
-  .offscreen-copy { position: fixed; top: -9999px; left: -9999px; opacity: 0; }
   .mc-pager { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; }
   .mc-page-info { font-size: 12px; opacity: .6; }
 
@@ -1612,12 +1610,20 @@
   .mc-table th.mc-sortable { padding: 6px; text-align: left; cursor: pointer; user-select: none; }
   .mc-table th.mc-col-title, .mc-table th.mc-col-url { width: 25%; }
   .mc-table th.mc-col-email { width: 20%; }
-  .mc-table th.mc-col-added-at { width: 15%; }
-  .mc-table th.mc-col-is-used { width: 50px; text-align: center; }
-  .mc-table th.mc-col-quality { width: 90px; }
-  .mc-table th.mc-col-reaction { width: 110px; }
-  .mc-quality--junk { color: var(--bad-text); }
-  .mc-quality--good { color: var(--ok-text); }
+  .mc-table th.mc-col-category { width: 14%; }
+  .mc-table th.mc-col-sent { width: 90px; }
+  .mc-table th.mc-col-reaction { width: 100px; }
+  .mc-views { --gap: 6px; margin-bottom: 8px; }
+  .mc-tools--table { margin-bottom: 8px; }
+  .mc-cat-add { --gap: 6px; margin-bottom: 8px; }
+  .mc-cat-add > .inp { flex: 1 1 220px; min-width: 0; }
+  .mc-cat-list { display: grid; gap: 6px; }
+  .mc-cat-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; }
+  .mc-cat-toggle { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 160px; min-width: 0; }
+  .mc-cat-name { font-weight: 600; overflow-wrap: anywhere; }
+  .mc-cat-details { flex: 1 0 100%; display: grid; gap: 4px; }
+  .mc-cat-desc { margin: 0; font-size: 12px; opacity: .8; }
+  .mc-logs > summary { cursor: pointer; font-size: 13px; opacity: .8; margin: 8px 0; }
   .mc-reaction--declined, .mc-reaction--bounced { color: var(--bad-text); }
   .mc-reaction--replied { color: var(--ok-text); }
 

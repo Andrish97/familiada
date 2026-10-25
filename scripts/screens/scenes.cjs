@@ -367,7 +367,6 @@ module.exports = [
     ["mail-settings", "btnTabMail", "Ustawienia maili"],
     ["reports", "btnTabReports", "Poczta Familiada"],
     ["marketing", "btnTabMarketing", "Marketing"],
-    ["marketing-contacts", "btnTabMarketingContacts", "Kontakty Marketingowe"],
     ["marketplace", "btnTabMarketplace", "Gry Społeczności"],
     ["generator", "btnTabGenerator", "Gry Producenta"],
   ].map(([key, tab, title]) => ({ id: `admin-panel-${key}`, category: "Dodatkowe", title: `Panel admina — ${title}`, path: "/admin/", sources: ["web/admin/"], ready: () => !!document.getElementById("btnTabStats") && !document.body.classList.contains("settings-locked"), devices: ["desktop", "phone"], settle: 800,
@@ -424,8 +423,22 @@ module.exports = [
       await view.locator(".compose-preview-wrapper iframe").waitFor();
       await view.waitForTimeout(800);
     }] },
-  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — kontakty marketingowe: zlecenie lead-findera (przez Worker)", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop"],
-    steps: [async (view) => { await view.locator("#btnMore").click().catch(() => {}); await view.getByText("Kontakty Marketingowe").last().click(); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "")); await view.waitForTimeout(500); }] },
+  { id: "admin-leads", category: "Dodatkowe", title: "Panel admina — Marketing: kategorie, wyszukiwanie (wstrzymane), kontakty z widokami", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
+    steps: [async (view) => { await view.evaluate(() => document.getElementById("btnTabMarketing").click()); await view.waitForFunction(() => /Wznów/.test(document.getElementById("mcActionBtn")?.textContent || "") && document.querySelectorAll("#mcTableBody tr[data-id]").length > 1); await view.waitForTimeout(500); }] },
+  { id: "admin-leads-send", category: "Dodatkowe", title: "Panel admina — Marketing: widok kategorii, zaznaczone wiersze do wysyłki", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop"],
+    steps: [async (view) => {
+      await view.evaluate(() => document.getElementById("btnTabMarketing").click());
+      await view.waitForFunction(() => document.querySelectorAll("#mcViews [data-view]").length > 2 && document.querySelectorAll("#mcTableBody tr[data-id]").length > 1);
+      await view.locator('#mcCatList [data-act="details"]').first().click();
+      const cells = view.locator('#mcTableBody td[data-col="1"]');
+      await cells.nth(0).scrollIntoViewIfNeeded();
+      await cells.nth(0).click();
+      await cells.nth(1).click({ modifiers: ["Shift"] });
+      await view.locator("#mcToRecipientsBtn").click({ timeout: 5000 });
+      await view.waitForTimeout(800);
+      await view.evaluate(() => document.getElementById("mcCatList").scrollIntoView());
+      await view.waitForTimeout(300);
+    }] },
   { id: "admin-bypass", category: "Dodatkowe", title: "Panel admina — prace techniczne: obejście (cookie 12 h)", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],
     steps: [async (view) => { await view.locator(".bypass-desc").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-date-picker", category: "Dodatkowe", title: "Panel admina — przerwa: okno wyboru daty i godziny", path: "/admin/", sources: ["web/admin/"], ready: "#bypassToggle", devices: ["desktop", "phone"],

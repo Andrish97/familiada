@@ -117,6 +117,8 @@ async function sendMarketing() {
     if (!json.ok) throw new Error(json.error);
     showToast(`Dodano do kolejki: ${json.queued}/${json.total}${json.skipped ? `; pominięto ${json.skipped} — powiadomienia wyłączone` : ""}${json.blocked ? `; pominięto ${json.blocked} — odmowa lub adres odbity` : ""}.`, json.queued ? "success" : "info");
     if (statusEl) statusEl.textContent = "";
+    // Tabela kontaktów odświeża kolumnę „Wysłano”.
+    document.dispatchEvent(new CustomEvent("mkt-sent"));
     if (!json.queued) return;
     
     // Clear email list after successful send
@@ -130,6 +132,18 @@ async function sendMarketing() {
   } finally {
     document.getElementById("btnMktSend")?.removeAttribute("disabled");
   }
+}
+
+// Adresy z tabeli kontaktów (Lead Finder) do listy odbiorców — bez kopiowania.
+export function addMarketingRecipients(emails) {
+  const area = document.getElementById("mktEmailInput");
+  if (!area) return 0;
+  const have = new Set(area.value.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean));
+  const add = [...new Set((emails || []).map((e) => String(e).trim().toLowerCase()).filter((e) => e && !have.has(e)))];
+  if (add.length) area.value = (area.value.trim() ? area.value.trim() + "\n" : "") + add.join("\n");
+  mktParseEmails();
+  document.getElementById("mktSendSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  return add.length;
 }
 
 export function wireMarketingEvents() {

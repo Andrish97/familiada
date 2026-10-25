@@ -92,13 +92,6 @@ function wireEvents() {
     });
   }
 
-  if (els.btnTabMarketingContacts) {
-    els.btnTabMarketingContacts.addEventListener("click", () => {
-      if (activeTab === "tools") closeTools();
-      setActiveTab("marketingContacts");
-    });
-  }
-
   wireMaintenanceEvents();
   wireMailSettingsEvents();
   wireMarketplaceEvents();

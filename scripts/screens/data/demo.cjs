@@ -403,12 +403,19 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/attachments?message_id=*": { ok: true, attachments: [] },
       // Kontakty marketingowe: stan zlecenia lead-findera przez Worker (Ś2).
       "/_admin_api/leads/search-runs/status": { status: "paused", run_id: "0f1e2d3c-4b5a-4987-8654-3210fedcba98", verified: 12, errors: 0 },
-      // Lead Finder 2: jakość z przeglądu i reakcje odbiorców.
+      // Lead Finder 3: kategorie i kontakty z wysyłkami i odpowiedziami.
+      "/_admin_api/marketing/categories": { ok: true, rows: [
+        { id: "a1000000-0000-4000-8000-000000000001", name: "DJ na wesela", is_active: true, contacts: 2, expanded_at: "2026-10-25T09:00:00Z",
+          description: "DJ-e i wodzireje prowadzący wesela i imprezy firmowe; bez sklepów i kursów DJ.", queries: ["DJ na wesele kontakt e-mail", "DJ weselny @gmail.com", "wodzirej i DJ oferta"], pkd: ["93.29.Z", "90.01.Z"] },
+        { id: "a1000000-0000-4000-8000-000000000002", name: "Agencje eventowe", is_active: true, contacts: 1, expanded_at: null, description: null, queries: [], pkd: [] },
+        { id: "a1000000-0000-4000-8000-000000000003", name: "Szkoły", is_active: false, contacts: 0, expanded_at: null, description: null, queries: [], pkd: [] },
+      ] },
+      "/_admin_api/marketing/contacts/emails?*": { ok: true, emails: ["kontakt@wodzirej-example.test"], total: 1 },
       "/_admin_api/marketing/contacts?*": { ok: true, total: 4, rows: [
-        { id: "c1", email: "biuro@djmax-example.test", title: "DJ Max — wesela i imprezy", url: "https://djmax-example.test", is_used: true, added_at: "2026-10-25T09:00:00Z", quality: "good", quality_reason: "DJ weselny z prowadzeniem", sent_count: 1, reaction: "replied" },
-        { id: "c2", email: "kontakt@wodzirej-example.test", title: "Wodzirej Anna", url: "https://wodzirej-example.test", is_used: true, added_at: "2026-10-24T09:00:00Z", quality: "good", quality_reason: "wodzirej", sent_count: 2, reaction: null },
-        { id: "c3", email: "biuro@przedszkole-example.test", title: "Przedszkole Słoneczko", url: "https://przedszkole-example.test", is_used: false, added_at: "2026-10-19T09:00:00Z", quality: "junk", quality_reason: "placówka publiczna (przedszkole)", sent_count: 0, reaction: null },
-        { id: "c4", email: "events@agencja-example.test", title: "Agencja eventowa Fala", url: "https://agencja-example.test", is_used: true, added_at: "2026-10-18T09:00:00Z", quality: null, sent_count: 1, reaction: "declined" },
+        { id: "c1", email: "biuro@djmax-example.test", title: "DJ Max — wesela i imprezy", url: "https://djmax-example.test", category_id: "a1000000-0000-4000-8000-000000000001", added_at: "2026-10-25T09:00:00Z", sent_count: 1, last_sent_at: "2026-10-20T09:00:00Z", reaction: "replied" },
+        { id: "c2", email: "kontakt@wodzirej-example.test", title: "Wodzirej Anna", url: "https://wodzirej-example.test", category_id: "a1000000-0000-4000-8000-000000000001", added_at: "2026-10-24T09:00:00Z", sent_count: 0, last_sent_at: null, reaction: null },
+        { id: "c3", email: "events@agencja-example.test", title: "Agencja eventowa Fala", url: "https://agencja-example.test", category_id: "a1000000-0000-4000-8000-000000000002", added_at: "2026-10-18T09:00:00Z", sent_count: 2, last_sent_at: "2026-10-22T09:00:00Z", reaction: null },
+        { id: "c4", email: "biuro@stare-example.test", title: "Studio imprez Bis", url: "https://stare-example.test", category_id: null, added_at: "2026-09-18T09:00:00Z", sent_count: 1, last_sent_at: null, reaction: "declined" },
       ] },
       "/_admin_api/marketing/logs": { ok: true, rows: [
         { created_at: "2026-10-20T10:01:00Z", level: "info", message: "Zlecenie wstrzymane" },

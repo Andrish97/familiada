@@ -10,7 +10,7 @@ export let activeTab = "maintenance";
 // Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
 const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
-  "reports", "marketing", "marketingContacts",
+  "reports", "marketing",
 ];
 const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
@@ -40,7 +40,6 @@ export function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
-  const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
   const tools = document.getElementById("btnTools");
 
   if (btn) btn.classList.toggle("is-active", tab === "maintenance");
@@ -51,7 +50,6 @@ export function setActiveTab(tab, { updateUrl = true } = {}) {
   if (btnGen) btnGen.classList.toggle("is-active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("is-active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("is-active", tab === "marketing");
-  if (btnMarketingContacts) btnMarketingContacts.classList.toggle("is-active", tab === "marketingContacts");
   if (tools) tools.classList.toggle("is-active", tab === "tools");
 
   // Hide/show panels
@@ -63,7 +61,6 @@ export function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
-  if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
 
   // When entering reports panel, init mail view
   if (tab === "reports") {
@@ -92,7 +89,6 @@ export function activateSettingsTabFromUrl() {
     generator: els.btnTabGenerator,
     reports: els.btnTabReports,
     marketing: els.btnTabMarketing,
-    marketingContacts: els.btnTabMarketingContacts,
   };
   const button = buttons[tab];
   if (button) button.click();

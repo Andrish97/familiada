@@ -59,7 +59,6 @@
       <button class="btn sm" id="btnTabMail" type="button">Ustawienia maili</button>
       <button class="btn sm" id="btnTabReports" type="button"><span>Poczta Familiada</span><span class="badge" id="tabBadgeReports" aria-hidden="true"></span></button>
       <button class="btn sm" id="btnTabMarketing" type="button">Marketing</button>
-      <button class="btn sm" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
       <button class="btn sm" id="btnTabMarketplace" type="button"><span>Gry Społeczności</span><span class="badge" id="tabBadgeMarketplace" aria-hidden="true"></span></button>
       <button class="btn sm hidden-on-mobile" id="btnTabGenerator" type="button">Gry Producenta</button>
       <div class="nav-more" id="navMore" hidden>
@@ -818,14 +817,120 @@
         </div>
       </div>
 
-      <!-- ── Marketing panel ── -->
+      <!-- ── Marketing: kontakty (Lead Finder) i wysyłka w jednej karcie ── -->
       <div class="market-admin-panel" id="marketingPanel" hidden>
         <div class="card card--inset settings-card">
           <div class="panel-head">
-            <div class="panel-title">Wysyłka marketingowa</div>
-            <div class="panel-sub">Wyślij wiadomość do wielu adresatów jednocześnie</div>
+            <div class="panel-title">Marketing</div>
+            <div class="panel-sub">Kontakty z Lead Findera według kategorii, wysyłka ofert z tabeli</div>
           </div>
 
+          <!-- Kategorie wyszukiwania -->
+          <div class="mc-section">
+            <div class="mc-section-head">
+              <div class="panel-title">Kategorie wyszukiwania</div>
+            </div>
+            <div class="cluster mc-cat-add">
+              <input class="inp" id="mcCatName" type="text" maxlength="80" autocomplete="off" placeholder="Nowa kategoria, np. DJ na wesela">
+              <button class="btn sm gold" id="mcCatAddBtn" type="button"><i class="ico" data-icon="plus"></i> Dodaj</button>
+            </div>
+            <div class="mc-cat-list" id="mcCatList"><div class="mc-empty">Ładowanie…</div></div>
+          </div>
+
+          <!-- Wyszukiwanie -->
+          <div class="mc-section">
+            <div class="mc-section-head">
+              <div class="panel-title">Wyszukiwanie</div>
+            </div>
+            <div class="mc-controls">
+              <div class="mc-field-inline">
+                <label for="mcTargetCount">Ilość kontaktów:</label>
+                <input class="inp mc-target-count" id="mcTargetCount" type="number" min="1" max="1000" value="50">
+                <button class="btn sm gold" id="mcActionBtn" type="button"><i class="ico" data-icon="play"></i> Uruchom</button>
+                <button class="btn sm danger" id="mcCancelBtn" type="button" hidden><i class="ico" data-icon="cancel"></i> Anuluj</button>
+                <button class="btn sm" id="mcRefreshBtn" type="button"><i class="ico" data-icon="refresh"></i> Odśwież</button>
+              </div>
+            </div>
+            <div class="ai-provider-order">
+              <div class="ai-provider-order-title">Kolejność dostawców AI:</div>
+              <div class="provider-order-list" id="aiProviderOrderList"></div>
+            </div>
+            <details class="mc-logs">
+              <summary>Logi wyszukiwania</summary>
+              <div id="mcLogsContainer">
+                <div class="mc-empty">Brak logów</div>
+              </div>
+              <div class="mc-auto-refresh">
+                <label>
+                  <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie
+                </label>
+              </div>
+            </details>
+          </div>
+
+          <!-- Kontakty -->
+          <div class="mc-section">
+            <div class="mc-section-head mc-section-head--tools">
+              <div class="panel-title">Kontakty</div>
+              <div class="cluster mc-tools">
+                <button class="btn sm" id="mcExportBtn" type="button"><i class="ico" data-icon="download"></i> Eksport CSV</button>
+                <input type="file" id="mcImportInput" accept=".csv,text/csv" hidden>
+                <label for="mcImportInput" class="btn sm"><i class="ico" data-icon="upload"></i> Import CSV</label>
+              </div>
+            </div>
+            <div class="cluster mc-views" id="mcViews" role="tablist"></div>
+            <div class="cluster mc-tools mc-tools--table">
+              <div class="mc-search">
+                <input class="inp" id="mcSearchInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Szukaj…">
+                <button type="button" id="mcSearchClearBtn" class="mc-search-clear" aria-label="Wyczyść" hidden><i class="ico" data-icon="close"></i></button>
+              </div>
+              <div class="ui-select mc-filter-used" id="mcFilterSent">
+                <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">—</span>
+                  <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
+              <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" hidden><i class="ico" data-icon="globe"></i> Odwiedź</a>
+              <button class="btn sm" id="mcCopyBtn" type="button" hidden><i class="ico" data-icon="copy"></i> Kopiuj</button>
+              <button class="btn sm" id="mcToRecipientsBtn" type="button" hidden><i class="ico" data-icon="envelope-out"></i> Zaznaczone do wysyłki</button>
+              <button class="btn sm" id="mcViewToRecipientsBtn" type="button"><i class="ico" data-icon="envelope-out"></i> Cały widok do wysyłki</button>
+              <button class="btn sm danger" id="mcDeleteBtn" type="button" hidden><i class="ico" data-icon="trash"></i> Usuń</button>
+              <span id="mcSelectionInfo" class="mc-meta"></span>
+            </div>
+
+            <div class="data-table-wrap">
+              <table class="data-table mc-table" id="mcContactsTable">
+                <thead>
+                  <tr>
+                    <th class="mc-sortable mc-col-title" data-col="title">Nazwa</th>
+                    <th class="mc-sortable mc-col-email" data-col="email">E-mail</th>
+                    <th class="mc-sortable mc-col-url" data-col="url">Strona</th>
+                    <th class="mc-col-category">Kategoria</th>
+                    <th class="mc-sortable mc-col-sent" data-col="last_sent_at">Wysłano</th>
+                    <th class="mc-sortable mc-col-reaction" data-col="reaction">Odpowiedź</th>
+                  </tr>
+                </thead>
+                <tbody id="mcTableBody">
+                  <tr><td colspan="6" class="mc-empty mc-empty--cell">Ładowanie...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mc-pager">
+              <button class="btn sm" id="mcPrevPage" type="button"><i class="ico" data-icon="arrow-left"></i> Poprzednia</button>
+              <span id="mcPageInfo" class="mc-page-info">Strona 1 / 1</span>
+              <button class="btn sm" id="mcNextPage" type="button">Następna <i class="ico" data-icon="arrow-right"></i></button>
+            </div>
+          </div>
+
+          <hr class="mkt-sep">
+
+          <!-- Wysyłka -->
+          <div class="mc-section" id="mktSendSection">
+            <div class="mc-section-head">
+              <div class="panel-title">Wysyłka</div>
+            </div>
           <!-- Szablon -->
           <div class="field">
             <label class="field-label">Szablon</label>
@@ -866,7 +971,7 @@
           <!-- Odbiorcy -->
           <div class="field">
             <label class="field-label">Odbiorcy</label>
-            <span class="hint mkt-recipients-hint">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
+            <span class="hint mkt-recipients-hint">Adresy z tabeli kontaktów („Zaznaczone do wysyłki”, „Cały widok do wysyłki”) albo wpisane ręcznie. Odmowy i odbite adresy są pomijane.</span>
             <textarea class="inp" id="mktEmailInput" rows="4" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
             <div class="cluster mkt-file-row">
               <input type="file" id="mktFileInput" accept=".txt,.csv" hidden>
@@ -891,117 +996,7 @@
             <span id="mktSendStatus" class="mkt-send-status"></span>
             <button class="btn sm gold" type="button" id="btnMktSend">Wyślij do odbiorców</button>
           </div>
-        </div>
-      </div>
-
-      <!-- ── Marketing Contacts panel ── -->
-      <div class="market-admin-panel" id="marketingContactsPanel" hidden>
-        <div class="card card--inset settings-card">
-          <div class="panel-head">
-            <div class="panel-title">Kontakty Marketingowe</div>
-            <div class="panel-sub">Lead Finder: wyszukiwarka i CEIDG → odsiew → ocena AI paczkami</div>
           </div>
-
-          <!-- Run controls -->
-          <div class="mc-controls">
-            <div class="mc-field-inline">
-              <label for="mcTargetCount">Ilość kontaktów:</label>
-              <input class="inp mc-target-count" id="mcTargetCount" type="number" min="1" max="500" value="50">
-              <button class="btn sm gold" id="mcActionBtn" type="button"><i class="ico" data-icon="play"></i> Uruchom</button>
-              <button class="btn sm danger" id="mcCancelBtn" type="button" hidden><i class="ico" data-icon="cancel"></i> Anuluj</button>
-              <button class="btn sm" id="mcReviewBtn" type="button" title="Ocenia zapisane kontakty (bez kasowania) — wynik w kolumnie Jakość"><i class="ico" data-icon="check"></i> Przejrzyj kontakty</button>
-              <button class="btn sm" id="mcRefreshBtn" type="button"><i class="ico" data-icon="refresh"></i> Odśwież</button>
-            </div>
-          </div>
-
-          <!-- AI Provider order -->
-          <div class="ai-provider-order">
-            <div class="ai-provider-order-title">Kolejność AI providerów (OpenRouter → Groq):</div>
-            <div class="provider-order-list" id="aiProviderOrderList"></div>
-          </div>
-
-          <!-- Logs -->
-          <div class="mc-section">
-            <div class="mc-section-head">
-              <div class="panel-title">Logi</div>
-            </div>
-
-            <div id="mcLogsContainer">
-              <div class="mc-empty">Wybierz zlecenie aby zobaczyć logi</div>
-            </div>
-            <div class="mc-auto-refresh">
-              <label>
-                <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie (5s)
-              </label>
-            </div>
-          </div>
-
-          <!-- Verified contacts table -->
-          <div class="mc-section">
-            <div class="mc-section-head mc-section-head--tools">
-              <div class="panel-title">Zweryfikowane kontakty</div>
-              <div class="cluster mc-tools">
-                <div class="mc-search">
-                  <input class="inp" id="mcSearchInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Szukaj…">
-                  <button type="button" id="mcSearchClearBtn" class="mc-search-clear" aria-label="Wyczyść" hidden><i class="ico" data-icon="close"></i></button>
-                </div>
-                <div class="ui-select mc-filter-used" id="mcFilterUsed">
-                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="ui-select mc-filter-used" id="mcFilterQuality">
-                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="ui-select mc-filter-used" id="mcFilterReaction">
-                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" hidden><i class="ico" data-icon="globe"></i> Odwiedź</a>
-                <button class="btn sm" id="mcCopyBtn" type="button" hidden><i class="ico" data-icon="copy"></i> Kopiuj</button>
-                <button class="btn sm" id="mcMarkUsedBtn" type="button"><i class="ico" data-icon="check"></i> Użyte</button>
-                <button class="btn sm danger" id="mcDeleteBtn" type="button"><i class="ico" data-icon="trash"></i> Usuń</button>
-                <span id="mcSelectionInfo" class="mc-meta"></span>
-              </div>
-            </div>
-
-            <!-- Excel-like table -->
-            <div class="data-table-wrap">
-              <table class="data-table mc-table" id="mcContactsTable">
-                <thead>
-                  <tr>
-                    <th class="mc-sortable mc-col-title" data-col="title">Tytuł</th>
-                    <th class="mc-sortable mc-col-email" data-col="email">E-mail</th>
-                    <th class="mc-sortable mc-col-url" data-col="url">URL</th>
-                    <th class="mc-sortable mc-col-added-at" data-col="added_at">Dodano</th>
-                    <th class="mc-sortable mc-col-is-used" data-col="is_used">Użyto</th>
-                    <th class="mc-sortable mc-col-quality" data-col="quality">Jakość</th>
-                    <th class="mc-sortable mc-col-reaction" data-col="reaction">Reakcja</th>
-                  </tr>
-                </thead>
-                <tbody id="mcTableBody">
-                  <tr><td colspan="7" class="mc-empty mc-empty--cell">Ładowanie...</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mc-pager">
-              <button class="btn sm" id="mcPrevPage" type="button"><i class="ico" data-icon="arrow-left"></i> Poprzednia</button>
-              <span id="mcPageInfo" class="mc-page-info">Strona 1 / 1</span>
-              <button class="btn sm" id="mcNextPage" type="button">Następna <i class="ico" data-icon="arrow-right"></i></button>
-            </div>
-          </div>
-
         </div>
       </div>
 

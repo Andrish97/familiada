@@ -34,11 +34,8 @@ test('Ś2: lista dozwolonych ścieżek lead-findera', () => {
   assert.equal(leadFinderTarget('POST', `search-runs/${RUN}/delete`, q), null);
   assert.equal(leadFinderTarget('POST', 'search-runs/../../health/pause', q), null);
   assert.equal(leadFinderTarget('GET', 'health', q), null);
-  // Lead Finder 2: przegląd zapisanych kontaktów (tylko POST, all=true|false).
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', q), { path: '/api/contacts-review?all=false' });
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=true')), { path: '/api/contacts-review?all=true' });
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=x&y=1')), { path: '/api/contacts-review?all=false' });
-  assert.equal(leadFinderTarget('GET', 'contacts-review', q), null);
+  // Przegląd kontaktów przez usługę wycofany (LF3: eksport/import w panelu).
+  assert.equal(leadFinderTarget('POST', 'contacts-review', q), null);
 });
 
 test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt tokenu zniknął', async () => {

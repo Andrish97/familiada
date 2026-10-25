@@ -201,10 +201,11 @@ function adminData(db) {
     ["Biuro podróży Słoneczko", "kontakt@sloneczko.example.test", "https://sloneczko.example.test", false, 15],
     ["Klub seniora „Pogodna Jesień”", "klub@pogodna.example.test", "https://pogodna.example.test", false, 11],
     ["Agencja eventowa Fiesta", "hello@fiesta.example.test", "https://fiesta.example.test", true, 6],
-  ].map(([title, email, url, is_used, d], i) => ({ id: i + 1, title, email, url, is_used, added_at: T(d, 9), created_at: T(d, 9) }));
+  ].map(([title, email, url, is_used, d], i) => ({ id: i + 1, title, email, url, is_used, sent_count: is_used ? 1 : 0, added_at: T(d, 9), created_at: T(d, 9) }));
   h["/_admin_api/marketing/ai-providers"] = { ok: true, rows: aiProviders };
   h["/_admin_api/marketing/logs"] = { ok: true, rows: [] };
   h["/_admin_api/marketing/contacts?*"] = { ok: true, rows: contacts, total: contacts.length };
+  h["/_admin_api/marketing/categories"] = { ok: true, rows: [] };
 }
 
 module.exports = [
@@ -376,9 +377,6 @@ module.exports = [
   { id: "logos-market-admin-market-published", category: CAT, title: "Panel admina — Gry Społeczności, opublikowane", path: "/admin/?tab=marketplace", sources: ADMIN, ready: "[data-market-preview]", db: adminData, settle: 600,
     steps: [click("#mktTabPublished", 800)] },
   { id: "logos-market-admin-marketing", category: CAT, title: "Panel admina — Marketing", path: "/admin/?tab=marketing", sources: ADMIN, ready: "#marketingPanel", db: adminData, settle: 1000 },
-  // Panel kontaktów ładuje dane dopiero przy zmianie atrybutu hidden (MutationObserver), więc krok przełącza zakładkę przyciskiem.
-  { id: "logos-market-admin-contacts", category: CAT, title: "Panel admina — Kontakty Marketingowe", path: "/admin/", sources: ADMIN, ready: "#panelStatus", db: adminData, settle: 800,
-    steps: [async (view) => { await view.evaluate(() => document.getElementById("btnTabMarketingContacts").click()); await view.waitForFunction(() => document.querySelectorAll("#mcTableBody tr").length > 1); await view.waitForTimeout(600); }] },
   // Funkcja Edge generate-game idzie przez Worker (/_admin_api/generator/<akcja>):
   // lista gier producenta z danych sceny, pozostałe akcje zwracają { ok: true }.
   { id: "logos-market-admin-generator", category: CAT, title: "Panel admina — Gry Producenta (wczytane gry producenta)", path: "/admin/?tab=generator", sources: ADMIN, ready: "#generatorPanel", devices: ["desktop"], settle: 800,
