@@ -1,6 +1,7 @@
 // Tłumaczenia EN — część „marketplace”.
 const en = {
   marketplace: {
+    seoDescription: "Find ready-made Familiada questions and answers. Community games for parties, weddings, school activities and family gatherings.",
     title: "Community Games",
     pageTitle: "Community Games — ready-made Familiada questions",
     subtitle: "Browse games created by the community and add them to your library.",

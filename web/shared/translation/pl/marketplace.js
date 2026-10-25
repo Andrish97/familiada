@@ -1,6 +1,7 @@
 // Tłumaczenia PL — część „marketplace”.
 const pl = {
   marketplace: {
+    seoDescription: "Pobierz gotowe pytania i odpowiedzi do Familiady. Gry społeczności na imprezę, wesele, zajęcia szkolne lub spotkanie z rodziną.",
     title: "Gry Społeczności",
     pageTitle: "Gry Społeczności — gotowe pytania do Familiady",
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",

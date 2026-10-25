@@ -75,6 +75,8 @@ Usunięcie kogoś ze znajomych nie odbiera mu dostępu do baz — zrób to osobn
 
 # 13. Gry Społeczności
 
+Podgląd Twojego nieopublikowanego zgłoszenia jest prywatny. Jego adres zawiera `?game=` i działa po zalogowaniu na Twoje konto. Opublikowana gra ma publiczny adres `/marketplace/game/…`, który możesz udostępnić innym.
+
 ## 13.1 Czym są Gry Społeczności
 
 Gry Społeczności to publiczny katalog gotowych gier, przygotowanych przez użytkowników

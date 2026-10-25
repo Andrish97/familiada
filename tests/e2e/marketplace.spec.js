@@ -11,7 +11,8 @@ test.use({ needs: { standard: 1 } });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["marketplace"] });
+  await context.route("**/_api/notify-submission", route => route.fulfill({ status: 200, body: "{}" }));
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["marketplace"] });
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
 });
 
@@ -22,7 +23,7 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     hasTouch: true,
     serviceWorkers: "block",
   });
-  await serveBranchCode(context, { pages: ["marketplace"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["marketplace"] });
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
   const page = await context.newPage();
   try {
@@ -183,22 +184,21 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page).toHaveURL(/sort=title/);
 });
 
-test("wolny prawdziwy backend: siatka ukryta do pierwszej odpowiedzi, nieistniejący UUID konkretny błąd", async ({ page }) => {
-  await page.route("**/rest/v1/rpc/market_browse", async (route) => {
+test("wolny prawdziwy backend: publiczna siatka pozostaje odsłonięta i działa po odpowiedzi", async ({ page }) => {
+  await page.route("**/rest/v1/rpc/market_public_catalog", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     await route.continue();
   });
   // stopniowe ładowanie (decyzja 2026-10-20): przy pierwszym odczycie bez napisu „Ładowanie…",
   // siatka odsłania się razem z kartami
   await page.goto(URL, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#browseGrid")).not.toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#browseGrid")).toBeVisible();
   await expect(page.locator("#browseInfo")).not.toHaveText("Ładowanie…");
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("#browseGrid")).toHaveClass(/skel-step-ready/);
 
-  await page.goto(`${URL}/game/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#appToast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
-  await expect(page.locator("#gameDetailOverlay")).toBeHidden();
+  // Statusy 404 są sprawdzane na rzeczywistym Workerze (marketplace.test.mjs).
+
 });
 
 test("konto: dodanie jest atomowe i idempotentne, kopia ma poprawny typ i zawartość", async ({ page, context, accounts, loginAs }) => {
@@ -320,7 +320,8 @@ test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", asyn
     await sentRow.locator("[data-preview]").click();
     await expect(page.locator("#gameDetailOverlay")).toBeVisible();
     await expect(page.locator("#detailTitle")).toHaveText(name);
-    await expect(page).toHaveURL(/\/marketplace\/game\/[^/?]+/);
+    await expect(page).toHaveURL(new RegExp(`[?&]game=${rows[0].id}`));
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
     const refreshResponse = await page.reload({ waitUntil: "domcontentloaded" });
     expect(refreshResponse?.status()).toBe(200);
     await expect(page.locator("#gameDetailOverlay")).toBeVisible();
@@ -351,7 +352,7 @@ test("backend nie ujawnia listy oceniających anonimowi ani zwykłemu użytkowni
   expect(rows).toEqual([]);
 
   const anon = await context.browser().newContext({ serviceWorkers: "block" });
-  await serveBranchCode(anon, { pages: ["marketplace"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anon, { pages: ["marketplace"] });
   const anonPage = await anon.newPage();
   try {
     await anonPage.goto(URL, { waitUntil: "domcontentloaded" });

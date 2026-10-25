@@ -78,17 +78,6 @@ const en = {
     replyQuoteLabel: "Your report [{ticket}]:",
     composeSubject: "Message from Familiada",
   },
-  marketplaceSsr: {
-    listTitle: "Familiada Marketplace",
-    listDesc: "Browse and download free Familiada games created by the community.",
-    back: "← Back to Marketplace",
-    questions: "Questions",
-    topAnswers: "Top answers",
-    by: "by",
-    originProducer: "Producer",
-    originCommunity: "Community",
-    play: "Play this game",
-  },
   sharingMail: {
   "friendReminderSubject": "{owner} reminds you about a friend invitation",
   "friendReminderBody": "The invitation from {owner} is still waiting for your decision. You can accept or decline it.",

@@ -99,7 +99,7 @@ export const PAGES = {
   gameSettings:  { path: "/games/settings/",   access: "guest", minViewportHeight: 580,  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "16", state: ["id"], buttons: {
     btnPlay: { to: "control", minViewportWidth: 980, custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  marketplace:   { path: "/marketplace/",       access: "public", minViewportHeight: 580, parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games", "manual"], manual: "13", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
+  marketplace:   { path: "/marketplace/",       access: "public", minViewportHeight: 580, parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games", "manual"], manual: "13", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog", "game"], dialogs: ["gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games", "manual"], manual: "17.1", state: ["share"] },
   connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
   controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
@@ -231,7 +231,7 @@ function parseInternal(raw) {
 // adres bieżącej strony porównujemy z tym "/" dopisanym.
 export function pageIdForPath(pathname) {
   // Publiczny HTML dokumentów pod index.html ma tę samą tożsamość nawigacji.
-  if (["/manual/index.html", "/privacy/index.html"].includes(pathname)) pathname = pathname.replace(/index\.html$/, "");
+  if (["/manual/index.html", "/privacy/index.html", "/marketplace/index.html"].includes(pathname)) pathname = pathname.replace(/index\.html$/, "");
   const withSlash = pathname.endsWith("/") || /\.[a-z0-9]+$/i.test(pathname) ? pathname : `${pathname}/`;
   let sub = null;
   for (const [id, p] of Object.entries(PAGES)) {

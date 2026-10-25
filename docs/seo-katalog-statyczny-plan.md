@@ -456,3 +456,44 @@ Wskazówek i zachowany URL przykładowej gry. Worker 10/10; regresja
 przeglądarkowa ze wstrzymaniem treści 4/4; powiązane unity 43/43, zrzuty
 telefonu i komputera obejrzane. Wdrożenie §10 zakończone. §11 pozostaje
 planem; gry i baza nie zostały przebudowane.
+
+## 13. Realizacja Gier Społeczności — 2026-10-25
+
+Zatwierdzone „Możesz wdrażać zgodnie z procedurą”. Branch
+`codex/marketplace-public-html`, wariant §11 bez R2 i bez cache HTML.
+
+- Migracja 485 `market_public_catalog`: lista tylko `published`, slugi,
+  publiczne pola i liczniki, bez limitu 100 funkcji `market_browse`.
+  Lokalny PG16: 105 wpisów, wykluczenie pozostałych statusów, cofnięcie
+  publikacji i DELETE od razu wykluczają wpis, brak prywatnych pól.
+  Main 91ad8fd0b, DB 40170614000 ✓, log APPLY/OK 06:53:59–06:54:00 UTC.
+  Rzeczywisty odczyt anon: 90 rekordów, wszystkie ze slugiem, brak pól
+  moderacji/email/payload/stanu konta.
+- Worker i przeglądarka mają wspólny renderer kart, pytań i metadanych.
+  Istniejący szablon, style i okienka, H1 gry i H2 pytań/kart, prawdziwe
+  linki. Pełna lista w publicznym HTML, także gdy ponad 100 wpisów.
+- Canonical katalogu zależy od języka UI. Canonical gry to slug bez
+  parametrów; brak fikcyjnych hreflangów gry. Schema Game, bez FAQPage.
+- Worker używa tylko klucza anon, nie przekazuje sesji, filtruje wynik
+  szczegółów do `published`, do HTML/bootstrap trafia jawna lista pól.
+  Odczyty API i szablonu równolegle, timeout 6 s, błąd 503/Retry-After.
+- Brak cache katalogu, gry i sitemap; publiczne CSS/JS nadal mają cache.
+  Mapa bierze publiczną listę, nie RPC admina. Liczniki nie są lastmod.
+- JS przejmuje gotowy HTML bez czyszczenia pytań i ponownego odczytu listy;
+  przed gotowością modelu linki są zwykłymi linkami. Kontrolki JS czekają
+  wyłączone do gotowości, a akcje konta na auth. Bez JS działa katalog,
+  pytania i odnośnik powrotu. Wyłączone animacje wejścia w trybie bez JS.
+- Prywatne zgłoszenia pozostają dostępne autorowi pod `?game=<id>`, z
+  noindex i kontrolą uprawnień RPC. Nowy stan w PAGES, aktualizacja tras
+  i Wskazówek PL/EN/UK. Niepubliczny slug daje 404 także przeglądarce.
+- Usunięto oddzielny prosty HTML dla botów i nieużywane tłumaczenia SSR.
+  Bramka Maintenance obejmuje katalog/grę identycznie dla obu UA.
+
+Lokalnie: workerd 17/17 (PL/EN/UK, oba UA, XSS, 105 kart, HEAD/404,
+wycofanie, noindex prywatnego podglądu, 503, sitemap i Maintenance).
+Rzeczywista przeglądarka z atrapą API: 12 przypadków (PL/EN/UK × telefon/
+komputer × JS/bez JS), bez utraty pytań przy przejęciu, z zamykaniem,
+otwieraniem i metadanymi. Powiązane unity 39/39 oraz 53/53 (część wspólna),
+lint i i18n OK. Zrzuty katalogu/Moje wysłane PL/EN/UK, 390 i 1400 px oraz
+publicznej gry bez JS. Kolejny krok: punktowe E2E kodu brancha na bazie
+po migracji, dopiero potem Pages/Worker i kontrola rzeczywistej produkcji.

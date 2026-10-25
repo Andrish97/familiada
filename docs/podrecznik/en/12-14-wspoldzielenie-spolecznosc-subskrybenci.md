@@ -75,6 +75,8 @@ Removing someone from your friends does not revoke their access to bases — do 
 
 # 13. Community Games
 
+The preview of your unpublished submission is private. Its address contains `?game=` and works when you are signed in to your account. A published game has a public `/marketplace/game/…` address that you can share with others.
+
 ## 13.1 What Community Games are
 
 Community Games is a public catalogue of ready-made games, prepared by users

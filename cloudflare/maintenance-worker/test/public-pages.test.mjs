@@ -16,7 +16,8 @@ const sources = Object.fromEntries(['manual/index.html', 'privacy/index.html', '
 const outboundService = async (request) => {
   const url = new URL(request.url);
   requests.push(url.pathname);
-  if (url.pathname.includes('/rest/')) throw new Error('public reading must not use the database');
+  if (url.pathname === '/rest/v1/rpc/market_public_catalog') return new Response('[]', {headers:{'Content-Type':'application/json'}});
+  if (url.pathname.includes('/rest/')) throw new Error('guide reading must not use the database');
   if (failOrigin) return new Response('origin unavailable', { status: 503 });
   let source = sources[url.pathname.slice(1)];
   if (legacyManual && url.pathname === '/manual/index.html') source = source
@@ -28,7 +29,7 @@ const outboundService = async (request) => {
 before(async () => {
   bundle = (await build({ entryPoints: [new URL('../src/index.js', import.meta.url).pathname], bundle: true,
     write: false, format: 'esm', platform: 'browser', target: 'es2022' })).outputFiles[0].text;
-  mf = new Miniflare({ modules: true, script: bundle, compatibilityDate: '2024-01-01', kvNamespaces: ['MAINT_KV'], outboundService });
+  mf = new Miniflare({ modules: true, script: bundle, compatibilityDate: '2024-01-01', kvNamespaces: ['MAINT_KV'], bindings:{SUPABASE_URL:'https://api.test',SUPABASE_ANON_KEY:'anon-only'}, outboundService });
 });
 after(async () => mf?.dispose());
 
@@ -135,7 +136,7 @@ test('technical document is noindex; actual maintenance remains 503 with Retry-A
     assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, follow');
     await response.text();
   }
-  const maintenance = new Miniflare({ modules: true, script: bundle, compatibilityDate: '2024-01-01', kvNamespaces: ['MAINT_KV'], outboundService });
+  const maintenance = new Miniflare({ modules: true, script: bundle, compatibilityDate: '2024-01-01', kvNamespaces: ['MAINT_KV'], bindings:{SUPABASE_URL:'https://api.test',SUPABASE_ANON_KEY:'anon-only'}, outboundService });
   try {
     await (await maintenance.getKVNamespace('MAINT_KV')).put('state', JSON.stringify({ enabled: true, mode: 'message' }));
     const response = await maintenance.dispatchFetch('https://www.familiada.online/manual/?ch=6');

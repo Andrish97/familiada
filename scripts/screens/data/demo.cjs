@@ -313,8 +313,8 @@ function buildDb(lang, extras = {}) {
     }`,
     poll_text_tally_draft_get: { draft: null, saved_at: null },
     market_my_library: [],
-    market_browse: ["pl", "en", "uk"].flatMap((mlang) => content[mlang].market.map(([title, description, author], i) => ({
-      id: id("8b00", ["pl", "en", "uk"].indexOf(mlang) * 100 + i + 1), lang: mlang, title, description,
+    market_public_catalog: ["pl", "en", "uk"].flatMap((mlang) => content[mlang].market.map(([title, description, author], i) => ({
+      id: id("8b00", ["pl", "en", "uk"].indexOf(mlang) * 100 + i + 1), slug: `demo-${mlang}-${i+1}`, lang: mlang, title, description,
       author_username: author || "", origin: author ? "community" : "producer",
       library_count: [184, 152, 97, 73, 61, 45, 38, 22][i], avg_rating: [4.8, 4.6, 4.4, 4.7, 4.1, 3.9, 4.5, 4.2][i], rating_count: [56, 41, 23, 19, 12, 8, 11, 5][i],
       in_library: mlang === lang && i === 1, created_at: daysAgo(i * 5 + 2),
