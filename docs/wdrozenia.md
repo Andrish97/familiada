@@ -303,8 +303,15 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   treści Wskazówek oraz wersje; brak zmian semantycznych w kodzie testowanych
   stron. Resolver rozwiązał wyłącznie wersje. Pełny unit **864/864** ✓ (47,3 s).
 - Końcowy zbiór pomiarów: **974/974**, bez przekroczeń 0,01; max 0,006484.
-- Status: UI brancha zielone; ponowny Control z obserwacją rzeczywistych
-  wiadomości, potem main/Pages i te same spece kontrolne na produkcji.
+- Control z rzeczywistym odbiorem: **40222245868 ✓ 1/1**, bez retry;
+  postgres_changes: Display 10, Host 10, Buzzer 28. Pełna runda i wznowienie
+  potwierdzone. UI 40220957780 ✓ 4/4 pozostaje zielone.
+- Przed publikacją doszedł main `b2a84d3ab1` z korelacją diagnostyki dzwonka
+  (`13efd5fc54`). Zachowano nowe metryki w specu i własną obserwację kanału;
+  resolver rozwiązał wyłącznie wersje. Pełny unit **860/860** ✓ (49,0 s;
+  main uprościł testy doorbellGuard). Bez zmian geometrii stron.
+- Status: Control po ostatnim scaleniu, następnie main/Pages i kontrola
+  tych samych 4 testów UI + pełnej rundy Control na produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |

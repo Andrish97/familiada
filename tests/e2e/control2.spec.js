@@ -1439,6 +1439,11 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       const transport = transportOf(await readControl2Sessions(page, game.id));
       return Object.values(transport).every(item => item.connected > 0);
     }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+    await expect.poll(async () => {
+      const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+      return events.some(event => event.source === "control" && event.category === "state_sync"
+        && event.metrics?.phase === "doorbell_sent" && Number.isSafeInteger(event.metrics?.revision));
+    }, { timeout: 15000, message: "Control powinien zalogować wysłany dzwonek z rewizją" }).toBe(true);
     const transport = transportOf(await readControl2Sessions(page, game.id));
     console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
     if (Object.values(transport).some(item => item.catchup > 0)) {

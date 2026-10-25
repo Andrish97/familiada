@@ -13,13 +13,13 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T18265";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T18265";
-import { rt } from "./realtime.js?v=v2026-10-25T18265";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18265";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18265";
-import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18265";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T18265";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T18442";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-25T18442";
+import { rt } from "./realtime.js?v=v2026-10-25T18442";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18442";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18442";
+import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18442";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T18442";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
@@ -72,7 +72,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Zapis przez dziennik sesji urządzenia (session-log.js, control2_device_log).
   function sendDiagnostic(eventType, phase, transport, metrics = {}) {
     if (!active || !sessionStarted) return;
-    log({ event_type: eventType, phase, transport, ...transportContext(), ...metrics });
+    log({ event_type: eventType, phase, transport, client_time_ms: Date.now(), ...transportContext(), ...metrics });
   }
   function noteReadStatus(result) {
     if (!sessionStarted) return;
@@ -93,7 +93,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       });
     }
   }
-  function noteRowProgress({ row, source, previousRev, fetchMs, renderMs, renderError }) {
+  function noteRowProgress({ row, source, previousRev, fetchMs, receivedMs, renderMs, renderError }) {
     const started = row?.detail?.locks?.gameStarted === true && row?.detail?.locks?.gameEnded !== true;
     if (started && !sessionStarted) {
       sessionStarted = true;
@@ -142,13 +142,25 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       });
     }
     lastRenderedRev = Math.max(lastRenderedRev, Number(row.rev) || 0);
-    if (source !== "postgres_changes" && Number(row.rev) > previousRev && directIncident) {
-      directIncident.catchupCount += 1;
-      directIncident.latestRevision = Number(row.rev);
-      directIncident.missedRevisions += previousRev >= 0 ? Math.max(1, Number(row.rev) - previousRev) : 0;
-      directIncident.maxFetchMs = Math.max(directIncident.maxFetchMs, fetchMs || 0);
-      directIncident.maxRenderMs = Math.max(directIncident.maxRenderMs, renderMs || 0);
-      directIncident.lastTrigger = source;
+    if (source !== "postgres_changes" && previousRev >= 0 && Number(row.rev) > previousRev) {
+      if (directIncident) {
+        directIncident.catchupCount += 1;
+        directIncident.latestRevision = Number(row.rev);
+        directIncident.missedRevisions += previousRev >= 0 ? Math.max(1, Number(row.rev) - previousRev) : 0;
+        directIncident.maxFetchMs = Math.max(directIncident.maxFetchMs, fetchMs || 0);
+        directIncident.maxRenderMs = Math.max(directIncident.maxRenderMs, renderMs || 0);
+        directIncident.lastTrigger = source;
+      }
+      sendDiagnostic("state_sync", "fallback_applied", "rpc_fallback", {
+        trigger: source, revision: Number(row.rev), previous_revision: previousRev >= 0 ? previousRev : null,
+        fetch_ms: fetchMs, received_ms: receivedMs, render_ms: renderMs,
+      });
+    }
+    if (source === "postgres_changes" && (receivedMs >= 250 || renderMs >= 500)) {
+      sendDiagnostic("state_sync", "postgres_changes_slow", "postgres_changes", {
+        revision: Number(row.rev), previous_revision: previousRev >= 0 ? previousRev : null,
+        received_ms: receivedMs, render_ms: renderMs,
+      });
     }
   }
   function noteDirectFailure(status, error = null) {
@@ -201,6 +213,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     isDirectConnected: () => active && directConnected,
     fetchNow: () => { if (active) void fetchGuarded(directConnected ? "rpc_doorbell" : "rpc_broadcast"); },
     onMissed: (metrics) => sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", { trigger: "doorbell", ...metrics }),
+    onLate: (metrics) => sendDiagnostic("state_sync", "direct_after_fallback", "postgres_changes", metrics),
     onStale: () => { if (!active) return; noteDirectFailure("STALE"); resync(); },
   });
   function subscribeDoorbell() {
@@ -316,7 +329,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       }, (payload) => {
         const row = payload?.new;
         const rev = Number(row?.rev);
-        if (row && Number.isFinite(rev)) sync.applyRow({ ...row, rev }, "postgres_changes");
+        if (row && Number.isFinite(rev)) {
+          doorbell.observeRevision(rev);
+          sync.applyRow({ ...row, rev }, "postgres_changes");
+        }
         else if (payload?.eventType === "DELETE") fetchGuarded("rpc_delete_recovery");
       }).subscribe((status) => {
         if (channel !== directChannel) return;

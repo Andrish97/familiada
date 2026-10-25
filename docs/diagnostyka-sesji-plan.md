@@ -238,6 +238,29 @@ odpytywanie. Spec realtime robi to samo i sprawdza, że gniazdo trzyma token
 urządzenia; pełna runda w `control2.spec.js` sprawdza `transport_state
 connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
 
+### Dodatkowa korelacja rewizji — 2026-10-25
+
+Wielokrotne `fallback_catchup` nie rozstrzyga, czy Postgres Changes zgubił
+wiadomość, czy dostarczył ją po progu 400 ms ustawionym dla dzwonka. Na
+branchu dodano pomiary po numerze rewizji, bez zmiany transportu i bez
+migracji:
+
+- Control zapisuje `state_sync / doorbell_sent` z rewizją i lokalnym czasem
+  wysłania;
+- urządzenie zapisuje `fallback_catchup` z rewizją i progiem oczekiwania;
+- jeśli później nadejdzie Postgres Changes, zapisuje
+  `direct_after_fallback` z rewizją i czasem od fallbacku;
+- gdy RPC faktycznie zastosuje nowszy stan, `fallback_applied` podaje
+  `fetch_ms`, czas oczekiwania w kolejce (`received_ms`) i render (`render_ms`);
+- nietypowo wolne bezpośrednie zdarzenia (`received_ms` ≥ 250 ms lub
+  `render_ms` ≥ 500 ms) dostają `postgres_changes_slow`.
+
+`client_time_ms` pochodzi z zegara urządzenia, więc nie należy porównywać go
+między urządzeniami jak precyzyjnego czasu serwera. Rewizja łączy zdarzenia,
+a czasy `*_ms` mierzą odstępy lokalne. Fazy `direct_after_fallback` i
+`fallback_applied` pozwolą odróżnić opóźniony kanał od skutecznego odzyskania
+stanu przez RPC; nie są same w sobie diagnozą przyczyny.
+
 ## Pytania do decyzji
 
 1. Retencja szczegółowych zdarzeń: 90 / 180 / 365 dni? (Podsumowanie żyje
