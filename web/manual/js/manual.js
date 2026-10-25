@@ -1,4 +1,4 @@
-import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-25T22394";
+import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-25T22413";
 // manual/js/manual.js
 // Podręcznik (E13): części → rozdziały → podrozdziały. Treść z content/{lang}.js
 // (generowana z docs/podrecznik przez scripts/manual/build-content.mjs).
@@ -6,22 +6,22 @@ import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-25T22394";
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T22394";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T22394";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T22394";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22394";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22394";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T22394";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T22394";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T22394";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T22413";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T22413";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T22413";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22413";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22413";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T22413";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T22413";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T22413";
 
-import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T22394";
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T22394";
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T22413";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T22413";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-25T22394"),
-  en: () => import("../content/en.js?v=v2026-10-25T22394"),
-  uk: () => import("../content/uk.js?v=v2026-10-25T22394"),
+  pl: () => import("../content/pl.js?v=v2026-10-25T22413"),
+  en: () => import("../content/en.js?v=v2026-10-25T22413"),
+  uk: () => import("../content/uk.js?v=v2026-10-25T22413"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
