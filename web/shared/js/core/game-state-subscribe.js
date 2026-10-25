@@ -284,11 +284,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         accessToken: async () => directToken || SUPABASE_ANON_KEY,
       });
       directClient.realtime.onClose((event) => {
-        // Usunięcie kanałów podczas odświeżenia tokenu zamyka socket celowo.
-        // Poza tym wąskim oknem zapisuj także czysty close 1000, bo serwer
-        // może zamknąć połączenie normalnie, a i tak jest to diagnostyczne.
-        if (event?.code === 1000 && event?.wasClean && performance.now() <= ignoreCleanSocketCloseUntil) return;
-        const details = realtimeSocketCloseDetails(event);
+        // Zapisuj także zamknięcia wywołane przez klienta. Flaga pozwala je
+        // odróżnić od serwerowych, zamiast po cichu wyrzucać kod 1000.
+        const expected = event?.code === 1000 && event?.wasClean
+          && performance.now() <= ignoreCleanSocketCloseUntil;
+        const details = { ...realtimeSocketCloseDetails(event), socket_close_expected: expected };
         lastSocketClose = { at: performance.now(), details };
         if (directIncident) Object.assign(directIncident.socketClose, details);
         sendDiagnostic("transport_state", "socket_closed", "postgres_changes", {
@@ -477,6 +477,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     clearTimeout(tokenTimer);
     tokenTimer = null;
     const client = directClient;
+    if (directChannel || directTableChannels.size) ignoreCleanSocketCloseUntil = performance.now() + 5_000;
     if (directChannel) {
       const channel = directChannel;
       directChannel = null;
