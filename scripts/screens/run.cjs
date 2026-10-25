@@ -39,6 +39,8 @@ const DEVICES = {
   "desktop-1400": { width: 1400, height: 900, scale: 1, mobile: false },
   // Typowy laptop (e2e Control: lista urządzeń bez przewijania przy 1366×768).
   "laptop-1366": { width: 1366, height: 768, scale: 1, mobile: false },
+  // Tablet w pionie z paskami przeglądarki (zgłoszenie 2026-10-25, Eksplorator).
+  "tablet-600": { width: 600, height: 960, scale: 2, mobile: true, screen: { width: 600, height: 960 } },
   "monitor-1920": { width: 1920, height: 1080, scale: 1, mobile: false },
   // Dotykowy tablet z niskim oknem 1400×550 (Host i Przycisk wymagają dotyku).
   "tablet-short-1400": { width: 1400, height: 550, scale: 1, mobile: true, screen: { width: 1440, height: 900 } },

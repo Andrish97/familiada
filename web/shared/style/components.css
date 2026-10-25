@@ -2863,6 +2863,9 @@
   :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection:has(> .shareList--scroll):not([hidden]) {
     display: flex;
     flex-direction: column;
+    /* Dzieci na pełną szerokość okna, także gdy strona ma align-items: start
+       dla siatki (Eksplorator „Utwórz grę”: lista węższa i ucięta, 2026-10-25). */
+    align-items: stretch;
     flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
