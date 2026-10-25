@@ -204,3 +204,14 @@ zmianą Edge. Błąd flow-list YAML dzielił tmpfs na dwa wpisy. Poprawiono
 cytowanie w prywatnym compose i publicznym przykładzie. Rzeczywisty lokalny
 start przez compose z poprawioną konfiguracją ✓: tmpfs /tmp z obiema opcjami,
 read-only, 1 CPU/1 GiB, zdrowie i 3 języki × 384 wymiarów.
+
+Model wdrożony 40199162665 ✓: 900 pytań/90 gier uzupełnione, pełne
+raporty i kandydaci w PL/EN/UK przez Edge ✓; kontrola parafraz 29/30,
+0/30 negatywnych (zbiór kontrolny, nie ogólna miara skuteczności).
+DB read 40199332058 ✓: 900/900 wektorów, 90/90 pełnych raportów.
+Produkcja 40199335322 ✓ 2/2 (zgłoszenie, kopia pod nowym ID/tytułem/językiem).
+Dodatkowy odczyt crona 40199723621 ✓: zadanie aktywne i 3 wymagane sekrety
+obecne, ale domyślny timeout pg_net to 5000 ms. Migracja 489 ustawia
+90000 ms dla partii modelu (handler może pracować kilkadziesiąt sekund).
+Lokalny rzeczywisty PL/pgSQL + atrapy Vault/pg_net ✓: limit czasu, nagłówki,
+granice partii, brak żądania bez sekretu, zachowane ograniczone uprawnienia.
