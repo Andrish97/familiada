@@ -46,6 +46,7 @@
     overscroll-behavior: none; /* gasi biały bounce */
     transition: opacity var(--dur-slow) ease-in;
   }
+  html[data-page-redirect] body { opacity: 0; pointer-events: none; }
   html.page-loading body, html[data-layout-pending] body { opacity: 0; }
 
   body > main,

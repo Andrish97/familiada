@@ -1,7 +1,8 @@
+import { redirectPage } from "./page-layout.js?v=v2026-10-25T19332";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-25T19243";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T19243";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T19243";
+import { icon } from "./icons.js?v=v2026-10-25T19332";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-25T19332";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-25T19332";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -146,7 +147,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T19243";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-25T19332";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -321,7 +322,7 @@ export async function getUser() {
 export async function requireAuth(redirect) {
   const u = await getUser();
   if (!u) {
-    location.href = withLangParam(redirect);
+    redirectPage(withLangParam(redirect));
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
@@ -331,7 +332,7 @@ export async function requireAuth(redirect) {
       const { data: expired } = await sb().rpc("guest_is_expired", { p_user_id: u.id });
       if (expired === true) {
         await sb().auth.signOut();
-        location.href = withLangParam("/login/?guest_expired=1");
+        redirectPage(withLangParam("/login/?guest_expired=1"));
         return null;
       }
       await sb().rpc("guest_touch", { p_ttl_days: 5 });
@@ -343,12 +344,12 @@ export async function requireAuth(redirect) {
   const username = await fetchUsername(u);
   // Guest accounts may not have a persisted username yet; do not bounce them.
   if (!username && !u?.is_guest) {
-    location.href = withLangParam("/login/?setup=username");
+    redirectPage(withLangParam("/login/?setup=username"));
     return null;
   }
   // After guest -> registered upgrade, keep forcing a real username.
   if (!u?.is_guest && String(username || "").toLowerCase().startsWith("guest_")) {
-    location.href = withLangParam("/login/?setup=username&guest_username=1");
+    redirectPage(withLangParam("/login/?setup=username&guest_username=1"));
     return null;
   }
   return { ...u, username };

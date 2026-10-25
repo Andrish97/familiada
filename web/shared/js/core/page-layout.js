@@ -1,5 +1,26 @@
 // Pierwsza widoczna klatka: tłumaczenia i pomiary wspólnego silnika przed
 // odsłonięciem. Dane nie są bramką: data-skel-step odsłania je niezależnie.
+// Przekierowanie jest stanem strony: rozstrzygnięcie trasy trzyma bramkę
+// holdPageLayout, a rozpoczęta nawigacja nie może odsłonić źródła w finally.
+let releaseRedirect = () => {};
+export function redirectPage(href) {
+  releaseRedirect();
+  const root = document.documentElement;
+  let timeout;
+  const release = () => {
+    clearTimeout(timeout);
+    root.removeAttribute("data-page-redirect");
+    window.removeEventListener("pageshow", restore);
+  };
+  const restore = (event) => { if (event.persisted) release(); };
+  root.setAttribute("data-page-redirect", "");
+  releaseRedirect = release;
+  window.addEventListener("pageshow", restore);
+  // Nawigacja może zostać przerwana przez przeglądarkę lub sieć.
+  timeout = setTimeout(release, 10000);
+  try { location.replace(href); } catch (error) { release(); throw error; }
+}
+
 const measurements = new Set();
 const waiting = new Set();
 const stepHolds = new WeakMap();
@@ -53,7 +74,7 @@ function measurePage() {
 function requestReveal() {
   if (shown || scheduled || !domReady || typeof requestAnimationFrame !== "function") return;
   const root = document.documentElement;
-  if (root.classList.contains("page-loading") || waiting.size) return;
+  if (root.classList.contains("page-loading") || root.hasAttribute("data-page-redirect") || waiting.size) return;
   scheduled = true;
   // Pierwszy pomiar uruchamia obserwatory rozmiaru. Drugi odbiera zmiany
   // po topbarze, podmianie ikon i tekstów; odsłonięcie jest w tej samej klatce.
@@ -61,7 +82,7 @@ function requestReveal() {
     measurePage();
     requestAnimationFrame(() => {
       scheduled = false;
-      if (waiting.size || root.classList.contains("page-loading")) { requestReveal(); return; }
+      if (waiting.size || root.classList.contains("page-loading") || root.hasAttribute("data-page-redirect")) { requestReveal(); return; }
       measurePage();
       shown = true;
       globalThis.FamiliadaPageBoot?.finish();
@@ -88,7 +109,7 @@ if (typeof document !== "undefined" && document.documentElement && typeof Mutati
     // Nowy etap po danych: pomiar w mikrozadaniu przed jego renderem,
     // bez ponownego chowania gotowej powłoki lub innych etapów.
     if (shown && readyStep) measurePage();
-  }).observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class"] });
+  }).observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "data-page-redirect"] });
   const loaded = document.readyState === "complete"
     || globalThis.performance?.getEntriesByType?.("navigation")[0]?.domContentLoadedEventStart > 0;
   if (loaded) start();

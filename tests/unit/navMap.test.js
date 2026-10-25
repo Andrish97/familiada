@@ -271,3 +271,13 @@ test("Control → Znajomi → Control zachowuje grę, język i łańcuch powrot�
   assert.equal(back.searchParams.get("lang"), "en");
   assert.equal(back.searchParams.get("ret"), "/games/?tab=prepared");
 });
+
+
+test("cele niewidocznych przekierowań są jawnymi trasami w tej samej mapie", () => {
+  for (const [id, page] of Object.entries(PAGES)) {
+    for (const destination of page.initialRedirects || []) {
+      assert.ok(PAGES[destination], `${id}: nieznany cel ${destination}`);
+      assert.notEqual(destination, id, `${id}: pętla przekierowania`);
+    }
+  }
+});

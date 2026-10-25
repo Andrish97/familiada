@@ -229,6 +229,31 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+
+### 2026-10-25 — niewidoczne przekierowania przy wejściu
+
+- Dodatkowe zlecenie użytkownika: Home zalogowanego miga przed Games;
+  poprawić także podobne automatyczne przejścia.
+- Branch `fix/atomic-redirects`. Wspólna blokada `redirectPage` zachowuje
+  ukrycie źródła po decyzji, nawet po zwolnieniu bramki pierwszej klatki.
+  Home czeka na sesję równolegle z i18n; Login na sesję/next (bez niezaufanej
+  kopii sesji w HTML), Go na rozstrzygnięcie bramki. requireAuth i przekierowania
+  gościa korzystają z tego samego mechanizmu. Stany interaktywne pozostają.
+- Chromium, 390/360/1400 px, opóźnienie danych 450 ms i HTML celu 700 ms:
+  Home/Login/Go przed zmianą **59–68 widocznych klatek źródła**, po zmianie
+  **0 we wszystkich 9 próbach**. Osobny spec e2e obejmuje także `next=friends`,
+  `force_auth` oraz błędny link Go. Skeleton nadal działa niezależnie.
+- Kontrola poprzedniego wdrożenia: Pages **40225432566 ✓**, UI produkcji
+  **40225815161 ✓ 4/4**. Control **40226069927 ✗**: licznik podpięty do
+  pojedynczego obiektu kanału zgubił obserwację po odtworzeniu kanału.
+  Pełna gra do tego miejsca działała, heartbeat/unexplainedCatchup = 0.
+  Licznik przeniesiono do obserwacji faktycznych ramek WebSocket w Playwright;
+  obejmuje reconnect i nawigacje, bez zmiany danych/SDK i bez osłabiania asercji.
+- Unit **812/812 ✓**. Zrzuty 12 kadrów Home/Login/Go: brak przekroczeń
+  skok-po-zaladowaniu; dwa istniejące ostrzeżenia zawijania CTA Home mobile,
+  lokalny zewnętrzny Turnstile niedostępny (stan zastany).
+- Status: branch e2e, potem publikacja i kontrola produkcji.
+
 ### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
 
 - Próba publikacji po zielonym Control 40222927342 została odrzucona jako

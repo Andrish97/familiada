@@ -35,7 +35,7 @@ test("index: sesję weryfikuje backend, a nie niezaufany localStorage", () => {
   const js = read("home/js/index.js");
   assert.doesNotMatch(html, /sb-.*auth-token/);
   assert.match(js, /await getUser\(\)/);
-  assert.match(js, /location\.replace\(withLangParam\("\/games\/"\)\)/);
+  assert.match(js, /redirectPage\(withLangParam\("\/games\/"\)\)/);
 });
 
 test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => {

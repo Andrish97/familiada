@@ -7,19 +7,22 @@ import { createRequire } from 'node:module';
 const read = file => fs.readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function layoutHarness() {
-  const frames = [], events = [], listeners = {};
+  const frames = [], events = [], listeners = {}, timeouts = new Map();
+  let sequence = 0;
   let mutation;
   const attributes = new Set(['data-layout-pending']);
-  const root = { classList: { contains: () => false }, removeAttribute: attr => attributes.delete(attr) };
+  const root = { classList: { contains: () => false }, removeAttribute: attr => attributes.delete(attr), hasAttribute: attr => attributes.has(attr), setAttribute: attr => attributes.add(attr) };
   const context = vm.createContext({
     document: { documentElement: root, readyState: 'interactive', addEventListener: (event, cb) => { listeners[event] = cb; } },
     MutationObserver: class { constructor(fn) { mutation = fn; } observe() {} },
     performance: { getEntriesByType: () => [{ domContentLoadedEventStart: 0 }] },
     requestAnimationFrame: cb => frames.push(cb),
-    window: { dispatchEvent: event => events.push(event.type) }, Event, console,
+    window: { dispatchEvent: event => events.push(event.type), addEventListener: (name, fn) => { listeners[name] = fn; }, removeEventListener: name => { delete listeners[name]; } },
+    setTimeout: fn => { const id = ++sequence; timeouts.set(id, fn); return id; }, clearTimeout: id => timeouts.delete(id),
+    location: { replace: href => events.push(`redirect:${href}`) }, Event, console,
   });
-  vm.runInContext(`${read('web/shared/js/core/page-layout.js').replace(/export /g, '')}; globalThis.api = { registerPageLayout, holdPageLayout, holdSkeletonLayout };`, context);
-  return { context, frames, events, listeners, attributes, mutation: records => mutation(records), api: context.api };
+  vm.runInContext(`${read('web/shared/js/core/page-layout.js').replace(/export /g, '')}; globalThis.api = { registerPageLayout, holdPageLayout, holdSkeletonLayout, redirectPage };`, context);
+  return { context, frames, events, listeners, attributes, timeouts, mutation: records => mutation(records), api: context.api };
 }
 
 test('pierwsza klatka czeka na DOMContentLoaded, tłumaczenia i obydwa pomiary', async () => {
@@ -138,4 +141,33 @@ test('audyt rozdziela etap ukryty i widoczny, pomija interakcje i zatrzymuje si�
   assert.equal(result.shifts.length, 1);
   deliver([{ startTime: 40, value: .5, sources: [] }]);
   assert.equal(context.__screensLayoutAudit.shifts.length, 2);
+});
+
+
+test('przekierowanie pozostaje ukryte po zwolnieniu bramki inicjalizacji', async () => {
+  const h = layoutHarness();
+  let resolve;
+  h.api.holdPageLayout(new Promise(done => { resolve = done; }));
+  h.listeners.DOMContentLoaded();
+  h.api.redirectPage('/games/?lang=uk');
+  resolve(); await tick();
+  assert.equal(h.frames.length, 0);
+  assert.ok(h.attributes.has('data-page-redirect'));
+  assert.deepEqual(h.events, ['redirect:/games/?lang=uk']);
+  h.listeners.pageshow({ persisted: true });
+  assert.equal(h.attributes.has('data-page-redirect'), false, 'powrót z bfcache przywraca źródło');
+  h.mutation([]); h.frames.shift()(); h.frames.shift()();
+  assert.ok(h.events.includes('page:shown'));
+});
+
+test('przerwana nawigacja ma bezpiecznik, a wyjątek przeglądarki zwalnia stan', () => {
+  const h = layoutHarness();
+  h.api.redirectPage('/games/'); h.api.redirectPage('/login/');
+  assert.equal(h.timeouts.size, 1, 'nowy cel zastępuje poprzedni bezpiecznik');
+  [...h.timeouts.values()][0]();
+  assert.equal(h.attributes.has('data-page-redirect'), false);
+  h.context.location.replace = () => { throw new Error('navigation rejected'); };
+  assert.throws(() => h.api.redirectPage('/games/'), /navigation rejected/);
+  assert.equal(h.attributes.has('data-page-redirect'), false);
+  assert.equal(h.timeouts.size, 0);
 });

@@ -1163,9 +1163,23 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    // Licznik po stronie Playwright przeżywa przeładowanie urządzenia przez
+    // service workera oraz odtworzenie kanału po reconnect. Czyta tylko typ
+    // i topic rzeczywistych ramek; nie zmienia SDK ani obsługi wiadomości.
+    const nativeCounts = { display: 0, host: 0, buzzer: 0 };
+    const observeNative = (source) => (devicePage) => devicePage.on("websocket", (socket) => {
+      socket.on("framereceived", ({ payload }) => {
+        try {
+          const frame = JSON.parse(String(payload));
+          const event = Array.isArray(frame) ? frame[3] : frame.event;
+          const topic = Array.isArray(frame) ? frame[2] : frame.topic;
+          if (event === "postgres_changes" && String(topic).includes("game-state-direct")) nativeCounts[source]++;
+        } catch {}
+      });
+    });
+    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors, { onPage: observeNative("display") });
+    const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors, { onPage: observeNative("host") });
+    const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, { onPage: observeNative("buzzer") });
 
     // Potwierdź, że prawdziwe strony urządzeń dołączyły do kanału
     // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
@@ -1178,19 +1192,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
       }).toEqual(expect.arrayContaining([expect.stringMatching(/:joined$/)]));
 
-      // Obserwacja prawdziwych ramek kanału, bez modyfikacji danych ani obsługi.
-      await devicePage.evaluate(() => {
-        window.__e2eNativeChanges = 0;
-        for (const channel of window.__sbDeviceRealtime.getChannels().filter((ch) => String(ch.topic || "").includes("game-state-direct"))) {
-          const native = channel.channelAdapter?.getChannel?.();
-          const onMessage = native?.onMessage;
-          if (typeof onMessage !== "function") throw new Error("native postgres_changes observer unavailable");
-          native.onMessage = function (event, ...args) {
-            if (event === "postgres_changes") window.__e2eNativeChanges++;
-            return onMessage.call(this, event, ...args);
-          };
-        }
-      });
+
     }
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -1325,12 +1327,10 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // słabego łącza 2026-10-25). Catchup nie dowodzi awarii kanału. Wymagamy
     // jego rzeczywistej wiadomości, żeby zapasowy transport nie ukrył regresji
     // „SUBSCRIBED, ale bez danych”; cała runda nadal sprawdza stan urządzeń.
-    const nativeCounts = {};
-    for (const [source, devicePage] of [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]]) {
-      await expect.poll(() => devicePage.evaluate(() => window.__e2eNativeChanges || 0), {
+    for (const source of Object.keys(nativeCounts)) {
+      await expect.poll(() => nativeCounts[source], {
         timeout: 10000, message: `${source}: bezpośredni kanał dostarczył postgres_changes`,
       }).toBeGreaterThan(0);
-      nativeCounts[source] = await devicePage.evaluate(() => window.__e2eNativeChanges || 0);
     }
     console.log(`[e2e-diag] native postgres_changes ${JSON.stringify(nativeCounts)}`);
 

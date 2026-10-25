@@ -1430,3 +1430,16 @@ prywatnym Workerem i plikami z repo familiada-server. Dawne lokalne trasy
 `web/admin/` i jego narzędzia nie są stronami tej aplikacji ani wpisami PAGES.
 Na domenie publicznej ich ścieżki pozostają zablokowane. Mapa i testy
 prywatnego panelu należą do jego repo.
+
+
+### Atomowe przekierowania przy wejściu (2026-10-25)
+
+Decyzja użytkownika: źródło niewidocznej nawigacji nie może mignąć przed
+celem. `PAGES.initialRedirects` wymienia możliwe cele dla Home, Login i Go;
+uprawnienia `access` nadal opisują przekierowanie na logowanie przez auth.
+Home czeka na backendowe sprawdzenie sesji równolegle z językiem, Login na
+sesję i istniejący `next`, Go na decyzję bramki. Nie ufamy lokalnej kopii
+sesji w HTML logowania. `force_auth`, ustawienie nazwy, błędne/zakończone
+linki i komunikaty po potwierdzeniu zachowują własny widok. Mechanizm jest
+w `page-layout.js` (holdPageLayout + redirectPage), kontrakt w §5a instrukcji
+silnika. Brak zmiany adresów, parametrów, ról i docelowych uprawnień.

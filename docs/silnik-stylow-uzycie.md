@@ -145,6 +145,17 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
   jeszcze się pobierają. Błąd obietnicy zwalnia bramkę. Niezależny bezpiecznik
   klasycznego skryptu zdejmuje ukrywanie po 5 s także przy błędzie modułów;
   guard urządzenia nadal ma pierwszeństwo.
+- Niewidoczne przekierowania rozstrzygaj przed odsłonięciem. Strona wejścia
+  przekazuje `route: promise` do `initEntryPage`; wynik `true` oznacza
+  przekierowanie (funkcja zwraca wtedy `false`). Inne inicjalizatory rejestrują
+  całą decyzję przez `holdPageLayout`. Także błąd tłumaczeń czeka na decyzję
+  trasy; listy danych nie należą do tej bramki.
+- Do automatycznej nawigacji używaj `redirectPage(href)` z `page-layout.js`.
+  `data-page-redirect` trzyma źródło ukryte także po `finally` inicjalizatora
+  i po bezpieczniku bootstrapu, aż przeglądarka otworzy cel. Nawigacja używa
+  `replace`, więc Wstecz nie ponawia bramki. Wyjątek przeglądarki, powrót
+  z bfcache i niezależny limit 10 s dla przerwanej nawigacji zwalniają stan.
+  Nie stosuj do potwierdzeń z widocznym odliczaniem ani zwykłych kliknięć.
 - Stopniowe ładowanie pozostaje: `data-skel-step`, `skel-step-ready`, grupy
   i `topbar-ready`. Wstaw treść i podepnij akcje, potem oznacz etap jako gotowy.
   Silnik mierzy nowo odsłaniany etap przed jego renderem. `skel-step-ready`

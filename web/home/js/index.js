@@ -1,13 +1,14 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-25T19243";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T19243";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T19243";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T19243";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-25T19243";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T19243";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T19243";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T19243";
-import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T19243";
-import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-25T19243";
+import { redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-25T19332";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-25T19332";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T19332";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T19332";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T19332";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-25T19332";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T19332";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T19332";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T19332";
+import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T19332";
+import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-25T19332";
 
 
 async function redirectIfSession() {
@@ -16,14 +17,14 @@ async function redirectIfSession() {
     if (user) {
       // Gość ma prawie pełne konto: od razu /games/ (nawigacja, decyzja 2026-10-07).
       if (isGuestUser(user)) {
-        location.replace(withLangParam("/games/"));
+        redirectPage(withLangParam("/games/"));
         return true;
       }
       if (!user.username) {
-        location.replace(withLangParam("/login/?setup=username"));
+        redirectPage(withLangParam("/login/?setup=username"));
         return true;
       }
-      location.replace(withLangParam("/games/"));
+      redirectPage(withLangParam("/games/"));
       return true;
     }
   } catch (e) {
@@ -401,7 +402,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Kadry zaczynają się pobierać od razu, nie czekając na tłumaczenia.
   switchLandingImages(getUiLang());
   // Awaria tłumaczeń nie może zostawić pustej strony (initEntryPage odsłania ją zawsze).
-  await initEntryPage("home", { ready: initI18n({ withSwitcher: true }) }).catch((e) => console.error("[index] i18n init failed:", e));
+  const stay = await initEntryPage("home", {
+    ready: initI18n({ withSwitcher: true }), route: redirectIfSession(),
+  }).catch((e) => { console.warn("[index] initialization failed", e?.name); return true; });
+  if (!stay) return;
   applyTranslations();
   updateInternalLinks();
   updateHomeSeo();
@@ -427,5 +431,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Te zapytania są niekrytyczne: landing pozostaje gotowy także przy wolnym
   // lub niedostępnym backendzie, a każde odrzucenie jest jawnie obsłużone.
   void loadRatingStats();
-  void redirectIfSession();
 });

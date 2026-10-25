@@ -149,13 +149,13 @@ test("lokalne skrypty, style i importy JS wskazują istniejące pliki", () => {
 
 test("powroty do listy gier prowadzą na games (login, confirm, konto, manifest)", () => {
   assert.match(read("login/index.html"), /data-games-url="\/games\/"/);
-  assert.match(read("login/index.html"), /_dest = '\/games\/'/);
+  assert.doesNotMatch(read("login/index.html"), /sb-.*auth-token/);
   assert.match(read("login/js/login.js"), /baseUrls\.gamesUrl \|\| "\/games\/"/);
   assert.match(read("login/confirm/index.html"), /data-base-href="\/games\/"/);
   assert.match(read("account/js/account.js"), /initPage\("account"/); // „Wstecz” liczy initPage z mapy
   assert.doesNotMatch(read("index.html"), /sb-.*auth-token/);
   assert.match(read("home/js/index.js"), /await getUser\(\)/);
-  assert.match(read("home/js/index.js"), /location\.replace\(withLangParam\("\/games\/"\)\)/);
+  assert.match(read("home/js/index.js"), /redirectPage\(withLangParam\("\/games\/"\)\)/);
   assert.match(read("marketplace/index.html"), /id="btnGoGames"/);
   assert.match(read("friends/index.html"), /id="btnBack"/);
   assert.match(read("shared/js/core/topbar-controller.js"), /#btnBackToGames/);
