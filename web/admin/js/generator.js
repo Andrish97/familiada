@@ -1,10 +1,10 @@
-import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js?v=v2026-10-25T14465";
+import { exactCopy, needsReview, uniquenessSummary, uniquenessReportHtml, uniquenessErrorMessage } from "./uniqueness.js?v=v2026-10-25T15122";
 
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T14465";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T14465";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T14465";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T14465";
-import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T14465";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T15122";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T15122";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T15122";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T15122";
+import { setProgress as setBar, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T15122";
 
 
 let games = [];
@@ -947,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-25T14465';
+    a.download = 'przykladowa-gra.json?v=v2026-10-25T15122';
 
     document.body.appendChild(a);
     a.click();
