@@ -229,6 +229,45 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — animowane części ikon: audyt, hamburger i para kawy
+
+- Zlecenie użytkownika: audyt zastosowań animowanych części SVG i pierwsze
+  wdrożenie hamburgera oraz kawy. Doprecyzowanie: filiżanka stoi, para nad
+  nią płynnie zmienia falę. Branch `feat/animated-icon-parts`.
+- Decyzje i audyt: `docs/animowane-ikony-audyt.md`. Wspólny silnik, stały
+  viewBox/rozmiar/currentColor; stan menu jest źródłem kształtu hamburgera.
+  Ruch pary tylko w widocznym obszarze i aktywnej karcie, wyłączony dla
+  prefers-reduced-motion. Bez nowych animacji pozostałych ikon w tej paczce.
+- Silnik i audyt gotowe: ruch części SVG, bez runtime-fetch. Chromium na
+  390/360/1400 px: menu zmienia stan, krzywa pary zmienia kształt, reduced
+  motion zatrzymuje ją, brak błędów JS. Unit **814/814 ✓**.
+- Zrzuty 15 kadrów menu/stopki/okna kawy; brak przekroczeń CLS. Dwie istniejące
+  uwagi dotyczą zawijania CTA Home, niezwiązane z ikonami.
+- Branch e2e 40230197325 zatrzymał się przy zbieraniu testów (needs w describe);
+  deklarację lease przeniesiono na poziom pliku. 40230454872: okno kawy **3/3 ✓**;
+  dwa nowe testy ujawniły rezerwację 12 px guttera na stronie bez scrollbara
+  oraz ostatnią klatkę SMIL po endElement. Gutter jest teraz rezerwowany tylko,
+  gdy rzeczywiście istniał scrollbar; SMIL pauzuje i wznawia własną oś czasu,
+  zachowując fazę fali. Ponowny unit **814/814 ✓**, smoke 390/360/1400 ✓.
+- 40231091388: para **1/1 ✓**, hamburger ujawnił istniejący przypadek 360 px:
+  długa nazwa konta zostawiała sekcji nawigacji dokładnie 0 px. Pomiar uznawał
+  ją za ukrytą i nie uruchamiał hamburgera. Teraz pomijany jest tylko brak
+  renderowanego prostokąta (display:none), a widoczna sekcja 0 px poprawnie
+  przechodzi do menu. Unit po poprawce **814/814 ✓**.
+- Hamburger **40231973821 ✓ 1/1**, para **40231091388 ✓ 1/1**, okno kawy
+  **40230454872 ✓ 3/3**. Po scaleniu aktualnego main (tylko obrazy, dokumenty
+  i wersje) pełny unit ponownie **814/814 ✓**. Nie powtarzano zielonych speców,
+  których kod się nie zmienił. Pages **40232581204 ✓** (`82605a98d8`),
+  kontrola rzeczywistej produkcji **40232849277 ✓ 5/5**.
+- Ostatnie doprecyzowanie: Escape obsłużony przez menu oznacza preventDefault,
+  by nie zamykać dodatkowo okna pod nim. Unit **814/814 ✓**, branch
+  **40232960922 ✓ 1/1**. Pages **40233133027 ✓** (`31830e051a`),
+  produkcyjny test menu **40233368390 ✓ 1/1**. Status: **zrobione**.
+- Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
+  `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
+  repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.
+
+
 ### 2026-10-25 — jednoznaczny opis zmiany typu gry
 
 - Zgłoszenie użytkownika: dwukrotne „zostaną” sugerowało zachowanie także
@@ -2085,3 +2124,20 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Zaproszenie marketingowe — poprawiony nagłówek | „Pytania na trzy sposoby” zastąpione przez „Trzy sposoby na przygotowanie gry” w aktywnym prywatnym szablonie i publicznej kopii wspólnego modułu. Zaktualizowane istniejące asercje: prywatnie 2/2, publicznie 2/2, po scaleniu wersji także brak konfliktów. Podgląd maila 1400/390 obejrzany. Private production 40231963637 i CI 40231963015/40231961534 success; podgląd i wysyłka nadal używają tego samego buildera. | Poprawka wdrożona w prywatnym panelu; publiczna kopia nie jest używana przez stronę i nie wymaga Pages. Odświeżyć otwartą kartę panelu. Bez wysyłania wiadomości. |
+
+
+### 2026-10-25 — prywatny TinyMCE: wspólny motyw silnika
+
+- Na dodatkowe zgłoszenie właściciela poprawiono oba edytory wyłącznie w
+  `Andrish97/familiada-server`: skrzynkę i Marketing. Jeden adapter opcji,
+  kolory/fonty/obramowania/tła/okna z tokenów, CSS iframe bez dopisywania do
+  wysyłanego HTML. Naprawiony automatyczny scroll TinyMCE 7.9.3 pod palcem.
+- Zachowano równoległe zmiany Marketingu, rozmów i nagłówka zaproszenia.
+  Prywatny pakiet otrzymał przypięte części ikon i animowany hamburger;
+  nie dodawano nowego przycisku kawy do prywatnej stopki.
+- Prywatnie **84/84 unit**, **17/17 przeglądarkowych** z prawdziwym TinyMCE,
+  w tym edytor/menu/okno na 390 i 1400 px. CI main **40233222927 ✓**,
+  serwer check **40232621976 ✓**, produkcja **40233222220 ✓** (`ea720aa`).
+  SHA wydania potwierdzony, odmowy originu 404, poprawny sekret 200,
+  private/no-store, Access 302. Brak wysyłki i zmian maintenance.
+- Szczegóły prywatnie: docs/admin-private-plan.md; status: **zrobione**.

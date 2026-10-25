@@ -1,4 +1,4 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T20442";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T20570";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -6,12 +6,12 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T20442";
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T20442";
-import { signOut } from './auth.js?v=v2026-10-25T20442';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T20442';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T20442';
-import { icon, iconText } from './icons.js?v=v2026-10-25T20442';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T20442';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T20570";
+import { signOut } from './auth.js?v=v2026-10-25T20570';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T20570';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T20570';
+import { icon, iconText } from './icons.js?v=v2026-10-25T20570';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T20570';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -114,7 +114,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     // Topbar Ustawień jest początkowo display:none pod ekranem logowania.
     // Pomiar zerowej szerokości błędnie uruchamiał hamburger i zostawiał go
     // po późniejszym odblokowaniu panelu.
-    if (!section2.isConnected || section2Width <= 0) return;
+    // Widoczna sekcja może mieć 0 px, gdy konto zajęło całe wolne miejsce.
+    // To właśnie wymaga hamburgera; pomijamy wyłącznie brak układu (display:none).
+    if (!section2.isConnected || !section2.getClientRects().length) return;
 
     const btns = getVisibleBtns();
     btns.forEach(btn => btn.classList.remove('hidden'));
@@ -410,7 +412,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T20442');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T20570');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -492,11 +494,17 @@ function initTopbarController() {
   const close = () => {
     overlay?.classList.remove('is-open');
     document.body.classList.remove('topbar-mobile-lock');
+    document.documentElement.removeAttribute('data-menu-scrollbar');
+    toggleBtn?.setAttribute('aria-expanded', 'false');
+    toggleBtn?.setAttribute('aria-label', t('common.menuOpen'));
   };
 
   const open = () => {
+    document.documentElement.toggleAttribute('data-menu-scrollbar', window.innerWidth > document.documentElement.clientWidth);
     overlay?.classList.add('is-open');
     document.body.classList.add('topbar-mobile-lock');
+    toggleBtn?.setAttribute('aria-expanded', 'true');
+    toggleBtn?.setAttribute('aria-label', t('common.menuClose'));
   };
 
   const mountMobile = () => {
@@ -507,6 +515,7 @@ function initTopbarController() {
 
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
+    overlay.id = 'topbarMobileMenu';
     if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
@@ -580,7 +589,10 @@ function initTopbarController() {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger')}</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBtn.setAttribute('aria-controls', overlay.id);
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.setAttribute('aria-label', t('common.menuOpen'));
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger', { animation: 'menu' })}</span><span class="badge" aria-hidden="true"></span>`;
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
@@ -592,8 +604,10 @@ function initTopbarController() {
       action.blur();
       close();
     }, true);
-    toggleBtn.addEventListener('pointerdown', open);
-    closeBtn.addEventListener('pointerdown', close);
+    toggleBtn.addEventListener('click', () => {
+      if (toggleBtn.getAttribute('aria-expanded') === 'true') close(); else open();
+    });
+    closeBtn.addEventListener('click', () => { close(); toggleBtn?.focus(); });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     if (!section2.querySelector(':scope > .topbar-title')) section2.hidden = true;
@@ -653,6 +667,16 @@ function initTopbarController() {
   window.addEventListener('topbar:mobile-required', (event) => {
     navRequiresMobile = !!event.detail?.required;
     syncMode();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
+    event.preventDefault();
+    close();
+    toggleBtn?.focus();
+  });
+  window.addEventListener('i18n:lang', () => {
+    toggleBtn?.setAttribute('aria-label', t(toggleBtn.getAttribute('aria-expanded') === 'true' ? 'common.menuClose' : 'common.menuOpen'));
   });
 
   syncMode();

@@ -1,6 +1,8 @@
 // Tłumaczenia UK — część wspólna — wczytuje ją każda strona.
 const uk = {
   common: {
+    menuOpen: "Відкрити меню",
+    menuClose: "Закрити меню",
     colorPicker: {
       preview: "Попередній перегляд кольору",
       hexLabel: "HEX",

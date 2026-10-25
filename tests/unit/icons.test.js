@@ -99,3 +99,18 @@ test("pliki ikon językowych i połowy gwiazdki są osobnymi źródłami SVG", (
     assert.ok(icon(name).includes(`${ICONS[name]}#icon`), name);
   }
 });
+
+test('części animacji pochodzą z aktualnych SVG, a profile są jawne', async () => {
+  const { buildIconParts, output } = await import('../../scripts/build-icon-parts.mjs');
+  assert.equal(fs.readFileSync(output, 'utf8'), buildIconParts());
+  const menu = icon('hamburger', { animation: 'menu', label: 'Menu' });
+  assert.equal((menu.match(/data-icon-part=/g) || []).length, 3);
+  assert.match(menu, /role="img" aria-label="Menu"/);
+  assert.doesNotMatch(menu, /<use/);
+  const coffee = icon('coffee', { animation: 'steam' });
+  assert.equal((coffee.match(/<animate /g) || []).length, 2);
+  assert.match(coffee, /attributeName="d" begin="indefinite"/);
+  assert.match(coffee, /data-icon-part="cup"/);
+  assert.doesNotMatch(icon('coffee'), /data-icon-animation/);
+  assert.throws(() => icon('save', { animation: 'steam' }), RangeError);
+});
