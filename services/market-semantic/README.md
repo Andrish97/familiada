@@ -81,8 +81,8 @@ w trzech językach. W logu są wyłącznie liczniki i wersje; treści oraz token
 nie trafiają do Actions. Poprzedni obraz służy do powrotu przy nieudanym starcie.
 Kolejne wdrożenie nie obraca sekretu i nie liczy ponownie gotowych kontekstów.
 
-Migracje 487/488 i aplikacja są wdrożone. Wdrożenie modelu trwa po udostępnieniu
-repo serwera; końcowy stan i numery przebiegów: `docs/unikalnosc-gier-plan.md`.
+Migracje 487/488 i aplikacja są wdrożone. Bieżący stan modelu i numery
+przebiegów wdrożeniowych: `docs/unikalnosc-gier-plan.md`.
 Pomiar zasobów 40192840935: 4 CPU, ~7,8 GiB RAM, ~5,4 GiB dostępne;
 kontener ma limit 1 CPU/1 GiB. Wycofanie obrazu nie wyłącza dokładnej blokady
 ani tekstowego porównania; niepełny wynik znaczenia jest jawny w panelu.
