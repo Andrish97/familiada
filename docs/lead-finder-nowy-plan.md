@@ -28,9 +28,11 @@ Zastępuje wcześniejsze wersje tego planu (LF2). Analiza starego systemu:
 - **Lead Finder tylko w sieci Dockera,** sterowany przez funkcję Edge
   (bez publicznego `leads.familiada.online`). Klucz dla funkcji Edge właściciel
   dodaje sam poleceniem z Termuxa.
-- **AI: tylko DeepSeek** (decyzja 2026-10-25) — bez wyboru i kolejności
-  dostawców w panelu, napis „Wyszukiwanie i ocena kontaktów: DeepSeek” ze stanem;
-  więcej dostawców właściciel doda, gdy będą potrzebni (migracja 493).
+- **AI: tylko DeepSeek** (decyzja 2026-10-25: „usuń pozostałe AI, nie
+  ukrywaj, nic nie pokazuj w panelu”) — bez wyboru, napisu, stanu ani odczytu
+  dostawców przez panel. Pozostali dostawcy usunięci z tabeli (migracja 495);
+  rekord `deepseek` zostaje ze stanem cooldownu dla usługi i RPC
+  `get_available_ai_providers` / `set_ai_provider_cooldown`.
 - **Mail „Zaproszenie”**: pierwszy obraz = grafika OG (`og-image-mail.webp`,
   odświeżana z `og-image` przez `scripts/screens/publish-homepage.cjs`).
 - Dopisane przez agenta (zgoda w rozmowie): odmowa albo odbity adres = bez
