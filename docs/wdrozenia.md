@@ -2164,3 +2164,9 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   widoczny. Ponownie **815/815 unit**, lokalne panele 390/360 + desktop ✓,
   sześć zrzutów telefonów z audytem **0 uwag**. Powtórzyć tylko test spisu,
   bo menu główne/atomowe przekierowania nie zostały zmienione tą korektą.
+
+- Końcowy branch po scaleniu bieżącego main: **40235146124 ✓** (spis z
+  dostępnym X, 390/360, Escape/tło i współpraca z menu głównym). Unit po
+  scaleniu **815/815**; zmiany realtime z równoległej sesji zachowane.
+  Prywatny main 14c8819: production **40235056371 ✓**, Access 302,
+  CI 84 unit + 17 browser. Publikacja publicznego main i kontrola 3 testów.
