@@ -1,182 +1,90 @@
-# Lead Finder 2 — nowy system (plan, 2026-10-25)
+# Lead Finder 3 — kategorie, rejestr + strony, wysyłka z tabeli (plan 2026-10-25)
 
-Polecenie użytkownika: zbudować system od nowa, bo odwiedzanie stron jest
-kosztowne. **Wynik końcowy bez zmian:** wiersze w `marketing_verified_contacts`
-(`email`, `url`, `title`, `short_description`, `verify_reason`), te same
-endpointy usługi (`/api/search-runs`, `/status`, `/pause`, `/resume`,
-`/cancel`), logi w `marketing_search_logs`. Panel admina i Worker
-(`/_admin_api/leads/*`, `/_admin_api/marketing/*`) bez zmian.
+Zastępuje wcześniejsze wersje tego planu (LF2). Analiza starego systemu:
+`docs/lead-finder-analiza.md`.
 
-Analiza starego systemu: `docs/lead-finder-analiza.md`.
+## Decyzje użytkownika (2026-10-25)
 
-## Zasada
+- Zupełnie nowy system wyszukiwania. Skuteczny, szybki, dużo nowych
+  kontaktów. Bez miast. Źródła łączone: rejestr CEIDG (klucz API zdobędzie
+  właściciel) i strony/wyniki wyszukiwarki — oba naraz.
+- Wynik w tabeli jak dotąd: krótka nazwa, e-mail, strona internetowa.
+- **Kategorie edytowane w panelu:** wpisuję nazwę kategorii i tyle. AI sama
+  układa z niej zapytania (frazy wyszukiwania, kody PKD) i szuka. Kiedyś
+  może to być np. „szkoły” — system nie ma wpisanych na sztywno grup.
+- **Tabela z widokami:** całość z kolumną „Kategoria” albo widok jednej
+  kategorii (zakładki).
+- **„Użyte” = wysłano ofertę marketingową** (liczone z wysyłek, nie
+  zaznaczane ręcznie). Widać, czy ktoś odpowiedział. Można wysłać ponownie.
+- **Wysyłka z tabeli:** strony „Marketing” i „Kontakty marketingowe” w panelu
+  łączą się w jedną — zaznaczam kontakty i wysyłam, bez kopiowania adresów.
+- **Stare kontakty — jednorazowy przegląd lepszym modelem:** eksport z panelu
+  (plik), przegląd poza systemem, import z powrotem. Nie DeepSeek (szkoda jego
+  zasobów), nie Anthropic (brak kredytów). Potem kontakty po prostu są
+  w tabeli — bez przycisku „Przejrzyj kontakty”.
+- **Stare wysyłki:** wysłano wszystkim oznaczonym jako „użyte”; agent dopasuje
+  wysyłki (historia `messages`, oznaczenie `is_used`) i odpowiedzi.
+- **Lead Finder tylko w sieci Dockera,** sterowany przez funkcję Edge
+  (bez publicznego `leads.familiada.online`). Klucz dla funkcji Edge właściciel
+  dodaje sam poleceniem z Termuxa.
+- Dopisane przez agenta (zgoda w rozmowie): odmowa albo odbity adres = bez
+  kolejnej wysyłki; import może przypisać kategorię.
 
-Stary: wyszukiwarka → **pobranie każdej strony (httpx + Chromium)** → e-mail
-z HTML → jedno zapytanie AI na stronę (prompt ~3 tys. tokenów).
+## Jak szuka
 
-Nowy: **kontakty z gotowych danych, bez odwiedzania stron** → reguły w kodzie
-→ AI ocenia **paczkami** po krótkich opisach. Strona odwiedzana tylko
-wyjątkowo, w małym budżecie.
+Dla każdej aktywnej kategorii:
 
-## Źródła (bez odwiedzania stron)
+1. **Rozwinięcie kategorii (raz, zapis w bazie):** AI dostaje nazwę
+   kategorii i zwraca opis „kogo szukamy / kogo nie”, 20–40 fraz
+   wyszukiwania (bez miast, z wariantami, np. „… kontakt e-mail”, „… @gmail.com”)
+   i kody PKD. Właściciel może poprawić tekst w panelu; zmiana nazwy =
+   ponowne rozwinięcie.
+2. **Źródła równolegle:**
+   - CEIDG: firmy aktywne po PKD kategorii, e-mail i www z wpisu;
+   - wyszukiwarka (SearXNG, kilka stron wyników na frazę): e-mail z tytułu
+     i opisu wyniku; bez maila, a z własną stroną firmy → krótkie pobranie
+     strony głównej i `/kontakt` (bez przeglądarki, w budżecie).
+3. **Odsiew w kodzie:** poprawny e-mail, dokładne domeny (nie podciąg), MX,
+   duplikaty po e-mailu i domenie, portale/katalogi.
+4. **Ocena AI paczkami** (25 na zapytanie) według opisu kategorii; e-mail
+   zawsze ze źródła. Dostawcy z `marketing_ai_providers` (kolejność w panelu).
+5. **Zapis** do `marketing_verified_contacts` z kategorią.
 
-1. **CEIDG — rejestr jednoosobowych firm (główne źródło).** Oficjalne API
-   Hurtowni Danych `dane.biznes.gov.pl/api/ceidg/v3` (bezpłatny klucz JWT,
-   rejestracja na biznes.gov.pl). Wyszukiwanie po kodzie PKD i miejscu,
-   szczegóły wpisu z e-mailem, stroną www i telefonem, jeśli przedsiębiorca je
-   podał. DJ-e, wodzireje, animatorzy to w większości JDG. Limit zapytań
-   o szczegóły (wg poradników ~50 na 3 min, ~1000/h) — przy kilkudziesięciu
-   kontaktach na przebieg wystarczy. Do potwierdzenia na kluczu: nazwy pól
-   i filtrów, które kody PKD (2007/2025) dają najwięcej trafień. Kandydaci:
-   93.29.Z (pozostała działalność rozrywkowa — DJ, animatorzy), 90.01.Z
-   (działalność artystyczna — wodzireje, konferansjerzy), 82.30.Z (organizacja
-   wydarzeń — agencje).
-2. **Opisy z wyników SearXNG** — zapytania z adresem w treści (np.
-   `wodzirej Kraków "@gmail.com"`, `DJ wesele Kraków kontakt e-mail`). E-mail
-   wycinany z tytułu i opisu wyniku, bez wchodzenia na stronę. Uzupełnia
-   spółki (KRS nie podaje e-maili) i firmy bez maila w CEIDG.
-3. **Jedno pobranie bez Chromium (budżet)** — tylko dla kandydata, którego AI
-   oceniło jako dobrego, ma stronę www, a nie ma maila: strona główna
-   i `/kontakt`, sam httpx, budżet np. 20 na przebieg. Bez Playwright
-   w obrazie.
+## Panel (jedna strona „Marketing”)
 
-## Przepływ
-
-1. **Zbieranie** → nowa tabela `marketing_candidates` (źródło, id w źródle,
-   nazwa, miasto, kody PKD, e-mail, domena www, krótki opis ≤ 300 znaków,
-   stan). Pula zapytań: (PKD lub rola) × miasto z `marketing_cities`, jak dziś.
-2. **Odsiew w kodzie:** poprawny e-mail, domena maila porównywana **dokładnie**
-   z listą (nie podciąg — błąd `mail.com`/`gmail.com` ze starego systemu),
-   rekord MX domeny (DNS, tanio), duplikaty po e-mailu i domenie z
-   `marketing_verified_contacts` i wcześniejszych kandydatów, słowa
-   wykluczające w nazwie/opisie.
-3. **AI paczkami:** 20–30 kandydatów w jednym zapytaniu (JSON: id, nazwa,
-   PKD słownie, domena, opis), odpowiedź na każdy id: `ok`, `title`,
-   `short_description`, `reason`. **AI nie podaje e-maila** — e-mail zawsze
-   ze źródła. Krótki prompt (kryteria typów A–D bez list domen i bez „HARD
-   OVERRIDE”). Koszt na kontakt ~20× mniejszy niż dziś. Dostawcy jak dziś
-   (`marketing_ai_providers`, cooldowny).
-4. **Zapis** zaakceptowanych do `marketing_verified_contacts`; `url` = strona
-   www, a bez niej link do wpisu CEIDG / wyniku wyszukiwania.
-5. **Liczniki lejka** na przebieg (zebrane, odsiane wg przyczyny, do AI,
-   zaakceptowane) w logach i w tabeli z GRANT dla `agent_reader` (same liczby)
-   — kontrola przez `db-read`.
-
-## Usługa
-
-- `services/lead-finder/` zastąpiony nowym kodem (FastAPI, te same endpointy
-  i klucz `LEAD_FINDER_API_KEY`), moduły: `sources/ceidg.py`,
-  `sources/searx.py`, `filters.py`, `classify.py`, `store.py`; testy unit
-  w Pythonie (filtry, parsowanie odpowiedzi AI, paczki) w CI.
-- Obraz `python:slim` zamiast obrazu Playwright (~2 GB → ~150 MB), mniej RAM
-  na serwerze z bazą. Wdrożenie jak dziś (`deploy-lead-finder.yml`,
-  `familiada-deploy-lead-finder`, powrót do poprzedniego obrazu).
-- Nowy sekret `CEIDG_API_KEY` — właściciel: `sudo familiada-secret set
-  lead-finder CEIDG_API_KEY`.
-- Model na serwerze — nie (uzasadnienie: `lead-finder-analiza.md` §3).
-
-## Baza
-
-- Migracja dodająca (zgodna wstecz ze starym Lead Finderem):
-  `marketing_candidates` (service only), `marketing_run_stats` (liczniki
-  przebiegu, GRANT SELECT dla `agent_reader` — same liczby), w
-  `marketing_verified_contacts` kolumny `source`, `quality`, `quality_reason`,
-  `reviewed_at`, `sent_count`, `last_sent_at`, `reaction`, `reaction_at`;
-  funkcje `marketing_mark_sent(emails)` i `marketing_mark_reaction(email,
-  reaction)` (service only).
-- Historia zapytań zostaje w `marketing_search_queries_log` (`search:<zapytanie>`,
-  `ceidg:<pkd>:<województwo>:<strona>`) — zapytanie nie jest powtarzane.
-- Po tygodniu działania: usunięcie `marketing_raw_contacts`, `marketing_cities`,
-  `claim_next_pending_lead` (osobna migracja).
-
-## Stan wdrożenia (2026-10-25)
-
-- Migracja 489 na produkcji (`latest.log`: OK; numer 489 ma też migracja
-  innej sesji `market_embedding_cron_timeout` — obie zastosowane).
-- Usługa: `services/lead-finder/` (`main.py`, pakiet `lf/`: `filters`,
-  `sources/search`, `sources/ceidg`, `classify`, `fetch`, `pipeline`, `db`),
-  testy `python3 -m unittest discover -s services/lead-finder/tests`
-  (uruchamiane też przez `deploy-lead-finder.yml` przed wdrożeniem).
-  Obraz `python:3.12-slim`, bez Playwright. Endpointy: dotychczasowe +
-  `POST /api/contacts-review?all=` (Worker: `/_admin_api/leads/contacts-review`).
-  Status zwraca dodatkowo `kind`, `stats`, `ceidg`.
-- Worker: `lib/email/marketing-reactions.js` (reakcje w poczcie
-  przychodzącej), wysyłka pomija odmowy/odbicia (`blocked`) i zapisuje
-  `marketing_mark_sent`.
-- Panel: kolumny Jakość i Reakcja, filtry jakości i reakcji, przycisk
-  „Przejrzyj kontakty” (zrzut `admin-leads`).
-- Kontrola po wdrożeniu (właściciel z panelu, agent przez `db-read`):
-  przebieg na celu 10 → `scripts/db-read/lead-finder-runs.sql`; przegląd
-  kontaktów → `scripts/db-read/lead-finder-contacts.sql`.
+- Kategorie: lista, dodaj (nazwa), włącz/wyłącz, podgląd opisu i fraz.
+- Uruchom wyszukiwanie: liczba kontaktów, wszystkie aktywne kategorie albo
+  wybrana.
+- Tabela: zakładki „Wszystkie” + kategorie; kolumny Nazwa, E-mail, Strona,
+  Kategoria, Wysłano (liczba, data), Odpowiedź; filtry „niewysłane”,
+  „wysłane bez odpowiedzi”, „odpowiedzieli”.
+- Zaznaczone → szablon wiadomości (obecny edytor) → wyślij / wyślij ponownie.
+- Eksport CSV (wszystkie albo widok) i import CSV (zachowaj/usuń, kategoria).
 
 ## Etapy
 
-1. Migracja (lokalny Postgres, test SQL) → `main`.
-2. Nowa usługa: źródło wyszukiwarki + CEIDG (gdy jest klucz), odsiew, AI
-   paczkami, budżet pobrań, przegląd starych kontaktów (`POST
-   /api/contacts-review`); testy unit Pythona; wdrożenie; przebieg z panelu
-   na celu 10, liczniki przez `db-read`.
-3. Reakcje: Worker (wysyłka, poczta przychodząca) + panel (kolumny, filtry,
-   przycisk przeglądu); unit, zrzut `admin-leads`, e2e punktowo.
-4. Klucz CEIDG (właściciel), próba kodów PKD, przebieg kontrolny.
-5. Sprzątanie starych tabel.
+1. Baza: `marketing_categories`, kategoria kontaktu, dopasowanie starych
+   wysyłek i odpowiedzi (jednorazowo), funkcje eksportu/importu.
+2. Panel: połączenie stron, kategorie, widoki, wysyłka z tabeli,
+   eksport/import; Worker; zrzuty.
+3. Usługa: kategorie z bazy, rozwinięcie przez AI, CEIDG + wyszukiwarka
+   równolegle, ocena paczkami.
+4. Sieć Dockera: funkcja Edge `lead-finder`, Worker przez funkcję, Caddy bez
+   `leads` (gałęzie WIP: `familiada` `ccr-0a6daa7e-i8jy1u`,
+   `familiada-server` `wip-lead-finder-internal`), klucz — polecenie dla
+   właściciela.
+5. Eksport starych kontaktów → przegląd przez właściciela → import.
+6. Klucz CEIDG, przebieg kontrolny, liczniki przez `db-read`.
 
-## Uwaga prawna (do wiadomości właściciela)
+## Stan (co już działa z LF2)
+
+Migracja 489 (kandydaci, liczniki `marketing_run_stats`, kolumny wysyłek
+i reakcji), usługa bez Playwright, reakcje w poczcie przychodzącej, pomijanie
+odmów i odbić przy wysyłce. Do usunięcia z LF2: przycisk i endpoint
+„Przejrzyj kontakty”, przegląd AI (`ai_review_prompt.txt`), stałe role
+i województwa (`roles.txt`, `regions.txt`, `templates.txt`).
+
+## Uwaga prawna
 
 Wysyłka maili marketingowych bez wcześniejszej zgody (także do firm) jest
-w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG). Dotyczy
-tak samo starego systemu; źródło danych tego nie zmienia.
-
-## Grupy docelowe (decyzja 2026-10-25)
-
-Liczy się skutek: osoby i firmy, które mogą używać Familiady. Miasta nie są
-wymagane (pula zapytań: rola × województwo/ogólnie, CEIDG: PKD × województwo).
-
-- **A — prowadzący:** DJ, wodzirej, konferansjer, animator imprez, prezenter.
-- **B — organizatorzy:** agencje eventowe, team building, organizatorzy wesel
-  i imprez firmowych.
-- **C — lokale i rozrywka:** puby i kawiarnie z wieczorami quizowymi,
-  organizatorzy quizów i teleturniejów.
-- **D — szkolenia i integracje firm:** firmy szkoleniowe, trenerzy z grami.
-
-**Wykluczone (odsiew w kodzie przed AI i w AI):** placówki publiczne —
-szkoły, przedszkola, żłobki, uczelnie, urzędy, gminy, domy i ośrodki kultury,
-biblioteki, jednostki z domeną `gov.pl`, `edu.pl`, `bip.` i podobne; sam
-wynajem sali/sprzętu; portale, katalogi, media.
-
-## Przegląd obecnych kontaktów (decyzja 2026-10-25)
-
-Wszystkie wiersze `marketing_verified_contacts` przechodzą przez nowy odsiew
-(reguły + AI paczkami, po zapisanych `title`/`short_description`/`url`/`email`,
-bez odwiedzania stron). Wynik w nowych kolumnach `quality` (`good`/`junk`),
-`quality_reason`, `reviewed_at` — **nic nie jest kasowane automatycznie**.
-Panel pokazuje filtr „Śmieci” i pozwala usunąć zaznaczone jak dziś. Kontakty
-z reakcją (odpowiedź) nie są oznaczane jako śmieci.
-
-## Reakcje odbiorców (decyzja 2026-10-25)
-
-Dziś odpowiedź na maila marketingowego rozpoznawana jest po podobnym temacie,
-bez powiązania z kontaktem. Nowe:
-
-- wysyłka z panelu (`/_admin_api/marketing/send`) zapisuje na kontakcie
-  `sent_count`, `last_sent_at`;
-- poczta przychodząca: nadawca porównany z e-mailami kontaktów i adresatami
-  wysłanych maili marketingowych → `reaction` = `replied` (domyślnie),
-  `declined` (rezygnacja, „nie jestem zainteresowany”, „proszę nie pisać” —
-  słowa w treści), `bounced` (zwrotka serwera pocztowego z adresem kontaktu),
-  `reaction_at`;
-- `declined`/`bounced` → kontakt pomijany przy kolejnych wysyłkach (Worker
-  zwraca je w `skipped`);
-- panel: kolumna reakcji i filtr („Odpowiedzieli”, „Bez odpowiedzi”,
-  „Odmówili”, „Odbite”), liczniki skuteczności (wysłane / odpowiedzi).
-
-## Decyzje
-
-- 2026-10-25 (użytkownik): nowy system od zera, odwiedzanie stron jest
-  kosztowne, wynik końcowy jak wcześniej.
-- 2026-10-25 (użytkownik): oba źródła (CEIDG i wyszukiwarka); miasta
-  niewymagane, liczy się skutek; odbiorcy Familiady bez placówek publicznych
-  (szkoły itd.); przegląd obecnej tabeli na śmieci; lepsze śledzenie
-  odpowiedzi i reakcji; pobieranie stron — tak, w małym budżecie.
-- Klucz CEIDG zakłada właściciel (`sudo familiada-secret set lead-finder
-  CEIDG_API_KEY`); bez klucza działa samo źródło z wyszukiwarki.
+w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG).
