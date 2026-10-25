@@ -14,21 +14,21 @@ Settings panel (admin)
 - POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-25T11250";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-25T11250";
-import { startActivityPanel } from "./activity.js?v=v2026-10-25T11250";
-import { checkMe, els, showAuth, showPanel, syncTopbarHeight } from "./core.js?v=v2026-10-25T11250";
-import { activateSettingsTabFromUrl, activeTab, onEnterMarketingTab, setActiveTab, settingsTabFromUrl } from "./tabs.js?v=v2026-10-25T11250";
-import { applyDateOrderByLang, loadState, startCountdownTimer, startPolling, stopPolling, wireMaintenanceEvents } from "./maintenance.js?v=v2026-10-25T11250";
-import { initMailSelects, openMailTab, renderCronPresetOptions, renderProviderOrder, syncMailSelectLabels, wireMailSettingsEvents } from "./mail-settings.js?v=v2026-10-25T11250";
-import { loadAdminStats, loadExcludedUsers, loadRetentionStats, loadSnakeStats, wireStatsEvents } from "./stats.js?v=v2026-10-25T11250";
-import { loadProducerRatings, loadRatings, wireRatingsEvents } from "./ratings.js?v=v2026-10-25T11250";
-import { loadMarketplace, wireMarketplaceEvents } from "./marketplace.js?v=v2026-10-25T11250";
-import { loadMailFolder, startAdminBadges, wireReportsEvents } from "./mailbox.js?v=v2026-10-25T11250";
-import { closeTools, initToolsSelect } from "./tools.js?v=v2026-10-25T11250";
-import { initMarketingEditor, wireMarketingEvents } from "./marketing.js?v=v2026-10-25T11250";
-import { initMarketingContacts } from "./marketing-contacts.js?v=v2026-10-25T11250";
-import "../../shared/js/core/scroll-fade.js?v=v2026-10-25T11250"; // wygaszona krawędź przewijanych list
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-25T11321";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-25T11321";
+import { startActivityPanel } from "./activity.js?v=v2026-10-25T11321";
+import { checkMe, els, showAuth, showPanel, syncTopbarHeight } from "./core.js?v=v2026-10-25T11321";
+import { activateSettingsTabFromUrl, activeTab, onEnterMarketingTab, setActiveTab, settingsTabFromUrl } from "./tabs.js?v=v2026-10-25T11321";
+import { applyDateOrderByLang, loadState, startCountdownTimer, startPolling, stopPolling, wireMaintenanceEvents } from "./maintenance.js?v=v2026-10-25T11321";
+import { initMailSelects, openMailTab, renderCronPresetOptions, renderProviderOrder, syncMailSelectLabels, wireMailSettingsEvents } from "./mail-settings.js?v=v2026-10-25T11321";
+import { loadAdminStats, loadExcludedUsers, loadRetentionStats, loadSnakeStats, wireStatsEvents } from "./stats.js?v=v2026-10-25T11321";
+import { loadProducerRatings, loadRatings, wireRatingsEvents } from "./ratings.js?v=v2026-10-25T11321";
+import { loadMarketplace, wireMarketplaceEvents } from "./marketplace.js?v=v2026-10-25T11321";
+import { loadMailFolder, startAdminBadges, wireReportsEvents } from "./mailbox.js?v=v2026-10-25T11321";
+import { closeTools, initToolsSelect } from "./tools.js?v=v2026-10-25T11321";
+import { initMarketingEditor, wireMarketingEvents } from "./marketing.js?v=v2026-10-25T11321";
+import { initMarketingContacts } from "./marketing-contacts.js?v=v2026-10-25T11321";
+import "../../shared/js/core/scroll-fade.js?v=v2026-10-25T11321"; // wygaszona krawędź przewijanych list
 
 function wireEvents() {
   if (els.btnTabStats) {
