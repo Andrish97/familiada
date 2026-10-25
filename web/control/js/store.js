@@ -326,5 +326,5 @@ export function createStore(gameId) {
     ringDoorbell(gameId, row.rev);
   }
 
-  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow };
+  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow, writing: () => writeOrder.pending() };
 }

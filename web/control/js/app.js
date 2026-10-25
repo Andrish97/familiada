@@ -486,9 +486,6 @@ async function main() {
   let dispatchGeneration = 0;
   let lockedUntil = Number.isFinite(Date.parse(store.state.__row?.locked_until || ""))
     ? Date.parse(store.state.__row.locked_until) : 0;
-  // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
-  // czas round-tripu store.setLock(ms).
-  let lockConfirmPending = false;
   const displayCompletion = createRenderCompletionGate(store.state.rev);
   // Wznowienie strony nie jest nową zmianą planszy. W szczególności Buzzer
   // może podnieść rev samym lastPressed, którego Wyświetlacz nie renderuje;
@@ -801,7 +798,7 @@ async function main() {
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
-  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   function recoverLeaseStatusRead() {
     if (!presenceUnavailable) return false;
@@ -821,48 +818,17 @@ async function main() {
   }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
-  // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
-  // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
-  // osobne wywołanie RPC, więc jego round-trip jest nieznany z góry.
-  // Poprzednia wersja liczyła `lockedUntil` OD RAZU (`Date.now()+ms`) plus
-  // sztywny margines 400ms na ten round-trip -- w CI zdarzało się, że sam
-  // round-trip setLock() trwał >1s (dużo więcej niż margines), więc klient
-  // odblokowywał przycisk, ZANIM serwer w ogóle zdążył ustawić swoją
-  // blokadę z TEJ akcji -- server odrzucał kolejny zapis LockedError('locked')
-  // (zgłoszone e2e: "reset pojedynku..." i, mimo marginesu, "próg w rundzie
-  // -> finał" — ADD_X w DUEL). Naprawa: zamiast zgadywać margines,
-  // blokujemy TWARDO (`lockConfirmPending`) aż store.setLock(ms) faktycznie
-  // wróci, i DOPIERO WTEDY liczymy `lockedUntil=Date.now()+ms` -- serwer
-  // ustawia swój `locked_until` W MOMENCIE przetworzenia zapytania, czyli
-  // zawsze WCZEŚNIEJ niż chwila odebrania TEJ odpowiedzi tutaj, więc to
-  // zawsze bezpieczne (nigdy za krótkie) górne ograniczenie, niezależnie od
-  // realnych warunków sieci.
+  // animacji). Blokada w bazie (migracja 264) powstaje w tym samym zapisie
+  // (game_state_write, p_lock_ms — engine.js's computeCommitGate i advance()),
+  // a armLock() jest wołane dopiero po jego potwierdzeniu, więc
+  // `Date.now() + ms` tutaj nigdy nie wypada przed serwerowym `locked_until`.
+  // Wcześniej osobne store.setLock(ms) dokładało drugą podróż do serwera,
+  // przez którą Control trzymał przyciski, i drugą
+  // zmianę wiersza rozsyłaną do wszystkich urządzeń (eksport 25.10).
   function armLock(ms, generation = dispatchGeneration) {
     if (ms <= 0 || restarting || generation !== dispatchGeneration) return;
     lockedUntil = Math.max(lockedUntil, Date.now() + ms);
     setTimeout(renderCurrent, ms + 20);
-    lockConfirmPending = true;
-    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny
-    // "Zatrzymaj"/"X" trwale disabled w control2.spec.js) -- czy
-    // store.setLock(ms) w ogóle się rozstrzyga, i kiedy dokładnie.
-    const _armT0 = Date.now();
-    console.log(`[e2e-diag-state] t=${_armT0} armLock START ms=${ms} lockedUntil=${lockedUntil}`);
-    store.setLock(ms)
-      .then(() => {
-        if (restarting || generation !== dispatchGeneration) return;
-        const confirmed = Date.now() + ms;
-        if (confirmed > lockedUntil) {
-          lockedUntil = confirmed;
-          setTimeout(renderCurrent, ms + 20);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (generation !== dispatchGeneration) return;
-        lockConfirmPending = false;
-        console.log(`[e2e-diag-state] t=${Date.now()} armLock SETTLED afterMs=${Date.now() - _armT0}`);
-        renderCurrent();
-      });
   }
 
   // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
@@ -1002,9 +968,7 @@ async function main() {
   // synchronicznie przez commit() zanim ten sam dzwonek do niego wróci —
   // stąd warunek rev > store.state.rev, żeby nie robić zbędnego refetchu.
   let externalRefreshInFlight = false;
-  rt(doorbellTopic(gameId)).onBroadcast("rev", async (msg) => {
-    const rev = msg?.payload?.rev;
-    if (typeof rev !== "number" || rev <= store.state.rev) return;
+  async function refreshExternalState() {
     if (externalRefreshInFlight) return;
     externalRefreshInFlight = true;
     try {
@@ -1013,7 +977,30 @@ async function main() {
     } finally {
       externalRefreshInFlight = false;
     }
+  }
+  rt(doorbellTopic(gameId)).onBroadcast("rev", (msg) => {
+    const rev = msg?.payload?.rev;
+    if (typeof rev !== "number" || rev <= store.state.rev) return;
+    void refreshExternalState();
   });
+  // Siatka na zgubiony dzwonek (484): migawka urządzeń co 750 ms niesie
+  // rewizję gry. Dwa odczyty z rzędu z nowszą rewizją, gdy Control sam nic
+  // nie zapisuje = cudza zmiana (naciśnięcie Przycisku), której dzwonek nie
+  // dotarł (np. chwilowo zerwane gniazdo Realtime na słabym łączu).
+  let snapshotBehindRev = null;
+  function noteSnapshotRevision(gameRev) {
+    if (!Number.isSafeInteger(gameRev) || gameRev <= store.state.rev) { snapshotBehindRev = null; return; }
+    if (committing || store.writing() || externalRefreshInFlight) { snapshotBehindRev = null; return; }
+    if (snapshotBehindRev == null) { snapshotBehindRev = gameRev; return; }
+    snapshotBehindRev = null;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "state_sync",
+      message: "Control nadrobił cudzą zmianę stanu z odczytu urządzeń (dzwonek nie dotarł).",
+      devices: ["control"],
+      metrics: { reason: "snapshot_catchup", game_rev: gameRev, local_rev: store.state.rev },
+    });
+    void refreshExternalState();
+  }
 
   const urls = await urlsP;
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
@@ -1021,6 +1008,12 @@ async function main() {
 
   const presence = createPresence({
     gameId,
+    onSnapshot: ({ gameRev, displayCompletion }) => {
+      noteSnapshotRevision(gameRev);
+      // Potwierdzenie planszy z tej samej migawki: bez osobnego odpytywania,
+      // gdy kanał potwierdzeń zgubi zdarzenie.
+      if (displayCompletion && displayCompletion.rendered_rev != null) applyDisplayCompletion(displayCompletion, "snapshot");
+    },
     onChange: ({ flags, displayAudioUnlocked: audioUnlocked, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
       if (error) {
@@ -1234,7 +1227,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -1765,7 +1758,6 @@ async function main() {
       await _dispatchGatedQueue;
       await store.setLock(0);
       lockedUntil = 0;
-      lockConfirmPending = false;
       await restartGameNow();
     } finally {
       restarting = false;

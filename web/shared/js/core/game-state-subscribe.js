@@ -19,6 +19,7 @@ import { rt } from "./realtime.js?v=v2026-10-25T06442";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T06442";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T06442";
 import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T06442";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T06442";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), log = () => {} }) {
@@ -192,12 +193,19 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   });
   const fetchGuarded = sync.fetchGuarded;
 
+  // Dzwonek Control jest sprawdzany także przy połączonym kanale
+  // bezpośrednim (doorbell-guard.js): zgubiona przez postgres_changes zmiana
+  // nie czeka już na heartbeat lease.
+  const doorbell = createDoorbellGuard({
+    getReceivedRev: () => sync.receivedRev,
+    isDirectConnected: () => active && directConnected,
+    fetchNow: () => { if (active) void fetchGuarded(directConnected ? "rpc_doorbell" : "rpc_broadcast"); },
+    onMissed: (metrics) => sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", { trigger: "doorbell", ...metrics }),
+    onStale: () => { if (!active) return; noteDirectFailure("STALE"); resync(); },
+  });
   function subscribeDoorbell() {
     const channel = rt(doorbellTopic(gameId));
-    channel.onBroadcast("rev", (msg) => {
-      const rev = msg?.payload?.rev;
-      if (!directConnected && typeof rev === "number" && rev > sync.lastRev) fetchGuarded("rpc_broadcast");
-    });
+    channel.onBroadcast("rev", (msg) => doorbell.ring(msg?.payload?.rev));
     for (const [event, handler] of Object.entries(onBroadcast)) {
       if (typeof handler === "function") channel.onBroadcast(event, handler);
     }
@@ -450,6 +458,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function stop() {
     if (!active) return;
     active = false;
+    doorbell.stop();
     sessionStarted = false;
     network.stop();
     directIncidentAt = null;

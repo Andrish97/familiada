@@ -13,6 +13,9 @@ export function createWriteOrder() {
     settle() { pending = Math.max(0, pending - 1); },
     // Wywoływane w trakcie bieżącego zapisu (liczy się on sam).
     newerQueued() { return pending > 1; },
+    // Jakikolwiek zapis w toku lub w kolejce (app.js: nie dociągaj wtedy
+    // cudzego stanu z migawki — to zwykle nasz własny, jeszcze niepotwierdzony).
+    pending() { return pending > 0; },
   };
 }
 
