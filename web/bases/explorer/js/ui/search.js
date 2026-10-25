@@ -7,10 +7,10 @@
 // (#searchOverlay), do którego na czas edycji przenosimy to samo pole z paska
 // (tam schowane) — dlatego nasłuch jest na dokumencie, nie na #toolbar.
 
-import { setQuery, clearQuery } from "../state.js?v=v2026-10-25T21390";
-import { renderAll } from "../render.js?v=v2026-10-25T21390";
-import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-25T21390";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-25T21390";
+import { setQuery, clearQuery } from "../state.js?v=v2026-10-25T21401";
+import { renderAll } from "../render.js?v=v2026-10-25T21401";
+import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-25T21401";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-25T21401";
 
 const TEXT_DELAY_MS = 200;
 

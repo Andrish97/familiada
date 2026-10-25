@@ -2200,3 +2200,10 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   z main; kod tych testów bez zmian, bez zbędnego powtarzania zielonych.
 - Prywatny edytor: branch CI **40236348759 ✓ 85 unit + 20 browser**, check
   **40236378726 ✓**. Main 640a016, production **40236470765** w toku.
+
+- Uproszczony edytor wdrożony: private production **40236470765 ✓**,
+  main 640a016, 85 unit, kontrola wydania/originu i private cache, domena
+  po publikacji Access 302. Szczegóły prywatnie, status **zrobione**.
+- Publiczny main z równoległymi znacznikami wersji scalony bez utraty zmian;
+  końcowe **816/816 unit**. Bramka kawy 40236412493 nadal ważna (po niej
+  doszły wyłącznie obrazy, dokumentacja i wersje zasobów). Publikacja Pages.
