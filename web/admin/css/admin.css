@@ -1924,6 +1924,10 @@
   .stats-detail-info { font-size: 11px; opacity: .4; margin-bottom: 6px; min-height: 16px; }
   .stats-detail-scroll { min-height: 60px; overflow-y: auto; flex: 1; }
   .stats-detail-body { min-width: min(680px, 88vw); display: flex; flex-direction: column; max-height: calc(82vh - 140px); overflow: hidden; }
+  /* Okno od dołu (telefon): bez limitu z komputera — treść na całą wysokość
+     okna, przewija się ciało arkusza (zgłoszenie 2026-10-25). */
+  :where(:root[data-sheet]) .sheet-active .stats-detail-body { min-width: 0; max-height: none; overflow: visible; }
+  :where(:root[data-sheet]) .sheet-active .stats-detail-scroll { overflow: visible; }
   .stats-detail-export { margin: 0 0 8px; }
   .stats-detail-period { min-width: 220px; }
   .stats-detail-overlay { overflow-y: auto; padding: 24px 12px; box-sizing: border-box; align-items: safe center; }

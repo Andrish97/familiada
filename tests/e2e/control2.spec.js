@@ -3848,6 +3848,94 @@ test("control2: słabe łącze — runda z Przyciskiem przy +700 ms na zapytanie
   }
 });
 
+// Telefon schowany na kilkanaście sekund (eksport 25.10, iPhone): timery
+// stoją, lease wygasa, a po powrocie odczyt stanu i token kanału szły jeszcze
+// starą epoką i dostawały odmowę. Zamrożenie = heartbeat wisi bez odpowiedzi.
+async function setPageVisibility(p, visible) {
+  await p.evaluate((isVisible) => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => (isVisible ? "visible" : "hidden") });
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => !isVisible });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, visible);
+}
+
+test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu i tokenu", async ({ page, browser, accounts, loginAs }, testInfo) => {
+  test.setTimeout(180000);
+  await loginAs(page, page.context(), accounts.standard[0]);
+  const game = await makeGame(page, `E2E-CONTROL2-RESUME-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  const errors = [];
+  try {
+    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzer = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 20000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 35000 });
+
+    const denied = [];
+    let resumedAt = null;
+    buzzer.on("response", (res) => {
+      if (resumedAt == null || res.status() < 400) return;
+      if (/\/rpc\/game_state_get|\/functions\/v1\/device-realtime-token/.test(res.url())) {
+        denied.push(`${res.status()} ${new URL(res.url()).pathname} +${Date.now() - resumedAt}ms`);
+      }
+    });
+    const held = [];
+    await buzzer.route("**/rpc/control_device_instance_heartbeat", (route) => { held.push(route); });
+    await setPageVisibility(buzzer, false);
+    await expect(page.locator("#dotBuzzer")).not.toHaveClass(/\bok\b/, { timeout: 40000 });
+
+    resumedAt = Date.now();
+    await setPageVisibility(buzzer, true);
+    await buzzer.waitForTimeout(500);
+    await buzzer.unroute("**/rpc/control_device_instance_heartbeat");
+    for (const route of held) await route.continue().catch(() => {});
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 30000 });
+    console.log(`[e2e-diag] resume: Przycisk z powrotem po ${Date.now() - resumedAt} ms`);
+
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(buzzer.locator("#btnA")).toBeEnabled({ timeout: 30000 });
+    await buzzer.locator("#btnA").click();
+    await expect(page.getByRole("button", { name: /^Zatwierdź:/ })).toBeVisible({ timeout: 20000 });
+    expect(denied, "odmowy po powrocie z tła").toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// e2e 40185039280 (25.10): 503 na jednym module tuż po wdrożeniu zatrzymał
+// stronę Przycisku bez komunikatu; Control czekał na niego w nieskończoność.
+// module-boot-guard.js przeładowuje stronę po nieudanym wczytaniu modułu.
+test("control2: Przycisk sam się przeładowuje po nieudanym wczytaniu modułu (503)", async ({ page, browser, accounts, loginAs }) => {
+  test.setTimeout(120000);
+  await loginAs(page, page.context(), accounts.standard[0]);
+  const game = await makeGame(page, `E2E-CONTROL2-BOOT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  const errors = [];
+  let failed = 0;
+  try {
+    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, {
+      onPage: (p) => p.route("**/shared/js/core/game-state-subscribe.js*", async (route) => {
+        if (failed === 0) { failed += 1; await route.fulfill({ status: 503, body: "Service Unavailable" }); return; }
+        await route.fallback();
+      }),
+    });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 45000 });
+    expect(failed).toBe(1);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser, accounts, loginAs }) => {
   test.setTimeout(300_000);
   const email = accounts.noaccount[0].email;

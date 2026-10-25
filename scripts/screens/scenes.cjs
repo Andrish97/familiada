@@ -384,6 +384,9 @@ module.exports = [
   // Tabela „Rozgrywki” w szczegółach statystyk (szerokość kolumn, przycisk „Pokaż przebieg”).
   { id: "admin-stats-gameplay-table", category: "Dodatkowe", title: "Panel admina — tabela Rozgrywki", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().waitFor(); await view.waitForTimeout(400); }] },
+  // Telefon (zgłoszenie 2026-10-25): podsumowanie „Sugerowane problemy” przewija się z tabelą.
+  { id: "admin-stats-gameplay-phone", category: "Dodatkowe", title: "Panel admina — Rozgrywki na telefonie (przewijanie z podsumowaniem)", path: "/admin/", sources: ["web/admin/"], ready: () => !!document.querySelector("#btnTabStats"), devices: ["phone"],
+    steps: [async (view) => { await view.evaluate(() => document.querySelector("#btnTabStats").click()); await view.waitForTimeout(500); await view.evaluate(() => document.querySelector('.stat-box[data-detail="gameplay"]').click()); await view.waitForTimeout(1500); }] },
   // Migracja 466: pomiar łącza urządzeń w przebiegu rozgrywki.
   { id: "admin-stats-network-probe", category: "Dodatkowe", title: "Panel admina — przebieg rozgrywki z pomiarem łącza", path: "/admin/", sources: ["web/admin/"], ready: "#btnTabStats", devices: ["desktop"],
     steps: [clickTab("#btnTabStats"), async (view) => { await view.locator('.stat-box[data-detail="gameplay"]').click(); await view.locator(".stats-session-details-button").first().click(); await view.locator(".stats-session-run-details").waitFor(); await view.waitForTimeout(400); }] },

@@ -91,15 +91,42 @@ produkcji 40172214348 zielone. Test słabego łącza (+700 ms na każde
 zapytanie REST Control i urządzeń): zgłoszenie Przyciskiem → zatwierdzone
 5,2 s, odsłonięcie → kolejna akcja 4,4 s (w tym ~1,8 s animacji z dźwiękiem).
 
+## Tematy osobne (25.10, polecenie użytkownika „popraw te osobne tematy”)
+
+1. **Powrót telefonu po wygaśnięciu lease.** Subskrypcja i lease reagowały
+   na `visibilitychange` równolegle: odczyt stanu i token kanału szły starą
+   epoką (odmowa, `FunctionsHttpError`). Teraz `beforeResync` →
+   `lease.refresh()` (czeka na heartbeat w toku) i dopiero potem resync
+   (`device-lease.js`, `game-state-subscribe.js`, trzy strony urządzeń).
+   e2e: „Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu
+   i tokenu” (zamrożony heartbeat = zapytania wiszą).
+2. **Potwierdzenie Wyświetlacza bez zmiany `game_state`.** Przycisk słucha
+   `game_state_display_completion` (`onDirectTables`, RLS 376) i od razu
+   sprawdza gotowość; migracja 486 usuwa lustro `display_rendered_rev`
+   (kolumna zostaje, nieaktualizowana). Na akcję z dźwiękiem wiersz
+   `game_state` zmienia się raz (był trzy razy przed 25.10: zapis,
+   `set_lock`, potwierdzenie). Test SQL `docs/sql/test-display-complete-486.sql`.
+3. **Wycofane transakcje.** `pg_stat_statements` jest zainstalowane, ale nie
+   liczy zapytań zakończonych błędem; `track_functions` wyłączone. Odczyty
+   `scripts/db-read/rollback-sources.sql`: bez żadnej gry Control baza
+   wycofuje ~1 transakcję na 10 s (1,4% w 149 s bezczynności), średnio od
+   restartu 0,68/s — to głównie tło usług i celowe odmowy, nie błędy
+   Control. Pomiar w czasie gier e2e (10:16–10:25, Control + 3 urządzenia, 4 testy): 3 wycofania na 4203 zatwierdzenia (0,07%) — Control nie jest źródłem; historyczne 10% (87 tys. od restartu 23.10) powstało w jakimś wcześniejszym okresie. Dokładne przypisanie
+   do funkcji wymaga logów serwera bazy (`log_min_error_statement`) —
+   dostęp ma właściciel.
+
+4. **Nieudane wczytanie modułu = martwa strona urządzenia.** Kontrola
+   produkcji 40185039280: 503 na `game-state-subscribe.js` tuż po
+   wdrożeniu zatrzymał cały graf modułów Przycisku (bez komunikatu; Control
+   czekał na urządzenie). Na słabym łączu to samo daje zgubione żądanie
+   przy otwieraniu. `module-boot-guard.js` (zwykły skrypt przed modułami
+   Control, Wyświetlacza, Prowadzącego i Przycisku): przeładowanie po 1/3/8 s,
+   potem `#deviceLoadError` z „Odśwież”. e2e z wymuszonym 503.
+
 ## Do zrobienia osobno
 
-- Wygładzić powrót telefonu po wygaśnięciu lease (odczyt i token dopiero
-  z nową epoką) — dziś ~1 s i fałszywe błędy w diagnostyce.
-- Przypisać 10% wycofanych transakcji do funkcji (wymaga statystyk
-  zapytań na serwerze bazy).
-- Rozważyć potwierdzenie Wyświetlacza bez zmiany wiersza `game_state`
-  (`display_rendered_rev` wysyła cały wiersz do wszystkich urządzeń przy
-  każdym potwierdzeniu; Przycisk potrzebuje tylko tej liczby).
+- Usunąć kolumnę `game_state.display_rendered_rev` (sprzątanie po 486,
+  gdy stare karty urządzeń wygasną).
 - Po kolejnym eksporcie: liczba `fallback_catchup` z `trigger: doorbell`
   vs `lease_heartbeat`, `snapshot_catchup`, czasy `late_ack`
   z `display_ack_ms`.

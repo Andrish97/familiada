@@ -7,17 +7,17 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T08394";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T08394";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T08394";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T08394";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T08394";
-import { createHostRenderer } from "./render.js?v=v2026-10-25T08394";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-25T08394";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-25T08394";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T08394";
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T08394";
-import { setShift } from "../../../shared/js/core/geometry.js?v=v2026-10-25T08394";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T12231";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T12231";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T12231";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T12231";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T12231";
+import { createHostRenderer } from "./render.js?v=v2026-10-25T12231";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-25T12231";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-25T12231";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T12231";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T12231";
+import { setShift } from "../../../shared/js/core/geometry.js?v=v2026-10-25T12231";
 
 
 function parseParams() {
@@ -239,6 +239,7 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "host", key,
     getLeaseArgs: () => lease.actionArgs(),
+    beforeResync: () => lease.refresh(),
     log: lease.log,
     onRow: async (row) => {
       lease.setProgress({ receivedRev: Number(row.rev) || 0 });
