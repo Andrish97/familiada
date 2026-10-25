@@ -1,29 +1,43 @@
 # Przebudowa kontroli unikalności gier — 2026-10-25
 
-## Aktualny stan produkcji
+## Aktualny stan produkcji — zakończone
 
-Wdrożone na main `04ebe5a49`: migracje 487/488, blokada identycznych
-zestawów w bazie, raporty tekstowe, aktualność raportów i potwierdzanie
-niepełnych wyników w panelu. DB 40193262609, Edge 40193262531,
-Worker 40193262526 i Pages 40193262517 zakończone powodzeniem.
-Kontrola produkcji 40193541789 ✓ 6/6: anonimowy katalog, dodanie do
-biblioteki, ocena, zgłoszenie/prywatny preview, blokada kopii pod nowym ID,
-tytułem i językiem oraz ochrona listy oceniających. Wybrane unity także ✓.
+Działa pełny system: blokada identycznych zestawów w bazie (487/488),
+porównanie tekstowe i znaczenia pytań z odpowiedziami, świeże raporty
+oraz potwierdzanie zbieżności i niepełnych wyników w panelu. Model działa
+na własnym serwerze; kod `services/market-semantic` i osobny workflow
+`deploy-market-semantic.yml` są w repo familiada, zgodnie z decyzją właściciela.
+Prywatne familiada-server zawiera instalator i compose. Bez nowego DNS,
+publicznego portu ani domeny; prywatna sieć `supabase_default`, 1 CPU/1 GiB,
+read-only, osobny token generowany wyłącznie na serwerze.
 
-DB READ ONLY 40193544729 ✓: 90 gier, 900 pytań, 90 prawidłowych raportów,
-aktywna blokada, brak prawa bezpośredniego INSERT dla użytkowników,
-0 grup dokładnych kopii. HTTP strony dzieci-i-rodzice: 200, canonical,
-10 pytań w HTML, identyczna odpowiedź dla przeglądarki i Googlebota.
+Deploy modelu 40199162665 ✓ (kod 424dd2aab): kontrola autoryzacji, zasobów
+oraz zbioru parafraz PL/EN/UK; uzupełniono 900 pytań z 90 gier.
+Raporty zapisanej gry oraz kandydata przed publikacją przez rzeczywiste
+Edge przeszły w trzech językach. DB READ ONLY 40199332058 ✓:
+**900/900 wektorów i 90/90 pełnych raportów**, aktywny indeks kopii,
+bezpośredni INSERT użytkownika zablokowany, 0 grup identycznych zestawów.
 
-**Pozostało uruchomienie modelu znaczenia.** Jest przygotowany i przetestowany
-lokalnie; produkcja ma nadal 0 wektorów i 0 pełnych raportów semantycznych.
-Panel jawnie pokazuje niepełny wynik. Dostęp do konfiguracji
-`Andrish97/familiada-server` nadal zwraca 404, więc nie można dodać usługi
-i jej sekretów zgodnie z procedurą. Zasoby serwera zmierzono — wystarczające
-do przygotowanego limitu 1 CPU/1 GiB. Następnie: instrukcje prywatnego repo,
-instalacja usługi i konfiguracja URL/tokenu Edge, indeksacja 900 pytań,
-sprawdzenie pełnego pokrycia i raportów na produkcji. Zgoda na realizację
-już udzielona; brak dotyczy dostępu, nie zatwierdzenia działania.
+Produkcja 40199335322 ✓ 2/2 (zgłoszenie/prywatny podgląd oraz blokada kopii
+pod nowym ID, tytułem i językiem). Poprzednia kontrola całego zmienionego
+przepływu 40193541789 ✓ 6/6: także anonim, biblioteka, ocena i ochrona listy
+oceniających. Jednostkowe testy instalacji/sekretów 8/8, kontraktu usługi 5/5,
+wcześniejsze testy SQL i wyścigów oraz raportów/API pozostają zielone.
+
+Okresowe uzupełnianie działa co 15 minut, a podgląd/sprawdzenie w panelu
+uzupełnia brakujący kontekst sprawdzanej gry. Zmiana pytań/odpowiedzi
+unieważnia ich wektory; tytuł i punktacja nie wymagają nowego liczenia.
+Migracja 489: timeout HTTP 90 s zamiast domyślnego 5 s dla większej partii,
+lokalny SQL ✓, produkcja 40199926405 ✓ (log OK 13:58:49 UTC).
+Rzeczywisty wywołany mechanizm crona 40200181919 ✓: aktywne zadanie,
+konfiguracja Vault obecna, jawny timeout, odpowiedź HTTP 200 bez przekroczenia
+czasu i z pełnym indeksem. Tokeny i treści nie są wypisywane do Actions.
+
+Podobieństwo jest wskazaniem dla moderatora; dokładne kopie blokuje baza.
+Zbiór kontrolny parafraz: 29/30 wykrytych i 0/30 kontrolnych wskazanych,
+co nie jest gwarancją wykrywania każdej parafrazy ani ogólnym benchmarkiem.
+Podobieństwo tekstowe/znaczenia porównujemy w języku gry; identyczne zestawy
+są chronione globalnie także po zmianie etykiety języka.
 
 Poniższy dziennik zawiera wcześniejsze stany sprzed wdrożenia.
 
