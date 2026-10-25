@@ -152,6 +152,8 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
     await view.evaluate(() => document.fonts?.ready);
     await page.waitForTimeout(scene.settle ?? 400);
   } catch (e) { readyError = e.message.split("\n")[0]; }
+  // Nieaktualny selektor sceny nie usuwa pomiaru samego startu strony.
+  if (args.audit && !initialLayout) initialLayout = await view.evaluate(() => window.__screensLayoutAudit?.stop()).catch(() => null);
   const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
   // --audit: układ (przewijanie, obcięcia, sterowanie poza ekranem, safe area) — audit-layout.cjs.
   const audit = args.audit

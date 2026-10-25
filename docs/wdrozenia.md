@@ -256,8 +256,23 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Scalenie `origin/main` (`eb822245d3`) → `2cff3e4e79`, bez konfliktów;
   obce zmiany tylko w Lead Finderze/workflow diagnostycznym i dokumentacji,
   bez wpływu na zielone spece frontendu — nie powtarzać testów brancha.
-- Status: bramka e2e brancha spełniona, pełna galeria w toku (część 1
-  wznowiona po poprawce sceny). Dalej main/Pages → te same spece na produkcji.
+- Pełna galeria `--changed --audit`: 478 + 493 = **971 kadrów / 542 sceny**,
+  bez `skok-po-zaladowaniu` (963 pomiary początkowe; 8 selektorów gotowości
+  nieaktualnych — runner zapisuje pomiar także po błędzie selektora,
+  uzupełnienie punktowe). Pozostałe uwagi: 113 + 187, poza zakresem CLS.
+- Porównanie wszystkich 36 tras: **52 pary**, 51 identycznych, jedna różnica
+  **1 piksela**, zero ponad próg. Skeleton: **24/24** (8 stron × 390/360/1400,
+  UK, dane +250 ms), CLS max 0,00172; Gry/Bazy/Logo widoczne przed danymi.
+  Słownik +900 ms: Control/guard 390/360/1400 — CLS 0.
+- Próba na bazie potwierdziła wcześniejsze błędy Turnstile, iframe poczty
+  i nieaktualne selektory `manual-games` / `games-duplicate-done`.
+  Bazowe Wskazówki z tym samym audytem: CLS 0,05467 desktop / 0,07113 phone;
+  po poprawce 0. Uzupełnione brakujące RPC atrapy `initiate_email_change_intent`
+  (SQL void); scena migracji gościa ponownie bez braków i bez uwag audytu.
+- Pełny unit po ostatniej korekcie runnera: **859/859** ✓ (74,2 s).
+- Status: lokalne bramki i e2e brancha zielone. Przed publikacją scalenie
+  nowszego `main` z diagnostyką Control, unit i ponowny Control, potem
+  main/Pages → te same spece na produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |

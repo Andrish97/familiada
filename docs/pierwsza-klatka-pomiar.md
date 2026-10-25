@@ -42,3 +42,21 @@ Po poprawce punktowo, z tymi samymi opóźnieniami: Wskazówki 0/0/0,
 Gry 0,00001/0,00002/0,00010; ankieta 0/0/0,00006. Wartości poniżej progu
 0,01: drobne przesunięcia liczników i tekstu topbara. Pełny audyt i kontrola
 produkcyjna są odnotowywane w Dzienniku `wdrozenia.md`.
+
+
+Weryfikacja całości: 542 sceny, 971 kadrów (478 + 493), brak przekroczeń
+0,01 po odsłonięciu. Pierwszy przebieg zapisał 963 pomiary; 8 nieaktualnych
+selektorów uzupełnia przebieg punktowy. Runner zachowuje pomiar także po
+błędzie selektora. Maksimum zmierzonych wartości: 0,006484. Pozostałe
+113 + 187 uwag audytu dotyczą przewijania, ucięć i innych istniejących stanów;
+nie są wynikiem bramki pierwszej klatki. Próba na kodzie bazowym potwierdziła
+m.in. błędy Turnstile, sandbox iframe poczty i stare selektory Wskazówek.
+Nie oznaczamy pełnego audytu układu jako zielonego.
+
+Porównanie końcowego wyglądu: 52 pary PNG ze wszystkich 36 tras, identyczne
+dane i czcionka Inter — 51 par identycznych i jeden różny piksel w pozostałej,
+żadna para ponad próg. Potwierdzenie skeletonu: 24/24 prób przy opóźnieniu
+danych 250 ms, UK, 390/360/1400 px. W Grach, Bazach i Logo etap danych był
+jeszcze niegotowy, gdy powłoka była już widoczna; po jego odsłonięciu CLS 0.
+Maksimum 24 prób: 0,00172 (ustawienia gry, 360 px). Control i ekran guarda
+ze słownikiem opóźnionym o 900 ms: 0/0/0.
