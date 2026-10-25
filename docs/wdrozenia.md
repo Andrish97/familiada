@@ -229,6 +229,23 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — animowane części ikon: audyt, hamburger i para kawy
+
+- Zlecenie użytkownika: audyt zastosowań animowanych części SVG i pierwsze
+  wdrożenie hamburgera oraz kawy. Doprecyzowanie: filiżanka stoi, para nad
+  nią płynnie zmienia falę. Branch `feat/animated-icon-parts`.
+- Decyzje i audyt: `docs/animowane-ikony-audyt.md`. Wspólny silnik, stały
+  viewBox/rozmiar/currentColor; stan menu jest źródłem kształtu hamburgera.
+  Ruch pary tylko w widocznym obszarze i aktywnej karcie, wyłączony dla
+  prefers-reduced-motion. Bez nowych animacji pozostałych ikon w tej paczce.
+- Silnik i audyt gotowe: ruch części SVG, bez runtime-fetch. Chromium na
+  390/360/1400 px: menu zmienia stan, krzywa pary zmienia kształt, reduced
+  motion zatrzymuje ją, brak błędów JS. Unit **814/814 ✓**.
+- Zrzuty 15 kadrów menu/stopki/okna kawy; brak przekroczeń CLS. Dwie istniejące
+  uwagi dotyczą zawijania CTA Home, niezwiązane z ikonami.
+- Status: punktowe e2e na branchu (ikony + okno kawy), potem produkcja.
+
+
 ### 2026-10-25 — jednoznaczny opis zmiany typu gry
 
 - Zgłoszenie użytkownika: dwukrotne „zostaną” sugerowało zachowanie także

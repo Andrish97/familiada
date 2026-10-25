@@ -82,6 +82,24 @@
     overflow: visible;
   }
 
+  /* Części hamburgera pozostają w stałym viewBox; stan jest na przycisku. */
+  .ico[data-icon-animation="menu"] [data-icon-part] {
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+  }
+  .ico[data-icon-animation="menu"] [data-icon-part="top"] { transform-origin: 12px 6px; }
+  .ico[data-icon-animation="menu"] [data-icon-part="middle"] { transform-origin: 12px 12px; }
+  .ico[data-icon-animation="menu"] [data-icon-part="bottom"] { transform-origin: 12px 18px; }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="top"] {
+    transform: translateY(6px) rotate(45deg);
+  }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="middle"] {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  :where(button[aria-expanded="true"]) .ico[data-icon-animation="menu"] [data-icon-part="bottom"] {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
   a.gold {
     color: var(--accent);
     text-decoration: underline;

@@ -317,6 +317,23 @@ Jedna rodzina animacji, czasy z tokenów (`--dur-fast` .12 s, `--dur-base`
 - **Menu, listy, podpowiedzi** — `popover-in`; przyciski, pola, kafle —
   przejścia kolorów, obwódek i lekkiego uniesienia.
 
+### Animowane części ikon (2026-10-25)
+
+`icon("hamburger", { animation: "menu" })` morfuje kreski według
+`aria-expanded` najbliższego przycisku. `icon("coffee", { animation: "steam" })`
+zmienia krzywe pary przy nieruchomej filiżance. HTML przy hydracji:
+`<i data-icon="coffee" data-icon-animation="steam"></i>`.
+
+Rysunek pochodzi z jednego pliku SVG. Po zmianie części:
+`node scripts/build-icon-parts.mjs`; wygenerowany `icon-parts.js` jest
+sprawdzany przez unit. Zwykłe ikony nadal używają zewnętrznego SVG.
+Brak pobierania lub wymiany rysunku po odsłonięciu strony. Geometria pola
+24×24, rozmiar em i currentColor są wspólne. Animacja nie ustawia stylów inline.
+`icon-motion.js` zatrzymuje SMIL pary poza obszarem widoku, przy ukrytej
+karcie i ograniczonym ruchu; odpina usunięte elementy. Hamburger w reduced
+motion natychmiast pokazuje poprawny stan. W przeglądarce bez odpowiednich
+API pozostaje statyczny rysunek. Audyt kandydatów: `animowane-ikony-audyt.md`.
+
 ## 8. Nowa strona — kroki
 
 1. HTML: szkielet z §5, pliki z §2, elementy z §6.

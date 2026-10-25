@@ -1,4 +1,4 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19542";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T20152";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -6,12 +6,12 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19542";
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T19542";
-import { signOut } from './auth.js?v=v2026-10-25T19542';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T19542';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T19542';
-import { icon, iconText } from './icons.js?v=v2026-10-25T19542';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T19542';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T20152";
+import { signOut } from './auth.js?v=v2026-10-25T20152';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T20152';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T20152';
+import { icon, iconText } from './icons.js?v=v2026-10-25T20152';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T20152';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -410,7 +410,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T19542');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T20152');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -492,11 +492,15 @@ function initTopbarController() {
   const close = () => {
     overlay?.classList.remove('is-open');
     document.body.classList.remove('topbar-mobile-lock');
+    toggleBtn?.setAttribute('aria-expanded', 'false');
+    toggleBtn?.setAttribute('aria-label', t('common.menuOpen'));
   };
 
   const open = () => {
     overlay?.classList.add('is-open');
     document.body.classList.add('topbar-mobile-lock');
+    toggleBtn?.setAttribute('aria-expanded', 'true');
+    toggleBtn?.setAttribute('aria-label', t('common.menuClose'));
   };
 
   const mountMobile = () => {
@@ -507,6 +511,7 @@ function initTopbarController() {
 
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
+    overlay.id = 'topbarMobileMenu';
     if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
@@ -580,7 +585,10 @@ function initTopbarController() {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger')}</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBtn.setAttribute('aria-controls', overlay.id);
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.setAttribute('aria-label', t('common.menuOpen'));
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger', { animation: 'menu' })}</span><span class="badge" aria-hidden="true"></span>`;
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
@@ -592,8 +600,10 @@ function initTopbarController() {
       action.blur();
       close();
     }, true);
-    toggleBtn.addEventListener('pointerdown', open);
-    closeBtn.addEventListener('pointerdown', close);
+    toggleBtn.addEventListener('click', () => {
+      if (toggleBtn.getAttribute('aria-expanded') === 'true') close(); else open();
+    });
+    closeBtn.addEventListener('click', () => { close(); toggleBtn?.focus(); });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     if (!section2.querySelector(':scope > .topbar-title')) section2.hidden = true;
@@ -653,6 +663,15 @@ function initTopbarController() {
   window.addEventListener('topbar:mobile-required', (event) => {
     navRequiresMobile = !!event.detail?.required;
     syncMode();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
+    close();
+    toggleBtn?.focus();
+  });
+  window.addEventListener('i18n:lang', () => {
+    toggleBtn?.setAttribute('aria-label', t(toggleBtn.getAttribute('aria-expanded') === 'true' ? 'common.menuClose' : 'common.menuOpen'));
   });
 
   syncMode();

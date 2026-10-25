@@ -1,6 +1,8 @@
 // Tłumaczenia EN — część wspólna — wczytuje ją każda strona.
 const en = {
   common: {
+    menuOpen: "Open menu",
+    menuClose: "Close menu",
     colorPicker: {
       preview: "Color preview",
       hexLabel: "HEX",

@@ -1,0 +1,11 @@
+// WYGENEROWANE: node scripts/build-icon-parts.mjs — źródła: web/assets/icons.
+export const ICON_PARTS = Object.freeze({
+  "hamburger": {
+    "animation": "menu",
+    "markup": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g data-icon-part=\"top\"><path d=\"M4 6h16\"/></g><g data-icon-part=\"middle\"><path d=\"M4 12h16\"/></g><g data-icon-part=\"bottom\"><path d=\"M4 18h16\"/></g></g>"
+  },
+  "coffee": {
+    "animation": "steam",
+    "markup": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path data-icon-part=\"cup\" d=\"M4.5 10h11v3.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5Z\"/><path d=\"M15.5 11.5h1.25a2.25 2.25 0 0 1 0 4.5H15\"/><path data-icon-part=\"saucer\" d=\"M3 21h15\"/><path data-icon-part=\"steam-1\" d=\"M7.5 8 C5.0 6.5 9.5 4.5 7.5 2\"><animate attributeName=\"d\" begin=\"indefinite\" dur=\"2.8s\" repeatCount=\"indefinite\" calcMode=\"spline\" keyTimes=\"0;0.5;1\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1\" values=\"M7.5 8 C5.0 6.5 9.5 4.5 7.5 2;M7.5 8 C10.0 6.5 5.5 4.5 7.5 2;M7.5 8 C5.0 6.5 9.5 4.5 7.5 2\"/></path><path data-icon-part=\"steam-2\" d=\"M11.5 8 C9.0 6.5 13.5 4.5 11.5 2\"><animate attributeName=\"d\" begin=\"indefinite\" dur=\"3.4s\" repeatCount=\"indefinite\" calcMode=\"spline\" keyTimes=\"0;0.5;1\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1\" values=\"M11.5 8 C9.0 6.5 13.5 4.5 11.5 2;M11.5 8 C14.0 6.5 9.5 4.5 11.5 2;M11.5 8 C9.0 6.5 13.5 4.5 11.5 2\"/></path></g>"
+  }
+});

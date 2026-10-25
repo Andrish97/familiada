@@ -1,6 +1,8 @@
 // Tłumaczenia PL — część wspólna — wczytuje ją każda strona.
 const pl = {
   common: {
+    menuOpen: "Otwórz menu",
+    menuClose: "Zamknij menu",
     colorPicker: {
       preview: "Podgląd koloru",
       hexLabel: "HEX",
