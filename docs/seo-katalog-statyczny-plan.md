@@ -1,10 +1,14 @@
 # Statyczny katalog, gry i publiczne Wskazówki — propozycja
 
-Status: katalog nadal jest propozycją. Pozostałe poprawki w realizacji na branchu `codex/public-pages-seo`, bez wdrożenia na main. Stan kodu sprawdzony
+Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów zatwierdzona do wdrożenia 2026-10-25. Stan kodu sprawdzony
 na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
 i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
 ## 1. Zakres i ustalenia użytkownika
+
+- 2026-10-25: zgoda na wdrożenie przetestowanych publicznych dokumentów.
+  Dla gier przygotować plan i ocenić prostsze wykonanie; bez zgody na
+  implementację nowego katalogu w tej paczce.
 
 - 2026-10-24: wykonać na branchu wszystkie pozostałe poprawki, bez nowego
   katalogu Gier Społeczności i bez publikacji na produkcji. Wskazówki i
@@ -48,7 +52,9 @@ i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 | Gotowy HTML w osobnym R2, obsługiwany przez Worker | Zmiany katalogu niezależne od wdrożeń aplikacji; brak zapytania do bazy przy odczycie gotowej gry | Nowy bucket/binding, proces publikowania i kontrola spójności |
 | Obecny renderer Workera rozszerzony na wszystkich, z cache | Najmniejsza przebudowa, pełny HTML dla ludzi i botów | To SSR z cache, a nie trwały statyczny katalog; zimny odczyt nadal wymaga bazy |
 
-**Rekomendacja dla docelowego, rzeczywiście statycznego katalogu: R2 + Worker.**
+**Wariant trwałych plików: R2 + Worker.** Po ponownej ocenie 2026-10-25
+rekomendacją pierwszego etapu jest prostszy SSR z §11; poniższy wariant
+pozostaje opcją przy potrzebie niezależności od API/VPS.
 Strona, style i JS pozostają na GitHub Pages. Nowy, osobny bucket zawiera
 wyłącznie publiczne artefakty SEO, bez mieszania ich z kopiami zapasowymi.
 Nie publikujemy `r2.dev` ani bezpośredniego publicznego dostępu do bucketa.
@@ -269,3 +275,125 @@ stron ponownie: workerd 6/6 + wcześniejsze 4/4 głównej, i18n bez nieużywanyc
 kluczy; budowanie `wrangler deploy --dry-run` zakończone bez publikacji
 (267,67 KiB gzip). Drzewo nie zawiera plików testowego podglądu.
 Wszystko pozostaje na branchu; produkcja, baza i katalog są bez zmian.
+
+## 11. Prostszy plan dla gier — rekomendacja 2026-10-25
+
+Status: propozycja po pytaniu użytkownika „czy nie da się tego zrobić prościej”.
+Nie jest częścią zatwierdzonego wdrożenia publicznych dokumentów. §3–6
+opisują alternatywę dla trwałych plików; R2 nie jest wymaganiem SEO.
+Na pierwszy etap zalecany jest **obecny Worker + publiczny odczyt bazy +
+pełny HTML tego samego interfejsu**, bez nowego hostingu i procesu publikacji.
+
+### Co rzeczywiście jest potrzebne
+
+Robot i człowiek mają otrzymać pod istniejącym URL gotowy katalog lub treść
+gry w otwartym okienku, wraz z prawidłowym tytułem i canonicalem. HTML nie
+musi istnieć jako plik na dysku. Można zbudować go na żądanie, podobnie do
+publicznych Wskazówek, ale z danymi publicznych gier pobranymi z obecnego API.
+Nie wystarczy przekazać wszystkim obecnego prostego dokumentu dla botów:
+nie ma interfejsu aplikacji, a gra jest tam błędnie opisana jako FAQ.
+
+```mermaid
+flowchart LR
+  A[Istniejący URL katalogu lub gry] --> B[Obecny Worker]
+  B --> C[Publiczny odczyt obecnej bazy na własnym serwerze]
+  C --> B
+  B --> D[Obecny szablon Pages z wypełnionymi kartami lub okienkiem]
+  D --> E[JS: filtry, konto, oceny i biblioteka]
+```
+
+### Zakres pierwszej paczki
+
+1. **Jeden model publicznych danych.** Worker pobiera je z publicznym
+   kluczem anon, bez przekazywania sesji/cookies użytkownika i bez używania
+   listy administracyjnej z e-mailami/notatkami. Istniejący `market_browse`
+   nie zwraca sluga i ucina wynik do 100 pozycji, więc nie daje poprawnego
+   adresu karty. Najczytelniej dodać jedno małe, tylko odczytowe RPC
+   `market_public_catalog`: wyłącznie opublikowane pozycje, slug, tytuł,
+   opis, język i dozwolona publiczna nazwa autora; ewentualnie publiczne
+   liczniki. Bez payloadów całej biblioteki i bez danych konta. Przy obecnym
+   rozmiarze można zwrócić wszystkie nagłówki w jednym odczycie; przyszła
+   paginacja musi mieć linki HTML, bez cichego obcięcia listy. To dodająca
+   migracja, bez zmiany typu zwracanego obecnych RPC.
+2. **Wspólny renderer interfejsu.** Wydzielić HTML kart oraz pytań/odpowiedzi
+   z obecnego JS do modułu używanego przez Worker i przeglądarkę. Użyć
+   obecnego silnika stylów, nie tworzyć osobnego wyglądu dla Google.
+   Karta jest `<a href="/marketplace/game/slug">`; zwykły klik otwiera
+   okienko, Ctrl/środkowy przycisk/nowa karta działają standardowo.
+3. **Bezpośredni URL gry.** Worker pobiera publiczną grę po slugu
+   (istniejące `market_game_by_slug` z anon, plus jawne sprawdzenie
+   `status=published`) i wypełnia obecny szablon z otwartym okienkiem.
+   Nadaje grze własny title, opis, canonical, H1 oraz publiczne dane
+   strukturalne zgodne z grą, bez automatycznego FAQ. Język treści gry
+   pozostaje jej rzeczywistym językiem; język przycisków może być PL/EN/UK.
+   Parametr języka UI nie udaje tłumaczenia pytań. Dokładna polityka
+   canonicala tych wariantów ma być wspólna dla renderera i klienta.
+4. **Dołączenie JS bez kasowania treści.** Inicjalizacja przejmuje już
+   wypełnione karty i okienko. Nie może czyścić ich na „Ładowanie…” ani
+   uzależniać czytania od logowania. Dane osobiste (`in_library`, własne
+   gwiazdki, oceniający dostępni autorowi) są pobierane oddzielnie po auth.
+   Otwieranie/zamykanie, Back/Forward i zmiana języka synchronizują URL
+   oraz metadane. Bez JS działają linki do katalogu i zamknięcie okienka
+   jako zwykły powrót do katalogu; pytania/odpowiedzi pozostają czytelne.
+5. **Prywatny podgląd autora.** Zachować obecne uwierzytelnione RPC własnych
+   zgłoszeń. Ten stan nie trafia do publicznego SSR ani sitemap. Nie można
+   po prostu zacząć 404-ować każdego niepublicznego sluga przed startem JS,
+   bo zepsuje to obecny refresh podglądu autora. Najprościej rozdzielić
+   adresy w tym samym katalogu: publiczne `/marketplace/game/slug`, a
+   prywatny podgląd autora jako stan `?preview=<id>` istniejącego okienka,
+   bez indeksowania. To zmiana URL/state wymagająca PAGES, dokumentacji,
+   testów i aktualizacji Wskazówek PL/EN/UK; finalny parametr ustalić przy
+   implementacji. Nie dodaje nowej strony ani publicznej kopii treści.
+6. **Bez cache HTML na początek.** Każde publiczne wejście odczytuje
+   aktualny stan bazy, HTML ma `no-store`; brak R2, KV z odciskami, kolejki,
+   webhooków i synchronizacji plików. Po zatwierdzeniu wycofania kolejne
+   odczyty nie publikują gry — także po RPC autora, admina lub usunięciu
+   w kaskadzie. Rozpoczętej wcześniej odpowiedzi i otwartego okienka nie da
+   się cofnąć. Cache statycznych CSS/JS/obrazów zostaje bez zmian.
+7. **Mapa i błędy.** Sitemap korzysta z tego samego publicznego źródła
+   listy, bez administracyjnych pól. Na początku również bez starego cache
+   wpisów gier. Brak/wycofanie = 404; timeout/awaria bazy = 503 i Retry-After,
+   nie pusta lista z 200 i nie rekurencyjny `fetch(request)` tego samego
+   Workera. Ograniczyć czas pobrania. `lastmod` gier na razie pominąć:
+   obecny `updated_at` zmienia się od liczników; brak daty jest lepszy od
+   fałszywej. Osobna data zmiany treści nie blokuje tej paczki.
+8. **Przełączenie po sprawdzeniu obu widoków.** Usunąć wybór HTML katalogu
+   i gry według User-Agent. Nie zmieniać bramki przerwy, uprawnień akcji
+   konta, logowania ani widoków urządzeń. Sprawdzić też, że reguły strefy
+   Cloudflare nie wymuszają cache wbrew `no-store`.
+
+### Czego dzięki temu nie trzeba utrzymywać
+
+| Wariant | Publikowanie zmian gier | Nowe elementy | Zachowanie przy awarii API |
+|---|---|---|---|
+| Zalecany pierwszy etap: Worker SSR bez cache HTML | Zmiana w bazie jest źródłem kolejnego odczytu | Małe RPC listy + wspólny renderer i inicjalizacja JS | Kontrolowane 503; bez generowania pustych stron |
+| Gotowe HTML na własnym serwerze | Publikator po każdej zmianie widoczności, atomowe podmiany plików | Generator, kolejka/retry lub pełna przebudowa, katalog plików, reguły Caddy/Workera | Pliki mogą działać, jeżeli działa serwer WWW; wspólna awaria VPS wyłącza również pliki |
+| Gotowe HTML w R2 | Publikator, trwałe zadania i kontrola aktywnej wersji | R2, binding, generator, spis, retry i kontrola wycofań | Gotowe strony mogą działać niezależnie od VPS; aktualizacje wymagają bazy/publikatora |
+
+Własny serwer już obsługuje API/bazę. Nie trzeba teraz przenosić na niego
+frontendu ani uruchamiać Node tylko dla SEO. SSR dokłada odczyt bazy do
+wejścia publicznego; to jego koszt i ograniczenie dostępności. Przy obecnej
+skali jest rozsądnym punktem startu, lecz pomiar opóźnień i obciążenia jest
+warunkiem wdrożenia, nie założeniem o nieograniczonej wydajności.
+
+### Weryfikacja i kolejność
+
+- Najpierw test publicznego źródła danych: wyłącznie `published`, brak
+  prywatnych pól, stabilne slugi, pełna lista bez limitu 100.
+- Wspólny renderer i przejęcie HTML w JS: jeden etap z testami wszystkich
+  trybów (anon, konto, autor, nowa karta, refresh, Back/Forward, zamknięcie,
+  filtr, język). Osobno sprawdzić prywatny podgląd po odświeżeniu.
+- Rzeczywisty Worker: ten sam HTML dla obu UA, treść bez JS, GET/HEAD,
+  canonical zgodny z URL, XSS w tytułach/opisach/odpowiedziach; biblioteka
+  i własne oceny nigdy nie trafiają do współdzielonego dokumentu.
+- SQL i publiczne odczyty po akceptacji, wycofaniu autora/admina i kasowaniu;
+  timeout/awaria API = 503. Żadnych utrwalonych publicznych kopii zgłoszeń.
+- Punktowe E2E, PL/EN/UK, telefon/komputer, pomiar TTFB i liczby wywołań API.
+  Dopiero po tej bramce przełączenie produkcji i sprawdzenie sitemap.
+- Po publikacji odczyt HTML w Search Console. Pełny HTML ułatwia Google
+  odczyt treści; nie jest obietnicą indeksowania wszystkich gier.
+
+Cache dołożyć dopiero, gdy pomiar wskaże taką potrzebę. Krótki TTL oznacza
+jawnie zaakceptowane opóźnienie wycofania; natychmiastowa kontrola statusu
+przed podaniem cache nadal wymaga bazy. Odporność publicznego katalogu na
+awarię całego VPS to osobny powód powrotu do R2 i §5, nie warunek poprawy SEO.

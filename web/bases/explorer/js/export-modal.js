@@ -1,12 +1,12 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-24T23180";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-24T23180";
-import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-24T23180";
-import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-24T23180";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-24T23180";
-import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-24T23180";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T06061";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T06061";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-25T06061";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-25T06061";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T06061";
+import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-25T06061";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
@@ -275,13 +275,11 @@ export function initExportModal() {
     setProgress({ step: t("baseExplorer.common.dash"), i: 0, n: 0, msg: "" });
     lockUi(false);
 
-    // lista okna: pytania przekazane przez menedżera (cała baza)
+    // Lista okna = dokładnie to, co użytkownik zaznaczył (pytania/foldery
+    // rozwinięte do pytań), wszystko wybrane; w oknie można tylko odznaczać.
+    // Bez dobierania i bez progu 10.
     allQuestions = Array.isArray(opts.questions) ? opts.questions.slice() : [];
-
-    // Dokładnie to, co użytkownik zaznaczył (pytania/foldery rozwinięte do
-    // pytań); bez zaznaczenia -- nic. Bez dobierania i bez progu 10.
-    const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
-    selectedIds = new Set(pre);
+    selectedIds = new Set(allQuestions.map((q) => q.id));
 
     // typ startowy z suwaka (0 = ankieta tekstowa to poprawna wartość), opts.type nadpisuje
     const rangeIdx = Number.parseInt(xTypeRange?.value ?? "2", 10);

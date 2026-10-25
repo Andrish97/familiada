@@ -2098,8 +2098,10 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       for (const qid of chosen) {
         await expect(page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`)).toBeChecked();
       }
+      // lista okna = tylko zaznaczenie (decyzja 2026-10-24), bez reszty bazy
+      await expect(page.locator("#xList .xPickItem")).toHaveCount(3);
       for (const qid of ids.filter((id) => !chosen.includes(id))) {
-        await expect(page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`)).not.toBeChecked();
+        await expect(page.locator(`#xList .xPickItem[data-qid="${qid}"]`)).toHaveCount(0);
       }
 
       await page.locator("#xName").fill(gameName);
