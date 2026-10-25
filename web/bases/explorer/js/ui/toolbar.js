@@ -3,12 +3,12 @@
 // grupy, ikony, dymki ze skrótem i powodem niedostępności, widoczność
 // i dostępność — bez własnych reguł. Klik woła runAction.
 
-import { ACTIONS, TOOLBAR_GROUPS, actionById, actionState } from "../actions/registry.js?v=v2026-10-25T23195";
-import { buildContext } from "../actions/context.js?v=v2026-10-25T23195";
-import { runAction } from "../actions/run.js?v=v2026-10-25T23195";
-import { formatShortcut } from "../platform.js?v=v2026-10-25T23195";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T23195";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T23195";
+import { ACTIONS, TOOLBAR_GROUPS, actionById, actionState } from "../actions/registry.js?v=v2026-10-25T23423";
+import { buildContext } from "../actions/context.js?v=v2026-10-25T23423";
+import { runAction } from "../actions/run.js?v=v2026-10-25T23423";
+import { formatShortcut } from "../platform.js?v=v2026-10-25T23423";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T23423";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T23423";
 
 const GROUP_LABEL = {
   history: "baseExplorer.toolbar.groupHistory",
