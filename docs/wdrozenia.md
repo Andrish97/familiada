@@ -2170,3 +2170,8 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   scaleniu **815/815**; zmiany realtime z równoległej sesji zachowane.
   Prywatny main 14c8819: production **40235056371 ✓**, Access 302,
   CI 84 unit + 17 browser. Publikacja publicznego main i kontrola 3 testów.
+
+- Publiczne Pages **40235227172 ✓** (kod 5d7963c38d, znacznik zasobów
+  27594b7c2e), Worker **40235227300 ✓**. Odczyt publicznego CSS potwierdził
+  prawą szufladę i brak starego przycisku zamknięcia. Kontrola main
+  **40235293025**: te same trzy scenariusze na opublikowanych plikach.
