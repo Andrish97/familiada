@@ -27,12 +27,18 @@ export function createSessionLog({ rpc, params, canSend = () => true, accessToke
   let flushing = null;
   let retryTimer = null;
   let retryIndex = 0;
+  let consecutiveFailures = 0;
+  let droppedEvents = 0;
   let stopped = false;
 
   function push(event) {
     if (stopped || !event?.event_type && !event?.kind) return;
     queue.push({ ...event, event_id: event.event_id || newEventId() });
-    if (queue.length > MAX_QUEUE) queue.splice(0, queue.length - MAX_QUEUE);
+    if (queue.length > MAX_QUEUE) {
+      const dropped = queue.length - MAX_QUEUE;
+      queue.splice(0, dropped);
+      droppedEvents += dropped;
+    }
     void flush();
   }
 
@@ -55,7 +61,19 @@ export function createSessionLog({ rpc, params, canSend = () => true, accessToke
           // Odrzucone przez bazę (np. poza sesją) i tak nie przejdą przy ponowieniu.
           queue.splice(0, batch.length);
           retryIndex = 0;
+          if (consecutiveFailures || droppedEvents) {
+            queue.push({
+              event_type: "log_delivery",
+              phase: "recovered",
+              failed_attempts: consecutiveFailures,
+              dropped_events: droppedEvents,
+              event_id: newEventId(),
+            });
+            consecutiveFailures = 0;
+            droppedEvents = 0;
+          }
         } catch {
+          consecutiveFailures += 1;
           scheduleRetry();
           break;
         }
@@ -170,5 +188,39 @@ export function watchPageLifecycle(push, { onExit } = {}) {
     window.removeEventListener("pageshow", onPageShow);
     window.removeEventListener("offline", onOffline);
     window.removeEventListener("online", onOnline);
+  };
+}
+
+/** Capture uncaught script failures without storing user input or stack traces. */
+export function watchRuntimeErrors(push, page) {
+  const onError = (event) => {
+    const error = event?.error;
+    push({
+      event_type: "runtime_error",
+      phase: "uncaught_error",
+      error_name: String(error?.name || "Error").replace(/[^A-Za-z0-9_.:+/-]/g, "").slice(0, 80) || "Error",
+      page,
+      line: Number.isFinite(event?.lineno) ? event.lineno : undefined,
+      column: Number.isFinite(event?.colno) ? event.colno : undefined,
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(),
+    });
+  };
+  const onRejection = (event) => {
+    const reason = event?.reason;
+    push({
+      event_type: "runtime_error",
+      phase: "unhandled_rejection",
+      error_name: String(reason?.name || "UnhandledRejection").replace(/[^A-Za-z0-9_.:+/-]/g, "").slice(0, 80) || "UnhandledRejection",
+      page,
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(),
+    });
+  };
+  window.addEventListener("error", onError);
+  window.addEventListener("unhandledrejection", onRejection);
+  return () => {
+    window.removeEventListener("error", onError);
+    window.removeEventListener("unhandledrejection", onRejection);
   };
 }

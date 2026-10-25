@@ -420,7 +420,21 @@ window.addEventListener("DOMContentLoaded", async () => {
       },
     };
 
-    const renderer = createRenderer({ scene, qr, getSfxDuration });
+    const renderer = createRenderer({
+      scene, qr, getSfxDuration,
+      onFinalResult: ({ amount, roundsPoints, finalPoints, multiplier, mainPrize, hitTarget, stateRev, renderKind }) =>
+        displayEventLog.report({
+          event_type: "prize_render",
+          amount,
+          rounds_points: roundsPoints,
+          final_points: finalPoints,
+          multiplier,
+          main_prize: mainPrize,
+          hit_target: hitTarget,
+          state_rev: stateRev,
+          render_kind: renderKind,
+        }),
+    });
     rendererInstance = renderer;
     async function warmCueTiming(row, previous) {
       const keys = new Set();
