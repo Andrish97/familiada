@@ -10,16 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T21151";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T21151";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T21151";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T21151";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T21151";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-25T21151";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T21151";
-import { createPressController } from "./press.js?v=v2026-10-25T21151";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T21151";
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T21151";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T21212";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T21212";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T21212";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T21212";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T21212";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-25T21212";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T21212";
+import { createPressController } from "./press.js?v=v2026-10-25T21212";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-25T21212";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-25T21212";
 
 
 function parseParams() {
