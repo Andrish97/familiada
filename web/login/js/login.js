@@ -1,5 +1,5 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-25T07004";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-25T07081";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -22,17 +22,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-25T07004";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T07004";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T07004";
+} from "../../shared/js/core/auth.js?v=v2026-10-25T07081";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T07081";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T07081";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-25T07004";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-25T07004";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T07004";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-25T07004";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T07004";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T07004";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T07004";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-25T07081";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-25T07081";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T07081";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-25T07081";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-25T07081";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T07081";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T07081";
 
 
 const $ = (s) => document.querySelector(s);

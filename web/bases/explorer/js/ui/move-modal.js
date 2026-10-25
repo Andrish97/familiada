@@ -5,13 +5,13 @@
 // Zwraca wybrany folder (null = folder główny) albo undefined (anulowano).
 // Przy przenoszeniu folderów nie da się wybrać ich samych ani ich wnętrza.
 
-import { normalizeText } from "../data/listing.js?v=v2026-10-25T07004";
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T07004";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T07004";
-import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-25T07004";
-import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-25T07004";
-import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-25T07004";
-import { emptyStateHtml } from "../../../../shared/js/core/empty-state.js?v=v2026-10-25T07004";
+import { normalizeText } from "../data/listing.js?v=v2026-10-25T07081";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-25T07081";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-25T07081";
+import { guardRoutedSheet } from "./sheet-guard.js?v=v2026-10-25T07081";
+import { esc, treeToggleHtml, treeIconName, treeRowInner, treeLines } from "./tree-row.js?v=v2026-10-25T07081";
+import { openDialog, closeDialog } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-25T07081";
+import { emptyStateHtml } from "../../../../shared/js/core/empty-state.js?v=v2026-10-25T07081";
 
 const ROOT = "root";
 
