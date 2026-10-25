@@ -5,22 +5,22 @@
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06164";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06164";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06164";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T06164";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T06164";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06164";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06164";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T06164";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-25T06271";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T06271";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06271";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T06271";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-25T06271";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-25T06271";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-25T06271";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-25T06271";
 
-import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T06164";
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T06164";
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-25T06271";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-25T06271";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-25T06164"),
-  en: () => import("../content/en.js?v=v2026-10-25T06164"),
-  uk: () => import("../content/uk.js?v=v2026-10-25T06164"),
+  pl: () => import("../content/pl.js?v=v2026-10-25T06271"),
+  en: () => import("../content/en.js?v=v2026-10-25T06271"),
+  uk: () => import("../content/uk.js?v=v2026-10-25T06271"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
@@ -95,11 +95,14 @@ function renderStart() {
   article.innerHTML = manualArticle(manual, null, t, chapterHref);
 }
 
-function renderChapter(ch) {
-  const back = returnTo && titleOf(returnTo)
+function returnHtml() {
+  return returnTo && titleOf(returnTo)
     ? `<div class="m-return-bar"><a class="m-return" href="${hrefFor(returnTo)}" data-return="1"><i data-icon="arrow-left"></i><span>${esc(t("manual.backTo", { title: titleOf(returnTo) }))}</span></a></div>`
     : "";
-  article.innerHTML = back + manualArticle(manual, ch, t, chapterHref);
+}
+
+function renderChapter(ch) {
+  article.innerHTML = returnHtml() + manualArticle(manual, ch, t, chapterHref);
 }
 
 // Karuzela widoków: przewijanie z przyciąganiem (przesunięcie palcem na telefonie),
@@ -217,11 +220,16 @@ function syncReturn() {
   }
 }
 
-function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false } = {}) {
+function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false, hydrate = false } = {}) {
   const ch = id ? findChapter(id) : null;
   current = ch ? ch.id : null;
   returnTo = ch && from && titleOf(from) ? from : null;
-  if (ch) renderChapter(ch); else renderStart();
+  const reuse = hydrate && article.dataset.manualLang === getUiLang()
+    && article.dataset.manualChapter === (ch?.id || "");
+  if (reuse) {
+    // Nie odłączaj widocznych obrazów/linków przy przejęciu gotowego HTML.
+    article.insertAdjacentHTML("afterbegin", returnHtml());
+  } else if (ch) renderChapter(ch); else renderStart();
   syncPublicSeo("manual", getUiLang(), ch ? t("manual.chapterTitle", { title: ch.title }) : t("manual.title"), ch?.description || t("manual.startLead"), ch);
   syncReturn();
   renderToc();
@@ -234,7 +242,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null, ke
     const next = chapterHref(current, ch ? hash : "", returnTo);
     if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, "", next);
   }
-  scrollToHash(ch ? hash : "", smooth);
+  if (!reuse || hash) scrollToHash(ch ? hash : "", smooth);
+  else markSection();
 }
 
 function setTocOpen(open) {
@@ -278,13 +287,13 @@ function wireNavigation() {
   content.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(markSection); }, { passive: true });
 }
 
-async function renderForLang() {
+async function renderForLang({ hydrate = false } = {}) {
   manual = await loadContent(getUiLang());
   searchIndexEntries = buildIndex(manual);
   // Tekst wpisany, zanim treść się wczytała, dostaje wyniki od razu po zbudowaniu indeksu.
   if (search?.input.value) search.refresh();
   const params = new URLSearchParams(location.search);
-  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true });
+  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true, hydrate });
 }
 
 /* ================= Init ================= */
@@ -309,9 +318,11 @@ async function init() {
   });
   await i18nP;
   wireSearch();
-  wireNavigation();
   try {
-    await renderForLang();
+    await renderForLang({ hydrate: true });
+    // Wcześniej linki HTML działają normalnie, bez przechwytywania kliknięć.
+    wireNavigation();
+    document.documentElement.dataset.manualReady = "true";
   } finally {
     document.documentElement.classList.remove("page-loading");
     document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");

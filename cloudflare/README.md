@@ -67,7 +67,7 @@ dla wszystkich odwiedzających. `/` pozostaje wersją PL; canonical i
 Content-Language odpowiadają wersji. Unity: `node --test tests/unit/homeSeo.test.js`;
 test silnika Worker: `cd cloudflare/maintenance-worker && npm ci && npm test`.
 
-Paczka publicznych dokumentów (`codex/public-pages-seo`, na razie bez wdrożenia):
+Publiczne dokumenty (wdrożone 2026-10-25):
 `/manual/` oraz `/privacy` (także warianty ze slash i `index.html`) otrzymują
 pełny HTML PL/EN/UK z gotowych modułów treści i słowników. Odczyt dokumentu
 nie wymaga Supabase ani sesji; brak podziału według User-Agent. Wskazówki
@@ -136,3 +136,11 @@ Example:
 - `panel`: CNAME → your panel origin (Proxy ON if routed through worker)
 - `supabase`: CNAME → your supabase origin (Proxy ON if routed through worker)
 - `api`: CNAME → your API origin (Proxy ON if routed through worker)
+
+
+Regresja przejęcia HTML Wskazówek: po `npm ci` w `tests` i w katalogu
+Workera uruchomić z głównego repo
+`node cloudflare/maintenance-worker/test/public-browser.mjs`.
+Celowo wstrzymuje import treści; sprawdza wczesne linki HTML i zachowanie
+istniejącego obrazu po starcie JS przy 390/1400 px. Zwykły `npm test` Workera
+pozostaje bez zależności od Playwrighta.

@@ -1,6 +1,6 @@
 # Statyczny katalog, gry i publiczne Wskazówki — propozycja
 
-Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów opublikowana 2026-10-25 (9dbb9f1ab); kontrola końcowa trwa. Stan kodu sprawdzony
+Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów wdrożona i sprawdzona 2026-10-25 (9dbb9f1ab, poprawka abad78242). Stan kodu sprawdzony
 na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
 i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
@@ -23,8 +23,8 @@ i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 - **Wskazówki są udostępnione wszystkim, mają działać i pomagać w
   wyszukiwaniu.** Ich obecne `noindex, nofollow` jest sprzeczne z celem;
   publiczne rozdziały mają otrzymać indeksowalny HTML.
-- Ten dokument określa proponowane wykonanie. Nie zatwierdza nowej
-  konfiguracji Cloudflare ani nie zmienia działającej aplikacji.
+- §10 opisuje wdrożone publiczne dokumenty. §11 to nowa propozycja dla
+  gier, bez wdrożenia nowej infrastruktury i przebudowy katalogu.
 
 ## 2. Co faktycznie wymaga zmiany
 
@@ -252,7 +252,8 @@ UA, błędy, HEAD, sitemap, przerwa); 87/87 punktowych unitów aplikacji,
 nieużywanych kluczy, lint no-undef. Przeglądarka z wyłączonym API: 12
 przypadków PL/EN/UK z JS i bez, nawigacja bez JS oraz telefon bez poziomego
 przewijania. Zrzuty: 36 scen istniejącego interfejsu + 12 bez JS.
-Brak wdrożenia i brak kontroli produkcji tego kodu — zgodnie z poleceniem.
+Stan etapu 2026-10-24: bez wdrożenia, zgodnie z ówczesnym poleceniem;
+publikacja po zgodzie 2026-10-25 jest opisana poniżej.
 
 
 Bramka brancha zakończona:
@@ -274,7 +275,8 @@ nie były powtarzane bez zmiany powiązanego kodu. Najnowszy kod publicznych
 stron ponownie: workerd 6/6 + wcześniejsze 4/4 głównej, i18n bez nieużywanych
 kluczy; budowanie `wrangler deploy --dry-run` zakończone bez publikacji
 (267,67 KiB gzip). Drzewo nie zawiera plików testowego podglądu.
-Wszystko pozostaje na branchu; produkcja, baza i katalog są bez zmian.
+Stan 2026-10-24: całość pozostawała na branchu. Baza i katalog nie były
+zmieniane; publikacja dokumentów nastąpiła po zgodzie 2026-10-25.
 
 ## 11. Prostszy plan dla gier — rekomendacja 2026-10-25
 
@@ -415,3 +417,38 @@ i Worker
 — sukces. Przy wdrożeniu zmieniony także wewnętrzny klucz Cache API mapy,
 żeby starszy spis nie przetrwał na innych POP przez godzinę. Regresja starego
 cache i cały zestaw Workera 10/10. Publiczny URL sitemap nie zmienia się.
+
+
+Kontrola main 40168599886 ujawniła różnicę względem testu samego frontu:
+SSR udostępnia linki i obrazy przed końcem importu treści w przeglądarce.
+Poprawka przejmuje zgodny język/rozdział bez wymiany DOM; obsługę nawigacji
+JS podpina po gotowości modelu, wcześniej działają zwykłe odnośniki HTML.
+Test powiększania czeka na gotowość JS, a nie samą obecność obrazu SSR.
+Regresja `cloudflare/maintenance-worker/test/public-browser.mjs` wstrzymuje
+moduł treści: zachowanie elementu obrazu i wczesna nawigacja, 390/1400 px,
+4/4. Unity powiązane 43/43. Zwykły wygląd i opis obsługi bez zmian.
+
+Poprawka `a4863c843`: Worker 10/10, przeglądarka 4/4, unity 43/43;
+branch E2E [40169011626](https://github.com/Andrish97/familiada/actions/runs/40169011626)
+2/2 — gotowa do publikacji i ponownego sprawdzenia na produkcji.
+
+
+## 12. Zamknięcie wdrożenia publicznych dokumentów — 2026-10-25
+
+Poprawka przejęcia SSR `a4863c843` opublikowana jako `abad78242`:
+[Pages 40169123102](https://github.com/Andrish97/familiada/actions/runs/40169123102)
+i [Worker 40169123107](https://github.com/Andrish97/familiada/actions/runs/40169123107)
+— sukces. Wersje zasobów CI: `00d285406`.
+
+Kontrola rzeczywistego main:
+[40169213382](https://github.com/Andrish97/familiada/actions/runs/40169213382)
+3/3 (publiczne języki/metadane i nawigacja, wyszukiwanie, powiększanie
+ilustracji na telefonie). Prywatność PL/EN/UK i bezpieczny powrót `ret`
+przeszły już w 40168599886; poprawka nie zmieniła ich kodu.
+
+Ponowne odczyty produkcji: 22 przypadki ✓, identyczny publiczny HTML obu
+UA w PL/EN/UK, canonicale, 404/HEAD/noindex techniczne, sitemap 63 adresy
+Wskazówek i zachowany URL przykładowej gry. Worker 10/10; regresja
+przeglądarkowa ze wstrzymaniem treści 4/4; powiązane unity 43/43, zrzuty
+telefonu i komputera obejrzane. Wdrożenie §10 zakończone. §11 pozostaje
+planem; gry i baza nie zostały przebudowane.

@@ -1400,7 +1400,7 @@ E19N, a wraz z nim cały etap E19, jest zamknięty produkcyjnie.
 - **2026-10-22 — każdy kod QR ze zrzutów prowadzi do węża** (decyzja użytkownika: „wszystkie kody QR widoczne na zrzutach mają prowadzić do węża… żeby to było spójne”). Jedna reguła na początku `/go/` (`screenshotSnakeUrl` w `poll-links.js`): link z identyfikatorem demo `00000000-0000-4000-8000-…` w `id` — ankieta (`p=anon`), urządzenie (`d=host|buzzer|display`), QR na Wyświetlaczu (`d=qr`) — otwiera `/snake/?qr=<id>&lang=…` i liczy skan (`logSnake`). Wcześniej tylko ankiety; kod Prowadzącego dawał „nieprawidłowy link”.
 
 
-### 2026-10-24 — SEO publicznych dokumentów, tylko branch
+### 2026-10-24/25 — SEO publicznych dokumentów, wdrożone
 
 `/manual/` pozostaje publiczne. `ch` identyfikuje istniejący rozdział;
 nieznany (także pusty) daje 404. `from` i wspólny `ret` są kontekstem
@@ -1415,4 +1415,5 @@ rozpoznawane przez pageIdForPath. Bez nowych publicznych tras.
 korzysta z tego samego dokumentu. Samodzielne `/maintenance/` jest noindex;
 bramka awarii nadal 503/Retry-After. Link katalog → Wskazówki jest kotwicą
 HTML z zachowaniem nawigacji mapy przy JS i zwykłego nowego okna.
-Katalog i okienka gier nie są przebudowywane. Kod nie jest na produkcji.
+Katalog i okienka gier nie są przebudowywane. Publiczne dokumenty wdrożone
+2026-10-25; kontrola main 40169213382 przeszła.
