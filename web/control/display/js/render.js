@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T17340";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T17584";
 
 // control/display/js/render.js
 //
@@ -25,9 +25,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T1734
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-25T17340";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-25T17340";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-25T17340";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-25T17584";
+import { resolveRoundsEndScreen, resolveFinalEndScreen, resolveEndScreenMode } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-25T17584";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-25T17584";
 
 import {
   ROUND_INTRO_ANIM,
@@ -37,12 +37,12 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-25T17340";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-25T17584";
 
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
-export function createRenderer({ scene, qr, getSfxDuration }) {
+export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
   const timing = createTransitionTiming({ getSfxDuration });
   let generation = 0;
   let activeGeneration = 0;
@@ -325,13 +325,27 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     const winnerTeam = row.detail.final.winnerTeam;
     const totals = row.detail.rounds.totals || { A: 0, B: 0 };
     const finalPoints = row.detail.final.runtime.sum || 0;
+    const roundsPoints = (totals[winnerTeam] || 0) - (row.detail.locks.gameEnded ? finalPoints : 0);
+    const hitTarget = !!row.detail.final.runtime.reached200;
     const screen = resolveFinalEndScreen(row.detail.settings, {
-      roundsPoints: (totals[winnerTeam] || 0) - (row.detail.locks.gameEnded ? finalPoints : 0),
+      roundsPoints,
       finalPoints,
-      hitTarget: !!row.detail.final.runtime.reached200,
+      hitTarget,
     });
     if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });
-    else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
+    else {
+      await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
+      if (resolveEndScreenMode(row.detail.settings) === "money") onFinalResult?.({
+          amount: screen.amount,
+          roundsPoints,
+          finalPoints,
+          multiplier: Number(row.detail.settings?.finalPrizeMultiplier ?? 3),
+          mainPrize: Number(row.detail.settings?.mainPrizeAmount ?? 25000),
+          hitTarget,
+          stateRev: Number(row.rev) || 0,
+          renderKind: animate ? "animated" : "snapshot",
+        });
+    }
   }
 
   // ============================================================

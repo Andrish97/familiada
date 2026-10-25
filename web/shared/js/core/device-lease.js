@@ -1,10 +1,10 @@
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T17340";
-import { t } from "../../translation/translation.js?v=v2026-10-25T17340";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-25T17340";
-import { startTicker } from "./background-ticker.js?v=v2026-10-25T17340";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-25T17340";
-import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "./session-log.js?v=v2026-10-25T17340";
-import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-25T17340";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-25T17584";
+import { t } from "../../translation/translation.js?v=v2026-10-25T17584";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-25T17584";
+import { startTicker } from "./background-ticker.js?v=v2026-10-25T17584";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-25T17584";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle, watchRuntimeErrors } from "./session-log.js?v=v2026-10-25T17584";
+import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-25T17584";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -234,8 +234,10 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
 
   let stopLifecycle = null;
   let stopWakeLock = null;
+  let stopRuntimeErrors = null;
   async function start() {
     stopLifecycle = watchPageLifecycle(logEvent, { onExit: () => log.flushOnExit() });
+    stopRuntimeErrors = watchRuntimeErrors(logEvent, deviceType);
     stopWakeLock = onWakeLockChange(({ phase, error_name: errorName }) => logEvent({ event_type: "wake_lock", phase, error_name: errorName }));
     await heartbeat(true);
     stopTicker = startTicker(() => void heartbeat(false), HEARTBEAT_MS);
@@ -252,6 +254,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev 
     stopTicker?.();
     stopLifecycle?.();
     stopWakeLock?.();
+    stopRuntimeErrors?.();
     log.stop();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("focus", onResume);

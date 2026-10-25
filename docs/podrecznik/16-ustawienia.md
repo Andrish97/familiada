@@ -137,6 +137,7 @@ Ostatnie dwa ustawienia są widoczne, gdy gra ma finał i ekran końcowy pokazuj
 Kwota na ekranie końcowym to punkty zwycięskiej drużyny z rund pomnożone przez „Mnożnik
 nagrody”, a po osiągnięciu celu finału — powiększone o kwotę główną (→ 4.4). Przy remisie ekran
 końcowy pokazuje logo.
+Punkty finału nie wchodzą do mnożenia; służą tylko do sprawdzenia celu.
 
 ![Kwota nagrody po finale](zrzut:game-settings-prize)
 
