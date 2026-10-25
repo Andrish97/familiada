@@ -113,3 +113,22 @@ z obecną bazą. Nowy test `unikalność treści` wymaga 487 i ma zostać wykona
 po migracji razem z kontrolą produkcji; lokalny odpowiednik z wyścigiem
 już przeszedł. Pozostałe testy raportów moderatora mają kontrolowany backend,
 bez logowania prawdziwego człowieka przez Cloudflare Access.
+
+
+Bramka zgodności kodu brancha z działającym backendem:
+[40191286096](https://github.com/Andrish97/familiada/actions/runs/40191286096)
+— sukces 2/2 (anonimowy katalog, wyszukiwanie/filtry/języki/historia;
+zgłoszenie i prywatny podgląd po odświeżeniu) oraz wybrane unity.
+To potwierdza zgodność dotychczasowego publicznego przepływu. Nie jest to
+kontrola wdrożenia nowego guarda ani usługi na VPS — te wymagają 486/487
+oraz dostępu do konfiguracji serwera.
+
+Stan do kontynuacji: branch `codex/market-uniqueness`, implementacja
+b09f15320 + 826df5fa5, sprzątnięcie artefaktów 113d1bfde. Drzewo kodu
+przetestowane i wypchnięte. Produkcja pozostaje na poprzedniej wersji.
+Dostęp do `Andrish97/familiada-server` ponownie sprawdzony po wszystkich
+testach — 404. Następny krok po udostępnieniu: odczytać instrukcje prywatnego
+repo, zmierzyć dostępne zasoby, dodać prywatną usługę/sekret/URL w Edge,
+wykonać testy instalatora, potem procedura 486 → bramka kodu → kod i 487 →
+uzupełnienie wektorów → test nowego guarda oraz kontrola produkcji.
+Bez dodatkowego potwierdzania zgody na samą przebudowę.
