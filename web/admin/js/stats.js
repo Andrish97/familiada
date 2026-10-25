@@ -1174,6 +1174,7 @@ async function openStatsDetailModal(type) {
 
   const perPage = STATS_DETAIL_PER_PAGE;
   let allRows = [];
+  let summaryEl = null; // Sugerowane problemy (Rozgrywki), w przewijanym obszarze
 
   const infoEl = document.createElement("div");
   infoEl.className = "stats-detail-info";
@@ -1259,6 +1260,9 @@ async function openStatsDetailModal(type) {
     infoEl.textContent = total ? `${from + 1}–${to} / ${total}` : "0 wyników";
 
     tableWrap.innerHTML = "";
+    // Podsumowanie przewija się razem z tabelą: nad tabelą, poza przewijanym
+    // obszarem zabierało na telefonie całą wysokość okna (zgłoszenie 2026-10-25).
+    if (summaryEl) tableWrap.appendChild(summaryEl);
     tableWrap.appendChild(buildStatsTable(cfg, pageRows));
     fitModalToTable();
 
@@ -1281,7 +1285,7 @@ async function openStatsDetailModal(type) {
     allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
     if (type === "gameplay") {
       exportButton.disabled = false;
-      body.insertBefore(buildSessionsDiagnosisSummary(allRows), tableWrap);
+      summaryEl = buildSessionsDiagnosisSummary(allRows);
     }
     renderPage(1);
   } catch (err) {
