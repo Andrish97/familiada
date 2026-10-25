@@ -19,9 +19,9 @@ import { rt } from "./realtime.js?v=v2026-10-25T18561";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18561";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18561";
 import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18561";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T205220";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T205905";
 import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T18561";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T205220";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T205905";
 
 const HEARTBEAT_REV_GRACE_MS = 250;
 
@@ -191,6 +191,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function noteDirectFailure(status, error = null) {
     directStatus = status;
     directConnected = false;
+    // Kolejny kanał jest nową generacją transportu. Jeśli jego przerwa okaże
+    // się krótsza niż próg logowania `recovered`, onDirectReady zapisze mimo
+    // to świeże `connected`; nie polegaj na wpisie starego połączenia.
+    transportSnapshotLogged = false;
     if (directIncidentAt == null) {
       directIncidentAt = performance.now();
       directIncident = {

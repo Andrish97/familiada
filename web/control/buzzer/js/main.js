@@ -14,7 +14,7 @@ import { initI18n, setUiLang } from "../../../shared/translation/translation.js?
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T18561";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T18561";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T18561";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T205220";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T205905";
 import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-25T18561";
 import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T18561";
 import { createPressController } from "./press.js?v=v2026-10-25T18561";

@@ -11,7 +11,7 @@ import { initI18n, setUiLang } from "../../../shared/translation/translation.js?
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-25T18561";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T18561";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T18561";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T205220";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-25T205905";
 import { createHostRenderer } from "./render.js?v=v2026-10-25T18561";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-25T18561";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-25T18561";

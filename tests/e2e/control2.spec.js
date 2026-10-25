@@ -1296,10 +1296,20 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         }];
       }));
     };
-    await expect.poll(async () => {
-      const transport = transportOf(await readControl2Sessions(page, game.id));
-      return Object.values(transport).every(item => item.connected > 0);
-    }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+    let lastTransportSnapshot = null;
+    try {
+      await expect.poll(async () => {
+        const sessions = await readControl2Sessions(page, game.id);
+        lastTransportSnapshot = transportOf(sessions);
+        return Object.values(lastTransportSnapshot).every(item => item.connected > 0);
+      }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+    } catch (error) {
+      const sessions = await readControl2Sessions(page, game.id);
+      lastTransportSnapshot = transportOf(sessions);
+      console.log(`[e2e-diag] connected transport timeout ${JSON.stringify(lastTransportSnapshot)}`);
+      await attachStatistics(testInfo, "transport-connect-timeout", sessions);
+      throw error;
+    }
     await expect.poll(async () => {
       const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
       return events.some(event => event.source === "control" && event.category === "state_sync"
