@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mWZahqj9Q5usTnuYl2FFC6I7uZtRA2YURakfu8jflXJnz2gZPieEXrIFjXAtAzK
+\restrict FvOfGVWjh9Nu41847T8VOIXJKLqRFFTFKdR7S6DnaENPSQaW1XYvThDLGiQibkU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -6419,7 +6419,14 @@ BEGIN
   LEFT JOIN public.device_presence dp
     ON dp.game_id=s.game_id AND dp.device_type::text=s.device_type AND dp.device_id='lease-primary'
   WHERE s.game_id=p_game_id AND r.ended_at IS NULL AND r.expires_at>now();
-  RETURN jsonb_build_object('ok',true,'server_time',clock_timestamp(),'devices',v_devices);
+  -- 484: rewizja gry i potwierdzenie Wyświetlacza w tej samej migawce, którą
+  -- Control odpytuje co 750 ms — siatka na zgubiony dzwonek (naciśnięcie
+  -- Przycisku) i zgubione potwierdzenie planszy, bez osobnych zapytań.
+  RETURN jsonb_build_object('ok',true,'server_time',clock_timestamp(),'devices',v_devices,
+    'game_rev',(SELECT rev FROM public.game_state WHERE game_id=p_game_id),
+    'display_completion',(SELECT jsonb_build_object('rendered_rev',dc.rendered_rev,'requested_rev',dc.requested_rev,
+        'rendered_at',dc.rendered_at,'requested_at',dc.requested_at)
+      FROM public.game_state_display_completion dc WHERE dc.game_id=p_game_id));
 END;
 $$;
 
@@ -24801,5 +24808,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mWZahqj9Q5usTnuYl2FFC6I7uZtRA2YURakfu8jflXJnz2gZPieEXrIFjXAtAzK
+\unrestrict FvOfGVWjh9Nu41847T8VOIXJKLqRFFTFKdR7S6DnaENPSQaW1XYvThDLGiQibkU
 
