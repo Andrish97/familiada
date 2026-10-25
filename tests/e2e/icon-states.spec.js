@@ -75,7 +75,7 @@ test('ikony stanu: zapis potwierdza wynik bazy, a Powiel rusza kartkami tylko po
       if (route.request().method() === 'PATCH') await saveGate;
       return route.continue();
     });
-    await page.goto('/games/settings/?id=' + id + '&lang=pl');
+    await page.goto('/games/settings/?id=' + id + '&lang=pl&ret=' + encodeURIComponent('/games/?lang=pl'));
     await page.locator('#gsTeamA').fill('E2E A');
     const save = page.locator('#btnSaveAll');
     const saveBox = await save.boundingBox();

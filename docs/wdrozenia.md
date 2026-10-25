@@ -2253,3 +2253,10 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   wspólny kod nadal z brancha. Ponawiane wyłącznie dwa nieukończone testy.
 - Prywatny branch CI **40240583138 ✓ 91 unit + 25 browser**, server/check
   **40240583124 ✓**. Dwa zrzuty selektora 390/1400 obejrzane.
+
+- Ponowienie **40240883411**: selektor/konto ✓ 1/1, zapis w drugim teście
+  również potwierdzony przez bazę i ikonę; test zatrzymał się dopiero na
+  oczekiwaniu powrotu do Gier. Domyślny parent Ustawień to Control, więc
+  scenariusz dostał jawny ret=/games/. Zachowanie aplikacji i mapa bez zmian.
+  Ponawiany tylko test zapisu/Powiel; oko, hamburger i strzałki są zielone.
+- Prywatny pakiet opublikowany: production **40240924445 ✓**, main 7cf7cff.
