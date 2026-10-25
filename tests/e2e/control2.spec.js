@@ -1238,19 +1238,30 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
 
-    // Kontrolowana, krótka utrata sieci jednego urządzenia w aktywnej rundzie:
+    // Kontrolowana utrata sieci jednego urządzenia w aktywnej rundzie:
     // fallback ma utrzymać stan, a po powrocie kanał ma się odtworzyć i zalogować
     // kod zamknięcia WebSocket (żeby odróżnić błąd socketu od błędu kanału).
     await displayPage.context().setOffline(true);
-    await displayPage.waitForTimeout(3500);
+    // Chromium może zostawić istniejące WebSocket otwarte po krótkim offline.
+    // Trzymaj przerwę dłużej niż heartbeat Realtime (25 s), żeby wymusić
+    // rzeczywiste wykrycie zerwania, a nie tylko chwilowy brak pakietów.
+    await displayPage.waitForTimeout(30000);
     await displayPage.context().setOffline(false);
-    await expect.poll(async () => {
-      const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
-      return events.some(event => event.source === "display" && event.category === "device_transport"
-        && event.metrics?.phase === "socket_closed")
-        && events.some(event => event.source === "display" && event.category === "device_transport"
-          && event.metrics?.phase === "recovered" && Number.isInteger(event.metrics?.socket_close_code));
-    }, { timeout: 30000, message: "Display powinien odzyskać kanał i zapisać kod zamknięcia WebSocket" }).toBe(true);
+    let socketEvents = [];
+    try {
+      await expect.poll(async () => {
+        const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+        socketEvents = events.filter(event => event.source === "display" && event.category === "device_transport"
+          && ["socket_closed", "recovered"].includes(event.metrics?.phase));
+        return events.some(event => event.source === "display" && event.category === "device_transport"
+          && event.metrics?.phase === "socket_closed")
+          && events.some(event => event.source === "display" && event.category === "device_transport"
+            && event.metrics?.phase === "recovered" && Number.isInteger(event.metrics?.socket_close_code));
+      }, { timeout: 45000, message: "Display powinien odzyskać kanał i zapisać kod zamknięcia WebSocket" }).toBe(true);
+    } catch (error) {
+      console.log(`[e2e-socket-close] ${JSON.stringify(socketEvents.map(event => ({ phase: event.metrics?.phase, metrics: event.metrics })))}`);
+      throw error;
+    }
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
 
     const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
