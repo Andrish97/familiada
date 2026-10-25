@@ -33,6 +33,11 @@ Zastępuje wcześniejsze wersje tego planu (LF2). Analiza starego systemu:
   dostawców przez panel. Pozostali dostawcy usunięci z tabeli (migracja 495);
   rekord `deepseek` zostaje ze stanem cooldownu dla usługi i RPC
   `get_available_ai_providers` / `set_ai_provider_cooldown`.
+- **SearXNG — jedno źródło konfiguracji** (zatwierdzone 2026-10-25):
+  `apps/searxng/settings.yml` w `familiada-server`, jawna lista silników,
+  wdrażanie przez `server.yml apps production`; bez importowanej kopii i bez
+  `SEARCH_ENGINES` w Lead Finderze. Na start Yandex i Seznam (zwracały wyniki
+  w próbach serwera); zmiana silników w jednym pliku, kontrola `apps check`.
 - **Mail „Zaproszenie”**: pierwszy obraz = grafika OG (`og-image-mail.webp`,
   odświeżana z `og-image` przez `scripts/screens/publish-homepage.cjs`).
 - Dopisane przez agenta (zgoda w rozmowie): odmowa albo odbity adres = bez

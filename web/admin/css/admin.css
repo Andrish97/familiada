@@ -575,10 +575,6 @@
   .provider-bar-track > .progress-bar[data-tone="bad"] { --progress-color: var(--danger); }
   .provider-bar-value { width: 60px; text-align: right; }
   .provider-limit { width: 80px; text-align: center; }
-  .provider-status { font-size: 11px; }
-  .provider-status[data-tone="bad"] { color: var(--danger); }
-  .provider-status[data-tone="warn"] { color: var(--warn-text); }
-  .provider-status[data-tone="ok"] { color: var(--ok-text); }
   .stats-exclude-msg[data-tone="bad"] { color: var(--danger); }
   .stats-exclude-msg[data-tone="ok"] { color: var(--ok-text); }
   .table-empty { text-align: center; padding: 20px; opacity: .5; }
@@ -1581,7 +1577,6 @@
   .mc-cat-name { font-weight: 600; overflow-wrap: anywhere; }
   .mc-cat-details { flex: 1 0 100%; display: grid; gap: 4px; }
   .mc-cat-desc { margin: 0; font-size: 12px; opacity: .8; }
-  .mc-ai-note { font-size: 13px; opacity: .85; margin: 8px 0; }
   .mc-logs > summary { cursor: pointer; font-size: 13px; opacity: .8; margin: 8px 0; }
   .mc-reaction--declined, .mc-reaction--bounced { color: var(--bad-text); }
   .mc-reaction--replied { color: var(--ok-text); }
