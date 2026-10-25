@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EFx4Gwk5rxaEiHedJ7BGrNhYR7yRq6tBRImaFSAgpMHcRr8neUdPs7Zk7S56S8q
+\restrict mWZahqj9Q5usTnuYl2FFC6I7uZtRA2YURakfu8jflXJnz2gZPieEXrIFjXAtAzK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -13493,6 +13493,23 @@ $$;
 
 
 --
+-- Name: market_public_catalog(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_public_catalog"() RETURNS TABLE("id" "uuid", "slug" "text", "title" "text", "description" "text", "lang" "text", "origin" "text", "author_username" "text", "library_count" integer, "avg_rating" numeric, "rating_count" integer, "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select mg.id, mg.slug, mg.title, mg.description, mg.lang,
+    mg.origin::text, coalesce(public._public_username(mg.author_user_id), ''),
+    mg.library_count, mg.avg_rating, mg.rating_count, mg.created_at
+  from public.market_games mg
+  where mg.status = 'published' and mg.slug is not null
+  order by mg.created_at desc, mg.id;
+$$;
+
+
+--
 -- Name: market_rate_game("uuid", integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -24784,5 +24801,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EFx4Gwk5rxaEiHedJ7BGrNhYR7yRq6tBRImaFSAgpMHcRr8neUdPs7Zk7S56S8q
+\unrestrict mWZahqj9Q5usTnuYl2FFC6I7uZtRA2YURakfu8jflXJnz2gZPieEXrIFjXAtAzK
 
