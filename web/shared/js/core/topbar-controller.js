@@ -374,6 +374,8 @@ export function setTopbarAccount(user, {
   });
 
   document.addEventListener('pointerdown', (e) => {
+    // Na telefonie konto jest stałą częścią hamburgera, nie dropdownem.
+    if (_mobileActive) return;
     if (!whoEl.contains(e.target) && !menu.contains(e.target)) menu.hidden = true;
   });
 

@@ -42,6 +42,16 @@ test('niewidoczne przekierowania: sesja rozstrzyga trasę przed pierwszą klatk�
       await expect(page.locator('html')).not.toHaveAttribute('data-layout-pending', '', { timeout: 15000 });
       expect(visibleFrames, `${source} → ${destination}, ${width}px: widoczne klatki źródła`).toBe(0);
     }
+    const toggle = page.locator('.topbar-menu-toggle');
+    const menu = page.locator('#topbarAccountMenu');
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (width < 600) await toggle.click();
+      else await page.locator('#who, #whoStatic').click();
+      await expect(menu.getByRole('button', { name: 'Ustawienia konta', exact: true })).toBeVisible();
+      await expect(menu.getByRole('button', { name: 'Wyloguj', exact: true })).toBeVisible();
+      if (width < 600) await page.locator('.topbar-mobile-close').click();
+      else await page.locator('main').click({ position: { x: 2, y: 2 } });
+    }
   }
   source = ''; target = '';
   await page.goto('/login/?force_auth=1', { waitUntil: 'domcontentloaded' });

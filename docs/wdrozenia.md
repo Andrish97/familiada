@@ -252,7 +252,19 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Unit **812/812 ✓**. Zrzuty 12 kadrów Home/Login/Go: brak przekroczeń
   skok-po-zaladowaniu; dwa istniejące ostrzeżenia zawijania CTA Home mobile,
   lokalny zewnętrzny Turnstile niedostępny (stan zastany).
-- Status: branch e2e, potem publikacja i kontrola produkcji.
+- Kolejne zgłoszenie: w hamburgerze brak ustawień konta i wylogowania.
+  Potwierdzone w Chromium: obie akcje istniały, lecz `pointerdown` otwierający
+  hamburger uruchamiał desktopową obsługę kliknięcia poza dropdownem i chował
+  całą sekcję. Na mobile sekcja konta jest stała; obsługa zamykania dropdownu
+  działa teraz tylko na desktopie. Nowa scena `games-account-menu` i e2e
+  dwukrotnego otwarcia na 390/360/1400 px sprawdzają widoczność obu akcji.
+- Branch `3e39a47081`: UI **40226827228 ✓ 5/5**, pełna runda Control
+  **40226829390 ✓ 1/1**. Korekta licznika prawdziwych ramek potwierdzona.
+- Po poprawce hamburgera: pełny unit ponownie **812/812 ✓**; Gry i Zadania,
+  390/360/1400 px: **6/6 zrzutów**, audyt **0 uwag**, obie akcje widoczne.
+- Status: ponowny punktowy test rozszerzonego speca menu, potem publikacja
+  i kontrola produkcji. Uwierzytelnienie GH_TOKEN zwraca 401; odczyt przez
+  połączoną aplikację GitHub działa, CLI Actions wymaga odświeżenia dostępu.
 
 ### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
 
