@@ -1264,7 +1264,18 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
             && event.metrics?.phase === "recovered" && Number.isInteger(event.metrics?.socket_close_code));
       }, { timeout: 45000, message: "Display powinien odzyskać kanał i zapisać kod zamknięcia WebSocket" }).toBe(true);
     } catch (error) {
-      console.log(`[e2e-socket-close] ${JSON.stringify(socketEvents.map(event => ({ phase: event.metrics?.phase, metrics: event.metrics })))}`);
+      const socketProbe = await displayPage.evaluate(() => ({
+        observer_attached: window.__sbDeviceRealtimeCloseObserverAttached,
+        app_close: window.__sbDeviceRealtimeLastClose || null,
+        connection_state: window.__sbDeviceRealtime?.realtime?.connectionState?.() || null,
+      })).catch(() => null);
+      const allDeviceTransportEvents = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+      console.log(`[e2e-socket-close] ${JSON.stringify({
+        socketProbe,
+        selected: socketEvents.map(event => ({ phase: event.metrics?.phase, metrics: event.metrics })),
+        device_transport: allDeviceTransportEvents.filter(event => event.source === "display" && event.category === "device_transport")
+          .map(event => ({ phase: event.metrics?.phase, status: event.metrics?.status, code: event.metrics?.socket_close_code })),
+      })}`);
       throw error;
     }
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
