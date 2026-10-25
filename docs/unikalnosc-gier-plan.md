@@ -154,3 +154,9 @@ Capacity READ ONLY 40192840935 ✓: 4 CPU, 8 326 938 624 B RAM,
 78 116 810 752 B. Lokalny model z limitem 1 CPU/1 GiB ma zapas;
 przed instalacją uwzględnić bieżące obciążenie i zasady prywatnego repo.
 Pierwszy etap 487 opublikowany 64207656a; oczekiwanie na log migracji.
+
+Etap 487 zastosowany: Apply DB 40192829492 ✓, schema/log zsynchronizowane
+1dedce609, log OK 12:24:58 UTC. DB READ ONLY 40193092955 ✓: 90 gier,
+900 pytań, 90 prawidłowych raportów, 0 wektorów, 0 pełnych raportów
+znaczenia, 0 grup kopii. Stan zgodny z oczekiwaniem przed 488.
+Bramka kodu po migracji: 40193089231 (kod 2edf00f7a).
