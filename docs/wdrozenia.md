@@ -2231,3 +2231,5 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Po scaleniu aktualnego main **823/823 unit**. Kod stopki i jej testów po
   zielonym 40238074611 zmieniony wyłącznie wersjami zasobów; publikacja
   przywróconego wyglądu i potem kontrola produkcji 4 testów.
+
+| 2026-10-25 | Marketing — uporządkowany wygląd filtrów | Na zgłoszenie właściciela przebudowano blok filtrów: wspólna karta, równe pola z etykietami, lżejsza typografia dat, czytelny zakres także po zwinięciu, układy komputer/telefon/tablet. Wybranie działania zamyka Więcej przed potwierdzeniem (naprawiona kolizja menu z oknem na telefonie). Server 3f0a8ec, production 40239271693 success; CI 40238809930 i 40239041141 success: 89 unit + 23 browser, build/check. CSS bez zmiany progów; korekta pośredniego progu na wspólny 980. Zrzuty stanów otwartego/zwiniętego 1400/390 i tablet obejrzane. Origin SHA/private-cache i 404/404/200; po wdrożeniu Access 302, origin 404, www 200. | Odświeżyć panel. Zachowano działanie sortowania, zakresów i przygotowania adresów widoku. Bez realnej wysyłki, zmian bazy/API/LF ani maintenance. |
