@@ -132,3 +132,19 @@ w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG).
 Kontrola po przebiegu przez `db-read`: `scripts/db-read/lead-finder-runs.sql`
 (liczniki lejka) i `scripts/db-read/lead-finder-contacts.sql` (kontakty, wysyłki,
 odpowiedzi); bez uruchamiania wyszukiwania za właściciela.
+
+## Kontrola po czynnościach właściciela (2026-10-25)
+
+Właściciel potwierdził dodanie klucza CEIDG, import kontaktów i usunięcie
+rekordu DNS leads. DB read 40215443562: 1098 kontaktów, wszystkie przejrzane
+i dobre, 0 nieprzejrzanych/śmieci, 1094 z wysyłką, 5 odpowiedzi. DB read
+40215403809: brak nowego przebiegu po wdrożeniu; widoczna tylko próba z
+16:22 UTC sprzed poprawki SearXNG. Działanie CEIDG i nowego wyszukiwania
+potwierdzi dopiero test właściciela z panelu.
+
+DNS leads odpowiada tak samo jak losowa nieistniejąca subdomena (wildcard);
+samo rozwiązanie nazwy nie oznacza pozostawienia publicznej usługi.
+
+Decyzja właściciela: najpierw sprawdza działanie Lead Findera, potem
+przenoszenie panelu i podział Workera; token Cloudflare doda później.
+Nie uruchamiać wyszukiwania ani wysyłki za właściciela.
