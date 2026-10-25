@@ -2,8 +2,13 @@ import { renderRichMailDocument } from "./mail-document.js?v=v2026-10-25T20442";
 
 
 // Treść kampanii pozostaje edytowalnym HTML. Podgląd i wysyłka mają jeden dokument.
-export function buildMarketingMailHtml({ template, subject, bodyHtml = '' }) {
+export function buildMarketingMailHtml({ template, subject, bodyHtml = '', bodyMode = 'editor' }) {
   const invitation = template === 'invitation';
+  // Gotowy dokument zachowuje własne style; fragment dostaje wspólną oprawę.
+  // Stopkę preferencji dodaje niezależnie transport poczty przed dostarczeniem.
+  if (!invitation && bodyMode === 'html' && /<!doctype\s+html|<html(?:\s|>)/i.test(bodyHtml)) {
+    return String(bodyHtml);
+  }
   // Kadry z systemu zrzutów (scripts/screens), te same co na stronie głównej;
   // wersja podglądu (960 px) wystarcza dla maila szerokiego na 516 px.
   const IMG_BASE = 'https://familiada.online/assets/img/pl/shots';
