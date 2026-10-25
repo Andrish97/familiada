@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fuJwTg2otOAhYV8p10ubX8BXcGuJt4OUtPJrzEyJTrP9RgWICeYZ3fwtryYW5bc
+\restrict 7AHHyZSm9FdjhAXpJvvS4wvQZXoJh6PMuCPgCy6RY0MB5AD5yNLZZeCryYZhH6P
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2730,6 +2730,164 @@ BEGIN
  RETURN jsonb_build_object('ok',true,'mail_allowed',true,'to',v_to,'kind','sub_invite',
    'link','/go/?s='||s.token,'token',s.token,'registered',false,'unsub_token',v_unsub);
 END; $$;
+
+
+--
+-- Name: _market_admin_review_before_content_guard("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_market_admin_review_before_content_guard"("p_id" "uuid", "p_action" "text", "p_note" "text" DEFAULT ''::"text") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_new_status public.market_game_status;
+  v_title      text;
+  v_slug       text;
+begin
+  if p_action = 'approve' then
+    v_new_status := 'published';
+  elsif p_action = 'reject' then
+    v_new_status := 'rejected';
+  else
+    return query select false, 'invalid_action';
+    return;
+  end if;
+
+  select title, slug into v_title, v_slug
+    from public.market_games
+   where id = p_id and status = 'pending';
+
+  if not found then
+    return query select false, 'not_found_or_not_pending';
+    return;
+  end if;
+
+  if p_action = 'approve' and (v_slug is null or v_slug = '') then
+    v_slug := public.unique_market_slug(v_title, p_id);
+  end if;
+
+  update public.market_games
+     set status          = v_new_status,
+         origin          = case when p_action = 'approve' then 'community' else origin end,
+         moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end,
+         slug            = case when p_action = 'approve' then v_slug else slug end
+   where id = p_id;
+
+  return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: _market_submit_game_before_content_guard("uuid", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_market_submit_game_before_content_guard"("p_game_id" "uuid", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_game public.games%rowtype;
+  v_can_play boolean;
+  v_payload jsonb;
+  v_new uuid;
+  v_ntfy_topic text;
+begin
+  if v_uid is null then return query select false, 'not_authenticated', null::uuid; return; end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(p_game_id::text, 0));
+
+  select * into v_game
+  from public.games
+  where id = p_game_id
+    and owner_id = v_uid
+    and source_market_id is null
+    and is_demo = false;
+
+  if not found then return query select false, 'game_not_found', null::uuid; return; end if;
+
+  if exists (
+    select 1 from public.market_games
+    where author_user_id = v_uid
+      and source_game_id = p_game_id
+      and status in ('pending', 'published')
+  ) then
+    return query select false, 'already_submitted', null::uuid; return;
+  end if;
+
+  -- E21: centralna grywalność (preparowana gotowa albo zamknięta ankieta)
+  v_can_play := coalesce((public.game_rules_compute(v_game.id, v_game.type::text, v_game.status::text)
+                          -> 'play' ->> 'ok')::boolean, false);
+  if v_game.type not in ('prepared', 'poll_text', 'poll_points') or not v_can_play then
+    return query select false, 'game_not_playable', null::uuid; return;
+  end if;
+
+  if p_lang not in ('pl', 'en', 'uk') then return query select false, 'invalid_lang', null::uuid; return; end if;
+  if char_length(btrim(coalesce(p_title, ''))) not between 1 and 120 then
+    return query select false, 'invalid_title', null::uuid; return;
+  end if;
+  if char_length(btrim(coalesce(p_description, ''))) > 500 then
+    return query select false, 'invalid_description', null::uuid; return;
+  end if;
+
+  select jsonb_build_object(
+    'game', jsonb_build_object(
+      'name', v_game.name,
+      'type', case
+        when v_game.status = 'ready' and v_game.type in ('poll_text', 'poll_points') then 'prepared'
+        else v_game.type::text
+      end
+    ),
+    'questions', coalesce(jsonb_agg(
+      jsonb_build_object(
+        'text', q.text,
+        'answers', coalesce((
+          select jsonb_agg(
+            jsonb_build_object('text', a.text, 'fixed_points', a.fixed_points)
+            order by a.ord
+          )
+          from public.answers a where a.question_id = q.id
+            -- snapshot preparowany z zamkniętej ankiety: tylko punktowane odpowiedzi
+            and (v_game.type = 'prepared' or a.fixed_points > 0)
+        ), '[]'::jsonb)
+      ) order by q.ord
+    ), '[]'::jsonb)
+  ) into v_payload
+  from public.questions q
+  where q.game_id = p_game_id;
+
+  if jsonb_array_length(v_payload -> 'questions') < 10 then
+    return query select false, 'too_few_questions', null::uuid; return;
+  end if;
+
+  insert into public.market_games
+    (author_user_id, source_game_id, title, description, lang, status, payload)
+  values
+    (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', v_payload)
+  returning id into v_new;
+
+  begin
+    select value into v_ntfy_topic from public.app_config where key = 'ntfy_topic';
+    if v_ntfy_topic is not null and v_ntfy_topic <> '' then
+      perform net.http_post(
+        url := 'https://ntfy.sh/' || v_ntfy_topic,
+        body := jsonb_build_object(
+          'title', 'Nowe zgłoszenie (' || p_lang || ')',
+          'message', btrim(p_title),
+          'priority', 3
+        ),
+        headers := '{"Content-Type": "application/json"}'::jsonb
+      );
+    end if;
+  exception when others then
+    null;
+  end;
+
+  return query select true, null::text, v_new;
+end;
+$$;
 
 
 --
@@ -13157,44 +13315,18 @@ $$;
 
 CREATE FUNCTION "public"."market_admin_review"("p_id" "uuid", "p_action" "text", "p_note" "text" DEFAULT ''::"text") RETURNS TABLE("ok" boolean, "err" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_new_status public.market_game_status;
-  v_title      text;
-  v_slug       text;
-begin
-  if p_action = 'approve' then
-    v_new_status := 'published';
-  elsif p_action = 'reject' then
-    v_new_status := 'rejected';
-  else
-    return query select false, 'invalid_action';
-    return;
-  end if;
-
-  select title, slug into v_title, v_slug
-    from public.market_games
-   where id = p_id and status = 'pending';
-
-  if not found then
-    return query select false, 'not_found_or_not_pending';
-    return;
-  end if;
-
-  if p_action = 'approve' and (v_slug is null or v_slug = '') then
-    v_slug := public.unique_market_slug(v_title, p_id);
-  end if;
-
-  update public.market_games
-     set status          = v_new_status,
-         origin          = case when p_action = 'approve' then 'community' else origin end,
-         moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end,
-         slug            = case when p_action = 'approve' then v_slug else slug end
-   where id = p_id;
-
-  return query select true, '';
-end;
+DECLARE violated_constraint text;
+BEGIN
+ RETURN QUERY SELECT * FROM public._market_admin_review_before_content_guard(p_id,p_action,p_note);
+EXCEPTION WHEN unique_violation THEN
+ GET STACKED DIAGNOSTICS violated_constraint=CONSTRAINT_NAME;
+ IF violated_constraint='market_games_active_content_unique' THEN
+   RETURN QUERY SELECT false,'duplicate_content'::text;
+ ELSE RAISE;
+ END IF;
+END
 $$;
 
 
@@ -13769,108 +13901,18 @@ $$;
 
 CREATE FUNCTION "public"."market_submit_game"("p_game_id" "uuid", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_uid uuid := auth.uid();
-  v_game public.games%rowtype;
-  v_can_play boolean;
-  v_payload jsonb;
-  v_new uuid;
-  v_ntfy_topic text;
-begin
-  if v_uid is null then return query select false, 'not_authenticated', null::uuid; return; end if;
-
-  perform pg_advisory_xact_lock(hashtextextended(p_game_id::text, 0));
-
-  select * into v_game
-  from public.games
-  where id = p_game_id
-    and owner_id = v_uid
-    and source_market_id is null
-    and is_demo = false;
-
-  if not found then return query select false, 'game_not_found', null::uuid; return; end if;
-
-  if exists (
-    select 1 from public.market_games
-    where author_user_id = v_uid
-      and source_game_id = p_game_id
-      and status in ('pending', 'published')
-  ) then
-    return query select false, 'already_submitted', null::uuid; return;
-  end if;
-
-  -- E21: centralna grywalność (preparowana gotowa albo zamknięta ankieta)
-  v_can_play := coalesce((public.game_rules_compute(v_game.id, v_game.type::text, v_game.status::text)
-                          -> 'play' ->> 'ok')::boolean, false);
-  if v_game.type not in ('prepared', 'poll_text', 'poll_points') or not v_can_play then
-    return query select false, 'game_not_playable', null::uuid; return;
-  end if;
-
-  if p_lang not in ('pl', 'en', 'uk') then return query select false, 'invalid_lang', null::uuid; return; end if;
-  if char_length(btrim(coalesce(p_title, ''))) not between 1 and 120 then
-    return query select false, 'invalid_title', null::uuid; return;
-  end if;
-  if char_length(btrim(coalesce(p_description, ''))) > 500 then
-    return query select false, 'invalid_description', null::uuid; return;
-  end if;
-
-  select jsonb_build_object(
-    'game', jsonb_build_object(
-      'name', v_game.name,
-      'type', case
-        when v_game.status = 'ready' and v_game.type in ('poll_text', 'poll_points') then 'prepared'
-        else v_game.type::text
-      end
-    ),
-    'questions', coalesce(jsonb_agg(
-      jsonb_build_object(
-        'text', q.text,
-        'answers', coalesce((
-          select jsonb_agg(
-            jsonb_build_object('text', a.text, 'fixed_points', a.fixed_points)
-            order by a.ord
-          )
-          from public.answers a where a.question_id = q.id
-            -- snapshot preparowany z zamkniętej ankiety: tylko punktowane odpowiedzi
-            and (v_game.type = 'prepared' or a.fixed_points > 0)
-        ), '[]'::jsonb)
-      ) order by q.ord
-    ), '[]'::jsonb)
-  ) into v_payload
-  from public.questions q
-  where q.game_id = p_game_id;
-
-  if jsonb_array_length(v_payload -> 'questions') < 10 then
-    return query select false, 'too_few_questions', null::uuid; return;
-  end if;
-
-  insert into public.market_games
-    (author_user_id, source_game_id, title, description, lang, status, payload)
-  values
-    (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', v_payload)
-  returning id into v_new;
-
-  begin
-    select value into v_ntfy_topic from public.app_config where key = 'ntfy_topic';
-    if v_ntfy_topic is not null and v_ntfy_topic <> '' then
-      perform net.http_post(
-        url := 'https://ntfy.sh/' || v_ntfy_topic,
-        body := jsonb_build_object(
-          'title', 'Nowe zgłoszenie (' || p_lang || ')',
-          'message', btrim(p_title),
-          'priority', 3
-        ),
-        headers := '{"Content-Type": "application/json"}'::jsonb
-      );
-    end if;
-  exception when others then
-    null;
-  end;
-
-  return query select true, null::text, v_new;
-end;
+DECLARE violated_constraint text;
+BEGIN
+ RETURN QUERY SELECT * FROM public._market_submit_game_before_content_guard(p_game_id,p_title,p_description,p_lang,p_payload);
+EXCEPTION WHEN unique_violation THEN
+ GET STACKED DIAGNOSTICS violated_constraint=CONSTRAINT_NAME;
+ IF violated_constraint='market_games_active_content_unique' THEN
+   RETURN QUERY SELECT false,'duplicate_content'::text,NULL::uuid;
+ ELSE RAISE;
+ END IF;
+END
 $$;
 
 
@@ -21480,17 +21522,17 @@ CREATE INDEX "market_game_questions_norm_idx" ON "public"."market_game_questions
 
 
 --
+-- Name: market_games_active_content_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "market_games_active_content_unique" ON "public"."market_games" USING "btree" ("content_key") WHERE (("status" = ANY (ARRAY['pending'::"public"."market_game_status", 'published'::"public"."market_game_status"])) AND ("content_key" IS NOT NULL));
+
+
+--
 -- Name: market_games_author_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "market_games_author_idx" ON "public"."market_games" USING "btree" ("author_user_id");
-
-
---
--- Name: market_games_content_key_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "market_games_content_key_idx" ON "public"."market_games" USING "btree" ("content_key") WHERE (("status" = ANY (ARRAY['pending'::"public"."market_game_status", 'published'::"public"."market_game_status"])) AND ("content_key" IS NOT NULL));
 
 
 --
@@ -24343,13 +24385,6 @@ ALTER TABLE "public"."message_attachments" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: market_games mg_insert_own; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "mg_insert_own" ON "public"."market_games" FOR INSERT TO "authenticated" WITH CHECK (("author_user_id" = "auth"."uid"()));
-
-
---
 -- Name: market_games mg_no_direct_delete; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -25122,5 +25157,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fuJwTg2otOAhYV8p10ubX8BXcGuJt4OUtPJrzEyJTrP9RgWICeYZ3fwtryYW5bc
+\unrestrict 7AHHyZSm9FdjhAXpJvvS4wvQZXoJh6PMuCPgCy6RY0MB5AD5yNLZZeCryYZhH6P
 
