@@ -310,8 +310,11 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   (`13efd5fc54`). Zachowano nowe metryki w specu i własną obserwację kanału;
   resolver rozwiązał wyłącznie wersje. Pełny unit **860/860** ✓ (49,0 s;
   main uprościł testy doorbellGuard). Bez zmian geometrii stron.
-- Status: Control po ostatnim scaleniu, następnie main/Pages i kontrola
-  tych samych 4 testów UI + pełnej rundy Control na produkcji.
+- Control po ostatnim scaleniu: **40222927342 ✓ 1/1**. Bramka brancha
+  spełniona: UI 40220957780 4/4 + Control 40222927342 1/1; pełny unit
+  860/860. Kod `2126329c63` gotowy do publikacji.
+- Status: publikacja main/Pages, następnie te same 4 testy UI + pełna runda
+  Control na rzeczywistej produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |
