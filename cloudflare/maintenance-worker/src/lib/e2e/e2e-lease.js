@@ -2,7 +2,7 @@
 // zakładanie i odtwarzanie kont według roli, kontrola wykluczenia w statystykach.
 // Plan: docs/konta-testowe-plan.md. Wołane tylko z handleE2EApi (po tokenie E2E).
 import { json } from "../core/http.js";
-import { readJson } from "../admin/admin-auth.js";
+import { readJson } from "../core/http.js";
 import { supabaseRequest, supabaseRpc } from "../core/supabase.js";
 
 const ACCOUNT_ROLES = new Set(["standard", "disposable", "dedicated"]);

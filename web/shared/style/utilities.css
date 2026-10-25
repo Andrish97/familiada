@@ -51,8 +51,5 @@
   .grow { flex: 1 1 auto; min-width: 0; }
   .between { justify-content: space-between; }
   .center { align-items: center; }
-  .nowrap { white-space: nowrap; }
   .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .text-muted { color: var(--text-muted); }
-  .text-sm { font-size: 12px; }
 }

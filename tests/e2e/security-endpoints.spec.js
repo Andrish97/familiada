@@ -186,3 +186,22 @@ test("P2 Worker: formularz kontaktu bez tokenu Turnstile = 400", async ({ reques
     expect((await res.json()).error).toBe("captcha_failed");
   }
 });
+
+// Panel przeniesiony do prywatnego repo i na serwer. Stary origin Pages
+// nie może nadal udostępniać jego HTML, modułów lub manifestu.
+test("prywatny panel: stare pliki usunięte z originu Pages", async ({ request }) => {
+  for (const path of ["/admin/index.html", "/admin/js/admin.js", "/manifest-admin.webmanifest"]) {
+    const res = await request.get(`https://andrish97.github.io${path}`, { headers: { Host: "familiada.online" }, maxRedirects: 0 });
+    log(`old Pages ${path}`, res.status());
+    expect(res.status()).toBe(404);
+  }
+});
+
+test("prywatny origin i zamknięte przekazanie kluczy odmawiają bez sekretów", async ({ request }) => {
+  const origin = await request.get(`${API}/__admin_static/admin/index.html`);
+  log("private origin no secret", origin.status());
+  expect(origin.status()).toBe(404);
+  const handoff = await request.post(`${WWW}/_internal/admin-secret-handoff`, { data: {} });
+  log("secret handoff closed", handoff.status());
+  expect(handoff.status()).toBe(404);
+});

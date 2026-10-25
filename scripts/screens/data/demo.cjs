@@ -375,122 +375,13 @@ function buildDb(lang, extras = {}) {
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
-      "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true,
+"/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true,
         subscriptions: friends.filter((f) => f.direction === "friend").slice(0, 4).map((f, i) => ({ kind: "subscription", id: id("8f00", i + 1), owner_label: f.label, status: i === 1 ? "pending" : "active" })),
         items: [
           ...tasks.filter((x) => x.state === "todo").map((x, i) => ({ kind: "poll", id: id("8f10", i + 1), name: x.title, owner_label: x.owner_label, status: i === 0 ? "opened" : "pending", link: `/go/?t=${x.token}` })),
           { kind: "device", id: id("8f20", 1), name: p.game, owner_label: friends[0].label, device_type: "host", link: "/go/?t=00000000-0000-4000-8000-0000000000aa" },
-        ] },
-      // Panel admina (/admin/): odpowiedzi API Workera za Cloudflare Access.
-      "/_admin_api/me": { ok: true, email: "admin@example.com" },
-      "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },
-      "/_admin_api/state": { enabled: false, mode: "message", message: "" },
-      // Liczniki powiadomień panelu: 3 nieprzeczytane maile, 2 otwarte zgłoszenia, 4 gry do zatwierdzenia.
-      "/_admin_api/messages?filter=inbox*": { ok: true, rows: [1, 2, 3, 4].map((n) => ({ id: `m${n}`, direction: "inbound", is_read: n === 4, report_id: null, subject: `Pytanie ${n}`, created_at: "2026-10-20T10:00:00Z" })) },
-      "/_admin_api/reports?status=all*": { ok: true, rows: [
-        { id: "r1", status: "open", ticket_number: "TICKET-2026-0007", subject: "Nie działa dźwięk na Wyświetlaczu", created_at: "2026-10-22T18:10:00Z", message_count: 2 },
-        { id: "r2", status: "open", ticket_number: "TICKET-2026-0006", subject: "Błąd w pytaniu finałowym", created_at: "2026-10-20T09:30:00Z", message_count: 3, author_account_deleted_at: "2026-10-21T12:00:00Z" },
-        { id: "r3", status: "closed", ticket_number: "TICKET-2026-0005", subject: "Pytanie o import gry", created_at: "2026-10-18T15:45:00Z", message_count: 1 },
-      ] },
-      "/_admin_api/marketplace/list?status=pending*": { ok: true, rows: ["Rodzinny quiz", "Wieczór filmowy", "Szkolna Familiada", "Kuchnia świata", "Gra producenta"].map((title, i) => ({ id: `mk${i}`, title, lang: "pl", status: "pending", origin: i === 4 ? "producer" : "user", author_username: "ania.k", created_at: "2026-10-19T18:00:00Z", library_count: 0 })) },
-      // Poczta: treść HTML maila w podglądzie (iframe sandbox bez skryptów --
-      // skrypt i onerror z treści nie mogą nic zmienić; audyt E24, Ś6).
-      "/_admin_api/messages/read*": { ok: true },
-      "/_admin_api/messages?filter=all*": { ok: true, rows: [] },
-      "/_admin_api/messages/detail*": { ok: true, message: { id: "m1", direction: "inbound", source: "email", is_read: true, lang: "pl",
-        from_email: "anna.nowak@example.com", to_email: "kontakt@familiada.online", subject: "Pytanie 1", created_at: "2026-10-20T10:00:00Z",
-        body: "Dzień dobry, mam pytanie o finał.",
-        body_html: '<p>Dzień dobry,</p><p>mam pytanie o <b>finał</b> — czy można zmienić czas odpowiedzi?</p><p><a href="https://www.familiada.online/manual/" target="_blank">Podręcznik</a></p><script>document.body.innerHTML = "<h1 style=\'color:red\'>SKRYPT Z MAILA DZIAŁA</h1>";</script><img src="x:" onerror="document.body.style.background=\'red\'">' } },
-      "/_admin_api/attachments?message_id=*": { ok: true, attachments: [] },
-      // Kontakty marketingowe: stan zlecenia lead-findera przez Worker (Ś2).
-      "/_admin_api/leads/search-runs/status": { status: "paused", run_id: "0f1e2d3c-4b5a-4987-8654-3210fedcba98", verified: 12, errors: 0 },
-      // Lead Finder 3: kategorie i kontakty z wysyłkami i odpowiedziami.
-      "/_admin_api/marketing/categories": { ok: true, rows: [
-        { id: "a1000000-0000-4000-8000-000000000001", name: "DJ na wesela", is_active: true, contacts: 2, expanded_at: "2026-10-25T09:00:00Z",
-          description: "DJ-e i wodzireje prowadzący wesela i imprezy firmowe; bez sklepów i kursów DJ.", queries: ["DJ na wesele kontakt e-mail", "DJ weselny @gmail.com", "wodzirej i DJ oferta"], pkd: ["93.29.Z", "90.01.Z"] },
-        { id: "a1000000-0000-4000-8000-000000000002", name: "Agencje eventowe", is_active: true, contacts: 1, expanded_at: null, description: null, queries: [], pkd: [] },
-        { id: "a1000000-0000-4000-8000-000000000003", name: "Szkoły", is_active: false, contacts: 0, expanded_at: null, description: null, queries: [], pkd: [] },
-      ] },
-      "/_admin_api/marketing/contacts/emails?*": { ok: true, emails: ["kontakt@wodzirej-example.test"], total: 1 },
-      "/_admin_api/marketing/contacts?*": { ok: true, total: 4, rows: [
-        { id: "c1", email: "biuro@djmax-example.test", title: "DJ Max — wesela i imprezy", url: "https://djmax-example.test", category_id: "a1000000-0000-4000-8000-000000000001", added_at: "2026-10-25T09:00:00Z", sent_count: 1, last_sent_at: "2026-10-20T09:00:00Z", reaction: "replied" },
-        { id: "c2", email: "kontakt@wodzirej-example.test", title: "Wodzirej Anna", url: "https://wodzirej-example.test", category_id: "a1000000-0000-4000-8000-000000000001", added_at: "2026-10-24T09:00:00Z", sent_count: 0, last_sent_at: null, reaction: null },
-        { id: "c3", email: "events@agencja-example.test", title: "Agencja eventowa Fala", url: "https://agencja-example.test", category_id: "a1000000-0000-4000-8000-000000000002", added_at: "2026-10-18T09:00:00Z", sent_count: 2, last_sent_at: "2026-10-22T09:00:00Z", reaction: null },
-        { id: "c4", email: "biuro@stare-example.test", title: "Studio imprez Bis", url: "https://stare-example.test", category_id: null, added_at: "2026-09-18T09:00:00Z", sent_count: 1, last_sent_at: null, reaction: "declined" },
-      ] },
-      "/_admin_api/marketing/logs": { ok: true, rows: [
-        { created_at: "2026-10-20T10:01:00Z", level: "info", message: "Zlecenie wstrzymane" },
-        { created_at: "2026-10-20T10:00:00Z", level: "success", message: "Zweryfikowano kontakt" },
-      ] },
-      // E25: wykluczenia ze statystyk -- automatyczne z rolą konta testowego, ręczne z przyciskiem
-      "/_admin_api/stats/excluded": { ok: true, rows: [
-        ...["e2e.standard01", "e2e.standard02", "e2e.standard03"].map((username) => ({ user_id: `00000000-0000-4000-8000-0000000000${username.slice(-2)}`, username, email: `e2e+${username.slice(4)}@familiada.online`, reason: "test:standard", automatic: true, added_at: "2026-10-22T20:30:00Z" })),
-        { user_id: "00000000-0000-4000-8000-0000000000d1", username: "e2e.disposable01", email: "e2e+disposable01@familiada.online", reason: "test:disposable", automatic: true, added_at: "2026-10-22T20:30:00Z" },
-        { user_id: "00000000-0000-4000-8000-0000000000e1", username: "e2e.dedicated01", email: "e2e+dedicated01@familiada.online", reason: "test:dedicated", automatic: true, added_at: "2026-10-22T20:30:00Z" },
-        { user_id: "00000000-0000-4000-8000-0000000000f1", username: "guest_3fa9c2d1", email: "", reason: "test_guest", automatic: true, added_at: "2026-10-22T20:31:00Z" },
-        { user_id: "00000000-0000-4000-8000-0000000000aa", username: "wlasciciel", email: "admin@example.com", reason: "manual", automatic: false, added_at: "2026-10-01T09:00:00Z" },
-      ] },
-      // Migracja 466: przebieg rozgrywki z pomiarami łącza (start, spowolnienie, powrót).
-      "/_admin_api/stats/detail?type=gameplay*": { ok: true, rows: [{
-        game_name: "Quiz rodzinny", owner: "jan.kowalski", control_version: 2, status: "playing", effective_status: "playing",
-        started_at: "2026-10-22T21:00:00Z", ended_at: null, rounds_played: 2, rounds_score_a: 62, rounds_score_b: 100,
-        team_a_score: 62, team_b_score: 100, final_step: null, final_points: null, winner_team: null, error_count: 0,
-        stats_detail: { last_step: "r_play", teams: { teamA: "Drużyna A", teamB: "Drużyna B" }, events: [
-          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:05Z", devices: ["display"], message: "Pomiar łącza na starcie gry.",
-            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 48, db_ms: 131, connection_type: "wifi", effective_type: "4g", browser_rtt_ms: 50, downlink_mbps: 9.6 } },
-          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:00:06Z", devices: ["control"], message: "Pomiar łącza na starcie gry.",
-            metrics: { source: "probe", phase: "baseline", verdict: "ok", edge_ms: 39, db_ms: 118 } },
-          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:23:31Z", devices: ["display"], message: "Wolne łącze urządzenia (już do Cloudflare).",
-            metrics: { source: "probe", phase: "slow", verdict: "device_network", edge_ms: 2140, db_ms: 2390, connection_type: "wifi", effective_type: "3g", browser_rtt_ms: 900, downlink_mbps: 0.8 } },
-          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:24:40Z", devices: ["display"], message: "Łącze i odpowiedź serwera wróciły do normy.",
-            metrics: { source: "probe", phase: "recovered", verdict: "device_network", duration_ms: 69000, samples: 12, device_network_samples: 12, server_samples: 0, max_edge_ms: 4810, max_db_ms: 5000, edge_ms: 61, db_ms: 140 } },
-          { kind: "diagnostic", category: "device_network", at: "2026-10-22T21:40:02Z", devices: ["control"], message: "Wolna odpowiedź serwera przy sprawnym łączu urządzenia.",
-            metrics: { source: "probe", phase: "slow", verdict: "server", edge_ms: 44, db_ms: 2730 } },
-          // Diagnostyka per sesja (468–469): opis urządzeń, uśpienie telefonu, blokada ekranu.
-          { kind: "diagnostic", category: "device_info", source: "display", prestart: true, at: "2026-10-22T20:58:10Z", devices: ["display"], message: "Urządzenie i przeglądarka.",
-            metrics: { device_class: "phone", browser: "safari", os: "ios", battery_level: 30, charging: false } },
-          { kind: "diagnostic", category: "wake_lock", source: "display", prestart: true, at: "2026-10-22T20:58:11Z", devices: ["display"], message: "Przeglądarka odmówiła blokady wygaszania ekranu.",
-            metrics: { phase: "denied", error_name: "NotAllowedError" } },
-          { kind: "diagnostic", category: "device_info", source: "control", prestart: true, at: "2026-10-22T20:57:40Z", devices: ["control"], message: "Urządzenie i przeglądarka.",
-            metrics: { device_class: "desktop", browser: "chrome", os: "windows" } },
-          { kind: "diagnostic", category: "display_state", source: "display", at: "2026-10-22T21:12:00Z", devices: ["display"], message: "Stan karty Wyświetlacz: w tle (zmiana widoczności).",
-            metrics: { reason: "page_state", visibility: "hidden", visibility_reason: "visibilitychange" } },
-          { kind: "diagnostic", category: "device_lease", source: "display", at: "2026-10-22T21:12:20Z", devices: ["display"], message: "Blokada urządzenia wygasła.",
-            metrics: { from_state: "primary", to_state: "expired", epoch: 1 } },
-          { kind: "diagnostic", category: "display_state", source: "display", at: "2026-10-22T21:13:05Z", devices: ["display"], message: "Stan karty Wyświetlacz: widoczna (zmiana widoczności).",
-            metrics: { reason: "page_state", visibility: "visible", visibility_reason: "visibilitychange", hidden_duration_ms: 65000, since_heartbeat_ms: 64000 } },
-        ] },
-        diag: { event_count: 11, dropped_count: 0, summary: {
-          display: {
-            "device_network:baseline": { n: 1 }, "device_network:slow:device_network": { n: 1, max_ms: 2390 }, "device_network:recovered": { n: 1, dur_ms: 69000 },
-            "device_info:device_info": { n: 1 }, "wake_lock:denied": { n: 1 },
-            "display_state:page_state:hidden": { n: 1 }, "display_state:page_state:visible": { n: 1, hidden_ms: 65000 },
-            "device_lease:expired": { n: 1 }, "device_lease:primary": { n: 2 },
-          },
-          control: { "device_network:baseline": { n: 1 }, "device_network:slow:server": { n: 1, max_ms: 2730 }, "device_info:device_info": { n: 1 } },
-        } },
-      }, {
-        game_name: "Familiada w biurze", owner: "ola", control_version: 2, status: "final", effective_status: "final",
-        started_at: "2026-10-21T18:00:00Z", ended_at: "2026-10-21T18:42:00Z", rounds_played: 5, rounds_score_a: 310, rounds_score_b: 180,
-        team_a_score: 445, team_b_score: 180, final_step: "finished", final_points: 135, winner_team: "A", error_count: 0,
-        stats_detail: { last_step: "f_end", teams: { teamA: "Księgowość", teamB: "IT" }, events: [] },
-        diag: { event_count: 4, dropped_count: 0, summary: { host: { "display_state:page_state:hidden": { n: 2 }, "display_state:page_state:visible": { n: 2, hidden_ms: 14000 } } } },
-      }, {
-        game_name: "Wieczór quizowy", owner: "kuba2009", control_version: 2, status: "final", effective_status: "final",
-        started_at: "2026-10-20T19:00:00Z", ended_at: "2026-10-20T19:35:00Z", rounds_played: 4, rounds_score_a: 220, rounds_score_b: 260,
-        team_a_score: 220, team_b_score: 260, final_step: null, final_points: null, winner_team: "B", error_count: 0,
-        stats_detail: { last_step: "r_gameEnd", teams: { teamA: "Kowalscy", teamB: "Nowakowie" }, events: [] },
-        diag: { event_count: 6, dropped_count: 0, summary: {} },
-      }] },
-      "/_admin_api/stats/snake": { ok: true, stats: {
-        kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
-          start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },
-        scores: { max: 61, avg: 9.4 }, players: 23,
-        top: [["ania.k", 61, 40], ["Wujek_Staszek", 48, 12], ["quizmaster", 37, 55], ["ola", 29, 8], ["kuba2009", 22, 31]]
-          .map(([username, best, games]) => ({ username, best, games, best_at: "2026-10-18T19:20:00Z" })),
-        daily: Array.from({ length: 14 }, (_, i) => ({ day: `2026-10-${String(7 + i).padStart(2, "0")}`, scan: [3, 5, 2, 8, 12, 9, 4, 6, 15, 11, 7, 10, 14, 6][i], enter: [3, 4, 2, 7, 11, 9, 4, 5, 14, 10, 6, 9, 13, 6][i], start: [8, 12, 5, 20, 31, 22, 9, 14, 40, 28, 15, 26, 37, 21][i] })),
-      } },
-    },
+        ] }
+},
   };
 }
 

@@ -229,6 +229,26 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
+
+- Próba publikacji po zielonym Control 40222927342 została odrzucona jako
+  non-fast-forward. Nowy main `34162dedda` przeniósł publiczny panel admina
+  do prywatnego systemu oraz doprecyzował klasyfikację catchup w teście Control.
+- Zachowano usunięcie `web/admin` i scen panelu. W Control połączono obie
+  kontrole: rzeczywisty odbiór postgres_changes oraz brak heartbeat/wyjaśnienie
+  spóźnionych rewizji. Wspólne części silnika pierwszej klatki zachowane.
+- Resolver błędnie automatycznie dodawał pliki konfliktu modyfikacja/usunięcie
+  bez markerów. Został poprawiony: brak obu stron indeksu oznacza decyzję
+  ręczną. Trzy testy na repozytoriach tymczasowych: modify/delete, delete/modify,
+  wersje + zachowanie niezależnej logiki. Usunięcie panelu jawnie zatwierdzone;
+  `git ls-files web/admin` puste. Bez odtwarzania usuniętego publicznego kodu.
+- Unit po scaleniu **809/809** ✓ (28,3 s; testy prywatnego panelu usunięte na
+  main). Nowe zrzuty publiczne: **9/9**, 390/360/1400 px, audyt 0 uwag.
+  Wcześniejsze 974 pomiary obejmowały także dawny publiczny panel; bieżący
+  inwentarz publiczny ma 500 wpisów scen. UI publicznych stron bez zmian.
+- Status: Control na połączonym kodzie, potem publikacja i kontrola produkcji.
+
+
 ### 2026-10-25 — pierwsza widoczna klatka wspólnego silnika
 
 - Zlecenie: pomiar przed poprawką, brak skoków po pokazaniu strony,
@@ -316,6 +336,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Status: publikacja main/Pages, następnie te same 4 testy UI + pełna runda
   Control na rzeczywistej produkcji.
 
+
+
+| 2026-10-25 | Control 2 — korelacja opóźnionego Realtime w logach | Wdrożono na main `13efd5fc54`, Pages `40222221847` ✓. Control loguje wysłany dzwonek z rewizją; urządzenia zapisują próg 400 ms, rewizję nadrobioną RPC, późny odbiór przez Postgres Changes oraz osobno czas pobrania, kolejki i renderu. Bez migracji. Unity `doorbellGuard` + `gameStateSync` 14/14; branch E2E `40222055549` ✓. Pierwsza kontrola Pages `40222281282` wykazała Display: fallback dzwonka dla rewizji 8, po którym dotarła ta sama rewizja przez Postgres Changes; RPC zdążyło zastosować rewizję 9. Asercję E2E doprecyzowano i wypchnięto jako `2ae929808d` (bez zmian frontu); branch `40222638855` ✓. Kontrola main `40222828929` wykryła Host: `lease_heartbeat`, jedna pominięta rewizja 9, następnie `rpc_resume` rewizją 10 i odzyskanie kanału. | Nowe pomiary zbierają się w statystykach; pojedynczy test kontrolny pokazał też prawdziwy fallback heartbeat u Hosta. Przyczyna źródłowa tego incydentu nie jest jeszcze ustalona; analizować nowe przebiegi według `trigger`, rewizji i czasów. |
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |
 | 2026-10-25 | Lead Finder tylko z DeepSeekiem; obraz OG w mailu odświeżany | Decyzje użytkownika: (1) obraz w mailu ma się zmieniać razem z systemem — `og-image-mail.webp` generuje teraz `publish-homepage.cjs` razem z `og-image` (CI zrzutów); (2) bez wyboru dostawców AI, tylko DeepSeek z napisem w panelu — usunięta lista kolejności (panel, `mail-settings.js`, Worker `/ai-providers/order`), usługa woła tylko DeepSeek (`lf/classify.py`), migracja 493 (deepseek włączony, reszta wyłączona; test `tests/sql/lead-finder-deepseek-493.sql`); (3) w mailu bez powtórzenia opisu planszy. Testy Pythona 14/14, unit 846/847 (znany `marketUniqueness`), zrzut `admin-leads`. | — |
@@ -1950,3 +1973,11 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 | 2026-10-25 | Cloudflare — nazwa tokenu wdrażania potwierdzona | Po zatwierdzeniu obu zmian przez właściciela: 40217250880 i 40217410046 success. Token GitHuba f0e69f94 to Edit Cloudflare Workers (szczegóły i lista zgodne). Obsługuje deploy-worker i maintenance/KV. familiada-worker-deploy (d3d9d078): brak zdarzeń zwróconych przez filtr audit logs za 2026-09-25–2026-10-26; brak osobnego użycia w sprawdzonych automatach obu repo. | Edit Cloudflare Workers zostaje; po diagnozie usunąć z niego tymczasowe User/API Tokens/Read. familiada-worker-deploy nie jest potrzebny obecnym automatom Familiady; historia dotyczy wskazanego okresu, nie stanowi audytu cudzych integracji. Token Cloudflare Agent potrzebny tylko przy używaniu tego asystenta. Agent nie zmieniał ani nie usuwał tokenów. |
 
 | 2026-10-25 | Prywatny panel — wznowienie i wspólny token wdrażania | Właściciel polecił kontynuować i użyć istniejącego Edit Cloudflare Workers. Secrets API prywatnego repo nadal 403; wybrano przekazanie obecnego tokenu przez ograniczone polecenie SSH do root-only pliku na serwerze, bez wartości w logach. Server deploy check 40219284275 success. Lokalnie 858/858 unit, w tym szyfrowana koperta RSA-OAEP/AES-GCM dla istniejących sekretów aplikacji, krótkie okno i odmowy. | Instalacja helpera → synchronizacja tokenu → przygotowanie originu i prywatnego Workera. Podpis ciasteczka przerwy bez rotacji; historia repo nadal osobną operacją. DB read 40219193696: brak nowego przebiegu LF; wyszukiwania nie uruchamiano za właściciela. |
+
+
+| 2026-10-25 | Prywatny panel — hosting i osobny Worker działają | Server production 40220835928 success: origin odmawia bez/z błędnym sekretem, poprawny sekret 200; trasa admina przełączona bez zmiany DNS, Access pozostaje. Kontrola 40220989507 success 10/10. Aktualny panel z równoległą diagnostyką: production 40221916159 i prywatne CI 40221913780 success (68 unit + 2 przeglądarkowe). | Czyszczenie bieżącego publicznego repo i Pages po prywatnym wdrożeniu; historia pozostaje osobnym etapem. Podpis ciasteczka przerwy i wspólne KV zachowane. |
+
+| 2026-10-25 | Publiczny Worker — usunięcie starego panelu i API, bramka lokalna | Usunięte web/admin, manifest, moduły admin API i jednorazowe przekazanie kluczy; testy, sceny i dane panelu przeniesione do prywatnego repo. Publiczny Worker nadal obsługuje użytkowników, pocztę, cron i maintenance; osobny moduł weryfikuje dotychczasowe ciasteczko. JS unit 804/804, renderowanie Workera 17/17, CSS i zrzuty gier/Eksploratora 1400/390 ✓. Prywatnie 69 unit, 2 przeglądarkowe, zrzuty marketingu, maila i podglądu przerwy 1400/390 ✓. | Bramka kodu brancha dla nawigacji → publikacja Pages/Workera → kontrola endpointów, starego originu Pages oraz wspólnego KV. Na produkcji nie zmieniano przerwy. |
+
+
+| 2026-10-25 | Prywatny panel — maintenance potwierdzone, bramka publikacji | Prywatna production 40222895555 i CI 40222894573/40222895087 success (69 unit + 2 przeglądarkowe). Odczyt produkcji 40223021152: wspólne MAINT_KV obu Workerów, stan publiczny zgodny, przerwa wyłączona, bez zapisów. Branch E2E 40223007752 success 2/2 (nawigacja i powroty), wybrane unity zielone. Po scaleniu równoległych zmian main: 800/800 unit; konflikty usuniętych plików panelu dotyczyły wyłącznie wersji zasobów. | Publikacja cleanup na main, potem kontrola security-endpoints i usunięcie wyłącznie niepotrzebnych kluczy admin API z publicznego Workera. |

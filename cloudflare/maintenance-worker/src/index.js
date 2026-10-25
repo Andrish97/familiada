@@ -1,4 +1,3 @@
-import { secretHandoff } from "./lib/admin-secret-handoff.js";
 // See cloudflare/README.md for full behavior and checklist.
 //
 // This file is the thin router/entry point only -- all actual logic lives in
@@ -15,7 +14,6 @@ import { cleanupExpiredAttachments, cleanupExpiredE2EEmails, cleanupMailCenter }
 import { handleE2EApi, handleE2ELoginBypass, authorizeE2EApi } from "./lib/e2e/e2e-api.js";
 import { getState } from "./lib/core/state.js";
 import { json, withHeaders } from "./lib/core/http.js";
-import { handleAdminApi } from "./lib/admin/admin-api.js";
 import {
   ORIGIN_BASE,
   ORIGIN_HOST,
@@ -29,13 +27,12 @@ import {
   serveNotFoundPage,
 } from "./lib/origin/origin.js";
 import {
-  isAdminAsset,
   isStaticAssetPath,
   serveStaticAsset,
   isCommonAsset,
   isMaintenanceAsset,
 } from "./lib/origin/assets.js";
-import { hasAdminBypass } from "./lib/admin/admin-auth.js";
+import { hasAdminBypass } from "./lib/core/maintenance-bypass.js";
 import { handleNotifySubmission } from "./lib/notifications/telegram.js";
 import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js";
 import { isBot, serveDynamicSitemap } from "./lib/ssr/ssr.js";
@@ -74,8 +71,9 @@ export default {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const host = url.host.toLowerCase();
-  if (host === "www.familiada.online" && url.pathname === "/_internal/admin-secret-handoff") return secretHandoff(request, env);
-  if (host === "www.familiada.online" || host === "familiada.online" || host === "admin.familiada.online") {
+  // Panel ma osobny Worker; tutaj pozostaje jedynie odmowa przy błędnym routingu.
+  if (host === "admin.familiada.online") return new Response("Not Found", { status: 404 });
+  if (host === "www.familiada.online" || host === "familiada.online") {
     const redirect = tvRedirect(request, url);
     if (redirect) {
       // Jeśli prace techniczne trwają, telewizor ma dostać Maintenance.
@@ -108,48 +106,6 @@ async function handleFetch(request, env, ctx) {
       "https://www.familiada.online" + url.pathname + url.search,
       301
     );
-  }
-
-  // SETTINGS HOST (admin panel, no maintenance gate)
-  if (host === "admin.familiada.online") {
-    // Contact is public also on the admin host; all privileged routes below
-    // retain their existing authentication requirements.
-    if (request.method === "POST" && url.pathname === "/_api/contact") return handleContactSubmit(request, env);
-    if (request.method === "POST" && url.pathname === "/_api/contact/append") return handleContactAppend(request, env);
-    if (url.pathname.startsWith("/_admin_api")) {
-      return handleAdminApi(request, env);
-    }
-
-    // Block explicit settings paths (only "/" should work)
-    if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
-      return new Response("Not Found", { status: 404 });
-    }
-
-    // Root on admin subdomain opens admin/index.html
-    if (url.pathname === "/" || url.pathname === "/index.html") {
-      url.pathname = "/admin/index.html";
-      return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-    }
-
-    // allow admin tools and assets only
-    if (url.pathname.startsWith("/admin/tools/") || isAdminAsset(url.pathname) || url.pathname === "/version.txt") {
-      const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-      if (url.pathname.startsWith("/admin/tools/")) {
-        return withHeaders(res, {
-          "Content-Security-Policy": "frame-ancestors 'self'",
-          "X-Frame-Options": "SAMEORIGIN"
-        });
-      }
-      if (url.pathname === "/version.txt") {
-        return withHeaders(res, { "Cache-Control": "no-store" });
-      }
-      if (url.pathname === "/admin/sw.js") {
-        return withHeaders(res, { "Service-Worker-Allowed": "/" });
-      }
-      return res;
-    }
-
-    return new Response("Not Found", { status: 404 });
   }
 
   // Known service hosts (no maintenance gate here)

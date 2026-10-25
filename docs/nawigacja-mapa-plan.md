@@ -840,13 +840,6 @@ flowchart LR
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
-  admin["/admin/"]
-  adminToolEditor["/admin/tools/editor_5x7.html"]
-  adminToolExporter["/admin/tools/exporterandeditor.html"]
-  adminToolHostLogo["/admin/tools/host-logo-lab/"]
-  adminToolKora["/admin/tools/kora-builder.html"]
-  adminToolLogoBackground["/admin/tools/logo-background-lab/"]
-  adminToolTheme["/admin/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
@@ -924,13 +917,6 @@ flowchart LR
   privacy["/privacy/"]
   notFound["/404.html"]
   maintenance["/maintenance/"]
-  admin["/admin/"]
-  adminToolEditor["/admin/tools/editor_5x7.html"]
-  adminToolExporter["/admin/tools/exporterandeditor.html"]
-  adminToolHostLogo["/admin/tools/host-logo-lab/"]
-  adminToolKora["/admin/tools/kora-builder.html"]
-  adminToolLogoBackground["/admin/tools/logo-background-lab/"]
-  adminToolTheme["/admin/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
@@ -1436,3 +1422,11 @@ zwykłe kliknięcie otwiera okienko, nowa karta i odświeżenie są standardowe.
 Zamknięcie przywraca adres/metadata katalogu i zachowuje filtry. Bez JS
 powrót jest linkiem do katalogu. Bramka Maintenance obejmuje oba UA równo,
 także publiczną grę (usuwa dotychczasowy niezamierzony wyjątek trasy gry).
+
+### Panel administracyjny poza aplikacją publiczną (2026-10-25)
+
+`https://admin.familiada.online/` to osobny system z Cloudflare Access,
+prywatnym Workerem i plikami z repo familiada-server. Dawne lokalne trasy
+`web/admin/` i jego narzędzia nie są stronami tej aplikacji ani wpisami PAGES.
+Na domenie publicznej ich ścieżki pozostają zablokowane. Mapa i testy
+prywatnego panelu należą do jego repo.
