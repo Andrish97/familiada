@@ -135,7 +135,7 @@ value the field shows an error at once, and [Save] stops saving and asks you to 
 The last two settings are shown when the game has a final and the end screen shows the prize amount.
 The amount on the end screen is the winning team's points from the rounds multiplied by
 the "Prize multiplier", and once the final target is reached — increased by the main prize amount (→ 4.4). In a tie, the end
-screen shows the logo.
+screen shows the logo. Final points are not multiplied; they only determine whether the target was reached.
 
 ![Prize amount after the final](zrzut:game-settings-prize)
 
