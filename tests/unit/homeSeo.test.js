@@ -111,9 +111,11 @@ test('sitemap includes each localized homepage and retains published game URLs',
   const original = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify([{ slug: 'dzieci-i-rodzice', created_at: '2026-05-25' }]), { headers: { 'Content-Type': 'application/json' } });
   try {
-    const response = await buildDynamicSitemap({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'unit' });
+    // Katalog idzie kluczem publicznym (806ca4edd: bez klucza administracyjnego).
+    const response = await buildDynamicSitemap({ SUPABASE_URL: 'https://api.example.invalid', SUPABASE_ANON_KEY: 'unit' });
     const xml = await response.text();
     for (const suffix of ['', '?lang=en', '?lang=uk', 'marketplace/game/dzieci-i-rodzice']) assert.ok(xml.includes(`<loc>https://www.familiada.online/${suffix}</loc>`));
-    assert.ok(xml.includes('<lastmod>2026-05-25</lastmod>'));
+    // Gry bez lastmod: updated_at zmienia też liczba kopii (docs/seo-katalog-statyczny-plan.md).
+    assert.ok(!xml.includes('<lastmod>2026-05-25</lastmod>'));
   } finally { globalThis.fetch = original; }
 });
