@@ -19,9 +19,11 @@ import { rt } from "./realtime.js?v=v2026-10-25T18561";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T18561";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T18561";
 import { createDirectReadiness, postgresSystemStatus } from "./direct-channel-ready.js?v=v2026-10-25T18561";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T18561";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T204805";
 import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T18561";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T204805";
 
+const HEARTBEAT_REV_GRACE_MS = 250;
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 1500, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
@@ -48,6 +50,22 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let lastRenderedRev = -1;
   let sync;
   const fallbackRevisionTracker = createFallbackRevisionTracker();
+  const revisionWatchdog = createRevisionWatchdog({
+    getReceivedRev: () => sync?.receivedRev ?? -1,
+    graceMs: HEARTBEAT_REV_GRACE_MS,
+    onMissed: ({ latest_revision, missed_revisions }) => {
+      fallbackRevisionTracker.noteFallback(latest_revision, "lease_heartbeat");
+      sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
+        trigger: "lease_heartbeat", latest_revision, missed_revisions, grace_ms: HEARTBEAT_REV_GRACE_MS,
+      });
+      // Heartbeat potwierdził nowszy stan. Jeśli 250 ms później kanał nadal
+      // go nie dostarczył, pobierz stan i odbuduj cichy lub stary kanał.
+      if (directConnected) {
+        noteDirectFailure("STALE");
+        resync();
+      } else void fetchGuarded("rpc_fallback");
+    },
+  });
   // Pomiar łącza w trakcie gry (migracja 466): tylko start, spowolnienie
   // i powrót do normy; zapis jak diagnostyka — nigdy nie blokuje gry.
   const network = createNetworkMonitor({
@@ -341,6 +359,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         if (row && Number.isFinite(rev)) {
           noteDirectRevision(rev);
           sync.applyRow({ ...row, rev }, "postgres_changes");
+          revisionWatchdog.observeReceivedRevision();
         }
         else if (payload?.eventType === "DELETE") fetchGuarded("rpc_delete_recovery");
       }).subscribe((status) => {
@@ -432,6 +451,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     // kanał dostarczył zdarzenie z opóźnieniem. Zamknij korelacje starej
     // generacji przed pobraniem RPC i ponownym SUBSCRIBE.
     fallbackRevisionTracker.clear();
+    revisionWatchdog.clear();
     fetchGuarded("rpc_resume");
     rt(doorbellTopic(gameId)).reset();
     subscribeDoorbell();
@@ -497,6 +517,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     active = false;
     doorbell.stop();
     fallbackRevisionTracker.clear();
+    revisionWatchdog.clear();
     sessionStarted = false;
     network.stop();
     directIncidentAt = null;
@@ -525,32 +546,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // nie czekamy na własny dzwonek, tylko dociągamy od razu.
   function refetchNow() { return fetchGuarded(); }
 
-  // Rewizja z heartbeatu lease. Jeśli dwa kolejne heartbeaty (~3 s) widzą
-  // nowszą rewizję niż ta, którą urządzenie ma, zmiana z kanału na żywo
-  // przepadła: dociągamy stan i zapisujemy to w diagnostyce.
-  let behindRevision = null;
+  // Heartbeat jest niezależnym od Realtime potwierdzeniem rewizji z serwera.
+  // Po krótkim oknie na dostarczenie wiersza przez kanał watchdog nadrabia
+  // stan, zamiast czekać na kolejny heartbeat.
   function noteServerRevision(revision) {
-    if (!active || !Number.isSafeInteger(revision)) return;
-    // Wiersz czekający na koniec animacji (Wyświetlacz) już dotarł kanałem.
-    if (revision <= sync.receivedRev) { behindRevision = null; return; }
-    if (behindRevision == null || revision < behindRevision) { behindRevision = revision; return; }
-    const missed = revision - Math.max(0, sync.receivedRev);
-    behindRevision = null;
-    fallbackRevisionTracker.noteFallback(revision, "lease_heartbeat");
-    sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
-      trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
-    });
-    // Siatka bezpieczeństwa: kanał gotowy, a zmiana nie przyszła. Przyczynę
-    // z 2026-10-21 (rejoin z tokenem anon, SUBSCRIBED przed potwierdzeniem
-    // PostgreSQL) naprawiono 2026-10-23; to zostaje na pojedyncze zgubione
-    // zdarzenia. Dopóki directConnected=true, dzwonek i odpytywanie są
-    // wyłączone, więc bez odbudowy kanału kolejne zmiany czekałyby na heartbeat.
-    if (directConnected) {
-      noteDirectFailure("STALE");
-      resync();
-      return;
-    }
-    void fetchGuarded("rpc_fallback");
+    if (active) revisionWatchdog.noteServerRevision(revision);
   }
 
     return { start, stop, applyRow, refetchNow, noteServerRevision,

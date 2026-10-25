@@ -8,7 +8,6 @@ test("dzwonek: brak rewizji po grace uruchamia awaryjne pobranie", () => {
   let fetches = 0;
   const missed = [];
   const guard = createDoorbellGuard({
-    graceMs: 400,
     getReceivedRev: () => receivedRev,
     isDirectConnected: () => true,
     fetchNow: () => { fetches++; },
@@ -20,7 +19,7 @@ test("dzwonek: brak rewizji po grace uruchamia awaryjne pobranie", () => {
   guard.ring(4);
   timerCallback();
   assert.equal(fetches, 1);
-  assert.deepEqual(missed, [{ latest_revision: 4, missed_revisions: 1, grace_ms: 400 }]);
+  assert.deepEqual(missed, [{ latest_revision: 4, missed_revisions: 1, grace_ms: 100 }]);
   guard.stop();
 });
 
