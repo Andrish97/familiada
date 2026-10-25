@@ -1,5 +1,32 @@
 # Przebudowa kontroli unikalności gier — 2026-10-25
 
+## Aktualny stan produkcji
+
+Wdrożone na main `04ebe5a49`: migracje 487/488, blokada identycznych
+zestawów w bazie, raporty tekstowe, aktualność raportów i potwierdzanie
+niepełnych wyników w panelu. DB 40193262609, Edge 40193262531,
+Worker 40193262526 i Pages 40193262517 zakończone powodzeniem.
+Kontrola produkcji 40193541789 ✓ 6/6: anonimowy katalog, dodanie do
+biblioteki, ocena, zgłoszenie/prywatny preview, blokada kopii pod nowym ID,
+tytułem i językiem oraz ochrona listy oceniających. Wybrane unity także ✓.
+
+DB READ ONLY 40193544729 ✓: 90 gier, 900 pytań, 90 prawidłowych raportów,
+aktywna blokada, brak prawa bezpośredniego INSERT dla użytkowników,
+0 grup dokładnych kopii. HTTP strony dzieci-i-rodzice: 200, canonical,
+10 pytań w HTML, identyczna odpowiedź dla przeglądarki i Googlebota.
+
+**Pozostało uruchomienie modelu znaczenia.** Jest przygotowany i przetestowany
+lokalnie; produkcja ma nadal 0 wektorów i 0 pełnych raportów semantycznych.
+Panel jawnie pokazuje niepełny wynik. Dostęp do konfiguracji
+`Andrish97/familiada-server` nadal zwraca 404, więc nie można dodać usługi
+i jej sekretów zgodnie z procedurą. Zasoby serwera zmierzono — wystarczające
+do przygotowanego limitu 1 CPU/1 GiB. Następnie: instrukcje prywatnego repo,
+instalacja usługi i konfiguracja URL/tokenu Edge, indeksacja 900 pytań,
+sprawdzenie pełnego pokrycia i raportów na produkcji. Zgoda na realizację
+już udzielona; brak dotyczy dostępu, nie zatwierdzenia działania.
+
+Poniższy dziennik zawiera wcześniejsze stany sprzed wdrożenia.
+
 ## Decyzje i zakres
 
 Użytkownik: „Możemy przebudować system sprawdzania? Żeby był skuteczny”.
@@ -27,9 +54,8 @@ Zasady przyjęte do implementacji:
   wyników lub wektorów do zmienionej gry. Uprawnienia moderatora chronią
   raporty zgłoszeń i treści pending. Komunikaty autora bez danych innych
   prywatnych zgłoszeń.
-- Pytanie asynchroniczne: model parafraz lokalnie na serwerze (zalecany
-  przy wystarczających zasobach) lub zewnętrzne API. Trwa przygotowanie
-  części bazodanowej i panelu niezależnej od tej decyzji.
+- Przyjęto lokalny model CPU na własnym serwerze, po pomiarze zasobów.
+  Część bazodanowa i panel działają niezależnie od dostępności modelu.
 
 ## Etapy
 

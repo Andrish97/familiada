@@ -67,9 +67,13 @@ services/market-semantic`. W środowisku proxy z własnym CA dodać
 `--secret id=proxy_ca,src=<plik-CA>`; mount służy tylko pobieraniu i nie
 zostaje w obrazie. Zachować właściwy bundle CA, nie wyłączać TLS.
 
-Kolejność: testy lokalne → prywatna konfiguracja, zasoby i start usługi →
-model dodający 487 → testy kodu brancha → wspólna publikacja kodu i blokady
-488 → uzupełnienie wszystkich pytań przez panel/cron → kontrola produkcji.
+Stan: migracje 487/488 oraz obsługujący je kod są już wdrożone; kontrola
+produkcji 40193541789 ✓ 6/6. Model nie jest jeszcze zainstalowany, pokrycie
+wynosi 0/900 pytań (DB read 40193544729). Dalsza kolejność: instrukcje
+prywatnego repo → konfiguracja i start usługi → ustawienie URL/tokenu Edge →
+uzupełnienie wszystkich pytań przez panel/cron → kontrola pełnego pokrycia
+i raportów na produkcji. Pomiar 40192840935: 4 CPU, ~7,8 GiB RAM,
+~5,4 GiB dostępne; przygotowany kontener ma limit 1 CPU/1 GiB.
 Wycofanie obrazu usługi nie wyłącza dokładnej blokady i tekstowego porównania;
 stan znaczenia jest jawnie niepełny/niedostępny. Nie usuwać indeksu ochrony
 jako obejścia błędu modelu.
