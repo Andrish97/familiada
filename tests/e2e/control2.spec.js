@@ -3347,9 +3347,13 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     const syncSessions = await readControl2Sessions(page, game.id);
     const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic"
       && ["state_sync", "device_state_sync"].includes(event.category));
+    console.log(`[statistics-review] reconnect sync events ${JSON.stringify(syncEvents.map(event => ({ source: event.source,
+      category: event.category, phase: event.metrics?.phase, trigger: event.metrics?.trigger,
+      revision: event.metrics?.revision ?? event.metrics?.latest_revision, previous_revision: event.metrics?.previous_revision,
+      received_ms: event.metrics?.received_ms, fetch_ms: event.metrics?.fetch_ms, status: event.metrics?.status })))}`);
+    await attachStatistics(testInfo, "reconnect", syncSessions);
     expect(syncEvents.some(event => ["requested", "acknowledged"].includes(event.metrics?.phase))).toBe(false);
     expect(syncEvents.length).toBeLessThan(10);
-    await attachStatistics(testInfo, "reconnect", syncSessions);
     expect(syncSessions).toHaveLength(1);
     expect(syncSessions[0].rounds_played).toBe(1);
     expect(syncSessions[0].ended_at).toBeNull();
