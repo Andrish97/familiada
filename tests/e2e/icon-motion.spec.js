@@ -1,12 +1,11 @@
 const { test, expect } = require('./helpers/e2e-test');
 const { serveBranchCode } = require('./helpers/branch-code');
-test.use({ serviceWorkers: 'block' });
+test.use({ serviceWorkers: 'block', needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE === '1') await serveBranchCode(context, { pages: ['games', 'privacy'] });
 });
 
 test.describe('hamburger', () => {
-  test.use({ needs: { standard: 1 } });
   test('animowane części: menu ma stan, obsługę klawiatury i nie zmienia wymiarów', async ({ page, context, accounts, loginAs }) => {
     await loginAs(page, context, accounts.standard[0]);
     for (const width of [390, 360]) {
