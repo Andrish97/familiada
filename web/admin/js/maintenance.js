@@ -1,9 +1,9 @@
 // admin/js/maintenance.js — Przerwa techniczna: stan, tryby, wybór daty, podgląd strony przerwy, odpytywanie stanu.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T06124";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T06124";
-import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-25T06124";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T06162";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T06162";
+import { API_BASE, MINUTES_MIN, POLL_MS, apiFetch, els, escSetting, markUserAction, setText, shouldShowActionError, showAuth, showToast } from "./core.js?v=v2026-10-25T06162";
 
 let currentState = null;
 let currentMode = "message";
@@ -691,10 +691,10 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-25T06124"/>
-  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-25T06124"/>
-  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-25T06124"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-25T06124"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-25T06162"/>
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-25T06162"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-25T06162"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-25T06162"/>
 
 </head>
 <body class="page--block">
