@@ -1,16 +1,16 @@
 // admin/js/stats.js — Statystyki: przegląd, retencja, wykluczeni, snake, szczegóły i diagnoza rozgrywek.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T06371";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-25T06371";
-import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06371";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-25T06371";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T06371";
-import { activityDetailRows } from "./activity.js?v=v2026-10-25T06371";
-import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-25T06371";
-import { setStatus } from "./maintenance.js?v=v2026-10-25T06371";
-import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-25T06371";
-import { setWidth } from "../../shared/js/core/geometry.js?v=v2026-10-25T06371";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T06442";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-25T06442";
+import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T06442";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-25T06442";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T06442";
+import { activityDetailRows } from "./activity.js?v=v2026-10-25T06442";
+import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-25T06442";
+import { setStatus } from "./maintenance.js?v=v2026-10-25T06442";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-25T06442";
+import { setWidth } from "../../shared/js/core/geometry.js?v=v2026-10-25T06442";
 
 export async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
@@ -726,7 +726,7 @@ function buildSessionRunDetails(r) {
           return { title: "Zacięcie animacji planszy", detail: `Display: przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.display_visibility === "visible" ? " · karta była widoczna" : ""}` };
         }
         if (metrics.reason === "start_signal_timeout") {
-          return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
+          return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)} od zapisu akcji${Number.isFinite(Number(metrics.since_request_ms)) && metrics.since_request_ms !== null ? ` (${formatDuration(metrics.since_request_ms)} od kliknięcia)` : ""}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
           return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };

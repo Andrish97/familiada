@@ -14,13 +14,13 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T06371";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T06371";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-25T06371";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-25T06371";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-25T06371";
-import { createWriteOrder, confirmedRevisionOnly } from "./writeOrder.js?v=v2026-10-25T06371";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-25T06371";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T06442";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T06442";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-25T06442";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-25T06442";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-25T06442";
+import { createWriteOrder, confirmedRevisionOnly } from "./writeOrder.js?v=v2026-10-25T06442";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-25T06442";
 
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
@@ -205,6 +205,9 @@ export function createStore(gameId) {
       sound_cue_key: optimisticKey,
       sound_cue_seq: optimisticSeq,
       detail: payload.detail,
+      // Rewizja, którą nada serwer (game_state_write: rev + 1 przy zgodnym
+      // expectedRev). Pomiar potwierdzenia planszy w app.js liczy od niej.
+      __target_rev: (state.rev || 0) + 1,
     };
     state.soundCueKey = optimisticKey;
     state.soundCueSeq = optimisticSeq;

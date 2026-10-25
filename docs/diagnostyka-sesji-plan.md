@@ -276,3 +276,9 @@ connected postgres_changes` u Display/Host/Buzzer i brak `fallback_catchup`.
     alarmem `ack_timeout`; `display_ack_ms` w `late_ack`;
   - blokada wygaszania: odmowa (Safari iOS bez gestu) i zwolnienie przez
     system ponawiane przy najbliższym geście (`keep-alive.js`).
+- 2026-10-25 (eksport 7 dni z 25.10, polecenie użytkownika „zbadaj i zrób
+  wszystko”): pomiar potwierdzenia planszy liczony od rewizji nadanej przez
+  serwer (`__target_rev` wiersza optymistycznego; bramka Control bez zmian);
+  limit 1,2 s na sygnał startu animacji liczony od potwierdzenia zapisu
+  Control (twardy limit 3 s bez potwierdzenia), `since_request_ms`;
+  `AbortError` z obsługi wiersza nie jest błędem renderu.
