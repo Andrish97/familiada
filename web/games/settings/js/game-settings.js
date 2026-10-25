@@ -1798,7 +1798,7 @@ async function main() {
   // Load game, themes and questions in parallel
   const [gameResult, themesJson, questionsList] = await Promise.all([
     sb().from("games").select("id,name,settings").eq("id", gameId).single(),
-    fetch("/shared/data/display-themes.json").then(r => r.json()).catch(() => ({ themes: [] })),
+    fetch("/shared/data/display-themes.json?v=v2026-10-25T23195").then(r => r.json()).catch(() => ({ themes: [] })),
     loadQuestions(gameId).catch(() => []),
   ]);
 

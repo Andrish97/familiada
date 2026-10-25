@@ -9,7 +9,7 @@ let DEFAULT_THEME = "classic";
 
 async function initRegistry() {
   try {
-    const res = await fetch("/shared/data/display-themes.json");
+    const res = await fetch("/shared/data/display-themes.json?v=v2026-10-25T23195");
     const json = await res.json();
     DEFAULT_THEME = json.default ?? DEFAULT_THEME;
     THEME_META = json.themes.map(e => ({ key: e.key, label: e.label }));

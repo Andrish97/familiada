@@ -24,5 +24,9 @@ Użytkownik zaakceptował podgląd v7 i polecił wdrożenie.
 
 ## Stan
 
-Implementacja na `codex/display-themes-modern-motion`; testy i zrzuty w toku.
+Implementacja na `codex/display-themes-modern-motion`. Unit punktowo 43/43,
+po scaleniu 25/25, Chromium lokalnie 1/1. E2E brancha 40246237871: 2/2,
+zapis wszystkich motywów, własnego tła i kolorów drużyn; scena Display.
+Po testach dopisane wersje URL rejestru motywów (zgodne z istniejącym Host).
+Zrzuty 6 motywów 1400 px oraz ustawień 390/1440 px, PL/EN/UK.
 Wdrożenie według bramek z `AGENTS.md`.

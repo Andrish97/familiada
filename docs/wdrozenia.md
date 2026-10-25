@@ -14,7 +14,7 @@ Kontrolki w konstrukcji; domyślne tło opcjonalne, kolory A/B zachowane.
 Pierwsze propozycje Neon/Studio/Złoty odrzucone i usunięte.
 Test Chromium geometrii sześciu paneli, animacji i koloru kontrolek: 1/1.
 Unit punktowo: 43/43. Zrzuty wszystkich motywów i ustawień 390/1400 px.
-W toku bramka E2E przed Pages. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
+E2E brancha 40246237871: 2/2 ✓; trwa wdrożenie Pages i kontrola produkcji. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
 
 ## Zasady
 
