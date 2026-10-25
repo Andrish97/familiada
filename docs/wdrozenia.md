@@ -2175,3 +2175,15 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   27594b7c2e), Worker **40235227300 ✓**. Odczyt publicznego CSS potwierdził
   prawą szufladę i brak starego przycisku zamknięcia. Kontrola main
   **40235293025**: te same trzy scenariusze na opublikowanych plikach.
+
+| 2026-10-25 | Prywatny Marketing — Autorska w dwóch trybach i układ rozmowy | Decyzja właściciela: usunąć zbędny Newsletter; Autorska ma Edytor do pisania i Kod HTML do wklejania fragmentu/całego dokumentu. Osobne szkice przy przełączaniu, wspólny podgląd i wysyłka aktywnego trybu. Podgląd izolowany bez skryptów; transport zachowuje stopkę preferencji. Zgłoszony zrzut rozmowy: powrót dostał własny wiersz z odstępem, HTML szerszy i wyższy podgląd. Lokalnie 9 punktowych browser + 4 edytora success, CSS 3/3 po poprawce analizy komentarza; 6 zrzutów 1400/390 obejrzanych. Publiczna kopia buildera: 3/3, po scaleniu także brak konfliktów. | Kod panelu i sceny prywatnie; bez realnej wysyłki, zmian bazy, LF ani maintenance. Server 312b733, production 40235289031 success; CI 40234942955 i 40235137267 success: 85 unit + 20 browser, build/check. Origin potwierdził SHA, private/no-store i 404/404/200; po wdrożeniu panel/API 302 do Access, origin 404, www 200. Odświeżyć panel. |
+
+- Zamknięcie menu: produkcyjny **40235293025 ✓ 3/3**, rzeczywiste pliki
+  main. Pages/Worker i prywatna publikacja opisane wyżej; status **zrobione**.
+
+### 2026-10-25 — czytelniejsza kawka i prostszy edytor (w trakcie)
+
+- Zgłoszenie właściciela: animacji pary prawie nie widać przy obecnej małej
+  ikonie; TinyMCE przeciążony przyciskami, z obcymi kolorami. Powiększyć
+  wejście w stopce; prywatny edytor: jeden podstawowy pasek, pozostałe
+  narzędzia we wbudowanym overflow, spójne tła/stany/okna z tokenów.
