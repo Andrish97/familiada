@@ -1,8 +1,8 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-25T07400";
-import { setMessage } from "./toast.js?v=v2026-10-25T07400";
-import { t } from "../../translation/translation.js?v=v2026-10-25T07400";
-import { openDialog, closeDialog, isSheetViewport, animateClose } from "./modal-sheet.js?v=v2026-10-25T07400";
-import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-25T07400";
+import { icon, iconText } from "./icons.js?v=v2026-10-25T07422";
+import { setMessage } from "./toast.js?v=v2026-10-25T07422";
+import { t } from "../../translation/translation.js?v=v2026-10-25T07422";
+import { openDialog, closeDialog, isSheetViewport, animateClose } from "./modal-sheet.js?v=v2026-10-25T07422";
+import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-25T07422";
 
 let modalSeq = 0;
 

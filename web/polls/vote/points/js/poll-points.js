@@ -1,10 +1,10 @@
 // js/pages/poll-points.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-25T07400";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-25T07400";
-import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-25T07400";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-25T07400";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-25T07400";
-import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-25T07400";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-25T07422";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-25T07422";
+import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-25T07422";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-25T07422";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-25T07422";
+import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-25T07422";
 
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
