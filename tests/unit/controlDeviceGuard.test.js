@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('../../web/shared/js/core/device-guard.js', import.meta.url), 'utf8')
-  .replace(/^import .*;$/m, '')
+  .replace(/^import .*;$/gm, '')
   .replace(/export /g, '');
 const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false, userAgent = '' }) => {
-  const api = new Function('window', 'navigator', `${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen, MIN_WORK_HEIGHT};`)(
+  const api = new Function('window', 'navigator', `const globalThis = {}; ${fs.readFileSync(new URL('../../web/shared/js/core/page-boot.js', import.meta.url), 'utf8')}; ${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen, MIN_WORK_HEIGHT};`)(
     { innerWidth: width, innerHeight: height, screen: { width: screenWidth, height: screenHeight }, matchMedia: (query) => ({ matches: query.includes('hover') ? !touch : touch }) },
     { maxTouchPoints: touch ? 1 : 0, userAgent },
   );

@@ -229,6 +229,119 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
+
+- Próba publikacji po zielonym Control 40222927342 została odrzucona jako
+  non-fast-forward. Nowy main `34162dedda` przeniósł publiczny panel admina
+  do prywatnego systemu oraz doprecyzował klasyfikację catchup w teście Control.
+- Zachowano usunięcie `web/admin` i scen panelu. W Control połączono obie
+  kontrole: rzeczywisty odbiór postgres_changes oraz brak heartbeat/wyjaśnienie
+  spóźnionych rewizji. Wspólne części silnika pierwszej klatki zachowane.
+- Resolver błędnie automatycznie dodawał pliki konfliktu modyfikacja/usunięcie
+  bez markerów. Został poprawiony: brak obu stron indeksu oznacza decyzję
+  ręczną. Trzy testy na repozytoriach tymczasowych: modify/delete, delete/modify,
+  wersje + zachowanie niezależnej logiki. Usunięcie panelu jawnie zatwierdzone;
+  `git ls-files web/admin` puste. Bez odtwarzania usuniętego publicznego kodu.
+- Unit po scaleniu **809/809** ✓ (28,3 s; testy prywatnego panelu usunięte na
+  main). Nowe zrzuty publiczne: **9/9**, 390/360/1400 px, audyt 0 uwag.
+  Wcześniejsze 974 pomiary obejmowały także dawny publiczny panel; bieżący
+  inwentarz publiczny ma 500 wpisów scen. UI publicznych stron bez zmian.
+- Control na połączonym kodzie **40224637995 ✓ 1/1**; UI **40220957780 ✓ 4/4**.
+  Kolejny main `1f6833d329` wniósł dokumentację, test originu Pages i wersje,
+  bez zmian semantycznych w `web/`; zielonych speców nie powtarzano.
+  Unit po uzgodnieniu wersji **809/809** ✓ (21,3 s).
+- Status: publikacja main/Pages, następnie te same spece na produkcji.
+
+
+### 2026-10-25 — pierwsza widoczna klatka wspólnego silnika
+
+- Zlecenie: pomiar przed poprawką, brak skoków po pokazaniu strony,
+  zachowanie stopniowego ładowania, wspólny silnik zamiast poprawek stron.
+- Branch `fix/first-visible-layout`, baza `e95f8d8969` (czysty main).
+- Pomiar Playwright z atrapą na 10 stronach × 390/360/1400 px. Szybki odczyt
+  zwykle maskował wyścig; opóźnienie topbara 900 ms i danych 250 ms ujawniło
+  Gry desktop CLS 0,09880, ankietę mobile 0,01271/0,01596 oraz Wskazówki.
+  Wyniki i przyczyny: `docs/pierwsza-klatka-pomiar.md`.
+- Wspólny bootstrap przed CSS (te same funkcje profilu co guard), bramka
+  DOM/i18n/powłoki + dwa pomiary, rejestr pomiarów, niezależny bezpiecznik 5 s,
+  gotowość etapów potwierdzana po hydracji. Topbar reaguje przed renderem na
+  zmianę widoczności przycisków i nie zawija się przejściowo. Wspólne
+  podsumowanie ankiety rezerwuje wiersz. Zasada w §5a podręcznika silnika.
+- Punktowe 58 unit ✓, pełny unit finalnego kodu 859/859 ✓ (98,7 s). Nowy audyt CLS
+  `skok-po-zaladowaniu` z progiem 0,01; pełna galeria `--changed --audit`
+  obejmuje wszystkie 542 sceny, uruchomiona w dwóch rozłącznych częściach.
+- Kod `7b05cb8fe3`. Branch e2e 40216076232 ✓ **3/3** (lista Gier z
+  opóźnionym odczytem/błędem, filtr i sortowanie, mobilne okno nazwy) oraz
+  40216078769 ✓ **1/1** (pełna runda 4 urządzeń i wznowienie Control).
+- Scena `manual-shots` czekała bez końca na decode obrazu lazy poza ekranem;
+  przewija go przed decode. `manual-return` czeka na widoczny link powrotu
+  także w mobilnym pasku. Kroki scen mają limit 45 s. Pomiar guarda startuje
+  od pokazania nakładki. Ponowny pełny unit 859/859 ✓ (94,5 s).
+- Scalenie `origin/main` (`eb822245d3`) → `2cff3e4e79`, bez konfliktów;
+  obce zmiany tylko w Lead Finderze/workflow diagnostycznym i dokumentacji,
+  bez wpływu na zielone spece frontendu — nie powtarzać testów brancha.
+- Pełna galeria `--changed --audit`: 478 + 493 = **971 kadrów / 542 sceny**,
+  bez `skok-po-zaladowaniu` (**971/971 pomiarów**, w tym 8 uzupełnionych
+  punktowo po błędach starych selektorów). CLS max **0,006484**. Pozostałe uwagi: 113 + 187, poza zakresem CLS.
+- Porównanie wszystkich 36 tras: **52 pary**, 51 identycznych, jedna różnica
+  **1 piksela**, zero ponad próg. Skeleton: **24/24** (8 stron × 390/360/1400,
+  UK, dane +250 ms), CLS max 0,00172; Gry/Bazy/Logo widoczne przed danymi.
+  Słownik +900 ms: Control/guard 390/360/1400 — CLS 0.
+- Próba na bazie potwierdziła wcześniejsze błędy Turnstile, iframe poczty
+  i nieaktualne selektory `manual-games` / `games-duplicate-done`.
+  Bazowe Wskazówki z tym samym audytem: CLS 0,05467 desktop / 0,07113 phone;
+  po poprawce 0. Uzupełnione brakujące RPC atrapy `initiate_email_change_intent`
+  (SQL void); scena migracji gościa ponownie bez braków i bez uwag audytu.
+- Pełny unit po ostatniej korekcie runnera: **859/859** ✓ (74,2 s).
+- Nowszy main `e86f84b5c1`: zmiany semantyczne tylko w diagnostyce/rendererze
+  urządzeń Control; pozostały front to wersje zasobów. Konflikty `?v=`:
+  diff3 → resolver (wyłącznie wersje) → version-assets → flat.css.
+  Uzupełniona atrapa `watchRuntimeErrors` w istniejących testach lease
+  (nowa funkcja z main), bez zmiany asercji. Bootstrap nie chowa ponownie
+  już otwartej karty przy późnym imporcie; sprawdzone unit i Chromium.
+- Pełny unit po scaleniu i poprawce atrap: **859/859** ✓ (46,6 s).
+- Ostatnia próba wolnego szkicu Ankiety ujawniła późniejszą podpowiedź
+  walidacji: CLS 0,01817 / 0,02265 / 0,01388 (390/360/1400). Wspólny
+  `holdSkeletonLayout(elementy, promise)` w silniku opóźnia tylko jeszcze
+  nieodsłonięty etap. Ankieta zgłasza walidację i podsumowanie jako zależność
+  geometrii, a wyniki pozostają osobnym etapem. Po poprawce 0 / 0 / 0,00085.
+  Nowa scena `polls-draft-text-blocked-slow`: dane +250 ms i 360 px.
+- Powtórka wszystkich widoków `/polls/` po tej zmianie: **54 kadry**, audyt
+  **0 uwag**, max CLS 0,000573. Razem inwentarz **543 sceny / 974 kadry**;
+  pozostałe strony nie używają nowej bramki etapów i ich sprawdzony tor
+  inicjalizacji pozostaje bez zmian. Dwa nowe testy: niezależność etapów,
+  wiele zależności i błąd. Pełny unit **861/861** ✓ (103,5 s).
+- E2E po scaleniu: UI 40219691538 ✓ 3/3. Control 40219693950: asercja
+  zerowego nadrabiania — Host nadrobił pojedyncze rewizje 5 i 10 z dzwonka;
+  Display/Buzzer 0, wszystkie kanały connected. Bez zmiany asercji.
+- UI na finalnej logice `f4bdbbebc7`: **40220957780 ✓ 4/4** (Gry, okno
+  mobilne, ładowanie Ankiety i ponowienie). Osobny Control 40221102773:
+  ponownie asercja 0 catchup, tym razem Display 1, Host/Buzzer 0.
+- Test transportu dostosowany do naprawy słabego łącza z 25.10: dzwonek może
+  wygrać wyścig z postgres_changes. Zamiast wnioskować o awarii z licznika
+  nadrabiania, test wymaga faktycznej wiadomości postgres_changes na każdym
+  urządzeniu. Obserwator przekazuje zdarzenie do oryginalnej obsługi SDK;
+  lokalny Chromium + prawdziwy vendor potwierdził odbiór i zachowanie obsługi.
+  Wykrycie martwego kanału oraz wszystkie asercje rundy/wznowienia pozostają.
+- Scalenie kolejnego main `ad26b3ba4c`: backend prywatnego panelu, zrzuty i
+  treści Wskazówek oraz wersje; brak zmian semantycznych w kodzie testowanych
+  stron. Resolver rozwiązał wyłącznie wersje. Pełny unit **864/864** ✓ (47,3 s).
+- Końcowy zbiór pomiarów: **974/974**, bez przekroczeń 0,01; max 0,006484.
+- Control z rzeczywistym odbiorem: **40222245868 ✓ 1/1**, bez retry;
+  postgres_changes: Display 10, Host 10, Buzzer 28. Pełna runda i wznowienie
+  potwierdzone. UI 40220957780 ✓ 4/4 pozostaje zielone.
+- Przed publikacją doszedł main `b2a84d3ab1` z korelacją diagnostyki dzwonka
+  (`13efd5fc54`). Zachowano nowe metryki w specu i własną obserwację kanału;
+  resolver rozwiązał wyłącznie wersje. Pełny unit **860/860** ✓ (49,0 s;
+  main uprościł testy doorbellGuard). Bez zmian geometrii stron.
+- Control po ostatnim scaleniu: **40222927342 ✓ 1/1**. Bramka brancha
+  spełniona: UI 40220957780 4/4 + Control 40222927342 1/1; pełny unit
+  860/860. Kod `2126329c63` gotowy do publikacji.
+- Status: publikacja main/Pages, następnie te same 4 testy UI + pełna runda
+  Control na rzeczywistej produkcji.
+
+
+
 | 2026-10-25 | Control 2 — korelacja opóźnionego Realtime w logach | Wdrożono na main `13efd5fc54`, Pages `40222221847` ✓. Control loguje wysłany dzwonek z rewizją; urządzenia zapisują próg 400 ms, rewizję nadrobioną RPC, późny odbiór przez Postgres Changes oraz osobno czas pobrania, kolejki i renderu. Bez migracji. Unity `doorbellGuard` + `gameStateSync` 14/14; branch E2E `40222055549` ✓. Pierwsza kontrola Pages `40222281282` wykazała Display: fallback dzwonka dla rewizji 8, po którym dotarła ta sama rewizja przez Postgres Changes; RPC zdążyło zastosować rewizję 9. Asercję E2E doprecyzowano i wypchnięto jako `2ae929808d` (bez zmian frontu); branch `40222638855` ✓. Kontrola main `40222828929` wykryła Host: `lease_heartbeat`, jedna pominięta rewizja 9, następnie `rpc_resume` rewizją 10 i odzyskanie kanału. | Nowe pomiary zbierają się w statystykach; pojedynczy test kontrolny pokazał też prawdziwy fallback heartbeat u Hosta. Przyczyna źródłowa tego incydentu nie jest jeszcze ustalona; analizować nowe przebiegi według `trigger`, rewizji i czasów. |
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |

@@ -10,6 +10,12 @@ pat = re.compile(r"<<<<<<< [^\n]*\n(.*?)\|\|\|\|\|\|\|[^\n]*\n(.*?)=======\n(.*?
 ver = re.compile(r"v20\d\d-\d\d-\d\dT\d+")
 left = []
 for f in files:
+    # Konflikt modyfikacja/usunięcie nie ma markerów w pliku. Sam brak
+    # markerów nie oznacza rozwiązania: nie wolno przywrócić usuniętej strony.
+    entries = subprocess.run(["git", "ls-files", "--unmerged", "--", f], capture_output=True, text=True).stdout.splitlines()
+    stages = {line.split()[2] for line in entries}
+    if not {"2", "3"}.issubset(stages):
+        left.append(f); continue
     try:
         s = open(f, encoding="utf-8").read()
     except (UnicodeDecodeError, FileNotFoundError):

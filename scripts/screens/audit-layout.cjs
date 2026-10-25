@@ -24,10 +24,59 @@ const SCROLL_POLICY = {
 // ujednolicenie-wygladu.md; lista w wspolne-style-plan.md „Zakazy…”).
 const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn", ".fit-row"];
 
+// Uruchamiane przez addInitScript przed skryptami strony. Bez treści i danych
+// użytkowników: zapisujemy tylko selektory i geometrię źródeł przesunięcia.
+function observeLayoutShifts() {
+  const state = window.__screensLayoutAudit = { shown: null, loadingRemoved: null, shifts: [], supported: false };
+  const label = (el) => el?.nodeType === 1
+    ? `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${[...el.classList].slice(0, 3).map((c) => `.${c}`).join("")}` : "";
+  const rect = (r) => ({ x: r.x, y: r.y, width: r.width, height: r.height });
+  const record = (entries) => {
+    for (const entry of entries) {
+      if (entry.hadRecentInput || state.stopped) continue;
+      state.shifts.push({ time: entry.startTime, value: entry.value,
+        sources: (entry.sources || []).map((source) => ({ el: label(source.node), before: rect(source.previousRect), after: rect(source.currentRect) })) });
+    }
+  };
+  const checkShown = () => {
+    const root = document.documentElement;
+    if (!root || state.shown !== null || !document.body) return;
+    if (!root.hasAttribute("data-page-guard") && (root.classList.contains("page-loading") || root.hasAttribute("data-layout-pending"))) return;
+    // Guard jest osobnym końcowym ekranem; body zostaje pod nim niewidoczne.
+    state.shown = performance.now();
+  };
+  const mutation = new MutationObserver((records) => {
+    for (const r of records) {
+      if (r.target === document.documentElement && r.attributeName === "class" && r.oldValue?.split(/\s+/).includes("page-loading")
+          && !r.target.classList.contains("page-loading")) state.loadingRemoved = performance.now();
+    }
+    checkShown();
+  });
+  mutation.observe(document, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "data-layout-pending", "data-page-guard"] });
+  let observer;
+  try {
+    observer = new PerformanceObserver((list) => record(list.getEntries()));
+    observer.observe({ type: "layout-shift", buffered: true });
+    state.supported = PerformanceObserver.supportedEntryTypes?.includes("layout-shift") ?? true;
+  } catch {}
+  state.stop = () => {
+    if (observer) { record(observer.takeRecords()); observer.disconnect(); }
+    mutation.disconnect();
+    state.stopped = true;
+    const after = state.shifts.filter((entry) => state.shown !== null && entry.time >= state.shown);
+    return { shown: state.shown, loadingRemoved: state.loadingRemoved, supported: state.supported,
+      before: state.shifts.filter((entry) => state.shown === null || entry.time < state.shown).reduce((sum, entry) => sum + entry.value, 0),
+      after: after.reduce((sum, entry) => sum + entry.value, 0), shifts: after };
+  };
+}
+
 // Funkcja wykonywana w stronie (page.evaluate). opts: { path, safe, allowDocScroll }.
 function inspectLayout(opts) {
   const NO_WRAP = opts.noWrap || [];
   const out = [];
+  const initial = opts.initialLayout;
+  if (initial && !initial.supported) out.push({ kind: "blad-audytu", el: "", detail: "Brak pomiaru layout-shift" });
+  if (initial?.after > 0.01) out.push({ kind: "skok-po-zaladowaniu", el: [...new Set(initial.shifts.flatMap((s) => s.sources.map((source) => source.el)))].join(", "), detail: `CLS po pokazaniu strony: ${initial.after.toFixed(5)} > 0.01` });
   const W = innerWidth, H = innerHeight;
   const safe = { top: 0, right: 0, bottom: 0, left: 0, ...(opts.safe || {}) };
   const label = (el) => {
@@ -286,7 +335,7 @@ function inspectLayout(opts) {
 
 const allowDocScroll = (path) => SCROLL_POLICY.global.some((re) => re.test(path.split(/[?#]/)[0]));
 
-module.exports = { inspectLayout, allowDocScroll, SCROLL_POLICY, NO_WRAP };
+module.exports = { observeLayoutShifts, inspectLayout, allowDocScroll, SCROLL_POLICY, NO_WRAP };
 
 if (require.main === module) {
   const { spawnSync } = require("node:child_process");

@@ -1177,6 +1177,20 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         timeout: 15000,
         message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
       }).toEqual(expect.arrayContaining([expect.stringMatching(/:joined$/)]));
+
+      // Obserwacja prawdziwych ramek kanału, bez modyfikacji danych ani obsługi.
+      await devicePage.evaluate(() => {
+        window.__e2eNativeChanges = 0;
+        for (const channel of window.__sbDeviceRealtime.getChannels().filter((ch) => String(ch.topic || "").includes("game-state-direct"))) {
+          const native = channel.channelAdapter?.getChannel?.();
+          const onMessage = native?.onMessage;
+          if (typeof onMessage !== "function") throw new Error("native postgres_changes observer unavailable");
+          native.onMessage = function (event, ...args) {
+            if (event === "postgres_changes") window.__e2eNativeChanges++;
+            return onMessage.call(this, event, ...args);
+          };
+        }
+      });
     }
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -1263,8 +1277,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       return { roundNo: data.detail?.rounds?.roundNo, scoreA: data.detail?.rounds?.totals?.A };
     }, game.id), { timeout: 10000 }).toEqual({ roundNo: 2, scoreA: 90 });
 
-    // Urządzenia jadą na postgres_changes, nie na transporcie zapasowym
-    // (diagnoza 2026-10-23: kanał SUBSCRIBED bez dostarczanych zmian).
+    // Kanały muszą dostarczać rzeczywiste zmiany, nie tylko SUBSCRIBED
+    // (diagnoza 2026-10-23). Dzwonek może równolegle naprawiać opóźnienia.
     const transportOf = sessions => {
       const events = (sessions[0]?.stats_detail.events || []).filter(event => ["display", "host", "buzzer"].includes(event.source));
       return Object.fromEntries(["display", "host", "buzzer"].map(source => {
@@ -1307,6 +1321,18 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
       expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
     }
+    // Dzwonek może odczytać rewizję przed ramką postgres_changes (naprawa
+    // słabego łącza 2026-10-25). Catchup nie dowodzi awarii kanału. Wymagamy
+    // jego rzeczywistej wiadomości, żeby zapasowy transport nie ukrył regresji
+    // „SUBSCRIBED, ale bez danych”; cała runda nadal sprawdza stan urządzeń.
+    const nativeCounts = {};
+    for (const [source, devicePage] of [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]]) {
+      await expect.poll(() => devicePage.evaluate(() => window.__e2eNativeChanges || 0), {
+        timeout: 10000, message: `${source}: bezpośredni kanał dostarczył postgres_changes`,
+      }).toBeGreaterThan(0);
+      nativeCounts[source] = await devicePage.evaluate(() => window.__e2eNativeChanges || 0);
+    }
+    console.log(`[e2e-diag] native postgres_changes ${JSON.stringify(nativeCounts)}`);
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);

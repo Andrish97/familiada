@@ -1,3 +1,4 @@
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19190";
 // scroll-fade.js
 // Wygaszona krawędź przewijanych list (decyzja właściciela 2026-10-21):
 // gdy nad lub pod widocznym fragmentem są jeszcze elementy, krawędź listy
@@ -178,5 +179,12 @@ export function initScrollFade(root) {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
   else run();
 }
+
+registerPageLayout(() => {
+  for (const el of document.querySelectorAll(SCROLL_FADE_SELECTOR)) {
+    scrollFade(el);
+    update(el, true);
+  }
+});
 
 initScrollFade();

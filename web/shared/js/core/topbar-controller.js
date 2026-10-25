@@ -1,3 +1,4 @@
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19190";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -5,12 +6,12 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T18561";
-import { signOut } from './auth.js?v=v2026-10-25T18561';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-25T18561';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T18561';
-import { icon, iconText } from './icons.js?v=v2026-10-25T18561';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T18561';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-25T19190";
+import { signOut } from './auth.js?v=v2026-10-25T19190';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-25T19190';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-25T19190';
+import { icon, iconText } from './icons.js?v=v2026-10-25T19190';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-25T19190';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -78,17 +79,14 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   // aktualizują — bez tego dropdown pokazywał nieaktualne liczby).
   const badgeObserver = new MutationObserver(() => {
     if (_mobileActive) return;
-    if (_hiddenBtns.length) recalc();
-    else updateMoreBadge([]);
+    recalc();
   });
-  getButtons().forEach(btn => {
-    if (btn) badgeObserver.observe(btn, {
+  badgeObserver.observe(section2, {
       subtree: true,
       characterData: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['class'],
-    });
+      attributeFilter: ['class', 'hidden', 'data-nav-hidden'],
   });
 
   function getVisibleBtns() {
@@ -106,7 +104,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   // Pomiar sam przełącza klasę .hidden przycisków — te zmiany nie mogą
   // wracać do obserwatora liczników (pętla bez końca, zawieszona strona).
   function recalc() {
-    try { measureOverflow(); } finally { badgeObserver.takeRecords(); }
+    try { measureOverflow(); updateTopbarHeight(); } finally { badgeObserver.takeRecords(); }
   }
 
   function measureOverflow() {
@@ -410,7 +408,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-25T18561');
+  const { getUser } = await import('./auth.js?v=v2026-10-25T19190');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
@@ -709,6 +707,12 @@ function updateTopbarHeight() {
   const height = Math.ceil(topbar.getBoundingClientRect().height);
   document.body.style.setProperty('--topbar-h', `${height}px`);
 }
+
+registerPageLayout(() => {
+  initTopbarController();
+  _overflowState?.recalc();
+  updateTopbarHeight();
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   initTopbarController();

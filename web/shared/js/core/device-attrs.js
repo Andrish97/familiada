@@ -8,22 +8,11 @@
 //   data-keyboard    klawiatura ekranowa otwarta (dotyk, aktywne pole i okno
 //                    niższe o ponad KEYBOARD_MIN px): stopka znika, aktywne
 //                    pole przewija się do widoku w swoim kontenerze
-// Ładowany jako pierwszy moduł strony; body jest ukryte (page-loading),
-// dopóki strona się nie złoży, więc atrybuty są przed pierwszym widokiem.
-import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-25T18561";
+// Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
+import "./page-layout.js?v=v2026-10-25T19190";
+import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-25T19190";
 
-export const NARROW_MAX = 600;
-
-export function deviceLayout(profile = getDeviceProfile()) {
-  const narrow = profile.viewportWidth <= NARROW_MAX;
-  return {
-    device: profile.formFactor,
-    input: profile.touch ? "touch" : "pointer",
-    orientation: profile.orientation,
-    compact: profile.formFactor === "phone" || narrow,
-    sheet: (profile.touch && profile.formFactor !== "tv") || narrow,
-  };
-}
+export const { NARROW_MAX, deviceLayout } = globalThis.FamiliadaDevice;
 
 let current = null;
 

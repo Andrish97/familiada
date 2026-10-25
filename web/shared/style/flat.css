@@ -46,7 +46,7 @@
     overscroll-behavior: none; /* gasi biały bounce */
     transition: opacity var(--dur-slow) ease-in;
   }
-  html.page-loading body { opacity: 0; }
+  html.page-loading body, html[data-layout-pending] body { opacity: 0; }
 
   body > main,
   main {
@@ -342,6 +342,9 @@
     gap: 8px;
   }
   .topbar-layout-4 :is(.topbar-section-2, .topbar-section-3, .topbar-section-4) { justify-content: flex-start; }
+  /* Overflow rozstrzyga kontroler przed renderem. Przejściowe zawinięcie
+     przy aktualizacji nawigacji nie zmienia wysokości całej strony. */
+  .topbar-layout-4 .topbar-section-2 { flex-wrap: nowrap; }
   .topbar-layout-4 .topbar-section button { touch-action: manipulation; }
   .topbar-layout-4 .topbar-section-1 .brand { align-self: center; }
   .topbar-layout-4 .topbar-section :is(.btn, .who, .lang-switcher, .user-btn, .top-status) {
