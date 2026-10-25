@@ -26,6 +26,12 @@ PROVIDERS = {
                   'endpoint': 'https://api.anthropic.com/v1/messages'},
 }
 
+# Przegląd zapisanych kontaktów (decyzja użytkownika 2026-10-25): osobny
+# model AI, niezależny od tego, który kontakty kiedyś przyjął. Bez
+# przechodzenia na dostawców wyszukiwania — niedostępny = przegląd stoi.
+REVIEW_PROVIDER = os.getenv('REVIEW_AI_PROVIDER', 'anthropic').strip()
+REVIEW_MODEL = os.getenv('REVIEW_AI_MODEL', 'claude-sonnet-5-5').strip()
+
 QUOTA_WORDS = ('day', 'daily', 'quota', 'credit', 'unauthorized', 'insufficient', 'billing')
 
 
@@ -97,10 +103,11 @@ class Classifier:
         self.client = client
         self.stats = stats
 
-    async def _call(self, name, prompt):
+    async def _call(self, name, prompt, model=None):
         p = PROVIDERS.get(name)
         if not p or not p['key']:
             return 500, None, 'missing config'
+        p = {**p, 'model': model or p['model']}
         timeout = cfg('TIMEOUT_AI', 90)
         max_tokens = cfg('AI_MAX_TOKENS', 6000)
         try:
@@ -137,11 +144,19 @@ class Classifier:
         providers = await self.db.rpc('get_available_ai_providers')
         if not providers:
             return None
-        for p in providers if isinstance(providers, list) else [providers]:
+        providers = providers if isinstance(providers, list) else [providers]
+        model = None
+        if mode == 'review':
+            providers = [p for p in providers if p.get('name') == REVIEW_PROVIDER]
+            if not providers or not PROVIDERS.get(REVIEW_PROVIDER, {}).get('key'):
+                log.error(f'Model przeglądu ({REVIEW_PROVIDER}/{REVIEW_MODEL}) niedostępny — przegląd wstrzymany.')
+                return None
+            model = REVIEW_MODEL
+        for p in providers:
             name = p['name']
             if self.stats:
                 self.stats['ai_calls'] += 1
-            status, content, err = await self._call(name, prompt)
+            status, content, err = await self._call(name, prompt, model)
             if status == 200:
                 try:
                     res = parse_results(content, ids)
@@ -149,7 +164,7 @@ class Classifier:
                     log.error(f'Model {name}: niepoprawna odpowiedź ({e})')
                     await self._cooldown(name, 30, f'zły format: {e}')
                     continue
-                log.info(f'Ocena {name}: {len(res)}/{len(ids)} pozycji')
+                log.info(f'Ocena {name}{"/" + model if model else ""}: {len(res)}/{len(ids)} pozycji')
                 return res
             if any(w in str(err) for w in QUOTA_WORDS):
                 await self._cooldown(name, cfg('PROVIDER_COOLDOWN_QUOTA', 86400), f'limit ({status}): {err}')

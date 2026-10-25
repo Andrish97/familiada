@@ -176,21 +176,6 @@ async function handleFetch(request, env, ctx) {
     return fetch(request);
   }
 
-  // Lead Finder - passthrough for settings frontend communication
-  if (host === "leads.familiada.online") {
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "https://admin.familiada.online",
-          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Authorization, Content-Type",
-          "Access-Control-Max-Age": "86400"
-        }
-      });
-    }
-    return fetch(request);
-  }
-
   // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
   if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
     if (isCommonAsset(url.pathname)) {
@@ -206,7 +191,7 @@ async function handleFetch(request, env, ctx) {
   // Statyczne assety (dowolny folder, dopasowane po rozszerzeniu, nie po
   // prefiksie ścieżki) — omijają całkowicie GLOBAL GATE i KV. Tu host jest
   // zawsze www.familiada.online: apex zawsze przekierowuje wyżej, a
-  // settings/panel/supabase/api/leads/nieznane subdomeny już zwróciły
+  // settings/panel/supabase/api/nieznane subdomeny już zwróciły
   // odpowiedź w blokach powyżej. Patrz isStaticAssetPath — jeden wyjątek
   // (/maintenance-state.json) zostaje w normalnej bramce, bo czyta KV.
   if ((request.method === "GET" || request.method === "HEAD") && isStaticAssetPath(url.pathname)) {

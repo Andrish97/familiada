@@ -23,11 +23,11 @@ const RUN = '0f1e2d3c-4b5a-4987-8654-3210fedcba98';
 // ── Ś2 ────────────────────────────────────────────────────────────────────
 test('Ś2: lista dozwolonych ścieżek lead-findera', () => {
   const q = new URLSearchParams();
-  assert.deepEqual(leadFinderTarget('GET', 'search-runs/status', q), { path: '/api/search-runs/status' });
-  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=70')), { path: '/api/search-runs?target_count=70' });
-  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=99999')), { path: '/api/search-runs?target_count=1000' });
+  assert.deepEqual(leadFinderTarget('GET', 'search-runs/status', q), { action: 'status' });
+  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=70')), { action: 'start', target_count: 70 });
+  assert.deepEqual(leadFinderTarget('POST', 'search-runs', new URLSearchParams('target_count=99999')), { action: 'start', target_count: 1000 });
   for (const action of ['pause', 'resume', 'cancel']) {
-    assert.deepEqual(leadFinderTarget('POST', `search-runs/${RUN}/${action}`, q), { path: `/api/search-runs/${RUN}/${action}` });
+    assert.deepEqual(leadFinderTarget('POST', `search-runs/${RUN}/${action}`, q), { action, run_id: RUN });
   }
   assert.equal(leadFinderTarget('GET', 'search-runs', q), null);
   assert.equal(leadFinderTarget('POST', 'search-runs/status', q), null);
@@ -35,18 +35,19 @@ test('Ś2: lista dozwolonych ścieżek lead-findera', () => {
   assert.equal(leadFinderTarget('POST', 'search-runs/../../health/pause', q), null);
   assert.equal(leadFinderTarget('GET', 'health', q), null);
   // Lead Finder 2: przegląd zapisanych kontaktów (tylko POST, all=true|false).
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', q), { path: '/api/contacts-review?all=false' });
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=true')), { path: '/api/contacts-review?all=true' });
-  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=x&y=1')), { path: '/api/contacts-review?all=false' });
+  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', q), { action: 'review', all: false });
+  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=true')), { action: 'review', all: true });
+  assert.deepEqual(leadFinderTarget('POST', 'contacts-review', new URLSearchParams('all=x&y=1')), { action: 'review', all: false });
   assert.equal(leadFinderTarget('GET', 'contacts-review', q), null);
 });
 
 test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt tokenu zniknął', async () => {
-  const env = { ...ACCESS_ENV, LEAD_FINDER_API_KEY: 'klucz-lf' };
+  const env = { ...ACCESS_ENV, LEAD_FINDER_API_KEY: 'klucz-lf', SUPABASE_URL: 'https://api.test', SUPABASE_SERVICE_ROLE_KEY: 'srk' };
   const prev = globalThis.fetch;
   const calls = [];
   globalThis.fetch = withJwks(async (url, init) => {
-    calls.push({ url: String(url), method: init.method, auth: new Headers(init.headers).get('Authorization') });
+    const h = new Headers(init.headers);
+    calls.push({ url: String(url), method: init.method, secret: h.get('X-Internal-Secret'), body: init.body ? JSON.parse(init.body) : null });
     return new Response(JSON.stringify({ status: 'idle', run_id: null }), { headers: { 'content-type': 'application/json' } });
   });
   try {
@@ -54,14 +55,15 @@ test('Ś2: proxy dokleja klucz po stronie Workera; bez Access 401; stary punkt t
     const res = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs/status`, { headers: { 'Cf-Access-Jwt-Assertion': jwt } }), env);
     assert.equal(res.status, 200);
     assert.deepEqual(await res.json(), { status: 'idle', run_id: null });
-    assert.deepEqual(calls, [{ url: 'https://leads.familiada.online/api/search-runs/status', method: 'GET', auth: 'Bearer klucz-lf' }]);
+    // Przez funkcję Edge lead-finder (usługa tylko w sieci Dockera), klucz w X-Internal-Secret.
+    assert.deepEqual(calls, [{ url: 'https://api.test/functions/v1/lead-finder', method: 'POST', secret: 'klucz-lf', body: { action: 'status' } }]);
 
     const start = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs?target_count=5`, {
       method: 'POST', headers: { 'Cf-Access-Jwt-Assertion': jwt, Origin: ADMIN, 'Content-Type': 'application/json' },
     }), env);
     assert.equal(start.status, 200);
-    assert.equal(calls[1].url, 'https://leads.familiada.online/api/search-runs?target_count=5');
-    assert.equal(calls[1].method, 'POST');
+    assert.deepEqual(calls[1].body, { action: 'start', target_count: 5 });
+    assert.equal(calls[1].secret, 'klucz-lf');
 
     const anon = await handleAdminApi(new Request(`${ADMIN}/_admin_api/leads/search-runs/status`), env);
     assert.equal(anon.status, 401);
@@ -168,7 +170,7 @@ test('N3: nagłówki bezpieczeństwa na stronach HTML naszych hostów', () => {
 });
 
 test('N3: bez zmian dla usług przepuszczanych, nie-HTML; istniejąca CSP uzupełniona', () => {
-  for (const host of ['api.familiada.online', 'panel.familiada.online', 'supabase.familiada.online', 'leads.familiada.online']) {
+  for (const host of ['api.familiada.online', 'panel.familiada.online', 'supabase.familiada.online', 'docker.familiada.online']) {
     assert.equal(withSecurityHeaders(new Request(`https://${host}/`), html()).headers.get('X-Frame-Options'), null, host);
   }
   const js = withSecurityHeaders(new Request('https://www.familiada.online/a.js'), new Response('1', { headers: { 'Content-Type': 'application/javascript' } }));
