@@ -1,12 +1,12 @@
 // admin/js/marketplace.js — Społeczność gier: przegląd, akceptacja, odrzucenie, wycofanie.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T06442";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T06442";
-import { adminFetch, escSetting, showToast } from "./core.js?v=v2026-10-25T06442";
-import { testTelegram } from "./mail-settings.js?v=v2026-10-25T06442";
-import { loadProducerRatings } from "./ratings.js?v=v2026-10-25T06442";
-import { loadMarketPendingBadge } from "./mailbox.js?v=v2026-10-25T06442";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T07004";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T07004";
+import { adminFetch, escSetting, showToast } from "./core.js?v=v2026-10-25T07004";
+import { testTelegram } from "./mail-settings.js?v=v2026-10-25T07004";
+import { loadProducerRatings } from "./ratings.js?v=v2026-10-25T07004";
+import { loadMarketPendingBadge } from "./mailbox.js?v=v2026-10-25T07004";
 
 // ============================================================
 // MARKETPLACE ADMIN
