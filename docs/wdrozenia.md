@@ -254,7 +254,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   ją za ukrytą i nie uruchamiał hamburgera. Teraz pomijany jest tylko brak
   renderowanego prostokąta (display:none), a widoczna sekcja 0 px poprawnie
   przechodzi do menu. Unit po poprawce **814/814 ✓**.
-- Status: ponowienie wyłącznie testu hamburgera, potem publikacja i kontrola.
+- Hamburger **40231973821 ✓ 1/1**, para **40231091388 ✓ 1/1**, okno kawy
+  **40230454872 ✓ 3/3**. Po scaleniu aktualnego main (tylko obrazy, dokumenty
+  i wersje) pełny unit ponownie **814/814 ✓**. Nie powtarzano zielonych speców,
+  których kod się nie zmienił. Status: publikacja Pages i te same 5 testów na produkcji.
 - Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
   `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
   repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.
@@ -2110,3 +2113,6 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Lead Finder — zaznaczenie kategorii uwzględniane przy starcie | Poprawka prywatnego panelu (server 54d4512): zapis zaznaczenia aktualizuje stan sprawdzany przed startem; start czeka na zapis, błąd przywraca poprzedni wybór. Regresja odtworzona przed poprawką. Production 40226710636 success; CI 40226710455/40226709262 success: 69 unit (w tym CSS), 6 testów przeglądarkowych, w tym 4 scenariusze kategorii. Zrzuty 1400/390 obejrzane, origin 404 bez/z błędnym sekretem, 200 z poprawnym, Access 302. | Właściciel odświeża otwarty panel i ponawia start. Wyszukiwania ani wysyłki nie uruchamiano za właściciela; bez zmian usługi LF i bazy. |
+
+
+| 2026-10-25 | Prywatny Marketing — prostsza obsługa i korespondencja kontaktu | Wdrożenie server bb81708, production 40230764119 success. Kategorie/status/sortowanie w listach, wybór kontaktów checkboxami zamiast arkusza, uporządkowane działania i Więcej; Odwiedź dla jednej osoby. Nazwa/Rozmowa otwierają w Poczcie Familiady zapisane wysłane i odebrane maile danej osoby, ze starszą historią i powrotem. Frazy kategorii zwinięte z liczbą, pełna lista przewijana. CI 40230763632/40230762128: 75 unit, 12 przeglądarkowych, CSS bez zwiększania progów; zrzuty 1400/390 obejrzane. Odczyt 40229857187: próbny kontakt ma 1 wysłaną i 1 otrzymaną wiadomość, adres zgodny; bez treści w logach. Po wdrożeniu panel i rozmowy przez Access 302, prywatny origin bez sekretu 404; origin z sekretem 200 i właściwe SHA. | Właściciel odświeża panel. Brak archiwalnej treści starej wysyłki jest jawnie opisany. Bez uruchamiania wyszukiwania lub wysyłki, bez zmian bazy/usługi LF. Kod i szczegóły wyłącznie w prywatnym repo. |
