@@ -40,15 +40,16 @@ def item_for_lead(cid, c):
     return item
 
 
-def item_for_review(cid, row):
-    return {'id': cid, 'name': row.get('title') or '', 'site': row.get('url') or '',
-            'text': (row.get('short_description') or '')[:400],
-            'email_domain': (row.get('email') or '').rpartition('@')[2]}
+def build_prompt(items, category):
+    """Ocena paczki według kategorii (nazwa + opis z rozwinięcia AI)."""
+    base = load_text('ai_prompt.txt')
+    return (base.replace('{category}', category.get('name') or '')
+                .replace('{description}', category.get('description') or '(brak opisu — oceniaj według nazwy kategorii)')
+                .replace('{items}', json.dumps(items, ensure_ascii=False)))
 
 
-def build_prompt(items, mode='lead'):
-    base = load_text('ai_prompt.txt' if mode == 'lead' else 'ai_review_prompt.txt')
-    return base.replace('{items}', json.dumps(items, ensure_ascii=False))
+def build_expand_prompt(name):
+    return load_text('ai_category_prompt.txt').replace('{category}', name)
 
 
 def _clean(v, limit):
@@ -57,10 +58,7 @@ def _clean(v, limit):
 
 def parse_results(content, ids):
     """JSON modelu → {id: {ok, title, short_description, reason}} tylko dla znanych id."""
-    m = re.search(r'\{.*\}', content or '', re.DOTALL)
-    if not m:
-        raise ValueError('brak JSON w odpowiedzi')
-    data = json.loads(m.group())
+    data = _json_object(content)
     rows = data.get('results') if isinstance(data, dict) else None
     if not isinstance(rows, list):
         raise ValueError('brak listy results')
@@ -89,6 +87,38 @@ def parse_results(content, ids):
             'reason': reason,
         }
     return out
+
+
+def _json_object(content):
+    m = re.search(r'\{.*\}', content or '', re.DOTALL)
+    if not m:
+        raise ValueError('brak JSON w odpowiedzi')
+    return json.loads(m.group())
+
+
+PKD_RE = re.compile(r'^\d{2}\.\d{2}\.[A-Z]$')
+
+
+def parse_category(content):
+    """Rozwinięcie kategorii: {description, queries[], pkd[]} sprawdzone w kodzie."""
+    data = _json_object(content)
+    desc = _clean(data.get('description'), 800)
+    queries, seen = [], set()
+    for q in data.get('queries') or []:
+        q = _clean(q, 120)
+        if q and q.lower() not in seen:
+            seen.add(q.lower())
+            queries.append(q)
+    pkd = []
+    for code in data.get('pkd') or []:
+        code = str(code).strip().upper().replace(' ', '')
+        if re.fullmatch(r'\d{4}[A-Z]', code):
+            code = f'{code[:2]}.{code[2:4]}.{code[4]}'
+        if PKD_RE.fullmatch(code) and code not in pkd:
+            pkd.append(code)
+    if not desc or len(queries) < 3:
+        raise ValueError('za mało danych w rozwinięciu kategorii')
+    return {'description': desc, 'queries': queries[:40], 'pkd': pkd[:8]}
 
 
 class Classifier:
@@ -130,10 +160,9 @@ class Classifier:
     async def _cooldown(self, name, seconds, msg):
         await self.db.rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': seconds, 'p_error': msg[:500]})
 
-    async def classify(self, items, mode='lead'):
-        """{id: wynik} albo None, gdy żaden dostawca nie jest dostępny."""
-        prompt = build_prompt(items, mode)
-        ids = [i['id'] for i in items]
+    async def _ask(self, prompt, parse):
+        """Odpowiedź pierwszego dostępnego dostawcy po parse(); None = brak dostawców,
+        {} = wszyscy dostępni zawiedli (ponowić później)."""
         providers = await self.db.rpc('get_available_ai_providers')
         if not providers:
             return None
@@ -144,13 +173,11 @@ class Classifier:
             status, content, err = await self._call(name, prompt)
             if status == 200:
                 try:
-                    res = parse_results(content, ids)
+                    return parse(content)
                 except (ValueError, json.JSONDecodeError) as e:
                     log.error(f'Model {name}: niepoprawna odpowiedź ({e})')
                     await self._cooldown(name, 30, f'zły format: {e}')
                     continue
-                log.info(f'Ocena {name}: {len(res)}/{len(ids)} pozycji')
-                return res
             if any(w in str(err) for w in QUOTA_WORDS):
                 await self._cooldown(name, cfg('PROVIDER_COOLDOWN_QUOTA', 86400), f'limit ({status}): {err}')
             elif status == 429:
@@ -159,3 +186,15 @@ class Classifier:
                 await self._cooldown(name, cfg('PROVIDER_COOLDOWN_LONG', 300), f'błąd {status}: {err}')
             log.info(f'Dostawca {name}: błąd {status}')
         return {}
+
+    async def classify(self, items, category):
+        """{id: wynik} albo None (brak dostawców) / {} (chwilowo niedostępni)."""
+        ids = [i['id'] for i in items]
+        res = await self._ask(build_prompt(items, category), lambda c: parse_results(c, ids))
+        if res:
+            log.info(f'Ocena „{category.get("name")}”: {len(res)}/{len(ids)} pozycji')
+        return res
+
+    async def expand(self, name):
+        """Rozwinięcie kategorii albo None/{} jak wyżej."""
+        return await self._ask(build_expand_prompt(name), parse_category)

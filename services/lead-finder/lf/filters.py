@@ -1,4 +1,5 @@
-"""Odsiew w kodzie: e-maile, domeny, placówki publiczne, słowa wykluczające.
+"""Odsiew w kodzie: e-maile, domeny, portale, słowa wykluczające. Kogo szukać
+(np. czy szkoły), decyduje kategoria z panelu i jej opis — nie kod.
 
 Domeny porównywane dokładnie (domena albo jej poddomena), nigdy jako podciąg —
 w starym systemie `mail.com` wycinało wszystkie adresy `@gmail.com`.
@@ -20,7 +21,6 @@ BLOCKED_DOMAINS = {d.lower() for d in load_lines('blocked_domains.txt')}
 GARBAGE_EMAIL_DOMAINS = {d.lower() for d in load_lines('garbage_email_domains.txt')}
 JUNK_EMAIL_PREFIXES = tuple(p.lower() for p in load_lines('junk_email_prefixes.txt'))
 IGNORED_EXTENSIONS = tuple(e.lower() for e in load_lines('ignored_extensions.txt'))
-PUBLIC_KEYWORDS = [k.lower() for k in load_lines('public_keywords.txt')]
 NEGATIVE_KEYWORDS = [k.lower() for k in load_lines('negative_keywords.txt')]
 PORTAL_DOMAINS = {d.lower() for d in load_lines('portal_domains.txt')}
 
@@ -30,14 +30,6 @@ FREEMAIL_DOMAINS = {
     'op.pl', 'poczta.onet.pl', 'vp.pl', 'tlen.pl', 'gazeta.pl', 'outlook.com', 'hotmail.com', 'live.com',
     'yahoo.com', 'icloud.com', 'me.com', 'proton.me', 'protonmail.com', 'poczta.fm', 'buziaczek.pl', 'autograf.pl',
 }
-
-# Domeny jednostek publicznych (decyzja 2026-10-25: bez szkół, urzędów itd.).
-_PUBLIC_SUFFIXES = ('.gov.pl', '.edu.pl', '.edu', '.gov', '.mil.pl', '.policja.gov.pl')
-_PUBLIC_LABEL_RE = re.compile(
-    r'(^|[.-])(bip|ug|um|uw|gmina|gminy|powiat|starostwo|urzad|szkola|szkoly|sp\d+|zs\d*|zsp\d*|lo\d*|'
-    r'przedszkole|przedszkola|zlobek|mok|gok|mgok|mck|dk|biblioteka|mbp|gbp|muzeum|uczelnia|uniwersytet|'
-    r'politechnika|kuratorium|oswiata|cuw|mops|gops|ops)([.-]|\d|$)')
-
 
 def norm_domain(host):
     host = (host or '').strip().lower().rstrip('.')
@@ -122,43 +114,21 @@ def best_email(emails, site_domain=''):
     return sorted(ok, key=rank)[0] if ok else None
 
 
-def is_public_domain(domain):
-    domain = norm_domain(domain)
-    if not domain:
-        return False
-    if domain.endswith(_PUBLIC_SUFFIXES):
-        return True
-    return bool(_PUBLIC_LABEL_RE.search(domain.rsplit('.', 1)[0]))
-
-
 def has_keyword(text, keywords):
     low = (text or '').lower()
     return next((k for k in keywords if k in low), None)
 
 
-def public_reason(name='', snippet='', domains=()):
-    """Powód odrzucenia jako placówki publicznej albo None."""
-    for d in domains:
-        if is_public_domain(d):
-            return f'placówka publiczna (domena {norm_domain(d)})'
-    kw = has_keyword(f'{name} {snippet}', PUBLIC_KEYWORDS)
-    return f'placówka publiczna ({kw})' if kw else None
-
-
 def rule_reason(url='', name='', snippet='', emails=()):
-    """Odsiew przed AI. Zwraca (rodzaj, powód) albo None, gdy kandydat przechodzi."""
+    """Odsiew przed AI. Zwraca powód albo None, gdy kandydat przechodzi."""
     domain = url_domain(url) if url else ''
     if url and any(url.lower().split('?')[0].endswith(x) for x in IGNORED_EXTENSIONS):
-        return 'rule', 'plik, nie strona'
+        return 'plik, nie strona'
     if domain and domain_in(domain, BLOCKED_DOMAINS):
-        return 'rule', f'domena zablokowana ({domain})'
-    email_domains = [e.rpartition('@')[2] for e in emails]
-    reason = public_reason(name, snippet, [domain] + email_domains)
-    if reason:
-        return 'public', reason
+        return f'domena zablokowana ({domain})'
     kw = has_keyword(f'{name} {snippet}', NEGATIVE_KEYWORDS)
     if kw:
-        return 'rule', f'słowo wykluczające ({kw})'
+        return f'słowo wykluczające ({kw})'
     return None
 
 

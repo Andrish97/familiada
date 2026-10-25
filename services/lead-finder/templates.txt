@@ -1,6 +1,0 @@
-# Szablony zapytań SearXNG: {role}, {region}. Celem są wyniki z adresem
-# e-mail w tytule lub opisie (bez wchodzenia na stronę).
-{role} {region} kontakt e-mail
-{role} {region} "@gmail.com"
-{role} {region} email oferta
-{role} kontakt "@" {region}

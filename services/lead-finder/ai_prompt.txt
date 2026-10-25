@@ -1,36 +1,27 @@
-# Prompt oceny kandydatów (paczka). {items} = lista JSON kandydatów:
-# id, name (tytuł wyniku albo nazwa firmy), site (domena/adres), text (opis
-# wyniku wyszukiwania), pkd (kody PKD z rejestru), email_domains.
-Oceniasz, czy kandydat to potencjalny klient Familiady — systemu do
-prowadzenia gry „Familiada” / teleturnieju na żywo na imprezach (ekran,
-pilot prowadzącego, publiczność gra drużynami).
+# Prompt oceny kandydatów (paczka). {category} = nazwa kategorii z panelu,
+# {description} = opis „kogo szukamy / kogo nie” (rozwinięcie AI, w bazie),
+# {items} = lista JSON: id, name, site, text (opis wyniku), pkd, email_domains.
+Szukamy kontaktów marketingowych dla Familiady — systemu do prowadzenia
+gry „Familiada” / teleturnieju na żywo (ekran, pilot prowadzącego,
+publiczność gra drużynami).
 
-AKCEPTUJ (ok: 1) firmy i osoby, które same PROWADZĄ albo ORGANIZUJĄ
-wydarzenia z udziałem publiczności:
-- A: DJ, wodzirej, konferansjer, animator imprez, prezenter;
-- B: agencja eventowa, team building, organizacja wesel i imprez firmowych,
-  wedding planner;
-- C: lokal albo firma organizująca quizy, teleturnieje, wieczory gier;
-- D: firma szkoleniowa lub trener używający gier dla grup.
+KATEGORIA: {category}
+KOGO SZUKAMY: {description}
 
-ODRZUĆ (ok: 0):
-- placówki publiczne: szkoły, przedszkola, uczelnie, urzędy, gminy, domy
-  i ośrodki kultury, biblioteki, instytucje państwowe i samorządowe;
-- sam wynajem sali, obiektu, sprzętu lub atrakcji bez prowadzącego;
-- portale, katalogi, rankingi, ogłoszenia, media, blogi, artykuły;
-- sklepy, kursy i szkolenia DJ/animatorów, inne branże;
-- firmy spoza Polski;
-- gdy dane są zbyt ogólne, żeby uznać to za firmę z grup A–D.
-
-Oceniaj tylko na podstawie podanych danych, nie zgaduj. W razie wątpliwości
-odrzuć.
+Zasady:
+- AKCEPTUJ (ok: 1) tylko konkretną firmę, osobę lub instytucję z Polski,
+  która pasuje do kategorii.
+- ODRZUĆ (ok: 0): portale, katalogi, rankingi, ogłoszenia, media, blogi,
+  artykuły, sklepy, oferty pracy, firmy spoza Polski i wszystko, co nie pasuje
+  do kategorii; także gdy dane są zbyt ogólne, żeby to ocenić.
+- Oceniaj tylko na podstawie podanych danych, nie zgaduj.
 
 KANDYDACI:
 {items}
 
 Zwróć JSON z wynikiem dla KAŻDEGO id dokładnie raz:
 {"results": [
-  {"id": "c1", "ok": 1, "group": "A", "title": "nazwa firmy",
-   "short_description": "usługi w jednym zdaniu", "reason": "krótko, dlaczego"},
+  {"id": "c1", "ok": 1, "title": "krótka nazwa firmy (do 60 znaków)",
+   "short_description": "czym się zajmuje, jedno zdanie", "reason": "krótko, dlaczego"},
   {"id": "c2", "ok": 0, "reason": "krótka przyczyna (max 10 słów)"}
 ]}

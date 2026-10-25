@@ -1,7 +1,7 @@
 """
-Lead Finder 2 — kontakty z gotowych danych (wyszukiwarka, CEIDG) bez
-odwiedzania stron, ocena AI paczkami. Plan: docs/lead-finder-nowy-plan.md.
-Wynik jak wcześniej: marketing_verified_contacts; te same endpointy panelu.
+Lead Finder 3 — kategorie z panelu, wyszukiwarka i CEIDG równolegle, ocena
+AI paczkami. Plan: docs/lead-finder-nowy-plan.md. Wynik:
+marketing_verified_contacts (z kategorią); endpointy jak dla panelu.
 """
 
 import asyncio
@@ -121,23 +121,14 @@ app.add_middleware(CORSMiddleware, allow_origins=[ADMIN_ORIGIN], allow_methods=[
                    allow_headers=['Authorization', 'Content-Type'])
 
 
-def _start(kind, **kw):
+@app.post('/api/search-runs', dependencies=[Depends(require_api_key)])
+async def start_search(target_count: int = 50):
     if engine.status != 'idle':
         raise HTTPException(400, f'System zajęty ({engine.status})')
     run_id = str(uuid.uuid4())
     engine.status = 'starting'
-    asyncio.create_task(engine.start(run_id, kind, **kw))
+    asyncio.create_task(engine.start(run_id, max(1, min(1000, target_count))))
     return {'ok': True, 'run_id': run_id}
-
-
-@app.post('/api/search-runs', dependencies=[Depends(require_api_key)])
-async def start_search(target_count: int = 50):
-    return _start('search', target=max(1, min(1000, target_count)))
-
-
-@app.post('/api/contacts-review', dependencies=[Depends(require_api_key)])
-async def start_review(all: bool = False):
-    return _start('review', all_rows=all)
 
 
 @app.get('/api/search-runs/status', dependencies=[Depends(require_api_key)])

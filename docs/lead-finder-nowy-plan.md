@@ -76,13 +76,19 @@ Dla każdej aktywnej kategorii:
 5. Eksport starych kontaktów → przegląd przez właściciela → import.
 6. Klucz CEIDG, przebieg kontrolny, liczniki przez `db-read`.
 
-## Stan (co już działa z LF2)
+## Stan (2026-10-25)
 
-Migracja 489 (kandydaci, liczniki `marketing_run_stats`, kolumny wysyłek
-i reakcji), usługa bez Playwright, reakcje w poczcie przychodzącej, pomijanie
-odmów i odbić przy wysyłce. Do usunięcia z LF2: przycisk i endpoint
-„Przejrzyj kontakty”, przegląd AI (`ai_review_prompt.txt`), stałe role
-i województwa (`roles.txt`, `regions.txt`, `templates.txt`).
+- Baza: migracje 490 (kategorie, dopasowanie starych wysyłek: 1305/1309
+  z wysyłką, 6 odpowiedzi) i 491 (import, kategorie z licznikami).
+- Panel: jedna karta Marketing (wdrożone `75dd6ea0`).
+- Usługa: `lf/pipeline.py` — kategorie z bazy, rozwinięcie AI
+  (`ai_category_prompt.txt` -> `marketing_categories.description/queries/pkd`),
+  wyszukiwarka rundami (`SEARCH_PARALLEL`, `SEARCH_PAGES`) i CEIDG w tle,
+  ocena paczkami według kategorii (`ai_prompt.txt`), zapis z `category_id`.
+  Odsiew placówek publicznych usunięty z kodu (decyduje kategoria).
+  Historia zapytań: `search:<kategoria>:<strona>:<fraza>`,
+  `ceidg:<kategoria>:<pkd>:<strona>`.
+- Sieć Dockera: gałęzie WIP, czeka na klucz w `functions.env`.
 
 ## Uwaga prawna
 

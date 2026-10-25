@@ -1,6 +1,6 @@
 """Źródło 2: CEIDG — rejestr jednoosobowych firm (API Hurtowni Danych v3).
 
-Lista firm po kodzie PKD i województwie, potem szczegóły wpisu z e-mailem
+Lista firm po kodzie PKD (z rozwinięcia kategorii), potem szczegóły wpisu z e-mailem
 i stroną www (jeśli przedsiębiorca je podał). Nazwy pól odpowiedzi
 odczytywane ostrożnie (szukanie kluczy w całym wpisie), bo dokumentacja nie
 była dostępna przy pisaniu — sprawdzić na kluczu (plan, etap 4).
@@ -10,21 +10,8 @@ Limit szczegółów ~50 na 3 min: odstęp CEIDG_DETAIL_DELAY.
 import asyncio
 
 from .. import filters
-from ..config import load_lines
 
 BASE_URL = 'https://dane.biznes.gov.pl/api/ceidg/v3'
-PKD_CODES = load_lines('ceidg_pkd.txt')
-REGIONS = load_lines('regions.txt')
-
-
-def query_pool():
-    """Zapytania „ceidg:<pkd>:<województwo>:<strona>”; strony dokładane w miarę wyników."""
-    return [f'ceidg:{pkd}:{region}:1' for pkd in PKD_CODES for region in REGIONS]
-
-
-def parse_query(q):
-    _, pkd, region, page = q.split(':', 3)
-    return pkd, region, int(page)
 
 
 def _find(obj, keys):
@@ -59,7 +46,7 @@ def _pkd_list(obj):
     return list(dict.fromkeys(out))
 
 
-def firm_to_candidate(firm, region=''):
+def firm_to_candidate(firm):
     firm_id = _find(firm, {'id'}) or ''
     name = _find(firm, {'nazwa', 'firma'}) or ''
     email = _find(firm, {'email', 'adresemail', 'e-mail'})
@@ -79,7 +66,6 @@ def firm_to_candidate(firm, region=''):
         'emails': emails,
         'snippet': '',
         'pkd': _pkd_list(firm)[:10],
-        'region': region,
     }
 
 
@@ -101,10 +87,8 @@ class Ceidg:
         r.raise_for_status()
         return r.json()
 
-    async def list_firms(self, pkd, region, page=1, limit=25):
-        data = await self._get('/firmy', {
-            'pkd': pkd.replace('.', ''), 'wojewodztwo': region, 'status': 'AKTYWNY', 'page': page, 'limit': limit,
-        })
+    async def list_firms(self, pkd, page=1, limit=25):
+        data = await self._get('/firmy', {'pkd': pkd.replace('.', ''), 'status': 'AKTYWNY', 'page': page, 'limit': limit})
         firms = data.get('firmy') or data.get('firma') or []
         has_next = bool((data.get('links') or {}).get('next'))
         return firms, has_next

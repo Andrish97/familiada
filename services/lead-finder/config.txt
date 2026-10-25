@@ -10,6 +10,8 @@ PROVIDER_COOLDOWN_LONG=300       # Cooldown po błędach 5xx/timeout (sekundy)
 PROVIDER_COOLDOWN_QUOTA=86400    # Cooldown po limicie dziennym/braku środków (sekundy)
 
 # === Źródła ===
+SEARCH_PARALLEL=4                # Ile fraz wyszukiwarki naraz
+SEARCH_PAGES=2                   # Stron wyników na frazę
 TIMEOUT_SEARCH=25                # Timeout zapytania SearXNG (sekundy)
 CEIDG_DETAIL_DELAY=4             # Odstęp między szczegółami wpisów CEIDG (limit ~50/3 min)
 

@@ -1,13 +1,14 @@
-"""Przebiegi: wyszukiwanie kontaktów (źródła → odsiew → AI paczkami → zapis)
-i przegląd zapisanych kontaktów (reguły + AI, oznaczenie good/junk)."""
+"""Przebieg wyszukiwania (Lead Finder 3, docs/lead-finder-nowy-plan.md):
+kategorie z panelu -> rozwinięcie AI (opis, frazy, PKD; raz, w bazie) ->
+wyszukiwarka i CEIDG równolegle -> odsiew w kodzie -> ocena AI paczkami
+według kategorii -> marketing_verified_contacts z kategorią."""
 
 import asyncio
 import logging
-import random
 from datetime import datetime, timezone
 
 from . import fetch, filters
-from .classify import Classifier, item_for_lead, item_for_review
+from .classify import Classifier, item_for_lead
 from .config import cfg
 from .sources import ceidg as ceidg_src
 from .sources import search as search_src
@@ -31,6 +32,15 @@ class Stopped(Exception):
     pass
 
 
+def search_queries(cat, pages):
+    """Klucze zapytań wyszukiwarki kategorii: search:<kategoria>:<strona>:<fraza>."""
+    return [f'search:{cat["id"]}:{p}:{q}' for p in range(1, pages + 1) for q in cat.get('queries') or []]
+
+
+def ceidg_queries(cat):
+    return [f'ceidg:{cat["id"]}:{pkd}:1' for pkd in cat.get('pkd') or []]
+
+
 class Engine:
     def __init__(self, db, client, searx_url, ceidg=None, mx_check=None, notify=None):
         self.db = db
@@ -40,23 +50,22 @@ class Engine:
         self.mx_check = mx_check
         self.notify = notify
         self.status = 'idle'
-        self.kind = None
         self.run_id = None
         self.target = 0
         self.verified = 0
         self.stats = dict.fromkeys(STAT_KEYS, 0)
         self.known_emails, self.known_domains, self.known_refs = set(), set(), set()
         self.done_queries = set()
+        self.categories = []
         self.fetch_budget = 0
         self.attempts = {}
-        self.extra_ceidg = []
-        self.junk = 0
 
     # --- stan ---
 
     def snapshot(self):
-        return {'status': self.status, 'run_id': self.run_id, 'kind': self.kind, 'verified': self.verified,
-                'target': self.target, 'errors': self.stats['errors'], 'stats': dict(self.stats)}
+        return {'status': self.status, 'run_id': self.run_id, 'verified': self.verified, 'target': self.target,
+                'errors': self.stats['errors'], 'stats': dict(self.stats),
+                'categories': [c['name'] for c in self.categories]}
 
     async def _checkpoint(self):
         while self.status == 'paused':
@@ -65,12 +74,12 @@ class Engine:
             raise Stopped()
 
     async def save_stats(self, finished=False):
-        row = {'run_id': self.run_id, 'kind': self.kind, 'target': self.target, **self.stats}
+        row = {'run_id': self.run_id, 'kind': 'search', 'target': self.target, **self.stats}
         if finished:
             row['finished_at'] = now_iso()
         await self.db.insert('marketing_run_stats', row, upsert_on='run_id')
 
-    # --- wspólne ---
+    # --- przygotowanie ---
 
     async def load_known(self):
         verified = await self.db.select_all('marketing_verified_contacts', 'id,email,url') or []
@@ -87,28 +96,34 @@ class Engine:
         logs = await self.db.select_all('marketing_search_queries_log', 'id,query_text') or []
         self.done_queries = {r['query_text'] for r in logs}
 
-    # --- zbieranie ---
+    async def load_categories(self, classifier):
+        """Aktywne kategorie; nierozwinięte rozwija AI (opis, frazy, PKD) i zapisuje."""
+        rows = await self.db.select('marketing_categories', {
+            'select': 'id,name,description,queries,pkd,expanded_at', 'is_active': 'eq.true', 'order': 'created_at'}) or []
+        ready = []
+        for cat in rows:
+            await self._checkpoint()
+            if not cat.get('expanded_at') or not cat.get('queries'):
+                exp = await classifier.expand(cat['name'])
+                if exp is None:
+                    raise NoQuota()
+                if not exp:
+                    log.error(f'Kategoria „{cat["name"]}”: AI nie przygotowała fraz — pomijam w tym przebiegu.')
+                    continue
+                cat = {**cat, **exp, 'expanded_at': now_iso()}
+                await self.db.update('marketing_categories', {**exp, 'expanded_at': cat['expanded_at']},
+                                     {'id': f'eq.{cat["id"]}'})
+                log.info(f'Kategoria „{cat["name"]}”: {len(exp["queries"])} fraz, PKD: {", ".join(exp["pkd"]) or "brak"}.')
+            ready.append(cat)
+        self.categories = ready
+        return ready
 
-    def _next_query(self):
-        options = []
-        if self.ceidg and self.ceidg.enabled:
-            ceidg_left = [q for q in ceidg_src.query_pool() if q not in self.done_queries]
-            ceidg_left += [q for q in self.extra_ceidg if q not in self.done_queries]
-            if ceidg_left:
-                options.append(ceidg_left[0])
-        search_left = [q for q in (f'search:{q}' for q in search_src.query_pool()) if q not in self.done_queries]
-        if search_left:
-            options.append(random.choice(search_left))
-        return random.choice(options) if options else None
+    # --- odsiew i zapis kandydata ---
 
     async def _mx_ok(self, emails):
         if not self.mx_check:
             return emails
-        out = []
-        for e in emails:
-            if await self.mx_check(e.rpartition('@')[2]):
-                out.append(e)
-        return out
+        return [e for e in emails if await self.mx_check(e.rpartition('@')[2])]
 
     async def admit(self, c):
         """Odsiew kandydata i zapis do marketing_candidates. True, gdy czeka na ocenę."""
@@ -122,13 +137,12 @@ class Engine:
         self.known_refs.add(ref)
         emails = await self._mx_ok(emails)
         c = {**c, 'emails': emails, 'run_id': self.run_id}
-        rule = filters.rule_reason(c.get('url', ''), c.get('name', ''), c.get('snippet', ''), emails)
         if not emails and not c.get('domain'):
             self.stats['dropped_no_email'] += 1
             return False
-        if rule:
-            kind, reason = rule
-            self.stats['dropped_public' if kind == 'public' else 'dropped_rule'] += 1
+        reason = filters.rule_reason(c.get('url', ''), c.get('name', ''), c.get('snippet', ''), emails)
+        if reason:
+            self.stats['dropped_rule'] += 1
             await self.db.insert('marketing_candidates', {**c, 'status': 'rejected', 'reject_reason': reason},
                                  upsert_on='source,source_ref', ignore_duplicates=True)
             return False
@@ -138,89 +152,105 @@ class Engine:
                              upsert_on='source,source_ref', ignore_duplicates=True)
         return True
 
-    async def collect_once(self):
-        """Jedno zapytanie do źródła. Zwraca liczbę nowych kandydatów albo None, gdy pula pusta."""
-        q = self._next_query()
-        if not q:
-            return None
-        added = found = 0
-        try:
-            if q.startswith('ceidg:'):
-                pkd, region, page = ceidg_src.parse_query(q)
-                firms, has_next = await self.ceidg.list_firms(pkd, region, page)
-                if has_next:
-                    self.extra_ceidg.append(f'ceidg:{pkd}:{region}:{page + 1}')
-                for firm in firms:
-                    await self._checkpoint()
-                    detail = await self.ceidg.details(firm)
-                    self.stats['ceidg_records'] += 1
-                    c = ceidg_src.firm_to_candidate(detail, region)
-                    if c:
-                        found += 1
-                        added += await self.admit(c)
-                    else:
-                        self.stats['dropped_no_email'] += 1
-            else:
-                self.stats['search_queries'] += 1
-                results, dead = await search_src.search(self.client, self.searx_url, q[len('search:'):],
-                                                        timeout=cfg('TIMEOUT_SEARCH', 25))
-                self.stats['search_results'] += len(results)
-                self.stats['search_engine_errors'] += dead
-                if not results:
-                    log.info(f'Brak wyników ({dead} silników bez odpowiedzi): {q}')
-                for res in results:
-                    c = search_src.result_to_candidate(res)
-                    if c:
-                        found += 1
-                        added += await self.admit(c)
-                    else:
-                        self.stats['dropped_no_email'] += 1
-        except Stopped:
-            raise
-        except Exception as e:
-            self.stats['errors'] += 1
-            log.error(f'Źródło {q.split(":")[0]}: {str(e)[:200]}')
+    async def _log_query(self, q, found, added):
         self.done_queries.add(q)
         await self.db.insert('marketing_search_queries_log',
                              {'query_text': q, 'urls_found': found, 'urls_added': added, 'status': 'completed'},
                              upsert_on='query_text')
-        log.info(f'Zapytanie {q}: {found} kandydatów, {added} do oceny')
+
+    # --- źródła ---
+
+    async def run_search_query(self, q):
+        _, cat_id, page, phrase = q.split(':', 3)
+        found = added = 0
+        self.stats['search_queries'] += 1
+        try:
+            results, dead = await search_src.search(self.client, self.searx_url, phrase, int(page),
+                                                    timeout=cfg('TIMEOUT_SEARCH', 25))
+        except Exception as e:  # SearXNG niedostępny, zły JSON
+            self.stats['errors'] += 1
+            log.error(f'Wyszukiwarka: {str(e)[:200]}')
+            return 0
+        self.stats['search_results'] += len(results)
+        self.stats['search_engine_errors'] += dead
+        for res in results:
+            c = search_src.result_to_candidate(res)
+            if c:
+                found += 1
+                added += await self.admit({**c, 'category_id': cat_id})
+            else:
+                self.stats['dropped_no_email'] += 1
+        await self._log_query(q, found, added)
+        if not results:
+            log.info(f'Brak wyników ({dead} silników bez odpowiedzi): „{phrase}”')
         return added
+
+    async def ceidg_producer(self):
+        """CEIDG w tle (limit zapytań: odstęp między szczegółami wpisów)."""
+        if not self.ceidg or not self.ceidg.enabled:
+            return
+        queue = [q for cat in self.categories for q in ceidg_queries(cat) if q not in self.done_queries]
+        while queue and self.status in ('running', 'paused') and self.verified < self.target:
+            q = queue.pop(0)
+            _, cat_id, pkd, page = q.split(':', 3)
+            found = added = 0
+            try:
+                firms, has_next = await self.ceidg.list_firms(pkd, int(page))
+                for firm in firms:
+                    await self._checkpoint()
+                    detail = await self.ceidg.details(firm)
+                    self.stats['ceidg_records'] += 1
+                    c = ceidg_src.firm_to_candidate(detail)
+                    if c:
+                        found += 1
+                        added += await self.admit({**c, 'category_id': cat_id})
+                    else:
+                        self.stats['dropped_no_email'] += 1
+                if has_next:
+                    queue.append(f'ceidg:{cat_id}:{pkd}:{int(page) + 1}')
+            except Stopped:
+                return
+            except Exception as e:
+                self.stats['errors'] += 1
+                log.error(f'CEIDG: {str(e)[:200]}')
+                await asyncio.sleep(30)
+                continue
+            await self._log_query(q, found, added)
+            log.info(f'CEIDG {pkd} s. {page}: {found} firm z kontaktem, {added} do oceny')
 
     # --- ocena ---
 
     async def accept(self, c, res, email):
-        title = res.get('title') or c.get('name') or ''
-        group = res.get('group') or ''
-        row = {'email': email, 'url': c.get('url') or '', 'title': title[:200],
-               'short_description': res.get('short_description') or None,
-               'verify_reason': (f'[{group}] ' if group else '') + res['reason'],
-               'source': c['source'], 'quality': 'good', 'quality_reason': res['reason'], 'reviewed_at': now_iso()}
+        row = {'email': email, 'url': c.get('url') or '', 'title': (res.get('title') or c.get('name') or '')[:200],
+               'short_description': res.get('short_description') or None, 'verify_reason': res['reason'],
+               'source': c['source'], 'category_id': c.get('category_id'),
+               'quality': 'good', 'quality_reason': res['reason'], 'reviewed_at': now_iso()}
         if await self.db.insert('marketing_verified_contacts', row):
             self.known_emails.add(email)
             self.verified += 1
             self.stats['ai_accepted'] += 1
-            log.info(f'Zweryfikowano {c.get("url")}: {res["reason"]}')
+            log.info(f'Dodano: {row["title"] or c.get("url")} — {res["reason"]}')
             return True
         self.stats['errors'] += 1
         return False
 
-    async def classify_once(self, classifier):
-        size = cfg('AI_BATCH_SIZE', 25)
+    async def classify_once(self, classifier, cat):
+        """Jedna paczka kandydatów kategorii. Liczba ocenionych, -1 = AI chwilowo niedostępne."""
         rows = await self.db.select('marketing_candidates', {
-            'select': '*', 'status': 'eq.new', 'order': 'created_at', 'limit': size}) or []
+            'select': '*', 'status': 'eq.new', 'category_id': f'eq.{cat["id"]}', 'order': 'created_at',
+            'limit': cfg('AI_BATCH_SIZE', 25)}) or []
         if not rows:
             return 0
         ids = [r['id'] for r in rows]
         await self.db.update('marketing_candidates', {'status': 'classifying'}, {'id': f'in.({",".join(ids)})'})
         items = {f'c{i + 1}': r for i, r in enumerate(rows)}
         self.stats['sent_to_ai'] += len(rows)
-        results = await classifier.classify([item_for_lead(cid, r) for cid, r in items.items()])
+        results = await classifier.classify([item_for_lead(cid, r) for cid, r in items.items()], cat)
         if not results:
             await self.db.update('marketing_candidates', {'status': 'new'}, {'id': f'in.({",".join(ids)})'})
             if results is None:
                 raise NoQuota()
-            return -1  # wszyscy dostępni dostawcy zawiedli — ponowić za chwilę
+            return -1
         for cid, c in items.items():
             if self.verified >= self.target:
                 await self.db.update('marketing_candidates', {'status': 'new'}, {'id': f'eq.{c["id"]}'})
@@ -229,14 +259,14 @@ class Engine:
             if not res:
                 n = self.attempts.get(c['id'], 0) + 1
                 self.attempts[c['id']] = n
-                status = {'status': 'rejected', 'reject_reason': 'brak oceny AI'} if n >= 3 else {'status': 'new'}
-                await self.db.update('marketing_candidates', status, {'id': f'eq.{c["id"]}'})
+                await self.db.update('marketing_candidates',
+                                     {'status': 'rejected', 'reject_reason': 'brak oceny AI'} if n >= 3 else {'status': 'new'},
+                                     {'id': f'eq.{c["id"]}'})
                 continue
             if not res['ok']:
                 self.stats['ai_rejected'] += 1
                 await self.db.update('marketing_candidates', {'status': 'rejected', 'reject_reason': res['reason']},
                                      {'id': f'eq.{c["id"]}'})
-                log.info(f'Odrzucono {c.get("url")}: {res["reason"]}')
                 continue
             emails = c.get('emails') or []
             if not emails and c.get('domain') and self.fetch_budget > 0:
@@ -246,123 +276,86 @@ class Engine:
                 emails = await self._mx_ok([e for e in emails if e not in self.known_emails])
             email = filters.best_email(emails, c.get('domain') or '')
             if not email:
-                await self.db.update('marketing_candidates', {'status': 'rejected', 'reject_reason': 'dobry, ale bez e-maila'},
+                await self.db.update('marketing_candidates', {'status': 'rejected', 'reject_reason': 'pasuje, ale bez e-maila'},
                                      {'id': f'eq.{c["id"]}'})
                 continue
             ok = await self.accept(c, res, email)
             await self.db.update('marketing_candidates', {'status': 'accepted' if ok else 'new'}, {'id': f'eq.{c["id"]}'})
         return len(rows)
 
-    # --- przebiegi ---
-
-    async def _pending(self):
+    async def _pending(self, cat):
         rows = await self.db.select('marketing_candidates', {
-            'select': 'id', 'status': 'eq.new', 'limit': cfg('AI_BATCH_SIZE', 25)})
+            'select': 'id', 'status': 'eq.new', 'category_id': f'eq.{cat["id"]}', 'limit': cfg('AI_BATCH_SIZE', 25)})
         return len(rows or [])
+
+    # --- przebieg ---
 
     async def run_search(self, target):
         classifier = Classifier(self.db, self.client, self.stats)
         batch = cfg('AI_BATCH_SIZE', 25)
-        self.extra_ceidg = []
+        parallel = cfg('SEARCH_PARALLEL', 4)
         self.fetch_budget = cfg('FETCH_BUDGET_PER_RUN', 20)
         await self.db.update('marketing_candidates', {'status': 'new'}, {'status': 'eq.classifying'})
         await self.load_known()
-        sources_left, idle_rounds = True, 0
-        while self.verified < target:
-            await self._checkpoint()
-            pending = await self._pending()
-            if pending < batch and sources_left:
-                added = await self.collect_once()
-                if added is None:
-                    sources_left = False
-                    log.info('Wszystkie zapytania wykonane — oceniam to, co zostało.')
-                idle_rounds = idle_rounds + 1 if not added else 0
-                # Zbierać dalej do pełnej paczki; po 3 pustych zapytaniach ocenić, co jest.
-                if sources_left and pending + (added or 0) < batch and (idle_rounds < 3 or not pending):
-                    await self.save_stats()
-                    continue
-                pending = await self._pending()
-            if not pending:
-                if not sources_left:
-                    log.info('Brak kandydatów i zapytań — koniec przebiegu.')
-                    break
-                continue
-            idle_rounds = 0
-            if await self.classify_once(classifier) == -1:
-                log.info('Dostawcy AI chwilowo niedostępni — ponowię za 30 s.')
-                await asyncio.sleep(30)
-            await self.save_stats()
+        cats = await self.load_categories(classifier)
+        if not cats:
+            log.error('Brak aktywnych kategorii z frazami — dodaj kategorię w panelu.')
+            return
+        log.info(f'Kategorie: {", ".join(c["name"] for c in cats)}. CEIDG: {"tak" if self.ceidg and self.ceidg.enabled else "brak klucza"}.')
+        queues = {c['id']: [q for q in search_queries(c, cfg('SEARCH_PAGES', 2)) if q not in self.done_queries] for c in cats}
+        ceidg_task = asyncio.create_task(self.ceidg_producer())
+        try:
+            turn = 0
+            while self.verified < target:
+                await self._checkpoint()
+                # Runda wyszukiwarki: po kilka fraz naraz, kategorie po kolei.
+                picked = []
+                for i in range(len(cats)):
+                    if len(picked) >= parallel:
+                        break
+                    cat = cats[(turn + i) % len(cats)]
+                    q = queues[cat['id']]
+                    picked += [q.pop(0) for _ in range(min(len(q), max(1, parallel // len(cats))))]
+                turn += 1
+                if picked:
+                    await asyncio.gather(*(self.run_search_query(q) for q in picked))
+                sources_left = any(queues.values()) or not ceidg_task.done()
+                # Ocena: pełne paczki, a gdy źródła się skończyły — także niepełne.
+                judged = False
+                for cat in cats:
+                    while self.verified < target:
+                        await self._checkpoint()
+                        n = await self._pending(cat)
+                        if not n or (n < batch and sources_left):
+                            break
+                        done = await self.classify_once(classifier, cat)
+                        judged = True
+                        if done == -1:
+                            log.info('Dostawcy AI chwilowo niedostępni — ponowię za 30 s.')
+                            await asyncio.sleep(30)
+                            break
+                await self.save_stats()
+                if not picked and not judged:
+                    if not sources_left:
+                        log.info('Wszystkie frazy i wpisy CEIDG sprawdzone — koniec przebiegu.')
+                        break
+                    await asyncio.sleep(5)  # czekamy na CEIDG
+        finally:
+            ceidg_task.cancel()
 
-    async def run_review(self, all_rows=False):
-        classifier = Classifier(self.db, self.client, self.stats)
-        extra = {} if all_rows else {'reviewed_at': 'is.null'}
-        rows = await self.db.select_all('marketing_verified_contacts',
-                                        'id,email,url,title,short_description,reaction', extra=extra) or []
-        self.target = len(rows)
-        log.info(f'Przegląd kontaktów: {len(rows)} do sprawdzenia.')
-        size = cfg('AI_BATCH_SIZE', 25)
-        for i in range(0, len(rows), size):
-            await self._checkpoint()
-            batch, to_ai = rows[i:i + size], {}
-            for row in batch:
-                self.stats['candidates'] += 1
-                email = (row.get('email') or '').strip().lower()
-                verdict = None
-                if row.get('reaction') == 'replied':
-                    verdict = ('good', 'odpowiedział na wiadomość')
-                elif not filters.email_ok(email):
-                    verdict = ('junk', 'adres e-mail niepoprawny albo portalu')
-                else:
-                    rule = filters.rule_reason(row.get('url') or '', row.get('title') or '',
-                                               row.get('short_description') or '', [email])
-                    if rule:
-                        verdict = ('junk', rule[1])
-                        self.stats['dropped_public' if rule[0] == 'public' else 'dropped_rule'] += 1
-                if verdict:
-                    await self._mark(row, *verdict)
-                else:
-                    to_ai[f'c{len(to_ai) + 1}'] = row
-            if to_ai:
-                self.stats['sent_to_ai'] += len(to_ai)
-                results = await classifier.classify([item_for_review(k, r) for k, r in to_ai.items()], 'review')
-                if results is None:
-                    raise NoQuota()
-                if not results:
-                    log.info('Dostawcy AI chwilowo niedostępni — paczka zostaje bez oceny.')
-                for k, row in to_ai.items():
-                    res = results.get(k)
-                    if res:
-                        self.stats['ai_accepted' if res['ok'] else 'ai_rejected'] += 1
-                        await self._mark(row, 'good' if res['ok'] else 'junk', res['reason'])
-            await self.save_stats()
-
-    async def _mark(self, row, quality, reason):
-        await self.db.update('marketing_verified_contacts',
-                             {'quality': quality, 'quality_reason': reason[:300], 'reviewed_at': now_iso()},
-                             {'id': f'eq.{row["id"]}'})
-        if quality == 'good':
-            self.verified += 1
-        else:
-            self.junk += 1
-
-    async def start(self, run_id, kind, target=0, all_rows=False):
-        self.run_id, self.kind, self.target, self.verified = run_id, kind, target, 0
+    async def start(self, run_id, target):
+        self.run_id, self.target, self.verified = run_id, target, 0
         self.stats = dict.fromkeys(STAT_KEYS, 0)
         self.attempts = {}
-        self.junk = 0
+        self.categories = []
         self.status = 'running'
         await self.db.delete('marketing_search_logs', {'level': 'not.is.null'})
-        log.info(f'Zlecono {target} kontaktów.' if kind == 'search' else 'Zlecono przegląd zapisanych kontaktów.')
+        log.info(f'Zlecono {target} kontaktów.')
         await self.save_stats()
         try:
-            if kind == 'search':
-                await self.run_search(target)
-            else:
-                await self.run_review(all_rows)
+            await self.run_search(target)
             self.status = 'completed'
-            msg = (f'Zlecenie zakończone. Sukces: {self.verified}/{target}.' if kind == 'search'
-                   else f'Przegląd zakończony: dobre {self.verified}, śmieci {self.junk}, '
-                        f'bez oceny {self.target - self.verified - self.junk}.')
+            msg = f'Zlecenie zakończone. Nowe kontakty: {self.verified}/{target}.'
             log.info(msg)
             if self.notify:
                 await self.notify(f'✅ <b>Lead Finder</b>\n{msg}')

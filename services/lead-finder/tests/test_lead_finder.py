@@ -33,15 +33,6 @@ class FiltersTest(unittest.TestCase):
         self.assertFalse(filters.domain_in('djolx.pl', {'olx.pl'}))
         self.assertFalse(filters.domain_in('gmail.com', {'mail.com'}))
 
-    def test_public(self):
-        for d in ('sp12.krakow.pl', 'bip.gmina.pl', 'zs-wola.edu.pl', 'mok-radom.pl', 'um.warszawa.pl', 'szkola-nr1.pl'):
-            self.assertTrue(filters.is_public_domain(d), d)
-        for d in ('djmarek.pl', 'wodzirej-lublin.pl', 'spokoj-events.pl', 'lodz-dj.pl', 'dkmusic.dk'):
-            self.assertFalse(filters.is_public_domain(d), d)
-        self.assertEqual(filters.rule_reason('https://x.pl', 'Szkoła Podstawowa nr 5', '', ['a@x.pl'])[0], 'public')
-        self.assertEqual(filters.rule_reason('https://x.pl', 'DJ', '', ['sekretariat@sp5.edu.pl'])[0], 'public')
-        self.assertIsNone(filters.rule_reason('https://djmax.pl', 'DJ Max — wesela', 'Wodzirej i DJ', ['a@djmax.pl']))
-
     def test_best_email(self):
         self.assertEqual(filters.best_email(['x@gmail.com', 'biuro@djmax.pl', 'a@inna.pl'], 'djmax.pl'), 'biuro@djmax.pl')
         self.assertEqual(filters.best_email(['x@gmail.com', 'a@inna.pl'], 'djmax.pl'), 'a@inna.pl')
@@ -49,12 +40,6 @@ class FiltersTest(unittest.TestCase):
 
 
 class SourcesTest(unittest.TestCase):
-    def test_query_pool(self):
-        pool = search.query_pool()
-        self.assertGreater(len(pool), 500)
-        self.assertEqual(len(pool), len(set(pool)))
-        self.assertFalse(any('{' in q for q in pool))
-
     def test_result_to_candidate(self):
         c = search.result_to_candidate({'url': 'https://www.djmax.pl/oferta', 'title': 'DJ Max',
                                         'content': 'Wesela, kontakt: biuro@djmax.pl'})
@@ -66,10 +51,9 @@ class SourcesTest(unittest.TestCase):
     def test_ceidg_candidate(self):
         firm = {'id': 'abc', 'nazwa': 'DJ Max Jan Nowak', 'adresDzialalnosci': {'miasto': 'Lublin'},
                 'email': 'Biuro@DJMax.pl', 'www': 'djmax.pl', 'pkd': [{'kod': '93.29.Z'}]}
-        c = ceidg.firm_to_candidate(firm, 'lubelskie')
+        c = ceidg.firm_to_candidate(firm)
         self.assertEqual((c['source_ref'], c['emails'], c['domain'], c['pkd']), ('abc', ['biuro@djmax.pl'], 'djmax.pl', ['93.29.Z']))
         self.assertIsNone(ceidg.firm_to_candidate({'id': 'x', 'nazwa': 'Bez kontaktu'}))
-        self.assertEqual(len(ceidg.query_pool()), len(ceidg.PKD_CODES) * 16)
 
 
 class ParseTest(unittest.TestCase):
@@ -88,16 +72,29 @@ class ParseTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             classify.parse_results('brak', ['c1'])
 
-    def test_prompts_have_items(self):
-        for mode in ('lead', 'review'):
-            p = classify.build_prompt([{'id': 'c1', 'name': 'Łódź DJ'}], mode)
-            self.assertIn('"Łódź DJ"', p)
-            self.assertNotIn('{items}', p)
+    def test_prompts(self):
+        p = classify.build_prompt([{'id': 'c1', 'name': 'Łódź DJ'}], {'name': 'Szkoły', 'description': 'Szkoły podstawowe'})
+        self.assertIn('"Łódź DJ"', p)
+        self.assertIn('KATEGORIA: Szkoły', p)
+        self.assertIn('Szkoły podstawowe', p)
+        self.assertNotIn('{', p.split('KANDYDACI:')[0].replace('{"results"', ''))
+        e = classify.build_expand_prompt('Wodzireje')
+        self.assertIn('KATEGORIA: Wodzireje', e)
+        self.assertNotIn('{category}', e)
+
+    def test_parse_category(self):
+        res = classify.parse_category(json.dumps({
+            'description': ' DJ-e  weselni ', 'queries': ['DJ wesele kontakt', 'dj wesele kontakt', 'DJ @gmail.com', 'oprawa muzyczna', ''],
+            'pkd': ['9329Z', '90.01.Z', 'zły', '93.29.Z']}))
+        self.assertEqual(res, {'description': 'DJ-e weselni', 'queries': ['DJ wesele kontakt', 'DJ @gmail.com', 'oprawa muzyczna'],
+                               'pkd': ['93.29.Z', '90.01.Z']})
+        with self.assertRaises(ValueError):
+            classify.parse_category('{"description": "x", "queries": ["a"]}')
 
 
 class FakeDb:
     def __init__(self):
-        self.tables = {'marketing_verified_contacts': [], 'marketing_candidates': [],
+        self.tables = {'marketing_verified_contacts': [], 'marketing_candidates': [], 'marketing_categories': [],
                        'marketing_search_queries_log': [], 'marketing_run_stats': [], 'marketing_search_logs': []}
         self.n = 0
 
@@ -107,6 +104,7 @@ class FakeDb:
                 continue
             op, _, val = v.partition('.')
             cur = row.get(k)
+            cur = str(cur).lower() if isinstance(cur, bool) else cur
             if op == 'eq' and str(cur) != val:
                 return False
             if op == 'in' and str(cur) not in val.strip('()').split(','):
@@ -150,19 +148,27 @@ class FakeDb:
 
 
 class FakeClassifier:
-    """Akceptuje kandydatów z „DJ” w nazwie."""
+    """Akceptuje kandydatów z „DJ” w nazwie; rozwija kategorię w stałe frazy."""
 
     def __init__(self, *a, **kw):
         self.calls = 0
+        self.categories = []
 
-    async def classify(self, items, mode='lead'):
+    async def classify(self, items, category):
         self.calls += 1
-        return {i['id']: {'ok': 'DJ' in i['name'], 'group': 'A', 'title': i['name'], 'short_description': 'opis',
+        self.categories.append(category['name'])
+        return {i['id']: {'ok': 'DJ' in i['name'], 'group': '', 'title': i['name'], 'short_description': 'opis',
                           'reason': 'test'} for i in items}
+
+    async def expand(self, name):
+        return {'description': f'opis {name}', 'queries': [f'{name} kontakt', f'{name} @gmail.com', f'{name} oferta'], 'pkd': ['93.29.Z']}
 
 
 def run(coro):
     return asyncio.run(coro)
+
+
+CAT = {'id': 'k1', 'name': 'DJ', 'description': 'DJ-e', 'queries': ['dj'], 'pkd': []}
 
 
 class PipelineTest(unittest.TestCase):
@@ -171,70 +177,88 @@ class PipelineTest(unittest.TestCase):
         self.engine = pipeline.Engine(self.db, None, 'http://searx')
         self.engine.run_id, self.engine.status, self.engine.target = 'r1', 'running', 10
 
-    def test_admit_and_classify(self):
+    def cand(self, ref, name, domain, emails, source='search', cat='k1'):
+        return {'source': source, 'source_ref': ref, 'name': name, 'url': f'https://{domain}', 'domain': domain,
+                'emails': emails, 'snippet': '', 'category_id': cat}
+
+    def test_admit_and_classify_with_category(self):
         db, e = self.db, self.engine
         db.tables['marketing_verified_contacts'].append({'id': 'v1', 'email': 'old@djstary.pl', 'url': 'https://djstary.pl'})
         run(e.load_known())
         cands = [
-            {'source': 'search', 'source_ref': 'https://djmax.pl', 'name': 'DJ Max', 'url': 'https://djmax.pl',
-             'domain': 'djmax.pl', 'emails': ['biuro@djmax.pl'], 'snippet': 'wesela'},
-            {'source': 'search', 'source_ref': 'https://djmax.pl', 'name': 'DJ Max', 'url': 'https://djmax.pl',
-             'domain': 'djmax.pl', 'emails': ['biuro@djmax.pl'], 'snippet': ''},
-            {'source': 'search', 'source_ref': 'https://djstary.pl/x', 'name': 'DJ', 'url': 'https://djstary.pl/x',
-             'domain': 'djstary.pl', 'emails': ['nowy@djstary.pl'], 'snippet': ''},
-            {'source': 'search', 'source_ref': 'https://sp5.pl', 'name': 'Szkoła Podstawowa nr 5', 'url': 'https://sp5.pl',
-             'domain': 'sp5.pl', 'emails': ['sekretariat@sp5.pl'], 'snippet': ''},
-            {'source': 'ceidg', 'source_ref': 'f1', 'name': 'Sala Weselna', 'url': 'https://sala.pl',
-             'domain': 'sala.pl', 'emails': ['sala@gmail.com'], 'snippet': ''},
+            self.cand('https://djmax.pl', 'DJ Max', 'djmax.pl', ['biuro@djmax.pl']),
+            self.cand('https://djmax.pl', 'DJ Max', 'djmax.pl', ['biuro@djmax.pl']),
+            self.cand('https://djstary.pl/x', 'DJ', 'djstary.pl', ['nowy@djstary.pl']),
+            self.cand('https://apteka.pl', 'Apteka Zdrowie', 'apteka.pl', ['a@apteka.pl']),
+            self.cand('f1', 'Sala Weselna', 'sala.pl', ['sala@gmail.com'], source='ceidg'),
+            # Szkoła przechodzi odsiew w kodzie — o szkołach decyduje kategoria.
+            self.cand('https://sp5.edu.pl', 'Szkoła Podstawowa nr 5', 'sp5.edu.pl', ['sekretariat@sp5.edu.pl'], cat='k2'),
         ]
-        admitted = [run(e.admit(c)) for c in cands]
-        self.assertEqual(admitted, [True, False, False, False, True])
-        self.assertEqual((e.stats['dropped_duplicate'], e.stats['dropped_public']), (2, 1))
-        done = run(e.classify_once(FakeClassifier()))
-        self.assertEqual(done, 2)
+        self.assertEqual([run(e.admit(c)) for c in cands], [True, False, False, False, True, True])
+        self.assertEqual((e.stats['dropped_duplicate'], e.stats['dropped_rule']), (2, 1))
+        fc = FakeClassifier()
+        self.assertEqual(run(e.classify_once(fc, CAT)), 2)
+        self.assertEqual(fc.categories, ['DJ'])
         verified = db.tables['marketing_verified_contacts']
         self.assertEqual([v['email'] for v in verified], ['old@djstary.pl', 'biuro@djmax.pl'])
-        self.assertEqual((verified[1]['quality'], verified[1]['source'], verified[1]['verify_reason']), ('good', 'search', '[A] test'))
+        self.assertEqual((verified[1]['category_id'], verified[1]['source'], verified[1]['title']), ('k1', 'search', 'DJ Max'))
         statuses = {c['source_ref']: c['status'] for c in db.tables['marketing_candidates']}
-        self.assertEqual(statuses, {'https://djmax.pl': 'accepted', 'https://sp5.pl': 'rejected', 'f1': 'rejected'})
+        self.assertEqual(statuses['https://djmax.pl'], 'accepted')
+        self.assertEqual(statuses['f1'], 'rejected')
+        self.assertEqual(statuses['https://sp5.edu.pl'], 'new')  # inna kategoria — inna paczka
 
     def test_no_quota_and_provider_failure(self):
         e = self.engine
-        run(e.admit({'source': 'search', 'source_ref': 'u', 'name': 'DJ', 'url': 'https://dj.pl', 'domain': 'dj.pl',
-                     'emails': ['a@dj.pl'], 'snippet': ''}))
+        run(e.admit(self.cand('u', 'DJ', 'dj.pl', ['a@dj.pl'])))
 
         class Down:
             def __init__(self, result):
                 self.result = result
 
-            async def classify(self, items, mode='lead'):
+            async def classify(self, items, category):
                 return self.result
-        self.assertEqual(run(e.classify_once(Down({}))), -1)
+        self.assertEqual(run(e.classify_once(Down({}), CAT)), -1)
         self.assertEqual(self.db.tables['marketing_candidates'][0]['status'], 'new')
         with self.assertRaises(pipeline.NoQuota):
-            run(e.classify_once(Down(None)))
+            run(e.classify_once(Down(None), CAT))
         self.assertEqual(self.db.tables['marketing_candidates'][0]['status'], 'new')
 
-    def test_review_marks_without_deleting(self):
+    def test_categories_expanded_once_and_saved(self):
         db, e = self.db, self.engine
-        db.tables['marketing_verified_contacts'] = [
-            {'id': 'a', 'email': 'biuro@djmax.pl', 'url': 'https://djmax.pl', 'title': 'DJ Max', 'reviewed_at': None},
-            {'id': 'b', 'email': 'sekretariat@sp5.edu.pl', 'url': 'https://sp5.edu.pl', 'title': 'SP5', 'reviewed_at': None},
-            {'id': 'c', 'email': 'x@hotel.pl', 'url': 'https://hotel.pl', 'title': 'Hotel', 'reviewed_at': None},
-            {'id': 'd', 'email': 'y@hotel2.pl', 'url': 'https://hotel2.pl', 'title': 'Hotel', 'reaction': 'replied',
-             'reviewed_at': None},
-            {'id': 'e', 'email': 'z@done.pl', 'url': 'https://done.pl', 'title': 'Hotel', 'reviewed_at': 'x'},
+        db.tables['marketing_categories'] = [
+            {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': None, 'queries': [], 'pkd': [], 'expanded_at': None, 'created_at': 1},
+            {'id': 'k2', 'name': 'Szkoły', 'is_active': False, 'queries': [], 'pkd': [], 'expanded_at': None, 'created_at': 2},
+            {'id': 'k3', 'name': 'Agencje', 'is_active': True, 'description': 'gotowe', 'queries': ['a', 'b', 'c'], 'pkd': [], 'expanded_at': 'x', 'created_at': 3},
         ]
-        orig = pipeline.Classifier
-        pipeline.Classifier = FakeClassifier
+        cats = run(e.load_categories(FakeClassifier()))
+        self.assertEqual([c['name'] for c in cats], ['DJ', 'Agencje'])
+        saved = db.tables['marketing_categories'][0]
+        self.assertEqual((saved['description'], saved['pkd'], len(saved['queries'])), ('opis DJ', ['93.29.Z'], 3))
+        self.assertTrue(saved['expanded_at'])
+        self.assertEqual(pipeline.search_queries(cats[1], 2)[:2], ['search:k3:1:a', 'search:k3:1:b'])
+        self.assertEqual(pipeline.ceidg_queries(cats[0]), ['ceidg:k1:93.29.Z:1'])
+
+    def test_run_search_end_to_end(self):
+        db, e = self.db, self.engine
+        db.tables['marketing_categories'] = [
+            {'id': 'k1', 'name': 'DJ', 'is_active': True, 'description': 'x', 'queries': ['dj wesele'], 'pkd': [], 'expanded_at': 'x', 'created_at': 1}]
+
+        async def fake_search(client, base, phrase, pageno=1, timeout=25):
+            if pageno > 1:
+                return [], 0
+            return [{'url': 'https://djmax.pl', 'title': 'DJ Max', 'content': 'kontakt biuro@djmax.pl'},
+                    {'url': 'https://www.facebook.com/x', 'title': 'Profil', 'content': ''}], 1
+        orig_search, orig_cls = search.search, pipeline.Classifier
+        search.search, pipeline.Classifier = fake_search, FakeClassifier
         try:
-            run(e.run_review())
+            run(e.run_search(5))
         finally:
-            pipeline.Classifier = orig
-        q = {r['id']: r.get('quality') for r in db.tables['marketing_verified_contacts']}
-        self.assertEqual(q, {'a': 'good', 'b': 'junk', 'c': 'junk', 'd': 'good', 'e': None})
-        self.assertEqual(len(db.tables['marketing_verified_contacts']), 5)
-        self.assertEqual((e.verified, e.junk), (2, 2))
+            search.search, pipeline.Classifier = orig_search, orig_cls
+        self.assertEqual([v['email'] for v in db.tables['marketing_verified_contacts']], ['biuro@djmax.pl'])
+        self.assertEqual(e.stats['search_queries'], 2)
+        self.assertEqual(e.stats['search_engine_errors'], 1)
+        self.assertEqual({r['query_text'] for r in db.tables['marketing_search_queries_log']},
+                         {'search:k1:1:dj wesele', 'search:k1:2:dj wesele'})
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 # Słowa wykluczające — kandydat odrzucany bez AI, gdy nazwa lub opis je
-# zawiera (małe litery). Tylko jednoznaczne branże spoza eventów.
+# zawiera (małe litery). Tylko śmieci niezależne od kategorii (urzędy
+# techniczne, medycyna, nieruchomości, motoryzacja, oferty pracy); resztę
+# odrzuca AI według opisu kategorii.
 wodociągi
 kanalizacja
 oczyszczalnia
@@ -33,8 +35,3 @@ notariusz
 oferta pracy
 praca dla
 zatrudnimy
-kurs dj
-szkoła dj
-kurs animatora
-sklep dla animatorów
-hurtownia balonów
