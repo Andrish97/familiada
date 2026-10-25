@@ -62,11 +62,14 @@ async function callEdgeAction(action, body = {}) {
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     cache: 'no-store',
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, uniqueness_protocol: 2 }),
   });
   let data = null;
   try { data = await res.json(); } catch { data = null; }
   if (!res.ok || (data?.ok === false && !data.retry)) throw new Error(uniquenessErrorMessage(data?.error || data?.err || `HTTP ${res.status}`));
+  if (["check-uniqueness", "check-candidate"].includes(action) &&
+      (!data?.ok || !data.review_key || !Array.isArray(data.matches) || typeof data.semantic?.complete !== 'boolean'))
+    throw new Error("Trwa aktualizacja sprawdzania gier. Odśwież panel za chwilę.");
   return data;
 }
 

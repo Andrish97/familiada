@@ -266,6 +266,9 @@ serve(async (req: Request) => {
   try {
     const body = await req.json();
     const { action } = body;
+    // Starszy panel nie może dostać nowego formatu jako listy procentowych DUP.
+    if (["check-uniqueness", "check-candidate", "publish-producer-game"].includes(action) && body.uniqueness_protocol !== 2)
+      return new Response(JSON.stringify({ ok: false, error: "Odśwież panel przed sprawdzaniem lub publikacją gry." }), { status: 409, headers: { ...CORS, "Content-Type": "application/json" } });
 
     // ── Lista gier producenta ──────────────────────────────────────────────────
     if (action === "list-producer-games") {

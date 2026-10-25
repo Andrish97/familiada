@@ -171,7 +171,7 @@ BEGIN
 END
 $$;
 REVOKE ALL ON FUNCTION public.market_uniqueness_report(uuid,jsonb,text,jsonb,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.market_uniqueness_report(uuid,jsonb,text,jsonb,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.market_uniqueness_report(uuid,jsonb,text,jsonb,text) TO service_role,agent_reader;
 
 
 CREATE OR REPLACE FUNCTION public.market_embedding_jobs(p_model text,p_limit integer DEFAULT 5,p_id uuid DEFAULT NULL)

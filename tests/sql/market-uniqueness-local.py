@@ -36,7 +36,7 @@ CREATE FUNCTION public.unique_market_slug(text,uuid) RETURNS text LANGUAGE sql A
  for name,old in [('market_games_build_questions_text',None),('market_games_compute_fingerprint',None),('market_games_set_questions_fields',None),('market_submit_game','_market_submit_game_before_content_guard'),('market_admin_review','_market_admin_review_before_content_guard')]:fixture+=original(name,old)+'\n'
  fixture+='CREATE TRIGGER trg_market_games_questions_fields BEFORE INSERT OR UPDATE OF payload ON public.market_games FOR EACH ROW EXECUTE FUNCTION public.market_games_set_questions_fields();'
  sql(fixture)
- for filename in ['supabase/migrations/2026-10-25_486_market_uniqueness_model.sql','tests/sql/market-uniqueness-486.sql','supabase/migrations/2026-10-25_487_market_exact_copy_guard.sql','tests/sql/market-uniqueness-487.sql']:
+ for filename in ['supabase/migrations/2026-10-25_487_market_uniqueness_model.sql','tests/sql/market-uniqueness-487.sql','supabase/migrations/2026-10-25_488_market_exact_copy_guard.sql','tests/sql/market-uniqueness-488.sql']:
   sql((root/filename).read_text());print('PASS '+filename,flush=True)
  # Two different sources/authors compete for exactly the same content key.
  actor='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';ids=['77777777-7777-4777-8777-777777777777','88888888-8888-4888-8888-888888888888']

@@ -68,8 +68,8 @@ services/market-semantic`. W środowisku proxy z własnym CA dodać
 zostaje w obrazie. Zachować właściwy bundle CA, nie wyłączać TLS.
 
 Kolejność: testy lokalne → prywatna konfiguracja, zasoby i start usługi →
-model dodający 486 → testy kodu brancha → wspólna publikacja kodu i blokady
-487 → uzupełnienie wszystkich pytań przez panel/cron → kontrola produkcji.
+model dodający 487 → testy kodu brancha → wspólna publikacja kodu i blokady
+488 → uzupełnienie wszystkich pytań przez panel/cron → kontrola produkcji.
 Wycofanie obrazu usługi nie wyłącza dokładnej blokady i tekstowego porównania;
 stan znaczenia jest jawnie niepełny/niedostępny. Nie usuwać indeksu ochrony
 jako obejścia błędu modelu.

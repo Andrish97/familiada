@@ -49,11 +49,11 @@ Zasady przyjęte do implementacji:
 
 
 2026-10-25 — wykonanie na branchu (produkcja bez zmian):
-- 486: kanoniczny SHA-256 pytania/odpowiedzi, projekcja per pytanie,
+- 487: kanoniczny SHA-256 pytania/odpowiedzi, projekcja per pytanie,
   raport dokładny/tekstowy/znaczeniowy, jawne pokrycie i klucz wersji
   zatwierdzenia. Wektory zależą od pytania z odpowiedziami; zmiana punktów
   nie wymaga ponownego liczenia, zmiana pytania/odpowiedzi tak. Zapis CAS.
-- 487: unikalny indeks aktywnej treści obejmuje też wyścig, zmianę języka,
+- 488: unikalny indeks aktywnej treści obejmuje też wyścig, zmianę języka,
   autora i ID; wrappery zachowują kontrakt RPC, zwracają duplicate_content.
   Zapis bezpośrednio z konta użytkownika zamknięty — zgłoszenia przez RPC.
 - Edge i panel: raporty par pytań/odpowiedzi, świeży skan i weryfikacja
@@ -72,7 +72,7 @@ Zasady przyjęte do implementacji:
 - Prawdziwy opublikowany katalog, lokalny SQL + rzeczywiste wektory:
   90/90 pełnych raportów, 14 gier ma po 1 kandydacie do porównania;
   brak identycznych kopii. Bez oznaczania tych wskazań jako dowodu kopii.
-- Lokalne testy SQL 486/487 i dwie równoczesne transakcje ✓. JS unit 14/14
+- Lokalne testy SQL 487/488 i dwie równoczesne transakcje ✓. JS unit 14/14
   nowych/powiązanych, szersza bramka 47/47 przed ostatnimi poprawkami.
   Browser panelu: telefon/komputer, raport → anuluj → ponownie potwierdź,
   poprawny klucz zatwierdzenia, 2/2. Zrzuty 18 PL/EN/UK, panel i błąd kopii.
@@ -86,7 +86,7 @@ Blokada wdrożenia infrastruktury: repo Andrish97/familiada-server zwraca
 zawiera tego repo. Konto deploy ma ograniczone sudo do istniejących
 instalatorów, więc potrzebny jest dostęp do repo konfiguracji. Wysłano
 pytanie asynchroniczne o udostępnienie/nazwę; dalsze testy lokalne trwają.
-Nie wdrożono 486/487, kodu Edge ani frontu. Workflow market-model-preflight
+Nie wdrożono 487/488, kodu Edge ani frontu. Workflow market-model-preflight
 służy wyłącznie odczytowi numerycznych zasobów serwera, bez zmian.
 
 
@@ -109,7 +109,7 @@ ponownie sprawdzone — nadal 404. Zabezpieczono również zmianę wersji korpus
 między podglądem a kliknięciem i dialog na telefonie (potwierdzenie dopiero
 po schowaniu arkusza; Anuluj odtwarza raport).
 Bramka CI kodu brancha dotyczy zgodności publicznego katalogu i zgłoszenia
-z obecną bazą. Nowy test `unikalność treści` wymaga 487 i ma zostać wykonany
+z obecną bazą. Nowy test `unikalność treści` wymaga 488 i ma zostać wykonany
 po migracji razem z kontrolą produkcji; lokalny odpowiednik z wyścigiem
 już przeszedł. Pozostałe testy raportów moderatora mają kontrolowany backend,
 bez logowania prawdziwego człowieka przez Cloudflare Access.
@@ -120,7 +120,7 @@ Bramka zgodności kodu brancha z działającym backendem:
 — sukces 2/2 (anonimowy katalog, wyszukiwanie/filtry/języki/historia;
 zgłoszenie i prywatny podgląd po odświeżeniu) oraz wybrane unity.
 To potwierdza zgodność dotychczasowego publicznego przepływu. Nie jest to
-kontrola wdrożenia nowego guarda ani usługi na VPS — te wymagają 486/487
+kontrola wdrożenia nowego guarda ani usługi na VPS — te wymagają 487/488
 oraz dostępu do konfiguracji serwera.
 
 Stan do kontynuacji: branch `codex/market-uniqueness`, implementacja
@@ -129,6 +129,22 @@ przetestowane i wypchnięte. Produkcja pozostaje na poprzedniej wersji.
 Dostęp do `Andrish97/familiada-server` ponownie sprawdzony po wszystkich
 testach — 404. Następny krok po udostępnieniu: odczytać instrukcje prywatnego
 repo, zmierzyć dostępne zasoby, dodać prywatną usługę/sekret/URL w Edge,
-wykonać testy instalatora, potem procedura 486 → bramka kodu → kod i 487 →
+wykonać testy instalatora, potem procedura 487 → bramka kodu → kod i 488 →
 uzupełnienie wektorów → test nowego guarda oraz kontrola produkcji.
 Bez dodatkowego potwierdzania zgody na samą przebudowę.
+
+
+Decyzja wykonawcza: blokada serwerowego repo dotyczy instalacji modelu,
+nie niezależnej ochrony dokładnych kopii. Kontynuujemy wdrożenie SQL,
+raportów tekstowych i UI z jawnym stanem niedostępnego modelu. Procedura:
+dodające 487 → CI brancha po tej migracji → kod razem z zachowaniem 488 →
+kontrola produkcji, a po dostępie do serwera osobne uruchomienie i walidacja
+modelu. To daje działającą ochronę bez czekania na nową infrastrukturę.
+Stary panel/nowy backend i odwrotnie mają jawne odrzucenie niezgodnego
+protokołu (`uniqueness_protocol: 2`), bez udawania pełnych wyników.
+Agent_reader otrzymuje wyłącznie odczyt raportu (STABLE), aby zweryfikować
+realną produkcję przez numeryczne db-read; inni użytkownicy nadal bez dostępu.
+
+Przed publikacją: numer 486 zajął niezależny etap Wyświetlacza na main.
+Niewdrożone pliki tego etapu przenumerowano na 487 (model danych) i 488
+(blokada treści); wcześniejsze wpisy dziennika używają numeracji roboczej.

@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { uniquenessSummary, uniquenessReportHtml, exactCopy } from '../../web/admin/js/uniqueness.js';
 const require = createRequire(import.meta.url);
-const { transformSync } = require('esbuild');
+const { transformSync, buildSync } = require('esbuild');
 const source = fs.readFileSync(new URL('../../supabase/functions/generate-game/uniqueness.ts', import.meta.url), 'utf8');
 const code = transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2022' }).code;
 const unit = () => { const v=Array(384).fill(0);v[0]=1;return v; };
@@ -64,4 +64,29 @@ test('panel rozróżnia niepełny wynik i dokładną kopię oraz ucieka treści 
  assert.match(uniquenessSummary(partial),/niepełne/);assert.match(uniquenessReportHtml(partial),/niedostępne/);
  const copy={...partial,question_count:10,matches:[{title:'<img src=x>',lang:'pl',exact_content:true,matched_questions:10,question_pairs:[{source_pos:1,candidate_pos:2,source_text:'<script>bad()</script>',candidate_text:'& q',method:'semantic'}]}]};
  assert.equal(exactCopy(copy),true);const html=uniquenessReportHtml(copy);assert.ok(!html.includes('<script>'));assert.ok(html.includes('&lt;img'));assert.ok(html.includes('zbliżone znaczenie'));
+});
+
+test('wdrożenie etapami: stary panel dostaje żądanie odświeżenia, nowy otrzymuje raport', async () => {
+ const entry = new URL('../../supabase/functions/generate-game/index.ts', import.meta.url);
+ const input = fs.readFileSync(entry, 'utf8')
+  .replace(/import \{ serve \} from "https:[^\n]+/, 'const serve = globalThis.fixtureServe;')
+  .replace(/import \{ createClient \} from "https:[^\n]+/, 'const createClient = globalThis.fixtureClient;');
+ const bundled = buildSync({stdin:{contents:input,loader:'ts',resolveDir:new URL('.',entry).pathname},bundle:true,write:false,platform:'node',format:'cjs'}).outputFiles[0].text;
+ let handler, calls = 0;
+ const report = {ok:true,review_key:'current',matches:[],semantic:{complete:true}};
+ const context = {Response,Request,TextEncoder,AbortSignal,Error,Date,setTimeout,clearTimeout,
+  Deno:{env:{get:key=>key==='GENERATE_GAME_SECRET'?'fixture-token':undefined}},
+  fixtureServe:fn=>{handler=fn;},
+  fixtureClient:()=>({rpc:async name=>{calls++;return {data:name==='market_embedding_jobs'?[]:report,error:null};}})};
+ vm.createContext(context);vm.runInContext(bundled,context);
+ const request = body => new Request('https://edge.test',{method:'POST',headers:{'X-Internal-Secret':'fixture-token','Content-Type':'application/json'},body:JSON.stringify(body)});
+ for(const action of ['check-uniqueness','check-candidate','publish-producer-game']) {
+  const response=await handler(request({action}));assert.equal(response.status,409);
+  assert.match((await response.json()).error,/Odśwież/);
+ }
+ assert.equal(calls,0);
+ const response=await handler(request({action:'check-uniqueness',id:'g',uniqueness_protocol:2}));
+ assert.equal(response.status,200);assert.deepEqual(await response.json(),report);assert.equal(calls,2);
+ const denied=await handler(new Request('https://edge.test',{method:'POST',body:'{}'}));
+ assert.equal(denied.status,401);assert.equal(calls,2);
 });
