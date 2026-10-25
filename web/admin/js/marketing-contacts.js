@@ -2,11 +2,11 @@
 // tabela kontaktów z widokami kategorii, adresy do wysyłki.
 // Plan: docs/lead-finder-nowy-plan.md (Lead Finder 3). Wysyłka: marketing.js.
 
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T17584";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T17584";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T17584";
-import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T17584";
-import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T17584";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T18143";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T18143";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T18143";
+import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T18143";
+import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T18143";
 
 const MC_PAGE_SIZE = 50;
 const MC_SENT_FILTERS = [
