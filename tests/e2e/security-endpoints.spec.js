@@ -38,24 +38,21 @@ test("E24: generate-game bez nagłówka sekretu = 401, funkcja lead-finder usuni
   expect(lead.status()).toBeGreaterThanOrEqual(400);
 });
 
-// Lead Finder tylko w sieci Dockera (sterowanie przez funkcję Edge
-// lead-finder z nagłówkiem X-Internal-Secret). leads.* nie prowadzi do usługi:
-// brak rekordu DNS (błąd sieci) albo strona 404 z Workera. Funkcja Edge bez
-// sekretu odmawia (401 z bramki/funkcji).
-test("Lead Finder: brak adresu publicznego, funkcja Edge bez sekretu odmawia", async ({ request }) => {
-  const diag = (name, res) => console.log(`[e2e-diag] security ${name} -> ${res ? res.status() : "brak połączenia"}`);
-  for (const [name, url] of [["leads health", `${LEADS}/health`], ["leads status", `${LEADS}/api/search-runs/status`]]) {
-    const res = await request.get(url, { maxRedirects: 0 }).catch(() => null);
-    diag(name, res);
-    if (res) expect(res.status()).toBe(404);
-  }
-  const edge = await request.post(`${API}/functions/v1/lead-finder`, { data: { action: "status" } });
-  diag("edge no secret", edge);
-  const forged = await request.post(`${API}/functions/v1/lead-finder`, {
-    data: { action: "status" }, headers: { "X-Internal-Secret": "e2e-forged-key" },
-  });
-  diag("edge forged", forged);
-  for (const res of [edge, forged]) expect([401, 403]).toContain(res.status());
+// leads.* przez Caddy: bez poprawnego klucza (Authorization: Bearer) Caddy
+// odpowiada 404 i nie przekazuje żądania do usługi (która sama też wymaga
+// klucza: 401). Przy rotacji LEAD_FINDER_API_KEY trzeba zmienić też Caddyfile.
+test("E24: lead-finder bez klucza lub z fałszywym kluczem nie odpowiada (404 z Caddy)", async ({ request }) => {
+  const diag = (name, res) => console.log(`[e2e-diag] security ${name} -> ${res.status()}`);
+  const health = await request.get(`${LEADS}/health`);
+  diag("leads health", health);
+  const status = await request.get(`${LEADS}/api/search-runs/status`);
+  diag("leads status", status);
+  const forged = await request.get(`${LEADS}/api/search-runs/status`, { headers: { Authorization: "Bearer e2e-forged-key" } });
+  diag("leads status forged", forged);
+  const start = await request.post(`${LEADS}/api/search-runs?target_count=1`);
+  diag("leads start", start);
+
+  for (const res of [health, status, forged, start]) expect([401, 404]).toContain(res.status());
 });
 
 // ── Paczka P1 (Ś2, Ś7, N3, N4) ───────────────────────────────────────────

@@ -1,7 +1,7 @@
 // src/lib/core/security-headers.js -- nagłówki bezpieczeństwa dla stron HTML
 // (audyt E24, N3). Dotyczy hostów serwowanych przez Worker z Pages (www,
 // apex, settings, nieznane subdomeny ze stroną prac/404); usługi przepuszczane
-// bez zmian (panel/supabase/api/docker) zostają bez nowych nagłówków.
+// bez zmian (panel/supabase/api/leads) zostają bez nowych nagłówków.
 //
 // Pełna CSP w trybie Report-Only (naruszenia w konsoli przeglądarki).
 // Egzekwowane są ograniczenia osadzania, obiektów, bazowego URL i formularzy
@@ -12,6 +12,7 @@ const PASSTHROUGH_HOSTS = new Set([
   "panel.familiada.online",
   "supabase.familiada.online",
   "api.familiada.online",
+  "leads.familiada.online",
   "docker.familiada.online",
 ]);
 
