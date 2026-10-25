@@ -257,7 +257,9 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
   });
 }
 
-export const SITEMAP_CACHE_KEY = new Request("https://www.familiada.online/sitemap.xml");
+// Nowy format zawiera publiczne rozdziały. Nie odziedzicz starej mapy z Cache API
+// po deployu Workera; publiczny adres /sitemap.xml pozostaje bez zmian.
+export const SITEMAP_CACHE_KEY = new Request("https://www.familiada.online/sitemap.xml?format=public-documents-v1");
 
 export async function serveDynamicSitemap(env, ctx) {
   const edgeCache = caches.default;

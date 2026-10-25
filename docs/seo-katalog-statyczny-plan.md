@@ -1,6 +1,6 @@
 # Statyczny katalog, gry i publiczne Wskazówki — propozycja
 
-Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów zatwierdzona do wdrożenia 2026-10-25. Stan kodu sprawdzony
+Status: katalog nadal jest propozycją; zalecany prostszy wariant opisuje §11. Paczka publicznych dokumentów opublikowana 2026-10-25 (9dbb9f1ab); kontrola końcowa trwa. Stan kodu sprawdzony
 na `origin/main` po E23 (4f05908f8). Wcześniejsze poprawki strony głównej
 i HTTPS: [seo-bezpieczenstwo-plan.md](seo-bezpieczenstwo-plan.md).
 
@@ -404,3 +404,14 @@ awarię całego VPS to osobny powód powrotu do R2 i §5, nie warunek poprawy SE
 69/69, workerd 10/10, branch E2E
 [40168072561](https://github.com/Andrish97/familiada/actions/runs/40168072561)
 5/5. Zgoda na publikację dotyczy §10; §11 pozostaje planem dla gier.
+
+
+Publikacja §10 2026-10-25: Pages
+[40168515253](https://github.com/Andrish97/familiada/actions/runs/40168515253)
+i Worker
+[40168514623](https://github.com/Andrish97/familiada/actions/runs/40168514623)
+— sukces. Odczyt produkcji: 22 przypadki (PL/EN/UK, oba UA, canonicale,
+404/HEAD i noindex dokumentów technicznych, sitemap z 63 adresami Wskazówek)
+— sukces. Przy wdrożeniu zmieniony także wewnętrzny klucz Cache API mapy,
+żeby starszy spis nie przetrwał na innych POP przez godzinę. Regresja starego
+cache i cały zestaw Workera 10/10. Publiczny URL sitemap nie zmienia się.

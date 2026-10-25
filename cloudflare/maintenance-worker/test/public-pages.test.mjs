@@ -63,6 +63,11 @@ test('every guide chapter and index has full localized HTML, canonical, reciproc
 });
 
 test('sitemap lists public localized documents using exactly their canonical URLs; HEAD agrees', async () => {
+  // Cache API przeżywa wdrożenie: poprzedni Worker mógł zostawić mapę bez Wskazówek.
+  const cache = (await mf.getCaches()).default;
+  await cache.put('https://www.familiada.online/sitemap.xml', new Response('<urlset>old-sitemap</urlset>', {
+    headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' },
+  }));
   const response = await mf.dispatchFetch('https://www.familiada.online/sitemap.xml');
   assert.equal(response.status, 200);
   const xml = await response.text();
