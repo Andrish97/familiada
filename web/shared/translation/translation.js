@@ -1,5 +1,5 @@
-import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-25T22030";
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-25T22030";
+import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-25T22052";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-25T22052";
 
 // Słownik jest podzielony na części: <lang>/<część>.js (docs/tlumaczenia-podzial-plan.md).
 // Strona wczytuje część wspólną i części z <meta name="i18n-parts" content="…">,
@@ -11,7 +11,7 @@ const LANG_META = {
   uk: { lang: "uk", label: "Українська", icon: "flag-ua" },
 };
 const ASSET_VERSION = new URL(import.meta.url).search;
-import { placeDropdown } from "../js/core/popover.js?v=v2026-10-25T22030";
+import { placeDropdown } from "../js/core/popover.js?v=v2026-10-25T22052";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
