@@ -38,6 +38,7 @@ export async function createThemeManager(baseSvg, bgLayer) {
     const key = name.toLowerCase();
     const factory = THEMES[key];
     if (!factory) throw new Error(`THEME: nieznany motyw "${name}". Dostępne: ${getAvailableLabels().map(m => m.label).join(", ")}`);
+    activeTheme?.destroy?.();
     activeTheme = factory(baseSvg, bgLayer, config);
     activeName = key;
     return activeTheme;

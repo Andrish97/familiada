@@ -5,6 +5,17 @@ jakim jest stanie. **Decyzje i szczegóły nie są tutaj**, tylko w plikach
 tematycznych (niżej „Źródła”), a ten plik do nich odsyła. Dzięki temu po
 utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
+## Motywy wyświetlacza — 2026-10-25
+
+Na branchu: trzy nowe motywy oraz przerwy obiegające paski Modern.
+Pierwszą animację z falowaniem odrzucono po doprecyzowaniu użytkownika.
+Wzorzec ruchu: nagranie finału TVP z nowego studia 2025; podgląd animowany
+przygotowany lokalnie. Test Chromium przełączania sześciu paneli i ograniczonego
+ruchu: 1/1; testy jednostkowe wyświetlacza: 17/17.
+Zrzuty: Modern, Neon, Studio, Złoty (1400 px), ustawienia (390/1400 px).
+Decyzje i zakres: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
+Branch: `codex/display-themes-modern-motion`.
+
 ## Zasady
 
 Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —

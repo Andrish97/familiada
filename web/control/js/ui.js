@@ -411,6 +411,9 @@ export function createUI({ root, emit }) {
     const key = String(theme || "").toLowerCase();
     if (key === "classic") return t("control.themeClassic");
     if (key === "modern") return t("control.themeModern");
+    if (key === "neon") return t("control.themeNeon");
+    if (key === "studio") return t("control.themeStudio");
+    if (key === "gold") return t("control.themeGold");
     return theme || t("control.summaryDefault");
   }
 

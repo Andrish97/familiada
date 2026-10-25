@@ -37,7 +37,9 @@ zostaną przyjęte.
 
 - **Kolory** — kolor drużyny A, kolor drużyny B, tło i kolor kropki (świecących punktów
   Wyświetlacza). Kliknij kolor, aby wpisać kod koloru albo ustawić go suwakami.
-- **Motyw** — „Klasyczny” (domyślnie) albo „Nowoczesny”.
+- **Motyw** — „Klasyczny” (domyślnie), „Nowoczesny”, „Neon”, „Studio” albo „Złoty”.
+  Nowoczesny i nowe motywy mają paski z przerwami przesuwającymi się dookoła w tle.
+  Systemowe ustawienie ograniczenia ruchu wyłącza te animacje.
 - **Logo** — „Domyślne” albo jedno z Twoich logo (→ 8).
 - **Logo prowadzącego** — jak logo wygląda na ekranie prowadzącego:
   - „Piksele” — tak samo jak na Wyświetlaczu, z kropek,
@@ -47,6 +49,7 @@ zostaną przyjęte.
 
   Wyświetlacz zawsze pokazuje logo z kropek, bo jest ekranem kropkowym.
 
+![Wybór motywu wyświetlacza](zrzut:settings-theme-neon)
 ![Wygląd](zrzut:appearance)
 ![Okno koloru](zrzut:game-settings-color)
 ![Logo prowadzącego — „Piksele”](zrzut:game-settings-display-pixel)

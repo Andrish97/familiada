@@ -278,6 +278,27 @@ test("ustawienia gry: drużyny — zapis nazw persystuje po przeładowaniu stron
   }
 });
 
+test("ustawienia gry: nowe motywy zapisują się i pozostają wybrane po przeładowaniu", async ({ page, context, accounts, loginAs }) => {
+  test.setTimeout(120_000);
+  await loginAs(page, context, accounts.standard[0]);
+  const gameId = await createGame(page);
+  try {
+    await openSettings(page, gameId);
+    for (const [key, label] of [["neon", "Neon"], ["studio", "Studio"], ["gold", "Złoty"]]) {
+      await switchTab(page, "display");
+      await page.locator("#gsThemeSelect .ui-select-btn").click();
+      await page.locator(`#gsThemeSelect [role="option"][data-value="${key}"]`).click();
+      await expect(page.locator("#gsThemeSelect .ui-select-label")).toHaveText(label);
+      await saveAndWait(page);
+      expect((await getGameRow(page, gameId)).settings.display.theme).toBe(key);
+      await page.reload();
+      await expect(page.locator("#gsContentInner")).toBeVisible();
+      await switchTab(page, "display");
+      await expect(page.locator("#gsThemeSelect .ui-select-label")).toHaveText(label);
+    }
+  } finally { await deleteGame(page, gameId); }
+});
+
 test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do settings", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);
