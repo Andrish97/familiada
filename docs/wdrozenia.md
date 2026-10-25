@@ -257,7 +257,11 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Hamburger **40231973821 ✓ 1/1**, para **40231091388 ✓ 1/1**, okno kawy
   **40230454872 ✓ 3/3**. Po scaleniu aktualnego main (tylko obrazy, dokumenty
   i wersje) pełny unit ponownie **814/814 ✓**. Nie powtarzano zielonych speców,
-  których kod się nie zmienił. Status: publikacja Pages i te same 5 testów na produkcji.
+  których kod się nie zmienił. Pages **40232581204 ✓** (`82605a98d8`),
+  kontrola rzeczywistej produkcji **40232849277 ✓ 5/5**.
+- Ostatnie doprecyzowanie: Escape obsłużony przez menu oznacza preventDefault,
+  by nie zamykać dodatkowo okna pod nim. Unit **814/814 ✓**, branch
+  **40232960922 ✓ 1/1**. Status: publikacja tego doprecyzowania i punktowa kontrola menu.
 - Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
   `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
   repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.

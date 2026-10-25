@@ -25,7 +25,7 @@ nazwy składane ze stanu nie są liczone. Poniżej miejsca i warunki wdrożenia.
 | Następne | Strzałki list rozwijanych | Obrót grotu przy otwarciu/zamknięciu | `list-search.js`, `ui-select.js`, aria-expanded; 14 dosłownych użyć caret-down/7 plików |
 | Następne | Zapis ustawień i logo | Krótka sygnalizacja pracy, po sukcesie narysowanie check | `game-settings.js` saving, `logos/js/editor-page.js` saving/status; dopiero po wyniku serwera, nie po samym kliknięciu |
 | Następne | Kopiowanie / Powiel | Rozsunięcie kartek, potem potwierdzenie | `resource-duplicate.js` aria-busy i rozstrzygnięcie Promise; nie odtwarzać sukcesu przy błędzie |
-| Następne | Pokaż/ukryj hasło | Powieka / przekreślenie zmienia stan | `password-toggle.js`; stan pola type i etykieta dostępności, bez dekoracyjnej pętli |
+| Następne | Pokaż/ukryj hasło | Powieka / przekreślenie zmienia stan | `login/js/login.js` (initPasswordToggles); stan pola type i etykieta dostępności, bez dekoracyjnej pętli |
 | Opcjonalne | Dźwięk i wyciszenie | Fale znikają/pojawiają się | Panel Control i ustawienia; faktyczny stan mute, bez powiązania z czasem audio |
 | Opcjonalne | Foldery drzewa baz | Obrót strzałki i otwarcie konturu | `bases/explorer/js/ui/tree.js`; aria-expanded / stan drzewa, nie na każdy rerender listy |
 | Opcjonalne | Wysyłanie / import / eksport | Ruch strzałki podczas rzeczywistej pracy | aria-busy/Promise; 10 użyć upload/6 plików i 5 download/3 pliki; bez fikcyjnego procentu |
