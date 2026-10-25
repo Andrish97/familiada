@@ -1221,6 +1221,22 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
+
+    // Kontrolowana, krótka utrata sieci jednego urządzenia w aktywnej rundzie:
+    // fallback ma utrzymać stan, a po powrocie kanał ma się odtworzyć i zalogować
+    // kod zamknięcia WebSocket (żeby odróżnić błąd socketu od błędu kanału).
+    await displayPage.context().setOffline(true);
+    await displayPage.waitForTimeout(3500);
+    await displayPage.context().setOffline(false);
+    await expect.poll(async () => {
+      const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+      return events.some(event => event.source === "display" && event.category === "device_transport"
+        && event.metrics?.phase === "socket_closed")
+        && events.some(event => event.source === "display" && event.category === "device_transport"
+          && event.metrics?.phase === "recovered" && Number.isInteger(event.metrics?.socket_close_code));
+    }, { timeout: 30000, message: "Display powinien odzyskać kanał i zapisać kod zamknięcia WebSocket" }).toBe(true);
+    await expect(questionDuringDuel).toHaveText(visibleQuestion);
+
     const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
     expect(duelGridRows).toBe(6);
     const duelTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);

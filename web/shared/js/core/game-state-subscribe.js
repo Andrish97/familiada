@@ -291,6 +291,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         const details = realtimeSocketCloseDetails(event);
         lastSocketClose = { at: performance.now(), details };
         if (directIncident) Object.assign(directIncident.socketClose, details);
+        sendDiagnostic("transport_state", "socket_closed", "postgres_changes", {
+          status: directStatus, ...details,
+        });
       });
       // debug helper (jak globalThis.__sbClient w supabase.js)
       globalThis.__sbDeviceRealtime = directClient;
