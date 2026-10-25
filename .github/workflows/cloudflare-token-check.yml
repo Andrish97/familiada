@@ -45,4 +45,35 @@ jobs:
             const codes = (listing.errors || []).map(item => item.code).filter(item => typeof item === 'number');
             console.log(`Lista tokenów: HTTP ${list.status}, kody błędów=${JSON.stringify(codes)}`);
           }
+          if (list.ok && listing.success) {
+            const accountsRes = await fetch('https://api.cloudflare.com/client/v4/accounts?per_page=50', options);
+            const accountsData = await accountsRes.json().catch(() => ({}));
+            if (!accountsRes.ok || !accountsData.success) {
+              console.log(`Konta do sprawdzenia historii: HTTP ${accountsRes.status}`);
+            } else {
+              const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+              const before = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+              const names = new Set(['familiada-worker-deploy', 'Edit Cloudflare Workers']);
+              for (const item of listing.result.filter(item => names.has(item.name))) {
+                console.log(`Sprawdzany token: ${JSON.stringify(item.name)}, status=${item.status}, końcówka ID=${item.id.slice(-8)}`);
+                for (const account of accountsData.result || []) {
+                  const query = new URLSearchParams({ actor_token_id: item.id, since, before, limit: '1', direction: 'desc' });
+                  const audit = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account.id}/logs/audit?${query}`, options);
+                  const result = await audit.json().catch(() => ({}));
+                  if (!audit.ok || !result.success) {
+                    console.log(`Historia ${JSON.stringify(item.name)}: HTTP ${audit.status}`);
+                    continue;
+                  }
+                  const event = result.result?.[0];
+                  if (!event) {
+                    console.log(`Historia ${JSON.stringify(item.name)}: brak zdarzeń w zakresie ${since}–${before}`);
+                  } else if (event.actor?.token_id === item.id) {
+                    console.log(`Historia ${JSON.stringify(item.name)}: ostatnie zdarzenie=${event.action?.time}, produkt=${JSON.stringify(event.resource?.product)}, operacja=${JSON.stringify(event.action?.type)}`);
+                  } else {
+                    console.log(`Historia ${JSON.stringify(item.name)}: odpowiedź nie potwierdza filtra tokenu`);
+                  }
+                }
+              }
+            }
+          }
           JS
