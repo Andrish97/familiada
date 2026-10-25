@@ -10,7 +10,7 @@ services:
     mem_limit: 1024m
     cpus: 1
     read_only: true
-    tmpfs: [/tmp:size=32m,mode=1777]
+    tmpfs: ['/tmp:size=32m,mode=1777']
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 128

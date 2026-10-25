@@ -186,3 +186,21 @@ Etap 487 zastosowany: Apply DB 40192829492 ✓, schema/log zsynchronizowane
 900 pytań, 90 prawidłowych raportów, 0 wektorów, 0 pełnych raportów
 znaczenia, 0 grup kopii. Stan zgodny z oczekiwaniem przed 488.
 Bramka kodu po migracji: 40193089231 (kod 2edf00f7a).
+
+2026-10-25 — użytkownik udostępnił familiada-server, CLI i integracja
+potwierdzają dostęp. Wznowienie wdrożenia modelu: osobny projekt compose
+w prywatnej sieci, 1 CPU/1 GiB, osobny generowany na serwerze sekret;
+check przed apply zgodnie z CLAUDE.md infrastruktury, potem indeksacja
+i numeryczna kontrola pełnego pokrycia oraz punktowy E2E.
+
+Decyzja użytkownika: moduł w repo familiada, osobny workflow wdrożeniowy
+jak Lead Finder. Kod już w services/market-semantic; nowy automat
+deploy-market-semantic.yml używa konta deploy i ograniczonego instalatora
+z prywatnego familiada-server. Publiczny adres/DNS nie jest potrzebny: Edge
+i model komunikują się przez prywatną sieć supabase_default.
+
+Pierwszy deploy modelu 40198714440: obraz zbudowany, start przerwany przed
+zmianą Edge. Błąd flow-list YAML dzielił tmpfs na dwa wpisy. Poprawiono
+cytowanie w prywatnym compose i publicznym przykładzie. Rzeczywisty lokalny
+start przez compose z poprawioną konfiguracją ✓: tmpfs /tmp z obiema opcjami,
+read-only, 1 CPU/1 GiB, zdrowie i 3 języki × 384 wymiarów.
