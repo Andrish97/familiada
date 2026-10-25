@@ -45,9 +45,9 @@ produkcyjna są odnotowywane w Dzienniku `wdrozenia.md`.
 
 
 Weryfikacja całości: 542 sceny, 971 kadrów (478 + 493), brak przekroczeń
-0,01 po odsłonięciu. Pierwszy przebieg zapisał 963 pomiary; 8 nieaktualnych
-selektorów uzupełnia przebieg punktowy. Runner zachowuje pomiar także po
-błędzie selektora. Maksimum zmierzonych wartości: 0,006484. Pozostałe
+0,01 po odsłonięciu. **971/971 pomiarów**: 963 z pierwszego przebiegu i 8
+uzupełnionych punktowo po błędach starych selektorów. Runner zachowuje pomiar
+także po błędzie selektora. Maksimum zmierzonych wartości: 0,006484. Pozostałe
 113 + 187 uwag audytu dotyczą przewijania, ucięć i innych istniejących stanów;
 nie są wynikiem bramki pierwszej klatki. Próba na kodzie bazowym potwierdziła
 m.in. błędy Turnstile, sandbox iframe poczty i stare selektory Wskazówek.

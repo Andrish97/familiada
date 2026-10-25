@@ -131,6 +131,7 @@ Klasy pomocnicze (`utilities.css`, lista zamknięta): `.cluster`
 
 - `page-boot.js` ustawia atrybuty urządzenia przed renderem. Klasyfikacja jest
   wspólna dla CSS, `device-attrs.js` i guarda; moduł aktualizuje ją po zmianach.
+  Późny import na już otwartej stronie nie uruchamia bramki startowej.
 - `page-loading` pozostaje sygnałem strony „tłumaczenia gotowe”. Wspólna bramka
   `data-layout-pending` czeka dodatkowo na DOMContentLoaded, konfigurację
   powłoki z `initPage` i dwa przebiegi pomiarów przed odsłonięciem.

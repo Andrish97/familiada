@@ -112,7 +112,9 @@ można poprawiać bez migracji.
 | Długość przerwy liczona przy powrocie (czas od ostatniego sygnału życia) | zapis „ukryta” często nie dochodzi przed zamrożeniem — powrót niesie czas trwania | `device-lease.js` |
 | Klasa urządzenia i rodzina przeglądarki (telefon/tablet/komputer/TV, Safari/Chrome/…) — zgrubnie, bez wersji i bez odcisku | wiadomo, że np. iPhone zamraża agresywnie | raz na połączenie |
 | Tryb oszczędzania / poziom baterii (gdy przeglądarka podaje) | usypianie i dławienie timerów | raz na połączenie + zmiana |
-| `online`/`offline` dla wszystkich urządzeń i Control (dziś tylko Wyświetlacz) | brak sieci po stronie urządzenia | wspólny moduł |
+| `online`/`offline` dla wszystkich urządzeń i Control | brak sieci po stronie urządzenia | wspólny moduł |
+| Nieobsłużony błąd JS i odrzucona obietnica na Controlu, Hoście, Buzzerze i Wyświetlaczu | odróżnia awarię strony od braku aktywności lub błędnego użycia | wspólny logger sesji |
+| Składniki nagrody zapisane w `stats_detail.prize_calculation` oraz kwota policzona przez Wyświetlacz | porównanie rachunku serwera i ekranu: punkty rund, finał, mnożnik, cel, kwota główna | trigger statystyk + `display/js/render.js` |
 | Zdarzenia przed startem gry (parowanie, odblokowanie dźwięku, czekanie na urządzenia) | problemy przy przygotowaniu | po `runtime_session_id` |
 
 Zasada z 2026-10-18 zostaje: tylko istotne zdarzenia, bez zwykłych

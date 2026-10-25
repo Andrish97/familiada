@@ -257,9 +257,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   obce zmiany tylko w Lead Finderze/workflow diagnostycznym i dokumentacji,
   bez wpływu na zielone spece frontendu — nie powtarzać testów brancha.
 - Pełna galeria `--changed --audit`: 478 + 493 = **971 kadrów / 542 sceny**,
-  bez `skok-po-zaladowaniu` (963 pomiary początkowe; 8 selektorów gotowości
-  nieaktualnych — runner zapisuje pomiar także po błędzie selektora,
-  uzupełnienie punktowe). Pozostałe uwagi: 113 + 187, poza zakresem CLS.
+  bez `skok-po-zaladowaniu` (**971/971 pomiarów**, w tym 8 uzupełnionych
+  punktowo po błędach starych selektorów). CLS max **0,006484**. Pozostałe uwagi: 113 + 187, poza zakresem CLS.
 - Porównanie wszystkich 36 tras: **52 pary**, 51 identycznych, jedna różnica
   **1 piksela**, zero ponad próg. Skeleton: **24/24** (8 stron × 390/360/1400,
   UK, dane +250 ms), CLS max 0,00172; Gry/Bazy/Logo widoczne przed danymi.
@@ -270,8 +269,14 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   po poprawce 0. Uzupełnione brakujące RPC atrapy `initiate_email_change_intent`
   (SQL void); scena migracji gościa ponownie bez braków i bez uwag audytu.
 - Pełny unit po ostatniej korekcie runnera: **859/859** ✓ (74,2 s).
-- Status: lokalne bramki i e2e brancha zielone. Przed publikacją scalenie
-  nowszego `main` z diagnostyką Control, unit i ponowny Control, potem
+- Nowszy main `e86f84b5c1`: zmiany semantyczne tylko w diagnostyce/rendererze
+  urządzeń Control; pozostały front to wersje zasobów. Konflikty `?v=`:
+  diff3 → resolver (wyłącznie wersje) → version-assets → flat.css.
+  Uzupełniona atrapa `watchRuntimeErrors` w istniejących testach lease
+  (nowa funkcja z main), bez zmiany asercji. Bootstrap nie chowa ponownie
+  już otwartej karty przy późnym imporcie; sprawdzone unit i Chromium.
+- Pełny unit po scaleniu i poprawce atrap: **859/859** ✓ (46,6 s).
+- Status: końcowy branch do ponownego punktowego e2e, potem
   main/Pages → te same spece na produkcji.
 
 
@@ -1902,3 +1907,7 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 | 2026-10-25 | Lead Finder — potwierdzenie importu, test właściciela przed przenosinami | Właściciel zgłosił dodanie CEIDG_API_KEY, import i usunięcie DNS leads. DB read 40215443562 success: 1098 kontaktów, 1098 dobrych, 0 nieprzejrzanych/śmieci, 1094 z wysyłką, 5 odpowiedzi. DB read 40215403809 success: jeszcze brak nowego przebiegu po zmianach. DNS zgodny z wildcardem dla losowej subdomeny. | Właściciel najpierw testuje wyszukiwanie z panelu; potem dopiero przeniesienie panelu/Workera i dodanie tokenu Cloudflare. Wyszukiwania i wysyłki nie uruchamiano za właściciela; CEIDG niepotwierdzone nowym przebiegiem. |
 
 | 2026-10-25 | Cloudflare — identyfikacja istniejących tokenów, tylko odczyt | Dodany workflow cloudflare-token-check.yml; 40216055939 success. Sekret CLOUDFLARE_API_TOKEN w repo familiada: active, końcówka ID f0e69f94 (bez wartości sekretu). Odczyt nazwy tokenu przez API: HTTP 403. Ten sekret obsługuje deploy-worker i odczyt maintenance/KV. | Właściciel pokazał trzy zestawy uprawnień; dwa umożliwiają wdrożenia, agentowy służy do odczytu. Powiązanie nazwy z tokenem GitHuba wymaga porównania ID w ustawieniach Cloudflare. Tokenów nie zmieniano ani nie usuwano; przenosiny panelu nadal po teście Lead Findera. |
+
+| 2026-10-25 | Cloudflare — ponowna identyfikacja po zmianie uprawnień | Właściciel potwierdził dodanie User/API Tokens/Read do familiada-worker-deploy. Odczyty 40216860390 i 40217023422: token GitHuba nadal active, ID kończy się f0e69f94; szczegóły i lista tokenów HTTP 403 (lista: kod 9109). Sprawdzono schemat API Cloudflare: endpointy wspierają Bearer i wymagają api.token.read/list. | Nazwa tokenu nadal niepotwierdzona; poproszono o to samo tymczasowe uprawnienie dla Edit Cloudflare Workers. Nie usuwać tokenów na podstawie samej nazwy/uprawnień. Token z datą właściciel zidentyfikował jako automatyczny token Cloudflare Agent; nie jest tokenem wdrożeniowym. |
+
+| 2026-10-25 | Cloudflare — nazwa tokenu wdrażania potwierdzona | Po zatwierdzeniu obu zmian przez właściciela: 40217250880 i 40217410046 success. Token GitHuba f0e69f94 to Edit Cloudflare Workers (szczegóły i lista zgodne). Obsługuje deploy-worker i maintenance/KV. familiada-worker-deploy (d3d9d078): brak zdarzeń zwróconych przez filtr audit logs za 2026-09-25–2026-10-26; brak osobnego użycia w sprawdzonych automatach obu repo. | Edit Cloudflare Workers zostaje; po diagnozie usunąć z niego tymczasowe User/API Tokens/Read. familiada-worker-deploy nie jest potrzebny obecnym automatom Familiady; historia dotyczy wskazanego okresu, nie stanowi audytu cudzych integracji. Token Cloudflare Agent potrzebny tylko przy używaniu tego asystenta. Agent nie zmieniał ani nie usuwał tokenów. |

@@ -2,9 +2,9 @@
 // aktywność i lokalne obserwacje; telemetryka nie blokuje akcji gry.
 // Obserwacje idą dziennikiem sesji (session-log.js, control2_control_log,
 // migracje 468–469) — także przed startem gry, do sesji uruchomienia Control.
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-25T17010";
-import { createNetworkMonitor, measureNetwork } from "../../shared/js/core/network-probe.js?v=v2026-10-25T17010";
-import { collectDeviceInfo, createSessionLog, watchPageLifecycle } from "../../shared/js/core/session-log.js?v=v2026-10-25T17010";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-25T17592";
+import { createNetworkMonitor, measureNetwork } from "../../shared/js/core/network-probe.js?v=v2026-10-25T17592";
+import { collectDeviceInfo, createSessionLog, watchPageLifecycle, watchRuntimeErrors } from "../../shared/js/core/session-log.js?v=v2026-10-25T17592";
 
 
 export function createSessionTelemetry(gameId, getState, subscribe = () => () => {}) {
@@ -74,6 +74,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
   logVisibility("initial");
   void collectDeviceInfo().then(info => log.push(info), () => {});
   const stopLifecycle = watchPageLifecycle(event => log.push(event), { onExit: () => log.flushOnExit() });
+  const stopRuntimeErrors = watchRuntimeErrors(event => log.push(event), "control");
   const timer = setInterval(() => { void report(); }, 5 * 60 * 1000);
   syncNetwork(getState());
   const unsubscribe = subscribe(state => syncNetwork(state));
@@ -91,6 +92,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
       clearInterval(timer);
       unsubscribe?.();
       stopLifecycle();
+      stopRuntimeErrors();
       document.removeEventListener("visibilitychange", visibilityChanged);
       log.stop();
     },

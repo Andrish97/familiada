@@ -1,16 +1,16 @@
 // admin/js/stats.js — Statystyki: przegląd, retencja, wykluczeni, snake, szczegóły i diagnoza rozgrywek.
 // Część panelu admina (E23 §8a: rozbicie admin.js (dawniej settings.js) na moduły paneli).
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T17010";
-import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-25T17010";
-import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T17010";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-25T17010";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T17010";
-import { activityDetailRows } from "./activity.js?v=v2026-10-25T17010";
-import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-25T17010";
-import { setStatus } from "./maintenance.js?v=v2026-10-25T17010";
-import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-25T17010";
-import { setWidth } from "../../shared/js/core/geometry.js?v=v2026-10-25T17010";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T17592";
+import { describeDevice, deviceInfoBySource, diagnoseSession, SOURCE_NAMES, summarizeSessions } from "./session-diagnosis.js?v=v2026-10-25T17592";
+import { iconText, icon } from "../../shared/js/core/icons.js?v=v2026-10-25T17592";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-25T17592";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T17592";
+import { activityDetailRows } from "./activity.js?v=v2026-10-25T17592";
+import { API_BASE, adminGet, adminPost, apiFetch, btnBackSheet, els, esc, fmtDate } from "./core.js?v=v2026-10-25T17592";
+import { setStatus } from "./maintenance.js?v=v2026-10-25T17592";
+import { emptyState } from "../../shared/js/core/empty-state.js?v=v2026-10-25T17592";
+import { setWidth } from "../../shared/js/core/geometry.js?v=v2026-10-25T17592";
 
 export async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");

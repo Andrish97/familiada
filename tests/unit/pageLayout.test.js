@@ -55,7 +55,7 @@ test('błąd inicjalizacji zwalnia bramkę; nowa obietnica między klatkami wstr
 test('bootstrap ustawia telefon przed body, resetuje etap HTML i ma niezależny bezpiecznik', () => {
   const attributes = new Set(), classes = new Set(['page-loading']), callbacks = [];
   const root = { dataset: {}, toggleAttribute: (k, enabled) => enabled ? attributes.add(k) : attributes.delete(k),
-    setAttribute: k => attributes.add(k), removeAttribute: k => attributes.delete(k), classList: { remove: k => classes.delete(k) } };
+    setAttribute: k => attributes.add(k), removeAttribute: k => attributes.delete(k), classList: { remove: k => classes.delete(k), contains: k => classes.has(k) } };
   let timeout;
   const context = vm.createContext({ document: { documentElement: root, readyState: 'loading', addEventListener() {} },
     window: { innerWidth: 390, innerHeight: 844, screen: { width: 390, height: 844 }, matchMedia: q => ({ matches: q.includes('coarse') }) },
@@ -71,6 +71,13 @@ test('bootstrap ustawia telefon przed body, resetuje etap HTML i ma niezależny 
   timeout();
   assert.equal(attributes.has('data-layout-pending'), false);
   assert.equal(classes.has('page-loading'), false);
+  context.document.readyState = 'complete';
+  timeout = undefined;
+  const late = vm.createContext({ ...context, FamiliadaDevice: undefined, FamiliadaPageBoot: undefined });
+  vm.runInContext(read('web/shared/js/core/page-boot.js'), late);
+  assert.ok(late.FamiliadaDevice, 'profil istnieje także przy późnym imporcie');
+  assert.equal(attributes.has('data-layout-pending'), false, 'późny import nie chowa działającej strony');
+  assert.equal(timeout, undefined);
 });
 
 test('audyt rozdziela etap ukryty i widoczny, pomija interakcje i zatrzymuje się przed krokami sceny', () => {

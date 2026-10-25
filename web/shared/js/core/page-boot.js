@@ -84,6 +84,9 @@
   root.dataset.orientation = next.orientation;
   root.toggleAttribute("data-compact", next.compact);
   root.toggleAttribute("data-sheet", next.sheet);
+  // Import modułu z już otwartej karty po wdrożeniu nie uruchamia ponownie
+  // bramki startowej. Atrybuty i API profilu nadal są dostępne.
+  if (document.readyState === "complete" && !root.classList.contains("page-loading")) return;
   root.setAttribute("data-layout-pending", "");
   // HTML może zawierać gotową treść dla trybu bez JS. Przy hydracji etap
   // potwierdza dopiero kod strony, po podmianie treści i podpięciu obsługi.
