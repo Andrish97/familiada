@@ -3,6 +3,7 @@
 //   web/assets/img/<język>/shots/<scena>.webp          -- pełny kadr (przeglądarka zdjęć)
 //   web/assets/img/<język>/shots/<scena>-preview.webp  -- podgląd na kaflu (960 px)
 //   web/assets/img/og/og-image.webp                    -- podgląd linku (scena og-image, PL)
+//   web/assets/img/og/og-image-mail.webp               -- ta sama grafika w mailu marketingowym (1032 px)
 // Użycie (po zrzutach scen homepage we wszystkich językach):
 //   node scripts/screens/run.cjs --scenes=<homepage> --lang=all && node scripts/screens/publish-homepage.cjs
 //   opcje: --out=<katalog wyniku run.cjs> (domyślnie scripts/screens/out), --strict (wymaga wszystkich kadrów)
@@ -18,6 +19,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
 const outDir = path.resolve(repo, args.out || "scripts/screens/out");
 const LANGS = ["pl", "en", "uk"];
 const PREVIEW_WIDTH = 960;
+const OG_MAIL_WIDTH = 1032;
 
 // Plik wyniku run.cjs dla sceny strony głównej: własny rozmiar, telefon albo komputer.
 function sourceFile(scene, lang) {
@@ -59,7 +61,10 @@ async function toWebp(page, png, width, quality) {
         if (scene.id === "og-image") {
           if (lang === "pl") {
             fs.writeFileSync(path.join(repo, "web/assets/img/og/og-image.webp"), await toWebp(page, png, 0, 0.9));
-            written++;
+            // Pierwszy obraz maila „Zaproszenie” (web/shared/js/core/marketing-mail.js):
+            // 2× szerokości maila (516 px), odświeżany razem z grafiką OG.
+            fs.writeFileSync(path.join(repo, "web/assets/img/og/og-image-mail.webp"), await toWebp(page, png, OG_MAIL_WIDTH, 0.82));
+            written += 2;
           }
           continue;
         }

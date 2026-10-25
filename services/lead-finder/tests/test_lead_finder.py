@@ -92,6 +92,40 @@ class ParseTest(unittest.TestCase):
             classify.parse_category('{"description": "x", "queries": ["a"]}')
 
 
+class DeepSeekOnlyTest(unittest.TestCase):
+    """Lead Finder używa wyłącznie DeepSeeka (decyzja 2026-10-25)."""
+
+    class Db:
+        def __init__(self, available):
+            self.available, self.cooldowns = available, []
+
+        async def rpc(self, fn, params=None):
+            if fn == 'get_available_ai_providers':
+                return self.available
+            self.cooldowns.append(params)
+            return True
+
+    def ask(self, available, reply):
+        db = self.Db(available)
+        c = classify.Classifier(db, None)
+
+        async def fake_call(prompt):
+            return reply
+        c._call = fake_call
+        return run(c._ask('p', lambda text: {'ok': text})), db
+
+    def test_only_deepseek(self):
+        res, db = self.ask([{'name': 'groq'}, {'name': 'anthropic'}], (200, 'x', None))
+        self.assertIsNone(res)  # inni dostawcy nie są używani
+        res, _ = self.ask([{'name': 'deepseek'}], (200, 'x', None))
+        self.assertEqual(res, {'ok': 'x'})
+        res, db = self.ask([{'name': 'deepseek'}], (402, None, 'insufficient balance'))
+        self.assertIsNone(res)
+        self.assertEqual(db.cooldowns[0]['p_name'], 'deepseek')
+        res, db = self.ask([{'name': 'deepseek'}], (503, None, 'busy'))
+        self.assertEqual(res, {})
+
+
 class FakeDb:
     def __init__(self):
         self.tables = {'marketing_verified_contacts': [], 'marketing_candidates': [], 'marketing_categories': [],

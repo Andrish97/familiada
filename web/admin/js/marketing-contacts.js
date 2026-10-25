@@ -6,7 +6,6 @@ import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T16
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T16233";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T16233";
 import { adminFetch, adminGet, adminPost } from "./core.js?v=v2026-10-25T16233";
-import { loadAiProviderOrder, renderAiProviderOrder } from "./mail-settings.js?v=v2026-10-25T16233";
 import { addMarketingRecipients } from "./marketing.js?v=v2026-10-25T16233";
 
 const MC_PAGE_SIZE = 50;
@@ -180,7 +179,23 @@ export async function initMarketingContacts() {
         targetInput.disabled = false;
         break;
     }
-    renderAiProviderOrder();
+  }
+
+  // Jedyny dostawca AI Lead Findera: DeepSeek (decyzja 2026-10-25). Stan z
+  // marketing_ai_providers: aktywny albo zablokowany limitem (cooldown).
+  async function mcLoadAiStatus() {
+    const el = document.getElementById("mcAiStatus");
+    if (!el) return;
+    try {
+      const rows = (await adminGet("/marketing/ai-providers", "rows")) || [];
+      const p = rows.find((r) => r.name === "deepseek");
+      const until = p?.cooldown_until ? new Date(p.cooldown_until) : null;
+      if (!p || !p.is_active) { el.textContent = "wyłączony"; el.dataset.tone = "bad"; }
+      else if (until && until > new Date()) {
+        el.textContent = `zablokowany limitem do ${until.toLocaleString("pl-PL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`;
+        el.dataset.tone = "warn";
+      } else { el.textContent = "aktywny"; el.dataset.tone = "ok"; }
+    } catch { el.textContent = ""; }
   }
 
   async function mcLoadRuns() {
@@ -617,7 +632,7 @@ export async function initMarketingContacts() {
   }
 
   // ── Zdarzenia ───────────────────────────────────────────────────────────
-  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadCategories(); mcLoadContacts(); mcLoadLogs(); });
+  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadCategories(); mcLoadContacts(); mcLoadLogs(); mcLoadAiStatus(); });
   {
     let mcSearchTimer = null;
     const searchInput = document.getElementById("mcSearchInput");
@@ -678,7 +693,7 @@ export async function initMarketingContacts() {
     await mcLoadRuns();
     mcLoadLogs();
     if (mcState.status === "running" && document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
-    await loadAiProviderOrder();
+    mcLoadAiStatus();
   };
   if (panel) new MutationObserver(onShow).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
   mcUpdateButtons();

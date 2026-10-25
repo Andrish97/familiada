@@ -143,21 +143,6 @@ export async function handleAdminMarketingApi(request, env, url) {
     return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
   }
 
-  // POST /_admin_api/marketing/ai-providers/order { names } -- priorytet = pozycja
-  if (url.pathname === "/_admin_api/marketing/ai-providers/order" && request.method === "POST") {
-    const body = await readJson(request);
-    const names = Array.isArray(body?.names) ? body.names.map(String).filter(Boolean).slice(0, 50) : [];
-    if (!names.length) return json({ ok: false, error: "missing_names" }, 400);
-    const results = await Promise.all(names.map((name, idx) =>
-      supabaseRequest(env, `/rest/v1/marketing_ai_providers?name=eq.${encodeURIComponent(name)}`, {
-        method: "PATCH",
-        body: { priority: idx },
-      })));
-    const bad = results.find((r) => !r.ok);
-    if (bad) return json({ ok: false, error: "ai_order_failed", details: summarizeSupabaseError(bad) }, bad.status || 500);
-    return json({ ok: true });
-  }
-
   // POST /_admin_api/marketing/send { emails, subject, template_id, custom_body }
   if (url.pathname === "/_admin_api/marketing/send" && request.method === "POST") {
     const body = await readJson(request);

@@ -557,43 +557,8 @@
     font-weight: 800;
   }
 
-  .provider-order-name{
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-
-
   /* Kryjące podłoże strzałek: ten sam wzorzec co .btn w base.css.
      Android potrafi nakładać półprzezroczyste warstwy przy przerysowaniu. */
-  .ai-provider-order{
-    --under: var(--surface-1);
-    margin-top: 1rem;
-    padding: 12px;
-    background: var(--under);
-    border-radius: var(--r-sm);
-  }
-
-  .ai-provider-order-title{
-    font-size: .85rem;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-
-  .ai-provider-order .provider-order-row{
-    background: var(--under);
-  }
-
-  .ai-provider-order .provider-order-rank{
-    background: var(--surface-inset);
-    flex-shrink: 0;
-  }
-
-  .ai-provider-order .provider-order-actions{
-    flex-shrink: 0;
-    --gap: 4px;
-  }
-
   /* Dostawcy maili: wyłączony wiersz z czerwonym odcieniem; --under = kolor
      wiersza (kryjące przyciski). */
   .mail-provider-row { --under: var(--surface-2); }
@@ -614,7 +579,6 @@
   .provider-status[data-tone="bad"] { color: var(--danger); }
   .provider-status[data-tone="warn"] { color: var(--warn-text); }
   .provider-status[data-tone="ok"] { color: var(--ok-text); }
-  .ai-provider-order .provider-order-rank { font-weight: bold; }
   .stats-exclude-msg[data-tone="bad"] { color: var(--danger); }
   .stats-exclude-msg[data-tone="ok"] { color: var(--ok-text); }
   .table-empty { text-align: center; padding: 20px; opacity: .5; }
@@ -625,11 +589,6 @@
   .rt-user { font-weight: 900; }
   .rt-stars { color: var(--accent); }
   .rt-comment { font-size: 13px; }
-
-  @media (hover: none), (pointer: coarse){
-    .ai-provider-order .btn:hover{ filter: none; }
-    .ai-provider-order .btn:active{ transform: none; }
-  }
 
   .mail-controls{
     display: flex;
@@ -1622,6 +1581,7 @@
   .mc-cat-name { font-weight: 600; overflow-wrap: anywhere; }
   .mc-cat-details { flex: 1 0 100%; display: grid; gap: 4px; }
   .mc-cat-desc { margin: 0; font-size: 12px; opacity: .8; }
+  .mc-ai-note { font-size: 13px; opacity: .85; margin: 8px 0; }
   .mc-logs > summary { cursor: pointer; font-size: 13px; opacity: .8; margin: 8px 0; }
   .mc-reaction--declined, .mc-reaction--bounced { color: var(--bad-text); }
   .mc-reaction--replied { color: var(--ok-text); }

@@ -331,7 +331,7 @@ class Engine:
                         done = await self.classify_once(classifier, cat)
                         judged = True
                         if done == -1:
-                            log.info('Dostawcy AI chwilowo niedostępni — ponowię za 30 s.')
+                            log.info('DeepSeek chwilowo niedostępny — ponowię za 30 s.')
                             await asyncio.sleep(30)
                             break
                 await self.save_stats()
@@ -363,9 +363,9 @@ class Engine:
             log.info('Zlecenie przerwane.')
         except NoQuota:
             self.status = 'cancelled'
-            log.error('Brak dostępnych limitów u wszystkich dostawców AI. Przerywam.')
+            log.error('DeepSeek niedostępny (wyłączony albo limit). Przerywam.')
             if self.notify:
-                await self.notify('⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.')
+                await self.notify('⚠️ <b>Zlecenie przerwane</b>\nDeepSeek niedostępny (wyłączony albo limit).')
         except Exception as e:
             self.status = 'error'
             self.stats['errors'] += 1
