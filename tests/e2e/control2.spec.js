@@ -4155,6 +4155,7 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     for (let round = 1; round <= 2; round++) {
       await page.locator("#btnManual").click();
       await page.waitForURL(/\/manual\//, { timeout: 15000 });
+      await expect(page.locator(".topbar.topbar-ready")).toBeAttached({ timeout: 15000 });
       const startedAt = Date.now();
       await page.locator("#btnBack").click();
       await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
@@ -4169,6 +4170,7 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     // prosi o nowy gest, Wyświetlacz pokazuje przycisk, a gest odblokowuje grę.
     await page.locator("#btnManual").click();
     await page.waitForURL(/\/manual\//, { timeout: 15000 });
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached({ timeout: 15000 });
     await displayPage.reload({ waitUntil: "domcontentloaded" });
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
