@@ -7,7 +7,7 @@
 // (closeDialog cofa przy tym wpis historii). Pokazanie z adresu oznacza
 // modal-sheet.js (data-routed); otwarcie naszym kodem (openDialog) go zdejmuje.
 
-import { closeDialog, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-24T23314";
+import { closeDialog, isOverlayOpen } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-25T00035";
 
 export function guardRoutedSheet(overlay, isOpen = () => overlay?.dataset.routed !== "true") {
   if (!overlay) return;
