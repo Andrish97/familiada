@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vNTWK6wRIyCBhdUYwdDHpreFAq06YmuDSvjWFlNgNAe0ebKg1oUJlOagEqHES0S
+\restrict A9IaP6SfeKiSNh4zdmldfNrb8XVORK9tscCRvrgsGROZC0xS43q8sEkKxsCL0by
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -14098,6 +14098,7 @@ BEGIN
     RAISE EXCEPTION 'marketing_import_contacts: oczekiwano tablicy do 1000 wierszy';
   END IF;
 
+  DROP TABLE IF EXISTS pg_temp._imp;
   CREATE TEMP TABLE _imp ON COMMIT DROP AS
   SELECT (r->>'id')::uuid AS id,
          lower(coalesce(r->>'decision', '')) AS decision,
@@ -14126,6 +14127,7 @@ BEGIN
      AND (i.name IS NOT NULL OR i.category IS NOT NULL OR i.decision = 'keep');
   GET DIAGNOSTICS n_upd = ROW_COUNT;
 
+  DROP TABLE pg_temp._imp;
   RETURN jsonb_build_object('updated', n_upd, 'deleted', n_del, 'categories', n_cat);
 END $_$;
 
@@ -25469,5 +25471,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vNTWK6wRIyCBhdUYwdDHpreFAq06YmuDSvjWFlNgNAe0ebKg1oUJlOagEqHES0S
+\unrestrict A9IaP6SfeKiSNh4zdmldfNrb8XVORK9tscCRvrgsGROZC0xS43q8sEkKxsCL0by
 
