@@ -1,8 +1,8 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19152";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-25T19190";
 // Nagłówek list Gier/Baz/Logo: pozwól tytułowi i podpowiedzi zawinąć się
 // przed przeniesieniem akcji. Akcje schodzą niżej, gdy nie mieszczą się nawet
 // obok minimalnej szerokości nagłówka.
-import { setWidth } from "./geometry.js?v=v2026-10-25T19152";
+import { setWidth } from "./geometry.js?v=v2026-10-25T19190";
 export function initListHeaderLayout(selector = ".bar") {
   const bars = [...document.querySelectorAll(selector)].filter((bar) => bar.querySelector(":scope > .actions"));
   for (const bar of bars) {
