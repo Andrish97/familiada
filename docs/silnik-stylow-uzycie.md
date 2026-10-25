@@ -368,7 +368,10 @@ hamburger/X wynika z `aria-expanded`. Tło i Escape też zamykają menu.
 
 Panele robocze używają `.drawer` / `.drawer-scrim` i `bindDrawer` z
 `core/drawer.js`: podaj panel, backdrop i opcjonalny toggle; `beforeOpen`
-służy do pomiaru, `onChange` do odświeżenia stanu strony. API: open, close,
+służy do dodatkowej pracy przed otwarciem, `onChange` do odświeżenia stanu strony.
+`anchor` wskazuje pasek narzędzi (domyślnie rodzic toggle); wspólny pomiar
+z `registerPageLayout` i ResizeObserver ustawia przez geometry.js początek
+panelu oraz tła pod paskiem. Przełącznik/X pozostaje dostępny. API: open, close,
 setOpen, isOpen. Zamknięty panel na wąskim ekranie jest inert, na komputerze
 wraca do układu. `drawer:open` zamyka pozostałe panele, także topbar.
 Lewa strona paneli roboczych pozostaje zgodna z układem strony. Obie strony

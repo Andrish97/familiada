@@ -2155,3 +2155,12 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   reduced motion, klawiatura, licznik aktualizowany przy zamkniętym menu.
   Prywatnie **84/84 unit**, test menu 1/1, zrzut obejrzany. Audyt rozpoznaje
   `.drawer-scrim` jako tło, nie przycisk z ikoną w strefie bezpiecznej.
+
+- Branch E2E **40234872626 ✓ 3/3** (hamburger, spis, atomowa nawigacja).
+  Prywatny branch CI **40234865542 ✓ 84 unit + 17 browser**, check
+  **40234874849 ✓**. Panel opublikowany na main 14c8819, production w toku.
+- Po ocenie zrzutów: wspólny drawer mierzy początek pod własnym paskiem
+  narzędzi przez geometry.js i registerPageLayout; X sekcji/spisu pozostaje
+  widoczny. Ponownie **815/815 unit**, lokalne panele 390/360 + desktop ✓,
+  sześć zrzutów telefonów z audytem **0 uwag**. Powtórzyć tylko test spisu,
+  bo menu główne/atomowe przekierowania nie zostały zmienione tą korektą.

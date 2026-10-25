@@ -16,11 +16,13 @@ test('drawer: desktop stays usable; narrow panels exclude hidden content, close 
   const media = new EventTarget(); media.matches = false;
   const doc = new EventTarget(); doc.activeElement = null;
   globalThis.document = doc;
-  globalThis.window = { matchMedia: () => media };
+  globalThis.window = { matchMedia: () => media, addEventListener: () => {} };
   globalThis.CustomEvent = class extends Event { constructor(type, opts) { super(type); this.detail = opts.detail; } };
   try {
-    const source = fs.readFileSync(new URL('../../web/shared/js/core/drawer.js', import.meta.url), 'utf8');
-    const { bindDrawer } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+    const source = fs.readFileSync(new URL('../../web/shared/js/core/drawer.js', import.meta.url), 'utf8')
+      .replace(/^import .*;$/gm, '') + '\n';
+    const dependencies = 'const setDrawerTop = () => {}; const registerPageLayout = fn => fn();\n';
+    const { bindDrawer } = await import(`data:text/javascript;base64,${Buffer.from(dependencies + source).toString('base64')}`);
     const panel = new Element(), backdrop = new Element(), toggle = new Element();
     let measured = 0;
     const drawer = bindDrawer({ panel, backdrop, toggle, beforeOpen: () => measured++ });

@@ -96,7 +96,13 @@ test('wysuwane panele: spis Wskazówek z lewej, Escape i wzajemne zamykanie', as
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(toggle.locator('[data-icon-part="middle"]')).toHaveCSS('opacity', '0');
     await expect(toc).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
-    expect((await toc.boundingBox()).x).toBe(0);
+    const tocBox = await toc.boundingBox();
+    expect(tocBox.x).toBe(0);
+    const toggleBox = await toggle.boundingBox();
+    expect(tocBox.y).toBeGreaterThanOrEqual(toggleBox.y + toggleBox.height);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
     await page.keyboard.press('Escape');
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(toggle).toBeFocused();

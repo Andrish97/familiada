@@ -1,15 +1,28 @@
 // Wspólna obsługa bocznych paneli roboczych. Układ i ruch: .drawer w silniku.
-export function bindDrawer({ panel, backdrop, toggle, beforeOpen, onChange } = {}) {
+import { setDrawerTop } from './geometry.js?v=dev';
+import { registerPageLayout } from './page-layout.js?v=dev';
+
+export function bindDrawer({ panel, backdrop, toggle, anchor = toggle?.parentElement, beforeOpen, onChange } = {}) {
   if (!panel || !backdrop) return null;
   const narrow = window.matchMedia('(max-width: 980px)');
   const isOpen = () => panel.classList.contains('is-open');
   let opener = toggle;
+  const measure = () => {
+    if (!anchor || !narrow.matches) return;
+    const top = Math.max(0, anchor.getBoundingClientRect().bottom);
+    setDrawerTop(panel, top);
+    setDrawerTop(backdrop, top);
+  };
+  registerPageLayout(measure);
+  if (anchor && typeof ResizeObserver !== 'undefined') new ResizeObserver(measure).observe(anchor);
+  window.addEventListener('resize', measure, { passive: true });
 
   const setOpen = (requested) => {
     const open = !!requested && narrow.matches;
     if (open && !isOpen()) {
       opener = toggle || document.activeElement;
       beforeOpen?.();
+      measure();
       document.dispatchEvent(new CustomEvent('drawer:open', { detail: { panel } }));
     }
     const restoreFocus = !open && panel.contains(document.activeElement);
