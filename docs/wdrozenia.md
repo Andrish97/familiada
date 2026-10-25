@@ -239,8 +239,11 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   Dostosowano dwa istniejące oczekiwania e21 do poprawionego tekstu.
 - Pełny unit **812/812 ✓**; okno na 390/360/1400 px: **3/3 zrzuty**,
   audyt **0 uwag**. Branch e21 **40227951311 ✓ 2/2**: konwersja preparowanej
-  do tekstowej oraz zachowanie punktów zamkniętej ankiety. Status: publikacja
-  i te same dwa testy kontrolnie na produkcji.
+  do tekstowej oraz zachowanie punktów zamkniętej ankiety. Pages
+  **40228094314 ✓** (`589ceae46c`). Kontrola main w e21 używa rzeczywistych
+  plików produkcji; przechwytywanie kodu działa tylko przy TEST_BRANCH_CODE=1
+  (zachowanie brancha bez zmian). Ponowny pełny unit **812/812 ✓**.
+  Status: te same dwa testy kontrolnie na produkcji.
 
 
 

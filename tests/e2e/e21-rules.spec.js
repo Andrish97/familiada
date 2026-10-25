@@ -13,7 +13,9 @@ test.use({ serviceWorkers: "block" });
 test.use({ needs: { standard: 1 } });
 test.describe.configure({ retries: 0 });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["games", "games/editor"] });
+  if (process.env.TEST_BRANCH_CODE === "1") {
+    await serveBranchCode(context, { pages: ["games", "games/editor"] });
+  }
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
 });
 
