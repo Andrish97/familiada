@@ -272,6 +272,13 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   na miejscu widoczne. Dane 450 ms, dokument celu 700 ms.
 - Scalono `51428c6df0`: dokumentacja, wersje i trzy odświeżone obrazy Home.
   Resolver rozwiązał wyłącznie konflikty wersji; kod obu poprawek zachowany.
+- Końcowy spec przekierowań i konta **40227197939 ✓ 1/1** (9 przekierowań,
+  dwukrotne otwarcie menu na 390/360/1400 px, force_auth, błędny Go).
+  UI 40226827228 5/5 i Control 40226829390 1/1 pozostają ważne — scalenie
+  zmieniło tylko dokumentację, wersje i obrazy Home; poprawka konta dotyczy
+  mobilnego zamykania dropdownu, nie transportu/rozgrywki Control.
+- Pełny unit po scaleniu **812/812 ✓** (20,7 s). Status: publikacja Pages,
+  potem te same punktowe testy UI + Control na produkcji.
 
 ### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
 
