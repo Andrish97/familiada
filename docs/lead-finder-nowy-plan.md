@@ -108,3 +108,43 @@ Dla każdej aktywnej kategorii:
 
 Wysyłka maili marketingowych bez wcześniejszej zgody (także do firm) jest
 w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG).
+
+## Konfiguracja i obsługa (2026-10-25)
+
+- Parametry bez sekretów: `familiada-server/apps/lead-finder/config.txt`,
+  montowane jako `/app/config.txt`; deploy kodu nie zmienia parametrów.
+- Silniki: `familiada-server/apps/searxng/settings.yml`, wyłącznie Yandex
+  i Seznam. Lead Finder nie przekazuje własnej listy `engines`.
+- Wdrożenie konfiguracji: `server.yml` → `apps` → najpierw `check`, potem
+  `production`. Sekrety pozostają w `/srv/familiada/secrets/lead-finder.env`.
+- Panel i administracyjna część Workera mają trafić do prywatnego
+  `familiada-server`; plan oddzielenia w prywatnym
+  `familiada-server/docs/admin-private-plan.md`.
+
+### Czynności właściciela
+
+1. Ponowny import pliku `kontakty-przejrzane.csv` po poprawce 492:
+   1098 zostaw / 211 usuń.
+2. Klucz CEIDG: `ssh -t andrish97@75.119.141.106 'sudo familiada-secret set lead-finder CEIDG_API_KEY'`.
+3. Usunięcie rekordu DNS `leads` w Cloudflare.
+4. Pierwsza kategoria i przebieg z panelu.
+
+Kontrola po przebiegu przez `db-read`: `scripts/db-read/lead-finder-runs.sql`
+(liczniki lejka) i `scripts/db-read/lead-finder-contacts.sql` (kontakty, wysyłki,
+odpowiedzi); bez uruchamiania wyszukiwania za właściciela.
+
+## Kontrola po czynnościach właściciela (2026-10-25)
+
+Właściciel potwierdził dodanie klucza CEIDG, import kontaktów i usunięcie
+rekordu DNS leads. DB read 40215443562: 1098 kontaktów, wszystkie przejrzane
+i dobre, 0 nieprzejrzanych/śmieci, 1094 z wysyłką, 5 odpowiedzi. DB read
+40215403809: brak nowego przebiegu po wdrożeniu; widoczna tylko próba z
+16:22 UTC sprzed poprawki SearXNG. Działanie CEIDG i nowego wyszukiwania
+potwierdzi dopiero test właściciela z panelu.
+
+DNS leads odpowiada tak samo jak losowa nieistniejąca subdomena (wildcard);
+samo rozwiązanie nazwy nie oznacza pozostawienia publicznej usługi.
+
+Decyzja właściciela: najpierw sprawdza działanie Lead Findera, potem
+przenoszenie panelu i podział Workera; token Cloudflare doda później.
+Nie uruchamiać wyszukiwania ani wysyłki za właściciela.

@@ -1,0 +1,39 @@
+name: Cloudflare token — identyfikacja (tylko odczyt)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Sprawdź token zapisany w GitHubie (bez wartości sekretu)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          const token = process.env.CLOUDFLARE_API_TOKEN;
+          if (!token) { console.log('CLOUDFLARE_API_TOKEN: brak'); process.exit(1); }
+          const options = { headers: { Authorization: `Bearer ${token}` }, redirect: 'error' };
+          const res = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', options);
+          if (!res.ok) { console.log(`Weryfikacja tokenu: HTTP ${res.status}`); process.exit(1); }
+          const data = await res.json();
+          const id = data.result?.id;
+          if (!data.success || !/^[0-9a-f]{32}$/i.test(id || '')) {
+            console.log('Weryfikacja tokenu: nieprawidłowa odpowiedź'); process.exit(1);
+          }
+          console.log(`Token w repo familiada: status=${data.result.status}, końcówka ID=${id.slice(-8)}`);
+          const details = await fetch(`https://api.cloudflare.com/client/v4/user/tokens/${id}`, options);
+          if (details.ok) {
+            const meta = await details.json();
+            if (meta.success && meta.result?.id === id && typeof meta.result.name === 'string') {
+              console.log(`Nazwa tokenu: ${JSON.stringify(meta.result.name)}`);
+            }
+          } else {
+            console.log(`Nazwa tokenu niedostępna dla tego uprawnienia (HTTP ${details.status})`);
+          }
+          JS

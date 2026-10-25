@@ -168,8 +168,7 @@ class Engine:
         self.stats['search_queries'] += 1
         try:
             results, dead = await search_src.search(self.client, self.searx_url, phrase, int(page),
-                                                    timeout=cfg('TIMEOUT_SEARCH', 25),
-                                                    engines=str(cfg('SEARCH_ENGINES', '')).strip())
+                                                    timeout=cfg('TIMEOUT_SEARCH', 25))
         except Exception as e:  # SearXNG niedostępny, zły JSON
             self.stats['errors'] += 1
             log.error(f'Wyszukiwarka: {str(e)[:200]}')
