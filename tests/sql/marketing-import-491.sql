@@ -2,6 +2,7 @@
 -- Lokalna baza wg docs/sql/local-db.md (schema.sql + 490 + 491).
 \set ON_ERROR_STOP 1
 begin;
+delete from public.marketing_categories;
 insert into public.marketing_categories(id, name) values ('49100000-0000-4000-8000-0000000000c1', 'DJ');
 insert into public.marketing_verified_contacts(id, email, url, title) values
   ('49100000-0000-4000-8000-000000000001', 'a@a.pl', 'https://a.pl', 'A'),
