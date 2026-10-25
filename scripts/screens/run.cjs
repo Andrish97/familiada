@@ -121,7 +121,7 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
     if (typeof scene.ready === "string") await view.waitForSelector(scene.ready, { state: "visible", timeout: 15000 });
     else if (scene.ready) await view.waitForFunction(scene.ready, null, { timeout: 15000 });
     await view.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 8000 }).catch(() => {});
-    await view.waitForFunction(() => !document.documentElement.hasAttribute("data-layout-pending"), null, { timeout: 6000 });
+    await view.waitForFunction(() => (!document.documentElement.hasAttribute("data-layout-pending") || document.documentElement.hasAttribute("data-page-guard")), null, { timeout: 6000 });
     if (args.audit) {
       // Koniec pomiaru automatycznego ładowania przed akcjami sceny (zmiana
       // zakładki, otwarcie okna i przewinięcie są zamierzoną zmianą układu).
@@ -129,7 +129,15 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
       await page.waitForTimeout(scene.settle ?? 400);
       initialLayout = await view.evaluate(() => window.__screensLayoutAudit?.stop());
     }
-    for (const step of scene.steps || []) await step(view, { lang, device: deviceName, page });
+    for (const step of scene.steps || []) {
+      let deadline;
+      try {
+        await Promise.race([
+          step(view, { lang, device: deviceName, page }),
+          new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error("Krok sceny przekroczył 45 s")), 45000); }),
+        ]);
+      } finally { clearTimeout(deadline); }
+    }
     if (scene.fullPage) {
       // Zrzut całej strony: przewinąć, żeby wczytały się obrazy z loading="lazy".
       await view.evaluate(async () => {

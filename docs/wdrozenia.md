@@ -246,8 +246,18 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Punktowe 58 unit ✓, pełny unit finalnego kodu 859/859 ✓ (98,7 s). Nowy audyt CLS
   `skok-po-zaladowaniu` z progiem 0,01; pełna galeria `--changed --audit`
   obejmuje wszystkie 542 sceny, uruchomiona w dwóch rozłącznych częściach.
-- Status: pełny unit zielony, galeria w toku; commit kodu do e2e brancha.
-  Dalej e2e brancha → main/Pages → te same spece na produkcji.
+- Kod `7b05cb8fe3`. Branch e2e 40216076232 ✓ **3/3** (lista Gier z
+  opóźnionym odczytem/błędem, filtr i sortowanie, mobilne okno nazwy) oraz
+  40216078769 ✓ **1/1** (pełna runda 4 urządzeń i wznowienie Control).
+- Scena `manual-shots` czekała bez końca na decode obrazu lazy poza ekranem;
+  przewija go przed decode. `manual-return` czeka na widoczny link powrotu
+  także w mobilnym pasku. Kroki scen mają limit 45 s. Pomiar guarda startuje
+  od pokazania nakładki. Ponowny pełny unit 859/859 ✓ (94,5 s).
+- Scalenie `origin/main` (`eb822245d3`) → `2cff3e4e79`, bez konfliktów;
+  obce zmiany tylko w Lead Finderze/workflow diagnostycznym i dokumentacji,
+  bez wpływu na zielone spece frontendu — nie powtarzać testów brancha.
+- Status: bramka e2e brancha spełniona, pełna galeria w toku (część 1
+  wznowiona po poprawce sceny). Dalej main/Pages → te same spece na produkcji.
 
 
 | 2026-10-25 | Lead Finder nic nie znajdował — wyszukiwarki blokują serwer | `db-read` `lead-finder-runs.sql`: przebieg 16:22 — 60 zapytań, 0 wyników, 410 odmów silników, CEIDG 0 (bez klucza). Próba z sieci Dockera (`familiada-server` `apps check`, 40209… / 121225966637): domyślne silniki SearXNG odmawiają (duckduckgo/startpage CAPTCHA, brave too many requests, aol HTTP error, karmasearch/mojeek/qwant/presearch access denied); wyniki dają yandex (10), seznam (10), wiby (2). Poprawki: `SEARCH_ENGINES=yandex,seznam,bing,google,wiby`, `SEARCH_PARALLEL=2`; zapytanie bez wyników z odmową silników wraca do puli, po 8 takich z rzędu wyszukiwarka wstrzymana w przebiegu z listą powodów w logu; migracja 494 zwraca do puli zapytania z 0 wyników. Mail „Zaproszenie”: wyraźnie „nie jest oferta handlowa”, system bezpłatny. Testy Pythona 15/15, test maila ✓. | Przebieg kontrolny z panelu (właściciel), liczniki `db-read`. |

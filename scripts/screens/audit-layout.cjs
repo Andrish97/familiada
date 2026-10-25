@@ -41,7 +41,7 @@ function observeLayoutShifts() {
   const checkShown = () => {
     const root = document.documentElement;
     if (!root || state.shown !== null || !document.body) return;
-    if (root.classList.contains("page-loading") || root.hasAttribute("data-layout-pending")) return;
+    if (!root.hasAttribute("data-page-guard") && (root.classList.contains("page-loading") || root.hasAttribute("data-layout-pending"))) return;
     // Guard jest osobnym końcowym ekranem; body zostaje pod nim niewidoczne.
     state.shown = performance.now();
   };
@@ -52,7 +52,7 @@ function observeLayoutShifts() {
     }
     checkShown();
   });
-  mutation.observe(document, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "data-layout-pending"] });
+  mutation.observe(document, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "data-layout-pending", "data-page-guard"] });
   let observer;
   try {
     observer = new PerformanceObserver((list) => record(list.getEntries()));
