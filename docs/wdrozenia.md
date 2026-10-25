@@ -2207,3 +2207,5 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Publiczny main z równoległymi znacznikami wersji scalony bez utraty zmian;
   końcowe **816/816 unit**. Bramka kawy 40236412493 nadal ważna (po niej
   doszły wyłącznie obrazy, dokumentacja i wersje zasobów). Publikacja Pages.
+
+| 2026-10-25 | Marketing — daty kontaktów, migracja 497 | Decyzja właściciela: filtrowanie i sortowanie po dodaniu lub ostatniej wiadomości. Dodający widok tylko dla service_role: ostatnia korespondencja w obu kierunkach, dokładny adres, pominięty kosz, data dawnej wysyłki bez treści zachowana. Daty kalendarzowe Europe/Warsaw, dwa indeksy wiadomości. Test SQL 497 na lokalnym Postgres 16 w Dockerze: oba kierunki, obcy adres/wzorce, kosz, brak historii, stara wysyłka, zakres i DST oraz uprawnienia — OK, rollback. Użyto dokładnych definicji dwóch zależnych tabel z schema.sql. | Najpierw migracja i log OK, potem wdrożenie prywatnego API/UI. Baza i kod dotychczasowego panelu zgodne wstecz; brak wysyłki i zmian maintenance. |
