@@ -229,6 +229,18 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-25 — jednoznaczny opis zmiany typu gry
+
+- Zgłoszenie użytkownika: dwukrotne „zostaną” sugerowało zachowanie także
+  usuwanych danych. Dwa opisy PL brzmią teraz: „Zachowasz pytania.
+  Odpowiedzi i punkty usuniemy.” oraz „Zachowasz pytania i odpowiedzi.
+  Punkty usuniemy.” EN/UK już rozróżniają zachowanie i usunięcie.
+- Branch `fix/change-type-copy`; znaczenie i konwersja danych bez zmian.
+  Dostosowano dwa istniejące oczekiwania e21 do poprawionego tekstu.
+- Pełny unit **812/812 ✓**; okno na 390/360/1400 px: **3/3 zrzuty**,
+  audyt **0 uwag**. Status: dwa punktowe e21 na branchu, potem produkcja.
+
+
 
 ### 2026-10-25 — niewidoczne przekierowania przy wejściu
 
