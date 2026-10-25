@@ -4179,6 +4179,32 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await expect(startRound).toBeEnabled({ timeout: 15000 });
 
+    // Wyjście do Wskazówek i powrót są dozwolone w trakcie rozgrywki:
+    // mają zostać sparowane w logu i nie mogą utworzyć nowej sesji gry.
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      const events = sessions[0]?.stats_detail.events || [];
+      return {
+        sessions: sessions.length,
+        opens: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_open").length,
+        returns: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_return").length,
+      };
+    }, { timeout: 15000 }).toEqual({ sessions: 1, opens: 3, returns: 3 });
+    const navigationEvents = (await readControl2Sessions(page, game.id))[0].stats_detail.events
+      .filter(event => event.source === "control" && ["manual_open", "manual_return"].includes(event.metrics?.phase));
+    const navigationIds = new Map();
+    for (const event of navigationEvents) {
+      const id = event.metrics?.navigation_id;
+      expect(typeof id, "nawigacja do Wskazówek musi mieć identyfikator pary").toBe("string");
+      const phases = navigationIds.get(id) || [];
+      phases.push(event.metrics.phase);
+      navigationIds.set(id, phases);
+      if (event.metrics.phase === "manual_return") expect(event.metrics.duration_ms).toBeGreaterThanOrEqual(0);
+    }
+    expect([...navigationIds.values()]).toEqual([[
+      "manual_open", "manual_return",
+    ], ["manual_open", "manual_return"], ["manual_open", "manual_return"]]);
+
     // Przeglądarka Wyświetlacza wstrzymuje dźwięk bez przeładowania strony
     // (np. uśpienie telewizora) i nie pozwala wznowić go bez gestu: Control
     // wstrzymuje grę, Wyświetlacz pokazuje przycisk, gest przywraca grę.

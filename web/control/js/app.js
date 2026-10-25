@@ -189,9 +189,14 @@ async function main() {
   // utworzeniu store (do tego czasu wyjście jest swobodne).
   let beforeLeave = async () => true;
   let runtimeSession = null;
+  let sessionTelemetry = null;
+  let isGameInProgress = () => false;
+  const manualNavigationKey = "fam:control:manual-navigation";
   let testModePanel = null;
   let testModeChanging = false;
   const i18nP = initI18n({ withSwitcher: true });
+  const params = new URLSearchParams(location.search);
+  const gameId = params.get("id");
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
   let pageLock = null;
@@ -213,12 +218,19 @@ async function main() {
       if (!(await beforeLeave())) return;
       location.href = href;
     },
-    onManual: (href) => leaveTo(href),
+    onManual: async (href) => {
+      if (isGameInProgress()) {
+        const navigationId = crypto.randomUUID();
+        sessionStorage.setItem(manualNavigationKey, JSON.stringify({ gameId, navigationId, at: Date.now() }));
+        sessionTelemetry?.logEvent({
+          event_type: "page_lifecycle", phase: "manual_open", target: "manual", navigation_id: navigationId,
+        });
+      }
+      await leaveTo(href);
+    },
   });
   await i18nP;
 
-  const params = new URLSearchParams(location.search);
-  const gameId = params.get("id");
   const root = document.getElementById("app");
 
   const user = await userP;
@@ -331,7 +343,19 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
-  const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
+  isGameInProgress = () => !!store.state.locks.gameStarted && !store.state.locks.gameEnded;
+  sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
+  try {
+    const navigation = JSON.parse(sessionStorage.getItem(manualNavigationKey) || "null");
+    if (navigation?.gameId === gameId && typeof navigation.navigationId === "string") {
+      sessionTelemetry.logEvent({
+        event_type: "page_lifecycle", phase: "manual_return", source: "manual",
+        navigation_id: navigation.navigationId,
+        duration_ms: Math.max(0, Date.now() - Number(navigation.at || Date.now())),
+      });
+    }
+  } catch { /* Uszkodzony znacznik nawigacji nie może zatrzymać Control. */ }
+  sessionStorage.removeItem(manualNavigationKey);
   setDoorbellObserver(({ gameId: doorbellGameId, revision, client_time_ms }) => {
     if (doorbellGameId !== gameId) return;
     sessionTelemetry.logEvent({
