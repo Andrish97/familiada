@@ -15,17 +15,17 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T06061";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T06061";
-import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-25T06061";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-25T06061";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-25T06061";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T06061";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-25T06061";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-25T06061";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-25T06061";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-25T06061";
-import { setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T06061";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T06124";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-25T06124";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-25T06124";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-25T06124";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-25T06124";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T06124";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-25T06124";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-25T06124";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-25T06124";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-25T06124";
+import { setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-25T06124";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -740,6 +740,7 @@ export function initDrawEditor(ctx) {
   // =========================================================
   const T = (k, p) => t(`logoEditor.draw.ui.${k}`, p);
   let lineStyleSel = null;
+  let shapeSel = null;
 
   function colorBtn(value, attr = "") {
     const black = value === "BLACK";
@@ -751,7 +752,7 @@ export function initDrawEditor(ctx) {
     `<input id="${id}" class="inp sm ctxInput" type="number" min="${min}" max="${max}" step="${step}" value="${value}"/>`;
   const toggleBtn = (id, on, content, title = "") =>
     `<button class="btn xs" id="${id}" type="button" aria-pressed="${on ? "true" : "false"}" ${title ? `title="${title}" aria-label="${title}"` : ""}>${content}</button>`;
-  const lineStyleHtml = (id) =>
+  const selectHtml = (id) =>
     `<div class="ui-select ctxSelect" id="${id}"><button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span></button><div class="ui-select-menu" role="listbox"></div></div>`;
   const alignButtons = (align) => group(
     toggleBtn("cAlignL", align === "left", icon("align-left"), T("alignLeft")) +
@@ -793,6 +794,8 @@ export function initDrawEditor(ctx) {
   function renderSettingsContent() {
     lineStyleSel?.destroy();
     lineStyleSel = null;
+    shapeSel?.destroy();
+    shapeSel = null;
     if (!toolCtx) return;
     toolCtx.dataset.empty = T("ctxEmpty"); // podpowiedź w pustym wierszu ustawień (CSS :empty)
     const active = canvas?.getActiveObject();
@@ -810,7 +813,7 @@ export function initDrawEditor(ctx) {
     const s = settings.BRUSH;
     toolCtx.innerHTML =
       group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
-      group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
+      group(label(T("styleLabel")) + selectHtml("cLineStyle")) +
       group(label(T("colorLabel")) + colorBtn(s.fg, 'id="cFg"'));
     bindNumber("cStrokeW", ...RANGE.stroke, 6, (v) => { s.stroke = v; applyBrushStyle(); updateCursor(); });
     mountLineStyle("cLineStyle", s.lineStyle, (v) => { s.lineStyle = v; applyBrushStyle(); });
@@ -827,10 +830,9 @@ export function initDrawEditor(ctx) {
     const s = settings.SHAPES;
     const shape = shapeById(currentShape);
     let html =
-      `<div class="ctxGroup"><button class="btn xs ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
-      `<span class="ctxSelectIco">${shape.icon}</span><span class="ctxSelectLabel">${t(shape.label)}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button></div>` +
+      `<div class="ctxGroup">${selectHtml("cShape")}</div>` +
       group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
-      group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
+      group(label(T("styleLabel")) + selectHtml("cLineStyle")) +
       group(label(T("colorLabel")) + colorBtn(s.fg, 'id="cFg"'));
     if (shape.hasFill) {
       html += group(`<label class="ctxChk"><input type="checkbox" id="cFill" ${s.fill ? "checked" : ""}/> ${T("fillCheckbox")}</label>` + colorBtn(s.fillColor, 'id="cFillColor"'));
@@ -840,7 +842,12 @@ export function initDrawEditor(ctx) {
     }
     toolCtx.innerHTML = html;
 
-    on("cShapeBtn", "click", (e) => { e.stopPropagation(); toggleShapePicker(); });
+    // Wybór kształtu: wspólna lista ui-select (ikona + nazwa), jak „Styl”.
+    shapeSel = initUiSelect($("cShape"), {
+      options: SHAPES.map((sh) => ({ value: sh.id, label: t(sh.label), icon: sh.icon })),
+      value: shape.id,
+      onChange: (v) => setShape(v),
+    });
     bindNumber("cStrokeW", ...RANGE.stroke, 6, (v) => { s.stroke = v; });
     mountLineStyle("cLineStyle", s.lineStyle, (v) => { s.lineStyle = v; });
     on("cFg", "click", () => { s.fg = s.fg === "BLACK" ? "WHITE" : "BLACK"; renderSettings(); });
@@ -925,7 +932,7 @@ export function initDrawEditor(ctx) {
 
     let html =
       group(label(T("outlineLabel")) + `<input id="cObjStroke" class="inp sm ctxInput" type="number" min="${RANGE.outline[0]}" max="${RANGE.outline[1]}" step="1" value="${widths.size === 1 ? [...widths][0] : ""}" placeholder="—"/>`) +
-      group(label(T("styleLabel")) + lineStyleHtml("cObjLineStyle")) +
+      group(label(T("styleLabel")) + selectHtml("cObjLineStyle")) +
       group(colorBtn(strokeColors.size === 1 ? [...strokeColors][0] : "WHITE", 'id="cObjStrokeColor"'));
     if (canFill) {
       html += group(`<label class="ctxChk"><input type="checkbox" id="cObjFill" ${filled ? "checked" : ""}/> ${T("fillCheckbox")}</label>` + colorBtn(toBW(firstFill || "#fff"), 'id="cObjFillColor"'));
@@ -960,40 +967,6 @@ export function initDrawEditor(ctx) {
       apply((o) => { if (o.fill && o.fill !== "transparent") o.set({ fill: next }); });
       renderSettings();
     });
-  }
-
-  // =========================================================
-  // Wybór kształtu (popover pod przyciskiem)
-  // =========================================================
-  function closeShapePicker() {
-    $("shapePickerPop")?.remove();
-    document.removeEventListener("pointerdown", onShapePickerOutside, true);
-  }
-
-  function onShapePickerOutside(e) {
-    if (e.target.closest?.("#shapePickerPop, #cShapeBtn")) return;
-    closeShapePicker();
-  }
-
-  function toggleShapePicker() {
-    if ($("shapePickerPop")) return closeShapePicker();
-    const anchor = $("cShapeBtn");
-    if (!anchor) return;
-    const pop = document.createElement("div");
-    pop.id = "shapePickerPop";
-    pop.className = "shapePickerPop ctxPop";
-    pop.setAttribute("role", "listbox");
-    pop.innerHTML = SHAPES.map((s) =>
-      `<button class="spi" type="button" role="option" data-shape="${s.id}" aria-selected="${s.id === currentShape}" aria-label="${t(s.label)}" title="${t(s.label)}">${s.icon}</button>`).join("");
-    pop.addEventListener("click", (e) => {
-      const item = e.target.closest(".spi");
-      if (!item) return;
-      closeShapePicker();
-      setShape(item.dataset.shape);
-    });
-    document.body.appendChild(pop);
-    placeDropdown(anchor, pop, { align: "start" });
-    document.addEventListener("pointerdown", onShapePickerOutside, true);
   }
 
   // =========================================================
@@ -1405,7 +1378,7 @@ export function initDrawEditor(ctx) {
     // Klik poza sceną (nie w pasek narzędzi) kończy edycję tekstu.
     document.addEventListener("mousedown", (ev) => {
       if (ctx.getMode?.() !== "DRAW" || !canvas) return;
-      if (ev.target.closest?.("#toolsDraw, #toolCtxSettings, #drawFontPickPop, #shapePickerPop, .ui-select-menu")) return;
+      if (ev.target.closest?.("#toolsDraw, #toolCtxSettings, #drawFontPickPop, .ui-select-menu")) return;
       if (canvas.upperCanvasEl.contains(ev.target)) return;
       if (isTextObj(canvas.getActiveObject())) finishTextEditing();
     });
@@ -1570,7 +1543,6 @@ export function initDrawEditor(ctx) {
       baseTool = tool = TOOL.SELECT;
       drawing = null;
       clearPolyDraft();
-      closeShapePicker();
       closeFontPicker();
 
       resizeStage();
@@ -1591,7 +1563,6 @@ export function initDrawEditor(ctx) {
     close() {
       paneDraw.hidden = true;
       if (canvas && isTextObj(canvas.getActiveObject())) canvas.getActiveObject().exitEditing?.();
-      closeShapePicker();
       closeFontPicker();
       hideCursorDot();
       if (toolCtx) toolCtx.innerHTML = "";

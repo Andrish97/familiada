@@ -22,7 +22,7 @@ const SCROLL_POLICY = {
 
 // Elementy, które nie mogą się zawijać (decyzje: e20-uwagi-do-korekty.md,
 // ujednolicenie-wygladu.md; lista w wspolne-style-plan.md „Zakazy…”).
-const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn"];
+const NO_WRAP = ["#navMore", "#btnMySent", ".topbar .btn", ".fit-row"];
 
 // Funkcja wykonywana w stronie (page.evaluate). opts: { path, safe, allowDocScroll }.
 function inspectLayout(opts) {
@@ -167,6 +167,68 @@ function inspectLayout(opts) {
     }
   }
 
+  // 4a. Obwódka przycisku ucięta przez przodka z overflow (zgłoszenie
+  // 2026-10-24): krawędź przycisku wystaje o 0,5–4 px poza obszar przycinania.
+  for (const btn of root.querySelectorAll("button, a.btn, [role=button], .btn, input:not([type=hidden]), select, textarea")) {
+    if (!visible(btn)) continue;
+    const r = btn.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) continue;
+    for (let e = btn.parentElement; e && e !== document.documentElement; e = e.parentElement) {
+      const st = getComputedStyle(e);
+      if (st.overflowX === "visible" && st.overflowY === "visible" && st.contain.indexOf("paint") < 0) continue;
+      // Lista przewijana: element częściowo przewinięty to nie ucięta obwódka.
+      if (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1) break;
+      const c = e.getBoundingClientRect();
+      const bl = parseFloat(st.borderLeftWidth), bt = parseFloat(st.borderTopWidth), br = parseFloat(st.borderRightWidth), bb = parseFloat(st.borderBottomWidth);
+      const clip = { left: c.left + bl, top: c.top + bt, right: c.right - br, bottom: c.bottom - bb };
+      const cut = Math.max(st.overflowX === "visible" ? 0 : Math.max(clip.left - r.left, r.right - clip.right),
+        st.overflowY === "visible" ? 0 : Math.max(clip.top - r.top, r.bottom - clip.bottom));
+      if (cut > 0.5 && cut <= 4) { add("obwodka-ucieta", btn, `${cut.toFixed(1)} px (${label(e)})`); break; }
+      if (cut > 4) break; // przewinięte poza widok — nie obwódka
+    }
+  }
+
+  // 4c. Przewijany obszar bez wygaszonej krawędzi (scroll-fade.js): treść
+  // ucięta ostro przy krawędzi (zgłoszenie 2026-10-24, Dźwięk w ustawieniach gry).
+  for (const el of root.querySelectorAll("*")) {
+    if (el.scrollHeight <= el.clientHeight + 8 || el.clientHeight < 60) continue;
+    const oy = getComputedStyle(el).overflowY;
+    if (oy !== "auto" && oy !== "scroll") continue;
+    if (!visible(el) || el.classList.contains("scroll-fade") || el.closest("select, textarea, .menu, [role=listbox]")) continue;
+    if (el === document.documentElement || el === document.body) continue;
+    add("brak-wygaszenia", el, `${el.clientHeight}/${el.scrollHeight} px`);
+  }
+
+  // 4d. Sklejone karty (zgłoszenie 2026-10-24, Ankiety): dwa sąsiednie bloki
+  // z ramką lub tłem stoją w pionie bliżej niż 4 px (bez odstępu silnika).
+  const boxed = (el) => {
+    const st = getComputedStyle(el);
+    if (st.position === "absolute" || st.position === "fixed" || st.display.startsWith("inline")) return false;
+    const bordered = ["Top", "Bottom", "Left", "Right"].filter((side) => parseFloat(st[`border${side}Width`]) > 0 && st[`border${side}Style`] !== "none").length >= 3;
+    const r = parseFloat(st.borderTopLeftRadius) > 0;
+    return bordered && r;
+  };
+  // Pomija elementy przycięte przez przewijaną listę (częściowo przewinięte).
+  const clippedByScroll = (el) => {
+    const r = el.getBoundingClientRect();
+    for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      if (e.scrollHeight <= e.clientHeight + 1) continue;
+      const c = e.getBoundingClientRect();
+      if (r.top < c.top - 1 || r.bottom > c.bottom + 1) return true;
+    }
+    return false;
+  };
+  const boxes = [...root.querySelectorAll("main *, .overlay:not([hidden]) *")].filter((el) => visible(el) && el.getBoundingClientRect().height > 20 && boxed(el) && !clippedByScroll(el))
+    .map((el) => ({ el, r: el.getBoundingClientRect() }));
+  for (const { el: b, r: rb } of boxes) {
+    for (const { el: a, r: ra } of boxes) {
+      if (a === b || a.contains(b) || b.contains(a)) continue;
+      const gapY = rb.top - ra.bottom;
+      const overlapX = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
+      if (overlapX > 40 && gapY > -1 && gapY < 3) { add("sklejone-karty", b, `${gapY.toFixed(1)} px pod ${label(a)}`); break; }
+    }
+  }
+
   // 4b. Zakazy zawijania: element w jednym wierszu; stopka — części obok siebie.
   for (const el of root.querySelectorAll(NO_WRAP.join(","))) {
     if (!visible(el)) continue;
@@ -185,6 +247,21 @@ function inspectLayout(opts) {
     let last = -Infinity;
     for (const t of tops) { if (t - last > lh * 0.6) lines.add(t); last = t; }
     if (lines.size > 1) add("zawiniete", el, `${lines.size} wiersze`);
+  }
+  // Rząd przycisków zawinięty na dwa wiersze (zgłoszenie 2026-10-24) i .fit-row
+  // szerszy niż jego miejsce.
+  for (const row of root.querySelectorAll("*")) {
+    const btns = [...row.children].filter((c) => c.matches(".btn, button") && visible(c));
+    if (btns.length < 2) continue;
+    const st = getComputedStyle(row);
+    if (st.display !== "flex" && st.display !== "inline-flex") continue;
+    if (st.flexDirection.startsWith("column")) continue;
+    const tops = btns.map((b) => b.getBoundingClientRect().top);
+    const h = Math.min(...btns.map((b) => b.getBoundingClientRect().height));
+    if (Math.max(...tops) - Math.min(...tops) > h * 0.6) add("przyciski-zawiniete", row, `${btns.length} przycisków w ${new Set(tops.map((t) => Math.round(t / h))).size} rzędach`);
+  }
+  for (const row of root.querySelectorAll(".fit-row")) {
+    if (visible(row) && row.scrollWidth > row.clientWidth + 1) add("fit-row-za-szeroki", row, `${row.scrollWidth}/${row.clientWidth} px`);
   }
   for (const foot of root.querySelectorAll(".footer")) {
     if (!visible(foot)) continue;

@@ -26,14 +26,15 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 // przejmowany. Małe okna (confirm/prompt) zostają okienkami.
 async function expectBottomSheet(page, overlay, { panel = ".modal, .market-preview-card", handle = true } = {}) {
   await expect(overlay).toHaveClass(/sheet-active/);
-  await page.waitForTimeout(450); // animacja wjazdu
+  await page.waitForTimeout(550); // animacja wjazdu (--dur-sheet-in .46s)
   const vp = page.viewportSize();
   const box = await overlay.locator(panel).first().boundingBox();
   expect(box.width, "okno na całą szerokość ekranu").toBeGreaterThanOrEqual(vp.width - 2);
   expect(Math.round(box.y + box.height), "okno przy dolnej krawędzi").toBeGreaterThanOrEqual(vp.height - 2);
   expect(box.y, "okno prawie na całą wysokość").toBeLessThan(60);
   if (handle) await expect(overlay.locator(".sheet-handle")).toBeVisible();
-  await expect(page.locator(".footer")).toBeHidden();
+  // Stopka zostaje w tle pod arkuszem (decyzja użytkownika 2026-10-24).
+  await expect(page.locator(".footer")).toBeVisible();
 }
 
 async function closeSheetViaHandle(page) {
@@ -145,7 +146,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await expect.poll(() => page.evaluate(() => history.state?.__sheetDialog || null)).toBe("shareOverlay");
 
       await expectBottomSheet(page, overlay);
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
 
       await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
@@ -609,7 +610,7 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
       await expectBottomSheet(page, overlay);
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
 
       await closeSheetViaHandle(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
@@ -725,7 +726,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
       await expect(overlay).toBeVisible({ timeout: 5000 });
 
       await expectBottomSheet(page, overlay);
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
 
       await page.locator("#btnSubmitCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
@@ -858,7 +859,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     await expect(overlay).toBeVisible({ timeout: 5000 });
 
     await expectBottomSheet(page, overlay);
-    await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+    await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
 
     // klik w tło zamyka okno od dołu (decyzja 2026-10-20), pasek też
     await overlay.click({ position: { x: 5, y: 5 } });
@@ -1122,8 +1123,7 @@ test.describe("contact-modal: mobile sheet modal (wspólny dla wielu stron)", ()
     await expect(overlay).toBeVisible({ timeout: 5000 });
 
     await expectBottomSheet(page, overlay);
-    // Reguła CSS istniejąca już wcześniej (body.sheet-open .footer .btn-contact-footer)
-    await expect(footerContactBtn).toBeHidden();
+    await expect(footerContactBtn).toBeVisible(); // stopka zostaje w tle
 
     // Przycisk wstecz w topbarze nie jest przejmowany; okno zamyka pasek.
     await expect(btnBack).toHaveText(originalText);

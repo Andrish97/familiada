@@ -139,6 +139,10 @@
   --dur-fast: .12s;
   --dur-base: .2s;
   --dur-slow: .3s;
+  /* Okno od dołu (roletka): wjazd wolniej i łagodnie do końca, nie „wyskakuje”. */
+  --dur-sheet-in: .46s;
+  --dur-sheet-out: .3s;
+  --ease-sheet: cubic-bezier(.32, .72, 0, 1);
 
   /* ── układ ──────────────────────────────────────────────────── */
   --page-gutter: 18px;           /* boczny margines treści; ≤980 px — 15 px */

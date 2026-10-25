@@ -426,6 +426,8 @@ div#cover2Logo {
     white-space: normal;
     word-break: break-word
 }
+/* Podgląd (mały iframe): napis w proporcji ekranu, bez progu 14 px. */
+:root[data-preview] .cover2Swipe { font-size: calc(var(--host-line)*.72); }
 
 /* Bardzo niski ekran (podgląd Prowadzącego w ustawieniach gry na telefonie,
    ok. 200 px wysokości): podpowiedź zostaje widoczna, tylko mniejsza --

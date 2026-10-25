@@ -5,9 +5,12 @@
 //   data-orientation portrait | landscape
 //   data-compact     układ telefonu: telefon albo okno do 600 px
 //   data-sheet       okna od dołu: dotyk (bez TV) albo okno do 600 px
+//   data-keyboard    klawiatura ekranowa otwarta (dotyk, aktywne pole i okno
+//                    niższe o ponad KEYBOARD_MIN px): stopka znika, aktywne
+//                    pole przewija się do widoku w swoim kontenerze
 // Ładowany jako pierwszy moduł strony; body jest ukryte (page-loading),
 // dopóki strona się nie złoży, więc atrybuty są przed pierwszym widokiem.
-import { getDeviceProfile } from "./device-guard.js?v=v2026-10-25T06061";
+import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-25T06124";
 
 export const NARROW_MAX = 600;
 
@@ -37,6 +40,27 @@ function apply() {
   if (changed) document.dispatchEvent(new CustomEvent("device:change", { detail: next }));
 }
 
+// Klawiatura: okno (resizes-content) albo widoczna część (visualViewport)
+// niższe niż najwyższe zapamiętane przy tej szerokości.
+const KEYBOARD_MIN = 120;
+let fullHeight = { width: 0, height: 0 };
+
+function viewHeight() {
+  return Math.min(window.innerHeight, window.visualViewport?.height || window.innerHeight);
+}
+
+function applyKeyboard() {
+  const root = document.documentElement;
+  const h = viewHeight();
+  if (window.innerWidth !== fullHeight.width) fullHeight = { width: window.innerWidth, height: h };
+  const typing = root.dataset.input === "touch" && editableFocused();
+  if (!typing || h > fullHeight.height) fullHeight.height = Math.max(fullHeight.height, h);
+  const open = typing && fullHeight.height - h > KEYBOARD_MIN;
+  if (root.hasAttribute("data-keyboard") === open) return;
+  root.toggleAttribute("data-keyboard", open);
+  if (open) requestAnimationFrame(() => document.activeElement?.scrollIntoView?.({ block: "nearest" }));
+}
+
 /** Układ telefonu (data-compact). */
 export const isCompactLayout = () => document.documentElement.hasAttribute("data-compact");
 /** Okna od dołu (data-sheet). */
@@ -49,6 +73,10 @@ export function onDeviceChange(fn) {
 
 if (typeof document !== "undefined" && typeof window !== "undefined") {
   apply();
-  window.addEventListener("resize", apply, { passive: true });
+  applyKeyboard();
+  window.addEventListener("resize", () => { apply(); applyKeyboard(); }, { passive: true });
   window.addEventListener("orientationchange", apply);
+  window.visualViewport?.addEventListener("resize", applyKeyboard, { passive: true });
+  document.addEventListener("focusin", () => requestAnimationFrame(applyKeyboard));
+  document.addEventListener("focusout", () => requestAnimationFrame(applyKeyboard));
 }

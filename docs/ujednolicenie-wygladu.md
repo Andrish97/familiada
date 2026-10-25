@@ -26,6 +26,19 @@ podliczania jako stan bieżącej operacji.
 
 ---
 
+## Decyzje — Control, klawiatura, zawijanie, okna (2026-10-24/25)
+
+- **Control rośnie z ekranem** (czytelność dla operatora, zwłaszcza gdy prowadzi
+  sam bez Prowadzącego): przyciski w treści mają jeden rozmiar ze wspólnego
+  tokena `--c2-btn-fs` (0,88 × `--c2-fs`), który skaluje się z oknem; nie
+  stały rozmiar silnika. Topbar zostaje w stałym rozmiarze jak na innych stronach.
+- **Rzędy przycisków się nie zawijają**: `.fit-row` (core/fit-row.js) — gdy się
+  nie mieszczą, najpierw przyciski poboczne chowają napisy (ikona + dymek),
+  główny (złoty) dopiero na końcu.
+- **Stopka zostaje w tle pod oknem od dołu**; chowa się tylko przy otwartej
+  klawiaturze ekranowej (`data-keyboard`, telefony i tablety).
+- **Roletka** wjeżdża łagodnie (`--dur-sheet-in` .46s, `--ease-sheet`).
+
 ## Decyzje — telefon: Ustawienia gry i przycisk powrotu (2026-10-21)
 
 - **Ustawienia gry działają na telefonie** (bez blokady urządzenia i progu

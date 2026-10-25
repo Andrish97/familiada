@@ -29,8 +29,10 @@ export const SCROLL_FADE_SELECTOR = [
   ".sheet-modal-body",
   ".uni-body",
   ".uni-modal > .mSub",
+  ".modal-scroll",
   // edytor gry, edycja pytania (Eksplorator), ustawienia gry i Control
   ".listShell",
+  "#gsContent",
   ".qf-listShell",
   ".qList",
   ".c2-scroll-area",
@@ -49,6 +51,9 @@ export const SCROLL_FADE_SELECTOR = [
   ".mkt-detail-questions",
   ".market-preview-questions",
   "#resultsList",
+  // Wskazówki: treść rozdziału i spis
+  "#manualContent",
+  "#manualToc",
   // Logo: lista czcionek, siatka obrazów
   "#drawFontList",
   ".imgTopGrid",
@@ -100,6 +105,8 @@ function update(el, full) {
       else el.style.removeProperty("--scroll-fade-top");
     }
   }
+  // Przerysowanie z uzgadnianiem klas (Control) zdejmuje klasę — przywróć.
+  if (!el.classList.contains("scroll-fade")) el.classList.add("scroll-fade");
   const max = scrollable.get(el) ? el.scrollHeight - el.clientHeight : 0;
   const above = max > 1 && el.scrollTop > 1;
   const below = max > 1 && el.scrollTop < max - 1;

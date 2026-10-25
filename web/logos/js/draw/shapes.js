@@ -1,24 +1,23 @@
 // Kształty narzędzia „Kształty”: metadane/geometria; podglądy są w assets.
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-25T06061";
 
 
-// label = klucz tłumaczenia
+// label = klucz tłumaczenia, icon = nazwa ikony (core/icons.js)
 export const SHAPES = [
-  { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: icon("logo-shape-line") },
-  { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: icon("logo-shape-rect") },
-  { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: icon("logo-shape-round-rect") },
-  { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: icon("logo-shape-ellipse") },
-  { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: icon("logo-shape-triangle") },
-  { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: icon("logo-shape-diamond") },
-  { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: icon("logo-shape-pentagon") },
-  { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: icon("logo-shape-hexagon") },
-  { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: icon("logo-shape-star5") },
-  { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: icon("logo-shape-arrow1") },
-  { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: icon("logo-shape-arrow2") },
-  { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: icon("logo-shape-arrow1-fill") },
-  { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: icon("logo-shape-arrow2-fill") },
-  { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: icon("logo-shape-heart") },
-  { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: icon("logo-shape-polygon") },
+  { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: "logo-shape-line" },
+  { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: "logo-shape-rect" },
+  { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: "logo-shape-round-rect" },
+  { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: "logo-shape-ellipse" },
+  { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: "logo-shape-triangle" },
+  { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: "logo-shape-diamond" },
+  { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: "logo-shape-pentagon" },
+  { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: "logo-shape-hexagon" },
+  { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: "logo-shape-star5" },
+  { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: "logo-shape-arrow1" },
+  { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: "logo-shape-arrow2" },
+  { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: "logo-shape-arrow1-fill" },
+  { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: "logo-shape-arrow2-fill" },
+  { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: "logo-shape-heart" },
+  { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: "logo-shape-polygon" },
 ];
 
 export const shapeById = (id) => SHAPES.find((s) => s.id === id) || SHAPES[1];

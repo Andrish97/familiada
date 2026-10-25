@@ -1,8 +1,8 @@
-import { icon, iconText } from "./icons.js?v=v2026-10-25T06061";
-import { setMessage } from "./toast.js?v=v2026-10-25T06061";
-import { t } from "../../translation/translation.js?v=v2026-10-25T06061";
-import { openDialog, closeDialog, isSheetViewport, animateClose } from "./modal-sheet.js?v=v2026-10-25T06061";
-import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-25T06061";
+import { icon, iconText } from "./icons.js?v=v2026-10-25T06124";
+import { setMessage } from "./toast.js?v=v2026-10-25T06124";
+import { t } from "../../translation/translation.js?v=v2026-10-25T06124";
+import { openDialog, closeDialog, isSheetViewport, animateClose } from "./modal-sheet.js?v=v2026-10-25T06124";
+import { setProgress, ratioPct } from "./ui-metrics.js?v=v2026-10-25T06124";
 
 let modalSeq = 0;
 
@@ -80,7 +80,7 @@ function buildModal({
   if (body) bodyWrap.appendChild(body);
 
   const foot = document.createElement("div");
-  foot.className = "importRow uni-foot modal-actions";
+  foot.className = "importRow uni-foot modal-actions fit-row"; // jeden rząd (core/fit-row.js)
 
   const okBtn = document.createElement("button");
   okBtn.className = "btn sm gold";

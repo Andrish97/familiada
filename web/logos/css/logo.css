@@ -722,29 +722,6 @@
   .ctxPop{
     color: var(--text);
   }
-  .shapePickerPop{
-    position: fixed;
-    z-index: var(--z-menu);
-    display: grid;
-    grid-template-columns: repeat(5, 42px);
-    gap: 4px;
-    transition: opacity .12s;
-  }
-  .shapePickerPop .spi{
-    position: relative;
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    border-radius: var(--r-sm);
-    color: var(--text);
-    cursor: pointer;
-  }
-  .shapePickerPop .spi:hover{ background: var(--w-4); }
-  .shapePickerPop .spi[aria-selected="true"]{ background: var(--w-8); color: var(--accent); }
 
   /* Przycisk otwierający listę (kształt, font): stała szerokość, nazwa
      ucinana wielokropkiem — dłuższe nazwy nie wychodzą poza przycisk. */
@@ -754,9 +731,6 @@
     gap: 6px;
     color: var(--text);
   }
-  .ctxSelectBtn--shape{ width: 190px; }
-  .ctxSelectIco{ display: inline-flex; flex-shrink: 0; }
-  .ctxSelectIco svg{ width: 18px; height: 18px; }
   .ctxSelectLabel{
     flex: 1;
     min-width: 0;

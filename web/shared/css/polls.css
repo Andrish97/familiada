@@ -67,11 +67,12 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    border-bottom: 1px solid var(--line);
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: var(--r-md);
     background: var(--surface-1);
+    /* Odstęp do karty z wypustkami jak .bar silnika (layout.css): 12 px. */
+    margin-bottom: 12px;
   }
   .pollBarState{
     display: flex;
@@ -182,12 +183,14 @@
     font-size: 13px;
     opacity: .75;
   }
+  /* Trzy przyciski zawsze w jednym rzędzie: trzy równe kolumny. */
   .pollLinkActions{
     margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch; /* równa wysokość, gdy jeden napis zawija się w dwa wiersze */
   }
-  /* Przyciski układają się w jednym rzędzie, a na wąskim ekranie mogą zejść niżej. */
-  .pollLinkActions .btn{ white-space: normal; flex: 1 1 105px; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .pollLinkActions .btn{ white-space: normal; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
   /* telefon: ikona nad napisem -- najdłuższe słowo („wyświetlaczu”) mieści się
      w jednej z trzech równych kolumn bez ucinania */

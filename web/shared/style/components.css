@@ -1234,8 +1234,8 @@
   }
   .toggle-slider > .ico { flex: none; width: 1.15em; height: 1.15em; }
   /* Obrys wybranej części idzie po zaokrągleniu grupy (bez ucięć w rogach). */
-  .toggle-item:first-child > .toggle-slider { border-radius: calc(var(--r-md) - var(--r-xs)) 0 0 calc(var(--r-md) - var(--r-xs)); }
-  .toggle-item:last-child > .toggle-slider { border-radius: 0 calc(var(--r-md) - var(--r-xs)) calc(var(--r-md) - var(--r-xs)) 0; }
+  .toggle-item:first-child > .toggle-slider { border-radius: calc(var(--r-md) - 1px) 0 0 calc(var(--r-md) - 1px); }
+  .toggle-item:last-child > .toggle-slider { border-radius: 0 calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0; }
   .toggle-group--sm .toggle-slider { padding: 7px 10px; font-size: 12px; }
   /* Wiersz listy na telefonie: przełącznik same ikony (opis w dymku). */
   @media (max-width: 600px) {
@@ -2204,13 +2204,29 @@
     .grid :is(.tile, .addCard, .logoTile):hover { transform: none; }
   }
 
+  /* ── Wiersz bez zawijania (.fit-row, core/fit-row.js) ─────────────
+     Jeden rząd zawsze; gdy się nie mieści, .is-icons chowa napisy
+     przycisków z ikoną (zostaje ikona 36×36, nazwa w dymku). */
+  .fit-row { flex-wrap: nowrap; min-width: 0; }
+  .fit-row > .btn { flex: 0 0 auto; white-space: nowrap; }
+  .fit-row.is-icons > .btn:not(.gold):has(> svg.ico),
+  .fit-row.is-icons-all > .btn:has(> svg.ico) {
+    width: 36px;
+    min-width: 36px;
+    padding-inline: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0; /* napis zostaje w dostępności i w dymku */
+  }
+  .fit-row:is(.is-icons, .is-icons-all) > .btn:has(> svg.ico) > svg.ico { width: 18px; height: 18px; }
+
   /* ── Sekcje udostępniania (share-sections.js) ─────────────────── */
   .shareSection {
     --under: var(--surface-inset);
     margin-top: 16px;
     padding: 12px;
     border-radius: var(--r-md);
-    background: var(--w-4);
+    background: var(--surface-inset); /* kryjące (Android) */
     border: 1px solid var(--line-faint);
   }
   .shareSection:first-child { margin-top: 0; }
@@ -2622,6 +2638,11 @@
 }
 
 @layer states {
+  /* Pomiar .fit-row (core/fit-row.js): dzieci w pełnej szerokości, także
+     komunikaty z flex: 1 stron — w warstwie states, żeby wygrać z page. */
+  .fit-row.is-measuring { justify-content: flex-start; } /* wystawanie w lewo nie trafia do scrollWidth */
+  .fit-row.is-measuring > * { flex: 0 0 auto; min-width: max-content; }
+
   /* ── Zaznaczenie (jedno w całym serwisie): element .is-selected (kafel,
      wiersz listy, wiersz drzewa, tag) albo wiersz z zaznaczonym polem wyboru —
      złota krawędź i złoty odcień tła. Wiersze bez ramki dostają obrys, kafle
@@ -2661,7 +2682,8 @@
   .sheet-modal-actions[hidden] { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
-  :where(:root[data-sheet]) body.sheet-open .footer { visibility: hidden; }
+  /* Klawiatura ekranowa (device-attrs.js): stopka nie zabiera miejsca przy pisaniu. */
+  :where(:root[data-keyboard]) .footer { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
@@ -2678,9 +2700,9 @@
     /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
     overflow: hidden;
     overflow: clip;
-    animation: sheetScrimIn .28s ease both;
+    animation: sheetScrimIn var(--dur-sheet-in) ease both;
   }
-  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut .24s ease both; }
+  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut var(--dur-sheet-out) ease both; }
 
   :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
     position: relative;
@@ -2705,12 +2727,12 @@
     overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
     overflow: clip;
     transform: translateY(var(--sheet-drag, 0px));
-    animation: sheetUp .34s var(--ease-out) both;
+    animation: sheetUp var(--dur-sheet-in) var(--ease-sheet) both;
     will-change: transform;
   }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
-  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown .24s ease-in both; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown var(--dur-sheet-out) cubic-bezier(.4, 0, 1, 1) both; }
 
   /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
      ekranu, żeby pole i przyciski zostały nad klawiaturą. */
@@ -2815,6 +2837,9 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
+  /* Sekcje jedna pod drugą w arkuszu: 12 px jak w oknie wyśrodkowanym
+     (tam odstęp daje gap okna, którego ciało arkusza nie dziedziczy). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body > .shareSection + .shareSection { margin-top: 12px; }
   /* Treść .uni-body jak w wyśrodkowanym oknie (kolumna z odstępem), ale bez
      własnego przewijania -- przewija się treść okna od dołu. */
   :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
@@ -2861,7 +2886,8 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
-  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top { margin-inline: 16px; }
+  /* .sheet-modal-top ma display: contents — margines dostają jego części. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top > :is(.sheet-modal-head, .sheet-modal-actions) { margin-inline: 16px; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
   /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
      w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
@@ -2917,13 +2943,7 @@
      zachowują „✕”). */
   :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
 
-  /* Kontakt i Prywatność nie należą do widoku arkusza. */
-  :where(:root[data-sheet]) body.sheet-open .footer :is(.btn-contact-footer, .btn-support-footer, a[href^="/privacy"]),
-  :where(:root[data-sheet]) body.sheet-open .contact-footer-entry { display: none; }
 
-  /* Strony bez „Wstecz” w topbarze dostają #btnBackSheet tylko w trybie
-     arkusza — zastępuje markę. */
-  :where(:root[data-sheet]) body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand { display: none; }
   /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
   :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }
   :where(:root[data-sheet]) body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }

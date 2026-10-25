@@ -358,7 +358,6 @@
   }
 
   .device-row-2 .btn {
-    font-size: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -396,7 +395,6 @@
     align-items: center;
     justify-content: center;
     padding: 0 12px;
-    min-height: 42px;
     background: var(--g-10);
     border: 1px solid var(--g-10);
     border-radius: var(--r-md);
@@ -520,8 +518,16 @@
      zagnieżdżone klasy się nie mnożą. */
   body { --c2-fs:clamp(14px, min((100vh - 223px) * .031, 1.6vw), 28px); }
   .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; font-size:calc(var(--c2-fs) * var(--c2-fit, 1)); }
-  #app > .cardBody .btn { font-size:calc(var(--c2-fs) * .82); }
-  #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
+  /* Przyciski w treści Control (zgłoszenie 2026-10-24: różne rozmiary): jeden
+     rozmiar w całym panelu — czcionka --c2-btn-fs skaluje się z --c2-fs,
+     wypełnienie w em, więc wysokość jest wszędzie ta sama. Rzędy przycisków
+     nie rozciągają ich w pionie. */
+  body { --c2-btn-fs:calc(var(--c2-fs) * .88); }
+  #app .btn { font-size:var(--c2-btn-fs); padding:.45em .85em; line-height:1.15; }
+  #app .btn.icon { padding:.475em; } /* kwadrat tej samej wysokości co przycisk z napisem */
+  #app .btn > svg.ico { width:1.1em; height:1.1em; }
+  #app .device-connect-code-val { line-height:1; }
+  #app :is(.stepFoot, .stepFootButtons, .c2-summary-row) { align-items:center; }
   #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
   #app > .cardBody .toggle-slider { font-size:calc(var(--c2-fs) * .92); }
   /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
@@ -637,7 +643,6 @@
   .c2-devicerows .control-test-choice > .choice { flex:0 0 auto; }
   .c2-devicerows .control-test-choice > .hint { flex:1 1 auto; min-width:0; }
   .c2-devicerows .device-row-2 { gap:6px; }
-  .c2-devicerows .device-row-2 .btn { padding:7px 9px; }
   .c2-devicerows .device-row-opt { margin-top:0; padding-top:5px; }
   .c2-devicerows .hint { line-height:1.2; }
   /* Zgłoszone: przyciski wyłączonego urządzenia (checkbox "Bez tabletu
@@ -664,7 +669,6 @@
   /* "Losuj ponownie" (zgłoszone jako "zbyt mały") — btn.sm z base.css (13px)
      dociągnięty do tej samej skali co reszta Podsumowania, żeby nie ginął
      obok 1.15rem summarySectionValue. */
-  .c2-summary-row .btn.sm { font-size:var(--c2-fs); padding:9px 15px; }
   /* Podsumowanie wykorzystuje szerokość karty: podgląd Display jest na
      całą szerokość, a reszta informacji układa się w dwóch kolumnach. */
   .c2-summary-grid { display:flex; flex-direction:column; gap:12px; }
@@ -700,7 +704,6 @@
      telefon/tablet i tak nie wchodzi tutaj (guardDesktopOnly()), więc
      dolny próg celuje w skromny laptop (~1000px), górny w duży zewnętrzny
      monitor (~2200px+). */
-  #app > .cardBody .device-row-2 .btn { font-size:calc(var(--c2-fs) * .92); }
   /* Siatka równych przycisków (decyzja 2026-10-21): dwie kolumny tej samej
      szerokości w obu liniach; kod jest przyciskiem kopiowania. */
   .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:stretch; gap:6px; }
@@ -708,7 +711,7 @@
   /* Trzecia linia z jednym przyciskiem („Udostępnij” u Prowadzącego i Przycisku). */
   .device-row-line--single { grid-template-columns: minmax(0, 1fr); }
   .device-row-line > .btn { width:100%; min-width:0; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .device-row-line > .device-connect-code { gap:.5em; padding:0 .6em; }
+  .device-row-line > .device-connect-code { gap:.5em; }
   .device-row-line > .device-connect-code .ico { color: var(--text-muted); }
   .device-row-line > .device-connect-code:hover { border-color:var(--g-60); }
   /* Status połączenia: lekka plakietka z kropką zamiast dużego kafla. */
@@ -821,11 +824,9 @@
     .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
     .c2-devicerows .control-test-choice { padding-block:5px; }
     .c2-devicerows .device-row-2 { gap:5px; }
-    .c2-devicerows .device-row-2 .btn { padding:.4em .6em; }
     .c2-devicerows .device-row-opt { padding-top:2px; }
     .c2-devicerows .toggle-group { margin-top:4px; }
     .c2-devices-layout .c2-roundlayout-main > .c2-scroll-area { gap:6px; }
-    .c2-devicerows .device-connect-code { min-height:2.1em; padding:0 .5em; }
     .c2-devicerows .device-connect-code-val { font-size:calc(var(--c2-fs) * .98); letter-spacing:.08em; }
   }
   @media (max-width: 980px) {

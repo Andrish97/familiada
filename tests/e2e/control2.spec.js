@@ -953,6 +953,12 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
   trackErrors(p, label, errors);
   instrumentAnon(p, label);
   await p.goto(path, { waitUntil: "domcontentloaded" });
+  // /go/ przekierowuje na stronę urządzenia po control_device_share_resolve;
+  // bez czekania evaluate trafiał w przerwaną nawigację („Execution context
+  // was destroyed”, przebiegi 2029/40145858490).
+  if (deviceType && parsed.pathname === "/go/") {
+    await p.waitForURL((url) => url.pathname.startsWith(`/control/${deviceType}`), { waitUntil: "domcontentloaded", timeout: 20000 });
+  }
   return p;
 }
 
