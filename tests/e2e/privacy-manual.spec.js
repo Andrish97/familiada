@@ -304,6 +304,8 @@ test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, ob
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
     const page = await context.newPage();
     await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
+    // Treść SSR jest czytelna wcześniej; powiększanie wymaga gotowego JS.
+    await expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true");
     const shot = page.locator(".m-shot-zoom").first();
     await shot.scrollIntoViewIfNeeded();
     await shot.click();

@@ -415,3 +415,13 @@ i Worker
 — sukces. Przy wdrożeniu zmieniony także wewnętrzny klucz Cache API mapy,
 żeby starszy spis nie przetrwał na innych POP przez godzinę. Regresja starego
 cache i cały zestaw Workera 10/10. Publiczny URL sitemap nie zmienia się.
+
+
+Kontrola main 40168599886 ujawniła różnicę względem testu samego frontu:
+SSR udostępnia linki i obrazy przed końcem importu treści w przeglądarce.
+Poprawka przejmuje zgodny język/rozdział bez wymiany DOM; obsługę nawigacji
+JS podpina po gotowości modelu, wcześniej działają zwykłe odnośniki HTML.
+Test powiększania czeka na gotowość JS, a nie samą obecność obrazu SSR.
+Regresja `cloudflare/maintenance-worker/test/public-browser.mjs` wstrzymuje
+moduł treści: zachowanie elementu obrazu i wczesna nawigacja, 390/1400 px,
+4/4. Unity powiązane 43/43. Zwykły wygląd i opis obsługi bez zmian.

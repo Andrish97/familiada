@@ -47,6 +47,7 @@ test('every guide chapter and index has full localized HTML, canonical, reciproc
     assert.doesNotMatch(html, /page-loading|noindex/);
     assert.match(html, /<h1 class="m-title">[^<]+<\/h1>/);
     assert.match(html, /class="m-side-item/);
+    assert.match(html, new RegExp(`data-manual-lang="${lang}" data-manual-chapter="${id || ''}"`));
     assert.match(html, /<meta name="description" content="[^"]{15}/);
     assert.ok(html.match(/id="btnLegal"[^>]*>/)?.[0].includes(publicUrl('privacy', lang)));
     if (id) {
