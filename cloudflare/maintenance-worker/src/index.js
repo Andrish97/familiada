@@ -1,3 +1,4 @@
+import { secretHandoff } from "./lib/admin-secret-handoff.js";
 // See cloudflare/README.md for full behavior and checklist.
 //
 // This file is the thin router/entry point only -- all actual logic lives in
@@ -73,6 +74,7 @@ export default {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const host = url.host.toLowerCase();
+  if (host === "www.familiada.online" && url.pathname === "/_internal/admin-secret-handoff") return secretHandoff(request, env);
   if (host === "www.familiada.online" || host === "familiada.online" || host === "admin.familiada.online") {
     const redirect = tvRedirect(request, url);
     if (redirect) {
