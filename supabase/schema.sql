@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ia2FjcqKn3ZRYLbpx8l1CvDLHmwK4x4oi5YBu0CY9q4x7BJ4Zz0gIpylchH8ZIj
+\restrict i7Ea0fv68nVurQkRWjm30Ky5CTmVHzqI2ZajjtsVjSF2OOSvoyOqpvDvtOK91PX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -19521,6 +19521,109 @@ CREATE TABLE "public"."marketing_cities" (
 
 
 --
+-- Name: marketing_verified_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_verified_contacts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "title" "text",
+    "short_description" "text",
+    "email" "text" NOT NULL,
+    "url" "text" NOT NULL,
+    "is_used" boolean DEFAULT false,
+    "added_at" timestamp with time zone DEFAULT "now"(),
+    "verify_reason" "text",
+    "source" "text",
+    "quality" "text",
+    "quality_reason" "text",
+    "reviewed_at" timestamp with time zone,
+    "sent_count" integer DEFAULT 0 NOT NULL,
+    "last_sent_at" timestamp with time zone,
+    "reaction" "text",
+    "reaction_at" timestamp with time zone,
+    "category_id" "uuid",
+    CONSTRAINT "marketing_verified_contacts_quality_check" CHECK ((("quality" IS NULL) OR ("quality" = ANY (ARRAY['good'::"text", 'junk'::"text"])))),
+    CONSTRAINT "marketing_verified_contacts_reaction_check" CHECK ((("reaction" IS NULL) OR ("reaction" = ANY (ARRAY['replied'::"text", 'declined'::"text", 'bounced'::"text"]))))
+);
+
+
+--
+-- Name: messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "source" "text" DEFAULT 'email'::"text" NOT NULL,
+    "direction" "text" NOT NULL,
+    "from_email" "text",
+    "to_email" "text",
+    "subject" "text" DEFAULT ''::"text" NOT NULL,
+    "body" "text" DEFAULT ''::"text" NOT NULL,
+    "body_html" "text",
+    "report_id" "uuid",
+    "queue_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "deleted_at" timestamp with time zone,
+    "is_read" boolean DEFAULT false NOT NULL,
+    "read_at" timestamp with time zone,
+    "is_marketing" boolean DEFAULT false,
+    CONSTRAINT "messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"]))),
+    CONSTRAINT "messages_source_check" CHECK (("source" = ANY (ARRAY['email'::"text", 'form'::"text", 'compose'::"text"])))
+);
+
+
+--
+-- Name: COLUMN "messages"."is_marketing"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."messages"."is_marketing" IS 'True for marketing/bulk emails sent from marketing panel';
+
+
+--
+-- Name: marketing_contacts_view; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW "public"."marketing_contacts_view" WITH ("security_invoker"='true') AS
+ SELECT "contact"."id",
+    "contact"."title",
+    "contact"."short_description",
+    "contact"."email",
+    "contact"."url",
+    "contact"."is_used",
+    "contact"."added_at",
+    "contact"."verify_reason",
+    "contact"."source",
+    "contact"."quality",
+    "contact"."quality_reason",
+    "contact"."reviewed_at",
+    "contact"."sent_count",
+    "contact"."last_sent_at",
+    "contact"."reaction",
+    "contact"."reaction_at",
+    "contact"."category_id",
+    "latest"."last_message_at",
+    (("contact"."added_at" AT TIME ZONE 'Europe/Warsaw'::"text"))::"date" AS "added_date",
+    (("latest"."last_message_at" AT TIME ZONE 'Europe/Warsaw'::"text"))::"date" AS "last_message_date"
+   FROM ("public"."marketing_verified_contacts" "contact"
+     LEFT JOIN LATERAL ( SELECT GREATEST("contact"."last_sent_at", ( SELECT "msg"."created_at"
+                   FROM "public"."messages" "msg"
+                  WHERE (("msg"."direction" = 'inbound'::"text") AND ("msg"."deleted_at" IS NULL) AND ("lower"("btrim"("msg"."from_email")) = "lower"("btrim"("contact"."email"))))
+                  ORDER BY "msg"."created_at" DESC
+                 LIMIT 1), ( SELECT "msg"."created_at"
+                   FROM "public"."messages" "msg"
+                  WHERE (("msg"."direction" = 'outbound'::"text") AND ("msg"."deleted_at" IS NULL) AND ("lower"("btrim"("msg"."to_email")) = "lower"("btrim"("contact"."email"))))
+                  ORDER BY "msg"."created_at" DESC
+                 LIMIT 1)) AS "last_message_at") "latest" ON (true));
+
+
+--
+-- Name: VIEW "marketing_contacts_view"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON VIEW "public"."marketing_contacts_view" IS 'Prywatny odczyt kontaktów: dodanie i ostatnia korespondencja w obu kierunkach; daty Europe/Warsaw.';
+
+
+--
 -- Name: marketing_run_stats; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -19578,33 +19681,6 @@ CREATE TABLE "public"."marketing_search_queries_log" (
 
 
 --
--- Name: marketing_verified_contacts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."marketing_verified_contacts" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "title" "text",
-    "short_description" "text",
-    "email" "text" NOT NULL,
-    "url" "text" NOT NULL,
-    "is_used" boolean DEFAULT false,
-    "added_at" timestamp with time zone DEFAULT "now"(),
-    "verify_reason" "text",
-    "source" "text",
-    "quality" "text",
-    "quality_reason" "text",
-    "reviewed_at" timestamp with time zone,
-    "sent_count" integer DEFAULT 0 NOT NULL,
-    "last_sent_at" timestamp with time zone,
-    "reaction" "text",
-    "reaction_at" timestamp with time zone,
-    "category_id" "uuid",
-    CONSTRAINT "marketing_verified_contacts_quality_check" CHECK ((("quality" IS NULL) OR ("quality" = ANY (ARRAY['good'::"text", 'junk'::"text"])))),
-    CONSTRAINT "marketing_verified_contacts_reaction_check" CHECK ((("reaction" IS NULL) OR ("reaction" = ANY (ARRAY['replied'::"text", 'declined'::"text", 'bounced'::"text"]))))
-);
-
-
---
 -- Name: message_attachments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -19619,38 +19695,6 @@ CREATE TABLE "public"."message_attachments" (
     "inline" boolean DEFAULT false NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
-
-
---
--- Name: messages; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."messages" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "source" "text" DEFAULT 'email'::"text" NOT NULL,
-    "direction" "text" NOT NULL,
-    "from_email" "text",
-    "to_email" "text",
-    "subject" "text" DEFAULT ''::"text" NOT NULL,
-    "body" "text" DEFAULT ''::"text" NOT NULL,
-    "body_html" "text",
-    "report_id" "uuid",
-    "queue_id" "uuid",
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "deleted_at" timestamp with time zone,
-    "is_read" boolean DEFAULT false NOT NULL,
-    "read_at" timestamp with time zone,
-    "is_marketing" boolean DEFAULT false,
-    CONSTRAINT "messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"]))),
-    CONSTRAINT "messages_source_check" CHECK (("source" = ANY (ARRAY['email'::"text", 'form'::"text", 'compose'::"text"])))
-);
-
-
---
--- Name: COLUMN "messages"."is_marketing"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN "public"."messages"."is_marketing" IS 'True for marketing/bulk emails sent from marketing panel';
 
 
 --
@@ -21934,6 +21978,20 @@ CREATE UNIQUE INDEX "marketing_categories_name_key" ON "public"."marketing_categ
 --
 
 CREATE INDEX "message_attachments_message_id_idx" ON "public"."message_attachments" USING "btree" ("message_id");
+
+
+--
+-- Name: messages_contact_inbound_date_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_contact_inbound_date_idx" ON "public"."messages" USING "btree" ("lower"("btrim"("from_email")), "created_at" DESC) WHERE (("direction" = 'inbound'::"text") AND ("deleted_at" IS NULL));
+
+
+--
+-- Name: messages_contact_outbound_date_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_contact_outbound_date_idx" ON "public"."messages" USING "btree" ("lower"("btrim"("to_email")), "created_at" DESC) WHERE (("direction" = 'outbound'::"text") AND ("deleted_at" IS NULL));
 
 
 --
@@ -25543,5 +25601,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ia2FjcqKn3ZRYLbpx8l1CvDLHmwK4x4oi5YBu0CY9q4x7BJ4Zz0gIpylchH8ZIj
+\unrestrict i7Ea0fv68nVurQkRWjm30Ky5CTmVHzqI2ZajjtsVjSF2OOSvoyOqpvDvtOK91PX
 

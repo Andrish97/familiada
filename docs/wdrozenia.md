@@ -2218,3 +2218,16 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 - Cofnięcie powiększenia: porównanie z e1068dc463 potwierdziło identyczną
   wysokość stopki, grupy akcji i ikony dla 360/390/1400, bez overflow.
   **816/816 unit**, trzy zrzuty + audyt **0 uwag**. Bramka restore-footer.
+
+| 2026-10-25 | Marketing — daty kontaktów, migracja 497 | Decyzja właściciela: filtrowanie i sortowanie po dodaniu lub ostatniej wiadomości. Dodający widok tylko dla service_role: ostatnia korespondencja w obu kierunkach, dokładny adres, pominięty kosz, data dawnej wysyłki bez treści zachowana. Daty kalendarzowe Europe/Warsaw, dwa indeksy wiadomości. Test SQL 497 na lokalnym Postgres 16 w Dockerze: oba kierunki, obcy adres/wzorce, kosz, brak historii, stara wysyłka, zakres i DST oraz uprawnienia — OK, rollback. Użyto dokładnych definicji dwóch zależnych tabel z schema.sql. | Najpierw migracja i log OK, potem wdrożenie prywatnego API/UI. Baza i kod dotychczasowego panelu zgodne wstecz; brak wysyłki i zmian maintenance. |
+
+| 2026-10-25 | Marketing — filtrowanie i sortowanie dat wdrożone | Migracja 497: db-migrate 40237695553 success, latest.log OK. Prywatny server e232d60, production 40238015053 success; CI 40237835130 i 40238014654 success: 89 unit + 23 browser, build/check. Dodanie i ostatnia wiadomość sortowane w obie strony, brak historii na końcu; zakres Od/Do według polskich dni, widoczne daty i ten sam filtr przy przygotowaniu adresów całego widoku. Read-only 40237908054: 4 sortowania po 50 wierszy i 2 zakresy poprawne, adresy zgodne; bez treści i adresów w logach. Zrzuty 1400/390 obejrzane. Origin potwierdza SHA/private cache oraz 404/404/200; po wdrożeniu panel/API 302 do Access, origin 404, www 200. | Odświeżyć panel; sortowanie w liście nad kontaktami, filtrowanie w Zakres dat. Bez wysyłki, uruchamiania LF ani zmiany maintenance. |
+
+- Restore-footer branch **40238074611 ✓ 4/4**. Animacja i obsługa wsparcia
+  zachowane przy przywróconych wymiarach. Równoległe zmiany main (realtime,
+  migracja 497 i dziennik Marketingu) zachowane; konflikty wyłącznie dopisków
+  dziennika. Finalna bramka jednostkowa po scaleniu, publikacja.
+
+- Po scaleniu aktualnego main **823/823 unit**. Kod stopki i jej testów po
+  zielonym 40238074611 zmieniony wyłącznie wersjami zasobów; publikacja
+  przywróconego wyglądu i potem kontrola produkcji 4 testów.

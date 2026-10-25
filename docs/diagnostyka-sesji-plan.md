@@ -18,6 +18,10 @@ Stan: **wdrożone** (2026-10-22/23, etapy 1–4; przebiegi w Dzienniku
 - Etap 4 — migracja 470: usunięte `control2_device_events`, stare RPC zapisu
   i odczytu, `stats_detail.events`; zmiany blokad urządzeń wprost do zdarzeń
   sesji; `control2_session_ping(p_game_id)` tylko jako sygnał aktywności.
+- Podczas aktywnej gry przejście Control → Wskazówki → Control jest dozwolone
+  i nie kończy ani nie rozpoczyna sesji. Control zapisuje `page_lifecycle`
+  `manual_open` i `manual_return` z tym samym `navigation_id`; powrót zawiera
+  też `duration_ms`. Test sprawdza parowanie trzech przejść oraz jedną sesję.
 
 ## Cel (decyzja użytkownika 2026-10-22)
 
@@ -249,7 +253,8 @@ migracji:
   wysłania;
 - urządzenie zapisuje `fallback_catchup` z rewizją i progiem oczekiwania;
 - jeśli później nadejdzie Postgres Changes, zapisuje
-  `direct_after_fallback` z rewizją i czasem od fallbacku;
+  `direct_after_fallback` z rewizją, źródłem fallbacku (`doorbell` albo
+  `lease_heartbeat`) i czasem od fallbacku;
 - gdy RPC faktycznie zastosuje nowszy stan, `fallback_applied` podaje
   `fetch_ms`, czas oczekiwania w kolejce (`received_ms`) i render (`render_ms`);
 - nietypowo wolne bezpośrednie zdarzenia (`received_ms` ≥ 250 ms lub
