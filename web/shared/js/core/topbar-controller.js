@@ -114,7 +114,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     // Topbar Ustawień jest początkowo display:none pod ekranem logowania.
     // Pomiar zerowej szerokości błędnie uruchamiał hamburger i zostawiał go
     // po późniejszym odblokowaniu panelu.
-    if (!section2.isConnected || section2Width <= 0) return;
+    // Widoczna sekcja może mieć 0 px, gdy konto zajęło całe wolne miejsce.
+    // To właśnie wymaga hamburgera; pomijamy wyłącznie brak układu (display:none).
+    if (!section2.isConnected || !section2.getClientRects().length) return;
 
     const btns = getVisibleBtns();
     btns.forEach(btn => btn.classList.remove('hidden'));

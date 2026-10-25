@@ -249,7 +249,12 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   oraz ostatnią klatkę SMIL po endElement. Gutter jest teraz rezerwowany tylko,
   gdy rzeczywiście istniał scrollbar; SMIL pauzuje i wznawia własną oś czasu,
   zachowując fazę fali. Ponowny unit **814/814 ✓**, smoke 390/360/1400 ✓.
-- Status: ponowienie tylko dwóch testów ikon, potem publikacja i kontrola.
+- 40231091388: para **1/1 ✓**, hamburger ujawnił istniejący przypadek 360 px:
+  długa nazwa konta zostawiała sekcji nawigacji dokładnie 0 px. Pomiar uznawał
+  ją za ukrytą i nie uruchamiał hamburgera. Teraz pomijany jest tylko brak
+  renderowanego prostokąta (display:none), a widoczna sekcja 0 px poprawnie
+  przechodzi do menu. Unit po poprawce **814/814 ✓**.
+- Status: ponowienie wyłącznie testu hamburgera, potem publikacja i kontrola.
 - Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
   `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
   repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.

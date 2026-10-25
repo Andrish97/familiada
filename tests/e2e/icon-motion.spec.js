@@ -13,7 +13,14 @@ test.describe('hamburger', () => {
       await page.goto('/games/?lang=pl', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('html')).not.toHaveAttribute('data-layout-pending', '');
       const button = page.locator('.topbar-menu-toggle');
-      await expect(button).toHaveAttribute('aria-expanded', 'false');
+      await expect(button).toHaveAttribute('aria-expanded', 'false').catch(async error => {
+        console.log('[e2e-diag] menu-layout', await page.evaluate(() => ({ width: innerWidth,
+          compact: document.documentElement.hasAttribute('data-compact'), device: document.documentElement.dataset.device,
+          topbar: document.querySelector('.topbar')?.className,
+          sections: [2, 3, 4].map(n => document.querySelector(`.topbar-section-${n}`)?.getBoundingClientRect().width),
+        })));
+        throw error;
+      });
       const box = await button.boundingBox();
       await button.focus(); await page.keyboard.press('Enter');
       await expect(button).toHaveAttribute('aria-expanded', 'true');
