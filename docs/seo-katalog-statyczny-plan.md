@@ -518,3 +518,10 @@ Dodatkowo przejęcie gotowej gry nie zależy od zgodności języka SSR z
 preferencją przeglądarki; lokalizowane punkty bez odłączania pytań.
 Regresja przeglądarkowa rozszerzona do 16/16 (w tym angielska preferencja
 przy domyślnym polskim HTML i odciętym API przeglądarki).
+
+Poprawka adfd17279, integracja b2b82dcd4: branch E2E
+[40173651438](https://github.com/Andrish97/familiada/actions/runs/40173651438)
+✓ 2/2 — ocena z kontrolowanym opóźnieniem biblioteki i HTML SSR, zgłoszenie
+z prywatnym podglądem po odświeżeniu. Worker 17/17, przeglądarka 16/16,
+powiązane unity po integracji 42/42. Promocja poprawki na main, potem
+kontrola tych dwóch scenariuszy i biblioteki na rzeczywistej produkcji.
