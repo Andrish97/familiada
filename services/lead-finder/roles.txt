@@ -1,11 +1,25 @@
-# Role do wyszukiwania - podstawiane do {role} w szablonach
-# Lista ról przeszukiwanych przez lead finder
-
-DJ wesele
-Wodzirej
-Konferansjer
-Animator dzieci
-Agencja eventowa
-Organizacja imprez
-Team building
-Gry integracyjne
+# Role do wyszukiwania — podstawiane do {role} w templates.txt
+# Grupy docelowe: docs/lead-finder-nowy-plan.md „Grupy docelowe”.
+# A — prowadzący
+DJ na wesele
+DJ eventowy
+wodzirej
+konferansjer
+animator imprez
+animator dla dzieci
+prezenter na imprezy
+# B — organizatorzy
+agencja eventowa
+organizacja imprez firmowych
+team building
+organizacja wesel
+wedding planner
+organizacja eventów
+# C — lokale i rozrywka
+quiz w pubie
+pub quiz
+teleturniej na imprezę
+gry integracyjne
+# D — szkolenia i integracje
+gry szkoleniowe dla firm
+imprezy integracyjne

@@ -1,16 +1,23 @@
-# ŚMIECIOWE PREFIXY MAILOWE
-# Maile zaczynające się od tych fraz będą automatycznie odrzucane podczas scrapowania.
-# Odrzucenie nie następuje, jeśli domena maila jest "wieloczłonowa" (np. info@nazwa-firmy.pl).
-
+# Początki adresów, które nie są kontaktem z firmą
 webmaster@
 dmca@
 privacy@
+rodo@
+iod@
+abuse@
+postmaster@
 subscriptions@
+newsletter@
 legal@
-press@
 noreply@
-office@it
-jan@
+no-reply@
+no_reply@
+donotreply@
+mailer-daemon@
 test@
 example@
-xyz@
+jan.kowalski@
+jankowalski@
+user@
+name@
+email@

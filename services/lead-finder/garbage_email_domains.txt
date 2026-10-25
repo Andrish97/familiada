@@ -1,4 +1,5 @@
-# Domeny placeholderowe (przykładowe)
+# Domeny e-mail odrzucane (porównanie dokładne: domena albo jej poddomena).
+# Przykładowe adresy z szablonów stron
 example.com
 example.org
 example.net
@@ -6,19 +7,15 @@ przyklad.pl
 domena.pl
 test.com
 test.pl
-email.com
-mail.com
 twojadomena.pl
 nazwadomeny.pl
 twojmail.pl
-
-# Popularne polskie przykłady
-kowalski.com
-nowak.pl
 website.com
 yourdomain.com
-
-# Portale ogłoszeniowe i listingi (MAILE PORTALOWE ODRZUCAMY)
+sentry.io
+wixpress.com
+sentry-next.wixpress.com
+# Portale i katalogi (adres portalu, nie firmy)
 fixly.pl
 oferteo.pl
 olx.pl
@@ -27,7 +24,6 @@ panoramafirm.pl
 aleo.com
 biznesfinder.pl
 pkt.pl
-zamoscklik.pl
 gumtree.pl
 morizon.pl
 otodom.pl
@@ -39,3 +35,9 @@ infobel.com
 cylex.pl
 yelp.com
 yellowpages.com
+weselezklasa.pl
+wedding.pl
+weselicho.net
+mamfach.pl
+dealoo.pl
+ebilet.pl

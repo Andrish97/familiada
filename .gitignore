@@ -29,3 +29,4 @@ tests/recordings/
 .claude/worktrees/
 screens-out/
 scripts/manual/out/
+__pycache__/

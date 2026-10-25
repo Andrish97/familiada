@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "services/lead-finder/**"
+      - ".github/workflows/deploy-lead-finder.yml"
   workflow_dispatch: {}
 
 jobs:
@@ -15,6 +16,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Testy unit usługi (przed wdrożeniem)
+        run: |
+          python3 -m pip install -q -r services/lead-finder/requirements.txt
+          python3 -m unittest discover -s services/lead-finder/tests -v
 
       - name: Install rsync + ssh
         run: |
@@ -41,6 +52,7 @@ jobs:
           rsync -az --delete --checksum \
             --exclude '__pycache__' \
             --exclude '.git' \
+            --exclude 'tests' \
             -e "ssh -i ~/.ssh/id_ed25519" \
             services/lead-finder/ \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/"

@@ -3,11 +3,13 @@
 // serwisowego (audyt E24) -- panel czyta i zmienia je wyłącznie tędy.
 import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { supabaseRequest, summarizeSupabaseError } from "../core/supabase.js";
+import { supabaseRequest, supabaseRpc, summarizeSupabaseError } from "../core/supabase.js";
 import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 const MC_PAGE_SIZE = 50;
-const MC_SORT_COLS = new Set(["title", "email", "url", "added_at", "is_used"]);
+const MC_SORT_COLS = new Set(["title", "email", "url", "added_at", "is_used", "quality", "reaction", "sent_count"]);
+const MC_QUALITY = new Set(["good", "junk"]);
+const MC_REACTION = new Set(["replied", "declined", "bounced"]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function cleanIds(ids) {
@@ -15,7 +17,7 @@ function cleanIds(ids) {
 }
 
 export async function handleAdminMarketingApi(request, env, url) {
-  // GET /_admin_api/marketing/contacts?page=&used=&search=&sort=&dir=
+  // GET /_admin_api/marketing/contacts?page=&used=&quality=&reaction=&search=&sort=&dir=
   if (url.pathname === "/_admin_api/marketing/contacts" && request.method === "GET") {
     const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
     const sort = MC_SORT_COLS.has(url.searchParams.get("sort")) ? url.searchParams.get("sort") : "added_at";
@@ -23,6 +25,14 @@ export async function handleAdminMarketingApi(request, env, url) {
     const q = new URLSearchParams({ select: "*", order: `${sort}.${dir}` });
     const used = url.searchParams.get("used");
     if (used === "true" || used === "false") q.set("is_used", `eq.${used}`);
+    // quality: good | junk | none (nieprzejrzane); reaction: replied | declined |
+    // bounced | waiting (wysłane, bez reakcji).
+    const quality = url.searchParams.get("quality");
+    if (MC_QUALITY.has(quality)) q.set("quality", `eq.${quality}`);
+    else if (quality === "none") q.set("quality", "is.null");
+    const reaction = url.searchParams.get("reaction");
+    if (MC_REACTION.has(reaction)) q.set("reaction", `eq.${reaction}`);
+    else if (reaction === "waiting") { q.set("reaction", "is.null"); q.set("sent_count", "gt.0"); }
     const search = String(url.searchParams.get("search") || "").trim().slice(0, 200);
     if (search) {
       // Wzorzec LIKE (\\ % _ dosłownie, * to % w PostgREST), potem wartość w cudzysłowie PostgREST.
@@ -100,9 +110,16 @@ export async function handleAdminMarketingApi(request, env, url) {
     if (typeof custom_body !== "string" || !custom_body.trim()) return json({ ok: false, error: "missing_body" }, 400);
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const validEmails = [...new Set(emails.map(e => String(e).trim().toLowerCase()).filter(e => emailRe.test(e)))];
-    if (!validEmails.length) return json({ ok: false, error: "no_valid_emails" }, 400);
-    if (validEmails.length > 500) return json({ ok: false, error: "too_many_emails", max: 500 }, 400);
+    const requested = [...new Set(emails.map(e => String(e).trim().toLowerCase()).filter(e => emailRe.test(e)))];
+    if (!requested.length) return json({ ok: false, error: "no_valid_emails" }, 400);
+    if (requested.length > 500) return json({ ok: false, error: "too_many_emails", max: 500 }, 400);
+    // Kontakty, które odmówiły albo których adres odbił -- bez kolejnych wysyłek.
+    const bRes = await supabaseRpc(env, "marketing_send_blocked", { p_emails: requested });
+    if (!bRes.ok) return json({ ok: false, error: "blocked_check_failed", details: summarizeSupabaseError(bRes) }, bRes.status || 500);
+    const blockedSet = new Set((Array.isArray(bRes.data) ? bRes.data : []).map((r) => String(typeof r === "string" ? r : Object.values(r || {})[0] || "")));
+    const validEmails = requested.filter((e) => !blockedSet.has(e));
+    const blocked = requested.length - validEmails.length;
+    if (!validEmails.length) return json({ ok: true, queued: 0, skipped: 0, blocked, total: requested.length });
 
     // custom_body is already full HTML from client (templates in JS)
     const emailHtml = custom_body || "";
@@ -139,7 +156,9 @@ export async function handleAdminMarketingApi(request, env, url) {
     const queuedEmails = (Array.isArray(qRes.data) ? qRes.data : []).map(row => row.to_email);
     const queued = queuedEmails.length;
     const skipped = validEmails.length - queued;
-    if (!queued) return json({ ok: true, queued, skipped, total: validEmails.length });
+    if (!queued) return json({ ok: true, queued, skipped, blocked, total: requested.length });
+    const sRes = await supabaseRpc(env, "marketing_mark_sent", { p_emails: queuedEmails });
+    if (!sRes.ok) console.error("[marketing/send] mark_sent failed", summarizeSupabaseError(sRes));
     const messageRows = queuedEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
@@ -161,7 +180,7 @@ export async function handleAdminMarketingApi(request, env, url) {
       console.error("[marketing/send] Failed to save message history records", summarizeSupabaseError(mRes));
     }
 
-    return json({ ok: true, queued, skipped, total: validEmails.length });
+    return json({ ok: true, queued, skipped, blocked, total: requested.length });
   }
 
   return new Response("Not Found", { status: 404 });

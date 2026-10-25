@@ -1,0 +1,6 @@
+# Kody PKD do zapytań CEIDG (PKD 2007; wpisy z PKD 2025 sprawdzić na kluczu,
+# plan etap 4). Kolejność = priorytet.
+93.29.Z    # pozostała działalność rozrywkowa i rekreacyjna (DJ, animatorzy)
+90.01.Z    # działalność artystyczna (wodzireje, konferansjerzy, muzycy)
+82.30.Z    # organizacja targów, wystaw i kongresów (agencje eventowe)
+90.02.Z    # wspomaganie przedstawień (nagłośnienie z prowadzeniem)

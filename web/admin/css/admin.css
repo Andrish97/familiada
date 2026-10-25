@@ -1608,12 +1608,18 @@
   .mc-page-info { font-size: 12px; opacity: .6; }
 
   /* Excel-like table styling */
-  .mc-table { min-width: 620px; font-size: 13px; }
+  .mc-table { min-width: 820px; font-size: 13px; }
   .mc-table th.mc-sortable { padding: 6px; text-align: left; cursor: pointer; user-select: none; }
   .mc-table th.mc-col-title, .mc-table th.mc-col-url { width: 25%; }
   .mc-table th.mc-col-email { width: 20%; }
   .mc-table th.mc-col-added-at { width: 15%; }
   .mc-table th.mc-col-is-used { width: 50px; text-align: center; }
+  .mc-table th.mc-col-quality { width: 90px; }
+  .mc-table th.mc-col-reaction { width: 110px; }
+  .mc-quality--junk { color: var(--bad-text); }
+  .mc-quality--good { color: var(--ok-text); }
+  .mc-reaction--declined, .mc-reaction--bounced { color: var(--bad-text); }
+  .mc-reaction--replied { color: var(--ok-text); }
 
   .mc-table th { font-size: 11px; user-select: none; }
 

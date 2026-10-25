@@ -26,6 +26,12 @@ export async function initMarketingContacts() {
     return data || {};
   }
   let mcFilterUsedValue = "";
+  let mcFilterQualityValue = "";
+  let mcFilterReactionValue = "";
+  const MC_QUALITY_LABEL = { good: "Dobry", junk: "Śmieć" };
+  const MC_REACTION_LABEL = { replied: "Odpowiedź", declined: "Odmowa", bounced: "Odbity" };
+  const MC_QUALITY_CLASS = { good: " mc-quality--good", junk: " mc-quality--junk" };
+  const MC_REACTION_CLASS = { replied: " mc-reaction--replied", declined: " mc-reaction--declined", bounced: " mc-reaction--bounced" };
   let mcSearchValue = "";
   let mcState = {
     runs: [],
@@ -44,12 +50,15 @@ export async function initMarketingContacts() {
     const actionBtn = document.getElementById("mcActionBtn");
     const cancelBtn = document.getElementById("mcCancelBtn");
     const targetInput = document.getElementById("mcTargetCount");
+    const reviewBtn = document.getElementById("mcReviewBtn");
     if (!actionBtn || !cancelBtn) return;
 
     actionBtn.disabled = false;
     cancelBtn.disabled = false;
+    if (reviewBtn) reviewBtn.disabled = mcState.status !== "idle" && mcState.status !== "completed" && mcState.status !== "cancelled";
 
     switch (mcState.status) {
+      case "starting":
       case "running":
         actionBtn.innerHTML = iconText("pause", "Wstrzymaj");
         actionBtn.className = "btn sm warning";
@@ -155,6 +164,8 @@ export async function initMarketingContacts() {
     try {
       const q = new URLSearchParams({ page: String(mcState.page), sort: mcState.sortCol, dir: mcState.sortDir });
       if (mcFilterUsedValue !== "") q.set("used", mcFilterUsedValue);
+      if (mcFilterQualityValue !== "") q.set("quality", mcFilterQualityValue);
+      if (mcFilterReactionValue !== "") q.set("reaction", mcFilterReactionValue);
       const search = mcSearchValue.trim();
       if (search) q.set("search", search);
       const { rows, total } = await adminGet(`/marketing/contacts?${q}`);
@@ -162,7 +173,7 @@ export async function initMarketingContacts() {
       mcRenderContacts(total || 0);
       mcUpdateSortHeaders();
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="5" class="mc-empty mc-empty--cell">Błąd: ${e.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="mc-empty mc-empty--cell">Błąd: ${mcEsc(e.message)}</td></tr>`;
     }
   }
 
@@ -194,7 +205,7 @@ export async function initMarketingContacts() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="mc-empty mc-empty--cell">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="mc-empty mc-empty--cell">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       mcUpdateSelectionInfo();
       return;
@@ -209,10 +220,17 @@ export async function initMarketingContacts() {
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${usedText}</td>
+        <td class="mc-cell mc-selectable${MC_QUALITY_CLASS[c.quality] || ''}" data-row="${i}" data-col="5" title="${mcEsc(c.quality_reason || '')}">${MC_QUALITY_LABEL[c.quality] || '—'}</td>
+        <td class="mc-cell mc-selectable${MC_REACTION_CLASS[c.reaction] || ''}" data-row="${i}" data-col="6">${mcReactionText(c)}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
     mcSetupTableSelection();
+  }
+
+  function mcReactionText(c) {
+    if (c.reaction) return MC_REACTION_LABEL[c.reaction] || mcEsc(c.reaction);
+    return c.sent_count > 0 ? `Wysłano ×${c.sent_count}` : '—';
   }
 
   function mcSetupTableSelection() {
@@ -507,7 +525,7 @@ export async function initMarketingContacts() {
         mcState.logRun = data.run_id;
         mcUpdateButtons();
         if (mcState.page === 1) mcLoadContacts();
-        if (mcState.status !== "running") {
+        if (mcState.status !== "running" && mcState.status !== "starting") {
           mcStopLogAutoRefresh();
         }
       } catch(e) {}
@@ -525,6 +543,20 @@ export async function initMarketingContacts() {
   document.getElementById("mcActionBtn")?.addEventListener("click", () => window.mcAction());
   document.getElementById("mcCancelBtn")?.addEventListener("click", () => window.mcCancel());
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
+  document.getElementById("mcReviewBtn")?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: "Przejrzeć zapisane kontakty? Śmieci zostaną oznaczone w kolumnie Jakość, nic nie zostanie usunięte." })) return;
+    try {
+      mcState.logs = [];
+      mcRenderLogs();
+      const data = await mcLeads("contacts-review", "POST");
+      mcState.logRun = data.run_id;
+      mcState.status = "running";
+      mcUpdateButtons();
+      mcStartLogAutoRefresh();
+    } catch (e) {
+      alertModal({ text: "Błąd: " + e.message });
+    }
+  });
   {
     let mcSearchTimer = null;
     const searchInput = document.getElementById("mcSearchInput");
@@ -557,6 +589,27 @@ export async function initMarketingContacts() {
     ],
     value: "",
     onChange: (val) => { mcFilterUsedValue = val; mcState.page = 1; mcLoadContacts(); },
+  });
+  initUiSelect(document.getElementById("mcFilterQuality"), {
+    options: [
+      { value: "", label: "Każda jakość" },
+      { value: "good", label: "Dobre" },
+      { value: "junk", label: "Śmieci" },
+      { value: "none", label: "Nieprzejrzane" },
+    ],
+    value: "",
+    onChange: (val) => { mcFilterQualityValue = val; mcState.page = 1; mcLoadContacts(); },
+  });
+  initUiSelect(document.getElementById("mcFilterReaction"), {
+    options: [
+      { value: "", label: "Każda reakcja" },
+      { value: "waiting", label: "Czekają na odpowiedź" },
+      { value: "replied", label: "Odpowiedzieli" },
+      { value: "declined", label: "Odmówili" },
+      { value: "bounced", label: "Odbite" },
+    ],
+    value: "",
+    onChange: (val) => { mcFilterReactionValue = val; mcState.page = 1; mcLoadContacts(); },
   });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);

@@ -1,761 +1,189 @@
 """
-Marketing Lead Finder Service - Multi-layer Buffered Version
-Architecture: Query Pool -> Raw Buffer -> AI Verification
+Lead Finder 2 — kontakty z gotowych danych (wyszukiwarka, CEIDG) bez
+odwiedzania stron, ocena AI paczkami. Plan: docs/lead-finder-nowy-plan.md.
+Wynik jak wcześniej: marketing_verified_contacts; te same endpointy panelu.
 """
 
 import asyncio
-import json
+import hmac
 import logging
 import os
-import random
-import re
 import uuid
-import time
-from datetime import datetime
-from typing import Optional, List, Set
-from urllib.parse import urlparse
-from contextlib import asynccontextmanager
+from typing import Optional
 
+import dns.asyncresolver
+import dns.exception
+import dns.resolver
 import httpx
-import hmac
 from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from playwright.async_api import async_playwright
 
-# --- Logger Configuration ---
-logger = logging.getLogger("lead_finder")
+from lf.config import cfg
+from lf.db import Supabase
+from lf.filters import FREEMAIL_DOMAINS
+from lf.pipeline import Engine
+from lf.sources.ceidg import Ceidg
+
+logger = logging.getLogger('lead_finder')
 logger.setLevel(logging.INFO)
 _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
-global_client = httpx.AsyncClient(timeout=60)
+SUPABASE_URL = os.getenv('LEAD_FINDER_SUPABASE_URL', 'http://kong:8000')
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', os.getenv('SERVICE_ROLE_KEY', ''))
+SEARXNG_URL = os.getenv('SEARXNG_URL', 'http://searxng:8080')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+LEAD_FINDER_API_KEY = os.getenv('LEAD_FINDER_API_KEY', '').strip()
+ADMIN_ORIGIN = 'https://admin.familiada.online'
 
-# --- Global Assets Cache ---
-READABILITY_JS = ""
+http = httpx.AsyncClient(timeout=60)
+db = Supabase(SUPABASE_URL, SUPABASE_KEY)
 
-async def get_readability_js():
-    global READABILITY_JS
-    if READABILITY_JS: return READABILITY_JS
-    try:
-        r = await global_client.get("https://cdnjs.cloudflare.com/ajax/libs/readability/0.4.4/Readability.min.js")
-        if r.status_code == 200:
-            READABILITY_JS = r.text
-            return READABILITY_JS
-    except: pass
-    return ""
 
-class SupabaseClient:
-    def __init__(self, url, key):
-        self.url = url
-        self.headers = {
-            'apikey': key, 
-            'Authorization': f'Bearer {key}', 
-            'Content-Type': 'application/json',
-            'Prefer': 'count=exact'
-        }
-        self.client = httpx.AsyncClient(timeout=30, headers=self.headers)
-    
-    async def get_count(self, table, filters=None):
-        try:
-            params = {'select': 'id', 'limit': 1}
-            if filters:
-                for k, v in filters.items(): params[k] = f'eq.{v}'
-            r = await self.client.get(f'{self.url}/rest/v1/{table}', params=params)
-            cr = r.headers.get('Content-Range', '')
-            return int(cr.split('/')[-1]) if '/' in cr else 0
-        except: return 0
+class DbLogHandler(logging.Handler):
+    """Wpisy INFO/ERROR do marketing_search_logs (dziennik w panelu)."""
 
-    async def insert(self, table, data):
-        try:
-            r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
-            return r.status_code in (200, 201)
-        except Exception as e:
-            print(f"[SERVER] DB Insert Error: {e}")
-            return False
-
-    async def select(self, table, columns='*', filters=None, limit=None):
-        try:
-            params = {'select': columns}
-            if filters:
-                for k, v in filters.items(): params[k] = f'eq.{v}'
-            if limit: params['limit'] = limit
-            r = await self.client.get(f'{self.url}/rest/v1/{table}', params=params)
-            return r.json() if r.status_code == 200 else None
-        except: return None
-
-    async def update(self, table, data, filters):
-        try:
-            params = {k: f'eq.{v}' for k, v in filters.items()}
-            r = await self.client.patch(f'{self.url}/rest/v1/{table}', json=data, params=params)
-            return r.status_code in (200, 204)
-        except: return False
-
-    async def delete(self, table, filters=None):
-        try:
-            params = {}
-            if filters:
-                for k, v in filters.items():
-                    params[k] = v if '.' in str(v) else f'eq.{v}'
-            r = await self.client.delete(f'{self.url}/rest/v1/{table}', params=params)
-            return r.status_code in (200, 204, 404)
-        except: return False
-    
-    async def call_rpc(self, fn, params=None):
-        try:
-            r = await self.client.post(f'{self.url}/rest/v1/rpc/{fn}', json=params or {})
-            if r.status_code in (200, 201): return r.json()
-            if r.status_code == 204: return True
-            return None
-        except Exception as e:
-            return None
-
-SUPABASE_URL = "http://kong:8000"
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
-supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-async def send_telegram_notification(message):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID: return
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        await global_client.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"})
-    except Exception as e:
-        print(f"[SERVER] Telegram Error: {e}")
-
-class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
-        if record.levelname in ('INFO', 'ERROR', 'CRITICAL'):
-            try:
-                msg = self.format(record)
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    level = 'info' if record.levelname == 'INFO' else 'error'
-                    loop.create_task(supabase.insert('marketing_search_logs', {'level': level, 'message': msg}))
-            except: pass
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        if record.getMessage().startswith('DB '):
+            return  # błąd samej bazy — tylko w logach kontenera (bez pętli)
+        level = 'error' if record.levelno >= logging.ERROR else 'info'
+        loop.create_task(db.insert('marketing_search_logs', {'level': level, 'message': self.format(record)[:2000]}))
 
-_db_handler = SupabaseLoggingHandler()
+
+_db_handler = DbLogHandler()
 _db_handler.setLevel(logging.INFO)
+_db_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_db_handler)
 
-def load_txt_lines(filename):
-    path = os.path.join(os.path.dirname(__file__), filename)
-    if not os.path.exists(path): return []
-    with open(path, 'r', encoding='utf-8') as f:
-        return [l.strip() for l in f if l.strip() and not l.startswith('#')]
 
-def load_config():
-    path = os.path.join(os.path.dirname(__file__), 'config.txt')
-    config = {}
-    if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip() and '=' in line and not line.startswith('#'):
-                    k, v = line.split('=', 1)
-                    try: config[k.strip()] = int(v.split('#')[0].strip())
-                    except: config[k.strip()] = v.split('#')[0].strip()
-    return config
+async def notify(text):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    try:
+        await http.post(f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
+                        json={'chat_id': TELEGRAM_CHAT_ID, 'text': text, 'parse_mode': 'HTML'})
+    except httpx.HTTPError as e:
+        print(f'[SERVER] Telegram: {e}')
 
-CONFIG = load_config()
-SEARXNG_URL = "http://searxng:8080"
-AI_DELAY = CONFIG['AI_DELAY']
-AI_DELAY_REJECT = CONFIG['AI_DELAY_REJECT']
-AI_TEXT_LIMIT = CONFIG['AI_TEXT_LIMIT']
-PROVIDER_COOLDOWN_SECONDS = CONFIG['PROVIDER_COOLDOWN_SECONDS']
-PROVIDER_COOLDOWN_LONG = CONFIG['PROVIDER_COOLDOWN_LONG']
-PROVIDER_COOLDOWN_QUOTA = CONFIG['PROVIDER_COOLDOWN_QUOTA'] 
-RAW_BUFFER_THRESHOLD = CONFIG['RAW_BUFFER_THRESHOLD']
-SEARCH_RESULTS_LIMIT = CONFIG['SEARCH_RESULTS_LIMIT']
-TIMEOUT_SEARCH = CONFIG['TIMEOUT_SEARCH']
-TIMEOUT_SCRAPE = CONFIG['TIMEOUT_SCRAPE']
-TIMEOUT_SCRAPE_JS = CONFIG['TIMEOUT_SCRAPE_JS']
-TIMEOUT_AI = CONFIG['TIMEOUT_AI']
 
-MAX_CONCURRENT_SCRAPES = CONFIG['MAX_CONCURRENT_SCRAPES']
-MAX_CONCURRENT_PLAYWRIGHT = CONFIG['MAX_CONCURRENT_PLAYWRIGHT']
+_mx_cache = {}
 
-AI_PROVIDERS = {
-    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
-    'deepseek': {'key': os.getenv("DEEP_SEEK_API_KEY", ""), 'model': "deepseek-chat", 'endpoint': "https://api.deepseek.com/chat/completions", 'timeout': 60},
-    'anthropic': {'key': os.getenv("ANTHROPIC_API_KEY", ""), 'model': os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"), 'endpoint': "https://api.anthropic.com/v1/messages", 'timeout': 60},
-}
 
-ROLES = load_txt_lines('roles.txt')
-SEARCH_TEMPLATES = load_txt_lines('templates.txt')
-NEGATIVE_KEYWORDS = [k.lower() for k in load_txt_lines('negative_keywords.txt')]
-BLOCKED_DOMAINS = [d.lower() for d in load_txt_lines('blocked_domains.txt')]
-GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domains.txt')]
-SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
-SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
-REQUIRED_KEYWORDS = load_txt_lines('required_keywords.txt')
-IGNORED_EXTENSIONS = tuple(load_txt_lines('ignored_extensions.txt'))
-
-EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-
-# --- Global State ---
-task_status = "idle" 
-task_run_id = None
-verified_in_run = 0
-attempts_in_run = 0
-critical_errors_in_run = 0
-rejected_domains = set() 
-scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
-playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
-
-# --- Logic ---
-
-def is_garbage_text(text: str) -> bool:
-    if not text or len(text) < 100: return True
-    readable_words = re.findall(r'[a-zA-ZąęółźżćńśĄĘÓŁŹŻĆŃŚ]{3,}', text)
-    total_chars = len(text)
-    readable_chars = sum(len(w) for w in readable_words)
-    if readable_chars / total_chars < 0.30: return True
-    patterns = [r'window\.__next_s', r'self\.__next_s', r'getElementsByTagName', r' @keyframes\s+\w+', r'\.wp-site-blocks', r'dataLayer\.push', r'gtm\.js\?id=']
-    return any(re.search(p, text) for p in patterns)
-
-def clean_text(text):
-    if not text: return ""
-    text = re.sub(r'\s+', ' ', text).strip()
-    if "function(" in text or "var " in text or "window." in text:
-        text = re.sub(r'\{[^\}]+\}', '', text)
-    return text[:AI_TEXT_LIMIT]
-
-def extract_emails(html):
-    found = set()
-    JUNK_PREFIXES = tuple(load_txt_lines('junk_email_prefixes.txt'))
-    for e in EMAIL_REGEX.findall(html):
-        e_low = e.lower()
-        if any(e_low.endswith(x) for x in IGNORED_EXTENSIONS): continue
-        if any(e_low.startswith(p) for p in JUNK_PREFIXES): continue
-        if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
-    return found
-
-async def scrape_with_playwright(url):
-    USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-    ]
-    async with playwright_semaphore:
-        browser = None
+async def mx_check(domain):
+    """False tylko, gdy domena na pewno nie przyjmuje poczty (brak domeny / brak MX i A)."""
+    domain = domain.lower()
+    if domain in FREEMAIL_DOMAINS:
+        return True
+    if domain in _mx_cache:
+        return _mx_cache[domain]
+    ok = True
+    resolver = dns.asyncresolver.Resolver()
+    resolver.lifetime = 4
+    try:
+        await resolver.resolve(domain, 'MX')
+    except dns.resolver.NXDOMAIN:
+        ok = False
+    except dns.resolver.NoAnswer:
         try:
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                ctx = await browser.new_context(
-                    user_agent=random.choice(USER_AGENTS),
-                    bypass_csp=True,
-                    viewport={'width': 1280, 'height': 800}
-                )
-                page = await ctx.new_page()
-                await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-                
-                try: 
-                    if any(url.endswith(ext) for ext in IGNORED_EXTENSIONS):
-                        return "", None
+            await resolver.resolve(domain, 'A')
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            ok = False
+        except dns.exception.DNSException:
+            pass
+    except dns.exception.DNSException:
+        pass  # timeout / brak serwera DNS — nie odrzucamy
+    _mx_cache[domain] = ok
+    return ok
 
-                    await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="domcontentloaded")
-                    await page.wait_for_timeout(2500) 
 
-                    # Obsługa Google Consent
-                    if "google." in url:
-                        try:
-                            for btn_text in ["Zaakceptuj wszystko", "Accept all", "Ich stimme zu", "Accetta wszystko"]:
-                                btn = page.get_by_role("button", name=btn_text, exact=False).first
-                                if await btn.is_visible(timeout=1000):
-                                    await btn.click()
-                                    await page.wait_for_timeout(1000)
-                                    break
-                        except: pass
-                    
-                    # Pobierz wyrenderowany HTML
-                    html = await page.content()
-                    
-                    # Wyciągnij tekst za pomocą evaluate, ale operując na przekazanym HTML 
-                    # lub bezpośrednio na DOM (bezpieczne, bo nie dodajemy tagów <script>)
-                    txt = await page.evaluate("""() => {
-                        const clone = document.body.cloneNode(true);
-                        const selectors = 'script, style, nav, header, footer, noscript, iframe, svg, [style*="display: none"]';
-                        clone.querySelectorAll(selectors).forEach(n => n.remove());
-                        return clone.innerText || clone.textContent;
-                    }""")
-                    
-                    return clean_text(txt), extract_emails(html)
-                except Exception as e:
-                    # Wycinamy tylko pierwszą linię błędu (bez całego tracebacku Playwright)
-                    err_msg = str(e).split('\n')[0]
-                    print(f"[SERVER] Playwright: {url} niedostępna ({err_msg})")
-                    return "", None
-        except Exception as e:
-            err_msg = str(e).split('\n')[0]
-            print(f"[SERVER] Playwright Critical: {url} ({err_msg})")
-            return None, None
-        finally:
-            if browser:
-                try: await browser.close()
-                except: pass
+engine = Engine(db, http, SEARXNG_URL,
+                ceidg=Ceidg(http, os.getenv('CEIDG_API_KEY', '').strip(), cfg('CEIDG_DETAIL_DELAY', 4)),
+                mx_check=mx_check, notify=notify)
 
-async def scrape_and_save_lead(res):
-    try:
-        url = res.get('url', '').lower()
-        if not url: return 0
-        
-        # Ignoruj pliki binarne i dokumenty
-        if any(url.endswith(ext) for ext in IGNORED_EXTENSIONS):
-            return 0
-
-        parsed = urlparse(url)
-        domain = parsed.netloc.lower().replace('www.', '')
-        if domain in rejected_domains: return 0
-        if any(b in domain for b in BLOCKED_DOMAINS): return 0
-        allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
-        if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
-        
-        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}, limit=1): return 0
-        if await supabase.select('marketing_raw_contacts', 'id', {'url': url}, limit=1): return 0
-        
-        txt, emails = '', set()
-        # Metoda 1: HTTPX (Szybka)
-        async with scrape_semaphore:
-            try:
-                async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-                    r = await client.get(url)
-                    if r.status_code == 200:
-                        clean_html = re.sub(r'<(script|style|nav|header|footer)[^>]*>.*?</\1>', ' ', r.text, flags=re.DOTALL | re.IGNORECASE)
-                        txt = clean_text(re.sub(r'<[^>]+>', ' ', clean_html))
-                        emails = extract_emails(r.text)
-            except: pass
-
-        # Metoda 2: Playwright (jeśli HTTPX zawiódł lub tekst jest zbyt krótki)
-        if (not emails or len(txt) < 150) and not any(s in url for s in SOCIAL_PLATFORMS):
-            p_txt, p_emails = await scrape_with_playwright(url)
-            if p_txt and len(p_txt) > len(txt): txt = p_txt
-            if p_emails: emails.update(p_emails)
-
-        # FINALNA DECYZJA
-        if not emails: return 0 # Brak maila = odrzucamy
-
-        # Pomiń jeśli którykolwiek email już jest w bazie zweryfikowanych kontaktów
-        for em in [e.lower().strip() for e in emails]:
-            if await supabase.select('marketing_verified_contacts', 'id', {'email': em}, limit=1):
-                return 0
-
-        # Jeśli mamy maile, ale tekst jest śmieciowy - nie odrzucamy, wstawiamy placeholder
-        if len(txt) < 100:
-            txt = f"[SYSTEM: Nie udało się pobrać treści strony. Metoda renderowania Playwright zwróciła zbyt mało danych. URL: {url}]"
-
-        return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:AI_TEXT_LIMIT], 'emails_found': list(emails), 'status': 'pending'}) else 0
-    except Exception as e:
-        print(f"[SERVER] Scrape Error for {res.get('url')}: {e}")
-        return 0
-
-async def producer_task(run_id):
-    last_heartbeat = time.time()
-    while task_status in ("running", "paused") and task_run_id == run_id:
-        if task_status == "paused":
-            await asyncio.sleep(5); continue
-        if time.time() - last_heartbeat > 60:
-            print(f"[HEARTBEAT] Producent żyje. Status: {task_status}")
-            last_heartbeat = time.time()
-        pending_count = await supabase.get_count('marketing_raw_contacts', {'status': 'pending'})
-        if pending_count < RAW_BUFFER_THRESHOLD:
-            cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
-            if cities:
-                history = await supabase.select('marketing_search_queries_log', 'query_text')
-                done = set(h['query_text'] for h in history) if history else set()
-                pool = [f"{r}:{c['name']}" for r in ROLES for c in cities]
-                available = [p for p in pool if p not in done]
-                if not available:
-                    await supabase.delete('marketing_search_queries_log', {'query_text': 'neq.null'})
-                    available = pool
-                picked = random.choice(available)
-                role, city = picked.split(':', 1)
-                logger.info(f"Za mało surowych kontaktów w bazie ({pending_count}), rozpoczynam wyszukiwanie {role} {city}")
-                
-                total_added = 0
-                total_found = 0
-                
-                for template_line in SEARCH_TEMPLATES:
-                    if task_status not in ("running", "paused"): break
-                    parts = template_line.split(';')
-                    query_tpl = parts[0]
-                    search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else SEARCH_RESULTS_LIMIT
-                    query = query_tpl.replace('{role}', role).replace('{city}', city)
-                    
-                    try:
-                        r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': search_limit}, timeout=TIMEOUT_SEARCH)
-                        if r.status_code == 200:
-                            results = r.json().get('results', [])
-                            urls_found_count = len(results)
-                            total_found += urls_found_count
-                            try:
-                                added_results = await asyncio.wait_for(asyncio.gather(*[scrape_and_save_lead(res) for res in results]), timeout=300)
-                                added_count = sum(added_results)
-                                total_added += added_count
-                            except asyncio.TimeoutError: 
-                                print(f"[SERVER] Timeout dla {query}")
-                    except Exception as e: 
-                        print(f"[SERVER] SearXNG Error for {query}: {e}")
-
-                # Zapisz zagregowany wynik dla całego WYSZUKIWANIA (rola + miasto)
-                # Używamy formatu 'rola:miasto' jako query_text, aby pasowało do unikalnego klucza i puli
-                await supabase.insert('marketing_search_queries_log', {
-                    'query_text': picked, 
-                    'urls_found': total_found, 
-                    'urls_added': total_added,
-                    'status': 'completed'
-                })
-                
-                logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano łącznie {total_added} surowych kontaktów (znaleziono {total_found} URL).")
-        await asyncio.sleep(5)
-
-async def call_ai_provider(name, prompt):
-    cfg = AI_PROVIDERS.get(name)
-    if not cfg or not cfg['key']: return 500, None, "Missing config"
-
-    if name == 'anthropic':
-        headers = {
-            'Content-Type': 'application/json',
-            'x-api-key': cfg['key'],
-            'anthropic-version': '2023-06-01',
-        }
-        payload = {
-            'model': cfg['model'],
-            'max_tokens': 1000,
-            'system': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.',
-            'messages': [{'role': 'user', 'content': prompt}],
-            'temperature': 0.1,
-        }
-        try:
-            r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
-            if r.status_code == 200:
-                resp_json = r.json()
-                if 'content' in resp_json and len(resp_json['content']) > 0:
-                    return 200, resp_json['content'][0]['text'], None
-                return 500, None, "Malformed provider response (no content)"
-            else:
-                return r.status_code, None, r.text.lower()[:200]
-        except Exception as e: return 500, None, str(e)
-
-    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {cfg["key"]}'}
-
-    payload = {
-        'model': cfg['model'],
-        'messages': [
-            {'role': 'system', 'content': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.'},
-            {'role': 'user', 'content': prompt}
-        ],
-        'temperature': 0.1,
-        'max_tokens': 1000
-    }
-    if name in ('deepseek', 'groq'):
-        payload['response_format'] = {"type": "json_object"}
-
-    try:
-        r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
-        if r.status_code == 200:
-            resp_json = r.json()
-            if 'choices' in resp_json and len(resp_json['choices']) > 0:
-                return 200, resp_json['choices'][0]['message']['content'], None
-            return 500, None, "Malformed provider response (no choices)"
-        else:
-            err_body = r.text.lower()
-            return r.status_code, None, err_body[:200]
-    except Exception as e: return 500, None, str(e)
-
-async def verify_raw_lead(lead, target):
-    global verified_in_run, attempts_in_run
-    url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-    parsed = urlparse(url)
-    domain = parsed.netloc.lower().replace('www.', '')
-    
-    if domain in rejected_domains or any(b in domain for b in BLOCKED_DOMAINS):
-        return {"ok": 0, "reason": "Domena zablokowana (Bouncer Safety)."}
-
-    prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
-    with open(prompt_path, 'r', encoding='utf-8') as f:
-        base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
-    
-    # Detekcja Garbage Tekstu przed wysyłką do AI
-    final_text = txt
-    if is_garbage_text(txt):
-        final_text = "[NIEDOSTĘPNY - śmieciowy kod JS/CSS]"
-
-    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', final_text[:AI_TEXT_LIMIT])
-
-    attempts_in_run += 1
-    logger.info(f"Weryfikacja [{attempts_in_run}] (Znaleziono: {verified_in_run}/{target}): {url}")
-
-    while task_status in ("running", "paused") and task_run_id is not None:
-        if task_status == "paused":
-            await asyncio.sleep(2); continue
-            
-        providers_data = await supabase.call_rpc('get_available_ai_providers')
-        if not providers_data: return "NO_QUOTA"
-        providers = providers_data if isinstance(providers_data, list) else [providers_data]
-        
-        for p_info in providers:
-            provider = p_info['name']
-            logger.info(f"Weryfikuję przez {provider}")
-            status, content, err = await call_ai_provider(provider, prompt)
-            
-            if status == 200:
-                print(f"[AI RAW RESP - {provider}] {content}")
-                try:
-                    match = re.search(r'\{.*\}', content, re.DOTALL)
-                    if not match:
-                        raise ValueError("Brak bloku JSON w odpowiedzi modelu.")
-                    
-                    clean_json = match.group()
-                    res = json.loads(clean_json)
-                    delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
-                    await asyncio.sleep(delay)
-                    if not res.get('ok'):
-                        is_portal = any(p in domain for p in ('olx.pl', 'fixly.pl', 'oferteo.pl', 'gratka.pl', 'panoramafirm.pl'))
-                        if not is_portal: rejected_domains.add(domain)
-                    res['_raw_ai_response'] = content[:500] 
-                    return res
-                except Exception as parse_err: 
-                    msg = f"Model {provider} zwrócił niepoprawny format: {parse_err}"
-                    logger.error(msg)
-                    await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 30, 'p_error': msg})
-                    continue
-            elif any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-                msg = f"Dostawca {provider} wyczerpał limit lub środki (Błąd {status}): {err}"
-                logger.info(msg)
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
-                continue
-            elif status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")):
-                msg = f"Dostawca {provider} ma błędnie skonfigurowany model (Błąd 404): {err}"
-                logger.error(msg)
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
-                await send_telegram_notification(
-                    f"⚠️ <b>Błędna konfiguracja dostawcy AI</b>\n"
-                    f"Dostawca <b>{provider}</b> zwraca błąd 404 — skonfigurowany model nie istnieje lub brak do niego dostępu.\n"
-                    f"Ustaw poprawną nazwę modelu w zmiennej {provider.upper()}_MODEL w .env na serwerze.\n\n"
-                    f"<code>{msg[:300]}</code>"
-                )
-                continue
-            else:
-                msg = f"Dostawca {provider} zwrócił błąd {status}: {err}"
-                logger.info(msg)
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_LONG, 'p_error': msg})
-                continue
-        
-        print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
-        await asyncio.sleep(30)
-    return None
-
-async def consumer_task(run_id, target):
-    global verified_in_run, critical_errors_in_run, task_status
-    consecutive_critical = 0
-    last_heartbeat = time.time()
-    while task_run_id == run_id and task_status in ("running", "paused") and verified_in_run < target:
-        if task_status == "paused":
-            await asyncio.sleep(5); continue
-        
-        if time.time() - last_heartbeat > 60:
-            print(f"[HEARTBEAT] Konsument żyje. Status: {task_status}")
-            last_heartbeat = time.time()
-
-        result = await supabase.call_rpc('claim_next_pending_lead')
-        if not result or not isinstance(result, list) or len(result) == 0:
-            await asyncio.sleep(5); continue
-        
-        lead = result[0]
-        res = await verify_raw_lead(lead, target)
-        
-        if res == "NO_QUOTA":
-            logger.error("Brak dostępnych limitów u wszystkich dostawców AI w bazie danych. Przerywam.")
-            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
-            task_status = "cancelled"
-            await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.")
-            break
-
-        if res is None:
-            consecutive_critical += 1
-            critical_errors_in_run += 1
-            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
-            if consecutive_critical >= 10:
-                logger.warning("Wykryto serię błędów AI. Zasypiam na 10 minut...")
-                await asyncio.sleep(600)
-                consecutive_critical = 0
-            continue
-        
-        consecutive_critical = 0
-        raw_resp = res.get('_raw_ai_response', '')
-        if res.get('ok') and res.get('email'):
-            email = str(res['email']).strip().lower()
-            if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
-                await supabase.insert('marketing_verified_contacts', {
-                    'email': email, 'url': lead['url'], 'title': res.get('title') or lead.get('title'),
-                    'short_description': res.get('short_description'), 'verify_reason': str(res.get('reason',''))[:500]
-                })
-                verified_in_run += 1
-                logger.info(f"Zweryfikowano {lead['url']}. Przyczyna: {res.get('reason','')}")
-            await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
-        else:
-            reason = str(res.get('reason',''))
-            await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': reason[:500]}, {'id': lead['id']})
-            logger.info(f"Odrzucono {lead['url']}. Przyczyna: {reason}")
-
-GROQ_MODEL_CANDIDATES = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "gemma2-9b-it"]
-DEEPSEEK_MODEL_CANDIDATES = ["deepseek-chat"]
-ANTHROPIC_MODEL_CANDIDATES = ["claude-haiku-4-5-20251001", "claude-sonnet-5", "claude-3-5-haiku-latest"]
-MODEL_CANDIDATES = {'groq': GROQ_MODEL_CANDIDATES, 'deepseek': DEEPSEEK_MODEL_CANDIDATES, 'anthropic': ANTHROPIC_MODEL_CANDIDATES}
-MODELS_LIST_URL = {
-    'groq': "https://api.groq.com/openai/v1/models",
-    'deepseek': "https://api.deepseek.com/models",
-    'anthropic': "https://api.anthropic.com/v1/models",
-}
-
-def _models_list_headers(name, cfg):
-    if name == 'anthropic':
-        return {'x-api-key': cfg['key'], 'anthropic-version': '2023-06-01'}
-    return {'Authorization': f'Bearer {cfg["key"]}'}
-
-async def try_switch_model(name):
-    """Sprawdza w API dostawcy jakie modele są faktycznie dostępne na koncie
-    i przełącza się na pierwszy dostępny kandydat z listy zamienników.
-    Wywoływane tylko gdy skonfigurowany model realnie zawiódł błędem 404 —
-    sama nieobecność na liście /models nie jest dowodem awarii (np. DeepSeek
-    nie zawsze wymienia tam działające jeszcze aliasy modeli)."""
-    cfg = AI_PROVIDERS.get(name)
-    if not cfg or not cfg['key']: return False
-    models_url = MODELS_LIST_URL.get(name)
-    if not models_url: return False
-    try:
-        r = await global_client.get(models_url, headers=_models_list_headers(name, cfg), timeout=15)
-        if r.status_code != 200: return False
-        available = {m['id'] for m in r.json().get('data', [])}
-    except Exception:
-        return False
-
-    for candidate in MODEL_CANDIDATES.get(name, []):
-        if candidate != cfg['model'] and candidate in available:
-            logger.warning(f"Model {name}/{cfg['model']} niedostępny — przełączam na {candidate}")
-            cfg['model'] = candidate
-            return True
-    return False
-
-async def warmup_ai_providers():
-    print("[SERVER] Rozgrzewanie modeli AI (Hey)...")
-    providers = await supabase.select('marketing_ai_providers', '*', {'is_active': 'true'})
-    if not providers: return
-    for p in providers:
-        name = p['name']
-        status, _, err = await call_ai_provider(name, "Hey")
-
-        if status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")) and await try_switch_model(name):
-            status, _, err = await call_ai_provider(name, "Hey")
-
-        if status == 200:
-            logger.info(f"Model {name} jest gotowy.")
-        elif any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-            msg = f"Model {name} wyczerpał limit lub środki (Błąd {status}): {err}"
-            logger.info(msg)
-            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
-        elif status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")):
-            msg = f"Model {name}/{AI_PROVIDERS[name]['model']} niedostępny, brak działającego zamiennika: {err}"
-            logger.error(msg)
-            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
-            await send_telegram_notification(
-                f"⚠️ <b>Błędna konfiguracja dostawcy AI</b>\n"
-                f"Dostawca <b>{name}</b> zwraca błąd 404 — model nie istnieje, a żaden ze znanych zamienników też nie jest dostępny na koncie.\n\n"
-                f"<code>{msg[:300]}</code>"
-            )
-        else:
-            msg = f"Model {name} zwrócił błąd {status}: {err}"
-            logger.info(msg)
-            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': msg})
-
-async def run_worker(run_id, target):
-    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, rejected_domains
-    try:
-        task_status, verified_in_run, attempts_in_run, critical_errors_in_run = "running", 0, 0, 0
-        rejected_domains.clear()
-        await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
-        await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'status': 'processing'})
-        logger.info(f"Zlecono {target} kontaktów.")
-        await warmup_ai_providers()
-        p_task, c_task = asyncio.create_task(producer_task(run_id)), asyncio.create_task(consumer_task(run_id, target))
-        while task_status in ("running", "paused") and verified_in_run < target: await asyncio.sleep(1)
-        p_task.cancel(); c_task.cancel()
-        if task_status == "running": 
-            task_status = "completed"
-            msg = f"✅ <b>Zlecenie zakończone</b>\nSukces: {verified_in_run}/{target}"
-            logger.info(f"Zlecenie zakończone. Sukces: {verified_in_run}/{target}.")
-            await send_telegram_notification(msg)
-    except Exception as e:
-        print(f"[SERVER] Error: {e}"); task_status = "error"
-        await send_telegram_notification(f"❌ <b>Błąd krytyczny bota</b>\n{e}")
-    finally:
-        await asyncio.sleep(5); task_status = "idle"
-
-LEAD_FINDER_API_KEY = os.getenv("LEAD_FINDER_API_KEY", "").strip()
-ADMIN_ORIGIN = "https://admin.familiada.online"
 
 def require_api_key(authorization: Optional[str] = Header(default=None)):
-    # Ten sam klucz co sekret Workera LEAD_FINDER_API_KEY (panel pobiera go
-    # przez /_admin_api/config/lead-finder-token). Bez klucza w env: odmowa.
+    # Ten sam klucz co sekret Workera LEAD_FINDER_API_KEY. Bez klucza w env: odmowa.
     if not LEAD_FINDER_API_KEY:
-        raise HTTPException(503, "API niekonfigurowane")
-    expected = f"Bearer {LEAD_FINDER_API_KEY}"
-    given = authorization or ""
-    if not hmac.compare_digest(given.encode("utf-8"), expected.encode("utf-8")):
-        raise HTTPException(401, "Brak autoryzacji")
+        raise HTTPException(503, 'API niekonfigurowane')
+    given = (authorization or '').encode('utf-8')
+    if not hmac.compare_digest(given, f'Bearer {LEAD_FINDER_API_KEY}'.encode('utf-8')):
+        raise HTTPException(401, 'Brak autoryzacji')
+
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[ADMIN_ORIGIN],
-    allow_methods=["GET", "POST"],
-    allow_headers=["Authorization", "Content-Type"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=[ADMIN_ORIGIN], allow_methods=['GET', 'POST'],
+                   allow_headers=['Authorization', 'Content-Type'])
 
-@app.on_event("startup")
-async def startup_event():
-    # Pobierz skrypt Readability raz przy starcie
-    await get_readability_js()
 
-@app.post("/api/search-runs", dependencies=[Depends(require_api_key)])
-async def start(target_count: int = 50):
-    global task_run_id, task_status
-    if task_status != "idle": raise HTTPException(400, f"System zajęty ({task_status})")
-    task_run_id = str(uuid.uuid4())
-    asyncio.create_task(run_worker(task_run_id, target_count))
-    return {"ok": True, "run_id": task_run_id}
+def _start(kind, **kw):
+    if engine.status != 'idle':
+        raise HTTPException(400, f'System zajęty ({engine.status})')
+    run_id = str(uuid.uuid4())
+    engine.status = 'starting'
+    asyncio.create_task(engine.start(run_id, kind, **kw))
+    return {'ok': True, 'run_id': run_id}
 
-@app.get("/api/search-runs/status", dependencies=[Depends(require_api_key)])
-async def status(): return {"status": task_status, "run_id": task_run_id, "verified": verified_in_run, "errors": critical_errors_in_run}
 
-@app.post("/api/search-runs/{run_id}/pause", dependencies=[Depends(require_api_key)])
+@app.post('/api/search-runs', dependencies=[Depends(require_api_key)])
+async def start_search(target_count: int = 50):
+    return _start('search', target=max(1, min(1000, target_count)))
+
+
+@app.post('/api/contacts-review', dependencies=[Depends(require_api_key)])
+async def start_review(all: bool = False):
+    return _start('review', all_rows=all)
+
+
+@app.get('/api/search-runs/status', dependencies=[Depends(require_api_key)])
+async def status():
+    s = engine.snapshot()
+    s['ceidg'] = engine.ceidg.enabled
+    return s
+
+
+def _own_run(run_id):
+    if engine.run_id != run_id:
+        raise HTTPException(404, 'Nieznane zlecenie')
+
+
+@app.post('/api/search-runs/{run_id}/pause', dependencies=[Depends(require_api_key)])
 async def pause(run_id: str):
-    global task_status
-    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
-    if task_status != "running": raise HTTPException(400, f"Nie można wstrzymać w stanie {task_status}")
-    task_status = "paused"
-    return {"ok": True, "status": task_status}
+    _own_run(run_id)
+    if engine.status != 'running':
+        raise HTTPException(400, f'Nie można wstrzymać w stanie {engine.status}')
+    engine.status = 'paused'
+    return {'ok': True, 'status': engine.status}
 
-@app.post("/api/search-runs/{run_id}/resume", dependencies=[Depends(require_api_key)])
+
+@app.post('/api/search-runs/{run_id}/resume', dependencies=[Depends(require_api_key)])
 async def resume(run_id: str):
-    global task_status
-    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
-    if task_status != "paused": raise HTTPException(400, f"Nie można wznowić w stanie {task_status}")
-    task_status = "running"
-    return {"ok": True, "status": task_status}
+    _own_run(run_id)
+    if engine.status != 'paused':
+        raise HTTPException(400, f'Nie można wznowić w stanie {engine.status}')
+    engine.status = 'running'
+    return {'ok': True, 'status': engine.status}
 
-@app.post("/api/search-runs/{run_id}/cancel", dependencies=[Depends(require_api_key)])
+
+@app.post('/api/search-runs/{run_id}/cancel', dependencies=[Depends(require_api_key)])
 async def cancel(run_id: str):
-    global task_status
-    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
-    if task_status not in ("running", "paused"): raise HTTPException(400, "Brak aktywnego zlecenia do anulowania")
-    task_status = "cancelled"
-    return {"ok": True, "status": task_status}
+    _own_run(run_id)
+    if engine.status not in ('running', 'paused'):
+        raise HTTPException(400, 'Brak aktywnego zlecenia do anulowania')
+    engine.status = 'cancelled'
+    return {'ok': True, 'status': engine.status}
 
-@app.get("/health")
-async def health(): return {"status": "ok"}
 
-if __name__ == "__main__":
+@app.get('/health')
+async def health():
+    return {'status': 'ok'}
+
+
+if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host='0.0.0.0', port=8001)

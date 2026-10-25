@@ -84,9 +84,30 @@ wyjątkowo, w małym budżecie.
   `reviewed_at`, `sent_count`, `last_sent_at`, `reaction`, `reaction_at`;
   funkcje `marketing_mark_sent(emails)` i `marketing_mark_reaction(email,
   reaction)` (service only).
-- Po tygodniu działania: usunięcie `marketing_raw_contacts`,
-  `marketing_search_queries_log`, `marketing_cities` i ich funkcji (osobna
-  migracja).
+- Historia zapytań zostaje w `marketing_search_queries_log` (`search:<zapytanie>`,
+  `ceidg:<pkd>:<województwo>:<strona>`) — zapytanie nie jest powtarzane.
+- Po tygodniu działania: usunięcie `marketing_raw_contacts`, `marketing_cities`,
+  `claim_next_pending_lead` (osobna migracja).
+
+## Stan wdrożenia (2026-10-25)
+
+- Migracja 489 na produkcji (`latest.log`: OK; numer 489 ma też migracja
+  innej sesji `market_embedding_cron_timeout` — obie zastosowane).
+- Usługa: `services/lead-finder/` (`main.py`, pakiet `lf/`: `filters`,
+  `sources/search`, `sources/ceidg`, `classify`, `fetch`, `pipeline`, `db`),
+  testy `python3 -m unittest discover -s services/lead-finder/tests`
+  (uruchamiane też przez `deploy-lead-finder.yml` przed wdrożeniem).
+  Obraz `python:3.12-slim`, bez Playwright. Endpointy: dotychczasowe +
+  `POST /api/contacts-review?all=` (Worker: `/_admin_api/leads/contacts-review`).
+  Status zwraca dodatkowo `kind`, `stats`, `ceidg`.
+- Worker: `lib/email/marketing-reactions.js` (reakcje w poczcie
+  przychodzącej), wysyłka pomija odmowy/odbicia (`blocked`) i zapisuje
+  `marketing_mark_sent`.
+- Panel: kolumny Jakość i Reakcja, filtry jakości i reakcji, przycisk
+  „Przejrzyj kontakty” (zrzut `admin-leads`).
+- Kontrola po wdrożeniu (właściciel z panelu, agent przez `db-read`):
+  przebieg na celu 10 → `scripts/db-read/lead-finder-runs.sql`; przegląd
+  kontaktów → `scripts/db-read/lead-finder-contacts.sql`.
 
 ## Etapy
 

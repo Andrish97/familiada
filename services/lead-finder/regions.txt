@@ -1,0 +1,17 @@
+# Regiony do zapytań — {region} w templates.txt (miasta nie są wymagane).
+dolnośląskie
+kujawsko-pomorskie
+lubelskie
+lubuskie
+łódzkie
+małopolskie
+mazowieckie
+opolskie
+podkarpackie
+podlaskie
+pomorskie
+śląskie
+świętokrzyskie
+warmińsko-mazurskie
+wielkopolskie
+zachodniopomorskie

@@ -1,116 +1,40 @@
-# ==============================================
-# NEGATIVE KEYWORDS - wykluczenie na poziomie crawlera
-# Jeśli page_text zawiera te frazy → skip bez wysyłki do AI
-# ==============================================
-
-# --- Infrastruktura i Media ---
+# Słowa wykluczające — kandydat odrzucany bez AI, gdy nazwa lub opis je
+# zawiera (małe litery). Tylko jednoznaczne branże spoza eventów.
 wodociągi
 kanalizacja
 oczyszczalnia
-gazownia
-energetyka
-elektrownia
 ciepłownia
 zakład komunalny
-mpwik
-pwik
-
-# --- Urzędy i Instytucje ---
-urząd miasta
-urząd gminy
-starostwo
-ministerstwo
 komenda policji
 prokuratura
 sąd rejonowy
-bip.gov.pl
-rzecznik praw
 biuro rachunkowe
-
-# --- Ochrona zdrowia / Medyczne ---
-icd-10
-ból głowy
-ciśnienie krwi
-kompres
-suplementy diety
-apteka internetowa
-recepta
-choroba
-leczenie
-rehabilitacja
-
-# --- Nieruchomości i Budownictwo ---
-wykończenia pod klucz
-budowa domu
+apteka
+przychodnia
+stomatolog
+dentysta
+weterynarz
 deweloper
 sprzedaż mieszkań
+biuro nieruchomości
 pośrednictwo nieruchomości
-wynajem mieszkań
 instalacje elektryczne
-
-# --- Edukacja (szkoły, przedszkola, żłobki) ---
-szkoła podstawowa
-liceum ogólnokształcące
-przedszkole miejskie
-żłobek
-placówka oświatowa
-organ prowadzący
-podstawa programowa
-kuratorium oświaty
-dyrektor szkoły
-
-# --- Sport wyczynowy / Organizacje sportowe ---
-liga kickboxingu
-związek sportowy
-puchar polski
-zawody sportowe
-wyniki meczów
-tabela ligowa
-transfer zawodnika
-klub sportowy
-
-# --- Filmy (wykluczenie bazy o filmie "Wodzirej" i innych) ---
-obsada
-reżyseria
-scenariusz
-film fabularny
-premiera filmu
-aktorzy
-kinematografia
-produkcja filmowa
-rotten tomatoes
-imdb rating
-
-# --- E-commerce / Sklepy (niezwiązane z eventami) ---
-dodaj do koszyka
-koszyk zakupów
-zamówienie online
-śledzenie przesyłki
-kod rabatowy
-regulamin sklepu
-polityka zwrotów
-
-# --- Finanse / Bankowość ---
-konto bankowe
-przelew bankowy
-kurs walut
-giełda papierów
-inwestycje
-lokata bankowa
-kredyt hipoteczny
-ubezpieczenie
-
-# --- Motoryzacja ---
+hurtownia
 serwis samochodowy
-naprawa silnika
+warsztat samochodowy
 części zamienne
 lakiernia
-auto komis
-przegląd techniczny
-
-# --- Gastronomia TYLKO (restauracje bez działu event) ---
-menu restauracji
-rezerwacja stolika
-karta dań
-kuchnia polska
-kucharz poleca
+komis samochodowy
+kredyt hipoteczny
+ubezpieczenia
+kancelaria prawna
+kancelaria adwokacka
+notariusz
+oferta pracy
+praca dla
+zatrudnimy
+kurs dj
+szkoła dj
+kurs animatora
+sklep dla animatorów
+hurtownia balonów

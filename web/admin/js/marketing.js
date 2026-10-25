@@ -115,7 +115,7 @@ async function sendMarketing() {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(`Dodano do kolejki: ${json.queued}/${json.total}${json.skipped ? `; pominięto ${json.skipped} — powiadomienia wyłączone.` : ""}`, json.queued ? "success" : "info");
+    showToast(`Dodano do kolejki: ${json.queued}/${json.total}${json.skipped ? `; pominięto ${json.skipped} — powiadomienia wyłączone` : ""}${json.blocked ? `; pominięto ${json.blocked} — odmowa lub adres odbity` : ""}.`, json.queued ? "success" : "info");
     if (statusEl) statusEl.textContent = "";
     if (!json.queued) return;
     

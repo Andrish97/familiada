@@ -5,6 +5,7 @@ import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue
 import { uploadToStorage } from "../core/storage.js";
 import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
 import { findTicketOwner } from "./contact.js";
+import { recordMarketingReactions } from "./marketing-reactions.js";
 
 export function decodeMimeWords(str) {
   if (!str || typeof str !== "string") return str || "";
@@ -115,10 +116,16 @@ export async function handleInboundEmail(message, env) {
   const ticketMatch = subject.match(/\[(?:TICKET-)?(\d{4}-\d{4})\]/i);
   const ticketArg = ticketMatch ? await ticketForSender(env, ticketMatch[1], from) : null;
 
-  // Check if this is a reply to a marketing email (by subject thread)
-  const cleanSubject = subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+  // Reakcja odbiorcy na mail marketingowy: nadawca (albo adresat zwrotki)
+  // dopasowany do kontaktu Lead Findera. Dodatkowo, jak dotąd, podobny temat.
   let isReplyToMarketing = false;
-  if (cleanSubject) {
+  try {
+    isReplyToMarketing = await recordMarketingReactions(env, { from, subject, body });
+  } catch (err) {
+    console.error("[email] marketing reaction failed:", err);
+  }
+  const cleanSubject = subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+  if (cleanSubject && !isReplyToMarketing) {
     try {
       // Check if any existing marketing email has similar subject
       const checkRes = await supabaseRequest(env, `/rest/v1/messages?select=id&direction=eq.outbound&is_marketing=eq.true&subject=ilike.%${cleanSubject}%&limit=1`, { method: "GET" });

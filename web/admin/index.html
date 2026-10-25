@@ -899,7 +899,7 @@
         <div class="card card--inset settings-card">
           <div class="panel-head">
             <div class="panel-title">Kontakty Marketingowe</div>
-            <div class="panel-sub">Wyszukiwarka leadów: SearXNG → Email → AI Weryfikacja</div>
+            <div class="panel-sub">Lead Finder: wyszukiwarka i CEIDG → odsiew → ocena AI paczkami</div>
           </div>
 
           <!-- Run controls -->
@@ -909,6 +909,7 @@
               <input class="inp mc-target-count" id="mcTargetCount" type="number" min="1" max="500" value="50">
               <button class="btn sm gold" id="mcActionBtn" type="button"><i class="ico" data-icon="play"></i> Uruchom</button>
               <button class="btn sm danger" id="mcCancelBtn" type="button" hidden><i class="ico" data-icon="cancel"></i> Anuluj</button>
+              <button class="btn sm" id="mcReviewBtn" type="button" title="Ocenia zapisane kontakty (bez kasowania) — wynik w kolumnie Jakość"><i class="ico" data-icon="check"></i> Przejrzyj kontakty</button>
               <button class="btn sm" id="mcRefreshBtn" type="button"><i class="ico" data-icon="refresh"></i> Odśwież</button>
             </div>
           </div>
@@ -951,6 +952,20 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
+                <div class="ui-select mc-filter-used" id="mcFilterQuality">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
+                <div class="ui-select mc-filter-used" id="mcFilterReaction">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" hidden><i class="ico" data-icon="globe"></i> Odwiedź</a>
                 <button class="btn sm" id="mcCopyBtn" type="button" hidden><i class="ico" data-icon="copy"></i> Kopiuj</button>
                 <button class="btn sm" id="mcMarkUsedBtn" type="button"><i class="ico" data-icon="check"></i> Użyte</button>
@@ -969,10 +984,12 @@
                     <th class="mc-sortable mc-col-url" data-col="url">URL</th>
                     <th class="mc-sortable mc-col-added-at" data-col="added_at">Dodano</th>
                     <th class="mc-sortable mc-col-is-used" data-col="is_used">Użyto</th>
+                    <th class="mc-sortable mc-col-quality" data-col="quality">Jakość</th>
+                    <th class="mc-sortable mc-col-reaction" data-col="reaction">Reakcja</th>
                   </tr>
                 </thead>
                 <tbody id="mcTableBody">
-                  <tr><td colspan="5" class="mc-empty mc-empty--cell">Ładowanie...</td></tr>
+                  <tr><td colspan="7" class="mc-empty mc-empty--cell">Ładowanie...</td></tr>
                 </tbody>
               </table>
             </div>

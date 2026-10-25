@@ -1,17 +1,3 @@
-# ==============================================
-# SUBPAGE PATHS - ścieżki crawlowane po znalezieniu domeny
-# Crawler odwiedza te podstrony w poszukiwaniu emaili i treści
-# ==============================================
-# LIMIT: max 3 podstrony na domenę żeby nie duplikować URLi!
-# ==============================================
-
-# --- Kontakt (priorytet 1 — najczęściej zawiera email) ---
+# Podstrony kontaktu odwiedzane w budżecie pobrań (po stronie głównej).
 kontakt
 contact
-kontakty
-
-# --- O firmie (priorytet 2 — zawiera opis usług) ---
-o-nas
-about
-onas
-o-mnie

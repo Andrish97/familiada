@@ -403,9 +403,12 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/attachments?message_id=*": { ok: true, attachments: [] },
       // Kontakty marketingowe: stan zlecenia lead-findera przez Worker (Ś2).
       "/_admin_api/leads/search-runs/status": { status: "paused", run_id: "0f1e2d3c-4b5a-4987-8654-3210fedcba98", verified: 12, errors: 0 },
-      "/_admin_api/marketing/contacts?*": { ok: true, total: 2, rows: [
-        { id: "c1", email: "biuro@przedszkole-example.test", name: "Przedszkole Słoneczko", city: "Kraków", used: false, added_at: "2026-10-19T09:00:00Z" },
-        { id: "c2", email: "dom.kultury@example.test", name: "Dom Kultury", city: "Gdańsk", used: true, added_at: "2026-10-18T09:00:00Z" },
+      // Lead Finder 2: jakość z przeglądu i reakcje odbiorców.
+      "/_admin_api/marketing/contacts?*": { ok: true, total: 4, rows: [
+        { id: "c1", email: "biuro@djmax-example.test", title: "DJ Max — wesela i imprezy", url: "https://djmax-example.test", is_used: true, added_at: "2026-10-25T09:00:00Z", quality: "good", quality_reason: "DJ weselny z prowadzeniem", sent_count: 1, reaction: "replied" },
+        { id: "c2", email: "kontakt@wodzirej-example.test", title: "Wodzirej Anna", url: "https://wodzirej-example.test", is_used: true, added_at: "2026-10-24T09:00:00Z", quality: "good", quality_reason: "wodzirej", sent_count: 2, reaction: null },
+        { id: "c3", email: "biuro@przedszkole-example.test", title: "Przedszkole Słoneczko", url: "https://przedszkole-example.test", is_used: false, added_at: "2026-10-19T09:00:00Z", quality: "junk", quality_reason: "placówka publiczna (przedszkole)", sent_count: 0, reaction: null },
+        { id: "c4", email: "events@agencja-example.test", title: "Agencja eventowa Fala", url: "https://agencja-example.test", is_used: true, added_at: "2026-10-18T09:00:00Z", quality: null, sent_count: 1, reaction: "declined" },
       ] },
       "/_admin_api/marketing/logs": { ok: true, rows: [
         { created_at: "2026-10-20T10:01:00Z", level: "info", message: "Zlecenie wstrzymane" },

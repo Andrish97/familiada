@@ -54,20 +54,36 @@ test('admin compose: actual queue id is recorded with attachments; history failu
 });
 test('admin marketing: only actually queued normalized recipients get sent history', async () => {
   const body = { emails:[' FIRST@example.com ','first@example.com','second@example.com','invalid'], subject:'Campaign', custom_body:'<p>Body</p>' };
-  const mixed = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[201,[{to_email:'second@example.com'}]],[201,[]]]);
-  assert.deepEqual(mixed.result,{ok:true,queued:1,skipped:1,total:2});
-  assert.equal(mixed.calls[0].path,'/rest/v1/mail_queue?select=to_email');
-  assert.equal(mixed.calls[0].prefer,'return=representation');
-  assert.equal(mixed.calls[0].body.length,2);
-  assert.deepEqual(mixed.calls[1].body.map(row=>row.to_email),['second@example.com']);
-  const none = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[201,[]]]);
-  assert.deepEqual(none.result,{ok:true,queued:0,skipped:2,total:2});
-  assert.equal(none.calls.length,1);
-  const all = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[201,[{to_email:'first@example.com'},{to_email:'second@example.com'}]],[201,[]]]);
-  assert.deepEqual(all.result,{ok:true,queued:2,skipped:0,total:2});
-  const failed = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[503,{message:'queue unavailable'}]]);
+  // Kolejność: lista pominiętych (odmowa/odbicie), kolejka, zapis wysyłki na kontaktach, historia.
+  const mixed = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,[]],[201,[{to_email:'second@example.com'}]],[200,1],[201,[]]]);
+  assert.deepEqual(mixed.result,{ok:true,queued:1,skipped:1,blocked:0,total:2});
+  assert.equal(mixed.calls[0].path,'/rest/v1/rpc/marketing_send_blocked');
+  assert.deepEqual(mixed.calls[0].body,{p_emails:['first@example.com','second@example.com']});
+  assert.equal(mixed.calls[1].path,'/rest/v1/mail_queue?select=to_email');
+  assert.equal(mixed.calls[1].prefer,'return=representation');
+  assert.equal(mixed.calls[1].body.length,2);
+  assert.equal(mixed.calls[2].path,'/rest/v1/rpc/marketing_mark_sent');
+  assert.deepEqual(mixed.calls[2].body,{p_emails:['second@example.com']});
+  assert.deepEqual(mixed.calls[3].body.map(row=>row.to_email),['second@example.com']);
+  const none = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,[]],[201,[]]]);
+  assert.deepEqual(none.result,{ok:true,queued:0,skipped:2,blocked:0,total:2});
+  assert.equal(none.calls.length,2);
+  const all = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,[]],[201,[{to_email:'first@example.com'},{to_email:'second@example.com'}]],[200,2],[201,[]]]);
+  assert.deepEqual(all.result,{ok:true,queued:2,skipped:0,blocked:0,total:2});
+  const failed = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,[]],[503,{message:'queue unavailable'}]]);
   assert.equal(failed.status,503);
   assert.equal(failed.result.error,'queue_insert_failed');
+});
+test('admin marketing: odmowa lub adres odbity -- bez wysyłki; błąd sprawdzenia nie wysyła', async () => {
+  const body = { emails:['first@example.com','second@example.com'], subject:'Campaign', custom_body:'<p>Body</p>' };
+  const one = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,['first@example.com']],[201,[{to_email:'second@example.com'}]],[200,1],[201,[]]]);
+  assert.deepEqual(one.result,{ok:true,queued:1,skipped:0,blocked:1,total:2});
+  assert.deepEqual(one.calls[1].body.map(row=>row.to_email),['second@example.com']);
+  const allBlocked = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[200,['first@example.com','second@example.com']]]);
+  assert.deepEqual(allBlocked.result,{ok:true,queued:0,skipped:0,blocked:2,total:2});
+  const broken = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[[503,{message:'db unavailable'}]]);
+  assert.equal(broken.status,503);
+  assert.equal(broken.result.error,'blocked_check_failed');
 });
 test('admin marketing: malformed recipients, empty subject and over 500 unique emails never reach queue', async () => {
   for (const [body,error] of [[{},'missing_emails'],[{emails:['a@b.com'],subject:'S'},'missing_body'],[{emails:['a@b.com']},'missing_subject'],[{emails:['invalid'],subject:'S',custom_body:'Body'},'no_valid_emails'],[{emails:Array.from({length:501},(_,i)=>`u${i}@example.com`),subject:'S',custom_body:'Body'},'too_many_emails']]) {

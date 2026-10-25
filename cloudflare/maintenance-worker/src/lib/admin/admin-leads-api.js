@@ -1,7 +1,8 @@
 // src/lib/admin/admin-leads-api.js -- /_admin_api/leads/*: pośrednik panelu
 // do usługi lead-finder (leads.familiada.online). Klucz LEAD_FINDER_API_KEY
 // zostaje po stronie Workera (audyt E24, Ś2) -- przeglądarka go nie dostaje.
-// Tylko ścieżki zleceń wyszukiwania używane przez panel (lista dozwolonych).
+// Tylko ścieżki zleceń wyszukiwania i przeglądu kontaktów używane przez panel
+// (lista dozwolonych).
 // Admin (Cloudflare Access) i CSRF sprawdzone wcześniej w handleAdminApi.
 import { json } from "../core/http.js";
 
@@ -19,6 +20,9 @@ export function leadFinderTarget(method, subPath, searchParams) {
     const raw = Number(searchParams.get("target_count"));
     const count = Number.isFinite(raw) ? Math.max(1, Math.min(1000, Math.round(raw))) : 50;
     return { path: `/api/search-runs?target_count=${count}` };
+  }
+  if (method === "POST" && subPath === "contacts-review") {
+    return { path: `/api/contacts-review?all=${searchParams.get("all") === "true" ? "true" : "false"}` };
   }
   const m = /^search-runs\/([^/]+)\/([a-z]+)$/.exec(subPath);
   if (method === "POST" && m && RUN_ID_RE.test(m[1]) && RUN_ACTIONS.has(m[2])) {

@@ -1,0 +1,35 @@
+# Placówki publiczne — odrzucane bez AI (decyzja użytkownika 2026-10-25:
+# bez szkół, urzędów itp.). Szukane w nazwie i opisie kandydata (małe litery).
+szkoła podstawowa
+szkoły podstawowej
+zespół szkół
+zespołu szkół
+liceum
+technikum
+przedszkole
+przedszkola
+żłobek
+żłobka
+uczelnia
+uniwersytet
+politechnika
+urząd miasta
+urząd gminy
+urzędu miasta
+urzędu gminy
+starostwo
+gmina
+powiat
+kuratorium
+dom kultury
+domu kultury
+ośrodek kultury
+ośrodka kultury
+centrum kultury
+biblioteka publiczna
+miejska biblioteka
+gminna biblioteka
+ośrodek pomocy społecznej
+mops
+gops
+biuletyn informacji publicznej
