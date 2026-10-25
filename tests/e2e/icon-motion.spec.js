@@ -2,7 +2,7 @@ const { test, expect } = require('./helpers/e2e-test');
 const { serveBranchCode } = require('./helpers/branch-code');
 test.use({ serviceWorkers: 'block', needs: { standard: 1 } });
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE === '1') await serveBranchCode(context, { pages: ['games', 'privacy'] });
+  if (process.env.TEST_BRANCH_CODE === '1') await serveBranchCode(context, { pages: ['games', 'privacy', 'manual'] });
 });
 
 test.describe('hamburger', () => {
@@ -28,6 +28,14 @@ test.describe('hamburger', () => {
       await expect(middle).toHaveCSS('opacity', '0');
       await expect(page.locator('#topbarAccountMenu').getByRole('button', { name: 'Wyloguj', exact: true })).toBeVisible();
       expect(await button.boundingBox()).toEqual(box);
+      const panel = page.locator('.topbar-mobile-panel');
+      await expect(panel).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+      const drawerBox = await panel.boundingBox();
+      expect(Math.abs(drawerBox.x + drawerBox.width - width)).toBeLessThan(1);
+      expect(drawerBox.width).toBeLessThanOrEqual(320);
+      await expect(page.locator('.topbar-mobile-close')).toHaveCount(0);
+      await page.keyboard.press('Tab');
+      expect(await page.locator('.topbar-mobile-overlay').evaluate(el => el.contains(document.activeElement))).toBe(true);
       await page.keyboard.press('Escape');
       await expect(button).toHaveAttribute('aria-expanded', 'false');
       await expect(middle).toHaveCSS('opacity', '1');
@@ -36,8 +44,12 @@ test.describe('hamburger', () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await button.click();
       await expect(middle).toHaveCSS('opacity', '0');
-      await page.locator('.topbar-mobile-close').click();
+      await page.locator('.topbar-menu-toggle').click();
       await expect(button).toBeFocused();
+      await button.click();
+      await page.locator('.topbar-mobile-overlay').click({ position: { x: 8, y: 80 } });
+      await expect(button).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('.topbar-mobile-overlay')).toHaveAttribute('inert', '');
       await page.emulateMedia({ reducedMotion: 'no-preference' });
     }
   });
@@ -72,4 +84,40 @@ test('animowane części: para zmienia krzywą, filiżanka stoi, ograniczony ruc
   await button.scrollIntoViewIfNeeded();
   await button.click();
   await expect(page.locator('.support-modal')).toBeVisible();
+});
+
+test('wysuwane panele: spis Wskazówek z lewej, Escape i wzajemne zamykanie', async ({ page }) => {
+  for (const width of [390, 360]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/manual/?ch=6&lang=pl', { waitUntil: 'domcontentloaded' });
+    const toggle = page.locator('#manualTocToggle');
+    const toc = page.locator('#manualToc');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(toggle.locator('[data-icon-part="middle"]')).toHaveCSS('opacity', '0');
+    await expect(toc).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+    const tocBox = await toc.boundingBox();
+    expect(tocBox.x).toBe(0);
+    const toggleBox = await toggle.boundingBox();
+    expect(tocBox.y).toBeGreaterThanOrEqual(toggleBox.y + toggleBox.height);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    await page.keyboard.press('Escape');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toBeFocused();
+    await expect(toc).toHaveAttribute('inert', '');
+    await toggle.click();
+    const menu = page.locator('.topbar-menu-toggle');
+    await menu.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(menu).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await toggle.click();
+    await page.locator('#manualTocBackdrop').click({ position: { x: width - 8, y: 70 } });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await expect(toc).not.toHaveAttribute('inert', '');
+    await expect(toc).toBeVisible();
+  }
 });

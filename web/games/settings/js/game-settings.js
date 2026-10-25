@@ -1,35 +1,36 @@
+import { bindDrawer } from "../../../shared/js/core/drawer.js?v=v2026-10-25T21231";
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T20570";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-25T20570";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-25T20570";
-import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T20570";
-import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T20570";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T20570";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T20570";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-25T20570";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-25T20570";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T20570";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-25T20570";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-25T20570";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-25T20570";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-25T20570";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-25T21231";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-25T21231";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-25T21231";
+import { normHex } from "../../../shared/js/core/color.js?v=v2026-10-25T21231";
+import { colorPickerHTML, bindColorPicker } from "../../../shared/js/core/color-picker.js?v=v2026-10-25T21231";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-25T21231";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T21231";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-25T21231";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-25T21231";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-25T21231";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-25T21231";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-25T21231";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-25T21231";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-25T21231";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-25T20570";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-25T21231";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-25T20570";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T20570";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-25T20570";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T20570";
-import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-25T20570";
-import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T20570";
-import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-25T20570";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-25T21231";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-25T21231";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-25T21231";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T21231";
+import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-25T21231";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-25T21231";
+import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-25T21231";
 
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
@@ -1869,25 +1870,16 @@ async function main() {
 
   updateSubTabStates();
 
+  const sectionDrawer = bindDrawer({ panel: sidebar, backdrop: sidebarBackdrop, toggle: sidebarToggle });
+
   // Sidebar clicks
   sidebar?.addEventListener("click", e => {
     const btn = e.target.closest(".gs-sidebar-item");
     if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
     const cat = btn.dataset.cat;
     if (cat) setActiveCat(cat);
-    sidebar?.classList.remove("is-open");
-    sidebarBackdrop?.classList.remove("is-open");
-    sidebarToggle?.setAttribute("aria-expanded", "false");
+    sectionDrawer?.close();
   });
-  const toggleSidebar = (open = !sidebar?.classList.contains("is-open")) => {
-    sidebar?.classList.toggle("is-open", open);
-    sidebarBackdrop?.classList.toggle("is-open", open);
-    sidebarToggle?.setAttribute("aria-expanded", String(open));
-  };
-  sidebarToggle?.addEventListener("click", () => toggleSidebar());
-  sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
-
   // Save button
   btnSaveAll?.addEventListener("click", saveAll);
 

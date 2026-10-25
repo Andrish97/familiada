@@ -1063,11 +1063,7 @@
       min-height: 0;
     }
 
-    /* Lewy panel jako szuflada (.drawer/.drawer-scrim w silniku). #toolbar jest
-       osobnym elementem NAD .explorer: --drawer-top dolicza jego realną
-       wysokość (--be-toolbar-h, mierzone w mobile.js przy otwarciu), żeby
-       szuflada i tło nie zasłaniały toolbara. */
-    body { --drawer-top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px)); }
+    /* Położenie szuflady pod #toolbar mierzy wspólny core/drawer.js. */
 
     /* Prawy panel — pełna szerokość, rozciągnięty na całą wysokość .explorer
        (flex:1 1 auto zamiast sztywnego min-height:50vh, patrz komentarz przy

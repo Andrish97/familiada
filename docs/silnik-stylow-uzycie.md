@@ -358,3 +358,21 @@ API pozostaje statyczny rysunek. Audyt kandydatów: `animowane-ikony-audyt.md`.
 3. Logika współdzielona → moduł w `web/shared/js/core/` z testem unit.
 4. Wpis w §6 tutaj i w `wzorce-ui.md`; usuń dotychczasowe kopie na
    stronach w tym samym kroku (zrzuty przed/po).
+
+### Wysuwane menu i panele boczne (2026-10-25)
+
+Główna nawigacja topbara używa `.topbar-mobile-overlay` i
+`.topbar-mobile-panel`: panel od prawej krawędzi pod topbarem, do 320 px /
+86vw, ze strefą bezpieczną. Nie dodawaj osobnego krzyżyka; stan przycisku
+hamburger/X wynika z `aria-expanded`. Tło i Escape też zamykają menu.
+
+Panele robocze używają `.drawer` / `.drawer-scrim` i `bindDrawer` z
+`core/drawer.js`: podaj panel, backdrop i opcjonalny toggle; `beforeOpen`
+służy do dodatkowej pracy przed otwarciem, `onChange` do odświeżenia stanu strony.
+`anchor` wskazuje pasek narzędzi (domyślnie rodzic toggle); wspólny pomiar
+z `registerPageLayout` i ResizeObserver ustawia przez geometry.js początek
+panelu oraz tła pod paskiem. Przełącznik/X pozostaje dostępny. API: open, close,
+setOpen, isOpen. Zamknięty panel na wąskim ekranie jest inert, na komputerze
+wraca do układu. `drawer:open` zamyka pozostałe panele, także topbar.
+Lewa strona paneli roboczych pozostaje zgodna z układem strony. Obie strony
+używają `--dur-base` / `--ease-out`, tłumionych przez reduced-motion.

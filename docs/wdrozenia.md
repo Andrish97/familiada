@@ -2142,4 +2142,33 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   private/no-store, Access 302. Brak wysyłki i zmian maintenance.
 - Szczegóły prywatnie: docs/admin-private-plan.md; status: **zrobione**.
 
+### 2026-10-25 — wysuwane menu: w trakcie
+
+- Decyzja właściciela: główne menu z prawej (korekta kierunku), bez drugiego
+  krzyżyka; ujednolicić także pozostałe wysuwane panele. Realizacja w silniku,
+  równolegle w prywatnym pakiecie admina. Drzewo baz/sekcje/spis zachowują lewą.
+- Bramka: zrzuty 390/360/1400, unit, punktowe E2E z brancha, Pages i kontrola
+  tych samych speców na produkcji. Prywatnie unit/browser + check/production.
+
+- Bramka lokalna: **815/815 unit**, regresja przeglądarkowa wszystkich czterech
+  paneli na 390 i 360 px (prawdziwy kod, atrapa Supabase), desktop 1400,
+  reduced motion, klawiatura, licznik aktualizowany przy zamkniętym menu.
+  Prywatnie **84/84 unit**, test menu 1/1, zrzut obejrzany. Audyt rozpoznaje
+  `.drawer-scrim` jako tło, nie przycisk z ikoną w strefie bezpiecznej.
+
+- Branch E2E **40234872626 ✓ 3/3** (hamburger, spis, atomowa nawigacja).
+  Prywatny branch CI **40234865542 ✓ 84 unit + 17 browser**, check
+  **40234874849 ✓**. Panel opublikowany na main 14c8819, production w toku.
+- Po ocenie zrzutów: wspólny drawer mierzy początek pod własnym paskiem
+  narzędzi przez geometry.js i registerPageLayout; X sekcji/spisu pozostaje
+  widoczny. Ponownie **815/815 unit**, lokalne panele 390/360 + desktop ✓,
+  sześć zrzutów telefonów z audytem **0 uwag**. Powtórzyć tylko test spisu,
+  bo menu główne/atomowe przekierowania nie zostały zmienione tą korektą.
+
+- Końcowy branch po scaleniu bieżącego main: **40235146124 ✓** (spis z
+  dostępnym X, 390/360, Escape/tło i współpraca z menu głównym). Unit po
+  scaleniu **815/815**; zmiany realtime z równoległej sesji zachowane.
+  Prywatny main 14c8819: production **40235056371 ✓**, Access 302,
+  CI 84 unit + 17 browser. Publikacja publicznego main i kontrola 3 testów.
+
 | 2026-10-25 | Prywatny Marketing — Autorska w dwóch trybach i układ rozmowy | Decyzja właściciela: usunąć zbędny Newsletter; Autorska ma Edytor do pisania i Kod HTML do wklejania fragmentu/całego dokumentu. Osobne szkice przy przełączaniu, wspólny podgląd i wysyłka aktywnego trybu. Podgląd izolowany bez skryptów; transport zachowuje stopkę preferencji. Zgłoszony zrzut rozmowy: powrót dostał własny wiersz z odstępem, HTML szerszy i wyższy podgląd. Lokalnie 9 punktowych browser + 4 edytora success, CSS 3/3 po poprawce analizy komentarza; 6 zrzutów 1400/390 obejrzanych. Publiczna kopia buildera: 3/3, po scaleniu także brak konfliktów. | Kod panelu i sceny prywatnie; bez realnej wysyłki, zmian bazy, LF ani maintenance. Server 312b733, production 40235289031 success; CI 40234942955 i 40235137267 success: 85 unit + 20 browser, build/check. Origin potwierdził SHA, private/no-store i 404/404/200; po wdrożeniu panel/API 302 do Access, origin 404, www 200. Odświeżyć panel. |

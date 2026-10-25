@@ -20,7 +20,7 @@ nazwy składane ze stanu nie są liczone. Poniżej miejsca i warunki wdrożenia.
 
 | Priorytet | Ikona / miejsce | Ruch części i wyzwalacz | Źródło stanu / ograniczenie |
 |---|---|---|---|
-| Wdrożone | Hamburger, wspólny topbar | Trzy kreski → dwie przekątne; odwrócenie po zamknięciu | `topbar-controller.js`, aria-expanded; klik, klawiatura, Escape, zamknięcie panelem/tłem i nawigacja |
+| Wdrożone | Hamburger, wspólny topbar | Trzy kreski → dwie przekątne; odwrócenie po zamknięciu | `topbar-controller.js`, aria-expanded; klik, klawiatura, Escape, zamknięcie przełącznikiem/tłem i nawigacja |
 | Wdrożone | Kawa, wspólna stopka | Dwie krzywe pary zmieniają falę, filiżanka stoi | `support-modal.js`, widoczność SVG/karty i prefers-reduced-motion; rozmiary kaw w oknie statyczne |
 | Następne | Strzałki list rozwijanych | Obrót grotu przy otwarciu/zamknięciu | `list-search.js`, `ui-select.js`, aria-expanded; 14 dosłownych użyć caret-down/7 plików |
 | Następne | Zapis ustawień i logo | Krótka sygnalizacja pracy, po sukcesie narysowanie check | `game-settings.js` saving, `logos/js/editor-page.js` saving/status; dopiero po wyniku serwera, nie po samym kliknięciu |
@@ -57,3 +57,8 @@ filiżance, pauza przy ograniczonym ruchu, własna oś czasu SVG, brak zmian
 geometrii przycisku. Kontrola produkcji 40232849277 5/5 i po doprecyzowaniu
 Escape 40233368390 1/1. Pages 40233133027. Prywatna kopia silnika oraz
 ujednolicenie TinyMCE mają własną weryfikację w repo familiada-server.
+
+- Uzupełnienie decyzji 2026-10-25: główne menu jest szufladą z prawej,
+  zamykaną tym samym hamburgerem/X. Usunięto dodatkowy krzyżyk panelu.
+  Animowane kreski obejmują także sekcje ustawień i spis Wskazówek;
+  drzewo baz zachowuje przyciski widoków drzewo/tagi/kategorie.

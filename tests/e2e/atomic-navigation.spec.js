@@ -49,7 +49,7 @@ test('niewidoczne przekierowania: sesja rozstrzyga trasę przed pierwszą klatk�
       else await page.locator('#who, #whoStatic').click();
       await expect(menu.getByRole('button', { name: 'Ustawienia konta', exact: true })).toBeVisible();
       await expect(menu.getByRole('button', { name: 'Wyloguj', exact: true })).toBeVisible();
-      if (width < 600) await page.locator('.topbar-mobile-close').click();
+      if (width < 600) await page.locator('.topbar-menu-toggle').click();
       else await page.locator('main').click({ position: { x: 2, y: 2 } });
     }
   }

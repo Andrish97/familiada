@@ -1125,6 +1125,15 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-25 — wysuwane menu** (decyzja właściciela): główna nawigacja
+  wysuwa się **z prawej** pod topbarem, także w prywatnym panelu admina.
+  Widoczny przełącznik hamburger/X jest jedynym przyciskiem zamykania;
+  dodatkowo tło i Escape. Pozostałe panele (drzewo bazy, sekcje ustawień,
+  spis Wskazówek) zachowują lewą stronę i wspólny ruch/tło/zamykanie.
+  To zmiana prezentacji istniejących tras; PAGES, uprawnienia, ret i adresy
+  pozostają bez zmian. Zamknięty panel jest inert; po zamknięciu fokus
+  wraca z panelu do przycisku. Otwarcie jednego zamyka poprzedni.
+
 - **2026-10-22 — guard sprawdza też wysokość** (decyzja użytkownika; przypadek:
   tablet w poziomie, krótszy bok ≥ 700, szerokość ≥ 980, ale viewport ok. 550 px
   wysokości przez paski przeglądarki/powiększenie — Moje gry w jednym ściśniętym
