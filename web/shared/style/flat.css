@@ -34,7 +34,7 @@
     background: var(--bg);
   }
   /* Zachowaj szerokość układu, gdy wysuwane menu blokuje przewijanie body. */
-  html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
+  html[data-menu-scrollbar]:has(body.topbar-mobile-lock), html:has(body.explorer-drawer-open) { scrollbar-gutter: stable; }
   body.explorer-drawer-open { overflow: hidden; } /* szuflada Eksploratora na telefonie */
 
   body {

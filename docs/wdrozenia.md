@@ -243,7 +243,16 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   motion zatrzymuje ją, brak błędów JS. Unit **814/814 ✓**.
 - Zrzuty 15 kadrów menu/stopki/okna kawy; brak przekroczeń CLS. Dwie istniejące
   uwagi dotyczą zawijania CTA Home, niezwiązane z ikonami.
-- Status: punktowe e2e na branchu (ikony + okno kawy), potem produkcja.
+- Branch e2e 40230197325 zatrzymał się przy zbieraniu testów (needs w describe);
+  deklarację lease przeniesiono na poziom pliku. 40230454872: okno kawy **3/3 ✓**;
+  dwa nowe testy ujawniły rezerwację 12 px guttera na stronie bez scrollbara
+  oraz ostatnią klatkę SMIL po endElement. Gutter jest teraz rezerwowany tylko,
+  gdy rzeczywiście istniał scrollbar; SMIL pauzuje i wznawia własną oś czasu,
+  zachowując fazę fali. Ponowny unit **814/814 ✓**, smoke 390/360/1400 ✓.
+- Status: ponowienie tylko dwóch testów ikon, potem publikacja i kontrola.
+- Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
+  `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
+  repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.
 
 
 ### 2026-10-25 — jednoznaczny opis zmiany typu gry

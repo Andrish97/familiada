@@ -8,10 +8,13 @@ function synchronize(svg, state) {
   const running = state.visible && svg.isConnected && !document.hidden && !preference.matches;
   if (running === state.running) return;
   state.running = running;
-  for (const animation of svg.querySelectorAll('animate')) {
-    if (running) animation.beginElement?.();
-    else animation.endElement?.();
-  }
+  if (running) {
+    svg.unpauseAnimations();
+    if (!state.started) {
+      for (const animation of svg.querySelectorAll('animate')) animation.beginElement();
+      state.started = true;
+    }
+  } else svg.pauseAnimations();
   svg.toggleAttribute('data-icon-running', running);
 }
 
@@ -43,8 +46,8 @@ export function observeIconMotion(root) {
   const list = elements(root);
   if (!list.length || !initialize()) return;
   for (const svg of list) {
-    if (tracked.has(svg)) continue;
-    tracked.set(svg, { visible: false, running: false });
+    if (tracked.has(svg) || typeof svg.pauseAnimations !== 'function' || typeof svg.unpauseAnimations !== 'function') continue;
+    tracked.set(svg, { visible: false, running: false, started: false });
     observer.observe(svg);
   }
 }

@@ -492,11 +492,13 @@ function initTopbarController() {
   const close = () => {
     overlay?.classList.remove('is-open');
     document.body.classList.remove('topbar-mobile-lock');
+    document.documentElement.removeAttribute('data-menu-scrollbar');
     toggleBtn?.setAttribute('aria-expanded', 'false');
     toggleBtn?.setAttribute('aria-label', t('common.menuOpen'));
   };
 
   const open = () => {
+    document.documentElement.toggleAttribute('data-menu-scrollbar', window.innerWidth > document.documentElement.clientWidth);
     overlay?.classList.add('is-open');
     document.body.classList.add('topbar-mobile-lock');
     toggleBtn?.setAttribute('aria-expanded', 'true');

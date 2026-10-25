@@ -54,6 +54,7 @@ test('animowane części: para zmienia krzywą, filiżanka stoi, ograniczony ruc
   expect((await sample()).cup).toEqual(before.cup);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(svg).not.toHaveAttribute('data-icon-running', '');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const quiet = await sample();
   await page.waitForTimeout(250);
   expect(await sample()).toEqual(quiet);
