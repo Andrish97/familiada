@@ -33,6 +33,22 @@ export function realtimeSocketCloseDetails(event) {
   return details;
 }
 
+// Supabase JS 2.118 exposes close callbacks on its Realtime transport adapter
+// (`client.realtime.socketAdapter`), not on RealtimeClient itself. Prefer a
+// public method if a later SDK version adds one, then use the pinned adapter
+// API. A missing observer must never prevent channel subscription.
+export function observeRealtimeSocketClose(realtime, callback) {
+  const targets = [realtime, realtime?.socketAdapter];
+  const target = targets.find(candidate => typeof candidate?.onClose === "function");
+  if (!target) return false;
+  try {
+    target.onClose(callback);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function createDirectReadiness(onReady) {
   let joined = false;
   let postgresReady = false;

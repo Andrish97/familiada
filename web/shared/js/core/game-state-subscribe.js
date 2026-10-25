@@ -18,7 +18,7 @@ import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026
 import { rt } from "./realtime.js?v=v2026-10-25T22553";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-25T22553";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-25T22553";
-import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails } from "./direct-channel-ready.js?v=v2026-10-25T22553";
+import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./direct-channel-ready.js?v=v2026-10-25T23220";
 import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-25T22553";
 import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-25T22553";
 import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-25T22553";
@@ -283,7 +283,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         accessToken: async () => directToken || SUPABASE_ANON_KEY,
       });
-      directClient.realtime.onClose((event) => {
+      observeRealtimeSocketClose(directClient.realtime, (event) => {
         // Zapisuj także zamknięcia wywołane przez klienta. Flaga pozwala je
         // odróżnić od serwerowych, zamiast po cichu wyrzucać kod 1000.
         const expected = event?.code === 1000 && event?.wasClean
