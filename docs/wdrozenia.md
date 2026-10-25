@@ -261,7 +261,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   kontrola rzeczywistej produkcji **40232849277 ✓ 5/5**.
 - Ostatnie doprecyzowanie: Escape obsłużony przez menu oznacza preventDefault,
   by nie zamykać dodatkowo okna pod nim. Unit **814/814 ✓**, branch
-  **40232960922 ✓ 1/1**. Status: publikacja tego doprecyzowania i punktowa kontrola menu.
+  **40232960922 ✓ 1/1**. Pages **40233133027 ✓** (`31830e051a`),
+  produkcyjny test menu **40233368390 ✓ 1/1**. Status: **zrobione**.
 - Dodatkowe zgłoszenie TinyMCE panelu realizowane wyłącznie w prywatnym
   `familiada-server`, branch `feat/editor-engine-skin`; bez powrotu panelu do
   repo publicznego. Wspólne części ikon synchronizowane do prywatnego pakietu.
@@ -2123,3 +2124,20 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Zaproszenie marketingowe — poprawiony nagłówek | „Pytania na trzy sposoby” zastąpione przez „Trzy sposoby na przygotowanie gry” w aktywnym prywatnym szablonie i publicznej kopii wspólnego modułu. Zaktualizowane istniejące asercje: prywatnie 2/2, publicznie 2/2, po scaleniu wersji także brak konfliktów. Podgląd maila 1400/390 obejrzany. Private production 40231963637 i CI 40231963015/40231961534 success; podgląd i wysyłka nadal używają tego samego buildera. | Poprawka wdrożona w prywatnym panelu; publiczna kopia nie jest używana przez stronę i nie wymaga Pages. Odświeżyć otwartą kartę panelu. Bez wysyłania wiadomości. |
+
+
+### 2026-10-25 — prywatny TinyMCE: wspólny motyw silnika
+
+- Na dodatkowe zgłoszenie właściciela poprawiono oba edytory wyłącznie w
+  `Andrish97/familiada-server`: skrzynkę i Marketing. Jeden adapter opcji,
+  kolory/fonty/obramowania/tła/okna z tokenów, CSS iframe bez dopisywania do
+  wysyłanego HTML. Naprawiony automatyczny scroll TinyMCE 7.9.3 pod palcem.
+- Zachowano równoległe zmiany Marketingu, rozmów i nagłówka zaproszenia.
+  Prywatny pakiet otrzymał przypięte części ikon i animowany hamburger;
+  nie dodawano nowego przycisku kawy do prywatnej stopki.
+- Prywatnie **84/84 unit**, **17/17 przeglądarkowych** z prawdziwym TinyMCE,
+  w tym edytor/menu/okno na 390 i 1400 px. CI main **40233222927 ✓**,
+  serwer check **40232621976 ✓**, produkcja **40233222220 ✓** (`ea720aa`).
+  SHA wydania potwierdzony, odmowy originu 404, poprawny sekret 200,
+  private/no-store, Access 302. Brak wysyłki i zmian maintenance.
+- Szczegóły prywatnie: docs/admin-private-plan.md; status: **zrobione**.

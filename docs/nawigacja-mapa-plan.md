@@ -1443,3 +1443,14 @@ sesji w HTML logowania. `force_auth`, ustawienie nazwy, błędne/zakończone
 linki i komunikaty po potwierdzeniu zachowują własny widok. Mechanizm jest
 w `page-layout.js` (holdPageLayout + redirectPage), kontrakt w §5a instrukcji
 silnika. Brak zmiany adresów, parametrów, ról i docelowych uprawnień.
+
+
+### Stan menu topbara (2026-10-25)
+
+Wspólny przycisk menu przechodzi z trzech kresek w krzyżyk według
+aria-expanded; ponowne naciśnięcie, X panelu i Escape zamykają menu.
+Escape obsłużony przez menu nie zamyka dodatkowo okna pod nim. Wszystkie
+przyciski nadal korzystają z tych samych wpisów PAGES, ról i adresów;
+stan menu jest lokalny i nie zmienia URL ani łańcucha ret. Żadna trasa
+nie została dodana/usunięta. Testy 390/360 obejmują też brak miejsca na
+sekcję nawigacji przy długiej nazwie konta.

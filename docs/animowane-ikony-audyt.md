@@ -48,3 +48,12 @@ nazwy składane ze stanu nie są liczone. Poniżej miejsca i warunki wdrożenia.
 - Bez obsługi SMIL/IntersectionObserver rysunek pozostaje statyczny i czytelny.
 - Nowa animacja wymaga jawnej pary nazwa/profil, testu stanów i pomiaru
   geometrii. Nie uruchamiać wszystkich animacji po każdym renderze dokumentu.
+
+
+## Weryfikacja wdrożenia
+
+Unit 814/814. Chromium 390/360/1400: fala zmienia krzywą przy stałej
+filiżance, pauza przy ograniczonym ruchu, własna oś czasu SVG, brak zmian
+geometrii przycisku. Kontrola produkcji 40232849277 5/5 i po doprecyzowaniu
+Escape 40233368390 1/1. Pages 40233133027. Prywatna kopia silnika oraz
+ujednolicenie TinyMCE mają własną weryfikację w repo familiada-server.
