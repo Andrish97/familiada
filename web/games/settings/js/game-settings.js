@@ -1,3 +1,4 @@
+import { bindDrawer } from "../../../shared/js/core/drawer.js?v=dev";
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
@@ -1869,25 +1870,16 @@ async function main() {
 
   updateSubTabStates();
 
+  const sectionDrawer = bindDrawer({ panel: sidebar, backdrop: sidebarBackdrop, toggle: sidebarToggle });
+
   // Sidebar clicks
   sidebar?.addEventListener("click", e => {
     const btn = e.target.closest(".gs-sidebar-item");
     if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
     const cat = btn.dataset.cat;
     if (cat) setActiveCat(cat);
-    sidebar?.classList.remove("is-open");
-    sidebarBackdrop?.classList.remove("is-open");
-    sidebarToggle?.setAttribute("aria-expanded", "false");
+    sectionDrawer?.close();
   });
-  const toggleSidebar = (open = !sidebar?.classList.contains("is-open")) => {
-    sidebar?.classList.toggle("is-open", open);
-    sidebarBackdrop?.classList.toggle("is-open", open);
-    sidebarToggle?.setAttribute("aria-expanded", String(open));
-  };
-  sidebarToggle?.addEventListener("click", () => toggleSidebar());
-  sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
-
   // Save button
   btnSaveAll?.addEventListener("click", saveAll);
 

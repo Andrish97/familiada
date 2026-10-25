@@ -1,3 +1,4 @@
+import { bindDrawer } from "../../../shared/js/core/drawer.js?v=dev";
 // base-explorer/js/mobile.js
 // Obsługa mobilna: drawer lewego panelu + długie tapnięcie jako zamiennik PPM
 
@@ -26,38 +27,22 @@ export function initDrawer({ onChange } = {}) {
     document.body.style.setProperty("--be-toolbar-h", `${h}px`);
   }
 
-  const isOpen = () => panel.classList.contains("is-open");
+  const drawer = bindDrawer({ panel, backdrop: overlay, beforeOpen: updateToolbarOffset,
+    onChange: (open) => {
+      const root = document.documentElement;
+      document.body.classList.toggle("explorer-drawer-open", open && root.scrollHeight > root.clientHeight);
+      onChange?.();
+    },
+  });
+  const { close } = drawer;
 
-  function open() {
-    updateToolbarOffset();
-    panel.classList.add("is-open");
-    overlay.classList.add("is-open");
-    // Blokada przewijania tylko, gdy strona się przewija: klasa włącza
-    // scrollbar-gutter (base.css), który bez paska przewijania zwęziłby
-    // układ i pasek narzędzi „mrugnąłby” przy każdym otwarciu.
-    const root = document.documentElement;
-    if (root.scrollHeight > root.clientHeight) {
-      document.body.classList.add("explorer-drawer-open"); // blokada przewijania: base.css
-    }
-    onChange?.();
-  }
-
-  function close() {
-    if (!isOpen()) return;
-    panel.classList.remove("is-open");
-    overlay.classList.remove("is-open");
-    document.body.classList.remove("explorer-drawer-open");
-    onChange?.();
-  }
-
-  overlay.addEventListener("click", close);
   document.addEventListener("modal-sheet:enter", close);
   document.addEventListener("explorer:close-drawer", close); // okna menedżera także bez trybu od dołu
 
   // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
   // NIE zamyka drawera automatycznie -- lista po prawej i tak aktualizuje
   // się w tle, user zamyka drawer ręcznie (ten sam przycisk / klik w overlay).
-  return { open, close, isOpen };
+  return drawer;
 }
 
 /* ================= Long press → context menu ================= */

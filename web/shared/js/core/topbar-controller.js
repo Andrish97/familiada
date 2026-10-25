@@ -446,7 +446,7 @@ function initTopbarController() {
   const menuContentSelector =
     'button, a, [role="button"], [role="tab"], .btn, .user-btn, .lang-switcher, .top-status';
 
-  let overlay, panel, closeBtn, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
+  let overlay, panel, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
   let isMobileMounted = false;
   let navRequiresMobile = false;
 
@@ -480,7 +480,7 @@ function initTopbarController() {
   const hasVisibleMenuItems = () => {
     if (!isMobileMounted || !mount) return false;
     return (tabGroup?.childElementCount || 0) > 0 ||
-      [...mount.querySelectorAll(menuContentSelector)].some(isVisible);
+      [...mount.querySelectorAll(menuContentSelector)].some(el => !isHiddenWithin(el, mount));
   };
 
   const hasMenuContent = () => {
@@ -492,15 +492,20 @@ function initTopbarController() {
   };
 
   const close = () => {
+    const focusInMenu = overlay?.contains(document.activeElement);
     overlay?.classList.remove('is-open');
+    if (overlay) overlay.inert = true;
     document.body.classList.remove('topbar-mobile-lock');
     document.documentElement.removeAttribute('data-menu-scrollbar');
     toggleBtn?.setAttribute('aria-expanded', 'false');
     toggleBtn?.setAttribute('aria-label', t('common.menuOpen'));
+    if (focusInMenu) toggleBtn?.focus();
   };
 
   const open = () => {
     document.documentElement.toggleAttribute('data-menu-scrollbar', window.innerWidth > document.documentElement.clientWidth);
+    document.dispatchEvent(new CustomEvent('drawer:open', { detail: { panel: overlay } }));
+    if (overlay) overlay.inert = false;
     overlay?.classList.add('is-open');
     document.body.classList.add('topbar-mobile-lock');
     toggleBtn?.setAttribute('aria-expanded', 'true');
@@ -516,16 +521,11 @@ function initTopbarController() {
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
     overlay.id = 'topbarMobileMenu';
+    overlay.inert = true;
     if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
     panel.className = 'topbar-mobile-panel';
-
-    closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'btn topbar-mobile-close';
-    closeBtn.innerHTML = icon('close');
-    closeBtn.setAttribute('aria-label', t('common.modal.closeLabel'));
 
     mount = document.createElement('div');
     mount.className = 'topbar-mobile-mount';
@@ -582,7 +582,7 @@ function initTopbarController() {
 
     if (!hasAnything) { unmountMobile(); return; }
 
-    panel.append(closeBtn, mount);
+    panel.append(mount);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
@@ -607,7 +607,6 @@ function initTopbarController() {
     toggleBtn.addEventListener('click', () => {
       if (toggleBtn.getAttribute('aria-expanded') === 'true') close(); else open();
     });
-    closeBtn.addEventListener('click', () => { close(); toggleBtn?.focus(); });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     if (!section2.querySelector(':scope > .topbar-title')) section2.hidden = true;
@@ -653,7 +652,7 @@ function initTopbarController() {
 
     try { badgeObserver?.disconnect(); } catch {}
     badgeObserver = toggleBadge = null;
-    overlay = panel = closeBtn = mount = tabGroup = group2 = group4 = sep = toggleBtn = null;
+    overlay = panel = mount = tabGroup = group2 = group4 = sep = toggleBtn = null;
 
     // Przelicz overflow po przywróceniu section-2
     _overflowState?.collapseAll();
@@ -670,10 +669,22 @@ function initTopbarController() {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
-    event.preventDefault();
-    close();
-    toggleBtn?.focus();
+    if (toggleBtn?.getAttribute('aria-expanded') !== 'true') return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+      toggleBtn?.focus();
+    } else if (event.key === 'Tab') {
+      // Nawigacja klawiaturą pozostaje w otwartym menu i jego przełączniku.
+      const items = [toggleBtn, ...overlay.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')]
+        .filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+      const index = items.indexOf(document.activeElement);
+      event.preventDefault();
+      items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length]?.focus();
+    }
+  });
+  document.addEventListener('drawer:open', event => {
+    if (event.detail?.panel !== overlay) close();
   });
   window.addEventListener('i18n:lang', () => {
     toggleBtn?.setAttribute('aria-label', t(toggleBtn.getAttribute('aria-expanded') === 'true' ? 'common.menuClose' : 'common.menuOpen'));

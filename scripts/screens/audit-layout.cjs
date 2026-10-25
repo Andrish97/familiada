@@ -160,7 +160,7 @@ function inspectLayout(opts) {
 
   // 3. Sterowanie poza ekranem / zasłonięte / w safe area.
   const controls = [...root.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [tabindex]:not([tabindex='-1'])")]
-    .filter((el) => !el.closest("svg, [data-audit-skip]") && visible(el));
+    .filter((el) => !el.closest("svg, .drawer-scrim, [data-audit-skip]") && visible(el));
   for (const el of controls) {
     const r = el.getBoundingClientRect();
     // Przodek z przewijaniem może pokazać element — wtedy liczy się tylko jego okno.
@@ -194,7 +194,7 @@ function inspectLayout(opts) {
       || /url\(/.test(getComputedStyle(b, "::before").maskImage + getComputedStyle(b, "::before").backgroundImage + getComputedStyle(b, "::after").maskImage)
       || !/\p{L}{2}/u.test(b.textContent.trim());
     for (const btn of root.querySelectorAll("button, a.btn, [role=button], [role=tab], label.btn")) {
-      if (!visible(btn) || !hasIcon(btn)) continue;
+      if (btn.matches(".drawer-scrim") || !visible(btn) || !hasIcon(btn)) continue;
       const bad = [];
       for (let e = btn; e && e !== document.body; e = e.parentElement) {
         const st = getComputedStyle(e);

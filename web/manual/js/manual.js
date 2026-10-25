@@ -1,3 +1,4 @@
+import { bindDrawer } from "../../shared/js/core/drawer.js?v=dev";
 // manual/js/manual.js
 // Podręcznik (E13): części → rozdziały → podrozdziały. Treść z content/{lang}.js
 // (generowana z docs/podrecznik przez scripts/manual/build-content.mjs).
@@ -246,11 +247,8 @@ function show(id, hash = "", { updateUrl = true, smooth = false, from = null, ke
   else markSection();
 }
 
-function setTocOpen(open) {
-  toc.classList.toggle("is-open", open);
-  tocBackdrop.classList.toggle("is-open", open);
-  tocToggle.setAttribute("aria-expanded", String(open));
-}
+let tocDrawer;
+function setTocOpen(open) { tocDrawer?.setOpen(open); }
 
 function wireNavigation() {
   // Odnośniki wewnątrz podręcznika (spis, karty części, „→ 7.3”, poprzedni/następny).
@@ -299,13 +297,11 @@ async function renderForLang({ hydrate = false } = {}) {
 /* ================= Init ================= */
 // Przyciski panelu działają od pierwszej chwili — także gdy treść i tłumaczenia jeszcze się wczytują.
 function wirePanel() {
-  tocToggle.addEventListener("click", () => setTocOpen(!toc.classList.contains("is-open")));
+  tocDrawer = bindDrawer({ panel: toc, backdrop: tocBackdrop, toggle: tocToggle });
   document.getElementById("manualSearchToggle")?.addEventListener("click", () => {
     setTocOpen(true);
     toc.querySelector(".searchText")?.focus();
   });
-  tocBackdrop.addEventListener("click", () => setTocOpen(false));
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") setTocOpen(false); });
 }
 
 async function init() {

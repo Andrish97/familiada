@@ -2141,3 +2141,17 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   SHA wydania potwierdzony, odmowy originu 404, poprawny sekret 200,
   private/no-store, Access 302. Brak wysyłki i zmian maintenance.
 - Szczegóły prywatnie: docs/admin-private-plan.md; status: **zrobione**.
+
+### 2026-10-25 — wysuwane menu: w trakcie
+
+- Decyzja właściciela: główne menu z prawej (korekta kierunku), bez drugiego
+  krzyżyka; ujednolicić także pozostałe wysuwane panele. Realizacja w silniku,
+  równolegle w prywatnym pakiecie admina. Drzewo baz/sekcje/spis zachowują lewą.
+- Bramka: zrzuty 390/360/1400, unit, punktowe E2E z brancha, Pages i kontrola
+  tych samych speców na produkcji. Prywatnie unit/browser + check/production.
+
+- Bramka lokalna: **815/815 unit**, regresja przeglądarkowa wszystkich czterech
+  paneli na 390 i 360 px (prawdziwy kod, atrapa Supabase), desktop 1400,
+  reduced motion, klawiatura, licznik aktualizowany przy zamkniętym menu.
+  Prywatnie **84/84 unit**, test menu 1/1, zrzut obejrzany. Audyt rozpoznaje
+  `.drawer-scrim` jako tło, nie przycisk z ikoną w strefie bezpiecznej.

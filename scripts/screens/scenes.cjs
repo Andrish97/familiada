@@ -279,7 +279,7 @@ module.exports = [
 { id: "base-explorer-tags-color", category: "Dodatkowe", title: "Eksplorator bazy — okno tagów: wybór koloru", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click(); await view.locator('#toolbar button[data-act="editTags"]').click(); await view.locator("#tagsAddNew").click(); await view.locator("#tagsEditColorTile").click(); await view.locator("#tagsL3").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(500); }] },
 { id: "base-explorer-drawer", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel na telefonie (hamburger)", devices: ["phone", "tablet"], path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
-    steps: [async (view) => { await view.locator("#btnDrawerToggle").click(); await view.waitForTimeout(500); }] },
+    steps: [async (view) => { if (await view.locator("#btnDrawerToggle").isVisible()) await view.locator("#btnDrawerToggle").click(); await view.waitForTimeout(300); }] },
 { id: "base-explorer-left-tags", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok tagów (przycisk przy wyszukiwarce / na telefonie)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
     steps: [async (view) => { await view.locator('[data-left-view="tags"]:visible').click(); await view.locator('#tags .row[data-kind="tag"]').first().click(); await view.waitForTimeout(500); }] },
 { id: "base-explorer-left-types", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok proponowanych kategorii", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
@@ -352,7 +352,7 @@ module.exports = [
   { id: "manual-start", category: "Dodatkowe", title: "Podręcznik — spis treści", path: "/manual/", sources: [...page("manual"), "web/manual/content/"], ready: ".m-parts" },
   { id: "manual-chapter", category: "Dodatkowe", title: "Podręcznik — rozdział z przyciskami i tabelą", path: "/manual/?ch=6", sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2" },
   { id: "manual-return", category: "Dodatkowe", title: "Podręcznik — powrót po odnośniku, ramki", path: "/manual/?ch=16&from=6.4#s-16-4", sources: [...page("manual"), "web/manual/content/"], ready: () => [...document.querySelectorAll("[data-return]")].some((el) => el.getClientRects().length && !el.hidden) },
-  { id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
+  { id: "manual-toc-phone", category: "Dodatkowe", title: "Podręcznik — spis treści na telefonie", path: "/manual/?ch=17#s-17-3", devices: ["phone"], sources: [...page("manual"), "web/manual/content/"], ready: ".m-doc .m-h2", steps: [async (view) => { if (await view.locator("#manualTocToggle").isVisible()) await view.locator("#manualTocToggle").click(); await view.evaluate(() => window.scrollTo(0, 0)); await view.waitForTimeout(300); }] },
   { id: "manual-shots", category: "Dodatkowe", title: "Podręcznik — karuzela widoków przy prowadzeniu rundy", path: "/manual/?ch=17#s-17-3", sources: [...page("manual"), "web/manual/content/", "web/manual/img/"], ready: ".m-carousel-nav", steps: [async (view) => { await view.locator(".m-carousel img").first().scrollIntoViewIfNeeded(); await view.locator(".m-carousel img").first().evaluate((img) => img.decode()); await view.waitForTimeout(300); }] },
   { id: "manual-shot-zoom", category: "Dodatkowe", title: "Wskazówki — podgląd zrzutu (jak na stronie głównej; telefon: okno od dołu z przybliżaniem)", path: "/manual/?ch=6#s-6-1", sources: [...page("manual"), "web/manual/content/", "web/manual/img/", "web/shared/js/core/image-viewer.js", "web/shared/css/image-viewer.css"], ready: ".m-shot-zoom img", steps: [async (view) => { await view.locator(".m-shot-zoom").first().click(); await view.locator("#imgvOverlay.is-open .imgv-img").evaluate((img) => img.decode()); await view.waitForTimeout(400); }] },
   { id: "manual-problems-devices", category: "Dodatkowe", title: "Wskazówki — 19.5 problemy z urządzeniami (komunikaty blokady okna)", path: "/manual/?ch=19#s-19-5", sources: [...page("manual"), "web/manual/content/"], ready: "#s-19-5" },
@@ -430,3 +430,9 @@ if (fs.existsSync(areaDir)) {
   }
 }
 
+
+module.exports.push({ id: "settings-drawer", category: "Dodatkowe", title: "Ustawienia gry — wysuwane sekcje",
+  path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/drawer.js"],
+  ready: "#gsContentInner", devices: ["phone"], steps: [async view => {
+    if (await view.locator("#gsSidebarToggle").isVisible()) await view.locator("#gsSidebarToggle").click(); await view.waitForTimeout(300);
+  }] });
