@@ -272,6 +272,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let directToken = null;
   let directClient = null;
   let lastSocketClose = null;
+  let ignoreCleanSocketCloseUntil = 0;
   const recentSocketClose = () => lastSocketClose && performance.now() - lastSocketClose.at <= 5_000
     ? { ...lastSocketClose.details } : {};
   // Lease, dla którego wystawiono token kanału (claims: połączenie + epoka).
@@ -283,9 +284,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         accessToken: async () => directToken || SUPABASE_ANON_KEY,
       });
       directClient.realtime.onClose((event) => {
-        // Usunięcie kanału przy zwykłym odświeżeniu tokenu zamyka socket
-        // celowo; nie traktuj czystego close 1000 jako awarii transportu.
-        if (event?.code === 1000 && event?.wasClean) return;
+        // Usunięcie kanałów podczas odświeżenia tokenu zamyka socket celowo.
+        // Poza tym wąskim oknem zapisuj także czysty close 1000, bo serwer
+        // może zamknąć połączenie normalnie, a i tak jest to diagnostyczne.
+        if (event?.code === 1000 && event?.wasClean && performance.now() <= ignoreCleanSocketCloseUntil) return;
         const details = realtimeSocketCloseDetails(event);
         lastSocketClose = { at: performance.now(), details };
         if (directIncident) Object.assign(directIncident.socketClose, details);
@@ -370,6 +372,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       await client.realtime.setAuth();
       if (!active) { directToken = null; return; }
       directUnavailableLogged = false;
+      if (directChannel || directTableChannels.size) ignoreCleanSocketCloseUntil = performance.now() + 5_000;
       if (directChannel) await client.removeChannel(directChannel);
       for (const channel of directTableChannels.values()) await client.removeChannel(channel).catch(() => {});
       directTableChannels.clear();
