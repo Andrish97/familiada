@@ -4149,25 +4149,46 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    // Urządzenia są osobnymi ekranami w realnej rozgrywce. W jednym headless
+    // Chromium akcja kliknięcia w Control przełącza fokus z Wyświetlacza i
+    // może zawiesić jego AudioContext; utrzymuj Display na pierwszym planie,
+    // a akcje operatora wysyłaj do strony jak z drugiego urządzenia.
+    await displayPage.bringToFront();
+    await expect.poll(() => displayPage.evaluate(() => ({
+      visibility: document.visibilityState, focused: document.hasFocus(),
+    }))).toEqual({ visibility: "visible", focused: true });
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
-    await page.getByRole("button", { name: "Dalej" }).click({ timeout: 10000 });
+    const controlClick = async locator => locator.evaluate(element => element.click());
+    await controlClick(page.getByRole("button", { name: "Dalej" }));
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
-    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await controlClick(page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
+    await controlClick(page.getByRole("button", { name: "Rozpocznij grę" }));
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
-    await expect(startRound).toBeEnabled({ timeout: 60000 });
+    try {
+      await expect(startRound).toBeEnabled({ timeout: 60000 });
+    } catch (error) {
+      const audioState = await displayPage.evaluate(() => ({
+        visibility: document.visibilityState, focused: document.hasFocus(),
+        audio_context: window.__sfxAudioContext?.state || null,
+        unlock_overlay_visible: !document.querySelector("#audioUnlockScreen")?.classList.contains("hidden"),
+      }));
+      const sessions = await readControl2Sessions(page, game.id);
+      console.log(`[e2e-diag] start-round readiness ${JSON.stringify({ audioState, sessions: sessions.map(s => s.stats_detail?.events?.filter(e => e.category === "audio_unlock").map(e => e.metrics)) })}`);
+      await attachStatistics(testInfo, "start-round-readiness", sessions);
+      throw error;
+    }
 
     // Zwykły powrót (Wyświetlacz bez zmian): odblokowanie z bazy nadal
     // obowiązuje, więc Control jest gotowy bez nowego gestu na Wyświetlaczu.
     const unlockScreen = displayPage.locator("#audioUnlockScreen");
     for (let round = 1; round <= 2; round++) {
-      await page.locator("#btnManual").click();
+      await controlClick(page.locator("#btnManual"));
       await page.waitForURL(/\/manual\//, { timeout: 15000 });
       await expect(page.locator(".topbar.topbar-ready")).toBeAttached({ timeout: 15000 });
       const startedAt = Date.now();
-      await page.locator("#btnBack").click();
+      await controlClick(page.locator("#btnBack"));
       await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
       await expect(startRound).toBeVisible({ timeout: 30000 });
       console.log(`[e2e-diag] control-return round=${round} visibleMs=${Date.now() - startedAt}`);
@@ -4178,11 +4199,11 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
 
     // Wyświetlacz przeładowany pod nieobecność Control: po powrocie Control
     // prosi o nowy gest, Wyświetlacz pokazuje przycisk, a gest odblokowuje grę.
-    await page.locator("#btnManual").click();
+    await controlClick(page.locator("#btnManual"));
     await page.waitForURL(/\/manual\//, { timeout: 15000 });
     await expect(page.locator(".topbar.topbar-ready")).toBeAttached({ timeout: 15000 });
     await displayPage.reload({ waitUntil: "domcontentloaded" });
-    await page.locator("#btnBack").click();
+    await controlClick(page.locator("#btnBack"));
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(startRound).toBeVisible({ timeout: 30000 });
     await expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 });
