@@ -85,6 +85,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
   document.addEventListener("visibilitychange", visibilityChanged);
   return {
     report,
+    logEvent(event) { if (event) log.push(event); },
     probeNetworkNow() { network.probeNow(); },
     stop() {
       networkActive = false;

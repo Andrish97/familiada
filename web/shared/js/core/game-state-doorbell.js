@@ -10,12 +10,23 @@
 
 import { rt } from "./realtime.js?v=v2026-10-25T18143";
 
+let onDoorbellSent = null;
+
+// Control installs a lightweight observer so its revision can be correlated
+// with the device-side receipt/fallback diagnostics. Other devices leave it
+// unset; the broadcast payload remains unchanged.
+export function setDoorbellObserver(observer) {
+  onDoorbellSent = typeof observer === "function" ? observer : null;
+  return () => { if (onDoorbellSent === observer) onDoorbellSent = null; };
+}
+
 
 export function doorbellTopic(gameId) {
   return `familiada-state:${gameId}`;
 }
 
 export function ringDoorbell(gameId, rev) {
+  try { onDoorbellSent?.({ gameId, revision: rev, client_time_ms: Date.now() }); } catch { /* diagnostics never block gameplay */ }
   return rt(doorbellTopic(gameId))
     .sendBroadcast("rev", { rev }, { mode: "http" })
     .catch(() => {});

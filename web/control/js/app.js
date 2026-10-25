@@ -21,7 +21,7 @@ import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T18143";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-25T18143";
 import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-25T18143";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T18143";
+import { doorbellTopic, setDoorbellObserver } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-25T18143";
 import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-25T18143";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-25T18143";
 
@@ -332,6 +332,14 @@ async function main() {
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
+  setDoorbellObserver(({ gameId: doorbellGameId, revision, client_time_ms }) => {
+    if (doorbellGameId !== gameId) return;
+    sessionTelemetry.logEvent({
+      kind: "diagnostic", category: "state_sync",
+      message: "Control wysłał dzwonek z numerem rewizji.", devices: ["control", "display"],
+      metrics: { phase: "doorbell_sent", revision, client_time_ms },
+    });
+  });
   const realtimeStates = new Map();
   // Wyjście z Control (ustawienia, zamknięcie karty) przerywa zapytania
   // i kanały; to nie jest awaria, więc nie trafia do statystyk. Okno 3 s,
