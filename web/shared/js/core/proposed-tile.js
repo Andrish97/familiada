@@ -7,8 +7,8 @@
 // „Odrzucone” w Bazach (decyzja 2026-10-21).
 // Wygląd: base.css (.tag, .grid .tile .tileMiniActions).
 
-import { t } from "../../translation/translation.js?v=v2026-10-25T10513";
-import { icon } from "./icons.js?v=v2026-10-25T10513";
+import { t } from "../../translation/translation.js?v=v2026-10-25T10522";
+import { icon } from "./icons.js?v=v2026-10-25T10522";
 
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
