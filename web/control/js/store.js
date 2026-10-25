@@ -205,6 +205,9 @@ export function createStore(gameId) {
       sound_cue_key: optimisticKey,
       sound_cue_seq: optimisticSeq,
       detail: payload.detail,
+      // Rewizja, którą nada serwer (game_state_write: rev + 1 przy zgodnym
+      // expectedRev). Pomiar potwierdzenia planszy w app.js liczy od niej.
+      __target_rev: (state.rev || 0) + 1,
     };
     state.soundCueKey = optimisticKey;
     state.soundCueSeq = optimisticSeq;

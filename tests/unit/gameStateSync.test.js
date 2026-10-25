@@ -187,3 +187,15 @@ test("receivedRev obejmuje wiersz czekający na koniec animacji (heartbeat nie b
   assert.equal(sync.lastRev, 3);
   assert.equal(sync.receivedRev, 3);
 });
+
+test("przerwanie obsługi wiersza (AbortError) nie jest raportowane jako błąd renderowania", async () => {
+  const progress = [];
+  const sync = createRowSync({
+    fetchRow: async () => ({ data: row(4) }),
+    onRow: () => { throw Object.assign(new Error("superseded"), { name: "AbortError" }); },
+    onProgress: (event) => progress.push(event),
+  });
+  await sync.fetchGuarded();
+  assert.equal(progress.length, 1);
+  assert.equal(progress[0].renderError, null);
+});

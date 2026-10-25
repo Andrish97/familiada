@@ -594,16 +594,21 @@ async function main() {
     if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
       const priorRow = previousDisplayRow;
       displayCompletion.request(row.rev);
+      // Wiersz optymistyczny (store.js) ma jeszcze poprzednią rewizję; pomiar
+      // liczy od tej, którą nada serwer — inaczej spóźnione potwierdzenie
+      // poprzedniej planszy zamykało pomiar nowej, a display_ack_ms nie
+      // znajdował żądania (eksport 25.10).
+      const targetRev = Number.isSafeInteger(row.__target_rev) ? row.__target_rev : row.rev;
       const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, step: row.step, soundCueSeq: row.sound_cue_seq, previousStep: lastDisplayStep, controlVisibility: document.visibilityState || "unknown", controlFocused: !!document.hasFocus?.(), reported: false };
-      displayCompletionTimes.set(row.rev, item);
+      displayCompletionTimes.set(targetRev, item);
       void expectedDisplayTransitionMs(priorRow, row).then(expectedMs => {
         item.expectedMs = expectedMs;
-        evaluateDisplayCompletion(row.rev, item);
+        evaluateDisplayCompletion(targetRev, item);
         if (expectedMs != null && !item.reported) {
           // Przed alarmem jeszcze jeden odczyt z bazy: zgubiony sygnał na
           // żywo to nie spóźniony Wyświetlacz (eksport 24.10).
           item.timeoutTimer = setTimeout(() => {
-            void refreshDisplayCompletion({ force: true }).finally(() => reportDisplayCompletionTimeout(row.rev, item));
+            void refreshDisplayCompletion({ force: true }).finally(() => reportDisplayCompletionTimeout(targetRev, item));
           }, Math.max(0, expectedMs + 1500));
         }
       });
@@ -1119,30 +1124,57 @@ async function main() {
     if (!waiter) return;
     displayCueStartWaiters.delete(seq);
     clearTimeout(waiter.timer);
+    clearTimeout(waiter.capTimer);
     waiter.resolve();
+  });
+  // Limit 1,2 s liczony od potwierdzenia zapisu Control przez serwer, nie od
+  // stanu optymistycznego: wcześniej mieściły się w nim też zapis Control,
+  // dzwonek i odczyt stanu przez Wyświetlacz, więc 10–25% dźwięków ruszało
+  // przed animacją przy widocznym Wyświetlaczu (eksport 25.10). Gdy
+  // potwierdzenie nie przyjdzie (np. odrzucony zapis), limit startuje po 3 s.
+  const DISPLAY_START_WAIT_MS = 1200;
+  const DISPLAY_START_CONFIRM_CAP_MS = 3000;
+  function cueWriteConfirmed(seq) {
+    const row = store.state.__row;
+    return !!row && row.__target_rev == null && Number(row.sound_cue_seq) >= seq;
+  }
+  function armDisplayCueStart(seq, waiter) {
+    if (waiter.timer) return;
+    clearTimeout(waiter.capTimer);
+    waiter.timer = setTimeout(() => {
+      if (displayCueStartWaiters.get(seq) === waiter) displayCueStartWaiters.delete(seq);
+      if (store.state.locks.gameStarted && !store.state.locks.gameEnded && store.state.settings.soundSource === "control") {
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "display_delay",
+          message: "Display nie potwierdził startu animacji w ciągu 1,2 s; Control uruchomił dźwięk po limicie.",
+          devices: ["display"],
+          metrics: {
+            reason: "start_signal_timeout", sound_cue_seq: seq, wait_ms: DISPLAY_START_WAIT_MS,
+            since_request_ms: Math.round(performance.now() - waiter.requestedAt),
+          },
+        });
+      }
+      waiter.resolve();
+    }, DISPLAY_START_WAIT_MS);
+  }
+  store.subscribe(() => {
+    for (const [seq, waiter] of displayCueStartWaiters) {
+      if (!waiter.timer && cueWriteConfirmed(seq)) armDisplayCueStart(seq, waiter);
+    }
   });
   function waitForDisplayCueStart(soundCueSeq) {
     const seq = Number(soundCueSeq);
     if (!Number.isFinite(seq) || seq <= 0) return Promise.resolve();
     return new Promise((resolve) => {
       const previous = displayCueStartWaiters.get(seq);
-      if (previous) { clearTimeout(previous.timer); previous.resolve(); }
-      const waiter = { resolve, timer: null };
+      if (previous) { clearTimeout(previous.timer); clearTimeout(previous.capTimer); previous.resolve(); }
       // A transient lost broadcast must never mute a cue or stall Control.
       // Normal path waits for Display to finish its timing prep and begin the
       // corresponding render; timeout is the network-failure fallback.
-      waiter.timer = setTimeout(() => {
-        if (displayCueStartWaiters.get(seq) === waiter) displayCueStartWaiters.delete(seq);
-        if (store.state.locks.gameStarted && !store.state.locks.gameEnded && store.state.settings.soundSource === "control") {
-          void sessionTelemetry.report({
-            kind: "diagnostic", category: "display_delay",
-            message: "Display nie potwierdził startu animacji w ciągu 1,2 s; Control uruchomił dźwięk po limicie.",
-            devices: ["display"], metrics: { reason: "start_signal_timeout", sound_cue_seq: seq, wait_ms: 1200 },
-          });
-        }
-        resolve();
-      }, 1200);
+      const waiter = { resolve, timer: null, capTimer: null, requestedAt: performance.now() };
       displayCueStartWaiters.set(seq, waiter);
+      if (cueWriteConfirmed(seq)) armDisplayCueStart(seq, waiter);
+      else waiter.capTimer = setTimeout(() => armDisplayCueStart(seq, waiter), DISPLAY_START_CONFIRM_CAP_MS);
     });
   }
   const soundReactor = createSoundReactor(store, { waitForStart: waitForDisplayCueStart });

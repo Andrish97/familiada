@@ -19,5 +19,6 @@ export function createWriteOrder() {
 // Wiersz po potwierdzeniu starszego zapisu: lokalny (nowszy) stan zostaje,
 // z serwera tylko rewizja (expectedRev następnego zapisu) i blokada.
 export function confirmedRevisionOnly(localRow, serverRow) {
-  return { ...(localRow || {}), rev: serverRow.rev, locked_until: serverRow.locked_until ?? null };
+  const { __target_rev: _target, ...local } = localRow || {};
+  return { ...local, rev: serverRow.rev, locked_until: serverRow.locked_until ?? null };
 }

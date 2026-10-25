@@ -41,8 +41,13 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
     try {
       await onRow(data);
     } catch (error) {
-      renderError = error;
-      console.warn("[game-state-sync] onRow rzucił wyjątek:", error);
+      // AbortError = obsługę wiersza przerwał nowszy stan (tak samo traktuje
+      // go kolejka renderu Wyświetlacza) — to nie błąd renderu (eksport 25.10:
+      // fałszywe render_error z render_ms 0).
+      if (error?.name !== "AbortError") {
+        renderError = error;
+        console.warn("[game-state-sync] onRow rzucił wyjątek:", error);
+      }
     }
     try {
       onProgress?.({
