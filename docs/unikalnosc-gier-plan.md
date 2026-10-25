@@ -198,3 +198,9 @@ jak Lead Finder. Kod już w services/market-semantic; nowy automat
 deploy-market-semantic.yml używa konta deploy i ograniczonego instalatora
 z prywatnego familiada-server. Publiczny adres/DNS nie jest potrzebny: Edge
 i model komunikują się przez prywatną sieć supabase_default.
+
+Pierwszy deploy modelu 40198714440: obraz zbudowany, start przerwany przed
+zmianą Edge. Błąd flow-list YAML dzielił tmpfs na dwa wpisy. Poprawiono
+cytowanie w prywatnym compose i publicznym przykładzie. Rzeczywisty lokalny
+start przez compose z poprawioną konfiguracją ✓: tmpfs /tmp z obiema opcjami,
+read-only, 1 CPU/1 GiB, zdrowie i 3 języki × 384 wymiarów.
