@@ -33,6 +33,10 @@ kontrola produkcji (tabela w §5).
 - Zaznaczenie oznacza dokładny zestaw pytań przekazany do nowej gry. Kliknięcie
   „Zrób grę” tworzy grę z aktualnie zaznaczonego zestawu; nie dobiera pytań
   automatycznie ani nie zmienia zaznaczenia.
+- **Lista w oknie = tylko zaznaczenie (decyzja użytkownika 2026-10-24):** okno
+  pokazuje wyłącznie zaznaczone pytania (foldery rozwinięte do pytań),
+  wszystkie wybrane; można je tylko odznaczyć. Reszty bazy w oknie nie ma
+  (wcześniej lista obejmowała całą bazę z możliwością dozaznaczania).
 - Można utworzyć szkic z mniej niż 10 pytaniami. Brak pytań lub niekompletne
   pytania nie blokują utworzenia; jeśli zestaw jest pusty, rezultat należy
   oznaczyć jako pusty/niegotowy, a nie po cichu uzupełniać.

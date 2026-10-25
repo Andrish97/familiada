@@ -159,8 +159,8 @@ The same limits and characters apply in the game editor (→ 7.3, 7.4). You assi
 1. Select questions or folders and choose [Create game].
 2. In the "Create game" window, enter the game name and choose the type: standard poll, scored or
    prepared.
-3. Check the list: the selected questions (including those from selected folders) are already chosen. You can
-   add or deselect questions from the whole base.
+3. Check the list: it shows only the selected questions (including those from selected folders), all of them
+   already chosen. Deselect the ones you do not want in the game.
 4. For each question and in the summary you can see what is missing for readiness — for example
    "Ready once created." or "A draft will be created. Missing for ready: …".
 5. Confirm. The game will appear in *My games*.
