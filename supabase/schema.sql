@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict lEgvDeKNoF04q4jzJFAmnRIrOSVhyDXoqfKLVc74nx9wTicj1hZgGl7ysbSrvNB
+\restrict aADk2liZgpeF88zEDeTYJ2XOelTJqqViwK9kacUwfD1mg9OKFmbt6It7vcpDcsx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11582,35 +11582,26 @@ CREATE FUNCTION "public"."invoke_embed_missing_market_games"("p_lang" "text" DEF
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_base   text := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url');
-  v_anon   text := (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key');
-  v_secret text := (select decrypted_secret from vault.decrypted_secrets where name = 'generate_game_secret');
-  v_url    text := v_base || '/functions/v1/generate-game';
-begin
-  if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
-    return;
-  end if;
-  if coalesce(v_secret, '') = '' then
-    raise warning 'invoke_embed_missing_market_games: brak generate_game_secret w vault';
-    return;
-  end if;
-
-  perform net.http_post(
-    url := v_url,
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || v_anon,
-      'apikey', v_anon,
-      'X-Internal-Secret', v_secret
-    ),
-    body := jsonb_build_object(
-      'action', 'embed-missing',
-      'lang', coalesce(nullif(p_lang, ''), 'all'),
-      'limit', greatest(1, least(coalesce(p_limit, 25), 50))
-    )
+DECLARE
+  v_base text := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='project_url');
+  v_anon text := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='anon_key');
+  v_secret text := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='generate_game_secret');
+BEGIN
+  IF coalesce(v_base,'')='' OR coalesce(v_anon,'')='' THEN RETURN; END IF;
+  IF coalesce(v_secret,'')='' THEN
+    RAISE WARNING 'invoke_embed_missing_market_games: brak generate_game_secret w vault';
+    RETURN;
+  END IF;
+  PERFORM net.http_post(
+    url := v_base || '/functions/v1/generate-game',
+    headers := jsonb_build_object('Content-Type','application/json',
+      'Authorization','Bearer ' || v_anon,'apikey',v_anon,'X-Internal-Secret',v_secret),
+    body := jsonb_build_object('action','embed-missing',
+      'lang',coalesce(nullif(p_lang,''),'all'),
+      'limit',greatest(1,least(coalesce(p_limit,25),50))),
+    timeout_milliseconds := 90000
   );
-end;
+END;
 $$;
 
 
@@ -25351,5 +25342,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lEgvDeKNoF04q4jzJFAmnRIrOSVhyDXoqfKLVc74nx9wTicj1hZgGl7ysbSrvNB
+\unrestrict aADk2liZgpeF88zEDeTYJ2XOelTJqqViwK9kacUwfD1mg9OKFmbt6It7vcpDcsx
 
