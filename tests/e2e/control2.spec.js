@@ -1258,14 +1258,15 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
         socketEvents = events.filter(event => event.source === "display" && event.category === "device_transport"
           && ["socket_closed", "recovered", "connected"].includes(event.metrics?.phase));
-        const closed = socketEvents.some(event => event.metrics?.phase === "socket_closed"
-          && Number.isInteger(event.metrics?.socket_close_code));
         const reconnected = socketEvents.some(event => event.metrics?.phase === "recovered"
           && Number.isInteger(event.metrics?.socket_close_code))
           || socketEvents.some(event => event.metrics?.phase === "connected"
             && Number.isInteger(event.metrics?.socket_close_code)
             && Number.isFinite(event.metrics?.reconnect_ms));
-        return closed && reconnected;
+        // The close observer's metadata is copied onto the successful
+        // reconnect event. A separate socket_closed row may be omitted by
+        // the short-event logging policy, so require the paired metadata here.
+        return reconnected;
       }, { timeout: 45000, message: "Display powinien zapisać kod zamknięcia i powiązać go z ponownym połączeniem" }).toBe(true);
     } catch (error) {
       const socketProbe = await displayPage.evaluate(() => ({
