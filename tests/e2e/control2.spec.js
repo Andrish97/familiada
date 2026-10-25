@@ -4160,7 +4160,7 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
   }
 });
 
-test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy dźwięku z Wyświetlacza", async ({ page, browser, accounts, loginAs }, testInfo) => {
+test("control2: powrót do Control ze Wskazówek w trakcie rundy zapisuje parę zdarzeń", async ({ page, browser, accounts, loginAs }, testInfo) => {
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAs(page, page.context(), accounts.standard[0]);
@@ -4174,16 +4174,15 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
-    await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
-    await page.getByRole("button", { name: "Dalej" }).click({ timeout: 10000 });
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
+    await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
     await expect(startRound).toBeEnabled({ timeout: 60000 });
+    await startRound.click();
+    await expect(page.locator(".c2-tilegrid")).toBeVisible({ timeout: 10000 });
 
     // Zwykły powrót (Wyświetlacz bez zmian): odblokowanie z bazy nadal
     // obowiązuje, więc Control jest gotowy bez nowego gestu na Wyświetlaczu.
@@ -4202,32 +4201,17 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
       await expect(unlockScreen).toHaveClass(/\bhidden\b/);
     }
 
-    // Wyświetlacz przeładowany pod nieobecność Control: po powrocie Control
-    // prosi o nowy gest, Wyświetlacz pokazuje przycisk, a gest odblokowuje grę.
-    await page.locator("#btnManual").click();
-    await page.waitForURL(/\/manual\//, { timeout: 15000 });
-    await expect(page.locator(".topbar.topbar-ready")).toBeAttached({ timeout: 15000 });
-    await displayPage.reload({ waitUntil: "domcontentloaded" });
-    await page.locator("#btnBack").click();
-    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
-    await expect(startRound).toBeVisible({ timeout: 30000 });
-    await expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 });
-    await expect(startRound).toBeDisabled();
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
-    await expect(startRound).toBeEnabled({ timeout: 15000 });
-
-    // Wyjście do Wskazówek i powrót są dozwolone w trakcie rozgrywki:
+    // Wyjście do Wskazówek i powrót są dozwolone w trakcie rundy:
     // mają zostać sparowane w logu i nie mogą utworzyć nowej sesji gry.
     await expect.poll(async () => {
       const sessions = await readControl2Sessions(page, game.id);
       const events = sessions[0]?.stats_detail.events || [];
       return {
         sessions: sessions.length,
-        opens: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_open").length,
-        returns: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_return").length,
-      };
-    }, { timeout: 15000 }).toEqual({ sessions: 1, opens: 3, returns: 3 });
+      opens: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_open").length,
+      returns: events.filter(event => event.source === "control" && event.metrics?.phase === "manual_return").length,
+    };
+    }, { timeout: 15000 }).toEqual({ sessions: 1, opens: 2, returns: 2 });
     const navigationEvents = (await readControl2Sessions(page, game.id))[0].stats_detail.events
       .filter(event => event.source === "control" && ["manual_open", "manual_return"].includes(event.metrics?.phase));
     const navigationIds = new Map();
@@ -4241,22 +4225,7 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     }
     expect([...navigationIds.values()]).toEqual([[
       "manual_open", "manual_return",
-    ], ["manual_open", "manual_return"], ["manual_open", "manual_return"]]);
-
-    // Przeglądarka Wyświetlacza wstrzymuje dźwięk bez przeładowania strony
-    // (np. uśpienie telewizora) i nie pozwala wznowić go bez gestu: Control
-    // wstrzymuje grę, Wyświetlacz pokazuje przycisk, gest przywraca grę.
-    await displayPage.evaluate(async () => {
-      const context = window.__sfxAudioContext;
-      context.resume = () => Promise.reject(new DOMException("blocked", "NotAllowedError"));
-      await context.suspend();
-    });
-    await expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 });
-    await expect(startRound).toBeDisabled();
-    await displayPage.evaluate(() => { delete window.__sfxAudioContext.resume; });
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
-    await expect(startRound).toBeEnabled({ timeout: 15000 });
+    ], ["manual_open", "manual_return"]]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);

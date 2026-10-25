@@ -6,28 +6,28 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-25T22030";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-25T22030";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T22030";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T22030";
-import { holdSkeletonLayout } from "../../shared/js/core/page-layout.js?v=v2026-10-25T22030";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T22030";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T22030";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-25T22030";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T22030";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22030";
-import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-25T22030";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-25T22030";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-25T22030";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-25T22030";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22030";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-25T22030";
-import { openDialog, closeDialog, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T22030";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T22030";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-25T22030";
-import { createTally } from "./poll-tally.js?v=v2026-10-25T22030";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-25T22394";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-25T22394";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-25T22394";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-25T22394";
+import { holdSkeletonLayout } from "../../shared/js/core/page-layout.js?v=v2026-10-25T22394";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-25T22394";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-25T22394";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-25T22394";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-25T22394";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-25T22394";
+import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-25T22394";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-25T22394";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-25T22394";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-25T22394";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-25T22394";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-25T22394";
+import { openDialog, closeDialog, isOverlayOpen } from "../../shared/js/core/modal-sheet.js?v=v2026-10-25T22394";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-25T22394";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-25T22394";
+import { createTally } from "./poll-tally.js?v=v2026-10-25T22394";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-25T22030";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-25T22394";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)
