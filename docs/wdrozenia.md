@@ -238,7 +238,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Branch `fix/change-type-copy`; znaczenie i konwersja danych bez zmian.
   Dostosowano dwa istniejące oczekiwania e21 do poprawionego tekstu.
 - Pełny unit **812/812 ✓**; okno na 390/360/1400 px: **3/3 zrzuty**,
-  audyt **0 uwag**. Status: dwa punktowe e21 na branchu, potem produkcja.
+  audyt **0 uwag**. Branch e21 **40227951311 ✓ 2/2**: konwersja preparowanej
+  do tekstowej oraz zachowanie punktów zamkniętej ankiety. Status: publikacja
+  i te same dwa testy kontrolnie na produkcji.
 
 
 
@@ -289,8 +291,13 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   UI 40226827228 5/5 i Control 40226829390 1/1 pozostają ważne — scalenie
   zmieniło tylko dokumentację, wersje i obrazy Home; poprawka konta dotyczy
   mobilnego zamykania dropdownu, nie transportu/rozgrywki Control.
-- Pełny unit po scaleniu **812/812 ✓** (20,7 s). Status: publikacja Pages,
-  potem te same punktowe testy UI + Control na produkcji.
+- Pełny unit po scaleniu **812/812 ✓** (20,7 s). Pages
+  **40227384980 ✓** (`cbbf53c6a6`), produkcyjne UI **40227463237 ✓ 5/5**,
+  Control **40227465117 ✓ 1/1**, próba 2. Próba 1 potwierdziła odbiór
+  postgres_changes na wszystkich urządzeniach i brak heartbeat/catchup,
+  lecz odczyt statystyk po zamierzonym reloadzie trafił w kolejną nawigację
+  (`Execution context was destroyed`). Ponowiono tylko nieudany job,
+  bez zmian kodu i bez powtarzania zielonego UI. Status: **zrobione**.
 
 ### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
 
@@ -313,7 +320,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   Kolejny main `1f6833d329` wniósł dokumentację, test originu Pages i wersje,
   bez zmian semantycznych w `web/`; zielonych speców nie powtarzano.
   Unit po uzgodnieniu wersji **809/809** ✓ (21,3 s).
-- Status: publikacja main/Pages, następnie te same spece na produkcji.
+- Zamknięte na produkcji: Pages **40227384980 ✓**, UI
+  **40227463237 ✓ 5/5**, Control **40227465117 ✓ 1/1**, próba 2
+  (pierwsza trafiła odczytem po reloadzie w trwającą nawigację).
 
 
 ### 2026-10-25 — pierwsza widoczna klatka wspólnego silnika
@@ -400,8 +409,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Control po ostatnim scaleniu: **40222927342 ✓ 1/1**. Bramka brancha
   spełniona: UI 40220957780 4/4 + Control 40222927342 1/1; pełny unit
   860/860. Kod `2126329c63` gotowy do publikacji.
-- Status: publikacja main/Pages, następnie te same 4 testy UI + pełna runda
-  Control na rzeczywistej produkcji.
+- Zamknięte: pełna kontrola produkcji w nowszym wpisie „niewidoczne
+  przekierowania”: UI 40227463237 5/5 + Control 40227465117 1/1 ✓.
 
 
 
