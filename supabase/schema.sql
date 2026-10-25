@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7AHHyZSm9FdjhAXpJvvS4wvQZXoJh6PMuCPgCy6RY0MB5AD5yNLZZeCryYZhH6P
+\restrict lEgvDeKNoF04q4jzJFAmnRIrOSVhyDXoqfKLVc74nx9wTicj1hZgGl7ysbSrvNB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -14056,6 +14056,79 @@ $$;
 
 
 --
+-- Name: marketing_contact_counts(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_contact_counts"() RETURNS TABLE("total" integer, "unreviewed" integer, "good" integer, "junk" integer, "sent" integer, "replied" integer, "declined" integer, "bounced" integer)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT count(*)::int,
+         count(*) FILTER (WHERE quality IS NULL)::int,
+         count(*) FILTER (WHERE quality = 'good')::int,
+         count(*) FILTER (WHERE quality = 'junk')::int,
+         count(*) FILTER (WHERE sent_count > 0)::int,
+         count(*) FILTER (WHERE reaction = 'replied')::int,
+         count(*) FILTER (WHERE reaction = 'declined')::int,
+         count(*) FILTER (WHERE reaction = 'bounced')::int
+    FROM public.marketing_verified_contacts;
+$$;
+
+
+--
+-- Name: marketing_mark_reaction("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_mark_reaction"("p_email" "text", "p_reaction" "text") RETURNS integer
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE n int;
+BEGIN
+  IF p_reaction NOT IN ('replied', 'declined', 'bounced') THEN
+    RAISE EXCEPTION 'marketing_mark_reaction: nieznana reakcja %', p_reaction;
+  END IF;
+  UPDATE public.marketing_verified_contacts
+     SET reaction = p_reaction, reaction_at = now()
+   WHERE lower(email) = lower(trim(p_email))
+     AND (p_reaction <> 'replied' OR reaction IS NULL OR reaction = 'replied');
+  GET DIAGNOSTICS n = ROW_COUNT;
+  RETURN n;
+END $$;
+
+
+--
+-- Name: marketing_mark_sent("text"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_mark_sent"("p_emails" "text"[]) RETURNS integer
+    LANGUAGE "sql"
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  WITH u AS (
+    UPDATE public.marketing_verified_contacts
+       SET sent_count = sent_count + 1, last_sent_at = now(), is_used = true
+     WHERE lower(email) = ANY (SELECT lower(e) FROM unnest(p_emails) e)
+    RETURNING 1)
+  SELECT count(*)::int FROM u;
+$$;
+
+
+--
+-- Name: marketing_send_blocked("text"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_send_blocked"("p_emails" "text"[]) RETURNS SETOF "text"
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT DISTINCT lower(email) FROM public.marketing_verified_contacts
+   WHERE reaction IN ('declined', 'bounced')
+     AND lower(email) = ANY (SELECT lower(e) FROM unnest(p_emails) e);
+$$;
+
+
+--
 -- Name: on_profile_created_check_suppression(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -19272,6 +19345,31 @@ CREATE TABLE "public"."marketing_ai_providers" (
 
 
 --
+-- Name: marketing_candidates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_candidates" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "run_id" "uuid",
+    "source" "text" NOT NULL,
+    "source_ref" "text" NOT NULL,
+    "name" "text",
+    "url" "text",
+    "domain" "text",
+    "emails" "text"[] DEFAULT '{}'::"text"[] NOT NULL,
+    "snippet" "text",
+    "pkd" "text"[] DEFAULT '{}'::"text"[] NOT NULL,
+    "region" "text",
+    "status" "text" DEFAULT 'new'::"text" NOT NULL,
+    "reject_reason" "text",
+    CONSTRAINT "marketing_candidates_source_check" CHECK (("source" = ANY (ARRAY['search'::"text", 'ceidg'::"text"]))),
+    CONSTRAINT "marketing_candidates_status_check" CHECK (("status" = ANY (ARRAY['new'::"text", 'classifying'::"text", 'accepted'::"text", 'rejected'::"text"])))
+);
+
+
+--
 -- Name: marketing_cities; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -19279,6 +19377,35 @@ CREATE TABLE "public"."marketing_cities" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "name" "text" NOT NULL,
     "is_active" boolean DEFAULT true
+);
+
+
+--
+-- Name: marketing_run_stats; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_run_stats" (
+    "run_id" "uuid" NOT NULL,
+    "kind" "text" DEFAULT 'search'::"text" NOT NULL,
+    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "finished_at" timestamp with time zone,
+    "target" integer DEFAULT 0 NOT NULL,
+    "search_queries" integer DEFAULT 0 NOT NULL,
+    "search_results" integer DEFAULT 0 NOT NULL,
+    "search_engine_errors" integer DEFAULT 0 NOT NULL,
+    "ceidg_records" integer DEFAULT 0 NOT NULL,
+    "candidates" integer DEFAULT 0 NOT NULL,
+    "dropped_no_email" integer DEFAULT 0 NOT NULL,
+    "dropped_duplicate" integer DEFAULT 0 NOT NULL,
+    "dropped_public" integer DEFAULT 0 NOT NULL,
+    "dropped_rule" integer DEFAULT 0 NOT NULL,
+    "pages_fetched" integer DEFAULT 0 NOT NULL,
+    "sent_to_ai" integer DEFAULT 0 NOT NULL,
+    "ai_calls" integer DEFAULT 0 NOT NULL,
+    "ai_accepted" integer DEFAULT 0 NOT NULL,
+    "ai_rejected" integer DEFAULT 0 NOT NULL,
+    "errors" integer DEFAULT 0 NOT NULL,
+    CONSTRAINT "marketing_run_stats_kind_check" CHECK (("kind" = ANY (ARRAY['search'::"text", 'review'::"text"])))
 );
 
 
@@ -19322,7 +19449,17 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "url" "text" NOT NULL,
     "is_used" boolean DEFAULT false,
     "added_at" timestamp with time zone DEFAULT "now"(),
-    "verify_reason" "text"
+    "verify_reason" "text",
+    "source" "text",
+    "quality" "text",
+    "quality_reason" "text",
+    "reviewed_at" timestamp with time zone,
+    "sent_count" integer DEFAULT 0 NOT NULL,
+    "last_sent_at" timestamp with time zone,
+    "reaction" "text",
+    "reaction_at" timestamp with time zone,
+    CONSTRAINT "marketing_verified_contacts_quality_check" CHECK ((("quality" IS NULL) OR ("quality" = ANY (ARRAY['good'::"text", 'junk'::"text"])))),
+    CONSTRAINT "marketing_verified_contacts_reaction_check" CHECK ((("reaction" IS NULL) OR ("reaction" = ANY (ARRAY['replied'::"text", 'declined'::"text", 'bounced'::"text"]))))
 );
 
 
@@ -20532,6 +20669,22 @@ ALTER TABLE ONLY "public"."marketing_ai_providers"
 
 
 --
+-- Name: marketing_candidates marketing_candidates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_candidates"
+    ADD CONSTRAINT "marketing_candidates_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_candidates marketing_candidates_source_source_ref_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_candidates"
+    ADD CONSTRAINT "marketing_candidates_source_source_ref_key" UNIQUE ("source", "source_ref");
+
+
+--
 -- Name: marketing_cities marketing_cities_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -20561,6 +20714,14 @@ ALTER TABLE ONLY "public"."marketing_raw_contacts"
 
 ALTER TABLE ONLY "public"."marketing_raw_contacts"
     ADD CONSTRAINT "marketing_raw_contacts_url_key" UNIQUE ("url");
+
+
+--
+-- Name: marketing_run_stats marketing_run_stats_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_run_stats"
+    ADD CONSTRAINT "marketing_run_stats_pkey" PRIMARY KEY ("run_id");
 
 
 --
@@ -21340,6 +21501,13 @@ CREATE INDEX "idx_marketing_verified_email" ON "public"."marketing_verified_cont
 
 
 --
+-- Name: idx_marketing_verified_email_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_email_lower" ON "public"."marketing_verified_contacts" USING "btree" ("lower"("email"));
+
+
+--
 -- Name: idx_marketing_verified_used; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -21582,6 +21750,20 @@ CREATE UNIQUE INDEX "market_games_slug_key" ON "public"."market_games" USING "bt
 --
 
 CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
+
+
+--
+-- Name: marketing_candidates_domain_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "marketing_candidates_domain_idx" ON "public"."marketing_candidates" USING "btree" ("domain");
+
+
+--
+-- Name: marketing_candidates_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "marketing_candidates_status_idx" ON "public"."marketing_candidates" USING "btree" ("status", "created_at");
 
 
 --
@@ -24343,6 +24525,12 @@ ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."marketing_ai_providers" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: marketing_candidates; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_candidates" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: marketing_cities; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -24353,6 +24541,12 @@ ALTER TABLE "public"."marketing_cities" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."marketing_raw_contacts" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_run_stats; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_run_stats" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: marketing_search_logs; Type: ROW SECURITY; Schema: public; Owner: -
@@ -25157,5 +25351,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7AHHyZSm9FdjhAXpJvvS4wvQZXoJh6PMuCPgCy6RY0MB5AD5yNLZZeCryYZhH6P
+\unrestrict lEgvDeKNoF04q4jzJFAmnRIrOSVhyDXoqfKLVc74nx9wTicj1hZgGl7ysbSrvNB
 
