@@ -263,8 +263,15 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Po poprawce hamburgera: pełny unit ponownie **812/812 ✓**; Gry i Zadania,
   390/360/1400 px: **6/6 zrzutów**, audyt **0 uwag**, obie akcje widoczne.
 - Status: ponowny punktowy test rozszerzonego speca menu, potem publikacja
-  i kontrola produkcji. Uwierzytelnienie GH_TOKEN zwraca 401; odczyt przez
-  połączoną aplikację GitHub działa, CLI Actions wymaga odświeżenia dostępu.
+  i kontrola produkcji. GH_TOKEN CLI wygasł (401), ale skonfigurowane
+  uwierzytelnienie środowiska działa przez REST bez starego nagłówka CLI;
+  dispatch testu 40227197939 uruchomiony, dostęp przywrócony bez udziału użytkownika.
+- Poszerzona lokalna macierz **36/36 ✓**: Home, Login/next/force_auth,
+  requireAuth, bramki ankiety/urządzenia/poczty oraz stany anonimowe i błędne,
+  390/360/1400 px. Poprawne przekierowania: 0 klatek źródła; stany pozostające
+  na miejscu widoczne. Dane 450 ms, dokument celu 700 ms.
+- Scalono `51428c6df0`: dokumentacja, wersje i trzy odświeżone obrazy Home.
+  Resolver rozwiązał wyłącznie konflikty wersji; kod obu poprawek zachowany.
 
 ### 2026-10-25 — pierwsza klatka: scalenie przeniesienia panelu
 
@@ -2033,3 +2040,9 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 
 | 2026-10-25 | Prywatny panel — ponowne usunięcie manifestu po równoległym scaleniu | Podczas kontroli DNS wykryto przywrócony przez inne scalenie web/manifest-admin.webmanifest (następnie wersjonowany przez CI). Kod panelu nadal prywatny; usunięto ponownie jedyny publiczny manifest. | Utrzymać usunięcie manifestu przy scalaniu starszych gałęzi; manifest wraz z ikonami jest wyłącznie w prywatnym repo. Kontrola starego originu po Pages. |
+
+
+| 2026-10-25 | Panel po zmianie DNS — kontrola zamknięta | Pages 40225875929 success po ponownym usunięciu manifestu. Punktowe E2E main 40225962643 success 1/1: rzeczywisty origin Pages nie serwuje starego HTML, JS ani manifestu panelu; kontrolny indeks originu 200. Unit ikon 3/3. Wcześniejsza kontrola po DNS: Access 302, www 200, prywatny origin bez sekretu 404, maintenance wyłączone. | Zmiana DNS potwierdzona przez właściciela; ochrona i działanie zachowane. Brak pomiaru porównawczego pozwalającego przypisać odczuwalne przyspieszenie samemu hostingowi. |
+
+
+| 2026-10-25 | Lead Finder — zaznaczenie kategorii uwzględniane przy starcie | Poprawka prywatnego panelu (server 54d4512): zapis zaznaczenia aktualizuje stan sprawdzany przed startem; start czeka na zapis, błąd przywraca poprzedni wybór. Regresja odtworzona przed poprawką. Production 40226710636 success; CI 40226710455/40226709262 success: 69 unit (w tym CSS), 6 testów przeglądarkowych, w tym 4 scenariusze kategorii. Zrzuty 1400/390 obejrzane, origin 404 bez/z błędnym sekretem, 200 z poprawnym, Access 302. | Właściciel odświeża otwarty panel i ponawia start. Wyszukiwania ani wysyłki nie uruchamiano za właściciela; bez zmian usługi LF i bazy. |
