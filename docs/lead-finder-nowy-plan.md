@@ -35,7 +35,7 @@ wyjątkowo, w małym budżecie.
    `wodzirej Kraków "@gmail.com"`, `DJ wesele Kraków kontakt e-mail`). E-mail
    wycinany z tytułu i opisu wyniku, bez wchodzenia na stronę. Uzupełnia
    spółki (KRS nie podaje e-maili) i firmy bez maila w CEIDG.
-3. **(opcja) Jedno pobranie bez Chromium** — tylko dla kandydata, którego AI
+3. **Jedno pobranie bez Chromium (budżet)** — tylko dla kandydata, którego AI
    oceniło jako dobrego, ma stronę www, a nie ma maila: strona główna
    i `/kontakt`, sam httpx, budżet np. 20 na przebieg. Bez Playwright
    w obrazie.
@@ -77,18 +77,27 @@ wyjątkowo, w małym budżecie.
 
 ## Baza
 
-- Migracja dodająca: `marketing_candidates` (service only, jak inne
-  `marketing_*`), funkcja pobierania paczki do oceny, GRANT liczników.
+- Migracja dodająca (zgodna wstecz ze starym Lead Finderem):
+  `marketing_candidates` (service only), `marketing_run_stats` (liczniki
+  przebiegu, GRANT SELECT dla `agent_reader` — same liczby), w
+  `marketing_verified_contacts` kolumny `source`, `quality`, `quality_reason`,
+  `reviewed_at`, `sent_count`, `last_sent_at`, `reaction`, `reaction_at`;
+  funkcje `marketing_mark_sent(emails)` i `marketing_mark_reaction(email,
+  reaction)` (service only).
 - Po tygodniu działania: usunięcie `marketing_raw_contacts`,
-  `marketing_search_queries_log` i ich funkcji (osobna migracja).
+  `marketing_search_queries_log`, `marketing_cities` i ich funkcji (osobna
+  migracja).
 
 ## Etapy
 
-1. Migracja `marketing_candidates` + liczniki (lokalny Postgres, test SQL).
-2. Nowa usługa ze źródłem SearXNG-opisy (działa bez klucza CEIDG) + AI
-   paczkami; testy unit; wdrożenie; przebieg z panelu na celu 10, liczniki.
-3. Źródło CEIDG po otrzymaniu klucza; próba kodów PKD; przebieg kontrolny.
-4. (opcja) pobranie strony w budżecie.
+1. Migracja (lokalny Postgres, test SQL) → `main`.
+2. Nowa usługa: źródło wyszukiwarki + CEIDG (gdy jest klucz), odsiew, AI
+   paczkami, budżet pobrań, przegląd starych kontaktów (`POST
+   /api/contacts-review`); testy unit Pythona; wdrożenie; przebieg z panelu
+   na celu 10, liczniki przez `db-read`.
+3. Reakcje: Worker (wysyłka, poczta przychodząca) + panel (kolumny, filtry,
+   przycisk przeglądu); unit, zrzut `admin-leads`, e2e punktowo.
+4. Klucz CEIDG (właściciel), próba kodów PKD, przebieg kontrolny.
 5. Sprzątanie starych tabel.
 
 ## Uwaga prawna (do wiadomości właściciela)
@@ -97,9 +106,56 @@ Wysyłka maili marketingowych bez wcześniejszej zgody (także do firm) jest
 w Polsce ograniczona (Prawo komunikacji elektronicznej, RODO dla JDG). Dotyczy
 tak samo starego systemu; źródło danych tego nie zmienia.
 
+## Grupy docelowe (decyzja 2026-10-25)
+
+Liczy się skutek: osoby i firmy, które mogą używać Familiady. Miasta nie są
+wymagane (pula zapytań: rola × województwo/ogólnie, CEIDG: PKD × województwo).
+
+- **A — prowadzący:** DJ, wodzirej, konferansjer, animator imprez, prezenter.
+- **B — organizatorzy:** agencje eventowe, team building, organizatorzy wesel
+  i imprez firmowych.
+- **C — lokale i rozrywka:** puby i kawiarnie z wieczorami quizowymi,
+  organizatorzy quizów i teleturniejów.
+- **D — szkolenia i integracje firm:** firmy szkoleniowe, trenerzy z grami.
+
+**Wykluczone (odsiew w kodzie przed AI i w AI):** placówki publiczne —
+szkoły, przedszkola, żłobki, uczelnie, urzędy, gminy, domy i ośrodki kultury,
+biblioteki, jednostki z domeną `gov.pl`, `edu.pl`, `bip.` i podobne; sam
+wynajem sali/sprzętu; portale, katalogi, media.
+
+## Przegląd obecnych kontaktów (decyzja 2026-10-25)
+
+Wszystkie wiersze `marketing_verified_contacts` przechodzą przez nowy odsiew
+(reguły + AI paczkami, po zapisanych `title`/`short_description`/`url`/`email`,
+bez odwiedzania stron). Wynik w nowych kolumnach `quality` (`good`/`junk`),
+`quality_reason`, `reviewed_at` — **nic nie jest kasowane automatycznie**.
+Panel pokazuje filtr „Śmieci” i pozwala usunąć zaznaczone jak dziś. Kontakty
+z reakcją (odpowiedź) nie są oznaczane jako śmieci.
+
+## Reakcje odbiorców (decyzja 2026-10-25)
+
+Dziś odpowiedź na maila marketingowego rozpoznawana jest po podobnym temacie,
+bez powiązania z kontaktem. Nowe:
+
+- wysyłka z panelu (`/_admin_api/marketing/send`) zapisuje na kontakcie
+  `sent_count`, `last_sent_at`;
+- poczta przychodząca: nadawca porównany z e-mailami kontaktów i adresatami
+  wysłanych maili marketingowych → `reaction` = `replied` (domyślnie),
+  `declined` (rezygnacja, „nie jestem zainteresowany”, „proszę nie pisać” —
+  słowa w treści), `bounced` (zwrotka serwera pocztowego z adresem kontaktu),
+  `reaction_at`;
+- `declined`/`bounced` → kontakt pomijany przy kolejnych wysyłkach (Worker
+  zwraca je w `skipped`);
+- panel: kolumna reakcji i filtr („Odpowiedzieli”, „Bez odpowiedzi”,
+  „Odmówili”, „Odbite”), liczniki skuteczności (wysłane / odpowiedzi).
+
 ## Decyzje
 
 - 2026-10-25 (użytkownik): nowy system od zera, odwiedzanie stron jest
   kosztowne, wynik końcowy jak wcześniej.
-- (czeka) CEIDG jako główne źródło — klucz zakłada właściciel.
-- (czeka) Pobranie strony w budżecie (źródło 3): tak / nie.
+- 2026-10-25 (użytkownik): oba źródła (CEIDG i wyszukiwarka); miasta
+  niewymagane, liczy się skutek; odbiorcy Familiady bez placówek publicznych
+  (szkoły itd.); przegląd obecnej tabeli na śmieci; lepsze śledzenie
+  odpowiedzi i reakcji; pobieranie stron — tak, w małym budżecie.
+- Klucz CEIDG zakłada właściciel (`sudo familiada-secret set lead-finder
+  CEIDG_API_KEY`); bez klucza działa samo źródło z wyszukiwarki.
