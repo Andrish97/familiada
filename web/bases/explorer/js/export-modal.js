@@ -1,12 +1,12 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T08101";
-import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T08101";
-import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-25T08101";
-import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-25T08101";
-import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T08101";
-import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-25T08101";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-25T08352";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-25T08352";
+import { openDialog, closeDialog } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-25T08352";
+import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-25T08352";
+import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-25T08352";
+import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-25T08352";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
