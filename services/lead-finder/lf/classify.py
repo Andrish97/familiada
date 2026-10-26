@@ -10,6 +10,7 @@ import os
 import re
 
 from .config import cfg, load_text
+from .resources import deepseek, BudgetUnavailable, ProviderUnavailable
 
 log = logging.getLogger('lead_finder')
 
@@ -125,21 +126,13 @@ class Classifier:
         self.stats = stats
 
     async def _call(self, prompt):
-        if not DEEPSEEK['key']:
-            return 500, None, 'missing config'
         try:
-            r = await self.client.post(DEEPSEEK['endpoint'], timeout=cfg('TIMEOUT_AI', 90), headers={
-                'Authorization': f'Bearer {DEEPSEEK["key"]}', 'Content-Type': 'application/json',
-            }, json={'model': DEEPSEEK['model'], 'temperature': 0, 'max_tokens': cfg('AI_MAX_TOKENS', 6000),
-                     'response_format': {'type': 'json_object'},
-                     'messages': [{'role': 'system', 'content': SYSTEM}, {'role': 'user', 'content': prompt}]})
-            if r.status_code == 200:
-                choices = r.json().get('choices') or []
-                text = (choices[0].get('message') or {}).get('content') if choices else None
-                return 200, text, None
-            return r.status_code, None, r.text.lower()[:300]
-        except Exception as e:  # sieć, timeout, zły JSON odpowiedzi HTTP
-            return 500, None, str(e)[:300]
+            result = await deepseek(self.db, self.client, prompt, service='marketing', max_tokens=cfg('AI_MAX_TOKENS', 6000))
+            return 200, json.dumps(result, ensure_ascii=False), None
+        except BudgetUnavailable:
+            return 402, None, 'local_budget'
+        except ProviderUnavailable as error:
+            return 503, None, str(error)
 
     async def _cooldown(self, name, seconds, msg):
         await self.db.rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': seconds, 'p_error': msg[:500]})
@@ -154,6 +147,8 @@ class Classifier:
         if self.stats:
             self.stats['ai_calls'] += 1
         status, content, err = await self._call(prompt)
+        if status == 402 and err == 'local_budget':
+            return None  # Własny budżet Marketingu nie blokuje budżetu pytań.
         if status == 200:
             try:
                 return parse(content)
