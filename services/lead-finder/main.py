@@ -23,6 +23,7 @@ from lf.db import Supabase
 from lf.filters import FREEMAIL_DOMAINS
 from lf.pipeline import Engine
 from lf.sources.ceidg import Ceidg
+from lf.question_bank import QuestionBank, router_for
 
 logger = logging.getLogger('lead_finder')
 logger.setLevel(logging.INFO)
@@ -119,6 +120,38 @@ def require_api_key(authorization: Optional[str] = Header(default=None)):
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=[ADMIN_ORIGIN], allow_methods=['GET', 'POST'],
                    allow_headers=['Authorization', 'Content-Type'])
+
+question_bank = QuestionBank(db, http, SEARXNG_URL, LEAD_FINDER_API_KEY)
+app.include_router(router_for(question_bank, require_api_key))
+
+
+@app.on_event('startup')
+async def start_question_worker():
+    question_bank.task = asyncio.create_task(question_bank.worker())
+    question_bank.demo_task = asyncio.create_task(demo_updates())
+
+
+async def demo_updates():
+    while True:
+        try:
+            result = await db.rpc('admin_demo_apply_next')
+            await asyncio.sleep(0.2 if result and result.get('status') == 'updated' else 3)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            await asyncio.sleep(15)
+
+
+@app.on_event('shutdown')
+async def stop_question_worker():
+    if getattr(question_bank, 'demo_task', None):
+        question_bank.demo_task.cancel()
+    if question_bank.task:
+        question_bank.task.cancel()
+        try:
+            await question_bank.task
+        except asyncio.CancelledError:
+            pass
 
 
 @app.post('/api/search-runs', dependencies=[Depends(require_api_key)])

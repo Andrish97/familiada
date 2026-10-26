@@ -4,6 +4,7 @@ bez wchodzenia na stronę."""
 import httpx
 
 from .. import filters
+from ..resources import SEARCH_GATE
 
 
 def result_to_candidate(res):
@@ -30,10 +31,11 @@ def result_to_candidate(res):
     }
 
 
-async def search(client, base_url, query, pageno=1, timeout=25):
+async def search(client, base_url, query, pageno=1, timeout=25, owner='marketing', language='pl-PL'):
     """Zwraca (wyniki, silniki bez odpowiedzi: [[nazwa, powód], …])."""
-    params = {'q': query, 'format': 'json', 'language': 'pl-PL', 'pageno': pageno, 'safesearch': 0}
-    r = await client.get(f'{base_url}/search', params=params, timeout=timeout)
+    params = {'q': query, 'format': 'json', 'language': language, 'pageno': pageno, 'safesearch': 0}
+    async with SEARCH_GATE.slot(owner):
+        r = await client.get(f'{base_url}/search', params=params, timeout=timeout)
     if r.status_code != 200:
         raise httpx.HTTPStatusError(f'SearXNG {r.status_code}', request=r.request, response=r)
     data = r.json()
