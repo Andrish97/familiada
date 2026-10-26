@@ -297,4 +297,7 @@ async function submitContact() {
 }
 
 
-if (typeof document !== "undefined") window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
+if (typeof document !== "undefined") {
+  window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
+  window.addEventListener("i18n:lang", applyLabels);
+}
