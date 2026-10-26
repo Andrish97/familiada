@@ -4,6 +4,9 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createRequire } = require('node:module');
 const { transform } = createRequire(path.join(__dirname, '../tests/package.json'))('esbuild');
+const { contentHashAssets } = require('./content-hash-assets.cjs');
+const TEXT_EXT = new Set(['.html', '.js', '.css', '.json', '.webmanifest', '.svg', '.xml']);
+const stableVersions = source => source.replace(/\?v=[a-zA-Z0-9T:-]+/g, '?v=vASSET');
 
 async function buildPublic({ source = path.join(__dirname, '../web'), out = path.join(__dirname, '../_site_public') } = {}) {
   source = path.resolve(source); out = path.resolve(out);
@@ -23,9 +26,12 @@ async function buildPublic({ source = path.join(__dirname, '../web'), out = path
       if (!entry.isFile()) throw new Error(`Nieobsługiwany typ pliku: ${rel}`);
       const kind = path.extname(rel).slice(1);
       if (!['js', 'css'].includes(kind) || rel.split(path.sep).includes('vendor') || /\.min\.(js|css)$/.test(rel)) {
-        await fs.copyFile(src, dest); continue;
+        if (TEXT_EXT.has(path.extname(rel).toLowerCase()) && !rel.split(path.sep).includes('vendor')) {
+          await fs.writeFile(dest, stableVersions(await fs.readFile(src, 'utf8')));
+        } else await fs.copyFile(src, dest);
+        continue;
       }
-      const input = await fs.readFile(src, 'utf8');
+      const input = stableVersions(await fs.readFile(src, 'utf8'));
       const result = await transform(input, { loader: kind, sourcefile: rel, minify: true,
         // Bez bundlowania: dynamiczne ścieżki import.meta.url i manifesty nadal działają.
         target: kind === 'js' ? 'esnext' : ['chrome80', 'safari13', 'firefox78'],
@@ -37,6 +43,7 @@ async function buildPublic({ source = path.join(__dirname, '../web'), out = path
   }
   await copy(source);
   await fs.writeFile(marker, JSON.stringify({ format: 1, totals }, null, 2) + '\n');
+  totals.hashes = contentHashAssets(out);
   return totals;
 }
 module.exports = { buildPublic };

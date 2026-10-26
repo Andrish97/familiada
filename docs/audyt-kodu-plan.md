@@ -92,3 +92,13 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   istniejący globalny znacznik unieważnia również niezmienione assety.
   Zmiana na hashe treści wymaga jednoczesnej obsługi grafu importów ES,
   service workera i otwartych sesji gry; nie wdrażano jej bez takiej bramki.
+
+- 2026-10-26: G/O3 na `perf/content-hash-assets-20261026`:
+  artefakt Pages otrzymuje wersje `?v=h<hash>` liczone z końcowej,
+  zminifikowanej treści zasobu i zależności importów. `asset-hashes.json`
+  zapisuje pełne sumy. Zmiana jednego pliku nie zmienia URL-i niezależnych
+  bibliotek, fontów i obrazów. Dwa pełne lokalne buildy z różnym globalnym
+  znacznikiem dały identyczne hashe wszystkich niezmienionych JS/CSS oraz
+  zasobów binarnych; różnił się tylko HTML z metadanymi wydania. Worker
+  nadal rozpoznaje `?v=` jako zasób z cache immutable. Przed publikacją
+  konieczne są testy gałęzi na tym samym artefakcie i kontrola produkcji.
