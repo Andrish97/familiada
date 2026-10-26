@@ -1,4 +1,4 @@
-import { createBoardTheme } from "./board.js?v=v2026-10-26T14443";
+import { createBoardTheme } from "./board.js?v=v2026-10-26T14464";
 
 export function createTheme(root) {
   return createBoardTheme(root, { serif: true });
