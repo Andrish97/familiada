@@ -6,6 +6,7 @@ import { uploadToStorage } from "../core/storage.js";
 import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
 import { findTicketOwner } from "./contact.js";
 import { recordMarketingReactions } from "./marketing-reactions.js";
+import { htmlToPlainTextPreview } from "./html-to-text.js";
 
 export function decodeMimeWords(str) {
   if (!str || typeof str !== "string") return str || "";
@@ -70,7 +71,8 @@ export async function handleInboundEmail(message, env) {
     console.log("[email] raw length:", rawText.length);
     const parts = extractMimeParts(rawText);
     console.log("[email] parsed:", { textLen: parts.text?.length, htmlLen: parts.html?.length, attCount: parts.attachments?.length });
-    body = parts.text;
+    // HTML-only mail still needs a text body for persistence and previews.
+    body = parts.text || htmlToPlainTextPreview(parts.html, 5000);
     bodyHtml = parts.html || null;
     inboundAttachments = parts.attachments || [];
   } catch (err) {
@@ -377,8 +379,12 @@ export function extractMimeParts(raw) {
   // Non-multipart (or multipart parsing above yielded nothing usable)
   const split = splitHeadersAndBody(raw);
   const content = split ? split.body.trim() : "";
-  const decoded = decodeMimePart(raw, content);
-  const isHtml = /^\s*<!doctype html|^\s*<html/i.test(decoded);
+  const headers = unfoldHeaderBlock(split?.headers || "");
+  const decoded = decodeMimePart(headers, content);
+  const mimeType = headers.match(/^Content-Type:\s*([^;\r\n]+)/im)?.[1].trim().toLowerCase();
+  // text/html may contain only a fragment (<div>, <p>...), with no <html>.
+  // An explicit text/plain remains text, even when it describes HTML code.
+  const isHtml = mimeType === "text/html" || (!mimeType && /^\s*(?:<!doctype\s+html|<html(?:\s|>))/i.test(decoded));
   return { text: isHtml ? "" : decoded, html: isHtml ? decoded : "", attachments: [] };
 }
 
