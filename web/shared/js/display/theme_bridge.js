@@ -1,4 +1,4 @@
-import { createLayoutTheme } from "./theme_layouts.js?v=v2026-10-26T13554";
+import { createLayoutTheme } from "./theme_layouts.js?v=v2026-10-26T14191";
 
 export function createTheme(baseSvg, bgLayer, config = {}) {
   return createLayoutTheme(baseSvg, bgLayer, config, "bridge");
