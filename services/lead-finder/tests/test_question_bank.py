@@ -147,6 +147,20 @@ class AsyncTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls[-1].args[0], 'qf_job_checkpoint')
         self.assertEqual(bank.ask.await_count, 2)
 
+    async def test_game_metadata_repairs_wrong_count_before_atomic_commit(self):
+        db = AsyncMock()
+        db.select.return_value = []
+        candidates = [{'id':str(i), 'text':'Pytanie '+str(i)} for i in range(10)]
+        db.rpc.side_effect = [candidates, [{'id':'new-game'}]]
+        bank = QuestionBank(db, AsyncMock(), 'http://searxng', 'test-only')
+        bank.ask = AsyncMock(side_effect=[{'games':[]}, {'games':[{'game_index':0,'title':'Rodzinny wieczór','description':'Gra dla całej rodziny.'}]}])
+        result = await bank.create_games({'lang':'pl','mode':'auto','count':10,'quantity':1,'include_ai':True,'request_id':'00000000-0000-4000-8000-000000000001'})
+        self.assertEqual(result['games'][0]['id'],'new-game')
+        self.assertEqual(bank.ask.await_count,2)
+        self.assertIn('exactly 1 GAMES',bank.ask.call_args.args[0])
+        self.assertEqual(db.rpc.call_args.args[0],'qf_games_commit')
+        self.assertEqual(db.rpc.call_args.args[1]['p_count'],10)
+
 
 if __name__ == '__main__':
     unittest.main()
