@@ -5,10 +5,11 @@ według kategorii -> marketing_verified_contacts z kategorią."""
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from . import fetch, filters
 from .classify import Classifier, item_for_lead
+from .logging_sink import describe_error
 from .config import cfg
 from .sources import ceidg as ceidg_src
 from .sources import search as search_src
@@ -171,7 +172,7 @@ class Engine:
                                                     timeout=cfg('TIMEOUT_SEARCH', 25))
         except Exception as e:  # SearXNG niedostępny, zły JSON
             self.stats['errors'] += 1
-            log.error(f'Wyszukiwarka: {str(e)[:200]}')
+            log.error('Wyszukiwarka: %s', describe_error(e), exc_info=True)
             return 0
         self.stats['search_results'] += len(results)
         self.stats['search_engine_errors'] += len(dead)
@@ -221,7 +222,7 @@ class Engine:
                 return
             except Exception as e:
                 self.stats['errors'] += 1
-                log.error(f'CEIDG: {str(e)[:200]}')
+                log.error('CEIDG: %s', describe_error(e), exc_info=True)
                 await asyncio.sleep(30)
                 continue
             await self._log_query(q, found, added)
@@ -363,7 +364,8 @@ class Engine:
         self.attempts = {}
         self.categories = []
         self.status = 'running'
-        await self.db.delete('marketing_search_logs', {'level': 'not.is.null'})
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        await self.db.delete('marketing_search_logs', {'created_at': f'lt.{cutoff}'})
         log.info(f'Zlecono {target} kontaktów.')
         await self.save_stats()
         try:
@@ -383,7 +385,7 @@ class Engine:
         except Exception as e:
             self.status = 'error'
             self.stats['errors'] += 1
-            log.error(f'Błąd przebiegu: {str(e)[:300]}')
+            log.error('Błąd przebiegu: %s', describe_error(e), exc_info=True)
             if self.notify:
                 await self.notify('❌ <b>Błąd Lead Findera</b> — szczegóły w logach panelu.')
         finally:

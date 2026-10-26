@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lf.config import cfg
 from lf.db import Supabase
+from lf.logging_sink import DbLogHandler
 from lf.filters import FREEMAIL_DOMAINS
 from lf.pipeline import Engine
 from lf.sources.ceidg import Ceidg
@@ -43,21 +44,7 @@ http = httpx.AsyncClient(timeout=60)
 db = Supabase(SUPABASE_URL, SUPABASE_KEY)
 
 
-class DbLogHandler(logging.Handler):
-    """Wpisy INFO/ERROR do marketing_search_logs (dziennik w panelu)."""
-
-    def emit(self, record):
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return
-        if record.getMessage().startswith('DB '):
-            return  # błąd samej bazy — tylko w logach kontenera (bez pętli)
-        level = 'error' if record.levelno >= logging.ERROR else 'info'
-        loop.create_task(db.insert('marketing_search_logs', {'level': level, 'message': self.format(record)[:2000]}))
-
-
-_db_handler = DbLogHandler()
+_db_handler = DbLogHandler(db)
 _db_handler.setLevel(logging.INFO)
 _db_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_db_handler)

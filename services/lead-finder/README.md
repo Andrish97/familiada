@@ -27,3 +27,11 @@ obniża celu. Pamięć źródeł ogranicza ponowne pobieranie i ekstrakcję.
 Druga pętla usługi wykonuje `admin_demo_apply_next`: aktualizuje kolejkę
 nieedytowanych demo, ponownie sprawdzając treść i blokady przed zapisem.
 Nie zmienia wzorców bez żądania administratora z podglądem wersji.
+
+## Dziennik Marketingu
+
+Nowe zlecenie zachowuje logi z ostatnich 7 dni. Ostrzeżenia i błędy operacji
+bazy są widoczne w panelu; awaria samej tabeli dziennika trafia tylko do stderr,
+żeby nie tworzyć pętli zapisu. Błędy wyszukiwarki, CEIDG i przebiegu zawierają
+typ wyjątku oraz traceback (limit wpisu 16000 znaków). Timeout z pustym
+komunikatem jest opisany jawnie jako np. `ReadTimeout`.

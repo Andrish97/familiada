@@ -1,5 +1,18 @@
 # Wdrożenia — kolejka i stan
 
+### 2026-10-26 — Lead Finder: przyczyny niewidocznych błędów
+
+Diagnostyka serwera 40370485923 i 40371576119: usługa zdrowa, brak restartów
+kontenera po jego odtworzeniu o 17:19 UTC. Bing/Yandex/Seznam zwracają wyniki;
+CEIDG w próbie odczytu odpowiedziało HTTP 204 po 5,6 s. Ostatni błąd w bazie:
+CEIDG z pustym opisem, 30 s po rozpoczęciu zlecenia. To wskazuje na timeout,
+ale utraconego typu wyjątku nie da się odtworzyć. Nowy przebieg kasował cały
+dziennik, a błędy DB były pomijane w panelu.
+Poprawka: 7 dni historii, typ i traceback wyjątku, osobny poziom ostrzeżeń,
+zapis błędów pozostałych tabel bez pętli zapisu błędów dziennika. Panel
+prywatny otrzymuje filtr poziomu, stabilny kursor historii i czytanie bez
+automatycznego powrotu na dół. Testy usługi 31/31, bez rzeczywistego zlecenia.
+
 ### 2026-10-26 — odbiór samodzielnego HTML w poczcie
 
 Zgłoszenie właściciela: odebrany fragment HTML był widoczny jako kod.

@@ -3,6 +3,7 @@
 import logging
 
 import httpx
+from .logging_sink import describe_error
 
 log = logging.getLogger('lead_finder')
 
@@ -21,7 +22,7 @@ class Supabase:
                 return r.json()
             log.error(f'DB select {table}: {r.status_code} {r.text[:200]}')
         except httpx.HTTPError as e:
-            log.error(f'DB select {table}: {e}')
+            log.error(f'DB select {table}: {describe_error(e)}')
         return None
 
     async def select_all(self, table, columns, page=1000, extra=None):
@@ -49,7 +50,7 @@ class Supabase:
                 return r.json()
             log.error(f'DB insert {table}: {r.status_code} {r.text[:200]}')
         except httpx.HTTPError as e:
-            log.error(f'DB insert {table}: {e}')
+            log.error(f'DB insert {table}: {describe_error(e)}')
         return None
 
     async def update(self, table, data, filters):
@@ -59,7 +60,7 @@ class Supabase:
                 return True
             log.error(f'DB update {table}: {r.status_code} {r.text[:200]}')
         except httpx.HTTPError as e:
-            log.error(f'DB update {table}: {e}')
+            log.error(f'DB update {table}: {describe_error(e)}')
         return False
 
     async def delete(self, table, filters):
@@ -78,5 +79,5 @@ class Supabase:
                 return True
             log.error(f'DB rpc {fn}: {r.status_code} {r.text[:200]}')
         except httpx.HTTPError as e:
-            log.error(f'DB rpc {fn}: {e}')
+            log.error(f'DB rpc {fn}: {describe_error(e)}')
         return None
