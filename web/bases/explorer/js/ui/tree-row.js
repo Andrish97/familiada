@@ -6,8 +6,8 @@ export { esc };
 // samymi klasami (.tree-row w base-explorer.css): linie prowadzące wcięć
 // z --depth, strzałka, folder otwarty/zamknięty, nazwa, kropki i liczba pytań.
 
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-26T13554";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-26T13554";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-26T14191";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-26T14191";
 
 
 /** Strzałka rozwijania (albo puste miejsce tej samej szerokości). */

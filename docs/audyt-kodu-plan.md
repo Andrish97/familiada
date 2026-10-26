@@ -55,3 +55,11 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   wariant, zachowując osobne limity, kolejkę oraz politykę ponawiania.
   Dodano kontrakty atrap HTTP dla czterech dostawców, załączników, odmów
   i ponownego użycia tokenu. Bramka gałęzi i kontrola produkcji przed nami.
+
+- 2026-10-26: G/O4 na `perf/manual-chapters-20261026`: generator zachowuje
+  pełne źródło do podglądu i testów, a dodatkowo wydaje mały spis oraz
+  osobne moduły rozdziałów. Strona pobiera rozdział po otwarciu, a pełny
+  indeks buduje dopiero przy pierwszym wyszukiwaniu. Test potwierdza brak
+  pobierania pełnego pliku PL (277 581 B źródła) na wejściu do spisu;
+  sam spis PL ma 12 076 B, mapa loaderów 2649 B przed kompresją.
+  Po zmianie należy sprawdzić głębokie linki, PL/EN/UK i wyszukiwanie.
