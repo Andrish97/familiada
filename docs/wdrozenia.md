@@ -240,6 +240,14 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-26 — motywy: kontrola produkcji i odzyskiwanie startu
+
+Pages 40246463317 ✓, produkcyjny zapis motywów i kolorów w 40246531710 ✓.
+Kontrola Display 40247368747 wykazała przeładowania; dodano diagnostykę
+źródła i ograniczenie guardu startu do modułów aplikacji z własnej domeny.
+Unit 14/14 ✓ (w tym regresja ignorowania zewnętrznego modułu). Następnie
+bramka brancha, Pages i punktowa kontrola Display; ustawienia pozostają zielone.
+
 ### 2026-10-25 — animowane części ikon: audyt, hamburger i para kawy
 
 - Zlecenie użytkownika: audyt zastosowań animowanych części SVG i pierwsze

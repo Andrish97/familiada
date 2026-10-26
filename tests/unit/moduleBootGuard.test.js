@@ -13,12 +13,12 @@ function boot(storage = new Map(), { withErrorBox = true } = {}) {
   vm.runInNewContext(source, {
     window: { addEventListener: (type, fn) => { listeners[type] = fn; } },
     document: { getElementById: (id) => (withErrorBox && id === "deviceLoadError" ? box : null) },
-    location: { pathname: "/control/buzzer/", reload: () => { env.reloads += 1; } },
+    location: { pathname: "/control/buzzer/", href: "https://www.familiada.online/control/buzzer/", origin: "https://www.familiada.online", reload: () => { env.reloads += 1; } },
     sessionStorage: { getItem: (k) => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: (k) => storage.delete(k) },
     setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
-    Number, String,
+    Number, String, URL,
   });
-  env.failScript = () => listeners.error({ target: { tagName: "SCRIPT", type: "module" } });
+  env.failScript = (src = "/control/buzzer/js/main.js?v=test") => listeners.error({ target: { tagName: "SCRIPT", type: "module", src } });
   env.failImport = (message) => listeners.unhandledrejection({ reason: { message } });
   env.runTimer = (ms) => timers.find((t) => t.ms === ms).fn();
   return env;
@@ -50,6 +50,17 @@ test("nieudany import dynamiczny (Chrome/Safari/Firefox) też uruchamia ponowien
   const other = boot();
   other.failImport("zwykły błąd aplikacji");
   assert.equal(other.timers.filter((t) => t.ms === 1000).length, 0);
+});
+
+test("błąd zewnętrznego modułu nie przeładowuje strony ani nie zużywa prób aplikacji", () => {
+  const env = boot();
+  env.failScript("https://static.cloudflareinsights.com/beacon.min.js/test");
+  env.failScript("https://cdn.example.com/addon.js");
+  assert.equal(env.timers.filter(t => t.ms < 30000).length, 0);
+  assert.equal(env.storage.size, 0);
+  env.failScript("https://www.familiada.online/control/buzzer/js/main.js?v=test");
+  env.runTimer(1000);
+  assert.equal(env.reloads, 1, "moduł aplikacji nadal odzyskuje połączenie po 1 s");
 });
 
 test("zwykły błąd obrazka albo skryptu klasycznego nie przeładowuje; 30 s bez błędu zeruje licznik", () => {

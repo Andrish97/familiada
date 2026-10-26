@@ -35,3 +35,9 @@ Pages 40246463317 success. Produkcyjny zapis ustawień w 40246531710 success;
 Display przerwany na inicjalizacji testu przez nawigację. Test importował
 niewersjonowany scene.js obok wersjonowanego grafu strony. Poprawiony import
 używa wersji entrypointu; do powtórzenia wyłącznie Display.
+
+Kontrola Display nadal wykazała nawigację po 1/3 s (40247368747).
+Diagnostyka: blokowany przez CSP zewnętrzny skrypt Cloudflare. Guard
+startu ograniczony do modułów z własnej domeny; regresja unit obejmuje
+zewnętrzny błąd bez zużywania budżetu prób i nadal działający retry aplikacji.
+Unit 14/14; bramka brancha i kontrola Display pozostają do wykonania.

@@ -28,7 +28,11 @@
   }
   window.addEventListener("error", function (event) {
     var el = event && event.target;
-    if (el && el.tagName === "SCRIPT" && el.type === "module") onBootFailure();
+    if (!el || el.tagName !== "SCRIPT" || el.type !== "module") return;
+    // Zewnętrzne dodatki (np. statystyki zablokowane przez CSP) nie są
+    // modułami aplikacji i nie mogą uruchamiać pętli przeładowań.
+    if (el.src && new URL(el.src, location.href).origin !== location.origin) return;
+    onBootFailure();
   }, true);
   window.addEventListener("unhandledrejection", function (event) {
     var message = String((event && event.reason && event.reason.message) || "");

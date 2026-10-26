@@ -18,8 +18,13 @@ test("display themes: switching preserves all six panels; gaps orbit and reduced
   await page.addInitScript(() => {
     window.addEventListener("unhandledrejection", event => console.warn("[e2e-diag] Display rejection:", String(event.reason?.message || event.reason)));
     window.addEventListener("error", event => {
-      if (event.target?.tagName === "SCRIPT") console.warn("[e2e-diag] Display script error:", new URL(event.target.src, location.href).pathname);
+      if (event.target?.tagName === "SCRIPT") console.warn("[e2e-diag] Display script error:", event.target.type, new URL(event.target.src, location.href).pathname);
     }, true);
+    const originalTimeout = window.setTimeout;
+    window.setTimeout = function (callback, delay, ...args) {
+      if (String(callback).includes("location.reload")) console.warn("[e2e-diag] Display scheduled reload:", delay, new Error().stack);
+      return originalTimeout.call(this, callback, delay, ...args);
+    };
     window.addEventListener("message", event => {
       if (event.data?.type === "familiada:preview-ready") window.__displayPreviewReady = true;
     });
