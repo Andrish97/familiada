@@ -1,5 +1,16 @@
 # Wdrożenia — kolejka i stan
 
+### 2026-10-26 — odbiór samodzielnego HTML w poczcie
+
+Zgłoszenie właściciela: odebrany fragment HTML był widoczny jako kod.
+Odbiornik pojedynczej części MIME nie respektował `Content-Type: text/html`,
+a HTML bez części tekstowej mógł zostać pominięty przy zapisie.
+Poprawka korzysta z typu MIME z nagłówków i tworzy tekst do podglądu
+z HTML, kiedy brak części tekstowej. Jawne `text/plain` pozostaje tekstem.
+Archiwalne fragmenty zapisane w polu tekstowym obsługuje osobna poprawka
+prywatnego panelu, wyłącznie dla danych sprzed wdrożenia odbiornika.
+Testy Workera: 21/21, w tym 4 nowe przypadki parsera i zapisu HTML-only.
+
 Jedna lista tego, co uzgodniliśmy do wdrożenia, w jakiej kolejności i w
 jakim jest stanie. **Decyzje i szczegóły nie są tutaj**, tylko w plikach
 tematycznych (niżej „Źródła”), a ten plik do nich odsyła. Dzięki temu po
