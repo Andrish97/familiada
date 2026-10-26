@@ -240,6 +240,16 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-26 — rozdzielenie ramek longów w nowych motywach
+
+Zgłoszenie użytkownika: obudowy longów nachodzą na siebie poza Kasetonem.
+Skrzydła, Radar, Wstęga, Most: przesunięcie obu longów po 24 jednostki
+SVG na zewnątrz, razem z obudowami i kontrolkami należącymi do longów.
+Zachowana treść i wielkość kropek. Kaseton, Modern, Classic bez zmian.
+Cztery rzeczywiste zrzuty obejrzane — ramki rozdzielone. Unit 10/10 ✓,
+lokalny Display E2E 1/1 ✓. Bramka brancha → Pages → kontrola produkcyjna.
+Decyzja i zakres: `docs/motywy-wyswietlacza.md`, „Korekta odstępu longów”.
+
 ### 2026-10-26 — motywy wyświetlacza: zakończone na produkcji
 
 - Pięć zaakceptowanych konstrukcji tablicy i animacja Modern z podglądu v7.

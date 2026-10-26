@@ -22,6 +22,14 @@ Użytkownik zaakceptował podgląd v7 i polecił wdrożenie.
 - Pierwsze propozycje Neon/Studio/Złoty oraz falowanie poziomych pasków
   zostały odrzucone i nie są częścią wdrożenia.
 
+## Korekta odstępu longów — 2026-10-26
+
+Zlecenie użytkownika: rozsunąć longi w nowych motywach poza Kasetonem,
+ponieważ ich zewnętrzne ramki nachodziły na siebie. Skrzydła, Radar,
+Wstęga i Most: oba longi odsunięte symetrycznie na zewnątrz o 24 jednostki
+SVG, wraz z ramkami i bezpośrednio przypisanymi kontrolkami. Treść oraz
+rozmiar siatki kropek zachowane. Kaseton, Modern i Classic bez zmiany układu.
+
 ## Stan — wdrożone 2026-10-26
 
 Pięć nowych motywów oraz zaakceptowana animacja Modern są na produkcji.

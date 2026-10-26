@@ -1,6 +1,7 @@
 import { ARTWORK } from "./theme_artwork.js?v=v2026-10-26T00161";
 
 const BACKGROUNDS = { wings: "#152238", radar: "#103d43", cabinet: "#352719", ribbon: "#36233f", bridge: "#252e35" };
+const LONG_PANEL_OFFSET = { wings: 24, radar: 24, ribbon: 24, bridge: 24 };
 const DISPLAYS = {
   big: { cx: 640, cy: 307.33656 }, leftPanel: { cx: 113.658, cy: 337.33654 },
   rightPanel: { cx: 1164.342, cy: 337.33654 }, topPanel: { cx: 640, cy: 57.165475 },
@@ -48,6 +49,14 @@ export function createLayoutTheme(baseSvg, bgLayer, config = {}, name) {
   baseSvg.setAttribute("viewBox", "0 0 1280 720");
   baseSvg.setAttribute("data-display-theme", name);
   baseSvg.innerHTML = STYLE + ARTWORK[name];
+  const displays = structuredClone(DISPLAYS);
+  const longOffset = LONG_PANEL_OFFSET[name] || 0;
+  displays.long1.cx -= longOffset;
+  displays.long2.cx += longOffset;
+  for (const panel of baseSvg.querySelectorAll("[data-long-panel]")) {
+    const offset = panel.getAttribute("data-long-panel") === "A" ? -longOffset : longOffset;
+    panel.setAttribute("transform", `translate(${offset} 0)`);
+  }
   // Capture immutable source colors once. Color updates never rebuild the SVG,
   // restart the slot animation, or touch the six content displays.
   const attributes = [];
@@ -118,7 +127,7 @@ export function createLayoutTheme(baseSvg, bgLayer, config = {}, name) {
   paint(); syncControls();
   motion?.addEventListener?.("change", animateControl);
   return {
-    name, displays: structuredClone(DISPLAYS), multiplier: 1,
+    name, displays, multiplier: 1,
     getColors: () => ({ ...colors }), getControls: () => ({ ...controls }),
     updateColors(next) { Object.assign(colors, next); paint(); },
     updateControls(next) { Object.assign(controls, next); syncControls(); animateControl(); },
