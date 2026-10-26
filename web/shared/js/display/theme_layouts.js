@@ -1,7 +1,7 @@
 import { ARTWORK } from "./theme_artwork.js?v=v2026-10-26T00161";
 
 const BACKGROUNDS = { wings: "#152238", radar: "#103d43", cabinet: "#352719", ribbon: "#36233f", bridge: "#252e35" };
-const LONG_PANEL_OFFSET = { wings: 24, radar: 24, ribbon: 24, bridge: 24 };
+const LONG_PANEL_OFFSET = { wings: 16, radar: 10, ribbon: 10, bridge: 10 };
 const DISPLAYS = {
   big: { cx: 640, cy: 307.33656 }, leftPanel: { cx: 113.658, cy: 337.33654 },
   rightPanel: { cx: 1164.342, cy: 337.33654 }, topPanel: { cx: 640, cy: 57.165475 },

@@ -243,8 +243,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 ### 2026-10-26 — rozdzielenie ramek longów w nowych motywach
 
 Zgłoszenie użytkownika: obudowy longów nachodzą na siebie poza Kasetonem.
-Skrzydła, Radar, Wstęga, Most: przesunięcie obu longów po 24 jednostki
-SVG na zewnątrz, razem z obudowami i kontrolkami należącymi do longów.
+Skrzydła, Radar, Wstęga, Most: przesunięcie obu longów na zewnątrz,
+razem z obudowami i kontrolkami należącymi do longów. Pierwsze 24 jednostki
+użytkownik uznał za zbyt duże: zmniejszone do 16 w Skrzydłach i 10
+w pozostałych trzech. Niewielka szczelina między ramkami.
 Zachowana treść i wielkość kropek. Kaseton, Modern, Classic bez zmian.
 Cztery rzeczywiste zrzuty obejrzane — ramki rozdzielone. Unit 10/10 ✓,
 lokalny Display E2E 1/1 ✓. Bramka brancha → Pages → kontrola produkcyjna.

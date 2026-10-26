@@ -26,8 +26,10 @@ Użytkownik zaakceptował podgląd v7 i polecił wdrożenie.
 
 Zlecenie użytkownika: rozsunąć longi w nowych motywach poza Kasetonem,
 ponieważ ich zewnętrzne ramki nachodziły na siebie. Skrzydła, Radar,
-Wstęga i Most: oba longi odsunięte symetrycznie na zewnątrz o 24 jednostki
-SVG, wraz z ramkami i bezpośrednio przypisanymi kontrolkami. Treść oraz
+Wstęga i Most: oba longi odsunięte symetrycznie na zewnątrz wraz z ramkami
+i bezpośrednio przypisanymi kontrolkami. Po doprecyzowaniu użytkownika
+odsunięcie zmniejszone: Skrzydła po 16 jednostek SVG, pozostałe po 10,
+żeby została niewielka szczelina między obudowami. Treść oraz
 rozmiar siatki kropek zachowane. Kaseton, Modern i Classic bez zmiany układu.
 
 ## Stan — wdrożone 2026-10-26
