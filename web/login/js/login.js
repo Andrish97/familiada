@@ -1,6 +1,6 @@
-import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-26T08253";
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-26T12141";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-26T08253";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-26T12141";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -23,17 +23,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-26T08253";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T08253";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-26T08253";
+} from "../../shared/js/core/auth.js?v=v2026-10-26T12141";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T12141";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-26T12141";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-26T08253";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-26T08253";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T08253";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-26T08253";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-26T08253";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-26T08253";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-26T08253";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-26T12141";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-26T12141";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T12141";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-26T12141";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-26T12141";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-26T12141";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-26T12141";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");

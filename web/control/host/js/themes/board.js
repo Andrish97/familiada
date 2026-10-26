@@ -1,4 +1,4 @@
-import { createTheme as createModernTheme } from "./modern.js?v=v2026-10-26T08253";
+import { createTheme as createModernTheme } from "./modern.js?v=v2026-10-26T12141";
 
 // The board variants keep Host's reading and swipe behavior. Their shapes
 // live in host.css; the game supplies background and team colors separately.
