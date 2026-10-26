@@ -4,8 +4,8 @@
 // dzień kalendarzowy, dopóki gość nie kliknie "Nie pokazuj więcej" — wtedy
 // znika na stałe (dla tego konta gościa).
 
-import { t } from "../../translation/translation.js?v=v2026-10-26T14264";
-import { icon } from "./icons.js?v=v2026-10-26T14264";
+import { t } from "../../translation/translation.js?v=v2026-10-26T14432";
+import { icon } from "./icons.js?v=v2026-10-26T14432";
 
 
 const LAST_SHOWN_PREFIX = "fam:guest:migrate_last_shown:";
