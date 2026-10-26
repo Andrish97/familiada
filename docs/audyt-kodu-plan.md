@@ -17,7 +17,7 @@
 | Paczka | Zakres | Stan |
 |---|---|---|
 | 0 | Przywrócenie dostępu do generatora w nawigacji panelu | gałąź prywatna, bramka testów |
-| A | Martwe moduły po migracji panelu, lokalne symbole i wybrane API, szablon motywu | do wykonania |
+| A | Martwe moduły po migracji panelu, lokalne symbole i wybrane API, szablon motywu | bramka gałęzi zielona, publikacja |
 | B | Wspólny cykl sesji ankiet tekstowych i punktowych | do wykonania |
 | C | Minifikacja wyników i odroczenie ciężkich funkcji publicznych | do wykonania |
 | D | Manifest panelu oraz przypięta synchronizacja wspólnych plików | repo prywatne |
