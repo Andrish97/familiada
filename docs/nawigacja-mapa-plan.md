@@ -35,6 +35,13 @@ gry), a trasy logowania, głosowania i połączonych urządzeń nie stały się
 przypadkowymi celami powrotu. Dostęp do samej strony konta nadal wynika z jej
 reguły `access: "guest"`.
 
+## Decyzja 2026-10-26: gotowość przycisku Ustawienia gry
+
+Przejście `games → gameSettings` korzysta z reguły `play`, tak samo jak
+`games → control`: przycisk nieaktywny pokazuje powód z walidacji gry.
+`btnSettings` i `gameSettings` nie przejmują `minViewportWidth` ani
+`deviceGuard` Control — ustawienia działają także na telefonie.
+
 ---
 
 ## 1. Co dziś jest niespójne (znalezione w kodzie)

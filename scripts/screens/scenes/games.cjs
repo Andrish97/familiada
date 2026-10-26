@@ -89,7 +89,7 @@ module.exports = [
     devices: ["desktop", "phone"], steps: [selectAtTopEdge(".logoTile")] },
   { id: "games-prepared-states", category: CAT, title: "Moje gry — Preparowane: gotowa, szkic z powodem blokady, kopia od znajomego", path: "/games/", sources: GAMES, ready: "#grid .card",
     steps: [select(G.football)] },
-  { id: "games-prepared-not-ready", category: CAT, title: "Moje gry — zaznaczona gra niegotowa (za mało pytań): Graj wyłączone, powód na kafelku", path: "/games/", sources: GAMES, ready: "#grid .card",
+  { id: "games-prepared-not-ready", category: CAT, title: "Moje gry — zaznaczona gra niegotowa (za mało pytań): Graj i Ustawienia gry wyłączone, powód na kafelku", path: "/games/", sources: GAMES, ready: "#grid .card",
     steps: [select(G.birthday), async (view) => { await view.locator(tile(G.birthday)).scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },
   { id: "games-prepared-received", category: CAT, title: "Moje gry — zaznaczona kopia od znajomego", path: "/games/", sources: GAMES, ready: "#grid .card",
     steps: [select(G.christmas), async (view) => { await view.locator(tile(G.christmas)).scrollIntoViewIfNeeded(); await view.waitForTimeout(200); }] },

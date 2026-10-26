@@ -92,7 +92,7 @@ On the bottom bar: [Duplicate], [Change type], [Export to file], [Export to base
 Which buttons are available depends on the type and state of the game. Hover over an inactive button (or
 press and hold it on a phone) to see the reason. The most important rules:
 
-- [Play] — a prepared game must be ready (→ 7.6), and a game with a poll must have its poll
+- [Play] and [Game settings] — a prepared game must be ready (→ 7.6), and a game with a poll must have its poll
   closed.
 - [Edit] and [Change type] — not available while the poll is open or stopped. When the poll is
   closed, the app will first ask whether to reset it (→ 7.5).

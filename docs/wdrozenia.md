@@ -246,6 +246,19 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-26 — Ustawienia gry: wspólna gotowość z Control
+
+- Decyzja użytkownika: przycisk korzysta z istniejącej reguły `play`, bez
+  mobilnego ograniczenia Control i bez nowej blokady trwającej rozgrywki.
+  Powód niedostępności jest wspólny z „Graj”; zmiana zaznaczenia na gotową
+  grę czyści podpowiedź poprzedniej odmowy.
+- Zmienione Wskazówki PL/EN/UK i opis przejścia w mapie nawigacji.
+  Punktowe unit 48/48 ✓, kontrola tłumaczeń ✓; zrzuty dwóch stanów listy
+  na komputerze 1400 px i telefonie 390 px obejrzane (4 kadry).
+- Branch `codex/game-settings-readiness`; punktowa bramka E2E obejmuje
+  brak zaznaczenia, gry z 9 i 10 pytaniami, powody PL/EN/UK oraz telefon.
+  Status: przed bramką brancha i wdrożeniem Pages.
+
 ### 2026-10-26 — Host: tekst poza ramkami i jaśniejsza zasłona
 
 - Zgłoszenie użytkownika: tekst wchodzi na ramki części motywów, zasłona

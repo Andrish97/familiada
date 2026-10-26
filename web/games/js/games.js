@@ -675,7 +675,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChan
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
-  if (btnSettings) btnSettings.disabled = !hasSel;
+  if (btnSettings) btnSettings.disabled = !hasSel || !canPlay;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
   // Gość może powielać własne gry; wysyłać kopii nie może (decyzja 2026-10-22).
@@ -1104,11 +1104,11 @@ async function selectionRules(g) {
 
 // Wyłączony przycisk mówi w podpowiedzi, czego brakuje (tekst z bazy).
 function setButtonReasons(v) {
-  const pairs = [[btnEdit, v?.edit], [btnChangeType, v?.change_type], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export], [btnDuplicate, v?.duplicate], [btnSendCopy, v?.send]];
+  const pairs = [[btnEdit, v?.edit], [btnChangeType, v?.change_type], [btnPlay, v?.play], [btnSettings, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export], [btnDuplicate, v?.duplicate], [btnSendCopy, v?.send]];
   for (const [btn, a] of pairs) {
     if (!btn) continue;
     if (a && !a.ok && a.reason) btn.title = a.reason;
-    else btn.removeAttribute("title");
+    else btn.title = "";
   }
 }
 

@@ -13,6 +13,14 @@ kontrola produkcji (tabela w §5).
 
 ## 1. Uzgodniony cel
 
+### Decyzja 2026-10-26 — przycisk Ustawienia gry
+
+Na liście gier „Ustawienia gry” korzysta z tej samej reguły `play` i tego
+samego powodu niedostępności co wejście do Control („Graj”). Nie dodajemy
+osobnej walidacji ani blokady przycisku z powodu trwającej rozgrywki.
+Ograniczenie mobilne Control nie dotyczy ustawień: przycisk i strona
+ustawień pozostają dostępne na telefonie.
+
 1. Aplikacja ma mieć jedno, nazwane źródło reguł opisujące:
    - czy gra nadaje się do ankiety, podliczenia lub rozgrywki;
    - czego brakuje i jak to naprawić;

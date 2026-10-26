@@ -839,24 +839,47 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 
-  test("wyłączony 'Graj' podpowiada powód z bazy, w wybranym języku", async ({ page, context, accounts, loginAs }) => {
+  test("Graj i Ustawienia gry mają wspólną walidację i powód, ustawienia działają na telefonie", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(90_000);
     await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-GVUI-${Date.now()}`;
+    const readyName = `${name}-ready`;
     try {
       await seedPreparedGame(page, name, { questions: 9 });
+      await seedPreparedGame(page, readyName);
       await openGames(page, "?lang=pl");
+      await expect(page.locator("#btnSettings")).toBeDisabled();
+      await tileByName(page, readyName).click();
+      await expect(page.locator("#btnPlay")).toBeEnabled();
+      await expect(page.locator("#btnSettings")).toBeEnabled();
       await tileByName(page, name).click();
       await expect(page.locator("#btnPreview")).toBeEnabled();
       await expect(page.locator("#btnPlay")).toBeDisabled();
       await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /10.*9/, { timeout: 10000 });
       await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /pytań/);
+      await expect(page.locator("#btnSettings")).toBeDisabled();
+      await expect(page.locator("#btnSettings")).toHaveAttribute("data-tooltip", await page.locator("#btnPlay").getAttribute("data-tooltip"));
 
       await page.locator(".lang-btn").click();
       await page.locator('.menu-item[data-lang="en"]').click();
       await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /questions/, { timeout: 10000 });
+      await expect(page.locator("#btnSettings")).toHaveAttribute("data-tooltip", await page.locator("#btnPlay").getAttribute("data-tooltip"));
+
+      await page.locator(".lang-btn").click();
+      await page.locator('.menu-item[data-lang="uk"]').click();
+      await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /питань/, { timeout: 10000 });
+      await expect(page.locator("#btnSettings")).toHaveAttribute("data-tooltip", await page.locator("#btnPlay").getAttribute("data-tooltip"));
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(page.locator("#btnPlay")).toBeHidden();
+      await expect(page.locator("#btnSettings")).toBeVisible();
+      await expect(page.locator("#btnSettings")).toBeDisabled();
+      await tileByName(page, readyName).click();
+      await expect(page.locator("#btnSettings")).toBeEnabled();
+      await expect(page.locator("#btnSettings")).not.toHaveAttribute("data-tooltip", /.+/);
     } finally {
       await deleteGamesByName(page, name);
+      await deleteGamesByName(page, readyName);
     }
   });
 });
