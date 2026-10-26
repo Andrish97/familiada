@@ -56,6 +56,8 @@ wewnętrzny odstęp dla tekstu, podpowiedzi gestu i zawartości zasłony.
 Obszar odpowiedzi rezerwuje miejsce na dwuwierszową podpowiedź; łuki
 Wstęgi skalują się z rozmiarem tekstu także w małym podglądzie.
 Zasłona używa pełnego gradientu A/B bez ciemnego, przezroczystego środka.
+Pierścień Radaru kończy się nad napisem zasłony. Unit 29/29 ✓, bramka
+Hosta 40284944638 **1/1 ✓**; czeka publikacja i kontrola produkcyjna.
 Classic i Modern zachowują dotychczasowy wygląd.
 
 ## Stan — wdrożone 2026-10-26
