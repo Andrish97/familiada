@@ -294,7 +294,11 @@ class QuestionBank:
         if existing:
             return {'ok': True, 'games': existing}
         vector = (await self.embed([category]))[0] if mode == 'category' else None
-        candidates = await self.rpc('qf_candidates', {'p_lang': lang, 'p_embedding': vector, 'p_include_ai': bool(body.get('include_ai')) or mode == 'manual', 'p_limit': max(total * 5, 500)})
+        params = {'p_lang': lang, 'p_include_ai': bool(body.get('include_ai')) or mode == 'manual', 'p_limit': max(total * 5, 500)}
+        # PostgREST zachowuje null jako wartość JSONB; brak argumentu daje SQL NULL.
+        if vector is not None:
+            params['p_embedding'] = vector
+        candidates = await self.rpc('qf_candidates', params)
         if mode == 'manual':
             ids = body.get('ids')
             if not isinstance(ids, list) or len(set(ids)) != count:

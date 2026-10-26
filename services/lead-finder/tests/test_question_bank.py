@@ -100,6 +100,8 @@ class AsyncTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, 'Za mało'):
             await bank.create_games({'lang': 'pl', 'mode': 'auto', 'count': 10, 'quantity': 2, 'request_id': '00000000-0000-4000-8000-000000000001'})
         bank.ask.assert_not_called()
+        candidate_call = next(call for call in db.rpc.call_args_list if call.args[0] == 'qf_candidates')
+        self.assertNotIn('p_embedding', candidate_call.args[1])
         self.assertTrue(all(call.args[0] != 'qf_games_commit' for call in db.rpc.call_args_list))
 
     async def test_search_round_uses_optional_completion_and_persists_links(self):
