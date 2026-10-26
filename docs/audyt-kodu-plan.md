@@ -35,3 +35,8 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   `core/username-availability.js`; rozstrzygnięcie unikalności przy zapisie
   nadal należy do bazy. Reszta E (formatowanie przerwy, paginacja, załączniki)
   wymaga osobnych adapterów i bramek.
+
+- 2026-10-26: E — wspólne sprawdzanie nazwy użytkownika wdrożone.
+  Bramka gałęzi 40330525901 success, Pages 40330793433 success,
+  produkcyjna kontrola 40331012157 success. Pozostałe adaptery E
+  są realizowane osobno w panelu prywatnym.

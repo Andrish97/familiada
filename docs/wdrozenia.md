@@ -2470,3 +2470,9 @@ identyczną nazwę RPC, komunikat zajętej nazwy i przekazywanie błędu.
 Lokalne 9/9 punktowych unit i cztery zrzuty 390/1400. Atrapa Logowania
 zwraca istniejący błąd ładowania zewnętrznego Turnstile; widok pozostaje
 czytelny. Test gałęzi oraz produkcja jeszcze przed nami.
+
+
+E: gałąź `refactor/shared-helpers-20261026` przeszła 40330525901
+(konto disposable, zmiana i przywrócenie nazwy; 9 punktowych unit).
+Pages 40330793433 success, ta sama kontrola na produkcji
+40331012157 success. Sprawdzanie nazwy użytkownika ma wspólne źródło.
