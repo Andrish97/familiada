@@ -100,6 +100,8 @@ class AsyncTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, 'Za mało'):
             await bank.create_games({'lang': 'pl', 'mode': 'auto', 'count': 10, 'quantity': 2, 'request_id': '00000000-0000-4000-8000-000000000001'})
         bank.ask.assert_not_called()
+        candidate_call = next(call for call in db.rpc.call_args_list if call.args[0] == 'qf_candidates')
+        self.assertNotIn('p_embedding', candidate_call.args[1])
         self.assertTrue(all(call.args[0] != 'qf_games_commit' for call in db.rpc.call_args_list))
 
     async def test_search_round_uses_optional_completion_and_persists_links(self):
@@ -144,6 +146,20 @@ class AsyncTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls[0].args[1]['p_question']['source']['points_origin'], 'estimated')
         self.assertEqual(calls[-1].args[0], 'qf_job_checkpoint')
         self.assertEqual(bank.ask.await_count, 2)
+
+    async def test_game_metadata_repairs_wrong_count_before_atomic_commit(self):
+        db = AsyncMock()
+        db.select.return_value = []
+        candidates = [{'id':str(i), 'text':'Pytanie '+str(i)} for i in range(10)]
+        db.rpc.side_effect = [candidates, [{'id':'new-game'}]]
+        bank = QuestionBank(db, AsyncMock(), 'http://searxng', 'test-only')
+        bank.ask = AsyncMock(side_effect=[{'games':[]}, {'games':[{'game_index':0,'title':'Rodzinny wieczór','description':'Gra dla całej rodziny.'}]}])
+        result = await bank.create_games({'lang':'pl','mode':'auto','count':10,'quantity':1,'include_ai':True,'request_id':'00000000-0000-4000-8000-000000000001'})
+        self.assertEqual(result['games'][0]['id'],'new-game')
+        self.assertEqual(bank.ask.await_count,2)
+        self.assertIn('exactly 1 GAMES',bank.ask.call_args.args[0])
+        self.assertEqual(db.rpc.call_args.args[0],'qf_games_commit')
+        self.assertEqual(db.rpc.call_args.args[1]['p_count'],10)
 
 
 if __name__ == '__main__':

@@ -294,7 +294,11 @@ class QuestionBank:
         if existing:
             return {'ok': True, 'games': existing}
         vector = (await self.embed([category]))[0] if mode == 'category' else None
-        candidates = await self.rpc('qf_candidates', {'p_lang': lang, 'p_embedding': vector, 'p_include_ai': bool(body.get('include_ai')) or mode == 'manual', 'p_limit': max(total * 5, 500)})
+        params = {'p_lang': lang, 'p_include_ai': bool(body.get('include_ai')) or mode == 'manual', 'p_limit': max(total * 5, 500)}
+        # PostgREST zachowuje null jako wartość JSONB; brak argumentu daje SQL NULL.
+        if vector is not None:
+            params['p_embedding'] = vector
+        candidates = await self.rpc('qf_candidates', params)
         if mode == 'manual':
             ids = body.get('ids')
             if not isinstance(ids, list) or len(set(ids)) != count:
@@ -331,11 +335,21 @@ class QuestionBank:
             # Małe paczki metadanych; bez ponownego wysyłania pełnych źródeł.
             for offset in range(0, quantity, 5):
                 batches = [[q['text'] for q in chosen[i*count:(i+1)*count]] for i in range(offset, min(quantity, offset+5))]
-                result = await self.ask('Write one vivid natural title (2–5 words) and an inviting description (2–3 sentences) for EACH game in ' + LANGUAGES[lang] + '. '
-                    'Match the actual questions; do not claim a real survey. Distinct titles and descriptions per game. Category: ' + compact(category) + '. '
-                    'Return {"games":[{"title":"...","description":"..."}]} in exact input order. Games: ' + compact(batches), 2500)
-                rows = result.get('games')
-                if not isinstance(rows, list) or len(rows) != len(batches):
+                inputs = [{'game_index': offset + index, 'questions': questions} for index, questions in enumerate(batches)]
+                prompt = ('Create metadata for exactly ' + str(len(inputs)) + ' GAMES in ' + LANGUAGES[lang] + '. '
+                    'Each object below is ONE GAME; its questions all belong to that same game, not separate games. '
+                    'Write one natural title (2–5 words) and an inviting description (2–3 sentences) per GAME. '
+                    'Match its actual questions; do not claim a real survey. Distinct titles and descriptions. Category: ' + compact(category) + '. '
+                    'Return exactly {"games":[{"game_index":0,"title":"...","description":"..."}]} with exactly ' + str(len(inputs)) + ' items, in input order. Input games: ' + compact(inputs))
+                rows = None
+                for attempt in range(2):
+                    result = await self.ask(prompt + (' Your previous response had the wrong number of games. Follow the exact output schema and count.' if attempt else ''), 2500)
+                    items = result.get('games')
+                    if isinstance(items, list) and len(items) == len(inputs) and all(isinstance(item, dict) and isinstance(item.get('title'), str) and item['title'].strip() and isinstance(item.get('description'), str) and item['description'].strip() for item in items):
+                        rows = items
+                        break
+                    log.warning('question_metadata_shape expected=%s keys=%s type=%s count=%s', len(inputs), sorted(result.keys()), type(items).__name__, len(items) if isinstance(items, (list, dict)) else -1)
+                if rows is None:
                     raise ProviderUnavailable('Brak pełnych nazw i opisów. Żadna gra nie została zapisana.')
                 metadata.extend(rows)
             if len({norm(m.get('title')) for m in metadata}) != quantity:
