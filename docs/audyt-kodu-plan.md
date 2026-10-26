@@ -18,8 +18,8 @@
 |---|---|---|
 | 0 | Przywrócenie dostępu do generatora w nawigacji panelu | wdrożone, kontrola zakończona |
 | A | Martwe moduły po migracji panelu, lokalne symbole i wybrane API, szablon motywu | wdrożone, kontrola zakończona |
-| B | Wspólny cykl sesji ankiet tekstowych i punktowych | testy gałęzi |
-| C | Minifikacja wyników i odroczenie ciężkich funkcji publicznych | do wykonania |
+| B | Wspólny cykl sesji ankiet tekstowych i punktowych | wdrożone, kontrola zakończona |
+| C | Minifikacja wyników i odroczenie ciężkich funkcji publicznych | wdrożone, kontrola zakończona |
 | D | Manifest panelu oraz przypięta synchronizacja wspólnych plików | repo prywatne |
 | E | Wspólne formatery, paginacja, załączniki i sprawdzanie profilu | do wykonania |
 | F | Wspólny transport dostawców maili i porównywanie sekretów Edge | do wykonania |

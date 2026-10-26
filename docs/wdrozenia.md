@@ -2442,3 +2442,21 @@ bez dławienia łącza/CPU): strona główna 542592→380824 B JS i
 telefon 736→788, desktop 708→604; Społeczność telefon 1164→1016,
 desktop 1136→1076. To punktowe wyniki środowiska, nie gwarancja Web
 Vitals produkcji. Bramka gałęzi i kontrola produkcji jeszcze przed nami.
+
+
+### 2026-10-26 — audyt B i C: bramki wydania
+
+B: gałąź `refactor/poll-vote-session-20261026` 40320366378 success
+(wcześniejszy 40292178490 miał błędnie niecytowany filtr powłoki),
+Pages 40320836944 success po scaleniu wersji z main. Produkcja
+40322194963 success (identyczne spece poll-anonymous i go); poprzedni
+40320946605 zatrzymano po utknięciu runnera na instalacji Chromium.
+Paczka B zakończona.
+
+C: gałąź `perf/public-loading-20261026` 40320453611 success
+(public-loading/support-modal), 40320701052 success (rzeczywiste zgłoszenie
+gry w Marketplace); uzupełnienie aktualizacji języka okna Kontaktu
+40322153422 success. Pages 40322685877 success. Produkcja:
+40322797056 success (wysłanie gry), public-loading/support-modal 40323281347 success.
+Pierwszy runner tego przebiegu 40322794337 utknął na instalacji Chromium;
+ponowiono bez zmiany aplikacji. Paczka C zakończona.
