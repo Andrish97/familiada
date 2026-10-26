@@ -2558,3 +2558,9 @@ deduplikacja z dotychczasowymi grami, atomowa paczka gier, publikacja.
 Lokalny Postgres 16 + pgvector: question-bank-498.sql OK (rollback);
 16 testów istniejącego Lead Findera zielonych po wspólnym ograniczniku.
 Najpierw wdrożenie bazy; usługa, Edge i prywatny panel są w przygotowaniu.
+
+### 2026-10-26 — Demo admin: podmiana wzorców i ręczne głosy
+- Decyzja właściciela: otwarte ankiety demo przyjmują ręcznie wpisane głosy (tekst+liczba albo liczba przy odpowiedzi). Plik wzorca zachowuje `demo_vote_counts`; głosy demonstracyjne nie są wynikami rzeczywistej ankiety.
+- Migracja 499: wersjonowana podmiana wzorca, kolejka nieedytowanych kopii, ponowne sprawdzenie przed zapisem, odroczenie aktywnych/blokowanych zasobów. Edytowane kopie pozostają.
+- Lokalny Postgres 16 + rzeczywisty schemat: `tests/sql/admin-demo-499.sql` zielony; gry, bazy, logo, PL/EN/UK, obie otwarte ankiety z głosami, ochrona edycji po podglądzie.
+- Migracja 498 puli pytań: produkcyjny przebieg 40360010680 zakończony sukcesem (PR #124).
