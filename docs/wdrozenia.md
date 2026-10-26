@@ -2546,3 +2546,15 @@ to `Cache-Control: public, max-age=31536000, immutable`. Produkcyjny
 E2E 40343062740 i lokalny Chromium przeszły 4/4 scenariusze Wskazówek, Kontaktu
 i podglądu obrazu. HTML pozostaje świeży, a niewersjonowane żądanie
 stanu przerwy używa `no-store`.
+
+### 2026-10-26 — pytania i gry Producenta: realizacja produkcyjna
+
+Właściciel zlecił działającą funkcję zamiast prototypu. Oddzielna pula pytań
+PL/EN/UK, zlecenia N nowych pytań (wyszukiwanie/generowanie, opcjonalna
+kategoria i uzupełnienie przez AI), gry ręczne/automatyczne/kategoryjne,
+publikacja i pobieranie. Panel/pełny plan w prywatnym familiada-server.
+Migracja dodająca 498: prywatne tabele, trwałe lease/postęp, budżety AI,
+deduplikacja z dotychczasowymi grami, atomowa paczka gier, publikacja.
+Lokalny Postgres 16 + pgvector: question-bank-498.sql OK (rollback);
+16 testów istniejącego Lead Findera zielonych po wspólnym ograniczniku.
+Najpierw wdrożenie bazy; usługa, Edge i prywatny panel są w przygotowaniu.
