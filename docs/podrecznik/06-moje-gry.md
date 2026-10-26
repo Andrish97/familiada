@@ -92,7 +92,7 @@ Na dolnym pasku: [Powiel], [Zmień typ], [Eksportuj do pliku], [Eksportuj do baz
 Dostępność przycisków zależy od rodzaju i stanu gry. Najedź na nieaktywny przycisk (albo
 przytrzymaj go na telefonie), aby zobaczyć powód. Najważniejsze zasady:
 
-- [Graj] — gra preparowana musi być gotowa (→ 7.6), a gra z ankietą musi mieć zamkniętą
+- [Graj] i [Ustawienia gry] — gra preparowana musi być gotowa (→ 7.6), a gra z ankietą musi mieć zamkniętą
   ankietę.
 - [Edytuj] i [Zmień typ] — niedostępne, gdy ankieta jest otwarta lub zatrzymana. Przy
   zamkniętej ankiecie serwis najpierw zapyta o jej wyzerowanie (→ 7.5).

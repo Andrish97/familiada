@@ -72,7 +72,7 @@ export const PAGES = {
     btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
     btnPlay:             { to: "control", minViewportWidth: 980, custom: true },
-    btnSettings:         { to: "gameSettings", custom: true },
+    btnSettings:         { to: "gameSettings", custom: true }, // reguła play jak btnPlay; bez ograniczenia szerokości
     btnEdit:             { to: "editor", custom: true },
     btnPoll:             { to: "polls", custom: true },
   } },
