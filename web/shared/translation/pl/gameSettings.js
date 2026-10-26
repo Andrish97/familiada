@@ -1,7 +1,7 @@
 // Tłumaczenia PL — część „gameSettings”.
 const pl = {
   gameSettings: {
-    pageTitle: "Ustawienia gry",
+
     title: "Familiada — ustawienia gry",
     saveAll: "Zapisz",
     resetAll: "Przywróć domyślne",

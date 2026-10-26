@@ -13,7 +13,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
+// CI gałęzi serwuje dokładnie minifikowany artefakt przeznaczony do publikacji.
+const REPO_ROOT = process.env.E2E_WEB_ROOT ? path.resolve(process.env.E2E_WEB_ROOT) : path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // Próba generalna przeprowadzki serwera: E2E_API_ORIGIN (np.
 // https://api2.familiada.online) podmienia adres API w kodzie z brancha.

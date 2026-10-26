@@ -1,7 +1,5 @@
 import { t } from "../../translation/translation.js?v=v2026-10-26T08253";
 import { icon } from "./icons.js?v=v2026-10-26T08253";
-import { confirmModal } from "./modal.js?v=v2026-10-26T08253";
-import { isSheetViewport } from "./modal-sheet.js?v=v2026-10-26T08253";
 
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu, bez napisu) otwiera okno z wyjaśnieniem
@@ -39,8 +37,11 @@ function applyButtonLabels(button) {
 
 // Okno jak inne okna wyboru (np. „Zmień typ” w Moich grach): tekst, lista opcji
 // z radiem, na dole Anuluj i złoty przycisk, który otwiera wybraną kawę.
-export function openSupportModal() {
-  if (!SUPPORT_URL) return Promise.resolve(false);
+export async function openSupportModal() {
+  if (!SUPPORT_URL) return false;
+  const [{ confirmModal }, { isSheetViewport }] = await Promise.all([
+    import("./modal.js?v=v2026-10-26T08253"), import("./modal-sheet.js?v=v2026-10-26T08253"),
+  ]);
   const box = document.createElement("div");
   box.className = "support-sizes";
   box.setAttribute("role", "radiogroup");

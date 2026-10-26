@@ -1,7 +1,7 @@
 // Tłumaczenia UK — część „gameSettings”.
 const uk = {
   gameSettings: {
-    pageTitle: "Налаштування гри",
+
     title: "Familiada — налаштування гри",
     saveAll: "Зберегти",
     resetAll: "Відновити типові",

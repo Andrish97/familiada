@@ -4,7 +4,6 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T08253";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-26T08253";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T08253";
 import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-26T08253";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-26T08253";
 import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-26T08253";
 import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T08253";
 import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-26T08253";
@@ -359,18 +358,20 @@ function initShotCarousels() {
 
 function initImageViewer() {
   const main = document.querySelector("main.wrap");
-  const { open } = createImageViewer({
+  let viewerPromise;
+  const getViewer = () => viewerPromise ||= import("../../shared/js/core/image-viewer.js?v=v2026-10-26T08253").then(({ createImageViewer }) => createImageViewer({
     mount: main,
     before: main?.querySelector(":scope > .footer") || null,
     backBtn: document.getElementById("btnImageViewerBack"),
-  });
+  }));
 
-  const openShot = (shot) => {
+  const openShot = async (shot) => {
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
     if (!img) return;
     const fullFile = img.dataset.fullFile;
     const fullImage = fullFile ? buildLangImgUrl(getUiLang(), fullFile) : (img.currentSrc || img.src);
+    const { open } = await getViewer();
     open(fullImage, img.getAttribute("alt") || "", img);
   };
 
@@ -383,7 +384,7 @@ function initImageViewer() {
 
   document.addEventListener("click", (e) => {
     if (e.target.closest(".shot-carousel-nav, .shot-carousel-dots")) return;
-    openShot(e.target.closest(".tile-shot"));
+    void openShot(e.target.closest(".tile-shot")).catch(error => console.error("[image-viewer] open failed", error));
   });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -391,7 +392,7 @@ function initImageViewer() {
     const shot = e.target.closest(".tile-shot");
     if (!shot) return;
     e.preventDefault();
-    openShot(shot);
+    void openShot(shot).catch(error => console.error("[image-viewer] open failed", error));
   });
 
 }

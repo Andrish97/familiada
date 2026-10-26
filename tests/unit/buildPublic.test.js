@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const { buildPublic } = createRequire(import.meta.url)('../../scripts/build-public.cjs');
+
+test('public artifact preserves module URLs, classic scripts, CSS layers and vendor assets', async t => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'familiada-build-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const source = path.join(dir, 'src'), out = path.join(dir, 'out');
+  await fs.mkdir(path.join(source, 'vendor'), { recursive: true });
+  await fs.writeFile(path.join(source, 'module.js'), 'import { value } from "./other.js?v=pinned"; export const url = new URL("./image.png", import.meta.url); export async function load() { return import("./later.js?v=pinned"); } console.log(value);');
+  await fs.writeFile(path.join(source, 'classic.js'), 'window.widget = function widget() { return "Zażółć"; };');
+  await fs.writeFile(path.join(source, 'styles.css'), '@layer base, page; @import "./other.css?v=pinned"; @layer base { .x { color: red; } } .image { background: url("./image.png"); }');
+  await fs.writeFile(path.join(source, 'flat.css'), '.x { color: red; }');
+  await fs.writeFile(path.join(source, 'vendor/sdk.js'), '/* vendor pinned */ window.sdk = {};');
+  await fs.writeFile(path.join(source, 'guide.md'), 'Not deployed');
+  await fs.writeFile(path.join(source, 'index.html'), '<script src="classic.js"></script>');
+  const totals = await buildPublic({ source, out });
+  const module = await fs.readFile(path.join(out, 'module.js'), 'utf8');
+  assert.match(module, /\.\/other\.js\?v=pinned/); assert.match(module, /import\.meta\.url/); assert.match(module, /import\("\.\/later\.js\?v=pinned"\)/);
+  const classic = await fs.readFile(path.join(out, 'classic.js'), 'utf8');
+  assert.doesNotMatch(classic, /\bexport\b|\bimport\b/);
+  const window = {}; new Function('window', classic)(window); assert.equal(window.widget(), 'Zażółć');
+  const css = await fs.readFile(path.join(out, 'styles.css'), 'utf8');
+  assert.match(css, /@layer base,page/); assert.match(css, /@layer base\{/); assert.match(css, /other\.css\?v=pinned/); assert.match(css, /image\.png/);
+  assert.doesNotMatch(await fs.readFile(path.join(out, 'flat.css'), 'utf8'), /@layer/);
+  assert.equal(await fs.readFile(path.join(out, 'vendor/sdk.js'), 'utf8'), '/* vendor pinned */ window.sdk = {};');
+  assert.equal(await fs.readFile(path.join(out, 'index.html'), 'utf8'), '<script src="classic.js"></script>');
+  await assert.rejects(fs.stat(path.join(out, 'guide.md')), { code: 'ENOENT' });
+  assert.equal(totals.js.files, 2); assert.equal(totals.css.files, 2);
+  await buildPublic({ source, out }); // Własny katalog wynikowy można odtworzyć.
+  await assert.rejects(buildPublic({ source, out: source }), /oddzielony/);
+  await assert.rejects(buildPublic({ source, out: dir }), /oddzielony/);
+});

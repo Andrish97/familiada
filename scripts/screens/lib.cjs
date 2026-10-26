@@ -6,7 +6,7 @@ const path = require("node:path");
 const { execSync } = require("node:child_process");
 
 const repo = path.resolve(__dirname, "../..");
-const webRoot = path.join(repo, "web");
+const webRoot = process.env.SCREENS_WEB_ROOT ? path.resolve(process.env.SCREENS_WEB_ROOT) : path.join(repo, "web");
 
 function loadPlaywright() {
   for (const id of [path.join(repo, "tests/node_modules/playwright"), path.join(repo, "tests/node_modules/@playwright/test"), "playwright", "/opt/node22/lib/node_modules/playwright"]) {

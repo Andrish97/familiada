@@ -2425,3 +2425,20 @@ formularzy/ponawiania/zatrzymania i 4 podziękowania 390/1400 obejrzane.
 Dawne sceny podziękowań czekały na style.display, choć strony już przed
 refaktorem używały hidden; poprawiono oczekiwanie scen i powtórzono tylko
 4 nieudane ujęcia. Aplikacja bez wyjątków dla zrzutów. Bramka B przed wdrożeniem.
+
+
+### 2026-10-26 — audyt C: odchudzenie zasobów (gałąź)
+
+Osobny artefakt Pages minifikuje aplikacyjny JS/CSS przez esbuild bez
+bundlowania, zachowuje URL importów, @layer i płaski CSS urządzeń. Testy
+gałęzi dostają ten sam artefakt. Kontakt, okno wsparcia, podgląd zdjęć,
+wylogowanie i eksport przy zgłoszeniu w Społeczności ładowane na żądanie.
+Usunięto osiem wcześniej przesłoniętych kluczy słownika, bez zmiany wartości.
+15/15 punktowych unit; 10 zrzutów stron/okien 390 i 1400 oraz Wyświetlacz
+obejrzane, bez błędów strony. Próby lokalnego Chromium (3 na profil i trasę,
+bez dławienia łącza/CPU): strona główna 542592→380824 B JS i
+173254→110476 B CSS, Społeczność 636276→443731 B JS i
+168205→108134 B CSS przed kompresją. LCP median [ms] strona główna
+telefon 736→788, desktop 708→604; Społeczność telefon 1164→1016,
+desktop 1136→1076. To punktowe wyniki środowiska, nie gwarancja Web
+Vitals produkcji. Bramka gałęzi i kontrola produkcji jeszcze przed nami.

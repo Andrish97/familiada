@@ -166,7 +166,7 @@ const en = {
     tally: {
       hintText: "Drag an answer onto another to merge them; click the text to fix it. Below 4% of votes — skipped.",
       hintTextTouch: "Merge: tap the button on one answer, then on the other. Tap the text to fix it. Below 4% — skipped.",
-        hintPoints: "Points = share of all complete polls. Below 4% — skipped (grey row).",
+
       counter: "Answers: {n} (3–6 required)",
       sum: "total points: {n}",
       votesPercent: "{n} v. · {pct}%",

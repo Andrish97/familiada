@@ -7,7 +7,6 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-26T08253";
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
 import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-26T08253";
-import { signOut } from './auth.js?v=v2026-10-26T08253';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-26T08253';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-26T08253';
 import { icon, iconText } from './icons.js?v=v2026-10-26T08253';
@@ -382,6 +381,7 @@ export function setTopbarAccount(user, {
       if (onLogout) {
         try { await onLogout(); } catch(e) { console.warn('logout callback error:', e); }
       }
+      const { signOut } = await import("./auth.js?v=v2026-10-26T08253");
       await signOut();
       location.href = withLangParam(loginHref);
     });

@@ -4,7 +4,6 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T08253";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T08253";
 import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-26T08253";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T08253";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-26T08253";
 import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-26T08253";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-26T08253";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-26T08253";
@@ -669,6 +668,7 @@ async function submitGame() {
 
   let payload;
   try {
+    const { exportGame } = await import("../../games/js/games-import-export.js?v=v2026-10-26T08253");
     payload = await exportGame(gameId);
   } catch (e) {
     console.error("[marketplace] submitGame export error:", e);

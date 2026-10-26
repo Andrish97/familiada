@@ -1,7 +1,7 @@
 // Tłumaczenia EN — część „gameSettings”.
 const en = {
   gameSettings: {
-    pageTitle: "Game settings",
+
     title: "Familiada — game settings",
     saveAll: "Save",
     resetAll: "Restore defaults",

@@ -52,7 +52,7 @@ const en = {
     deviceDisplay: "Display",
     deviceHost: "Host",
     deviceBuzzer: "Buzzer",
-    deviceSeenNone: "none",
+
     deviceSeenSeconds: "{seconds}s ago",
     deviceDropped: "Warning: {label} disconnected. Check the device internet connection.",
     qrModalTitle: "Device",

@@ -52,7 +52,7 @@ const pl = {
     deviceDisplay: "Wyświetlacz",
     deviceHost: "Prowadzący",
     deviceBuzzer: "Przycisk do pojedynku",
-    deviceSeenNone: "brak",
+
     deviceSeenSeconds: "{seconds}s temu",
     deviceDropped: "Uwaga: {label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.",
     qrModalTitle: "Urządzenie",

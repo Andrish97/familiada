@@ -52,7 +52,7 @@ const uk = {
     deviceDisplay: "Дисплей",
     deviceHost: "Ведучий",
     deviceBuzzer: "Кнопка для поєдинку",
-    deviceSeenNone: "немає",
+
     deviceSeenSeconds: "{seconds}с тому",
     deviceDropped: "Увага: {label} відключено. Перевір інтернет на пристрої.",
     qrModalTitle: "Пристрій",
