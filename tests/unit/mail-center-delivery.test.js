@@ -35,6 +35,7 @@ function workerContext(prepare, transport) {
  let decrements=0;
  const service={rpc:async name=>{if(name==='decrement_provider_worker')decrements++;return {data:null,error:null};},from:()=>({insert:async()=>({error:null})})};
  const context=vm.createContext({Deno:{env:{get:()=> 'fixture'}},createClient:()=>service,serve:()=>{},prepareMailDelivery:prepare,
+  createMailTransport:()=>({send:async()=>{const res=await transport();if(!res.ok)throw new Error('provider fixture failure');}}),
   fetch:transport,console:{log(){},warn(){},error(){}},Response,TextEncoder,FormData,Blob,Uint8Array,atob,btoa,crypto:globalThis.crypto});
  vm.runInContext(stripTypeScriptTypes(source),context);
  return {context,get decrements(){return decrements;}};

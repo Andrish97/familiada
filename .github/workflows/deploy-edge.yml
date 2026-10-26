@@ -17,6 +17,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Verify mail transport before deployment
+        run: |
+          deno check supabase/functions/send-email/index.ts supabase/functions/mail-worker/index.ts
+          deno test tests/deno/mail-providers.test.ts
+
       - name: Install rsync + ssh
         run: |
           sudo apt-get update

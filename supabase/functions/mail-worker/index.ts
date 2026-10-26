@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "../_shared/internal-auth.ts";
+import { createMailTransport, type MailAttachment } from "../_shared/mail-providers.ts";
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { prepareMailDelivery } from "../_shared/mail-center-footer.js";
 
@@ -16,18 +16,7 @@ const WORKER_SECRET = (Deno.env.get("MAIL_WORKER_SECRET") || "").trim();
 
 
 
-const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
-const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
-const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
-const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
-const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const ZEPTOMAIL_KEY = Deno.env.get("ZEPTOMAIL_API_KEY") || "";
-const ZEPTOMAIL_BOUNCE = Deno.env.get("ZEPTOMAIL_BOUNCE_ADDRESS") || "";
-const ZEPTOMAIL_REGION = Deno.env.get("ZEPTOMAIL_REGION") || "com"; // com, eu, in
-
-const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
-const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
+const mailTransport = createMailTransport();
 
 function json(obj: any, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
@@ -134,23 +123,7 @@ async function writeLog(entry: {
   }
 }
 
-function injectHtmlPart(html: string, htmlPart: string): string {
-  if (!htmlPart) return html;
-  const endBody = html.includes('</body>') ? html.replace(/<\/body>/i, htmlPart + '</body>') : html + htmlPart;
-  return endBody;
-}
-
-function buildAttachmentHtml(attachments: Array<{ filename: string; storage_path: string }>): string {
-  if (!attachments.length) return '';
-  const items = attachments.map(a => {
-    const name = a.filename.replace(/\.[^.]+$/, '');
-    const url = `https://api.familiada.online/storage/v1/object/public/${a.storage_path}`;
-    return `<a href="${url}" style="display: block; padding: 8px 12px; margin: 4px 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #3b82f6;">📎 ${name}</a>`;
-  }).join('');
-  return `<div style="margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px;">${items}</div>`;
-}
-
-type Attachment = { filename: string; content: string; contentType: string };
+type Attachment = MailAttachment;
 
 async function loadAttachmentsFromStorage(attachments: Array<{ filename: string; storage_path: string; mime_type?: string }>): Promise<Attachment[]> {
   const result: Attachment[] = [];
@@ -168,187 +141,6 @@ async function loadAttachmentsFromStorage(attachments: Array<{ filename: string;
     }
   }
   return result;
-}
-
-// Helper function to strip HTML tags and get plain text
-function htmlToText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
-    .replace(/&nbsp;/g, ' ')            // Replace &nbsp; with space
-    .replace(/&amp;/g, '&')             // Replace &amp; with &
-    .replace(/&lt;/g, '<')              // Replace &lt; with <
-    .replace(/&gt;/g, '>')              // Replace &gt; with >
-    .replace(/&quot;/g, '"')            // Replace &quot; with "
-    .replace(/&#39;/g, "'")             // Replace &#39; with '
-    .replace(/\s+/g, ' ')               // Collapse whitespace
-    .trim()
-.slice(0, 500);
-}
-
-const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(["pdf", "docx", "doc", "docm", "rtf", "txt", "csv", "ods", "xlsx", "xls", "msg", "pub", "mobi", "odt", "jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp", "eps", "cgm", "ppt", "pptx", "mp3", "m4a", "m4v", "wma", "ogg", "flac", "wav", "aif", "aifc", "aiff", "mp4", "mov", "avi", "mkv", "mpeg", "mpg", "wmv", "zip", "tar", "xml", "html", "htm", "shtml", "css", "ics", "ez", "pkpass"]);
-
-function splitAttachmentsByExtension(attachments: Array<{ filename: string; storage_path: string }>): { allowed: Array<{ filename: string; storage_path: string }>; discard: Array<{ filename: string; storage_path: string }> } {
-  const allowed: typeof attachments = [];
-  const discard: typeof attachments = [];
-  for (const a of attachments) {
-    const ext = a.filename.split('.').pop()?.toLowerCase() || '';
-    if (ALLOWED_ATTACHMENT_EXTENSIONS.has(ext)) {
-      allowed.push(a);
-    } else {
-      discard.push(a);
-    }
-  }
-  return { allowed, discard };
-}
-
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
-  if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
-  const from = fromEmail || FROM_EMAIL;
-  const text = plainText || htmlToText(html);
-  
-  let fullHtml = html;
-  let brevoAttachments = attachments;
-  
-  if (attachments?.length && attachmentsMeta?.length) {
-    const { allowed, discard } = splitAttachmentsByExtension(attachmentsMeta);
-    if (discard.length) {
-      fullHtml = injectHtmlPart(html, buildAttachmentHtml(discard));
-    }
-    const allowedSet = new Set(allowed.map(a => a.filename));
-    brevoAttachments = attachments.filter(a => allowedSet.has(a.filename));
-  }
-  
-  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: fullHtml, textContent: text };
-  if (brevoAttachments?.length) {
-    payload.attachment = brevoAttachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
-  }
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
-}
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
-  if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
-  if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
-  const from = fromEmail || FROM_EMAIL;
-  const text = plainText || htmlToText(html);
-  const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
-  const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
-
-  const form = new FormData();
-  form.append("from", `${FROM_NAME} <${from}>`);
-  form.append("to", to);
-  form.append("subject", subject);
-  form.append("text", text);
-  form.append("html", html);
-  if (attachments?.length) {
-    for (const a of attachments) {
-      form.append("attachment", new Blob([Uint8Array.from(atob(a.content), c => c.charCodeAt(0))], { type: a.contentType }), a.filename);
-    }
-  }
-
-  const res = await fetch(url, { method: "POST", headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` }, body: form });
-  if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
-}
-
-let sendpulseToken: string | null = null;
-
-async function getSendpulseToken(): Promise<string> {
-  if (sendpulseToken) return sendpulseToken;
-  
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) {
-    throw new Error("missing_SENDPULSE_credentials");
-  }
-  
-  const res = await fetch("https://api.sendpulse.com/oauth/access_token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      grant_type: "client_credentials",
-      client_id: SENDPULSE_ID,
-      client_secret: SENDPULSE_SECRET
-    })
-  });
-  
-  if (!res.ok) throw new Error(`sendpulse_auth_failed:${await res.text().catch(() => "")}`);
-  
-  const data = await res.json();
-  const token = data.access_token;
-  if (typeof token !== "string" || !token) throw new Error("sendpulse_auth_invalid_response");
-  sendpulseToken = token;
-  return token;
-}
-
-async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
-  
-  const from = fromEmail || FROM_EMAIL;
-  const text = htmlToText(html);
-  
-  const token = await getSendpulseToken();
-  const htmlBase64 = encodeBase64(new TextEncoder().encode(html));
-  
-  const emailPayload: any = {
-    subject,
-    text,
-    html: htmlBase64,
-    from: { name: FROM_NAME, email: from },
-    to: [{ email: to, name: "" }]
-  };
-  
-  if (attachments?.length) {
-    emailPayload.attachments_binary = Object.fromEntries(
-      attachments.map(a => [a.filename, a.content])
-    );
-  }
-  
-  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ email: emailPayload }),
-  });
-  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
-}
-
-async function sendViaZeptomail(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
-  if (!ZEPTOMAIL_KEY) throw new Error("missing_ZEPTOMAIL_API_KEY");
-  
-  const from = fromEmail || FROM_EMAIL;
-  const host = ZEPTOMAIL_REGION === "eu" ? "api.zeptomail.eu" : ZEPTOMAIL_REGION === "in" ? "api.zeptomail.in" : "api.zeptomail.com";
-  const url = `https://${host}/v1.1/email`;
-
-  const payload: any = {
-    from: { address: from, name: FROM_NAME },
-    to: [{ email_address: { address: to, name: "" } }],
-    subject: subject,
-    htmlbody: html,
-    textbody: htmlToText(html)
-  };
-  
-  if (ZEPTOMAIL_BOUNCE) {
-    payload.bounce_address = ZEPTOMAIL_BOUNCE;
-  }
-
-  if (attachments?.length) {
-    payload.attachments = attachments.map(a => ({
-      content: a.content,
-      mime_type: a.contentType,
-      name: a.filename
-    }));
-  }
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { 
-      "Authorization": `Zoho-enczapikey ${ZEPTOMAIL_KEY}`, 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`zeptomail_failed:${await res.text().catch(() => "")}`);
 }
 
 async function sendWithFallbacks(queueId: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], metaAttachments?: Array<{ filename: string; storage_path: string }>) {
@@ -371,10 +163,10 @@ async function sendWithFallbacks(queueId: string, providers: EmailProvider[], fr
       // Zmniejszamy limit za każdą podjętą próbę (zgodnie z prośbą użytkownika)
       await decrementWorkerLimit(p.id);
 
-      if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text, metaAttachments); }
-      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments); }
-      else if (p.type === "zeptomail") { await sendViaZeptomail(to, subject, html, fromEmail, attachments); }
-      else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
+      await mailTransport.send(p.type, {
+        to, subject, html, fromEmail, attachments, plainText: text,
+        attachmentsMeta: metaAttachments, mode: "worker",
+      });
       
       console.log("[mail-worker] SUCCESS via:", p.name);
       return { provider: p.name, skipped: "" };

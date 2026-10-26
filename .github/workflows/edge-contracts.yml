@@ -1,0 +1,22 @@
+name: Edge mail transport contracts
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/_shared/mail-providers.ts'
+      - 'supabase/functions/send-email/**'
+      - 'supabase/functions/mail-worker/**'
+      - 'tests/deno/**'
+      - '.github/workflows/edge-contracts.yml'
+  workflow_dispatch: {}
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/send-email/index.ts supabase/functions/mail-worker/index.ts
+      - run: deno test tests/deno/mail-providers.test.ts

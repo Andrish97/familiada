@@ -137,16 +137,6 @@ test('mail transport sends only action, token and language; rejects missing sess
   state.session = null; await assert.rejects(context.sendNotificationMail({ action: 'device:share', token: 'x' }));
   assert.equal(context.goLinkToken('/go/?b=abc&lang=pl', 'b'), 'abc');
 });
-test('auth provider token validation refuses missing/empty/non-string tokens and caches valid token', async () => {
-  const source = read('supabase/functions/send-email/index.ts');
-  const helper = source.slice(source.indexOf('async function getSendpulseToken'), source.indexOf('async function sendViaSendpulse')).replace('(): Promise<string>', '()');
-  const context = vm.createContext({ SENDPULSE_ID: 'test', SENDPULSE_SECRET: 'test', sendpulseToken: null, fetch: async () => ({ ok: true, json: async () => ({ access_token: context.response }) }) });
-  vm.runInContext(helper, context);
-  for (const value of [undefined,null,'',' ',14]) { context.response = value; await assert.rejects(context.getSendpulseToken(), /missing_token/); }
-  context.response = 'valid-test-token'; assert.equal(await context.getSendpulseToken(), 'valid-test-token');
-  context.fetch = async () => { throw new Error('cache should avoid network'); };
-  assert.equal(await context.getSendpulseToken(), 'valid-test-token');
-});
 test('poll sender marks only queued tasks as emailed and reports muted recipients as skipped', async () => {
   const source = read('web/shared/js/core/poll-mail.js');
   const sender = source.slice(source.indexOf('export async function sendPollInviteMails')).replace('export ', '');

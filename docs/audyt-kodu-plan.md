@@ -48,3 +48,10 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   okazji niezweryfikowaną odpowiedź tokenu SendPulse: brak poprawnego
   tokenu teraz jawnie kończy się błędem przed próbą wysyłki. Wspólny
   transport dostawców R2 pozostaje kolejnym etapem.
+
+- 2026-10-26: F/R2 na `refactor/mail-provider-transport-20261026`:
+  `send-email` i `mail-worker` używają jednego transportu Brevo, Mailgun,
+  SendPulse i ZeptoMail. Tryb natychmiastowy i worker przekazują jawny
+  wariant, zachowując osobne limity, kolejkę oraz politykę ponawiania.
+  Dodano kontrakty atrap HTTP dla czterech dostawców, załączników, odmów
+  i ponownego użycia tokenu. Bramka gałęzi i kontrola produkcji przed nami.

@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getEmailCopy, type CopyBlock, type EmailLang, type EmailType } from "./email-templates.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { renderMailDocument } from "../_shared/mail-document.js";
+import { createMailTransport, type MailProvider } from "../_shared/mail-providers.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -60,32 +60,7 @@ async function loadProviderOrder(): Promise<string[]> {
 }
 
 
-const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
-const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
-const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
-const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
-const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const ZEPTOMAIL_KEY = Deno.env.get("ZEPTOMAIL_API_KEY") || "";
-const ZEPTOMAIL_BOUNCE = Deno.env.get("ZEPTOMAIL_BOUNCE_ADDRESS") || "";
-const ZEPTOMAIL_REGION = Deno.env.get("ZEPTOMAIL_REGION") || "com";
-
-const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
-const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
-
-function htmlToText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 500);
-}
+const mailTransport = createMailTransport();
 
 const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
@@ -135,116 +110,6 @@ async function writeLog(entry: {
   } catch (err) {
     console.warn("[send-email] log:insert_failed", { error: String(err) });
   }
-}
-
-async function sendViaBrevo(to: string, subject: string, html: string) {
-  if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      sender: { email: FROM_EMAIL, name: FROM_NAME },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    }),
-  });
-  if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
-}
-
-async function sendViaMailgun(to: string, subject: string, html: string) {
-  if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
-  if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
-
-  const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
-  const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
-
-  const form = new FormData();
-  form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`);
-  form.append("to", to);
-  form.append("subject", subject);
-  form.append("html", html);
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` },
-    body: form,
-  });
-  if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
-}
-
-let sendpulseToken: string | null = null;
-
-async function getSendpulseToken(): Promise<string> {
-  if (sendpulseToken) return sendpulseToken;
-  
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
-  
-  const authRes = await fetch("https://api.sendpulse.com/oauth/access_token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      grant_type: "client_credentials",
-      client_id: SENDPULSE_ID,
-      client_secret: SENDPULSE_SECRET
-    })
-  });
-  
-  if (!authRes.ok) throw new Error(`sendpulse_auth_failed:${await authRes.text().catch(() => "")}`);
-  
-  const authData = await authRes.json();
-  const token = authData.access_token;
-  if (typeof token !== "string" || !token.trim()) throw new Error("sendpulse_auth_missing_token");
-  sendpulseToken = token;
-  return token;
-}
-
-async function sendViaSendpulse(to: string, subject: string, html: string) {
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
-  
-  const text = htmlToText(html);
-  const token = await getSendpulseToken();
-  const htmlBase64 = encodeBase64(new TextEncoder().encode(html));
-  
-  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: {
-        subject,
-        text,
-        html: htmlBase64,
-        from: { name: FROM_NAME, email: FROM_EMAIL },
-        to: [{ email: to, name: "" }]
-      }
-    }),
-  });
-  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
-}
-
-async function sendViaZeptomail(to: string, subject: string, html: string) {
-  if (!ZEPTOMAIL_KEY) throw new Error("missing_ZEPTOMAIL_API_KEY");
-  
-  const host = ZEPTOMAIL_REGION === "eu" ? "api.zeptomail.eu" : ZEPTOMAIL_REGION === "in" ? "api.zeptomail.in" : "api.zeptomail.com";
-  const url = `https://${host}/v1.1/email`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { 
-      "Authorization": `Zoho-enczapikey ${ZEPTOMAIL_KEY}`, 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({
-      from: { address: FROM_EMAIL, name: FROM_NAME },
-      to: [{ email_address: { address: to, name: "" } }],
-      subject: subject,
-      htmlbody: html,
-      textbody: htmlToText(html),
-      bounce_address: ZEPTOMAIL_BOUNCE || undefined
-    }),
-  });
-  if (!res.ok) throw new Error(`zeptomail_failed:${await res.text().catch(() => "")}`);
 }
 
 async function loadUserEmailFallbacks(userId: string): Promise<{
@@ -327,10 +192,7 @@ async function sendWithFallbacks(
         continue;
       }
 
-      if (p === "brevo") await sendViaBrevo(to, subject, html);
-      else if (p === "sendpulse") await sendViaSendpulse(to, subject, html);
-      else if (p === "zeptomail") await sendViaZeptomail(to, subject, html);
-      else await sendViaMailgun(to, subject, html);
+      await mailTransport.send(p as MailProvider, { to, subject, html, mode: "immediate" });
 
       usedProvider = p;
 
@@ -506,7 +368,7 @@ serve(async (req) => {
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
-  if (!BREVO_KEY && !MAILGUN_KEY && !SENDPULSE_ID && !ZEPTOMAIL_KEY) {
+  if (!mailTransport.hasAnyProvider) {
     console.error("[send-email] config:missing_mail_keys");
     await writeLog({
       requestId,
