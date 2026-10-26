@@ -1,14 +1,14 @@
-import { redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-26T08432";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-26T08432";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T08432";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-26T08432";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T08432";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-26T08432";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-26T08432";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-26T08432";
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T08432";
-import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-26T08432";
-import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-26T08432";
+import { redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-26T09091";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-26T09091";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T09091";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-26T09091";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T09091";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-26T09091";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-26T09091";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-26T09091";
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T09091";
+import { setProgress, setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-26T09091";
+import { homeSeo, homeSchemas, schemaJson } from "../../shared/js/core/home-seo.js?v=v2026-10-26T09091";
 
 
 async function redirectIfSession() {
