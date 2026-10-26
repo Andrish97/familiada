@@ -2401,6 +2401,12 @@ sprawdza 349 plików bez błędów; zapadka w unit. Testy punktowe: 37 zielonych
 w pierwszym zestawie, po usunięciu 2 kluczy cały zestaw i18n 8/8;
 nowa zapadka 1/1. Produkcja publiczna jeszcze bez zmian.
 
+Paczka A — bramki gałęzi zielone: 40290483897 (2/2 E2E: powrót Bazy/
+Znajomi i publiczne Wskazówki PL/EN/UK; 5 unit), 40290486636 (1/1 E2E:
+rzeczywiste Mute i zdarzenia audio Control; 3 unit). Zrzuty 20 widoków
+1400 px i 14 gotowych widoków telefonu (4 dodatkowe to blokady urządzenia). Oględziny bez zmiany wyglądu. Publikacja
+Pages, następnie te same kontrole na main.
+
 
 ### 2026-10-26 — audyt A: produkcja zamknięta; B: wspólna sesja ankiet
 

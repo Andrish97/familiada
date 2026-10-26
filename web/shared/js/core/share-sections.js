@@ -6,11 +6,11 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-26T07194";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-26T07194";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-26T07194";
-import { emptyState } from "./empty-state.js?v=v2026-10-26T07194";
-import "./scroll-fade.js?v=v2026-10-26T07194"; // wygaszona krawędź przewijanych list
+import { t } from "../../translation/translation.js?v=v2026-10-26T08253";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-26T08253";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-26T08253";
+import { emptyState } from "./empty-state.js?v=v2026-10-26T08253";
+import "./scroll-fade.js?v=v2026-10-26T08253"; // wygaszona krawędź przewijanych list
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];

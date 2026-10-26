@@ -1,7 +1,7 @@
 // displays.js
 // Moduł renderujący 6 wyświetlacze w SVG na podstawie pozycji z motywu + geometrii
 
-import { DOT_BIG, GAP, Wgrid, Hgrid } from "./display-geometry.js?v=v2026-10-26T07194";
+import { DOT_BIG, GAP, Wgrid, Hgrid } from "./display-geometry.js?v=v2026-10-26T08253";
 
 export function createDisplays({ svgGroup, theme }) {
   const NS = "http://www.w3.org/2000/svg";

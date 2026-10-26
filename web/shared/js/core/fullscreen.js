@@ -7,8 +7,8 @@
 //     „Dodaj do ekranu początkowego” (.a2hs, html.showA2HS), jeśli strona je ma;
 //   - zainstalowana aplikacja: html.webapp (silnik chowa wtedy .fs-btn).
 
-import { icon } from "./icons.js?v=v2026-10-26T07194";
-import { isIOSSafari, isStandalone } from "./pwa.js?v=v2026-10-26T07194";
+import { icon } from "./icons.js?v=v2026-10-26T08253";
+import { isIOSSafari, isStandalone } from "./pwa.js?v=v2026-10-26T08253";
 
 const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
