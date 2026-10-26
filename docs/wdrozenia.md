@@ -7,6 +7,10 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 ## Motywy wyświetlacza — wdrożone 2026-10-26
 
+Korekta Hosta: tekst i podpowiedzi odsunięte od ramek, pełny jasny
+gradient drużyn na zasłonie. Pages 40285093735 ✓, produkcyjny Host
+40285195072 **1/1 ✓**, unit 29/29 ✓.
+
 Zaakceptowany podgląd v7: Skrzydła, Radar, Kaseton, Wstęga, Most oraz
 szczeliny Modern wychodzące spod górnego licznika symetrycznie w dół.
 Kontrolki w konstrukcji; domyślne tło opcjonalne, kolory A/B zachowane.
@@ -257,8 +261,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   18 px, tekst–podpowiedź 13,3 px, napis zasłony–krawędź 20 px; ostatnia
   odpowiedź dostępna po przewinięciu. Bez dopisywania nowych testów CSS.
 - Unit punktowo 29/29 ✓, lokalny Host E2E 1/1 ✓. Bramka Hosta na
-  branchu 40284944638 **1/1 ✓**. Następnie Pages i punktowa kontrola
-  Hosta na produkcji.
+  branchu 40284944638 **1/1 ✓**. Pages 40285093735 ✓
+  (`2adb8709` po wersjach CI), produkcyjny Host 40285195072 **1/1 ✓**,
+  unit CI 29/29 ✓. Poprawka wdrożona i zakończona.
 
 ### 2026-10-26 — osobne motywy Prowadzącego i mniejszy odstęp longów
 
