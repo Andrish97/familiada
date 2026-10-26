@@ -2306,3 +2306,6 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   potwierdzają ją wcześniejsze 40238851673 ✓ 4/4 i odczyt CSS po tej paczce.
   Warianty 36/24 px pozostają odrzucone. Dalszych animacji z audytu nie
   wdrażać automatycznie po zamknięciu tej uzgodnionej paczki.
+
+2026-10-26: bramka Display na branchu 40247766872 ✓; po synchronizacji
+main unit 14/14 ✓. Zmiany main w Display/motywach to wyłącznie wersje URL.

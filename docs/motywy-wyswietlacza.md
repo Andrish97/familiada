@@ -41,3 +41,6 @@ Diagnostyka: blokowany przez CSP zewnętrzny skrypt Cloudflare. Guard
 startu ograniczony do modułów z własnej domeny; regresja unit obejmuje
 zewnętrzny błąd bez zużywania budżetu prób i nadal działający retry aplikacji.
 Unit 14/14; bramka brancha i kontrola Display pozostają do wykonania.
+
+2026-10-26: bramka Display na branchu 40247766872 ✓; po synchronizacji
+main unit 14/14 ✓. Zmiany main w Display/motywach to wyłącznie wersje URL.
