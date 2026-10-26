@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Minifikujemy wyłącznie artefakt; ścieżki, importy i czytelne źródła pozostają bez zmian.
+// Minifikujemy i wersjonujemy wyłącznie artefakt; czytelne źródła pozostają bez zmian.
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createRequire } = require('node:module');
@@ -31,14 +31,15 @@ async function buildPublic({ source = path.join(__dirname, '../web'), out = path
         } else await fs.copyFile(src, dest);
         continue;
       }
-      const input = stableVersions(await fs.readFile(src, 'utf8'));
+      const raw = await fs.readFile(src, 'utf8');
+      const input = stableVersions(raw);
       const result = await transform(input, { loader: kind, sourcefile: rel, minify: true,
         // Bez bundlowania: dynamiczne ścieżki import.meta.url i manifesty nadal działają.
         target: kind === 'js' ? 'esnext' : ['chrome80', 'safari13', 'firefox78'],
         keepNames: kind === 'js', legalComments: 'inline', charset: 'utf8' });
       for (const warning of result.warnings) console.warn(`[build] ${rel}: ${warning.text}`);
       await fs.writeFile(dest, result.code);
-      totals[kind].files++; totals[kind].source += Buffer.byteLength(input); totals[kind].output += Buffer.byteLength(result.code);
+      totals[kind].files++; totals[kind].source += Buffer.byteLength(raw); totals[kind].output += Buffer.byteLength(result.code);
     }
   }
   await copy(source);
