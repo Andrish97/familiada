@@ -96,6 +96,7 @@ export function initManualSearch(host, getEntries, onPick) {
   const list = host.querySelector(".m-search-results");
   let results = [];
   let active = -1;
+  let renderRequest = 0;
 
   const label = () => {
     input.placeholder = t("manual.search");
@@ -105,12 +106,15 @@ export function initManualSearch(host, getEntries, onPick) {
   label();
   window.addEventListener("i18n:lang", label);
 
-  const render = () => {
+  const render = async () => {
+    const request = ++renderRequest;
     const q = input.value;
     clear.hidden = !q;
     const words = norm(q).split(/\s+/).filter((w) => w.length > 1);
     if (!words.length) { list.hidden = true; list.innerHTML = ""; results = []; return; }
-    results = searchIndex(getEntries(), q);
+    const entries = await getEntries();
+    if (request !== renderRequest) return;
+    results = searchIndex(entries, q);
     active = results.length ? 0 : -1;
     list.hidden = false;
     list.innerHTML = results.length
@@ -133,7 +137,7 @@ export function initManualSearch(host, getEntries, onPick) {
     list.querySelector(".m-search-hit.active")?.scrollIntoView({ block: "nearest" });
   };
 
-  input.addEventListener("input", render);
+  input.addEventListener("input", () => { void render(); });
   input.addEventListener("keydown", (ev) => {
     if (ev.key === "ArrowDown") { ev.preventDefault(); setActive(active + 1); }
     else if (ev.key === "ArrowUp") { ev.preventDefault(); setActive(active - 1); }

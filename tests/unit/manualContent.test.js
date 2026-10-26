@@ -8,6 +8,22 @@ import { PAGES } from "../../web/shared/js/core/nav-map.js";
 
 const LANGS = ["pl", "en", "uk"].filter((l) => fs.existsSync(new URL(`../../web/manual/content/${l}.js`, import.meta.url)));
 const load = async (lang) => (await import(`../../web/manual/content/${lang}.js`)).default;
+
+test("spis treści i rozdziały są zgodne z pełnym źródłem w każdym języku", async () => {
+  const generated = await buildAll({ chunks: true });
+  const loaders = (await import("../../web/manual/content/chapter-loaders.js")).default;
+  for (const [relative, source] of Object.entries(generated)) {
+    const file = new URL(`../../web/manual/content/${relative.endsWith(".js") ? relative : `${relative}.js`}`, import.meta.url);
+    assert.equal(fs.readFileSync(file, "utf8"), source, `${relative}: nieaktualny plik`);
+  }
+  for (const lang of LANGS) {
+    const full = await load(lang);
+    const meta = (await import(`../../web/manual/content/meta/${lang}.js`)).default;
+    assert.deepEqual(meta.parts, full.parts);
+    assert.deepEqual(meta.chapters, full.chapters.map(({ html, ...chapter }) => chapter));
+    for (const chapter of full.chapters) assert.equal((await loaders[lang][chapter.id]()).default, chapter.html);
+  }
+});
 const anchors = (manual) => {
   const set = new Set();
   for (const c of manual.chapters) {

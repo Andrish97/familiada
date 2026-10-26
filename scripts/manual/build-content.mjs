@@ -338,8 +338,9 @@ function readSources(dir) {
   return files.map((f) => fs.readFileSync(path.join(dir, f), "utf8"));
 }
 
-export async function buildAll() {
+export async function buildAll({ chunks = false } = {}) {
   const results = {};
+  const chapterLoaders = {};
   for (const [lang, dir] of Object.entries(LANGS)) {
     const sources = readSources(dir);
     if (!sources) continue;
@@ -348,22 +349,39 @@ export async function buildAll() {
     const data = parseManual(sources, icons);
     results[lang] = "// Wygenerowane przez scripts/manual/build-content.mjs z docs/podrecznik — nie edytować ręcznie.\n"
       + `const manual = ${JSON.stringify(data, null, 1)};\n\nexport default manual;\n`;
+    if (chunks) {
+      const metadata = { parts: data.parts, chapters: data.chapters.map(({ html, ...chapter }) => chapter) };
+      results[`meta/${lang}.js`] = `// Wygenerowane przez scripts/manual/build-content.mjs — nie edytować.\nexport default ${JSON.stringify(metadata)};\n`;
+      chapterLoaders[lang] = {};
+      for (const chapter of data.chapters) {
+        results[`chapters/${lang}/${chapter.id}.js`] = `// Wygenerowane przez scripts/manual/build-content.mjs — nie edytować.\nexport default ${JSON.stringify(chapter.html)};\n`;
+        chapterLoaders[lang][chapter.id] = `() => import("./chapters/${lang}/${chapter.id}.js")`;
+      }
+    }
+  }
+  if (chunks) {
+    const entries = Object.entries(chapterLoaders).map(([lang, chapters]) =>
+      `  ${lang}: { ${Object.entries(chapters).map(([id, load]) => `${JSON.stringify(id)}: ${load}`).join(", ")} }`
+    ).join(",\n");
+    results["chapter-loaders.js"] = `// Wygenerowane przez scripts/manual/build-content.mjs — nie edytować.\nexport default {\n${entries}\n};\n`;
   }
   return results;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const check = process.argv.includes("--check");
-  const results = await buildAll();
+  const results = await buildAll({ chunks: true });
   let stale = false;
   fs.mkdirSync(OUT, { recursive: true });
   for (const [lang, content] of Object.entries(results)) {
-    const file = path.join(OUT, `${lang}.js`);
+    const relative = lang.endsWith(".js") ? lang : `${lang}.js`;
+    const file = path.join(OUT, relative);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
     const cur = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
     if (cur === content) continue;
     stale = true;
-    if (check) console.error(`nieaktualne: web/manual/content/${lang}.js`);
-    else { fs.writeFileSync(file, content); console.log(`zapisano: web/manual/content/${lang}.js`); }
+    if (check) console.error(`nieaktualne: web/manual/content/${relative}`);
+    else { fs.writeFileSync(file, content); console.log(`zapisano: web/manual/content/${relative}`); }
   }
   if (check && stale) process.exit(1);
 }

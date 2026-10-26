@@ -14,6 +14,7 @@ import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-26T13554";
 import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-26T13554";
 import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-26T13554";
 import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-26T13554";
+import chapterLoaders from "../content/chapter-loaders.js";
 
 import { manualToc, manualArticle } from "./render.js?v=v2026-10-26T13554";
 import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-26T13554";
@@ -22,6 +23,11 @@ const CONTENT = {
   pl: () => import("../content/pl.js?v=v2026-10-26T13554"),
   en: () => import("../content/en.js?v=v2026-10-26T13554"),
   uk: () => import("../content/uk.js?v=v2026-10-26T13554"),
+};
+const META = {
+  pl: () => import("../content/meta/pl.js"),
+  en: () => import("../content/meta/en.js"),
+  uk: () => import("../content/meta/uk.js"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").
@@ -38,7 +44,10 @@ const layout = document.querySelector(".m-layout");
 
 let manual = null;
 let current = null;
-let searchIndexEntries = [];
+let searchIndexEntries = null;
+let searchIndexLang = null;
+let searchIndexPromise = null;
+let showRequest = 0;
 let search = null;
 let tocList = null;
 
@@ -80,8 +89,29 @@ async function initManualI18n() {
 }
 
 async function loadContent(lang) {
-  const load = CONTENT[lang] || CONTENT.pl;
+  const load = META[lang] || META.pl;
   return (await load()).default;
+}
+
+async function loadChapter(ch, lang) {
+  if (ch.html) return;
+  const load = chapterLoaders[lang]?.[ch.id] || chapterLoaders.pl?.[ch.id];
+  if (!load) throw new Error(`Nie znaleziono rozdziału ${ch.id}`);
+  ch.html = (await load()).default;
+}
+
+async function getSearchEntries() {
+  const lang = getUiLang();
+  if (searchIndexLang !== lang) {
+    searchIndexLang = lang;
+    searchIndexEntries = null;
+    searchIndexPromise = null;
+  }
+  if (searchIndexEntries) return searchIndexEntries;
+  searchIndexPromise ||= (CONTENT[lang] || CONTENT.pl)().then(({ default: full }) => buildIndex(full));
+  const entries = await searchIndexPromise;
+  if (searchIndexLang === lang) searchIndexEntries = entries;
+  return entries;
 }
 
 const sectionId = (id) => `s-${id.replace(/\./g, "-")}`;
@@ -186,8 +216,8 @@ function wireSearch() {
   toc.innerHTML = `<div class="m-search" id="manualSearch"></div><div class="m-side-list"></div>`;
   tocList = toc.querySelector(".m-side-list");
   hydrateIcons(document.querySelector(".m-actionbar"));
-  search = initManualSearch(toc.querySelector("#manualSearch"), () => searchIndexEntries, (entry, query) => {
-    show(entry.ch, entry.id === entry.ch ? "" : `#${sectionId(entry.id)}`);
+  search = initManualSearch(toc.querySelector("#manualSearch"), getSearchEntries, async (entry, query) => {
+    await show(entry.ch, entry.id === entry.ch ? "" : `#${sectionId(entry.id)}`);
     const scope = entry.id === entry.ch ? article.querySelector(".m-doc") : sectionScope(sectionId(entry.id));
     for (const el of scope) highlight(el, query);
     const first = article.querySelector("mark.m-hit");
@@ -221,12 +251,17 @@ function syncReturn() {
   }
 }
 
-function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false, hydrate = false } = {}) {
+async function show(id, hash = "", { updateUrl = true, smooth = false, from = null, keepPanel = false, hydrate = false } = {}) {
+  const request = ++showRequest;
+  const doc = manual;
+  const lang = getUiLang();
   const ch = id ? findChapter(id) : null;
+  const reuse = hydrate && article.dataset.manualLang === lang
+    && article.dataset.manualChapter === (ch?.id || "");
+  if (ch && !reuse) await loadChapter(ch, lang);
+  if (request !== showRequest || manual !== doc || getUiLang() !== lang) return;
   current = ch ? ch.id : null;
   returnTo = ch && from && titleOf(from) ? from : null;
-  const reuse = hydrate && article.dataset.manualLang === getUiLang()
-    && article.dataset.manualChapter === (ch?.id || "");
   if (reuse) {
     // Nie odłączaj widocznych obrazów/linków przy przejęciu gotowego HTML.
     article.insertAdjacentHTML("afterbegin", returnHtml());
@@ -286,12 +321,16 @@ function wireNavigation() {
 }
 
 async function renderForLang({ hydrate = false } = {}) {
-  manual = await loadContent(getUiLang());
-  searchIndexEntries = buildIndex(manual);
-  // Tekst wpisany, zanim treść się wczytała, dostaje wyniki od razu po zbudowaniu indeksu.
-  if (search?.input.value) search.refresh();
+  const lang = getUiLang();
+  const nextManual = await loadContent(lang);
+  if (lang !== getUiLang()) return;
+  manual = nextManual;
+  searchIndexEntries = null;
+  searchIndexLang = null;
+  searchIndexPromise = null;
+  if (search?.input.value) void search.refresh();
   const params = new URLSearchParams(location.search);
-  show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true, hydrate });
+  await show(params.get(CHAPTER_PARAM), location.hash, { updateUrl: true, from: params.get(FROM_PARAM), keepPanel: true, hydrate });
 }
 
 /* ================= Init ================= */
