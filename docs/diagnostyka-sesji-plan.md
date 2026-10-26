@@ -325,10 +325,13 @@ nie wskazuje jeszcze, który komponent go powoduje.
 
 Próg dzwonka zwiększono do 600 ms: obejmuje zaobserwowane 534 ms, a nadal
 poprzedza watchdog heartbeat 700 ms. To ogranicza zbędne nadrabianie bez
-zmiany źródła prawdy ani zachowania przy utracie kanału. E2E `40249184597`
-uruchomiono ponownie na niezmienionym wydaniu 500 ms przed tą korektą; jego
-wynik należy zachować jako dodatkową próbę bazową. Po wdrożeniu 600 ms trzeba
-powtórzyć punktowy E2E i porównać liczbę fallbacków oraz `direct_after_fallback`.
+zmiany źródła prawdy ani zachowania przy utracie kanału. Po wdrożeniu Pages
+`40249540057` punktowy E2E czterech urządzeń (`40250682539`) przeszedł:
+Display/Host/Buzzer miały odpowiednio 10/10/29 natywnych zmian i zero
+fallbacków (w tym heartbeatowych). Kontrolowane zerwanie WebSocket Display
+zakończyło się odzyskaniem kanału po ok. 1,03 s; test potwierdził też wznowienie
+Control w środku gry. Wynik potwierdza poprawę w tym przebiegu, ale jedna próba
+nie wyklucza rzadkich opóźnień powyżej 600 ms.
 
 Read-only check serwera po teście (`familiada-server` run `40249157584`)
 potwierdził Realtime `v2.143.3` healthy, 0 restartów, `oom=false`, publikację
