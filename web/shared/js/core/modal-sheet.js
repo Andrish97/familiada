@@ -10,9 +10,8 @@
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
 import { t } from "../../translation/translation.js?v=v2026-10-26T07194";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-26T07194";
+import { dialogAllowed } from "./nav-map.js?v=v2026-10-26T07194";
 import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-26T07194";
-
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
 // obsługa dla wszystkich okien .overlay); „Anuluj” z [data-modal-cancel] też

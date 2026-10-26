@@ -39,10 +39,6 @@ function setText(el, text) {
   if (el) el.textContent = text;
 }
 
-function setHtml(el, html) {
-  if (el) el.innerHTML = html;
-}
-
 function tr(key, fallback) {
   const value = t(key);
   if (!value || value === key) return fallback;
@@ -218,15 +214,15 @@ function stopCountdown() {
 function updateCountdown(targetDate, isCountdownMode) {
   if (!targetDate) return false;
   const diff = targetDate.getTime() - Date.now();
-  
+
   const formatted = isCountdownMode ? formatCountdownDisplay(diff) : formatReturnAt(targetDate);
-  
+
   // Update all standard elements
   if (els.countdown) {
     els.countdown.hidden = false;
     setText(els.countdown, formatted);
   }
-  
+
   // Update all inline timers
   const inlines = document.querySelectorAll(".countdown-inline");
   inlines.forEach(el => setText(el, formatted));
@@ -246,7 +242,7 @@ function updateCountdown(targetDate, isCountdownMode) {
       tr("maintenance.countdownText", FALLBACKS.countdownText)
     );
   }
-  
+
   return true;
 }
 
@@ -283,7 +279,7 @@ function renderState(state) {
   const enabled = typeof state?.enabled === "boolean" ? state.enabled : null;
   const returnAt = parseDate(state?.returnAt);
   const useStandard = state?.useStandardText ?? (state?.customComments?.pl || state?.customComments?.en || state?.customComments?.uk ? false : true);
-  
+
   // Select comment based on browser language
   const userLang = (document.documentElement.lang || "pl").toLowerCase();
   let customComment = "";
@@ -310,7 +306,7 @@ function renderState(state) {
   if (useStandard || !customComment) {
     if (els.standardContent) els.standardContent.hidden = false;
     if (els.customContent) els.customContent.hidden = true;
-    
+
     if (els.countdown) els.countdown.hidden = true;
 
     if (mode === "message") {
@@ -351,11 +347,11 @@ function renderState(state) {
     if (els.standardContent) els.standardContent.hidden = true;
     if (els.customContent) {
       els.customContent.hidden = false;
-      
+
       let html = esc(customComment).replace(/\n/g, "<br>");
       html = html.replace(/#timer/g, '<span class="countdown-inline">—</span>');
       els.customContent.innerHTML = `<div class="custom-maintenance-content">${html}</div>`;
-      
+
       if (customComment.includes("#timer")) {
         if (mode === "countdown" || mode === "returnAt") {
           startCountdown(returnAt, mode === "countdown");

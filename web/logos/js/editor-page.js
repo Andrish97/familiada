@@ -36,7 +36,6 @@ import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-1
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-26T07194";
 const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-26T07194";
 
-
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;
 
@@ -79,10 +78,10 @@ export async function bootEditorPage({ mode, initEditor }) {
 
   /* ---------- stan zapisu ---------- */
   let statusState = "idle";
-  let statusText = "";
+
   function setStatus(state, text = "") {
     statusState = state;
-    statusText = text;
+
     renderStatus();
   }
   // Bez żadnej informacji o zapisie na stronie (decyzja: docs/ujednolicenie-

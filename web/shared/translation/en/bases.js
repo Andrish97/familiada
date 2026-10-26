@@ -107,10 +107,6 @@ const en = {
       editor: "Edit",
       viewer: "Read-only",
     },
-    roles: {
-      editorBadge: "EDIT",
-      viewerBadge: "READ",
-    },
     share: {
       remove: "Remove",
       failed: "Failed",

@@ -10,7 +10,7 @@
 //                    pole przewija się do widoku w swoim kontenerze
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
 import "./page-layout.js?v=v2026-10-26T07194";
-import { getDeviceProfile, editableFocused } from "./device-guard.js?v=v2026-10-26T07194";
+import { editableFocused } from "./device-guard.js?v=v2026-10-26T07194";
 
 export const { NARROW_MAX, deviceLayout } = globalThis.FamiliadaDevice;
 

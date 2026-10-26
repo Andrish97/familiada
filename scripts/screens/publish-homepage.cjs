@@ -61,7 +61,7 @@ async function toWebp(page, png, width, quality) {
         if (scene.id === "og-image") {
           if (lang === "pl") {
             fs.writeFileSync(path.join(repo, "web/assets/img/og/og-image.webp"), await toWebp(page, png, 0, 0.9));
-            // Pierwszy obraz maila „Zaproszenie” (web/shared/js/core/marketing-mail.js):
+            // Pierwszy obraz maila „Zaproszenie” w prywatnym panelu:
             // 2× szerokości maila (516 px), odświeżany razem z grafiką OG.
             fs.writeFileSync(path.join(repo, "web/assets/img/og/og-image-mail.webp"), await toWebp(page, png, OG_MAIL_WIDTH, 0.82));
             written += 2;

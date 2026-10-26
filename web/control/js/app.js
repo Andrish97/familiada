@@ -10,7 +10,7 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 
 import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-26T07194";
 import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-26T07194";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T07194";
@@ -24,7 +24,6 @@ import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-26T07194";
 import { doorbellTopic, setDoorbellObserver } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-26T07194";
 import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-26T07194";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-26T07194";
-
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
 // wcześniej przez chwilę widać było samą białą ramkę <img>.
@@ -130,7 +129,6 @@ import { createUI } from "./ui.js?v=v2026-10-26T07194";
 import { createShareDevice } from "./shareDevice.js?v=v2026-10-26T07194";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-26T07194";
-
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -1202,7 +1200,7 @@ async function main() {
       else waiter.capTimer = setTimeout(() => armDisplayCueStart(seq, waiter), DISPLAY_START_CONFIRM_CAP_MS);
     });
   }
-  const soundReactor = createSoundReactor(store, { waitForStart: waitForDisplayCueStart });
+  createSoundReactor(store, { waitForStart: waitForDisplayCueStart });
   const stopAudioDiagnostics = onSfxPlayback(event => {
     const state = store.state;
     if (!state.locks.gameStarted || state.locks.gameEnded || state.settings.soundSource === "display" || state.settings.soundMuted) return;

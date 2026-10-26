@@ -12,7 +12,6 @@ import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-26T07194"
 import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
 
-
 const i18nReady = initEntryPage("go", { ready: initI18n({ withSwitcher: true }) }).then(() => {
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
@@ -90,8 +89,7 @@ const copyToken = qs.get("c");
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
-const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
-const hasSubToken = Boolean(subToken) && !isUnsubOwner;
+
 const tokenCount = [taskToken, subToken, friendToken, baseToken, copyToken].filter(Boolean).length;
 const goToken = tokenCount === 1 ? (friendToken || baseToken || taskToken || subToken || copyToken) : null;
 

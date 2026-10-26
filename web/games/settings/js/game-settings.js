@@ -18,17 +18,13 @@ import { chooseDisplayTheme } from "../../../shared/js/display/theme-config.js?v
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-26T07194";
 import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-26T07194";
 
-import {
-  loadSfxManifest, getSfxCategories,
-  setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
-  playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-26T07194";
+import { loadSfxManifest, getSfxCategories, setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio } from "../../../shared/js/core/sfx.js?v=v2026-10-26T07194";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-26T07194";
 import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-26T07194";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-26T07194";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-26T07194";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import { blockingScreen, setBlockingIcon, setBlockingOpen } from "../../../shared/js/core/blocking-screen.js?v=v2026-10-26T07194";
 import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-26T07194";
 import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, roundsMaxPoints } from "./advanced-limits.js?v=v2026-10-26T07194";
@@ -36,7 +32,6 @@ import { ADVANCED_LIMITS, parseIntInRange, parseMultipliers, finalMaxPoints, rou
 // Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
 const DRAG = !isPhoneScreen();
 const DRAGGABLE = DRAG ? "true" : "false";
-
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -1666,7 +1661,6 @@ function renderGame() {
       }
     });
   });
-
 
   document.getElementById("btnGameReset")?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") })) return;

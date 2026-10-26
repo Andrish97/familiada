@@ -11,7 +11,7 @@ import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-26T07194";
 import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-26T07194";
 import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-26T07194";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T07194";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-26T07194";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
@@ -57,11 +57,9 @@ const tabBasesShared = document.getElementById("tabBasesShared");
 const basesSectionMine = document.getElementById("basesSectionMine");
 const basesSectionShared = document.getElementById("basesSectionShared");
 const basesSharedBadge = document.getElementById("basesSharedBadge");
-const who = document.getElementById("who");
+
 const hint = document.getElementById("hint");
 
-const btnBack = document.getElementById("btnBack");
-const btnLogout = document.getElementById("btnLogout");
 const btnBrowse = document.getElementById("btnBrowse");
 const btnShare = document.getElementById("btnShare");
 const btnDuplicate = document.getElementById("btnDuplicate");
@@ -116,7 +114,6 @@ const btnShareAddLabel = document.getElementById("btnShareAddLabel");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
-
 
 /* ================= STATE ================= */
 let currentUser = null;
@@ -185,14 +182,7 @@ let ownBaseDeclines = [];
 let baseDeclinesCollapsed = true;
 let shareRenderVersion = 0;
 
-
 /* ================= UI helpers ================= */
-function show(el, on) {
-  if (!el) return;
-  // atrybut hidden zamiast style.display (style inline biły się z regułami okien)
-  el.hidden = !on;
-  el.style.removeProperty("display");
-}
 
 function setHint(t) {
   if (!hint) return;
@@ -713,15 +703,6 @@ async function importBaseContent(baseId, payload, prog) {
 }
 
 /* ================= Share modal ================= */
-function roleLabel(role) {
-  return role === "editor" ? t("bases.roles.editorBadge") : t("bases.roles.viewerBadge");
-}
-
-function emailLooksOk(s) {
-  const t = String(s || "").trim();
-  // prosta walidacja – nie walczymy z RFC
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
-}
 
 // Okno „Udostępnienia” (górny pasek): kto ma dostęp, uprawnienie, ponów, cofnij.
 async function openShareModal() {
@@ -1143,7 +1124,6 @@ function render() {
   setSharedBasesBadge(sharedBases.filter((b) => !!b.proposed).length);
 }
 
-
 function selectBase(id) {
   selectedId = id;
   for (const el of document.querySelectorAll(".bases-section .card[data-base-id]")) {
@@ -1259,7 +1239,6 @@ function readFileAsText(file) {
   });
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
   btnBrowse?.addEventListener("click", () => {
     const b = selectedBase();
@@ -1363,7 +1342,6 @@ document.addEventListener("DOMContentLoaded", () => {
   btnImportCancelAction?.addEventListener("click", () => closeImportModal());
   btnImportDone?.addEventListener("click", () => closeImportModal());
 
-
   btnShareClose?.addEventListener("click", () => closeShareModal());
   btnShareDone?.addEventListener("click", () => closeShareModal());
   btnShareSendClose?.addEventListener("click", () => closeShareSendModal());
@@ -1374,8 +1352,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") shareAdd();
   });
 });
-
-
 
 async function refreshAltBadge() {
   try {

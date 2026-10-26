@@ -1,6 +1,5 @@
 // Kształty narzędzia „Kształty”: metadane/geometria; podglądy są w assets.
 
-
 // label = klucz tłumaczenia, icon = nazwa ikony (core/icons.js)
 export const SHAPES = [
   { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: "logo-shape-line" },
@@ -35,7 +34,6 @@ export function buildShapePath(shapeId, x1, y1, x2, y2, strokeWidth) {
   const w = Math.abs(x2-x1) || 10, h = Math.abs(y2-y1) || 10;
   const r = Math.min(w,h)/2;
   const sw = strokeWidth || 6;
-  const len = Math.hypot(x2-x1, y2-y1);
 
   switch(shapeId) {
     case "line": return `M ${x1} ${y1} L ${x2} ${y2}`;

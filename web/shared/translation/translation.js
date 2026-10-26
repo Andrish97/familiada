@@ -13,7 +13,6 @@ const LANG_META = {
 const ASSET_VERSION = new URL(import.meta.url).search;
 import { placeDropdown } from "../js/core/popover.js?v=v2026-10-26T07194";
 
-
 const LANG_ORDER = ["pl", "en", "uk"];
 let pageParts = null;
 const warnedSections = new Set();
@@ -26,7 +25,6 @@ let languageRequestId = 0;
 let latestLanguageLoad = Promise.resolve(false);
 
 let switcherEl = null; // container w topbarze
-let menuEl = null;     // portal w body
 
 function getCurrentYear() {
   return new Date().getFullYear();
@@ -308,7 +306,6 @@ async function injectLanguageSwitcher() {
   }
 
   switcherEl = container;
-  menuEl = menu;
 
   updateSwitcherLabel();
   return switcherEl;

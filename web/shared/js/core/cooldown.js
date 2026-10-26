@@ -1,6 +1,5 @@
 import { sb } from "./supabase.js?v=v2026-10-26T07194";
 
-
 function pickRpcRow(data, fnName) {
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) throw new Error(`${fnName}: empty response`);
@@ -41,46 +40,6 @@ export async function cooldownReserve(actionKey, cooldownSeconds) {
   };
 }
 
-/**
- * Per-email cooldowns (works for anon as well; used for reset password before login).
- * We only store a hash of the email in DB.
- */
-export async function cooldownEmailGet(email, actionKeys = []) {
-  const e = String(email || "").trim().toLowerCase();
-  const keys = Array.isArray(actionKeys) ? actionKeys : [];
-  if (!e || !keys.length) return new Map();
-
-  const { data, error } = await sb().rpc("cooldown_email_get", {
-    p_email: e,
-    p_action_keys: keys,
-  });
-  if (error) throw error;
-
-  const map = new Map();
-  (data || []).forEach((row) => {
-    if (!row?.action_key || !row?.next_allowed_at) return;
-    const ms = Date.parse(row.next_allowed_at);
-    if (Number.isFinite(ms)) map.set(row.action_key, ms);
-  });
-  return map;
-}
-
-export async function cooldownEmailReserve(email, actionKey, cooldownSeconds) {
-  const e = String(email || "").trim().toLowerCase();
-  const { data, error } = await sb().rpc("cooldown_email_reserve", {
-    p_email: e,
-    p_action_key: String(actionKey),
-    p_cooldown_seconds: Number(cooldownSeconds),
-  });
-  if (error) throw error;
-
-  const row = pickRpcRow(data, "cooldown_email_reserve");
-  return {
-    ok: !!row?.ok,
-    nextAllowedAtMs: row?.next_allowed_at ? Date.parse(row.next_allowed_at) : 0,
-  };
-}
-
 export async function cooldownRelease(actionKey, maxAgeSeconds = 60) {
   const { data, error } = await sb().rpc("cooldown_release", {
     p_action_key: String(actionKey),
@@ -90,55 +49,9 @@ export async function cooldownRelease(actionKey, maxAgeSeconds = 60) {
   return !!data;
 }
 
-export async function cooldownEmailRelease(email, actionKey, maxAgeSeconds = 60) {
-  const e = String(email || "").trim().toLowerCase();
-  const { data, error } = await sb().rpc("cooldown_email_release", {
-    p_email: e,
-    p_action_key: String(actionKey),
-    p_max_age_seconds: Number(maxAgeSeconds),
-  });
-  if (error) throw error;
-  return !!data;
-}
-
-/**
- * Ujednolicony mechanizm cooldownu maili (mail_cooldown_policies/
- * mail_cooldowns, migracja 288) -- w odróżnieniu od cooldownGet/Reserve
- * powyżej, czas trwania NIE jest parametrem wywołania, czyta go samo RPC
- * z tabeli "wymiarów" w bazie. target_key koduje własną granularność
- * (patrz konkretne wywołujące: bases.js/subscriptions.js/
- * control/js/shareDevice.js) -- ten moduł nie zgaduje jej formatu.
- */
-export async function mailCooldownCheck(actionKey, targetKey) {
-  const { data, error } = await sb().rpc("mail_cooldown_check", {
-    p_action_key: String(actionKey),
-    p_target_key: String(targetKey),
-  });
-  if (error) throw error;
-  const row = pickRpcRow(data, "mail_cooldown_check");
-  return {
-    ok: !!row?.ok,
-    nextAllowedAtMs: row?.next_allowed_at ? Date.parse(row.next_allowed_at) : 0,
-  };
-}
-
-export async function mailCooldownReserve(actionKey, targetKey) {
-  const { data, error } = await sb().rpc("mail_cooldown_reserve", {
-    p_action_key: String(actionKey),
-    p_target_key: String(targetKey),
-  });
-  if (error) throw error;
-  const row = pickRpcRow(data, "mail_cooldown_reserve");
-  return {
-    ok: !!row?.ok,
-    nextAllowedAtMs: row?.next_allowed_at ? Date.parse(row.next_allowed_at) : 0,
-  };
-}
-
 /**
  * Nakładki dla scope='email' (auth:reset_password/guest_upgrade_email/
- * signup_confirm) -- md5 target_key liczony PO STRONIE BAZY (mirror
- * cooldownEmailGet/Reserve powyżej), bo login.js woła to jeszcze przed
+ * signup_confirm) -- md5 target_key liczony PO STRONIE BAZY, bo login.js woła to jeszcze przed
  * zalogowaniem i w przeglądarce nie ma żadnej implementacji md5.
  */
 export async function mailCooldownEmailCheck(actionKey, email) {
@@ -201,7 +114,7 @@ export function formatCooldownRemaining(ms) {
  * bind({ key, labelEl, disableEls, formatText }) -- rejestruje cel;
  * formatText(ms) domyślnie formatCooldownRemaining.
  * setEndMs(key, ms) -- ustawia/aktualizuje koniec cooldownu dla klucza
- * (np. po odczycie z mailCooldownCheck albo po mailCooldownReserve).
+ * (np. po odczycie terminu cooldownu zwróconego przez RPC).
  * getRemainingMs(key) -- odczyt bez tykania.
  */
 export function createCooldownTicker() {

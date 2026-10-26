@@ -107,10 +107,6 @@ const pl = {
       editor: "Edycja",
       viewer: "Odczyt",
     },
-    roles: {
-      editorBadge: "EDYCJA",
-      viewerBadge: "ODCZYT",
-    },
     share: {
       remove: "Usuń",
       failed: "Nie udało się",

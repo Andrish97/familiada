@@ -20,12 +20,12 @@ import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-26T07194";
 import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-26T07194";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-26T07194";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
 import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-26T07194";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-26T07194";
-import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-26T07194";
+import { getDeviceProfile } from "../../shared/js/core/device-guard.js?v=v2026-10-26T07194";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-26T07194";
 import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-26T07194";
 import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-26T07194";
@@ -68,7 +68,6 @@ const el = {
   btnImport: $("btnImport"),
   tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
 
-
   importOverlay: $("logoImportOverlay"),
   importFile: $("inpImportLogoFile"),
   importChoose: $("btnImportLogoChoose"),
@@ -83,7 +82,6 @@ const el = {
   btnImportCancel: $("btnLogoImportCancel"),
   btnImportCancelAction: $("btnLogoImportCancelAction"),
   btnImportDone: $("btnLogoImportDone"),
-
 
   previewOverlay: $("previewOverlay"),
   previewCanvas: $("bigPreviewFull"),

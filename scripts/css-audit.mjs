@@ -43,9 +43,6 @@ const OUTSIDE_ENGINE = [
   "web/shared/js/display/",
   "web/shared/vendor/",
   "web/shared/style/flat.css",
-  "web/shared/js/core/mail-document.js",
-  "web/shared/js/core/marketing-mail.js",
-  "web/shared/js/core/compose-mail.js",
 ];
 // Ekrany gry (§3.1): własne tokeny z prefiksem na :root, kolory gry tylko w nich.
 const GAME_PREFIX = {

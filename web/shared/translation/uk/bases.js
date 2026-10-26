@@ -107,10 +107,6 @@ const uk = {
       editor: "Редагування",
       viewer: "Читання",
     },
-    roles: {
-      editorBadge: "РЕДАГ.",
-      viewerBadge: "ЧИТ.",
-    },
     share: {
       remove: "Видалити",
       failed: "Не вдалося",

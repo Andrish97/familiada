@@ -2,7 +2,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-26T07194";
 import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-26T07194";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-26T07194";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-26T07194";
@@ -11,9 +11,6 @@ import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=
 import "../../shared/js/core/contact-modal.js?v=v2026-10-26T07194";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-26T07194";
-
-
-
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
@@ -98,7 +95,7 @@ async function initEmailNotificationsUi(user) {
         cancelText: t("common.modal.promptCancel"),
         danger: true,
       });
-    
+
       if (!ok) {
         emailNotificationsChk.checked = true;
         return;
@@ -118,7 +115,6 @@ async function initEmailNotificationsUi(user) {
     }
   });
 }
-
 
 // --- cooldowns (anti-spam) ---
 // Per-user (server-side) cooldown via RPC (cross-device).
@@ -278,7 +274,6 @@ async function handleMigrateSubmit() {
     const rawUsername = String(migrateUsername?.value || "").trim();
     const username = rawUsername ? validateUsername(rawUsername) : "";
 
-
     const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
     if (!reserve.ok) {
       const left = (reserve.nextAllowedAtMs || 0) - Date.now();
@@ -327,7 +322,6 @@ async function handleMigrateResend() {
           : t("auth.errResendCooldownGeneric")
       );
     }
-
 
     const language = getUiLang();
     const redirect = new URL("/login/confirm/", location.origin);
@@ -391,7 +385,6 @@ async function handleMigrateCancel() {
   }
 }
 
-
 // --- email change pending state ---
 let currentEmail = "";
 let pendingEmail = "";
@@ -446,7 +439,6 @@ function setEmailPendingUi(nextPendingEmail) {
   // cooldown may additionally disable resend (cancel is always allowed)
   tickCooldowns();
 }
-
 
 async function refreshAuthEmailState() {
   try {
@@ -681,7 +673,6 @@ async function handleEmailSave() {
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-
     const { error } = await sb().auth.updateUser(
       { email: normalizedMail, data: { language, familiada_email_change_pending: normalizedMail } },
       { emailRedirectTo: confirmUrl.toString() }
@@ -723,7 +714,6 @@ async function handleEmailResend() {
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-
     // Ta sama droga co pierwsza wysyłka (nowy token, nowy mail). auth.resend
     // szuka konta po obecnym adresie, więc z nowym kończył się "sukcesem" bez maila.
     const { error } = await sb().auth.updateUser(
@@ -761,7 +751,6 @@ async function handleEmailCancel() {
       setEmailPendingUi("");
       return;
     }
-
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj zniknął natychmiast
     setEmailPendingUi("");

@@ -19,9 +19,7 @@ import {
   buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
 } from "../../../shared/js/core/question-form.js?v=v2026-10-26T07194";
 
-
 const $ = (id) => document.getElementById(id);
-const btnBack = document.getElementById("btnBack");
 
 function setErr(msg) {
   setMessage($("qErr"), msg, "error");

@@ -12,7 +12,6 @@ import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v
 
 import { sendNotificationMail } from "../../shared/js/core/notify-mail.js?v=v2026-10-26T07194";
 
-
 function deviceTypeLabel(type) {
   if (type === "host") return t("control.shareDeviceModal.typeHost");
   if (type === "buzzer") return t("control.shareDeviceModal.typeBuzzer");
@@ -57,7 +56,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const btnAddLabel = document.getElementById("btnShareDeviceAddLabel");
   const btnSendClose = document.getElementById("btnShareDeviceSendClose");
   const btnSendCancel = document.getElementById("btnShareDeviceSendCancel");
-  const backBtn = document.getElementById("btnBack");
 
   if (!overlay || !sendOverlay || isGuest) {
     return { open: () => {}, openSend: () => {}, isGuest, refreshBadges: async () => ({}) };

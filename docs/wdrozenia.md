@@ -2388,3 +2388,15 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 2026-10-26: bramka Display na branchu 40247766872 ✓; po synchronizacji
 main unit 14/14 ✓. Zmiany main w Display/motywach to wyłącznie wersje URL.
+
+
+### 2026-10-26 — audyt kodu: rozpoczęcie realizacji
+
+Właściciel zatwierdził poprawki na gałęziach, po bramkach na produkcji.
+Plan: `docs/audyt-kodu-plan.md`. Paczka A usuwa potwierdzone martwe
+symbole, stare publiczne kopie modułów panelu, wybrane nieużywane API;
+szablon motywu przeniesiony poza web. Inicjalizatory dźwięku Control
+zachowane. Usunięte 2 martwe klucze tłumaczeń z PL/EN/UK. ESLint
+sprawdza 349 plików bez błędów; zapadka w unit. Testy punktowe: 37 zielonych
+w pierwszym zestawie, po usunięciu 2 kluczy cały zestaw i18n 8/8;
+nowa zapadka 1/1. Produkcja publiczna jeszcze bez zmian.

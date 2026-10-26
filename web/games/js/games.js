@@ -8,7 +8,7 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-26T07
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-26T07194";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-26T07194";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import { tabFromUrl, setTab, markActiveTab } from "../../shared/js/core/tabs.js?v=v2026-10-26T07194";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-26T07194";
@@ -21,11 +21,9 @@ import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v202
 import { openDialog, closeDialog, isOverlayOpen, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-26T07194";
 import { setMessage } from "../../shared/js/core/toast.js?v=v2026-10-26T07194";
 
-
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
-
 
 import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-26T07194";
 import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-26T07194';
@@ -47,7 +45,6 @@ import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-26T07194";
 import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-26T07194";
 import { setProgress, ratioPct } from "../../shared/js/core/ui-metrics.js?v=v2026-10-26T07194";
-
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -112,10 +109,9 @@ const MSG = {
 
 /* ================= DOM ================= */
 const grid = document.getElementById("grid");
-const whoStatic = document.getElementById("whoStatic");
+
 const hint = document.getElementById("hint");
 
-const btnLogout = document.getElementById("btnLogout");
 const btnInstall = document.getElementById("btnInstall");
 const btnEdit = document.getElementById("btnEdit");
 const btnPreview = document.getElementById("btnPreview");
@@ -125,9 +121,6 @@ const btnSettings = document.getElementById("btnSettings");
 
 const friendsBadge = document.getElementById("friendsBadge");
 const tasksBadge = document.getElementById("tasksBadge");
-const navMore = document.getElementById("navMore");
-const btnMore = document.getElementById("btnMore");
-const navMoreDropdown = document.getElementById("navMoreDropdown");
 
 const btnDuplicate = document.getElementById("btnDuplicate");
 const btnChangeType = document.getElementById("btnChangeType");
@@ -184,7 +177,6 @@ const importProgBar = document.getElementById("importProgBar");
 const importProgMsg = document.getElementById("importProgMsg");
 
 // Export do pliku progress (osobny overlay)
-
 
 /* ================= STATE ================= */
 let currentUser = null;
@@ -247,14 +239,7 @@ function stopAutoRefresh() {
 // DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
 
-
 /* ================= UI helpers ================= */
-function show(el, on) {
-  if (!el) return;
-  // atrybut hidden zamiast style.display (style inline biły się z regułami okien)
-  el.hidden = !on;
-  el.style.removeProperty("display");
-}
 
 const IOS_PROMPT_LS_KEY = "pwa:install_dismissed";
 
@@ -275,7 +260,6 @@ async function maybeShowIosWebappPrompt() {
 
   if (skipNextTime) localStorage.setItem(IOS_PROMPT_LS_KEY, "1");
 }
-
 
 function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError, done } = {}) {
   if (stepEl && step != null) {
@@ -1180,7 +1164,6 @@ async function updateActionState() {
   }
 }
 
-
 /* ================= Import/Export ================= */
 // Otwarta/zatrzymana ankieta przechodzi do pliku/kopii jako szkic -- bieżące
 // głosy nie zostaną zachowane (E21); bez zgody nic się nie dzieje.
@@ -1386,7 +1369,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   let badgesRefreshInFlight = null;
   let badgesRefreshTimer = null;
   let lastBadgesRefreshAt = 0;
@@ -1436,7 +1418,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") refreshBadges({ force: true });
   });
-
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
@@ -1816,8 +1797,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-
-
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
@@ -1924,7 +1903,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (importFile) importFile.disabled = false;
     }
   });
-
 
   // Stan zakładki jest częścią adresu, dzięki czemu link można odświeżyć
   // i udostępnić bez utraty kontekstu.

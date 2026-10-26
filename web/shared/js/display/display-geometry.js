@@ -67,7 +67,7 @@ const outerOval = {
 const outerLeft  = outerOval.x;
 const outerRight = outerOval.x + outerOval.w;
 const outerTop   = outerOval.y;
-const outerBottom = outerOval.y + outerOval.h;
+
 const innerLeft  = innerOval.x;
 const innerRight = innerOval.x + innerOval.w;
 const innerTop   = innerOval.y;

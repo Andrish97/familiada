@@ -1,7 +1,6 @@
 // js/core/db-guard.js
 import { sb } from "./supabase.js?v=v2026-10-26T07194";
 
-
 // Supabase/PostgREST UPDATE ... WHERE trafiający w 0 wierszy NIE zwraca
 // błędu — to mechanizm stojący za "cichym sukcesem" przy edycji czegoś,
 // co zostało usunięte w innym miejscu (ominięta blokada z resource-lock.js,
@@ -42,16 +41,3 @@ export async function updateChecked(table, match, patch) {
 // które już nie istnieją, więc UPDATE "udaje się" nawet gdy część zaznaczenia
 // zniknęła w międzyczasie gdzie indziej. Porównanie liczby zwróconych wierszy
 // z liczbą żądanych id wykrywa ten częściowy, cichy brak skutku.
-export async function updateCheckedMany(table, ids, patch, idColumn = "id") {
-  const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
-  if (!uniqueIds.length) return [];
-
-  const { data, error } = await sb().from(table).update(patch).in(idColumn, uniqueIds).select(idColumn);
-  if (error) throw error;
-  if (!data || data.length !== uniqueIds.length) {
-    const e = new Error(`updateCheckedMany: expected ${uniqueIds.length} rows in "${table}", got ${data?.length || 0}`);
-    e.code = ROW_GONE;
-    throw e;
-  }
-  return data;
-}

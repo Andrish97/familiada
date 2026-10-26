@@ -39,7 +39,6 @@ import {
   LOGO_OUT_ANIM,
 } from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-26T07194";
 
-
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
 export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
@@ -451,7 +450,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
             // animOut, nie po nim (animOut trwa tyle, ile realnie gra reveal
             // — kończą się razem, zamiast animOut na sztywną, niezależną
             // liczbę).
-            const revealMs = await timing.dur("reveal");
+            await timing.dur("reveal");
             // Ten sam powód co w gałęzi r_roundStart wyżej — totals mają być
             // aktualne od razu, nie dopiero po GAME_ENDED (osobny, późniejszy
             // klik "Zakończ grę"/"Pokaż koniec gry").

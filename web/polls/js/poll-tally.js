@@ -34,14 +34,8 @@ import { setProgress } from "../../shared/js/core/ui-metrics.js?v=v2026-10-26T07
 // Dotyk: bez przeciągania (page-init.js), scalanie tylko przyciskiem.
 const TOUCH = !!globalThis.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
-const PAGE = 1000;
-
-function nextFrame() {
-  return new Promise((resolve) => requestAnimationFrame(resolve));
-}
 
 function mk(tag, cls, html) {
   const el = document.createElement(tag);
@@ -65,7 +59,7 @@ export function createTally({ gameId, pollResults, ui }) {
   let mode = ""; // "" | "points" | "text"
   let model = []; // tekst: [{ question_id, ord, text, items:[{id,text,count}] }]
   let states = new Map(); // question_id -> { q, slot, rows: Map(itemId -> r), meta }
-  let nextId = 1;
+
   let undo = [];
   let redo = [];
   let sig = 0;
@@ -246,7 +240,7 @@ export function createTally({ gameId, pollResults, ui }) {
     mode = "text";
     model = loaded.model;
     sig = loaded.sig;
-    nextId = loaded.nextId;
+
     undo = [];
     redo = [];
     dirty = false;

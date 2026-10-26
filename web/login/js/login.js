@@ -35,7 +35,6 @@ import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../
 import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-26T07194";
 
-
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
 const pass = $("#pass");
@@ -66,8 +65,6 @@ let captchaLoadPromise = null;
 const LOGIN_CAPTCHA_FAIL_THRESHOLD = 3;
 const loginFailuresByIdentity = new Map();
 
-
-
 function isSecurityRelevantLoginError(e) {
   const code = String(e?.errorCode || "").trim().toLowerCase();
   if (code === "invalid_login_credentials") return true;
@@ -92,7 +89,6 @@ function isCaptchaError(e) {
   if (msg.includes("captcha")) return true;
   return false;
 }
-
 
 function getLoginFailureKey(loginOrEmail) {
   return String(loginOrEmail || "").trim().toLowerCase();
@@ -357,7 +353,6 @@ async function getSilentCaptchaToken() {
   }
 }
 
-
 async function askCaptchaToken() {
   if (!captchaSiteKey) return null;
   if (_visibleCaptchaInFlight) return _visibleCaptchaInFlight;
@@ -447,12 +442,11 @@ async function askCaptchaToken() {
   }
 }
 
-
 let mode = "login"; // login | register
 
 let isBusy = false;
 
-const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
+ // 1h
 const RESET_ACTION_KEY = "auth:reset_password";
 // Czas trwania cooldownu (1h) jest teraz DANE w mail_cooldown_policies
 // (migracja 288/293), nie parametrem wywołania -- stąd brak tu już
@@ -612,7 +606,6 @@ async function waitForUserSession({ maxMs = 2500, stepMs = 150 } = {}) {
   return null;
 }
 
-
 async function confirmDiscardGuestIfActive() {
   try {
     const current = await getUser();
@@ -704,7 +697,6 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   void alertModal({ text: t("index.pendingEmailResent") });
   return true;
 }
-
 
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
@@ -873,9 +865,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (forceAuth) {
     void alertModal({ text: t("index.forceAuthInfo") });
   }
-  
+
   const usernameForm = document.querySelector("#usernameForm");
-  
+
   usernameForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (isBusy) return;
@@ -1117,13 +1109,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isBusy) return;
     setBusy(true);
     setErr("");
-  
+
     const loginOrEmail = email.value.trim();
     if (!loginOrEmail) {
       setBusy(false);
       return setErr(t("auth.errResetMissingLogin"));
     }
-  
+
     try {
       // Nazwa użytkownika: Worker rozwiązuje nazwę, pilnuje cooldownu i wysyła
       // link -- adres e-mail konta nie trafia do przeglądarki.
@@ -1216,7 +1208,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   email.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
-  
+
     if (document.activeElement === email && e.shiftKey === false) {
       e.preventDefault();
       if (mode === "login") {
@@ -1251,18 +1243,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }, 400);
   });
-  
+
   pass.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-  
+
     if (mode === "register") {
       pass2.focus();
     } else {
       btnPrimary.click(); // 🔴 jedyne miejsce wywołania
     }
   });
-  
+
   pass2.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();

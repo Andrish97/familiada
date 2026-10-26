@@ -7,7 +7,7 @@ import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-26T07194";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-26T07194";
 import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-26T07194";
-import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-26T07194";
+import { gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-26T07194";
 import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-26T07194";
 
 import {
@@ -19,7 +19,7 @@ import {
 import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-26T07194";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-26T07194";
 import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-26T07194";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
+import { backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-26T07194";
 import "../../../shared/js/core/contact-modal.js?v=v2026-10-26T07194";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-26T07194";
@@ -887,7 +887,7 @@ async function boot() {
   });
   const txtTa = $("txtTa");
   const btnTxtImport = $("btnTxtImport");
-  const importOverlay = $("txtImportOverlay");
+
   const txtPreviewBody = $("txtPreviewBody");
   let txtPreviewTimer = 0;
   let importing = false;

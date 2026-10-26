@@ -8,7 +8,6 @@ import { setMessage } from "../../../shared/js/core/toast.js?v=v2026-10-26T07194
 import { iconText } from "../../../shared/js/core/icons.js?v=v2026-10-26T07194";
 import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metrics.js?v=v2026-10-26T07194";
 
-
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
 // -- ale WARTOŚCI biorą z kanonicznego źródła (game-validate.js), nie z
@@ -17,7 +16,6 @@ import { setProgress as setBar, ratioPct } from "../../../shared/js/core/ui-metr
 const TYPES = [GAME_TYPES.POLL_TEXT, GAME_TYPES.POLL_POINTS, GAME_TYPES.PREPARED];
 
 const $ = (id) => document.getElementById(id);
-const btnBack = document.getElementById("btnBack");
 
 function setErr(msg) {
   setMessage($("xErr"), msg, "error");
@@ -163,14 +161,14 @@ export function initExportModal() {
   function metaText(q, type) {
     const answers = qAnswers(q);
     const an = answers.length;
-  
+
     if (type === "poll_text") {
       return an
         ? t("baseExplorer.export.answersCount", { count: an })
         : t("baseExplorer.export.noAnswers");
     }
     if (type === "poll_points") return t("baseExplorer.export.answersCount", { count: an });
-  
+
     const s = sumPoints(answers);
     return t("baseExplorer.export.preparedSummary", { count: an, sum: s });
   }
@@ -226,7 +224,6 @@ export function initExportModal() {
     if (e.target !== cb) e.preventDefault();
     updateCountUI();
   });
-
 
   function showProgress(on) {
     if (xProg) xProg.hidden = !on;
@@ -312,7 +309,6 @@ export function initExportModal() {
     if (running) return;
     close({ ok: false });
   });
-
 
   xTypeRange?.addEventListener("input", () => {
     const idx = Number.parseInt(xTypeRange.value, 10);

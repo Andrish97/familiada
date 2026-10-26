@@ -25,9 +25,6 @@ function esc(s) {
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
 
-
-const btnBack = document.getElementById("btnBack");
-
 /* ================= Utils ================= */
 
 function canWrite(state) {

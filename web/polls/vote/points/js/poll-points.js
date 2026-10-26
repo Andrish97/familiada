@@ -1,11 +1,10 @@
 // js/pages/poll-points.js
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-26T07194";
-import { initI18n, t, getUiLang, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-26T07194";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-26T07194";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-26T07194";
 import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-26T07194";
-
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
 const i18nReady = initEntryPage("pollVotePoints", { ready: initI18n({ withSwitcher: true }) }).then(() => {
@@ -73,7 +72,6 @@ function redirectToRoot() {
 function showFinished() {
   if (finished) return;
   finished = true;
-
 
   const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
@@ -293,7 +291,7 @@ function render() {
   const q = questions[idx];
 
   if (titleEl) titleEl.textContent = game.name || MSG.pollFallback();
-  
+
   if (game.status !== "poll_open") {
     showClosed(true);
     setSub("");
@@ -401,7 +399,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showStatus(MSG.missingParams());
       return;
     }
-    
+
     // stan ankiety względem klucza z linku: zatrzymana / zakończona / link wygasł
     const linkState = await describeLinkState();
     if (linkState) {

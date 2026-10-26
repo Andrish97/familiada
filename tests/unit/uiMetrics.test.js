@@ -66,7 +66,7 @@ test("paski postępu i kolory z danych bez style.width / style.background", () =
 test("pomiary na żywo tylko przez core/geometry.js: zero stylów wpisywanych z JS", () => {
   const bad = [];
   const re = /\.style\.(?!setProperty|removeProperty|getPropertyValue)[a-zA-Z]+\s*=(?!=)|\.style\.cssText\s*=|Object\.assign\([\w.]*\.style\b/;
-  const skip = /^(shared\/vendor|admin\/tools|control\/display|shared\/js\/display)|(mail-document|marketing-mail|compose-mail)\.js$/;
+  const skip = /^(shared\/vendor|admin\/tools|control\/display|shared\/js\/display)/;
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);

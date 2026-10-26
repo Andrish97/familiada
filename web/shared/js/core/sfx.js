@@ -15,10 +15,6 @@ export function setCurrentGameId(gameId) {
   _currentGameId = gameId ?? null;
 }
 
-export function getCurrentGameId() {
-  return _currentGameId;
-}
-
 /* ========= MANIFEST ========= */
 
 let manifest = null;
@@ -424,12 +420,6 @@ export function isAnySfxPlaying() {
   return [...cache.values()].some(audio => !failedAudio.has(audio) && !audio.error && !audio.paused && !audio.ended);
 }
 
-export function debugSfx(key) {
-  const a = cache.get(key);
-  if (!a) { console.warn("[sfx debug]", key, "— NOT IN CACHE"); return; }
-  console.log("[sfx debug]", key, "| src:", a.src?.slice(-40), "| duration:", a.duration, "| paused:", a.paused, "| ended:", a.ended, "| error:", a.error?.code, "| readyState:", a.readyState, "| volume:", audioNodes.get(a)?.volume);
-}
-
 export function onSfxEnd(key, fn) {
   const a = cache.get(key);
   if (!a) return () => {};
@@ -478,53 +468,6 @@ export function stopSfxPreview(key = null) {
   if (!previewSfxKey || (key && previewSfxKey !== key)) return;
   stopSfx(previewSfxKey);
   previewSfxKey = null;
-}
-
-export function createSfxMixer() {
-  let audio = null;
-  let raf = null;
-  let _endedHandler = null;
-  const listeners = new Set();
-
-  function notify() {
-    if (!audio) return;
-    const t = audio.currentTime || 0;
-    const d = audio.duration || 0;
-    for (const fn of listeners) fn(t, d);
-  }
-  function tick() {
-    if (audio && !audio.paused) {
-      notify();
-      raf = requestAnimationFrame(tick);
-    }
-  }
-  return {
-    play(key) {
-      this.stop();
-      audio = cache.get(key);
-      if (!audio) return;
-      playSfxAudio(audio, _getEffectiveVolume(key)).catch(() => {});
-      // Fired when audio ends naturally — lets onTime listeners detect end even if last RAF tick missed it
-      _endedHandler = () => {
-        const d = audio?.duration || 0;
-        for (const fn of listeners) fn(d, d);
-      };
-      audio.addEventListener("ended", _endedHandler, { once: true });
-      raf = requestAnimationFrame(tick);
-    },
-    stop() {
-      if (raf) cancelAnimationFrame(raf);
-      raf = null;
-      if (audio) {
-        if (_endedHandler) { audio.removeEventListener("ended", _endedHandler); _endedHandler = null; }
-        stopSfxAudio(audio);
-      }
-      audio = null;
-    },
-    onTime(fn) { listeners.add(fn); return () => listeners.delete(fn); },
-    get time() { return audio ? audio.currentTime : 0; },
-    get duration() { return audio?.duration || 0; },
-  };
 }
 
 const durationPromises = new Map();
@@ -597,8 +540,6 @@ export async function unlockAudio() {
     return false;
   }
 }
-
-export function isAudioUnlocked() { return unlocked && audioContext?.state === "running"; }
 
 /* ========= INICJALIZACJA ========= */
 

@@ -16,7 +16,6 @@ import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js
 import { cardInner, gamePath, publicRow, questionsHtml, starsHtml, selectRows, syncMarketSeo } from "./public.js?v=v2026-10-26T07194";
 import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-26T07194";
 
-
 let initialPublic = null;
 try { initialPublic = JSON.parse(document.getElementById("marketBootstrap")?.textContent || "null"); }
 catch { /* Brak odcisku w lokalnym podglądzie: zwykły odczyt publicznego RPC. */ }
@@ -54,10 +53,6 @@ let lastDetailTrigger = null;
 // Podgląd i zgłoszenie otwarte z okna „Moje wysłane” wracają do niego po zamknięciu.
 let returnToMySent = false;
 let skipNextPopstate = false;
-
-function currentBackBtn() {
-  return els.btnGoGames;
-}
 
 /* =========================================================
    Elements
@@ -670,7 +665,6 @@ async function submitGame() {
   if (!title)     return showSubmitError(t("marketplace.submit.errorMissingTitle"));
   if (!confirmed) return showSubmitError(t("marketplace.submit.errorCheckbox"));
 
-
   if (els.btnSubmitConfirm) els.btnSubmitConfirm.disabled = true;
 
   let payload;
@@ -928,7 +922,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initBrowseUiSelects();
   window.addEventListener("i18n:lang", refreshBrowseSelectLabels);
 
-
   // init ui-select for game picker in submit modal
   submitGameUiSelect = initUiSelect(els.submitGameSelectEl, {
     placeholder: t("marketplace.submit.pickGamePlaceholder"),
@@ -939,7 +932,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   wireEvents();
   applyTranslations();
   restoreBrowseParams();
-
 
   document.querySelector(".topbar")?.classList.add("topbar-ready");
   await loadBrowse({ reset: true, hydrate: true });

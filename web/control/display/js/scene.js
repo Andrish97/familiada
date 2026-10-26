@@ -33,7 +33,6 @@ import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-26T07194";
 import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-26T07194";
 
-
 export async function createScene() {
   let animationGeneration = 0;
   const $ = (id) => document.getElementById(id);
@@ -419,7 +418,7 @@ export async function createScene() {
   const getBitRowMajor_MSB = (bytes, x, y, w) => { const bytesPerRow = Math.ceil(w/8); const byteIndex = y*bytesPerRow+(x>>3); if (byteIndex<0||byteIndex>=bytes.length) return 0; return (bytes[byteIndex]>>(7-(x&7)))&1; };
 
   const drawLogoPix150x70 = (bitsBase64, colorOn = LIT.main) => {
-    const W=150, H=70; const bytes = base64ToBytes(bitsBase64);
+    const W=150; const bytes = base64ToBytes(bitsBase64);
     clearArea(big, 1, 1, 30, 10);
     for (let ty=0;ty<10;ty++) for (let tx=0;tx<30;tx++) {
       const tile = tileAt(big, 1+tx, 1+ty); if (!tile) continue;
