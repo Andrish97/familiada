@@ -1,4 +1,4 @@
-import { createBoardTheme } from "./board.js?v=v2026-10-26T14464";
+import { createBoardTheme } from "./board.js?v=v2026-10-26T15085";
 
 export function createTheme(root) {
   return createBoardTheme(root);

@@ -1,13 +1,13 @@
 // js/core/game-validate.js
-import { sb } from "./supabase.js?v=v2026-10-26T14464";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-26T14464";
-import { showBlockingOverlay, isResourceBusy } from "./resource-lock.js?v=v2026-10-26T14464";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-26T14464";
+import { sb } from "./supabase.js?v=v2026-10-26T15085";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-26T15085";
+import { showBlockingOverlay, isResourceBusy } from "./resource-lock.js?v=v2026-10-26T15085";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-26T15085";
 
 
 // Typy, statusy, progi i evaluateReadiness: game-rules.js (bez zależności
 // od przeglądarki, testowane jednostkowo i porównywane z SQL).
-export { TYPES, STATUS, RULES, evaluateReadiness } from "./game-rules.js?v=v2026-10-26T14464";
+export { TYPES, STATUS, RULES, evaluateReadiness } from "./game-rules.js?v=v2026-10-26T15085";
 
 /** Przetłumaczony opis braku z evaluateReadiness / readiness bazy. */
 export const readinessText = (issue) => t(`gameValidate.${issue?.code || "unknownType"}`, issue?.params || {});
