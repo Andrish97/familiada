@@ -13,16 +13,16 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-26T01094";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-26T01094";
-import { rt } from "./realtime.js?v=v2026-10-26T01094";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-26T01094";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-26T01094";
-import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./direct-channel-ready.js?v=v2026-10-26T01094";
-import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-26T01094";
-import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-26T01094";
-import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-26T01094";
-import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-26T01094";
+import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-26T01354";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-26T01354";
+import { rt } from "./realtime.js?v=v2026-10-26T01354";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-26T01354";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-26T01354";
+import { createDirectReadiness, postgresSystemStatus, realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./direct-channel-ready.js?v=v2026-10-26T01354";
+import { createDoorbellGuard } from "./doorbell-guard.js?v=v2026-10-26T01354";
+import { createFallbackRevisionTracker } from "./fallback-revision-tracker.js?v=v2026-10-26T01354";
+import { createRevisionWatchdog } from "./revision-watchdog.js?v=v2026-10-26T01354";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-26T01354";
 
 const HEARTBEAT_REV_GRACE_MS = 700;
 
