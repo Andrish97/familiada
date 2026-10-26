@@ -6,8 +6,8 @@
 // Po przeciągnięciu przeglądarka wysyła jeszcze „click” — consumeClick()
 // pozwala go pominąć, żeby nie skasował zaznaczenia z ramki.
 
-import { isModKey } from "../platform.js?v=v2026-10-26T14191";
-import { setBox, anchorBox } from "../../../../shared/js/core/geometry.js?v=v2026-10-26T14191";
+import { isModKey } from "../platform.js?v=v2026-10-26T14264";
+import { setBox, anchorBox } from "../../../../shared/js/core/geometry.js?v=v2026-10-26T14264";
 
 /**
  * container   element przewijany z wierszami
