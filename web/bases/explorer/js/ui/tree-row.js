@@ -1,4 +1,4 @@
-import { escapeHtmlAttribute as esc } from "../../../../shared/js/core/html-escape.js?v=v2026-10-26T15085";
+import { escapeHtmlAttribute as esc } from "../../../../shared/js/core/html-escape.js?v=v2026-10-26T16023";
 export { esc };
 // base-explorerjs/ui/tree-row.js
 // Jeden wygląd drzewa folderów (decyzja użytkownika 2026-10-21): lewy panel
@@ -6,8 +6,8 @@ export { esc };
 // samymi klasami (.tree-row w base-explorer.css): linie prowadzące wcięć
 // z --depth, strzałka, folder otwarty/zamknięty, nazwa, kropki i liczba pytań.
 
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-26T15085";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-26T15085";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-26T16023";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-26T16023";
 
 
 /** Strzałka rozwijania (albo puste miejsce tej samej szerokości). */

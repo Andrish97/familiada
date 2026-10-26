@@ -1,7 +1,7 @@
 // Ten sam publiczny model i HTML w Workerze i w przeglądarce.
-import { iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-26T15085";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-26T15085";
-import { escapePublicHtml as esc, publicLang } from "../../shared/js/core/public-seo.js?v=v2026-10-26T15085";
+import { iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-26T16023";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-26T16023";
+import { escapePublicHtml as esc, publicLang } from "../../shared/js/core/public-seo.js?v=v2026-10-26T16023";
 export { esc };
 export const validSlug = (s) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(s || ""));
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
