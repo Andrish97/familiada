@@ -7,17 +7,17 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-26T12275";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-26T12275";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-26T12275";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-26T12543";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-26T12543";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-26T12543";
 
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-26T12275";
-import { createHostRenderer } from "./render.js?v=v2026-10-26T12275";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-26T12275";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-26T12275";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-26T12275";
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-26T12275";
-import { setShift } from "../../../shared/js/core/geometry.js?v=v2026-10-26T12275";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-26T12543";
+import { createHostRenderer } from "./render.js?v=v2026-10-26T12543";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-26T12543";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-26T12543";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-26T12543";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-26T12543";
+import { setShift } from "../../../shared/js/core/geometry.js?v=v2026-10-26T12543";
 
 function parseParams() {
   const u = new URL(location.href);

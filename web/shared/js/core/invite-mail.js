@@ -1,6 +1,6 @@
 // Maile zaproszeń (znajomi, subskrybenci) i kopii zasobów (E19): treść buduje
 // funkcja Edge send-mail z szablonów serwera; tutaj tylko akcja i token.
-import { sendNotificationMail } from "./notify-mail.js?v=v2026-10-26T12275";
+import { sendNotificationMail } from "./notify-mail.js?v=v2026-10-26T12543";
 
 // kind: "friend" | "subscriber"; token: z linku /go/?f=… albo /go/?s=…
 export async function sendInviteMail({ token, kind = "subscriber", actionKey, reminder = false }) {
