@@ -2581,3 +2581,9 @@ Najpierw wdrożenie bazy; usługa, Edge i prywatny panel są w przygotowaniu.
 - Produkcja: migracja 499 (40364266678), Edge z brancha 40364885686 i po scaleniu 40365541771, Lead Finder z brancha 40365081520 i po scaleniu 40365541841 — sukces.
 - Kontrola produkcyjna 40365320178: pule PL/EN/UK, 90 dotychczasowych gier Producenta, embedding384, podgląd 33 wzorców i odmowa API bez autoryzacji — sukces. Żadnego demo nie podmieniono danymi testowymi.
 - Panel prywatny PR familiada-server#4: 110 unit + 36 browser + build (40365385298), zrzuty 390/1400. Aktywacja i test funkcjonalny kolekcji w toku; końcowy wynik w prywatnym planie.
+
+### 2026-10-26 — pełny przebieg pytań zakończony
+- Zlecenia rzeczywiste: PL10/10 wygenerowanych, EN1/1 wyszukanych z uzupełnieniem AI (40365839031; sam etap tworzenia gry początkowo zatrzymany na formacie metadanych, bez ubytku puli).
+- Doprecyzowano metadane każdej gry i dodano jedną ograniczoną próbę naprawy formatu. Test regresji i pozostałe27 testów Python zielone. Wdrożenie poprawki z brancha 40367410175 — sukces.
+- 40367625496 — pełna kontrola produkcyjna zielona: zachowana pula wykorzystana do jednej niepublikowanej gry,10 pytań, nazwa i opis obecne. Bez ponownego zbierania i bez publikacji.
+- Odczyt 40366747863:33 wzorce,2378 kopii zgodnych z wzorcami; brak podmian demo. Interfejs głosów i walidacja typów/języków na produkcji w panelu prywatnym.
