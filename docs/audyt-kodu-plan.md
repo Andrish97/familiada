@@ -16,9 +16,9 @@
 
 | Paczka | Zakres | Stan |
 |---|---|---|
-| 0 | Przywrócenie dostępu do generatora w nawigacji panelu | gałąź prywatna, bramka testów |
-| A | Martwe moduły po migracji panelu, lokalne symbole i wybrane API, szablon motywu | do wykonania |
-| B | Wspólny cykl sesji ankiet tekstowych i punktowych | do wykonania |
+| 0 | Przywrócenie dostępu do generatora w nawigacji panelu | wdrożone, kontrola zakończona |
+| A | Martwe moduły po migracji panelu, lokalne symbole i wybrane API, szablon motywu | wdrożone, kontrola zakończona |
+| B | Wspólny cykl sesji ankiet tekstowych i punktowych | testy gałęzi |
 | C | Minifikacja wyników i odroczenie ciężkich funkcji publicznych | do wykonania |
 | D | Manifest panelu oraz przypięta synchronizacja wspólnych plików | repo prywatne |
 | E | Wspólne formatery, paginacja, załączniki i sprawdzanie profilu | do wykonania |

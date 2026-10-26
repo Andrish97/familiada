@@ -2,11 +2,10 @@
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-26T07194";
 import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-26T07194";
 import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-26T07194";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-26T07194";
+import { createPollVoteView, createPollVoteSession } from "../../../../shared/js/core/poll-vote-session.js?v=v2026-10-26T07194";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-26T07194";
 import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-26T07194";
 import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-26T07194";
-
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
 const i18nReady = initEntryPage("pollVoteText", { ready: initI18n({ withSwitcher: true }) }).then(() => {
@@ -60,102 +59,19 @@ const answerInput = $("answerInput");
 const btnSend = $("btnSend");
 const countEl = $("count");
 
-let finished = false;
 let submitting = false;
 
 // lokalny bufor odpowiedzi (wysyłka dopiero na końcu)
 let outbox = [];
 
-function redirectToRoot() {
-  setTimeout(() => {
-    void getUser().then((user) => {
-      location.replace(withLangParam(user ? "/games/" : "/"));
-    });
-  }, 5000);
-}
-
-function showFinished() {
-  if (finished) return;
-  finished = true;
-
-
-  const sub = document.getElementById("sub");
-  const qbox = document.getElementById("qbox");
-  const closed = document.getElementById("closed");
-
-  // chowamy całe UI pytań (input + hint + liczniki)
-  if (qbox) qbox.hidden = true;
-
-  // chowamy "ankieta zamknięta", bo to inny stan
-  if (closed) closed.hidden = true;
-
-  // pokazujemy tylko jedno podziękowanie
-  if (sub) sub.textContent = MSG.thanks();
-
-  redirectToRoot();
-}
-
-function setClosedMsg(msg) {
-  if (closed) closed.textContent = msg || "";
-}
-
-function setSub(t) {
-  if (subEl) subEl.textContent = t || "";
-}
-
-function showClosed(on) {
-  if (closed) closed.hidden = !on;
-  if (qbox) qbox.hidden = on;
-  if (on && subEl) subEl.hidden = true; // Hide loading sub when showing closed/error msg
-  else if (!on && subEl) subEl.hidden = false;
-  if (on) document.getElementById("closed")?.classList.add("skel-step-ready");
-}
-
-// Komunikat stanu (zamknięta / wygasła / brak): zawsze widoczny w bloku #closed.
-function showStatus(msg) {
-  showClosed(true);
-  setSub("");
-  setClosedMsg(msg);
-  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
-}
-
-// Stan ankiety względem klucza z linku (poll_state, anon): zatrzymana / zakończona /
-// link z wcześniejszego uruchomienia. Zwraca komunikat albo null, gdy ankieta
-// jest otwarta (albo stanu nie da się ustalić -- wtedy decyduje reszta strony).
-function stateMessage(state) {
-  if (state === "stopped") return MSG.pollStopped();
-  if (state === "ended") return MSG.pollEnded();
-  if (state === "expired" || state === "draft") return MSG.linkExpired();
-  if (state === "not_found") return MSG.pollNotFound();
-  return null;
-}
-
-async function describeLinkState() {
-  try {
-    const { data, error } = await sb().rpc("poll_state", { p_game_id: gameId, p_key: key });
-    if (error) {
-      const m = String(error.message || "");
-      if (m.includes("invalid input syntax")) return MSG.pollNotFound();
-      return null;
-    }
-    return stateMessage(data?.state);
-  } catch {
-    return null;
-  }
-}
-
-let taskVoterToken = null;
 let taskResolved = !taskToken;
-function getVoterToken() {
-  if (taskToken && taskVoterToken) return taskVoterToken;
-  const k = `fam_voter_${gameId}_${key}`;
-  let t = localStorage.getItem(k);
-  if (!t) {
-    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
-    localStorage.setItem(k, t);
-  }
-  return t;
-}
+const voteView = createPollVoteView({ qbox, closed, subEl, messages: MSG, getUser, withLangParam });
+const { setSub, setClosedMsg, showClosed, showStatus, showFinished } = voteView;
+const { describeLinkState, loadPayload, submitBatch, resolveTaskToken, markTaskDone, maybeReturnToHub } = createPollVoteSession({
+  type: "text", getClient: sb, messages: MSG, view: voteView, getUser,
+  readContext: () => ({ gameId, key, taskToken }),
+  resolveContext: data => { gameId = data.game_id; key = data.key; taskResolved = true; },
+});
 
 // normalizacja do porównań
 function norm(s) {
@@ -163,29 +79,6 @@ function norm(s) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
-}
-
-// timeout bez użycia promise.finally (żeby nie wpaść w “finally is not a function”)
-async function withTimeout(promiseLike, ms, errMsg) {
-  const p = Promise.resolve(promiseLike);
-
-  let timer = null;
-  const timeout = new Promise((_, rej) => {
-    timer = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
-  });
-
-  try {
-    return await Promise.race([p, timeout]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
-
-async function loadPayload() {
-  const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(req, 15000, MSG.loadTimeout());
-  if (error) throw error;
-  return data;
 }
 
 function validateAndPack(questionId, rawText) {
@@ -203,109 +96,8 @@ function validateAndPack(questionId, rawText) {
   };
 }
 
-let anonymousSubmit = null;
 let retryAt = 0;
 let stopRetry = null;
-async function submitBatch(items) {
-  if (!taskToken) {
-    anonymousSubmit ||= createAnonymousSubmitter({ gameId, key, client: sb() });
-    return anonymousSubmit(items);
-  }
-  const voter = getVoterToken();
-
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-  const callOnce = async (chunk) => {
-    const req = sb().rpc("poll_text_submit_batch", {
-      p_game_id: gameId,
-      p_key: key,
-      p_voter_token: voter,
-      p_items: chunk,
-    });
-    const { error } = await withTimeout(req, 30000, MSG.loadTimeout());
-    if (error) throw error;
-  };
-
-  const callWithRetry = async (chunk, attempt = 1) => {
-    try {
-      await callOnce(chunk);
-    } catch (e) {
-      if (attempt >= 3) throw e;
-      await sleep(650 * attempt);
-      return callWithRetry(chunk, attempt + 1);
-    }
-  };
-
-  const CHUNK = 25;
-  const total = Array.isArray(items) ? items.length : 0;
-  for (let i = 0; i < total; i += CHUNK) {
-    const part = items.slice(i, i + CHUNK);
-    if (subEl) subEl.textContent = `${MSG.sending()} (${Math.min(i + CHUNK, total)}/${total})`;
-    await callWithRetry(part);
-  }
-}
-
-async function markTaskDone() {
-  if (!taskToken) return; // anon flow
-  try {
-    await sb().rpc("poll_task_done", { p_token: taskToken });
-  } catch (e) {
-    // nie blokujemy użytkownika — to tylko „miękka” synchronizacja taska
-    console.warn("[poll-text] poll_task_done failed:", e);
-  }
-}
-
-async function maybeReturnToHub(){
-  if (!taskToken) return;
-  try{
-    const u = await getUser();
-    if (!u) return;
-    setTimeout(() => { location.href = "/tasks/"; }, 650);
-  }catch{}
-}
-
-async function markTaskOpened() {
-  if (!taskToken) return;
-  try {
-    await sb().rpc("poll_task_opened", { p_token: taskToken });
-  } catch (e) {
-    console.warn("[poll-text] poll_task_opened failed:", e);
-  }
-}
-
-async function resolveTaskToken() {
-  if (!taskToken) return;
-  try {
-    const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
-    if (error) throw error;
-    if (data && data.ok === false) {
-      const msgs = {
-        poll_closed: MSG.pollEnded(),
-        poll_stopped: MSG.pollStopped(),
-        already_done: MSG.inviteDone(),
-      };
-      showStatus(msgs[data.error] || MSG.inviteExpired());
-      return;
-    }
-    if (!data?.ok || data?.kind !== "task") throw new Error(MSG.taskInvalid());
-    if (data.requires_auth) {
-      showStatus(MSG.loginToVote());
-      return;
-    }
-    if (data.needs_email) {
-      showStatus(MSG.emailRequired());
-      return;
-    }
-    gameId = data.game_id;
-    key = data.key;
-    taskVoterToken = data.voter_token;
-    taskResolved = true;
-    await markTaskOpened();
-  } catch (e) {
-    console.error("[poll-text] task resolve error:", e);
-    showStatus(MSG.openTaskFail());
-  }
-}
 
 let payload = null;
 let idx = 0;
@@ -330,7 +122,7 @@ function render() {
 
   if (!q) {
     // koniec pytań: wysyłka jednorazowa
-    if (submitting || finished || Date.now() < retryAt) return;
+    if (submitting || voteView.finished || Date.now() < retryAt) return;
     stopRetry?.(); stopRetry = null;
 
     submitting = true;
@@ -378,7 +170,7 @@ function render() {
 window.addEventListener("i18n:lang", () => {
   if (payload) {
     render();
-  } else if (!finished) {
+  } else if (!voteView.finished) {
     setSub(MSG.loading());
   }
 });
@@ -390,7 +182,7 @@ function updateCount() {
 
 function setupBeforeUnloadWarn() {
   window.addEventListener("beforeunload", (e) => {
-    if (finished) return;
+    if (voteView.finished) return;
     if (!outbox.length) return;
     // przeglądarki iOS/Chrome ignorują czasem własny tekst, ale sam alert działa
     e.preventDefault();
@@ -466,7 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     btnSend?.addEventListener("click", async () => {
-      if (finished || submitting) return;
+      if (voteView.finished || submitting) return;
 
       const q = (payload?.questions || [])[idx];
       if (!q) { render(); return; }

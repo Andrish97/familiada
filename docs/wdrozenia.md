@@ -2400,3 +2400,22 @@ zachowane. Usunięte 2 martwe klucze tłumaczeń z PL/EN/UK. ESLint
 sprawdza 349 plików bez błędów; zapadka w unit. Testy punktowe: 37 zielonych
 w pierwszym zestawie, po usunięciu 2 kluczy cały zestaw i18n 8/8;
 nowa zapadka 1/1. Produkcja publiczna jeszcze bez zmian.
+
+
+### 2026-10-26 — audyt A: produkcja zamknięta; B: wspólna sesja ankiet
+
+Paczka A: gałąź 40290483897 (nawigacja/Wskazówki 2 E2E + 5 unit)
+i 40290486636 (Control Mute 1 E2E + 3 unit) success. Pages 40290943100
+success, wersje e67d6cf2. Kontrola produkcji 40291423978 i 40291426653
+success — te same scenariusze. 20 ujęć desktop oraz 14 dozwolonych ujęć
+telefonu obejrzane. Cztery dodatkowe ujęcia wymuszonego telefonu pokazują
+zamierzone blokady edytorów logo i Control; nie są zaliczone jako gotowe sceny.
+
+B wydziela wspólne rozpoznawanie linku/zaproszenia, ładowanie, porcjowanie,
+ponawianie i finalny widok obu typów ankiet. Renderowanie, walidacja i bufor
+odpowiedzi pozostają w stronach. Lokalnie 19/19 punktowych testów, w tym
+9 nowych przypadków sesji, plus surowy thenable bez finally 1/1. 10 stanów
+formularzy/ponawiania/zatrzymania i 4 podziękowania 390/1400 obejrzane.
+Dawne sceny podziękowań czekały na style.display, choć strony już przed
+refaktorem używały hidden; poprawiono oczekiwanie scen i powtórzono tylko
+4 nieudane ujęcia. Aplikacja bez wyjątków dla zrzutów. Bramka B przed wdrożeniem.
