@@ -1,3 +1,4 @@
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-26T13185";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-26T13185";
 import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-26T13185";
 import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-26T13185";
@@ -472,12 +473,6 @@ function startEmailStateWatcher() {
   emailStateTimer = setInterval(tick, 30_000);
 }
 
-// Cudze profile nie są czytelne (migracja 445) -- zajętość nazwy sprawdza RPC.
-async function ensureUsernameAvailable(username) {
-  const { data: taken, error } = await sb().rpc("username_taken", { p_username: username });
-  if (error) throw error;
-  if (taken) throw new Error(t("auth.errUsernameTaken"));
-}
 
 async function loadUserRating(userId) {
   const container = document.getElementById("userRatingInfo");

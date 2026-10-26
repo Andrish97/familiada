@@ -2460,3 +2460,13 @@ gry w Marketplace); uzupełnienie aktualizacji języka okna Kontaktu
 40322797056 success (wysłanie gry), public-loading/support-modal 40323281347 success.
 Pierwszy runner tego przebiegu 40322794337 utknął na instalacji Chromium;
 ponowiono bez zmiany aplikacji. Paczka C zakończona.
+
+
+### 2026-10-26 — audyt E: wspólne sprawdzanie nazwy użytkownika
+
+Gałąź `refactor/shared-helpers-20261026`: Konto i Logowanie używają jednej
+implementacji w `shared/js/core/username-availability.js`. Zachowano
+identyczną nazwę RPC, komunikat zajętej nazwy i przekazywanie błędu.
+Lokalne 9/9 punktowych unit i cztery zrzuty 390/1400. Atrapa Logowania
+zwraca istniejący błąd ładowania zewnętrznego Turnstile; widok pozostaje
+czytelny. Test gałęzi oraz produkcja jeszcze przed nami.

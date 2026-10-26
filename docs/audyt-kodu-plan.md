@@ -29,3 +29,9 @@ Pełny raport z prywatnymi szczegółami pozostaje artefaktem sesji, nie publiku
 go w publicznym repo. Każda paczka kończy się wpisem w `wdrozenia.md` z wynikami
 gałęzi, wdrożenia i kontroli. Pomiary wydajności porównywać na tych samych trasach,
 jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
+
+- 2026-10-26: E rozpoczęte na `refactor/shared-helpers-20261026`.
+  Identyczne RPC `username_taken` z Konta i Logowania przeniesione do
+  `core/username-availability.js`; rozstrzygnięcie unikalności przy zapisie
+  nadal należy do bazy. Reszta E (formatowanie przerwy, paginacja, załączniki)
+  wymaga osobnych adapterów i bramek.
