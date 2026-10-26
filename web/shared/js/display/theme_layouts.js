@@ -1,4 +1,4 @@
-import { ARTWORK } from "./theme_artwork.js?v=v2026-10-26T14264";
+import { ARTWORK } from "./theme_artwork.js?v=v2026-10-26T14432";
 
 const BACKGROUNDS = { wings: "#152238", radar: "#103d43", cabinet: "#352719", ribbon: "#36233f", bridge: "#252e35" };
 const LONG_PANEL_OFFSET = { wings: 16, radar: 10, ribbon: 10, bridge: 10 };
