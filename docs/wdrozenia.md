@@ -5,16 +5,16 @@ jakim jest stanie. **Decyzje i szczegóły nie są tutaj**, tylko w plikach
 tematycznych (niżej „Źródła”), a ten plik do nich odsyła. Dzięki temu po
 utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
-## Motywy wyświetlacza — 2026-10-25
+## Motywy wyświetlacza — wdrożone 2026-10-26
 
-Użytkownik zaakceptował podgląd v7 i zlecił wdrożenie. Na branchu
-`codex/display-themes-modern-motion`: Skrzydła, Radar, Kaseton, Wstęga,
-Most oraz szczeliny Modern wychodzące spod górnego licznika symetrycznie w dół.
+Zaakceptowany podgląd v7: Skrzydła, Radar, Kaseton, Wstęga, Most oraz
+szczeliny Modern wychodzące spod górnego licznika symetrycznie w dół.
 Kontrolki w konstrukcji; domyślne tło opcjonalne, kolory A/B zachowane.
-Pierwsze propozycje Neon/Studio/Złoty odrzucone i usunięte.
-Test Chromium geometrii sześciu paneli, animacji i koloru kontrolek: 1/1.
-Unit punktowo: 43/43. Zrzuty wszystkich motywów i ustawień 390/1400 px.
-E2E brancha 40246237871: 2/2 ✓; trwa wdrożenie Pages i kontrola produkcji. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
+Sześć wyświetlaczy treści bez zmian. Classic pozostaje domyślny.
+Pages 40246463317 i 40247875596 ✓. Bramka brancha 40246237871 2/2 ✓,
+po poprawce startu Display 40247766872 ✓. Produkcyjne ustawienia
+40246531710 ✓ i końcowy Display 40247923010 ✓. Zrzuty oraz Wskazówki
+PL/EN/UK gotowe. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
 
 ## Zasady
 
@@ -239,6 +239,25 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    Codex: przypomnień nie ma — wystarczy Dziennik.
 
 ## Dziennik
+
+### 2026-10-26 — motywy wyświetlacza: zakończone na produkcji
+
+- Pięć zaakceptowanych konstrukcji tablicy i animacja Modern z podglądu v7.
+  Zmiana motywu ustawia opcjonalne domyślne tło; A/B i kropki pozostają.
+  Własne tło zachowane przy otwarciu gry i ponownym wyborze tego samego motywu.
+- Zrzuty sześciu motywów i ustawień desktop/telefon, Wskazówki PL/EN/UK.
+  Bramka brancha 40246237871 2/2 ✓, Pages 40246463317 ✓,
+  produkcyjny zapis ustawień 40246531710 ✓.
+- Diagnostyka Display potwierdziła, że błąd zewnętrznego modułu Cloudflare
+  zablokowanego przez CSP uruchamiał guard startu i przeładowania strony.
+  Guard ograniczony do modułów własnej domeny, polityka CSP bez zmian.
+  Unit regresji/motywów/wersji 14/14 ✓, bramka 40247766872 ✓,
+  publikacja poprawki Pages 40247875596 ✓ (`c31fa676` po wersjach CI).
+- Końcowa kontrola Display na produkcji 40247923010 **1/1 ✓**:
+  siedem motywów, treść i geometria sześciu paneli, kolor kontrolki,
+  wychodzenie szczelin spod górnego licznika i ograniczony ruch.
+  Bez pętli przeładowań przy blokadzie skryptu statystyk.
+- Etap zamknięty; szczegóły w `docs/motywy-wyswietlacza.md`.
 
 ### 2026-10-26 — motywy: kontrola produkcji i odzyskiwanie startu
 

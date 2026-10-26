@@ -22,25 +22,27 @@ Użytkownik zaakceptował podgląd v7 i polecił wdrożenie.
 - Pierwsze propozycje Neon/Studio/Złoty oraz falowanie poziomych pasków
   zostały odrzucone i nie są częścią wdrożenia.
 
-## Stan
+## Stan — wdrożone 2026-10-26
 
-Implementacja na `codex/display-themes-modern-motion`. Unit punktowo 43/43,
-po scaleniu 25/25, Chromium lokalnie 1/1. E2E brancha 40246237871: 2/2,
-zapis wszystkich motywów, własnego tła i kolorów drużyn; scena Display.
-Po testach dopisane wersje URL rejestru motywów (zgodne z istniejącym Host).
-Zrzuty 6 motywów 1400 px oraz ustawień 390/1440 px, PL/EN/UK.
-Wdrożenie według bramek z `AGENTS.md`.
+Pięć nowych motywów oraz zaakceptowana animacja Modern są na produkcji.
+Classic pozostaje domyślny. Wskazówki i etykiety zaktualizowane w PL/EN/UK.
+Zrzuty sześciu motywów 1400 px i ustawień 390/1440 px we wszystkich językach.
 
-Pages 40246463317 success. Produkcyjny zapis ustawień w 40246531710 success;
-Display przerwany na inicjalizacji testu przez nawigację. Test importował
-niewersjonowany scene.js obok wersjonowanego grafu strony. Poprawiony import
-używa wersji entrypointu; do powtórzenia wyłącznie Display.
+- Bramka brancha 40246237871: 2/2 ✓ — scena Display i zapis ustawień.
+- Pages 40246463317 ✓ — motywy. Produkcyjny zapis ustawień
+  40246531710 ✓ — domyślne tła pięciu motywów, niezmienione A/B,
+  własne tło po przeładowaniu i wyłączony wybór tła w Modern.
+- Kontrola Display ujawniła niezależny błąd guardu startu: zewnętrzny
+  moduł statystyk Cloudflare, blokowany przez CSP, wywoływał retry strony.
+  Guard reaguje teraz wyłącznie na moduły z własnej domeny. CSP bez zmian.
+  Import sceny w teście używa tej samej wersji URL co entrypoint strony;
+  test czeka na gotowość podglądu. Diagnostyka zachowana w specu.
+- Regresja guardu unit oraz motywy/wersje/konflikty: 14/14 ✓.
+  Bramka Display po poprawce 40247766872 ✓, Pages 40247875596 ✓.
+- Końcowa kontrola produkcyjna Display 40247923010: 1/1 ✓ — wszystkie
+  siedem motywów, geometria i treść sześciu paneli, kierunek i ruch
+  szczelin, zatrzymanie przy ograniczonym ruchu, rzeczywisty kolor
+  kontrolki drużyny, brak przeładowań wywołanych zewnętrznym modułem.
 
-Kontrola Display nadal wykazała nawigację po 1/3 s (40247368747).
-Diagnostyka: blokowany przez CSP zewnętrzny skrypt Cloudflare. Guard
-startu ograniczony do modułów z własnej domeny; regresja unit obejmuje
-zewnętrzny błąd bez zużywania budżetu prób i nadal działający retry aplikacji.
-Unit 14/14; bramka brancha i kontrola Display pozostają do wykonania.
-
-2026-10-26: bramka Display na branchu 40247766872 ✓; po synchronizacji
-main unit 14/14 ✓. Zmiany main w Display/motywach to wyłącznie wersje URL.
+Wcześniejsze diagnostyczne próby Display (40246843691, 40247144128,
+40247368747) nie były zielone; zamyka je poprawka guardu i końcowy przebieg.
