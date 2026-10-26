@@ -42,6 +42,7 @@ const pl = {
       defaultHint: "Jeśli nie wpiszesz nazw drużyn, zostaną pokazane domyślne wartości: {a} i {b}",
     },
     display: {
+      backgroundUnused: "Ten motyw korzysta z kolorów drużyn i nie używa koloru tła.",
       logo: "Logo",
       logoDefault: "Domyślne",
       logoLoading: "Ładowanie logo…",

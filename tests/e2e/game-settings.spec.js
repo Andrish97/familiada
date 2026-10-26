@@ -278,6 +278,46 @@ test("ustawienia gry: drużyny — zapis nazw persystuje po przeładowaniu stron
   }
 });
 
+test("ustawienia gry: nowe motywy — domyślne tła, zachowane kolory drużyn i własne tło po przeładowaniu", async ({ page, context, accounts, loginAs }) => {
+  test.setTimeout(180_000);
+  await loginAs(page, context, accounts.standard[0]);
+  const gameId = await createGame(page, { settings: { display: { colors: { A: "#25a56a", B: "#ef8e24", BACKGROUND: "#123456", DOT: "#d7ff3d" } } } });
+  try {
+    await openSettings(page, gameId);
+    for (const [key, label, bg] of [["wings", "Skrzydła", "#152238"], ["radar", "Radar", "#103d43"], ["cabinet", "Kaseton", "#352719"], ["ribbon", "Wstęga", "#36233f"], ["bridge", "Most", "#252e35"]]) {
+      await switchTab(page, "display");
+      await page.locator("#gsThemeSelect .ui-select-btn").click();
+      await page.locator(`#gsThemeSelect [role="option"][data-value="${key}"]`).click();
+      await expect(page.locator("#gsThemeSelect .ui-select-label")).toHaveText(label);
+      await saveAndWait(page);
+      const saved = (await getGameRow(page, gameId)).settings.display;
+      expect(saved.theme).toBe(key);
+      expect(saved.colors.BACKGROUND.toLowerCase()).toBe(bg);
+      expect(saved.colors.A.toLowerCase()).toBe("#25a56a");
+      expect(saved.colors.B.toLowerCase()).toBe("#ef8e24");
+      await page.reload();
+      await expect(page.locator("#gsContentInner")).toBeVisible();
+      await switchTab(page, "display");
+      await expect(page.locator("#gsThemeSelect .ui-select-label")).toHaveText(label);
+    }
+    await page.locator('.swatchBtn[data-color-key="BACKGROUND"]').click();
+    const modal = page.locator(".uni-modal:has(#gsColorHex)");
+    await page.locator("#gsColorHex").fill("345678");
+    await page.locator("#gsColorHex").press("Tab");
+    await modal.locator(".uni-foot .btn.gold").click();
+    await saveAndWait(page);
+    await page.reload();
+    await expect(page.locator("#gsContentInner")).toBeVisible();
+    expect((await getGameRow(page, gameId)).settings.display.colors.BACKGROUND.toLowerCase()).toBe("#345678");
+    await switchTab(page, "display");
+    await page.locator("#gsThemeSelect .ui-select-btn").click();
+    await page.locator('#gsThemeSelect [role="option"][data-value="modern"]').click();
+    await expect(page.locator('.swatchBtn[data-color-key="BACKGROUND"]')).toBeDisabled();
+    await saveAndWait(page);
+    expect((await getGameRow(page, gameId)).settings.display.colors.BACKGROUND.toLowerCase()).toBe("#345678");
+  } finally { await deleteGame(page, gameId); }
+});
+
 test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do settings", async ({ page, context, accounts, loginAs }) => {
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);

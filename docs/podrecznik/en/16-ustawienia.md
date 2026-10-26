@@ -37,7 +37,12 @@ be accepted.
 
 - **Colors** — the Team A color, the Team B color, the background and the dot color (the glowing points of
   the Display). Click a color to enter a color code or set it with the sliders.
-- **Theme** — "Classic" (default) or "Modern".
+- **Theme** — "Classic" (default), "Modern", "Wings", "Radar", "Cabinet", "Ribbon" or "Bridge".
+  Modern has two animated gaps: the segments emerge below the top counter and travel
+  down both sides. The new themes integrate team indicators into their structure.
+  Choosing a theme with a default background sets that color; you can change it afterwards.
+  Modern does not use the background color. Your team and dot colors are preserved.
+  The system reduced motion setting disables these animations.
 - **Logo** — "Default" or one of your logos (→ 8).
 - **Host logo** — how the logo looks on the host screen:
   - "Pixels" — the same as on the Display, made of dots,
@@ -47,6 +52,7 @@ be accepted.
 
   The Display always shows the logo made of dots, because it is a dot screen.
 
+![Choosing a display theme](zrzut:settings-theme-wings)
 ![Appearance](zrzut:appearance)
 ![Colour window](zrzut:game-settings-color)
 ![Host logo — “Pixels”](zrzut:game-settings-display-pixel)

@@ -5,6 +5,17 @@ jakim jest stanie. **Decyzje i szczegóły nie są tutaj**, tylko w plikach
 tematycznych (niżej „Źródła”), a ten plik do nich odsyła. Dzięki temu po
 utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
+## Motywy wyświetlacza — 2026-10-25
+
+Użytkownik zaakceptował podgląd v7 i zlecił wdrożenie. Na branchu
+`codex/display-themes-modern-motion`: Skrzydła, Radar, Kaseton, Wstęga,
+Most oraz szczeliny Modern wychodzące spod górnego licznika symetrycznie w dół.
+Kontrolki w konstrukcji; domyślne tło opcjonalne, kolory A/B zachowane.
+Pierwsze propozycje Neon/Studio/Złoty odrzucone i usunięte.
+Test Chromium geometrii sześciu paneli, animacji i koloru kontrolek: 1/1.
+Unit punktowo: 43/43. Zrzuty wszystkich motywów i ustawień 390/1400 px.
+E2E brancha 40246237871: 2/2 ✓; trwa wdrożenie Pages i kontrola produkcji. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
+
 ## Zasady
 
 Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —

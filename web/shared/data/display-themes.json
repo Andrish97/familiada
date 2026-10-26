@@ -8,9 +8,10 @@
         "en": "Classic",
         "uk": "Класична"
       },
-      "module": "./theme_classic.js?v=v2026-10-25T22543",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-25T22543"
-
+      "module": "./theme_classic.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-25T23493",
+      "defaultBackground": "#d21180",
+      "usesBackground": true
     },
     {
       "key": "modern",
@@ -19,9 +20,69 @@
         "en": "Modern",
         "uk": "Сучасна"
       },
-      "module": "./theme_modern.js?v=v2026-10-25T22543",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T22543"
-
+      "module": "./theme_modern.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": false
+    },
+    {
+      "key": "wings",
+      "label": {
+        "pl": "Skrzydła",
+        "en": "Wings",
+        "uk": "Крила"
+      },
+      "module": "./theme_wings.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": true,
+      "defaultBackground": "#152238"
+    },
+    {
+      "key": "radar",
+      "label": {
+        "pl": "Radar",
+        "en": "Radar",
+        "uk": "Радар"
+      },
+      "module": "./theme_radar.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": true,
+      "defaultBackground": "#103d43"
+    },
+    {
+      "key": "cabinet",
+      "label": {
+        "pl": "Kaseton",
+        "en": "Cabinet",
+        "uk": "Панель"
+      },
+      "module": "./theme_cabinet.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": true,
+      "defaultBackground": "#352719"
+    },
+    {
+      "key": "ribbon",
+      "label": {
+        "pl": "Wstęga",
+        "en": "Ribbon",
+        "uk": "Стрічка"
+      },
+      "module": "./theme_ribbon.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": true,
+      "defaultBackground": "#36233f"
+    },
+    {
+      "key": "bridge",
+      "label": {
+        "pl": "Most",
+        "en": "Bridge",
+        "uk": "Міст"
+      },
+      "module": "./theme_bridge.js?v=v2026-10-25T23493",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-25T23493",
+      "usesBackground": true,
+      "defaultBackground": "#252e35"
     }
   ]
 }
