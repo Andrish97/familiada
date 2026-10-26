@@ -23,7 +23,7 @@
 | D | Manifest panelu oraz przypięta synchronizacja wspólnych plików | wdrożone w repo prywatnym; 6 nieużywanych kopii usuniętych, dalsze kandydatury do oceny |
 | E | Wspólne formatery, paginacja, załączniki, profil i ucieczka HTML | wdrożone, kontrola zakończona |
 | F | Wspólny transport dostawców maili i porównywanie sekretów Edge | wdrożone, kontrola zakończona |
-| G | Cache zasobów, Wskazówki, ładowanie admina i eksport baz | Wskazówki, eksport i część admina wdrożone; hash zasobów oraz pełny podział kart otwarte |
+| G | Cache zasobów, Wskazówki, ładowanie admina i eksport baz | Cache, Wskazówki, eksport i część admina wdrożone; pełny podział kart otwarty |
 
 Pełny raport z prywatnymi szczegółami pozostaje artefaktem sesji, nie publikujemy
 go w publicznym repo. Każda paczka kończy się wpisem w `wdrozenia.md` z wynikami
@@ -88,10 +88,7 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   (Pages 40332636956, produkcyjny E2E 40332841986). O5: prywatne
   odpytywanie przerwy ograniczone do widocznej aktywnej karty, a kod
   generatora ładowany przy wejściu do jego zakładki. Dalsze karty panelu
-  wymagają osobnego podziału inicjalizacji. O3 pozostaje otwarte:
-  istniejący globalny znacznik unieważnia również niezmienione assety.
-  Zmiana na hashe treści wymaga jednoczesnej obsługi grafu importów ES,
-  service workera i otwartych sesji gry; nie wdrażano jej bez takiej bramki.
+  wymagają osobnego podziału inicjalizacji. O3 opisane niżej.
 
 - 2026-10-26: G/O3 na `perf/content-hash-assets-20261026`:
   artefakt Pages otrzymuje wersje `?v=h<hash>` liczone z końcowej,
@@ -101,4 +98,11 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   znacznikiem dały identyczne hashe wszystkich niezmienionych JS/CSS oraz
   zasobów binarnych; różnił się tylko HTML z metadanymi wydania. Worker
   nadal rozpoznaje `?v=` jako zasób z cache immutable. Przed publikacją
-  konieczne są testy gałęzi na tym samym artefakcie i kontrola produkcji.
+  gałąź 40342177096 przeszła testy artefaktu. Pages 40342368188
+  i ponowne wdrożenie bez zmiany źródeł 40342770947 przeszły.
+  Publiczne URL-e Supabase JS, `page-boot.js` i favicon pozostały
+  identyczne między wydaniami; wersjonowany JS ma nagłówek
+  `Cache-Control: public, max-age=31536000, immutable`.
+  Produkcyjny E2E 40343062740 i lokalny Chromium przeszły 4/4 scenariusze
+  Wskazówek, Kontaktu i podglądu obrazu. Pozostałe nierozbite karty admina oraz
+  nieweryfikowane kandydatury plików panelu są opisane w prywatnym repo.

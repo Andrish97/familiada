@@ -2501,6 +2501,17 @@ znaczniki wersji dopisywane do mapy importów przez wdrożenie.
 
 Gry, Bazy i Eksplorator korzystają z jednego helpera ucieczki HTML.
 Gałąź 40339424908, Pages 40339663570 i produkcyjny E2E 40339780563
-przeszły. Pozostały globalne unieważnianie cache niezmienionych assetów
-oraz pełny podział inicjalizacji zakładek panelu; te zmiany wymagają
-osobnych bramek zgodności importów, service workera i otwartych sesji.
+przeszły. Pełny podział inicjalizacji zakładek panelu pozostaje do wykonania.
+
+
+### 2026-10-26 — audyt G/O3: stabilny cache niezmienionych zasobów
+
+Wynikowy artefakt Pages używa `?v=h<hash>` liczonego z minifikowanej
+treści i zależności importów. Jawny `asset-hashes.json` ułatwia kontrolę.
+Testy gałęzi 40342177096 oraz Pages 40342368188 przeszły. Drugie
+wdrożenie 40342770947 także przeszło: URL-e Supabase JS, `page-boot.js`
+i favicon pozostały dokładnie takie same; nagłówek wersjonowanego JS
+to `Cache-Control: public, max-age=31536000, immutable`. Produkcyjny
+E2E 40343062740 i lokalny Chromium przeszły 4/4 scenariusze Wskazówek, Kontaktu
+i podglądu obrazu. HTML pozostaje świeży, a niewersjonowane żądanie
+stanu przerwy używa `no-store`.
