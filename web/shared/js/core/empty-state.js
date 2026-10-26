@@ -1,3 +1,4 @@
+import { escapeHtmlText as escapeHtml } from "./html-escape.js";
 // js/core/empty-state.js
 // Pusty stan (.empty-state w silniku, E23 §6.2): jeden sposób budowania
 // komunikatu „nic tu nie ma” w listach, oknach i panelach.
@@ -11,7 +12,6 @@ function classes(variant, hook) {
   return ["empty-state", variant && `empty-state--${variant}`, hook].filter(Boolean).join(" ");
 }
 
-const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 /** Element pustego stanu. */
 export function emptyState(text, { variant = "", hook = "", tag = "div" } = {}) {

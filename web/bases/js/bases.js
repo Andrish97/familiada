@@ -1,3 +1,4 @@
+import { escapeHtmlText as escapeHtml } from "../../shared/js/core/html-escape.js";
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-26T13554";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
@@ -1134,14 +1135,7 @@ for (const grid of [mineGrid, sharedGrid]) {
   });
 }
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+
 
 /* ================= Okno nazwy (wspólne promptModal) ================= */
 // Zmiana nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie

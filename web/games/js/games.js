@@ -1,3 +1,4 @@
+import { escapeHtmlText as escapeHtml } from "../../shared/js/core/html-escape.js";
 import { changeGameType } from "./change-type.js?v=v2026-10-26T13554";
 import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-26T13554";
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-26T13554";
@@ -412,14 +413,7 @@ function closeExportBaseModal() {
   closeDialog(exportBaseOverlay);
 }
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+
 
 /**
  * Bazy do eksportu:

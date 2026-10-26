@@ -1,3 +1,4 @@
+import { escapeHtmlAttribute as esc } from "../../../../shared/js/core/html-escape.js";
 // base-explorerjs/ui/toolbar.js
 // Przyciski paska narzędzi z rejestru akcji (actions/registry.js): kolejność,
 // grupy, ikony, dymki ze skrótem i powodem niedostępności, widoczność
@@ -19,9 +20,7 @@ const GROUP_LABEL = {
   view: "baseExplorer.toolbar.groupView",
 };
 
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
+
 
 // HTML grup paska (wstawiany raz, w szkielecie renderToolbar).
 export function toolbarButtonsHtml() {

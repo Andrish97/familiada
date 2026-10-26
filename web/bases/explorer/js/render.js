@@ -1,3 +1,4 @@
+import { escapeHtmlAttribute as esc } from "../../../shared/js/core/html-escape.js";
 // base-explorerjs/render.js
 // Rysowanie menedżera bazy z magazynu (state.store / state.d) i jednego
 // modelu „co pokazać” (data/listing.js). Bez bazy i bez akcji. Zmiana samego
@@ -22,9 +23,7 @@ const elBreadcrumbs = document.getElementById("breadcrumbs");
 const elList = document.getElementById("list");
 
 /* ================= Pomocnicze ================= */
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
+
 
 function toTime(v) {
   if (typeof v === "number") return Number.isFinite(v) ? v : 0;

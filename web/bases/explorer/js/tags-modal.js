@@ -1,3 +1,4 @@
+import { escapeHtmlAttribute as esc } from "../../../shared/js/core/html-escape.js";
 // base-explorerjs/tags-modal.js
 // Nowy modal tagów (3 warstwy) – spójny z założeniami:
 // - na każdej warstwie tylko X i "Zapisz"
@@ -18,9 +19,7 @@ import { normalizeText } from "./data/listing.js?v=v2026-10-26T13554";
 import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-26T13554";
 
 // Nazwa i kolor tagu pochodzą od użytkownika (także współdzielących bazę).
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
+
 
 // Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
 const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;

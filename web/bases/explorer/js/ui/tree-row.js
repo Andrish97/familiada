@@ -1,3 +1,5 @@
+import { escapeHtmlAttribute as esc } from "../../../../shared/js/core/html-escape.js";
+export { esc };
 // base-explorerjs/ui/tree-row.js
 // Jeden wygląd drzewa folderów (decyzja użytkownika 2026-10-21): lewy panel
 // i okno „Przenieś do / Kopiuj do” rysują wiersz tym samym kodem i tymi
@@ -7,7 +9,6 @@
 import { t } from "../../../../shared/translation/translation.js?v=v2026-10-26T13554";
 import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-26T13554";
 
-export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 /** Strzałka rozwijania (albo puste miejsce tej samej szerokości). */
 export function treeToggleHtml(id, { canToggle, isOpen }) {
