@@ -1,4 +1,4 @@
-const { test, expect } = require("./helpers/e2e-test");
+const { test, expect } = require(process.env.E2E_BYPASS_SECRET ? "./helpers/production-test" : "./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 test.use({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
@@ -13,7 +13,13 @@ test("display themes: switching preserves all six panels; gaps orbit and reduced
   page.on("pageerror", error => { errors.push(error.message); console.log("[e2e-diag] Display error:", error.message); });
   page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.log("[e2e-diag] Display navigation:", new URL(frame.url()).pathname); });
   page.on("response", response => { if (response.status() >= 400) console.log("[e2e-diag] Display HTTP:", response.status(), new URL(response.url()).pathname); });
+  page.on("console", message => { if (["error", "warning"].includes(message.type())) console.log("[e2e-diag] Display console:", message.text().slice(0, 350)); });
+  page.on("requestfailed", request => console.log("[e2e-diag] Display request:", request.failure()?.errorText, new URL(request.url()).pathname));
   await page.addInitScript(() => {
+    window.addEventListener("unhandledrejection", event => console.warn("[e2e-diag] Display rejection:", String(event.reason?.message || event.reason)));
+    window.addEventListener("error", event => {
+      if (event.target?.tagName === "SCRIPT") console.warn("[e2e-diag] Display script error:", new URL(event.target.src, location.href).pathname);
+    }, true);
     window.addEventListener("message", event => {
       if (event.data?.type === "familiada:preview-ready") window.__displayPreviewReady = true;
     });
