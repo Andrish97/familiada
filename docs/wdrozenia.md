@@ -269,9 +269,13 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   `codex/game-settings-readiness-ci` pomija `--with-deps` (pakiety systemowe
   runnera są zainstalowane); zmiana workflow nie trafia na `main`.
   Decyzja użytkownika: wdrożyć poprawkę bez czekania na kolejkę E2E.
-  Oczekujący przebieg 40353540626 anulowany; publikacja bez tej bramki,
-  po zielonych sprawdzeniach lokalnych opisanych wyżej.
-  Status: wdrożenie Pages w toku.
+  Publikacja bez czekania na przebieg 40353540626, po zielonych
+  sprawdzeniach lokalnych opisanych wyżej.
+  Pages 40355212895 **success**; kod na `main` (`95592d8`, wersje CI
+  `3fbd3d7`). Odczyt publicznego pliku produkcji
+  `games.js?v=h7d804224d22d712c` potwierdził identyczny warunek
+  wyłączenia „Graj” i „Ustawienia gry”. Produkcyjnego E2E nie wykonano.
+  Status: wdrożone.
 
 ### 2026-10-26 — Host: tekst poza ramkami i jaśniejsza zasłona
 
