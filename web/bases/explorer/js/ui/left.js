@@ -5,14 +5,14 @@
 // dołóż / zdejmij, Shift: zakres, ramka: zakres przeciągnięciem, klik w tło:
 // wyczyść. Działa w każdym miejscu — filtr obejmuje bieżący folder.
 
-import { setQuery } from "../state.js?v=v2026-10-26T07194";
-import { renderAll } from "../render.js?v=v2026-10-26T07194";
-import { openTagsWindow } from "../commands.js?v=v2026-10-26T07194";
-import { showContextMenu } from "../context-menu.js?v=v2026-10-26T07194";
-import { attachMarquee } from "./marquee.js?v=v2026-10-26T07194";
-import { addLongPress, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-26T07194";
-import { isModKey } from "../platform.js?v=v2026-10-26T07194";
-import { commitPendingSearch } from "./search.js?v=v2026-10-26T07194";
+import { setQuery } from "../state.js?v=v2026-10-26T08151";
+import { renderAll } from "../render.js?v=v2026-10-26T08151";
+import { openTagsWindow } from "../commands.js?v=v2026-10-26T08151";
+import { showContextMenu } from "../context-menu.js?v=v2026-10-26T08151";
+import { attachMarquee } from "./marquee.js?v=v2026-10-26T08151";
+import { addLongPress, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-26T08151";
+import { isModKey } from "../platform.js?v=v2026-10-26T08151";
+import { commitPendingSearch } from "./search.js?v=v2026-10-26T08151";
 
 const ROW = '.row[data-kind="tag"], .row[data-kind="meta"]';
 const field = (kind) => (kind === "meta" ? "types" : "tagIds");

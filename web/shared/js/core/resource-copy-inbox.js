@@ -2,7 +2,7 @@
 // (proposed-tile.js) i liczniki na wypustkach. Kopia czekająca na decyzję
 // jest już wierszem games/user_logos odbiorcy — strona rysuje ją jak
 // zaproszenie do bazy, zaraz po kaflu „+”, z ✓/✕ zamiast kosza.
-import {sb} from './supabase.js?v=v2026-10-26T07194';
+import {sb} from './supabase.js?v=v2026-10-26T08151';
 
 
 /** Czekające kopie danego rodzaju: Map(id gry/logo → oferta). Pusta dla gościa i przy błędzie. */
