@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict i7Ea0fv68nVurQkRWjm30Ky5CTmVHzqI2ZajjtsVjSF2OOSvoyOqpvDvtOK91PX
+\restrict 5TuV20PKPy9iUCtQj4qNLMQAyflSGKKqY1rddO8Jl3gee2GWQYO2hV6ScWPSPwK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1232,6 +1232,161 @@ begin
   end loop;
 end;
 $_$;
+
+
+--
+-- Name: _demo_base_canonical("jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_demo_base_canonical"("p" "jsonb") RETURNS "jsonb"
+    LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ WITH RECURSIVE cats AS (
+  SELECT c,c->>'id' id, jsonb_build_array(jsonb_build_array(coalesce(c->>'ord','0'),c->>'name')) path FROM jsonb_array_elements(coalesce(p->'categories','[]')) c WHERE coalesce(c->>'parent_id','')=''
+  UNION ALL SELECT c,c->>'id',parent.path||jsonb_build_array(jsonb_build_array(coalesce(c->>'ord','0'),c->>'name')) FROM jsonb_array_elements(coalesce(p->'categories','[]')) c JOIN cats parent ON c->>'parent_id'=parent.id
+ ), tags AS (SELECT t,t->>'id' id,jsonb_build_array(t->>'name',t->>'color',coalesce(t->>'ord','0')) val FROM jsonb_array_elements(coalesce(p->'tags','[]')) t)
+ SELECT jsonb_build_object('name',p#>>'{base,name}',
+ 'categories',coalesce((SELECT jsonb_agg(path ORDER BY path::text) FROM cats),'[]'),
+ 'tags',coalesce((SELECT jsonb_agg(val ORDER BY val::text) FROM tags),'[]'),
+ 'questions',coalesce((SELECT jsonb_agg(val ORDER BY val::text) FROM (
+  SELECT jsonb_build_object('category',c.path,'ord',coalesce(q->>'ord','0'),'payload',q->'payload','tags',coalesce((SELECT jsonb_agg(t.val ORDER BY t.val::text) FROM jsonb_array_elements(coalesce(p->'question_tags','[]')) e JOIN tags t ON t.id=e->>'tag_id' WHERE e->>'question_id'=q->>'id'),'[]')) val
+   FROM jsonb_array_elements(coalesce(p->'questions','[]')) q LEFT JOIN cats c ON c.id=q->>'category_id') s),'[]'),
+ 'category_tags',coalesce((SELECT jsonb_agg(jsonb_build_array(c.path,t.val) ORDER BY c.path::text,t.val::text) FROM jsonb_array_elements(coalesce(p->'category_tags','[]')) e JOIN cats c ON c.id=e->>'category_id' JOIN tags t ON t.id=e->>'tag_id'),'[]'))
+$$;
+
+
+--
+-- Name: _demo_current_definition("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_demo_current_definition"("p_kind" "text", "p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE result jsonb; packet jsonb;
+BEGIN
+ IF p_kind='logo' THEN
+  SELECT jsonb_build_object('name',name,'type',type,'payload',payload) INTO result FROM user_logos WHERE id=p_id AND is_demo;
+ ELSIF p_kind='game' THEN
+  SELECT jsonb_build_object('name',g.name,'type',g.type,'status',g.status,'settings',g.settings,
+   'questions',coalesce((SELECT jsonb_agg(jsonb_build_object('text',q.text,'answers',coalesce((SELECT jsonb_agg(jsonb_build_object('text',a.text,'fixed_points',a.fixed_points) ORDER BY a.ord,a.id) FROM answers a WHERE a.question_id=q.id),'[]')) ORDER BY q.ord,q.id) FROM questions q WHERE q.game_id=g.id),'[]'),
+   'votes',coalesce((SELECT jsonb_agg(jsonb_build_object('q',ord,'text',text,'count',n) ORDER BY ord,text) FROM (
+    SELECT ord,text,count(*) n FROM (
+     SELECT q.ord,e.answer_raw text FROM poll_text_entries e JOIN questions q ON q.id=e.question_id WHERE e.game_id=g.id
+     UNION ALL SELECT q.ord,a.text FROM poll_votes v JOIN questions q ON q.id=v.question_id JOIN answers a ON a.id=v.answer_id WHERE v.game_id=g.id
+    ) x GROUP BY ord,text) v),'[]')) INTO result FROM games g WHERE g.id=p_id AND g.is_demo;
+ ELSIF p_kind='base' THEN
+  SELECT jsonb_build_object('base',jsonb_build_object('name',b.name),
+   'categories',coalesce((SELECT jsonb_agg(to_jsonb(c)) FROM qb_categories c WHERE base_id=p_id),'[]'),
+   'tags',coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM qb_tags t WHERE base_id=p_id),'[]'),
+   'questions',coalesce((SELECT jsonb_agg(to_jsonb(q)) FROM qb_questions q WHERE base_id=p_id),'[]'),
+   'question_tags',coalesce((SELECT jsonb_agg(to_jsonb(e)) FROM qb_question_tags e JOIN qb_questions q ON q.id=e.question_id WHERE q.base_id=p_id),'[]'),
+   'category_tags',coalesce((SELECT jsonb_agg(to_jsonb(e)) FROM qb_category_tags e JOIN qb_categories c ON c.id=e.category_id WHERE c.base_id=p_id),'[]')) INTO packet FROM question_bases b WHERE b.id=p_id AND b.is_demo;
+  IF packet IS NOT NULL THEN result:=public._demo_base_canonical(packet); END IF;
+ END IF;
+ RETURN result;
+END $$;
+
+
+--
+-- Name: _demo_template_definition("text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_demo_template_definition"("p_slot" "text", "p" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE typ text; state text; qs jsonb; vs jsonb;
+BEGIN
+ IF p_slot='base' THEN RETURN public._demo_base_canonical(p); END IF;
+ IF p_slot LIKE 'logo_%' THEN RETURN jsonb_build_object('name',p->>'name','type',CASE WHEN p->>'kind'='GLYPH' THEN 'GLYPH_30x10' ELSE 'PIX_150x70' END,'payload',p->'payload'); END IF;
+ typ:=CASE WHEN p_slot='prepared' THEN 'prepared' WHEN p_slot LIKE 'poll_text_%' THEN 'poll_text' ELSE 'poll_points' END;
+ state:=CASE WHEN p_slot LIKE '%_open' THEN 'poll_open' WHEN p_slot LIKE '%_closed' THEN 'ready' ELSE 'draft' END;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('text',q->>'text','answers',coalesce((SELECT jsonb_agg(jsonb_build_object('text',left(btrim(a->>'text'),17),'fixed_points',coalesce((a->>'fixed_points')::int,0)) ORDER BY ai) FROM jsonb_array_elements(coalesce(q->'answers','[]')) WITH ORDINALITY x(a,ai)),'[]')) ORDER BY qi),'[]') INTO qs FROM jsonb_array_elements(coalesce(p->'questions','[]')) WITH ORDINALITY x(q,qi);
+ WITH votes AS (
+  SELECT ord::int q,a#>>'{}' text FROM jsonb_array_elements(coalesce(p->'votes','[]')) v CROSS JOIN LATERAL jsonb_array_elements(coalesce(v->'answers_raw','[]')) WITH ORDINALITY x(a,ord) WHERE p_slot='poll_text_open'
+  UNION ALL
+  SELECT ord::int,p->'questions'->(ord::int-1)->'answers'->(a#>>'{}')::int->>'text' FROM jsonb_array_elements(coalesce(p->'votes','[]')) v CROSS JOIN LATERAL jsonb_array_elements(coalesce(v->'picks','[]')) WITH ORDINALITY x(a,ord) WHERE p_slot='poll_points_open'
+  UNION ALL
+  SELECT (v->>'question')::int,CASE WHEN p_slot='poll_text_open' THEN v->>'text' ELSE p->'questions'->((v->>'question')::int-1)->'answers'->((v->>'answer')::int-1)->>'text' END
+  FROM jsonb_array_elements(coalesce(p->'demo_vote_counts','[]')) v CROSS JOIN LATERAL generate_series(1,(v->>'count')::int) n
+ ), grouped AS(SELECT q,text,count(*) n FROM votes GROUP BY q,text)
+ SELECT coalesce(jsonb_agg(jsonb_build_object('q',q,'text',text,'count',n) ORDER BY q,text),'[]') INTO vs FROM grouped;
+ RETURN jsonb_build_object('name',p#>>'{game,name}','type',typ,'status',state,'settings','{}'::jsonb,'questions',qs,'votes',vs);
+END $$;
+
+
+--
+-- Name: _demo_write("text", "uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_demo_write"("p_kind" "text", "p_id" "uuid", "p_slot" "text", "p" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE q jsonb; a jsonb; v jsonb; qi integer; ai integer; vi integer; off integer; qid uuid; aid uuid; sid uuid;
+ qids uuid[]:='{}'; sids uuid[]:='{}'; amap jsonb:='{}'; cmap jsonb; tmap jsonb; qmap jsonb; owner uuid;
+ typ game_type; stat game_status; definition jsonb;
+BEGIN
+ IF p_kind='logo' THEN
+  UPDATE user_logos SET name=p->>'name',type=CASE WHEN p->>'kind'='GLYPH' THEN 'GLYPH_30x10' ELSE 'PIX_150x70' END,payload=p->'payload' WHERE id=p_id;
+  RETURN;
+ ELSIF p_kind='base' THEN
+  SELECT owner_id INTO owner FROM question_bases WHERE id=p_id;
+  DELETE FROM qb_categories WHERE base_id=p_id;
+  DELETE FROM qb_questions WHERE base_id=p_id;
+  DELETE FROM qb_tags WHERE base_id=p_id;
+  UPDATE question_bases SET name=p#>>'{base,name}' WHERE id=p_id;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO cmap FROM jsonb_array_elements(p->'categories') x;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO tmap FROM jsonb_array_elements(p->'tags') x;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO qmap FROM jsonb_array_elements(p->'questions') x;
+  INSERT INTO qb_categories(id,base_id,parent_id,name,ord) SELECT (cmap->>(x->>'id'))::uuid,p_id,(cmap->>(x->>'parent_id'))::uuid,x->>'name',coalesce((x->>'ord')::int,0) FROM jsonb_array_elements(p->'categories') x;
+  INSERT INTO qb_tags(id,base_id,name,color,ord) SELECT (tmap->>(x->>'id'))::uuid,p_id,x->>'name',x->>'color',coalesce((x->>'ord')::int,0) FROM jsonb_array_elements(p->'tags') x;
+  INSERT INTO qb_questions(id,base_id,category_id,ord,payload,updated_by) SELECT (qmap->>(x->>'id'))::uuid,p_id,(cmap->>(x->>'category_id'))::uuid,coalesce((x->>'ord')::int,0),x->'payload',owner FROM jsonb_array_elements(p->'questions') x;
+  INSERT INTO qb_question_tags(question_id,tag_id) SELECT (qmap->>(x->>'question_id'))::uuid,(tmap->>(x->>'tag_id'))::uuid FROM jsonb_array_elements(p->'question_tags') x;
+  INSERT INTO qb_category_tags(category_id,tag_id) SELECT (cmap->>(x->>'category_id'))::uuid,(tmap->>(x->>'tag_id'))::uuid FROM jsonb_array_elements(p->'category_tags') x;
+  RETURN;
+ END IF;
+ definition:=public._demo_template_definition(p_slot,p);
+ typ:=(definition->>'type')::game_type;stat:=(definition->>'status')::game_status;
+ UPDATE games SET status='draft' WHERE id=p_id;
+ DELETE FROM poll_sessions WHERE game_id=p_id;
+ DELETE FROM questions WHERE game_id=p_id;
+ UPDATE games SET name=p#>>'{game,name}',type=typ WHERE id=p_id;
+ FOR q,qi IN SELECT value,ordinality::int FROM jsonb_array_elements(p->'questions') WITH ORDINALITY LOOP
+  INSERT INTO questions(game_id,ord,text) VALUES(p_id,qi,q->>'text') RETURNING id INTO qid;
+  qids:=array_append(qids,qid);
+  FOR a,ai IN SELECT value,ordinality::int FROM jsonb_array_elements(coalesce(q->'answers','[]')) WITH ORDINALITY LOOP
+   INSERT INTO answers(question_id,ord,text,fixed_points) VALUES(qid,ai,left(btrim(a->>'text'),17),coalesce((a->>'fixed_points')::int,0)) RETURNING id INTO aid;
+   amap:=amap||jsonb_build_object(qi::text||':'||ai::text,aid);
+  END LOOP;
+  IF stat='poll_open' THEN
+   INSERT INTO poll_sessions(game_id,question_id,question_ord,is_open) VALUES(p_id,qid,qi,true) RETURNING id INTO sid;
+   sids:=array_append(sids,sid);
+  END IF;
+ END LOOP;
+ IF stat='poll_open' THEN
+  FOR v IN SELECT value FROM jsonb_array_elements(definition->'votes') LOOP
+   qi:=(v->>'q')::int;
+   IF typ='poll_text' THEN
+    SELECT count(*) INTO off FROM poll_text_entries WHERE game_id=p_id AND question_id=qids[qi];
+    FOR vi IN 1..(v->>'count')::int LOOP
+     INSERT INTO poll_text_entries(game_id,poll_session_id,question_id,voter_token,answer_raw,answer_norm)
+      VALUES(p_id,sids[qi],qids[qi],'demo_seed_v'||lpad((off+vi)::text,6,'0'),v->>'text',lower(regexp_replace(btrim(v->>'text'),'\s+',' ','g')));
+    END LOOP;
+   ELSE
+    SELECT id,ord INTO aid,ai FROM answers WHERE question_id=qids[qi] AND text=v->>'text' ORDER BY ord LIMIT 1;
+    SELECT count(*) INTO off FROM poll_votes WHERE game_id=p_id AND question_id=qids[qi];
+    FOR vi IN 1..(v->>'count')::int LOOP
+     INSERT INTO poll_votes(game_id,question_ord,answer_ord,voter_token,poll_session_id,question_id,answer_id)
+      VALUES(p_id,qi,ai,'demo_seed_v'||lpad((off+vi)::text,6,'0'),sids[qi],qids[qi],aid);
+    END LOOP;
+   END IF;
+  END LOOP;
+ END IF;
+ UPDATE games SET status=stat WHERE id=p_id;
+END $$;
 
 
 --
@@ -5040,6 +5195,95 @@ BEGIN
   RETURN jsonb_build_object('ok', true, 'count', v_n);
 END;
 $$;
+
+
+--
+-- Name: admin_demo_apply_next(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_demo_apply_next"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE target admin_demo_targets; job admin_demo_updates; current_def jsonb; owner uuid;
+BEGIN
+ SELECT * INTO target FROM admin_demo_targets WHERE status='queued' AND next_run_at<=now() ORDER BY update_id,resource_id FOR UPDATE SKIP LOCKED LIMIT 1;
+ IF NOT FOUND THEN RETURN NULL; END IF;
+ SELECT * INTO job FROM admin_demo_updates WHERE id=target.update_id;
+ BEGIN
+  IF target.kind='game' THEN SELECT owner_id INTO owner FROM games WHERE id=target.resource_id FOR UPDATE NOWAIT;
+  ELSIF target.kind='base' THEN SELECT owner_id INTO owner FROM question_bases WHERE id=target.resource_id FOR UPDATE NOWAIT;
+  ELSE SELECT user_id INTO owner FROM user_logos WHERE id=target.resource_id FOR UPDATE NOWAIT; END IF;
+  current_def:=public._demo_current_definition(target.kind,target.resource_id);
+  IF current_def IS NULL THEN UPDATE admin_demo_targets SET status='removed' WHERE update_id=target.update_id AND resource_id=target.resource_id; RETURN jsonb_build_object('status','removed'); END IF;
+  IF current_def IS DISTINCT FROM job.old_definition THEN UPDATE admin_demo_targets SET status='edited' WHERE update_id=target.update_id AND resource_id=target.resource_id; RETURN jsonb_build_object('status','edited'); END IF;
+  IF (target.kind='game' AND public._game_control_active(target.resource_id)) OR EXISTS(SELECT 1 FROM edit_locks l WHERE heartbeat_at>clock_timestamp()-public.edit_lock_ttl() AND
+   ((l.resource_type=target.kind AND l.resource_id=target.resource_id) OR (target.kind='logo' AND l.resource_type='logos' AND l.resource_id=owner) OR
+    (target.kind='base' AND ((l.resource_type='base_question' AND l.resource_id IN(SELECT id FROM qb_questions WHERE base_id=target.resource_id)) OR (l.resource_type='base_folder' AND l.resource_id IN(SELECT id FROM qb_categories WHERE base_id=target.resource_id)) OR (l.resource_type='base_tag' AND l.resource_id IN(SELECT id FROM qb_tags WHERE base_id=target.resource_id)))))) THEN
+    RAISE lock_not_available;
+  END IF;
+  PERFORM public._demo_write(target.kind,target.resource_id,job.slot,job.new_payload);
+  UPDATE admin_demo_targets SET status='updated',message='' WHERE update_id=target.update_id AND resource_id=target.resource_id;
+  RETURN jsonb_build_object('status','updated');
+ EXCEPTION WHEN lock_not_available THEN
+  UPDATE admin_demo_targets SET next_run_at=now()+interval '30 seconds',message='Materiał jest używany; aktualizacja po zwolnieniu.' WHERE update_id=target.update_id AND resource_id=target.resource_id;
+  RETURN jsonb_build_object('status','busy');
+ WHEN OTHERS THEN
+  UPDATE admin_demo_targets SET status='failed',message=left(SQLSTATE||': '||SQLERRM,200) WHERE update_id=target.update_id AND resource_id=target.resource_id;
+  RETURN jsonb_build_object('status','failed');
+ END;
+END $$;
+
+
+--
+-- Name: admin_demo_preview("text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_demo_preview"("p_lang" "text", "p_slot" "text", "p_payload" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE old jsonb; expected jsonb; kind text; n integer;
+BEGIN
+ IF p_lang NOT IN ('pl','en','uk') OR p_slot NOT IN ('base','logo_text','logo_draw','logo_image','prepared','poll_text_open','poll_text_closed','poll_text_draft','poll_points_open','poll_points_closed','poll_points_draft') THEN RAISE EXCEPTION 'invalid_demo_slot'; END IF;
+ SELECT payload INTO old FROM demo_template_data WHERE lang=p_lang AND slot=p_slot;
+ IF old IS NULL THEN RAISE EXCEPTION 'demo_template_not_found'; END IF;
+ kind:=CASE WHEN p_slot='base' THEN 'base' WHEN p_slot LIKE 'logo_%' THEN 'logo' ELSE 'game' END;
+ expected:=public._demo_template_definition(p_slot,old);
+ SELECT count(*) INTO n FROM (
+  SELECT id FROM games WHERE is_demo AND kind='game'
+  UNION ALL SELECT id FROM user_logos WHERE is_demo AND kind='logo'
+  UNION ALL SELECT id FROM question_bases WHERE is_demo AND kind='base'
+ ) x WHERE public._demo_current_definition(kind,x.id)=expected;
+ RETURN jsonb_build_object('ok',true,'eligible',n,'revision',encode(sha256(convert_to(old::text,'UTF8')),'hex'),'kind',kind,'definition',public._demo_template_definition(p_slot,p_payload));
+END $$;
+
+
+--
+-- Name: admin_demo_replace("uuid", "text", "text", "jsonb", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_demo_replace"("p_request" "uuid", "p_lang" "text", "p_slot" "text", "p_payload" "jsonb", "p_revision" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE old jsonb; check_result jsonb; upd uuid; kind text;
+BEGIN
+ PERFORM pg_advisory_xact_lock(hashtextextended('admin-demo',0));
+ SELECT id INTO upd FROM admin_demo_updates WHERE request_id=p_request;
+ IF upd IS NOT NULL THEN RETURN jsonb_build_object('ok',true,'id',upd,'already',true); END IF;
+ SELECT payload INTO old FROM demo_template_data WHERE lang=p_lang AND slot=p_slot FOR UPDATE;
+ IF old IS NULL OR encode(sha256(convert_to(old::text,'UTF8')),'hex') IS DISTINCT FROM p_revision THEN RAISE EXCEPTION 'demo_version_changed_refresh_preview'; END IF;
+ check_result:=public.admin_demo_preview(p_lang,p_slot,p_payload);kind:=check_result->>'kind';
+ -- Type/shape checked independently of the browser by the private API and SQL definition builder.
+ IF check_result->'definition' IS NULL THEN RAISE EXCEPTION 'invalid_demo_payload'; END IF;
+ INSERT INTO admin_demo_updates(request_id,lang,slot,old_payload,new_payload,old_definition) VALUES(p_request,p_lang,p_slot,old,p_payload,public._demo_template_definition(p_slot,old)) RETURNING id INTO upd;
+ INSERT INTO admin_demo_targets(update_id,kind,resource_id)
+  SELECT upd,kind,x.id FROM (SELECT id FROM games WHERE is_demo AND kind='game' UNION ALL SELECT id FROM user_logos WHERE is_demo AND kind='logo' UNION ALL SELECT id FROM question_bases WHERE is_demo AND kind='base') x
+  WHERE public._demo_current_definition(kind,x.id)=public._demo_template_definition(p_slot,old);
+ UPDATE demo_template_data SET payload=p_payload WHERE lang=p_lang AND slot=p_slot;
+ RETURN jsonb_build_object('ok',true,'id',upd,'eligible',check_result->'eligible');
+END $$;
 
 
 --
@@ -17017,6 +17261,238 @@ $$;
 
 
 --
+-- Name: qf_ai_reserve("uuid", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_ai_reserve"("p_id" "uuid", "p_service" "text", "p_tokens" integer, "p_limit" integer) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE used bigint;
+BEGIN
+ IF p_service NOT IN ('marketing','questions') OR p_tokens<1 OR p_limit<1 THEN RETURN false; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('qf-ai:'||p_service,0));
+ IF EXISTS(SELECT 1 FROM producer_ai_usage WHERE request_id=p_id) THEN RETURN true; END IF;
+ SELECT coalesce(sum(coalesce(actual,reserved)),0) INTO used FROM producer_ai_usage WHERE service=p_service AND day=(now() AT TIME ZONE 'UTC')::date;
+ IF used+p_tokens>p_limit THEN RETURN false; END IF;
+ INSERT INTO producer_ai_usage(request_id,service,reserved) VALUES(p_id,p_service,p_tokens);
+ RETURN true;
+END $$;
+
+
+--
+-- Name: qf_candidates("text", "jsonb", boolean, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_candidates"("p_lang" "text", "p_embedding" "jsonb" DEFAULT NULL::"jsonb", "p_include_ai" boolean DEFAULT false, "p_limit" integer DEFAULT 500) RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT coalesce(jsonb_agg(to_jsonb(q)-'embedding'-'fingerprint'-'answer_key'), '[]'::jsonb) FROM (
+  SELECT * FROM producer_question_pool WHERE lang=p_lang AND (p_include_ai OR origin='search')
+   AND (p_embedding IS NULL OR 1-(embedding<=>(p_embedding::text::public.vector(384)))>=0.18)
+  ORDER BY CASE WHEN p_embedding IS NULL THEN 0 ELSE embedding<=>(p_embedding::text::public.vector(384)) END,created_at,id
+  LIMIT greatest(1,least(p_limit,10000))
+ ) q
+$$;
+
+
+--
+-- Name: qf_games_commit("uuid", "text", "text", "text", "jsonb", "jsonb", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_games_commit"("p_request" "uuid", "p_lang" "text", "p_mode" "text", "p_category" "text", "p_ids" "jsonb", "p_metadata" "jsonb", "p_count" integer) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE total integer; qty integer; existing jsonb; meta jsonb; game uuid; item jsonb; questions jsonb; chosen uuid[]; i integer; n integer;
+BEGIN
+ IF p_lang NOT IN ('pl','en','uk') OR p_mode NOT IN ('manual','auto','category') OR p_count<10 THEN RAISE EXCEPTION 'invalid_game_request'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('qf:'||p_lang,0));
+ SELECT jsonb_agg(to_jsonb(g) ORDER BY created_at,id) INTO existing FROM producer_question_games g WHERE batch_id=p_request;
+ IF existing IS NOT NULL THEN
+  IF existing->0->>'lang'<>p_lang OR existing->0->>'mode'<>p_mode THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  RETURN existing;
+ END IF;
+ qty:=jsonb_array_length(p_metadata);total:=jsonb_array_length(p_ids);
+ IF qty<1 OR total<>qty::bigint*p_count OR (p_mode='manual' AND qty<>1) OR (p_mode='category' AND length(btrim(p_category))=0) THEN RAISE EXCEPTION 'invalid_game_batch'; END IF;
+ SELECT array_agg(value::uuid) INTO chosen FROM jsonb_array_elements_text(p_ids);
+ IF (SELECT count(DISTINCT x) FROM unnest(chosen) x)<>total THEN RAISE EXCEPTION 'duplicate_selection'; END IF;
+ PERFORM id FROM producer_question_pool WHERE id=ANY(chosen) AND lang=p_lang ORDER BY id FOR UPDATE;
+ SELECT count(*) INTO n FROM producer_question_pool WHERE id=ANY(chosen) AND lang=p_lang;
+ IF n<>total THEN RAISE EXCEPTION 'questions_unavailable'; END IF;
+ FOR i IN 0..qty-1 LOOP
+  meta:=p_metadata->i;
+  IF length(btrim(coalesce(meta->>'title','')))=0 OR length(meta->>'title')>120 OR length(btrim(coalesce(meta->>'description','')))=0 THEN RAISE EXCEPTION 'missing_game_metadata'; END IF;
+  SELECT jsonb_agg(jsonb_build_object('text',q.text,'answers',q.answers,'source',q.source,'origin',q.origin) ORDER BY ids.ord) INTO questions
+   FROM unnest(chosen) WITH ORDINALITY ids(id,ord) JOIN producer_question_pool q ON q.id=ids.id WHERE ids.ord BETWEEN i*p_count+1 AND (i+1)*p_count;
+  INSERT INTO producer_question_games(batch_id,lang,title,description,mode,category,payload)
+   VALUES(p_request,p_lang,meta->>'title',meta->>'description',p_mode,coalesce(p_category,''),jsonb_build_object('title',meta->>'title','description',meta->>'description','questions',questions)) RETURNING id INTO game;
+  INSERT INTO producer_question_history(lang,fingerprint,question_norm,answer_key,embedding,game_id)
+   SELECT q.lang,q.fingerprint,market_normalize_content(q.text),q.answer_key,q.embedding,game FROM unnest(chosen) WITH ORDINALITY ids(id,ord)
+   JOIN producer_question_pool q ON q.id=ids.id WHERE ids.ord BETWEEN i*p_count+1 AND (i+1)*p_count;
+ END LOOP;
+ DELETE FROM producer_question_pool WHERE id=ANY(chosen);
+ SELECT jsonb_agg(to_jsonb(g) ORDER BY created_at,id) INTO existing FROM producer_question_games g WHERE batch_id=p_request;
+ RETURN existing;
+END $$;
+
+
+--
+-- Name: qf_job_checkpoint("uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_job_checkpoint"("p_id" "uuid", "p_lease" "uuid", "p_state" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ UPDATE producer_question_jobs SET
+  status=CASE WHEN accepted>=target THEN 'completed' ELSE coalesce(p_state->>'status','queued') END,
+  queries=coalesce(p_state->'queries',queries),cursor=coalesce((p_state->>'cursor')::integer,cursor),round=coalesce((p_state->>'round')::integer,round),
+  rejected=rejected+coalesce((p_state->>'rejected')::integer,0),duplicates=duplicates+coalesce((p_state->>'duplicates')::integer,0),
+  message=left(coalesce(p_state->>'message',''),500),next_run_at=now()+make_interval(secs=>greatest(2,coalesce((p_state->>'delay')::integer,5))),
+  lease=NULL,lease_until=NULL,updated_at=now()
+ WHERE id=p_id AND lease=p_lease AND status='running';
+ RETURN FOUND;
+END $$;
+
+
+--
+-- Name: qf_job_claim(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_job_claim"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE job producer_question_jobs;
+BEGIN
+ SELECT * INTO job FROM producer_question_jobs WHERE status IN ('queued','running','waiting_budget','waiting_provider')
+ AND accepted<target AND next_run_at<=now() AND (lease_until IS NULL OR lease_until<now())
+ ORDER BY updated_at,id FOR UPDATE SKIP LOCKED LIMIT 1;
+ IF NOT FOUND THEN RETURN NULL; END IF;
+ UPDATE producer_question_jobs SET lease=gen_random_uuid(),lease_until=now()+interval '6 minutes',status='running',updated_at=now() WHERE id=job.id RETURNING * INTO job;
+ RETURN to_jsonb(job);
+END $$;
+
+
+--
+-- Name: qf_job_control("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_job_control"("p_id" "uuid", "p_action" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF p_action NOT IN ('pause','resume','cancel') THEN RETURN false; END IF;
+ UPDATE producer_question_jobs SET status=CASE p_action WHEN 'pause' THEN 'paused' WHEN 'resume' THEN 'queued' ELSE 'cancelled' END,
+ lease=NULL,lease_until=NULL,next_run_at=now(),updated_at=now(),message=''
+ WHERE id=p_id AND status NOT IN ('completed','cancelled') AND (p_action<>'resume' OR status='paused');
+ RETURN FOUND;
+END $$;
+
+
+--
+-- Name: qf_job_create("uuid", "text", "text", integer, "text", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_job_create"("p_request" "uuid", "p_lang" "text", "p_kind" "text", "p_target" integer, "p_category" "text" DEFAULT ''::"text", "p_enrich" boolean DEFAULT false) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE result producer_question_jobs;
+BEGIN
+ INSERT INTO producer_question_jobs(request_id,lang,kind,target,category,enrich) VALUES(p_request,p_lang,p_kind,p_target,btrim(p_category),p_enrich)
+ ON CONFLICT(request_id) DO NOTHING;
+ SELECT * INTO result FROM producer_question_jobs WHERE request_id=p_request;
+ IF result.lang<>p_lang OR result.kind<>p_kind OR result.target<>p_target OR result.category<>btrim(p_category) OR result.enrich<>p_enrich THEN RAISE EXCEPTION 'request_conflict'; END IF;
+ RETURN to_jsonb(result)-'lease'-'lease_until';
+END $$;
+
+
+--
+-- Name: qf_offer("uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_offer"("p_job" "uuid", "p_lease" "uuid", "p_question" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE job producer_question_jobs; norm text; fp text; ak text; av public.vector(384); a jsonb; n integer; qid uuid;
+BEGIN
+ SELECT * INTO job FROM producer_question_jobs WHERE id=p_job FOR UPDATE;
+ IF NOT FOUND OR job.status<>'running' OR job.lease IS DISTINCT FROM p_lease OR job.accepted>=job.target THEN RETURN jsonb_build_object('ok',false,'reason','stopped'); END IF;
+ IF p_question->>'lang' IS DISTINCT FROM job.lang OR p_question->>'origin' IS DISTINCT FROM job.kind THEN RAISE EXCEPTION 'invalid_question_context'; END IF;
+ norm:=public.market_normalize_content(p_question->>'text');
+ IF length(norm)<8 OR length(norm)>500 OR jsonb_typeof(p_question->'answers') IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'invalid_question'; END IF;
+ n:=jsonb_array_length(p_question->'answers');
+ IF n<3 OR n>6 THEN RAISE EXCEPTION 'invalid_answers'; END IF;
+ FOR a IN SELECT * FROM jsonb_array_elements(p_question->'answers') LOOP
+  IF length(btrim(coalesce(a->>'text','')))<1 OR length(a->>'text')>120 OR jsonb_typeof(a->'fixed_points') IS DISTINCT FROM 'number' OR
+   (a->>'fixed_points')::numeric<>trunc((a->>'fixed_points')::numeric) OR (a->>'fixed_points')::integer NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'invalid_answer'; END IF;
+ END LOOP;
+ IF (SELECT count(DISTINCT market_normalize_content(value->>'text')) FROM jsonb_array_elements(p_question->'answers'))<>n THEN RAISE EXCEPTION 'duplicate_answers'; END IF;
+ IF (SELECT sum((value->>'fixed_points')::integer) FROM jsonb_array_elements(p_question->'answers'))>100 THEN RAISE EXCEPTION 'invalid_points'; END IF;
+ IF jsonb_typeof(p_question->'source') IS DISTINCT FROM 'object' OR
+  (job.kind='search' AND (coalesce(p_question->'source'->>'url','') !~ '^https?://' OR length(coalesce(p_question->'source'->>'evidence',''))<8)) OR
+  (job.kind='generated' AND p_question->'source'->>'points_origin' IS DISTINCT FROM 'estimated') THEN RAISE EXCEPTION 'missing_provenance'; END IF;
+ fp:=encode(sha256(convert_to(norm,'UTF8')),'hex');
+ SELECT encode(sha256(convert_to(jsonb_agg(market_normalize_content(value->>'text') ORDER BY market_normalize_content(value->>'text'))::text,'UTF8')),'hex') INTO ak FROM jsonb_array_elements(p_question->'answers');
+ av:=(p_question->'embedding')::text::public.vector(384);
+ IF vector_norm(av)<0.5 THEN RAISE EXCEPTION 'invalid_embedding'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('qf:'||job.lang,0));
+ IF EXISTS(SELECT 1 FROM producer_question_pool q WHERE q.lang=job.lang AND (q.fingerprint=fp OR q.answer_key=ak OR similarity(market_normalize_content(q.text),norm)>=0.88 OR 1-(q.embedding<=>av)>=0.94)) OR
+ EXISTS(SELECT 1 FROM producer_question_history h WHERE h.lang=job.lang AND (h.fingerprint=fp OR h.answer_key=ak OR similarity(h.question_norm,norm)>=0.88 OR 1-(h.embedding<=>av)>=0.94)) OR
+ EXISTS(SELECT 1 FROM market_game_questions q JOIN market_games g ON g.id=q.game_id WHERE g.lang=job.lang AND g.origin='producer' AND
+  (q.question_norm=norm OR similarity(q.question_norm,norm)>=0.88 OR (q.embedding IS NOT NULL AND 1-(q.embedding<=>av)>=0.94))) THEN
+  RETURN jsonb_build_object('ok',false,'reason','duplicate');
+ END IF;
+ INSERT INTO producer_question_pool(lang,text,answers,category_hint,origin,source,fingerprint,answer_key,embedding,job_id)
+ VALUES(job.lang,p_question->>'text',p_question->'answers',left(coalesce(p_question->>'category_hint',''),300),job.kind,p_question->'source',fp,ak,av,job.id) RETURNING id INTO qid;
+ UPDATE producer_question_jobs SET accepted=accepted+1,status=CASE WHEN accepted+1>=target THEN 'completed' ELSE status END,updated_at=now() WHERE id=job.id;
+ RETURN jsonb_build_object('ok',true,'id',qid);
+END $$;
+
+
+--
+-- Name: qf_publish("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_publish"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE g producer_question_games; result uuid;
+BEGIN
+ SELECT * INTO g FROM producer_question_games WHERE id=p_id FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'game_not_found'; END IF;
+ IF g.published_id IS NOT NULL THEN
+  UPDATE market_games SET status='published' WHERE id=g.published_id AND origin='producer';
+  RETURN jsonb_build_object('ok',true,'id',g.published_id);
+ END IF;
+ INSERT INTO market_games(title,description,lang,payload,origin,status) VALUES(g.title,g.description,g.lang,g.payload,'producer','published') RETURNING id INTO result;
+ UPDATE producer_question_games SET published_id=result WHERE id=p_id;
+ RETURN jsonb_build_object('ok',true,'id',result);
+END $$;
+
+
+--
+-- Name: qf_unpublish("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."qf_unpublish"("p_id" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ UPDATE market_games SET status='withdrawn' WHERE id=(SELECT published_id FROM producer_question_games WHERE id=p_id) AND origin='producer';
+ RETURN FOUND;
+END $$;
+
+
+--
 -- Name: questions_rules_state_stmt(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -17539,172 +18015,22 @@ $$;
 
 CREATE FUNCTION "public"."seed_demo_for_user"("p_uid" "uuid", "p_lang" "text" DEFAULT 'pl'::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_lang       text;
-  v_tpl        jsonb;
-  v_base_id    uuid;
-  v_cat_map    jsonb := '{}';
-  v_tag_map    jsonb := '{}';
-  v_bq_map     jsonb := '{}';
-  v_game_id    uuid;
-  v_q_ids      uuid[];
-  v_a_map      jsonb;
-  v_sess_ids   uuid[];
-  v_cfg        RECORD;
-  v_cat        jsonb;
-  v_tag        jsonb;
-  v_q          jsonb;
-  v_a          jsonb;
-  v_vote       jsonb;
-  v_ctag       jsonb;
-  v_qtag       jsonb;
-  v_qi         int;
-  v_ai         int;
-  v_vi         int;
-  v_pick       int;
-  v_cat_id     uuid;
-  v_tag_id     uuid;
-  v_q_id       uuid;
-  v_a_id       uuid;
-  v_parent_id  uuid;
-  v_sess_id    uuid;
-  v_logo_slot  text;
-  v_raw        text;
-  v_norm       text;
+DECLARE v_lang text:=lower(btrim(coalesce(p_lang,'pl'))); tpl record; rid uuid; kind text;
 BEGIN
-  v_lang := lower(trim(coalesce(p_lang, 'pl')));
-  IF v_lang NOT IN ('pl', 'en', 'uk') THEN v_lang := 'pl'; END IF;
-
-  /* ── STEP 1: BASE ─────────────────────────────────────────────────── */
-  SELECT payload INTO v_tpl FROM demo_template_data WHERE lang = v_lang AND slot = 'base';
-  IF v_tpl IS NOT NULL THEN
-    INSERT INTO question_bases (owner_id, name, is_demo)
-    VALUES (p_uid, v_tpl->'base'->>'name', true)
-    RETURNING id INTO v_base_id;
-
-    FOR v_cat IN SELECT value FROM jsonb_array_elements(v_tpl->'categories') LOOP
-      IF (v_cat->>'parent_id') IS NULL THEN
-        INSERT INTO qb_categories (base_id, parent_id, name, ord)
-        VALUES (v_base_id, NULL, v_cat->>'name', (v_cat->>'ord')::int)
-        RETURNING id INTO v_cat_id;
-        v_cat_map := v_cat_map || jsonb_build_object(v_cat->>'id', v_cat_id);
-      END IF;
-    END LOOP;
-    FOR v_cat IN SELECT value FROM jsonb_array_elements(v_tpl->'categories') LOOP
-      IF (v_cat->>'parent_id') IS NOT NULL THEN
-        v_parent_id := (v_cat_map->>(v_cat->>'parent_id'))::uuid;
-        INSERT INTO qb_categories (base_id, parent_id, name, ord)
-        VALUES (v_base_id, v_parent_id, v_cat->>'name', (v_cat->>'ord')::int)
-        RETURNING id INTO v_cat_id;
-        v_cat_map := v_cat_map || jsonb_build_object(v_cat->>'id', v_cat_id);
-      END IF;
-    END LOOP;
-
-    FOR v_tag IN SELECT value FROM jsonb_array_elements(v_tpl->'tags') LOOP
-      INSERT INTO qb_tags (base_id, name, color, ord)
-      VALUES (v_base_id, v_tag->>'name', v_tag->>'color', (v_tag->>'ord')::int)
-      RETURNING id INTO v_tag_id;
-      v_tag_map := v_tag_map || jsonb_build_object(v_tag->>'id', v_tag_id);
-    END LOOP;
-
-    FOR v_ctag IN SELECT value FROM jsonb_array_elements(v_tpl->'category_tags') LOOP
-      INSERT INTO qb_category_tags (category_id, tag_id)
-      VALUES ((v_cat_map->>(v_ctag->>'category_id'))::uuid, (v_tag_map->>(v_ctag->>'tag_id'))::uuid);
-    END LOOP;
-
-    FOR v_q IN SELECT value FROM jsonb_array_elements(v_tpl->'questions') LOOP
-      v_cat_id := (v_cat_map->>(v_q->>'category_id'))::uuid;
-      INSERT INTO qb_questions (base_id, category_id, ord, payload)
-      VALUES (v_base_id, v_cat_id, (v_q->>'ord')::int, v_q->'payload')
-      RETURNING id INTO v_q_id;
-      v_bq_map := v_bq_map || jsonb_build_object(v_q->>'id', v_q_id);
-    END LOOP;
-
-    FOR v_qtag IN SELECT value FROM jsonb_array_elements(v_tpl->'question_tags') LOOP
-      INSERT INTO qb_question_tags (question_id, tag_id)
-      VALUES ((v_bq_map->>(v_qtag->>'question_id'))::uuid, (v_tag_map->>(v_qtag->>'tag_id'))::uuid);
-    END LOOP;
-  END IF;
-
-  /* ── STEP 2: LOGOS ────────────────────────────────────────────────── */
-  FOREACH v_logo_slot IN ARRAY ARRAY['logo_text', 'logo_draw', 'logo_image'] LOOP
-    SELECT payload INTO v_tpl FROM demo_template_data WHERE lang = v_lang AND slot = v_logo_slot;
-    IF v_tpl IS NOT NULL THEN
-      INSERT INTO user_logos (user_id, name, type, is_demo, payload)
-      VALUES (
-        p_uid,
-        v_tpl->>'name',
-        CASE WHEN v_tpl->>'kind' = 'GLYPH' THEN 'GLYPH_30x10' ELSE 'PIX_150x70' END,
-        true,
-        v_tpl->'payload'
-      );
-    END IF;
-  END LOOP;
-
-  /* ── STEP 3: GAMES ────────────────────────────────────────────────── */
-  FOR v_cfg IN
-    SELECT * FROM (VALUES
-      ('poll_text_open',     'poll_text'::game_type,   'poll_open'::game_status, true,  false),
-      ('poll_text_closed',   'poll_text'::game_type,   'ready'::game_status,     false, false),
-      ('poll_points_open',   'poll_points'::game_type, 'poll_open'::game_status, false, true),
-      ('poll_points_closed', 'poll_points'::game_type, 'ready'::game_status,     false, false),
-      ('prepared',           'prepared'::game_type,    'draft'::game_status,     false, false),
-      ('poll_points_draft',  'poll_points'::game_type, 'draft'::game_status,     false, false),
-      ('poll_text_draft',    'poll_text'::game_type,   'draft'::game_status,     false, false)
-    ) AS t(slot, gtype, gstatus, is_text_open, is_points_open)
-  LOOP
-    SELECT payload INTO v_tpl FROM demo_template_data WHERE lang = v_lang AND slot = v_cfg.slot;
-    CONTINUE WHEN v_tpl IS NULL;
-
-    INSERT INTO games (owner_id, name, type, status, is_demo)
-    VALUES (p_uid, v_tpl->'game'->>'name', v_cfg.gtype, v_cfg.gstatus, true)
-    RETURNING id INTO v_game_id;
-
-    v_q_ids := ARRAY[]::uuid[]; v_a_map := '{}'; v_sess_ids := ARRAY[]::uuid[];
-
-    FOR v_qi IN 1..jsonb_array_length(v_tpl->'questions') LOOP
-      v_q := (v_tpl->'questions')->(v_qi - 1);
-      INSERT INTO questions (game_id, ord, text) VALUES (v_game_id, v_qi, v_q->>'text') RETURNING id INTO v_q_id;
-      v_q_ids := array_append(v_q_ids, v_q_id);
-      FOR v_ai IN 1..coalesce(jsonb_array_length(v_q->'answers'), 0) LOOP
-        v_a := (v_q->'answers')->(v_ai - 1);
-        INSERT INTO answers (question_id, ord, text, fixed_points)
-        VALUES (v_q_id, v_ai, left(trim(v_a->>'text'), 17), coalesce((v_a->>'fixed_points')::int, 0))
-        RETURNING id INTO v_a_id;
-        v_a_map := v_a_map || jsonb_build_object((v_qi - 1)::text || ':' || (v_ai - 1)::text, v_a_id);
-      END LOOP;
-    END LOOP;
-
-    IF v_cfg.is_text_open OR v_cfg.is_points_open THEN
-      FOR v_qi IN 1..array_length(v_q_ids, 1) LOOP
-        INSERT INTO poll_sessions (game_id, question_id, question_ord, is_open)
-        VALUES (v_game_id, v_q_ids[v_qi], v_qi, true) RETURNING id INTO v_sess_id;
-        v_sess_ids := array_append(v_sess_ids, v_sess_id);
-      END LOOP;
-    END IF;
-
-    FOR v_vi IN 1..coalesce(jsonb_array_length(v_tpl->'votes'), 0) LOOP
-      v_vote := (v_tpl->'votes')->(v_vi - 1);
-      IF v_cfg.is_text_open THEN
-        FOR v_qi IN 1..jsonb_array_length(v_vote->'answers_raw') LOOP
-          v_raw := v_vote->'answers_raw'->>(v_qi - 1);
-          INSERT INTO poll_text_entries (game_id, poll_session_id, question_id, voter_token, answer_raw, answer_norm)
-          VALUES (v_game_id, v_sess_ids[v_qi], v_q_ids[v_qi], 'demo_seed_v' || lpad(v_vi::text, 4, '0'), v_raw, lower(regexp_replace(trim(v_raw), '\s+', ' ', 'g')));
-        END LOOP;
-      ELSIF v_cfg.is_points_open THEN
-        FOR v_qi IN 1..jsonb_array_length(v_vote->'picks') LOOP
-          v_pick := (v_vote->'picks'->>(v_qi - 1))::int;
-          v_a_id := (v_a_map->>((v_qi - 1)::text || ':' || v_pick::text))::uuid;
-          INSERT INTO poll_votes (game_id, question_ord, answer_ord, voter_token, poll_session_id, question_id, answer_id)
-          VALUES (v_game_id, v_qi, v_pick + 1, 'demo_seed_v' || lpad(v_vi::text, 4, '0'), v_sess_ids[v_qi], v_q_ids[v_qi], v_a_id);
-        END LOOP;
-      END IF;
-    END LOOP;
-  END LOOP;
-END;
-$$;
+ IF v_lang NOT IN ('pl','en','uk') THEN v_lang:='pl'; END IF;
+ FOR tpl IN SELECT * FROM demo_template_data WHERE demo_template_data.lang=v_lang ORDER BY slot LOOP
+  IF tpl.slot='base' THEN
+   kind:='base';INSERT INTO question_bases(owner_id,name,is_demo) VALUES(p_uid,tpl.payload#>>'{base,name}',true) RETURNING id INTO rid;
+  ELSIF tpl.slot LIKE 'logo_%' THEN
+   kind:='logo';INSERT INTO user_logos(user_id,name,type,is_demo,payload) VALUES(p_uid,tpl.payload->>'name',CASE WHEN tpl.payload->>'kind'='GLYPH' THEN 'GLYPH_30x10' ELSE 'PIX_150x70' END,true,tpl.payload->'payload') RETURNING id INTO rid;
+  ELSIF tpl.slot IN ('prepared','poll_text_open','poll_text_closed','poll_text_draft','poll_points_open','poll_points_closed','poll_points_draft') THEN
+   kind:='game';INSERT INTO games(owner_id,name,type,is_demo) VALUES(p_uid,tpl.payload#>>'{game,name}',CASE WHEN tpl.slot='prepared' THEN 'prepared'::game_type WHEN tpl.slot LIKE 'poll_text_%' THEN 'poll_text'::game_type ELSE 'poll_points'::game_type END,true) RETURNING id INTO rid;
+  ELSE CONTINUE; END IF;
+  PERFORM public._demo_write(kind,rid,tpl.slot,tpl.payload);
+ END LOOP;
+END $$;
 
 
 --
@@ -18692,6 +19018,39 @@ CREATE FUNCTION "public"."username_taken"("p_username" "text") RETURNS boolean
       AND id IS DISTINCT FROM auth.uid()
   )
 $$;
+
+
+--
+-- Name: admin_demo_targets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."admin_demo_targets" (
+    "update_id" "uuid" NOT NULL,
+    "kind" "text" NOT NULL,
+    "resource_id" "uuid" NOT NULL,
+    "status" "text" DEFAULT 'queued'::"text" NOT NULL,
+    "next_run_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "message" "text" DEFAULT ''::"text" NOT NULL,
+    CONSTRAINT "admin_demo_targets_kind_check" CHECK (("kind" = ANY (ARRAY['game'::"text", 'logo'::"text", 'base'::"text"]))),
+    CONSTRAINT "admin_demo_targets_status_check" CHECK (("status" = ANY (ARRAY['queued'::"text", 'updated'::"text", 'edited'::"text", 'removed'::"text", 'failed'::"text"])))
+);
+
+
+--
+-- Name: admin_demo_updates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."admin_demo_updates" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "lang" "text" NOT NULL,
+    "slot" "text" NOT NULL,
+    "old_payload" "jsonb" NOT NULL,
+    "new_payload" "jsonb" NOT NULL,
+    "old_definition" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "admin_demo_updates_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"])))
+);
 
 
 --
@@ -19812,6 +20171,131 @@ CREATE TABLE "public"."poll_votes" (
 
 
 --
+-- Name: producer_ai_usage; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_ai_usage" (
+    "request_id" "uuid" NOT NULL,
+    "day" "date" DEFAULT (("now"() AT TIME ZONE 'UTC'::"text"))::"date" NOT NULL,
+    "service" "text" NOT NULL,
+    "reserved" integer NOT NULL,
+    "actual" integer,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "producer_ai_usage_actual_check" CHECK (("actual" >= 0)),
+    CONSTRAINT "producer_ai_usage_reserved_check" CHECK (("reserved" > 0)),
+    CONSTRAINT "producer_ai_usage_service_check" CHECK (("service" = ANY (ARRAY['marketing'::"text", 'questions'::"text"])))
+);
+
+
+--
+-- Name: producer_question_games; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_question_games" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "batch_id" "uuid" NOT NULL,
+    "lang" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "description" "text" NOT NULL,
+    "mode" "text" NOT NULL,
+    "category" "text" DEFAULT ''::"text" NOT NULL,
+    "payload" "jsonb" NOT NULL,
+    "published_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "producer_question_games_description_check" CHECK (("length"("btrim"("description")) > 0)),
+    CONSTRAINT "producer_question_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "producer_question_games_mode_check" CHECK (("mode" = ANY (ARRAY['manual'::"text", 'auto'::"text", 'category'::"text"]))),
+    CONSTRAINT "producer_question_games_title_check" CHECK ((("length"("btrim"("title")) >= 1) AND ("length"("btrim"("title")) <= 120)))
+);
+
+
+--
+-- Name: producer_question_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_question_history" (
+    "lang" "text" NOT NULL,
+    "fingerprint" "text" NOT NULL,
+    "question_norm" "text" NOT NULL,
+    "answer_key" "text" NOT NULL,
+    "embedding" "public"."vector"(384) NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "used_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
+-- Name: producer_question_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_question_jobs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "lang" "text" NOT NULL,
+    "kind" "text" NOT NULL,
+    "enrich" boolean DEFAULT false NOT NULL,
+    "category" "text" DEFAULT ''::"text" NOT NULL,
+    "target" integer NOT NULL,
+    "accepted" integer DEFAULT 0 NOT NULL,
+    "rejected" integer DEFAULT 0 NOT NULL,
+    "duplicates" integer DEFAULT 0 NOT NULL,
+    "status" "text" DEFAULT 'queued'::"text" NOT NULL,
+    "queries" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
+    "cursor" integer DEFAULT 0 NOT NULL,
+    "round" integer DEFAULT 0 NOT NULL,
+    "message" "text" DEFAULT ''::"text" NOT NULL,
+    "next_run_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "lease" "uuid",
+    "lease_until" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "producer_question_jobs_category_check" CHECK (("length"("category") <= 200)),
+    CONSTRAINT "producer_question_jobs_check" CHECK ((("accepted" >= 0) AND ("accepted" <= "target"))),
+    CONSTRAINT "producer_question_jobs_kind_check" CHECK (("kind" = ANY (ARRAY['search'::"text", 'generated'::"text"]))),
+    CONSTRAINT "producer_question_jobs_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "producer_question_jobs_status_check" CHECK (("status" = ANY (ARRAY['queued'::"text", 'running'::"text", 'paused'::"text", 'waiting_budget'::"text", 'waiting_provider'::"text", 'completed'::"text", 'cancelled'::"text", 'needs_attention'::"text"]))),
+    CONSTRAINT "producer_question_jobs_target_check" CHECK (("target" > 0))
+);
+
+
+--
+-- Name: producer_question_pool; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_question_pool" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "lang" "text" NOT NULL,
+    "text" "text" NOT NULL,
+    "answers" "jsonb" NOT NULL,
+    "category_hint" "text" DEFAULT ''::"text" NOT NULL,
+    "origin" "text" NOT NULL,
+    "source" "jsonb" NOT NULL,
+    "fingerprint" "text" NOT NULL,
+    "answer_key" "text" NOT NULL,
+    "embedding" "public"."vector"(384) NOT NULL,
+    "job_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "producer_question_pool_answers_check" CHECK ((("jsonb_typeof"("answers") = 'array'::"text") AND (("jsonb_array_length"("answers") >= 3) AND ("jsonb_array_length"("answers") <= 6)))),
+    CONSTRAINT "producer_question_pool_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "producer_question_pool_origin_check" CHECK (("origin" = ANY (ARRAY['search'::"text", 'generated'::"text"]))),
+    CONSTRAINT "producer_question_pool_text_check" CHECK ((("length"("text") >= 8) AND ("length"("text") <= 500)))
+);
+
+
+--
+-- Name: producer_question_sources; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."producer_question_sources" (
+    "url" "text" NOT NULL,
+    "content_hash" "text" NOT NULL,
+    "candidates" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
+    "fetched_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "producer_question_sources_url_check" CHECK (("length"("url") <= 2000))
+);
+
+
+--
 -- Name: profiles; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -20395,6 +20879,30 @@ CREATE TABLE "public"."user_market_library" (
 --
 
 ALTER TABLE ONLY "public"."storage_cleanup_queue" ALTER COLUMN "id" SET DEFAULT "nextval"('"public"."storage_cleanup_queue_id_seq"'::"regclass");
+
+
+--
+-- Name: admin_demo_targets admin_demo_targets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."admin_demo_targets"
+    ADD CONSTRAINT "admin_demo_targets_pkey" PRIMARY KEY ("update_id", "kind", "resource_id");
+
+
+--
+-- Name: admin_demo_updates admin_demo_updates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."admin_demo_updates"
+    ADD CONSTRAINT "admin_demo_updates_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: admin_demo_updates admin_demo_updates_request_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."admin_demo_updates"
+    ADD CONSTRAINT "admin_demo_updates_request_id_key" UNIQUE ("request_id");
 
 
 --
@@ -21045,6 +21553,70 @@ ALTER TABLE ONLY "public"."poll_text_entries"
 
 ALTER TABLE ONLY "public"."poll_votes"
     ADD CONSTRAINT "poll_votes_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: producer_ai_usage producer_ai_usage_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_ai_usage"
+    ADD CONSTRAINT "producer_ai_usage_pkey" PRIMARY KEY ("request_id");
+
+
+--
+-- Name: producer_question_games producer_question_games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_games"
+    ADD CONSTRAINT "producer_question_games_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: producer_question_history producer_question_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_history"
+    ADD CONSTRAINT "producer_question_history_pkey" PRIMARY KEY ("lang", "fingerprint");
+
+
+--
+-- Name: producer_question_jobs producer_question_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_jobs"
+    ADD CONSTRAINT "producer_question_jobs_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: producer_question_jobs producer_question_jobs_request_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_jobs"
+    ADD CONSTRAINT "producer_question_jobs_request_id_key" UNIQUE ("request_id");
+
+
+--
+-- Name: producer_question_pool producer_question_pool_lang_fingerprint_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_pool"
+    ADD CONSTRAINT "producer_question_pool_lang_fingerprint_key" UNIQUE ("lang", "fingerprint");
+
+
+--
+-- Name: producer_question_pool producer_question_pool_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_pool"
+    ADD CONSTRAINT "producer_question_pool_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: producer_question_sources producer_question_sources_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_sources"
+    ADD CONSTRAINT "producer_question_sources_pkey" PRIMARY KEY ("url");
 
 
 --
@@ -22142,6 +22714,27 @@ CREATE INDEX "poll_votes_voter_user_idx" ON "public"."poll_votes" USING "btree" 
 
 
 --
+-- Name: producer_ai_usage_day_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "producer_ai_usage_day_idx" ON "public"."producer_ai_usage" USING "btree" ("day", "service");
+
+
+--
+-- Name: producer_question_jobs_ready_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "producer_question_jobs_ready_idx" ON "public"."producer_question_jobs" USING "btree" ("next_run_at", "updated_at") WHERE ("status" = ANY (ARRAY['queued'::"text", 'running'::"text", 'waiting_budget'::"text", 'waiting_provider'::"text"]));
+
+
+--
+-- Name: producer_question_pool_lang_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "producer_question_pool_lang_idx" ON "public"."producer_question_pool" USING "btree" ("lang", "created_at");
+
+
+--
 -- Name: profiles_guest_expires_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -23122,6 +23715,14 @@ CREATE TRIGGER "zz_mail_center_profile_invalidate" AFTER UPDATE OF "is_guest" ON
 
 
 --
+-- Name: admin_demo_targets admin_demo_targets_update_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."admin_demo_targets"
+    ADD CONSTRAINT "admin_demo_targets_update_id_fkey" FOREIGN KEY ("update_id") REFERENCES "public"."admin_demo_updates"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: answers answers_question_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -23833,6 +24434,22 @@ ALTER TABLE ONLY "public"."poll_votes"
 
 
 --
+-- Name: producer_question_games producer_question_games_published_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_games"
+    ADD CONSTRAINT "producer_question_games_published_id_fkey" FOREIGN KEY ("published_id") REFERENCES "public"."market_games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: producer_question_pool producer_question_pool_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."producer_question_pool"
+    ADD CONSTRAINT "producer_question_pool_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "public"."producer_question_jobs"("id");
+
+
+--
 -- Name: profiles profiles_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -24290,6 +24907,18 @@ CREATE POLICY "Users can insert their own rating" ON "public"."app_ratings" FOR 
 
 CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
+
+--
+-- Name: admin_demo_targets; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."admin_demo_targets" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: admin_demo_updates; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."admin_demo_updates" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
@@ -25097,6 +25726,42 @@ CREATE POLICY "poll_votes_select_owner" ON "public"."poll_votes" FOR SELECT TO "
 
 
 --
+-- Name: producer_ai_usage; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_ai_usage" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: producer_question_games; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_question_games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: producer_question_history; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_question_history" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: producer_question_jobs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_question_jobs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: producer_question_pool; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_question_pool" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: producer_question_sources; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."producer_question_sources" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: profiles; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -25601,5 +26266,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict i7Ea0fv68nVurQkRWjm30Ky5CTmVHzqI2ZajjtsVjSF2OOSvoyOqpvDvtOK91PX
+\unrestrict 5TuV20PKPy9iUCtQj4qNLMQAyflSGKKqY1rddO8Jl3gee2GWQYO2hV6ScWPSPwK
 
