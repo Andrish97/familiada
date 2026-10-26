@@ -843,7 +843,7 @@ test.describe("games: audyt -- game_validate", () => {
     test.setTimeout(90_000);
     await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-GVUI-${Date.now()}`;
-    const readyName = `${name}-ready`;
+    const readyName = `E2E-GM-READY-${Date.now()}`;
     try {
       await seedPreparedGame(page, name, { questions: 9 });
       await seedPreparedGame(page, readyName);

@@ -257,7 +257,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   na komputerze 1400 px i telefonie 390 px obejrzane (4 kadry).
 - Branch `codex/game-settings-readiness`; punktowa bramka E2E obejmuje
   brak zaznaczenia, gry z 9 i 10 pytaniami, powody PL/EN/UK oraz telefon.
-  Status: przed bramką brancha i wdrożeniem Pages.
+  Pierwszy przebieg 40351402060 zatrzymał się na niejednoznacznym
+  selektorze testu: nazwa gotowej gry zawierała pełną nazwę szkicu.
+  Nazwy fixture'ów rozdzielone; kod aplikacji bez zmian.
+  Status: ponowna bramka brancha, przed wdrożeniem Pages.
 
 ### 2026-10-26 — Host: tekst poza ramkami i jaśniejsza zasłona
 
