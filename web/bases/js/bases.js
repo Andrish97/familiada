@@ -526,35 +526,27 @@ async function exportBase(baseId, onProgress) {
   const prog = (step, i, msg = "") => {
     if (typeof onProgress === "function") onProgress({ step, i, n: EXPORT_STEPS, msg });
   };
-  const { data: baseRow, error: bErr } = await sb()
-    .from("question_bases")
-    .select("id,name")
-    .eq("id", baseId)
-    .single();
+  // Wszystkie cztery odczyty zależą tylko od baseId. Uruchom je razem,
+  // ale komunikaty postępu pokazuj w dotychczasowej kolejności.
+  const [baseResult, categoriesResult, questionsResult, tagsResult] = await Promise.all([
+    sb().from("question_bases").select("id,name").eq("id", baseId).single(),
+    sb().from("qb_categories").select("id,parent_id,name,ord").eq("base_id", baseId).order("ord", { ascending: true }),
+    sb().from("qb_questions").select("id,category_id,ord,payload").eq("base_id", baseId).order("ord", { ascending: true }),
+    sb().from("qb_tags").select("id,name,color,ord").eq("base_id", baseId).order("ord", { ascending: true }),
+  ]);
+  const { data: baseRow, error: bErr } = baseResult;
   if (bErr) throw bErr;
   prog(t("bases.export.steps.base"), 1);
 
-  const { data: cats, error: cErr } = await sb()
-    .from("qb_categories")
-    .select("id,parent_id,name,ord")
-    .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+  const { data: cats, error: cErr } = categoriesResult;
   if (cErr) throw cErr;
   prog(t("bases.export.steps.folders"), 2, t("bases.export.count", { count: (cats || []).length }));
 
-  const { data: qs, error: qErr } = await sb()
-    .from("qb_questions")
-    .select("id,category_id,ord,payload")
-    .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+  const { data: qs, error: qErr } = questionsResult;
   if (qErr) throw qErr;
   prog(t("bases.export.steps.questions"), 3, t("bases.export.count", { count: (qs || []).length }));
 
-  const { data: tags, error: tErr } = await sb()
-    .from("qb_tags")
-    .select("id,name,color,ord")
-    .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+  const { data: tags, error: tErr } = tagsResult;
   if (tErr) throw tErr;
   prog(t("bases.export.steps.tags"), 4, t("bases.export.count", { count: (tags || []).length }));
 
