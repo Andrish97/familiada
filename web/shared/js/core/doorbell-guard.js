@@ -1,13 +1,14 @@
 // js/core/doorbell-guard.js
 // Dzwonek Control ({rev} po każdym potwierdzonym zapisie) jako siatka
 // bezpieczeństwa dla kanału bezpośredniego (postgres_changes). Gdy kanał
-// leży — od razu odczyt. Gdy działa — ma 400 ms na dostarczenie rewizji;
-// pomiar E2E pokazał, że zwykłe Postgres Changes docierało 180–350 ms po
-// dzwonku. Krótszy próg wywoływał RPC przed normalnym wierszem. Przy dłuższym
-// opóźnieniu RPC nadal nadrabia szybciej niż heartbeat urządzenia. Dwie
-// wpadki z rzędu = kanał nieświeży.
+// leży — od razu odczyt. Gdy działa — ma 500 ms na dostarczenie rewizji;
+// pomiary E2E wykazały typowe opóźnienie 180–350 ms i pojedynczy wspólny
+// przypadek 444–458 ms na trzech urządzeniach. Próg 400 ms uruchomił wtedy
+// zbędne odczyty RPC tuż przed dostarczeniem tych samych wierszy. Przy
+// dłuższym opóźnieniu RPC nadal nadrabia szybciej niż heartbeat urządzenia.
+// Dwie wpadki z rzędu = kanał nieświeży.
 
-export function createDoorbellGuard({ graceMs = 400, getReceivedRev, isDirectConnected, fetchNow, onMissed = () => {}, onStale = () => {}, setTimer = setTimeout, clearTimer = clearTimeout }) {
+export function createDoorbellGuard({ graceMs = 500, getReceivedRev, isDirectConnected, fetchNow, onMissed = () => {}, onStale = () => {}, setTimer = setTimeout, clearTimer = clearTimeout }) {
   let timer = null;
   let misses = 0;
   let latestMissedRev = null;

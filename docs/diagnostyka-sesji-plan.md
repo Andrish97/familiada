@@ -266,7 +266,7 @@ a czasy `*_ms` mierzą odstępy lokalne. Fazy `direct_after_fallback` i
 `fallback_applied` pozwolą odróżnić opóźniony kanał od skutecznego odzyskania
 stanu przez RPC; nie są same w sobie diagnozą przyczyny.
 
-### Korekta progów po pomiarze E2E — 2026-10-25
+### Korekta progów po pomiarze E2E — 2026-10-26
 
 Przebieg E2E `40246050244` ujawnił fałszywe nadrabianie przy widocznych,
 aktywnych kartach: próg dzwonka 100 ms powodował 5–7 `fallback_catchup` na
@@ -276,7 +276,8 @@ i niepotrzebne odtworzenie kanału. W równoległym sprawdzeniu serwera
 Realtime nie było restartów ani błędów, więc te konkretne zdarzenia wynikały
 z progów klienta, a nie z wykazanego błędu serwera.
 
-Zmieniono próg dzwonka na 400 ms, a watchdoga rewizji na 700 ms. E2E
+Zmieniono próg dzwonka z 100 ms na 400 ms, a watchdoga rewizji z 250 ms na
+700 ms. E2E
 `40246357739` przeszedł: Display miał 0 nadrabiań, Host i Buzzer również
 0; urządzenia odebrały odpowiednio 10, 10 i 29 natywnych ramek
 Postgres Changes. Kontrolowane rozłączenie Display i wznowienie także
@@ -290,6 +291,19 @@ Nie znaleziono w tym sprawdzeniu błędu serwera skorelowanego z E2E. To
 potwierdza poprawę i brak awarii w tym scenariuszu testowym; nie wyklucza
 problemów sieci lub przeglądarki w historycznych sesjach użytkowników ani
 nie dowodzi, że serwer nigdy nie doświadcza krótkich opóźnień.
+
+Po wdrożeniu próg 400 ms ujawnił kolejny przypadek w E2E `40247775263`:
+ta sama rewizja uruchomiła po jednym fallbacku na Display, Host i Buzzer,
+chociaż karty były widoczne, aktywne i online. Wiersz Postgres Changes
+dotarł 44–58 ms po fallbacku, czyli około 444–458 ms po lokalnym dzwonku.
+Serwerowy check po wcześniejszym E2E (`40247642918`) nadal wykazał healthy,
+0 restartów, `oom=false`, aktywne sloty CDC i brak błędów proxy; nie mierzy
+jednak czasu dostawy pojedynczego wiersza.
+
+Podniesiono próg dzwonka do 500 ms, pozostawiając watchdog heartbeat na
+700 ms. Zmiana daje temu zmierzonemu wierszowi dodatkowe 42 ms marginesu,
+nie opóźniając dłuższego fallbacku RPC poza pół sekundy. Weryfikacja nowego
+progu jest uruchomiona na `main`; wyniki należy dopisać po zakończeniu.
 
 ## Pytania do decyzji
 
