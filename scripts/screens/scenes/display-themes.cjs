@@ -39,4 +39,27 @@ module.exports = themes.flatMap((theme) => [
       await page.mouse.move(5, 5);
     }],
   },
+  ...(theme === "modern" ? [] : [false, true].map(covered => ({
+    id: `host-theme-${theme}${covered ? "-covered" : ""}`, category: "play",
+    title: `Prowadzący — ${theme}${covered ? " — zasłona" : ""}`,
+    path: "/control/host/?preview=1", frame: true,
+    devices: covered ? ["desktop-1400"] : ["desktop-1400", "phone", "tablet-landscape"],
+    sources: ["web/control/host/", "web/shared/data/display-themes.json"],
+    ready: () => document.readyState === "complete",
+    steps: [async (view, { lang, page }) => {
+      const { buildGameState } = await import("../data/game-state.mjs");
+      const row = buildGameState(lang, "round");
+      const registry = require("../../../web/shared/data/display-themes.json");
+      row.detail.display.theme = theme;
+      row.detail.display.colors.BACKGROUND = registry.themes.find(e => e.key === theme).defaultBackground;
+      row.detail.host.covered = covered;
+      if (covered) { row.phase = "DUEL"; row.step = "r_duel"; }
+      await view.waitForSelector("html[data-preview]");
+      await page.evaluate(row => document.getElementById("screensFrame").contentWindow.postMessage({ type: "familiada:preview-row", row }, location.origin), row);
+      await view.waitForSelector(`html[data-host-theme="${theme}"]`);
+      await view.waitForSelector(`#cover2.${covered ? "coverOn" : "coverOff"}`);
+      await view.evaluate(() => document.fonts.ready);
+      await view.waitForTimeout(500);
+    }],
+  }))),
 ]);

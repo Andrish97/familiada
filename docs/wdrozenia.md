@@ -240,6 +240,26 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-26 — osobne motywy Prowadzącego i mniejszy odstęp longów
+
+- Doprecyzowanie użytkownika: pierwsze rozsunięcie longów było za duże.
+  Skrzydła po 16 jednostek SVG, Radar/Wstęga/Most po 10; reszta bez zmiany.
+  Bramka Display na branchu 40248868515 **1/1 ✓**, unit 10/10 ✓.
+  Wcześniejszy przebieg 40248796826 anulowany po korekcie użytkownika.
+- Użytkownik zapytał o motywy Prowadzącego; po informacji o wspólnym Modern
+  zlecił pięć osobnych wersji. Odrębne moduły i oprawy: Skrzydła ścięte,
+  Radar pierścienie, Kaseton mosiężne ramki/krój szeryfowy, Wstęga łuki,
+  Most stalowe ramki i kratownica. Wspólny klucz z Wyświetlaczem.
+- Kolory ramek zależą od tła, akcenty i zasłona od A/B. Bez dodatkowych
+  wskaźników i bez zmiany treści, gestu, orientacji ani koloru statusów.
+  Powrót do Classic/Modern wyłącza oprawę nowych motywów.
+- 15 zrzutów rzeczywistego Hosta (desktop/telefon i pięć zasłon), pokazane
+  użytkownikowi przed publikacją; tablet i Wskazówki PL/EN/UK. Odświeżony
+  kadr Skrzydeł w ustawieniach (mniejszy odstęp longów).
+- Unit 21/21 ✓ + podręcznik 7/7 ✓, lokalny Host E2E 1/1 ✓: pytania,
+  komplet odpowiedzi, zmiana motywów/kolory, zasłona, pion, powrót Classic/Modern.
+  Następnie punktowa bramka Host, Pages i produkcyjny Host/Display.
+
 ### 2026-10-26 — rozdzielenie ramek longów w nowych motywach
 
 Zgłoszenie użytkownika: obudowy longów nachodzą na siebie poza Kasetonem.

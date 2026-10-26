@@ -40,6 +40,7 @@ zostaną przyjęte.
 - **Motyw** — „Klasyczny” (domyślnie), „Nowoczesny”, „Skrzydła”, „Radar”, „Kaseton”, „Wstęga” albo „Most”.
   Nowoczesny ma dwie animowane szczeliny: przebiegi wychodzą spod górnego licznika
   i rozchodzą się w dół po obu bokach. Nowe motywy mają kontrolki wbudowane w konstrukcję.
+  Wybór motywu dopasowuje też ramki i zasłonę ekranu Prowadzącego.
   Wybór motywu z domyślnym tłem ustawia ten kolor; można go potem zmienić.
   Nowoczesny nie używa koloru tła. Kolory drużyn i kropek pozostają ustawione przez Ciebie.
   Systemowe ustawienie ograniczenia ruchu wyłącza te animacje.

@@ -32,6 +32,18 @@ odsunięcie zmniejszone: Skrzydła po 16 jednostek SVG, pozostałe po 10,
 żeby została niewielka szczelina między obudowami. Treść oraz
 rozmiar siatki kropek zachowane. Kaseton, Modern i Classic bez zmiany układu.
 
+## Osobne motywy Prowadzącego — 2026-10-26
+
+Po pytaniu o Prowadzącego użytkownik zlecił osobne wersje pięciu motywów.
+Skrzydła: kanciaste ramki i boczne akcenty. Radar: zaokrąglone ramki
+z pierścieniami. Kaseton: proste, podwójne mosiężne obramowania. Wstęga:
+łukowe obramowania. Most: stalowe obramowania i konstrukcja kratownicy.
+Kolory oprawy pochodzą z wybranego tła, akcenty i zasłona z kolorów drużyn.
+Treści, kolory statusów, przewijanie, orientacja i gest odsłaniania bez zmian.
+Host nadal pokazuje wyłącznie tytuł/pytanie i odpowiedzi — bez wskaźników
+kontroli drużyn ani nowych informacji o grze. Podglądy rzeczywistej strony
+przed publikacją, w pionie, poziomie i z aktywną zasłoną.
+
 ## Stan — wdrożone 2026-10-26
 
 Pięć nowych motywów oraz zaakceptowana animacja Modern są na produkcji.

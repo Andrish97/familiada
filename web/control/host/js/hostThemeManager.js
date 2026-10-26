@@ -15,15 +15,16 @@ async function loadRegistry() {
       modules: new Map((registry.themes || [])
         .filter((entry) => entry.key && entry.hostModule)
         .map((entry) => [entry.key, entry.hostModule])),
+      backgrounds: new Map((registry.themes || []).map(entry => [entry.key, entry.defaultBackground])),
     };
   } catch (error) {
     console.warn("[host2] nie udało się wczytać rejestru motywów:", error);
-    return { defaultKey: FALLBACK_KEY, modules: new Map() };
+    return { defaultKey: FALLBACK_KEY, modules: new Map(), backgrounds: new Map() };
   }
 }
 
 export async function createHostThemeApplier() {
-  const { defaultKey, modules } = await loadRegistry();
+  const { defaultKey, modules, backgrounds } = await loadRegistry();
   const factories = new Map();
   let currentKey = null;
 
@@ -45,6 +46,7 @@ export async function createHostThemeApplier() {
       const theme = createTheme(root) || {};
       root.dataset.hostTheme = key;
       root.dataset.hostRuled = String(theme.ruled !== false);
+      root.dataset.hostBoard = String(theme.board === true);
       return key;
     } catch (error) {
       console.warn(`[host2] nie udało się wczytać motywu "${key}":`, error);
@@ -59,6 +61,7 @@ export async function createHostThemeApplier() {
     if (key !== currentKey) currentKey = await activate(key, root);
 
     const colors = row.detail?.display?.colors || {};
+    root.style.setProperty("--host-background", colors.BACKGROUND || backgrounds.get(currentKey) || "#d21180");
     root.style.setProperty("--host-dot", colors.DOT || DEFAULT_COLORS.DOT);
     root.style.setProperty("--host-cover-grad-a", colors.A || DEFAULT_COLORS.A);
     root.style.setProperty("--host-cover-grad-b", colors.B || DEFAULT_COLORS.B);

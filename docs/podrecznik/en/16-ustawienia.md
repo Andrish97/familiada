@@ -40,6 +40,7 @@ be accepted.
 - **Theme** — "Classic" (default), "Modern", "Wings", "Radar", "Cabinet", "Ribbon" or "Bridge".
   Modern has two animated gaps: the segments emerge below the top counter and travel
   down both sides. The new themes integrate team indicators into their structure.
+  Choosing a theme also matches the frames and cover on the Host screen.
   Choosing a theme with a default background sets that color; you can change it afterwards.
   Modern does not use the background color. Your team and dot colors are preserved.
   The system reduced motion setting disables these animations.

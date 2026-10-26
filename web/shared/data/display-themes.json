@@ -32,7 +32,7 @@
         "uk": "Крила"
       },
       "module": "./theme_wings.js?v=v2026-10-26T00161",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-26T00161",
+      "hostModule": "/control/host/js/themes/wings.js?v=v2026-10-26T00161",
       "usesBackground": true,
       "defaultBackground": "#152238"
     },
@@ -44,7 +44,7 @@
         "uk": "Радар"
       },
       "module": "./theme_radar.js?v=v2026-10-26T00161",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-26T00161",
+      "hostModule": "/control/host/js/themes/radar.js?v=v2026-10-26T00161",
       "usesBackground": true,
       "defaultBackground": "#103d43"
     },
@@ -56,7 +56,7 @@
         "uk": "Панель"
       },
       "module": "./theme_cabinet.js?v=v2026-10-26T00161",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-26T00161",
+      "hostModule": "/control/host/js/themes/cabinet.js?v=v2026-10-26T00161",
       "usesBackground": true,
       "defaultBackground": "#352719"
     },
@@ -68,7 +68,7 @@
         "uk": "Стрічка"
       },
       "module": "./theme_ribbon.js?v=v2026-10-26T00161",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-26T00161",
+      "hostModule": "/control/host/js/themes/ribbon.js?v=v2026-10-26T00161",
       "usesBackground": true,
       "defaultBackground": "#36233f"
     },
@@ -80,7 +80,7 @@
         "uk": "Міст"
       },
       "module": "./theme_bridge.js?v=v2026-10-26T00161",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-26T00161",
+      "hostModule": "/control/host/js/themes/bridge.js?v=v2026-10-26T00161",
       "usesBackground": true,
       "defaultBackground": "#252e35"
     }

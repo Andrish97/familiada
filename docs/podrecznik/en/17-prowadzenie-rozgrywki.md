@@ -89,6 +89,13 @@ with points, the final questions or the details of answer scoring. The second pa
 and up to cover it; in landscape — right and left. Only the host sees what is uncovered.
 After each change of stage, the cover may come back.
 
+The theme selected in the game settings also matches the Host screen.
+Wings, Radar, Cabinet, Ribbon and Bridge have their own frames and covers,
+with framing colors based on the background and accents in the team colors.
+The question and answer layout and the uncovering gestures stay the same.
+
+![Host in the Radar theme — question and answers](zrzut:host-theme-radar@tablet-landscape)
+
 ![Host screen — the right part under the cover](zrzut:play-host-duel@tablet-landscape)
 ![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet-landscape)
 

@@ -89,6 +89,13 @@ z punktami, pytania finału albo szczegóły oceny odpowiedzi. Druga część by
 i w górę, aby zasłonić; w poziomie — w prawo i w lewo. Odsłonięcie widzi tylko prowadzący.
 Po każdej zmianie etapu zasłona może wrócić.
 
+Motyw wybrany w ustawieniach gry dopasowuje również wygląd Prowadzącego.
+Skrzydła, Radar, Kaseton, Wstęga i Most mają osobne ramki oraz zasłony,
+z kolorami oprawy zależnymi od tła i akcentami w kolorach drużyn.
+Układ pytania i odpowiedzi oraz sposób odsłaniania pozostają takie same.
+
+![Prowadzący w motywie Radar — pytanie i odpowiedzi](zrzut:host-theme-radar@tablet-landscape)
+
 ![Ekran prowadzącego — prawa część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
 ![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet-landscape)
 
