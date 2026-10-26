@@ -43,7 +43,7 @@ module.exports = themes.flatMap((theme) => [
     id: `host-theme-${theme}${covered ? "-covered" : ""}`, category: "play",
     title: `Prowadzący — ${theme}${covered ? " — zasłona" : ""}`,
     path: "/control/host/?preview=1", frame: true,
-    devices: covered ? ["desktop-1400"] : ["desktop-1400", "phone", "tablet-landscape"],
+    devices: covered ? ["desktop-1400", "phone", "phone-landscape"] : ["desktop-1400", "phone", "tablet-landscape", "phone-landscape"],
     sources: ["web/control/host/", "web/shared/data/display-themes.json"],
     ready: () => document.readyState === "complete",
     steps: [async (view, { lang, page }) => {

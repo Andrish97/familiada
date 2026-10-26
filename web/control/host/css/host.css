@@ -474,6 +474,7 @@ div#cover2Logo {
   --host-frame: color-mix(in srgb, var(--host-background) 38%, var(--white));
   --host-frame-faint: color-mix(in srgb, var(--host-frame) 20%, transparent);
   --host-board-pad: clamp(8px, 1.4vmin, 20px);
+  --host-reading-inset: max(18px, calc(var(--host-line) * 1.3));
   --host-board-radius: calc(var(--host-line) * .75);
   --host-chamfer: calc(var(--host-line) * .65);
   --host-brass: color-mix(in srgb, #a88e64 75%, var(--host-background));
@@ -481,10 +482,10 @@ div#cover2Logo {
 }
 
 html[data-host-board="true"] {
-  --host-text-left-1: calc(var(--host-line) * 1.3);
-  --host-text-right-1: calc(var(--host-line) * 1.3);
-  --host-text-left-2: calc(var(--host-line) * 1.3);
-  --host-text-right-2: calc(var(--host-line) * 1.3);
+  --host-text-left-1: var(--host-reading-inset);
+  --host-text-right-1: var(--host-reading-inset);
+  --host-text-left-2: var(--host-reading-inset);
+  --host-text-right-2: var(--host-reading-inset);
 }
 
 html[data-preview][data-host-board="true"] { --host-board-pad: 1.4vmin; }
@@ -515,19 +516,24 @@ html[data-host-board="true"] .pane::after {
 
 html[data-host-board="true"] .pane2::before { display: none; }
 html[data-host-board="true"] .text { z-index: 1; }
+html[data-host-board="true"] .pane1 .text {
+  top: max(var(--host-text-top-1), var(--host-reading-inset));
+  bottom: calc(var(--host-safe-bottom) + var(--host-reading-inset));
+}
+html[data-host-board="true"] .pane2 .text {
+  top: max(var(--host-text-top-2), var(--host-reading-inset));
+  /* Reserve space for a wrapped swipe hint as well as the lower frame. */
+  bottom: calc(var(--host-safe-bottom) + var(--host-reading-inset) + var(--host-line) * 2.4);
+}
 html[data-host-board="true"] .p2Hint {
   z-index: 2;
-  bottom: calc(var(--host-safe-bottom) + var(--host-line) * .7);
+  bottom: calc(var(--host-safe-bottom) + var(--host-reading-inset));
   color: var(--host-board-hint);
 }
 
 html[data-host-board="true"] .cover2 {
   border-radius: inherit;
-  background-color: var(--host-panel-bg);
-  background-image: linear-gradient(135deg,
-    color-mix(in srgb, var(--host-cover-grad-a) 36%, transparent),
-    transparent 38% 62%,
-    color-mix(in srgb, var(--host-cover-grad-b) 36%, transparent));
+  background: linear-gradient(135deg, var(--host-cover-grad-a), var(--host-cover-grad-b));
 }
 
 html[data-host-board="true"] .cover2::before {
@@ -541,7 +547,16 @@ html[data-host-board="true"] .cover2::before {
 
 html[data-host-board="true"] .cover2Content {
   z-index: 1;
-  padding-bottom: calc(var(--host-safe-bottom) + var(--host-line) * .85);
+  padding: calc(var(--host-safe-top) + var(--host-reading-inset))
+    calc(var(--host-safe-right) + var(--host-reading-inset))
+    calc(var(--host-safe-bottom) + var(--host-reading-inset))
+    calc(var(--host-safe-left) + var(--host-reading-inset));
+}
+html[data-host-board="true"] .cover2Swipe {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0;
+  text-align: center;
 }
 
 /* Skrzydła: cut corners and strips underneath both reading areas. */
@@ -594,8 +609,10 @@ html[data-host-theme="radar"] .paper {
 html[data-host-theme="radar"] .pane::after { inset: 7px; border-color: var(--host-frame); }
 html[data-host-theme="radar"] .cover2::before {
   inset: 10%;
+  bottom: calc(var(--host-reading-inset) + var(--host-line) * 3);
   border-radius: 50%;
-  box-shadow: 0 0 0 8px var(--host-frame-faint), 0 0 0 20px var(--host-frame-faint);
+  box-shadow: 0 0 0 calc(var(--host-line) * .25) var(--host-frame-faint),
+    0 0 0 calc(var(--host-line) * .6) var(--host-frame-faint);
 }
 
 /* Kaseton: brass edges, rivets and a serif reading face. */
@@ -612,7 +629,9 @@ html[data-host-theme="cabinet"] .pane::after { inset: 9px; border-color: var(--h
 html[data-host-theme="cabinet"] .cover2::before { border: 4px double var(--host-brass); }
 
 /* Wstęga: bowed frames and curved edges in team colors. */
-html[data-host-theme="ribbon"] { --host-board-radius: 30% 12% 30% 12% / 12px 26px 12px 26px; }
+html[data-host-theme="ribbon"] {
+  --host-board-radius: 30% 12% 30% 12% / calc(var(--host-line) * .35) calc(var(--host-line) * .75) calc(var(--host-line) * .35) calc(var(--host-line) * .75);
+}
 html[data-host-theme="ribbon"] .paper {
   background-image: radial-gradient(ellipse at 0 100%, color-mix(in srgb, var(--host-cover-grad-a) 24%, transparent), transparent 60%),
     radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--host-cover-grad-b) 24%, transparent), transparent 60%);
@@ -621,10 +640,10 @@ html[data-host-theme="ribbon"] .pane::after {
   inset: 6px 10px;
   border-inline: 0;
   border-block: 2px solid var(--host-cover-grad-a);
-  border-radius: 45% / 18px;
+  border-radius: 45% / calc(var(--host-line) * .53);
 }
 html[data-host-theme="ribbon"] .pane2::after { border-block-color: var(--host-cover-grad-b); }
-html[data-host-theme="ribbon"] .cover2::before { border-radius: 45% / 24px; }
+html[data-host-theme="ribbon"] .cover2::before { border-radius: 45% / calc(var(--host-line) * .7); }
 
 /* Most: steel frames with diagonal trusses visible between the panels. */
 html[data-host-theme="bridge"] { --host-board-radius: 0px; }

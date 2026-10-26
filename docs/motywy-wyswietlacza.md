@@ -48,6 +48,16 @@ Wdrożone: bramka Host 40249758651 ✓, Pages 40249873902 ✓,
 końcowa produkcja Host/Display 40249971411 **2/2 ✓**.
 Zrzuty i Wskazówki PL/EN/UK odświeżone.
 
+## Odstępy tekstu Hosta i jasność zasłony — 2026-10-26
+
+Zgłoszenie użytkownika: tekst nachodzi na ramki niektórych motywów,
+zasłona jest zbyt ciemna. Wszystkie pięć wersji otrzymuje bezpieczny
+wewnętrzny odstęp dla tekstu, podpowiedzi gestu i zawartości zasłony.
+Obszar odpowiedzi rezerwuje miejsce na dwuwierszową podpowiedź; łuki
+Wstęgi skalują się z rozmiarem tekstu także w małym podglądzie.
+Zasłona używa pełnego gradientu A/B bez ciemnego, przezroczystego środka.
+Classic i Modern zachowują dotychczasowy wygląd.
+
 ## Stan — wdrożone 2026-10-26
 
 Pięć nowych motywów oraz zaakceptowana animacja Modern są na produkcji.

@@ -242,6 +242,23 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+### 2026-10-26 — Host: tekst poza ramkami i jaśniejsza zasłona
+
+- Zgłoszenie użytkownika: tekst wchodzi na ramki części motywów, zasłona
+  za ciemna. Bezpieczne odstępy obejmują treść, podpowiedź i zasłonę;
+  osobne miejsce na dwuwierszowy napis gestu. Łuki Wstęgi skalują się
+  z tekstem, pierścień Radaru kończy się nad napisem na zasłonie.
+- Pełny gradient A/B na zasłonie zamiast ciemnego środka. Classic/Modern
+  bez zmiany. Wskazówki nie wymagają zmiany opisu; odświeżone kadry Hosta
+  PL/EN/UK. Sceny obejmują też telefon w poziomie i zasłony na telefonie.
+- 30 zrzutów pięciu motywów: desktop 1400, telefon 390 i telefon poziomo.
+  Pomiar rzeczywistej strony z długim pytaniem/odpowiedziami: 20 układów
+  (5 motywów × 4 okna, w tym podgląd 320×200), min. odstęp tekst–ramka
+  18 px, tekst–podpowiedź 13,3 px, napis zasłony–krawędź 20 px; ostatnia
+  odpowiedź dostępna po przewinięciu. Bez dopisywania nowych testów CSS.
+- Unit punktowo 29/29 ✓, lokalny Host E2E 1/1 ✓. Następnie bramka
+  Hosta na branchu, Pages i punktowa kontrola Hosta na produkcji.
+
 ### 2026-10-26 — osobne motywy Prowadzącego i mniejszy odstęp longów
 
 - Doprecyzowanie użytkownika: pierwsze rozsunięcie longów było za duże.
