@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "../_shared/internal-auth.ts";
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
@@ -13,14 +14,7 @@ const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const WORKER_SECRET = (Deno.env.get("MAIL_WORKER_SECRET") || "").trim();
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const ea = new TextEncoder().encode(a);
-  const eb = new TextEncoder().encode(b);
-  let diff = ea.length ^ eb.length;
-  const n = Math.max(ea.length, eb.length);
-  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
-  return diff === 0;
-}
+
 
 const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
@@ -281,8 +275,10 @@ async function getSendpulseToken(): Promise<string> {
   if (!res.ok) throw new Error(`sendpulse_auth_failed:${await res.text().catch(() => "")}`);
   
   const data = await res.json();
-  sendpulseToken = data.access_token;
-  return sendpulseToken;
+  const token = data.access_token;
+  if (typeof token !== "string" || !token) throw new Error("sendpulse_auth_invalid_response");
+  sendpulseToken = token;
+  return token;
 }
 
 async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {

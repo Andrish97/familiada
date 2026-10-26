@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "../_shared/internal-auth.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { serviceRoute } from "./routes.js";
 
@@ -8,14 +9,7 @@ import { serviceRoute } from "./routes.js";
 // Ten sam klucz idzie dalej do usługi jako Bearer. Bez CORS.
 const SERVICE_URL = (Deno.env.get("LEAD_FINDER_URL") || "http://familiada-lead-finder:8001").replace(/\/+$/, "");
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const ea = new TextEncoder().encode(a);
-  const eb = new TextEncoder().encode(b);
-  let diff = ea.length ^ eb.length;
-  const n = Math.max(ea.length, eb.length);
-  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
-  return diff === 0;
-}
+
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });

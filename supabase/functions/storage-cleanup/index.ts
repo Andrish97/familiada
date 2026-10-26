@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "../_shared/internal-auth.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,14 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // wartości pochodnej nie daje dostępu do mail-worker.
 const CLEANUP_CONTEXT = "storage-cleanup";
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const ea = new TextEncoder().encode(a);
-  const eb = new TextEncoder().encode(b);
-  let diff = ea.length ^ eb.length;
-  const n = Math.max(ea.length, eb.length);
-  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
-  return diff === 0;
-}
+
 
 async function expectedSecret(): Promise<string> {
   const base = (Deno.env.get("MAIL_WORKER_SECRET") || "").trim();

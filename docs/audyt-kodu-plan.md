@@ -40,3 +40,11 @@ jawnie rozdzielając transfer po kompresji od rozmiarów kodu źródłowego.
   Bramka gałęzi 40330525901 success, Pages 40330793433 success,
   produkcyjna kontrola 40331012157 success. Pozostałe adaptery E
   są realizowane osobno w panelu prywatnym.
+
+- 2026-10-26: F/R3 na `refactor/edge-internal-auth-20261026`: cztery Edge
+  Functions używają jednej funkcji `_shared/internal-auth.ts`; polityki
+  odrzucenia pustego sekretu pozostają przy endpointach. Deno typecheck
+  pięciu plików i test bajtów/Unicode przeszły. Typecheck wykrył przy
+  okazji niezweryfikowaną odpowiedź tokenu SendPulse: brak poprawnego
+  tokenu teraz jawnie kończy się błędem przed próbą wysyłki. Wspólny
+  transport dostawców R2 pozostaje kolejnym etapem.

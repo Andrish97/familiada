@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "../_shared/internal-auth.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { checkGameUniqueness, indexSemanticQuestions, isExactCopyError } from "./uniqueness.ts";
@@ -7,14 +8,7 @@ import { checkGameUniqueness, indexSemanticQuestions, isExactCopyError } from ".
 // Bez nagłówków CORS -- przeglądarka nie ma tu wstępu.
 const CORS: Record<string, string> = {};
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const ea = new TextEncoder().encode(a);
-  const eb = new TextEncoder().encode(b);
-  let diff = ea.length ^ eb.length;
-  const n = Math.max(ea.length, eb.length);
-  for (let i = 0; i < n; i++) diff |= (ea[i] ?? 0) ^ (eb[i] ?? 0);
-  return diff === 0;
-}
+
 
 // Sekret GENERATE_GAME_SECRET (env funkcji) w nagłówku X-Internal-Secret;
 // brak sekretu w env = odmowa każdego żądania.
