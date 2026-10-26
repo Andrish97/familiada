@@ -301,9 +301,19 @@ Serwerowy check po wcześniejszym E2E (`40247642918`) nadal wykazał healthy,
 jednak czasu dostawy pojedynczego wiersza.
 
 Podniesiono próg dzwonka do 500 ms, pozostawiając watchdog heartbeat na
-700 ms. Zmiana daje temu zmierzonemu wierszowi dodatkowe 42 ms marginesu,
-nie opóźniając dłuższego fallbacku RPC poza pół sekundy. Weryfikacja nowego
-progu jest uruchomiona na `main`; wyniki należy dopisać po zakończeniu.
+700 ms. Dwa przebiegi po tej zmianie (`40248033196` i `40248450575`)
+przeszły: 0 nadrabiań u wszystkich urządzeń, natywne ramki odpowiednio
+10/10/29 oraz 10/10/28, a kontrolowane rozłączenie Display i wznowienie
+przeszły. To potwierdza, że próg 500 ms usuwa odtworzony przypadek
+444–458 ms w tych dwóch przebiegach. Nie usuwa dłuższych opóźnień, dla
+których fallback RPC nadal ma działać.
+
+Read-only check po tych testach (`familiada-server` run `40248618149`)
+wykazał Realtime healthy, 0 restartów, `oom=false`, aktywne sloty CDC
+(zaległość 0 i 48 bajtów) oraz odpowiedzi WebSocket 101 w Envoy. Nie było
+błędów Caddy ani pasujących błędów gateway. Ten check nadal nie pokazuje
+czasu konkretnej zmiany od commitu do odbioru przez urządzenie; przyczyna
+opóźnienia 444–458 ms nie została więc przypisana do komponentu serwera.
 
 ## Pytania do decyzji
 
