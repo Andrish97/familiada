@@ -31,6 +31,7 @@ i bezpośrednio przypisanymi kontrolkami. Po doprecyzowaniu użytkownika
 odsunięcie zmniejszone: Skrzydła po 16 jednostek SVG, pozostałe po 10,
 żeby została niewielka szczelina między obudowami. Treść oraz
 rozmiar siatki kropek zachowane. Kaseton, Modern i Classic bez zmiany układu.
+Wdrożone; bramka Display 40248868515 ✓, kontrola produkcji 40249971411 ✓.
 
 ## Osobne motywy Prowadzącego — 2026-10-26
 
@@ -43,6 +44,9 @@ Treści, kolory statusów, przewijanie, orientacja i gest odsłaniania bez zmian
 Host nadal pokazuje wyłącznie tytuł/pytanie i odpowiedzi — bez wskaźników
 kontroli drużyn ani nowych informacji o grze. Podglądy rzeczywistej strony
 przed publikacją, w pionie, poziomie i z aktywną zasłoną.
+Wdrożone: bramka Host 40249758651 ✓, Pages 40249873902 ✓,
+końcowa produkcja Host/Display 40249971411 **2/2 ✓**.
+Zrzuty i Wskazówki PL/EN/UK odświeżone.
 
 ## Stan — wdrożone 2026-10-26
 
@@ -74,4 +78,6 @@ Pięć oddzielnych motywów Hosta — bramka 40249758651 ✓. Unit 28/28 ✓,
 po synchronizacji main wersje/motywy/konflikty 10/10 ✓. Zmiany main
 w modułach Display/Host to wyłącznie wersje zasobów; zmiany Realtime
 zachowane. Podglądy pokazane, Wskazówki i zrzuty PL/EN/UK gotowe.
-Następnie Pages i wspólna punktowa kontrola Display/Host.
+Pages 40249873902 ✓ (`93ad1f8c` po wersjach CI), wspólna punktowa
+kontrola produkcyjna Display/Host 40249971411 **2/2 ✓**, unit CI 28/28 ✓.
+Korekta longów i pięć motywów Prowadzącego zakończone.

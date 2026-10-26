@@ -14,7 +14,9 @@ Sześć wyświetlaczy treści bez zmian. Classic pozostaje domyślny.
 Pages 40246463317 i 40247875596 ✓. Bramka brancha 40246237871 2/2 ✓,
 po poprawce startu Display 40247766872 ✓. Produkcyjne ustawienia
 40246531710 ✓ i końcowy Display 40247923010 ✓. Zrzuty oraz Wskazówki
-PL/EN/UK gotowe. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
+PL/EN/UK gotowe. Dodatkowo mniejszy odstęp longów i pięć osobnych
+motywów Prowadzącego: Pages 40249873902 ✓, kontrola produkcji
+Host/Display 40249971411 **2/2 ✓**, unit 28/28 ✓. Decyzje: [motywy-wyswietlacza.md](motywy-wyswietlacza.md).
 
 ## Zasady
 
@@ -259,8 +261,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 - Unit 21/21 ✓ + podręcznik 7/7 ✓, lokalny Host E2E 1/1 ✓: pytania,
   komplet odpowiedzi, zmiana motywów/kolory, zasłona, pion, powrót Classic/Modern.
   Bramka Host 40249758651 **1/1 ✓**, unit CI 28/28 ✓. Po synchronizacji
-  main unit wersji/motywów/konfliktów 10/10 ✓. Następnie Pages
-  i produkcyjny Host/Display.
+  main unit wersji/motywów/konfliktów 10/10 ✓. Pages 40249873902 ✓
+  (`93ad1f8c` po wersjach CI), kontrola produkcyjna Host/Display
+  40249971411 **2/2 ✓**, unit CI 28/28 ✓. Etap zakończony.
 
 ### 2026-10-26 — rozdzielenie ramek longów w nowych motywach
 
