@@ -1,4 +1,4 @@
-import { bindDrawer } from "../../../shared/js/core/drawer.js?v=v2026-10-26T14432";
+import { bindDrawer } from "../../../shared/js/core/drawer.js?v=v2026-10-26T14443";
 // base-explorer/js/mobile.js
 // Obsługa mobilna: drawer lewego panelu + długie tapnięcie jako zamiennik PPM
 
