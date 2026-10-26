@@ -1237,6 +1237,56 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await expect(questionDuringDuel).toHaveText(visibleQuestion);
+
+    // Kontrolowana utrata sieci jednego urządzenia w aktywnej rundzie.
+    // Chromium nie zawsze zamyka już otwarty WebSocket przy samym setOffline,
+    // więc zamykamy jego natywne gniazdo jawnie, gdy urządzenie jest offline.
+    // To pozwala sprawdzić kod zamknięcia i automatyczne ponowne dołączenie.
+    await displayPage.context().setOffline(true);
+    const forcedSocketClose = await displayPage.evaluate(() => {
+      const socket = window.__sbDeviceRealtime?.realtime?.socketAdapter?.socket?.conn;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+      socket.close(4000, "e2e_network_interrupt");
+      return true;
+    });
+    expect(forcedSocketClose, "E2E powinien zamknąć aktywny WebSocket Displaya").toBe(true);
+    await displayPage.waitForTimeout(3500);
+    await displayPage.context().setOffline(false);
+    let socketEvents = [];
+    try {
+      await expect.poll(async () => {
+        const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+        socketEvents = events.filter(event => event.source === "display" && event.category === "device_transport"
+          && ["socket_closed", "recovered", "connected"].includes(event.metrics?.phase));
+        const reconnected = socketEvents.some(event => event.metrics?.phase === "recovered"
+          && Number.isInteger(event.metrics?.socket_close_code))
+          || socketEvents.some(event => event.metrics?.phase === "connected"
+            && Number.isInteger(event.metrics?.socket_close_code)
+            && Number.isFinite(event.metrics?.reconnect_ms));
+        // The close observer's metadata is copied onto the successful
+        // reconnect event. A separate socket_closed row may be omitted by
+        // the short-event logging policy, so require the paired metadata here.
+        return reconnected;
+      }, { timeout: 45000, message: "Display powinien zapisać kod zamknięcia i powiązać go z ponownym połączeniem" }).toBe(true);
+    } catch (error) {
+      const socketProbe = await displayPage.evaluate(() => ({
+        observer_attached: window.__sbDeviceRealtimeCloseObserverAttached,
+        app_close: window.__sbDeviceRealtimeLastClose || null,
+        connection_state: window.__sbDeviceRealtime?.realtime?.connectionState?.() || null,
+      })).catch(() => null);
+      const allDeviceTransportEvents = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
+      console.log(`[e2e-socket-close] ${JSON.stringify({
+        socketProbe,
+        selected: socketEvents.map(event => ({ phase: event.metrics?.phase, metrics: event.metrics })),
+        device_transport: allDeviceTransportEvents.filter(event => event.source === "display" && event.category === "device_transport")
+          .map(event => ({ phase: event.metrics?.phase, status: event.metrics?.status,
+            code: event.metrics?.socket_close_code, reconnect_ms: event.metrics?.reconnect_ms,
+            previous_status: event.metrics?.previous_status })),
+      })}`);
+      throw error;
+    }
+    await expect(questionDuringDuel).toHaveText(visibleQuestion);
+
     const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
     expect(duelGridRows).toBe(6);
     const duelTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);
@@ -1291,6 +1341,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
           connected: sourceEvents.filter(event => event.category === "device_transport"
             && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
           catchup: catchups.length,
+          doorbellCatchup: catchups.filter(event => event.metrics?.trigger === "doorbell").length,
           heartbeatCatchup: catchups.filter(event => event.metrics?.trigger === "lease_heartbeat").length,
           unexplainedCatchup: catchups.filter(event => event.metrics?.trigger !== "doorbell"
             && event.metrics?.trigger !== "lease_heartbeat"
@@ -1333,17 +1384,23 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     }, { timeout: 15000, message: "Control powinien zalogować wysłany dzwonek z rewizją" }).toBe(true);
     const transport = transportOf(await readControl2Sessions(page, game.id));
     console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
-    if (Object.values(transport).some(item => item.catchup > 0)) {
-      // Szczegóły nadrabiania: rewizje i czasy (bez treści gry).
-      const evs = ((await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [])
-        .filter(event => ["display", "host", "buzzer"].includes(event.source) && event.category !== "device_heartbeat")
+    if (Object.values(transport).some(item => item.heartbeatCatchup > 0 || item.unexplainedCatchup > 0)) {
+      // Jeśli próg heartbeat nadal wykryje opóźnienie po zwiększeniu grace,
+      // zachowaj pełne statystyki i korelację rewizji jako artefakt testu.
+      const anomalySessions = await readControl2Sessions(page, game.id);
+      await attachStatistics(testInfo, "transport-catchup-anomaly", anomalySessions);
+      const evs = (anomalySessions[0]?.stats_detail.events || [])
+        .filter(event => ["display", "host", "buzzer"].includes(event.source)
+          && ["device_transport", "device_state_sync", "device_network"].includes(event.category))
         .map(event => ({ t: event.created_at, s: event.source, c: event.category, p: event.metrics?.phase,
           tr: event.metrics?.trigger, rev: event.metrics?.revision ?? event.metrics?.latest_revision,
           prev: event.metrics?.previous_revision, miss: event.metrics?.missed_revisions,
-          rms: event.metrics?.render_ms, fms: event.metrics?.fetch_ms, st: event.metrics?.status }));
-      console.log(`[e2e-diag] device events ${JSON.stringify(evs).slice(0, 6000)}`);
+          grace: event.metrics?.grace_ms, reconnect_ms: event.metrics?.reconnect_ms,
+          fms: event.metrics?.fetch_ms, st: event.metrics?.status }));
+      console.log(`[e2e-diag] device events ${JSON.stringify(evs)}`);
     }
     for (const [source, item] of Object.entries(transport)) {
+      expect(item.doorbellCatchup, `${source}: przy zdrowym łączu dzwonek nie powinien wyprzedzać Realtime`).toBeLessThanOrEqual(1);
       expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
       expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
     }

@@ -266,6 +266,31 @@ a czasy `*_ms` mierzą odstępy lokalne. Fazy `direct_after_fallback` i
 `fallback_applied` pozwolą odróżnić opóźniony kanał od skutecznego odzyskania
 stanu przez RPC; nie są same w sobie diagnozą przyczyny.
 
+### Korekta progów po pomiarze E2E — 2026-10-25
+
+Przebieg E2E `40246050244` ujawnił fałszywe nadrabianie przy widocznych,
+aktywnych kartach: próg dzwonka 100 ms powodował 5–7 `fallback_catchup` na
+urządzenie, mimo że Postgres Changes docierało około 179–350 ms później.
+Próg watchdoga rewizji 250 ms oznaczał też stan `STALE` po około 298–326 ms
+i niepotrzebne odtworzenie kanału. W równoległym sprawdzeniu serwera
+Realtime nie było restartów ani błędów, więc te konkretne zdarzenia wynikały
+z progów klienta, a nie z wykazanego błędu serwera.
+
+Zmieniono próg dzwonka na 400 ms, a watchdoga rewizji na 700 ms. E2E
+`40246357739` przeszedł: Display miał 0 nadrabiań, Host i Buzzer również
+0; urządzenia odebrały odpowiednio 10, 10 i 29 natywnych ramek
+Postgres Changes. Kontrolowane rozłączenie Display i wznowienie także
+przeszły. Powtórka `40246805594` dała ten sam wynik: 0 nadrabiań na każdym
+urządzeniu, 10/10/29 natywnych ramek oraz udane kontrolowane wznowienie.
+
+Read-only check serwera po powtórce (`familiada-server` run
+`40246982124`) wykazał Realtime `v2.143.3` jako healthy, 0 restartów,
+`oom=false`; logi Envoy zawierały połączenia WebSocket z odpowiedzią 101.
+Nie znaleziono w tym sprawdzeniu błędu serwera skorelowanego z E2E. To
+potwierdza poprawę i brak awarii w tym scenariuszu testowym; nie wyklucza
+problemów sieci lub przeglądarki w historycznych sesjach użytkowników ani
+nie dowodzi, że serwer nigdy nie doświadcza krótkich opóźnień.
+
 ## Pytania do decyzji
 
 1. Retencja szczegółowych zdarzeń: 90 / 180 / 365 dni? (Podsumowanie żyje
