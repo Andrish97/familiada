@@ -258,7 +258,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   kadr Skrzydeł w ustawieniach (mniejszy odstęp longów).
 - Unit 21/21 ✓ + podręcznik 7/7 ✓, lokalny Host E2E 1/1 ✓: pytania,
   komplet odpowiedzi, zmiana motywów/kolory, zasłona, pion, powrót Classic/Modern.
-  Następnie punktowa bramka Host, Pages i produkcyjny Host/Display.
+  Bramka Host 40249758651 **1/1 ✓**, unit CI 28/28 ✓. Po synchronizacji
+  main unit wersji/motywów/konfliktów 10/10 ✓. Następnie Pages
+  i produkcyjny Host/Display.
 
 ### 2026-10-26 — rozdzielenie ramek longów w nowych motywach
 

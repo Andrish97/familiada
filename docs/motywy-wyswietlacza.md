@@ -68,3 +68,10 @@ Zrzuty sześciu motywów 1400 px i ustawień 390/1440 px we wszystkich językach
 
 Wcześniejsze diagnostyczne próby Display (40246843691, 40247144128,
 40247368747) nie były zielone; zamyka je poprawka guardu i końcowy przebieg.
+
+2026-10-26: korekta odstępu longów — bramka Display 40248868515 ✓.
+Pięć oddzielnych motywów Hosta — bramka 40249758651 ✓. Unit 28/28 ✓,
+po synchronizacji main wersje/motywy/konflikty 10/10 ✓. Zmiany main
+w modułach Display/Host to wyłącznie wersje zasobów; zmiany Realtime
+zachowane. Podglądy pokazane, Wskazówki i zrzuty PL/EN/UK gotowe.
+Następnie Pages i wspólna punktowa kontrola Display/Host.
