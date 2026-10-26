@@ -10,6 +10,16 @@ z HTML, kiedy brak części tekstowej. Jawne `text/plain` pozostaje tekstem.
 Archiwalne fragmenty zapisane w polu tekstowym obsługuje osobna poprawka
 prywatnego panelu, wyłącznie dla danych sprzed wdrożenia odbiornika.
 Testy Workera: 21/21, w tym 4 nowe przypadki parsera i zapisu HTML-only.
+PR #127 scalony; produkcyjny Worker `40366640706` zakończony sukcesem,
+wersja `ce5109b8-ce78-4637-8e77-0208175fdf16` aktywna od 17:14:21 UTC.
+Testy przechodzą przez rzeczywisty handler z syntetycznym MIME i atrapą
+zapisu; nie wysyłają SMTP ani powiadomień. Nie jest to próba rzeczywistego
+dostarczenia wiadomości. Prywatny panel: PR #5, izolowane podglądy i
+ograniczenie naprawy archiwum do maili sprzed wdrożenia odbiornika.
+Panel scalony i wdrożony: CI `40366955364` (111 unit, 38 browser),
+produkcja `40367349493` — sukces, kontrola originu/aktywnego wydania
+w automacie. Zrzuty telefonu i komputera oraz testy izolacji skryptów
+na fikcyjnej treści. Wiadomości w bazie nie były modyfikowane.
 
 Jedna lista tego, co uzgodniliśmy do wdrożenia, w jakiej kolejności i w
 jakim jest stanie. **Decyzje i szczegóły nie są tutaj**, tylko w plikach
