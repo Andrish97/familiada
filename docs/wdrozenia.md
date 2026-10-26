@@ -2476,3 +2476,31 @@ E: gałąź `refactor/shared-helpers-20261026` przeszła 40330525901
 (konto disposable, zmiana i przywrócenie nazwy; 9 punktowych unit).
 Pages 40330793433 success, ta sama kontrola na produkcji
 40331012157 success. Sprawdzanie nazwy użytkownika ma wspólne źródło.
+
+### 2026-10-26 — audyt E–G: wspólne moduły i odroczenie treści
+
+Wspólne formatowanie przerwy wdrożono w publicznym kodzie i prywatnym
+panelu. Publiczna gałąź 40334679380, Pages 40334864917 i produkcyjny
+E2E 40336262899 zakończyły się powodzeniem. Panel przeszedł lokalne
+94 unit, 30 browser i dry build oraz produkcyjne wdrożenie 40334884878.
+
+R3: cztery Edge Functions używają wspólnego porównania sekretów; deploy
+40333131907 i kontrola produkcyjna 40334289530 przeszły. R2: dwie
+ścieżki wysyłki używają wspólnego transportu Brevo, Mailgun, SendPulse
+i ZeptoMail. Kontrakty atrap 40335678879, deploy 40336295107 oraz
+przepływy poczty 40336717104 i 40336718432 przeszły.
+
+Eksport bazy równolegli niezależne odczyty: gałąź 40332312121, Pages
+40332636956 i produkcja 40332841986 przeszły. Wskazówki pobierają
+najpierw spis (PL: 4157 B transferu) oraz mapę rozdziałów (411 B),
+a pełny moduł języka (PL: 56 793 B transferu w pomiarze) dopiero
+przy szukaniu. Rozdział doczytuje się po otwarciu. Gałąź 40338304995,
+Pages 40338514649, produkcyjny E2E 40340151318 i lokalny Chromium
+na produkcji przeszły. Generator treści oraz jego test uwzględniają
+znaczniki wersji dopisywane do mapy importów przez wdrożenie.
+
+Gry, Bazy i Eksplorator korzystają z jednego helpera ucieczki HTML.
+Gałąź 40339424908, Pages 40339663570 i produkcyjny E2E 40339780563
+przeszły. Pozostały globalne unieważnianie cache niezmienionych assetów
+oraz pełny podział inicjalizacji zakładek panelu; te zmiany wymagają
+osobnych bramek zgodności importów, service workera i otwartych sesji.
