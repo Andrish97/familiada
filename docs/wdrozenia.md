@@ -268,8 +268,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
   się nie rozpoczęły. Osobny branch techniczny
   `codex/game-settings-readiness-ci` pomija `--with-deps` (pakiety systemowe
   runnera są zainstalowane); zmiana workflow nie trafia na `main`.
-  Przebieg 40353540626 oczekuje w kolejce GitHub Actions.
-  Status: przed zieloną bramką brancha i wdrożeniem Pages.
+  Decyzja użytkownika: wdrożyć poprawkę bez czekania na kolejkę E2E.
+  Oczekujący przebieg 40353540626 anulowany; publikacja bez tej bramki,
+  po zielonych sprawdzeniach lokalnych opisanych wyżej.
+  Status: wdrożenie Pages w toku.
 
 ### 2026-10-26 — Host: tekst poza ramkami i jaśniejsza zasłona
 
