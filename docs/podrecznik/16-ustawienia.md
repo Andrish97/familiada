@@ -70,7 +70,7 @@ Gra ma 10 dźwięków: intro, zakończenie, przejście między rundami, motyw fi
 - ustawić głośność od 0 do 100%.
 
 Własny plik może trwać do 120 sekund dla zakończenia, do 60 sekund dla intro, do 30 sekund dla przejścia i finału
-oraz do 5 sekund dla pozostałych dźwięków. Gdy wybierzesz „Własny”, musisz dodać plik — inaczej
+oraz do 2 sekund dla pozostałych dźwięków — operator czeka na koniec dźwięku, więc krótkie efekty trzymaj krótkie. Gdy wybierzesz „Własny”, musisz dodać plik — inaczej
 ustawień nie da się zapisać.
 
 ![Dźwięk](zrzut:sound)

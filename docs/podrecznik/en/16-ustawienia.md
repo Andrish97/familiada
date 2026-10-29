@@ -70,7 +70,7 @@ The game has 10 sounds: intro, outro, round transition, final theme, buzzer pres
 - set the volume from 0 to 100%.
 
 A custom file can be up to 120 seconds long for the outro, up to 60 seconds for the intro, up to 30 seconds for the round transition and final theme,
-and up to 5 seconds for the other sounds. If you choose "Custom", you must add a file — otherwise
+and up to 2 seconds for the other sounds — the operator waits for a sound to finish, so keep short effects short. If you choose "Custom", you must add a file — otherwise
 the settings cannot be saved.
 
 ![Sound](zrzut:sound)
