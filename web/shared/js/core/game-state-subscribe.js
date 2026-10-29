@@ -13,7 +13,7 @@
 // było odłączone (telefon w tle, zerwane łącze). Nie ma dzwonków ani
 // odpytywania.
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T13244";
+import { sb, REALTIME_OPTIONS, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T13244";
 import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T13244";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T13244";
 import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T13244";
@@ -209,6 +209,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!realtime) {
       realtime = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         accessToken: async () => deviceToken || SUPABASE_ANON_KEY,
+        realtime: REALTIME_OPTIONS,
       });
       const closeObserverAttached = observeRealtimeSocketClose(realtime.realtime, (event) => {
         // Zamknięcia wywołane przez klienta też trafiają do diagnostyki —

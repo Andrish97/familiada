@@ -3878,6 +3878,55 @@ test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu 
   }
 });
 
+// Ciche zerwanie gniazda (np. telefon przechodzi z Wi-Fi na LTE): WebSocket
+// nie dostaje zamknięcia, tylko przestaje przepuszczać ramki. Urządzenie
+// wykrywa to sygnałem kontrolnym Realtime (co 10 s, REALTIME_OPTIONS),
+// dołącza ponownie i odczytuje stan. Przy domyślnych 25 s trwało to 25–50 s.
+test("control2: ciche zerwanie gniazda Prowadzącego — nadrobienie zmiany bez przeładowania", async ({ page, browser, accounts, loginAs }) => {
+  test.setTimeout(180000);
+  await loginAs(page, page.context(), accounts.standard[0]);
+  const game = await makeGame(page, `E2E-CONTROL2-SILENT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  const errors = [];
+  const sockets = [];
+  try {
+    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const host = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors, {
+      onPage: (p) => p.routeWebSocket(/\/realtime\//, (ws) => {
+        const socket = { dead: false };
+        sockets.push(socket);
+        const server = ws.connectToServer();
+        ws.onMessage((message) => { if (!socket.dead) server.send(message); });
+        server.onMessage((message) => { if (!socket.dead) ws.send(message); });
+      }),
+    });
+    await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 20000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
+    await expect(host.locator("#paperText2")).not.toContainText("Odpowiedź B (30)");
+
+    expect(sockets.length, "Prowadzący ma gniazdo Realtime").toBeGreaterThan(0);
+    for (const socket of sockets) socket.dead = true;
+    await page.waitForTimeout(1000);
+    const changedAt = Date.now();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(host.locator("#paperText2")).toContainText("Odpowiedź B (30)", { timeout: 40000 });
+    const caughtUpMs = Date.now() - changedAt;
+    console.log(`[e2e-diag] silent-socket: Prowadzący nadrobił zmianę po ${caughtUpMs} ms, gniazd: ${sockets.length}`);
+    expect(sockets.length, "nowe gniazdo po wykryciu zerwania").toBeGreaterThan(1);
+    expect(caughtUpMs, "wykrycie cichego zerwania szybciej niż domyślne 25 s").toBeLessThan(25000);
+    // Lease nie wygasł (heartbeat HTTP działał) — w panelu Prowadzący cały czas połączony.
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 // e2e 40185039280 (25.10): 503 na jednym module tuż po wdrożeniu zatrzymał
 // stronę Przycisku bez komunikatu; Control czekał na niego w nieskończoność.
 // module-boot-guard.js przeładowuje stronę po nieudanym wczytaniu modułu.
