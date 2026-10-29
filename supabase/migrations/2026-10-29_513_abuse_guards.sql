@@ -54,6 +54,10 @@ BEGIN
   IF auth.uid() IS NULL OR position('@' in coalesce(p_new_email, '')) = 0 THEN
     RETURN;
   END IF;
+  -- adres innego konta: GoTrue i tak odmówi zmiany
+  IF EXISTS (SELECT 1 FROM auth.users u WHERE lower(u.email) = lower(trim(p_new_email)) AND u.id <> auth.uid()) THEN
+    RETURN;
+  END IF;
   INSERT INTO public.email_intents (email, intent, status, cooldown_until, user_id)
   VALUES (
     lower(p_new_email),
