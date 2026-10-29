@@ -57,11 +57,18 @@ function keyboardHeight() {
 
 const scrollable = (node) => /(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight;
 
-/** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery, potem
- * okno od dołu lub treść strony bez przewijania (podjeżdża), potem strona. */
+/** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery z
+ * przewijaniem, potem okno (.overlay) lub treść strony bez przewijania
+ * (.page-fit, np. dolny pasek list) podjeżdża, a na zwykłej stronie --
+ * przewinięcie strony. */
 function revealAboveKeyboard(el, kb) {
+  const overlay = el.closest(".overlay");
+  const lift = overlay || el.closest("body.page-fit > main");
+  // Podniesienia innego miejsca (fokus przeszedł gdzie indziej) nie trzymamy.
+  for (const other of document.querySelectorAll(".keyboard-lift")) if (other !== lift) other.classList.remove("keyboard-lift");
   const rect = el.getBoundingClientRect();
-  const topbarBottom = document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
+  // Okno zasłania górny pasek, więc wtedy granicą jest góra ekranu.
+  const topbarBottom = overlay ? 0 : document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
   // Pole wyższe niż widoczna część: jego górny brzeg zostaje pod paskiem.
   let delta = Math.min(rect.bottom - (window.innerHeight - kb - FIELD_GAP), rect.top - topbarBottom - FIELD_GAP);
   if (delta <= 0) return;
@@ -71,11 +78,8 @@ function revealAboveKeyboard(el, kb) {
     if (step > 0) { node.scrollBy({ top: step, behavior: "smooth" }); delta -= step; }
   }
   if (delta <= 0) return;
-  // Okno od dołu albo treść strony bez przewijania (.page-fit, np. dolny
-  // pasek list z wyszukiwaniem) podjeżdża razem z klawiaturą.
-  const lift = el.closest(".modal--sheet.sheet-active") || el.closest("body.page-fit > main");
   if (lift) {
-    const shift = Math.min(kb, (parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) + delta);
+    const shift = Math.min(kb, (lift.classList.contains("keyboard-lift") ? parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0 : 0) + delta);
     lift.style.setProperty("--keyboard-lift", `${Math.round(shift)}px`);
     lift.classList.add("keyboard-lift");
   } else {

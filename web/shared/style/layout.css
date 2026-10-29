@@ -37,8 +37,8 @@
   /* Pole w części bez przewijania (np. dolny pasek list) zasłoniłaby
      klawiatura: treść podjeżdża pod górnym paskiem (device-attrs.js). */
   body.page-fit > main.keyboard-lift {
-    transform: translateY(calc(-1 * var(--keyboard-lift, 0px)));
-    transition: transform .25s var(--ease-out);
+    translate: 0 calc(-1 * var(--keyboard-lift, 0px));
+    transition: translate .25s var(--ease-out);
   }
 
   /* ── Pasek tytułu listy ───────────────────────────────────────── */

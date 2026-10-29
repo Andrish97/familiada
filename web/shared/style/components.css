@@ -702,6 +702,13 @@
   .overlay:not([hidden]):not(.sheet-active) > .modal { animation: modal-in var(--dur-base) var(--ease-out); }
   .overlay.is-closing:not(.sheet-active) { animation: fade-out var(--dur-fast) ease both; }
   .overlay.is-closing:not(.sheet-active) > .modal { animation: modal-out var(--dur-fast) ease-in both; }
+  /* Pole w oknie zasłoniłaby klawiatura, a treść okna nie ma już dokąd się
+     przewinąć: okno podjeżdża (device-attrs.js). translate, nie transform --
+     nie koliduje z animacjami otwierania i przeciągania okna. */
+  .overlay.keyboard-lift > .modal {
+    translate: 0 calc(-1 * var(--keyboard-lift, 0px));
+    transition: translate .25s var(--ease-out);
+  }
   @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
   @keyframes modal-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
   @keyframes fade-out { to { opacity: 0; } }
@@ -1035,7 +1042,7 @@
   }
 
   @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
-  @keyframes sheetDown { from { transform: translateY(calc(var(--sheet-drag, 0px) - var(--keyboard-lift, 0px))); } to { transform: translateY(100%); } }
+  @keyframes sheetDown { from { transform: translateY(var(--sheet-drag, 0px)); } to { transform: translateY(100%); } }
   @keyframes sheetScrimIn { from { background-color: transparent; } }
   @keyframes sheetScrimOut { to { background-color: transparent; } }
   @keyframes contact-captcha-in {
@@ -2689,13 +2696,6 @@
     transform: translateY(var(--sheet-drag, 0px));
     animation: sheetUp var(--dur-sheet-in) var(--ease-sheet) both;
     will-change: transform;
-  }
-  /* Klawiatura zasłoniłaby pole na dole okna, którego treść nie ma już dokąd
-     się przewinąć: okno podjeżdża o --keyboard-lift (device-attrs.js). */
-  :where(:root[data-sheet]) .modal--sheet.sheet-active.keyboard-lift .modal {
-    animation: none;
-    transform: translateY(calc(var(--sheet-drag, 0px) - var(--keyboard-lift, 0px)));
-    transition: transform .25s var(--ease-out);
   }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
