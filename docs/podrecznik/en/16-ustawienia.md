@@ -94,7 +94,7 @@ These sections decide which questions go into the final and in what order the ro
 
 ### 16.5.1 Question settings
 
-- **"Does the game include a finale?"** — "Yes" or "No" (by default there is no final). Without a final, the game ends
+- **"Does the game include a finale?"** — "Yes" or "No" (by default "Yes"). Without a final, the game ends
   after the rounds (→ 3.7). When you turn the final off, the selected final questions go back to the rounds.
 - **"Finale questions mode"** — "Random" (the app draws 5 questions) or "Manual" (you choose
   them yourself in the "Questions — Finale" section).
@@ -133,7 +133,7 @@ The "Game settings" section:
 | "Round multipliers" | 1, 1, 1, 2, 3 | How many times the points count in each round. The last multiplier applies to all further rounds (→ 3.2). |
 | "Points threshold for finale" | 300 | The team's total score at which the game moves on to the final or ends (→ 3.6). |
 | "Finale target (pts)" | 200 | How many points the finalists must score together (→ 4.3). Shown when the final is turned on. |
-| "End screen mode" | "Logo" | What the end screen shows: "Logo", "Points" or "Prize amount" (only with a final). |
+| "End screen mode" | "Prize amount" | What the end screen shows: "Logo", "Points" or "Prize amount" (only with a final). |
 | "Main prize amount" | 25 000 | The prize for reaching the final target. |
 | "Prize multiplier (after finale)" | 3 | What the winning team's points from the rounds are multiplied by to calculate the amount. |
 

@@ -1114,16 +1114,29 @@ async function renderSound() {
       const cat = categories.find(c => c.key === key);
       const limitSec = cat?.limitSec || 30;
 
-      try {
-        const buf = await file.arrayBuffer();
-        const ctx = new AudioContext();
-        const decoded = await ctx.decodeAudioData(buf);
-        await ctx.close();
+      // Bez AudioContext nie da się sprawdzić pliku -- wtedy go nie blokujemy.
+      // Gdy jest, a pliku nie da się odtworzyć, to nie jest dźwięk (np. tekst
+      // z rozszerzeniem .mp3) -- wcześniej taki plik przechodził po cichu.
+      let ctx = null;
+      try { ctx = new AudioContext(); } catch { ctx = null; }
+      if (ctx) {
+        let decoded = null;
+        try {
+          decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+        } catch {
+          decoded = null;
+        } finally {
+          ctx.close().catch(() => {});
+        }
+        if (!decoded) {
+          alertModal({ text: t("gameSettings.sfxNotAudio") });
+          return;
+        }
         if (decoded.duration > limitSec) {
           alertModal({ text: (t("gameSettings.sfxTooLong")).replace("{limit}", limitSec) });
           return;
         }
-      } catch { /* nie blokuj jeśli AudioContext niedostępny */ }
+      }
 
       try {
         await setSfxCustomBlob(key, file, file.name, gameId);
@@ -1924,6 +1937,13 @@ async function main() {
 
   const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
+    // Cudza, usunięta albo zmyślona gra w adresie (brak wiersza, zły
+    // identyfikator): ta sama blokada „Brak gry.” z powrotem do listy co przy
+    // grze niegotowej -- wcześniej strona pokazywała surowy błąd bazy po angielsku.
+    if (!gameErr || gameErr.code === "PGRST116" || gameErr.code === "22P02") {
+      await guardGameState(gameId, "play");
+      return;
+    }
     if (content) content.innerHTML = `<p class="callout callout--bad" role="alert">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
   }

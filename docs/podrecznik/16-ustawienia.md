@@ -94,7 +94,7 @@ Te sekcje decydują, które pytania trafią do finału i w jakiej kolejności b�
 
 ### 16.5.1 Ustawienia pytań
 
-- **„Czy gra zawiera finał?”** — „Tak” albo „Nie” (domyślnie finału nie ma). Bez finału gra kończy
+- **„Czy gra zawiera finał?”** — „Tak” albo „Nie” (domyślnie „Tak”). Bez finału gra kończy
   się po rundach (→ 3.7). Gdy wyłączysz finał, wybrane pytania finałowe wracają do rund.
 - **„Tryb wyboru pytań finału”** — „Losowe” (serwis wylosuje 5 pytań) albo „Ręcznie” (wybierzesz
   je sam w sekcji „Pytania — Finał”).
@@ -133,7 +133,7 @@ Sekcja „Ustawienia gry”:
 | „Mnożniki rund” | 1, 1, 1, 2, 3 | Ile razy liczą się punkty w kolejnych rundach. Ostatni mnożnik obowiązuje we wszystkich dalszych rundach (→ 3.2). |
 | „Próg punktów do finału” | 300 | Łączny wynik drużyny, po którego osiągnięciu gra przechodzi do finału albo się kończy (→ 3.6). |
 | „Cel finału (pkt)” | 200 | Ile punktów muszą razem zdobyć finaliści (→ 4.3). Widoczne przy włączonym finale. |
-| „Tryb ekranu po zakończeniu” | „Logo” | Co pokaże ekran końcowy: „Logo”, „Punkty” albo „Kwota nagrody” (tylko z finałem). |
+| „Tryb ekranu po zakończeniu” | „Kwota nagrody” | Co pokaże ekran końcowy: „Logo”, „Punkty” albo „Kwota nagrody” (tylko z finałem). |
 | „Kwota główna nagrody” | 25 000 | Nagroda za osiągnięcie celu finału. |
 | „Mnożnik nagrody (po finale)” | 3 | Przez ile mnoży się punkty zwycięskiej drużyny z rund przy wyliczaniu kwoty. |
 

@@ -128,6 +128,9 @@ async function loadGame(gameId) {
     .select("id,name,type,status")
     .eq("id", gameId)
     .maybeSingle();
+  // zmyślony identyfikator w adresie (nie UUID) -- to też „nie ma takiej gry”,
+  // a nie ogólny błąd edytora
+  if (error?.code === "22P02") return null;
   if (error) throw error;
   return data; // null = nie ma albo cudza (RLS)
 }
