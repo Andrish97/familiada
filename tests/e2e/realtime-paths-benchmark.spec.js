@@ -4,7 +4,9 @@
 // Na produkcyjnej bazie, Realtime i Workerze, bez kodu aplikacji: te same
 // ścieżki co urządzenie (web/shared/js/core/game-state-subscribe.js):
 //   direct   — postgres_changes z tokenem urządzenia (device-realtime-token),
-//   doorbell — broadcast {rev} (game-state-doorbell.js, REST) → game_state_get.
+//   doorbell — broadcast {rev} (game-state-doorbell.js, REST) → game_state_get,
+//   dbcast   — wiersz wysłany z bazy na prywatny kanał urządzenia (migracja 508,
+//              game-state:<game_id>:<connection_id>, ten sam token).
 // Trzy urządzenia (display, host, buzzer) z własnym lease, tokenem i
 // heartbeatem co 3 s. Control zapisuje 60 zmian w tempie gry (700 ms)
 // i serię 20 jak w finale (150 ms). Czas liczony od startu zapisu do chwili,
@@ -45,7 +47,7 @@ async function addLatency(page, delayMs) {
 async function startDevice(page, { gid, key, type }) {
   return page.evaluate(async ({ gid, key, type }) => {
     const sb = window.__sbClient;
-    const bench = window.__bench = { direct: {}, bell: {}, read: {}, readRev: -1, errors: [] };
+    const bench = window.__bench = { direct: {}, bell: {}, read: {}, dbcast: {}, readRev: -1, errors: [], dbcastStatus: null };
     const connectionId = crypto.randomUUID();
     const { data: reg, error: regError } = await sb.rpc("control_device_instance_register", {
       p_game_id: gid, p_device_type: type, p_key: key,
@@ -119,6 +121,19 @@ async function startDevice(page, { gid, key, type }) {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { clearTimeout(timer); reject(new Error(`direct ${status}`)); }
       });
     });
+    // Kanał z bazy (508): prywatny, dołączenie sprawdza polityka na realtime.messages.
+    const dbcast = realtime.channel(`game-state:${gid}:${connectionId}`, { config: { private: true } })
+      .on("broadcast", { event: "state" }, ({ payload }) => {
+        const rev = Number(payload?.row?.rev);
+        if (Number.isFinite(rev)) bench.dbcast[rev] ??= Date.now();
+      });
+    await new Promise((resolve) => {
+      const timer = setTimeout(() => { bench.dbcastStatus = "TIMEOUT"; resolve(); }, 15000);
+      dbcast.subscribe((status, error) => {
+        bench.dbcastStatus = error ? `${status}:${String(error?.message || error).slice(0, 80)}` : status;
+        if (status === "SUBSCRIBED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") { clearTimeout(timer); resolve(); }
+      });
+    });
     return true;
   }, { gid, key, type });
 }
@@ -163,9 +178,11 @@ function quantiles(values) {
 function summarize(writes, devices) {
   const out = {};
   for (const [type, bench] of Object.entries(devices)) {
-    const direct = [], doorbell = [], bell = [];
-    let directMiss = 0, doorbellMiss = 0, bellMiss = 0, directFirst = 0, doorbellFirst = 0, both = 0;
+    const direct = [], doorbell = [], bell = [], dbcast = [];
+    let directMiss = 0, doorbellMiss = 0, bellMiss = 0, dbcastMiss = 0, directFirst = 0, doorbellFirst = 0, both = 0;
     const leads = [];
+    const firstOfThree = { direct: 0, doorbell: 0, dbcast: 0 };
+    const dbcastLeads = [];
     for (const [revText, write] of Object.entries(writes)) {
       const rev = Number(revText);
       const d = bench.direct[rev] != null ? bench.direct[rev] - write.startedAt : null;
@@ -174,6 +191,12 @@ function summarize(writes, devices) {
       if (d == null || d > MISS_MS) directMiss += 1; else direct.push(d);
       if (r == null || r > MISS_MS) doorbellMiss += 1; else doorbell.push(r);
       if (b == null) bellMiss += 1; else bell.push(b);
+      const c = bench.dbcast[rev] != null ? bench.dbcast[rev] - write.startedAt : null;
+      if (c == null || c > MISS_MS) dbcastMiss += 1; else dbcast.push(c);
+      const arrivals = [["direct", d], ["doorbell", r], ["dbcast", c]].filter(([, v]) => v != null);
+      if (arrivals.length) firstOfThree[arrivals.sort((x, y) => x[1] - y[1])[0][0]] += 1;
+      // dodatnie: kanał z bazy szybszy od najszybszej z dzisiejszych dróg
+      if (c != null && (d != null || r != null)) dbcastLeads.push(Math.min(d ?? Infinity, r ?? Infinity) - c);
       if (d != null && r != null) {
         both += 1;
         leads.push(r - d); // dodatnie: kanał bezpośredni szybszy o tyle ms
@@ -184,7 +207,10 @@ function summarize(writes, devices) {
       direct_ms: quantiles(direct), doorbell_read_ms: quantiles(doorbell), bell_after_write_ms: quantiles(bell),
       direct_miss: directMiss, doorbell_miss: doorbellMiss, bell_lost: bellMiss,
       direct_first: directFirst, doorbell_first: doorbellFirst, compared: both,
-      direct_lead_ms: quantiles(leads), errors: bench.errors.slice(0, 5),
+      direct_lead_ms: quantiles(leads),
+      dbcast_ms: quantiles(dbcast), dbcast_miss: dbcastMiss, dbcast_status: bench.dbcastStatus,
+      first_of_three: firstOfThree, dbcast_lead_vs_today_ms: quantiles(dbcastLeads),
+      errors: bench.errors.slice(0, 5),
     };
   }
   return out;
