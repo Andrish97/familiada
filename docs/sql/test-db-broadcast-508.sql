@@ -1,4 +1,6 @@
--- Tylko izolowana baza po local-stubs + local-realtime-stub + schema.sql + migracje 508 i 509.
+-- Tylko izolowana baza po local-stubs + local-realtime-stub + schema.sql + migracje 508–510.
+-- Kanał Control (game-control:, 510) liczony osobno — tu tylko kanały urządzeń.
+CREATE TEMP VIEW device_messages AS SELECT * FROM realtime.messages WHERE topic LIKE 'game-state:%' AND event = 'state';
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE FUNCTION pg_temp.check_result(ok boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
@@ -23,17 +25,17 @@ INSERT INTO public.control_device_slots(session_id,game_id,device_type,primary_c
 
 INSERT INTO public.game_state(game_id,rev,top_card,step,phase,control_team,detail)
 VALUES ('cccccccc-5080-0000-0000-000000000003',5,'rounds','r_play','PLAY','A','{"locks":{"gameStarted":true}}');
-SELECT pg_temp.check_result((SELECT count(*)=2 FROM realtime.messages), 'zapis wysyła do dwóch urządzeń z żywym lease');
-SELECT pg_temp.check_result((SELECT array_agg(topic ORDER BY topic) FROM realtime.messages) = ARRAY[
+SELECT pg_temp.check_result((SELECT count(*)=2 FROM device_messages), 'zapis wysyła do dwóch urządzeń z żywym lease');
+SELECT pg_temp.check_result((SELECT array_agg(topic ORDER BY topic) FROM device_messages) = ARRAY[
   'game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-00000000000d',
   'game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-00000000000e'],
   'tematy: własne połączenia Wyświetlacza i Prowadzącego, bez wygasłego Przycisku');
 SELECT pg_temp.check_result((SELECT bool_and(private AND event='state' AND extension='broadcast'
-  AND (payload->'row'->>'rev')::bigint=5 AND payload->'row'->>'step'='r_play') FROM realtime.messages),
+  AND (payload->'row'->>'rev')::bigint=5 AND payload->'row'->>'step'='r_play') FROM device_messages),
   'wiadomość: prywatna, cały wiersz stanu');
 
 UPDATE public.game_state SET rev=6, step='r_duel' WHERE game_id='cccccccc-5080-0000-0000-000000000003';
-SELECT pg_temp.check_result((SELECT count(*)=2 FROM realtime.messages WHERE (payload->'row'->>'rev')::bigint=6),
+SELECT pg_temp.check_result((SELECT count(*)=2 FROM device_messages WHERE (payload->'row'->>'rev')::bigint=6),
   'kolejna zmiana też trafia do obu urządzeń');
 
 -- Autoryzacja kanału (polityka na realtime.messages).
@@ -62,9 +64,9 @@ SELECT pg_temp.check_result(NOT public.control_device_broadcast_topic_valid(
   'game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-00000000000d',(SELECT c FROM claims)),
   'zastąpione urządzenie traci dostęp od razu');
 UPDATE public.game_state SET rev=7 WHERE game_id='cccccccc-5080-0000-0000-000000000003';
-SELECT pg_temp.check_result((SELECT count(*)=0 FROM realtime.messages WHERE (payload->'row'->>'rev')::bigint=7
+SELECT pg_temp.check_result((SELECT count(*)=0 FROM device_messages WHERE (payload->'row'->>'rev')::bigint=7
   AND topic LIKE '%00000000000d'), 'zastąpione urządzenie nie dostaje nowych zmian');
-SELECT pg_temp.check_result((SELECT count(*)=1 FROM realtime.messages WHERE (payload->'row'->>'rev')::bigint=7
+SELECT pg_temp.check_result((SELECT count(*)=1 FROM device_messages WHERE (payload->'row'->>'rev')::bigint=7
   AND topic LIKE '%0000000000dd'), 'nowe połączenie Wyświetlacza dostaje zmiany');
 
 -- Dołączenie do kanału tak jak sprawdza je serwer Realtime: rola anon,
@@ -89,7 +91,7 @@ RESET ROLE;
 -- Koniec sesji: nikt nie dostaje kolejnych zmian.
 UPDATE public.control_runtime_sessions SET ended_at=now() WHERE id='5e550000-5080-0000-0000-000000000001';
 UPDATE public.game_state SET rev=8 WHERE game_id='cccccccc-5080-0000-0000-000000000003';
-SELECT pg_temp.check_result((SELECT count(*)=0 FROM realtime.messages WHERE (payload->'row'->>'rev')::bigint=8),
+SELECT pg_temp.check_result((SELECT count(*)=0 FROM device_messages WHERE (payload->'row'->>'rev')::bigint=8),
   'po zakończeniu sesji brak wysyłki');
 
 -- Awaria wysyłki nie blokuje zapisu stanu.
