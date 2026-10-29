@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
+\restrict p8KTMHIIxNqXSOd08ppDXaacHjZTfYaTTvJ1db2gS04mgNsygZaVKa14nzCVq2H
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -25586,20 +25586,6 @@ CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SEL
 
 
 --
--- Name: game_state_display_completion display_completion_device_realtime_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
-
-
---
--- Name: POLICY "display_completion_device_realtime_read" ON "game_state_display_completion"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" IS 'Allows only a signed primary-device JWT with a current lease to receive the completion row for its game.';
-
-
---
 -- Name: game_state_display_completion display_completion_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -25715,20 +25701,6 @@ CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT 
 --
 
 ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: game_state game_state_device_realtime_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "game_state_device_realtime_read" ON "public"."game_state" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
-
-
---
--- Name: POLICY "game_state_device_realtime_read" ON "game_state"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY "game_state_device_realtime_read" ON "public"."game_state" IS 'Allows postgres_changes only to a signed device JWT whose session, type, primary connection and epoch still match the live lease.';
-
 
 --
 -- Name: game_state_display_completion; Type: ROW SECURITY; Schema: public; Owner: -
@@ -26813,5 +26785,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
+\unrestrict p8KTMHIIxNqXSOd08ppDXaacHjZTfYaTTvJ1db2gS04mgNsygZaVKa14nzCVq2H
 
