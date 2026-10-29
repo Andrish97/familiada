@@ -21,7 +21,7 @@
     {
       "key": "round_transition",
       "folder": "round_transition",
-      "limitSec": 30,
+      "limitSec": 60,
       "sounds": [
         { "file": "classic.mp3?v=v2026-10-29T14064", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
@@ -30,7 +30,7 @@
     {
       "key": "final_theme",
       "folder": "final_theme",
-      "limitSec": 30,
+      "limitSec": 60,
       "sounds": [
         { "file": "classic.mp3?v=v2026-10-29T14064", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
