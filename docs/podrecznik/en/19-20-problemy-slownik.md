@@ -103,7 +103,7 @@ Each item: **symptom** → possible cause → what to do.
 - **"The screen may turn off"** on a phone or tablet → the browser did not allow keeping the screen
   on (iPhone and iPad — until the page is first tapped) → press [Keep screen on]; the message returns after you come back from another
   app. On the duel buzzer it never appears during a duel. If the screen still turns
-  off, switch off battery saver (Low Power Mode on iPhone).
+  off, switch off battery saver (Low Power Mode on iPhone) and plug in the charger (→ 17.1).
 - **The QR code was scanned several times** → the screen opened last works, the earlier ones show
   "This device was opened elsewhere" → use the newest screen and close the tabs you do not need.
 - **"This device was opened elsewhere"** → the same device (buzzer, host screen or Display) was
