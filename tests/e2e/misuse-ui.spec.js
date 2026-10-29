@@ -8,6 +8,7 @@ const os = require("os");
 const path = require("path");
 const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { withE2EBypass, instrumentPage } = require("./helpers/login");
 
 test.use({ serviceWorkers: "block", needs: { standard: 1, disposable: 1 } });
 
@@ -190,5 +191,55 @@ test.describe("Konto: błędne dane", () => {
     });
     expect(alive, "sesja i konto zostają").toBe(true);
     await expect(page).toHaveURL(/\/account/);
+  });
+});
+
+test.describe("Logowanie i reset hasła: błędne dane", () => {
+  // Strona logowania zawsze z produkcji (Worker podmienia klucz Turnstile, helpers/branch-code.js).
+  async function openLogin(browser, path = "/login") {
+    const ctx = await browser.newContext({ serviceWorkers: "block" });
+    await withE2EBypass(ctx);
+    const page = await ctx.newPage();
+    instrumentPage(page);
+    await page.goto(`${ORIGIN}${path}`, { waitUntil: "domcontentloaded" });
+    return { ctx, page };
+  }
+
+  async function submitLogin(page, login, password) {
+    await page.fill("#email", login);
+    await page.fill("#pass", password);
+    await page.locator("#err").evaluate((el) => { el.textContent = ""; });
+    await page.click("#btnPrimary");
+    await expect(page.locator("#err")).not.toHaveText("", { timeout: 20000 });
+    return (await page.locator("#err").textContent()).trim();
+  }
+
+  test("puste pola i złe hasło do adresu e-mail: komunikat nie zdradza, czy konto istnieje", async ({ browser, accounts }) => {
+    test.skip(LOCAL_AUTH, "lokalna atrapa logowania przyjmuje każde hasło");
+    test.setTimeout(120_000);
+    const { ctx, page } = await openLogin(browser);
+    try {
+      await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20000 });
+      expect(await submitLogin(page, "", "")).toContain("Podaj e-mail/nazwę użytkownika i hasło");
+      const wrong = await submitLogin(page, accounts.standard[0].email, "Zle-Haslo-e2e-1!");
+      const unknown = await submitLogin(page, `nikt-${Date.now().toString(36)}@example.test`, "Zle-Haslo-e2e-1!");
+      expect(wrong).toBeTruthy();
+      expect(unknown, "ta sama odpowiedź dla nieznanego adresu").toBe(wrong);
+      await expect(page).toHaveURL(/\/login/);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("reset hasła bez ważnego linku: komunikat, formularz ukryty", async ({ browser }) => {
+    test.setTimeout(60_000);
+    const { ctx, page } = await openLogin(browser, "/login/reset/");
+    try {
+      await expect(page.locator("#err")).toContainText(/link/i, { timeout: 20000 });
+      await expect(page.locator("#form")).toBeHidden();
+      await expect(page.locator("#back")).toBeVisible();
+    } finally {
+      await ctx.close();
+    }
   });
 });
