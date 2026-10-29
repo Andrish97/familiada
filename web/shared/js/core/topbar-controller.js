@@ -1,4 +1,4 @@
-import { registerPageLayout } from "./page-layout.js?v=v2026-10-29T13270";
+import { registerPageLayout } from "./page-layout.js?v=v2026-10-29T13323";
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
@@ -6,11 +6,11 @@ import { registerPageLayout } from "./page-layout.js?v=v2026-10-29T13270";
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-29T13270";
-import { isGuestUser } from './guest-mode.js?v=v2026-10-29T13270';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-29T13270';
-import { icon, iconText } from './icons.js?v=v2026-10-29T13270';
-import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-29T13270';
+import { placeDropdown, clearPlacement } from "./popover.js?v=v2026-10-29T13323";
+import { isGuestUser } from './guest-mode.js?v=v2026-10-29T13323';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-29T13323';
+import { icon, iconText } from './icons.js?v=v2026-10-29T13323';
+import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-29T13323';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -381,7 +381,7 @@ export function setTopbarAccount(user, {
       if (onLogout) {
         try { await onLogout(); } catch(e) { console.warn('logout callback error:', e); }
       }
-      const { signOut } = await import("./auth.js?v=v2026-10-29T13270");
+      const { signOut } = await import("./auth.js?v=v2026-10-29T13323");
       await signOut();
       location.href = withLangParam(loginHref);
     });
@@ -444,7 +444,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-29T13270');
+  const { getUser } = await import('./auth.js?v=v2026-10-29T13323');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
