@@ -1,3 +1,3 @@
-import { initContactsPage } from "../../shared/js/core/contacts-page.js?v=v2026-10-29T10373";
+import { initContactsPage } from "../../shared/js/core/contacts-page.js?v=v2026-10-29T11025";
 
 void initContactsPage("subscribers");
