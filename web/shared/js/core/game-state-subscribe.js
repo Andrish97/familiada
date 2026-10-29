@@ -183,7 +183,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         directIncident.maxRenderMs = Math.max(directIncident.maxRenderMs, renderMs || 0);
         directIncident.lastTrigger = source;
       }
-      sendDiagnostic("state_sync", "fallback_applied", "rpc_fallback", {
+      // Odczyt po dzwonku przy połączonym kanale to zwykła szybka ścieżka
+      // (doorbell-guard.js), nie zastępstwo — zgubienie przez kanał zgłasza
+      // fallback_catchup z oceny kanału po progu.
+      if (source !== "rpc_doorbell") sendDiagnostic("state_sync", "fallback_applied", "rpc_fallback", {
         trigger: source, revision: Number(row.rev), previous_revision: previousRev >= 0 ? previousRev : null,
         fetch_ms: fetchMs, received_ms: receivedMs, render_ms: renderMs,
       });
