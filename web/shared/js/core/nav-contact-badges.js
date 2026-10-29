@@ -1,7 +1,7 @@
 // Liczniki skrótów do Znajomych i Subskrybentów.
 // Znajomi: oczekujące zaproszenia przychodzące (badges_get).
 // Subskrybenci: aktywne adresy na liście właściciela (contacts_list).
-import { sb } from "./supabase.js?v=v2026-10-29T17240";
+import { sb } from "./supabase.js?v=v2026-10-29T17274";
 
 const writeCount = (target, value) => {
   const count = Math.max(0, Number(value) || 0);
