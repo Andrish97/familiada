@@ -13,7 +13,7 @@ test.use({ serviceWorkers: "block", needs: { standard: 1, disposable: 1, noaccou
 
 const ORIGIN = "https://www.familijna.app";
 const LOCAL = process.env.E2E_BYPASS_SECRET === "local";
-const PAGES = ["account", "games", "tasks", "friends", "login/confirm", "login/reset"];
+const PAGES = ["account", "games", "tasks", "friends", "go", "login/confirm", "login/reset"];
 
 // Kontekst bez sesji (anonim) z kodem brancha.
 async function anonContext(browser) {
@@ -173,9 +173,10 @@ test.describe("zalogowany na stronie logowania", () => {
     await serveBranchCode(context, { pages: PAGES });
   });
 
-  test("przekierowanie do Moich gier; next= tylko na znane strony (Ustawienia konta z centrum maili, Zadania)", async ({ page, context, accounts, loginAs }) => {
+  test("przekierowanie do Moich gier; next= tylko na znane strony (Ustawienia konta z centrum maili, Zadania, link kopii)", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
     await loginAs(page, context, accounts.standard[0]);
+    const COPY_TOKEN = "0f0e0d0c-0b0a-4908-8706-050403020100";
     for (const [query, path] of [
       ["", "/games/"],
       ["?next=account", "/account/"],
@@ -183,10 +184,16 @@ test.describe("zalogowany na stronie logowania", () => {
       ["?next=https://evil.example.test/", "/games/"],
       ["?next=javascript:alert(1)", "/games/"],
       ["?next=../admin", "/games/"],
+      // 5.3: link kopii gry/logo (go.js redirectToLogin) wraca po logowaniu na
+      // /go/ z tym samym c=; c= spoza formatu tokenu -- Moje gry.
+      [`?from=poll-go&next=copy&c=${COPY_TOKEN}`, "/go/"],
+      ["?from=poll-go&next=copy&c=https://evil.example.test/", "/games/"],
     ]) {
       await page.goto(`${ORIGIN}/login/${query}`, { waitUntil: "domcontentloaded" });
-      await page.waitForURL((u) => u.pathname === path, { timeout: 20000 });
-      expect(new URL(page.url()).origin, query).toBe(ORIGIN);
+      let reached;
+      await page.waitForURL((u) => (u.pathname === path ? (reached = u, true) : false), { timeout: 20000 });
+      expect(reached.origin, query).toBe(ORIGIN);
+      if (path === "/go/") expect(reached.searchParams.get("c"), query).toBe(COPY_TOKEN);
     }
   });
 
