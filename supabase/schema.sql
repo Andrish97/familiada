@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AfW4TiR1uiUXAtKqcq8tp6DdZjBagpLKhkvnbwBpyD14xzlb8WgvlGLDUT3mskB
+\restrict 5dpBdPc0iOAwPnhoBsSbJNYr5raRnq8J124An3CnNo8ODzeSyPrpNoZNrAx4WlF
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8366,7 +8366,7 @@ begin
   select
     u.id,
     u.email_confirmed_at,
-    coalesce(u.raw_user_meta_data->>'familiada_email_change_intent', '') as meta_intent
+    coalesce(u.raw_user_meta_data->>'familijna_email_change_intent', '') as meta_intent
   into v_user
   from auth.users u
   where lower(u.email) = v_email
@@ -12847,7 +12847,7 @@ $$;
 -- Name: mail_cron_set("text", boolean, integer, "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."mail_cron_set"("p_schedule" "text", "p_active" boolean DEFAULT true, "p_limit" integer DEFAULT 25, "p_job_name" "text" DEFAULT 'familiada_mail_worker'::"text") RETURNS "jsonb"
+CREATE FUNCTION "public"."mail_cron_set"("p_schedule" "text", "p_active" boolean DEFAULT true, "p_limit" integer DEFAULT 25, "p_job_name" "text" DEFAULT 'familijna_mail_worker'::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $_$
@@ -12864,7 +12864,7 @@ begin
   end if;
 
   if v_job_name = '' then
-    v_job_name := 'familiada_mail_worker';
+    v_job_name := 'familijna_mail_worker';
   end if;
 
   select exists(select 1 from pg_namespace where nspname = 'cron') into v_has_cron;
@@ -26639,5 +26639,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AfW4TiR1uiUXAtKqcq8tp6DdZjBagpLKhkvnbwBpyD14xzlb8WgvlGLDUT3mskB
+\unrestrict 5dpBdPc0iOAwPnhoBsSbJNYr5raRnq8J124An3CnNo8ODzeSyPrpNoZNrAx4WlF
 
