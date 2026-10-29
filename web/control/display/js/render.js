@@ -40,7 +40,7 @@ import {
 } from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T14064";
 import {
   ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS,
-  BOARD_OUT_MS, BOARD_IN_MS, LOGO_OUT_MS, LOGO_IN_MS,
+  BOARD_OUT_MS, BOARD_IN_MS, LOGO_OUT_MS, LOGO_IN_MS, DUEL_X_FLASH_MS,
 } from "../../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T14064";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
@@ -572,14 +572,12 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
         }
         case "DUEL_MISS":
           // Krótki błysk (slot 4), nie stały X — control/js/display.js's
-          // roundsFlashDuelX: ON, potem OFF, bez czekania. Czas błysku to
-          // TERAZ answerAnimMs (nextRow.sound_cue_key dla tego zapisu to
-          // "answer_wrong" — ADD_X's gałąź DUEL) zamiast sztywnego 1000ms —
-          // ten sam dźwięk, który faktycznie gra na pudło w pojedynku.
+          // roundsFlashDuelX: ON, potem OFF, bez czekania; stały czas błysku
+          // (displayTiming.js).
           if (ev.team) {
             api.rounds.setX(`4${ev.team}`, true);
             const token = generation;
-            setTimeout(() => { if (token === generation) api.rounds.setX(`4${ev.team}`, false); }, answerAnimMs);
+            setTimeout(() => { if (token === generation) api.rounds.setX(`4${ev.team}`, false); }, DUEL_X_FLASH_MS);
           }
           // Pudło w pojedynku też oddaje głos drugiej drużynie (ten sam
           // powód co w ANSWER_REVEALED wyżej).

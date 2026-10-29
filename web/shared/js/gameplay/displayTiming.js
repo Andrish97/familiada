@@ -36,3 +36,7 @@ export const BOARD_OUT_MS = 1200;
 export const BOARD_IN_MS = 1800;
 export const LOGO_OUT_MS = 1200;
 export const LOGO_IN_MS = 1800;
+
+// Błysk X przy pudle w pojedynku (był równy długości dźwięku — po przycięciu
+// ciszy w plikach trwałby 0,76 s).
+export const DUEL_X_FLASH_MS = 1500;
