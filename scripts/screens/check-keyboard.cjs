@@ -1,12 +1,12 @@
 // Kontrola klawiatury ekranowej (decyzja użytkownika 2026-10-29: klawiatura
 // zasłania stronę, widok nie skacze, aktywne pole staje tuż nad klawiaturą).
 // Każda scena zrzutów (strony i otwarte okna), każde widoczne pole tekstowe,
-// telefon i tablet: pole ustawione na dole widoku, fokus, atrapa
+// telefon, tablet i duży tablet: pole ustawione na dole widoku, fokus, atrapa
 // VirtualKeyboard API (Chrome na Androidzie) zgłasza klawiaturę. Błąd, gdy pole
 // zostaje pod klawiaturą lub nad paskiem, gdy coś je zasłania, gdy widok
 // ruszył się, choć pole było widoczne, albo przesunął się dalej niż trzeba.
 //   node scripts/screens/check-keyboard.cjs
-//   zmienne: DEVICES=phone,tablet-landscape SCENES=account,... JOBS=4 VERBOSE=1
+//   zmienne: DEVICES=phone,tablet,tablet-landscape,tablet-large,tablet-large-landscape SCENES=account,... JOBS=4 VERBOSE=1
 const { startServer, stopServer, launch, newContext } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
 const { buildDb } = require("./data/demo.cjs");
@@ -16,10 +16,13 @@ const DEVICES = {
   tablet: { width: 820, height: 1180, scale: 1, mobile: true, kb: 420 },
   "phone-landscape": { width: 844, height: 390, scale: 1, mobile: true, kb: 200 },
   "tablet-landscape": { width: 1180, height: 820, scale: 1, mobile: true, kb: 380 },
+  // Duży tablet (Control, Wyświetlacz, ankieta QR wymagają ≥ 980 px / krótszego boku 800).
+  "tablet-large": { width: 1024, height: 1366, scale: 1, mobile: true, kb: 440 },
+  "tablet-large-landscape": { width: 1366, height: 1024, scale: 1, mobile: true, kb: 400 },
 };
 const GAP = 12; // FIELD_GAP w device-attrs.js
 const TOL = 3;
-const devices = (process.env.DEVICES || "phone,tablet,tablet-landscape").split(",");
+const devices = (process.env.DEVICES || "phone,tablet,tablet-landscape,tablet-large,tablet-large-landscape").split(",");
 const only = process.env.SCENES ? new Set(process.env.SCENES.split(",")) : null;
 const JOBS = Number(process.env.JOBS || 4);
 
@@ -36,7 +39,10 @@ const fakeKeyboard = () => {
 
 // Pola w aktywnym oknie (gdy jest), inaczej na stronie; tylko widoczne i edytowalne.
 const listFields = () => {
-  const scope = document.querySelector(".overlay:not([hidden]) .modal, .sheet-active, [role=dialog]:not([hidden])")?.closest(".overlay, .sheet-active, [role=dialog]") || document;
+  // Otwarte okno = naprawdę widoczne (nie tylko bez atrybutu hidden).
+  const shown = (el) => { const r = el.getBoundingClientRect(); const st = getComputedStyle(el); return r.width > 0 && r.height > 0 && st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0"; };
+  const open = [...document.querySelectorAll(".overlay, .sheet-active, [role=dialog]")].filter(shown);
+  const scope = open[open.length - 1] || document;
   const sel = "input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]):not([type=color]):not([type=file]):not([type=button]):not([type=submit]), textarea, [contenteditable=true]";
   return [...scope.querySelectorAll(sel)].filter((el) => {
     if (el.disabled || el.readOnly) return false;
@@ -97,10 +103,13 @@ const probe = async (page, i, kb) => page.evaluate(async ({ i, kb, GAP, TOL }) =
 }, { i, kb, GAP, TOL });
 
 // Zamknięcie klawiatury i powrót.
+// Po zamknięciu nic nie zostaje podniesione (translate, nawet 0, psuje okna
+// position:fixed otwierane z wnętrza treści).
 const closeKeyboard = (page) => page.evaluate(async () => {
   window.__kbSet(0);
   document.activeElement?.blur?.();
-  await new Promise((r) => setTimeout(r, 500));
+  await new Promise((r) => setTimeout(r, 600));
+  return document.querySelector(".keyboard-lift, [data-keyboard-room]") ? "po zamknięciu klawiatury treść zostaje podniesiona" : null;
 });
 
 async function checkScene(browser, origin, scene, deviceName, buildGameState) {
@@ -129,7 +138,10 @@ async function checkScene(browser, origin, scene, deviceName, buildGameState) {
       if (process.env.SHOTS && r.problems?.length) {
         await page.screenshot({ path: require("node:path").join(process.env.SHOTS, `${scene.id}-${deviceName}-${String(f.label).replace(/[^\w-]+/g, "_")}.png`) });
       }
-      if (!r.skip) await closeKeyboard(page);
+      if (!r.skip) {
+        const left = await closeKeyboard(page);
+        if (left) r.problems.push(left);
+      }
       out.push({ field: f.label, ...r });
     }
   } catch (e) {
@@ -144,10 +156,12 @@ async function checkScene(browser, origin, scene, deviceName, buildGameState) {
   const { buildGameState } = await import("./data/game-state.mjs");
   const origin = await startServer();
   const browser = await launch();
-  // Bez ramek, podglądów urządzeń i stałych rozmiarów (TV, Control) -- tam nie ma klawiatury.
+  // Bez podglądów urządzeń (bez pól). Sceny w ramce (Prowadzący) -- sama
+  // strona, bez ramki; sceny o stałym rozmiarze (np. Control) -- w rozmiarach
+  // urządzeń, bo Control działa na dużym tablecie.
   const seen = new Set();
-  const list = [...scenes].filter((s) => !s.frame && !s.previewRow && !s.size && (!only || only.has(s.id))).filter((s) => {
-    const key = `${s.path}|${(s.steps || []).map(String).join("|")}|${s.guest ? 1 : 0}`;
+  const list = [...scenes].filter((s) => !s.previewRow && (!only || only.has(s.id))).filter((s) => {
+    const key = `${s.path}|${(s.steps || []).map(String).join("|")}|${s.guest ? 1 : 0}|${JSON.stringify(s.gameState || null)}|${s.db ? String(s.db) : ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

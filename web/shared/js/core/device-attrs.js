@@ -73,9 +73,10 @@ function pendingMove(el) {
   }
   for (const lift of document.querySelectorAll(".keyboard-lift")) {
     if (!lift.contains(el)) continue;
-    const box = liftedBox(lift);
-    const now = -(parseFloat(getComputedStyle(box || lift).translate.split(" ")[1]) || 0);
-    px += (parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) - now;
+    const box = liftedBox(lift) || lift;
+    const scale = box.offsetHeight ? box.getBoundingClientRect().height / box.offsetHeight : 1;
+    const now = -(parseFloat(getComputedStyle(box).translate.split(" ")[1]) || 0);
+    px += ((parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) - now) * scale;
   }
   return px;
 }
@@ -91,9 +92,15 @@ function smoothScroll(node, step) {
  * przewijaniem, potem okno (.overlay) lub treść strony bez przewijania
  * (.page-fit, np. dolny pasek list) podjeżdża, a na zwykłej stronie --
  * przewinięcie strony. */
+/** Strona bez przewijania całości (.page-fit albo overflow:hidden, np. Control). */
+function pageLocked() {
+  if (document.body.classList.contains("page-fit")) return true;
+  return [document.documentElement, document.body].some((n) => getComputedStyle(n).overflowY === "hidden");
+}
+
 function revealAboveKeyboard(el, kb) {
   const overlay = el.closest(".overlay");
-  const lift = overlay || el.closest("body.page-fit > main");
+  const lift = overlay || (pageLocked() ? el.closest("main") : null);
   // Podniesienia innego miejsca (fokus przeszedł gdzie indziej) nie trzymamy.
   for (const other of document.querySelectorAll(".keyboard-lift")) if (other !== lift) other.classList.remove("keyboard-lift");
   const pending = pendingMove(el);
@@ -113,7 +120,12 @@ function revealAboveKeyboard(el, kb) {
   }
   if (delta <= 0) return;
   if (lift) {
-    const shift = Math.min(kb, (lift.classList.contains("keyboard-lift") ? parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0 : 0) + delta);
+    // Powierzchnia skalowana (Control: zoom) -- przesunięcie w jej pikselach.
+    const box = liftedBox(lift) || lift;
+    const scale = box.offsetHeight ? box.getBoundingClientRect().height / box.offsetHeight : 1;
+    const current = lift.classList.contains("keyboard-lift") ? parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0 : 0;
+    const shift = Math.min(kb / scale, current + delta / scale);
+    clearTimeout(lift.__keyboardSettle);
     lift.style.setProperty("--keyboard-lift", `${Math.round(shift)}px`);
     lift.classList.add("keyboard-lift");
   } else {
@@ -130,12 +142,22 @@ function revealAboveKeyboard(el, kb) {
 function settleLifted() {
   scrollTargets.clear();
   document.documentElement.removeAttribute("data-keyboard-room");
-  for (const el of document.querySelectorAll(".keyboard-lift")) el.style.setProperty("--keyboard-lift", "0px");
+  for (const el of document.querySelectorAll(".keyboard-lift")) {
+    el.style.setProperty("--keyboard-lift", "0px");
+    // Po zjeździe bez klasy: translate (nawet 0) zmienia odniesienie okien
+    // position:fixed otwieranych z wnętrza podniesionej treści.
+    clearTimeout(el.__keyboardSettle);
+    el.__keyboardSettle = setTimeout(() => {
+      el.classList.remove("keyboard-lift");
+      el.style.removeProperty("--keyboard-lift");
+    }, LIFT_MS);
+  }
 }
 
 // Jedno ustawienie naraz: płynne przewijanie trwa, a pomiar w jego trakcie
 // przesunąłby pole za daleko.
 const SCROLL_MS = 450;
+const LIFT_MS = 300; // transition: translate .25s (layout.css, components.css)
 let revealTimer = 0;
 let revealUntil = 0;
 function scheduleReveal() {
