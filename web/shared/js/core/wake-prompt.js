@@ -1,29 +1,31 @@
 // js/core/wake-prompt.js
-// Ekran „nie wygaszaj” na telefonach Apple (Prowadzący, Przycisk).
+// Ekran „nie wygaszaj” na telefonach i tabletach (Prowadzący, Przycisk).
 // Safari/WebKit na iOS i iPadOS odmawia blokady wygaszania bez dotknięcia
 // (NotAllowedError) — przy wejściu na stronę i po każdym powrocie z tła.
 // Na Prowadzącym nikt nie dotyka ekranu, na Przycisku dopiero w pojedynku,
 // więc telefon gasł po czasie automatycznej blokady i znikał z gry
 // (eksport 29.10: 22 odmowy, gry 23.10 bez ani jednej zgody). Jedno
 // dotknięcie przycisku na tym ekranie daje gest, przy którym keep-alive.js
-// ponawia prośbę o blokadę.
+// ponawia prośbę o blokadę. Android (Chrome) daje blokadę bez dotknięcia,
+// ale odmawia albo ją zwalnia np. w trybie oszczędzania energii — ekran
+// wtedy też się pokazuje, a tekst podpowiada wyłączenie tego trybu.
 
 import { t } from "../../translation/translation.js?v=v2026-10-29T04380";
 import { blockingScreen, setBlockingIcon, setBlockingOpen } from "./blocking-screen.js?v=v2026-10-29T04380";
 import { onWakeLockChange } from "./keep-alive.js?v=v2026-10-29T04380";
 
-function appleTouchDevice() {
+function mobileDevice() {
   const ua = navigator.userAgent || "";
-  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return /iPad|iPhone|iPod|Android/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
 /**
- * canShow: czy strona pozwala teraz przykryć ekran (Przycisk — tylko gdy
- * przyciski są wyłączone; w pojedynku samo naciśnięcie jest gestem).
+ * canShow: czy strona pozwala teraz przykryć ekran (Przycisk — poza
+ * pojedynkiem; w pojedynku samo naciśnięcie jest gestem).
  * Zwraca { sync } — wołać, gdy zmienia się wynik canShow.
  */
 export function initWakePrompt({ canShow = () => true } = {}) {
-  if (!appleTouchDevice()) return { sync() {} };
+  if (!mobileDevice()) return { sync() {} };
   let refused = false;
   // Po dotknięciu ekran znika, nawet gdy system dalej odmawia (np. tryb
   // oszczędzania energii) — wraca dopiero po kolejnym powrocie z tła.
@@ -51,8 +53,8 @@ export function initWakePrompt({ canShow = () => true } = {}) {
     setBlockingOpen(ensureOverlay(), open);
   }
 
-  onWakeLockChange(({ phase, error_name: errorName }) => {
-    refused = (phase === "denied" && errorName === "NotAllowedError") || phase === "released";
+  onWakeLockChange(({ phase }) => {
+    refused = phase === "denied" || phase === "released";
     sync();
   });
   document.addEventListener("visibilitychange", () => {

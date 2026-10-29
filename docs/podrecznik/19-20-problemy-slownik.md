@@ -100,9 +100,9 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   ekranu i nie przełączaj aplikacji. Gdy używasz przycisków fizycznych albo grasz bez tabletu
   prowadzącego — zaznacz odpowiednią opcję w panelu (→ 17.1). Po powrocie do strony urządzenie
   łączy się samo w kilka sekund.
-- **„Ekran może się wygasić”** na iPhonie lub iPadzie → Safari pozwala utrzymać włączony ekran
-  dopiero po dotknięciu strony → naciśnij [Nie wygaszaj ekranu]; komunikat wraca po powrocie
-  z innej aplikacji. Na przycisku do pojedynku nie pojawia się w trakcie pojedynku.
+- **„Ekran może się wygasić”** na telefonie lub tablecie → przeglądarka nie pozwoliła utrzymać
+  włączonego ekranu (iPhone i iPad — do pierwszego dotknięcia strony) → naciśnij [Nie wygaszaj
+  ekranu]; komunikat wraca po powrocie z innej aplikacji. Na przycisku do pojedynku nie pojawia się w trakcie pojedynku.
   Jeśli ekran i tak gaśnie, wyłącz tryb oszczędzania energii.
 - **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
   „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.

@@ -9,7 +9,7 @@ const pl = {
   },
   deviceWake: {
     title: "Ekran może się wygasić",
-    text: "Telefon wygasi ekran w trakcie gry i straci połączenie z grą. Dotknij przycisku poniżej — ekran zostanie włączony.",
+    text: "Telefon wygasi ekran w trakcie gry i straci połączenie z grą. Dotknij przycisku poniżej. Jeśli ekran nadal gaśnie, wyłącz tryb oszczędzania energii.",
     confirm: "Nie wygaszaj ekranu",
   },
   host: {

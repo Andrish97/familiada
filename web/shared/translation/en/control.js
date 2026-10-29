@@ -9,7 +9,7 @@ const en = {
   },
   deviceWake: {
     title: "The screen may turn off",
-    text: "The phone will turn off its screen during the game and lose the connection. Tap the button below to keep the screen on.",
+    text: "The phone will turn off its screen during the game and lose the connection. Tap the button below. If the screen still turns off, switch off battery saver.",
     confirm: "Keep screen on",
   },
   host: {
