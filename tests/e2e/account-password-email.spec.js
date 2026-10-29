@@ -667,12 +667,14 @@ for (const lang of MAIL_LANGS) {
       await context.addInitScript((l) => localStorage.setItem("uiLang", l), lang);
       await context.setExtraHTTPHeaders({ "X-E2E-Token": generateE2EToken(secret) });
       await page.goto(lang === "pl" ? LOGIN_URL : `${LOGIN_URL}?lang=${lang}`, { waitUntil: "networkidle" });
-      await context.setExtraHTTPHeaders({});
 
+      // Nagłówek zostaje na czas wysyłki: podpisany e2e reset omija limit KV
+      // Workera na IP (wspólny adres runnerów), cooldown w bazie zostaje.
       await page.locator("#email").fill(account.email);
       await page.locator("#btnForgot").click();
       lastAuthMailAt.set(account.name, Date.now());
       await expect(page.locator("#status")).toContainText(index.statusResetSent, { timeout: 30_000 });
+      await context.setExtraHTTPHeaders({});
 
       const email = await waitForEmail({ recipient: account.email, after });
       expectMailInLanguage(email, authEmail.recovery, lang, `reset ${lang}`, "recovery");

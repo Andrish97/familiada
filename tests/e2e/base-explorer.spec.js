@@ -593,7 +593,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
     try {
       await page.evaluate(async (baseId) => {
         const { data, error } = await window.__sbClient
-          .from("qb_tags").insert({ base_id: baseId, name: "e2e-tag", color: "#4da3ff", ord: 1 }).select("id").single();
+          .from("qb_tags").insert({ base_id: baseId, name: "e2e_tag", color: "#4da3ff", ord: 1 }).select("id").single();
         if (error) throw new Error(error.message);
         return data.id;
       }, baseId);
@@ -1006,7 +1006,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       const q1 = await createQuestion(page, { baseId, ord: 1, payload: { text: "P1", answers: [] } });
       const q2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "P2", answers: [] } });
-      const tagId = await createTag(page, { baseId, name: "e2e-partial" });
+      const tagId = await createTag(page, { baseId, name: "e2e_partial" });
       await assignTag(page, { questionId: q1, tagId }); // tylko P1 ma tag -- stan "some" przy zaznaczeniu obu
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
@@ -1051,7 +1051,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "P1", answers: [] } });
-      const tagId = await createTag(page, { baseId, name: "e2e-do-usuniecia" });
+      const tagId = await createTag(page, { baseId, name: "e2e_do_usuniecia" });
       await assignTag(page, { questionId: qid, tagId });
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
@@ -1109,7 +1109,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     const baseId = await createBase(page, `E2E-XB-SEARCHTAG-${Date.now()}`);
 
     try {
-      const tagId = await createTag(page, { baseId, name: "e2e-searchtag" });
+      const tagId = await createTag(page, { baseId, name: "e2e_searchtag" });
       const qTaggedA = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane kot", answers: [] } });
       const qTaggedB = await createQuestion(page, { baseId, ord: 2, payload: { text: "Otagowane pies", answers: [] } });
       const qPlain = await createQuestion(page, { baseId, ord: 3, payload: { text: "Zwykłe kot", answers: [] } });
@@ -1486,7 +1486,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       const q1 = await createQuestion(page, { baseId, ord: 1, payload: { text: "P1", answers: [] } });
       const q2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "P2", answers: [] } });
-      const tagId = await createTag(page, { baseId, name: "e2e-ctrlt" });
+      const tagId = await createTag(page, { baseId, name: "e2e_ctrlt" });
       await assignTag(page, { questionId: q1, tagId }); // tylko P1 -- przy zaznaczeniu obu stan powinien być "some"
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
@@ -2750,8 +2750,8 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie do otagowania", answers: [] } });
-      const lockedTagId = await createTag(page, { baseId, name: "e2e-locked" });
-      const freeTagId = await createTag(page, { baseId, name: "e2e-free" });
+      const lockedTagId = await createTag(page, { baseId, name: "e2e_locked" });
+      const freeTagId = await createTag(page, { baseId, name: "e2e_free" });
 
       // drugi user "zarządza" (edytuje) tagId, którego w tym teście NIE
       // dotykamy w modalu przypisywania -- jeśli modal blokowałby WSZYSTKIE
@@ -2874,7 +2874,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
     const baseId = await createBase(page, `E2E-XV-TAGEDITGONE-${Date.now()}`);
 
     try {
-      const tagId = await createTag(page, { baseId, name: "e2e-do-znikniecia" });
+      const tagId = await createTag(page, { baseId, name: "e2e_do_znikniecia" });
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");

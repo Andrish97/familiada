@@ -230,8 +230,9 @@ test("Rysunek: [Podgląd] pokazuje rysunek tak, jak na Wyświetlaczu, i się zam
   await L.drag(page, b.x + 100, b.y + 100, b.x + 400, b.y + 300);
   await page.locator("#tEye").click();
   await expect(page.locator("#previewOverlay")).toBeVisible();
-  // podgląd to kropki: na płótnie podglądu są jasne piksele
-  const lit = await page.locator("#bigPreviewFull").evaluate((el) => {
+  // podgląd to kropki: na płótnie podglądu są jasne piksele (rysowane
+  // asynchronicznie po otwarciu okna -- czekamy, aż się pojawią)
+  const countLit = () => page.locator("#bigPreviewFull").evaluate((el) => {
     const c = el.tagName === "CANVAS" ? el : el.querySelector("canvas");
     if (!c) return -1;
     const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
@@ -239,7 +240,7 @@ test("Rysunek: [Podgląd] pokazuje rysunek tak, jak na Wyświetlaczu, i się zam
     for (let i = 0; i < d.length; i += 4) if (d[i] > 200 && d[i + 1] > 150) n++;
     return n;
   });
-  expect(lit).toBeGreaterThan(0);
+  await expect.poll(countLit, { timeout: 10_000 }).toBeGreaterThan(0);
   await page.locator("#btnPreviewClose").click();
   await expect(page.locator("#previewOverlay")).toBeHidden();
 });

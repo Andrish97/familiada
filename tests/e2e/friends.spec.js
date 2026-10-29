@@ -409,7 +409,8 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser, 
       await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 390, height: 844 });
       // Po zmianie szerokości układ zakładek się przebudowuje -- klawisz dopiero przy fokusie.
-      await received.focus(); await expect(received).toBeFocused(); await received.press("ArrowLeft");
+      await expect(async () => { await received.focus(); await expect(received).toBeFocused({ timeout: 1000 }); }).toPass({ timeout: 10_000 });
+      await received.press("ArrowLeft");
       await expect(invite).toHaveAttribute("aria-selected", "true");
       expect(new URL(owner.page.url()).searchParams.has("tab")).toBe(false);
       await owner.page.locator("#inviteInput").fill("saved@example.net");

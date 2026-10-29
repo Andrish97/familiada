@@ -363,7 +363,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
     try {
       for (let ord = 1; ord <= 60; ord++) {
-        await createTag(page, { baseId, name: `Tag mobile ${ord}`, ord });
+        await createTag(page, { baseId, name: `Tag_mobile_${ord}`, ord });
       }
       const qid = await createQuestion(page, {
         baseId, ord: 1, payload: { text: "Pytanie do tagowania (mobile)", answers: [] },

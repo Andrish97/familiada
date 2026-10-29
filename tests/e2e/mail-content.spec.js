@@ -1,5 +1,6 @@
-// Treści wszystkich wariantów kontaktu i ręcznej wiadomości oraz szablonów
-// marketingowych. Szablony uruchamiane z kodu repozytorium.
+// Treści wszystkich wariantów maili kontaktu (Worker). Ręczne wiadomości,
+// szablony marketingowe i podgląd zapisanych maili należą do panelu admina
+// (prywatne repo familijna-server, admin-panel/tests/unit).
 // E25: Worker nie ma już /_e2e_api/mail-template-fixtures (fikstura pod stary
 // adres bez konta), więc dokumenty sprawdzamy po złożeniu, bez wysyłki SMTP.
 const { test, expect } = require('./helpers/e2e-test');
@@ -30,39 +31,17 @@ async function templates() {
         items.push({ ...mail, lang, expected: message, type });
       }
     }
-    const renderer = 'data:text/javascript;base64,' + fs.readFileSync(path.join(ROOT, 'supabase/functions/_shared/mail-document.js')).toString('base64');
-    const composeSource = fs.readFileSync(path.join(ROOT, 'web/shared/js/core/compose-mail.js'), 'utf8').replace(/from "[^\"]+"/, `from "${renderer}"`);
-    const { buildComposeMailHtml } = await import('data:text/javascript;base64,' + Buffer.from(composeSource).toString('base64'));
-    for (const lang of ['pl','en','uk']) items.push({ lang, type: 'manual', subject: `E2E-PKT6-${stamp}-${lang}-manual`, expected: '<Quote> & text', html: buildComposeMailHtml({ lang, subject: `E2E-PKT6-${stamp}-${lang}-manual`, bodyHtml: '<p><strong>Formatted body</strong></p>#quote', quote: '<Quote> & text', greeting: 'Hello', farewell: 'Team' }) });
-    const marketingSource = fs.readFileSync(path.join(ROOT, 'web/shared/js/core/marketing-mail.js'), 'utf8').replace(/from "[^\"]+"/, `from "${renderer}"`);
-    const { buildMarketingMailHtml } = await import('data:text/javascript;base64,' + Buffer.from(marketingSource).toString('base64'));
-    for (const template of ['invitation','newsletter','custom']) {
-      const subject = `E2E-PKT6-${stamp}-marketing-${template}`;
-      items.push({ lang:'pl', type: 'marketing', subject, expected: template === 'invitation' ? 'Widok prowadzącego i Przycisk do pojedynku' : 'Campaign body', html: buildMarketingMailHtml({ template, subject, bodyHtml: '<p><strong>Campaign body</strong></p>' }) });
-    }
     return items;
   } finally { globalThis.fetch = originalFetch; }
 }
-test('mail content: contact/manual PL/EN/UK and marketing templates rendered', async ({ page, context }) => {
+test('mail content: contact PL/EN/UK rendered', async ({ page }) => {
   test.setTimeout(240000);
   const items = await templates();
-  const invitation = items.find(item => item.subject.endsWith('marketing-invitation'));
-  const images = [...invitation.html.matchAll(/<img src="([^"]+)"/g)].map(match => match[1]);
-  expect(images.length).toBe(4);
-  for (const url of images) {
-    const response = await context.request.get(url.replace(/&amp;/g, '&'));
-    expect(response.status(), `marketing image ${url}`).toBe(200);
-    expect(response.headers()['content-type']).toContain('image/webp');
-  }
   for (const item of items) {
     const email = { subject: item.subject, body_html: item.html };
     expectMailDocument(email, { lang: item.lang });
     const containsText = await page.evaluate(({html,expected}) => new DOMParser().parseFromString(html, 'text/html').body.textContent.includes(expected), { html: email.body_html, expected: item.expected });
     expect(containsText, `rendered text ${item.subject}`).toBe(true);
     expect(email.body_html).not.toContain('<Example>');
-    if (item.type === 'manual') {
-      expect(email.body_html).toContain('<strong>Formatted body</strong>');
-      expect(email.body_html).not.toContain('#quote');
-    }
   }
 });

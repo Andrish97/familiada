@@ -418,19 +418,17 @@ test("czytelnik: Ctrl+N, Ctrl+Shift+N, F2 i Delete mówią „Masz tylko podglą
 
 /* ================= podejrzane dane ================= */
 
-test("nazwy z HTML w eksploratorze (folder, pytanie, tag): widać tekst, nic się nie wykonuje", async ({ page, context, accounts, loginAs }) => {
+test("nazwy z HTML w eksploratorze (folder, pytanie): widać tekst, nic się nie wykonuje; tagu z HTML baza nie zapisze", async ({ page, context, accounts, loginAs }) => {
   await loginAs(page, context, accounts.standard[0]);
   const baseId = await createBase(page, "xss");
   const xss = "<img src=x onerror=__xssHit=1>";
   const folder = await addFolder(page, baseId, `F ${xss}`);
   const qid = await addQuestion(page, baseId, `Q ${xss}`.slice(0, 100), { ord: 2 });
-  // tag z pominięciem strony (okno tagów takiej nazwy nie przyjmie)
-  await addTag(page, baseId, `T${xss}`);
+  // tag z HTML z pominięciem strony odrzuca też baza (515: litery, cyfry, _)
+  await expect(addTag(page, baseId, `T${xss}`)).rejects.toThrow(/qb:invalid/);
   await openBase(page, baseId);
-  await page.locator('[data-left-view="tags"]:visible').first().click();
   await expect(fRow(page, folder)).toContainText("<img src=x");
   await expect(qRow(page, qid)).toContainText("<img src=x");
-  await expect(page.locator('#tags .row[data-kind="tag"]')).toContainText("<img src=x");
   await page.waitForTimeout(500);
   const state = await page.evaluate(() => ({ hit: window.__xssHit || 0, injected: document.querySelectorAll('img[src="x"]').length }));
   expect(state).toEqual({ hit: 0, injected: 0 });

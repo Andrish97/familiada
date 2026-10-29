@@ -177,7 +177,7 @@ test("hasło (tylko CI): to samo co obecne — komunikat, bez blokady na godzin�
   await expect(page.locator("#savePass")).toBeEnabled();
 });
 
-test("konto gościa (tylko CI): tylko „Zapisz swoje dane” i usuwanie; błędne dane migracji nic nie wysyłają; [Anuluj] zostawia konto", async ({ page, context }) => {
+test("konto gościa (tylko CI): tylko „Zapisz swoje dane” i usuwanie; błędne dane migracji nic nie wysyłają; [Nie] zostawia konto", async ({ page, context }) => {
   test.skip(LOCAL, "konto gościa zakłada Worker");
   test.setTimeout(150_000);
   await loginAsGuest(page, context);
@@ -214,7 +214,7 @@ test("konto gościa (tylko CI): tylko „Zapisz swoje dane” i usuwanie; błęd
     await page.click("#deleteAccount");
     const dialog = page.locator(".uni-modal:visible");
     await expect(dialog).toContainText("Usunąć konto gościa?");
-    await dialog.getByRole("button", { name: "Anuluj" }).click();
+    await dialog.getByRole("button", { name: "Nie", exact: true }).click();
     await expect(page).toHaveURL(/\/account\//);
     expect(sent, "nic nie wysłane").toEqual([]);
     expect(await page.evaluate(async () => !!(await window.__sbClient.auth.getUser()).data?.user?.id)).toBe(true);

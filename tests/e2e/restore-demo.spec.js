@@ -83,13 +83,13 @@ test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)",
   const listFiles = () => page.evaluate(async ({ userId, gameId }) => {
     const sb = window.__sbClient;
     const sounds = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
-    const logos = await sb.storage.from("user-logos").list(userId);
-    return { sounds: sounds.data?.length ?? 0, logos: logos.data?.length ?? 0 };
+    const logos = await sb.storage.from("user-logos").list(userId, { search: "test-demo-logo" });
+    return { sounds: sounds.data?.length ?? 0, demoLogo: (logos.data || []).filter((f) => f.name === "test-demo-logo.png").length };
   }, setup);
-  // Świeżo dosiane demo (seed_demo_for_user) nie ma plików w buckecie (payload
-  // w bazie), więc po sprzątaniu oba katalogi są puste.
+  // Sprawdzamy tylko pliki z tego testu: w katalogu konta bywają pliki logo
+  // innych testów tego samego konta.
   await expect.poll(listFiles, {
     message: "pliki starej demo-gry i demo-logo powinny zniknąć po restore",
     timeout: 12 * 60_000, intervals: [15_000, 30_000],
-  }).toEqual({ sounds: 0, logos: 0 });
+  }).toEqual({ sounds: 0, demoLogo: 0 });
 });
