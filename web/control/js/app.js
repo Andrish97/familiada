@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-29T14064";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-29T14490";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -111,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-29T14064";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-29T14064";
-import { createEngine } from "./engine.js?v=v2026-10-29T14064";
-import { createActionGate } from "./actionGate.js?v=v2026-10-29T14064";
-import { createDevices } from "./devices.js?v=v2026-10-29T14064";
-import { createPresence } from "./presence.js?v=v2026-10-29T14064";
-import { missingDevices, blockingDevices, absenceCause } from "./deviceGate.js?v=v2026-10-29T14064";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-29T14064";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-29T14064";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-29T14064";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-29T14064";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-29T14064";
-import { createUI } from "./ui.js?v=v2026-10-29T14064";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-29T14064";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T14064";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T14064";
+import { createStore } from "./store.js?v=v2026-10-29T14490";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-29T14490";
+import { createEngine } from "./engine.js?v=v2026-10-29T14490";
+import { createActionGate } from "./actionGate.js?v=v2026-10-29T14490";
+import { createDevices } from "./devices.js?v=v2026-10-29T14490";
+import { createPresence } from "./presence.js?v=v2026-10-29T14490";
+import { missingDevices, blockingDevices, absenceCause } from "./deviceGate.js?v=v2026-10-29T14490";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-29T14490";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-29T14490";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-29T14490";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-29T14490";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-29T14490";
+import { createUI } from "./ui.js?v=v2026-10-29T14490";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-29T14490";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T14490";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T14490";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);

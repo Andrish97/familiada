@@ -34,6 +34,13 @@
     flex-direction: column;
     overflow: hidden;
   }
+  /* Pole na stronie bez przewijania (np. dolny pasek list, finał Control)
+     zasłoniłaby klawiatura: treść podjeżdża pod górnym paskiem
+     (device-attrs.js). */
+  main.keyboard-lift {
+    translate: 0 calc(-1 * var(--keyboard-lift, 0px));
+    transition: translate .25s var(--ease-out);
+  }
 
   /* ── Pasek tytułu listy ───────────────────────────────────────── */
   .bar {
