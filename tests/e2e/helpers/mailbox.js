@@ -10,11 +10,20 @@ function authHeaders(extra = {}) {
   return { "X-E2E-Token": generateE2EToken(secret), "X-E2E-Run": RUN_ID, ...extra };
 }
 
+// Zerwane połączenie (ECONNRESET) powtarzamy -- wszystkie wywołania skrzynki
+// są powtarzalne (odczyt, czyszczenie, zwolnienie blokady).
 async function api(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: authHeaders(options.headers),
-  });
+  let response;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      response = await fetch(`${API_BASE}${path}`, { ...options, headers: authHeaders(options.headers) });
+      break;
+    } catch (err) {
+      if (attempt >= 3) throw err;
+      console.log(`[e2e-diag] mailbox ${path.split("?")[0]} fetch failed (${err.cause?.code || err.message}), retry ${attempt}`);
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(`E2E mailbox ${response.status}: ${JSON.stringify(data)}`);
   return data;
