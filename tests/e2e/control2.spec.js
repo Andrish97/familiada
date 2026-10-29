@@ -1171,8 +1171,14 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     const nativeCounts = { display: 0, host: 0, buzzer: 0 };
     const observeNative = (source) => (devicePage) => devicePage.on("websocket", (socket) => {
       socket.on("framereceived", ({ payload }) => {
+        // Realtime (protokół 2.0) wysyła broadcast w ramkach binarnych
+        // (temat + zdarzenie + treść); odpowiedzi i sterowanie — w JSON.
+        if (typeof payload !== "string") {
+          if (Buffer.from(payload).toString("utf8").includes("game-state:")) nativeCounts[source]++;
+          return;
+        }
         try {
-          const frame = JSON.parse(String(payload));
+          const frame = JSON.parse(payload);
           const event = Array.isArray(frame) ? frame[3] : frame.event;
           const topic = Array.isArray(frame) ? frame[2] : frame.topic;
           if (event === "broadcast" && String(topic).includes("game-state:")) nativeCounts[source]++;
