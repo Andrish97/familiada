@@ -34,8 +34,9 @@ const FALLBACK_S = 2; // metadane audio (jeszcze) niedostępne — bezpieczny do
 // znaleziony w CI: trzy testy zawiesiły się z przyciskiem trwale disabled
 // przez cały timeout testu, 150s, bez żadnej zmiany stanu).
 const MAX_DUR_MS = 30_000;
-// Wyjątki zgodne z limitSec w audio/sounds.json: outro do 120 s, intro do 60 s.
-const MAX_DUR_BY_KEY = { show_outro: 120_000, show_intro: 60_000 };
+// Wyjątki zgodne z limitSec w audio/sounds.json: outro do 120 s, intro,
+// przejście rundy i motyw finału do 60 s.
+const MAX_DUR_BY_KEY = { show_outro: 120_000, show_intro: 60_000, round_transition: 60_000, final_theme: 60_000 };
 
 export function createTransitionTiming({ getSfxDuration }) {
   async function dur(key) {
