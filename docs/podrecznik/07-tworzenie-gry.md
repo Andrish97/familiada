@@ -157,7 +157,9 @@ Zaznacz grę w *Moich grach* i wybierz [Zmień typ]. Zmienia się **ta sama gra*
 kopia. Jeśli chcesz zachować obecną wersję, najpierw użyj [Powiel] (→ 6.6).
 
 - Gry z ankietą **otwartą lub zatrzymaną** nie można w tej chwili zmienić.
-- Przy ankiecie **zamkniętej** serwis najpierw zapyta o jej wyzerowanie (→ 7.5).
+- Przy ankiecie **zamkniętej** nie ma osobnego pytania o wyzerowanie — ostrzeżenie jest w samym
+  oknie „Zmień typ gry”: głosy, linki i kody QR ankiety zostaną usunięte, a gra wróci do szkicu
+  wybranego typu (→ 7.5).
 - Gier z zakładki Gry Społeczności nie można zmieniać.
 
 W oknie „Zmień typ gry” każdy rodzaj ma opis skutków — sprawdź go przed wyborem [Zmień]:

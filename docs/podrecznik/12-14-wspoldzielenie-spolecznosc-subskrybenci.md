@@ -43,10 +43,11 @@ Nieprzyjęte zaproszenie wygasa po **5 dniach**.
 |---|---|---|
 | Właściciel | kafel w zakładce „Moje bazy” | wszystko: edycja, udostępnianie, zmiana nazwy, [Powiel] i usunięcie bazy |
 | Edycja | ikona ołówka na kafelku | dodawać, zmieniać, przenosić i usuwać pytania, foldery i tagi; tworzyć z nich gry; eksportować do tej bazy pytania z gier (→ 6.7) |
-| Odczyt | ikona oka na kafelku | przeglądać bazę i eksportować ją do pliku |
+| Odczyt | ikona oka na kafelku | przeglądać bazę, eksportować ją do pliku i tworzyć z jej pytań gry |
 
-Osoba z dostępem do odczytu nie utworzy gry bezpośrednio z bazy. Może wyeksportować bazę
-do pliku, zaimportować ją jako własną (→ 9.1) i tam utworzyć grę.
+Osoba z dostępem do odczytu może utworzyć grę z pytań bazy (→ 9.8) — gra jest jej własna
+i trafia do jej *Moich gier*. Samej bazy nie zmieni: nie doda, nie zmieni ani nie usunie pytań,
+folderów ani tagów.
 
 Jak pracować z pytaniami → 9.
 
@@ -69,7 +70,8 @@ zaproszenia oczekujące, przyjęte i odrzucone. Przy każdej osobie możesz:
 
 Osoba, której odebrano dostęp, traci go od razu — jeśli ma bazę otwartą, zobaczy komunikat
 „Odebrano Ci dostęp”. Sama możesz też zrezygnować z udostępnionej bazy przyciskiem
-[Usuń z listy].
+[Usuń z listy]. Działa to jak odrzucenie zaproszenia: baza trafia do sekcji odrzuconych (tam
+możesz to cofnąć), a właściciel nie zaprosi Cię do niej ponownie przez 30 dni.
 
 Usunięcie kogoś ze znajomych nie odbiera mu dostępu do baz — zrób to osobno (→ 10.4).
 

@@ -6,10 +6,14 @@ A poll belongs to a game of the **Standard poll** or **Points** type (→ 7.1). 
 are turned into a board of answers with points (→ 2.4).
 
 Before you start a poll, the game must have **at least 10 questions**, and in a "Points" game — from 3 to
-6 answers in every question (→ 7.6).
+6 answers in every question (→ 7.6). Until the game meets these conditions, the [Poll] button
+in *My games* is inactive, and the poll page (e.g. opened from a saved address) is blocked
+entirely with the message "Not available in this game state" and the reason, for example "The
+game needs at least 10 questions (you have 4).".
 
 1. In *My games*, select the game and choose [Poll].
-2. Choose [Start] — or [Start and send invitations], if you have already added recipients (→ 15.2).
+2. Choose [Start] and confirm in the "Start poll?" window. The link, the QR code and invitations
+   for recipients are available only after the start (→ 15.2).
 
 ![Poll draft](zrzut:polls-draft-points)
 ![Draft — too few questions](zrzut:polls-draft-text-blocked)
@@ -158,7 +162,9 @@ Your corrections are saved as you go, so you can stop and come back later.
 
 ![Tallying a “Points” poll](zrzut:polls-tally-points)
 
-When everything is right, choose [Approve]. You will see "Votes counted. Game ready.".
+When everything is right, choose [Approve] and confirm in the window ("Approve the answers?"
+in a standard poll, "Count the votes?" in "Points"). The poll moves to the READY state
+with the note "ready to play".
 [Leave counting] goes back to the stopped poll without closing it.
 
 ![Approving the tally](zrzut:polls-tally-text-approve)

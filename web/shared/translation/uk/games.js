@@ -1,11 +1,5 @@
 // Tłumaczenia UK — część „games”.
 const uk = {
-  guestReminder: {
-    text: "Гостьовий акаунт буде видалено за кілька днів. Збережи свої дані, поки не втратив(-ла) їх.",
-    link: "Мігрувати зараз",
-    dismiss: "Не показувати знову",
-    close: "Закрити",
-  },
   gamesImportExport: {
     defaults: {
       gameName: "Гра",

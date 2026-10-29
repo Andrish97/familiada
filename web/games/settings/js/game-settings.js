@@ -1886,7 +1886,9 @@ async function guardActiveGameSession() {
       backButton.disabled = true;
       cancelButton.disabled = true;
       await pageLock?.release?.().catch(() => {});
-      location.href = backHref("gameSettings");
+      // Adres otwarty wprost (bez ret): Moje gry, jak po wejściu z Moich gier --
+      // rodzic z mapy (Control) wpuściłby z powrotem do gry w toku.
+      location.href = new URLSearchParams(location.search).has("ret") ? backHref("gameSettings") : linkTo("games");
       finish(false);
     });
     cancelButton.addEventListener("click", async () => {

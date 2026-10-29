@@ -33,3 +33,12 @@ export function screenshotSnakeUrl(params,base,lang=null){
  if(['pl','en','uk'].includes(lang))url.searchParams.set('lang',lang);
  return url.toString();
 }
+// Powrót z logowania do linku kopii gry lub logo (/go/?c=…): tylko token
+// w formacie UUID i tylko strona /go/ tej samej domeny (null: brak powrotu).
+export function copyGoReturnUrl(params,base,lang=null){
+ const token=params.get('c');
+ if(params.get('next')!=='copy'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(token||'')))return null;
+ const url=new URL('/go/',base);url.searchParams.set('c',token);
+ if(['pl','en','uk'].includes(lang))url.searchParams.set('lang',lang);
+ return url.toString();
+}

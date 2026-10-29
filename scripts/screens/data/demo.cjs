@@ -58,7 +58,8 @@ function rulesState(type, status, nq, extra = {}) {
     duplicate: transfer,
     send: poll && status !== "draft" ? no("sendOnlyDraft") : ok,
     play: poll && status !== "ready" ? no("playAfterPoll") : enough,
-    poll_entry: poll ? ok : no("preparedNoPoll"),
+    // jak game_validate (migracja 404): szkic wchodzi na stronę ankiety tylko z gotową treścią
+    poll_entry: !poll ? no("preparedNoPoll") : status === "draft" ? enough : ok,
     poll_open: !poll ? no("preparedNoPoll") : status === "poll_open" ? no("pollAlreadyOpen") : enough,
     poll_stop: status === "poll_open" ? ok : no("stopOnlyOpen"),
     poll_resume: status === "poll_stopped" ? ok : no("resumeOnlyStopped"),

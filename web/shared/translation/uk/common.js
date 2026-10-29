@@ -1,5 +1,11 @@
 // Tłumaczenia UK — część wspólna — wczytuje ją każda strona.
 const uk = {
+  guestReminder: {
+    text: "Гостьовий акаунт буде видалено за кілька днів. Збережи свої дані, поки не втратив(-ла) їх.",
+    link: "Мігрувати зараз",
+    dismiss: "Не показувати знову",
+    close: "Закрити",
+  },
   common: {
     passwordVisibility: "Показати пароль",
     menuOpen: "Відкрити меню",

@@ -228,7 +228,7 @@ test("konto gościa (tylko CI): tylko „Zapisz swoje dane” i usuwanie; błęd
 });
 
 test("przypomnienie gościa (5.4): raz dziennie z [Migruj teraz]; [Zamknij] tylko na dziś, „Nie pokazuj więcej” na stałe", async ({ page, context, accounts, loginAs }) => {
-  // Baner pokazuje strona Moje gry (teksty w jej części tłumaczeń); konto gościa
+  // Baner pokazuje strona Moje gry (teksty w części wspólnej tłumaczeń); konto gościa
   // podstawione w wywołaniu — zakładanie gościa sprawdza account-deletion.spec.js.
   await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
