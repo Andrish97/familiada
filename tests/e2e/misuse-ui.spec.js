@@ -4,6 +4,8 @@
 // baza i Worker produkcyjne. Strona serwera tych samych zasad:
 // tests/sql/abuse-probes.sql (migracja 514).
 const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
@@ -61,7 +63,7 @@ test.describe("nazwy z HTML na listach", () => {
     }
   });
 
-  test("import .famlogo: obcy adres obrazu i obrazy w rysunku odrzucone, nazwa do 80 znaków", async ({ page, context, accounts, loginAs }, testInfo) => {
+  test("import .famlogo: obcy adres obrazu i obrazy w rysunku odrzucone, nazwa do 80 znaków", async ({ page, context, accounts, loginAs }) => {
     test.setTimeout(120_000);
     await loginAs(page, context, accounts.standard[0]);
     const stamp = Date.now();
@@ -77,14 +79,18 @@ test.describe("nazwy z HTML na listach", () => {
         },
       },
     };
-    const file = testInfo.outputPath("hostile.famlogo");
+    // ścieżka bez znaków spoza ASCII (katalog wyników testu ma polskie litery)
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "e2e-famlogo-")), "hostile.famlogo");
     fs.writeFileSync(file, JSON.stringify(pkg));
     const external = [];
     page.on("request", (r) => { if (r.url().includes("tracker.example.test")) external.push(r.url()); });
 
     await page.goto(`${ORIGIN}/logos/?tab=draw`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#btnImport")).toBeEnabled({ timeout: 20000 });
     await page.locator("#btnImport").click();
+    await expect(page.locator("#logoImportOverlay")).toBeVisible({ timeout: 10000 });
     await page.setInputFiles("#inpImportLogoFile", file);
+    await expect(page.locator("#logoImportFileName")).toContainText("hostile.famlogo");
     await expect(page.locator("#btnLogoImportConfirm")).toBeEnabled({ timeout: 15000 });
     await page.locator("#btnLogoImportConfirm").click();
     await expect(page.locator("#btnLogoImportDone")).toBeVisible({ timeout: 20000 });
