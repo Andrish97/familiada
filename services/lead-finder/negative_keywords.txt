@@ -1,7 +1,9 @@
 # Słowa wykluczające — kandydat odrzucany bez AI, gdy nazwa lub opis je
-# zawiera (małe litery). Tylko śmieci niezależne od kategorii (urzędy
-# techniczne, medycyna, nieruchomości, motoryzacja, oferty pracy); resztę
-# odrzuca AI według opisu kategorii.
+# zawiera (małe litery); frazy wyszukiwania z tymi słowami nie są szukane.
+# Śmieci niezależne od kategorii (urzędy techniczne, medycyna, nieruchomości,
+# motoryzacja, oferty pracy) oraz usługi weselne i pokazy spoza grupy
+# docelowej (decyzja właściciela 2026-10-29). Tylko słowa jednoznaczne —
+# resztę odrzuca AI według opisu kategorii.
 wodociągi
 kanalizacja
 oczyszczalnia
@@ -35,3 +37,33 @@ notariusz
 oferta pracy
 praca dla
 zatrudnimy
+# usługi weselne i pokazy spoza grupy docelowej
+fireshow
+fire show
+teatr ognia
+pokaz ognia
+pokazy ognia
+z ogniem
+pokaz barmański
+pokazy barmańskie
+pokaz barmanski
+flair bartending
+kwiaciarnia
+florystyka
+florystka
+florysta
+dekoracje ślubne
+dekoracje sal
+dekoracje kościoła
+balony z helem
+fotograf ślubny
+fotografia ślubna
+kamerzysta
+wideofilmowanie
+filmowanie wesel
+suknie ślubne
+salon sukien
+tort weselny
+wynajem namiotów
+auto do ślubu
+samochód do ślubu
