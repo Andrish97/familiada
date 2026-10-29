@@ -1,10 +1,10 @@
 // js/pages/poll-points.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T16310";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-29T16310";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-29T16310";
-import { createPollVoteView, createPollVoteSession } from "../../../../shared/js/core/poll-vote-session.js?v=v2026-10-29T16310";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-29T16310";
-import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-29T16310";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T16322";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-29T16322";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-29T16322";
+import { createPollVoteView, createPollVoteSession } from "../../../../shared/js/core/poll-vote-session.js?v=v2026-10-29T16322";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-29T16322";
+import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-29T16322";
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
 const i18nReady = initEntryPage("pollVotePoints", { ready: initI18n({ withSwitcher: true }) }).then(() => {
