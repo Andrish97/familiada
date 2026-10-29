@@ -13,11 +13,11 @@
 // było odłączone (telefon w tle, zerwane łącze). Nie ma dzwonków ani
 // odpytywania.
 
-import { sb, REALTIME_OPTIONS, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T13584";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T13584";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T13584";
-import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T13584";
-import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T13584";
+import { sb, REALTIME_OPTIONS, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T14064";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T14064";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T14064";
+import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T14064";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T14064";
 
 const TRANSPORT = "broadcast";
 const NOT_RESYNC_SOURCES = new Set([TRANSPORT, "rpc_bootstrap", "press"]);

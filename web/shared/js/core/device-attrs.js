@@ -9,8 +9,8 @@
 //                    --keyboard-h: jej wysokość (zapas pod treścią długiej
 //                    strony, żeby dało się podnieść pole z samego dołu)
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
-import "./page-layout.js?v=v2026-10-29T13584";
-import { editableFocused } from "./device-guard.js?v=v2026-10-29T13584";
+import "./page-layout.js?v=v2026-10-29T14064";
+import { editableFocused } from "./device-guard.js?v=v2026-10-29T14064";
 
 export const { NARROW_MAX, deviceLayout } = globalThis.FamilijnaDevice;
 
