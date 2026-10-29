@@ -7,12 +7,12 @@
 //   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
 // Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-29T12525";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-29T12525";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T12525";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-29T12525";
-import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-29T12525";
-import { setBox } from "../../shared/js/core/geometry.js?v=v2026-10-29T12525";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-29T13000";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-29T13000";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T13000";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-10-29T13000";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-29T13000";
+import { setBox } from "../../shared/js/core/geometry.js?v=v2026-10-29T13000";
 
 
 const ASPECT = 26 / 11;

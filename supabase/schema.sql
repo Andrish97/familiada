@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
+\restrict fx7niYAgYdI8fPAHVxcLQW7vwJn2c55xCbvQlOGoLcajVg4dJZs5RvYljN9JBa2
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -438,18 +438,25 @@ CREATE FUNCTION "public"."_control2_device_event_view"("p_device_type" "text", "
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'released' THEN 'Urządzenie zwolniło blokadę.'
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'expired' THEN 'Blokada urządzenia wygasła.'
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
-      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'recovered' THEN 'Zakończyła się przerwa w bezpośrednim kanale urządzenia.'
-      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'auth_error' THEN 'Nie udało się uruchomić bezpośredniego kanału urządzenia.'
-      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'recovered' THEN 'Zakończyła się przerwa w kanale urządzenia; stan pobrany z bazy.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'auth_error' THEN 'Nie udało się pobrać tokenu kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'token_refresh' THEN 'Planowa wymiana tokenu kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'connected' THEN 'Kanał urządzenia połączony.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'socket_closed' THEN 'Zamknięte połączenie Realtime urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'reconnect_scheduled' THEN 'Ponowne dołączanie urządzenia do kanału.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'resync_applied' THEN 'Urządzenie nadrobiło zmiany z przerwy odczytem z bazy.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_slow' THEN 'Urządzenie wolno zastosowało nowy stan.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry (dawny mechanizm).'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'read_error' THEN 'Odczyt stanu gry z bazy nie powiódł się.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'read_recovered' THEN 'Odczyt stanu gry z bazy wrócił.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_error' THEN 'Urządzenie odebrało stan gry, ale jego obsługa renderu zgłosiła błąd.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_recovered' THEN 'Renderowanie stanu gry wróciło do działania.'
-      WHEN p_event_type = 'transport_state' THEN 'Zmienił się stan bezpośredniego kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' THEN 'Zmienił się stan kanału urządzenia.'
       WHEN p_event_type = 'state_sync' THEN 'Urządzenie zsynchronizowało stan gry.'
       ELSE 'Zdarzenie urządzenia.' END,
     'metrics', d || jsonb_build_object('reason', p_event_type, 'impact', CASE
       WHEN p_event_type = 'transport_state' AND coalesce((d->>'catchup_count')::integer, 0) > 0 THEN 'fallback_catchup'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'resync_applied' THEN 'resync'
       WHEN p_event_type = 'transport_state' THEN 'transport_recovered'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_error' THEN 'render_failure'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_recovered' THEN 'render_recovered'
@@ -25586,20 +25593,6 @@ CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SEL
 
 
 --
--- Name: game_state_display_completion display_completion_device_realtime_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
-
-
---
--- Name: POLICY "display_completion_device_realtime_read" ON "game_state_display_completion"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" IS 'Allows only a signed primary-device JWT with a current lease to receive the completion row for its game.';
-
-
---
 -- Name: game_state_display_completion display_completion_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -25715,20 +25708,6 @@ CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT 
 --
 
 ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: game_state game_state_device_realtime_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "game_state_device_realtime_read" ON "public"."game_state" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
-
-
---
--- Name: POLICY "game_state_device_realtime_read" ON "game_state"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON POLICY "game_state_device_realtime_read" ON "public"."game_state" IS 'Allows postgres_changes only to a signed device JWT whose session, type, primary connection and epoch still match the live lease.';
-
 
 --
 -- Name: game_state_display_completion; Type: ROW SECURITY; Schema: public; Owner: -
@@ -26813,5 +26792,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
+\unrestrict fx7niYAgYdI8fPAHVxcLQW7vwJn2c55xCbvQlOGoLcajVg4dJZs5RvYljN9JBa2
 
