@@ -15,7 +15,7 @@ const STATUS_READ_TIMEOUT_MS = 6_500;
 const POLL_MS = 750;
 const KINDS = ["display", "host", "buzzer"];
 
-export function createPresence({ gameId, onChange, onSnapshot = null }) {
+export function createPresence({ gameId, onChange }) {
   let timer = null;
   let inFlight = false;
   let flags = { display: false, host: false, buzzer: false };
@@ -56,9 +56,6 @@ export function createPresence({ gameId, onChange, onSnapshot = null }) {
         if (visibility != null) lastPageVisibility[kind] = visibility;
       }
       report({ error: null, errorSource: null });
-      // 484: rewizja gry i potwierdzenie Wyświetlacza z tej samej migawki —
-      // przy każdym odczycie (nie tylko przy zmianie), to siatka bezpieczeństwa.
-      onSnapshot?.({ gameRev: Number.isSafeInteger(data.game_rev) ? data.game_rev : null, displayCompletion: data.display_completion || null });
     } catch (error) {
       readUnavailable = true;
       report({ error, errorSource: "status_read" });

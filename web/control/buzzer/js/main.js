@@ -17,7 +17,6 @@ import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T11504";
 import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T11504";
 import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-29T11504";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T11504";
 import { createPressController } from "./press.js?v=v2026-10-29T11504";
 import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-29T11504";
 import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-29T11504";
@@ -68,7 +67,7 @@ async function main() {
   }
 
   let subscription = null;
-  const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "buzzer", key, onState: ({ state }) => {
+  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);
     if (subscription) {
       if (state === "primary") void subscription.start();
@@ -84,8 +83,31 @@ async function main() {
   let lockTimer = null;
   let displayReadyKey = null;
   let displayCheckPendingKey = null;
+  // Gotowość Wyświetlacza dla bieżącego przejścia (krok + dźwięk): baza
+  // wysyła potwierdzenie planszy na kanał Przycisku (zdarzenie completion,
+  // migracja 510); przejście zaczyna się od rewizji, w której zmienił się
+  // klucz (taką rewizję żąda trigger request_display_completion).
+  let transitionKey = null;
+  let transitionRev = null;
   const requestKeyOf = (row) => `${row?.step || ""}:${row?.sound_cue_seq ?? ""}`;
   const isDisplayReady = (row) => Boolean(row && displayReadyKey === requestKeyOf(row));
+  function noteTransition(row) {
+    const rowKey = requestKeyOf(row);
+    if (rowKey === transitionKey) return;
+    transitionKey = rowKey;
+    transitionRev = Number(row.rev) || 0;
+  }
+  function applyCompletion(completion) {
+    const rendered = Number(completion?.rendered_rev);
+    const requested = Number(completion?.requested_rev);
+    if (!lastRow || !Number.isFinite(rendered) || !Number.isFinite(requested) || transitionRev == null) return;
+    if (rendered >= requested && requested >= transitionRev && displayReadyKey !== transitionKey) {
+      displayReadyKey = transitionKey;
+      presses.render(lastRow);
+    }
+  }
+  // Przy starcie i po ponownym dołączeniu (wiadomości z przerwy przepadły):
+  // jeden odczyt gotowości z bazy.
   async function checkDisplayReady() {
     if (!lastRow) return;
     const row = lastRow;
@@ -106,12 +128,6 @@ async function main() {
       }
     } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
-  setInterval(() => {
-    // A live Realtime channel does not prove this client received every ACK.
-    // Retry while the current transition is pending so one dropped
-    // display_rendered_rev event cannot leave the Buzzer disabled indefinitely.
-    if (lastRow && !isDisplayReady(lastRow)) void checkDisplayReady();
-  }, 500);
 
   // Migracja 264 -- game_state_set_lock (control/js/store.js) NIE dzwoni
   // dzwonkiem i NIE podbija rev (patrz komentarz tam) -- więc bez własnego
@@ -134,21 +150,13 @@ async function main() {
     getLeaseArgs: () => lease.actionArgs(),
     beforeResync: () => lease.refresh(),
     log: lease.log,
-    // Potwierdzenie Wyświetlacza prosto z tabeli potwierdzeń (RLS dla
-    // urządzeń, migracja 376): Przycisk sprawdza gotowość od razu, bez
-    // czekania na zmianę całego wiersza game_state (badanie 25.10).
-    // Sygnał Wyświetlacza o zapisanym potwierdzeniu — gotowość sprawdza RPC.
-    onBroadcast: { display_rendered: () => { void checkDisplayReady(); } },
-    onDirectTables: {
-      game_state_display_completion: ({ status }) => {
-        if (status === "CHANGE" || status === "SUBSCRIBED") void checkDisplayReady();
-      },
-    },
+    // Potwierdzenie planszy z bazy (zdarzenie completion na kanale Przycisku).
+    onCompletion: applyCompletion,
     // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
     // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
       || prev.display_rendered_rev !== next.display_rendered_rev,
-    onRow: (row) => {
+    onRow: (row, source) => {
       lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;
@@ -163,6 +171,7 @@ async function main() {
           .catch((e) => console.warn("[buzzer2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
       }
       lastRow = row;
+      noteTransition(row);
       presses.render(row);
       lastRowStep = row.step || null;
       wakePrompt.sync();
@@ -171,7 +180,8 @@ async function main() {
       if (loadError) loadError.hidden = true;
       document.getElementById("arena")?.classList.add("skel-step-ready");
       offScreen?.classList.add("skel-step-ready");
-      void checkDisplayReady();
+      // Wiersz z odczytu (start, ponowne dołączenie): gotowość z bazy.
+      if (source !== "broadcast") void checkDisplayReady();
       scheduleUnlockRerender(row);
     },
     onError: (error) => {
@@ -187,16 +197,9 @@ async function main() {
       p_game_id: gameId, p_key: key, p_team: team,
       ...lease.actionArgs(),
     }),
-    applyRow: (row) => subscription.applyRow(row),
+    // Naciśnięcie zapisuje baza i sama wysyła je Control i urządzeniom (510).
+    applyRow: (row) => subscription.applyRow(row, "press"),
     refetch: () => subscription.refetchNow(),
-    onAccepted: (data) => {
-      // game_state_buzzer_press idzie z pominięciem control/js/store.js,
-      // więc nic INNEGO nie zadzwoni dzwonkiem po tym zapisie — bez tego
-      // Control (i Display/Host) nigdy by się nie dowiedzieli, że ktoś
-      // nacisnął (znalezione na żywo przez control2-full-game.spec.js:
-      // Buzzer widział własne wciśnięcie, ale Control — nie).
-      ringDoorbell(gameId, data.rev);
-    },
     onError: (error) => console.warn("[buzzer2] press failed, spróbuj ponownie:", error),
   });
   const press = presses.press;

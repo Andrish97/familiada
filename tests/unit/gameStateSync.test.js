@@ -149,7 +149,7 @@ test("postęp synchronizacji rozróżnia źródło i raportuje błąd renderowan
   assert.equal(progress[0].source, "rpc");
   assert.equal(progress[0].previousRev, -1);
   assert.equal(progress[0].renderError.name, "RenderError");
-  assert.equal(progress[1].source, "postgres_changes");
+  assert.equal(progress[1].source, "broadcast");
   assert.equal(progress[1].previousRev, 4);
   assert.equal(progress[1].renderError, null);
 });

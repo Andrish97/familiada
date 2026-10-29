@@ -20,9 +20,6 @@ import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-29T
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T11504";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T11504";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T11504";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-29T11504";
-import { doorbellTopic, setDoorbellObserver } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T11504";
-import { createDirectReadiness, postgresSystemStatus } from "../../shared/js/core/direct-channel-ready.js?v=v2026-10-29T11504";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-29T11504";
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
@@ -354,14 +351,6 @@ async function main() {
     }
   } catch { /* Uszkodzony znacznik nawigacji nie może zatrzymać Control. */ }
   sessionStorage.removeItem(manualNavigationKey);
-  setDoorbellObserver(({ gameId: doorbellGameId, revision, client_time_ms }) => {
-    if (doorbellGameId !== gameId) return;
-    sessionTelemetry.logEvent({
-      kind: "diagnostic", category: "state_sync",
-      message: "Control wysłał dzwonek z numerem rewizji.", devices: ["control", "display"],
-      metrics: { phase: "doorbell_sent", revision, client_time_ms },
-    });
-  });
   const realtimeStates = new Map();
   // Wyjście z Control (ustawienia, zamknięcie karty) przerywa zapytania
   // i kanały; to nie jest awaria, więc nie trafia do statystyk. Okno 3 s,
@@ -632,11 +621,7 @@ async function main() {
         item.expectedMs = expectedMs;
         evaluateDisplayCompletion(targetRev, item);
         if (expectedMs != null && !item.reported) {
-          // Przed alarmem jeszcze jeden odczyt z bazy: zgubiony sygnał na
-          // żywo to nie spóźniony Wyświetlacz (eksport 24.10).
-          item.timeoutTimer = setTimeout(() => {
-            void refreshDisplayCompletion({ force: true }).finally(() => reportDisplayCompletionTimeout(targetRev, item));
-          }, Math.max(0, expectedMs + 1500));
+          item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(targetRev, item), Math.max(0, expectedMs + 1500));
         }
       });
       while (displayCompletionTimes.size > 40) displayCompletionTimes.delete(displayCompletionTimes.keys().next().value);
@@ -719,6 +704,7 @@ async function main() {
   let completionUIReady = false;
   let completionReadPending = false;
   let completionRealtimeConnected = false;
+  let latestDisplayCompletion = null;
   let completionReadIncident = null;
   // Czas od żądania zmiany planszy do zapisu potwierdzenia przez
   // Wyświetlacz, liczony zegarem serwera (483: requested_at/rendered_at).
@@ -730,6 +716,10 @@ async function main() {
   }
   function applyDisplayCompletion(row, source = "realtime") {
     const renderedRev = Number(row?.rendered_rev);
+    const requestedRev = Number(row?.requested_rev);
+    if (Number.isFinite(renderedRev) && Number.isFinite(requestedRev)) {
+      latestDisplayCompletion = { rendered_rev: renderedRev, requested_rev: requestedRev };
+    }
     if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
     const completedAt = performance.now();
     for (const [requestedRev, item] of displayCompletionTimes) {
@@ -755,64 +745,15 @@ async function main() {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data, "fallback_read"); }
+      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data, "resync_read"); }
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
   }
-  // Kanał działa dopiero po SUBSCRIBED i potwierdzeniu "Subscribed to
-  // PostgreSQL" (direct-channel-ready.js, diagnoza 2026-10-23): odczyt przy
-  // samym SUBSCRIBED gubił potwierdzenie zapisane w tej przerwie, a Control
-  // czekał na siatkę bezpieczeństwa (1-3 s). Do tego czasu działa odpytywanie.
-  const completionChannel = sb().channel(`display-completion:${gameId}`);
-  const completionReadiness = createDirectReadiness(() => {
-    completionRealtimeConnected = true;
-    observeRealtimeState("display_completion", "SUBSCRIBED");
-    void refreshDisplayCompletion();
-  });
-  completionChannel.on("system", {}, (payload) => {
-    const status = postgresSystemStatus(payload);
-    completionReadiness.postgres(status);
-    if (status === "error") {
-      completionRealtimeConnected = false;
-      observeRealtimeState("display_completion", "POSTGRES_ERROR");
-    }
-  }).on("postgres_changes", {
-    event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
-  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new, "realtime"); });
-  completionChannel.subscribe((status) => {
-    if (status === "SUBSCRIBED") { completionReadiness.joined(); return; }
-    completionReadiness.reset();
-    completionRealtimeConnected = false;
-    observeRealtimeState("display_completion", status);
-  });
-  // Kanał na żywo bywa połączony, a pojedyncze potwierdzenie i tak przepada.
-  // Gdy Control czeka dłużej niż 3 s (albo dłużej niż przewidziany czas
-  // animacji), sprawdza potwierdzenie w bazie co sekundę.
-  let lastStaleCompletionReadAt = 0;
-  function completionWaitIsStale() {
-    if (!waitingForDisplay()) return false;
-    const nowMs = performance.now();
-    for (const item of displayCompletionTimes.values()) {
-      if (item.completedAt != null) continue;
-      // Zgubione potwierdzenie na żywo kosztuje najwyżej ~0,3 s ponad czas
-      // animacji (wcześniej 1–1,5 s — eksport 24.10). Bez znanego czasu: 3 s.
-      if (nowMs - item.requestedAt > (item.expectedMs != null ? item.expectedMs + 300 : 3000)) return true;
-    }
-    return false;
-  }
-  setInterval(() => {
-    if (!completionRealtimeConnected) { void refreshDisplayCompletion(); return; }
-    if (completionWaitIsStale() && performance.now() - lastStaleCompletionReadAt >= 1000) {
-      lastStaleCompletionReadAt = performance.now();
-      void refreshDisplayCompletion();
-    }
-  }, 500);
   function refreshPendingDisplayCompletionOnResume() {
     if (document.visibilityState === "hidden") return;
-    // Background tabs throttle timers and may pause Realtime callbacks. Read
-    // the durable ACK immediately on return so a completed render does not
-    // keep Control locked until the browser resumes its polling timer.
+    // Powrót karty: wiadomości z czasu w tle mogły przepaść — jeden odczyt
+    // potwierdzenia z bazy.
     void refreshDisplayCompletion();
   }
   document.addEventListener("visibilitychange", refreshPendingDisplayCompletionOnResume);
@@ -889,13 +830,10 @@ async function main() {
       const deadline = Date.now() + 60_000;
       while (Date.now() < deadline) {
         if (controlOffline || presenceFlags.display === false) return false;
-        try {
-          const { data, error } = await sb().from("game_state_display_completion")
-            .select("rendered_rev,requested_rev").eq("game_id", gameId).maybeSingle()
-            .abortSignal(AbortSignal.timeout(6500));
-          if (!error && data && data.rendered_rev >= data.requested_rev) return true;
-        } catch { /* Retry while the Display remains connected. */ }
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Potwierdzenie z kanału Control (zdarzenie completion, 510).
+        const latest = latestDisplayCompletion;
+        if (latest && latest.rendered_rev >= latest.requested_rev) return true;
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       return false;
     }
@@ -1008,30 +946,6 @@ async function main() {
       externalRefreshInFlight = false;
     }
   }
-  rt(doorbellTopic(gameId)).onBroadcast("rev", (msg) => {
-    const rev = msg?.payload?.rev;
-    if (typeof rev !== "number" || rev <= store.state.rev) return;
-    void refreshExternalState();
-  });
-  // Siatka na zgubiony dzwonek (484): migawka urządzeń co 750 ms niesie
-  // rewizję gry. Dwa odczyty z rzędu z nowszą rewizją, gdy Control sam nic
-  // nie zapisuje = cudza zmiana (naciśnięcie Przycisku), której dzwonek nie
-  // dotarł (np. chwilowo zerwane gniazdo Realtime na słabym łączu).
-  let snapshotBehindRev = null;
-  function noteSnapshotRevision(gameRev) {
-    if (!Number.isSafeInteger(gameRev) || gameRev <= store.state.rev) { snapshotBehindRev = null; return; }
-    if (committing || store.writing() || externalRefreshInFlight) { snapshotBehindRev = null; return; }
-    if (snapshotBehindRev == null) { snapshotBehindRev = gameRev; return; }
-    snapshotBehindRev = null;
-    void sessionTelemetry.report({
-      kind: "diagnostic", category: "state_sync",
-      message: "Control nadrobił cudzą zmianę stanu z odczytu urządzeń (dzwonek nie dotarł).",
-      devices: ["control"],
-      metrics: { reason: "snapshot_catchup", game_rev: gameRev, local_rev: store.state.rev },
-    });
-    void refreshExternalState();
-  }
-
   const urls = await urlsP;
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   const connectCodes = await connectCodesP;
@@ -1064,12 +978,6 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onSnapshot: ({ gameRev, displayCompletion }) => {
-      noteSnapshotRevision(gameRev);
-      // Potwierdzenie planszy z tej samej migawki: bez osobnego odpytywania,
-      // gdy kanał potwierdzeń zgubi zdarzenie.
-      if (displayCompletion && displayCompletion.rendered_rev != null) applyDisplayCompletion(displayCompletion, "snapshot");
-    },
     onChange: ({ flags, displayAudioUnlocked: audioUnlocked, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
       if (error) {
@@ -1169,19 +1077,52 @@ async function main() {
   shareDevice.refreshBadges();
 
   const displayCueStartWaiters = new Map();
-  const displayDoorbell = rt(doorbellTopic(gameId));
-  displayDoorbell.onStatus((status) => observeRealtimeState("display_transition_started", status));
-  // Wyświetlacz zapisał potwierdzenie planszy: sprawdź je w bazie od razu
-  // (sam broadcast nie jest dowodem — decyduje tabela potwierdzeń).
-  displayDoorbell.onBroadcast("display_rendered", () => { void refreshDisplayCompletion({ force: true }); });
-  displayDoorbell.onBroadcast("display_transition_started", (message) => {
-    const seq = Number(message?.payload?.sound_cue_seq);
-    const waiter = displayCueStartWaiters.get(seq);
-    if (!waiter) return;
-    displayCueStartWaiters.delete(seq);
-    clearTimeout(waiter.timer);
-    clearTimeout(waiter.capTimer);
-    waiter.resolve();
+  // Prywatne kanały Control (decyzja właściciela 2026-10-29, migracja 510):
+  // baza sama wysyła tu każdą zmianę stanu (także naciśnięcie Przycisku)
+  // i potwierdzenie planszy — bez dzwonków i odpytywania. Wpuszcza tylko
+  // właściciela gry. Po każdym (ponownym) dołączeniu jeden odczyt, bo
+  // wiadomości z przerwy przepadły.
+  let latestExternalRev = 0;
+  function onControlState(row) {
+    const rev = Number(row?.rev);
+    if (!Number.isFinite(rev) || rev <= store.state.rev) return;
+    latestExternalRev = Math.max(latestExternalRev, rev);
+    // Własny zapis w toku: jego odpowiedź niesie stan; nowszą wiadomość
+    // (np. naciśnięcie w trakcie zapisu) dociągamy po jego końcu.
+    if (store.writing() || externalRefreshInFlight) {
+      void store.whenIdle().then(() => { if (latestExternalRev > store.state.rev) void refreshExternalState(); });
+      return;
+    }
+    void applyExpiredTimersOnResume(store.applyExternalRow(row));
+  }
+  const controlChannel = sb().channel(`game-control:${gameId}`, { config: { private: true } })
+    .on("broadcast", { event: "state" }, ({ payload }) => onControlState(payload?.row))
+    .on("broadcast", { event: "completion" }, ({ payload }) => {
+      if (!payload?.row) return;
+      recoverDisplayCompletionRead();
+      applyDisplayCompletion(payload.row, "realtime");
+    });
+  // Wyświetlacz: „animacja rusza” (dźwięk z Control) — sygnał chwilowy.
+  const signalChannel = sb().channel(`game-signal:${gameId}`, { config: { private: true } })
+    .on("broadcast", { event: "display_transition_started" }, (message) => {
+      const seq = Number(message?.payload?.sound_cue_seq);
+      const waiter = displayCueStartWaiters.get(seq);
+      if (!waiter) return;
+      displayCueStartWaiters.delete(seq);
+      clearTimeout(waiter.timer);
+      clearTimeout(waiter.capTimer);
+      waiter.resolve();
+    });
+  void Promise.resolve().then(() => sb().realtime.setAuth()).catch(() => {}).then(() => {
+    controlChannel.subscribe((status) => {
+      completionRealtimeConnected = status === "SUBSCRIBED";
+      observeRealtimeState("game_control", status);
+      if (status === "SUBSCRIBED") {
+        void refreshExternalState();
+        void refreshDisplayCompletion({ force: true });
+      }
+    });
+    signalChannel.subscribe((status) => observeRealtimeState("display_transition_started", status));
   });
   // Limit 1,2 s liczony od potwierdzenia zapisu Control przez serwer, nie od
   // stanu optymistycznego: wcześniej mieściły się w nim też zapis Control,

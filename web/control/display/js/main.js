@@ -15,8 +15,6 @@ import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T11504";
 import { createScene } from "./scene.js?v=v2026-10-29T11504";
 import { createQRController } from "./qr.js?v=v2026-10-29T11504";
 import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T11504";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-29T11504";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T11504";
 import { createRenderer } from "./render.js?v=v2026-10-29T11504";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-29T11504";
 import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, onAnySfxEnded, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-29T11504";
@@ -300,7 +298,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     let subscription = null;
     let rendererInstance = null;
     let soundReactorInstance = null;
-    const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
+    const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
       updateDeviceLeaseOverlay(state);
       if (subscription) {
         if (state === "primary") {
@@ -471,10 +469,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision, ...lease.actionArgs() }).abortSignal(AbortSignal.timeout(6500));
         if (!error) {
           reportedRenderRev = revision;
+          // Control i Przycisk dostają potwierdzenie z bazy (zdarzenie
+          // completion, migracja 510).
           lease.setProgress({ renderedRev: revision });
-          // Sygnał dla Control i Przycisku: od razu sprawdzają potwierdzenie
-          // w bazie zamiast czekać na Realtime albo migawkę (eksport 29.10).
-          rt(doorbellTopic(game.id)).sendBroadcast("display_rendered", { rendered_rev: revision }, { mode: "http" }).catch(() => {});
         }
         else if (loggedCompletionErrorRev !== revision) {
           loggedCompletionErrorRev = revision;
@@ -496,6 +493,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       gameId: game.id,
       deviceType: "display",
       key,
+      // Sygnał „animacja rusza” dla Control (game-signal:<gra>, migracja 510).
+      signal: true,
       getLeaseArgs: () => lease.actionArgs(),
       beforeResync: () => lease.refresh(),
       log: lease.log,
@@ -572,9 +571,9 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (token !== renderGeneration) return;
           if (lease.state === "primary" && prev && row.sound_cue_seq !== prev.sound_cue_seq
             && row.detail?.settings?.soundSource === "control") {
-            rt(doorbellTopic(game.id)).sendBroadcast("display_transition_started", {
+            void subscription?.sendSignal("display_transition_started", {
               sound_cue_seq: row.sound_cue_seq,
-            }, { mode: "http" }).catch(() => {});
+            });
           }
           await renderAndConfirm(
             async () => {

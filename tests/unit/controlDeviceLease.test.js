@@ -82,28 +82,6 @@ test("lease wygasły po wznowieniu karty rejestruje nową instancję i odzyskuje
   assert.equal(timers.size, 0);
 });
 
-test("heartbeat przekazuje rewizję gry tylko głównej instancji (samonaprawa zgubionej zmiany)", async () => {
-  const revs = [];
-  let response = { mode: "lease", state: "waiting", epoch: null, game_rev: 4 };
-  const client = { rpc() { return { abortSignal: async () => ({ data: response, error: null }) }; } };
-  const context = {
-    sb: () => client, t: key => key,
-    document: { visibilityState: "visible", hasFocus: () => true, addEventListener() {}, removeEventListener() {}, getElementById: () => null },
-    window: { addEventListener() {}, removeEventListener() {} },
-    crypto: { randomUUID: () => "connection-x" }, AbortSignal,
-    getDevicePresenceMeta: () => ({}), startTicker: () => () => {}, ...sessionLogStubs(), navigator: { onLine: true },
-  };
-  const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
-  const lease = create({ gameId: "game", deviceType: "buzzer", key: "key", onGameRev: rev => revs.push(rev) });
-  await lease.start();
-  assert.deepEqual(revs, [], "oczekująca instancja nie dociąga stanu gry");
-  response = { mode: "lease", state: "primary", epoch: 2, game_rev: 9 };
-  lease.setMeta({});
-  await new Promise(resolve => setImmediate(resolve));
-  assert.deepEqual(revs, [9]);
-  lease.stop();
-});
-
 test("dziennik sesji urządzenia: start instancji głównej, parametry lease i czas w tle przy powrocie", async () => {
   const sink = { events: [], options: null };
   const docListeners = new Map();

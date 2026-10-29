@@ -1175,7 +1175,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
           const frame = JSON.parse(String(payload));
           const event = Array.isArray(frame) ? frame[3] : frame.event;
           const topic = Array.isArray(frame) ? frame[2] : frame.topic;
-          if (event === "postgres_changes" && String(topic).includes("game-state-direct")) nativeCounts[source]++;
+          if (event === "broadcast" && String(topic).includes("game-state:")) nativeCounts[source]++;
         } catch {}
       });
     });
@@ -1183,12 +1183,11 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors, { onPage: observeNative("host") });
     const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, { onPage: observeNative("buzzer") });
 
-    // Potwierdź, że prawdziwe strony urządzeń dołączyły do kanału
-    // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
-    // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
+    // Potwierdź, że prawdziwe strony urządzeń dołączyły do prywatnego kanału
+    // z bazy (game-state:<gra>:<połączenie>, migracje 508–510).
     for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
       await expect.poll(() => devicePage.evaluate(() => window.__sbDeviceRealtime?.getChannels?.()
-        ?.filter(channel => String(channel.topic || "").includes("game-state-direct"))
+        ?.filter(channel => String(channel.topic || "").includes("game-state:"))
         .map(channel => `${channel.topic}:${channel.state}`) || []), {
         timeout: 15000,
         message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
@@ -1331,37 +1330,24 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       return { roundNo: data.detail?.rounds?.roundNo, scoreA: data.detail?.rounds?.totals?.A };
     }, game.id), { timeout: 10000 }).toEqual({ roundNo: 2, scoreA: 90 });
 
-    // Kanały muszą dostarczać rzeczywiste zmiany, nie tylko SUBSCRIBED
-    // (diagnoza 2026-10-23). Dzwonek może równolegle naprawiać opóźnienia.
+    // Kanał z bazy musi dostarczać rzeczywiste zmiany, nie tylko SUBSCRIBED
+    // (diagnoza 2026-10-23). Przy zdrowym łączu żaden odczyt nie nadrabia
+    // zmian (resync_applied — tylko po przerwie w połączeniu).
     const transportOf = sessions => {
       const events = (sessions[0]?.stats_detail.events || []).filter(event => ["display", "host", "buzzer"].includes(event.source));
       return Object.fromEntries(["display", "host", "buzzer"].map(source => {
         const sourceEvents = events.filter(event => event.source === source);
-        const catchups = sourceEvents.filter(event => event.metrics?.phase === "fallback_catchup");
-        const lateDirect = sourceEvents.filter(event => event.metrics?.phase === "direct_after_fallback");
         return [source, {
           connected: sourceEvents.filter(event => event.category === "device_transport"
-            && event.metrics?.phase === "connected" && event.metrics?.transport === "postgres_changes").length,
-          catchup: catchups.length,
-          doorbellCatchup: catchups.filter(event => event.metrics?.trigger === "doorbell").length,
-          heartbeatCatchup: catchups.filter(event => event.metrics?.trigger === "lease_heartbeat").length,
-          unexplainedCatchup: catchups.filter(event => event.metrics?.trigger !== "doorbell"
-            && event.metrics?.trigger !== "lease_heartbeat"
-            || !lateDirect.some(late => late.metrics?.trigger === event.metrics?.trigger
-              && late.metrics?.fallback_revision === event.metrics?.latest_revision)).length,
-          catchupContext: catchups.map(event => ({ trigger: event.metrics?.trigger, rev: event.metrics?.latest_revision,
-            missed: event.metrics?.missed_revisions, visibility: event.metrics?.visibility,
-            focused: event.metrics?.focused, online: event.metrics?.online })),
-          lateDirect: lateDirect.map(event => ({ trigger: event.metrics?.trigger,
-            fallback_revision: event.metrics?.fallback_revision, direct_revision: event.metrics?.direct_revision,
-            fallback_to_direct_ms: event.metrics?.fallback_to_direct_ms, visibility: event.metrics?.visibility,
-            focused: event.metrics?.focused, online: event.metrics?.online })),
+            && event.metrics?.phase === "connected" && event.metrics?.transport === "broadcast").length,
+          resync: sourceEvents.filter(event => event.metrics?.phase === "resync_applied").map(event => ({
+            trigger: event.metrics?.trigger, rev: event.metrics?.revision, previous: event.metrics?.previous_revision,
+            visibility: event.metrics?.visibility, online: event.metrics?.online })),
           recoveredContext: sourceEvents.filter(event => event.category === "device_transport"
             && event.metrics?.phase === "recovered").map(event => ({ first_status: event.metrics?.first_status,
             duration_ms: event.metrics?.duration_ms, start_visibility: event.metrics?.start_visibility,
             start_online: event.metrics?.start_online, hidden_duration_ms: event.metrics?.hidden_duration_ms,
             error_class: event.metrics?.error_class })),
-          recovered: sourceEvents.filter(event => event.metrics?.phase === "recovered").length,
         }];
       }));
     };
@@ -1371,7 +1357,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         const sessions = await readControl2Sessions(page, game.id);
         lastTransportSnapshot = transportOf(sessions);
         return Object.values(lastTransportSnapshot).every(item => item.connected > 0);
-      }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected postgres_changes" }).toBe(true);
+      }, { timeout: 20000, message: "Display/Host/Buzzer powinny zalogować transport_state connected broadcast" }).toBe(true);
     } catch (error) {
       const sessions = await readControl2Sessions(page, game.id);
       lastTransportSnapshot = transportOf(sessions);
@@ -1379,43 +1365,17 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
       await attachStatistics(testInfo, "transport-connect-timeout", sessions);
       throw error;
     }
-    await expect.poll(async () => {
-      const events = (await readControl2Sessions(page, game.id))[0]?.stats_detail.events || [];
-      return events.some(event => event.source === "control" && event.category === "state_sync"
-        && event.metrics?.phase === "doorbell_sent" && Number.isSafeInteger(event.metrics?.revision));
-    }, { timeout: 15000, message: "Control powinien zalogować wysłany dzwonek z rewizją" }).toBe(true);
     const transport = transportOf(await readControl2Sessions(page, game.id));
     console.log(`[e2e-diag] device transport ${JSON.stringify(transport)}`);
-    if (Object.values(transport).some(item => item.heartbeatCatchup > 0 || item.unexplainedCatchup > 0)) {
-      // Jeśli próg heartbeat nadal wykryje opóźnienie po zwiększeniu grace,
-      // zachowaj pełne statystyki i korelację rewizji jako artefakt testu.
-      const anomalySessions = await readControl2Sessions(page, game.id);
-      await attachStatistics(testInfo, "transport-catchup-anomaly", anomalySessions);
-      const evs = (anomalySessions[0]?.stats_detail.events || [])
-        .filter(event => ["display", "host", "buzzer"].includes(event.source)
-          && ["device_transport", "device_state_sync", "device_network"].includes(event.category))
-        .map(event => ({ t: event.created_at, s: event.source, c: event.category, p: event.metrics?.phase,
-          tr: event.metrics?.trigger, rev: event.metrics?.revision ?? event.metrics?.latest_revision,
-          prev: event.metrics?.previous_revision, miss: event.metrics?.missed_revisions,
-          grace: event.metrics?.grace_ms, reconnect_ms: event.metrics?.reconnect_ms,
-          fms: event.metrics?.fetch_ms, st: event.metrics?.status }));
-      console.log(`[e2e-diag] device events ${JSON.stringify(evs)}`);
-    }
     for (const [source, item] of Object.entries(transport)) {
-      expect(item.doorbellCatchup, `${source}: przy zdrowym łączu dzwonek nie powinien wyprzedzać Realtime`).toBeLessThanOrEqual(1);
-      expect(item.heartbeatCatchup, `${source}: kanał aktywny nie powinien wymagać nadrabiania z heartbeatu`).toBe(0);
-      expect(item.unexplainedCatchup, `${source}: fallback dzwonka powinien mieć późniejszy odbiór Postgres Changes tej rewizji`).toBe(0);
+      expect(item.resync, `${source}: przy zdrowym łączu kanał z bazy nie gubi zmian`).toEqual([]);
     }
-    // Dzwonek może odczytać rewizję przed ramką postgres_changes (naprawa
-    // słabego łącza 2026-10-25). Catchup nie dowodzi awarii kanału. Wymagamy
-    // jego rzeczywistej wiadomości, żeby zapasowy transport nie ukrył regresji
-    // „SUBSCRIBED, ale bez danych”; cała runda nadal sprawdza stan urządzeń.
     for (const source of Object.keys(nativeCounts)) {
       await expect.poll(() => nativeCounts[source], {
-        timeout: 10000, message: `${source}: bezpośredni kanał dostarczył postgres_changes`,
+        timeout: 10000, message: `${source}: kanał z bazy dostarczył zmiany`,
       }).toBeGreaterThan(0);
     }
-    console.log(`[e2e-diag] native postgres_changes ${JSON.stringify(nativeCounts)}`);
+    console.log(`[e2e-diag] native broadcast ${JSON.stringify(nativeCounts)}`);
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);
@@ -3437,8 +3397,7 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(0);
     expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
     const syncSessions = await readControl2Sessions(page, game.id);
-    // doorbell_sent: Control zapisuje jeden wpis na każdą zmianę stanu (telemetria
-    // dzwonka, 2026-10-26) — to nie jest synchronizacja po zerwaniu, więc poza progiem.
+    // Po zerwaniu każde urządzenie raz nadrabia stan odczytem (resync_applied).
     const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic"
       && ["state_sync", "device_state_sync"].includes(event.category)
       && event.metrics?.phase !== "doorbell_sent");

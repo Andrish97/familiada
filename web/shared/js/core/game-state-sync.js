@@ -39,7 +39,7 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
     let renderError = null;
     const appliedAt = now();
     try {
-      await onRow(data);
+      await onRow(data, source);
     } catch (error) {
       // AbortError = obsługę wiersza przerwał nowszy stan (tak samo traktuje
       // go kolejka renderu Wyświetlacza) — to nie błąd renderu (eksport 25.10:
@@ -122,7 +122,7 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
   // Wiersz z Realtime lub odpowiedzi game_state_buzzer_press. Render jest
   // serializowany tak samo jak odpowiedź RPC; podczas animacji zachowujemy
   // tylko najnowszą odebraną rewizję.
-  function applyRow(row, source = "postgres_changes") {
+  function applyRow(row, source = "broadcast") {
     if (!row || !isNewer(row)) return;
     const pending = { row, source, receivedAt: now() };
     if (fetching) {

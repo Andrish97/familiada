@@ -213,7 +213,7 @@ async function main() {
   // iPhone/iPad: blokada wygaszania wymaga dotknięcia (wake-prompt.js).
   initWakePrompt();
   let subscription = null;
-  const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "host", key, onState: ({ state }) => {
+  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);
     if (subscription) {
       if (state === "primary") void subscription.start();

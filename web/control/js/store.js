@@ -15,7 +15,6 @@
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T11504";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T11504";
 import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-29T11504";
 import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T11504";
 import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-29T11504";
@@ -23,14 +22,8 @@ import { createWriteOrder, confirmedRevisionOnly } from "./writeOrder.js?v=v2026
 import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-29T11504";
 
 
-// Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
-// ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
-// nigdy nie zadziała dla Display/Host/Buzzer, i to jest świadome, nie
-// fallback). Niesie WYŁĄCZNIE {rev} — nieautorytatywne, samo w sobie nic nie
-// znaczy poza "coś się zmieniło, dogoń przez game_state_get". Nazwa kanału +
-// wysyłka wydzielone do js/core/game-state-doorbell.js, bo dzwonić musi
-// KAŻDY zapis do game_state, nie tylko te stąd — patrz control/buzzer/js/main.js
-// (game_state_buzzer_press idzie z pominięciem tego store).
+// Zapis wystarczy: baza sama wysyła nowy wiersz urządzeniom i Control
+// (prywatne kanały, migracje 508–510) — bez dzwonków.
 
 export { StaleWriteError, makeDefaultState, DEFAULT_SETTINGS };
 
@@ -226,7 +219,6 @@ export function createStore(gameId) {
       console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt WRITE-OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
       applyConfirmed(row);
       emit();
-      ringDoorbell(gameId, row.rev);
       return row;
     }
 
@@ -312,7 +304,6 @@ export function createStore(gameId) {
     const row = await persist.setUiLang(lang);
     applyRow(row);
     emit();
-    ringDoorbell(gameId, row.rev);
   }
 
   // Migracja 268 -- ten sam wzorzec co setUiLang() wyżej, dla
@@ -323,8 +314,19 @@ export function createStore(gameId) {
     const row = await persist.setSoundMuted(muted);
     applyRow(row);
     emit();
-    ringDoorbell(gameId, row.rev);
   }
 
-  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow, writing: () => writeOrder.pending() };
+  // Cudzy wiersz z kanału Control (naciśnięcie Przycisku, zdarzenie state):
+  // tylko nowszy niż znany i nie w trakcie własnego zapisu (jego odpowiedź
+  // niesie już stan; wiadomość nowsza od niej sprawdza wołający po
+  // whenIdle()). Zwraca wygasłe timery jak hydrate().
+  function applyExternalRow(row) {
+    if (!row || !(Number(row.rev) > Number(state.rev)) || writeOrder.pending()) return null;
+    applyRow(row);
+    emit();
+    return expiredTimerOnHydrate(state);
+  }
+  const whenIdle = () => _writeQueue.then(() => {});
+
+  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow, applyExternalRow, whenIdle, writing: () => writeOrder.pending() };
 }
