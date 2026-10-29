@@ -91,8 +91,10 @@ function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, mi
   // telefon w landscape pozostaje osobną regułą powyżej. Strona bez progu
   // szerokości (minWidth 0, np. Wskazówki, listy) działa w każdym widoku.
   if (minWidth > 0 && profile.formFactor === "tablet") {
+    // Klawiatura ekranowa też obniża okno (resizes-content), ale to nie jest
+    // widok dzielony (blokada po otwarciu klawiatury, zgłoszenie 2026-10-29).
     const shortSide = profile.screenShortSide;
-    const splitHeight = profile.viewportHeight < shortSide * 0.7;
+    const splitHeight = profile.viewportHeight < shortSide * 0.7 && !virtualKeyboardLikely(profile);
     const splitWidth = profile.orientation === "landscape"
       && profile.viewportWidth < shortSide * 0.85;
     if (splitHeight || splitWidth) return "narrow";

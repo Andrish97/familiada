@@ -154,3 +154,19 @@ test('zamykanie klawiatury na tablecie w pionie nie miga „Obróć urządzenie�
   assert.equal(api.getDeviceProfile().orientation, 'portrait');
   assert.equal(api.deviceGuardState(0, { minHeight: 580 }), 'ok');
 });
+
+test('otwarta klawiatura na tablecie nie jest widokiem dzielonym (edytor logo)', () => {
+  const body = {};
+  const input = { tagName: 'INPUT', type: 'text' };
+  const documentElement = { dataset: {}, toggleAttribute() {}, classList: { contains: () => false } };
+  const document = { body, documentElement, readyState: 'complete', activeElement: input, addEventListener() {} };
+  // Tablet w poziomie, klawiatura obniżyła okno do 380 px.
+  const api = load({ screenWidth: 1280, screenHeight: 800, width: 1280, height: 380, touch: true, document });
+  const logo = { formFactors: ['tablet', 'desktop'], minHeight: 580 };
+  assert.equal(api.deviceGuardState(700, logo), 'ok');
+  document.activeElement = body;
+  assert.equal(api.deviceGuardState(700, logo), 'narrow', 'bez klawiatury to nadal widok dzielony');
+  // Tablet w pionie: 800×1280, klawiatura obniża okno do 700 px.
+  const portrait = load({ screenWidth: 800, screenHeight: 1280, width: 800, height: 700, touch: true, document: { ...document, activeElement: input } });
+  assert.equal(portrait.deviceGuardState(700, logo), 'ok');
+});
