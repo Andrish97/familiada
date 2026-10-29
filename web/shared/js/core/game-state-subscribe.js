@@ -16,7 +16,7 @@
 import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T11504";
 import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T11504";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T11504";
-import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./direct-channel-ready.js?v=v2026-10-29T11504";
+import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T11504";
 import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T11504";
 
 const TRANSPORT = "broadcast";

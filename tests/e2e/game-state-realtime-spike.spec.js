@@ -194,9 +194,13 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
   }
 });
 
-test("control2: krótkotrwały token primary dostarcza zmiany game_state przez postgres_changes", async ({ page, browser, accounts, loginAs }) => {
+// Kanały z bazy (migracje 508–511): urządzenie z tokenem dostaje stan tylko
+// na własnym kanale game-state:<gra>:<połączenie>; cudzy temat, kanał Control
+// i dołączenie bez tokenu są odrzucane; właściciel dostaje stan
+// i potwierdzenia planszy na game-control:<gra>.
+test("control2: prywatne kanały z bazy — urządzenie, Control i odmowy", async ({ page, browser, accounts, loginAs }) => {
+  test.setTimeout(120_000);
   await loginAs(page, page.context(), accounts.standard[0]);
-  const gameName = `E2E-GAME-STATE-SCOPED-REALTIME-${Date.now()}`;
   const game = await page.evaluate(async (name) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
@@ -205,205 +209,127 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     }).select("id").single();
     if (error) throw error;
     return data;
-  }, gameName);
-  const deviceContext = await browser.newContext();
-  let channelName = "";
-  let ownerCompletionChannelName = "";
+  }, `E2E-GAME-STATE-DB-CHANNELS-${Date.now()}`);
+  const contexts = [];
+  const write = (label) => page.evaluate(async ({ gid, label }) => {
+    const { data, error } = await window.__sbClient.rpc("game_state_write", {
+      p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
+      p_phase: null, p_control_team: null, p_detail: { teams: { teamA: label, teamB: "B" } },
+      p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
+    });
+    if (error) throw error;
+    return Number(data.rev);
+  }, { gid: game.id, label });
   try {
-    const { error: seedError } = await page.evaluate(async gid => {
-      const { error } = await window.__sbClient.rpc("game_state_write", {
-        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
-        p_phase: null, p_control_team: null,
-        p_detail: { teams: { teamA: "Seed A", teamB: "Seed B" } },
-        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
-      });
-      return { error };
-    }, game.id);
-    expect(seedError, "seed game_state_write should succeed").toBeNull();
-    const keyResult = await page.evaluate(async (gid) => {
-      const { data: session, error: sessionError } = await window.__sbClient.rpc("control_runtime_session_touch_v2", {
-        p_game_id: gid, p_session_id: null,
-      });
-      if (sessionError || !session?.ok) throw sessionError || new Error(session?.error || "session touch failed");
-      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", {
-        p_game_id: gid, p_device_type: "display",
-      });
-      if (error || !data?.ok) throw error || new Error(data?.error || "link failed");
-      return data.token;
-    }, game.id);
-
-    const devicePage = await deviceContext.newPage();
-    await devicePage.goto("/", { waitUntil: "domcontentloaded" });
-    const lease = await devicePage.evaluate(async ({ gid, key }) => {
-      const connectionId = crypto.randomUUID();
-      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
-        p_game_id: gid, p_device_type: "display", p_key: key,
-        p_connection_id: connectionId, p_meta: { visibility: "visible", focused: true },
-      });
-      if (error || data?.state !== "primary") throw error || new Error("display did not become primary");
-      return { connection_id: connectionId, epoch: data.epoch };
-    }, { gid: game.id, key: keyResult });
-
-    const direct = await devicePage.evaluate(async ({ gid, key, lease }) => {
+    await write("Seed");
+    const keys = await page.evaluate(async (gid) => {
       const sb = window.__sbClient;
-      const { data, error } = await sb.functions.invoke("device-realtime-token", {
-        body: { game_id: gid, device_type: "display", key,
-          connection_id: lease.connection_id, epoch: lease.epoch },
-      });
-      if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
-      const scopedRest = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
-        global: { headers: { Authorization: `Bearer ${data.token}` } },
-      });
-      const { data: completionRows, error: completionReadError } = await scopedRest
-        .from("game_state_display_completion").select("game_id,rendered_rev")
-        .eq("game_id", gid);
-      if (completionReadError) throw completionReadError;
-      window.__scopedCompletionReadCount = completionRows?.length ?? 0;
-      // Realtime RLS deliberately checks the live connection heartbeat. Keep
-      // this bare-page fixture alive at the same cadence as the real device
-      // lease client, which normally runs every three seconds.
-      window.__deviceHeartbeatTimer = setInterval(() => {
-        void sb.rpc("control_device_instance_heartbeat", {
-          p_game_id: gid, p_device_type: "display", p_key: key,
-          p_connection_id: lease.connection_id, p_epoch: lease.epoch,
-          p_meta: { visibility: "visible", focused: true },
-        });
-      }, 3000);
-      const { data: before, error: readError } = await sb.rpc("game_state_get", {
-        p_game_id: gid, p_device_type: "display", p_key: key,
-        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
-      });
-      if (readError) throw readError;
-      // Jak aplikacja (web/shared/js/core/game-state-subscribe.js): osobny
-      // klient tylko dla Realtime, accessToken zawsze zwraca token urządzenia.
-      // Na wspólnym kliencie realtime-js po dołączeniu podmieniał token na
-      // anon, a ponowne dołączenie zakładało subskrypcję bez claims urządzenia.
-      const realtime = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
-        accessToken: async () => data.token,
-      });
-      window.__scopedRealtimeClient = realtime;
-      window.__scopedDeviceToken = data.token;
-      // Token przed subscribe(): claims subskrypcji ustala dołączenie.
-      await realtime.realtime.setAuth();
-      const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
-      window.__scopedSystem = [];
-      const channel = realtime.channel(channelName).on("system", {}, payload => {
-        window.__scopedSystem.push(`${payload?.status || ""}:${String(payload?.message || "").slice(0, 80)}`);
-      }).on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
-      }, payload => {
-        if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
-      }).on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
-      }, payload => {
-        if (Number(payload?.new?.rendered_rev) > 0) {
-          window.__scopedRealtimeRenderedRev = payload.new.rendered_rev;
-        }
-      });
-      // SUBSCRIBED to tylko dołączenie; subskrypcja w bazie jest gotowa po
-      // komunikacie systemowym "Subscribed to PostgreSQL".
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error(`postgres_changes subscribe timeout ${JSON.stringify(window.__scopedSystem)}`)), 15000);
-        let joined = false, ready = false;
-        const done = () => { if (joined && ready) { clearTimeout(timeout); resolve(); } };
-        channel.on("system", {}, payload => {
-          if (/PostgreSQL/i.test(String(payload?.message || ""))) {
-            if (payload?.status === "ok") { ready = true; done(); }
-            else { clearTimeout(timeout); reject(new Error(`postgres_changes system: ${payload?.message}`)); }
-          }
-        });
-        channel.subscribe(status => {
-          if (status === "SUBSCRIBED") { joined = true; done(); }
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            clearTimeout(timeout); reject(new Error(`postgres_changes: ${status}`));
-          }
-        });
-      });
-      return { channelName, beforeRev: before?.rev };
-    }, { gid: game.id, key: keyResult, lease });
-    channelName = direct.channelName;
-    expect(await devicePage.evaluate(() => window.__scopedCompletionReadCount)).toBe(1);
-
-    ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
-    await page.evaluate(async ({ gid, channelName }) => {
-      const sb = window.__sbClient;
-      const channel = sb.channel(channelName).on("postgres_changes", {
-        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
-      }, payload => { window.__ownerRealtimeCompletionRev = payload?.new?.rendered_rev ?? null; });
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 15000);
-        let joined = false, ready = false;
-        const done = () => { if (joined && ready) { clearTimeout(timeout); resolve(); } };
-        channel.on("system", {}, payload => {
-          if (/PostgreSQL/i.test(String(payload?.message || "")) && payload?.status === "ok") { ready = true; done(); }
-        });
-        channel.subscribe(status => {
-          if (status === "SUBSCRIBED") { joined = true; done(); }
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            clearTimeout(timeout); reject(new Error(`owner completion postgres_changes: ${status}`));
-          }
-        });
-      });
-    }, { gid: game.id, channelName: ownerCompletionChannelName });
-
-    const { error: writeError } = await page.evaluate(async gid => {
-      const { error } = await window.__sbClient.rpc("game_state_write", {
-        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
-        p_phase: null, p_control_team: null,
-        p_detail: { teams: { teamA: "Realtime A", teamB: "Realtime B" } },
-        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
-      });
-      return { error };
+      const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch_v2", { p_game_id: gid, p_session_id: null });
+      if (sessionError || !session?.ok) throw sessionError || new Error("session touch failed");
+      const keys = {};
+      for (const type of ["display", "host"]) {
+        const { data, error } = await sb.rpc("control_runtime_device_link", { p_game_id: gid, p_device_type: type });
+        if (error || !data?.ok) throw error || new Error(`link ${type} failed`);
+        keys[type] = data.token;
+      }
+      return keys;
     }, game.id);
-    expect(writeError, "owner game_state_write should succeed").toBeNull();
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
-      .not.toBeNull().catch(() => {});
-    const diag = await devicePage.evaluate(() => ({
-      system: window.__scopedSystem, rev: window.__scopedRealtimeRev || null,
-      deviceTokenKept: window.__scopedRealtimeClient.realtime.accessTokenValue === window.__scopedDeviceToken,
-    }));
-    console.log(`[e2e-diag] scoped realtime ${JSON.stringify(diag)}`);
-    // Ponowne dołączenie (zerwane łącze) bierze token z gniazda -- musi to
-    // być nadal token urządzenia, nie anon.
-    expect(diag.deviceTokenKept).toBe(true);
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 1000 })
-      .not.toBeNull();
-    const completedRevision = await devicePage.evaluate(async ({ gid, key, lease }) => {
-      const sb = window.__sbClient;
-      const { data, error } = await sb.rpc("game_state_get", {
-        p_game_id: gid, p_device_type: "display", p_key: key,
-        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
-      });
-      if (error || !data?.rev) throw error || new Error("missing current game_state revision");
-      const { error: completionError } = await sb.rpc("game_state_display_complete", {
-        p_game_id: gid, p_key: key, p_rev: data.rev,
-        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
-      });
-      if (completionError) throw completionError;
-      return data.rev;
-    }, { gid: game.id, key: keyResult, lease });
-    const storedCompletion = await page.evaluate(async gid => {
-      const { data, error } = await window.__sbClient.from("game_state_display_completion")
-        .select("rendered_rev").eq("game_id", gid).single();
-      return { renderedRev: data?.rendered_rev ?? null, error: error?.message || null };
-    }, game.id);
-    expect(storedCompletion.error).toBeNull();
-    expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
-    await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
-      .toBe(completedRevision);
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRenderedRev || null), { timeout: 15000 })
-      .toBe(completedRevision);
+
+    // Urządzenie: lease, heartbeat, token, kanał własny i próba cudzego.
+    const openDevice = async (type) => {
+      const context = await browser.newContext();
+      contexts.push(context);
+      const devicePage = await context.newPage();
+      await devicePage.goto("/", { waitUntil: "domcontentloaded" });
+      await devicePage.waitForFunction(() => !!window.__sbClient && !!window.supabase, null, { timeout: 20000 });
+      const info = await devicePage.evaluate(async ({ gid, key, type }) => {
+        const sb = window.__sbClient;
+        const connectionId = crypto.randomUUID();
+        const { data: reg, error } = await sb.rpc("control_device_instance_register", {
+          p_game_id: gid, p_device_type: type, p_key: key, p_connection_id: connectionId, p_meta: { visibility: "visible", focused: true },
+        });
+        if (error || reg?.state !== "primary") throw error || new Error(`${type} not primary`);
+        window.__heartbeat = setInterval(() => {
+          sb.rpc("control_device_instance_heartbeat", { p_game_id: gid, p_device_type: type, p_key: key,
+            p_connection_id: connectionId, p_epoch: reg.epoch, p_meta: { visibility: "visible", focused: true } }).then(() => {}, () => {});
+        }, 3000);
+        const { data: tokenData, error: tokenError } = await sb.functions.invoke("device-realtime-token", {
+          body: { game_id: gid, device_type: type, key, connection_id: connectionId, epoch: reg.epoch },
+        });
+        if (tokenError || !tokenData?.token) throw tokenError || new Error("missing token");
+        window.__rt = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, { accessToken: async () => tokenData.token });
+        await window.__rt.realtime.setAuth();
+        window.__got = { own: [], completion: [] };
+        const join = (topic, onState, onCompletion) => new Promise((resolve) => {
+          const channel = window.__rt.channel(topic, { config: { private: true } });
+          if (onState) channel.on("broadcast", { event: "state" }, ({ payload }) => onState(Number(payload?.row?.rev)));
+          if (onCompletion) channel.on("broadcast", { event: "completion" }, ({ payload }) => onCompletion(payload?.row));
+          const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
+          channel.subscribe((status) => {
+            if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); }
+          });
+        });
+        const own = await join(`game-state:${gid}:${connectionId}`, (rev) => window.__got.own.push(rev), (row) => window.__got.completion.push(row?.rendered_rev));
+        const control = await join(`game-control:${gid}`);
+        return { connectionId, epoch: reg.epoch, own, control };
+      }, { gid: game.id, key: keys[type], type });
+      return { page: devicePage, ...info };
+    };
+    const display = await openDevice("display");
+    const host = await openDevice("host");
+    expect(display.own, "Wyświetlacz dołącza do własnego kanału").toBe("SUBSCRIBED");
+    expect(host.own, "Prowadzący dołącza do własnego kanału").toBe("SUBSCRIBED");
+    expect(display.control, "urządzenie nie dołączy do kanału Control").toBe("CHANNEL_ERROR");
+    // Cudzy kanał (Prowadzącego) z tokenem Wyświetlacza.
+    const foreign = await display.page.evaluate(({ gid, conn }) => new Promise((resolve) => {
+      const channel = window.__rt.channel(`game-state:${gid}:${conn}`, { config: { private: true } });
+      const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
+      channel.subscribe((status) => { if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); } });
+    }), { gid: game.id, conn: host.connectionId });
+    expect(foreign, "token Wyświetlacza nie otworzy kanału Prowadzącego").toBe("CHANNEL_ERROR");
+    // Bez tokenu (zwykły anon) — odmowa.
+    const anonJoin = await host.page.evaluate(({ gid, conn }) => new Promise((resolve) => {
+      const channel = window.__sbClient.channel(`game-state:${gid}:${conn}`, { config: { private: true } });
+      const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
+      channel.subscribe((status) => { if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); } });
+    }), { gid: game.id, conn: host.connectionId });
+    expect(anonJoin, "bez tokenu urządzenia brak dostępu").toBe("CHANNEL_ERROR");
+
+    // Control (właściciel): game-control:<gra>.
+    const controlStatus = await page.evaluate((gid) => new Promise((resolve) => {
+      window.__ctrl = { state: [], completion: [] };
+      const channel = window.__sbClient.channel(`game-control:${gid}`, { config: { private: true } })
+        .on("broadcast", { event: "state" }, ({ payload }) => window.__ctrl.state.push(Number(payload?.row?.rev)))
+        .on("broadcast", { event: "completion" }, ({ payload }) => window.__ctrl.completion.push(Number(payload?.row?.rendered_rev)));
+      window.__ctrlChannel = channel;
+      const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
+      Promise.resolve(window.__sbClient.realtime.setAuth()).catch(() => {}).then(() => channel.subscribe((status) => {
+        if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); }
+      }));
+    }), game.id);
+    expect(controlStatus, "właściciel dołącza do kanału Control").toBe("SUBSCRIBED");
+
+    const rev = await write("Live");
+    await expect.poll(() => display.page.evaluate(() => window.__got.own), { timeout: 10000 }).toContain(rev);
+    await expect.poll(() => host.page.evaluate(() => window.__got.own), { timeout: 10000 }).toContain(rev);
+    await expect.poll(() => page.evaluate(() => window.__ctrl.state), { timeout: 10000 }).toContain(rev);
+    // Potwierdzenie planszy (Wyświetlacz) dochodzi do Control i urządzeń.
+    const completeError = await display.page.evaluate(async ({ gid, key, conn, epoch, rev }) => {
+      const { error } = await window.__sbClient.rpc("game_state_display_complete", {
+        p_game_id: gid, p_key: key, p_rev: rev, p_connection_id: conn, p_epoch: epoch });
+      return error?.message || null;
+    }, { gid: game.id, key: keys.display, conn: display.connectionId, epoch: display.epoch, rev });
+    expect(completeError).toBeNull();
+    await expect.poll(() => page.evaluate(() => window.__ctrl.completion), { timeout: 10000 }).toContain(rev);
+    await expect.poll(() => display.page.evaluate(() => window.__got.completion), { timeout: 10000 }).toContain(rev);
+
+    // Koniec sesji i zastąpienie urządzenia: docs/sql/test-db-broadcast-508.sql.
   } finally {
-    await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
-    if (channelName) await deviceContext.pages()[0]?.evaluate(async () => {
-      await window.__scopedRealtimeClient?.removeAllChannels();
-    }).catch(() => {});
-    if (ownerCompletionChannelName) await page.evaluate(async name => {
-      const sb = window.__sbClient;
-      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
-      if (channel) await sb.removeChannel(channel);
-    }, ownerCompletionChannelName).catch(() => {});
-    await deviceContext.close().catch(() => {});
-    await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
+    for (const context of contexts) {
+      await context.pages()[0]?.evaluate(async () => { clearInterval(window.__heartbeat); await window.__rt?.removeAllChannels(); }).catch(() => {});
+      await context.close().catch(() => {});
+    }
+    await page.evaluate(async () => { await window.__sbClient?.removeAllChannels(); }).catch(() => {});
+    await page.evaluate(async (gid) => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }
 });

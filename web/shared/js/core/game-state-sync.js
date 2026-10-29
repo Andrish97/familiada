@@ -1,16 +1,8 @@
 // js/core/game-state-sync.js
-// Monotoniczny, serializowany odbiór wierszy dla Broadcast/poll fallbacku
-// oraz bezpośrednich zdarzeń postgres_changes.
-//
-// Dzwonek (broadcast {rev}) jest tylko podpowiedzią i bywa gubiony: błąd
-// sieciowy w trakcie game_state_get, zawieszone żądanie albo przerwa w
-// kanale. Gdy po zmianie stanu nie ma już żadnej kolejnej zmiany (np. po
-// "Rozpocznij rundę" Buzzer czeka na pierwsze naciśnięcie), urządzenie
-// zostawało na starym stanie — Buzzer pokazywał zapalony przycisk
-// poprzedniej rundy. Dlatego: (1) błąd/wyjątek planuje ponowną próbę,
-// (2) zawieszone żądanie jest przerywane limitem czasu (po stronie
-// fetchRow), (3) wołający może okresowo wywoływać fetchGuarded() jako siatkę
-// bezpieczeństwa (tani no-op, gdy rev się nie zmienił).
+// Monotoniczny, serializowany odbiór wierszy stanu gry: z kanału z bazy
+// (applyRow, game-state-subscribe.js) i z odczytów RPC przy starcie oraz po
+// ponownym dołączeniu (fetchGuarded). Nieudany odczyt planuje ponowną próbę,
+// a zawieszone żądanie przerywa limit czasu po stronie fetchRow.
 
 export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onReadStatus = null, retryMs = 2000, sameRevChanged = null, setTimer = setTimeout, now = () => globalThis.performance?.now?.() ?? Date.now() }) {
   let lastRev = -1;

@@ -1,21 +1,18 @@
 // tests/e2e/realtime-paths-benchmark.spec.js
 //
-// Pomiar porównawczy (decyzja: kanał bezpośredni z tokenem zostaje czy nie).
-// Na produkcyjnej bazie, Realtime i Workerze, bez kodu aplikacji: te same
-// ścieżki co urządzenie (web/shared/js/core/game-state-subscribe.js):
-//   direct   — postgres_changes z tokenem urządzenia (device-realtime-token),
-//   doorbell — broadcast {rev} (game-state-doorbell.js, REST) → game_state_get,
-//   dbcast   — wiersz wysłany z bazy na prywatny kanał urządzenia (migracja 508,
-//              game-state:<game_id>:<connection_id>, ten sam token).
-// Trzy urządzenia (display, host, buzzer) z własnym lease, tokenem i
-// heartbeatem co 3 s. Control zapisuje 60 zmian w tempie gry (700 ms)
-// i serię 20 jak w finale (150 ms). Czas liczony od startu zapisu do chwili,
-// gdy urządzenie zna stan ≥ tej rewizji — osobno dla każdej ścieżki.
+// Pomiar kanału z bazy (migracje 508–510; decyzja właściciela 2026-10-29 —
+// jedyny mechanizm powiadomień gry). Wyniki porównania z dawnymi drogami
+// (postgres_changes, dzwonek + odczyt): e2e 40868645209 — kanał z bazy
+// p50 141 ms / p90 158 ms, dawne ~420 ms.
+// Na produkcyjnej bazie, Realtime i Workerze, bez kodu aplikacji: trzy
+// urządzenia (display, host, buzzer) z własnym lease, tokenem i heartbeatem
+// co 3 s dołączają do game-state:<gra>:<połączenie>. Control zapisuje
+// 60 zmian w tempie gry (700 ms) i serię 20 jak w finale (150 ms). Czas od
+// startu zapisu do odebrania wiersza, liczba zgubionych.
 // Profil „slow” dokłada to samo opóźnienie każdemu żądaniu HTTP i każdej
-// wiadomości WebSocket w obie strony (page.route + routeWebSocket), żeby
-// żadna ścieżka nie była uprzywilejowana.
+// wiadomości WebSocket w obie strony (page.route + routeWebSocket).
 // Test nie ocenia wydajności progiem — wypisuje wynik ([bench] …) i dołącza
-// JSON; pada tylko, gdy pomiar jest niemiarodajny (ścieżka nic nie dostarczyła).
+// JSON; pada tylko, gdy kanał nic nie dostarczył.
 
 const { test, expect } = require("./helpers/e2e-test");
 
@@ -42,12 +39,11 @@ async function addLatency(page, delayMs) {
   });
 }
 
-// Strona urządzenia: lease + heartbeat, kanał bezpośredni, dzwonek z odczytem
-// (jeden odczyt naraz, kolejny zakolejkowany — jak fetchGuarded).
+// Strona urządzenia: lease + heartbeat, token, kanał z bazy.
 async function startDevice(page, { gid, key, type }) {
   return page.evaluate(async ({ gid, key, type }) => {
     const sb = window.__sbClient;
-    const bench = window.__bench = { direct: {}, bell: {}, read: {}, dbcast: {}, readRev: -1, errors: [], dbcastStatus: null };
+    const bench = window.__bench = { dbcast: {}, errors: [], dbcastStatus: null };
     const connectionId = crypto.randomUUID();
     const { data: reg, error: regError } = await sb.rpc("control_device_instance_register", {
       p_game_id: gid, p_device_type: type, p_key: key,
@@ -64,38 +60,6 @@ async function startDevice(page, { gid, key, type }) {
       }).then(({ error }) => { if (error) bench.errors.push(`heartbeat:${error.message}`); }, () => {});
     }, 3000);
 
-    let reading = false, pending = false;
-    async function read() {
-      if (reading) { pending = true; return; }
-      reading = true;
-      try {
-        const { data, error } = await sb.rpc("game_state_get", { p_game_id: gid, p_device_type: type, p_key: key, ...lease });
-        const at = Date.now();
-        if (error) bench.errors.push(`read:${error.message}`);
-        const rev = Number(data?.rev);
-        if (Number.isFinite(rev) && rev > bench.readRev) {
-          for (let r = bench.readRev + 1; r <= rev; r += 1) bench.read[r] ??= at;
-          bench.readRev = rev;
-        }
-      } finally {
-        reading = false;
-        if (pending) { pending = false; void read(); }
-      }
-    }
-    const initial = await sb.rpc("game_state_get", { p_game_id: gid, p_device_type: type, p_key: key, ...lease });
-    bench.readRev = Number(initial.data?.rev) || 0;
-
-    const bellChannel = sb.channel(`familijna-state:${gid}`).on("broadcast", { event: "rev" }, ({ payload }) => {
-      const rev = Number(payload?.rev);
-      if (!Number.isFinite(rev)) return;
-      bench.bell[rev] ??= Date.now();
-      if (rev > bench.readRev) void read();
-    });
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("doorbell subscribe timeout")), 15000);
-      bellChannel.subscribe((status) => { if (status === "SUBSCRIBED") { clearTimeout(timer); resolve(); } });
-    });
-
     const { data: tokenData, error: tokenError } = await sb.functions.invoke("device-realtime-token", {
       body: { game_id: gid, device_type: type, key, connection_id: connectionId, epoch: reg.epoch },
     });
@@ -103,24 +67,6 @@ async function startDevice(page, { gid, key, type }) {
     const realtime = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, { accessToken: async () => tokenData.token });
     window.__benchRealtime = realtime;
     await realtime.realtime.setAuth();
-    const direct = realtime.channel(`bench-direct:${gid}:${type}:${connectionId}`).on("postgres_changes", {
-      event: "*", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
-    }, (payload) => {
-      const rev = Number(payload?.new?.rev);
-      if (Number.isFinite(rev)) bench.direct[rev] ??= Date.now();
-    });
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 15000);
-      let joined = false, ready = false;
-      const done = () => { if (joined && ready) { clearTimeout(timer); resolve(); } };
-      direct.on("system", {}, (payload) => {
-        if (/PostgreSQL/i.test(String(payload?.message || "")) && payload?.status === "ok") { ready = true; done(); }
-      });
-      direct.subscribe((status) => {
-        if (status === "SUBSCRIBED") { joined = true; done(); }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { clearTimeout(timer); reject(new Error(`direct ${status}`)); }
-      });
-    });
     // Kanał z bazy (508): prywatny, dołączenie sprawdza polityka na realtime.messages.
     const dbcast = realtime.channel(`game-state:${gid}:${connectionId}`, { config: { private: true } })
       .on("broadcast", { event: "state" }, ({ payload }) => {
@@ -138,7 +84,7 @@ async function startDevice(page, { gid, key, type }) {
   }, { gid, key, type });
 }
 
-// Control: zapis, potem dzwonek po REST — jak store.js + ringDoorbell.
+// Control: sam zapis — baza wysyła zmianę urządzeniom.
 async function runWrites(page, gid) {
   return page.evaluate(async ({ gid, steady, burst }) => {
     const sb = window.__sbClient;
@@ -157,11 +103,6 @@ async function runWrites(page, gid) {
       if (error) throw error;
       const rev = Number(data?.rev);
       writes[rev] = { startedAt, doneAt: Date.now(), burst: gapMs === burst.gapMs };
-      void fetch(`${sb.supabaseUrl}/realtime/v1/api/broadcast`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: sb.supabaseKey, Authorization: `Bearer ${sb.supabaseKey}` },
-        body: JSON.stringify({ messages: [{ topic: `familijna-state:${gid}`, event: "rev", payload: { rev } }] }),
-      });
       await new Promise((resolve) => setTimeout(resolve, gapMs));
     }
     return writes;
@@ -178,46 +119,24 @@ function quantiles(values) {
 function summarize(writes, devices) {
   const out = {};
   for (const [type, bench] of Object.entries(devices)) {
-    const direct = [], doorbell = [], bell = [], dbcast = [];
-    let directMiss = 0, doorbellMiss = 0, bellMiss = 0, dbcastMiss = 0, directFirst = 0, doorbellFirst = 0, both = 0;
-    const leads = [];
-    const firstOfThree = { direct: 0, doorbell: 0, dbcast: 0 };
-    const dbcastLeads = [];
+    const fromStart = [], fromDone = [];
+    let miss = 0;
     for (const [revText, write] of Object.entries(writes)) {
-      const rev = Number(revText);
-      const d = bench.direct[rev] != null ? bench.direct[rev] - write.startedAt : null;
-      const r = bench.read[rev] != null ? bench.read[rev] - write.startedAt : null;
-      const b = bench.bell[rev] != null ? bench.bell[rev] - write.doneAt : null;
-      if (d == null || d > MISS_MS) directMiss += 1; else direct.push(d);
-      if (r == null || r > MISS_MS) doorbellMiss += 1; else doorbell.push(r);
-      if (b == null) bellMiss += 1; else bell.push(b);
-      const c = bench.dbcast[rev] != null ? bench.dbcast[rev] - write.startedAt : null;
-      if (c == null || c > MISS_MS) dbcastMiss += 1; else dbcast.push(c);
-      const arrivals = [["direct", d], ["doorbell", r], ["dbcast", c]].filter(([, v]) => v != null);
-      if (arrivals.length) firstOfThree[arrivals.sort((x, y) => x[1] - y[1])[0][0]] += 1;
-      // dodatnie: kanał z bazy szybszy od najszybszej z dzisiejszych dróg
-      if (c != null && (d != null || r != null)) dbcastLeads.push(Math.min(d ?? Infinity, r ?? Infinity) - c);
-      if (d != null && r != null) {
-        both += 1;
-        leads.push(r - d); // dodatnie: kanał bezpośredni szybszy o tyle ms
-        if (d < r) directFirst += 1; else doorbellFirst += 1;
-      }
+      const at = bench.dbcast[Number(revText)];
+      if (at == null || at - write.startedAt > MISS_MS) { miss += 1; continue; }
+      fromStart.push(at - write.startedAt);
+      fromDone.push(at - write.doneAt);
     }
     out[type] = {
-      direct_ms: quantiles(direct), doorbell_read_ms: quantiles(doorbell), bell_after_write_ms: quantiles(bell),
-      direct_miss: directMiss, doorbell_miss: doorbellMiss, bell_lost: bellMiss,
-      direct_first: directFirst, doorbell_first: doorbellFirst, compared: both,
-      direct_lead_ms: quantiles(leads),
-      dbcast_ms: quantiles(dbcast), dbcast_miss: dbcastMiss, dbcast_status: bench.dbcastStatus,
-      first_of_three: firstOfThree, dbcast_lead_vs_today_ms: quantiles(dbcastLeads),
-      errors: bench.errors.slice(0, 5),
+      dbcast_ms: quantiles(fromStart), dbcast_after_write_ms: quantiles(fromDone),
+      dbcast_miss: miss, dbcast_status: bench.dbcastStatus, errors: bench.errors.slice(0, 5),
     };
   }
   return out;
 }
 
 for (const profile of PROFILES) {
-  test(`realtime: kanał bezpośredni vs dzwonek+odczyt — profil ${profile.name}`, async ({ page, browser, accounts, loginAs }, testInfo) => {
+  test(`realtime: kanał z bazy — profil ${profile.name}`, async ({ page, browser, accounts, loginAs }, testInfo) => {
     test.setTimeout(240_000);
     await loginAs(page, page.context(), accounts.standard[0]);
     const game = await page.evaluate(async (name) => {
@@ -270,8 +189,7 @@ for (const profile of PROFILES) {
       console.log(`[bench] ${profile.name} (+${profile.delayMs} ms): ${JSON.stringify(summary)}`);
       await testInfo.attach(`realtime-bench-${profile.name}.json`, { body: JSON.stringify({ profile, summary }, null, 2), contentType: "application/json" });
       for (const result of Object.values(summary)) {
-        expect(result.direct_ms?.n ?? 0, "kanał bezpośredni nic nie dostarczył — pomiar niemiarodajny").toBeGreaterThan(0);
-        expect(result.doorbell_read_ms?.n ?? 0, "dzwonek+odczyt nic nie dostarczył — pomiar niemiarodajny").toBeGreaterThan(0);
+        expect(result.dbcast_ms?.n ?? 0, `kanał z bazy nic nie dostarczył (${result.dbcast_status})`).toBeGreaterThan(0);
       }
     } finally {
       for (const context of contexts) {
