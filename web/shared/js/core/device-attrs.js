@@ -9,8 +9,8 @@
 //                    niższe o ponad KEYBOARD_MIN px): stopka znika, aktywne
 //                    pole przewija się do widoku w swoim kontenerze
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
-import "./page-layout.js?v=v2026-10-29T10373";
-import { editableFocused } from "./device-guard.js?v=v2026-10-29T10373";
+import "./page-layout.js?v=v2026-10-29T11025";
+import { editableFocused } from "./device-guard.js?v=v2026-10-29T11025";
 
 export const { NARROW_MAX, deviceLayout } = globalThis.FamilijnaDevice;
 
