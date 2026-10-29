@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-import {parseLogoPackage} from '../../web/logos/js/package.js';
+import {parseLogoPackage,sanitizeLogoFileImport} from '../../web/logos/js/package.js';
 import {decodeImportedLogoImage} from '../../web/shared/js/core/logo-image-data.js';
 import { loadDict } from "./helpers/i18n.js";
 
@@ -40,7 +40,7 @@ for(const lang of ['pl','en','uk'])test(`actual file parser uses the shared pars
  const dict = await loadDict(lang);
  const t=(key,args={})=>{let value=key.split('.').reduce((item,part)=>item?.[part],dict);assert.equal(typeof value,'string',key);for(const [name,item] of Object.entries(args))value=value.replaceAll('{'+name+'}',item);return value;};
  const source=(await readFile(new URL('../../web/logos/js/transfer.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace(/export /g,'');
- const context=vm.createContext({parseLogoPackage,t});vm.runInContext(source+'\nglobalThis.parse=parseImport;',context);
+ const context=vm.createContext({parseLogoPackage,sanitizeLogoFileImport,t});vm.runInContext(source+'\nglobalThis.parse=parseImport;',context);
  assert.throws(()=>context.parse('not-json','Logo'),error=>error.message===dict.logoEditor.errors.invalidJson);
  for(const [input,key] of [[{kind:'NO'},'unknownImportFormat'],[{kind:'PIX'},'missingBits'],[{kind:'PIX',payload:{w:20,h:10,bits_b64:'AA=='}},'pixSize']])assert.throws(()=>context.parse(JSON.stringify(input),'Logo'),error=>error.message===t('logoEditor.errors.'+key,{expectedW:150,expectedH:70,actualW:20,actualH:10}));
  assert.equal(context.parse('{"kind":"GLYPH","name":"Rodzina"}','Logo').name,'Rodzina');

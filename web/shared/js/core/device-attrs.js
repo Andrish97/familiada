@@ -5,12 +5,13 @@
 //   data-orientation portrait | landscape
 //   data-compact     układ telefonu: telefon albo okno do 600 px
 //   data-sheet       okna od dołu: dotyk (bez TV) albo okno do 600 px
-//   data-keyboard    klawiatura ekranowa otwarta (dotyk, aktywne pole i okno
-//                    niższe o ponad KEYBOARD_MIN px): stopka znika, aktywne
-//                    pole przewija się do widoku w swoim kontenerze
+//   data-keyboard    klawiatura ekranowa otwarta (dotyk, aktywne pole);
+//                    --keyboard-h: jej wysokość
+//   data-keyboard-room  zapas pod treścią (html::after), gdy pole z samego
+//                    dołu strony trzeba podnieść ponad koniec strony
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
-import "./page-layout.js?v=v2026-10-29T13391";
-import { editableFocused } from "./device-guard.js?v=v2026-10-29T13391";
+import "./page-layout.js?v=v2026-10-29T14180";
+import { editableFocused } from "./device-guard.js?v=v2026-10-29T14180";
 
 export const { NARROW_MAX, deviceLayout } = globalThis.FamilijnaDevice;
 
@@ -29,25 +30,143 @@ function apply() {
   if (changed) document.dispatchEvent(new CustomEvent("device:change", { detail: next }));
 }
 
-// Klawiatura: okno (resizes-content) albo widoczna część (visualViewport)
-// niższe niż najwyższe zapamiętane przy tej szerokości.
+// Klawiatura zasłania stronę, nie zmienia układu (decyzja użytkownika
+// 2026-10-29): meta viewport interactive-widget=resizes-visual. Tam, gdzie
+// jest VirtualKeyboard API (Chrome na Androidzie), przejmujemy ustawienie
+// widoku (overlaysContent): przeglądarka nic nie przesuwa, a strona jednym
+// płynnym ruchem stawia aktywne pole tuż nad klawiaturą — tylko gdy
+// klawiatura by je zasłoniła. Bez API (np. Safari) przesuwa przeglądarka.
+const vk = typeof navigator !== "undefined" ? navigator.virtualKeyboard : null;
 const KEYBOARD_MIN = 120;
+const FIELD_GAP = 12; // odstęp pola od klawiatury
 let fullHeight = { width: 0, height: 0 };
 
 function viewHeight() {
   return Math.min(window.innerHeight, window.visualViewport?.height || window.innerHeight);
 }
 
-function applyKeyboard() {
-  const root = document.documentElement;
+/** Wysokość klawiatury w px (0, gdy zamknięta). */
+function keyboardHeight() {
+  if (vk?.overlaysContent) return Math.round(vk.boundingRect?.height || 0);
   const h = viewHeight();
   if (window.innerWidth !== fullHeight.width) fullHeight = { width: window.innerWidth, height: h };
-  const typing = root.dataset.input === "touch" && editableFocused();
-  if (!typing || h > fullHeight.height) fullHeight.height = Math.max(fullHeight.height, h);
-  const open = typing && fullHeight.height - h > KEYBOARD_MIN;
-  if (root.hasAttribute("data-keyboard") === open) return;
-  root.toggleAttribute("data-keyboard", open);
-  if (open) requestAnimationFrame(() => document.activeElement?.scrollIntoView?.({ block: "nearest" }));
+  if (!editableFocused() || h > fullHeight.height) fullHeight.height = Math.max(fullHeight.height, h);
+  const covered = fullHeight.height - h;
+  return covered > KEYBOARD_MIN ? covered : 0;
+}
+
+const scrollable = (node) => /(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight;
+
+// Cele rozpoczętych płynnych ruchów (kontener → docelowe scrollTop). Pomiar
+// w trakcie ruchu liczy pole tam, gdzie dojedzie, więc kolejne ustawienie
+// (druga zmiana klawiatury, wolne urządzenie) nie dokłada ruchu drugi raz.
+const scrollTargets = new Map();
+const liftedBox = (lift) => (lift.classList.contains("overlay") ? lift.querySelector(":scope > .modal") : lift);
+
+/** Ile pole jeszcze przejedzie w górę w trwających ruchach. */
+function pendingMove(el) {
+  let px = 0;
+  for (const [node, target] of scrollTargets) {
+    const current = node === document.scrollingElement ? window.scrollY : node.scrollTop;
+    if (Math.abs(target - current) < 1) { scrollTargets.delete(node); continue; }
+    if (node === document.scrollingElement || node.contains(el)) px += target - current;
+  }
+  for (const lift of document.querySelectorAll(".keyboard-lift")) {
+    if (!lift.contains(el)) continue;
+    const box = liftedBox(lift);
+    const now = -(parseFloat(getComputedStyle(box || lift).translate.split(" ")[1]) || 0);
+    px += (parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) - now;
+  }
+  return px;
+}
+
+function smoothScroll(node, step) {
+  const isPage = node === document.scrollingElement;
+  const from = scrollTargets.get(node) ?? (isPage ? window.scrollY : node.scrollTop);
+  scrollTargets.set(node, from + step);
+  (isPage ? window : node).scrollTo({ top: from + step, behavior: "smooth" });
+}
+
+/** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery z
+ * przewijaniem, potem okno (.overlay) lub treść strony bez przewijania
+ * (.page-fit, np. dolny pasek list) podjeżdża, a na zwykłej stronie --
+ * przewinięcie strony. */
+function revealAboveKeyboard(el, kb) {
+  const overlay = el.closest(".overlay");
+  const lift = overlay || el.closest("body.page-fit > main");
+  // Podniesienia innego miejsca (fokus przeszedł gdzie indziej) nie trzymamy.
+  for (const other of document.querySelectorAll(".keyboard-lift")) if (other !== lift) other.classList.remove("keyboard-lift");
+  const pending = pendingMove(el);
+  const rect = el.getBoundingClientRect();
+  const top = rect.top - pending;
+  const bottom = rect.bottom - pending;
+  // Okno zasłania górny pasek, więc wtedy granicą jest góra ekranu.
+  const topbarBottom = overlay ? 0 : document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
+  // Pole wyższe niż widoczna część: jego górny brzeg zostaje pod paskiem.
+  let delta = Math.round(Math.min(bottom - (window.innerHeight - kb - FIELD_GAP), top - topbarBottom - FIELD_GAP));
+  if (delta <= 0) return;
+  for (let node = el.parentElement; node && node !== document.body && delta > 0; node = node.parentElement) {
+    if (!scrollable(node)) continue;
+    const at = scrollTargets.get(node) ?? node.scrollTop;
+    const step = Math.min(delta, node.scrollHeight - node.clientHeight - at);
+    if (step > 0) { smoothScroll(node, step); delta -= step; }
+  }
+  if (delta <= 0) return;
+  if (lift) {
+    const shift = Math.min(kb, (lift.classList.contains("keyboard-lift") ? parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0 : 0) + delta);
+    lift.style.setProperty("--keyboard-lift", `${Math.round(shift)}px`);
+    lift.classList.add("keyboard-lift");
+  } else {
+    // Zapas pod treścią tylko wtedy, gdy strona nie ma dokąd się przewinąć
+    // (poza układem strony: html::after, wyśrodkowane strony nie drgną).
+    const at = scrollTargets.get(document.scrollingElement) ?? window.scrollY;
+    const room = document.documentElement.scrollHeight - window.innerHeight - at;
+    if (room < delta) document.documentElement.toggleAttribute("data-keyboard-room", true);
+    smoothScroll(document.scrollingElement, delta);
+  }
+}
+
+/** Klawiatura zamknięta: podniesione okno lub treść zjeżdża na swoje miejsce. */
+function settleLifted() {
+  scrollTargets.clear();
+  document.documentElement.removeAttribute("data-keyboard-room");
+  for (const el of document.querySelectorAll(".keyboard-lift")) el.style.setProperty("--keyboard-lift", "0px");
+}
+
+// Jedno ustawienie naraz: płynne przewijanie trwa, a pomiar w jego trakcie
+// przesunąłby pole za daleko.
+const SCROLL_MS = 450;
+let revealTimer = 0;
+let revealUntil = 0;
+function scheduleReveal() {
+  if (!vk?.overlaysContent) return;
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(() => {
+    if (keyboardH <= 0 || !editableFocused()) return;
+    revealAboveKeyboard(document.activeElement, keyboardH);
+    revealUntil = Date.now() + SCROLL_MS;
+  }, Math.max(0, revealUntil - Date.now()));
+}
+
+let keyboardH = 0;
+function applyKeyboard() {
+  const root = document.documentElement;
+  const covered = keyboardHeight(); // zawsze: zapamiętuje pełną wysokość okna
+  const kb = root.dataset.input === "touch" && editableFocused() ? covered : 0;
+  if (kb === keyboardH) return;
+  keyboardH = kb;
+  root.toggleAttribute("data-keyboard", kb > 0);
+  root.style.setProperty("--keyboard-h", `${kb}px`);
+  if (kb > 0) scheduleReveal();
+  else settleLifted();
+}
+
+/** Inne pole przy otwartej klawiaturze: to samo ustawienie bez czekania na zmianę klawiatury. */
+function onFocusIn() {
+  requestAnimationFrame(() => {
+    applyKeyboard();
+    if (keyboardH > 0) scheduleReveal();
+  });
 }
 
 /** Układ telefonu (data-compact). */
@@ -65,7 +184,11 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
   applyKeyboard();
   window.addEventListener("resize", () => { apply(); applyKeyboard(); }, { passive: true });
   window.addEventListener("orientationchange", apply);
+  if (vk) {
+    try { vk.overlaysContent = true; } catch {}
+    vk.addEventListener?.("geometrychange", applyKeyboard);
+  }
   window.visualViewport?.addEventListener("resize", applyKeyboard, { passive: true });
-  document.addEventListener("focusin", () => requestAnimationFrame(applyKeyboard));
+  document.addEventListener("focusin", onFocusIn);
   document.addEventListener("focusout", () => requestAnimationFrame(applyKeyboard));
 }

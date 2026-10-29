@@ -95,7 +95,7 @@ do $$
 begin
   update public.games set status = 'ready' where id = '40500000-0000-4000-8000-000000000001';
   raise exception 'status ready z przeglądarki';
-exception when others then if sqlerrm not in ('poll_close_blocked:useTally:', 'game_write_forbidden') then raise; end if; -- 513: game_write_forbidden
+exception when others then if sqlerrm not in ('poll_close_blocked:useTally:', 'game_write_forbidden') then raise; end if; -- 514: game_write_forbidden
 end $$;
 reset role;
 select 'e21-poll-tally-405: OK' as wynik;

@@ -1,4 +1,4 @@
--- 513: luki znalezione sondami nadużyć (tests/sql/abuse-probes.sql).
+-- 514: luki znalezione sondami nadużyć (tests/sql/abuse-probes.sql).
 -- Zwykły zalogowany, gość albo anonim omijał zasady interfejsu przez
 -- bezpośrednie wywołania RPC i zapisy do tabel (PostgREST). Poprawki
 -- obejmują tylko ścieżki, których front nie używa, albo dokładają po stronie

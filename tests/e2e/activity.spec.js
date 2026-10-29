@@ -43,6 +43,6 @@ test('activity production: only explicitly marked E2E guests receive automatic t
   await page.evaluate(()=>window.__sbClient.functions.invoke('delete-account',{method:'POST'})).catch(()=>{});
  }
  expect(result.marked).toBe(true);expect(result.listDenied).toBe(true);
- // 513: gość nie ocenia systemu (jak w interfejsie) -- zapis odrzucony, statystyki bez zmian.
+ // 514: gość nie ocenia systemu (jak w interfejsie) -- zapis odrzucony, statystyki bez zmian.
  expect(result.rateError).toMatch(/row-level security/);expect(result.ratingCount[0]).toBeDefined();expect(result.ratingCount[1]).toBe(result.ratingCount[0]);
 });

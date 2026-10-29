@@ -1,7 +1,7 @@
 // Gry ankietowe w stanie „otwarta” i „zamknięta” przez te same ścieżki co
 // użytkownik: poll_open (Centrum ankiet) i import pliku .famgame z zamkniętą
 // ankietą (game_import_package). Stanu gry ankietowej nie da się ustawić
-// zapisem z przeglądarki (migracja 513, sondy G3 w tests/sql/abuse-probes.sql).
+// zapisem z przeglądarki (migracja 514, sondy G3 w tests/sql/abuse-probes.sql).
 
 // Szkic z 10 pytaniami (po 3 odpowiedzi), potem otwarcie ankiety. -> id gry
 async function seedOpenPoll(page, { type = "poll_text", name }) {

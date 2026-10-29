@@ -1,8 +1,8 @@
-import { redirectPage } from "./page-layout.js?v=v2026-10-29T13391";
+import { redirectPage } from "./page-layout.js?v=v2026-10-29T14180";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-29T13391";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T13391";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T13391";
+import { icon } from "./icons.js?v=v2026-10-29T14180";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T14180";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T14180";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -147,7 +147,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T13391";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T14180";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -555,7 +555,7 @@ export async function signOut() {
 }
 
 // Reset hasła po nazwie użytkownika albo adresie e-mail: Worker rozwiązuje
-// nazwę, rezerwuje cooldown (tylko serwer, migracja 513) i wysyła link; adres
+// nazwę, rezerwuje cooldown (tylko serwer, migracja 514) i wysyła link; adres
 // e-mail konta nie wraca do przeglądarki. { sent, nextAllowedAtMs }
 export async function resetPasswordByLogin(login, language, captchaToken = null) {
   const { status, data } = await authApi("reset", {

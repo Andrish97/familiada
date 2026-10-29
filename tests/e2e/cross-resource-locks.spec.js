@@ -109,7 +109,7 @@ test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrze
   await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-POLLOPEN-${Date.now()}`;
-  // otwarta ankieta przez poll_open (stanu nie ustawia się zapisem z przeglądarki, 513)
+  // otwarta ankieta przez poll_open (stanu nie ustawia się zapisem z przeglądarki, 514)
   const gameId = await seedOpenPoll(page, { type: "poll_text", name: gameName });
 
   try {
@@ -599,7 +599,7 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
   await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-RESET-${Date.now()}`;
-  // zamknięta ankieta (pierwsza odpowiedź 42 pkt) -- import .famgame (513)
+  // zamknięta ankieta (pierwsza odpowiedź 42 pkt) -- import .famgame (514)
   const imported = await importClosedPoll(page, { type: "poll_text", name: gameName, points: [42, 20, 10] });
   const gameId = imported.id;
   const questionId = imported.questionIds[0];

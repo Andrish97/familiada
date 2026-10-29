@@ -551,7 +551,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);
 
-  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 513)
+  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
   const imported = await importClosedPoll(page, { type: "poll_points", name: `E2E-EDITOR-READY-${Date.now()}` });
   const gameId = imported.id;
   try {
@@ -576,7 +576,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);
 
-  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 513)
+  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
   const imported = await importClosedPoll(page, { type: "poll_points", name: `E2E-EDITOR-READY-${Date.now()}` });
   const gameId = imported.id;
   try {

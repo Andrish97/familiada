@@ -1,10 +1,10 @@
 // Wrogie i błędne dane wejściowe, które użytkownik może podać z pliku albo
 // z pola tekstowego (sondy nadużyć: tests/sql/abuse-probes.sql), oraz zgodność
-// zasad sprawdzanych w przeglądarce i na serwerze (migracja 513).
+// zasad sprawdzanych w przeglądarce i na serwerze (migracja 514).
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
-import { parseLogoPackage, LOGO_NAME_MAX } from "../../web/logos/js/package.js";
+import { parseLogoPackage, sanitizeLogoFileImport, LOGO_NAME_MAX } from "../../web/logos/js/package.js";
 import { parseQaText } from "../../web/shared/js/core/text-import.js";
 
 const root = new URL("../../", import.meta.url);
@@ -19,8 +19,11 @@ test(".famlogo: nazwa z pliku skracana do limitu pola i bazy", () => {
   assert.equal(parseLogoPackage({ kind: "GLYPH", name: "<img src=x onerror=alert(1)>" }, "Logo").name, "<img src=x onerror=alert(1)>");
 });
 
-test(".famlogo: obraz tylko z własnego Storage, bez adresów obcych serwerów", () => {
-  const pix = (source) => parseLogoPackage({ kind: "PIX", payload: { bits_b64: "AA==", source } }, "Logo").payload.source;
+// Plik z dysku: parser wspólny + czyszczenie obrazów (transfer.js parseImport).
+const fromFile = (obj) => sanitizeLogoFileImport(parseLogoPackage(obj, "Logo"));
+
+test(".famlogo z pliku: obraz tylko osadzony albo z własnego Storage", () => {
+  const pix = (source) => fromFile({ kind: "PIX", payload: { bits_b64: "AA==", source } }).payload.source;
   for (const url of ["https://evil.test/track.png", "http://api.familijna.app/storage/v1/object/public/user-logos/u1/a.png",
     "https://evil.test/storage/v1/object/public/other-bucket/a.png", "javascript:alert(1)", "//evil.test/a.png", `${OWN}?x=1`]) {
     assert.equal(pix({ mode: "IMAGE", imageUrl: url }).imageUrl, undefined, url);
@@ -30,26 +33,35 @@ test(".famlogo: obraz tylko z własnego Storage, bez adresów obcych serwerów",
   assert.equal(pix({ mode: "IMAGE", imageUrl: OWN, imageData: "data:image/png;base64,AQID" }).imageUrl, undefined);
 });
 
-test(".famlogo: rysunek bez obrazów (loadFromJSON pobrałby każdy src)", () => {
+test(".famlogo z pliku: rysunek bez obrazów z obcych serwerów, osadzone zostają", () => {
   const fabricData = {
     version: "5.3.0",
     backgroundImage: { type: "image", src: "https://evil.test/bg.png" },
-    overlayImage: { type: "image", src: "https://evil.test/ov.png" },
+    overlayImage: { type: "image", src: "data:image/png;base64,AA==" },
     objects: [
       { type: "path", path: [["M", 0, 0]] },
       { type: "image", src: "https://evil.test/a.png" },
-      { type: "Image", src: "https://evil.test/b.png" },
-      { type: "group", objects: [{ type: "rect" }, { type: "image", src: "https://evil.test/c.png" }] },
+      { type: "image", src: "data:image/png;base64,AA==" },
+      { type: "rect", fill: { type: "pattern", source: "https://evil.test/p.png" } },
+      { type: "group", objects: [{ type: "rect" }, { src: "https://evil.test/c.png" }, { src: OWN }] },
     ],
   };
   const before = structuredClone(fabricData);
-  const out = parseLogoPackage({ kind: "PIX", payload: { bits_b64: "AA==", source: { mode: "DRAW", fabricData } } }, "Logo").payload.source.fabricData;
+  const out = fromFile({ kind: "PIX", payload: { bits_b64: "AA==", source: { mode: "DRAW", fabricData } } }).payload.source.fabricData;
   assert.equal(out.backgroundImage, undefined);
-  assert.equal(out.overlayImage, undefined);
-  assert.deepEqual(out.objects.map((o) => o.type), ["path", "group"]);
-  assert.deepEqual(out.objects[1].objects.map((o) => o.type), ["rect"]);
+  assert.equal(out.overlayImage.src, "data:image/png;base64,AA==");
+  assert.deepEqual(out.objects.map((o) => o.type), ["path", "image", "rect", "group"]);
+  assert.equal(out.objects[2].fill, undefined);
+  assert.deepEqual(out.objects[3].objects, [{ type: "rect" }, { src: OWN }]);
   assert.doesNotMatch(JSON.stringify(out), /evil\.test/);
   assert.deepEqual(fabricData, before, "plik wejściowy bez zmian");
+});
+
+test("parser wspólny (kopie między kontami) nie usuwa adresów obrazów -- przenosi je serwer", () => {
+  const source = { mode: "DRAW", imageUrl: "https://sender.example/i.png", fabricData: { objects: [{ src: "https://sender.example/i.png" }] } };
+  const out = parseLogoPackage({ kind: "PIX", payload: { bits_b64: "AA==", source } }, "Logo").payload.source;
+  assert.equal(out.imageUrl, "https://sender.example/i.png");
+  assert.equal(out.fabricData.objects[0].src, "https://sender.example/i.png");
 });
 
 test("import TXT: format z podręcznika 7.7", () => {
@@ -97,9 +109,9 @@ test("import TXT: duży plik nie zawiesza parsera", () => {
   assert.ok(Date.now() - t0 < 2000);
 });
 
-test("zasady nazwy użytkownika i hasła: przeglądarka = serwer (513)", async () => {
+test("zasady nazwy użytkownika i hasła: przeglądarka = serwer (514)", async () => {
   const auth = await read("web/shared/js/core/auth.js");
-  const migs = (await readdir(new URL("supabase/migrations/", root))).filter((f) => /^\d{4}-\d\d-\d\d_513_/.test(f));
+  const migs = (await readdir(new URL("supabase/migrations/", root))).filter((f) => /^\d{4}-\d\d-\d\d_\d+_abuse_guards\.sql$/.test(f));
   assert.equal(migs.length, 1);
   const sql = await read(`supabase/migrations/${migs[0]}`);
   // Nazwa: 3–20 znaków z [a-zA-Z0-9_.-], bez prefiksu guest_.
@@ -118,6 +130,6 @@ test("limit nazwy logo: pole, import i baza mają tę samą wartość", async ()
   const list = await read("web/logos/js/list.js");
   assert.match(list, /maxLength: 80/);
   assert.equal(LOGO_NAME_MAX, 80);
-  const sql = (await readdir(new URL("supabase/migrations/", root))).find((f) => /_513_/.test(f));
+  const sql = (await readdir(new URL("supabase/migrations/", root))).find((f) => /_abuse_guards\.sql$/.test(f));
   assert.match(await read(`supabase/migrations/${sql}`), /char_length\(coalesce\(new\.name, ''\)\) > 80/);
 });

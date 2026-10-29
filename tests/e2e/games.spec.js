@@ -718,7 +718,7 @@ test.describe("games: audyt -- migracja 272", () => {
     await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-RESET-${Date.now()}`;
     try {
-      // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 513)
+      // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
       const { id: gameId } = await importClosedPoll(page, { type: "poll_points", name, points: [40, 35, 25] });
 
       await openGames(page);

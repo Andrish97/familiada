@@ -13,13 +13,14 @@
 // było odłączone (telefon w tle, zerwane łącze). Nie ma dzwonków ani
 // odpytywania.
 
-import { sb, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T13391";
-import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T13391";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T13391";
-import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T13391";
-import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T13391";
+import { sb, REALTIME_OPTIONS, SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase.js?v=v2026-10-29T14180";
+import { createNetworkMonitor, measureNetwork } from "./network-probe.js?v=v2026-10-29T14180";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-29T14180";
+import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realtime-socket-close.js?v=v2026-10-29T14180";
+import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T14180";
 
 const TRANSPORT = "broadcast";
+const NOT_RESYNC_SOURCES = new Set([TRANSPORT, "rpc_bootstrap", "press"]);
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onCompletion = null, signal = false, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
@@ -140,8 +141,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }
     lastRenderedRev = Math.max(lastRenderedRev, Number(row.rev) || 0);
     // Odczyt po (ponownym) dołączeniu przyniósł nowszy stan: urządzenie
-    // przegapiło zmiany, gdy było odłączone.
-    if (source !== TRANSPORT && source !== "rpc_bootstrap" && previousRev >= 0 && Number(row.rev) > previousRev) {
+    // przegapiło zmiany, gdy było odłączone. Wynik własnego zapisu urządzenia
+    // (naciśnięcie Przycisku) bywa szybszy niż ta sama zmiana z kanału —
+    // to nie nadrobienie (e2e 40884933127).
+    if (!NOT_RESYNC_SOURCES.has(source) && previousRev >= 0 && Number(row.rev) > previousRev) {
       if (outage) {
         outage.catchupCount += 1;
         outage.missedRevisions += Math.max(1, Number(row.rev) - previousRev);
@@ -209,6 +212,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     if (!realtime) {
       realtime = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         accessToken: async () => deviceToken || SUPABASE_ANON_KEY,
+        realtime: REALTIME_OPTIONS,
       });
       const closeObserverAttached = observeRealtimeSocketClose(realtime.realtime, (event) => {
         // Zamknięcia wywołane przez klienta też trafiają do diagnostyki —

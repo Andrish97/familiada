@@ -179,7 +179,7 @@ test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez 
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const name = `E2E-E21-KEEP-${Date.now()}`;
-  // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 513)
+  // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
   const game = await importClosedPoll(page, { type: "poll_points", name, points: [40, 30, 20] });
   try {
     await page.goto(`${ORIGIN}/games/?tab=poll_points`, { waitUntil: "domcontentloaded" });

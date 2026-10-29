@@ -2,7 +2,7 @@
 // nazwy z HTML na listach, wrogi plik .famlogo, błędne nazwy i hasła na
 // Koncie, usunięcie konta złym hasłem. Strony z kodu brancha (serveBranchCode),
 // baza i Worker produkcyjne. Strona serwera tych samych zasad:
-// tests/sql/abuse-probes.sql (migracja 513).
+// tests/sql/abuse-probes.sql (migracja 514).
 const fs = require("fs");
 const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
@@ -144,7 +144,7 @@ test.describe("Konto: błędne dane", () => {
     await page.click("#savePass");
     expect(await toastText(page)).toContain("Brakuje:");
 
-    // Ominięcie interfejsu: serwer trzyma te same zasady i nie oddaje kolumn gościa (513).
+    // Ominięcie interfejsu: serwer trzyma te same zasady i nie oddaje kolumn gościa (514).
     const direct = await page.evaluate(async () => {
       const sb = window.__sbClient;
       const { data: u } = await sb.auth.getUser();

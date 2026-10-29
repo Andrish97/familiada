@@ -924,6 +924,13 @@
   .overlay:not([hidden]):not(.sheet-active) > .modal { animation: modal-in var(--dur-base) var(--ease-out); }
   .overlay.is-closing:not(.sheet-active) { animation: fade-out var(--dur-fast) ease both; }
   .overlay.is-closing:not(.sheet-active) > .modal { animation: modal-out var(--dur-fast) ease-in both; }
+  /* Pole w oknie zasłoniłaby klawiatura, a treść okna nie ma już dokąd się
+     przewinąć: okno podjeżdża (device-attrs.js). translate, nie transform --
+     nie koliduje z animacjami otwierania i przeciągania okna. */
+  .overlay.keyboard-lift > .modal {
+    translate: 0 calc(-1 * var(--keyboard-lift, 0px));
+    transition: translate .25s var(--ease-out);
+  }
   @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
   @keyframes modal-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
   @keyframes fade-out { to { opacity: 0; } }
@@ -2858,8 +2865,14 @@
   .sheet-modal-actions[hidden] { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
-  /* Klawiatura ekranowa (device-attrs.js): stopka nie zabiera miejsca przy pisaniu. */
-  :where(:root[data-keyboard]) .footer { display: none; }
+  /* Klawiatura ekranowa zasłania stronę (device-attrs.js): układ się nie
+     zmienia. Pole z samego dołu strony: zapas wysokości klawiatury za
+     <body> (html::after), żeby dało się je postawić nad klawiaturą. */
+  :root[data-keyboard-room]::after {
+    content: "";
+    display: block;
+    height: var(--keyboard-h, 0px);
+  }
 
   :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
@@ -3263,6 +3276,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  /* Pole w części bez przewijania (np. dolny pasek list) zasłoniłaby
+     klawiatura: treść podjeżdża pod górnym paskiem (device-attrs.js). */
+  body.page-fit > main.keyboard-lift {
+    translate: 0 calc(-1 * var(--keyboard-lift, 0px));
+    transition: translate .25s var(--ease-out);
   }
 
   /* ── Pasek tytułu listy ───────────────────────────────────────── */
