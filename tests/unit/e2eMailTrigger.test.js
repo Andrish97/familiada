@@ -5,7 +5,7 @@ import { handleE2EApi } from '../../cloudflare/maintenance-worker/src/lib/e2e/e2
 // /_e2e_api/mail-trigger: tylko adres e2e+ wypożyczony przez przebieg (E25).
 const env={E2E_BYPASS_SECRET:'fixture-secret',SUPABASE_URL:'https://supabase.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture-key'};
 const endpoint=new URL('https://www.familijna.app/_e2e_api/mail-trigger');
-const RECIPIENT='e2e+noaccount02@familiada.online';
+const RECIPIENT='e2e+noaccount02@familijna.app';
 function headers(authorized=true){
  const payload=Buffer.from(JSON.stringify({iat:Date.now()-1000,nonce:randomUUID()})).toString('base64');
  const h={'Content-Type':'application/json','X-E2E-Run':'run-1'};

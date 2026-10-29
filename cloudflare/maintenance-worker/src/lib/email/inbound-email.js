@@ -34,9 +34,9 @@ export function decodeMimeWords(str) {
 // Gdyby Cloudflare podał adres bez części +detail (e2e@), adresat z nagłówka To.
 function inboundRecipient(message) {
   const to = String(message.to || "").trim();
-  if (!/^e2e@familiada\.online$/i.test(to)) return to;
+  if (!/^e2e@familijna\.app$/i.test(to)) return to;
   const header = String(message.headers?.get?.("to") || "");
-  const match = header.match(/e2e\+[a-z]+[0-9]{2}(?:\.new)?@familiada\.online/i);
+  const match = header.match(/e2e\+[a-z]+[0-9]{2}(?:\.new)?@familijna\.app/i);
   return match ? match[0] : to;
 }
 
@@ -45,7 +45,7 @@ export async function handleInboundEmail(message, env) {
   const recipient = normalizeE2ERecipient(inboundRecipient(message));
   // E25: jedna reguła Cloudflare e2e@ (+ Subaddressing) -- przyjmujemy tylko
   // adresy znanych tożsamości testowych; reszta e2e+ odrzucona, nigdy do admina.
-  if (!recipient && /^e2e(\+[^@]*)?@familiada\.online$/i.test(String(message.to || "").trim())) {
+  if (!recipient && /^e2e(\+[^@]*)?@familijna\.app$/i.test(String(message.to || "").trim())) {
     message.setReject?.("Unknown test address");
     return;
   }

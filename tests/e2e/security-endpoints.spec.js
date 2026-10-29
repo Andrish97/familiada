@@ -20,7 +20,7 @@ test("E24: API panelu admina bez tokenu Access = 401 (także z dopisanymi nagł�
   const forged = await request.get(`${WWW}/_admin_api/stats/overview`, {
     maxRedirects: 0,
     headers: {
-      "Cf-Access-Authenticated-User-Email": "e2e@familiada.online",
+      "Cf-Access-Authenticated-User-Email": "e2e@familijna.app",
       "Cf-Access-Jwt-Assertion": "e2e.forged.token",
     },
   });
@@ -59,8 +59,8 @@ test("Lead Finder: brak adresu publicznego, funkcja Edge bez sekretu odmawia", a
 });
 
 // ── Paczka P1 (Ś2, Ś7, N3, N4) ───────────────────────────────────────────
-// Panel admina zostaje na starej domenie do przeniesienia (plan rebrandingu).
-const SETTINGS = "https://admin.familiada.online";
+// Panel admina (admin.familijna.app).
+const SETTINGS = "https://admin.familijna.app";
 
 // Ś2: klucz lead-findera nie wychodzi z Workera. Bez sesji Access: www = 401
 // (API panelu tylko na hoście panelu), host panelu = bramka Access (302/403)

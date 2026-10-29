@@ -6,7 +6,7 @@ import { readJson } from "../core/http.js";
 import { supabaseRequest, supabaseRpc } from "../core/supabase.js";
 
 const ACCOUNT_ROLES = new Set(["standard", "disposable", "dedicated"]);
-const E2E_PLUS_RE = /^e2e\+[a-z]+[0-9]{2}(\.new)?@familiada\.online$/;
+const E2E_PLUS_RE = /^e2e\+[a-z]+[0-9]{2}(\.new)?@familijna\.app$/;
 const RUN_ID_RE = /^[A-Za-z0-9._:-]{1,100}$/;
 
 export function isE2EPlusAddress(value) {

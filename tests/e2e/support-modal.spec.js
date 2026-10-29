@@ -5,7 +5,7 @@ const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familijna.app";
-const SUPPORT = "https://buycoffee.to/familiada.online";
+const SUPPORT = "https://buycoffee.to/familijna.app";
 
 test.use({ serviceWorkers: "block" });
 

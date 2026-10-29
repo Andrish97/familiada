@@ -15,7 +15,7 @@ const SECRET = "unit-test-e2e-secret";
 test("Diagnostyka dostarczenia wymaga tokenu i adresu testowego w krótkim oknie", async () => {
   const after = encodeURIComponent(new Date().toISOString());
   for (const [recipient, headers, status] of [
-    ["e2e+standard01@familiada.online", {}, 401],
+    ["e2e+standard01@familijna.app", {}, 401],
     ["real@example.com", { "X-E2E-Token": token() }, 400],
   ]) {
     const response = await worker.fetch(new Request(`https://www.familijna.app/_e2e_api/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${after}`, { headers }), env(), {});
@@ -39,7 +39,7 @@ function env() {
 
 test("E2E mailbox odrzuca brak podpisanego tokenu", async () => {
   const response = await worker.fetch(
-    new Request("https://www.familijna.app/_e2e_api/emails?recipient=e2e%2Bstandard01%40familiada.online&after=2026-09-30T10:00:00Z"),
+    new Request("https://www.familijna.app/_e2e_api/emails?recipient=e2e%2Bstandard01%40familijna.app&after=2026-09-30T10:00:00Z"),
     env(),
     {}
   );
@@ -57,14 +57,14 @@ test("E2E mailbox dopuszcza tylko przygotowane konta testowe i ograniczone okno 
 
   const oldDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const oldWindow = await worker.fetch(
-    new Request(`https://www.familijna.app/_e2e_api/emails?recipient=e2e%2Bstandard01%40familiada.online&after=${encodeURIComponent(oldDate)}`, { headers: { "X-E2E-Token": token() } }),
+    new Request(`https://www.familijna.app/_e2e_api/emails?recipient=e2e%2Bstandard01%40familijna.app&after=${encodeURIComponent(oldDate)}`, { headers: { "X-E2E-Token": token() } }),
     env(),
     {}
   );
   assert.equal(oldWindow.status, 400);
 });
 
-for (const recipient of ["e2e+standard01@familiada.online", "e2e+noaccount01@familiada.online", "e2e+disposable01.new@familiada.online", "e2e+dedicated01@familiada.online"]) {
+for (const recipient of ["e2e+standard01@familijna.app", "e2e+noaccount01@familijna.app", "e2e+disposable01.new@familijna.app", "e2e+dedicated01@familijna.app"]) {
 test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, async (t) => {
   const calls = [];
   const originalFetch = globalThis.fetch;
@@ -97,9 +97,9 @@ test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, a
 
 const { normalizeE2ERecipient } = await import("../../cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
 test("adresy testowe to wyłącznie e2e+<rola><NN> (E25)", () => {
-  assert.equal(normalizeE2ERecipient(" E2E+Standard07@FAMILIADA.ONLINE "), "e2e+standard07@familiada.online");
-  assert.equal(normalizeE2ERecipient("e2e+disposable01.new@familiada.online"), "e2e+disposable01.new@familiada.online");
-  for (const value of ["test1@familiada.online","test14@familiada.online","e2e@familiada.online","e2e+x@familiada.online","e2e+standard01@example.com","real@familiada.online","e2e+standard01@familiada.online.attacker.net",null]) {
+  assert.equal(normalizeE2ERecipient(" E2E+Standard07@FAMILIJNA.APP "), "e2e+standard07@familijna.app");
+  assert.equal(normalizeE2ERecipient("e2e+disposable01.new@familijna.app"), "e2e+disposable01.new@familijna.app");
+  for (const value of ["test1@familiada.online","test14@familiada.online","e2e@familijna.app","e2e+x@familijna.app","e2e+standard01@example.com","e2e+standard01@familiada.online","real@familiada.online","e2e+standard01@familijna.app.attacker.net",null]) {
     assert.equal(normalizeE2ERecipient(value),null);
   }
 });
@@ -109,14 +109,14 @@ test("skrzynka e2e+ i diagnostyka tylko z tokenem E2E i wypożyczeniem", async (
   globalThis.fetch=async (url,options={})=>{if(String(url).includes("/rpc/e2e_lease_owns"))return Response.json(true);calls.push({url:String(url),method:options.method});return new Response(JSON.stringify([]),{status:200,headers:{"Content-Type":"application/json"}});};
   t.after(()=>{globalThis.fetch=originalFetch;});
   for(const [endpoint,method] of [["emails","GET"],["emails","DELETE"],["mail-delivery","GET"]]) {
-    const url=`https://www.familijna.app/_e2e_api/${endpoint}?recipient=e2e%2Bnoaccount01%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`;
+    const url=`https://www.familijna.app/_e2e_api/${endpoint}?recipient=e2e%2Bnoaccount01%40familijna.app&after=${encodeURIComponent(new Date().toISOString())}`;
     const blocked=await worker.fetch(new Request(url,{method}),env(),{});
     assert.equal(blocked.status,401);
     const response=await worker.fetch(new Request(url,{method,headers:{"X-E2E-Token":token(),"X-E2E-Run":"run-1"}}),env(),{});
     assert.equal(response.status,200);
   }
   assert.equal(calls.length,4);
-  assert.ok(calls.every(call=>call.url.includes('e2e%2Bnoaccount01%40familiada.online')));
+  assert.ok(calls.every(call=>call.url.includes('e2e%2Bnoaccount01%40familijna.app')));
 });
 
 const TECHNICAL_FROM = 'bounce+948a5050-c564-11f1-8b41-16423a433ff6_vt1@bounce-zem.familiada.online';
@@ -141,7 +141,7 @@ test('technical sender still delivers to every exact test mailbox', async (t) =>
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options) => { if (String(url).includes('/rpc/e2e_identity')) return Response.json({ name: 'e2e.identity01' }); calls.push({ url: String(url), body: JSON.parse(options.body) }); return Response.json([{ id: 'fixture' }]); };
   t.after(() => { globalThis.fetch = originalFetch; });
-  const addresses = ['standard01', 'standard40', 'noaccount10', 'disposable06', 'disposable06.new', 'dedicated01'].map((id) => `e2e+${id}@familiada.online`);
+  const addresses = ['standard01', 'standard40', 'noaccount10', 'disposable06', 'disposable06.new', 'dedicated01'].map((id) => `e2e+${id}@familijna.app`);
   for (const to of addresses) {
     await worker.email({ from: TECHNICAL_FROM, to, headers: new Headers({ subject: 'Invitation' }),
       raw: new Blob(['Content-Type: text/plain\r\n\r\nFixture']).stream(),
@@ -177,7 +177,7 @@ test("zwolnienie blokady maila: tylko z tokenem, adres testowy i dozwolony klucz
   const send = (body, withToken = true) => worker.fetch(new Request("https://www.familijna.app/_e2e_api/mail-cooldowns/release", {
     method: "POST", headers: { "Content-Type": "application/json", "X-E2E-Run": "run-1", ...(withToken ? { "X-E2E-Token": token() } : {}) }, body: JSON.stringify(body),
   }), env(), {});
-  const ok = { recipient: "e2e+noaccount01@familiada.online", action_key: "auth:guest_upgrade_email" };
+  const ok = { recipient: "e2e+noaccount01@familijna.app", action_key: "auth:guest_upgrade_email" };
   assert.equal((await send(ok, false)).status, 401);
   assert.equal((await send({ ...ok, recipient: "real@example.com" })).status, 400);
   assert.equal((await send({ ...ok, action_key: "account:email" })).status, 400);
@@ -185,5 +185,5 @@ test("zwolnienie blokady maila: tylko z tokenem, adres testowy i dozwolony klucz
   assert.equal((await send(ok)).status, 200);
   assert.equal(calls.length, 1);
   assert.match(calls[0].url, /\/rest\/v1\/rpc\/mail_cooldown_email_release$/);
-  assert.deepEqual(calls[0].body, { p_email: "e2e+noaccount01@familiada.online", p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200 });
+  assert.deepEqual(calls[0].body, { p_email: "e2e+noaccount01@familijna.app", p_action_key: "auth:guest_upgrade_email", p_max_age_seconds: 7200 });
 });
