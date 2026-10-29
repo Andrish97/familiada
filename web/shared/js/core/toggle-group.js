@@ -2,7 +2,7 @@
 // naraz, wybrana wyróżniona; klik w część wybiera tę wartość.
 // Wspólny dla przełączników tworzonych w JS (uprawnienie w udostępnianiu
 // bazy); znaczniki jak w Ustawieniach gry.
-import { icon } from "./icons.js?v=v2026-10-29T11255";
+import { icon } from "./icons.js?v=v2026-10-29T11504";
 
 let groupSeq = 0;
 

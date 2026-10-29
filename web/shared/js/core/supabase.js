@@ -4,9 +4,9 @@
 export const SUPABASE_URL = "https://api.familijna.app";
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
 
-import { startActivity } from "./activity.js?v=v2026-10-29T11255";
-import { setReservedUsernamePrefixes } from "./reserved-usernames.js?v=v2026-10-29T11255";
-import { applyLegacyHandoff } from "./legacy-handoff.js?v=v2026-10-29T11255";
+import { startActivity } from "./activity.js?v=v2026-10-29T11504";
+import { setReservedUsernamePrefixes } from "./reserved-usernames.js?v=v2026-10-29T11504";
+import { applyLegacyHandoff } from "./legacy-handoff.js?v=v2026-10-29T11504";
 
 
 let _client = null;
@@ -16,7 +16,7 @@ export function sb() {
 
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     throw new Error(
-      "supabase-js nie jest załadowany. Upewnij się, że <script src='/shared/vendor/supabase-js.js?v=v2026-10-29T11255' defer></script> jest przed modułami."
+      "supabase-js nie jest załadowany. Upewnij się, że <script src='/shared/vendor/supabase-js.js?v=v2026-10-29T11504' defer></script> jest przed modułami."
     );
   }
 
