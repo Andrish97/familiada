@@ -349,18 +349,19 @@ export function createAnimator({
   // ============================================================
   // TRANSITION – przejście planszy (decyzja właściciela 2026-10-29):
   // stara zawartość znika losowo wyrywanymi kawałkami rzędów (1–3 kafle),
-  // a w ostatniej części tego znikania nowa plansza już wjeżdża paskami
-  // pikseli z góry na dół. Pasek nowej planszy ma pierwszeństwo: wyrwanie
-  // kawałka nie gasi pikseli, które nowa plansza już narysowała.
-  // Nowa zawartość musi być już narysowana w obszarze; opts.from to zrzut
-  // obszaru sprzed zmiany (snapArea).
+  // a pod koniec tego znikania nowa plansza już się odsłania w kolejności
+  // czytania: rzędy od góry, w rzędzie kafle od lewej (każdy kafel
+  // kolumnami pikseli), puste kafle pomijane. Odsłonięte piksele mają
+  // pierwszeństwo: wyrwanie kawałka nie gasi tego, co nowa plansza już
+  // narysowała. Nowa zawartość musi być już narysowana w obszarze;
+  // opts.from to zrzut obszaru sprzed zmiany (snapArea).
   // ============================================================
-  async function transition(big, area, { from, outMs = 1200, inMs = 1800, overlapMs = 600, rng = Math.random } = {}) {
+  async function transition(big, area, { from, outMs = 900, inMs = 1300, overlapMs = 500, rng = Math.random } = {}) {
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
     const to = snapArea(big, A.c1, A.r1, A.c2, A.r2);
     paintStart(big, A, { from });
-    const H = A.r2 - A.r1 + 1;
     const lit = (tile) => !!tile && tile.some((row) => row.some((fill) => fill !== dotOff));
+    const key = (r, c) => r * 1000 + c;
 
     // Kawałki rzędów do wyrwania: tylko te, na których coś świeci (puste
     // nie dają widocznego kroku).
@@ -380,16 +381,25 @@ export function createAnimator({
       [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
     }
 
+    // Odsłanianie: świecące kafle nowej planszy w kolejności czytania,
+    // po 5 kroków (kolumn pikseli) na kafel.
+    const reveal = [];
+    for (let r = A.r1; r <= A.r2; r++) {
+      for (let c = A.c1; c <= A.c2; c++) {
+        if (!lit(to[r - A.r1]?.[c - A.c1])) continue;
+        for (let px = 0; px < 5; px++) reveal.push({ r, c, px });
+      }
+    }
+
     const outTotal = clampMs(outMs, 0);
     const inStart = Math.max(0, outTotal - clampMs(overlapMs, 0));
     const inTotal = clampMs(inMs, 0);
-    const pixelRows = H * 7;
     const events = [];
     pieces.forEach((piece, i) => events.push({ t: outTotal * (i + 1) / pieces.length, out: piece }));
-    for (let k = 0; k < pixelRows; k++) events.push({ t: inStart + inTotal * (k + 1) / pixelRows, row: k });
-    events.sort((a, b) => a.t - b.t || (a.row != null ? -1 : 1));
+    reveal.forEach((step, i) => events.push({ t: inStart + inTotal * (i + 1) / reveal.length, step }));
+    events.sort((a, b) => a.t - b.t || (a.step ? -1 : 1));
 
-    let painted = 0; // pikselowe rzędy nowej planszy już narysowane
+    const painted = new Map(); // kafel -> liczba odsłoniętych kolumn pikseli
     const token = getGeneration();
     const check = () => { if (token !== getGeneration()) throw Object.assign(new Error("Animation cancelled"), { name: "AbortError" }); };
     const start = now();
@@ -402,26 +412,20 @@ export function createAnimator({
       }
       check();
       if (ev.out) {
-        const tileRow = ev.out.r - A.r1;
         for (const c of ev.out.cols) {
           const t = tileAt(big, c, ev.out.r);
           if (!t) continue;
+          const done = painted.get(key(ev.out.r, c)) || 0;
           for (let py = 0; py < 7; py++) {
-            if (tileRow * 7 + py < painted) continue;
-            for (let px = 0; px < 5; px++) t.dots[py][px].setAttribute("fill", dotOff);
+            for (let px = done; px < 5; px++) t.dots[py][px].setAttribute("fill", dotOff);
           }
         }
       } else {
-        const tileRow = Math.floor(ev.row / 7);
-        const py = ev.row % 7;
-        const r = A.r1 + tileRow;
-        for (let c = A.c1; c <= A.c2; c++) {
-          const t = tileAt(big, c, r);
-          const tile = to[tileRow]?.[c - A.c1];
-          if (!t || !tile) continue;
-          for (let px = 0; px < 5; px++) t.dots[py][px].setAttribute("fill", tile[py][px]);
-        }
-        painted = ev.row + 1;
+        const { r, c, px } = ev.step;
+        const t = tileAt(big, c, r);
+        const tile = to[r - A.r1]?.[c - A.c1];
+        if (t && tile) for (let py = 0; py < 7; py++) t.dots[py][px].setAttribute("fill", tile[py][px]);
+        painted.set(key(r, c), px + 1);
       }
     }
   }
