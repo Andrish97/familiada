@@ -12,7 +12,37 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  # Bramka: sondy nadużyć i fuzzer autoryzacji (tests/sql) na tymczasowym
+  # Postgresie ze schema.sql + migracji z tego pusha -- zanim cokolwiek trafi
+  # na produkcję (scripts/sql-gate.sh; lokalnie to samo na bazie z docs/sql/local-db.md).
+  sql-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Postgres 16 (obraz runnera)
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -qc "alter user postgres password 'postgres'"
+
+      - name: Sondy nadużyć i fuzzer autoryzacji
+        env:
+          BEFORE: ${{ github.event.before }}
+          PGPASSWORD: postgres
+          PSQL_ADMIN: psql -h localhost -U postgres
+        run: |
+          NEW=""
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            NEW=$(git diff --name-only --diff-filter=A "$BEFORE" HEAD -- 'supabase/migrations/*.sql' | sort)
+          fi
+          scripts/sql-gate.sh $NEW
+
   migrate:
+    needs: sql-gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

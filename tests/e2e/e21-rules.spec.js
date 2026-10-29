@@ -7,6 +7,7 @@
 // (serveBranchCode), baza i konta produkcyjne.
 
 const { test, expect } = require("./helpers/e2e-test");
+const { importClosedPoll } = require("./helpers/game-seed");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 test.use({ serviceWorkers: "block" });
@@ -178,12 +179,9 @@ test("Zmień typ: zamknięta ankieta -> preparowana z zachowanymi punktami, bez 
   await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const name = `E2E-E21-KEEP-${Date.now()}`;
-  const game = await seedGame(page, { type: "poll_points", name, questions: 10 });
+  // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
+  const game = await importClosedPoll(page, { type: "poll_points", name, points: [40, 30, 20] });
   try {
-    await page.evaluate(async (id) => {
-      const { error } = await window.__sbClient.from("games").update({ status: "ready" }).eq("id", id);
-      if (error) throw new Error(error.message);
-    }, game.id);
     await page.goto(`${ORIGIN}/games/?tab=poll_points`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     const tile = page.locator("#grid .card", { has: page.locator(".name", { hasText: name }) });

@@ -34,7 +34,7 @@ The "Sharing" card offers two ways:
 - [Copy link] copies the voting link, and [Open] opens the poll in a new tab,
 - a QR code to scan with a phone — click it to show it full screen.
 
-Voters are anonymous — you only see the number of votes. People can vote once per browser.
+Voters are anonymous — you only see the number of votes. On one device the next person can vote after 30 seconds (e.g. when several people share a phone). Link votes cannot be tied to people — someone can vote several times, e.g. from another browser. When the result matters, invite recipients (below): each of them votes once.
 
 ![Sharing — link and QR code](zrzut:poll-share)
 ![Enlarged QR code](zrzut:polls-qr-vote-modal)

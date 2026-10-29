@@ -5,10 +5,10 @@
 //   (A) { kind:"GLYPH"|"PIX", name, payload:{ rows | layers | bits_b64, source } }  -- nasz eksport
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
-import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-29T14180";
-import { parseLogoPackage } from "./package.js?v=v2026-10-29T14180";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-29T14180";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-29T14180";
+import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-29T15284";
+import { parseLogoPackage, sanitizeLogoFileImport } from "./package.js?v=v2026-10-29T15284";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-29T15284";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-29T15284";
 
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */
@@ -80,7 +80,7 @@ export function parseImport(text, fallbackName) {
   let obj;
   try { obj = JSON.parse(text); } catch { throw new Error(t("logoEditor.errors.invalidJson")); }
   try {
-    return parseLogoPackage(obj, fallbackName);
+    return sanitizeLogoFileImport(parseLogoPackage(obj, fallbackName));
   } catch (error) {
     if (["pixSize", "missingBits", "unknownImportFormat"].includes(error?.code)) {
       throw new Error(t(`logoEditor.errors.${error.code}`, error.params));

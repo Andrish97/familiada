@@ -5,7 +5,7 @@
       "folder": "show_outro",
       "limitSec": 120,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
@@ -14,70 +14,70 @@
       "folder": "show_intro",
       "limitSec": 60,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "round_transition",
       "folder": "round_transition",
-      "limitSec": 30,
+      "limitSec": 60,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "final_theme",
       "folder": "final_theme",
-      "limitSec": 30,
+      "limitSec": 60,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "buzzer_press",
       "folder": "buzzer_press",
-      "limitSec": 5,
+      "limitSec": 2,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "answer_correct",
       "folder": "answer_correct",
-      "limitSec": 5,
+      "limitSec": 2,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "answer_wrong",
       "folder": "answer_wrong",
-      "limitSec": 5,
+      "limitSec": 2,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "answer_repeat",
       "folder": "answer_repeat",
-      "limitSec": 5,
+      "limitSec": 2,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
     {
       "key": "time_over",
       "folder": "time_over",
-      "limitSec": 5,
+      "limitSec": 2,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     },
@@ -86,7 +86,7 @@
       "folder": "reveal",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-29T14180", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+        { "file": "classic.mp3?v=v2026-10-29T15284", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
       ]
     }

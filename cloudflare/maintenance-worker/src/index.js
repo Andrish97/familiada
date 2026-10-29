@@ -43,6 +43,7 @@ import { isMarketPath, servePublicMarketplace } from "./lib/ssr/marketplace.js";
 import { localizeHome } from "./lib/ssr/home.js";
 import { localizePublicPage, invalidManualChapter } from "./lib/ssr/public-pages.js";
 import { AUTH_ROUTES } from "./lib/auth/auth-api.js";
+import { DEVICE_ROUTES } from "./lib/device/connect-code.js";
 
 export default {
   async email(message, env) {
@@ -198,7 +199,9 @@ async function handleFetch(request, env, ctx) {
 
   // Logowanie/reset po nazwie i stan adresu przy rejestracji (audyt E24, B7/B8).
   // Przed bramką obejścia: z ciasteczkiem obejścia trasa trafiałaby do origin.
-  const authRoute = Object.hasOwn(AUTH_ROUTES, url.pathname) ? AUTH_ROUTES[url.pathname] : null;
+  // Kod urządzenia (TV, „Podłącz urządzenie”) z limitem prób -- ta sama reguła przerwy.
+  const authRoute = Object.hasOwn(AUTH_ROUTES, url.pathname) ? AUTH_ROUTES[url.pathname]
+    : Object.hasOwn(DEVICE_ROUTES, url.pathname) ? DEVICE_ROUTES[url.pathname] : null;
   if (authRoute) {
     const state = await getState(env);
     if (state.enabled && state.mode !== "off" && !await hasAdminBypass(request, env) && !await authorizeE2EApi(request, env)) {

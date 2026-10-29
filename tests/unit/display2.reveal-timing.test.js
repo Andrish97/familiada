@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRenderer } from "../../web/control/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
+import { ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS, REVEAL_TILE_MS, BOARD_OUT_MS, LOGO_IN_MS } from "../../web/shared/js/gameplay/displayTiming.js";
 
 function row(state) { return { step: state.step, phase: state.phase, top_card: state.topCard, detail: structuredClone(state), sound_cue_key: "answer_correct" }; }
 function setup() {
@@ -16,7 +17,7 @@ function setup() {
   return { renderer, calls, release };
 }
 
-test("round answer reveals before points; bank starts near the end of the points animation", async () => {
+test("round answer, points and bank reveal one after another at one tempo per character", async () => {
   const { renderer, calls } = setup();
   const state = makeDefaultState("reveal");
   state.step = "r_play";
@@ -29,14 +30,16 @@ test("round answer reveals before points; bank starts near the end of the points
   await new Promise((resolve) => setTimeout(resolve, 200));
   assert.equal(calls.some((call) => call.name === "rounds.setText"), true);
   assert.equal(calls.some((call) => call.name === "rounds.setPts"), true);
-  assert.equal(calls.some((call) => call.name === "rounds.setSuma"), false);
   await pending;
   const answer = calls.find((call) => call.name === "rounds.setText");
   const points = calls.find((call) => call.name === "rounds.setPts");
   const total = calls.find((call) => call.name === "rounds.setSuma");
-  assert.equal(answer.args[2].animIn.ms, 500);
-  assert.equal(points.args[2].animIn.ms, 500);
-  assert.equal(total.args[1].animIn.ms, 150);
+  // Stałe tempo (decyzja 2026-10-29): 17 znaków tekstu, 2 punktów, 3 sumy.
+  assert.equal(answer.args[2].animIn.ms, ROUND_TEXT_MS);
+  assert.equal(points.args[2].animIn.ms, ROUND_POINTS_MS);
+  assert.equal(total.args[1].animIn.ms, ROUND_SUMA_MS);
+  assert.equal(ROUND_TEXT_MS / 17, REVEAL_TILE_MS);
+  assert.equal(ROUND_POINTS_MS / 2, REVEAL_TILE_MS);
   assert.ok(calls.indexOf(answer) < calls.indexOf(points));
   assert.ok(calls.indexOf(points) < calls.indexOf(total));
 });
@@ -57,7 +60,8 @@ test("automatic final zero waits for the answer without doubling the sound durat
   await pending;
   const answer = calls.find((call) => call.name === "final.setLeft");
   const points = calls.find((call) => call.name === "final.setA");
-  assert.equal(answer.args[2].animIn.ms + points.args[2].animIn.ms, 1000);
+  assert.equal(answer.args[2].animIn.ms, FINAL_TEXT_MS);
+  assert.equal(points.args[2].animIn.ms, FINAL_POINTS_MS);
   assert.equal(calls.find((call) => call.name === "final.setSumaFor").args[2].animIn.ms, points.args[2].animIn.ms);
 });
 
@@ -78,8 +82,8 @@ test("coalesced last score and Finish final do not replay points to final-theme 
   after.sound_cue_key = "final_theme";
   await renderer.renderDiff(before, after);
   assert.equal(calls.find(c => c.name === "final.setA").args[2].animIn.ms, 0);
-  assert.equal(calls.find(c => c.name === "big.animOut").args[0].ms, 500);
+  assert.equal(calls.find(c => c.name === "big.animOut").args[0].ms, BOARD_OUT_MS);
   const result = calls.find(c => c.name === "logo.show" || c.name === "win.set");
   assert.ok(result);
-  assert.equal(result.name === "logo.show" ? result.args[0].ms : result.args[1].animIn.ms, 500);
+  assert.equal(result.name === "logo.show" ? result.args[0].ms : result.args[1].animIn.ms, LOGO_IN_MS);
 });

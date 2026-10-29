@@ -34,6 +34,8 @@ połączone; przyciski urządzeń pozwalają wrócić do ich kodów i udostępni
   a przyciskiem, OK/Enter zatwierdza. Możesz też użyć zwykłej strony [Podłącz urządzenie].
   Logowanie na telewizorze nie jest potrzebne.
 - **Inne urządzenie.** Otwórz familijna.app → [Podłącz urządzenie] → [Podłącz kodem] i wpisz kod.
+  Kod działa, dopóki trwa sesja gry (także do godziny po zamknięciu panelu); po zbyt wielu
+  błędnych kodach z jednej sieci strona prosi o odczekanie kilku minut.
 
 ![Strona dla telewizora — kod Wyświetlacza](zrzut:play-connect-tv)
 

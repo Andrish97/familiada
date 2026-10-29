@@ -88,7 +88,8 @@ async function openLoginWithCaptchaBypass(page, context) {
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
   await context.setExtraHTTPHeaders({ "X-E2E-Token": generateE2EToken(secret) });
   await page.goto(LOGIN_URL, { waitUntil: "networkidle" });
-  await context.setExtraHTTPHeaders({});
+  // Nagłówek zostaje: reset po adresie e-mail idzie przez Worker (/_api/auth/reset,
+  // migracja 514), który testowy token Turnstile przyjmuje tylko z X-E2E-Token.
 }
 
 // Hasło konta z powrotem na TEST_PASSWORD (to samo, które ustawia lease) --

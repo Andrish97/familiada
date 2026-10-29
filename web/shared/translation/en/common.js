@@ -138,6 +138,9 @@ const en = {
       account: "Account settings",
       manual: "Help",
       privacy: "Privacy",
+      friends: "Friends",
+      subscribers: "Subscribers",
+      tasks: "Tasks",
     },
     "menu": {
       friends: "Friends",

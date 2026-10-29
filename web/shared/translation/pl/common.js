@@ -138,6 +138,9 @@ const pl = {
       account: "Ustawienia konta",
       manual: "Wskazówki",
       privacy: "Prywatność",
+      friends: "Znajomi",
+      subscribers: "Subskrybenci",
+      tasks: "Zadania",
     },
     "menu": {
       friends: "Znajomi",

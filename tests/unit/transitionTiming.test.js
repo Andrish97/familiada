@@ -48,9 +48,10 @@ test("dur(): NaN => bezpieczny fallback, nie NaN", async () => {
   assert.equal(ms, 2000);
 });
 
-test("dur(): absurdalnie długi czas (np. błędne metadane) => przycięty do sufitu 30s", async () => {
-  const t = makeTiming({ round_transition: 9999 });
-  assert.equal(await t.dur("round_transition"), 30_000);
+test("dur(): absurdalnie długi czas (np. błędne metadane) => przycięty do sufitu kategorii", async () => {
+  const t = makeTiming({ round_transition: 9999, answer_correct: 9999 });
+  assert.equal(await t.dur("round_transition"), 60_000);
+  assert.equal(await t.dur("answer_correct"), 30_000);
 });
 
 test("syncedMs(): Infinity w jednym z dwóch kluczy nie zaraża wyniku", async () => {
@@ -86,11 +87,13 @@ test("revealSyncSplit(): oba równe -> offset=0, revealMs=pełny czas", async ()
   assert.equal(revealMs, 800);
 });
 
-test("dur(): intro do 60 s (sounds.json limitSec), pozostałe do 30 s, outro do 120 s", async () => {
-  const t = makeTiming({ show_intro: 32.4, round_transition: 45, show_outro: 88, final_theme: 50 });
+test("dur(): intro, przejście i finał do 60 s (sounds.json limitSec), pozostałe do 30 s, outro do 120 s", async () => {
+  const t = makeTiming({ show_intro: 32.4, round_transition: 45, show_outro: 88, final_theme: 50, reveal: 40 });
   assert.equal(await t.dur("show_intro"), 32_400);
-  assert.equal(await t.dur("round_transition"), 30_000);
+  assert.equal(await t.dur("round_transition"), 45_000);
   assert.equal(await t.dur("show_outro"), 88_000);
-  assert.equal(await t.dur("final_theme"), 30_000);
+  assert.equal(await t.dur("final_theme"), 50_000);
+  assert.equal(await t.dur("reveal"), 30_000);
   assert.equal(await makeTiming({ show_intro: 75 }).dur("show_intro"), 60_000);
+  assert.equal(await makeTiming({ round_transition: 75 }).dur("round_transition"), 60_000);
 });

@@ -138,6 +138,9 @@ const uk = {
       account: "Налаштування акаунта",
       manual: "Підказки",
       privacy: "Приватність",
+      friends: "Друзі",
+      subscribers: "Підписники",
+      tasks: "Завдання",
     },
     "menu": {
       friends: "Друзі",

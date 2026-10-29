@@ -20,6 +20,7 @@
 // wdrożeniem. Regresje z audytu: sekcja "editor: audyt" na końcu pliku.
 
 const { test, expect } = require("./helpers/e2e-test");
+const { importClosedPoll } = require("./helpers/game-seed");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
@@ -94,13 +95,6 @@ async function getAnswersRows(page, questionId) {
     if (error) throw new Error(error.message);
     return data || [];
   }, questionId);
-}
-
-async function updateGameStatus(page, gameId, patch) {
-  await page.evaluate(async ({ gameId, patch }) => {
-    const { error } = await window.__sbClient.from("games").update(patch).eq("id", gameId);
-    if (error) throw new Error(error.message);
-  }, { gameId, patch });
 }
 
 async function deleteGame(page, gameId) {
@@ -557,10 +551,12 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);
 
-  const gameId = await createGame(page, { type: "poll_points" });
+  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
+  const imported = await importClosedPoll(page, { type: "poll_points", name: `E2E-EDITOR-READY-${Date.now()}` });
+  const gameId = imported.id;
   try {
-    const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
-    await updateGameStatus(page, gameId, { status: "ready" });
+    const qId = imported.questionIds[0];
+    const aId = imported.answerIds[0];
 
     await page.goto(`https://www.familijna.app/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
@@ -580,10 +576,12 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
   test.setTimeout(60_000);
   await loginAs(page, context, accounts.standard[0]);
 
-  const gameId = await createGame(page, { type: "poll_points" });
+  // gra po zamkniętej ankiecie -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
+  const imported = await importClosedPoll(page, { type: "poll_points", name: `E2E-EDITOR-READY-${Date.now()}` });
+  const gameId = imported.id;
   try {
-    const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
-    await updateGameStatus(page, gameId, { status: "ready" });
+    const qId = imported.questionIds[0];
+    const aId = imported.answerIds[0];
 
     await page.goto(`https://www.familijna.app/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });

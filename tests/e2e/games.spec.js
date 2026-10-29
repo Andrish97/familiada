@@ -19,6 +19,7 @@
 
 const fs = require("fs");
 const { test, expect } = require("./helpers/e2e-test");
+const { importClosedPoll } = require("./helpers/game-seed");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const GAMES_URL = "https://www.familijna.app/games";
@@ -717,34 +718,17 @@ test.describe("games: audyt -- migracja 272", () => {
     await loginAs(page, context, accounts.standard[0]);
     const name = `E2E-GM-RESET-${Date.now()}`;
     try {
-      const gameId = await page.evaluate(async (name) => {
-        const sb = window.__sbClient;
-        const { data: u } = await sb.auth.getUser();
-        const { data: g, error } = await sb.from("games")
-          .insert({ name, owner_id: u.user.id, type: "poll_points", status: "draft" })
-          .select("id").single();
-        if (error) throw new Error(error.message);
-        const { data: qs, error: qErr } = await sb.from("questions")
-          .insert(Array.from({ length: 10 }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` })))
-          .select("id");
-        if (qErr) throw new Error(qErr.message);
-        const { error: aErr } = await sb.from("answers").insert(qs.flatMap((q) =>
-          [40, 35, 25].map((p, j) => ({ question_id: q.id, ord: j + 1, text: `O${j + 1}`, fixed_points: p }))));
-        if (aErr) throw new Error(aErr.message);
-        const { error: sErr } = await sb.from("games")
-          .update({ status: "ready", poll_opened_at: new Date().toISOString(), poll_closed_at: new Date().toISOString() })
-          .eq("id", g.id);
-        if (sErr) throw new Error(sErr.message);
-        return g.id;
-      }, name);
+      // zamknięta ankieta -- import .famgame (stanu nie ustawia się zapisem z przeglądarki, 514)
+      const { id: gameId } = await importClosedPoll(page, { type: "poll_points", name, points: [40, 35, 25] });
 
       await openGames(page);
       await page.locator("#tabPollPoints").click();
       await tileByName(page, name).click();
       await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
       await page.locator("#btnEdit").click();
-      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
-      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      const confirm = page.locator(".uni-modal", { has: page.locator(".mSub", { hasText: "Ankieta jest zamknięta" }) });
+      await expect(confirm).toBeVisible({ timeout: 10000 });
+      await confirm.locator(".uni-foot .btn.gold").click();
       await page.waitForURL(/\/games\/editor/, { timeout: 20000 });
 
       const st = await page.evaluate(async (id) => {
