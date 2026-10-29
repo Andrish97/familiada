@@ -353,9 +353,25 @@ export function loadSfxFromCloud(urlMap) {
 
 /* ========= FADE ========= */
 
-// Każdy plik: pierwsze 5% to wejście, ostatnie 8% to wyjście.
-const FADE_IN_RATIO = 0.05;
-const FADE_OUT_RATIO = 0.08;
+// Wejście: krótkie, stałe (tylko bez trzasku) — procent długości pliku
+// tłumił uderzenie krótkich efektów i wyciszał początek długiej muzyki
+// (intro 32 s: 1,6 s ciszy). Wyjście: do 0,35 s (najwyżej 20% pliku)
+// po krzywej (1 - t)², która na ucho cichnie równo; liniowa trzymała
+// głośność do końca i urywała dźwięk (zgłoszenie właściciela 2026-10-29).
+const FADE_IN_S = 0.015;
+const FADE_OUT_MAX_S = 0.35;
+const FADE_OUT_MAX_RATIO = 0.2;
+const FADE_CURVE_POINTS = 32;
+
+// Krzywa wyciszenia od ułamka `from` (0 = początek wyjścia) do końca.
+function fadeOutCurve(target, from) {
+  const curve = new Float32Array(FADE_CURVE_POINTS);
+  for (let i = 0; i < FADE_CURVE_POINTS; i++) {
+    const t = from + (1 - from) * (i / (FADE_CURVE_POINTS - 1));
+    curve[i] = target * (1 - t) * (1 - t);
+  }
+  return curve;
+}
 
 function scheduleFade(audio) {
   const nodes = audioNodes.get(audio);
@@ -370,16 +386,29 @@ function scheduleFade(audio) {
     gain.setValueAtTime(target, now);
     return;
   }
-  const fadeIn = duration * FADE_IN_RATIO;
-  const fadeOut = duration * FADE_OUT_RATIO;
+  const fadeIn = Math.min(FADE_IN_S, duration / 4);
+  const fadeOut = Math.min(FADE_OUT_MAX_S, duration * FADE_OUT_MAX_RATIO);
   const fadeOutStart = duration - fadeOut;
-  const current = position < fadeIn ? target * position / fadeIn
-    : position > fadeOutStart ? target * Math.max(0, (duration - position) / fadeOut)
-    : target;
-  gain.setValueAtTime(current, now);
+  const remaining = Math.max(0, duration - position);
+  if (position >= fadeOutStart) {
+    // Zmiana głośności w trakcie wyjścia: dokończ krzywą od bieżącego miejsca.
+    const from = Math.min(1, (position - fadeOutStart) / fadeOut);
+    scheduleCurve(gain, fadeOutCurve(target, from), now, remaining);
+    return;
+  }
+  gain.setValueAtTime(position < fadeIn ? target * position / fadeIn : target, now);
   if (position < fadeIn) gain.linearRampToValueAtTime(target, now + fadeIn - position);
-  if (position < fadeOutStart) gain.setValueAtTime(target, now + fadeOutStart - position);
-  gain.linearRampToValueAtTime(0, now + Math.max(0, duration - position));
+  scheduleCurve(gain, fadeOutCurve(target, 0), now + fadeOutStart - position, fadeOut);
+}
+
+function scheduleCurve(gain, curve, start, duration) {
+  if (duration <= 0) { gain.setValueAtTime(0, start); return; }
+  try {
+    gain.setValueCurveAtTime(curve, start, duration);
+  } catch {
+    gain.setValueAtTime(curve[0], start);
+    gain.linearRampToValueAtTime(0, start + duration);
+  }
 }
 
 export function playSfxAudio(audio, volume = 1) {

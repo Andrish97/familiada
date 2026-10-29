@@ -38,6 +38,10 @@ import {
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
 } from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T14064";
+import {
+  ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS,
+  BOARD_OUT_MS, BOARD_IN_MS, LOGO_OUT_MS, LOGO_IN_MS,
+} from "../../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T14064";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
@@ -303,20 +307,20 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
     if (row.top_card === "rounds") {
       // Końcowa plansza zmienia się od początku reveal i przejścia rundy.
       // Osobne outro gra dopiero po przejściu, nie opóźnia rysowania.
-      const revealMs = animate ? await timing.dur("reveal") : 0;
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
-      if (animate) await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
+      if (animate) await api.big.animOut({ ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS });
       api.big.clear();
-      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });
-      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
+      const logoMs = animate ? LOGO_IN_MS : 0;
+      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: logoMs });
+      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: logoMs } });
       return;
     }
     // Wynik odsłania się podczas reveal, kończącego się razem z muzyką finału.
     const split = animate ? await timing.revealSyncSplit("final_theme") : { offsetMs: 0, revealMs: 0 };
     if (split.offsetMs > 0) await wait(split.offsetMs);
-    const revealMs = split.revealMs;
-    if (animate) await api.big.animOut({ ...FINAL_OUT_ANIM, ms: revealMs / 2 });
+    const logoMs = animate ? LOGO_IN_MS : 0;
+    if (animate) await api.big.animOut({ ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS });
     api.big.clear();
     // Before outro, the final sum has not yet been added to round totals.
     // Reconnecting after outro must not add it a second time.
@@ -331,9 +335,9 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
       finalPoints,
       hitTarget,
     });
-    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });
+    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: logoMs });
     else {
-      await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
+      await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: logoMs } });
       if (resolveEndScreenMode(row.detail.settings) === "money") onFinalResult?.({
           amount: screen.amount,
           roundsPoints,
@@ -412,13 +416,13 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
             // The old image disappears in the first half of reveal;
             // the new board appears in its second half. The preceding
             // audio offset leaves the old image visible.
-            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+            const { offsetMs } = await timing.revealSyncSplit("round_transition");
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
             if (offsetMs > 0) await wait(offsetMs);
-            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: revealMs / 2 });
+            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: LOGO_OUT_MS });
             await paintRoundsBoard(nextRow, {
-              animIn: { ...ROUND_INTRO_ANIM, ms: revealMs / 2 },
-              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: revealMs / 2 },
+              animIn: { ...ROUND_INTRO_ANIM, ms: BOARD_IN_MS },
+              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS },
             });
           } else if (ev.to === "r_play" && ev.from === "r_duel") {
             // R2->R3 (ACCEPT_BUZZ): control_team zostaje null (dopiero PLAY
@@ -467,10 +471,10 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
             paintTotals(nextRow);
             api.small.topDigits(pad3(nextRow.detail.final.runtime.sum));
             const leadMs = await timing.dur("final_theme");
-            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+            const { offsetMs } = await timing.revealSyncSplit("round_transition");
             await wait(leadMs + offsetMs);
-            await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
-            await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
+            await api.big.animOut({ ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS });
+            await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
             showTimerPlaceholder(nextRow, "15");
             // Wskaźnik na zwycięzcę zapala się TU (plan, sekcja 2a: "zostaje
             // zapalony przez cały finał i zakończenie gry") — nie przez
@@ -481,13 +485,13 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
           } else if (ev.to === "f_p2_start") {
             // Replace player 1 answers with placeholders during reveal:
             // equal disappearance and appearance phases.
-            const { offsetMs, revealMs: maskMs } = await timing.revealSyncSplit("round_transition");
+            const { offsetMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
-            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs / 2 }, animIn: { ...FINAL_BOARD_ANIM, ms: maskMs / 2 } });
+            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS }, animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
             // Restore player 1 answers with the same two-phase transition.
-            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+            const { offsetMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const f = nextRow.detail.final;
             const rows = Array.from({ length: 5 }, (_, i) => {
@@ -497,15 +501,15 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
                 a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
               };
             });
-            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: revealMs / 2 }, animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
+            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS }, animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");
           } else if (ev.to === "r_roundStart" && ev.from === "r_intro") {
-            const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
+            const { offsetMs } = await timing.revealSyncSplit("show_intro");
             if (offsetMs > 0) await wait(offsetMs);
             paintTeamNames(nextRow);
-            await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
+            await api.logo.show({ ...LOGO_IN_ANIM, ms: LOGO_IN_MS });
           } else if (ev.to === "r_intro") {
             api.big.clear();
             paintTeamNames(nextRow, true);
@@ -534,36 +538,29 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
         case "ANSWER_REVEALED": {
           const r = nextRow.detail.rounds;
           const bankChanged = r.bankPts !== (prevRow.detail?.rounds?.bankPts ?? 0);
-          // Kolejność ma znaczenie: najpierw tekst, potem punkty odpowiedzi.
-          // Bank zaczyna się pod koniec animacji punktów i kończy razem z nimi.
-          // Obie fazy mieszczą się w czasie jednego dźwięku.
-          const answerMs = answerAnimMs * 0.5;
-          const pointsMs = answerAnimMs - answerMs;
+          // Jedna równa fala: tekst, potem punkty, potem suma banku — każdy
+          // znak w tym samym tempie (displayTiming.js), niezależnie od
+          // długości dźwięku.
           const revealedAnswers = ev.ords
             .map((ord) => ({ ord, ans: r.answers.find((a) => a.ord === ord) }))
             .filter(({ ans }) => ans);
           await Promise.all(revealedAnswers.map(({ ord, ans }) => {
-            return api.rounds.setText(ord, ans.text, { animIn: { ...ANSWER_ANIM, ms: answerMs } });
+            return api.rounds.setText(ord, ans.text, { animIn: { ...ANSWER_ANIM, ms: ROUND_TEXT_MS } });
           }));
           const pointAnimations = revealedAnswers.map(({ ord, ans }) => {
-            return api.rounds.setPts(ord, String(ans.fixed_points), { animIn: { ...ANSWER_ANIM, ms: pointsMs } });
+            return api.rounds.setPts(ord, String(ans.fixed_points), { animIn: { ...ANSWER_ANIM, ms: ROUND_POINTS_MS } });
           });
           // R8 (odkrywanie reszty, phase REVEAL) jest czysto pokazowe —
           // bankPts się wtedy nie zmienia (control/js/display.js's
           // roundsRevealRow tam w ogóle nie woła RSUMA/TOP) — bez tego
           // SUMA dostawałaby zbędną animację na niezmienioną liczbę.
-          if (bankChanged) {
-            const bankDelayMs = pointsMs * 0.7;
-            const bankAnimMs = pointsMs - bankDelayMs;
-            pointAnimations.push((async () => {
-              await new Promise((resolve) => setTimeout(resolve, bankDelayMs));
-              api.small.topDigits(pad3(r.bankPts));
-              await api.rounds.setSuma(String(r.bankPts ?? 0), {
-                animIn: { ...ANSWER_ANIM, ms: bankAnimMs },
-              });
-            })());
-          }
           await Promise.all(pointAnimations);
+          if (bankChanged) {
+            api.small.topDigits(pad3(r.bankPts));
+            await api.rounds.setSuma(String(r.bankPts ?? 0), {
+              animIn: { ...ANSWER_ANIM, ms: ROUND_SUMA_MS },
+            });
+          }
           // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ
           // drużynie (duel.currentTeam się zmienia), bez żadnej zmiany
           // control_team (ta zostaje null aż do wygranej) — CONTROL_CHANGED
@@ -608,8 +605,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
         // brak treści gracza 1, zawsze zera, i pomylone strony.
         case "FINAL_ANSWER_REVEALED": {
           const row = nextRow.detail.final.runtime[ev.round][ev.idx];
-          const hasPoints = events.some((event) => event.kind === "FINAL_POINTS_REVEALED" && event.round === ev.round && event.idx === ev.idx);
-          const ms = hasPoints ? answerAnimMs * 0.6 : answerAnimMs;
+          const ms = closingFinal ? 0 : FINAL_TEXT_MS;
           if (ev.round === "map1") await api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms } });
           else await api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms } });
           break;
@@ -617,9 +613,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
         case "FINAL_POINTS_REVEALED": {
           const f = nextRow.detail.final;
           const row = f.runtime[ev.round][ev.idx];
-          const hasAnswer = events.some((event) => event.kind === "FINAL_ANSWER_REVEALED" && event.round === ev.round && event.idx === ev.idx);
-          const ms = hasAnswer ? answerAnimMs * 0.4 : answerAnimMs;
-          const animIn = { ...ANSWER_ANIM, ms };
+          const animIn = { ...ANSWER_ANIM, ms: closingFinal ? 0 : FINAL_POINTS_MS };
           await Promise.all([
             ev.round === "map1" ? api.final.setA(ev.idx + 1, String(row.pts), { animIn }) : api.final.setB(ev.idx + 1, String(row.pts), { animIn }),
             api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn }),

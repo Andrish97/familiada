@@ -20,6 +20,7 @@ import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-29T
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T14064";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T14064";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T14064";
+import { ROUND_ANSWER_TOTAL_MS, FINAL_ANSWER_TOTAL_MS, BOARD_OUT_MS, BOARD_IN_MS, LOGO_IN_MS } from "../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T14064";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-29T14064";
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
@@ -515,16 +516,24 @@ async function main() {
   let previousDisplayRow = store.state.__row || null;
   let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
   let lastDisplayStep = store.state.step;
+  // Dźwięk wyznacza start animacji, a jej długość stałe z displayTiming.js
+  // (Wyświetlacz liczy z tych samych) — oczekiwany czas to dłuższe z obu.
   async function expectedDisplayTransitionMs(previous, row) {
     const key = row?.sound_cue_key;
     if (!key) return null;
-    if (key === "round_transition") return actionGate.timing.syncedMs("round_transition", "reveal");
-    if (key === "show_intro") return actionGate.timing.syncedMs("show_intro", "reveal");
+    const timing = actionGate.timing;
+    const afterReveal = async (otherKey, animMs) => Math.max(
+      await timing.syncedMs(otherKey, "reveal"),
+      (await timing.revealSyncSplit(otherKey)).offsetMs + animMs);
+    const boardMs = BOARD_OUT_MS + Math.max(BOARD_IN_MS, LOGO_IN_MS);
+    if (key === "round_transition") return afterReveal("round_transition", boardMs);
+    if (key === "show_intro") return afterReveal("show_intro", LOGO_IN_MS);
     if (key === "final_theme" && previous?.step === "f_start" && row.step === "f_p1_entry") {
-      return (await actionGate.timing.dur("final_theme")) + await actionGate.timing.syncedMs("round_transition", "reveal");
+      return (await timing.dur("final_theme")) + await afterReveal("round_transition", boardMs);
     }
-    if (key === "final_theme" && row.step === "f_end") return actionGate.timing.syncedMs("final_theme", "reveal");
-    return actionGate.timing.dur(key);
+    if (key === "final_theme" && row.step === "f_end") return afterReveal("final_theme", boardMs);
+    const answerMs = row.top_card === "final" ? FINAL_ANSWER_TOTAL_MS : ROUND_ANSWER_TOTAL_MS;
+    return Math.max(await timing.dur(key), answerMs);
   }
   function evaluateDisplayCompletion(revision, item) {
     if (item.timedOut && !item.lateReported && item.completedAt != null) {

@@ -1,12 +1,8 @@
 // web/js/gameplay/displayAnim.js
 //
 // STYL animacji Wyświetlacza (typ/kierunek) — jedno źródło prawdy dla
-// control/display/js/render.js. Czasy trwania (`ms`) NIE są tu już zaszyte na
-// sztywno (zgłoszone: "Pozbądźmy się sztywnych zapisanych ram czasowych...
-// Animacja zawsze = dźwięki") — render.js dolicza `ms` dynamicznie, z
-// web/js/gameplay/transitionTiming.js, na podstawie rzeczywistego czasu trwania
-// dźwięku towarzyszącego danej animacji. Te stałe zostają WYŁĄCZNIE jako
-// "jak" (typ wjazdu/wyjazdu: matrix/edge, kierunek), nie "jak długo".
+// control/display/js/render.js. Czasy trwania są w displayTiming.js (stałe,
+// decyzja właściciela 2026-10-29); dźwięk wyznacza tylko start animacji.
 //
 // Typy 1:1 z dawnego control/js/display.js (literały ANIMIN/ANIMOUT),
 // zweryfikowane w kodzie przy przepisywaniu na display2 — nie zgadywane.
