@@ -726,8 +726,9 @@ test.describe("games: audyt -- migracja 272", () => {
       await tileByName(page, name).click();
       await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
       await page.locator("#btnEdit").click();
-      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
-      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      const confirm = page.locator(".uni-modal", { has: page.locator(".mSub", { hasText: "Ankieta jest zamknięta" }) });
+      await expect(confirm).toBeVisible({ timeout: 10000 });
+      await confirm.locator(".uni-foot .btn.gold").click();
       await page.waitForURL(/\/games\/editor/, { timeout: 20000 });
 
       const st = await page.evaluate(async (id) => {

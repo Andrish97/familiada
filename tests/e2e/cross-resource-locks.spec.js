@@ -164,7 +164,8 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
     await expect(page.locator(".uni-modal .mSub", { hasText: "innej karcie" })).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-modal .uni-foot .btn.gold").click();
+    // zamykane potwierdzenie znika po animacji -- przycisk z okna komunikatu
+    await page.locator(".uni-modal", { has: page.locator(".mSub", { hasText: "innej karcie" }) }).locator(".uni-foot .btn.gold").click();
 
     expect(await gameExists(page, gameId), "gra otwarta w edytorze w innej karcie nie powinna zostać usunięta").toBe(true);
   } finally {
@@ -260,7 +261,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     // core/modal.js (confirmModal/alertModal). Komunikat od kroku 4 dotyczy
     // już całej puli logo ("ustawienia gry"), nie tylko referencji.
     await expect(page.locator(".uni-modal .mSub", { hasText: "ustawienia gry" })).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
+    await page.locator(".uni-modal", { has: page.locator(".mSub", { hasText: "ustawienia gry" }) }).locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
 
     expect(await logoExists(page, logoId), "logo używane przez grę z otwartymi ustawieniami nie powinno zostać usunięte").toBe(true);
   } finally {
