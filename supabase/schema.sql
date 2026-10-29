@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
+\restrict f6XSCMTEpHK30t0U0cxECEHaXCPuBxnSmekv4sl3JY8PvHIXU9JwD8tN4RMqpGi
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -21417,8 +21417,12 @@ CREATE VIEW "public"."stats_exclusions_effective" AS
             1
            FROM (("public"."profiles" "p"
              JOIN "auth"."users" "u" ON (("u"."id" = "p"."id")))
-             LEFT JOIN "public"."e2e_identities" "i" ON (("i"."user_id" = "u"."id")))
-          WHERE ((COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") OR (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) OR ("i"."user_id" IS NOT NULL))) "x"
+             LEFT JOIN LATERAL ( SELECT "ei"."role"
+                   FROM "public"."e2e_identities" "ei"
+                  WHERE (("ei"."user_id" = "u"."id") OR (("ei"."email" IS NOT NULL) AND (("lower"(("u"."email")::"text") = "ei"."email") OR ("lower"(("u"."email")::"text") = "replace"("ei"."email", '@'::"text", '.new@'::"text")))))
+                  ORDER BY ("ei"."user_id" = "u"."id") DESC NULLS LAST
+                 LIMIT 1) "i" ON (true))
+          WHERE ((COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") OR (("u"."raw_app_meta_data" ->> 'e2e_role'::"text") IS NOT NULL) OR ("i"."role" IS NOT NULL))) "x"
   ORDER BY "user_id", "priority";
 
 
@@ -27086,5 +27090,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
+\unrestrict f6XSCMTEpHK30t0U0cxECEHaXCPuBxnSmekv4sl3JY8PvHIXU9JwD8tN4RMqpGi
 
