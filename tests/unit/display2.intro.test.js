@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRenderer } from "../../web/control/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
-import { LOGO_IN_MS, LOGO_OUT_MS, BOARD_IN_MS } from "../../web/shared/js/gameplay/displayTiming.js";
+import { LOGO_IN_MS, BOARD_TRANSITION } from "../../web/shared/js/gameplay/displayTiming.js";
 
 function stateToRow(state) {
   return { step: state.step, phase: state.phase, top_card: state.topCard, detail: structuredClone(state) };
@@ -10,7 +10,7 @@ function stateToRow(state) {
 
 function setup() {
   const calls = [];
-  const api = new Proxy({}, { get: (_, group) => new Proxy({}, { get: (_, name) => (...args) => { calls.push({ name: `${group}.${name}`, args, at: Date.now() }); } }) });
+  const api = new Proxy({}, { get: (_, group) => new Proxy({}, { get: (_, name) => (...args) => { calls.push({ name: `${group}.${name}`, args, at: Date.now() }); if (`${group}.${name}` === "big.replace") args[0](); } }) });
   const renderer = createRenderer({ scene: { api }, qr: { show() {}, hide() {} }, getSfxDuration: async (key) => key === "show_intro" ? 0.06 : 0.02 });
   const state = makeDefaultState("intro-test");
   state.topCard = "rounds";
@@ -149,7 +149,7 @@ test("pregame names and a reconnect before the first round both keep score panel
   for (const name of ["small.leftDigits", "small.rightDigits"]) assert.equal(calls.findLast(call => call.name === name).args[0], "");
 });
 
-test("round board: logo leaves, then the board enters, with fixed durations", async () => {
+test("round board: logo turns into the board with one board transition", async () => {
   const { renderer, calls, state } = setup();
   state.step = "r_roundStart";
   state.rounds.roundNo = 1;
@@ -159,11 +159,9 @@ test("round board: logo leaves, then the board enters, with fixed durations", as
   const after = stateToRow(state);
   after.sound_cue_key = "round_transition";
   await renderer.renderDiff(before, after);
-  const out = calls.find(c => c.name === "logo.hide");
+  assert.equal(calls.some(c => c.name === "logo.hide"), false);
   const into = calls.find(c => c.name === "rounds.setAll");
-  assert.equal(out.args[0].ms, LOGO_OUT_MS);
-  assert.equal(into.args[0].animIn.ms, BOARD_IN_MS);
-  assert.ok(calls.indexOf(out) < calls.indexOf(into));
+  assert.deepEqual(into.args[0].transition, BOARD_TRANSITION);
 });
 
 test("team names refresh without changing the current game step", async () => {

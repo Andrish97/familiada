@@ -110,3 +110,26 @@ test("matrix entry over previous content overwrites it at the wave front instead
   assert.equal(seen[0], "old", "the far end still shows the old content when the wave starts");
   assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "new")));
 });
+
+test("board transition tears old tiles out at random and overlaps the new board wipe without punching holes in it", async () => {
+  // 3 kafle w rzędzie, 2 rzędy; stara plansza świeci wszędzie, nowa ma "new".
+  const grid = Array.from({ length: 2 }, () => Array.from({ length: 3 }, () => ({ dots: Array.from({ length: 7 }, () => Array.from({ length: 5 }, () => ({ fill: "new", setAttribute(_, fill) { this.fill = fill; } }))) })));
+  let clock = 0;
+  const timeline = [];
+  const animator = createAnimator({
+    tileAt: (_, c, r) => grid[r - 1]?.[c - 1], clearTileAt() {}, clearArea() {}, dotOff: "off",
+    snapArea: () => grid.map((row) => row.map((t) => t.dots.map((line) => line.map((d) => d.fill)))),
+    now: () => clock,
+    wait: async (ms) => { clock += ms; timeline.push({ at: clock, tiles: grid.flat().map((t) => t.dots.flat().map((d) => d.fill)) }); },
+  });
+  const from = grid.map((row) => row.map(() => Array.from({ length: 7 }, () => Array(5).fill("old"))));
+  let seed = 7;
+  const rng = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  await animator.transition({}, { c1: 1, r1: 1, c2: 3, r2: 2 }, { from, outMs: 100, inMs: 140, overlapMs: 40, rng });
+  assert.equal(clock, 200, "out 100 ms + in 140 ms - overlap 40 ms");
+  // Przed nakładką część starej planszy już zgasła, część jeszcze stoi.
+  const beforeIn = timeline.filter((s) => s.at < 60).at(-1).tiles;
+  assert.ok(beforeIn.some((t) => t.every((f) => f === "off")) && beforeIn.some((t) => t.every((f) => f === "old")));
+  // Koniec: cała nowa plansza, bez dziur po wyrywaniu.
+  assert.ok(grid.flat().every((t) => t.dots.flat().every((d) => d.fill === "new")));
+});

@@ -505,6 +505,15 @@ export async function createScene() {
         if (type==="matrix") return anim.outMatrix(big, A, axis, speed, opts||{});
       },
       clear: () => { activeBoard = null; clearBig(big); },
+      // Przejście planszy: zrzut obecnej zawartości, draw() rysuje nową,
+      // potem losowe wyrywanie starej z nachodzącym wjazdem nowej (anim.transition).
+      replace: async (draw, { area=null, ...timing } = {}) => {
+        const A = area ?? api.big.areaAll();
+        const from = snapArea(big, A.c1, A.r1, A.c2, A.r2);
+        clearArea(big, A.c1, A.r1, A.c2, A.r2);
+        draw();
+        await anim.transition(big, A, { ...timing, from });
+      },
       put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
       clearArea: (c1,r1,c2,r2) => clearArea(big, c1,r1,c2,r2),
     },
@@ -575,7 +584,8 @@ export async function createScene() {
         }
         xState[key]=true; if (isBig) drawRoundsBigX(GLYPHS, big, side, LIT.main); else drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
       },
-      setAll: async ({ rows=[], suma=undefined, animOut=null, animIn=null } = {}) => {
+      setAll: async ({ rows=[], suma=undefined, animOut=null, animIn=null, transition=null } = {}) => {
+        if (transition) return api.big.replace(() => api.rounds.setAll({ rows, suma }), transition);
         activeBoard = "rounds";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.text)||isNonEmpty(r?.pts));
@@ -603,7 +613,8 @@ export async function createScene() {
       setSumMode: (side) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`FSUMMODE: nieznana strona: ${side}`); finalState.sumMode=s; drawFinalSum(); },
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { if (finalState.sumMode==="A") finalState.sumA=(val??"").toString(); else finalState.sumB=(val??"").toString(); const isA=(finalState.sumMode==="A"); clearFinalSumRow(); writeField(GLYPHS, big, isA?FINAL.sumaALabel:FINAL.sumaBLabel, SUMA_LABEL, LIT.main); await updateField(GLYPHS, big, isA?FINAL.sumaAVal:FINAL.sumaBVal, alignRight((val??"").toString(),3), {out:animOut, in:animIn, color:LIT.main}); },
       setSumaFor: async (side, val, anims={}) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`setSumaFor: nieznana strona: ${side}`); finalState.sumMode=s; return api.final.setSuma(val, anims); },
-      setAll: async ({ rows=[], suma=undefined, sumaSide=null, animOut=null, animIn=null } = {}) => {
+      setAll: async ({ rows=[], suma=undefined, sumaSide=null, animOut=null, animIn=null, transition=null } = {}) => {
+        if (transition) return api.big.replace(() => api.final.setAll({ rows, suma, sumaSide }), transition);
         activeBoard = "final";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.left)||isNonEmpty(r?.a)||isNonEmpty(r?.b)||isNonEmpty(r?.right));
@@ -613,8 +624,9 @@ export async function createScene() {
         if (suma!==undefined&&(sumaSide==="A"||sumaSide==="B")) { if (sumaSide==="A") { finalState.sumA=(suma??"").toString(); finalState.sumMode="A"; } else { finalState.sumB=(suma??"").toString(); finalState.sumMode="B"; } }
         drawFinalSum(); if (animIn) await api.big.animIn({...animIn, area:A_ALL});
       },
-      setHalf: async (side, { rows=[], animOut=null, animIn=null } = {}) => {
+      setHalf: async (side, { rows=[], animOut=null, animIn=null, transition=null } = {}) => {
         const s = (side??"").toString().toUpperCase(); let area; if (s==="A") area=FINAL_AREA_LEFT; else if (s==="B") area=FINAL_AREA_RIGHT; else throw new Error(`final.setHalf: nieznana strona: ${side}`);
+        if (transition) return api.big.replace(() => api.final.setHalf(s, { rows }), { ...transition, area });
         if (animOut) await api.big.animOut({...animOut, area});
         for (let i=0;i<5;i++) { const r=rows[i]??{}; if (s==="A") { writeField(GLYPHS, big, FINAL.leftTxt[i], clipText((r.left??"").toString(),11), LIT.main); writeField(GLYPHS, big, FINAL.ptsA[i], alignRight((r.a??"").toString(),2), LIT.main); } else { writeField(GLYPHS, big, FINAL.ptsB[i], alignRight((r.b??"").toString(),2), LIT.main); writeField(GLYPHS, big, FINAL.rightTxt[i], clipText((r.right??"").toString(),11), LIT.main); } }
         if (animIn) await api.big.animIn({...animIn, area});

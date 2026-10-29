@@ -29,18 +29,10 @@ import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v202
 import { resolveRoundsEndScreen, resolveFinalEndScreen, resolveEndScreenMode } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-29T15284";
 import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-29T15284";
 
-import {
-  ROUND_INTRO_ANIM,
-  ROUND_OUT_ANIM,
-  ANSWER_ANIM,
-  FINAL_BOARD_ANIM,
-  FINAL_OUT_ANIM,
-  LOGO_IN_ANIM,
-  LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T15284";
+import { ANSWER_ANIM, LOGO_IN_ANIM } from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T15284";
 import {
   ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS,
-  BOARD_OUT_MS, BOARD_IN_MS, LOGO_OUT_MS, LOGO_IN_MS, DUEL_X_FLASH_MS,
+  BOARD_TRANSITION, LOGO_IN_MS, DUEL_X_FLASH_MS,
 } from "../../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T15284";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
@@ -198,7 +190,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
   const ROUNDS_TEXT_PLACEHOLDER = "…".repeat(17);
   const ROUNDS_PTS_PLACEHOLDER = "——";
 
-  async function paintRoundsBoard(row, { animIn, animOut } = {}) {
+  async function paintRoundsBoard(row, { animIn, animOut, transition } = {}) {
     const r = row.detail.rounds;
     const answerCount = Math.max(1, Math.min(6, r.answers?.length || 6));
     const rows = Array.from({ length: 6 }, (_, i) => {
@@ -213,7 +205,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
     // rysować na tym samym płótnie ("big") — inaczej dwie animacje na raz
     // (np. logo wchodzące i stara plansza rund jeszcze schodząca) nakładają
     // się wizualnie (zgłoszone: "wszystko się nakłada jedno na drugie").
-    await api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn, animOut });
+    await api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn, animOut, transition });
     for (const key of ["1A", "2A", "3A", "4A", "1B", "2B", "3B", "4B"]) {
       const [n, side] = [key[0], key[1]];
       const count = side === "A" ? r.xA : r.xB;
@@ -233,7 +225,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
   const FINAL_TEXT_PLACEHOLDER = "—".repeat(11);
   const FINAL_PTS_PLACEHOLDER = "▒▒";
 
-  async function paintFinalBoard(row, { animIn } = {}) {
+  async function paintFinalBoard(row, { animIn, transition } = {}) {
     const f = row.detail.final;
     const rows = Array.from({ length: 5 }, (_, i) => {
       const m1 = f.runtime.map1[i], m2 = f.runtime.map2[i];
@@ -244,7 +236,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
         right: m2?.revealedAnswer ? m2.outText : FINAL_TEXT_PLACEHOLDER,
       };
     });
-    await api.final.setAll({ rows, animIn });
+    await api.final.setAll({ rows, animIn, transition });
     api.small.topDigits(pad3(f.runtime.sum));
     paintTotals(row);
     applyIndicator(row);
@@ -309,19 +301,14 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
       // Osobne outro gra dopiero po przejściu, nie opóźnia rysowania.
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
-      if (animate) await api.big.animOut({ ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS });
-      api.big.clear();
-      const logoMs = animate ? LOGO_IN_MS : 0;
-      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: logoMs });
-      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: logoMs } });
+      const draw = () => { api.big.clear(); if (screen.kind === "logo") api.logo.draw(); else api.win.set(screen.amount); };
+      if (animate) await api.big.replace(draw, BOARD_TRANSITION);
+      else draw();
       return;
     }
     // Wynik odsłania się podczas reveal, kończącego się razem z muzyką finału.
     const split = animate ? await timing.revealSyncSplit("final_theme") : { offsetMs: 0, revealMs: 0 };
     if (split.offsetMs > 0) await wait(split.offsetMs);
-    const logoMs = animate ? LOGO_IN_MS : 0;
-    if (animate) await api.big.animOut({ ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS });
-    api.big.clear();
     // Before outro, the final sum has not yet been added to round totals.
     // Reconnecting after outro must not add it a second time.
     paintTotals(row);
@@ -335,9 +322,10 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
       finalPoints,
       hitTarget,
     });
-    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: logoMs });
-    else {
-      await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: logoMs } });
+    const draw = () => { api.big.clear(); if (screen.kind === "logo") api.logo.draw(); else api.win.set(screen.amount); };
+    if (animate) await api.big.replace(draw, BOARD_TRANSITION);
+    else draw();
+    if (screen.kind !== "logo") {
       if (resolveEndScreenMode(row.detail.settings) === "money") onFinalResult?.({
           amount: screen.amount,
           roundsPoints,
@@ -413,17 +401,11 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
           break;
         case "STEP_CHANGE":
           if (ev.to === "r_duel" && ev.from === "r_roundStart") {
-            // The old image disappears in the first half of reveal;
-            // the new board appears in its second half. The preceding
-            // audio offset leaves the old image visible.
+            // Przejście planszy rusza razem z reveal (logo albo poprzednia
+            // plansza znika losowymi kawałkami, nowa wjeżdża z nakładką).
             const { offsetMs } = await timing.revealSyncSplit("round_transition");
-            const isFirstRound = nextRow.detail.rounds.roundNo === 1;
             if (offsetMs > 0) await wait(offsetMs);
-            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: LOGO_OUT_MS });
-            await paintRoundsBoard(nextRow, {
-              animIn: { ...ROUND_INTRO_ANIM, ms: BOARD_IN_MS },
-              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS },
-            });
+            await paintRoundsBoard(nextRow, { transition: BOARD_TRANSITION });
           } else if (ev.to === "r_play" && ev.from === "r_duel") {
             // R2->R3 (ACCEPT_BUZZ): control_team zostaje null (dopiero PLAY
             // go ustawia), ale duel.currentTeam już wskazuje, kto ma teraz
@@ -473,8 +455,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
             const leadMs = await timing.dur("final_theme");
             const { offsetMs } = await timing.revealSyncSplit("round_transition");
             await wait(leadMs + offsetMs);
-            await api.big.animOut({ ...ROUND_OUT_ANIM, ms: BOARD_OUT_MS });
-            await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
+            await paintFinalBoard(nextRow, { transition: BOARD_TRANSITION });
             showTimerPlaceholder(nextRow, "15");
             // Wskaźnik na zwycięzcę zapala się TU (plan, sekcja 2a: "zostaje
             // zapalony przez cały finał i zakończenie gry") — nie przez
@@ -488,7 +469,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
             const { offsetMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
-            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS }, animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
+            await api.final.setHalf("A", { rows, transition: BOARD_TRANSITION });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
             // Restore player 1 answers with the same two-phase transition.
             const { offsetMs } = await timing.revealSyncSplit("round_transition");
@@ -501,7 +482,7 @@ export function createRenderer({ scene, qr, getSfxDuration, onFinalResult }) {
                 a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
               };
             });
-            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: BOARD_OUT_MS }, animIn: { ...FINAL_BOARD_ANIM, ms: BOARD_IN_MS } });
+            await api.final.setHalf("A", { rows, transition: BOARD_TRANSITION });
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");

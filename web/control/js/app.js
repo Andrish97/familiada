@@ -20,7 +20,7 @@ import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-29T
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T15284";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15284";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T15284";
-import { ROUND_ANSWER_TOTAL_MS, FINAL_ANSWER_TOTAL_MS, BOARD_OUT_MS, BOARD_IN_MS, LOGO_IN_MS } from "../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T15284";
+import { ROUND_ANSWER_TOTAL_MS, FINAL_ANSWER_TOTAL_MS, BOARD_TRANSITION_MS, LOGO_IN_MS } from "../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T15284";
 import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-29T15284";
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
@@ -525,7 +525,7 @@ async function main() {
     const afterReveal = async (otherKey, animMs) => Math.max(
       await timing.syncedMs(otherKey, "reveal"),
       (await timing.revealSyncSplit(otherKey)).offsetMs + animMs);
-    const boardMs = BOARD_OUT_MS + Math.max(BOARD_IN_MS, LOGO_IN_MS);
+    const boardMs = BOARD_TRANSITION_MS;
     if (key === "round_transition") return afterReveal("round_transition", boardMs);
     if (key === "show_intro") return afterReveal("show_intro", LOGO_IN_MS);
     if (key === "final_theme" && previous?.step === "f_start" && row.step === "f_p1_entry") {

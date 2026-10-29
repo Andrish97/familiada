@@ -346,7 +346,88 @@ export function createAnimator({
     }
   }
 
+  // ============================================================
+  // TRANSITION – przejście planszy (decyzja właściciela 2026-10-29):
+  // stara zawartość znika losowo wyrywanymi kawałkami rzędów (1–3 kafle),
+  // a w ostatniej części tego znikania nowa plansza już wjeżdża paskami
+  // pikseli z góry na dół. Pasek nowej planszy ma pierwszeństwo: wyrwanie
+  // kawałka nie gasi pikseli, które nowa plansza już narysowała.
+  // Nowa zawartość musi być już narysowana w obszarze; opts.from to zrzut
+  // obszaru sprzed zmiany (snapArea).
+  // ============================================================
+  async function transition(big, area, { from, outMs = 1200, inMs = 1800, overlapMs = 600, rng = Math.random } = {}) {
+    const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
+    const to = snapArea(big, A.c1, A.r1, A.c2, A.r2);
+    paintStart(big, A, { from });
+    const H = A.r2 - A.r1 + 1;
+    const lit = (tile) => !!tile && tile.some((row) => row.some((fill) => fill !== dotOff));
+
+    // Kawałki rzędów do wyrwania: tylko te, na których coś świeci (puste
+    // nie dają widocznego kroku).
+    const pieces = [];
+    for (let r = A.r1; r <= A.r2; r++) {
+      let c = A.c1;
+      while (c <= A.c2) {
+        const len = Math.min(A.c2 - c + 1, 1 + Math.floor(rng() * 3));
+        const cols = [];
+        for (let i = 0; i < len; i++) cols.push(c + i);
+        if (cols.some((col) => lit(from?.[r - A.r1]?.[col - A.c1]))) pieces.push({ r, cols });
+        c += len;
+      }
+    }
+    for (let i = pieces.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+    }
+
+    const outTotal = clampMs(outMs, 0);
+    const inStart = Math.max(0, outTotal - clampMs(overlapMs, 0));
+    const inTotal = clampMs(inMs, 0);
+    const pixelRows = H * 7;
+    const events = [];
+    pieces.forEach((piece, i) => events.push({ t: outTotal * (i + 1) / pieces.length, out: piece }));
+    for (let k = 0; k < pixelRows; k++) events.push({ t: inStart + inTotal * (k + 1) / pixelRows, row: k });
+    events.sort((a, b) => a.t - b.t || (a.row != null ? -1 : 1));
+
+    let painted = 0; // pikselowe rzędy nowej planszy już narysowane
+    const token = getGeneration();
+    const check = () => { if (token !== getGeneration()) throw Object.assign(new Error("Animation cancelled"), { name: "AbortError" }); };
+    const start = now();
+    for (const ev of events) {
+      while (now() < start + ev.t) {
+        check();
+        if (pageHidden()) break;
+        if (wait === sleep && typeof requestAnimationFrame === "function") await nextFrame();
+        else await wait(Math.max(1, start + ev.t - now()));
+      }
+      check();
+      if (ev.out) {
+        const tileRow = ev.out.r - A.r1;
+        for (const c of ev.out.cols) {
+          const t = tileAt(big, c, ev.out.r);
+          if (!t) continue;
+          for (let py = 0; py < 7; py++) {
+            if (tileRow * 7 + py < painted) continue;
+            for (let px = 0; px < 5; px++) t.dots[py][px].setAttribute("fill", dotOff);
+          }
+        }
+      } else {
+        const tileRow = Math.floor(ev.row / 7);
+        const py = ev.row % 7;
+        const r = A.r1 + tileRow;
+        for (let c = A.c1; c <= A.c2; c++) {
+          const t = tileAt(big, c, r);
+          const tile = to[tileRow]?.[c - A.c1];
+          if (!t || !tile) continue;
+          for (let px = 0; px < 5; px++) t.dots[py][px].setAttribute("fill", tile[py][px]);
+        }
+        painted = ev.row + 1;
+      }
+    }
+  }
+
   return {
+    transition,
     inEdge,
     outEdge,
     inMatrix,
