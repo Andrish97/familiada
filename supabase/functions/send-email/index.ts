@@ -124,7 +124,7 @@ async function loadUserEmailFallbacks(userId: string): Promise<{
     if (error) throw error;
 
     const user = data?.user;
-    const pendingMetaEmail = String(user?.user_metadata?.familiada_email_change_pending || "").trim();
+    const pendingMetaEmail = String(user?.user_metadata?.familijna_email_change_pending || "").trim();
     return {
       email: String(user?.email || "").trim(),
       emailNew: String((user as { email_change?: string } | undefined)?.email_change || "").trim(),
@@ -318,7 +318,7 @@ function extractTargetEmail(payload: HookPayload, redirectUrl: URL | null): stri
   const fromEmailDataOld = String(payload.email_data.old_email || "").trim();
   if (fromEmailDataOld) return fromEmailDataOld;
 
-  const fromMeta = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
+  const fromMeta = String(payload.user.user_metadata?.familijna_email_change_pending || "").trim();
   if (fromMeta) return fromMeta;
 
   return "";
@@ -439,10 +439,10 @@ serve(async (req) => {
       const oldEmail = String(payload.email_data.old_email || "").trim();
       const newEmail = String(payload.email_data.new_email || "").trim();
       const pendingMetaEmail = firstEmail(
-        String(payload.user.user_metadata?.familiada_email_change_pending || ""),
+        String(payload.user.user_metadata?.familijna_email_change_pending || ""),
         fallbackUser.pendingMetaEmail,
       ).trim();
-      const intent = String(payload.user.user_metadata?.familiada_email_change_intent || "").trim().toLowerCase();
+      const intent = String(payload.user.user_metadata?.familijna_email_change_intent || "").trim().toLowerCase();
       const isGuestMigrate = intent === "guest_migrate";
 
       const targetEmail = firstEmail(

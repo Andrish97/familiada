@@ -130,7 +130,7 @@ async function provisionAccount(env, identity, password) {
     method: "PUT",
     body: {
       email, password, email_confirm: true,
-      user_metadata: { username: name, is_guest: false, familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      user_metadata: { username: name, is_guest: false, familijna_email_change_pending: "", familijna_email_change_intent: "" },
       app_metadata: { e2e_role: role },
     },
   });

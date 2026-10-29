@@ -1,8 +1,8 @@
-import { redirectPage } from "./page-layout.js?v=v2026-10-29T02360";
+import { redirectPage } from "./page-layout.js?v=v2026-10-29T03075";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-29T02360";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T02360";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T02360";
+import { icon } from "./icons.js?v=v2026-10-29T03075";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T03075";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T03075";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -147,7 +147,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T02360";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T03075";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
@@ -396,8 +396,8 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   const payload = {
     email: mail,
     data: {
-      familiada_email_change_pending: mail,
-      familiada_email_change_intent: "guest_migrate",
+      familijna_email_change_pending: mail,
+      familijna_email_change_intent: "guest_migrate",
     },
   };
   if (language) payload.data.language = language;

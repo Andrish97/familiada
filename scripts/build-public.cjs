@@ -11,7 +11,7 @@ const stableVersions = source => source.replace(/\?v=[a-zA-Z0-9T:-]+/g, '?v=vASS
 async function buildPublic({ source = path.join(__dirname, '../web'), out = path.join(__dirname, '../_site_public') } = {}) {
   source = path.resolve(source); out = path.resolve(out);
   if (source === out || source.startsWith(out + path.sep) || out.startsWith(source + path.sep)) throw new Error('Katalog wynikowy musi być oddzielony od źródeł');
-  const marker = path.join(out, '.familiada-build.json');
+  const marker = path.join(out, '.familijna-build.json');
   const entries = await fs.readdir(out).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
   if (entries.length && !await fs.stat(marker).catch(() => null)) throw new Error('Niepusty katalog bez znacznika buildu');
   await fs.rm(out, { recursive: true, force: true });

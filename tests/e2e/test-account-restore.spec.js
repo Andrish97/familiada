@@ -24,7 +24,7 @@ test("konto disposable: odtworzone przy wypożyczeniu i potwierdzone logowanie",
       email: data.user.email,
       confirmed: !!data.user.email_confirmed_at,
       newEmail: data.user.new_email || "",
-      pending: meta.familiada_email_change_pending || "",
+      pending: meta.familijna_email_change_pending || "",
       username: profile.username,
     };
   });
