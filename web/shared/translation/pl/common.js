@@ -181,6 +181,7 @@ const pl = {
       errSubject: "Podaj temat.",
       attachments: "Załączniki (opcjonalnie, maks. 5 plików, 5 MB każdy)",
       chooseFiles: "Wybierz pliki",
+      attachSkipped: "Pominięte (ponad 5 plików lub ponad 5 MB): {files}.",
     },
     "rateLimited": "Możesz wysłać jedno zgłoszenie na 24 godziny."
   },

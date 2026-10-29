@@ -17,8 +17,8 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T15573";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-29T15573";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T16063";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-29T16063";
 
 
 const STRIKE_LIMIT = 3;
@@ -242,6 +242,9 @@ const REDUCERS = {
   // bez żadnego sygnału dźwiękowego.
   async ACCEPT_BUZZ(state, action) {
     const r = state.rounds;
+    // Tylko przed przyjęciem zgłoszenia: spóźnione zatwierdzenie z kolejki
+    // (np. podwójne Enter) nie może zresetować trwającej rozgrywki.
+    if (state.step !== "r_duel" || r.duel.firstTeam) return null;
     const other = action.team === "A" ? "B" : "A";
     r.duel.firstTeam = action.team;
     r.duel.secondTeam = other;
@@ -299,11 +302,15 @@ const REDUCERS = {
       return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_correct" };
     }
 
+    // Kradzież to jedna odpowiedź: po jej rozstrzygnięciu zostaje tylko
+    // „Zakończ rundę”, a reszta odsłania się po końcu rundy bez punktów.
+    if (state.phase === "STEAL" && (!r.steal.active || r.steal.used)) return null;
+
     r.revealed.push(action.ord);
     r.bankPts += ans.fixed_points;
     r.allowPass = false;
 
-    if (state.phase === "STEAL" && r.steal.active && !r.steal.used) {
+    if (state.phase === "STEAL") {
       r.steal.used = true;
       r.steal.won = true;
       r.stealWon = true;
@@ -351,6 +358,7 @@ const REDUCERS = {
     }
 
     if (state.phase === "STEAL") {
+      if (!r.steal.active || r.steal.used) return null;
       r.steal.used = true;
       r.steal.won = false;
       r.stealWon = false;

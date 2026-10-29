@@ -16,20 +16,20 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-29T15573";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T15573";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-29T15573";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-29T15573";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T15573";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15573";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-29T16063";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T16063";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-29T16063";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-29T16063";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T16063";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T16063";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-29T15573";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-29T15573";
-import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-29T15573";
-import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-29T15573";
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-29T15573";
-import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-29T15573";
-import { setCell } from "../../shared/js/core/geometry.js?v=v2026-10-29T15573";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-29T16063";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-29T16063";
+import { displayTextSegments } from "../../shared/js/gameplay/displayText.js?v=v2026-10-29T16063";
+import { hasDisplayGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-29T16063";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-29T16063";
+import { FINAL_DISPLAY_MAX } from "../../shared/js/core/answer-text.js?v=v2026-10-29T16063";
+import { setCell } from "../../shared/js/core/geometry.js?v=v2026-10-29T16063";
 
 
 const $ = (id) => document.getElementById(id);
@@ -1069,6 +1069,7 @@ export function createUI({ root, emit }) {
       && !r.canEndRound && !r.lockPlayControls;
     const finishingGame = r.canEndRound && ["PLAY", "STEAL"].includes(state.phase) && previewPendingRoundEndDestination(state) === "GAME_END";
     const passAvailable = !finishingGame && state.phase === "PLAY" && r.allowPass && !r.passUsed;
+    const stealResolved = state.phase === "STEAL" && r.steal.used === true;
 
     // Uzbrojony kafel z poprzedniego renderu mógł przestać być prawdziwy
     // (odpowiedź już odsłonięta gdzie indziej, runda się skończyła...) —
@@ -1110,7 +1111,9 @@ export function createUI({ root, emit }) {
         // jeszcze na ekranie"). REVEAL_ANSWER i REVEAL_LEFT zawsze zwracają
         // soundCueKey "answer_correct" (engine.js) — trafienie odpowiedzi
         // zawsze oznacza dźwięk poprawnej odpowiedzi, niezależnie od fazy.
-        disabled: finishingGame || revealed || revealLocked(),
+        // Po rozstrzygniętej kradzieży zostaje tylko „Zakończ rundę” (silnik
+        // i tak odrzuca kolejne odsłonięcie przed końcem rundy).
+        disabled: finishingGame || revealed || stealResolved || revealLocked(),
         onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
       }));
     });
@@ -1822,6 +1825,12 @@ export function createUI({ root, emit }) {
     }
     // Enter reveals only the currently available stage, never advances a question.
     const availableReveal = !row.revealedAnswer ? revealAnswerTile : revealPointsTile;
+    // Skrót Enter ma tylko dostępny kafel: przy ponownym renderze tego samego
+    // pytania wiązanie szuka elementu po data-shortcut, więc drugi kafel
+    // z „reveal” przechwytywał Enter po [Pokaż odpowiedź] (punkty się nie odsłaniały).
+    const unavailableReveal = availableReveal === revealAnswerTile ? revealPointsTile : revealAnswerTile;
+    unavailableReveal.removeAttribute("data-shortcut");
+    unavailableReveal.removeAttribute("aria-keyshortcuts");
     const revealBinding = keyboardActions.get("reveal");
     if (revealBinding) revealBinding.el = availableReveal;
     if (!row.revealedAnswer) keyboardActions.set("reveal", {

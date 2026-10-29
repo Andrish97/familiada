@@ -60,8 +60,8 @@ or in the folder tree.
 
 **Dragging.** Drag the selection onto a folder to move it. With Ctrl held down
 (Option on a Mac) the items will be copied — a folder together with its contents. Dropping onto an empty
-background moves the items to the "Root folder". Dragging onto a tag in the left panel assigns
-that tag.
+background of the list moves the items to the current folder, and onto "Root folder" in the tree — to the
+root folder. Dragging onto a tag in the left panel assigns that tag.
 
 ![Trash](zrzut:base-explorer-trash)
 
@@ -107,14 +107,16 @@ the conditions of a given game type (→ 7.6):
 
 Type text in the "Search..." field. The app will find questions and folders whose text or name
 contains that text (upper and lower case do not matter; answers are not searched).
-Type `#tag_name` to add a tag to the search.
+To narrow the results to a tag, click it in the "Tags" panel — text and tags work together.
 
-When you search or filter by tag, the list shows results from the whole base, not the contents
-of a folder — in this view you cannot paste or cut. To go back to the folders, clear the search
-field or deselect the tags.
+When you search or filter by tag, the list shows results from the current folder and all its
+subfolders (in the "Root folder" — from the whole base), not just the contents of the folder. A folder
+in which all questions match is shown in the results as a single folder. In this view you cannot
+create, paste or duplicate items — you paste what you cut or copied after going back to the folders.
+To go back to the folders, clear the search field or deselect the tags.
 
 ![Search with a tag](zrzut:base-explorer-search-filters)
-![Filter results from the whole base](zrzut:base-explorer-filter)
+![Filter results](zrzut:base-explorer-filter)
 ![Search on a phone](zrzut:base-explorer-search-sheet@phone)
 
 ## 9.6 Keyboard shortcuts
@@ -174,4 +176,5 @@ The chosen game type decides what gets carried over: a standard poll keeps only 
 scored — questions and answers without points (the points will come from the poll), and a prepared game —
 questions, answers and points.
 
-You cannot create a game from a base you only have read-only access to (→ 12.4).
+You can also create a game from a base you only have read-only access to — it is created as a copy
+of the questions in your games, and the base stays unchanged (→ 12.4).

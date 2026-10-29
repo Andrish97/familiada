@@ -1,10 +1,22 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-29T15573";
-import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-29T15573";
-import { icon, iconText } from "./icons.js?v=v2026-10-29T15573";
-import { getTurnstileToken } from "./turnstile.js?v=v2026-10-29T15573";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-29T16063";
+import { openDialog, closeDialog, isSheetViewport } from "./modal-sheet.js?v=v2026-10-29T16063";
+import { icon, iconText } from "./icons.js?v=v2026-10-29T16063";
+import { getTurnstileToken } from "./turnstile.js?v=v2026-10-29T16063";
 
 
 let modalEl = null;
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+// Załączniki wysyłane (do 5 plików po 5 MB) i pominięte.
+function splitAttachments(fileList) {
+  const accepted = [], skipped = [];
+  for (const file of Array.from(fileList || [])) {
+    if (file.size > MAX_FILE_BYTES || accepted.length >= MAX_FILES) skipped.push(file);
+    else accepted.push(file);
+  }
+  return { accepted, skipped };
+}
 let isSubmitting = false;
 // Okno kontaktu zawsze korzysta ze wspólnego okna od dołu (modal-sheet.js).
 let usedSheetMode = false;
@@ -132,14 +144,17 @@ function ensureModal() {
   document.getElementById("cModalAttachments")?.addEventListener("change", (e) => {
     const list = document.getElementById("cModalFileList");
     if (!list) return;
-    const files = Array.from(e.target.files || []);
+    const { accepted, skipped } = splitAttachments(e.target.files);
     // Nazwa pliku jako tekst (nazwa może zawierać znaczniki HTML).
-    list.replaceChildren(...files.map(f => {
+    list.replaceChildren(...accepted.map(f => {
       const chip = document.createElement("span");
       chip.className = "contact-file";
       chip.textContent = f.name;
       return chip;
     }));
+    // Pliki ponad limit nie są wysyłane -- mówimy o tym od razu, przy wyborze.
+    const hint = document.getElementById("cModalAttachHint");
+    if (hint) hint.textContent = skipped.length ? t("contact.modal.attachSkipped", { files: skipped.map(f => f.name).join(", ") }) : "";
   });
 
   window.addEventListener("i18n:lang", applyLabels);
@@ -147,7 +162,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-29T15573");
+    const { sb } = await import("./supabase.js?v=v2026-10-29T16063");
 
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
@@ -176,6 +191,8 @@ export async function openContactModal(opts = {}) {
   if (fileInput) fileInput.value = "";
   const fileList = document.getElementById("cModalFileList");
   if (fileList) fileList.innerHTML = "";
+  const attachHint = document.getElementById("cModalAttachHint");
+  if (attachHint) attachHint.textContent = "";
 
   const ticketInp = document.getElementById("cModalTicket");
   if (opts.ticket && ticketInp) {
@@ -232,8 +249,7 @@ async function submitContact() {
     const attachments = [];
     const fileInput = document.getElementById("cModalAttachments");
     if (fileInput?.files?.length) {
-      for (const file of Array.from(fileInput.files).slice(0, 5)) {
-        if (file.size > 5 * 1024 * 1024) continue;
+      for (const file of splitAttachments(fileInput.files).accepted) {
         const b64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result.split(",")[1]);

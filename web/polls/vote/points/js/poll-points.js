@@ -1,10 +1,10 @@
 // js/pages/poll-points.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T15573";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-29T15573";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-29T15573";
-import { createPollVoteView, createPollVoteSession } from "../../../../shared/js/core/poll-vote-session.js?v=v2026-10-29T15573";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-29T15573";
-import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-29T15573";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T16063";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-29T16063";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-29T16063";
+import { createPollVoteView, createPollVoteSession } from "../../../../shared/js/core/poll-vote-session.js?v=v2026-10-29T16063";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-29T16063";
+import { initEntryPage } from "../../../../shared/js/core/page-init.js?v=v2026-10-29T16063";
 
 // Podręcznik w nowej karcie (wpisane odpowiedzi zostają), bez ?ret= — adres niesie klucz ankiety.
 const i18nReady = initEntryPage("pollVotePoints", { ready: initI18n({ withSwitcher: true }) }).then(() => {
@@ -150,8 +150,11 @@ function render() {
       b.className = "btn full";
       b.textContent = a.text || MSG.answerFallback(a.ord);
 
-      b.addEventListener("click", () => {
+      b.addEventListener("click", (e) => {
         if (voteView.finished || submitting) return;
+        // Drugie kliknięcie dwukliku trafia w przycisk następnego pytania, którego
+        // głosujący jeszcze nie widział — nie może za niego odpowiedzieć.
+        if (e.detail > 1) return;
 
         // zapamiętaj wybór (bez wysyłki)
         const packed = { question_id: q.id, answer_id: a.id };
