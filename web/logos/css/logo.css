@@ -510,11 +510,15 @@
     justify-content:center;
     padding: 8px;
   }
+  /* object-fit:contain — gdy max-height przycina wysokość (niskie okno,
+     klawiatura), szerokość zostaje 100%; bez tego bufor canvasa rozciągał
+     się w poziomie i kropki były owalne (jak .logoPrev canvas). */
   #imgBigPreview,
   #paneText #bigPreview{
     width: 100%;
     height: auto;
     max-height: 100%;
+    object-fit: contain;
     image-rendering: pixelated;
   }
 
@@ -838,6 +842,7 @@
     width: 100%;
     height: auto;
     max-height: 100%;
+    object-fit: contain;
     image-rendering: pixelated;
     flex-shrink: 0;
     transform-origin: 0 0;
