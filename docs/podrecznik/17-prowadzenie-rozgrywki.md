@@ -68,6 +68,8 @@ straci połączenie z grą.
 > - **podłącz ładowarkę** — gra trwa długo, a przy niskiej baterii system sam włącza oszczędzanie;
 > - **ustaw automatyczną blokadę ekranu** na najdłuższy czas albo „Nigdy”;
 > - **nie blokuj ekranu przyciskiem i nie przełączaj aplikacji** — strona w tle traci połączenie;
+> - **włącz tryb „Nie przeszkadzać”** — przychodzące połączenia i powiadomienia nie zasłonią strony,
+>   a internet działa dalej (nie używaj trybu samolotowego, bo wyłącza też internet);
 > - **zrób próbę**: podłącz urządzenie, odłóż je na kilka minut i sprawdź, czy ekran nadal świeci,
 >   a kropka urządzenia w panelu jest zielona.
 

@@ -69,6 +69,8 @@ connection to the game.
 > - **set Auto-Lock** to the longest time or "Never";
 > - **do not lock the screen with the button or switch apps** — a page in the background loses
 >   its connection;
+> - **turn on Do Not Disturb** — incoming calls and notifications will not cover the page, and the
+>   internet keeps working (do not use Airplane Mode, it turns the internet off too);
 > - **do a test run**: connect the device, leave it for a few minutes and check that the screen
 >   is still on and the device dot in the panel is green.
 
