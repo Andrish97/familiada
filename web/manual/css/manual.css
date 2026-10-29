@@ -156,9 +156,9 @@
       padding: 24px 32px 0;
   }
 
-  .m-article { max-width: 820px; }
-
-  .m-page-footer { margin-top: 40px; }
+  /* Odstęp przed stopką po stronie treści: stopka zachowuje margin-top: auto
+     z silnika, więc w krótkim rozdziale stoi na dole okna. */
+  .m-article { max-width: 820px; margin-bottom: 40px; }
 
 
   /* Lista podrozdziałów w nagłówku rozdziału — tylko gdy pasek boczny jest schowany (telefon, tablet). */

@@ -4263,11 +4263,13 @@ test("control2: powrót do Control ze Wskazówek w trakcie rundy zapisuje parę 
       const startedAt = Date.now();
       await page.locator("#btnBack").click();
       await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
-      // Po powrocie Control może czekać na koniec intro (32 s).
-      await expect(startRound).toBeVisible({ timeout: 60000 });
-      console.log(`[e2e-diag] control-return round=${round} visibleMs=${Date.now() - startedAt}`);
-      await expect(startRound).toBeEnabled({ timeout: 15000 });
-      console.log(`[e2e-diag] control-return round=${round} readyMs=${Date.now() - startedAt}`);
+      // Stan gry jest w bazie: po powrocie Control wznawia trwającą rundę
+      // (pojedynek), a nie wraca do ekranu „Rozpocznij rundę”.
+      const resumed = await page.locator(".c2-tilegrid").waitFor({ state: "visible", timeout: 30000 }).then(() => true, () => false);
+      const navLabels = await page.evaluate(() => [...document.querySelectorAll(".c2-gameplay-nav button, #app button.gold")].map((b) => b.textContent.trim()));
+      console.log(`[e2e-diag] control-return round=${round} resumed=${resumed} ms=${Date.now() - startedAt} nav=${JSON.stringify(navLabels)}`);
+      expect(resumed, "po powrocie ze Wskazówek Control pokazuje trwającą rundę").toBe(true);
+      await expect(startRound).toHaveCount(0);
       await expect(unlockScreen).toHaveClass(/\bhidden\b/);
     }
 

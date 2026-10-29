@@ -39,7 +39,7 @@
 
   .hero-lead {
     margin: 10px 0 0;
-    opacity: .88;
+    color: var(--text-soft);
     line-height: 1.55;
     max-width: 82ch;
     font-size: 14.5px;
@@ -55,7 +55,7 @@
 
   .hero-note {
     margin-top: 10px;
-    opacity: .6;
+    color: var(--text-faint);
     font-size: 12.5px;
   }
 
@@ -77,6 +77,10 @@
   /* do pełnej gotowości (js/index.js initPipeline) pasek jest niewidoczny, miejsce zostaje */
   .pipeline-wrap:not(.is-ready) { visibility: hidden; opacity: 0; }
   .pipeline-wrap.is-ready { visibility: visible; opacity: 1; transition: opacity .25s ease; }
+  /* Dotyk: pasek pojawia się bez przejścia opacity (Android: artefakty GPU nad kartą hero). */
+  @media (hover: none) and (pointer: coarse) {
+    .pipeline-wrap.is-ready { transition: none; }
+  }
 
   /* [przycisk] [linia] [przycisk] [linia] [przycisk] ... */
   .pipeline {
@@ -213,8 +217,7 @@
     font-weight: 1000;
     letter-spacing: .16em;
     text-transform: uppercase;
-    color: var(--accent);
-    opacity: .5;
+    color: var(--g-60);
   }
 
   .landing-section-heading {
@@ -230,7 +233,7 @@
   .about-body p {
     margin: 0 0 12px;
     font-size: 14px;
-    opacity: .85;
+    color: var(--text-soft);
     line-height: 1.7;
   }
   .about-body p:last-child { margin-bottom: 0; }
@@ -274,7 +277,7 @@
 
   .tile p {
     margin: 10px 0 0;
-    opacity: .82;
+    color: var(--text-soft);
     line-height: 1.55;
     font-size: 13px;
   }
@@ -282,7 +285,7 @@
   .tiles-more {
     max-width: 780px;
     margin: 16px auto 0;
-    opacity: .76;
+    color: var(--text-muted);
     line-height: 1.6;
     text-align: center;
   }
@@ -378,7 +381,7 @@
     border-radius: 50%;
   }
 
-  @media (hover:hover) {
+  @media (hover: hover) and (pointer: fine) {
     .tile-shot:hover {
       border-color: var(--w-14);
       box-shadow: 0 18px 50px var(--k-40);
@@ -414,7 +417,7 @@
   .forwhom-card p {
     margin: 0;
     font-size: 13px;
-    opacity: .78;
+    color: var(--text-muted);
     line-height: 1.6;
   }
 
@@ -431,7 +434,7 @@
     font-weight: 700;
     letter-spacing: .08em;
     text-transform: uppercase;
-    opacity: .45;
+    color: var(--text-faint);
   }
   .faq-category-title:first-of-type { margin-top: 0; }
 
@@ -453,21 +456,20 @@
   .faq-q .faq-caret {
     width: 18px;
     height: 18px;
-    color: var(--accent);
-    opacity: .5;
+    color: var(--g-60);
     flex-shrink: 0;
-    transition: transform 200ms ease, opacity 200ms ease;
+    transition: transform 200ms ease, color 200ms ease;
   }
 
   details[open] .faq-q .faq-caret {
     transform: rotate(180deg);
-    opacity: 1;
+    color: var(--accent);
   }
 
   .faq-a {
     margin: 0 0 14px 4px;
     font-size: 13px;
-    opacity: .78;
+    color: var(--text-muted);
     line-height: 1.7;
   }
   .faq-support { margin: -4px 0 16px 4px; }
@@ -492,7 +494,7 @@
       gap: 1px;
   }
   .rating-badge-index .count {
-      opacity: 0.6;
+      color: var(--g-60);
       font-weight: 700;
       font-size: 11px;
   }
