@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="login">
+  <meta name="robots" content="noindex, follow">
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="index.title">Familijna — logowanie</title>
+  <link rel="canonical" href="https://www.familijna.app/login">
+  
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/login/css/login.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/login/js/login.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+<body class="auth-body mode-login no-footer-line skel-body" data-confirm-url="/login/confirm/" data-reset-url="/login/reset/" data-games-url="/games/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
+  <div class="login-top-left">
+    <a href="/"
+       class="btn"
+       id="btnBackHome"
+       data-i18n="index.backHome" data-i18n-icon="arrow-left">Strona główna</a>
+  </div>
+  <div class="login-top-right" data-lang-slot>
+    <a href="/manual/?ch=5"
+       class="btn icon"
+       id="btnManual"
+       data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info" aria-hidden="true"></i></a>
+  </div>
+  <div class="auth-shell" data-skel-step>
+    <div class="card card--entry login-card" id="loginCard">
+      <div class="login-header">
+        <div class="login-brand">FAMILIJNA</div>
+      </div>
+      <div class="login-intro" data-i18n="index.intro">Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.</div>
+      <div class="status" id="status" data-i18n="index.statusChecking">Sprawdzam sesję…</div>
+
+      <div class="form">
+        <input class="inp" id="email" type="email" placeholder="E-mail lub nazwa użytkownika" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
+        <input class="inp" id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
+        <input class="inp" id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
+        <div class="hint" id="pwdHint"></div>
+
+        <div class="row">
+          <button class="btn gold" id="btnPrimary" type="button" data-i18n="index.btnLogin" data-i18n-icon="arrow-right">Zaloguj</button>
+          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister" data-i18n-icon="plus">Załóż konto</button>
+          <button class="btn" id="btnGuest" type="button" data-i18n="index.btnGuest" data-i18n-icon="person">Wejdź jako gość</button>
+        </div>
+
+        <div class="meta">
+          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot" data-i18n-icon="envelope">Przypomnij hasło</button>
+          <span class="cooldown" id="forgotCooldown" hidden></span>
+          <span class="field-error" id="err" role="alert"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card--entry login-card setup-card" id="setupCard" hidden>
+      <div class="brand">FAMILIJNA</div>
+      <div class="sub" data-i18n="index.setupTitle">Pierwsze logowanie</div>
+      <div class="setup-title" data-i18n="index.setupPrompt">Ustaw nazwę użytkownika</div>
+      <div class="setup-sub" data-i18n="index.setupSub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
+
+      <form class="setup-form" id="usernameForm">
+        <input class="inp" id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
+        <div class="field-error" id="usernameErr" role="alert"></div>
+        <div class="modal-actions">
+          <button class="btn gold" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave" data-i18n-icon="save">Zapisz nazwę</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

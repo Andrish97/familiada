@@ -1,0 +1,54 @@
+\set ON_ERROR_STOP 1
+BEGIN;
+DO $$
+DECLARE a uuid:=gen_random_uuid(); b uuid:=gen_random_uuid(); c uuid:=gen_random_uuid();
+ old jsonb; newer jsonb; preview jsonb; change jsonb; gid uuid; bgid uuid; bid uuid; r jsonb; n integer;
+ base jsonb; logo jsonb; qs jsonb;
+BEGIN
+ IF has_function_privilege('anon','admin_demo_replace(uuid,text,text,jsonb,text)','EXECUTE') OR has_table_privilege('authenticated','admin_demo_targets','SELECT') THEN RAISE EXCEPTION 'demo_admin_exposed'; END IF;
+ INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES(a,'demo-a@example.invalid','{}'),(b,'demo-b@example.invalid','{}'),(c,'demo-c@example.invalid','{}');
+ SELECT jsonb_agg(jsonb_build_object('text','Pytanie '||i,'answers',jsonb_build_array(jsonb_build_object('text','Ręcznik','fixed_points',40),jsonb_build_object('text','Parasol','fixed_points',30),jsonb_build_object('text','Woda','fixed_points',22))) ORDER BY i) INTO qs FROM generate_series(1,10) i;
+ old:=jsonb_build_object('game',jsonb_build_object('name','Demo testowe','type','prepared','state','draft'),'questions',qs,'votes','[]'::jsonb);
+ INSERT INTO demo_template_data(lang,slot,payload) VALUES('pl','prepared',old) ON CONFLICT(lang,slot) DO UPDATE SET payload=excluded.payload;
+ base:='{"base":{"name":"Baza demo"},"categories":[{"id":"a","parent_id":null,"name":"Folder","ord":1}],"tags":[{"id":"t","name":"Tag","color":"#fff","ord":1}],"questions":[{"id":"q","category_id":"a","ord":1,"payload":{"text":"Pytanie bazowe","answers":[]}}],"question_tags":[{"question_id":"q","tag_id":"t"}],"category_tags":[{"category_id":"a","tag_id":"t"}]}';
+ INSERT INTO demo_template_data(lang,slot,payload) VALUES('pl','base',base) ON CONFLICT(lang,slot) DO UPDATE SET payload=excluded.payload;
+ logo:=jsonb_build_object('name','Logo demo','kind','GLYPH','payload',jsonb_build_object('layers',jsonb_build_array(jsonb_build_object('color','main','rows',to_jsonb(array_fill(repeat(' ',30),ARRAY[10]))))));
+ INSERT INTO demo_template_data(lang,slot,payload) VALUES('pl','logo_text',logo) ON CONFLICT(lang,slot) DO UPDATE SET payload=excluded.payload;
+ PERFORM seed_demo_for_user(a,'pl');PERFORM seed_demo_for_user(b,'pl');PERFORM seed_demo_for_user(c,'pl');
+ SELECT id INTO gid FROM games WHERE owner_id=a AND name='Demo testowe';
+ SELECT id INTO bgid FROM games WHERE owner_id=b AND name='Demo testowe';
+ IF public._demo_current_definition('game',gid)<>public._demo_template_definition('prepared',old) THEN RAISE EXCEPTION 'seed_game_definition_differs'; END IF;
+ SELECT id INTO bid FROM question_bases WHERE owner_id=a AND name='Baza demo';
+ IF public._demo_current_definition('base',bid)<>public._demo_template_definition('base',base) THEN RAISE EXCEPTION 'seed_base_definition_differs'; END IF;
+ UPDATE questions SET text='Własna zmiana użytkownika' WHERE game_id=bgid AND ord=1;
+ newer:=jsonb_set(old,'{game,name}','"Nowa gra demo"');
+ preview:=admin_demo_preview('pl','prepared',newer);
+ IF (preview->>'eligible')::int<>2 THEN RAISE EXCEPTION 'edited_copy_was_eligible'; END IF;
+ change:=admin_demo_replace(gen_random_uuid(),'pl','prepared',newer,preview->>'revision');
+ UPDATE games SET name='Zmiana po podglądzie' WHERE owner_id=c AND name='Demo testowe';
+ FOR n IN 1..10 LOOP r:=admin_demo_apply_next();EXIT WHEN r IS NULL; END LOOP;
+ IF (SELECT name FROM games WHERE id=gid)<>'Nowa gra demo' OR (SELECT name FROM games WHERE id=bgid)<>'Demo testowe' THEN RAISE EXCEPTION 'wrong_game_replacement'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM admin_demo_targets WHERE update_id=(change->>'id')::uuid AND status='edited') THEN RAISE EXCEPTION 'concurrent_edit_not_preserved'; END IF;
+ newer:=jsonb_set(base,'{base,name}','"Nowa baza demo"');preview:=admin_demo_preview('pl','base',newer);
+ PERFORM admin_demo_replace(gen_random_uuid(),'pl','base',newer,preview->>'revision');
+ FOR n IN 1..10 LOOP r:=admin_demo_apply_next();EXIT WHEN r IS NULL; END LOOP;
+ IF (SELECT count(*) FROM question_bases WHERE owner_id IN(a,b,c) AND name='Nowa baza demo')<>3 THEN RAISE EXCEPTION 'base_not_updated'; END IF;
+ newer:=jsonb_set(logo,'{name}','"Nowe logo demo"');preview:=admin_demo_preview('pl','logo_text',newer);
+ PERFORM admin_demo_replace(gen_random_uuid(),'pl','logo_text',newer,preview->>'revision');
+ FOR n IN 1..10 LOOP r:=admin_demo_apply_next();EXIT WHEN r IS NULL; END LOOP;
+ IF (SELECT count(*) FROM user_logos WHERE user_id IN(a,b,c) AND name='Nowe logo demo')<>3 THEN RAISE EXCEPTION 'logo_not_updated'; END IF;
+ old:=jsonb_set(old,'{game,type}','"poll_text"');
+ old:=old||jsonb_build_object('demo_vote_counts',jsonb_build_array(jsonb_build_object('question',1,'text','Przykładowy głos','count',3)));
+ INSERT INTO demo_template_data(lang,slot,payload) VALUES('en','poll_text_open',old) ON CONFLICT(lang,slot) DO UPDATE SET payload=excluded.payload;
+ PERFORM seed_demo_for_user(a,'en');
+ SELECT id INTO gid FROM games WHERE owner_id=a AND type='poll_text' AND status='poll_open' ORDER BY created_at DESC LIMIT 1;
+ IF (SELECT count(*) FROM poll_text_entries WHERE game_id=gid)<>3 OR public._demo_current_definition('game',gid)<>public._demo_template_definition('poll_text_open',old) THEN RAISE EXCEPTION 'manual_text_votes_failed'; END IF;
+ old:=jsonb_set(old,'{game,type}','"poll_points"');
+ old:=old||jsonb_build_object('demo_vote_counts',jsonb_build_array(jsonb_build_object('question',1,'answer',2,'count',4)));
+ INSERT INTO demo_template_data(lang,slot,payload) VALUES('uk','poll_points_open',old) ON CONFLICT(lang,slot) DO UPDATE SET payload=excluded.payload;
+ PERFORM seed_demo_for_user(a,'uk');
+ SELECT id INTO gid FROM games WHERE owner_id=a AND type='poll_points' AND status='poll_open' ORDER BY created_at DESC LIMIT 1;
+ IF (SELECT count(*) FROM poll_votes WHERE game_id=gid)<>4 OR public._demo_current_definition('game',gid)<>public._demo_template_definition('poll_points_open',old) THEN RAISE EXCEPTION 'manual_points_votes_failed'; END IF;
+END $$;
+ROLLBACK;
+\echo 'admin-demo-499: OK'

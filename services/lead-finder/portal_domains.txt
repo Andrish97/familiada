@@ -1,0 +1,25 @@
+# Portale i katalogi — adres z portalu nie jest kontaktem firmy, profil na
+# portalu może prowadzić do firmy (AI ocenia, e-mail musi być spoza portalu).
+olx.pl
+fixly.pl
+oferteo.pl
+gratka.pl
+panoramafirm.pl
+pkt.pl
+aleo.com
+cylex.pl
+firmy.net
+weselezklasa.pl
+wedding.pl
+weselicho.net
+mamfach.pl
+dealoo.pl
+ebilet.pl
+facebook.com
+instagram.com
+linkedin.com
+tiktok.com
+twitter.com
+x.com
+pinterest.com
+youtube.com

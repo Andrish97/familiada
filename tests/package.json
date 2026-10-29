@@ -1,0 +1,13 @@
+{
+  "name": "familijna-e2e-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:unit": "node --test unit/*.test.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "esbuild": "^0.27.7",
+    "eslint": "^9.39.5"
+  }
+}

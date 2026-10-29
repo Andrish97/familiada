@@ -1,0 +1,138 @@
+// Testy web/shared/js/gameplay/deriveEvents.js — patrz plan przebudowy, sekcja 3.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { deriveEvents } from "../../web/shared/js/gameplay/deriveEvents.js";
+
+function row(overrides = {}) {
+  return {
+    step: "r_play",
+    phase: "PLAY",
+    control_team: "A",
+    sound_cue_key: null,
+    sound_cue_seq: 0,
+    detail: { rounds: { revealed: [], xA: 0, xB: 0, steal: {} }, final: { runtime: {} }, display: {}, host: {} },
+    ...overrides,
+  };
+}
+
+test("brak poprzedniego wiersza => tylko SNAPSHOT_RENDER (pierwsze renderowanie po (re)connect)", () => {
+  const events = deriveEvents(null, row());
+  assert.deepEqual(events, [{ kind: "SNAPSHOT_RENDER" }]);
+});
+
+test("brak zmian => brak zdarzeń", () => {
+  const a = row();
+  const b = row();
+  assert.deepEqual(deriveEvents(a, b), []);
+});
+
+test("zmiana step generuje STEP_CHANGE", () => {
+  const events = deriveEvents(row({ step: "r_duel" }), row({ step: "r_play" }));
+  assert.ok(events.some((e) => e.kind === "STEP_CHANGE" && e.from === "r_duel" && e.to === "r_play"));
+});
+
+test("locks.gameEnded false->true generuje GAME_ENDED (GAME_END_SHOW/FINISH_FINAL — ten sam step, więc STEP_CHANGE nie wystarcza)", () => {
+  const a = row({ step: "r_gameEnd", detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: false } } });
+  const b = row({ step: "r_gameEnd", detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  const events = deriveEvents(a, b);
+  assert.ok(events.some((e) => e.kind === "GAME_ENDED"));
+  assert.equal(events.some((e) => e.kind === "STEP_CHANGE"), false);
+});
+
+test("locks.gameEnded już true w obu wierszach => brak GAME_ENDED (nie odpala się ponownie)", () => {
+  const a = row({ detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  const b = row({ detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  assert.equal(deriveEvents(a, b).some((e) => e.kind === "GAME_ENDED"), false);
+});
+
+test("zmiana control_team generuje CONTROL_CHANGED", () => {
+  const events = deriveEvents(row({ control_team: "A" }), row({ control_team: "B" }));
+  assert.ok(events.some((e) => e.kind === "CONTROL_CHANGED" && e.team === "B"));
+});
+
+test("nowo odkryte odpowiedzi generują ANSWER_REVEALED z listą nowych ord", () => {
+  const prev = row({ detail: { rounds: { revealed: [1, 2] } } });
+  const next = row({ detail: { rounds: { revealed: [1, 2, 3] } } });
+  const events = deriveEvents(prev, next);
+  const ev = events.find((e) => e.kind === "ANSWER_REVEALED");
+  assert.deepEqual(ev.ords, [3]);
+});
+
+test("wzrost xA generuje STRIKE dla drużyny A, spadek/brak zmiany nic nie generuje", () => {
+  const events = deriveEvents(row({ detail: { rounds: { xA: 0, xB: 0 } } }), row({ detail: { rounds: { xA: 1, xB: 0 } } }));
+  assert.ok(events.some((e) => e.kind === "STRIKE" && e.team === "A" && e.count === 1));
+  assert.ok(!events.some((e) => e.kind === "STRIKE" && e.team === "B"));
+});
+
+test("wzrost rounds.duel.missSeq generuje DUEL_MISS z lastMissTeam (pudło w pojedynku, xA/xB nietknięte)", () => {
+  const prev = row({ detail: { rounds: { xA: 0, xB: 0, duel: { missSeq: 0, lastMissTeam: null } } } });
+  const next = row({ detail: { rounds: { xA: 0, xB: 0, duel: { missSeq: 1, lastMissTeam: "A" } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "DUEL_MISS" && e.team === "A"));
+  assert.ok(!events.some((e) => e.kind === "STRIKE"));
+});
+
+test("steal.used flip na true generuje STEAL_RESOLVED z poprawnym won", () => {
+  const prev = row({ detail: { rounds: { steal: { used: false } } } });
+  const next = row({ detail: { rounds: { steal: { used: true, won: true } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "STEAL_RESOLVED" && e.won === true));
+});
+
+test("odsłonięcie odpowiedzi finału generuje FINAL_ANSWER_REVEALED/FINAL_POINTS_REVEALED z poprawnym indeksem", () => {
+  const prev = row({ detail: { final: { runtime: { map1: [{ revealedAnswer: false, revealedPoints: false }] } } } });
+  const next = row({ detail: { final: { runtime: { map1: [{ revealedAnswer: true, revealedPoints: false }] } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "FINAL_ANSWER_REVEALED" && e.round === "map1" && e.idx === 0));
+  assert.ok(!events.some((e) => e.kind === "FINAL_POINTS_REVEALED"));
+});
+
+test("start i stop timera generują TIMER_STARTED/TIMER_STOPPED", () => {
+  const idle = row({ detail: { final: { runtime: { timer: { running: false } } } } });
+  const running = row({ detail: { final: { runtime: { timer: { running: true, phase: "P1", endsAt: 123 } } } } });
+  const startEvents = deriveEvents(idle, running);
+  assert.ok(startEvents.some((e) => e.kind === "TIMER_STARTED" && e.phase === "P1" && e.endsAt === 123));
+
+  const stopEvents = deriveEvents(running, idle);
+  assert.ok(stopEvents.some((e) => e.kind === "TIMER_STOPPED"));
+});
+
+test("start i stop timera3 (3s decyzja w rundach) generują TIMER3_STARTED/TIMER3_STOPPED, niezależnie od timera finału", () => {
+  const idle = row({ detail: { rounds: { timer3: { running: false } }, final: { runtime: { timer: { running: false } } } } });
+  const running = row({ detail: { rounds: { timer3: { running: true, endsAt: 456 } }, final: { runtime: { timer: { running: false } } } } });
+  const startEvents = deriveEvents(idle, running);
+  assert.ok(startEvents.some((e) => e.kind === "TIMER3_STARTED" && e.endsAt === 456));
+  assert.ok(!startEvents.some((e) => e.kind === "TIMER_STARTED"), "timer3 nie myli się z timerem finału");
+
+  const stopEvents = deriveEvents(running, idle);
+  assert.ok(stopEvents.some((e) => e.kind === "TIMER3_STOPPED"));
+});
+
+test("zmiana sound_cue_seq generuje SOUND_CUE z aktualnym kluczem (nawet gdy klucz się powtarza)", () => {
+  const prev = row({ sound_cue_key: "answer_correct", sound_cue_seq: 3 });
+  const next = row({ sound_cue_key: "answer_correct", sound_cue_seq: 4 });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "SOUND_CUE" && e.key === "answer_correct"));
+});
+
+test("zmiana display.mode generuje DISPLAY_MODE_CHANGED z qr", () => {
+  const prev = row({ detail: { display: { mode: "BLACK" } } });
+  const next = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: false } } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "DISPLAY_MODE_CHANGED" && e.mode === "QR" && e.qr?.host?.show === true));
+});
+
+test("QR host/buzzer NIEZALEŻNE: dodanie drugiego bez zmiany mode też generuje DISPLAY_MODE_CHANGED", () => {
+  const prev = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: false } } } } });
+  const next = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: true } } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "DISPLAY_MODE_CHANGED" && e.qr?.buzzer?.show === true));
+});
+
+test("zmiana host.covered generuje HOST_COVER_CHANGED", () => {
+  const prev = row({ detail: { host: { covered: true } } });
+  const next = row({ detail: { host: { covered: false } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "HOST_COVER_CHANGED" && e.covered === false));
+});

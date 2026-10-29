@@ -1,0 +1,39 @@
+-- Usuwa politykę public.game_state_anon_read_ready (dodaną w migracji 259).
+--
+-- Diagnoza (2026-09-05, seria sprawdzeń na produkcyjnym self-hosted Supabase):
+-- ta polityka nigdy nie działała jako mechanizm dostarczania postgres_changes
+-- dla roli anon — nie z powodu błędnej konfiguracji serwera (kolejno
+-- wykluczone: publikacja, slot replikacji, REPLICA IDENTITY, GRANT SELECT na
+-- game_state, treść samej polityki, jwt_secret w _realtime.tenants, Kong),
+-- tylko dlatego że jej podzapytanie EXISTS(...) do public.games samo podlega
+-- RLS na games — a jedyna tamtejsza polityka dostępna dla anon/public
+-- (games_select_by_keys, baseline 2026-03-01_000, linia ~8543) wymaga
+-- niestandardowego claimu JWT "share_key", którego nic w dzisiejszym kodzie
+-- nie ustawia (share_key jest przekazywany jako zwykły parametr URL do
+-- SECURITY DEFINER RPC, nigdy jako JWT claim).
+--
+-- Decyzja architektoniczna (ustalona wprost z właścicielem projektu): nie
+-- naprawiamy tego podzapytania (np. denormalizując status na game_state) —
+-- zamiast tego anon nie dostaje ŻADNEJ bezpośredniej polityki SELECT na
+-- game_state wcale, dokładnie tak jak dziś public.device_state (tylko
+-- device_state_owner_read dla authenticated, zero dla anon). Prawdziwe
+-- zabezpieczenie treści gry (pytania/odpowiedzi/wynik) ma być egzekwowane
+-- wyłącznie przez share_key/6-cyfrowy kod sprawdzany WEWNĄTRZ SECURITY
+-- DEFINER RPC (game_state_get, migracja 260) — nie przez RLS na surowej
+-- tabeli. Ktoś odpytujący game_state bezpośrednio (REST, próba
+-- postgres_changes) bez przejścia przez ten RPC ma dostać zero wierszy
+-- ZAWSZE, niezależnie od statusu gry czy znajomości game_id — silniejszy
+-- model niż status='ready' (który ujawniałby treść gry każdemu znającemu UUID,
+-- bez potrzeby klucza).
+--
+-- Konsekwencja: postgres_changes dla anon na tej tabeli nie zadziała nigdy —
+-- to świadome, trwałe ograniczenie, nie regresja do naprawienia. display2/
+-- host2/buzzer2 czytają stan wyłącznie przez game_state_get (bootstrap +
+-- ponowne wywołanie po broadcastowym "dzwonku" z {rev}), nigdy przez
+-- .from("game_state").select() ani postgres_changes.
+--
+-- Czysto addytywna zmiana ograniczona do nowej, jeszcze nieużywanej przez
+-- żadną stronę tabeli — zero wpływu na dzisiejszy control.html/display.html,
+-- na games, na device_state, czy cokolwiek innego produkcyjnego.
+
+DROP POLICY IF EXISTS "game_state_anon_read_ready" ON "public"."game_state";

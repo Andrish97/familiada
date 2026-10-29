@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="gameSettings gameValidate resources">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="gameSettings.title">Familijna — ustawienia gry</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/game-settings.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module">
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-29T02360";
+    await initI18n({ withSwitcher: true });
+    document.documentElement.classList.remove('page-loading');
+    import("/games/settings/js/game-settings.js?v=v2026-10-29T02360");
+
+  </script>
+</head>
+<body class="gs-body skel-body topbar-title-mobile">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="gameSettings.pageTitle">Ustawienia gry</div>
+        <div class="subtitle" id="gsTitle"></div>
+      </div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="whoStatic">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <div class="gs-layout">
+    <div class="gs-actionbar fit-row" id="gsFooter">
+      <button class="btn drawer-toggle gs-sidebar-toggle" id="gsSidebarToggle" type="button" aria-expanded="false" aria-controls="gsSidebar" data-i18n-aria-label="gameSettings.categories.open" aria-label="Pokaż sekcje"><i class="ico" data-icon="hamburger" data-icon-animation="menu" aria-hidden="true"></i></button>
+      <span class="gs-actionbar-msg hidden" id="gsFooterMsg" role="status"></span>
+      <div class="grow"></div>
+      <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-i18n-icon="refresh" data-skel-step>Przywróć domyślne</button>
+      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-i18n-icon="save" data-icon-animation="save" data-skel-step>Zapisz</button>
+      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play" data-i18n-icon="gamepad">Graj</button>
+    </div>
+
+    <button class="drawer-scrim" id="gsSidebarBackdrop" type="button" aria-label="Zamknij sekcje" tabindex="-1"></button>
+    <nav class="drawer gs-sidebar" id="gsSidebar" aria-label="Sekcje ustawień">
+      <button class="gs-sidebar-item active" data-cat="teams"     type="button" data-i18n="gameSettings.categories.teams">Drużyny</button>
+      <button class="gs-sidebar-item"        data-cat="display"   type="button" data-i18n="gameSettings.categories.display">Wygląd</button>
+      <button class="gs-sidebar-item"        data-cat="sound"     type="button" data-i18n="gameSettings.categories.sound">Dźwięk</button>
+      <button class="gs-sidebar-item"        data-cat="questions" type="button" data-i18n="gameSettings.categories.questions">Pytania — Ustawienia</button>
+      <button class="gs-sidebar-item gs-sidebar-sub" id="sidebarFinale" data-cat="finale" type="button" data-i18n="gameSettings.categories.finale">Pytania — Finał</button>
+      <button class="gs-sidebar-item gs-sidebar-sub" id="sidebarRounds" data-cat="rounds" type="button" data-i18n="gameSettings.categories.rounds">Pytania — Rundy</button>
+      <button class="gs-sidebar-item"        data-cat="game"      type="button" data-i18n="gameSettings.categories.game">Ustawienia gry</button>
+    </nav>
+
+    <main class="gs-content" id="gsContent">
+      <div id="gsContentInner" data-skel-step><!-- rendered by JS --></div>
+      <div id="gsLivePreviewWrap" class="gs-live-preview-grid" hidden>
+        <section class="gs-live-preview-card">
+          <div class="gs-live-preview-title" data-i18n="gameSettings.display.preview">Podgląd wyświetlacza</div>
+          <div id="gsDisplayIframeHolder" class="display-preview"></div>
+        </section>
+        <section class="gs-live-preview-card">
+          <div class="gs-live-preview-title" data-i18n="gameSettings.display.hostPreview">Podgląd prowadzącego</div>
+          <div id="gsHostIframeHolder" class="display-preview"></div>
+        </section>
+      </div>
+    </main>
+
+    <div class="footer gs-page-footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </div>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

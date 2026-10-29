@@ -1,0 +1,103 @@
+{
+  "type": "familijna-theme",
+  "version": 1,
+  "name": "Kaseton",
+  "label": {
+    "pl": "Kaseton",
+    "en": "Cabinet",
+    "uk": "Панель"
+  },
+  "inputs": {
+    "T": {
+      "default": "#352719",
+      "label": {
+        "pl": "Tło",
+        "en": "Background",
+        "uk": "Фон"
+      }
+    }
+  },
+  "outputs": {
+    "c1": "tint(#c0cbd3, T, 1)",
+    "c2": "tint(#536477, T, 1)",
+    "c3": "tint(#1b293c, T, 1)",
+    "c4": "tint(#718094, T, 1)",
+    "c5": "tint(#f9d888, T, 1)",
+    "c6": "tint(#79603a, T, 1)",
+    "c7": "tint(#ceaa65, T, 1)",
+    "c8": "tint(#141313, T)",
+    "c9": "tint(#26221d, T)",
+    "c10": "tint(#302a24, T)",
+    "c11": "tint(#867252, T)",
+    "c12": "tint(#5e5141, T)",
+    "c13": "tint(#101114, T)",
+    "c14": "tint(#0b0c10, T)",
+    "c15": "tint(#79654b, T)",
+    "c16": "tint(#090b0e, T)",
+    "c17": "tint(#33302a, T)",
+    "c18": "tint(#a68b5d, T)",
+    "c19": "tint(#90816a, T)",
+    "c20": "tint(#a88e64, T)",
+    "c21": "tint(#a78c62, T)",
+    "c22": "tint(#776e60, T)",
+    "redLight": "mix(A, T, 0.2)",
+    "redDark": "darken(mix(A, T, 0.35), 0.45)",
+    "blueLight": "mix(B, T, 0.2)",
+    "blueDark": "darken(mix(B, T, 0.35), 0.45)",
+    "lampA": {
+      "off": "mix(T, A, 0.25)",
+      "a": "A",
+      "b": "mix(T, A, 0.25)"
+    },
+    "glowA": {
+      "off": "none",
+      "a": "A",
+      "b": "none"
+    },
+    "lampB": {
+      "off": "mix(T, B, 0.25)",
+      "a": "mix(T, B, 0.25)",
+      "b": "B"
+    },
+    "glowB": {
+      "off": "none",
+      "a": "none",
+      "b": "B"
+    }
+  },
+  "display": {
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1280 720\">\n<defs><linearGradient id=\"red\" x2=\"1\" y2=\"1\"><stop stop-color=\"@redLight\"/><stop offset=\"1\" stop-color=\"@redDark\"/></linearGradient><linearGradient id=\"blue\" x2=\"0.8\" y2=\"1\"><stop stop-color=\"@blueLight\"/><stop offset=\"1\" stop-color=\"@blueDark\"/></linearGradient><linearGradient id=\"steel\" x2=\"0\" y2=\"1\"><stop stop-color=\"@c1\"/><stop offset=\".25\" stop-color=\"@c2\"/><stop offset=\".5\" stop-color=\"@c3\"/><stop offset=\"1\" stop-color=\"@c4\"/></linearGradient><linearGradient id=\"gold\" x2=\"0\" y2=\"1\"><stop stop-color=\"@c5\"/><stop offset=\".45\" stop-color=\"@c6\"/><stop offset=\"1\" stop-color=\"@c7\"/></linearGradient><linearGradient id=\"team\" gradientUnits=\"userSpaceOnUse\" x1=\"0\" x2=\"1280\"><stop stop-color=\"#e52849\"/><stop offset=\".48\" stop-color=\"#be366e\"/><stop offset=\"1\" stop-color=\"#277aee\"/></linearGradient></defs><defs><pattern id=\"slats\" width=\"12\" height=\"12\" patternUnits=\"userSpaceOnUse\"><rect width=\"12\" height=\"12\" fill=\"@c8\"/><path d=\"M0 11H12\" stroke=\"@c9\"/></pattern></defs>\n<rect width=\"1280\" height=\"720\" fill=\"@T\"/>\n<path d=\"M0 90H384L430 0H850L896 90H1280V670H0Z\" fill=\"@c10\" stroke=\"@c11\" stroke-width=\"4\"/>\n<path d=\"M14 105H398L442 16H838L882 105H1266V652H14Z\" fill=\"url(#slats)\" stroke=\"url(#gold)\" stroke-width=\"6\"/>\n<path d=\"M32 119H1248V636H32Z\" fill=\"none\" stroke=\"@c12\" stroke-width=\"2\"/>\n<path d=\"M534 0H746L768 20V111H512V20Z\" fill=\"@c13\" stroke=\"url(#gold)\" stroke-width=\"3\"/>\n<rect x=\"4\" y=\"268\" width=\"218\" height=\"230\" rx=\"4\" fill=\"@c14\" stroke=\"@c15\" stroke-width=\"3\"/><rect x=\"1058\" y=\"268\" width=\"218\" height=\"230\" rx=\"4\" fill=\"@c14\" stroke=\"@c15\" stroke-width=\"3\"/>\n<rect x=\"216\" y=\"115\" width=\"848\" height=\"385\" rx=\"2\" fill=\"@c16\" stroke=\"url(#gold)\" stroke-width=\"5\"/>\n<rect x=\"70\" y=\"505\" width=\"1140\" height=\"85\" fill=\"@c17\" stroke=\"url(#gold)\" stroke-width=\"3\"/><path d=\"M640 505V590\" stroke=\"@c18\" stroke-width=\"3\"/>\n<g fill=\"@c19\"><rect x=\"48\" y=\"148\" width=\"126\" height=\"3\"/><rect x=\"1106\" y=\"148\" width=\"126\" height=\"3\"/><rect x=\"48\" y=\"165\" width=\"126\" height=\"3\"/><rect x=\"1106\" y=\"165\" width=\"126\" height=\"3\"/><rect x=\"48\" y=\"182\" width=\"126\" height=\"3\"/><rect x=\"1106\" y=\"182\" width=\"126\" height=\"3\"/><rect x=\"48\" y=\"199\" width=\"126\" height=\"3\"/><rect x=\"1106\" y=\"199\" width=\"126\" height=\"3\"/><rect x=\"48\" y=\"216\" width=\"126\" height=\"3\"/><rect x=\"1106\" y=\"216\" width=\"126\" height=\"3\"/></g>\n<g fill=\"@c14\" stroke=\"@c20\" stroke-width=\"2\"><circle cx=\"40\" cy=\"130\" r=\"4\"/><circle cx=\"1240\" cy=\"130\" r=\"4\"/><circle cx=\"40\" cy=\"620\" r=\"4\"/><circle cx=\"1240\" cy=\"620\" r=\"4\"/></g>\n<path d=\"M48 698H1232\" stroke=\"url(#gold)\" stroke-width=\"4\"/><path d=\"M68 681H1212\" stroke=\"@c12\"/><text x=\"640\" y=\"624\" text-anchor=\"middle\" font-size=\"13\" font-family=\"Georgia\" letter-spacing=\"9\" fill=\"@c21\">FAMILIJNA</text>\n<g fill=\"none\" stroke-width=\"5\"><path class=\"display-theme-indicator a cabinet-light\" d=\"M14 280V488H210\" stroke=\"currentColor\" color=\"@lampA\" data-glow=\"@glowA\"/><path class=\"display-theme-indicator b cabinet-light\" d=\"M1266 280V488H1070\" stroke=\"currentColor\" color=\"@lampB\" data-glow=\"@glowB\"/></g><rect x=\"226.33\" y=\"124.92\" width=\"827.34\" height=\"364.84\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/><rect x=\"18.48\" y=\"291.31\" width=\"190.36\" height=\"92.04\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/><rect x=\"1069.16\" y=\"291.31\" width=\"190.36\" height=\"92.04\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/><rect x=\"544.82\" y=\"11.14\" width=\"190.36\" height=\"92.04\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/><rect x=\"81.53\" y=\"516.99\" width=\"550.54\" height=\"59.4\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/><rect x=\"647.93\" y=\"516.99\" width=\"550.54\" height=\"59.4\" rx=\"2\" fill=\"#000\" stroke=\"@c22\" stroke-width=\"2\"/>\n</svg>",
+    "page": "var(--t-T)",
+    "scale": 1,
+    "motion": 80
+  },
+  "host": {
+    "ruled": false,
+    "board": true,
+    "css": {
+      ":root": {
+        "--host-font": "Georgia, \"Times New Roman\", serif",
+        "--host-font-ratio": "0.94",
+        "--host-line-height-mult": "1.4",
+        "--host-baseline-shift": "0",
+        "--host-paper-bg": "var(--host-board-bg)",
+        "--host-ink": "#f5f5f7",
+        "--host-background": "#352719",
+        "--host-cover-grad-a": "var(--t-A)",
+        "--host-cover-grad-b": "var(--t-B)",
+        "--host-board-radius": "2px"
+      },
+      ".pane": {
+        "border": "4px double var(--host-brass)",
+        "background-image": "radial-gradient(circle at 10px 10px, var(--host-brass) 2px, transparent 3px), radial-gradient(circle at calc(100% - 10px) 10px, var(--host-brass) 2px, transparent 3px), radial-gradient(circle at 10px calc(100% - 10px), var(--host-brass) 2px, transparent 3px), radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), var(--host-brass) 2px, transparent 3px)"
+      },
+      ".pane::after": {
+        "inset": "9px",
+        "border-color": "var(--host-brass)"
+      },
+      ".cover2::before": {
+        "border": "4px double var(--host-brass)"
+      }
+    }
+  }
+}

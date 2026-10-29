@@ -1,0 +1,538 @@
+/* game-settings/settings.css */
+@layer page {
+  .gs-body {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .gs-layout {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    grid-template-rows: auto 1fr auto;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .gs-page-footer {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .gs-sidebar {
+    grid-row: 2;
+    border-right: 1px solid var(--line);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+  }
+
+  .gs-sidebar-item {
+    padding: 10px 14px;
+    border-radius: var(--r-sm);
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text-faint); /* przygaszone kolorem, nie opacity (Android) */
+    transition: color .15s, background .15s;
+    border-left: 3px solid transparent;
+  }
+
+  .gs-sidebar-item:hover {
+    color: var(--text-soft);
+    --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+
+  }
+
+  .gs-sidebar-sub {
+    padding-left: 28px;
+    font-size: .82rem;
+    font-weight: 500;
+  }
+
+  .gs-sidebar-item-disabled {
+    color: var(--disabled-text);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .gs-sidebar-item.active {
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    --btn-tint: var(--g-10);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+
+    color: var(--accent);
+  }
+
+  /* ===== CONTENT ===== */
+  .gs-content {
+    grid-row: 2;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* ===== PASEK AKCJI (Przywróć + komunikat zapisu) ===== */
+  .gs-actionbar {
+    --under: var(--surface-1); /* podłoże dla kryjących teł przycisków (css/base.css) */
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--g-10);
+  }
+
+  .gs-actionbar-msg {
+    flex: 1;
+    font-size: .85rem;
+    opacity: .75;
+  }
+
+
+  /* ===== DŹWIĘKI ===== */
+  .sfx-table { display: flex; flex-direction: column; }
+
+  .sfx-variant-select {
+    font-size: .82rem;
+    padding: 5px 8px;
+    min-width: 0;
+  }
+
+  .sfx-vol,
+  .sound-volume-slider { width: 90px; }
+
+
+  .sfx-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--w-8);
+  }
+
+  /* ===== TOPBAR EXTRAS ===== */
+  /* ===== CATEGORY LAYOUT ===== */
+  .gs-cat-title {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  .gs-section {
+    background: var(--surface-1);
+    --under: var(--surface-1); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .gs-section:last-child { margin-bottom: 0; }
+
+  .gs-field {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .gs-field:last-child { margin-bottom: 0; }
+
+  /* ===== DISPLAY PREVIEW ===== */
+  .display-preview {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--w-14);
+    background: var(--bg);
+    overflow: hidden;
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+
+  .gs-live-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 14px 0;
+  }
+  .gs-live-preview-card { min-width: 0; }
+  .gs-live-preview-title {
+    margin: 0 0 6px;
+    color: var(--accent);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .gs-live-preview-grid .display-preview { margin: 0; }
+  .gs-preview-frame { display: block; width: 100%; height: 100%; border: 0; }
+  #gsThemeSelect { width: 100%; }
+  .sfx-variant-select { min-width: 0; }
+  .gs-list-hint { margin: 0 0 12px; }
+  .gs-prize-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .gs-prize-hint { grid-column: 1 / -1; }
+  .gs-host-logo-mode { display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; width: min(100%, 320px); margin-top: 8px; }
+
+  @media (max-width: 600px) {
+    .gs-live-preview-grid { grid-template-columns: 1fr; }
+  }
+
+
+  /* ===== COLOR SWATCHES ===== */
+  .colorRow{
+    display:flex; flex-wrap:wrap; align-items:center;
+    gap:10px; margin-top:10px;
+  }
+  .colorItem{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 14px; border-radius:var(--r-sm);
+    border:1px solid var(--w-14);
+    background:var(--w-4);
+  }
+  .colorItem .field-label{ margin: 0; white-space: nowrap; }
+  .swatchBtn{
+    width:22px; height:22px; border-radius:var(--r-sm);
+    border:1px solid var(--w-25);
+    background:var(--c, var(--w-8));
+    box-shadow:0 10px 24px var(--k-40);
+    cursor:pointer; flex:0 0 auto;
+  }
+  .swatchBtn:active{ transform:translateY(1px); }
+  .swatchBtn:focus{ outline:2px solid var(--g-35); outline-offset:2px; }
+  /* Motyw bez trzeciego koloru: pole wyłączone. */
+  .colorItem:has(.swatchBtn:disabled){ opacity:.45; }
+  .swatchBtn:disabled{ cursor:default; box-shadow:none; }
+
+  /* ===== SFX TABLE (identyczny z control-new) ===== */
+  .sfx-row:last-child{
+    border-bottom: none;
+  }
+  .sfx-row-desc{
+    font-size: .85rem;
+    opacity: .85;
+  }
+  .sfx-vol-wrap{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sfx-vol-label{
+    font-size: .8rem;
+    min-width: 36px;
+    text-align: right;
+    opacity: .75;
+  }
+  .sfx-file-input{
+    display: none;
+  }
+  .sfx-file-remove{ font-size: .85rem; padding: 0 2px; line-height: 1; }
+  .sfx-add-btn{
+    font-size: .8rem;
+    padding: 4px 8px;
+  }
+
+  /* ===== QUESTIONS SETTINGS (sekcje jak w control) ===== */
+  .sectionBlock{
+    margin-bottom:18px; padding-bottom:16px;
+    border-bottom:1px solid var(--w-8);
+  }
+  .sectionBlock:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  .sectionBlock > .section-title{ margin-bottom:10px; }
+  .setting-item{ margin-bottom:12px; }
+  .setting-item:last-child{ margin-bottom:0; }
+  .setting-item .field-label + .inp{ margin-top:6px; }
+  .setting-item .inp--short{ max-width:160px; }
+  .gs-row-dragging{ opacity:.35; }
+  .gs-row-drag-over-top{ box-shadow:0 -2px 0 var(--accent); }
+  .gs-row-drag-over-bot{ box-shadow:0 2px 0 var(--accent); }
+  .gs-draggable{ cursor:grab; }
+
+  /* ===== LOGO TILES ===== */
+  .gs-logo-grid{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+  }
+  .gs-logo-tile{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:7px 9px; border-radius:var(--r-sm);
+    border:2px solid var(--w-14);
+    background:var(--k-20); cursor:pointer;
+    transition:border-color .12s, background .12s;
+    user-select:none;
+  }
+  .gs-logo-tile:hover{ border-color:var(--w-25); background:var(--w-8); }
+  .gs-logo-prev{
+    width:120px; height:56px; border-radius:var(--r-xs);
+    overflow:hidden; background:var(--black); flex-shrink:0;
+  }
+  .gs-logo-prev canvas{ width:120px; height:56px; display:block; }
+  .gs-logo-name{
+    font-size:11px; font-weight:600; text-align:center; opacity:.8;
+    max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+
+  /* ===== FINALE PICKER (control-style) ===== */
+  .gs-badge-row{
+    margin-bottom:10px;
+  }
+
+  .finalLists{
+    margin-top:12px;
+    display:grid;
+    /* minmax(0,…): bez tego długie (nowrap) pytania rozpychały kolumny
+       i prawa lista wychodziła poza kartę */
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:14px;
+  }
+  .finalCol{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:280px;
+  }
+  .finalCol .qList{
+    flex:1;
+    min-height:0;
+    max-height:60vh;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  .finalCol .mini{
+    margin-top:0;
+    margin-bottom:6px;
+  }
+  .qList{
+    box-sizing:border-box;
+    width:100%;
+    border-radius:var(--r-md);
+    border:1px solid var(--w-14);
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:10px;
+    background:var(--surface-2);
+    min-height:60px;
+  }
+  .qList.droptarget{
+    outline:2px dashed var(--text-faint);
+    outline-offset:2px;
+  }
+  .qRow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface-inset);
+    border-radius:var(--r-sm);
+    padding:7px 10px;
+    cursor:grab;
+    font-size:.83rem;
+    user-select:none;
+    overflow:hidden;
+    flex-shrink:0; /* lista ma max-height i scroll — wiersze nie mogą się ściskać */
+  }
+  .qRow:active{ cursor:grabbing; }
+  .qRow:hover{ background:linear-gradient(var(--w-8), var(--w-8)) var(--surface-inset); }
+  .qRow .meta{
+    font-weight:1000;
+    font-size:.65rem;
+    color:var(--accent);
+    min-width:18px;
+    text-align:center;
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+  .qRow .txt{
+    flex:1;
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  @media (max-width: 980px){
+    .finalLists{ grid-template-columns:1fr; }
+    /* Na wąskim układzie przewija się cała sekcja ustawień; listy finałowe
+       rosną naturalnie zamiast tworzyć zagnieżdżone obszary scrolla. */
+    .finalCol .qList{ max-height:none; overflow:visible; }
+  }
+
+  /* Na tablecie ustawienia pozostają używalne w pionie; sekcje otwierają się
+     jako wysuwany panel zamiast blokować cały widok. */
+  @media (max-width: 980px) {
+    .gs-layout{grid-template-columns:minmax(0,1fr)}
+    .gs-content{grid-column:1;grid-row:2;min-width:0;padding:20px var(--page-pad-right) 20px var(--page-pad-left)}
+  }
+
+  /* ===== ROUNDS ORDER (control-style) ===== */
+  .roundsOrderList{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:10px;
+  }
+  .roundsOrderItem{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    /* Kryjące tła zamiast rgba: w Chrome na Androidzie półprzezroczyste tła
+       wierszy nakładały się przy przerysowaniach — pasy, połówki wierszy
+       jaśniejsze (patrz css/base.css, „KRYJĄCE TŁA PRZYCISKÓW”). */
+    background:var(--surface-inset);
+    border-radius:var(--r-sm);
+    padding:7px 10px;
+    cursor:grab;
+    font-size:.83rem;
+    user-select:none;
+  }
+  .roundsOrderItem:active{ cursor:grabbing; }
+  .roundsOrderItem:hover{ background:linear-gradient(var(--w-8), var(--w-8)) var(--surface-inset); }
+  .roundsOrderItem.dragging{ background:var(--surface-2); color:var(--text-faint); cursor:grabbing; }
+  .roundsOrderHandle{
+    color:var(--w-25);
+    font-size:.9rem;
+    cursor:grab;
+    user-select:none;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+  }
+  .roundsOrderItem:hover .roundsOrderHandle{ color: var(--text); }
+  .roundsOrderNum{
+    font-weight:1000;
+    font-size:.65rem;
+    color:var(--accent);
+    min-width:18px;
+    text-align:center;
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+  .roundsOrderText{
+    flex:1;
+    font-size:inherit;
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .roundsOrderActions{ display:flex; gap:4px; flex-shrink:0; }
+  /* Ikony z silnika (js/core/icons.js) */
+  .roundsOrderHandle .ico { vertical-align: middle; }
+
+  /* Licznik znaków nazwy drużyny na Wyświetlaczu; znaki bez glifu -- ostrzeżenie. */
+  .gs-team-measure.is-warn { opacity: 1; color: var(--bad-text); }
+
+  /* ===== TELEFON (decyzja 2026-10-21: Ustawienia gry także na telefonie) =====
+     Dźwięk: nazwa nad kontrolkami, lista dźwięków na całą szerokość;
+     kolory 2×2; logo w dwóch równych kolumnach; listy finału bez pustego
+     miejsca; pytania rund w dwóch liniach zamiast wielokropka. */
+  @media (max-width: 600px) {
+    /* Pasek w jednym rzędzie (.fit-row); komunikat ucinany, pełny w dymku. */
+    .gs-actionbar { gap: 8px; padding-inline: 12px; }
+    .gs-actionbar-msg { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sfx-vol, .sound-volume-slider { width: 72px; }
+
+    .colorRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+    .colorItem { justify-content: space-between; min-width: 0; padding: 8px 10px; }
+    .colorItem .field-label { white-space: normal; min-width: 0; line-height: 1.2; }
+
+    .gs-logo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gs-logo-tile { min-width: 0; }
+    .gs-logo-prev { width: 100%; height: auto; aspect-ratio: 120 / 56; }
+    .gs-logo-prev canvas { width: 100%; height: 100%; }
+    .gs-logo-name { max-width: 100%; }
+
+    .finalCol { min-height: 0; }
+    .finalCol .qList { min-height: 60px; }
+    .roundsOrderText, .qRow .txt {
+      white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.3;
+    }
+  }
+
+  /* Dźwięk: kolumna pliku o stałej szerokości — wiersz z własnym plikiem albo
+     „Wybierz plik” nie przesuwa listy, podglądu ani suwaka (kolumny równe). */
+  .sfx-row {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--w-8);
+    position: relative;
+    grid-template-columns: minmax(130px, 1fr) 160px 30px 180px 170px;
+  }
+  .sfx-row .sfx-variant-select { width: 100%; }
+  .sfx-file-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+  /* Wgrane motywy (import motywów): te same kafelki plików co własne dźwięki. */
+  .gs-theme-files {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .gs-theme-files .sfx-file-tag { flex: 0 1 auto; max-width: 100%; }
+  .sfx-file-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--w-25);
+    border-radius: var(--r-sm);
+    padding: 3px 8px;
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under); /* kryjące (Android) */
+    font-size: .8rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .sfx-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: none;
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* Tablet w pionie i telefon: nazwa nad kontrolkami, plik na całą szerokość. */
+  @media (max-width: 980px) {
+    .sfx-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 8px; padding: 10px 0; }
+    .sfx-row-desc, .sfx-file-wrap { grid-column: 1 / -1; }
+    .sfx-file-wrap { justify-content: flex-start; }
+    .sfx-file-wrap:not(:has(.sfx-file-tag, .sfx-add-btn:not([hidden]))) { display: none; }
+    .sfx-file-tag { flex: 1; }
+  }
+
+  /* Ustawienia gry: błąd pola od razu przy polu, podpowiedź progów z pytań. */
+  .inp.is-invalid { border-color: var(--danger); box-shadow: 0 0 0 1px var(--bad-line); }
+  .gs-field-suggest { margin-top: 6px; font-size: 12px; line-height: 1.35; opacity: .75; }
+  .gs-field-suggest:empty { display: none; }
+  .gs-field-suggest.is-warn { opacity: 1; color: var(--warn-text); }
+
+  /* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20;
+     dawniej shared/css/base.css). */
+  @media (hover: none) and (pointer: coarse) {
+    .roundsOrderHandle { display: none; }
+  }
+}

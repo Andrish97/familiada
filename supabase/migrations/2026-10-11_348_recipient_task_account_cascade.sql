@@ -1,0 +1,31 @@
+-- Graf pkt7: usunięcie konta odbiorcy usuwa zależne zaproszenia.
+-- SET NULL blokował usunięcie auth.users przez poll_tasks_one_recipient_chk.
+-- Trigger347 usuwa niepełne głosy; komplet pozostaje anonimowym agregatem.
+BEGIN;
+-- Rodzic przed dziećmi, również podczas równoległego usuwania konta.
+-- Old procedural account cleanup reaches auth.users after deleting children.
+-- Acquire the whole DDL lock set without waiting; a failed attempt releases
+-- all its locks, allowing that old cleanup to finish before the next attempt.
+DO $$ BEGIN
+ FOR attempt IN 1..100 LOOP
+  BEGIN
+   LOCK TABLE auth.users IN SHARE ROW EXCLUSIVE MODE NOWAIT;
+   LOCK TABLE public.base_share_tasks,public.poll_subscriptions,public.poll_tasks IN ACCESS EXCLUSIVE MODE NOWAIT;
+   RETURN;
+  EXCEPTION WHEN lock_not_available THEN
+   IF attempt=100 THEN RAISE; END IF;
+  END;
+  PERFORM pg_sleep(.1);
+ END LOOP;
+END $$;
+ALTER TABLE public.base_share_tasks DROP CONSTRAINT base_share_tasks_recipient_user_id_fkey;
+ALTER TABLE public.base_share_tasks ADD CONSTRAINT base_share_tasks_recipient_user_id_fkey
+ FOREIGN KEY(recipient_user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.poll_subscriptions DROP CONSTRAINT poll_subscriptions_subscriber_user_id_fkey;
+ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_subscriber_user_id_fkey
+ FOREIGN KEY(subscriber_user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.poll_tasks DROP CONSTRAINT poll_tasks_recipient_user_id_fkey;
+ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_recipient_user_id_fkey
+ FOREIGN KEY(recipient_user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+COMMIT;
+NOTIFY pgrst,'reload schema';

@@ -1,0 +1,24 @@
+# Nowe frazy dla kategorii, gdy wszystkie dotychczasowe zostały już sprawdzone.
+# {category} = nazwa, {description} = opis z rozwinięcia, {used} = dotychczasowe frazy (JSON).
+Przygotowujesz wyszukiwanie kontaktów marketingowych (e-mail) w Polsce dla
+Familijnej — systemu do prowadzenia drużynowej gry ankietowej na żywo.
+
+KATEGORIA: {category}
+OPIS: {description}
+
+Wszystkie poniższe frazy zostały już sprawdzone i nie dają nowych wyników:
+{used}
+
+Zwróć JSON:
+{
+  "queries": ["20 NOWYCH fraz do wyszukiwarki po polsku, bez nazw miast"]
+}
+
+Frazy:
+- nie powtarzaj ani nie przestawiaj słów z fraz powyżej; szukaj innych nazw
+  usługi, innych okazji (urodziny, firmowe, szkolne, plenerowe), innych
+  sformułowań oferty i innych typów wykonawców tej samej kategorii;
+- mają dawać wyniki, w których opisie widać adres e-mail: mieszaj warianty
+  z „kontakt e-mail”, „@gmail.com”, „@wp.pl”, „@o2.pl”, „oferta e-mail”,
+  „napisz do nas”, „rezerwacja terminu e-mail”;
+- bez nazw miast i regionów, bez operatorów site:.

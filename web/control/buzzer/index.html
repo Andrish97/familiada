@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pl" data-device-guard-pending>
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="control">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <title data-i18n="buzzer.title">Familijna — Przycisk do pojedynku</title>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/control/buzzer/css/buzzer.css?v=v2026-10-29T02360"/>
+  <script src="/shared/js/core/module-boot-guard.js?v=v2026-10-29T02360"></script>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/control/buzzer/js/main.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+<body class="buzzer-body" data-device-screen data-device-form-factors="phone,tablet" data-requires-touch="true">
+  <div class="a2hs" id="buzzerA2HS" role="dialog" aria-modal="true" aria-labelledby="buzzerA2HSTitle" aria-hidden="true">
+  <div class="a2hsCard">
+    <h2 class="a2hsTitle" id="buzzerA2HSTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h2>
+    <p class="a2hsText" data-i18n-html="common.a2hsBuzzer">
+      W Safari nie da się wymusić prawdziwego pełnego ekranu.
+      Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.
+    </p>
+    <button class="btn a2hsClose" id="buzzerA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
+  </div>
+</div>
+
+  <button class="corner-btn fs-btn" id="btnFullscreen" type="button" aria-label="Pełny ekran" title="Pełny ekran" data-i18n-aria-label="common.fullscreen" data-i18n-title="common.fullscreen"><i class="ico" data-icon="fullscreen-enter"></i></button>
+
+  <div class="off" id="offScreen" data-skel-step hidden></div>
+
+  <div class="arena" id="arena" data-skel-step hidden>
+    <button class="btnRing red" id="btnA" type="button" aria-label="Przycisk A" data-i18n-aria-label="buzzer.btnA"></button>
+    <button class="btnRing blue" id="btnB" type="button" aria-label="Przycisk B" data-i18n-aria-label="buzzer.btnB"></button>
+  </div>
+  <div class="device-load-error" id="deviceLoadError" role="alert" data-skel-step hidden>
+    <span data-i18n="common.genericError">Wystąpił błąd.</span>
+    <button class="btn" type="button" data-retry-device data-i18n="common.refresh" data-i18n-icon="refresh">Odśwież</button>
+  </div>
+</body>
+</html>

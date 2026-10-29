@@ -1,0 +1,103 @@
+# ==============================================
+# DOMAIN BLACKLIST - domeny blokowane przez crawler
+# (przed pobieraniem strony, bez wysyłki do AI)
+# ==============================================
+# Wnioski z analizy 156 odrzuconych kontaktów — domeny które
+# nigdy nie będą leadem, a generują szum i koszty AI.
+# ==============================================
+
+# --- Katalogi polskie (strony kategorii, nie profile firm) ---
+# UWAGA: blokuj tylko jeśli URL pasuje do wzorca /kategoria/miasto
+# Profil firmy na tych domenach może być leadem — obsłuż w crawlerze
+
+# --- Portale ogłoszeniowe zagraniczne ---
+thebash.com
+bark.com
+gumtree.com
+thumbtack.com
+
+# --- Portale informacyjne / news polskie ---
+onet.pl
+wp.pl
+interia.pl
+gazeta.pl
+wyborcza.pl
+tvn24.pl
+polsatnews.pl
+rmf.pl
+radiozet.pl
+
+# --- Portale informacyjne / news zagraniczne ---
+mlb.com
+nba.com
+nfl.com
+fox13seattle.com
+nbcnews.com
+thegatewaypundit.com
+bolavip.com
+inforcapital.com
+retailrestaurantfb.com
+thecityceleb.com
+
+# --- Serwisy technologiczne / słowniki / narzędzia ---
+w3schools.com
+wpbeginner.com
+supportyourtech.com
+thesaurus.com
+vocabineer.com
+ingles.com
+arimetrics.com
+deepl.com
+xataka.com
+xatakandroid.com
+infobae.com
+
+# --- Rozrywka / Streaming / Gry ---
+roblox.com
+youtube.com
+netflix.com
+hbomax.com
+rottentomatoes.com
+thestreamable.com
+play.google.com
+apps.microsoft.com
+imdb.com
+ticketmaster.com
+
+# --- Portale pracy / Kariera ---
+governmentjobs.com
+careers.homedepot.com
+pracuj.pl
+indeed.com
+kariera.pl
+
+# --- Finanse / Bankowość ---
+americanexpress.com
+wise.com
+paypal.com
+pkobp.pl
+
+# --- Zdrowie / Medyczne ---
+healthline.com
+medonet.pl
+aztlanherbalremedies.com
+prombs.com
+
+# --- Turystyka / Hotele (globalne agregatory) ---
+hotelguides.com
+booking.com
+airbnb.com
+tripadvisor.com
+visitbydgoszcz.pl
+wonderfulwanderings.com
+travellingking.com
+
+# --- Inne ---
+talkofthevillages.com
+cainsballroom.com       
+metergysolutions.com
+dcacar.com
+iere.org
+coolwoodwildlifepark.com
+sportsbrackets.net
+1000thingsmagazine.com

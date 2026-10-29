@@ -1,0 +1,32 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { isTvUserAgent, tvRedirect } from "../../cloudflare/maintenance-worker/src/lib/origin/tv.js";
+const ua = "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 TV Safari/537.36";
+function redirect(path, headers = {}, method = "GET") {
+  const url = new URL(path, "https://www.familijna.app");
+  return tvRedirect(new Request(url, { method, headers: { "user-agent": ua, accept: "text/html", ...headers } }), url);
+}
+test("TV routes known website pages to code entry, including other device links", () => {
+  for (const path of ["/", "/login/", "/control/", "/games/", "/control/host/?id=a&key=b", "/control/buzzer/?id=a&key=b", "/control/display/?preview=1"]) {
+    assert.equal(redirect(path)?.headers.get("location"), "https://www.familijna.app/connect/?tv=1");
+  }
+});
+test("TV leaves Maintenance, 404 and unknown paths to their own handlers", () => {
+  for (const path of ["/maintenance", "/maintenance/", "/404", "/404.html", "/missing.html"]) {
+    assert.equal(redirect(path), null);
+  }
+});
+test("TV accepts Display and code page without loops but redirects missing credentials", () => {
+  for (const path of ["/connect/?tv=1", "/connect/index.html?tv=1", "/control/display/?id=a&key=b", "/control/display/index.html?id=a&key=b", "/polls/vote/qr/?id=a&key=b", "/go/?d=display&id=a&key=b", "/go/?d=qr&id=a&key=b"]) assert.equal(redirect(path), null);
+  assert.equal(redirect("/go/?d=display")?.status, 302);
+  assert.equal(redirect("/go/?d=host&id=a&key=b")?.status, 302);
+  assert.equal(redirect("/control/display/" )?.status, 302);
+  assert.equal(redirect("/polls/vote/qr/")?.status, 302);
+  assert.equal(redirect("/polls/vote/qr/?id=a&key=b&preview=1")?.status, 302);
+});
+test("TV leaves assets, API requests and normal desktop/mobile navigation unchanged", () => {
+  assert.equal(redirect("/assets/audio/show_outro/classic.mp3", { accept: "*/*", "sec-fetch-dest": "audio" }), null);
+  assert.equal(redirect("/_api/contact", {}, "POST"), null);
+  for (const value of ["Mozilla/5.0 (Windows NT 10.0)", "Mozilla/5.0 (Linux; Android 14; Pixel 8)", "Mozilla/5.0 (iPhone)"]) assert.equal(isTvUserAgent(value), false);
+  for (const value of [ua, "Android TV", "webOS", "BRAVIA", "AFTMM", "HbbTV/1.5.1"]) assert.equal(isTvUserAgent(value), true);
+});

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="utf-8" />
+  <meta name="i18n-parts" content="baseExplorer gameValidate games questionForm resources">
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <meta name="robots" content="noindex, nofollow"/>
+  <title data-i18n="baseExplorer.title">Familijna — menedżer bazy pytań</title>
+  
+    <!-- wspólne style aplikacji (jak w games/manual) -->
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-29T02360" />
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+
+  <script>document.documentElement.classList.add('page-loading')</script>
+
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-29T02360"></script>
+
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+
+<body class="explorer-body skel-body topbar-title-mobile">
+
+  <!-- TOPBAR – identyczny wzorzec jak w manualu/stronie gier -->
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button id="btnBack" class="btn" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="baseExplorer.headerTitle">Menedżer bazy pytań</div>
+        <div class="subtitle" id="baseName">—</div>
+      </div>
+    </div>
+
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+
+    <div class="topbar-section topbar-section-4">
+      <div id="who" class="who">—</div>
+      <button id="btnLogout" class="btn" data-i18n="common.logout" data-i18n-icon="close">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap explorer-page">
+  <!-- TOOLBAR -->
+  <section id="toolbar" class="toolbar" data-skel-step>
+    <!-- wypełniane dynamicznie w JS -->
+  </section>
+
+  <!-- GŁÓWNY LAYOUT: drzewo + zawartość -->
+  <div class="explorer" data-skel-step>
+
+    <!-- OVERLAY do zamykania drawera na mobile -->
+    <button id="drawerOverlay" class="drawer-scrim" type="button" tabindex="-1" aria-hidden="true"></button>
+
+    <!-- LEWY PANEL: foldery + tagi -->
+    <aside id="explorerLeft" class="explorer-left drawer">
+      <div id="tree" class="tree">
+        <!-- drzewo kategorii -->
+      </div>
+
+      <div class="left-sep" aria-hidden="true"></div>
+
+      <div id="leftFilters" class="left-filters">
+        <div id="matchedCategories" class="matched-categories">
+          <!-- pasujące kategorie -->
+        </div>
+        <div class="left-sep" aria-hidden="true"></div>
+        <div id="tags" class="tags">
+          <!-- tagi Finder-style -->
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- PRAWY PANEL: lista -->
+    <section class="explorer-right">
+      <div id="breadcrumbs" class="breadcrumbs">
+        <!-- ścieżka / aktualny kontekst -->
+      </div>
+      
+      <div id="list" class="list">
+        <!-- foldery i pytania -->
+      </div>
+    </section>
+
+
+  </div>
+
+  <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
+
+  <!-- Przenieś do… / Kopiuj do… (ui/move-modal.js): drzewo folderów z wyszukiwaniem -->
+  <!-- Szukaj na telefonie (ui/search.js): pole, tabletki i podpowiedzi z paska
+       przenoszone na czas edycji do treści okna -->
+  <div class="overlay modal--sheet sheet-fit" id="searchOverlay" hidden>
+    <div class="modal modal--narrow search-modal" role="dialog" aria-modal="true" aria-labelledby="searchSheetTitle">
+      <div class="mHead">
+        <div class="mTitle" id="searchSheetTitle" data-i18n="baseExplorer.search.sheetTitle">Szukaj</div>
+        <button class="btn sm" id="searchSheetClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="mSub" data-i18n="baseExplorer.search.sheetHelp">Szuka w nazwach pytań i folderów. Tagi i kategorie wybierasz przyciskami w pasku — działają razem z tekstem.</div>
+      <div class="searchSheetBody" id="searchSheetBody"></div>
+      <div class="modal-actions">
+        <button class="btn sm" id="searchSheetClear" type="button" data-i18n="common.clear" data-i18n-icon="close">Wyczyść</button>
+        <button class="btn sm gold" id="searchSheetDone" type="button" data-i18n="baseExplorer.search.done" data-i18n-icon="check">Gotowe</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay modal--sheet" id="moveOverlay" hidden>
+    <div class="modal modal--narrow move-modal" role="dialog" aria-modal="true" aria-labelledby="moveTitle">
+      <div class="mHead">
+        <div class="mTitle" id="moveTitle">Przenieś do</div>
+        <button class="btn sm" id="moveClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="moveBody sheet-fill">
+        <label class="searchBox moveSearch">
+          <i class="ico" data-icon="search"></i>
+          <input id="moveSearch" class="searchText" type="search" autocomplete="off" data-i18n-placeholder="baseExplorer.move.searchPlaceholder" placeholder="Szukaj folderu…" />
+        </label>
+        <div id="moveList" class="moveList sheet-scroll" role="tree"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn sm" id="moveCancel" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="moveOk" type="button" disabled>Przenieś tutaj</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay modal--sheet" id="tagsOverlay" hidden>
+    <div class="modal modal--medium tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
+  
+      <!-- WARSTWA 1: przypisz -->
+      <section id="tagsL1" class="modal-layer tags-layer">
+        <div class="tagsHead">
+          <div class="mTitle" id="tagsTitle" data-i18n="baseExplorer.tags.modalTitle">Tagi</div>
+          <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+        <div class="mSub tagsAssignInfo" id="tagsAssignInfo">—</div>
+  
+        <div id="tagsAssignList" class="tagsPickList sheet-scroll"></div>
+  
+        <div class="tagsFoot">
+          <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag" data-i18n-icon="plus">Dodaj tag</button>
+          <div id="tagsAssignErr" class="importMsg" hidden></div>
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
+        </div>
+      </section>
+  
+      <!-- WARSTWA 2: dodaj/edytuj -->
+      <section id="tagsL2" class="modal-layer tags-layer" hidden>
+        <div class="tagsHead">
+          <div class="mTitle" id="tagsEditTitle" data-i18n="baseExplorer.tags.editTitle">Tag</div>
+          <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+  
+        <div class="tagsEditGrid tagsCard">
+          <label class="tagsCardLbl" for="tagsEditName" data-i18n="baseExplorer.tags.nameLabel">Nazwa</label>
+          <input id="tagsEditName" class="inp" type="text" maxlength="40" autocomplete="off" placeholder="Nazwa taga…" data-i18n-placeholder="baseExplorer.tags.namePlaceholder"/>
+
+          <button id="tagsEditColorTile" class="tagsColorTile" type="button" aria-label="Wybierz kolor" data-i18n-aria-label="baseExplorer.tags.pickColor">
+            <span class="tagsColorDot" id="tagsEditColorDot"></span>
+            <span class="tagsColorLbl" data-i18n="baseExplorer.tags.colorLabel">Kolor</span>
+            <i class="ico tagsColorGo" data-icon="caret-right"></i>
+          </button>
+        </div>
+  
+        <div class="tagsFoot">
+          <div id="tagsEditErr" class="importMsg" hidden></div>
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm" id="tagsL2Back" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
+        </div>
+      </section>
+  
+      <!-- WARSTWA 3: picker koloru -->
+      <section id="tagsL3" class="modal-layer tags-layer" hidden>
+        <div class="tagsHead">
+          <div class="mTitle" data-i18n="baseExplorer.tags.colorModalTitle">Kolor</div>
+          <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+        <div class="colorModalBody modal-scroll" id="tagsColorBody"></div>
+  
+        <div class="tagsFoot">
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm" id="tagsL3Back" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="tagsL3Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
+        </div>
+      </section>
+      
+    </div>
+  </div>
+
+    <!-- =======================================================
+       [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay modal--sheet" id="exportOverlay" hidden>
+    <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="xTitle" data-i18n="baseExplorer.export.title">Utwórz grę</div>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="mSub" id="xSub" data-i18n="baseExplorer.export.subtitle">
+        Gra powstanie z zaznaczonych pytań. Oznaczenia pokazują, czego brakuje do gotowości wybranego typu — można to uzupełnić później.
+      </div>
+
+      <div class="xBody sheet-fill">
+        <div class="xField">
+          <div class="field-label" data-i18n="baseExplorer.export.gameNameLabel">Nazwa gry</div>
+          <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
+        </div>
+
+        <div class="xGrid2 sheet-fill">
+          <div class="xField sheet-fill">
+            <div class="field-label" data-i18n="baseExplorer.export.questionsLabel">Pytania</div>
+            <div id="xList" class="xPickList sheet-scroll"></div>
+          </div>
+
+          <div class="xField">
+            <div class="xTypeBox">
+              <div class="xTypeTop">
+                <div class="xTypeTitle" data-i18n="baseExplorer.export.typeTitle">Typ gry</div>
+                <div class="hint" id="xTypeHint">—</div>
+              </div>
+
+              <div class="xRange">
+                <input id="xTypeRange" class="rng" type="range" min="0" max="2" step="1" value="2" />
+              </div>
+
+              <div class="xTypeLabels">
+                <div class="xTypeLbl" id="lbl0" data-v="0">
+                  <b data-i18n="baseExplorer.export.typePollText">Ankieta tekstowa</b>
+                </div>
+                <div class="xTypeLbl" id="lbl1" data-v="1">
+                  <b data-i18n="baseExplorer.export.typePollPoints">Punktacja</b>
+                </div>
+                <div class="xTypeLbl" id="lbl2" data-v="2">
+                  <b data-i18n="baseExplorer.export.typePrepared">Preparowana</b>
+                </div>
+              </div>
+
+              <div class="xSummary" id="xSummary" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone" data-i18n-title="baseExplorer.export.selectedTitle">
+          <span data-i18n="baseExplorer.export.selectedLabel">WYBRANE</span>
+          <b id="xCountVal">0</b>
+        </div>
+
+        <div class="tagsFootSpacer"></div>
+
+        <div id="xErr" class="importMsg" hidden></div>
+
+        <div class="uni-progress" id="xProg" hidden>
+          <div class="uni-progress-row">
+            <div id="xProgStep" class="uni-progress-step">—</div>
+            <div id="xProgCount" class="uni-progress-count">0/0</div>
+          </div>
+          <div class="progress">
+            <div id="xProgBarFill" class="progress-bar"></div>
+          </div>
+          <div id="xProgMsg" class="importMsg uni-progress-msg"></div>
+        </div>
+
+        <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="xCreate" type="button" disabled data-i18n="baseExplorer.export.create" data-i18n-icon="file-plus">Utwórz</button>
+      </div>
+
+    </div>
+  </div>
+
+    <!-- =======================================================
+       [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay modal--sheet" id="questionOverlay" hidden>
+    <div class="modal modal--medium tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="qTitle" data-i18n="baseExplorer.question.title">Pytanie</div>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="mSub" data-i18n="baseExplorer.question.subtitle">
+        Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne.
+        Jeśli wpisane: 0–100, suma ≤ 100.
+      </div>
+
+      <!-- Ten sam układ i style co pytanie w edytorze gry (css/question-form.css);
+           wiersze odpowiedzi i kafelek "+ Dodaj odpowiedź" buduje question-modal.js -->
+      <div class="qBody sheet-fill">
+        <div class="qBlock card card--inset qf-section">
+          <div class="section-title" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
+          <textarea id="qText" class="inp qf-qtext" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
+        </div>
+
+        <div class="qBlock qAnswersBlock card card--inset qf-section sheet-fill">
+          <div class="qf-sum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle"></div>
+
+          <div class="qf-listShell sheet-scroll">
+            <div id="qAnswers" class="qf-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+
+        <div id="qErr" class="importMsg" hidden></div>
+
+        <button class="btn sm" type="button" data-modal-cancel data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <footer class="footer">
+    <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+    <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+  </footer>
+  </main>
+
+  <!-- KONTEKST MENU (prawy klik) -->
+  <div id="contextMenu" class="context-menu" hidden></div>
+
+  <!-- MODALE (wstrzykiwane JS-em) -->
+  <div id="modalRoot"></div>
+
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

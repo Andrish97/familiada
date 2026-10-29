@@ -1,0 +1,154 @@
+@layer page {
+  .account-body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .account-grid {
+    margin-top: 16px;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-panel{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .account-panel .section-title {
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: .08em;
+  }
+
+  .account-panel .section-hint {
+    font-size: 12px;
+    opacity: .75;
+  }
+
+  .account-panel.danger {
+    --under: var(--surface-1);
+    border-color: var(--bad-line);
+    background: var(--surface-1);
+  }
+
+  .account-panel--demo {
+    grid-column: 1 / -1;
+  }
+  /* panel na całą szerokość: opis po lewej, przycisk po prawej — niski pasek */
+  @media (min-width: 981px) {
+    .account-panel--demo {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
+      column-gap: 24px;
+      row-gap: 6px;
+      align-items: center;
+    }
+    .account-panel--demo > * { grid-column: 1; }
+    .account-panel--demo > .account-actions {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      margin-top: 0;
+    }
+  }
+
+  /* duży ekran: trzy kolumny (nazwa · e-mail · hasło / wiadomości · ocena · usuń konto) */
+  @media (min-width: 1281px) {
+    .account-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .account-grid > #deleteSection { order: 1; }
+    .account-grid > .account-panel--demo { order: 2; }
+  }
+
+  @media (max-width: 980px) {
+    .account-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Karta formularza (familijna-server/docs/wzorce-ui.md, „Karty formularzy”, 2026-10-21):
+     pola jedno pod drugim na całą szerokość, przyciski w wierszu akcji na dole
+     karty (karty w jednym rzędzie siatki mają przyciski na jednej linii).
+     Komputer: przyciski po prawej, szerokość według treści; telefon: cały
+     wiersz — jeden przycisk na całą szerokość, dwa po równo (drugorzędny
+     po lewej, złoty po prawej). Przycisk ma wysokość pola (40 px). */
+  .account-panel > .inp,
+  .account-panel > .pass-wrap{ width: 100%; }
+  .account-actions{
+    margin-top: auto;
+  }
+  .account-actions .btn,
+  #ratingEditBtn{
+    min-height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
+    box-sizing: border-box;
+  }
+  .account-actions .pending-actions:not([hidden]){ display: contents; }
+  /* E-mail: pole „Powtórz nowy e-mail” w grupie #emailActions, którą skrypt
+     ukrywa przy oczekującej zmianie -- wtedy znika też „Zmień e-mail”,
+     a w wierszu akcji zostaje para Anuluj / Wyślij ponownie. */
+  .account-field-group{ display: contents; }
+  .account-field-group[hidden]{ display: none; }
+  .account-field-group > .inp{ width: 100%; }
+  #emailActions[hidden] ~ .account-actions > #saveEmail{ display: none; }
+  @media (max-width: 600px) {
+
+    .account-actions .btn{ flex: 1 1 0; min-width: 0; }
+  }
+
+  .cooldown{
+    font-size: 12px;
+    opacity: .75;
+    padding: 8px 10px;
+    border-radius: var(--r-md);
+    border: 1px dashed var(--g-35);
+    background: var(--k-20);
+  }
+
+  /* --- fixed control sizing (avoid multi-line buttons changing height) --- */
+  .account-panel .inp,
+  .cooldown {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  .account-panel .inp {
+    padding: 0 14px;
+    line-height: 40px;
+  }
+
+  .account-panel .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* ==========================================
+     Email notifications panel
+  ========================================== */
+
+
+  /* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
+  #userRatingInfo { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
+  #userRatingInfo .rating-info { display: grid; gap: 6px; }
+  #userRatingInfo .rating-stars,
+  #userRatingInfo .rating-comment-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #userRatingInfo .label { font-size: 12px; opacity: .75; }
+  #userRatingInfo .value.italic { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }
+  #ratingEditBtn{ margin-top: auto; align-self: flex-end; }
+  @media (max-width: 600px) {
+    #ratingEditBtn{ align-self: stretch; }
+  }
+  .account-panel .pass-wrap .inp{ padding-right: 44px; }
+}

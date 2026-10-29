@@ -1,0 +1,310 @@
+name: E2E Tests (Playwright)
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_filter:
+        description: 'Opcjonalnie: odpal tylko wybrany plik/wzorzec (np. "e2e/nowy-test.spec.js" albo "--grep nazwa"). Puste = wszystkie testy, w równoległych grupach (patrz niżej). To pole jest najczęściej używane -- pojedynczy plik/wzorzec zamiast całego zestawu.'
+        required: false
+        default: ""
+      unit_filter:
+        description: 'Opcjonalnie: rozdzielone spacją pliki testów unit, np. "unit/rounds.engine.test.js unit/final.engine.test.js". Puste = cały zestaw unit.'
+        required: false
+        default: ""
+      max_failures:
+        description: 'Przerwij po tylu błędach (--max-failures); 0 = przejdź cały plik i pokaż wszystkie błędy naraz (punktowy spec).'
+        required: false
+        default: "1"
+      workers:
+        description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
+        required: false
+        default: "4"
+      api_origin:
+        description: 'Opcjonalnie: adres API zamiast https://api.familijna.app (próba generalna przeprowadzki, np. https://api2.familiada.online). Działa w spekach z serveBranchCode.'
+        required: false
+        default: ""
+      e20_gallery_pages:
+        description: 'Opcjonalnie: ID stron galerii E20 rozdzielone przecinkami. Puste = wszystkie strony.'
+        required: false
+        default: ""
+      e20_gallery_profiles:
+        description: 'Opcjonalnie: profile galerii E20 rozdzielone przecinkami. Puste = wszystkie urządzenia.'
+        required: false
+        default: ""
+      retain_statistics_games:
+        description: 'Zachowaj gry, których rekordy statystyk odczytano w wybranych testach Control2, do ręcznego sprawdzenia w panelu.'
+        type: boolean
+        required: false
+        default: false
+
+# WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
+# Ten workflow loguje się na prawdziwe konta na produkcji i ma dostęp do
+# E2E_BYPASS_SECRET/TEST_PASSWORD; odpalany wyłącznie ręcznie, świadomie,
+# kiedy faktycznie trzeba: Actions → "E2E Tests (Playwright)" → Run
+# workflow. Pole "spec_filter" pozwala odpalić wyrywkowo tylko jeden
+# plik/wzorzec zamiast całego zestawu (wtedy leci jeden job,
+# e2e-custom-filter, bez podziału na grupy niżej) -- to zdecydowanie
+# najczęstszy sposób odpalania.
+#
+# TYLKO DWA SEKRETY W OGÓLE: E2E_BYPASS_SECRET (omija Turnstile, podpisuje
+# /_e2e_api/*) i TEST_PASSWORD (wspólne hasło kont testowych).
+#
+# KONTA TESTOWE (E25, familijna-server/docs/konta-testowe-plan.md): spec deklaruje potrzeby
+# (test.use({ needs }) z e2e/helpers/e2e-test.js), każdy worker Playwrighta
+# wypożycza (lease) przez Worker komplet tożsamości e2e na wyłączność i oddaje
+# go po zakończeniu. Workflow nie przydziela kont i nie zna ich liczby --
+# równoległe przebiegi rozdziela samo wypożyczanie.
+#
+# JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
+# ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
+# e2e-grouped i w e2e-custom-filter.
+#
+# WAŻNE, znalezione na własnej skórze (run #122, 12/16 testów control2
+# failed, 57 minut): TEST_WORKERS (realna liczba RÓWNOLEGŁYCH workerów
+# Playwrighta) musi zostać niski. Runner GitHub Actions (ubuntu-latest) ma ograniczoną
+# liczbę rdzeni, a każdy POJEDYNCZY test control2.spec.js sam otwiera do 4
+# kontekstów przeglądarki naraz (Control+Display+Host+Buzzer) -- przy
+# --workers=10 to do 40 jednoczesnych instancji Chromium na jednej
+# maszynie. Runner fizycznie nie nadążał renderować strony w czasie, na
+# jaki czekał Playwright -- stąd masowe "element is not stable"/"element
+# is not enabled" i timeouty, NIE błąd logiki testów. TEST_WORKERS reguluje
+# faktyczne obciążenie. Podnoś TEST_WORKERS ostrożnie, po jednym, sprawdzając
+# realny wynik, nie zgadując.
+#
+# workers:1 z playwright.config.js jest używane tylko lokalnie/poza CI —
+# w CI workers zawsze nadpisuje ten jeden, wspólny --workers.
+# Podniesione 2 -> 4 na wyraźną prośbę (2026-09-17), żeby skrócić czas
+# przebiegu -- 4 workery x do 4 kontekstów/test = do 16 jednoczesnych
+# Chromium, wciąż wyraźnie poniżej 40, które przeciążyło runner w run #122.
+# Po jednym czystym przebiegu na workers=4 (run #131, ~21 min, brak
+# objawów przeciążenia) podniesione ostrożnie 4 -> 5 (2026-09-17) -- do 20
+# jednoczesnych Chromium, nadal wyraźnie poniżej progu 40.
+# Cofnięte 5 -> 4 (2026-10-02): dokładnie przewidziany tu sygnał się
+# pojawił -- control2.spec.js (po przybyciu testów 17 -> 21 od ostatniej
+# kalibracji) dał TRZY kolejne pełne przebiegi (run #290/#291/#292) z
+# identycznym, powtarzalnym timeoutem na DWÓCH tych samych testach
+# (physicalBuzzer's checkbox.check(), zerwanie-połączenia's dot status) --
+# bez żadnej zmiany w logice, którą dałoby się za to winić (sprawdzone:
+# ani jeden, ani drugi test nie dotyka kodu zmienianego w tej sesji).
+# Jeśli znowu pojawi się masowe "element is not stable"/"not enabled" przy
+# workers=4, to sygnał żeby cofnąć o kolejny krok (4 -> 2), nie iść dalej w
+# górę bez kolejnego czystego przebiegu na obecnej wartości.
+env:
+  TEST_BRANCH_CODE: ${{ github.ref_name != 'main' && '1' || '0' }}
+  E2E_API_ORIGIN: ${{ inputs.api_origin || '' }}
+  TEST_WORKERS: ${{ inputs.workers || '4' }}
+
+jobs:
+  e2e-grouped:
+    if: ${{ github.event.inputs.spec_filter == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: true
+      matrix:
+        group:
+          - name: konto-glowne
+            files: >-
+              e2e/game-deletion.spec.js e2e/restore-demo.spec.js
+              e2e/cross-resource-locks.spec.js
+              e2e/editor.spec.js e2e/game-settings.spec.js
+              e2e/game-state-realtime-spike.spec.js e2e/polls.spec.js
+              e2e/poll-qr.spec.js e2e/poll-voting.spec.js e2e/go.spec.js
+          - name: konto-drugie
+            files: e2e/base-explorer.spec.js e2e/bases.spec.js
+          - name: goscie-i-statyka
+            files: >-
+              e2e/account-deletion.spec.js e2e/guest-migration.spec.js
+              e2e/static-assets-routing.spec.js e2e/games-rename.spec.js
+          - name: konto-email
+            files: e2e/account-password-email.spec.js
+          - name: control2
+            files: e2e/control2.spec.js
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      # Cache samych binarek przeglądarki (~/.cache/ms-playwright) osobno od
+      # npm cache powyżej — klucz po wersji @playwright/test z package-lock,
+      # więc bump wersji automatycznie unieważnia cache i ściąga nową. Playwright
+      # CLI samo wykrywa już obecne binarki i pomija ich pobieranie (nawet bez
+      # tego kroku by nie pobrał drugi raz w tym samym jobie) — cache pozwala to
+      # wykryć MIĘDZY uruchomieniami, bo każdy run zaczyna na świeżej maszynie.
+      # System deps (apt, --with-deps) i tak instalują się na nowo za każdym
+      # razem — ta VM resetuje się między runami, nic tu nie da się scache'ować.
+      - name: Build the deployment artifact for branch tests
+        if: github.ref_name != 'main'
+        run: |
+          node scripts/build-public.cjs --out="$RUNNER_TEMP/familijna-public"
+          echo "E2E_WEB_ROOT=$RUNNER_TEMP/familijna-public" >> "$GITHUB_ENV"
+
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      # Cloudflare Bot Fight Mode jest na stałe wyłączony w dashboardzie
+      # (Security → Bots) — na Free planie nie da się go pominąć per-request
+      # (nie działa na silniku reguł, WAF Custom Rules/Configuration Rules go
+      # nie dotyczą), więc jedyną opcją było albo płacić, albo wyłączyć na
+      # stałe. Turnstile na /login (osobny mechanizm, patrz e2e-token.js)
+      # zostaje jako właściwa ochrona przed botami przy logowaniu.
+      - name: Run E2E tests (${{ matrix.group.name }})
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
+        working-directory: tests
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshots-${{ matrix.group.name }}
+          path: tests/test-results/
+          retention-days: 7
+
+  e2e-custom-filter:
+    permissions:
+      contents: write
+    if: ${{ github.event.inputs.spec_filter != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Build the deployment artifact for branch tests
+        if: github.ref_name != 'main'
+        run: |
+          node scripts/build-public.cjs --out="$RUNNER_TEMP/familijna-public"
+          echo "E2E_WEB_ROOT=$RUNNER_TEMP/familijna-public" >> "$GITHUB_ENV"
+
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Unit tests (pointwise when selected)
+        env:
+          UNIT_FILTER: ${{ inputs.unit_filter }}
+        working-directory: tests
+        run: |
+          if [ -n "$UNIT_FILTER" ]; then
+            read -r -a unit_files <<< "$UNIT_FILTER"
+            for file in "${unit_files[@]}"; do
+              case "$file" in
+                unit/*.test.js) ;;
+                *) echo "Nieprawidłowa ścieżka testu unit: $file" >&2; exit 2 ;;
+              esac
+            done
+            node --test --test-concurrency=1 "${unit_files[@]}"
+          else
+            node --test --test-concurrency=1 unit/*.test.js
+          fi
+
+      - name: Run E2E tests (spec_filter)
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
+          IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
+          # Spec może wypożyczać zasoby tylko dla wybranych testów (np. poczta w control2).
+          E2E_SPEC_FILTER: ${{ inputs.spec_filter }}
+        run: |
+          if [ "$IS_E20_GALLERY" = "1" ]; then
+            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0 --max-failures=1
+          else
+            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS" --retries=0 --max-failures="${{ inputs.max_failures || '1' }}"
+          fi
+        working-directory: tests
+
+      - name: Validate E20 screenshot folders
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        env:
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
+        run: node scripts/agent-tools/build-e20-gallery.cjs
+
+      - name: Upload production statistics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-statistics-records
+          path: tests/test-results/**/statistics-*.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshots
+          path: tests/test-results/
+          retention-days: 7
+
+      # Zrzuty robione celowo przez testy (testInfo.outputPath("shot-*.png"),
+      # np. podgląd nowego wyglądu w editor.spec.js) -- też przy sukcesie.
+      - name: Upload test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shots
+          path: tests/test-results/**/shot-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload E20 gallery
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e20-gallery-${{ github.run_number }}
+          path: tests/test-results/e20-gallery/
+          if-no-files-found: warn
+          retention-days: 30

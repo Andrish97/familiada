@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file is a fallback only. The live sitemap is served dynamically by the Cloudflare Worker at /sitemap.xml and includes all published game pages. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Strona Główna -->
+  <url>
+    <loc>https://www.familijna.app/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.familijna.app/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.familijna.app/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.familijna.app/?lang=uk"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.familijna.app/"/>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Marketplace (Gry Społeczności) -->
+  <url>
+    <loc>https://www.familijna.app/marketplace</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.familijna.app/marketplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.familijna.app/marketplace?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.familijna.app/marketplace?lang=uk"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.familijna.app/marketplace"/>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Polityka Prywatności -->
+  <url>
+    <loc>https://www.familijna.app/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.familijna.app/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.familijna.app/privacy?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.familijna.app/privacy?lang=uk"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.familijna.app/privacy"/>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+
+</urlset>

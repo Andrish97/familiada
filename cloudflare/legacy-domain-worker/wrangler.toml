@@ -1,0 +1,15 @@
+name = "familijna-legacy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+# Worker starej domeny familiada.online (plan rebrandingu, przeprowadzka na
+# familijna.app). Trasy w panelu Cloudflare na strefie familiada.online:
+# tylko familiada.online/* i www.familiada.online/*. api./supabase./panel./
+# docker. zostają przy Workerze `familijna`, admin. przy `familiada-admin`.
+# Fazy przełączają się same według dat; po 2028-01 Worker i trasy do usunięcia.
+workers_dev = false
+preview_urls = false
+
+[vars]
+LEGACY_HANDOFF_UNTIL = "2026-12-01"
+LEGACY_REDIRECT_UNTIL = "2027-12-31"
+NEW_ORIGIN = "https://www.familijna.app"

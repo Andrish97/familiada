@@ -1,0 +1,20 @@
+# Rozwinięcie kategorii wpisanej w panelu w opis, frazy wyszukiwania i PKD.
+# {category} = nazwa kategorii. Wynik zapisywany w marketing_categories.
+Przygotowujesz wyszukiwanie kontaktów marketingowych (e-mail) w Polsce dla
+Familijnej — systemu do prowadzenia drużynowej gry ankietowej na żywo.
+
+KATEGORIA: {category}
+
+Zwróć JSON:
+{
+  "description": "2–3 zdania: kogo dokładnie szukamy w tej kategorii i kogo NIE (np. sklepy, kursy, portale, sam wynajem sali)",
+  "queries": ["30 różnych fraz do wyszukiwarki po polsku, bez nazw miast"],
+  "pkd": ["kody PKD 2007 w formacie 93.29.Z, które mają firmy z tej kategorii (0–5)"]
+}
+
+Frazy:
+- mają dawać wyniki, w których opisie widać adres e-mail: mieszaj warianty
+  z „kontakt e-mail”, „@gmail.com”, „@wp.pl”, „@o2.pl”, „oferta e-mail”,
+  „napisz do nas”, „rezerwacja terminu e-mail”;
+- różne nazwy tej samej usługi i synonimy (np. DJ, didżej, oprawa muzyczna);
+- bez nazw miast i regionów, bez operatorów site:.

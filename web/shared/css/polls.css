@@ -1,0 +1,479 @@
+/* css/polls.css */
+@layer page {
+  .name {
+      font-weight: 1000;
+      font-size: 16px;
+      letter-spacing: .04em
+  }
+
+  .meta {
+      opacity: .75;
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.35
+  }
+  .resultQ {
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      border-radius: var(--r-lg);
+      padding: 12px
+  }
+
+  .resultQ .qTitle {
+      font-weight: 1000;
+      margin-bottom: 8px;
+      line-height: 1.25
+  }
+
+  /* =========================================================
+     Strona ankiety (właściciel): pasek stanu + wypustki
+     Udostępnianie · Wyniki. Wypustki i kafelki: games.css.
+  ========================================================= */
+
+  /* atrybut hidden ma wygrywać z display ustawianym niżej */
+
+  /* A. Pasek stanu — pełna szerokość.
+     Lewa: stan słowem + krótki opis. Prawa: WSZYSTKIE akcje; główna złota,
+     „Przerwij” zawsze ostatni (stonowany, czerwony obrys). */
+  .pollStateWord{
+    font-weight: 1000;
+    font-size: 15px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+  }
+  .pollBar[data-state="poll_open"] .pollStateWord{ color: var(--warn-text); }
+  .pollBar[data-state="poll_stopped"] .pollStateWord,
+  .pollBar[data-state="tally"] .pollStateWord{ color: var(--accent); }
+  .pollBar[data-state="ready"] .pollStateWord{ color: var(--ok-text); }
+  .pollStateInfo{ font-size: 13px; opacity: .8; min-width: 0; }
+  .pollStateInfo:not(:empty)::before{ content: "· "; opacity: .7; }
+  /* powód, dla którego akcja jest wyłączona */
+  .pollBarHint{
+    margin: 0;
+    color: var(--g-60);
+    max-width: 420px;
+  }
+  .pollBarHint:empty{ display: none; }
+  /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
+  .pollBarActions .ico{ width: 16px; height: 16px; flex: 0 0 16px; }
+  /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
+
+  /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
+  .pollBar{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    /* Odstęp do karty z wypustkami jak .bar silnika (layout.css): 12 px. */
+    margin-bottom: 12px;
+  }
+  .pollBarState{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+  .pollBarActions{
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+  .pollBarActions .btn{
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  /* Podsumowanie odbiorców przychodzi po danych ankiety. Zarezerwuj wiersz
+     także przed odpowiedzią, żeby karta i akcje nie zjeżdżały. */
+  .pollBar .subsSummary{ flex-basis: 100%; min-height: 1lh; }
+  .pollAbort:not(:disabled){ --btn-tint: var(--bad-tint); color: var(--bad-text); border-color: var(--bad-line); }
+  @media (max-width: 980px){
+    .pollBar{ gap: 10px; padding: 10px; }
+    .pollBarState{ flex-basis: 100%; }
+    .pollBarActions{
+      flex-basis: 100%;
+    }
+    .pollBarActions .btn{ flex: 0 0 auto; }
+    .pollBarHint{ flex-basis: 100%; max-width: none; }
+  }
+  @media (max-width: 600px){
+    .pollBarActions .pollActionLabel{ display: none; }
+    .pollBarActions .btn{ width: 38px; min-width: 38px; height: 36px; padding: 0; justify-content: center; }
+    .pollBarActions .ico{ width: 18px; height: 18px; flex-basis: 18px; }
+  }
+
+  /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
+  /* Wypustki: silnik (.tabs-card). „Odbiorcy” tylko na telefonie. */
+  .polls-tabs-card .slot-recipients{ display: none; }
+  .pollShareLabelMobile{ display: none; }
+
+  /* Sekcje z wypustkami zajmują całą szerokość obszaru treści, jak w Games.
+     Węższe karty wpisywania maila i Go mają osobne reguły w swoich stylach. */
+  #pollTabsCard{
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .polls-section{ display: none; }
+  .polls-section.active{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
+  .shareCols{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+    align-content: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  @media (max-width: 980px){
+    .polls-tabs-card .slot-recipients{ display: flex; }
+    .pollShareLabelDesktop{ display: none; }
+    .pollShareLabelMobile{ display: inline; }
+    .shareCols{ grid-template-columns: minmax(0, 1fr); }
+    .shareCols > .pollRecipientsSec{ display: none; }
+    .polls-tabs-card.mobile-recipients-active .shareCols > .pollLinkSec{ display: none; }
+    .polls-tabs-card.mobile-recipients-active .shareCols > .pollRecipientsSec{ display: flex; }
+    /* równe marginesy: sekcje bez własnej ramki (karta ma już swój margines),
+       przewijanie nie odejmuje pasa od jednej strony */
+    .card.games-card.polls-card{ padding: 12px 12px 8px; }
+    /* Mobilna wypustka już nazywa aktywną sekcję. Jej treść nie potrzebuje
+       powtórzonego tytułu ani drugiej ramki wewnątrz głównej karty. */
+    .polls-card .pollSec{ padding: 0; background: none; border: 0; border-radius: 0; }
+    .polls-card .pollLinkSec > .pollSecTitle,
+    .polls-card .pollRecipientsSec > .pollSecHead > .pollSecTitle{ display: none; }
+  }
+  .pollSec{
+    --under: var(--surface-2);
+    padding: 12px;
+    border-radius: var(--r-md);
+    background: var(--w-4);
+    border: 1px solid var(--w-8);
+    min-width: 0;
+  }
+  .pollRecipientsSec{ display: flex; flex-direction: column; min-height: 0; }
+  /* Anonimowo: QR dopasowuje się do wysokości (kontener rozmiaru), akcje pod
+     nim zawsze widoczne — strona i panel się nie przewijają (decyzja E20). */
+  .pollLinkSec{ display: flex; flex-direction: column; min-height: 0; }
+  .pollLinkLive{ flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .pollRecipientsSec .subsGrid{ flex: 1 1 auto; min-height: 0; }
+  @media (max-width: 980px){
+    .pollSec{ padding: 12px; background: var(--w-4); border: 1px solid var(--w-8); border-radius: var(--r-md); }
+  }
+  .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  /* Link ankiety jest dostępny akcjami, bez wyświetlania długiego adresu. */
+  .pollLinkPlaceholder{
+    margin-top: 10px;
+    padding: 14px 10px;
+    border: 1px dashed var(--line);
+    border-radius: var(--r-md);
+    text-align: center;
+    font-size: 13px;
+    opacity: .75;
+  }
+  /* Trzy przyciski zawsze w jednym rzędzie: trzy równe kolumny. */
+  .pollLinkActions{
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch; /* równa wysokość, gdy jeden napis zawija się w dwa wiersze */
+  }
+  .pollLinkActions .btn{ white-space: normal; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
+  /* telefon: ikona nad napisem -- najdłuższe słowo („wyświetlaczu”) mieści się
+     w jednej z trzech równych kolumn bez ucinania */
+  @media (max-width: 600px){
+    .pollLinkActions .btn{ flex-direction: column; padding: 6px; gap: 3px; text-align: center; }
+  }
+
+  /* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”
+     z podpisem; kliknięcie powiększa go w oknie. Prawie cała szerokość
+     sceny: komputer do 300 px, telefon do 320 px. */
+  .pollQrStage{
+    margin-top: 10px;
+    padding: 14px 10px 12px;
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex: 1 1 0;
+    min-height: 140px;
+    container-type: size;
+  }
+  .qrFrameSmall{
+    padding: 12px;
+    background: var(--white);
+    border-radius: var(--r-md);
+    line-height: 0;
+  }
+  .qrFrameSmall img{ display: block; width: 100%; height: auto; }
+  .qrBox.img{
+    display: block;
+    /* 100cqh − podpis (odstęp + wiersz): QR nie wypycha akcji poza kartę. */
+    width: min(100%, 300px, 100cqh - 34px);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    border-radius: var(--r-md);
+    cursor: zoom-in;
+    transition: transform .15s ease;
+  }
+  .qrBox.img:not(:disabled):hover{ transform: scale(1.02); }
+  .qrBox.img:empty{ display: none; }
+  .qrBox.img:disabled{ cursor: default; }
+  .qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: var(--r-md); }
+  .pollQrVote{ display: flex; justify-content: center; }
+  @media (max-width: 980px){
+    .qrBox.img{ width: min(100%, 320px, 100cqh - 34px); }
+  }
+
+  /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
+  .subsSummary{ font-size: 12px; opacity: .85; }
+  /* „Dodaj odbiorców” w linii nagłówka sekcji (bez tytułu na telefonie: po prawej) */
+  .subsTools{ display: flex; justify-content: flex-end; margin-left: auto; }
+  .subsFoot{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .subsFoot .btn{ white-space: nowrap; flex: 0 0 auto; }
+  .subsSendHint{ text-align: right; flex: 1 1 200px; }
+  @media (max-width: 980px){
+    .subsFoot{ flex-direction: column-reverse; align-items: stretch; }
+    .subsFoot .btn{ width: 100%; white-space: normal; min-height: 42px; }
+    .subsSendHint{ text-align: left; flex: 0 0 auto; }
+  }
+
+  /* Subskrybenci: sekcje udostępniania (share-sections.js, base.css) */
+  .subsGrid{
+    display: block;
+    margin-top: 10px;
+    overflow: visible;
+    padding: 2px;
+  }
+  .pollRecipientGroup:empty{ display:none; }
+  .pollRecipientsModal .uni-body{ min-height: 140px; display: grid; gap: 16px; }
+  .pollRecipientsModal .shareSection{ margin: 0; }
+  .pollRecipientsModal .shareList{ max-height: min(240px, 25dvh); }
+  .pollRecipientsModal .uni-foot{ align-items: center; justify-content: flex-end; }
+  .pollRecipientsModal #pollRecipientsCount{ margin-right: auto; }
+  .pollRecipientsSec .shareList{ max-height: min(360px, 45dvh); }
+
+  @media (max-width: 600px){
+    /* Listy przewijają się osobno; kafelki zachowują naturalną wysokość
+       (przewijana lista to kolumna flex bez zwężania wierszy, base.css). */
+  }
+
+  /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
+  #resultsList{ display: grid; gap: 12px; }
+  #secResults.active #resultsList{
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-auto-rows: max-content;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    align-content: start;
+  }
+  #resultsMeta{ margin: 0 0 8px; }
+  #resultsMeta:empty{ display: none; }
+  .resultQ .aList{ display: grid; gap: 6px; }
+  .resultQ .aRow{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--w-8);
+    background: var(--w-4);
+    overflow: hidden;
+    transition: padding .4s ease, opacity .3s ease, height .3s ease, margin .3s ease, border-color .2s ease, background .2s ease;
+  }
+  .resultQ .aBar{
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: var(--p, 0%);
+    background: linear-gradient(90deg, var(--g-10), var(--g-35));
+    transition: width .6s ease;
+    pointer-events: none;
+  }
+  .resultQ .aTxt{ position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .resultQ .aVal{ position: relative; opacity: .95; font-weight: 1000; color: var(--accent); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Podliczanie: te same wiersze, uchwyt / pole edycji / kosz rozsuwają się płynnie */
+  .tallyBar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 10px;
+  }
+  .tallyHint{ margin: 0; flex: 1 1 260px; min-width: 0; }
+  .tallyTools{
+    flex: 0 0 auto;
+  }
+  .tallySave{ font-size: 12px; opacity: .75; min-width: 0; }
+  .tallySave[data-state="failed"]{ color: var(--bad-text); opacity: 1; }
+
+  .resultQ .tallyMeta{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin: 0;
+    font-size: 12px;
+    transition: max-height .4s ease, opacity .4s ease, margin .4s ease;
+  }
+  .resultQ .tallyMeta.on{ max-height: 120px; opacity: 1; margin: -2px 0 8px; }
+  .resultQ .tallyMetaInstant{ transition: none; }
+  .tallyCounter.invalid{ color: var(--bad-text); font-weight: 900; }
+  .tallySum{ color: var(--accent); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .tallyVotesTotal{ color: var(--info-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
+  .tallyMeta .tcTieBtn{ margin-left: 0; }
+  .tallyMeta .tcMergeDup, .tallyMeta .tcTieBtn{ display: inline-flex; align-items: center; gap: 6px; }
+  /* E21: remis na granicy szóstki -- kto wchodzi, kto zostaje pominięty */
+  .tallyTieInfo{ flex-basis: 100%; color: var(--warn-text); font-weight: 700; }
+  .resultQ .aRow.tallyTie{ border-style: dashed; }
+
+  .resultQ .tcHandle,
+  .resultQ .tcCnt{
+    position: relative;
+    flex: 0 0 auto;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    pointer-events: none;
+    transition: max-width .45s ease, opacity .35s ease;
+  }
+  /* Przyciski wiersza (scal, usuń) — wspólne .btn.sm.icon; tylko w trybie podliczania. */
+  .resultQ .aList:not(.tally) :is(.tcMergeBtn, .tcDel){ display: none; }
+  .resultQ .aList.tally .aRow{ min-height: 46px; height: auto; gap: 6px; padding: 3px 8px; }
+  .resultQ .aList.tally .aRow,
+  .resultQ .aList.tally .aBar,
+  .resultQ .aList.tally .tcHandle,
+  .resultQ .aList.tally .tcCnt{ transition: none; }
+  .resultQ .aList.tally .tcHandle{ max-width: 24px; color: var(--text-faint); pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
+  .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
+  .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
+  .resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; margin-left: 7px; }
+  /* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
+  @media (hover: hover) and (pointer: fine){
+    .resultQ .aList.tally .tcMergeBtn{ display: none; }
+  }
+  .resultQ .aList.tallyText .aTxt{ display: none; }
+  /* Telefon (uwaga użytkownika 2026-10-20): tekst odpowiedzi w pierwszej linii
+     na całą szerokość, głosy, punkty i przyciski w drugiej; mniejsze przyciski
+     bez ramki grupy; podpowiedź i cofnij/ponów w jednej linii; meta pytania
+     zwarta, „Scal identyczne” / „Zmień wybór w remisie” jako ikony. */
+  @media (max-width: 600px){
+    .tallyBar{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; }
+    .tallyHint{ flex: 1 1 0; }
+    .tallyTools .btn.sm{ width: 34px; height: 34px; padding: 0; }
+    .resultQ .tallyMeta{ gap: 4px 10px; }
+    .resultQ .tallyMeta.on{ max-height: 200px; }
+    .tallyMeta .tcMergeDup span,
+    .tallyMeta .tcTieBtn span{ display: none; }
+    .tallyMeta .tcMergeDup,
+    .tallyMeta .tcTieBtn{ width: 32px; height: 32px; padding: 0; justify-content: center; }
+    /* linia 1: tekst + przyciski; linia 2: głosy + punkty */
+    .resultQ .aList.tallyText .aRow{ flex-wrap: wrap; row-gap: 0; padding: 5px 6px 5px 8px; }
+    .resultQ .aList.tallyText .aTxtInp{ order: 1; flex: 1 1 0; }
+    .resultQ .aList.tally .tcActionGroup{ order: 2; margin-left: 4px; gap: 4px; }
+    .resultQ .aList.tallyText .tcCnt{ order: 3; flex: 0 0 calc(100% - 96px); max-width: none; margin-left: 6px; text-align: left; }
+    .resultQ .aList.tallyText .aVal{ order: 4; margin-left: auto; padding-right: 4px; }
+  }
+
+  .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
+  .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
+  .resultQ .aRow.tallySkipped,
+  .resultQ .aRow.tallySkipped.out{ opacity: 1; border-color: var(--bad-line); background: var(--bad-tint); }
+  .resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, var(--bad-tint), var(--bad-tint)); }
+  .resultQ .aRow.tallySkipped .aTxt,
+  .resultQ .aRow.tallySkipped .aVal{ color: var(--bad-text); }
+  .resultQ .aTxtInp{
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    height: 28px;
+    box-sizing: border-box;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    padding: 0 6px;
+    color: inherit;
+    font: inherit;
+    font-weight: 900;
+    outline: none;
+  }
+  .resultQ .aTxtInp:hover{ border-color: var(--w-14); }
+  .resultQ .aTxtInp:focus{ border-color: var(--g-60); background: var(--k-20); }
+  .resultQ .aRow.out{ color: var(--text-muted); } /* bez opacity (Android) */
+  .resultQ .aRow.dragging{ opacity: .5; }
+  .resultQ .aRow.drop-target{ border-color: var(--accent); background: var(--g-10); }
+  .resultQ .aRow.merge-src{ border-color: var(--g-60); background: var(--g-10); }
+  .resultQ .aRow.merge-target{ border-color: var(--info-line); }
+  .resultQ .aRow.tallySkipped.merge-src{
+    border-color: var(--accent);
+    background: linear-gradient(var(--g-10), var(--g-10)), var(--bad-tint);
+  }
+  .resultQ .aRow.tallySkipped.merge-target{ border-color: var(--info-strong); }
+  @media (prefers-reduced-motion: reduce){
+    .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tallyMeta{ transition: none; }
+  }
+
+
+  /* Szkic: udostępnianie widoczne, ale zablokowane do uruchomienia ankiety. */
+  /* Zablokowana sekcja: kolory wyłączenia jak .btn:disabled, nie opacity (Android). */
+  .shareCols.is-locked > .pollSec{ color: var(--disabled-text); }
+  .shareCols.is-locked > .pollSec .btn{ --btn-tint: var(--w-4); color: var(--disabled-text); border-color: var(--disabled-line); }
+  .shareCols.is-locked > .pollSec :is(button, a, input){ pointer-events: none; }
+/* Dotyk: uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20). */
+  @media (hover: none) and (pointer: coarse) {
+    .tcHandle { display: none; }
+  }
+}
+
+@layer page {
+  @media (max-width: 600px) {
+    /* Okno QR na telefonie: większe odstępy między QR, kodem i podpowiedzią
+       (jak okno urządzenia w Control). */
+    #pollQrModalOverlay .uni-body { gap: 20px; }
+  }
+}

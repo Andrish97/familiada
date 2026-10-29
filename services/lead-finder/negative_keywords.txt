@@ -1,0 +1,37 @@
+# Słowa wykluczające — kandydat odrzucany bez AI, gdy nazwa lub opis je
+# zawiera (małe litery). Tylko śmieci niezależne od kategorii (urzędy
+# techniczne, medycyna, nieruchomości, motoryzacja, oferty pracy); resztę
+# odrzuca AI według opisu kategorii.
+wodociągi
+kanalizacja
+oczyszczalnia
+ciepłownia
+zakład komunalny
+komenda policji
+prokuratura
+sąd rejonowy
+biuro rachunkowe
+apteka
+przychodnia
+stomatolog
+dentysta
+weterynarz
+deweloper
+sprzedaż mieszkań
+biuro nieruchomości
+pośrednictwo nieruchomości
+instalacje elektryczne
+hurtownia
+serwis samochodowy
+warsztat samochodowy
+części zamienne
+lakiernia
+komis samochodowy
+kredyt hipoteczny
+ubezpieczenia
+kancelaria prawna
+kancelaria adwokacka
+notariusz
+oferta pracy
+praca dla
+zatrudnimy

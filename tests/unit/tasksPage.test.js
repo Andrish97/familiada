@@ -1,0 +1,69 @@
+// Strona /tasks/ (E19 krok 2): wpis w mapie, trasa Workera, przycisk na liście
+// gier, teksty w trzech językach i wspólny komponent wierszy.
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { PAGES } from "../../web/shared/js/core/nav-map.js";
+import { loadDict } from "./helpers/i18n.js";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
+
+test("tasks: wpis w PAGES, trasa Workera, przycisk na liście gier", () => {
+  assert.equal(PAGES.tasks.access, "user");
+  assert.equal(PAGES.tasks.parent, "games");
+  assert.ok(PAGES.tasks.from.includes("games"));
+  assert.deepEqual(PAGES.tasks.state, ["t", "dialog"]);
+  assert.equal(PAGES.tasks.dialogs, undefined);
+  assert.deepEqual(PAGES.games.buttons.btnTasks, { to: "tasks", roles: ["user"] });
+  assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"friends", "subscribers", "tasks"/);
+  assert.match(read("web/games/index.html"), /id="btnTasks"/);
+  assert.match(read("web/tasks/js/tasks.js"), /initPage\("tasks"/);
+});
+
+test("tasks: teksty pl/en/uk mają te same klucze", async () => {
+  const keys = (o, p = "") => Object.entries(o).flatMap(([k, v]) => (v && typeof v === "object" ? keys(v, `${p}${k}.`) : [`${p}${k}`])).sort();
+  const langs = await Promise.all(["pl", "en", "uk"].map((l) => loadDict(l)));
+  const [pl, en, uk] = langs;
+  for (const [name, get] of [["tasks", (x) => x.tasks], ["shareSections.channel", (x) => x.shareSections.channel]]) {
+    assert.deepEqual(keys(get(en)), keys(get(pl)), `${name} en`);
+    assert.deepEqual(keys(get(uk)), keys(get(pl)), `${name} uk`);
+  }
+  for (const x of [pl, en, uk]) assert.ok(x.nav.menu.tasks);
+});
+
+test("komponent wierszy: sekcje zwijane, akcje z ikoną, usuwanie ikoną", () => {
+  const src = read("web/shared/js/core/share-sections.js");
+  assert.match(src, /export function renderRowSections/);
+  assert.match(src, /export function rowEl/);
+  assert.match(src, /aria-expanded/);
+  assert.match(src, /actionIcon === "trash"/);
+  assert.match(read("web/shared/style/components.css"), /\.rowsPage \{ width: 100%; max-width: 760px/);
+});
+
+test("tasks: tylko ankiety, bez akcji baz lub urządzeń i filtra rodzaju", () => {
+  const src = read("web/tasks/js/tasks.js");
+  assert.match(src, /data\.filter\(task => task\.kind === "poll"\)/);
+  assert.doesNotMatch(src, /base_share_accept|base_share_decline|connectDevice|focusBaseToken|labelKey: "tasks\.filter/);
+  assert.match(read("web/go/js/go.js"), /baseInviteBasesAction/);
+});
+
+test("tasks: bez wyszukiwania, dolnego paska i tekstowej etykiety typu", () => {
+  const src = read("web/tasks/js/tasks.js");
+  assert.doesNotMatch(src, /initListSearch|list-search|tasks\.pollType/);
+  assert.doesNotMatch(read("web/tasks/index.html"), /list-toolbar/);
+  assert.match(src, /noteMobile: owner/);
+});
+
+test("kontakty: wspólne karty, stan w mapie i wypustki z silnika", () => {
+  for (const id of ["friends", "subscribers"]) {
+    assert.deepEqual(PAGES[id].tabs, ["invite", "received"]);
+    assert.ok(PAGES[id].state.includes("tab"));
+    assert.match(read(`web/${id}/index.html`), /shared\/style\/layout.css/); // E23: wypustki z silnika
+    assert.match(read(`web/${id}/index.html`), /class="tab-label/);
+  }
+  const src = read("web/shared/js/core/contacts-page.js");
+  assert.match(src, /tabFromUrl\(/); assert.match(src, /setTab\(/);
+});

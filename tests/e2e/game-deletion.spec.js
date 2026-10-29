@@ -1,0 +1,104 @@
+// tests/e2e/game-deletion.spec.js
+// Weryfikuje, że usunięcie gry przez UI (js/pages/games.js, deleteGame())
+// realnie czyści folder user-sounds/{userId}/{gameId}/ w Supabase Storage,
+// nie tylko wiersz w DB.
+
+const { test, expect } = require("./helpers/e2e-test");
+
+test.use({ needs: { standard: 1 } });
+
+test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", async ({ page, context, accounts, loginAs }) => {
+  await loginAs(page, context, accounts.standard[0]);
+
+  // Stwórz testową grę bezpośrednio przez API (nie testujemy tu kreatora gier,
+  // tylko usuwanie — dokładnie ten sam kształt co createGame() w games.js)
+  const gameName = `E2E-TEST-DELETE-${Date.now()}`;
+  const { userId, gameId } = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const userId = userData.user.id;
+    const { data: game, error } = await sb
+      .from("games")
+      .insert({ name, owner_id: userId, type: "prepared", status: "draft" })
+      .select("id")
+      .single();
+    if (error) throw new Error("insert games failed: " + error.message);
+    return { userId, gameId: game.id };
+  }, gameName);
+
+  // Wgraj testowy plik audio do bucketu, dokładnie na ścieżkę jakiej używa sfx-cloud.js
+  const uploadError = await page.evaluate(async ({ userId, gameId }) => {
+    const sb = window.__sbClient;
+    const path = `${userId}/${gameId}/test_key`;
+    const blob = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "audio/mpeg" });
+    const { error } = await sb.storage.from("user-sounds").upload(path, blob, { upsert: true });
+    return error?.message || null;
+  }, { userId, gameId });
+  expect(uploadError, "upload testowego pliku audio nie powiódł się").toBeNull();
+
+  // Sprawdź że plik faktycznie jest w buckecie PRZED usunięciem gry
+  const before = await page.evaluate(async ({ userId, gameId }) => {
+    const sb = window.__sbClient;
+    const { data } = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
+    return data;
+  }, { userId, gameId });
+  expect(before?.length, "plik testowy powinien być w buckecie przed usunięciem gry").toBeGreaterThan(0);
+
+  // Przejdź do strony gier i odśwież listę gier, żeby nowa gra się pojawiła
+  await page.goto("https://www.familijna.app/games", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1500); // czas na załadowanie listy gier z DB
+
+  // Znajdź kartę naszej testowej gry po nazwie i kliknij jej przycisk usuwania (".x")
+  // Scoped do #grid — sama karta ma klasę "card", ale ma ją też otaczający ją
+  // panel (.card.games-card w games.html), więc bez zawężenia locator
+  // łapie oba elementy (strict mode violation).
+  const card = page.locator("#grid .card", { has: page.locator(".name", { hasText: gameName }) });
+  await expect(card).toBeVisible({ timeout: 10000 });
+  await card.locator(".x").click();
+
+  // Potwierdź modal usuwania (przycisk "Usuń")
+  await page.getByRole("button", { name: "Usuń", exact: true }).click();
+
+  // Poczekaj aż wiersz gry zniknie z DB (deleteGame() zakończy się)
+  await expect
+    .poll(async () => {
+      return await page.evaluate(async (id) => {
+        const sb = window.__sbClient;
+        const { data } = await sb.from("games").select("id").eq("id", id);
+        return data?.length ?? -1;
+      }, gameId);
+    }, { timeout: 15000, message: "gra powinna zniknąć z bazy po usunięciu" })
+    .toBe(0);
+
+  // Kluczowa asercja: folder w buckecie user-sounds ma być pusty/nie istnieć.
+  // Pliki usuwa teraz baza asynchronicznie (kolejka storage_cleanup_queue,
+  // migracja 313: edge function storage-cleanup wołana przez pg_net po
+  // zatwierdzeniu, ponowienia co 10 min z pg_cron), a games.js dodatkowo
+  // sprząta folder po stronie klienta dopiero PO odpowiedzi RPC -- więc
+  // sprawdzenie zaraz po zniknięciu wiersza gry było wyścigiem. Czekamy, a
+  // wpisy-zaślepki folderu (.emptyFolderPlaceholder) nie liczą się jako pliki.
+  const queue = await page.evaluate(async (gameId) => {
+    const { data, error } = await window.__sbClient.rpc("e2e_storage_cleanup_peek", { p_owner_id: gameId });
+    return error ? `error: ${error.message}` : data;
+  }, gameId);
+  console.log("[e2e-storage] kolejka po usunięciu gry:", JSON.stringify(queue));
+  await expect
+    .poll(async () => {
+      return await page.evaluate(async ({ userId, gameId }) => {
+        const sb = window.__sbClient;
+        const { data, error } = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
+        if (error) return `error: ${error.message}`;
+        return (data || []).filter((f) => f.name !== ".emptyFolderPlaceholder").map((f) => f.name);
+      }, { userId, gameId });
+    }, {
+      timeout: 60000,
+      intervals: [1000, 2000, 3000],
+      message: "plik audio nie powinien już istnieć w buckecie po usunięciu gry",
+    })
+    .toEqual([]);
+  const queueAfter = await page.evaluate(async (gameId) => {
+    const { data } = await window.__sbClient.rpc("e2e_storage_cleanup_peek", { p_owner_id: gameId });
+    return data;
+  }, gameId);
+  console.log("[e2e-storage] kolejka na koniec:", JSON.stringify(queueAfter));
+});

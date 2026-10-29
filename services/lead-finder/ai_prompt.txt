@@ -1,0 +1,27 @@
+# Prompt oceny kandydatów (paczka). {category} = nazwa kategorii z panelu,
+# {description} = opis „kogo szukamy / kogo nie” (rozwinięcie AI, w bazie),
+# {items} = lista JSON: id, name, site, text (opis wyniku), pkd, email_domains.
+Szukamy kontaktów marketingowych dla Familijnej — systemu do prowadzenia
+drużynowej gry ankietowej na żywo (ekran, pilot prowadzącego,
+publiczność gra drużynami).
+
+KATEGORIA: {category}
+KOGO SZUKAMY: {description}
+
+Zasady:
+- AKCEPTUJ (ok: 1) tylko konkretną firmę, osobę lub instytucję z Polski,
+  która pasuje do kategorii.
+- ODRZUĆ (ok: 0): portale, katalogi, rankingi, ogłoszenia, media, blogi,
+  artykuły, sklepy, oferty pracy, firmy spoza Polski i wszystko, co nie pasuje
+  do kategorii; także gdy dane są zbyt ogólne, żeby to ocenić.
+- Oceniaj tylko na podstawie podanych danych, nie zgaduj.
+
+KANDYDACI:
+{items}
+
+Zwróć JSON z wynikiem dla KAŻDEGO id dokładnie raz:
+{"results": [
+  {"id": "c1", "ok": 1, "title": "krótka nazwa firmy (do 60 znaków)",
+   "short_description": "czym się zajmuje, jedno zdanie", "reason": "krótko, dlaczego"},
+  {"id": "c2", "ok": 0, "reason": "krótka przyczyna (max 10 słów)"}
+]}

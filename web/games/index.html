@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="gameValidate games polls resources">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="games.title">Familijna — moje gry</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icon-apple-touch-180.png?v=v2026-10-29T02360"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-29T02360"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+
+<body class="page-fit skel-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand topbar-has-overflow-nav">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button class="btn topbar-sheet-back" id="btnBackSheet" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnMarketplace">
+        <span data-i18n="nav.menu.marketplace" data-i18n-icon-after="gamepad">Gry Społeczności</span>
+      </button>
+
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" hidden>
+        <span data-i18n="nav.menu.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnLogoEditor">
+        <span data-i18n="nav.menu.logo" data-i18n-icon-after="display">Logo</span>
+        <span class="badge" id="logoCopiesNavBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnBases">
+        <span data-i18n="nav.menu.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnFriends">
+        <span data-i18n="nav.menu.friends" data-i18n-icon-after="people">Znajomi</span>
+        <span class="badge" id="friendsBadge" data-nav-contact-count="friends" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnSubscribers" data-nav-hidden="true" hidden>
+        <span data-i18n="nav.menu.subscribers" data-i18n-icon-after="envelope">Subskrybenci</span>
+        <span class="badge" id="subscribersBadge" data-nav-contact-count="subscribers" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnTasks" data-nav-hidden="true" hidden>
+        <span data-i18n="nav.menu.tasks" data-i18n-icon-after="bell">Zadania</span>
+        <span class="badge" id="tasksBadge" aria-hidden="true"></span>
+      </button>
+
+      <div class="nav-more" id="navMore" hidden>
+        <button class="btn" id="btnMore" type="button"><span data-i18n="nav.menu.more">Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
+        <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
+      </div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn icon" id="btnInstall" type="button" hidden title="Zainstaluj aplikację" aria-label="Zainstaluj aplikację" data-i18n-title="games.pwaInstall.title" data-i18n-aria-label="games.pwaInstall.title"><i class="ico" data-icon="download"></i></button>
+      <button class="btn icon" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <div class="who" id="whoStatic">—</div>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title" data-i18n="games.header.title">Twoje gry</div>
+        <div class="hint" id="hint" data-i18n="common.renameTileHint"></div>
+      </div>
+
+      <div class="actions">
+        <!-- góra: główna akcja (złota) z lewej, reszta neutralna; pełne napisy także na telefonie -->
+        <div class="btn-group">
+          <button class="btn sm gold" id="btnPlay" type="button" disabled><i class="ico" data-icon="gamepad" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.play">Graj</span></button>
+          <button class="btn sm gold" id="btnSettings" type="button" disabled><i class="ico" data-icon="settings" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.settings">Ustawienia gry</span></button>
+        </div>
+
+        <button class="btn sm" id="btnEdit" type="button" disabled><i class="ico" data-icon="edit-paper" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.edit">Edytuj</span></button>
+
+        <button class="btn sm" id="btnPreview" type="button" disabled><i class="ico" data-icon="eye" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.preview">Podgląd</span></button>
+
+        <button class="btn sm" id="btnPoll" type="button" disabled><i class="ico" data-icon="polls" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.poll">Ankieta</span></button>
+      </div>
+    </div>
+
+    <!-- Karty z wypustką (kształt jak w Twoim pliku) -->
+    <section class="games-shell" data-skel-step>
+      <div class="tabs-card" id="tabs-root">
+        <!-- PASEK ZAKŁADEK -->
+        <div class="tabs-strip">
+          <!-- SLOT 1: ankieta tekstowa -->
+          <div class="tab-slot slot-pollText" data-copy-kind="game" data-copy-variant="poll_text">
+            <button class="tab-label" id="tabPollText" type="button">
+              <span class="only-desktop" data-i18n="games.tabs.pollText">Ankieta tekstowa</span>
+              <span class="only-mobile" data-i18n="games.tabs.pollTextMobile">Ankieta</span>
+              <span class="badge" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <!-- SLOT 2: punktacja -->
+          <div class="tab-slot slot-pollPoints" data-copy-kind="game" data-copy-variant="poll_points">
+            <button class="tab-label" id="tabPollPoints" type="button">
+              <span class="only-desktop" data-i18n="games.tabs.pollPoints">Punktacja</span>
+              <span class="only-mobile" data-i18n="games.tabs.pollPointsMobile">Punkty</span>
+              <span class="badge" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <!-- SLOT 3: preparowana -->
+          <div class="tab-slot slot-prepared" data-copy-kind="game" data-copy-variant="prepared">
+            <button class="tab-label" id="tabPrepared" type="button">
+              <span class="only-desktop" data-i18n="games.tabs.prepared">Preparowana</span>
+              <span class="only-mobile" data-i18n="games.tabs.preparedMobile">Prepar.</span>
+              <span class="badge" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <!-- SLOT 4: Z marketu -->
+          <div class="tab-slot slot-market">
+            <button class="tab-label" id="tabMarket" type="button">
+              <span class="only-desktop" data-i18n="games.tabs.market">Gry Społeczności</span>
+              <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społeczność</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KARTA POD WYPUSTKĄ -->
+        <div class="card games-card">
+          <div class="grid" id="grid"></div>
+
+          <div class="list-toolbar">
+          <div class="list-toolbar-left"></div>
+            <div class="list-toolbar-right">
+              <button class="btn sm" id="btnDuplicate" type="button" disabled data-i18n-title="resourceDuplicate.action" data-i18n-aria-label="resourceDuplicate.action"><i class="ico" data-icon="duplicate" data-icon-animation="copy" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceDuplicate.action">Powiel</span></button>
+              <button class="btn sm" id="btnChangeType" type="button" disabled data-i18n-title="games.changeType.action" data-i18n-aria-label="games.changeType.action"><i class="ico" data-icon="change-type" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.changeType.action">Zmień typ</span></button>
+              <button class="btn sm" id="btnExport" type="button" disabled data-i18n-title="games.actions.exportFile" data-i18n-aria-label="games.actions.exportFile"><i class="ico" data-icon="download" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.exportFile">Eksportuj do pliku</span></button>
+              <button class="btn sm" id="btnExportBase" type="button" disabled data-i18n-title="games.actions.exportBase" data-i18n-aria-label="games.actions.exportBase"><i class="ico" data-icon="drawer-export" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.exportBase">Eksportuj do bazy</span></button>
+              <button class="btn sm" id="btnImport" type="button" data-i18n-title="games.actions.import" data-i18n-aria-label="games.actions.import"><i class="ico" data-icon="upload" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.import">Importuj</span></button>
+              <button class="btn sm" id="btnSendCopy" type="button" disabled data-i18n-title="resourceSend.action" data-i18n-aria-label="resourceSend.action"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceSend.action">Wyślij</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal: eksport do bazy pytań -->
+    <div class="overlay modal--sheet" id="exportBaseOverlay" hidden>
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" data-i18n="games.exportBase.title">Eksport do bazy</div>
+          <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="mSub">
+          <span data-i18n="games.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
+        </div>
+
+        <div class="field">
+          <div class="ui-select" id="baseSelectWrap">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">—</span>
+              <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+        </div>
+
+        <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
+        <div id="exportBaseProg" class="uni-progress" hidden>
+          <div class="uni-progress-row">
+            <div id="exportBaseProgStep" class="uni-progress-step">—</div>
+            <div id="exportBaseProgCount" class="uni-progress-count">0/0</div>
+          </div>
+
+          <div class="progress">
+            <div id="exportBaseProgBar" class="progress-bar"></div>
+          </div>
+
+          <div class="importMsg" id="exportBaseProgMsg"></div>
+        </div>
+
+        <div class="importRow modal-actions">
+          <button class="btn sm" id="btnExportBaseCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="games.exportBase.confirm" data-i18n-icon="download">Eksportuj</button>
+          <div class="importMsg" id="exportBaseMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: import JSON -->
+    <div class="overlay modal--sheet" id="importOverlay" hidden>
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" data-i18n="games.import.title">Importuj</div>
+          <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+
+        <div class="importRow import-file-picker">
+          <input id="importFile" type="file" accept=".famgame,.json,application/json" hidden>
+          <button class="btn sm" id="btnChooseImportFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+          <span class="import-file-name" id="importFileName" aria-live="polite">Nie wybrano pliku</span>
+        </div>
+
+        <!-- Podgląd / błąd po wczytaniu pliku -->
+        <div id="importPreview" class="import-preview" hidden></div>
+        <div id="importErr" class="field-error" role="alert" hidden></div>
+
+        <!-- Pasek postępu (podczas importu) -->
+        <div id="importProg" class="uni-progress" hidden>
+          <div class="uni-progress-row">
+            <div id="importProgStep" class="uni-progress-step">—</div>
+            <div id="importProgCount" class="uni-progress-count">0/0</div>
+          </div>
+          <div class="progress">
+            <div id="importProgBar" class="progress-bar"></div>
+          </div>
+          <div class="importMsg" id="importProgMsg"></div>
+        </div>
+
+        <div class="importRow modal-actions">
+          <button class="btn sm" id="btnImportCancelAction" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="games.import.confirm" data-i18n-icon="upload">Importuj</button>
+          <div class="importMsg" id="importMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: podgląd gry -->
+    <div class="overlay modal--sheet" id="previewOverlay" hidden>
+      <div class="modal modal--medium bld-preview-modal">
+        <div class="bld-preview-head">
+          <div class="mTitle" id="previewTitle">—</div>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="btn-group bld-preview-switch" id="previewSwitch" role="group" aria-label="Podgląd" data-i18n-aria-label="games.preview.switchLabel" hidden>
+          <button class="btn sm gold" id="btnPreviewModeGame" type="button" data-i18n="games.preview.modeGame" data-i18n-icon="gamepad" aria-pressed="true">Gra</button>
+          <button class="btn sm" id="btnPreviewModePoll" type="button" data-i18n="games.preview.modePoll" data-i18n-icon="polls" aria-pressed="false">Ankieta</button>
+        </div>
+        <div class="q-preview bld-preview-questions modal-scroll" id="previewQuestions"></div>
+        <div class="q-preview bld-preview-questions bld-preview-poll modal-scroll" id="previewPoll" hidden>
+          <div class="meta" id="previewPollMeta"></div>
+          <div id="previewPollList"></div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

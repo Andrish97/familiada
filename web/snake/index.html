@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="snake">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="snake.title">Familijna — wąż</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/flat.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/snake/css/snake.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/snake/js/snake.js?v=v2026-10-29T02360" defer></script>
+</head>
+
+<!-- Ukryta gra (wejście z kodu QR na kadrze strony ankiet): wąż na kopii
+     planszy Wyświetlacza -- ten sam motyw i te same kropki. -->
+<body class="snake-body">
+  <!-- Pełny ekran jak na Wyświetlaczu; na iPhonie w Safari (bez Fullscreen API)
+       okno z instrukcją „Do ekranu początkowego” -- jak w Przycisku do pojedynku. -->
+  <!-- Konto: krótki komunikat i przycisk logowania (bez konta) albo konta,
+       obok pełnego ekranu -- widoczne także na telefonie. -->
+  <div class="snake-account" id="snakeAccountBar">
+    <span class="snake-account-note" id="snakeProgress"></span>
+    <a class="corner-btn" id="snakeLogin" href="/login/" hidden title="Zaloguj się" aria-label="Zaloguj się" data-i18n-title="snake.login" data-i18n-aria-label="snake.login"><i class="ico" data-icon="person"></i></a>
+    <a class="corner-btn" id="snakeAccount" href="/account/" hidden title="Konto" aria-label="Konto" data-i18n-title="snake.accountLabel" data-i18n-aria-label="snake.accountLabel"><i class="ico" data-icon="person"></i></a>
+  </div>
+  <button class="corner-btn fs-btn" id="btnFullscreen" type="button" title="Pełny ekran" aria-label="Pełny ekran" data-i18n-title="common.fullscreen" data-i18n-aria-label="common.fullscreen"><i class="ico" data-icon="fullscreen-enter"></i></button>
+  <div class="a2hs" id="snakeA2HS" role="dialog" aria-modal="true" aria-labelledby="snakeA2HSTitle" aria-hidden="true">
+    <div class="a2hsCard">
+      <h2 class="a2hsTitle" id="snakeA2HSTitle" data-i18n="common.a2hsTitle">Dodaj ten widok do ekranu początkowego</h2>
+      <p class="a2hsText" data-i18n-html="common.a2hsSnake">W Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę.</p>
+      <button class="btn a2hsClose" id="snakeA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
+    </div>
+  </div>
+
+  <main class="snake-wrap" data-skel-step>
+    <div class="snake-frame" id="snakeFrame" aria-label="Wąż" data-i18n-aria-label="snake.boardLabel" role="img">
+      <div class="layer-bg"></div>
+      <svg class="layer-base" id="baseSvg" viewBox="0 0 1280 720" overflow="visible"></svg>
+      <svg class="layer-displays" id="displaysSvg" viewBox="0 0 1280 720"><g id="displays"></g></svg>
+    </div>
+
+    <p class="snake-note snake-desktop" id="snakeKeysHint" data-i18n="snake.keysHint">Strzałki albo WASD, spacja albo kliknięcie planszy — pauza.</p>
+    <div class="snake-links snake-desktop">
+      <a class="btn sm" href="/" data-i18n="snake.home">Familijna</a>
+    </div>
+  </main>
+</body>
+</html>

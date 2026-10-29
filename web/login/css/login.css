@@ -1,0 +1,164 @@
+/* Gradient na html — widoczny przez transparentne body */
+@layer page {
+  /* Powłoka (tło, wysokość okna, strefa bezpieczna, stopka): .auth-body
+     i .auth-shell w silniku (layout.css). */
+
+  /* ── typography ── */
+
+  :where(.auth-shell) .sub {
+      opacity: .85;
+      margin-top: 6px;
+      margin-bottom: 14px;
+  }
+
+  /* ── status / error ── */
+
+  :where(.auth-shell) .status {
+      opacity: .75;
+      font-size: 13px;
+      margin-bottom: 10px;
+      margin-top: 30px;
+  }
+  .status:empty { display: none; }
+
+
+  /* ── form ── */
+
+
+  /* pole hasła z przyciskiem „pokaż” (silnik: .pass-wrap) */
+  .pass-wrap input { padding-right: 42px; }
+
+  /* ── buttons ── */
+
+  /* Dwie równe kolumny (główna akcja | przełącznik), gość na całą szerokość. */
+  :where(.auth-shell) .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+  }
+  .row > .btn { width: 100%; min-width: 0; justify-content: center; }
+  .row > #btnGuest { grid-column: 1 / -1; }
+
+  /* Przyciski: wspólne .btn / .btn.gold z shared/css/base.css */
+
+  /* ── misc ── */
+
+  :where(.auth-shell) .meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+  }
+
+  .link {
+      border: 0;
+      background: 0 0;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+  }
+
+
+  :where(.auth-shell) .cooldown {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: .75;
+  }
+
+  /* ── setup card (first-run) ── */
+
+  .setup-card { border-color: var(--g-35); }
+
+  .setup-title {
+      margin-top: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 14px;
+  }
+
+  .setup-sub {
+      margin-top: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      opacity: .8;
+  }
+
+  .setup-form {
+      display: grid;
+      gap: 10px;
+  }
+
+  :where(.auth-shell) .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+  }
+
+
+  /* setup mode – mobile safe */
+  body.setup-mode .login-card  { display: none; }
+  body.setup-mode .setup-card  { display: block; pointer-events: auto; }
+
+  .setup-card button,
+  .setup-card input { touch-action: manipulation; }
+
+  /* mode-specific fields */
+  body.mode-login .pass-wrap:has(#pass2) { display: none; }
+  body.mode-login #pwdHint               { display: none; }
+
+  /* ── login header ── */
+
+  .login-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 56px;
+  }
+
+  .login-brand {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: 1000;
+      letter-spacing: .14em;
+      font-size: 18px;
+      color: var(--accent);
+  }
+
+  /* ── back button (fixed) ── */
+
+  /* lewy górny róg: powrót na stronę główną; prawy: „i” (podręcznik) i język —
+     ten sam układ co sekcja 3 topbara stron aplikacji */
+  .login-top-left,
+  .login-top-right {
+      position: fixed;
+      top: max(20px, env(safe-area-inset-top));
+      z-index: var(--z-float);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+  .login-top-left { left: calc(20px + env(safe-area-inset-left, 0px)); }
+  .login-top-right { right: calc(20px + env(safe-area-inset-right, 0px)); }
+
+
+  /* przyciski w rogach: zwykłe .btn / .btn.icon, wysokość jak przycisk języka */
+  :is(.login-top-left, .login-top-right) .btn { min-height: var(--topbar-ctl-h); }
+
+  @media (max-width: 600px) {
+      .login-top-left,
+      .login-top-right { top: max(14px, env(safe-area-inset-top)); }
+      .login-top-left { left: calc(14px + env(safe-area-inset-left, 0px)); }
+      .login-top-right { right: calc(14px + env(safe-area-inset-right, 0px)); }
+  }
+
+  /* CAPTCHA (Turnstile): niewidoczne sprawdzenie potrzebuje prawdziwych
+     wymiarów (visibility zamiast display:none); okno z widocznym zadaniem. */
+  .captcha-silent { position: fixed; right: 0; bottom: 0; visibility: hidden; pointer-events: none; }
+  .captcha-mount { display: grid; place-items: center; min-height: 84px; }
+  .captcha-status { margin-top: 8px; font-size: 12px; opacity: .85; }
+}

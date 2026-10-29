@@ -1,0 +1,9 @@
+{
+  "name": "familijna-legacy-domain-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

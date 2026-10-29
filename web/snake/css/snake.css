@@ -1,0 +1,150 @@
+/* snake.css -- ukryta gra w węża na kopii planszy Wyświetlacza. */
+:root {
+  --snake-accent-line: rgba(215,255,61,.55);   /* kolor motywu planszy: włączony przycisk */
+}
+body.snake-body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--black);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+.snake-wrap {
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Plansza 16:9 jak Wyświetlacz, jak największa przy miejscu na podpisy. */
+.snake-frame {
+  position: relative;
+  width: min(100%, calc((100dvh - 150px) * 16 / 9));
+  aspect-ratio: 1280 / 720;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  touch-action: none;
+  flex: 0 0 auto;
+}
+.snake-frame .layer-bg,
+.snake-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.snake-frame .layer-bg { z-index: 1; }
+.snake-frame .layer-base { z-index: 2; overflow: visible; }
+.snake-frame .layer-displays { z-index: 3; }
+.snake-frame svg circle { transition: none; }
+
+/* Telefon i tablet: jak zwykły Wyświetlacz -- tło motywu na cały ekran
+   (także pod wcięciem i zaokrąglonymi rogami), plansza 16:9 jak największa
+   w strefie bezpiecznej (iPhone z notchem/Dynamic Island, pasek gestu).
+   Sterowanie przesunięciem palca; telefon w pionie blokuje device-guard. */
+@media (pointer: coarse) {
+  body.snake-body { overflow: hidden; touch-action: none; }
+  .snake-wrap {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    height: 100dvh;
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+  .snake-frame {
+    width: min(100%, calc((100dvh - var(--safe-top) - var(--safe-bottom)) * 16 / 9));
+    border-radius: 0;
+    overflow: visible;
+  }
+  .snake-frame .layer-bg { position: fixed; inset: 0; width: auto; height: auto; }
+  .snake-desktop { display: none; }
+}
+
+.snake-note {
+  margin: 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: .75;
+}
+.snake-note:empty { display: none; }
+
+.snake-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Przyciski w rogach: wspólne .corner-btn / .fs-btn z silnika; „włączony” w kolorze motywu. */
+.fs-btn.is-active { border-color: var(--snake-accent-line); color: var(--text); --btn-tint: transparent; }
+
+/* Konto: obok pełnego ekranu (44 px przycisku + 8 px odstępu). */
+.snake-account {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: calc(max(12px, env(safe-area-inset-right, 0px)) + 52px);
+  z-index: var(--z-top);
+  display: flex;
+  align-items: flex-start; /* przyciski równo z pełnym ekranem, gdy komunikat ma dwie linie */
+  gap: 8px;
+}
+.snake-account-note {
+  /* Kończy się przed górnym panelem na środku (najwęższy telefon w poziomie
+     ok. 667 px) -- dłuższy tekst zawija się w dwie linie. */
+  max-width: min(calc(50vw - 150px), 320px);
+  min-height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--w-14);
+  background: var(--k-20);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: right;
+}
+.snake-account-note:empty { display: none; }
+
+/* Zastępczy pełny ekran (przeglądarka bez Fullscreen API). */
+html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden; }
+
+/* Okno „Do ekranu początkowego” (iPhone, Safari) -- jak w Przycisku do pojedynku. */
+/* Przełącznik języka -- lewy górny róg, ten sam rozmiar i wygląd co pełny ekran. */
+.lang-switcher.lang-floating {
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: auto;
+  z-index: var(--z-top);
+}
+.lang-floating .btn.lang-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--w-25);
+  /* jak .fs-btn obok: półprzezroczysty na tle motywu (odcień przez --btn-tint) */
+  --under: transparent;
+  --btn-tint: var(--k-20);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.lang-floating .btn.lang-btn:hover { --btn-tint: var(--k-40); }
+.lang-floating .lang-btn .ico { width: 22px; height: 22px; }
+:where(.snake-body) .lang-menu { z-index: calc(var(--z-top) + 1); }
+
+/* Start/pauza stuknięciem tylko w dużą tablicę (pole gry). */
+.snake-big { cursor: pointer; }

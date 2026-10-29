@@ -1,0 +1,4 @@
+{
+ "_opis": "E25: pliki e2e, które jeszcze używają starych kont testN (testAccountUsername, loginAsPooledTestUser, loginAsTestUser, restoreTestAccount, adresy testN@). Lista i liczby mogą tylko maleć: przepisany plik usuń z listy (unit legacyTestAccounts.test.js). Przewodnik: tests/README.md „Jak przepisać stary spec”.",
+ "files": {}
+}

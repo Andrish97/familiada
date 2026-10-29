@@ -1,0 +1,22 @@
+/* Przerwa techniczna: wzorzec .page--block z silnika; tu tylko odliczanie
+   i treść własna (wstawiana z panelu admina). */
+.countdown {
+  margin-top: 14px;
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: var(--accent);
+}
+
+.custom-maintenance-content {
+  font-size: 18px;
+  line-height: 1.6;
+  opacity: .95;
+  white-space: normal;
+}
+
+.countdown-inline {
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: .05em;
+}

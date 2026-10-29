@@ -1,0 +1,70 @@
+name: Deploy Lead Finder Service (Docker)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "services/lead-finder/**"
+      - ".github/workflows/deploy-lead-finder.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Testy unit usługi (przed wdrożeniem)
+        run: |
+          python3 -m pip install -q -r services/lead-finder/requirements.txt
+          python3 -m unittest discover -s services/lead-finder/tests -v
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
+
+      - name: Cleanup old deployments
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p /home/deploy/staging/lead-finder/ && find /home/deploy/staging/lead-finder/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+
+      - name: Sync to server staging
+        run: |
+          STAGING="/home/deploy/staging/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING\""
+          rsync -az --delete --checksum \
+            --exclude '__pycache__' \
+            --exclude '.git' \
+            --exclude 'tests' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            services/lead-finder/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/"
+
+      - name: Run deploy script (server-side)
+        run: |
+          STAGING="/home/deploy/staging/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "sudo familiada-deploy-lead-finder ${{ github.sha }}"
+
+      - name: Cleanup staging
+        if: always()
+        run: |
+          STAGING="/home/deploy/staging/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "rm -rf \"$STAGING\""

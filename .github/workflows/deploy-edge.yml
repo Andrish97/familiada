@@ -1,0 +1,69 @@
+name: Deploy Supabase Edge Functions (self-host)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/functions/**"
+      - ".github/workflows/deploy-edge.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Verify mail transport before deployment
+        run: |
+          deno check supabase/functions/send-email/index.ts supabase/functions/mail-worker/index.ts supabase/functions/question-bank/index.ts supabase/functions/display-themes/index.ts
+          deno test tests/deno/mail-providers.test.ts
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # host key pinning (recommended). You can also use StrictHostKeyChecking=no, but better pin.
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
+
+      - name: Cleanup old deployments
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p /home/deploy/staging/edge/ && find /home/deploy/staging/edge/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+
+      - name: Sync functions to server staging
+        run: |
+          # staging dir per run
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING\""
+          rsync -az --delete --checksum \
+            --exclude 'main/' \
+            --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            supabase/functions/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/"
+
+      - name: Run deploy script (server-side)
+        run: |
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "sudo familiada-deploy-edge ${{ github.sha }}"
+
+      - name: Cleanup staging
+        if: always()
+        run: |
+          STAGING="/home/deploy/staging/edge/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "rm -rf \"$STAGING\""

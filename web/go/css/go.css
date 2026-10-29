@@ -1,0 +1,48 @@
+/* css/poll-go.css */
+@layer page {
+  body.poll-go-body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.poll-go-body > main.wrap {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+
+
+  body.poll-go-body:not(.mail-body) .poll-go-card { align-self: center; }
+
+  .poll-go-title {
+    font-weight: 1000;
+    font-size: 20px;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+    color: var(--accent);
+  }
+
+  .poll-go-sub {
+    opacity: .85;
+    line-height: 1.45;
+  }
+
+  .poll-go-actions{
+    margin-top: 16px;
+  }
+
+  .poll-go-email {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .poll-go-email .inp {
+    flex: 1 1 200px;
+  }
+}

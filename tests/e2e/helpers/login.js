@@ -1,0 +1,373 @@
+// tests/e2e/helpers/login.js
+const { generateE2EToken } = require("./e2e-token");
+const { ensureApiOriginRouting } = require("./branch-code");
+
+const LOGIN_URL = "https://www.familijna.app/login";
+
+// Domena kont testowych jest zawsze taka sama -- produkcja to zawsze
+// familiada.online -- więc jest to stała w kodzie, nie sekret. Dzięki temu
+// CI potrzebuje tylko DWÓCH sekretów w ogóle: E2E_BYPASS_SECRET i
+// TEST_PASSWORD. Loginy (test1@…, test2@…, ...) same w sobie niczego nie
+// odsłaniają bez prawdziwego hasła.
+const TEST_ACCOUNT_DOMAIN = "familijna.app";
+// Znany, nieszkodliwy szum widoczny w KAŻDYM przebiegu każdego testu --
+// zgłoszone: zalewa logi CI, utrudniając wyłowienie prawdziwego failu.
+// Odfiltrowane tu i w control2.spec.js's instrumentAnon() (ten sam wzorzec,
+// niezależna kopia -- oba pliki celowo nie dzielą stanu, patrz komentarz
+// przy loginAsPooledTestUser).
+//  - static.cloudflareinsights.com: analityka Cloudflare wstrzykiwana na
+//    KAŻDĄ stronę przez sam Cloudflare, blokowana przez CSP aplikacji
+//    (script-src nie zawiera tej domeny) -- to CSP działa poprawnie, nie
+//    błąd aplikacji.
+//  - "🎭 STOP! 🎭": własne, celowe ostrzeżenie anty-self-XSS aplikacji
+//    (js/core/security-warning.js), drukowane na KAŻDYM załadowaniu strony
+//    dla prawdziwych użytkowników -- nigdy nie jest sygnałem błędu.
+//  - /realtime/v1/api/broadcast: ringDoorbell() (js/core/game-state-
+//    doorbell.js) jest CELOWO fire-and-forget (.catch(()=>{})) -- przy
+//    zamknięciu kontekstu/nawigacji w trakcie testu taki w locie request
+//    dostaje net::ERR_ABORTED, co jest oczekiwane, nie błędem.
+function isKnownNoiseText(text) {
+  return text.includes("static.cloudflareinsights.com") || text.startsWith("🎭 STOP!");
+}
+function isKnownNoiseUrl(url) {
+  return url.includes("static.cloudflareinsights.com") || url.includes("/realtime/v1/api/broadcast");
+}
+
+// Trwała diagnostyka (nie tylko na czas jednego debugowania) — logowanie
+// bywa niedeterministycznie wolne/nieudane w CI (waitForURL timeout) bez
+// żadnego wcześniejszego sygnału dlaczego. Podpięte raz na page, żeby przy
+// kolejnym takim failu CI log od razu pokazał: błędy JS, błędy sieciowe
+// (zwłaszcza 429 — rate limit) i błędy konsoli, zamiast zgadywania.
+function instrumentPage(page) {
+  page.on("pageerror", (err) => console.log("[e2e-diag] pageerror:", err.message));
+  page.on("console", (msg) => {
+    if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
+      console.log(`[e2e-diag] console:${msg.type()}`, msg.text());
+    }
+    // "[e2e-diag-state]" to TYMCZASOWA diagnostyka w control/js/app.js
+    // (console.log, nie warning/error -- inaczej niewidoczne wyżej) --
+    // loguje KAŻDĄ zmianę store.state.step z realnym timestampem, żeby
+    // rozstrzygnąć, czy stan lokalnie dochodzi do "r_roundStart" (bug w
+    // renderze) czy nigdy tam nie dociera (bug wcześniej w łańcuchu).
+    else if (msg.text().startsWith("[e2e-diag-state]")) {
+      console.log(msg.text());
+    }
+  });
+  // Start wołania RPC: odróżnia „nie wystrzeliło” od „wisi bez odpowiedzi”.
+  page.on("request", (req) => {
+    if (req.url().includes("/rpc/")) console.log("[e2e-diag] rpc-start", new URL(req.url()).pathname.split("/").pop());
+  });
+  page.on("response", (res) => {
+    if (/\.js(?:\?|$)/.test(res.url()) && (res.headers()["content-type"] || "").includes("text/html")) {
+      console.log("[e2e-diag] module returned HTML", res.status(), res.url());
+    }
+    if (/\/functions\/v1\/(send-mail|send-email|mail-worker)(?:\?|$)/.test(res.url())) {
+      res.json().then((body) => console.log("[e2e-mail]", JSON.stringify({ status: res.status(), endpoint: new URL(res.url()).pathname, result: body })))
+        .catch(() => console.log("[e2e-mail]", res.status(), new URL(res.url()).pathname));
+    }
+    if (res.status() >= 400) {
+      console.log("[e2e-diag] HTTP", res.status(), res.url());
+    }
+    // Wołania RPC (np. game_state_write) logowane ZAWSZE, nie tylko przy
+    // błędzie -- żeby odróżnić "RPC w ogóle nie wystrzeliło" od "wystrzeliło,
+    // dostało 200, ale zajęło podejrzanie długo" od zwykłego "poszło szybko
+    // i OK". Sam status/URL nie ujawnia tokenu bypass (ten jest w nagłówku
+    // żądania, nigdzie tu nielogowanym).
+    if (res.url().includes("/rpc/")) {
+      console.log(`[e2e-diag] rpc ${res.status()}`, res.url());
+      if (res.status() >= 400 && res.url().includes("/rpc/control_device_shares_list")) {
+        res.text().then((body) => console.log("[e2e-diag] control_device_shares_list error body:", body.slice(0, 1000)))
+          .catch((e) => console.log("[e2e-diag] control_device_shares_list body read failed:", e.message));
+      }
+      if (res.status() >= 400 && res.url().includes("/rpc/control_devices_snapshot")) {
+        res.json().then(({ code, message, details, hint }) => console.log("[e2e-diag] control_devices_snapshot error:", JSON.stringify({ code, message, details, hint })))
+          .catch(() => console.log("[e2e-diag] control_devices_snapshot error body unavailable"));
+      }
+    }
+    // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
+    // oczekiwany step -- loguj TREŚĆ odpowiedzi (tylko pola stanu, nie całe
+    // detail), żeby odróżnić "serwer zapisał coś innego niż wysłaliśmy" od
+    // "serwer zapisał poprawnie, ale UI się nie przerysowało". Async handler
+    // na "response" jest przez Playwrighta obsługiwany poprawnie (nie trzeba
+    // czekać na niego explicite).
+    if (res.url().includes("/rpc/game_state_write") && res.status() < 400) {
+      res.json().then((body) => {
+        const row = Array.isArray(body) ? body[0] : body;
+        console.log("[e2e-diag] game_state_write ->", JSON.stringify({
+          rev: row?.rev, step: row?.step, phase: row?.phase, top_card: row?.top_card,
+          sound_cue_key: row?.sound_cue_key, sound_cue_seq: row?.sound_cue_seq,
+        }));
+      }).catch((e) => console.log("[e2e-diag] game_state_write body read failed:", e.message));
+    }
+  });
+  // Zerwane na poziomie sieci (DNS, reset połączenia, timeout w samej
+  // przeglądarce) -- NIE trafia do "response" wyżej wcale, bo nigdy nie
+  // dostało odpowiedzi. To jest inna dziura niż "HTTP >=400": żądanie mogło
+  // po prostu zniknąć bez śladu.
+  page.on("requestfailed", (req) => {
+    if (isKnownNoiseUrl(req.url())) return;
+    console.log("[e2e-diag] requestfailed", req.failure()?.errorText, req.url());
+  });
+  // control/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
+  // i pokazuje go operatorowi jako goły window.alert(`Błąd: ${e.message}`)
+  // -- Playwright domyślnie po cichu odrzuca takie dialogi (auto-dismiss),
+  // więc bez tego listenera taki błąd jest CAŁKOWICIE niewidoczny w logu CI
+  // (nie pageerror, nie console.error -- alert() nie trafia do żadnego z
+  // nich). Znalezione na żywo: 10/16 testów control2 utykało bez śladu
+  // błędu w logach, mimo realnego, powtarzalnego zawieszenia stanu gry --
+  // to jest dokładnie ta luka w diagnostyce.
+  page.on("dialog", (dialog) => {
+    console.log(`[e2e-diag] dialog:${dialog.type()}`, dialog.message());
+    dialog.dismiss().catch(() => {});
+  });
+}
+
+async function withE2EBypass(context, { suppressRating = true } = {}) {
+  const secret = process.env.E2E_BYPASS_SECRET;
+  if (!secret) throw new Error("Brak E2E_BYPASS_SECRET w zmiennych środowiskowych");
+
+  const token = generateE2EToken(secret);
+  await context.setExtraHTTPHeaders({
+    "X-E2E-Token": token, // weryfikowany (HMAC) przez Worker — omija Turnstile
+  });
+
+  // Konto testowe istnieje dłużej niż 7 dni, więc js/core/rating-system.js
+  // pokazuje na każdej stronie pełnoekranowy #ratingOverlay proszący o ocenę
+  // — nie testujemy tego, a zasłania klikalne elementy. Suppress ustawiany
+  // przed pierwszą nawigacją (addInitScript), więc initRatingSystem() od
+  // razu wychodzi wcześnie (patrz rating-system.js:19).
+  await context.addInitScript((shouldSuppressRating) => {
+    try {
+      if (shouldSuppressRating) localStorage.setItem("fam:app_rating_suppressed", "true");
+      // getUiLang() (translation/translation.js) sięga po navigator.language
+      // zanim spadnie na domyślne "pl" — Chromium w CI ma en-US, więc bez
+      // tego cała strona (i teksty przycisków w modalach) renderuje się po
+      // angielsku, a testy oczekują polskich napisów.
+      localStorage.setItem("uiLang", "pl");
+    } catch {
+      // ignore
+    }
+  }, suppressRating);
+}
+
+async function clearE2EBypass(context) {
+  await context.setExtraHTTPHeaders({});
+}
+
+// Wypisuje do logu (widocznego w output CI) co faktycznie wylądowało na
+// stronie — status HTTP, tytuł, początek treści body, czy #email istnieje.
+// Wołane tylko przy błędzie, żeby zdiagnozować bez potrzeby ściągania
+// screenshotów/artefaktów.
+async function dumpPageDiagnostics(page, gotoResponse) {
+  try {
+    console.log("[e2e-diag] goto status:", gotoResponse?.status(), gotoResponse?.statusText());
+    console.log("[e2e-diag] goto headers:", JSON.stringify(gotoResponse?.headers() || {}));
+    console.log("[e2e-diag] page.url():", page.url());
+    console.log("[e2e-diag] page title:", await page.title());
+    const bodyText = await page.evaluate(() => document.body?.innerText?.slice(0, 500) || "(brak body/innerText)");
+    console.log("[e2e-diag] body text (pierwsze 500 znaków):", bodyText);
+    const hasEmailField = await page.evaluate(() => !!document.getElementById("email"));
+    console.log("[e2e-diag] #email istnieje w DOM:", hasEmailField);
+  } catch (diagErr) {
+    console.log("[e2e-diag] dump się nie powiódł:", diagErr?.message || diagErr);
+  }
+}
+
+/**
+ * Loguje jako konto testowe (domyślnie test1@familiada.online, patrz
+ * testAccountUsername), zostawia stronę na /games. Przekaż
+ * { username: testAccountUsername(2) } żeby zalogować INNE konto z puli
+ * w scenariuszach z dwoma+ użytkownikami naraz -- wszystkie konta puli
+ * mają to samo TEST_PASSWORD (nie ma osobnych haseł per konto).
+ */
+async function loginAsTestUser(page, context, opts = {}) {
+  await ensureApiOriginRouting(context || page.context());
+  // Rozróżniamy "nie podano username w ogóle" (użyj domyślnego test1@…) od
+  // "podano klucz username, ale wartość jest pusta" -- to drugie MUSI
+  // głośno wybuchnąć, bo inaczej cicho logujemy się na domyślne konto
+  // zamiast na to, o które faktycznie chodziło, co przy testach
+  // wielokontowych (editor/viewer na współdzielonej bazie) daje mylący,
+  // trudny do zdiagnozowania fail.
+  if ("username" in opts && !opts.username) {
+    throw new Error(
+      "loginAsTestUser wywołane z jawnym { username } które jest puste -- sprawdź wywołanie " +
+      "testAccountUsername(n), inaczej test cicho zalogowałby się na domyślne konto zamiast na " +
+      "to, o które chodziło."
+    );
+  }
+  const username = opts.username || testAccountUsername(1);
+  const password = process.env.TEST_PASSWORD;
+  if (!username || !password) throw new Error("Brak TEST_PASSWORD w zmiennych środowiskowych");
+
+  instrumentPage(page);
+  await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
+  // opts.url -- strona logowania z parametrami (np. next=…); opts.expectUrl --
+  // dokąd ma wrócić po zalogowaniu (domyślnie /games/).
+  const res = await page.goto(opts.url || LOGIN_URL, { waitUntil: "domcontentloaded" });
+  // login.js attaches #btnPrimary's listener only after its async
+  // initI18n()+getUser() chain inside DOMContentLoaded. Don't wait for
+  // networkidle here: the app polls production RPCs in the background, so
+  // the network may never become idle. The status leaving its initial
+  // "checking session" state signals that getUser() completed; listener
+  // setup follows immediately in the same initialization function.
+  await page.waitForFunction(() => {
+    const status = document.querySelector("#status")?.textContent?.trim() || "";
+    return !document.documentElement.classList.contains("page-loading")
+      && !!status
+      && !/checking|sprawdzam|перевіряю/i.test(status);
+  }, null, { timeout: 20000 });
+  try {
+    await page.fill("#email", username, { timeout: 15000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
+  await page.fill("#pass", password);
+  await page.click("#btnPrimary");
+  try {
+    await page.waitForURL(opts.expectUrl || /games/, { timeout: 20000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
+  await clearE2EBypass(context); // token już niepotrzebny, sesja jest prawdziwa
+}
+
+/** Zakłada świeże konto gościa, zostawia stronę na /games. Gość sam wygaśnie po 5 dniach. */
+async function loginAsGuest(page, context, opts = {}) {
+  instrumentPage(page);
+  await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
+  const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+  // See the identical comment in loginAsTestUser — #btnGuest's listener is
+  // wired by the same async chain.
+  await page.waitForLoadState("networkidle");
+  try {
+    await page.click("#btnGuest", { timeout: 15000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
+  // Zakładanie gościa to więcej pracy po stronie backendu niż zwykłe
+  // logowanie (auth signup + trigger seedujący dane demo + redirect) —
+  // w CI bywa wolniejsze niż 20s, stąd dłuższy limit niż w loginAsTestUser.
+  try {
+    await page.waitForURL(/games/, { timeout: 40000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
+  // Server-side app_metadata marker, authorized by the signed E2E token.
+  // Ordinary guests and their editable user_metadata are not excluded.
+  const token = generateE2EToken(process.env.E2E_BYPASS_SECRET);
+  const marked = await page.evaluate(async (testToken) => {
+    const {data} = await window.__sbClient.auth.getSession();
+    const response = await fetch('/_e2e_api/mark-test-guest', {method:'POST',headers:{
+      'X-E2E-Token':testToken,Authorization:`Bearer ${data.session.access_token}`
+    }});
+    return response.ok;
+  },token);
+  if (!marked) throw new Error('Failed to mark test guest');
+  // Jednorazowe okno informacji dla gościa (guest-info-modal.js) blokuje
+  // ładowanie strony do kliknięcia OK; jak suppress oceny -- oznacz jako widziane.
+  await page.evaluate(async () => {
+    const { data } = await window.__sbClient.auth.getUser();
+    if (data?.user?.id) localStorage.setItem(`fam:guest:info_shown:${data.user.id}`, '1');
+  });
+  await clearE2EBypass(context);
+}
+
+// test9/test10 znów dostępne (decyzja użytkownika 2026-10-22); zwykła pula
+// (TEST_ACCOUNT_COUNT = 8) ich nie obejmuje, wybiera się je jawnie przez
+// TEST_ACCOUNT_NUMBERS. test4/test5 wróciły do zwykłej puli (2026-10-10). Równoległe przebiegi: każdy z rozłącznym
+// zestawem kont przez TEST_ACCOUNT_NUMBERS (workflow input `test_accounts`).
+const RESERVED_TEST_ACCOUNTS = [];
+const EXCLUDED_TEST_ACCOUNTS = [];
+const NEVER_USE_TEST_ACCOUNTS = [];
+
+// Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
+// nie wchodziły sobie w drogę):
+//  - test1: domyślne konto loginAsTestUser; bases, base-explorer, games,
+//    editor, marketplace, index, operator w control2 (@mailbox: udostępnianie)
+//  - test1..test<workers>: pula control2 (loginAsPooledTestUser)
+//  - test2,3,6,7: edytor logo (LOGO_E2E_ACCOUNTS)
+//  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
+//  - test2 (właściciel) i test3 (odbiorca): tasks (udostępnienie bazy)
+//  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
+//  - odbiorcy maili (clearMailbox kasuje CAŁĄ skrzynkę odbiorcy, więc każdy
+//    test @mailbox ma własnego): subscriptions=test8, bases=test7 (test6 bez maili),
+//    control2 (udostępnianie urządzenia)=test7
+const EXCLUDED_ACCOUNT_NOTE = "decyzja użytkownika 2026-10-09";
+
+/**
+ * Login n-tego konta z globalnej puli testX (1-indeksowane) —
+ * test1@familiada.online, test2@familiada.online, ... (bez
+ * EXCLUDED_TEST_ACCOUNTS). Wszystkie z tym samym TEST_PASSWORD. Domena jest
+ * stałą w kodzie (patrz TEST_ACCOUNT_DOMAIN), więc wygenerowanie loginu nie
+ * zależy od żadnego sekretu -- sam login bez prawdziwego hasła niczego nie
+ * odsłania. Dla wykluczonego numeru rzuca błąd.
+ */
+function testAccountUsername(n) {
+  if (RESERVED_TEST_ACCOUNTS.includes(n)) {
+    throw new Error(`Konto test${n} jest zarezerwowane; wybierz je wyłącznie przez TEST_ACCOUNT_NUMBERS w odizolowanym przebiegu`);
+  }
+  if (NEVER_USE_TEST_ACCOUNTS.includes(n)) {
+    throw new Error(`Konto test${n} jest wykluczone z e2e (${EXCLUDED_ACCOUNT_NOTE})`);
+  }
+  return `test${n}@${TEST_ACCOUNT_DOMAIN}`;
+}
+
+/**
+ * Pula kont z testX do prawdziwej
+ * równoległości WEWNĄTRZ jednego pliku testów -- każdy worker Playwrighta
+ * loguje się na inne konto, więc nikt nie czeka w kolejce za cudzym
+ * logowaniem. Rozmiar sterowany jedną, jawną (NIE sekretną) liczbą w
+ * workflow -- TEST_ACCOUNT_COUNT określa górny numer, a konta zarezerwowane
+ * są pomijane. Przebieg może podać jawne TEST_ACCOUNT_NUMBERS (rozłączne
+ * zestawy kont pozwalają puszczać lżejsze przebiegi równolegle).
+ */
+function getTestAccountPool() {
+  const selected = String(process.env.TEST_ACCOUNT_NUMBERS || "").trim();
+  if (selected) {
+    const numbers = selected.split(",").map((value) => Number(value.trim()));
+    if (numbers.some((n) => !Number.isInteger(n) || n < 1 || n > 10 || NEVER_USE_TEST_ACCOUNTS.includes(n))) {
+      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–10");
+    }
+    const uniqueNumbers = [...new Set(numbers)];
+    return uniqueNumbers.map((n) => `test${n}@${TEST_ACCOUNT_DOMAIN}`);
+  }
+  const count = parseInt(process.env.TEST_ACCOUNT_COUNT || "1", 10);
+  const n = Number.isFinite(count) && count > 0 ? count : 1;
+  // Pula = dozwolone numery 1..n (wykluczone pomijane); zawsze co najmniej test1.
+  const numbers = [];
+  for (let i = 1; i <= n; i++) {
+    if (!EXCLUDED_TEST_ACCOUNTS.includes(i)) numbers.push(i);
+  }
+  if (!numbers.length) numbers.push(1);
+  return numbers.map(testAccountUsername);
+}
+
+/**
+ * Loguje jako jedno z kont puli testX (patrz getTestAccountPool), wybrane
+ * po `workerIndex` (przekaż testInfo.parallelIndex z testu Playwrighta) --
+ * różne workery równoległe lądują na różnych kontach, więc nigdy nie
+ * ścigają się o to samo logowanie. Używane dziś przez control2.spec.js,
+ * ale nie jest do niego przywiązane -- każdy plik może po to sięgnąć.
+ */
+async function loginAsPooledTestUser(page, context, workerIndex, opts = {}) {
+  const pool = getTestAccountPool();
+  const username = pool[workerIndex % pool.length];
+  return loginAsTestUser(page, context, { ...opts, username });
+}
+
+module.exports = {
+  withE2EBypass,
+  loginAsTestUser,
+  loginAsGuest,
+  loginAsPooledTestUser,
+  getTestAccountPool,
+  testAccountUsername,
+  EXCLUDED_TEST_ACCOUNTS,
+  isKnownNoiseText,
+  isKnownNoiseUrl,
+  instrumentPage,
+};

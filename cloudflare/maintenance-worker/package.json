@@ -1,0 +1,15 @@
+{
+  "name": "familiada-maintenance-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "miniflare": "^4.20260329.0",
+    "wrangler": "^4.79.0"
+  },
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.mjs"
+  }
+}

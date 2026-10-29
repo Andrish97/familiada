@@ -1,0 +1,197 @@
+/* Silnik stylów E23 — tokeny (familijna-server/docs/silnik-stylow-projekt.md §3).
+   Jedyny plik z wartościami kolorów, warstw (z-index), promieni i czasów.
+   Sam :root, bez warstw i nowych funkcji CSS — ładują go też ekrany gry
+   (TV/Tizen). Wartości przeniesione 1:1 z dawnego shared/css/base.css
+   i games.css; odcienie i promienie zwinięte (§11.2–3, 2026-10-24):
+   biel 4, czerń 3, złoto 3 wartości alfa; podłoża bg / surface-1 /
+   surface-2 / surface-modal + kryjące surface-inset; tekst: text,
+   text-muted, accent, ok-text, bad-text, danger, info-text.
+   Przezroczystości: kanały --rgb-* w rgb(var(--rgb-x) / alfa). */
+:root {
+  color-scheme: dark;
+
+  /* ── paleta: kanały ─────────────────────────────────────────── */
+  --rgb-white: 255 255 255;
+  --rgb-black: 0 0 0;
+  --rgb-gold: 255 234 166;       /* złoto marki */
+  --rgb-amber: 255 200 60;
+  --rgb-green: 80 200 120;
+  --rgb-red: 255 110 110;
+  --rgb-blue: 140 200 255;
+  --rgb-scrim: 2 6 23;
+  --rgb-toast: 12 16 36;
+
+  /* ── rodziny przezroczystości (decyzja §11.2: jak najmniej wartości) ── */
+  --w-4: rgb(var(--rgb-white) / .04);    /* delikatne wypełnienie */
+  --w-8: rgb(var(--rgb-white) / .08);    /* odcień przycisku, najechanie */
+  --w-14: rgb(var(--rgb-white) / .14);   /* linie, obramowania */
+  --w-25: rgb(var(--rgb-white) / .25);   /* mocne obramowanie, suwak */
+  --k-20: rgb(var(--rgb-black) / .20);   /* wgłębienie */
+  --k-40: rgb(var(--rgb-black) / .40);   /* cień */
+  --k-70: rgb(var(--rgb-black) / .70);   /* przyciemnienie, głęboki cień */
+  --g-10: rgb(var(--rgb-gold) / .10);    /* złoty odcień tła */
+  --g-35: rgb(var(--rgb-gold) / .35);    /* złote obramowanie */
+  --g-60: rgb(var(--rgb-gold) / .60);    /* złoty tekst drugorzędny, mocny obrys */
+
+  /* ── podłoża (kryjące) ──────────────────────────────────────── */
+  --bg: #050914;                 /* tło strony */
+  /* tło stron logowania (.auth-body) */
+  --bg-auth: radial-gradient(circle at 20% 10%, var(--g-10), transparent 55%), radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%), var(--bg);
+  --surface-1: #111827;          /* karta, menu */
+  --surface-modal: #121524;      /* okno */
+  --surface-2: #0b1020;
+  --surface-inset: #1a2130; /* karta w karcie, pozycja menu (surface-1 + biel 4%, kryjąca) */
+  --surface-sunken: linear-gradient(var(--k-20), var(--k-20)) var(--under, var(--surface-1));
+  --surface-toast: rgb(var(--rgb-toast) / .96);
+
+  /* ── linie ──────────────────────────────────────────────────── */
+  --line: var(--w-14);
+  --line-faint: var(--w-8);
+
+  --white: #fff;                 /* kryjąca biel: tło kodu QR, kartki */
+  --black: #000;                 /* kryjąca czerń: tło podglądu obrazu i wideo */
+
+  /* ── tekst ──────────────────────────────────────────────────── */
+  --text: #fff;
+  --text-soft: rgb(var(--rgb-white) / .88);   /* tekst ciągły (Wskazówki, opisy) */
+  --text-muted: rgb(var(--rgb-white) / .70);
+  --text-faint: rgb(var(--rgb-white) / .55);  /* podpisy, liczniki, nieaktywne */
+  --accent: #ffeaa6;             /* złoto: tytuły, linki, aktywne */
+  --ok-text: #7ef0a2;
+  --bad-text: #ffaaaa;
+  --info-text: #bfe3ff;
+  --danger: #ff7777;
+  --danger-solid: #dc3545;
+  --warn-text: #ffd86e;
+
+  /* ── stany: linia (obramowanie), odcień (tło), mocny (lampka, aktywne) ── */
+  --ok-line: rgb(var(--rgb-green) / .40);
+  --ok-tint: rgb(var(--rgb-green) / .14);
+  --ok-strong: rgb(var(--rgb-green) / .75);
+  --bad-line: rgb(var(--rgb-red) / .40);
+  --bad-tint: rgb(var(--rgb-red) / .14);
+  --bad-strong: rgb(var(--rgb-red) / .75);
+  --warn-line: rgb(var(--rgb-amber) / .40);
+  --warn-tint: rgb(var(--rgb-amber) / .14);
+  --warn-strong: rgb(var(--rgb-amber) / .75);
+  --info-line: rgb(var(--rgb-blue) / .40);
+  --info-tint: rgb(var(--rgb-blue) / .14);
+  --info-strong: rgb(var(--rgb-blue) / .75);
+
+  /* ── wyłączone przyciski (kryjące, bez opacity) ─────────────── */
+  --disabled-text: #6c7080;
+  --disabled-line: #1c2130;
+  --disabled-danger-text: #7a5a62;
+  --disabled-danger-line: #3a2630;
+  --disabled-green-text: #4d6e58;
+  --disabled-green-line: #213a2c;
+
+  /* Kryjąca część maski (mask-image) — nie kolor, tylko nieprzezroczystość. */
+  --mask-on: #000;
+
+  /* ── przyciemnienia ─────────────────────────────────────────── */
+  --scrim: rgb(var(--rgb-scrim) / .5);          /* wokół okien i menu */
+  --scrim-modal: var(--k-70);   /* arkusz, okno kontaktu */
+  --scrim-block: var(--k-70);   /* ekran blokady */
+
+  /* ── cienie ─────────────────────────────────────────────────── */
+  --shadow-menu: 0 12px 36px var(--k-70);
+  --shadow-popover: 0 24px 60px var(--k-70);
+  --shadow-card: 0 18px 36px var(--k-40);
+  --shadow-lift: 0 10px 24px var(--k-40);
+  --shadow-modal: 0 30px 90px var(--k-70);
+  --shadow-sheet: 0 -18px 60px var(--k-70);
+  --shadow-toast: 0 16px 36px var(--k-40);
+
+  /* ── promienie (decyzja §11.3: jak najmniej wartości) ─────────── */
+  --r-xs: 4px;                   /* drobne elementy do ~24 px: pole wyboru, paski, uchwyty, wyróżnienie w tekście */
+  --r-sm: 8px;                   /* małe: chipy, oznaczenia, małe przyciski */
+  --r-md: 14px;                  /* przyciski, pola, wiersze, kafle */
+  --r-lg: 20px;                  /* karty, okna, wypustki */
+  --r-sheet: 28px;               /* górne rogi arkusza na telefonie */
+  --r-pill: 999px;
+
+  /* ── typografia ─────────────────────────────────────────────── */
+  --font-ui: system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+
+  /* ── warstwy (§3.2, 2026-10-24): globalne warstwy tylko tokenem;
+     liczby 0–9 wolno tylko jako kolejność wewnątrz jednego elementu. ── */
+  --z-local: 1;
+  --z-topbar: 10;
+  --z-fixed: 30;                /* stałe pasy i warstwy strony (podgląd, ekran prowadzącego) */
+  --z-notice: 40;               /* pasek komunikatu nad stroną */
+  --z-drawer: 41;               /* szuflada; zasłona pod nią: z-drawer − 1 */
+  --z-overlay: 50;              /* okna (.overlay) */
+  --z-float: 100;               /* pływające przyciski i wyskakujące panele w stronie */
+  --z-popover: 200;             /* rozwijane listy (ui-select) */
+  --z-lang-float: 999;
+  --z-menu: 1000;
+  --z-sheet: 1200;              /* okno od dołu; okna nad szufladą Eksploratora */
+  --z-top: 9999;                /* nad oknami: menu kontekstowe, podgląd obrazu, błąd urządzenia */
+  --z-mobile-menu: 10050;
+  --z-toast: 10100;
+  --z-tooltip: 2147483000;
+  --z-block: 2147483647;        /* nakładka blokady (blocking-overlay.css) — nad wszystkim */
+
+  /* ── ruch ───────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --dur-fast: .12s;
+  --dur-base: .2s;
+  --dur-slow: .3s;
+  /* Okno od dołu (roletka): wjazd wolniej i łagodnie do końca, nie „wyskakuje”. */
+  --dur-sheet-in: .46s;
+  --dur-sheet-out: .3s;
+  --ease-sheet: cubic-bezier(.32, .72, 0, 1);
+
+  /* ── układ ──────────────────────────────────────────────────── */
+  --page-gutter: 18px;           /* boczny margines treści; ≤980 px — 15 px */
+  --page-pad-left: calc(var(--page-gutter) + env(safe-area-inset-left, 0px));
+  --page-pad-right: calc(var(--page-gutter) + env(safe-area-inset-right, 0px));
+  --topbar-ctl-h: 37px;          /* wysokość kontrolek topbara */
+
+  /* Podłoże kryjących przycisków: odcień (--btn-tint) nakładany na kolor
+     powierzchni, na której stoi przycisk. Powierzchnia ustawia --under. */
+  --under: var(--bg);
+
+  /* Okna: dostępna szerokość i wysokość bez wycięć ekranu (safe area:
+     telefon poziomo, pasek gestu); starsze przeglądarki TV — bez env()/dvh. */
+  --modal-vw: 94vw;
+  --modal-vh: 92vh;
+
+  /* Wypustki kart */
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --tab-label-font-size: 12px;
+  --tab-label-letter-spacing: .08em;
+
+}
+
+@supports (height: calc(1dvh - env(safe-area-inset-top, 0px))) {
+  :root {
+    --modal-vw: calc(94vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    --modal-vh: calc(92dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 980px) {
+  :root { --page-gutter: 15px; }
+}
+@media (max-width: 600px) {
+  :root {
+    --tab-label-font-size: 10px;
+    --tab-label-letter-spacing: .015em;
+    --tab-height: 44px;
+  }
+}
+/* Ekrany dotykowe (Android, telefon, tablet): optymalizacja cieni pod GPU (gasi zamrażanie kafli i ghosting przy przewijaniu). */
+@media (hover: none) and (pointer: coarse) {
+  :root {
+    --shadow-menu: 0 4px 14px var(--k-70);
+    --shadow-popover: 0 6px 18px var(--k-70);
+    --shadow-card: 0 4px 14px var(--k-40);
+    --shadow-lift: 0 4px 10px var(--k-40);
+    --shadow-modal: 0 8px 24px var(--k-70);
+    --shadow-sheet: 0 -6px 20px var(--k-70);
+    --shadow-toast: 0 4px 14px var(--k-40);
+  }
+}

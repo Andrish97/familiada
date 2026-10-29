@@ -1,0 +1,92 @@
+/* css/poll.css */
+@layer page {
+  body.pollpub-body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+  }
+
+  .poll-vote-topbar{
+      justify-content:flex-start;
+      min-height:var(--topbar-h);
+  }
+  .poll-vote-topbar .brand{ color:var(--accent); }
+  .poll-vote-topbar .poll-vote-actions{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+  body.pollpub-body .brand {
+      font-weight: 1000;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--accent)
+  }
+
+  body.pollpub-body .title {
+      text-transform: none; /* tytuł pytania, nie nagłówek listy (.title w silniku) */
+      font-weight: 1000;
+      font-size: 18px;
+      margin-top: 10px;
+      letter-spacing: .06em
+  }
+
+  body.pollpub-body .sub {
+      opacity: .82;
+      font-size: 13px;
+      margin-top: 6px;
+      line-height: 1.35
+  }
+
+  .qbox {
+      margin-top: 14px;
+      scroll-margin-top: calc(var(--topbar-h, 0px) + 14px)
+  }
+
+  .qtext {
+      font-weight: 1000;
+      font-size: 16px;
+      margin-bottom: 12px;
+      line-height: 1.25
+  }
+
+  .alist {
+      display: grid;
+      gap: 10px
+  }
+
+  .trow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap
+  }
+
+  .trow .inp {
+      flex: 1 1 260px;
+      padding: 12px
+  }
+
+  .nav {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+  }
+
+  .small {
+      opacity: .75;
+      font-size: 12px
+  }
+
+  .closed {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--g-35);
+      background: var(--g-10);
+      color: var(--accent);
+      font-weight: 900;
+      line-height: 1.35
+  }
+}

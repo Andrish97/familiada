@@ -1,0 +1,134 @@
+@layer page {
+  .connect-device-body .bar.has-actions-below{row-gap:6px;padding-bottom:12px}
+  .connect-device-body .bar.has-actions-below > .actions{margin-top:0;justify-content:flex-start}
+
+  .connect-device-main-card { min-height: 0; overflow: hidden; }
+  .connect-device-main-card .tasks-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .connect-device-inner-card {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 0;
+  }
+  .connect-device-card-header {
+    flex: 0 0 auto;
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: .2px;
+  }
+  #enterCodeCard {
+    flex: 0 0 auto;
+    min-height: max-content;
+  }
+  .connect-device-tile {
+    min-height: 64px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .connect-device-tile:hover {
+    background: var(--w-8);
+    border-color: var(--accent);
+  }
+  .connect-device-tile.mail-row--device {
+    border-left: 3px solid var(--info-line);
+    background: var(--w-4);
+  }
+  .connect-device-tile .mail-kind { width: 18px; flex: 0 0 18px; opacity: .8; }
+  .connect-device-tile .mail-row-copy { min-width: 0; flex: 1 1 auto; }
+  .connect-device-tile .shareEmail { min-width: 0; }
+  .connect-device-tile .shareNote { color: var(--text); opacity: .65; font-size: 12px; margin-top: 5px; }
+  .connect-device-tile-meta { overflow-wrap: anywhere; }
+  .connect-device-tile-arrow {
+    justify-content: center;   /* .shareRowActions wyrównuje do prawej -- strzałka ma być na środku */
+    width: 36px;
+    min-width: 36px;
+    height: 38px;
+    border: 1px solid var(--line, var(--w-8));
+    border-radius: var(--r-sm);
+    display: grid;
+    place-items: center;
+    opacity: .75;
+  }
+  .connect-device-enter-code-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+  }
+  .connect-device-inner-card .connect-device-enter-code-row { margin-top: 0; }
+  .connect-device-msg { text-align: center; }
+  .connect-device-inner-card .shareList {
+    width: calc(100% - 20px);
+    max-width: 720px;
+    align-self: center;
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    overflow: auto;
+    margin: 8px auto 0;
+    padding: 2px 2px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 600px) {
+    .connect-device-inner-card { padding: 12px; }
+    .connect-device-inner-card .shareList { width: calc(100% - 12px); gap: 12px; }
+    .connect-device-tile { gap: 8px; }
+    .connect-device-tile .shareNote { font-size: 11px; }
+  }
+
+  .connect-device-tile.mail-row--device:hover { background: var(--info-tint); }
+
+  .connect-device-code-input {
+    flex: 1;
+    max-width: 180px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-align: center;
+    font-family: ui-monospace, 'SF Mono', Monaco, monospace;
+  }
+
+  /* Komputer i tablet poziomo: lewo–prawo (decyzja 2026-10-21) — po lewej
+     węższa karta z kodem, po prawej udostępnione urządzenia na całą wysokość. */
+  @media (min-width: 601px) {
+    .connect-device-main-card .tasks-scroll {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      align-items: stretch;
+    }
+    .connect-device-main-card .tasks-scroll:has(> #sharedDevicesCard[hidden]) {
+      grid-template-columns: minmax(260px, 340px);
+    }
+    #enterCodeCard { min-height: 0; }
+    #enterCodeCard .connect-device-enter-code-row { justify-content: stretch; }
+    #enterCodeCard .connect-device-code-input { max-width: none; min-width: 0; }
+    #enterCodeCard .connect-device-msg { text-align: left; }
+    #sharedDevicesCard .shareList { width: 100%; max-width: none; margin: 8px 0 0; }
+    /* Nagłówki obu kart tej samej wysokości (prawa ma przyciski listy). */
+    .connect-device-inner-card > .connect-device-card-header { min-height: 36px; display: flex; align-items: center; }
+  }
+
+  /* Przewijana lista udostępnionych urządzeń przycina wiersze jak karta (dawniej base.css). */
+  #sharedDevicesList{ border-radius: var(--r-md); }
+
+  /* Wiersz z linku (?share=): wyróżnienie. */
+  .shareRow.is-focus { border-color: var(--g-60); }
+
+  /* Skaner kodu QR: obraz z kamery na całym ekranie, zamknięcie w rogu. */
+  .qr-scan-video { position: fixed; inset: 0; z-index: var(--z-top); width: 100%; height: 100%; object-fit: cover; background: var(--black); }
+  .qr-scan-close { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); z-index: calc(var(--z-top) + 1); }
+}

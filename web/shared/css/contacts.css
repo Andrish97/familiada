@@ -1,0 +1,43 @@
+/* Znajomi i Subskrybenci: dwie karty, wspólne sekcje i wiersze odbiorców. */
+@layer page {
+  .contacts-body .title{ font-size: 18px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+  #contactsHost > .load-retry{ grid-column: 1 / -1; align-self: start; }
+  .contacts-card{ min-width: 0; }
+  .contacts-invite{ margin-top: 10px; }
+  .contacts-invite label{ display: block; margin-bottom: 6px; }
+  .contacts-invite-row{ display: flex; align-items: center; gap: 10px; }
+  .contacts-invite-row .inp{ flex: 1 1 auto; min-width: 0; }
+  .contacts-invite-row .btn{ flex: 0 0 auto; }
+  .contacts-invite-icon{ flex: 0 0 18px; }
+  .contacts-card .shareRow.rowsFocus{ border-color: var(--accent); }
+  @media (max-width: 600px){
+    .contacts-invite-row{ gap: 8px; }
+  }
+
+  :where(:root[data-compact]) .contacts-invite-row #btnInvite { box-sizing: border-box; width: 40px; min-width: 40px; height: auto; min-height: 0; padding: 0; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; }
+  :where(:root[data-compact]) .contacts-invite-row .contacts-invite-label { display: none; }
+  :where(:root[data-compact]) .contacts-invite-row .contacts-invite-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
+
+  /* Karta dzielona (silnik: .tabs-card--split, core/split-tabs.js). */
+  .contacts-tabs{ margin: 0; }
+
+  /* Wysokość karty wypełnia obszar pracy; scroll należy do poszczególnych list.
+     Podział wysokości między sekcje (decyzja 2026-10-21, familijna-server/docs/wzorce-ui.md):
+     każda sekcja to wiersz siatki minmax(auto, max-content) — rozwinięte sekcje
+     z listą (overflow: hidden, więc minimum 0) dostają po równo wolne miejsce,
+     ale nie więcej niż ich treść; nadwyżkę małej sekcji przejmują pozostałe.
+     Formularz, sekcja zwinięta (sam nagłówek) i pusta (zwarty pusty stan) mają
+     minimum równe treści, więc nigdy nie są ściskane. Lista przewija się
+     wewnątrz sekcji (wygaszone krawędzie: scroll-fade.js). */
+  .contacts-card{ display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(auto, max-content); align-content: start; row-gap: 14px; min-height: 0; overflow: hidden; }
+  #contactsOutgoing{ display: contents; }
+  .contacts-card .shareSection{ display: flex; flex-direction: column; min-height: 0; margin: 0; overflow: hidden; }
+  .contacts-card .contacts-add,
+  .contacts-card .shareSection:has(> .shareList[hidden]),
+  .contacts-card .shareSection:not(:has(.shareRow)){ overflow: visible; }
+  .contacts-card .section-title{ flex: 0 0 auto; }
+  .contacts-card .shareList--scroll{ max-height: none; flex: 1 1 auto; min-height: 0; align-content: start; }
+  .contacts-card .shareRow{ flex-shrink: 0; }
+
+  .contacts-card .shareSection[hidden]{ display: none; }
+}

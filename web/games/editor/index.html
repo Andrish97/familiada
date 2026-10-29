@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="editor gameValidate questionForm resources">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="editor.title">Familijna — edytor gry</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+
+<body class="page-fit editor-body editor skel-body topbar-title-mobile">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title"><div class="title" data-i18n="editor.pageTitlePrefix">Edytor gry</div><div class="subtitle" id="pageTitle"></div></div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- pole nazwy (wspólne z edytorami logo: .name-field w base.css) -->
+    <div class="rowTop">
+      <div class="name-field">
+        <label class="name-field-label" for="gameName" data-i18n="common.nameLabel">Nazwa</label>
+        <input id="gameName" class="inp" placeholder="Nazwa gry" data-i18n-placeholder="editor.gameNamePlaceholder"/>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="left">
+        <div class="panelHead">
+          <div class="section-title" data-i18n="editor.questionsTitle">Pytania</div>
+          <div class="hint panelHint" id="hintTop"></div>
+        </div>
+        <ul class="rulesList" id="rulesList" aria-live="polite"></ul>
+
+        <div class="listShell" data-skel-step>
+          <div id="qList" class="list"></div>
+        </div>
+
+        <div class="importInline">
+          <div class="hint">
+            <span data-i18n="editor.importHint">Import działa z pliku TXT albo z wklejonej treści.</span>
+          </div>
+          <button class="btn" id="btnImportTxt" type="button" data-i18n="editor.importBtn" data-i18n-icon="upload">Importuj</button>
+        </div>
+      </aside>
+
+      <section class="rightPanel">
+        <div id="empty" class="empty" data-i18n="editor.empty">Wybierz pytanie z listy lub dodaj nowe.</div>
+
+        <div id="editor" class="editorBox sheet-fill">
+
+          <div class="block card card--inset qf-section">
+            <div class="section-title" data-i18n="editor.questionLabel">Treść pytania</div>
+            <textarea id="qText" class="inp qf-qtext" spellcheck="false"></textarea>
+          </div>
+
+          <div class="answersBlock card card--inset qf-section sheet-fill">
+            <div id="pointsRemainTop" class="answersTop"></div>
+
+            <div class="qf-listShell sheet-scroll">
+              <div id="aList" class="qf-list"></div>
+            </div>
+
+            <div class="hint" id="hintBottom"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  <!-- Telefon: edycja pytania w oknie od dołu (editor.js przenosi tu #editor) -->
+  <div class="overlay modal--sheet" id="questionSheetOverlay" hidden>
+    <div class="modal question-sheet" role="dialog" aria-modal="true" aria-labelledby="qSheetTitle">
+      <div class="mHead">
+        <div class="mTitle" id="qSheetTitle">Pytanie</div>
+      </div>
+      <div class="qSheetBody sheet-fill" id="qSheetBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal: import TXT -->
+  <div class="overlay modal--sheet" id="txtImportOverlay" hidden>
+    <div class="modal">
+      <div class="mHead">
+        <div class="mTitle" data-i18n="editor.importModal.title">Import pytań</div>
+        <button class="btn sm" id="btnTxtClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="mSub">
+        <span data-i18n-html="editor.importModal.subtitle">
+          Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>.
+          Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>.
+          Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer.
+          Punkty po <b>/</b> są opcjonalne (w ankietach mogą być ignorowane).
+        </span>
+      </div>
+
+      <div class="importRow import-file-picker">
+        <input id="txtFile" type="file" accept=".txt,text/plain" hidden>
+        <button class="btn sm" id="btnTxtLoadFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+        <span class="import-file-name" id="txtFileName" aria-live="polite">Nie wybrano pliku</span>
+      </div>
+
+      <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="@Moja gra
+#Zwierzeta w Afryce
+1 Słoń /29
+2 Lew /19
+3 Małpa /16
+
+#Drugie pytanie
+1 Odpowiedź 1
+2 Odpowiedź 2
+3 Odpowiedź 3" data-i18n-placeholder="editor.importModal.placeholder"></textarea>
+
+      <section class="import-preview" id="txtPreview" aria-live="polite" aria-label="Podgląd importu" data-i18n-aria-label="editor.importModal.previewLabel">
+        <div class="import-preview-title" data-i18n="editor.importModal.previewTitle">Podgląd na żywo</div>
+        <div id="txtPreviewBody" data-i18n="editor.importModal.previewEmpty">Wpisz pytania, aby zobaczyć podgląd.</div>
+      </section>
+
+      <div class="mSub">
+        <span data-i18n="editor.importModal.formatHint">
+          Działa też format bez numerów (po prostu linie z odpowiedziami).
+          Import toleruje spacje/taby, „1.”, „2)” itp.
+          Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.
+        </span>
+      </div>
+
+      <div class="importRow modal-actions">
+        <button class="btn sm" id="btnTxtCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="btnTxtImport" type="button" data-i18n="editor.importModal.confirm" data-i18n-icon="upload">Importuj</button>
+        <div class="importMsg" id="txtMsg"></div>
+      </div>
+    </div>
+  </div>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

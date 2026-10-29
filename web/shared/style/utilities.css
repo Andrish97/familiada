@@ -1,0 +1,55 @@
+/* Silnik stylów E23 — klasy pomocnicze (familijna-server/docs/silnik-stylow-projekt.md §4.3).
+   Zamknięta lista; nowych nie dodaje się bez wpisu w projekcie.
+   [hidden] i .hidden w warstwie states (ostatniej): ukrycie wygrywa z każdym
+   display strony. Reguły stanów (np. arkusz okna), które ustawiają display,
+   pomijają ukryte elementy przez :not([hidden]) -- audyt zrzutów
+   (hidden-widoczny) pilnuje, żeby nic ukrytego się nie pokazało.
+   Styli inline nie używamy (atrybut hidden). */
+@layer states {
+  [hidden],
+  .hidden { display: none; }
+}
+
+@layer utilities {
+
+  .only-mobile { display: none; }
+  @media (max-width: 600px) {
+    .only-desktop { display: none; }
+    .only-mobile { display: inline-flex; }
+  }
+  /* Widoczność zależna od miejsca — jedyne miejsce nadpisań .only-*: w tej
+     samej warstwie wygrywa większa specyficzność, bez flagi important. */
+  .list-toolbar .only-desktop { display: inline; }              /* dolny pasek listy: o etykietach decyduje is-compact-icons */
+  .list-toolbar.is-compact-icons .only-desktop { display: none; }
+  @media (max-width: 600px) {
+    :is(.topbar-section-1, .topbar-section-3) .only-desktop { display: inline; } /* topbar: długie etykiety */
+    :is(.topbar-section-1, .topbar-section-3) .only-mobile { display: none; }
+    .tabs-strip .only-desktop { display: none; }                 /* wypustki: krótkie nazwy */
+    .tabs-strip .only-mobile { display: inline; }
+    .baseShareLookup .btn .only-desktop { display: none; }
+  }
+  /* panel menu telefonu: pełne etykiety (po regułach topbara — wygrywa kolejnością) */
+  :where(:root[data-compact]) .topbar-mobile-panel .only-desktop { display: inline; }
+  :where(:root[data-compact]) .topbar-mobile-panel .only-mobile { display: none; }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Rząd elementów (przyciski akcji, narzędzia): jeden odstęp, zawijanie. */
+  .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
+  .cluster--end { justify-content: flex-end; }
+  .cluster--center { justify-content: center; }
+  .grow { flex: 1 1 auto; min-width: 0; }
+  .between { justify-content: space-between; }
+  .center { align-items: center; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

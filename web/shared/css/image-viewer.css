@@ -1,0 +1,87 @@
+/* Podgląd zrzutu (js/core/image-viewer.js): strona główna i Wskazówki. */
+@layer page {
+  .imgv-overlay {
+    z-index: var(--z-top);
+    background: var(--scrim-modal);
+    padding: 2vw;
+  }
+  .imgv-overlay.is-open { display: grid; }
+
+  /* Szerokość okna z proporcji obrazu (--imgv-ratio) i wysokości nagłówka
+     (--imgv-chrome, mierzona w image-viewer.js): obraz wypełnia okno i mieści
+     się w całości, bez ucinania dołu przy niższym oknie przeglądarki. */
+  .imgv-panel {
+    --imgv-max-h: min(88vh, 960px);
+    width: min(92vw, 1432px, calc((var(--imgv-max-h) - var(--imgv-chrome, 120px)) * var(--imgv-ratio, 1.6) + 32px));
+    max-width: 92vw;
+    max-height: var(--imgv-max-h);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (max-width: 980px) {
+    /* Wąskie okno bez arkusza: zwykły modal z marginesami po bokach. */
+    .imgv-overlay { padding: 3vw; }
+    .imgv-panel { width: 94vw; max-width: 94vw; height: 90vh; height: 90dvh; max-height: 90vh; }
+  }
+
+  .imgv-top {
+    margin-bottom: 10px;
+  }
+
+  .imgv-title {
+    max-width: 78%;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .imgv-name {
+    margin: 0 0 10px;
+  }
+
+  .imgv-stage {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: block;
+    overflow: hidden;
+  }
+
+  .imgv-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Pole przybliżania palcami (pinch-zoom.js) -- na każdym urządzeniu. */
+  .imgv-zoom {
+    width: 100%;
+    aspect-ratio: var(--imgv-ratio, 1.6);
+    min-width: 0;
+    min-height: 0;
+    display: block;
+    touch-action: none;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .imgv-zoom > img {
+    /* pinch-zoom.js wylicza przesunięcie względem lewego-górnego rogu */
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+
+  /* Dotyk (≤ 980 px): pole przybliżania wypełnia okno, a obraz mieści się w nim w całości
+     (object-fit: contain). */
+  @media (max-width: 980px) {
+    .imgv-stage { flex: 1 1 auto; }
+    .imgv-zoom { height: 100%; aspect-ratio: auto; }
+  }
+}

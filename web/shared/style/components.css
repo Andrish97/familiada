@@ -1,0 +1,3007 @@
+/* Silnik stylów E23 — komponenty (familijna-server/docs/silnik-stylow-projekt.md §4).
+   Przeniesione z dawnego shared/css/base.css z zachowaniem kolejności
+   (ta sama kaskada przy równej specyficzności), kolory i warstwy
+   z tokens.css. Nazwy klas bez zmian — używają ich wspólne moduły JS
+   i testy e2e (.btn, .uni-modal, .overlay > .modal, .tag, .badge…). */
+@layer components {
+
+  /* ── Pole wyboru i radio — jeden wzorzec w całym systemie ──────
+     Kwadrat z ramką, po zaznaczeniu złote wypełnienie i ciemny ptaszek.
+     „:root input[…]” (0,2,1) wygrywa z ogólnymi regułami pól tekstowych.
+     Przełączniki-pigułki (.toggle-item) to ukryte radio — pominięte. */
+  :root input[type="checkbox"],
+  :root input[type="radio"]:not(.toggle-item > input) {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0 .25em 0 0;
+    box-shadow: none;
+    outline: 0;
+    flex-shrink: 0;
+    display: inline-grid;
+    place-content: center;
+    vertical-align: -0.25em;
+    border: 1.5px solid var(--w-25);
+    background: var(--surface-1);
+    cursor: pointer;
+  }
+  :root input[type="checkbox"] {
+    border-radius: var(--r-xs);
+    transition: background-color var(--dur-fast), border-color var(--dur-fast);
+  }
+  :root input[type="checkbox"]::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background: var(--bg);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5 9.5 17.5 19.5 6.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5 9.5 17.5 19.5 6.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    transform: scale(0);
+    transition: transform var(--dur-fast);
+  }
+  :root input[type="checkbox"]:hover:not(:disabled) { border-color: var(--g-60); }
+  :root input[type="checkbox"]:checked,
+  :root input[type="checkbox"]:indeterminate {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  :root input[type="checkbox"]:checked::after { transform: scale(1); }
+  :root input[type="checkbox"]:indeterminate::after {
+    width: 10px;
+    height: 2.5px;
+    border-radius: var(--r-xs);
+    -webkit-mask: none;
+    mask: none;
+    transform: scale(1);
+  }
+  :root input[type="checkbox"]:focus {
+    box-shadow: none;
+    border-color: var(--w-25);
+  }
+  :root input[type="checkbox"]:checked:focus,
+  :root input[type="checkbox"]:indeterminate:focus { border-color: var(--accent); }
+
+  :root input[type="radio"]:not(.toggle-item > input) {
+    border-radius: 50%;
+    transition: border-color var(--dur-fast);
+  }
+  :root input[type="radio"]:not(.toggle-item > input)::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: scale(0);
+    transition: transform var(--dur-fast);
+  }
+  :root input[type="radio"]:not(.toggle-item > input):hover:not(:disabled),
+  :root input[type="radio"]:not(.toggle-item > input):checked { border-color: var(--accent); }
+  :root input[type="radio"]:not(.toggle-item > input):checked::after { transform: scale(1); }
+
+  :root input[type="checkbox"]:focus-visible,
+  :root input[type="radio"]:not(.toggle-item > input):focus-visible {
+    outline: 2px solid var(--g-60);
+    outline-offset: 2px;
+  }
+  :root input[type="checkbox"]:disabled,
+  :root input[type="radio"]:not(.toggle-item > input):disabled {
+    opacity: .4;
+    cursor: not-allowed;
+  }
+
+  /* Gwiazdki oceny ze starRating() — odstęp z rodzica (.stars, .mkt-stars). */
+  .ico-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
+  }
+
+  /* Małe przyciski z samą ikoną (akceptuj / odrzuć / usuń na kafelkach). */
+  .btn.xs > svg.ico:only-child {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.35em;
+  }
+
+  /* ── Topbar: stały pasek u góry, 4 sekcje ───────────────────────
+     Kryjące tło: półprzezroczysty pasek przepuszczał treść przewijaną
+     pod spodem i każdy przycisk miał inny odcień. */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-topbar);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
+    transition: top .18s ease-out;
+    background: var(--bg);
+    --under: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  /* Krótki ekran: kompaktowy topbar niezależnie od urządzenia. */
+  @media (max-height: 500px) {
+    .topbar {
+      padding-top: max(4px, env(safe-area-inset-top));
+      padding-bottom: 4px;
+    }
+  }
+  @media (max-width: 600px) {
+    .topbar {
+      padding: 12px 14px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-left: calc(14px + env(safe-area-inset-left, 0px));
+      padding-right: calc(14px + env(safe-area-inset-right, 0px));
+    }
+  }
+  /* BEZ will-change: transform — stała warstwa rozmywała ikony przy powiększeniu. */
+  :where(:root[data-compact]) .topbar { transition: top .18s ease-out, transform .22s ease, opacity .22s ease; }
+  :where(:root[data-compact]) .topbar.is-hidden-mobile {
+    transform: translateY(-110%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .topbar-layout-4 {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-layout-4 .topbar-section {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: center;
+    gap: 8px;
+  }
+  .topbar-layout-4 :is(.topbar-section-2, .topbar-section-3, .topbar-section-4) { justify-content: flex-start; }
+  /* Overflow rozstrzyga kontroler przed renderem. Przejściowe zawinięcie
+     przy aktualizacji nawigacji nie zmienia wysokości całej strony. */
+  .topbar-layout-4 .topbar-section-2 { flex-wrap: nowrap; }
+  .topbar-layout-4 .topbar-section button { touch-action: manipulation; }
+  .topbar-layout-4 .topbar-section-1 .brand { align-self: center; }
+  .topbar-layout-4 .topbar-section :is(.btn, .who, .lang-switcher, .user-btn, .top-status) {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+  /* Tablety: więcej miejsca dla nawigacji; „Więcej” dopiero, gdy trzeba. */
+  @media (max-width: 1280px) {
+    :where(:root:not([data-compact])) .topbar-layout-4 { column-gap: 8px; }
+    :where(:root:not([data-compact])) .topbar-layout-4 .topbar-section-2 { column-gap: 5px; }
+  }
+
+  /* Gry mają trzy stany nawigacji (pełny pasek, „Więcej”, hamburger),
+     więc sam rozmiar telefonu nie chowa od razu przycisków. */
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) {
+    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+    grid-template-areas: none;
+  }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section { grid-area: auto; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) :is(.topbar-section-2, .topbar-section-4) { display: flex; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2 { flex-wrap: nowrap; }
+
+  :where(:root[data-compact]) .topbar-layout-4 {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s3";
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-1 {
+    grid-area: s1;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: 0;
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-2,
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-section-4 { display: none; }
+  :where(:root[data-compact]) .topbar-layout-4:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
+  :where(:root[data-compact]) .topbar-layout-4.topbar-mobile-keep-brand .topbar-section-1 .brand {
+    display: block;
+    font-size: 12px;
+    letter-spacing: .1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  :where(:root[data-compact]) .topbar-layout-4 .mobile-primary-back { max-width: 58vw; }
+  :where(:root[data-compact]) .topbar-layout-4 .topbar-menu-toggle { margin-left: 0; }
+
+  /* Tytuł strony w topbarze także na telefonie (body.topbar-title-mobile). */
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 {
+    grid-area: s2;
+    display: flex;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 .topbar-title {
+    flex: 1 1 auto;
+    gap: 1px;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-title .title {
+    font-size: 13px;
+    letter-spacing: .06em;
+    line-height: 1.2;
+  }
+  :where(:root[data-compact]) body.topbar-title-mobile .topbar-title .subtitle {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  /* Tryb hamburgera wymuszony przez kontroler (nawigacja się nie mieści). */
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s3";
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-1 { grid-area: s1; flex-wrap: nowrap; min-width: 0; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-3 { grid-area: s3; justify-content: flex-end; align-items: center; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-2,
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced .topbar-section-4 { display: none; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand { display: none; }
+  :where(:root:not([data-compact])) .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand {
+    display: block; font-size: 12px; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Tytuł strony zostaje jak na telefonie (sekcja 2 ma wtedy tylko tytuł). */
+  :where(:root:not([data-compact])) body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  :where(:root:not([data-compact])) body.topbar-title-mobile .topbar-layout-4.topbar-mobile-forced .topbar-section-2 {
+    grid-area: s2; display: flex; min-width: 0; flex-wrap: nowrap;
+  }
+
+  /* Tytuł strony pracy w sekcji 2 topbara (edytory, ankieta). */
+  .topbar-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .topbar-title .title {
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .topbar-title .subtitle {
+    opacity: .75;
+    font-size: 12px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Topbar: marka, konto, kontrolki o stałej wysokości ────────── */
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 1000;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .who {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 12px;
+    min-height: var(--topbar-ctl-h);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg));
+    border: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  /* Kontrolki topbara mają STAŁĄ wysokość (wysokość z zawartości różniła
+     się między przeglądarkami). */
+  .topbar .btn,
+  .topbar .who,
+  .topbar .dotRow { height: var(--topbar-ctl-h); }
+  /* <a class="btn"> nie centruje zawartości w pionie sam z siebie */
+  .topbar a.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35em;
+  }
+  .user-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Suwak (jedyny): każdy input[type=range]. Tor z --track (np. gradient
+     koloru w pickerze), domyślnie neutralny; uchwyt złoty. ───────────── */
+  :root input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+  }
+  :root input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: var(--r-pill);
+    background: var(--track, var(--w-14));
+    box-shadow: 0 0 0 1px var(--w-14) inset;
+  }
+  :root input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--k-40);
+  }
+  :root input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: var(--r-pill);
+    background: var(--track, var(--w-14));
+    box-shadow: 0 0 0 1px var(--w-14) inset;
+  }
+  :root input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--k-40);
+  }
+  :root input[type="range"]::-moz-range-progress { background: none; }
+  :root input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+  :root input[type="range"]:disabled { cursor: not-allowed; opacity: .5; }
+
+  /* ── Przycisk ──────────────────────────────────────────────────
+     Tło KRYJĄCE: odcień (--btn-tint) na kolorze podłoża (--under) —
+     półprzezroczyste tła w Chrome na Androidzie nakładały się przy
+     przerysowaniach. Wariant ustawia --btn-tint, powierzchnia --under. */
+  .btn {
+    --btn-tint: var(--w-8);
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 900;
+    line-height: 1;
+    max-width: 100%;
+    text-decoration: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* flex gubi spację między ikoną a napisem (iconText) */
+    column-gap: .4em;
+    transition: filter var(--dur-fast) ease, transform var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  }
+  /* Android (zgłoszenie 2026-10-23): filter/transform na przycisku z ikoną dają
+     artefakty przezroczystości — tylko mysz; na dotyku naciśnięcie = obwódka. */
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: translateY(1px); }
+  }
+  @media (hover: none), (pointer: coarse) {
+    .btn:active:not(:disabled) { border-color: var(--g-60); }
+  }
+  :is(.btn, .corner-btn):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Włączony przełącznik / wybrana opcja (jedyny stan „aktywny” przycisku). */
+  :is(.btn, .corner-btn).is-active,
+  :is(.btn, .corner-btn)[aria-pressed="true"],
+  .ui-select.is-active .ui-select-btn {
+    --btn-tint: var(--g-10);
+    border-color: var(--g-60);
+    color: var(--accent);
+  }
+  .btn.gold {
+    --btn-tint: var(--g-10);
+    border-color: var(--g-35);
+    color: var(--accent);
+  }
+  a.btn.gold { text-decoration: none; }
+  .btn.danger {
+    /* stonowany, czerwony obrys (bez czerwonego wypełnienia) */
+    border-color: var(--bad-line);
+    color: var(--text-muted);
+  }
+  .btn.danger:hover:not(:disabled) {
+    border-color: var(--bad-strong);
+    color: var(--text);
+  }
+  .btn.green {
+    --btn-tint: var(--ok-tint);
+    border-color: var(--ok-line);
+    color: var(--ok-text);
+  }
+
+  /* ── Stopka ───────────────────────────────────────────────────── */
+  .footer {
+    position: relative;
+    margin: auto 0 8px; /* krótka strona: na dole okna */
+    padding-top: 20px;
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: start;
+    gap: 8px;
+    color: var(--text-muted); /* bez opacity: przyciski z ikonami w stopce (Android) */
+    font-size: 12px;
+    justify-self: stretch;
+    align-self: stretch;
+  }
+  /* stopka poza main: pełna szerokość, .wrap nie odbiera jej safe area */
+  .footer.wrap {
+    width: auto;
+    margin-inline: 0;
+    padding-top: 20px;
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  }
+  .footer > * { min-width: 0; max-width: 100%; flex: 0 1 auto; overflow-wrap: break-word; hyphens: auto; text-wrap: pretty; }
+  .footer > :first-child { text-align: left; }
+  .footer > :last-child { text-align: right; }
+  .footer:has(> :nth-child(3)) { gap: 8px 12px; }
+  .footer:has(> :nth-child(3)) > :nth-child(2) { margin-inline: auto; text-align: center; }
+  .footer::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: min(96vw, 1400px);
+    height: 1px;
+    background: var(--line);
+    transform: translateX(-50%);
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 900;
+  }
+  @media (hover: hover) and (pointer: fine) { .footer a:hover { filter: brightness(1.08); } }
+  .footer-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 12px; }
+  @media (max-width: 600px) {
+    .footer {
+      margin: auto 0 6px;
+      padding-top: 15px;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .footer::before { top: 6px; }
+  }
+  .no-footer-line .footer::before { display: none; }
+
+  /* ── Stopka: Kontakt, „Postaw kawę” ────────────────────────────── */
+  .btn-contact-footer {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 900;
+    font-size: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    text-decoration: none;
+  }
+  @media (hover: hover) and (pointer: fine) { .btn-contact-footer:hover { filter: brightness(1.08); } }
+  .btn-support-footer { display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
+  @media (hover: hover) and (pointer: fine) { .btn-support-footer:hover { filter: brightness(1.08); } }
+  .btn-support-footer .ico { width: 1.45em; height: 1.45em; flex: 0 0 auto; }
+  /* Wybór kawy: lista opcji jak w oknie „Zmień typ”. */
+  .support-sizes { display: grid; gap: 8px; }
+  .support-size { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; }
+  @media (hover: hover) and (pointer: fine) {
+    .support-size:hover { background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-modal)); }
+  }
+  .support-size:has(input:checked) { border-color: var(--accent); background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-modal)); }
+  .support-size input { margin: 0; }
+  .support-size-ico { display: inline-flex; width: 28px; justify-content: center; color: var(--accent); }
+  .support-size-ico .ico { width: 18px; height: 18px; }
+  .support-size--medium .support-size-ico .ico { width: 22px; height: 22px; }
+  .support-size--large .support-size-ico .ico { width: 26px; height: 26px; }
+  .support-size-name { font-weight: 900; }
+  .support-size-amount { font-weight: 900; color: var(--accent); }
+  .support-modal-note { margin: 2px 0 0; font-size: 12px; opacity: .65; }
+
+  /* Wyłączony: przygaszone kryjące kolory zamiast opacity — także .x,
+     .rowsAct, .shareBulkAction i pozycja menu (Android: bez opacity). */
+  .btn:disabled {
+    --btn-tint: var(--w-4);
+    color: var(--disabled-text);
+    border-color: var(--disabled-line);
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+  }
+  .btn.gold:disabled {
+    --btn-tint: var(--g-10);
+    color: var(--g-60);
+    border-color: var(--g-35);
+  }
+  .btn.danger:disabled {
+    color: var(--disabled-danger-text);
+    border-color: var(--disabled-danger-line);
+  }
+  .btn.green:disabled {
+    --btn-tint: var(--ok-tint);
+    color: var(--disabled-green-text);
+    border-color: var(--disabled-green-line);
+  }
+
+  .btn.sm {
+    padding: 7px 10px;
+    border-radius: var(--r-md);
+    font-size: 13px;
+    letter-spacing: .04em;
+  }
+  .btn.xs {
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    font-size: 12px;
+  }
+  /* Przycisk-ikona: kwadrat o wysokości zwykłego przycisku (jedyny wariant;
+     dawne .icon-btn i przyciski-ikony stron). */
+  .btn.icon {
+    min-width: 37px;
+    min-height: 37px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    line-height: 1;
+  }
+  .btn.sm.icon { min-width: 33px; min-height: 33px; font-size: 15px; }
+  .btn.lg {
+    padding: 14px 28px;
+    font-size: 17px;
+  }
+  .btn.full { width: 100%; }
+  /* Zajęty (czeka na sieć lub dźwięk): wyłączony z kursorem oczekiwania. */
+  .btn.is-busy:disabled { cursor: wait; }
+
+  /* ── Pole tekstowe ─────────────────────────────────────────────── */
+  .inp {
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
+    color: var(--text);
+    font-weight: 900;
+    outline: 0;
+    font-size: 16px;
+    max-width: 100%;
+    transition: border-color var(--dur-fast) ease;
+  }
+  .inp:focus { border-color: var(--g-35); }
+  /* Mały (paski narzędzi, filtry list): wysokość jak .btn.xs. */
+  .inp.sm { height: 28px; padding: 4px 8px; border-radius: var(--r-sm); font-size: 12px; }
+  textarea.inp { resize: vertical; font: inherit; font-size: 16px; font-weight: 700; line-height: 1.35; }
+  .inp:focus-visible { border-color: var(--g-60); box-shadow: 0 0 0 3px var(--g-10); }
+  .inp[type=file] { width: min(520px, 100%); }
+  .inp[type=file]::file-selector-button {
+    margin-right: 10px;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(var(--k-20), var(--k-20)) var(--under, var(--surface-1));
+    color: var(--accent);
+    font-weight: 1000;
+    letter-spacing: .06em;
+    cursor: pointer;
+  }
+  @media (hover: hover) and (pointer: fine) { .inp[type=file]::file-selector-button:hover { filter: brightness(1.06); } }
+
+  /* ── Treść strony: margines od krawędzi okna (--page-gutter) ──── */
+  .row,
+  .stack {
+    display: flex;
+    gap: 10px;
+  }
+  .row {
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .stack { flex-direction: column; }
+
+  /* Hasło z przyciskiem „pokaż”. */
+  .pass-wrap {
+    position: relative;
+    display: flex;
+  }
+  .pass-wrap input {
+    flex: 1;
+    padding-right: 42px;
+  }
+  .pass-wrap .pass-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-faint);
+    padding: 0;
+    transition: color .15s;
+  }
+  .pass-wrap .pass-toggle:hover { color: var(--text-soft); }
+  .pass-wrap .pass-toggle svg { width: 18px; height: 18px; pointer-events: none; }
+
+  /* Podpowiedź (jedyna: pod polem, w pasku, w oknie). Kolor przyciszony
+     zamiast przezroczystości — stały kontrast, linki w środku czytelne. */
+  .hint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-muted);
+  }
+  /* Błąd pola lub formularza (jeden): pod polem, czerwony, pusty ukryty. */
+  .field-error { margin: 6px 0 0; font-size: 12px; line-height: 1.35; color: var(--bad-text); }
+  .field-error:empty { display: none; }
+  .msg {
+    color: var(--accent);
+    font-weight: 900;
+    opacity: .9;
+  }
+
+  /* ── Okno: .overlay > .modal (duże) i .uni-modal (małe) ───────── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    display: grid;
+    place-items: center;
+    z-index: var(--z-overlay);
+  }
+  .overlay.contact-modal-overlay { background: var(--scrim-modal); }
+  .overlay.uni-overlay { background: var(--scrim-modal); } /* okna z core/modal.js */
+  /* Płynne okno (wyśrodkowane): tło się rozjaśnia, okno wjeżdża lekko z dołu;
+     zamknięcie odwrotnie (is-closing trzyma ostatnią klatkę do schowania —
+     closeDialog/animateClose w modal-sheet.js). Okno od dołu (arkusz) ma
+     własne animacje w warstwie states. */
+  .overlay:not([hidden]):not(.sheet-active) { animation: fade-in var(--dur-base) ease; }
+  .overlay:not([hidden]):not(.sheet-active) > .modal { animation: modal-in var(--dur-base) var(--ease-out); }
+  .overlay.is-closing:not(.sheet-active) { animation: fade-out var(--dur-fast) ease both; }
+  .overlay.is-closing:not(.sheet-active) > .modal { animation: modal-out var(--dur-fast) ease-in both; }
+  @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes modal-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes fade-out { to { opacity: 0; } }
+
+  /* Formularz okna kontaktu — rytm kart formularzy: 14 px między polami,
+     8 px etykieta → pole → podpowiedź. */
+  .contact-form { gap: 14px; }
+  .contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  /* Wybór z etykietą (jeden): label.choice > input[checkbox|radio] + tekst
+     (opcjonalnie span.choice-text z .hint pod spodem); lista: .choice-list. */
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    cursor: pointer;
+    user-select: none;
+  }
+  .choice > input { flex: 0 0 auto; margin-top: 1px; }
+  .choice-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .choice-text > .hint { margin: 0; }
+  .choice-list { display: grid; gap: 8px; }
+  @media (pointer: coarse) { .choice { min-height: 44px; align-items: center; } }
+
+  /* Pole formularza: etykieta (.field-label) nad kontrolką, kolejne pola
+     z odstępem; pole tekstowe i lista wyboru na całą szerokość. */
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field > .field-label { margin: 0; }
+  .field + .field,
+  .modal > .field { margin-top: 12px; }
+  .field > :is(.inp, .ui-select) { width: 100%; box-sizing: border-box; }
+  .field > .ui-select > .ui-select-btn { width: 100%; justify-content: space-between; }
+  .field > textarea.inp { resize: vertical; }
+  /* Etykieta pola (jedyna): nad polem, wersaliki, przyciszona. */
+  .field-label {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .contact-field > .field-label { margin: 0; }
+  .contact-field > .inp { width: 100%; }
+  .contact-field > textarea.inp {
+    resize: vertical;
+    min-height: 140px;
+  }
+  .contact-attach-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    cursor: pointer;
+    user-select: none;
+  }
+  .contact-hint {
+    font-size: 12px;
+    opacity: .75;
+  }
+  .contact-hint:empty,
+  .contact-files:empty,
+  .contact-captcha:empty { display: none; }
+  .contact-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .contact-file {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--line);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-modal));
+    font-size: 12px;
+    color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Turnstile w wierszu na całą szerokość; bez wyzwania nie zajmuje
+     miejsca, wyzwanie wjeżdża płynnie. */
+  .contact-captcha {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .contact-captcha > * {
+    width: 100%;
+    min-width: 0;
+  }
+  .contact-captcha[data-turnstile="pending"] {
+    height: 0;
+    margin-top: -14px;
+    overflow: hidden;
+    visibility: hidden;
+  }
+  .contact-captcha[data-turnstile="visible"] { animation: contact-captcha-in .22s ease-out; }
+  .contact-captcha[hidden] { display: none; }
+  .contact-error {
+    font-size: 13px;
+    color: var(--danger);
+    line-height: 1.4;
+  }
+  .contact-success {
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 16px 0;
+  }
+  .contact-success-icon {
+    font-size: 32px;
+    color: var(--ok-text);
+  }
+  .contact-success-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .contact-success-ticket {
+    font-size: 13px;
+    opacity: .75;
+  }
+
+  /* Okno mieści się w obszarze bez wycięć ekranu: --modal-vw/--modal-vh (tokens.css). */
+  .modal {
+    width: min(860px, var(--modal-vw));
+    margin-inline: auto;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--surface-modal);
+    --under: var(--surface-modal);
+    box-shadow: var(--shadow-modal);
+    padding: 18px;
+    max-height: var(--modal-vh);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    isolation: isolate;
+    background-clip: padding-box;
+  }
+  /* Proste okna (nazwa, krótkie potwierdzenie) — węższe. */
+  /* Szerokości okien (jedyne trzy): domyślna 860, --medium 720 (= okno uniwersalne), --narrow 560. */
+  .modal.modal--medium { width: min(720px, var(--modal-vw)); }
+  .modal.modal--narrow { width: min(560px, var(--modal-vw)); }
+
+  .mTitle {
+    font-weight: 1000;
+    font-size: 18px;
+    letter-spacing: .06em;
+    color: var(--accent);
+  }
+  .mHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .mHead .mTitle { margin: 0; }
+  .mSub {
+    opacity: .8;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .mSub:empty { display: none; }
+
+  /* Import / eksport w oknach list. */
+  .importRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .importRow > .inp:only-child { width: 100%; }
+  .import-file-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+  }
+  .import-file-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    opacity: .75;
+    font-size: .9rem;
+  }
+  /* Podgląd importu (Gry, edytor gry, Logo): ramka z podsumowaniem i listą
+     pytań; wariant --media dla obrazu (canvas logo) od krawędzi do krawędzi. */
+  .import-preview {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--k-20), var(--k-20)) var(--under, var(--surface-1));
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .import-preview--media { padding: 0; overflow: hidden; }
+  .import-preview--media > canvas { display: block; width: 100%; }
+  .import-preview-title { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+  .import-preview-title + * { margin-top: 7px; }
+  .import-preview-summary { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--accent); font-weight: 800; margin-bottom: 6px; }
+  .import-preview-list { display: grid; gap: 7px; }
+  .import-preview-list--scroll { max-height: 220px; overflow-y: auto; }
+  .import-preview-item { padding-top: 6px; border-top: 1px solid var(--w-8); overflow-wrap: anywhere; }
+  .import-preview-item strong { display: block; }
+  .import-preview-answers { color: var(--text-muted); margin-top: 2px; }
+  .import-preview .is-error { color: var(--bad-text); }
+  .importMsg {
+    margin-left: auto;
+    opacity: .85;
+    font-weight: 900;
+    color: var(--accent);
+    padding: 6px 0;
+  }
+  .importMsg:empty { display: none; }
+  .importMsg[data-kind="error"] { color: var(--bad-text); opacity: 1; }
+  .importMsg[data-kind="ok"] { color: var(--ok-text); }
+  .importTa {
+    width: 100%;
+    min-height: 220px;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--surface-sunken);
+    color: var(--text);
+    outline: 0;
+    resize: vertical;
+    font-weight: 800;
+  }
+
+  /* Uniwersalne okno (modal.js): nagłówek, przewijana treść, stopka. */
+  .uni-modal,
+  .share-uni {
+    width: min(720px, var(--modal-vw));
+    max-height: var(--modal-vh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .uni-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .uni-body {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .share-uni > .uni-head,
+  .share-uni > .uni-foot,
+  .uni-modal > .uni-head,
+  .uni-modal > .mHead,
+  .uni-modal > .mSub,
+  .uni-modal > .uni-foot { flex: 0 0 auto; }
+  .uni-modal > .mSub {
+    white-space: pre-line; /* tekst okna z \n (modal.js) */
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .uni-inp { width: 100%; }
+  /* Warstwy jednego okna (np. tagi: lista → nowy tag → kolor): widoczna jest
+     jedna, przełącza showModalLayer() z modal-sheet.js. W oknie od dołu każda
+     warstwa ma własny nagłówek, pasek akcji i przewijaną treść. */
+  .modal-layer:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  /* Kod połączenia urządzenia w oknie (QR w ankiecie i w Control). */
+  .uni-code {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 260px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 18px;
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-modal));
+    border: 1px solid var(--g-35);
+    border-radius: var(--r-md);
+  }
+  .uni-code-val {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: .32em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+  }
+  /* Podpowiedź pod tytułem okna: wyśrodkowana. */
+  .uni-hint { text-align: center; }
+  /* Stopka okna bez linii nad przyciskami (uwaga użytkownika 2026-10-24):
+     w oknie jest jeden separator -- pod paskiem tytułu w arkuszu. */
+  .uni-foot { margin-top: 16px; }
+  /* Rząd przycisków w stopce okna: do prawej (główna akcja ostatnia),
+     komunikat (.importMsg) zawsze po lewej. */
+  .modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .modal-actions > .importMsg {
+    order: -1;
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
+  @keyframes sheetDown { from { transform: translateY(var(--sheet-drag, 0px)); } to { transform: translateY(100%); } }
+  @keyframes sheetScrimIn { from { background-color: transparent; } }
+  @keyframes sheetScrimOut { to { background-color: transparent; } }
+  @keyframes contact-captcha-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .topbar-sheet-back {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--topbar-ctl-h);
+  }
+  .topbar-sheet-back > svg.ico { display: block; }
+
+  /* Telefon: „Wstecz” w topbarze to sama strzałka (tekst dla czytnika). */
+  @media (max-width: 600px) {
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) {
+      font-size: 0;
+      line-height: 0;
+      gap: 0;
+      min-width: 40px;
+      padding-inline: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Arkuszowy „Wstecz” zostaje ukryty, dopóki okno go nie aktywuje. */
+    .topbar :is(#btnBack, #backToGames, #btnGoGames):not([hidden]) { display: inline-flex; }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > svg.ico {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+    .topbar :is(#btnBack, #backToGames, #btnGoGames, .topbar-sheet-back) > .badge { font-size: 11px; }
+  }
+
+  /* ── Lista rozwijana (ui-select.js) ────────────────────────────── */
+  .ui-select {
+    position: relative;
+    display: inline-block;
+    min-width: 160px;
+    max-width: 100%;
+  }
+  .ui-select-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+  }
+  /* Za długa nazwa kończy się wielokropkiem; pełna w title. */
+  .ui-select-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ui-select-caret {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .ui-select-menu{
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: max-content;
+    /* przycisk z samą ikoną — menu szerokie na etykiety */
+    z-index: var(--z-popover);
+    display: none;
+    max-height: 260px;
+    overflow: auto;
+  }
+  .ui-select.open .ui-select-menu {
+    display: block;
+    animation: popover-in var(--dur-fast) var(--ease-out);
+  }
+  /* Pozycja menu (jedna): lista wyboru, język, konto, menu kontekstowe,
+     czcionki rysowania. Wybrana: aria-selected; nieaktywna: aria-disabled. */
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background var(--dur-fast);
+  }
+  .menu-item > span:not(.cm-kbd, .ui-select-dirty-dot, .badge) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .menu-item > .ico { flex: 0 0 auto; width: 16px; height: 16px; }
+  @media (hover: hover) and (pointer: fine) {
+    .menu-item:hover { background: var(--surface-inset); }
+  }
+  .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .menu-item[aria-selected="true"] { background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-1)); color: var(--accent); }
+  .menu-item[aria-disabled="true"] { color: var(--disabled-text); cursor: default; }
+
+  .menu-item.is-danger { color: var(--bad-text); }
+  /* Dotyk i telefon: cel dotyku 44 px. */
+  :where(:root:is([data-compact], [data-input="touch"])) .menu-item { min-height: 44px; font-size: 14px; }
+
+  /* Wyłączony: kolory --disabled-*, nie opacity (Android). */
+  .ui-select.is-disabled .ui-select-btn {
+    color: var(--disabled-text);
+    border-color: var(--disabled-line);
+    cursor: not-allowed;
+  }
+  @keyframes popover-in {
+    from { opacity: 0; transform: translateY(-4px); }
+  }
+
+  @media (max-width: 600px) {
+    .brand { letter-spacing: .14em; }
+  }
+
+  /* ── „Dodaj do ekranu głównego” (urządzenia) ───────────────────── */
+  /* „Dodaj do ekranu początkowego” (ekrany gry: Przycisk, Prowadzący, snake). */
+  .a2hs {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-toast);
+    display: none;
+    place-items: center;
+    box-sizing: border-box;
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) calc(env(safe-area-inset-right, 0px) + 20px)
+      calc(env(safe-area-inset-bottom, 0px) + 20px) calc(env(safe-area-inset-left, 0px) + 20px);
+    background: var(--k-70);
+  }
+  html.showA2HS .a2hs { display: grid; }
+  .a2hsCard {
+    --under: var(--surface-1);
+    box-sizing: border-box;
+    width: min(100%, 400px);
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
+    color: var(--text);
+    text-align: center;
+  }
+  .a2hsTitle { margin: 0 0 12px; font-size: 20px; font-weight: 900; }
+  .a2hsText { margin: 0 0 20px; color: var(--text-muted); font-size: 15px; line-height: 1.5; }
+  .a2hsText b { color: var(--text); font-weight: 700; }
+  .a2hsClose { width: 100%; min-height: 44px; }
+  @media (display-mode: standalone) {
+    .a2hs { display: none; }
+  }
+  @supports (-webkit-touch-callout: none) {
+    html.webapp .fs-btn { display: none; }
+  }
+
+  /* ── Przycisk dwóch stanów (jeden w serwisie): obie wartości widoczne
+     naraz, wybrana jak aktywny filtr (złoty odcień, napis i obrys). Kształt
+     zwykłego przycisku (.btn) podzielonego na części; --sm jak .btn.sm.
+     Znaczniki: .toggle-group > label.toggle-item > input[radio] + span.toggle-slider
+     (ikona i/lub .toggle-label); z JS — toggleGroupEl() z core/toggle-group.js.
+     Ustawienia gry, Dźwięk w Control, uprawnienie w udostępnianiu bazy. ── */
+  .toggle-group {
+    --btn-tint: var(--w-8);
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    width: fit-content;
+    max-width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--surface-1));
+    overflow: hidden;
+  }
+  .toggle-item { position: relative; display: flex; min-width: 0; cursor: pointer; }
+  .toggle-item + .toggle-item { border-left: 1px solid var(--line); }
+  .toggle-item input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4em;
+    min-width: 0;
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  }
+  .toggle-slider > .ico { flex: none; width: 1.15em; height: 1.15em; }
+  /* Obrys wybranej części idzie po zaokrągleniu grupy (bez ucięć w rogach). */
+  .toggle-item:first-child > .toggle-slider { border-radius: calc(var(--r-md) - 1px) 0 0 calc(var(--r-md) - 1px); }
+  .toggle-item:last-child > .toggle-slider { border-radius: 0 calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0; }
+  .toggle-group--sm .toggle-slider { padding: 7px 10px; font-size: 12px; }
+  /* Wiersz listy na telefonie: przełącznik same ikony (opis w dymku). */
+  @media (max-width: 600px) {
+    .shareRowActions .toggle-group .toggle-slider > .ico + .toggle-label { display: none; }
+  }
+  .toggle-item input:checked + .toggle-slider {
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-1));
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--g-60);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .toggle-item:hover input:not(:checked, :disabled) + .toggle-slider { background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-1)); color: var(--text); }
+  }
+  .toggle-item input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .toggle-item:has(input:disabled) { cursor: not-allowed; }
+  .toggle-item input:disabled:not(:checked) + .toggle-slider { color: var(--disabled-text); }
+
+  /* ── Wybór koloru (jeden: ustawienia gry, znaczniki w Eksploratorze;
+     znaczniki i obsługa: core/color-picker.js): dwie karty — podgląd + HEX,
+     suwaki R/G/B (tor z --track ustawia skrypt). ─────────────────────── */
+  .color-picker { display: flex; flex-direction: column; gap: 12px; }
+  .colorTopRow { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; }
+  .color-picker > :is(.colorTopRow, .sliders) {
+    padding: 12px;
+    border: 1px solid var(--w-8);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-1));
+  }
+  .colorHexField { flex: 1 1 auto; min-width: 0; display: grid; gap: 6px; }
+  .colorHexField .inp { width: 100%; }
+  .colorHexField :is(.hint, .field-label) { margin: 0; }
+  .colorPreview {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border: 1px solid var(--w-14);
+    border-radius: var(--r-md);
+    background: var(--c, var(--w-8));
+  }
+  .sliders { display: grid; gap: 10px; }
+  .sliderRow { display: grid; grid-template-columns: 18px minmax(0, 1fr) 44px; align-items: center; gap: 10px; }
+  .sLbl { font-weight: 1000; letter-spacing: .06em; }
+  .sVal { text-align: right; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .rng { width: 100%; }
+
+  /* ── Podgląd pytań (Gry, rynek, panel admina): lista pytań z odpowiedziami. */
+  .q-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .q-preview-item {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-1));
+  }
+  .q-preview-text { margin-bottom: 7px; font-size: 14px; font-weight: 900; }
+  .q-preview-answers { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }
+  .q-preview-answers li { font-size: 13px; color: var(--text-muted); }
+  .q-preview-pts { font-size: 11px; font-weight: 900; color: var(--accent); }
+
+  /* ── Komunikat w treści (ostrzeżenie, błąd, informacja) ──────────
+     Ramka z lewym paskiem w kolorze stanu; zawsze przy tym, czego dotyczy. */
+  .callout {
+    padding: 10px 12px;
+    border: 1px solid var(--w-14);
+    border-left-width: 3px;
+    border-radius: var(--r-sm);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-1));
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .callout--warn {
+    border-color: var(--warn-line);
+    border-left-color: var(--warn-strong);
+    background: linear-gradient(var(--warn-tint), var(--warn-tint)) var(--under, var(--surface-1));
+  }
+  .callout--bad {
+    border-color: var(--bad-line);
+    border-left-color: var(--bad-strong);
+    background: linear-gradient(var(--bad-tint), var(--bad-tint)) var(--under, var(--surface-1));
+  }
+  .callout--ok {
+    border-color: var(--ok-line);
+    border-left-color: var(--ok-strong);
+    background: linear-gradient(var(--ok-tint), var(--ok-tint)) var(--under, var(--surface-1));
+  }
+  .callout--info {
+    border-color: var(--info-line);
+    border-left-color: var(--info-strong);
+    background: linear-gradient(var(--info-tint), var(--info-tint)) var(--under, var(--surface-1));
+  }
+  .callout[hidden] { display: none; }
+
+  /* ── Pasek komunikatu na górze strony (np. przypomnienie dla gościa):
+     tło kryjące (odcień na --bg), link i przyciski .btn-plain w tekście. */
+  .notice-bar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-notice);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 10px calc(16px + env(safe-area-inset-right, 0px)) 10px calc(16px + env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--warn-line);
+    background: linear-gradient(var(--warn-tint), var(--warn-tint)) var(--bg);
+    font-size: .85rem;
+    text-align: center;
+  }
+  .notice-bar a { font-weight: 800; color: var(--accent); text-decoration: underline; white-space: nowrap; }
+  .notice-bar .btn-plain { padding: 2px; text-decoration: underline; white-space: nowrap; }
+
+  /* ── Przycisk w rogu ekranu (pełny ekran, konto na ekranach gry) ── */
+  .corner-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--w-25);
+    border-radius: var(--r-md);
+    background: var(--surface-1); /* kryjące, bez rozmycia (Android) */
+    box-shadow: 0 4px 14px var(--k-40);
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .corner-btn:hover { background: var(--surface-2); }
+  }
+  .corner-btn .ico { width: 20px; height: 20px; }
+  /* Pełny ekran: prawy górny róg w strefie bezpiecznej. */
+  .fs-btn {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: var(--z-toast);
+  }
+
+  /* ── Język, menu topbara (konto, język, hamburger) ────────────── */
+  .lang-switcher {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .lang-switcher.lang-floating {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    z-index: var(--z-lang-float);
+  }
+  .lang-btn,
+  .btn.lang-btn {
+    min-width: 38px;
+    min-height: var(--topbar-ctl-h);
+    display: grid;
+    place-items: center;
+    /* bez pionowego paddingu — flaga (2em) nie rozpycha przycisku */
+    padding: 0 6px;
+  }
+  .lang-btn .ico {
+    width: 2em;
+    height: 2em;
+    vertical-align: middle;
+  }
+  .lang-menu .menu-item > .ico { width: 1.6em; height: 1.6em; }
+  .topbar-menu-toggle {
+    order: 999;
+    min-width: 38px;
+    min-height: var(--topbar-ctl-h);
+    display: grid;
+    place-items: center;
+    touch-action: manipulation;
+  }
+  /* Wygląd każdego menu (jeden): język, konto, „Więcej”, lista wyboru,
+     menu kontekstowe, wysuwane panele paska rysowania, panel hamburgera.
+     Kryjące tło: półprzezroczyste nakładały się przy przerysowaniach. */
+  :is(.lang-menu, .account-menu, .nav-more-dropdown, .ui-select-menu, .context-menu, .ctxPop, .topbar-mobile-panel) {
+    --under: var(--surface-1);
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-menu);
+  }
+  .lang-menu,
+  .account-menu {
+    position: fixed;
+    display: grid;
+    gap: 4px;
+    min-width: 180px;
+    z-index: var(--z-menu);
+    animation: popover-in var(--dur-fast) var(--ease-out);
+  }
+  .lang-menu { max-width: calc(100vw - 24px); }
+  .account-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .account-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    touch-action: manipulation;
+  }
+  .account-btn .account-who {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .account-chevron {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .account-menu[hidden] { display: none; }
+  /* Konto w menu telefonu (topbar-controller.js czyści pozycję menu
+     ustawioną przez placeDropdown). */
+  .account-menu--inline {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    min-width: 0;
+    animation: none;
+  }
+  .account-btn--mobile-label {
+    pointer-events: none;
+    cursor: default;
+  }
+  .account-btn--mobile-label .account-chevron { display: none; }
+
+  /* Hamburger: szuflada z prawej pod topbarem. Ten sam układ na telefonie
+     i po wymuszonym zwinięciu nawigacji; jedyny krzyżyk to przycisk topbara. */
+  .topbar-mobile-overlay {
+    position: fixed;
+    inset: var(--topbar-h, 60px) 0 0;
+    z-index: var(--z-mobile-menu);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--scrim);
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) ease, visibility var(--dur-base);
+  }
+  .topbar-mobile-panel {
+    background: var(--surface-1);
+    --under: var(--surface-1);
+    border: 1px solid var(--line);
+    border-right: 0;
+    border-radius: var(--r-md) 0 0 var(--r-md);
+    padding: 14px calc(10px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) 10px;
+    width: calc(min(320px, 86vw) + env(safe-area-inset-right, 0px));
+    min-width: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    box-shadow: var(--shadow-menu);
+    overflow: hidden;
+    transform: translateX(105%);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  .topbar-mobile-mount {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.topbar-mobile-lock { overflow: hidden; }
+  .topbar-mobile-overlay.is-open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .topbar-mobile-overlay.is-open .topbar-mobile-panel { transform: translateX(0); }
+
+  @keyframes fade-in { from { opacity: 0; } }
+
+  :where(:root[data-compact]) .topbar-menu-toggle {
+    position: relative;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+  }
+  :where(:root[data-compact]) .topbar-menu-toggle .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    margin-left: 0;
+    transform: translate(0, 0);
+    pointer-events: none;
+  }
+  .topbar-mobile-tab-group {
+    display: grid;
+    gap: 8px;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  .topbar-mobile-tab-group .simple-tabs {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .topbar-mobile-tab-group .simple-tabs .tab {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .topbar-mobile-group { display: contents; }
+  .topbar-mobile-sep {
+    height: 1px;
+    background: var(--line-faint);
+  }
+  .topbar-mobile-group :is(.btn, .who, .user-btn, .top-status) {
+    width: 100%;
+    justify-content: center;
+  }
+  .topbar-mobile-group .btn {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .topbar-mobile-group .who:not(.account-btn) {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    border-radius: 0;
+    opacity: .8;
+  }
+  :where(:root[data-compact]) .topbar-mobile-hidden { display: none; }
+
+  :where(:root:not([data-compact])) .topbar-mobile-forced .topbar-menu-toggle { position: relative; padding: 10px 12px; border-radius: var(--r-md); }
+  :where(:root:not([data-compact])) .topbar-mobile-forced .topbar-menu-toggle .badge {
+    position: absolute; top: -6px; right: -6px; margin-left: 0; transform: translate(0, 0); pointer-events: none;
+  }
+  :where(:root:not([data-compact])) .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-group .btn { justify-content: flex-start; text-align: left; }
+
+  /* Ikony w etykietach hamburgera wyrównane razem z tekstem. */
+  .topbar-mobile-group .btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    text-align: left;
+  }
+  .topbar-mobile-group .btn > span[data-i18n] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .topbar-mobile-group .btn > .badge { margin-left: auto; }
+  .topbar-mobile-group .btn svg.ico { display: block; vertical-align: middle; }
+  .topbar-mobile-group .menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--surface-1));
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+  }
+  .topbar-mobile-group .account-menu--inline { display: contents; }
+  .topbar-mobile-group .account-btn--mobile-label {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    opacity: .8;
+  }
+  /* Dotyk: bez podświetleń najechania w menu (tablety). */
+  @media (hover: none) and (pointer: coarse) {
+    .topbar-mobile-panel .btn:hover { filter: none; }
+    .topbar-mobile-panel .btn:active { transform: none; }
+  }
+
+
+  /* ── Licznik powiadomień (.badge) i oznaczenie (.tag) ──────────
+     .badge — JEDEN licznik (pusty = schowany); .tag — stała informacja
+     o obiekcie, kolor ze znaczenia (--gold/--ok/--bad/--warn/--info/--muted). */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: var(--r-pill);
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--bg));
+    border: 1px solid var(--g-35);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    margin-left: 8px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .badge:empty { display: none; }
+  /* Liczba elementów (nie powiadomienie): neutralna. */
+  .badge--muted { background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--bg)); border-color: transparent; color: var(--text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--w-14);
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--surface-1));
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    line-height: 1.2;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  /* odstęp tylko za ikoną („Finał <b>3</b>/5” zostaje ciągłym tekstem) */
+  .tag > svg.ico:not(:last-child) { margin-right: 5px; }
+  .tag--upper { text-transform: uppercase; }
+  .tag--gold { border-color: var(--g-35); background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-1)); color: var(--accent); }
+  .tag--ok { border-color: var(--ok-line); background: linear-gradient(var(--ok-tint), var(--ok-tint)) var(--under, var(--surface-1)); color: var(--ok-text); }
+  .tag--bad { border-color: var(--bad-line); background: linear-gradient(var(--bad-tint), var(--bad-tint)) var(--under, var(--surface-1)); color: var(--bad-text); }
+  .tag--warn { border-color: var(--warn-line); background: linear-gradient(var(--warn-tint), var(--warn-tint)) var(--under, var(--surface-1)); color: var(--accent); }
+  .tag--info { border-color: var(--info-line); background: linear-gradient(var(--info-tint), var(--info-tint)) var(--under, var(--surface-1)); color: var(--info-text); }
+  .tag--muted { border-color: var(--w-14); background: linear-gradient(var(--w-14), var(--w-14)) var(--under, var(--surface-1)); color: var(--text-muted); }
+
+  /* Stan połączenia urządzenia (Control) — na żywo, wysokości przycisku. */
+  .conn-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 10px 15px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--w-25);
+    background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--surface-1));
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background .25s ease, border-color .25s ease, color .25s ease;
+  }
+  .conn-status--connected {
+    border-color: var(--ok-line);
+    background: var(--ok-tint);
+    color: var(--ok-text);
+  }
+  .conn-status--disconnected {
+    border-color: var(--bad-line);
+    background: var(--bad-tint);
+    color: var(--bad-text);
+  }
+
+  /* ── Ocena (rating-system.js) ──────────────────────────────────── */
+  .uni-modal.rating-modal {
+    max-width: 460px;
+    text-align: center;
+  }
+  .stars-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+  }
+  .star-btn {
+    background: none;
+    border: none;
+    font-size: 40px;
+    color: var(--w-14);
+    cursor: pointer;
+    transition: transform .1s, color .1s;
+    padding: 0;
+    line-height: 1;
+  }
+  @media (hover: hover) and (pointer: fine) { .star-btn:hover { transform: scale(1.15); } }
+  .star-btn .ico {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+  }
+  .star-btn.active { color: var(--accent); } /* bez filter (Android) */
+  .rating-comment {
+    width: 100%;
+    margin-bottom: 20px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  /* ── Pusty stan — jeden element na wszystkich stronach ──────────
+     Przerywana obwódka, wyśrodkowane zdanie; --tile w siatkach kafli. */
+  .empty-state {
+    display: flex;
+    min-height: 84px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    text-align: center;
+    align-self: start;
+    justify-self: stretch;
+    width: 100%;
+    border: 1px dashed var(--line);
+    border-radius: var(--r-md);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under, var(--surface-1));
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted, var(--text-muted));
+  }
+  .empty-state a { color: var(--accent); }
+  .empty-state--tile { width: auto; min-height: 130px; border-radius: var(--r-md); }
+  /* Błąd ładowania listy: wyśrodkowany przycisk „Ponów”. */
+  .load-retry { display: flex; justify-content: center; padding: 12px 0; }
+  /* W środku już obramowanej listy lub panelu: bez drugiej ramki. */
+  .empty-state--inline { min-height: 0; padding: 12px; border: 0; background: none; }
+  .empty-state[hidden] { display: none; }
+
+  /* Przycisk obok pola ma wysokość pola (wiersze „pole + przycisk”). */
+  :is(.contacts-invite-row, .baseShareLookup, .connect-device-enter-code-row) > .btn {
+    align-self: stretch;
+    height: auto;
+    min-height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  /* Okna udostępniania (Baza, urządzenie): pole adresu z przyciskiem. */
+  .baseShareLookup { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 10px; }
+  .baseShareLookup .inp { flex: 1 1 220px; min-width: 0; }
+  .baseShareLookup .btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
+  /* „Udostępnij zaznaczonym (n)”: na telefonie krótko „Udostępnij (n)”. */
+
+  /* Wysyłanie kopii (resource-send.js). */
+  .resource-send-modal {
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .resource-send-modal .mHead { margin: 0; }
+  .resource-send-modal .resource-send-name { margin: 0; overflow-wrap: anywhere; font-weight: 800; }
+  .resource-send-modal .shareSection { margin: 0; }
+  .resource-send-friends-section { min-width: 0; }
+  .resource-send-friends { max-height: none; overflow: visible; }
+  .resource-send-friend { justify-content: flex-start; cursor: pointer; }
+  .resource-send-friend input { flex: 0 0 auto; margin: 0; }
+  .resource-send-friend-name { min-width: 0; overflow-wrap: anywhere; }
+  .resource-send-history { min-width: 0; }
+  .resource-send-history summary { cursor: pointer; }
+  .resource-send-history-list { max-height: none; overflow: visible; }
+  .resource-send-history-row { overflow-wrap: anywhere; }
+  .resource-send-error { margin: 0; color: var(--danger); font-size: .9rem; }
+  .resource-send-error:empty { display: none; }
+  .resource-send-actions { margin-top: 0; }
+  .resource-send-empty { width: 100%; }
+
+  /* ── Pole nazwy edytora (gra, logo): kafel na całą szerokość ───── */
+  .name-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    width: 100%;
+    align-self: stretch;
+    padding: 8px 10px; /* niski: edytory na laptopie zachowują wysokość płótna */
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+  }
+  .name-field-label {
+    font-weight: 1000;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: 15px;
+    color: var(--accent);
+    flex: 0 0 auto;
+    padding-left: 2px;
+  }
+  .name-field .inp {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    font-size: 16px;
+    font-weight: 900;
+  }
+
+  /* ── Pole szukania (lupa, X czyści tekst) ──────────────────────── */
+  .searchBox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 4px 2px 8px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(var(--w-4), var(--w-4)) var(--under); /* kryjące (Android) */
+    min-width: 0;
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  }
+  .searchBox:focus-within {
+    border-color: var(--g-35);
+    box-shadow: 0 0 0 2px var(--g-10);
+  }
+  .searchText {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: 0 0;
+    color: inherit;
+    padding: 6px 4px;
+    font: inherit;
+    font-size: 13px;
+  }
+  .searchText::placeholder { opacity: .65; }
+  .searchText::-webkit-search-cancel-button { display: none; }
+  /* Pole szukania jak w oknie „Przenieś do”: lupa w polu, pełna szerokość, 40 px. */
+  .searchBox--field { height: 40px; padding: 0 6px 0 12px; gap: 8px; width: 100%; }
+  .searchBox--field > svg, .searchBox--field > .ico { flex: 0 0 auto; width: 16px; height: 16px; color: var(--text-muted); }
+  .searchBox--field .searchText { height: 100%; padding: 0 2px; }
+  :where(:root:is([data-compact], [data-input="touch"])) .searchBox--field .searchText { font-size: 16px; } /* iOS nie przybliża */
+
+  /* ── Przycisk bez tła (.btn-plain): sama ikona albo tekst w polu, wierszu
+     lub pasku — czyszczenie wyszukiwania, rozwijanie drzewa, usuń plik,
+     zamknij baner. Przygaszony kolorem, nie opacity (Android: artefakty
+     przezroczystości); podświetlenie tylko myszą. Rozmiar daje klasa
+     elementu (np. .searchClear). */
+  .btn-plain {
+    appearance: none;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+  .btn-plain:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-plain:hover { color: var(--text); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--surface-1)); }
+  }
+  .searchClear { width: 28px; height: 28px; }
+  .searchClear svg { width: 16px; height: 16px; }
+  .searchClear[hidden] { display: none; }
+
+  /* Błąd wczytania ekranu urządzenia (Prowadzący, Przycisk): cały ekran. */
+  .device-load-error {
+    position: fixed; inset: 0; z-index: var(--z-top); display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 24px; background: var(--surface-1); color: var(--text);
+    text-align: center; font: 600 18px/1.4 system-ui, sans-serif;
+  }
+
+  /* ── Ekran blokady strony (.page--block, decyzja §11 pkt 8): przerwa
+     techniczna i 404 — jedna karta na środku, tytuł, tekst, przyciski. Ładują
+     go też telewizory (flat.css). ── */
+  .page--block { min-height: 100vh; background: var(--bg); color: var(--text); }
+  .block-main {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px var(--page-pad-right) 40px var(--page-pad-left);
+  }
+  .block-card {
+    --under: var(--surface-1); /* podłoże kryjących teł przycisków */
+    width: min(880px, 100%);
+    padding: 32px 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--surface-1); /* kryjące, bez backdrop-filter (Android) */
+    box-shadow: var(--shadow-modal);
+  }
+  .block-card-top { display: grid; gap: 10px; justify-items: center; text-align: center; }
+  .block-title {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .block-text { max-width: 640px; margin: 0; line-height: 1.5; opacity: .85; white-space: pre-line; }
+  @media (max-width: 600px) {
+    .block-card { padding: 24px 18px; }
+  }
+  /* Niski ekran poziomo: karta przewija się sama zamiast wchodzić pod stopkę. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .page--block { min-height: 100dvh; height: 100dvh; overflow: hidden; }
+    .block-main {
+      flex: 1 1 0;
+      min-height: 0;
+      align-items: flex-start;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left, 0px));
+    }
+    .block-card { padding: 16px 18px; }
+  }
+
+  /* Przesuwanie palcem w bok (swipe.js): przewijanie w pionie i przybliżanie
+     zostają dla przeglądarki. */
+  .swipe-target { touch-action: pan-y pinch-zoom; }
+
+  /* Okno informacji dla gościa (guest-info-modal.js): ostrzeżenia, kreska, kroki przeniesienia. */
+  .guest-info { display: grid; gap: 12px; margin-top: 6px; font-size: .9rem; line-height: 1.55; }
+  .guest-info-sep { margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
+  .guest-info-title { font-weight: 700; letter-spacing: .03em; }
+  .guest-info-steps { display: grid; gap: 5px; margin: 6px 0 0; padding-left: 20px; }
+
+  /* ── Dymek komunikatu po akcji (toast.js) ─────────────────────── */
+  .app-toast {
+    position: fixed;
+    left: 50%;
+    /* nad dolnym paskiem stron z listą i nad wskaźnikiem home */
+    bottom: calc(max(12px, env(safe-area-inset-bottom)) + 64px);
+    transform: translate(-50%, 12px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: min(520px, calc(100vw - 30px));
+    padding: 12px 16px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--g-60);
+    background: var(--surface-toast);
+    color: var(--text);
+    font-weight: 900;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    box-shadow: var(--shadow-toast);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) ease, transform var(--dur-base) ease;
+    z-index: var(--z-toast);
+    cursor: pointer;
+  }
+  .app-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+  .app-toast.error {
+    border-color: var(--bad-strong);
+    color: var(--bad-text);
+  }
+  .app-toast .app-toast-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+  .app-toast .app-toast-close { display: none; flex: 0 0 auto; color: var(--text-muted); }
+  .app-toast.error .app-toast-close { display: inline; }
+  @media (max-width: 600px) {
+    .app-toast { width: calc(100vw - 30px); max-width: none; }
+  }
+
+  /* ── Kafel zasobu (gry, bazy, rynek): nazwa, opis (.meta), uwaga
+     (.rules), oznaczenia przy dole (.tileTags), ikony w rogu (.x). ── */
+  .grid .tile {
+    --under: var(--bg);
+    position: relative;
+    background: var(--bg);
+    border-radius: var(--r-md);
+    border: 1px solid var(--w-25);
+    padding: 14px 14px 12px;
+    cursor: pointer;
+    transition: transform var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out, border-color var(--dur-fast) ease-out, background var(--dur-fast) ease-out;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 130px;
+  }
+  /* Usuń (kosz) na kafelku — jeden przycisk dla kafli gier, baz i logo. */
+  .grid .tile .x {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .x {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+    --btn-tint: var(--k-20);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
+    color: var(--text);
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--dur-fast), border-color var(--dur-fast);
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .x:hover {
+    border-color: var(--accent);
+    --btn-tint: var(--k-40);
+  }
+  .x:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: not-allowed; }
+  .grid .tile .name {
+    min-width: 0;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding-right: 40px;
+    color: var(--text);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .grid .tile .meta {
+    margin-top: 6px;
+    padding-right: 40px; /* nie pod przyciskiem w rogu */
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+  }
+  /* Rząd oznaczeń: równa wysokość, zawijanie całymi oznaczeniami. */
+  .grid :is(.tile, .logoTile) .tileTags {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .grid :is(.tile, .logoTile) .tileTags .tag {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  /* „Od: …” w jednej linii: skraca się wielokropkiem. */
+  .grid :is(.tile, .logoTile) .tileTags:has(> .tag[data-kind="from"]) { flex-wrap: nowrap; min-width: 0; }
+  .grid :is(.tile, .logoTile) .tileTags > .tag[data-kind="from"] {
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 20px;
+  }
+  .grid .tile .tileTags .pollBadge--tally {
+    border-color: var(--accent);
+    background: var(--g-35);
+    box-shadow: 0 0 0 1px var(--g-10);
+  }
+  /* Czego brakuje do następnego kroku (games.rules_state). */
+  .grid .tile .rules {
+    margin-top: 4px;
+    padding-right: 40px;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--g-60);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grid .tile .rules:empty { display: none; }
+  .grid .tile.not-ready:not(.selected) .name { color: var(--text-muted); }
+  .grid .tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--accent);
+    background: var(--surface-2);
+  }
+  /* Dotyk: :hover zostaje po stuknięciu — bez uniesienia kafla. */
+  @media (hover: none) {
+    .grid :is(.tile, .addCard, .logoTile):hover { transform: none; }
+  }
+
+  /* ── Wiersz bez zawijania (.fit-row, core/fit-row.js) ─────────────
+     Jeden rząd zawsze; gdy się nie mieści, .is-icons chowa napisy
+     przycisków z ikoną (zostaje ikona 36×36, nazwa w dymku). */
+  .fit-row { flex-wrap: nowrap; min-width: 0; }
+  .fit-row > .btn { flex: 0 0 auto; white-space: nowrap; }
+  .fit-row.is-icons > .btn:not(.gold):has(> svg.ico),
+  .fit-row.is-icons-all > .btn:has(> svg.ico) {
+    width: 36px;
+    min-width: 36px;
+    padding-inline: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0; /* napis zostaje w dostępności i w dymku */
+  }
+  .fit-row:is(.is-icons, .is-icons-all) > .btn:has(> svg.ico) > svg.ico { width: 18px; height: 18px; }
+
+  /* ── Sekcje udostępniania (share-sections.js) ─────────────────── */
+  .shareSection {
+    --under: var(--surface-inset);
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: var(--r-md);
+    background: var(--surface-inset); /* kryjące (Android) */
+    border: 1px solid var(--line-faint);
+  }
+  .shareSection:first-child { margin-top: 0; }
+  .section-title { margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
+  .shareSectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+  .shareSectionHeading > .section-title { flex: 1 1 auto; min-width: 0; }
+  .section-title.shareSectionHeading { flex-wrap: wrap; }
+  .shareBulkActions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex: 0 0 auto; }
+  /* wygląd zwykłego przycisku, tylko ikona złota */
+  .shareBulkAction { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: var(--r-sm); color: var(--accent); }
+  .shareBulkAction .ico { display: block; width: 17px; height: 17px; flex: 0 0 auto; }
+  .shareBulkAction:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .shareBulkAction:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: default; }
+  .shareSectionSub { margin-top: 4px; opacity: .75; font-size: 13px; }
+  /* Narzędzia listy w nagłówku (attachListTools): sortowanie, filtr,
+     lupa — aktywne ustawienie złote. */
+  .listToolsHead { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+  .listToolsHead .shareBulkAction { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: var(--r-sm); }
+  .listToolsHead .shareBulkAction .ico { width: 18px; height: 18px; }
+  .listToolsHead .shareBulkActions { gap: 6px; }
+  /* Zwijana sekcja: tytuł + licznik … narzędzia … strzałka — jedna linia. */
+  :is(.rowsSectionHeadRow, .listToolsHead) > .rowsSectionHead { flex: 1 1 auto; width: auto; min-width: 0; padding: 0; }
+  .listToolsHead:has(> .rowsSectionCaret) { flex-wrap: nowrap; min-height: 36px; }
+  .listToolsHead > .rowsSectionCaret { flex: 0 0 auto; margin-left: 0; cursor: pointer; }
+  .listTools { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
+  .listTools[hidden], .listTools > [hidden] { display: none; }
+  .listTools .btn, .listTools .ui-select-btn { width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; }
+  .listTools .ico { width: 18px; height: 18px; }
+  .listTools .ui-select.listTools-select { width: 36px; min-width: 36px; max-width: 36px; flex: 0 0 36px; }
+  .listTools .ui-select-label { display: none; }
+  .listTools .ui-select-icon { display: inline-flex; }
+  .shareRow.is-search-hidden, .rowsRow.is-search-hidden { display: none; }
+  .listToolsEmpty[hidden] { display: none; }
+  .listToolsInline { height: 36px; margin-top: 8px; padding: 0 4px 0 10px; }
+  .listToolsInline[hidden] { display: none; }
+  .listToolsInline > svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--text-muted); }
+  .listToolsInline .searchText { height: 100%; padding: 0 4px; }
+
+  .shareList[hidden] { display: none; }
+  .shareList { display: grid; align-content: start; gap: 8px; margin-top: 8px; }
+  .shareList--grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .shareRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    min-width: 0;
+  }
+  .shareRow[hidden], .shareSection[hidden] { display: none; }
+  .shareRow.pick { cursor: pointer; }
+  .shareRow.pick:hover { border-color: var(--accent); }
+  .shareRow.blocked { color: var(--text-muted); cursor: not-allowed; } /* bez opacity (Android) */
+  .shareMain { flex: 1 1 auto; min-width: 0; }
+  .shareEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13.5px; }
+  .shareTags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .shareNote { margin-top: 4px; font-size: 11px; line-height: 1.3; color: var(--g-60); }
+  .shareRowActions { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
+  .shareRow--compact { min-height: 64px; }
+  /* Wiersz kontaktu: nazwa (+ znaczniki) w pierwszej linii, e-mail /
+     notatka zawsze pod spodem — wiersze tej samej wysokości. */
+  .shareRow--compact .shareMain { display: grid; grid-template-columns: minmax(0, max-content) auto; justify-content: start; align-items: center; align-content: center; gap: 4px 6px; }
+  .shareRow--compact .shareMain > * { min-width: 0; max-width: 100%; margin-top: 0; }
+  .shareRow--compact .shareTags { margin-top: 0; }
+  .shareRow--compact .shareNote { grid-column: 1 / -1; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shareRow--compact .shareRowActions { align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
+  /* Przycisk dwóch stanów w wierszu: naturalna szerokość, wysokość jak pozostałe akcje. */
+  .shareRow--compact .shareRowActions .toggle-group { flex: none; }
+  .shareRow--compact .shareRowActions .toggle-slider { padding-block: 0; }
+  .shareRow--compact .shareRowActions .btn { width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
+  .shareRowActions .shareActionCountdown { flex-direction: column; gap: 3px; }
+  .shareRowActions .shareActionCountdown:disabled { opacity: 1; border-color: var(--line); }
+  .shareActionTimer { width: 40px; min-width: 40px; min-height: 44px; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+  .shareActionTimer .ico { width: 18px; height: 18px; }
+  .shareActionTimer[hidden] { display: none; }
+  /* bez opacity/filter (Android); przyciski w wierszu są wtedy wyłączone */
+  .shareRow.is-cooling-down { color: var(--text-muted); }
+  .shareCountdown { flex: 0 0 auto; min-width: 38px; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
+  .shareCountdown[hidden] { display: none; }
+  /* Aktywny licznik: przyciski wiersza wyższe, przycisk z licznikiem szerszy. */
+  .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions :is(.btn, .shareActionTimer) { height: 52px; min-height: 52px; }
+  .shareRow--compact .shareRowActions .shareActionCountdown:has(.shareCountdown:not([hidden])) { width: auto; padding: 4px 6px; gap: 2px; }
+  .shareRow--compact .shareRowActions .shareCountdown { min-width: 0; }
+  /* Kafel propozycji (proposed-tile.js): ✓/✕ w prawym górnym rogu. */
+  .tileMiniActions { display: flex; gap: 6px; flex: 0 0 auto; }
+  .tileMiniActions .btn { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+  .tileMiniActions .btn .ico { width: 16px; height: 16px; }
+  .grid .tile .tileMiniActions { position: absolute; top: 8px; right: 8px; }
+  .grid .tile[data-proposed] :is(.name, .rules) { padding-right: 78px; }
+
+  /* ── Wiersze z sekcjami (renderRowSections): Zadania, Znajomi,
+     Subskrybenci. Komputer: akcje z tekstem; telefon: same ikony. ── */
+  .rowsPage { width: 100%; max-width: 760px; margin: 0 auto; }
+  .rowsSection { margin-top: 14px; }
+  .rowsSection:first-child { margin-top: 0; }
+  .rowsSection[hidden], .rowsRow[hidden] { display: none; }
+  .rowsSectionHead {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 4px 2px; background: none; border: 0; color: inherit; font: inherit; text-align: left;
+  }
+  button.rowsSectionHead { cursor: pointer; }
+  .rowsSectionTitle { font-weight: 800; letter-spacing: .2px; }
+  .rowsSectionCount { opacity: .6; font-size: 12px; }
+  .rowsSectionCaret { margin-left: auto; display: inline-flex; width: 18px; height: 18px; color: var(--text-muted); transition: transform var(--dur-base) var(--ease-out); }
+  .rowsSectionCaret svg { width: 100%; height: 100%; }
+  .rowsList { display: grid; gap: 8px; margin-top: 8px; }
+  .rowsList[hidden] { display: none; }
+  /* Płynność: rozwinięta sekcja i nowo pokazany panel zakładki wjeżdżają łagodnie. */
+  .rowsList.is-expanding,
+  [role="tabpanel"]:not([hidden]) { animation: panel-in var(--dur-base) var(--ease-out); }
+  @keyframes panel-in { from { opacity: 0; transform: translateY(4px); } }
+  .rowsRow {
+    display: flex; align-items: center; gap: 12px; min-width: 0;
+    padding: 10px 12px; border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .rowsRow.rowsFocus { border-color: var(--accent); background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-2)); }
+  .rowsAvatar {
+    flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 800;
+    background: linear-gradient(var(--g-10), var(--g-10)) var(--under, var(--surface-2)); color: var(--accent); border: 1px solid var(--g-35);
+  }
+  .rowsAvatar > svg { width: 22px; height: 22px; }
+  .rowsMain { flex: 1 1 auto; min-width: 0; }
+  .rowsTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+  .rowsNote { margin-top: 3px; font-size: 12px; line-height: 1.3; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rowsNote--mobile { display: none; }
+  .rowsChannel { font-weight: 700; }
+  .rowsActions { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+  /* napis i ikona wyśrodkowane w jednej linii */
+  .rowsAct { display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; }
+  .rowsAct .rowsActIcon { display: inline-flex; width: 16px; height: 16px; }
+  .rowsAct .rowsActIcon svg { width: 100%; height: 100%; }
+  .rowsAct:disabled { color: var(--disabled-text); border-color: var(--disabled-line); cursor: not-allowed; }
+  @media (max-width: 600px) {
+    .rowsNote--desktop { display: none; }
+    .rowsNote--mobile { display: block; }
+    .rowsAct .rowsActText { display: none; }
+    .rowsRow { gap: 10px; padding: 9px 10px; }
+  }
+  @media (max-width: 600px) {
+    .shareRow--compact .shareRowActions { gap: 4px; align-self: center; }
+    .shareRow--compact .shareRowActions .btn { width: 36px; min-width: 36px; min-height: 40px; height: 40px; padding: 4px; }
+    .shareRow--compact { gap: 8px; padding: 8px; }
+    .shareRow--compact .shareTags { gap: 4px; width: auto; max-width: 100%; margin-top: 0; flex-wrap: wrap; overflow: hidden; }
+    .shareRow--compact .shareTags .tag { font-size: 10px; padding: 2px 6px; }
+    /* nazwa w jednej linii z wielokropkiem, znaczniki się zawijają */
+    .shareRow--compact :is(.shareEmail, .shareNote) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .shareRow--compact .shareTags > * { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+  /* Wspólna wysokość i osobne przewijanie list odbiorców; bez ramki —
+     wiersze chowają się pod zaokrągloną krawędzią. */
+  .shareList--scroll {
+    max-height: 240px; overflow-y: auto; overscroll-behavior: contain;
+    border-radius: var(--r-md);
+  }
+  .shareList--scroll:not([hidden]) { display: flex; flex-direction: column; }
+  .shareList--scroll > * { flex-shrink: 0; }
+
+  /* Wygaszona krawędź przewijanych list (scroll-fade.js): element pod
+     krawędzią zanika na 32 px, tylko gdy za krawędzią coś jest. Ramka
+     listy zostaje cała — zanika tylko treść (maska exclude). */
+  .scroll-fade.has-more-above,
+  .scroll-fade.has-more-below {
+    --sf-size: var(--scroll-fade-size, 32px);
+    --sf-top: var(--scroll-fade-top, 0px);
+    mask-image:
+      linear-gradient(to bottom,
+        transparent var(--sf-top), var(--sf-a, transparent) var(--sf-top),
+        transparent calc(var(--sf-top) + var(--sf-size)),
+        transparent calc(100% - var(--sf-size)), var(--sf-b, transparent)),
+      linear-gradient(var(--mask-on) 0 0);
+    mask-origin: padding-box, border-box;
+    mask-clip: border-box;
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
+  }
+  .scroll-fade.has-more-above { --sf-a: var(--mask-on); }
+  .scroll-fade.has-more-below { --sf-b: var(--mask-on); }
+
+  /* Kontakt na stronach bez zwykłej stopki (ekrany urządzeń). */
+  .contact-footer-entry { flex: 0 0 auto; justify-content: flex-end; }
+  .contact-footer-entry--floating { position: fixed; right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: auto; margin: 0; padding: 5px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-1); z-index: var(--z-float); }
+  .contact-footer-entry--floating .btn-contact-footer { font-size: 11px; }
+
+  /* Okno postępu (modal.js progressModal). */
+  .uni-progress { display: grid; gap: 10px; margin-top: 12px; }
+  .uni-progress-row { display: flex; align-items: center; gap: 10px; }
+  .uni-progress-step { font-weight: 800; letter-spacing: .04em; }
+  .uni-progress-count { margin-left: auto; opacity: .8; font-variant-numeric: tabular-nums; }
+  /* Pasek postępu (jedyny): .progress > .progress-bar; skrypt ustawia tylko
+     --p (setProgress z core/ui-metrics.js) i ewentualnie --progress-color. */
+  .progress { height: 8px; border-radius: var(--r-pill); background: linear-gradient(var(--w-8), var(--w-8)) var(--under, var(--surface-1)); overflow: hidden; }
+  .progress-bar { height: 100%; width: var(--p, 0%); border-radius: inherit; background: var(--progress-color, var(--accent)); transition: width var(--dur-slow) ease; }
+  .uni-progress-msg { min-height: 18px; }
+  .uni-progress-msg[data-kind="error"] { opacity: 1; }
+  .progress-bar[data-kind="error"] { background: var(--danger-solid); }
+
+  /* Przyciski stopki wspólnego okna: ikona i napis z odstępem. */
+  .uni-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4em; }
+
+  /* ── Karta z wypustkami (wariant A, decyzja 2026-10-21) ──────────
+     Aktywna wypustka to sam przycisk karty: tło i obramowanie z
+     zaokrągleniem u góry, zachodzi o --tab-extra na kartę; ::before/::after
+     rysują wklęsłe narożniki. Strony dopisują zaokrąglenia swojej karty. */
+  .tabs-card {
+    /* Górne łuki wypustki = promień rogu karty; wklęsłe u podstawy — połowa
+       (decyzja użytkownika 2026-10-23: ładniej wygląda). */
+    --tab-r: var(--r-lg);
+    --tab-r-in: calc(var(--tab-r) / 2);
+    width: 100%;
+    margin: 0 auto; /* odstęp od paska tytułu daje .bar */
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Odstęp nad wypustkami: pod paskiem tytułu daje go .bar, pod każdym innym
+     elementem (np. karta akcji ankiety) — ta sama wartość tutaj. */
+  :not(.bar) + .tabs-card { margin-top: 12px; }
+  .tabs-strip {
+    flex: 0 0 auto;
+    display: flex;
+    height: var(--tab-height);
+    align-items: stretch;
+    background: var(--bg);
+    position: relative;
+    z-index: var(--z-local);
+  }
+  .tab-label,
+  .tab-slot {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  .tab-slot {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
+    align-items: stretch;
+  }
+  /* Równe kolumny: licznik na wypustce nie zmienia szerokości żadnej
+     (także na telefonie — wygrywa z .tab-slot w @media niżej). */
+  .tabs-strip > .tab-slot {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .tab-label {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    width: 100%;
+    height: var(--tab-height);
+    line-height: var(--tab-height);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    transition: color .15s;
+  }
+  .tabs-strip .tab-label {
+    font-size: var(--tab-label-font-size);
+    letter-spacing: var(--tab-label-letter-spacing);
+  }
+  /* Licznik na wypustce: zwykły .badge w jednej linii obok tekstu. */
+  .tabs-strip .tab-label > .badge { margin-left: 6px; }
+  .tabs-strip .tab-label > .badge:empty { display: none; }
+  .tab-label.active,
+  .tab-slot.active .tab-label { color: var(--text); }
+  /* Separator (::after) i podświetlenie najechania (::before) nieaktywnych. */
+  .tab-label::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--k-40);
+    display: none;
+  }
+  .tab-label::before {
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 14%;
+    bottom: 14%;
+    border-radius: calc(var(--tab-r) * .9);
+    background: var(--line);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+  }
+  /* Tylko mysz: na dotyku hover „przyklejał się” po stuknięciu. */
+  @media (hover: hover) and (pointer: fine) {
+    .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover { color: var(--text); }
+    .tab-slot:not(.active) .tab-label:not(.active):not(:disabled):hover::before { opacity: 1; }
+  }
+  .tab-slot:not(.active):not(:has(.tab-label.active)) + .tab-slot:not(.active):not(:has(.tab-label.active)) .tab-label::after { display: block; }
+  :is(.tab-label.active, .tab-slot.active > .tab-label) {
+    height: calc(var(--tab-height) + var(--tab-extra));
+    margin-bottom: calc(-1 * var(--tab-extra));
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: var(--tab-r) var(--tab-r) 0 0;
+    z-index: 3;
+  }
+  /* Wklęsły narożnik: kwadrat --tab-r-in (połowa promienia rogu, decyzja
+     2026-10-23) przy podstawie wypustki, łuk o promieniu --tab-r-in ze
+     środkiem w zewnętrznym rogu kwadratu. Łuk: przezroczyste wnętrze,
+     linia 1 px, za łukiem tło karty; przejścia po 1 px wygładzają krawędzie
+     jak zaokrąglenie obwódki. Linia nieprzezroczysta (--line-strong na tle
+     karty): tam, gdzie łuk leży na obwódce karty lub wypustki, nie pogrubia jej. */
+  :is(.tab-label.active, .tab-slot.active > .tab-label)::before,
+  :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
+    --tab-line: color-mix(in srgb, var(--white) 14%, var(--surface-1));
+    --tab-arc: transparent calc(var(--tab-r-in) - 1.5px), var(--tab-line) calc(var(--tab-r-in) - .5px), var(--surface-1) calc(var(--tab-r-in) + .5px);
+    content: "";
+    display: block;
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    width: var(--tab-r-in);
+    height: var(--tab-r-in);
+    border-radius: 0;
+    opacity: 1;
+    transition: none;
+    pointer-events: none;
+  }
+  :is(.tab-label.active, .tab-slot.active > .tab-label)::before {
+    left: calc(-1 * var(--tab-r-in));
+    right: auto;
+    background: radial-gradient(circle at 0 0, var(--tab-arc));
+  }
+  :is(.tab-label.active, .tab-slot.active > .tab-label)::after {
+    right: calc(-1 * var(--tab-r-in));
+    left: auto;
+    background: radial-gradient(circle at 100% 0, var(--tab-arc));
+  }
+  /* Skrajne wypustki stykają się z krawędzią karty — bez narożnika na zewnątrz. */
+  .tab-slot:first-child > .tab-label.active::before,
+  .tab-slot.active:first-child > .tab-label::before,
+  .tab-slot:last-child > .tab-label.active::after,
+  .tab-slot.active:last-child > .tab-label::after { display: none; }
+  @media (max-width: 600px) {
+    .tabs-strip { gap: 0; }
+    /* Krótkie nazwy zakładek na telefonie */
+    .tab-slot {
+      flex: 1 1 max-content;
+      justify-content: center;
+    }
+    .tab-label { z-index: 2; }
+    /* bez separatorów między nieaktywnymi (narożniki aktywnej zostają) */
+    .tab-slot:not(.active) > .tab-label:not(.active)::after { display: none; }
+  }
+
+  /* ── Karta dzielona (decyzja 2026-10-23) ─────────────────────────
+     Szeroki ekran: dwie karty obok siebie (.split-panels). Telefon (i telefon
+     poziomo): jedna karta z wypustkami — widać aktywny panel. Kontener
+     .tabs-card.tabs-card--split; panele [data-split-panel] w .split-panels;
+     przełączanie i dostępność: core/split-tabs.js (SPLIT_MQ = ten sam warunek). */
+  .tabs-card--split > .tabs-strip { display: none; }
+  .split-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+  .split-panels > [data-split-panel] { margin: 0; min-width: 0; min-height: 0; }
+  :where(:root[data-compact]) .tabs-card--split > .tabs-strip { display: flex; }
+  :where(:root[data-compact]) .split-panels { grid-template-columns: minmax(0, 1fr); }
+
+  /* Podpowiedź (core/tooltips.js) — dawniej osobny tooltips.css ładowany z JS. */
+  .app-tooltip {
+    position: fixed;
+    z-index: var(--z-tooltip);
+    max-width: min(320px, calc(100vw - 16px));
+    padding: 8px 11px;
+    border: 1px solid var(--g-35);
+    border-radius: var(--r-sm);
+    background: var(--surface-1);
+    box-shadow: 0 10px 30px var(--k-40);
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: .01em;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+  }
+  .app-tooltip:not([hidden]) { animation: popover-in var(--dur-fast) var(--ease-out); }
+}
+
+@layer states {
+  /* Pomiar .fit-row (core/fit-row.js): dzieci w pełnej szerokości, także
+     komunikaty z flex: 1 stron — w warstwie states, żeby wygrać z page. */
+  .fit-row.is-measuring { justify-content: flex-start; } /* wystawanie w lewo nie trafia do scrollWidth */
+  .fit-row.is-measuring > * { flex: 0 0 auto; min-width: max-content; }
+
+  /* ── Zaznaczenie (jedno w całym serwisie): element .is-selected (kafel,
+     wiersz listy, wiersz drzewa, tag) albo wiersz z zaznaczonym polem wyboru —
+     złota krawędź i złoty odcień tła. Wiersze bez ramki dostają obrys, kafle
+     pierścień. Strony nie mają własnego wyglądu zaznaczenia. ── */
+  .is-selected,
+  :is(.shareRow, .tags-row):has(input[type="checkbox"]:checked) {
+    border-color: var(--accent);
+    background-image: linear-gradient(var(--g-10), var(--g-10));
+  }
+  :is(tr, .row).is-selected { outline: 2px solid var(--g-60); outline-offset: -2px; }
+  tr.is-selected > td { background-image: linear-gradient(var(--g-10), var(--g-10)); }
+  :is(.tile, .logoTile).is-selected { box-shadow: 0 0 0 2px var(--g-60), 0 10px 22px var(--k-40); }
+
+  /* Karta pod wypustkami: róg prosty po stronie aktywnej skrajnej wypustki
+     (wszystkie karty z wypustkami; bez :has w :has — przeglądarka by ją pominęła; warstwa states, bo strony ustawiają
+     zaokrąglenie karty w warstwie page). Karta dzielona — tylko w trybie wąskim. */
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .card { border-top-left-radius: 0; }
+  .tabs-card:not(.tabs-card--split):has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .card { border-top-right-radius: 0; }
+  :where(:root[data-compact]) .split-panels > [data-split-panel]:not(.active) { display: none; }
+  :where(:root[data-compact]) .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:first-child, > .tabs-strip:not([hidden]) > .tab-slot:first-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-left-radius: 0; }
+  :where(:root[data-compact]) .tabs-card--split:has(> .tabs-strip:not([hidden]) > .tab-slot.active:last-child, > .tabs-strip:not([hidden]) > .tab-slot:last-child > .tab-label.active) > .split-panels > [data-split-panel] { border-top-right-radius: 0; }
+
+  /* ── Okno od dołu (arkusz) — telefon i tablet dotykowy ──────────
+     Rozbudowane okna (.modal--sheet; nie confirm/alert/prompt) wysuwają
+     się od dołu nad całą stroną (js/core/modal-sheet.js). Warunek taki
+     sam jak SHEET_MQ w modal-sheet.js. Poza arkuszem opakowania są
+     przezroczyste dla układu. Warstwa `states` jest PO warstwie strony:
+     stan arkusza wygrywa ze zwykłymi regułami okien stron. Strona nie
+     nadpisuje układu arkusza -- korzysta ze znaczników silnika
+     (.modal-layer, .sheet-fill, .sheet-scroll, .modal-scroll). Okna nie mają
+     stylów inline (atrybut hidden, klasy). */
+  .sheet-modal-top,
+  .sheet-modal-head,
+  .sheet-modal-actions,
+  .sheet-modal-body { display: contents; }
+  .sheet-modal-head[hidden],
+  .sheet-modal-actions[hidden] { display: none; }
+
+  :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
+  /* Klawiatura ekranowa (device-attrs.js): stopka nie zabiera miejsca przy pisaniu. */
+  :where(:root[data-keyboard]) .footer { display: none; }
+
+  :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
+
+  :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet.sheet-active {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0;
+    background: var(--scrim-modal);
+    /* clip, nie hidden: focus() pola przewijał tło do wysuwanego panelu */
+    overflow: hidden;
+    overflow: clip;
+    animation: sheetScrimIn var(--dur-sheet-in) ease both;
+  }
+  :where(:root[data-sheet]) body.sheet-open .modal--sheet.sheet-active.sheet-closing { animation: sheetScrimOut var(--dur-sheet-out) ease both; }
+
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: var(--surface-modal);
+    --under: var(--surface-modal);
+    box-shadow: var(--shadow-sheet);
+    padding: 32px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
+    overflow: clip;
+    transform: translateY(var(--sheet-drag, 0px));
+    animation: sheetUp var(--dur-sheet-in) var(--ease-sheet) both;
+    will-change: transform;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-closing .modal { animation: sheetDown var(--dur-sheet-out) cubic-bezier(.4, 0, 1, 1) both; }
+
+  /* Arkusz z polem tekstowym (np. nazwa): treść u góry, panel 78%
+     ekranu, żeby pole i przyciski zostały nad klawiaturą. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-fit .modal {
+    height: auto;
+    min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
+    justify-content: flex-start;
+    max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
+  }
+
+  /* Pasek do przeciągania (zamyka: przeciągnięcie w dół albo stuknięcie). */
+  :where(:root[data-sheet]) .sheet-handle {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 140px; height: 30px;
+    padding: 0; border: 0; background: none;
+    cursor: grab; touch-action: none;
+    display: grid; place-items: center;
+  }
+  :where(:root[data-sheet]) .sheet-handle::before {
+    content: "";
+    width: 44px; height: 5px; border-radius: var(--r-pill);
+    background: linear-gradient(var(--w-25), var(--w-25)) var(--under, var(--surface-modal));
+  }
+  :where(:root[data-sheet]) .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
+
+  /* Tablet: niższy panel z bocznymi krawędziami. */
+  @media (min-width: 601px) {
+    :where(:root[data-sheet]) .modal--sheet.sheet-active .modal {
+      height: min(88dvh, 920px);
+      border: 1px solid var(--line);
+      border-bottom: 0;
+    }
+  }
+
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.sheet-modal-head, .sheet-modal-actions, .sheet-modal-body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  /* Tytuł i przyciski w jednym wierszu (fitSheetTop w modal-sheet.js),
+     podpowiedź w drugim wierszu na całą szerokość; jedna linia oddzielająca
+     pod całym paskiem. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 8px;
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head { display: contents; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head > :not(:first-child) {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
+    grid-column: 2;
+    grid-row: 1;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) { flex-wrap: nowrap; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top:is(.is-inline, .is-oneline) > .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot) > * { flex-shrink: 0; }
+  /* Ciaśniej, żeby przyciski zmieściły się w jednym wierszu: przełącznik
+     dwóch stanów same ikony (opis w title), węższe przyciski. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .toggle-slider > .ico + .toggle-label { display: none; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions :is(.modal-actions, .uni-foot, .tagsFoot) { gap: 8px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-top.is-compact > .sheet-modal-actions .btn { padding-inline: 10px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions, .uni-foot, .tagsFoot, .baseShareLookup) { margin-top: 0; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions[hidden],
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
+    display: none;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Sekcje jedna pod drugą w arkuszu: 12 px jak w oknie wyśrodkowanym
+     (tam odstęp daje gap okna, którego ciało arkusza nie dziedziczy). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body > .shareSection + .shareSection { margin-top: 12px; }
+  /* Treść .uni-body jak w wyśrodkowanym oknie (kolumna z odstępem), ale bez
+     własnego przewijania -- przewija się treść okna od dołu. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
+    margin-top: 0;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+  /* Treść okna od dołu zostaje w miejscu, a przewija się tylko lista:
+     .sheet-fill ma wysokość treści i kurczy się do reszty okna (kolumna;
+     zagnieżdżone .sheet-fill wyznaczają drogę do listy), .sheet-scroll to
+     przewijana lista -- kurczy się pierwsza. Pozostałe elementy na tej drodze
+     mają swoją wysokość. Sekcja udostępniania (.shareSection) w .sheet-fill
+     sama jest wypełnieniem, a jej lista (.shareList--scroll) się przewija. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .sheet-fill:not([hidden]),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection:has(> .shareList--scroll):not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    /* Dzieci na pełną szerokość okna, także gdy strona ma align-items: start
+       dla siatki (Eksplorator „Utwórz grę”: lista węższa i ucięta, 2026-10-25). */
+    align-items: stretch;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection { margin: 0; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body:has(.sheet-fill:not([hidden]), > .sheet-scroll:not([hidden])) > :not(.sheet-fill, .sheet-scroll),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > :not(.sheet-fill, .sheet-scroll, .shareSection:has(> .shareList--scroll)) { flex: 0 0 auto; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .sheet-scroll,
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-fill > .shareSection > .shareList--scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Okno z obrazem (.modal--media, np. podgląd zrzutu): obraz od krawędzi
+     do krawędzi i na całą wysokość treści; nagłówek z marginesem. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  /* .sheet-modal-top ma display: contents — margines dostają jego części. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-top > :is(.sheet-modal-head, .sheet-modal-actions) { margin-inline: 16px; }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .modal--media > .sheet-modal-body .sheet-fill:not([hidden]) { flex: 1 1 auto; }
+  /* Lista z własnym przewijaniem w wyśrodkowanym oknie (.modal-scroll):
+     w oknie od dołu bez limitu wysokości -- przewija się cała treść okna. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-body .modal-scroll {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Nagłówek okna w arkuszu: jak nagłówek strony („Moje gry”):
+     wersaliki i JEDNA linia pod spodem. Nagłówki rozpoznaje
+     modal-sheet.js (headerSelectors) — ta sama lista tutaj. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    position: static;
+    border: 0;
+    padding-bottom: 0;
+    margin-bottom: 8px;
+    background: transparent;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > .mSub {
+    margin: 0;
+    padding: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head > .mTitle {
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:not(:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden]))):not(:has(+ .sheet-modal-actions > .modal-actions > :not([hidden]))) {
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 12px;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+    margin-bottom: 12px;
+    z-index: var(--z-local);
+  }
+  /* Gdy arkusz ma pasek akcji, jedyny separator jest pod nim. */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle),
+  :where(:root[data-sheet]) .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) {
+    border-bottom: 0;
+  }
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) .mTitle {
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  /* Wyjściem z arkusza jest przycisk w topbarze — „✕” w nagłówku zbędny
+     (tylko .sheet-active: okna z .modal--sheet bez przejęcia „Wstecz”
+     zachowują „✕”). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active :is(.uni-head, .mHead, .tagsHead, .bld-preview-head, .mkt-detail-head, .previewModalTitle) button[aria-label] { display: none; }
+
+
+  /* Tylko gdy jest faktycznie aktywnym „Wstecz” okna (.sheet-back-active). */
+  :where(:root[data-sheet]) .topbar-sheet-back.sheet-back-active { display: inline-flex; }
+  :where(:root[data-sheet]) body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) { display: none; }
+
+  /* Szuflada boczna (≤ 980 px): panel z lewej pod topbarem i tło; na
+     komputerze panel stoi w układzie strony, a przycisk i tło są ukryte.
+     W warstwie states, bo nadpisuje układ strony. Zamknięta: visibility
+     hidden (zawartość nie łapie fokusu). --drawer-top: początek pod paskiem
+     strony (domyślnie topbar). Ustawienia gry, Wskazówki, Eksplorator. */
+  .drawer-toggle,
+  .drawer-scrim { display: none; }
+  @media (max-width: 980px) {
+    .drawer-toggle { display: inline-flex; flex: 0 0 auto; }
+    .drawer-scrim {
+      position: fixed;
+      inset: var(--drawer-top, var(--topbar-h, 64px)) 0 0;
+      z-index: calc(var(--z-drawer) - 1);
+      padding: 0;
+      border: 0;
+      background: var(--scrim);
+      display: block;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity var(--dur-base) ease, visibility var(--dur-base);
+    }
+    .drawer-scrim.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
+    .drawer {
+      position: fixed;
+      z-index: var(--z-drawer);
+      top: var(--drawer-top, var(--topbar-h, 64px));
+      bottom: 0;
+      left: 0;
+      box-sizing: border-box;
+      width: calc(min(320px, 86vw) + env(safe-area-inset-left, 0px));
+      /* Strefa bezpieczna: wycięcie z lewej (telefon poziomo), pasek gestu na dole. */
+      padding: 14px 10px calc(14px + env(safe-area-inset-bottom, 0px)) calc(10px + env(safe-area-inset-left, 0px));
+      border: 1px solid var(--line);
+      border-left: 0;
+      border-radius: 0 var(--r-md) var(--r-md) 0;
+      background: var(--surface-1);
+      box-shadow: var(--shadow-card);
+      transform: translateX(-105%);
+      visibility: hidden;
+      transition: transform var(--dur-base) var(--ease-out), visibility var(--dur-base);
+    }
+    .drawer.is-open { transform: translateX(0); visibility: visible; }
+  }
+}
+
+/* ── Pomiary na żywo (core/geometry.js) ────────────────────────────
+   Skrypt ustawia tylko zmienne CSS i klasę geo-*; położenie i rozmiar
+   biorą się stąd. Warstwa states: stan z pomiaru wygrywa ze zwykłymi
+   regułami stron (np. menu z position: absolute w pliku strony). */
+@layer states {
+  .geo-float {
+    position: fixed;
+    left: var(--float-x, auto);
+    top: var(--float-y, auto);
+    bottom: var(--float-bottom, auto);
+    right: auto;
+    transform: none;
+  }
+  .geo-float.geo-float--sized { width: var(--float-w, auto); max-height: var(--float-max-h, none); }
+  .geo-measuring { visibility: hidden; pointer-events: none; }
+  .geo-anchor { position: relative; }
+  .geo-box { left: var(--box-x, 0px); top: var(--box-y, 0px); width: var(--box-w, 0px); height: var(--box-h, 0px); }
+  .geo-shift { transform: translate3d(var(--shift-x, 0px), var(--shift-y, 0px), 0) scale(var(--shift-scale, 1)); }
+  .geo-cell { grid-row: var(--cell-row, auto); grid-column: var(--cell-col, auto); }
+  .geo-w { width: var(--geo-w); }
+  .geo-min-w { min-width: var(--geo-min-w); }
+  /* Pole wyszukiwania w dolnym pasku listy: szerokość z pomiaru (list-header-layout.js). */
+  .list-search.geo-w { flex: 0 0 var(--geo-w); }
+
+  /* Pomiar dolnego paska listy: pudełko poza ekranem i klony grup w jednym
+     rzędzie; .is-icons odtwarza wariant kompaktowy (przyciski i listy 36 px). */
+  .toolbar-measure-box {
+    position: fixed; left: -100000px; top: 0;
+    width: max-content; max-width: none; flex: none; display: block;
+    visibility: hidden; pointer-events: none;
+  }
+  .toolbar-measure-box .toolbar-measure-clone {
+    display: flex; flex: 0 0 auto; flex-wrap: nowrap; position: static; margin: 0;
+    width: max-content; min-width: max-content; max-width: none;
+  }
+  .toolbar-measure-box .toolbar-measure-clone > * { flex: 0 0 auto; }
+  .toolbar-measure-box .toolbar-measure-clone .only-desktop { display: inline; }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.only-desktop, .ui-select-label, .ui-select-caret) { display: none; }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.list-toolbar-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open) {
+    display: grid; place-items: center; box-sizing: border-box; padding: 0;
+    width: 36px; min-width: 36px; max-width: 36px; height: 36px; min-height: 36px;
+  }
+  .toolbar-measure-box .toolbar-measure-clone.is-icons :is(.list-filter, .list-sort) { flex: 0 0 36px; width: 36px; min-width: 36px; max-width: 36px; }
+
+  /* Powiększanie obrazu (pinch-zoom.js): kursor wg stanu. */
+  [data-zoom-cursor="in"] { cursor: zoom-in; }
+  [data-zoom-cursor="grab"] { cursor: grab; }
+  [data-zoom-cursor="grabbing"] { cursor: grabbing; }
+}
+
+@layer components {
+  /* Wideo podtrzymujące ekran (keep-alive.js): niewidoczne, 1×1 px. */
+  .keep-alive-video { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+}

@@ -1,0 +1,32 @@
+# Narzędzia pracy agenta (Claude / Codex)
+
+| Plik | Do czego |
+|---|---|
+| `e2e-seq.sh` | Kolejne grupy e2e przez workflow `e2e-tests.yml` (`spec_filter`), każda dopiero gdy nic innego nie biegnie. `REF=<gałąź>` dla speców z `tests/e2e/helpers/local-site.js`. |
+| `eslint-undef.config.mjs` | Lint tylko na niezdefiniowane identyfikatory (po regresji 2026-10-09: `ret` w polls.js): `npx eslint -c scripts/agent-tools/eslint-undef.config.mjs <pliki>` (eslint z globalnej instalacji). |
+| `local-e2e/` | Spece e2e na kodzie z dysku i **lokalnej bazie** (Postgres + PostgREST, atrapa logowania) — przed wdrożeniem migracji, bez produkcji: `setup.sh`, potem `run.sh <spec> --grep …` (README w katalogu). |
+| `preview-poll-stub.js` | Podgląd strony z atrapą Supabase (fałszywy token w `localStorage`, podmiana `@supabase` z CDN, RPC z mapy). Wzór do podglądu dowolnej strony: zmień adres i mapy `DATA`/`RPC`. Gość: `user_metadata.is_guest = true`. |
+| `fabric-compat-check.cjs` | Przy zmianie wersji fabric (`web/shared/vendor/fabric.min.js`): stare vs nowe kropki zapisanych rysunków (dane zrzutów + stara scena bez `originX`), także po zapisie i ponownym zapisie edytora; `_line` i stabilność zapisu. `node scripts/agent-tools/fabric-compat-check.cjs <stary.js> <nowy.js>` → „WYNIK: zgodne”. |
+| `qrcode.esm.js` | Paczka `qrcode@1.5.3` jako ESM — CDN bywa zablokowany w środowisku agenta. |
+
+Uwagi:
+- W atrapie RPC muszą zwracać `{data: wartość}` (bez tablicy), inaczej
+  `guardResourceLock`/`game_validate` uznają odpowiedź za błąd i strona
+  zostaje pusta albo za nakładką.
+- Nakładkę blokady (`#resourceLockGuard`) można usunąć przed zrzutem.
+- Lokalny Postgres do migracji: `docs/sql/local-db.md` (port 5499).
+
+## Baza produkcyjna, stan przerwy i workflow z poziomu agenta
+
+| Narzędzie | Do czego |
+|---|---|
+| `gh-run.sh <workflow> klucz=wartość…` | Uruchamia workflow (`workflow_dispatch`, `REF=` domyślnie `main`), czeka na koniec i wypisuje adnotacje przebiegu przez API GitHuba — działa także tam, gdzie host z logami Actions jest zablokowany. `LOGS=50` dodatkowo próbuje pobrać koniec logu. Wymaga `GITHUB_TOKEN`. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/<nazwa>.sql` | Odczyt produkcji: jedno SELECT bez `;`/`\`, sesja READ ONLY, wynik tylko liczby/bool/UUID/daty (`scripts/db-read.sh`). Repo publiczne — żadnych treści, nazw, e-maili. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/whoami.sql` | Kontrola roli: `agent_reader`, nie superużytkownik, bez `auth`/profili, bez zapisu. `check-auth-denied.sql` ma się nie udać. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/activity-now.sql` | Kto jest teraz na stronie (liczby) i gry z aktywną sesją Control — sprawdzać przed zmianą danych. |
+| `gh-run.sh maintenance.yml` | Stan przerwy technicznej i aktywność (tylko odczyt). Przerwę włącza wyłącznie właściciel w panelu admina — agent o nią prosi. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/maintenance-blockers.sql` | Co przerwałaby przerwa teraz (liczby, źródła jak panel admina, bez kont testowych/admina). |
+
+Lokalnie odczyt na testowej bazie:
+`PSQL_CMD="psql -h /var/tmp/pgfam -p 5499 -U postgres -d fam" scripts/db-read.sh scripts/db-read/<nazwa>.sql`.
+

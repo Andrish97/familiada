@@ -1,0 +1,23 @@
+# Początki adresów, które nie są kontaktem z firmą
+webmaster@
+dmca@
+privacy@
+rodo@
+iod@
+abuse@
+postmaster@
+subscriptions@
+newsletter@
+legal@
+noreply@
+no-reply@
+no_reply@
+donotreply@
+mailer-daemon@
+test@
+example@
+jan.kowalski@
+jankowalski@
+user@
+name@
+email@

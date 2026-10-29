@@ -1,0 +1,30 @@
+# IGNOROWANE ROZSZERZENIA PLIKÓW
+# Służy do filtrowania fałszywych maili oraz do omijania adresów URL wskazujących na pliki.
+
+.png
+.jpg
+.jpeg
+.gif
+.svg
+.pdf
+.zip
+.rar
+.js
+.css
+.webp
+.woff
+.woff2
+.ico
+.mp3
+.mp4
+.wav
+.doc
+.docx
+.xls
+.xlsx
+.ppt
+.pptx
+.odt
+.txt
+.xml
+.json

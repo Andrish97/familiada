@@ -1,0 +1,56 @@
+-- Add population column to marketing_cities for dynamic search limits
+ALTER TABLE marketing_cities ADD COLUMN IF NOT EXISTS population integer DEFAULT 0;
+
+-- Update with approximate population data (2024)
+UPDATE marketing_cities SET population = 1800000 WHERE name = 'Warszawa';
+UPDATE marketing_cities SET population = 780000 WHERE name = 'Kraków';
+UPDATE marketing_cities SET population = 470000 WHERE name = 'Gdańsk';
+UPDATE marketing_cities SET population = 680000 WHERE name = 'Wrocław';
+UPDATE marketing_cities SET population = 550000 WHERE name = 'Poznań';
+UPDATE marketing_cities SET population = 650000 WHERE name = 'Łódź';
+UPDATE marketing_cities SET population = 290000 WHERE name = 'Katowice';
+UPDATE marketing_cities SET population = 340000 WHERE name = 'Lublin';
+UPDATE marketing_cities SET population = 390000 WHERE name = 'Szczecin';
+UPDATE marketing_cities SET population = 340000 WHERE name = 'Bydgoszcz';
+UPDATE marketing_cities SET population = 290000 WHERE name = 'Białystok';
+UPDATE marketing_cities SET population = 250000 WHERE name = 'Gdynia';
+UPDATE marketing_cities SET population = 220000 WHERE name = 'Częstochowa';
+UPDATE marketing_cities SET population = 210000 WHERE name = 'Radom';
+UPDATE marketing_cities SET population = 200000 WHERE name = 'Sosnowiec';
+UPDATE marketing_cities SET population = 180000 WHERE name = 'Toruń';
+UPDATE marketing_cities SET population = 190000 WHERE name = 'Kielce';
+UPDATE marketing_cities SET population = 170000 WHERE name = 'Rzeszów';
+UPDATE marketing_cities SET population = 175000 WHERE name = 'Gliwice';
+UPDATE marketing_cities SET population = 170000 WHERE name = 'Zabrze';
+UPDATE marketing_cities SET population = 175000 WHERE name = 'Olsztyn';
+UPDATE marketing_cities SET population = 170000 WHERE name = 'Bielsko-Biała';
+UPDATE marketing_cities SET population = 135000 WHERE name = 'Ruda Śląska';
+UPDATE marketing_cities SET population = 140000 WHERE name = 'Rybnik';
+UPDATE marketing_cities SET population = 125000 WHERE name = 'Tychy';
+UPDATE marketing_cities SET population = 120000 WHERE name = 'Dąbrowa Górnicza';
+UPDATE marketing_cities SET population = 115000 WHERE name = 'Płock';
+UPDATE marketing_cities SET population = 115000 WHERE name = 'Elbląg';
+UPDATE marketing_cities SET population = 125000 WHERE name = 'Opole';
+UPDATE marketing_cities SET population = 120000 WHERE name = 'Gorzów Wielkopolski';
+UPDATE marketing_cities SET population = 110000 WHERE name = 'Wałbrzych';
+UPDATE marketing_cities SET population = 105000 WHERE name = 'Włocławek';
+UPDATE marketing_cities SET population = 110000 WHERE name = 'Tarnów';
+UPDATE marketing_cities SET population = 105000 WHERE name = 'Chorzów';
+UPDATE marketing_cities SET population = 105000 WHERE name = 'Koszalin';
+UPDATE marketing_cities SET population = 100000 WHERE name = 'Kalisz';
+UPDATE marketing_cities SET population = 93000 WHERE name = 'Legnica';
+UPDATE marketing_cities SET population = 95000 WHERE name = 'Grudziądz';
+UPDATE marketing_cities SET population = 90000 WHERE name = 'Jaworzno';
+UPDATE marketing_cities SET population = 90000 WHERE name = 'Jastrzębie-Zdrój';
+UPDATE marketing_cities SET population = 84000 WHERE name = 'Nowy Sącz';
+UPDATE marketing_cities SET population = 80000 WHERE name = 'Jelenia Góra';
+UPDATE marketing_cities SET population = 82000 WHERE name = 'Siedlce';
+UPDATE marketing_cities SET population = 75000 WHERE name = 'Mysłowice';
+UPDATE marketing_cities SET population = 78000 WHERE name = 'Piła';
+UPDATE marketing_cities SET population = 72000 WHERE name = 'Inowrocław';
+UPDATE marketing_cities SET population = 73000 WHERE name = 'Lubin';
+UPDATE marketing_cities SET population = 72000 WHERE name = 'Ostrów Wielkopolski';
+UPDATE marketing_cities SET population = 70000 WHERE name = 'Ostrowiec Świętokrzyski';
+UPDATE marketing_cities SET population = 68000 WHERE name = 'Gniezno';
+
+CREATE INDEX IF NOT EXISTS idx_marketing_cities_population ON marketing_cities(population);

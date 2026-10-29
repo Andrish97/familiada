@@ -1,0 +1,102 @@
+name: Apply DB migrations + update schema.sql (self-host)
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/db-migrate.yml"
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Ensure local folders exist
+        run: mkdir -p supabase/migration_logs
+
+      - name: Install rsync and SSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts  # odcisk przypięty (nowy serwer)
+
+      - name: Sync migrations to server staging
+        run: |
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p \"$STAGING/migrations\" \"$STAGING/out\""
+
+          rsync -az --delete --checksum \
+            --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            supabase/migrations/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/migrations/"
+
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
+            scripts/apply-migrations.sh \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/apply-migrations.sh"
+
+      - name: Apply database migrations and dump schema (server-side)
+        run: |
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "export GITHUB_SHA='${{ github.sha }}' PSQL='sudo familiada-psql admin' SCHEMA_DUMP='sudo familiada-schema-dump'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
+
+      - name: Verify active-game settings guard (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
+            < docs/sql/test-active-game-settings-guard-381.sql
+
+      - name: Verify Control 2 page visibility events (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
+            < docs/sql/test-control2-page-visibility-393.sql
+
+      - name: Fetch schema.sql and migration log
+        run: |
+          STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/schema.sql" \
+            supabase/schema.sql
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/latest.log" \
+            supabase/migration_logs/latest.log
+
+      - name: Keep only the 30 latest migration logs
+        run: |
+          cd supabase/migration_logs
+          ls -1t *.log 2>/dev/null | tail -n +31 | xargs -r rm -f
+
+      - name: Commit schema and logs when changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add supabase/schema.sql supabase/migration_logs
+          if git diff --cached --quiet; then
+            echo "No schema or log changes to commit."
+            exit 0
+          fi
+          git commit -m "db: update schema + logs [skip ci]"
+          git pull --rebase --strategy-option=theirs
+          git push

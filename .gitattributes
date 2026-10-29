@@ -1,0 +1,6 @@
+# HTML files - use text merge driver (default)
+*.html text
+
+# Prevent automatic merge of version changes
+version.txt merge=ours
+sw.js merge=ours

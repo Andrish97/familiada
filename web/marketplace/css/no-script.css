@@ -1,0 +1,14 @@
+/* Czytanie publicznych gier bez JS: tylko działające linki i publiczna treść. */
+@layer page {
+  .mkt-body { padding-top: 0; }
+  .mkt-body .topbar { position: static; display: flex; flex-wrap: wrap; }
+  .mkt-body .topbar-section-4,
+  .mkt-body .mkt-search-bar,
+  .mkt-body .mkt-head-actions,
+  .mkt-body .mkt-detail-actions,
+  .mkt-body button { display: none; }
+  .mkt-body .topbar #btnGoGames { font-size: inherit; line-height: 1.2; }
+  .mkt-body .mkt-nojs-back:not([hidden]) { display: inline-flex; }
+  .mkt-body .overlay, .mkt-body .overlay > .modal { animation: none; }
+  .mkt-body #btnManual::after { content: attr(aria-label); }
+}

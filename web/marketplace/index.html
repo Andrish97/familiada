@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="gameValidate games marketplace resources">
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title>Gry Społeczności — gotowe pytania do gry</title>
+  <meta name="description" content="Pobierz gotowe pytania i odpowiedzi do gry drużynowej. Baza gier stworzonych przez społeczność — idealne na imprezę, wesele lub spotkanie z rodziną."/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://www.familijna.app/marketplace"/>
+  <link rel="alternate" hreflang="pl" href="https://www.familijna.app/marketplace" />
+  <link rel="alternate" hreflang="en" href="https://www.familijna.app/marketplace?lang=en" />
+  <link rel="alternate" hreflang="uk" href="https://www.familijna.app/marketplace?lang=uk" />
+  <link rel="alternate" hreflang="x-default" href="https://www.familijna.app/marketplace" />
+  <meta property="og:title" content="Pytania do Familijnej — Gotowe Gry Społeczności"/>
+  <meta property="og:description" content="Pobierz gotowe pytania i odpowiedzi do gry drużynowej. Baza gier stworzonych przez społeczność — idealne na imprezę, wesele lub spotkanie z rodziną."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://www.familijna.app/marketplace"/>
+  <meta property="og:image" content="https://www.familijna.app/assets/img/og/og-image.webp"/>
+
+  <base href="/"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-29T02360"/>
+  <noscript><link rel="stylesheet" href="/marketplace/css/no-script.css?v=v2026-10-29T02360"></noscript>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+<body class="mkt-body">
+
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <a class="btn" id="btnGoGames" href="/" data-i18n-icon="arrow-left" data-i18n="common.back">Wstecz</a>
+    </div>
+    <div class="topbar-section topbar-section-2">
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <a class="btn" id="btnManual" href="/manual/?ch=13" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></a>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <div class="who" id="whoStatic">—</div>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ======================================================
+         WIDOK: PRZEGLĄDAJ (domyślny)
+    ====================================================== -->
+    <section id="viewBrowse">
+      <div class="bar mkt-head">
+        <div>
+          <h1 class="title" data-i18n="marketplace.title">Gry Społeczności</h1>
+          <p class="hint" data-i18n="marketplace.subtitle">Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.</p>
+        </div>
+        <div class="actions mkt-head-actions">
+          <button class="btn sm" id="btnMySent" type="button" hidden data-i18n-title="marketplace.btnMySent" data-i18n-aria-label="marketplace.btnMySent" aria-label="Moje wysłane" title="Moje wysłane"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="mkt-action-label" data-i18n="marketplace.btnMySent">Moje wysłane</span></button>
+        </div>
+      </div>
+
+      <div class="card mkt-games-card">
+      <div class="mkt-search-bar">
+        <div class="mkt-search-field">
+          <label class="searchBox searchBox--field mkt-search-box">
+          <i class="ico" data-icon="search" aria-hidden="true"></i>
+          <input class="searchText mkt-search-input" id="searchInput" type="text" disabled data-market-enable enterkeyhint="search"
+            data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier"
+            data-i18n-placeholder="marketplace.searchPlaceholder"
+            placeholder="Szukaj gry…"
+            autocomplete="off"/>
+          <button class="btn-plain searchClear" id="btnSearchClear" type="button" hidden data-i18n-title="marketplace.searchClear" data-i18n-aria-label="marketplace.searchClear"><i class="ico" data-icon="close" aria-hidden="true"></i></button>
+          </label>
+          <button class="btn icon mkt-search-button" id="btnSearchFocus" type="button" disabled data-market-enable data-i18n-title="marketplace.searchLabel" data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier" title="Szukaj gier"><i class="ico" data-icon="search" aria-hidden="true"></i></button>
+        </div>
+        <div class="ui-select mkt-filter" id="langFilter">
+          <button disabled data-market-enable class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="langFilterLabel langFilterValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="globe"></i></span>
+            <span class="ui-select-name" id="langFilterLabel" data-i18n="marketplace.filterLabel">Język</span>
+            <span class="ui-select-label" id="langFilterValue">Wszystkie</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
+        <div class="ui-select mkt-filter" id="sortSelect">
+          <button disabled data-market-enable class="btn inp ui-select-btn mkt-filter-btn" type="button" data-i18n-aria-label="marketplace.sortLabel" aria-label="Sortowanie" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="sort"></i></span>
+            <span class="ui-select-label" id="sortSelectValue">Polecane</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
+      </div>
+      <div class="mkt-grid skel-step-ready" id="browseGrid" data-skel-step></div>
+      <div class="mkt-load-more-wrap" id="loadMoreWrap" hidden>
+        <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore" data-i18n-icon="arrow-down">Pokaż więcej</button>
+      </div>
+      <div class="hint mkt-info" id="browseInfo"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         OKNO: MOJE WYSŁANE (decyzja 2026-10-21 — okno zamiast karty)
+    ====================================================== -->
+    <div class="overlay modal--sheet" id="mySentOverlay" hidden>
+      <div class="modal share-uni mySentModal" role="dialog" aria-modal="true" aria-labelledby="mySentTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="mySentTitle" data-i18n="marketplace.mySent.title">Moje wysłane gry</div>
+          <button class="btn sm" id="btnMySentClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="uni-body">
+          <div id="mySentList"></div>
+          <div class="hint mkt-info" id="mySentInfo"></div>
+        </div>
+        <div class="uni-foot modal-actions">
+          <button class="btn sm gold" id="btnSubmitNew" type="button" data-i18n="marketplace.mySent.btnAdd" data-i18n-icon="plus">Dodaj nową do Gier Społeczności</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
+    ====================================================== -->
+    <div class="overlay modal--sheet" id="submitOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" id="submitModalTitle" data-i18n="marketplace.submit.title">Dodaj grę do Gier Społeczności</div>
+          <button class="btn sm" id="btnSubmitClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+
+        <div class="field">
+          <label class="field-label" id="submitGameLabel" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
+          <div class="ui-select" id="submitGameSelect">
+            <button class="btn inp ui-select-btn" type="button" aria-labelledby="submitGameLabel" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</span>
+              <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+          <span class="hint" id="submitNoEligible" hidden data-i18n="marketplace.submit.noEligible">Brak odpowiednich gier.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="submitTitle" data-i18n="marketplace.submit.titleLabel">Tytuł</label>
+          <input class="inp" id="submitTitle" type="text" maxlength="120"
+            data-i18n-placeholder="marketplace.submit.titlePlaceholder"
+            placeholder="Tytuł widoczny w Grach Społeczności"/>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="submitDesc" data-i18n="marketplace.submit.descLabel">Opis</label>
+          <textarea class="inp" id="submitDesc" rows="3" maxlength="500"
+            data-i18n-placeholder="marketplace.submit.descPlaceholder"
+            placeholder="Krótki opis gry (temat, poziom trudności, dla kogo…)"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
+          <div class="mkt-lang-picker" id="submitLangPicker">
+            <button class="btn sm is-active" data-lang="pl" type="button" aria-label="Polski" title="Polski"><i class="ico" data-icon="flag-pl"></i></button>
+            <button class="btn sm" data-lang="en" type="button" aria-label="English" title="English"><i class="ico" data-icon="lang-en"></i></button>
+            <button class="btn sm" data-lang="uk" type="button" aria-label="Українська" title="Українська"><i class="ico" data-icon="flag-ua"></i></button>
+          </div>
+        </div>
+
+        <div class="callout callout--warn mkt-submit-warn">
+          <p data-i18n="marketplace.submit.snapshotWarning">To jest niezmienny zapis gry. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.</p>
+          <p data-i18n="marketplace.submit.withdrawInfo">Wycofanie usuwa ją z katalogu, ale osoby, które ją dodały, nadal ją mają.</p>
+        </div>
+
+        <label class="choice mkt-submit-confirm" for="submitConfirm">
+          <input type="checkbox" id="submitConfirm"/>
+          <span data-i18n="marketplace.submit.checkboxConfirm">Rozumiem, że po wysłaniu zapis gry jest nieedytowalny.</span>
+        </label>
+
+        <div class="callout callout--bad mkt-submit-error" id="submitError" role="alert" hidden></div>
+
+        <div class="importRow modal-actions">
+          <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit" data-i18n-icon="envelope-out">Wyślij do Gier Społeczności</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         MODAL: PODGLĄD GRY
+    ====================================================== -->
+    <div class="overlay modal--sheet" id="gameDetailOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="modal modal--medium mkt-modal-detail">
+        <div class="mkt-detail-head">
+          <div>
+            <h1 class="mTitle" id="detailTitle">—</h1>
+            <div class="mSub" id="detailMeta">—</div>
+          </div>
+          <a class="btn mkt-nojs-back" id="marketNoJsBack" href="/marketplace" hidden data-i18n="common.back">Wstecz</a>
+          <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+
+        <p class="mkt-detail-desc" id="detailDesc"></p>
+
+        <div class="mkt-detail-rating" id="detailRating"></div>
+
+        <div class="q-preview mkt-detail-questions modal-scroll" id="detailQuestions"></div>
+
+        <div class="mkt-detail-raters" id="detailRaters" hidden></div>
+
+        <div class="cluster cluster--end mkt-detail-actions">
+          <button class="btn sm gold" id="btnAddLibrary" type="button" hidden data-i18n="marketplace.btnAddToLibrary" data-i18n-icon="plus">Dodaj do moich gier</button>
+          <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" data-i18n-icon="trash" hidden>Usuń z moich gier</button>
+          <span class="tag tag--ok" id="addedBadge" hidden data-i18n="marketplace.addedBadge" data-i18n-icon="check">W Twoich grach</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

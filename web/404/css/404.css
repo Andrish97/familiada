@@ -1,0 +1,18 @@
+/* 404: wzorzec .page--block z silnika; tu węższa karta i przyciski. */
+.notfound-card { width: min(720px, 100%); }
+
+.brand-static { text-decoration: none; }
+
+.notfound-actions { margin-top: 24px; }
+
+.notfound-actions .btn:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.notfound-card .notfound-redirect {
+  margin-top: 20px;
+  opacity: .6;
+}

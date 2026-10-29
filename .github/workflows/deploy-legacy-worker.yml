@@ -1,0 +1,31 @@
+name: Deploy legacy domain Worker
+
+# Worker starej domeny familiada.online (przeprowadzka na familijna.app).
+# Tylko ręcznie, w dniu przełączenia; trasy ustawia się w panelu Cloudflare
+# (lista w cloudflare/legacy-domain-worker/wrangler.toml).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Test legacy Worker
+        run: npm test
+        working-directory: cloudflare/legacy-domain-worker
+
+      - name: Deploy legacy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: cloudflare/legacy-domain-worker

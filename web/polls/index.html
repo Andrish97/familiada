@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="gameValidate games polls resources">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="polls.title">Familijna — ankieta i wyniki</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+
+<body class="page-fit polls-body topbar-title-mobile skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="polls.pageTitle">Ankieta</div>
+        <div class="subtitle" id="pollGameName"></div>
+      </div>
+      <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" hidden><span data-i18n="nav.menu.friends" data-i18n-icon-after="people">Znajomi</span><span class="badge" data-nav-contact-count="friends" aria-hidden="true"></span></button>
+      <button class="btn" id="btnSubscribers" type="button" data-nav-hidden="true" hidden><span data-i18n="nav.menu.subscribers" data-i18n-icon-after="envelope">Subskrybenci</span><span class="badge" data-nav-contact-count="subscribers" aria-hidden="true"></span></button>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="load-retry" id="pollLoadRetryWrap" hidden><button class="btn sm" id="pollLoadRetry" type="button" data-i18n="polls.load.retry" data-i18n-icon="refresh">Ponów</button></div>
+    <!-- A. Pasek stanu: stan słowem po lewej, WSZYSTKIE akcje po prawej
+         (telefon: stan u góry, akcje w dolnym pasku przyklejonym do ekranu) -->
+    <div class="pollBar" id="pollBar" data-state="" data-skel-step hidden>
+      <div class="pollBarState">
+        <span class="pollStateWord" id="pollStateWord"></span>
+        <span class="pollStateInfo" id="pollStateInfo"></span>
+        <span class="subsSummary" id="subsSummary"></span>
+        <span class="hint pollBarHint" id="hintTop"></span>
+      </div>
+      <div class="cluster cluster--end pollBarActions" id="pollActions">
+        <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n-title="polls.actions.resumePoll" data-i18n-aria-label="polls.actions.resumePoll" title="Wznów głosowanie" aria-label="Wznów głosowanie"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.resumePoll">Wznów głosowanie</span></button>
+        <button class="btn sm" id="btnLeaveTally" type="button" hidden data-i18n-title="polls.actions.leaveTally" data-i18n-aria-label="polls.actions.leaveTally" title="Wyjdź z podliczania" aria-label="Wyjdź z podliczania"><i class="ico" data-icon="arrow-left" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.leaveTally">Wyjdź z podliczania</span></button>
+        <button class="btn sm gold" id="btnOpenPoll" type="button" hidden data-i18n-title="polls.actions.openPoll" data-i18n-aria-label="polls.actions.openPoll" title="Uruchom" aria-label="Uruchom"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.openPoll">Uruchom</span></button>
+        <button class="btn sm gold" id="btnStopPoll" type="button" hidden data-i18n-title="polls.actions.stopPoll" data-i18n-aria-label="polls.actions.stopPoll" title="Zatrzymaj" aria-label="Zatrzymaj"><i class="ico" data-icon="stop" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.stopPoll">Zatrzymaj</span></button>
+        <button class="btn sm gold" id="btnTallyPoll" type="button" hidden data-i18n-title="polls.actions.tallyPoll" data-i18n-aria-label="polls.actions.tallyPoll" title="Podlicz głosy" aria-label="Podlicz głosy"><i class="ico" data-icon="polls" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.tallyPoll">Podlicz głosy</span></button>
+        <button class="btn sm gold" id="btnApproveTally" type="button" hidden data-i18n-title="polls.actions.approve" data-i18n-aria-label="polls.actions.approve" title="Zatwierdź" aria-label="Zatwierdź"><i class="ico" data-icon="check" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.approve">Zatwierdź</span></button>
+        <button class="btn sm gold" id="btnReopenPoll" type="button" hidden data-i18n-title="polls.actions.reopenPoll" data-i18n-aria-label="polls.actions.reopenPoll" title="Uruchom ponownie" aria-label="Uruchom ponownie"><i class="ico" data-icon="refresh" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.reopenPoll">Uruchom ponownie</span></button>
+        <button class="btn sm pollAbort" id="btnAbort" type="button" hidden data-i18n-title="polls.actions.abort" data-i18n-aria-label="polls.actions.abort" title="Przerwij" aria-label="Przerwij"><i class="ico" data-icon="cancel" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.abort">Przerwij</span></button>
+      </div>
+    </div>
+
+    <!-- B. Treść: wypustki Udostępnianie · Wyniki -->
+    <section class="games-shell" id="cardMain" data-skel-step hidden>
+      <div class="tabs-card hub-tabs polls-tabs-card" id="pollTabsCard">
+        <div class="tabs-strip" id="pollTabs" role="tablist">
+          <div class="tab-slot slot-share active">
+            <button class="tab-label active" id="tabShare" type="button" role="tab" aria-controls="secShare" aria-selected="true">
+              <span class="pollShareLabelDesktop" data-i18n="polls.tabs.share">Udostępnianie</span>
+              <span class="pollShareLabelMobile" data-i18n="pollSharePanel.anonymous">Anonimowo</span>
+            </button>
+          </div>
+
+          <div class="tab-slot slot-recipients">
+            <button class="tab-label" id="tabRecipients" type="button" role="tab" aria-controls="secShare" aria-selected="false">
+              <span data-i18n="pollSharePanel.recipients">Odbiorcy</span>
+            </button>
+          </div>
+
+          <div class="tab-slot slot-results">
+            <button class="tab-label" id="tabResults" type="button" role="tab" aria-controls="secResults" aria-selected="false">
+              <span data-i18n="polls.tabs.results">Głosy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card games-card polls-card">
+          <!-- Udostępnianie -->
+          <div class="polls-section active" id="secShare" role="tabpanel">
+            <div class="pollsEmpty empty-state" id="shareEmpty"></div>
+            <div class="shareCols" id="shareBody" hidden>
+              <section class="pollSec pollLinkSec">
+                <h3 class="section-title pollSecTitle" data-i18n="pollSharePanel.anonymous">Anonimowo</h3>
+                <div class="pollLinkPlaceholder" id="linkPlaceholder" data-i18n="polls.share.linkAfterStart" hidden>Link pojawi się po uruchomieniu</div>
+                <div class="pollLinkLive" id="linkLive">
+                  <div class="pollQrStage">
+                    <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
+                    <div class="hint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
+                  </div>
+                  <input id="pollLink" type="hidden" />
+                  <div class="cluster pollLinkActions">
+                    <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.share.copyLink" data-i18n-icon="copy">Kopiuj link</button>
+                    <button class="btn sm" id="btnOpen" type="button" disabled><i class="ico" data-icon="eye"></i><span data-i18n="polls.actions.openShort">Otwórz</span></button>
+                    <button class="btn sm" id="btnOpenQr" type="button" disabled><i class="ico" data-icon="qr-code"></i><span data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</span></button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pollSec pollRecipientsSec">
+                <div class="pollSecHead">
+                  <h3 class="section-title pollSecTitle" data-i18n="pollSharePanel.recipients">Odbiorcy</h3>
+                  <div class="subsTools" id="subsTools">
+                    <button class="btn sm gold" id="btnAddRecipients" type="button" data-i18n="polls.share.addRecipients" data-i18n-icon="people">Dodaj odbiorców</button>
+                  </div>
+                </div>
+                <div class="pollsEmpty empty-state" id="subsEmpty" hidden></div>
+                <div class="grid subsGrid" id="subsGrid"></div>
+                <div class="subsFoot">
+                  <span class="hint pollBarHint subsSendHint" id="sendHint"></span>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <!-- Wyniki: na żywo / zatrzymane / podliczanie / ostateczne — te same wiersze -->
+          <div class="polls-section" id="secResults" role="tabpanel">
+            <div class="meta" id="resultsMeta"></div>
+            <div class="tallyBar" id="tallyBar" hidden>
+              <div class="hint tallyHint" id="tallyHint"></div>
+              <div class="cluster tallyTools" id="tallyTools">
+                <span class="tallySave" id="tallySave" role="status"></span>
+                <button class="btn sm" id="btnUndo" type="button" disabled data-i18n-title="polls.tally.undo" data-i18n-aria-label="polls.tally.undo" title="Cofnij" aria-label="Cofnij"><i class="ico" data-icon="undo"></i></button>
+                <button class="btn sm" id="btnRedo" type="button" disabled data-i18n-title="polls.tally.redo" data-i18n-aria-label="polls.tally.redo" title="Ponów" aria-label="Ponów"><i class="ico" data-icon="redo"></i></button>
+              </div>
+            </div>
+            <div id="resultsList" data-skel-step></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="card" id="cardEmpty" hidden>
+      <div class="name" data-i18n="polls.empty.title">Brak gry</div>
+      <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls?id=...</b>.</div>
+    </div>
+    <div class="overlay modal--sheet" id="pollRecipientsOverlay" hidden>
+      <div class="modal uni-modal pollRecipientsModal" role="dialog" aria-modal="true" aria-labelledby="pollRecipientsTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="pollRecipientsTitle" data-i18n="polls.share.addRecipients">Dodaj odbiorców</div>
+          <button class="btn sm" id="pollRecipientsClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="uni-body sheet-fill">
+          <div class="hint uni-hint" data-i18n="polls.share.addRecipientsHint">Wybierz osoby, które chcesz zaprosić do tej ankiety.</div>
+          <div id="pollRecipientsEmpty" class="pollsEmpty empty-state" hidden></div>
+          <div id="pollRecipientsFriends" class="pollRecipientGroup sheet-fill"></div>
+          <div id="pollRecipientsSubs" class="pollRecipientGroup sheet-fill"></div>
+        </div>
+        <div class="uni-foot modal-actions">
+          <span class="importMsg" id="pollRecipientsCount" aria-live="polite"></span>
+          <button class="btn sm" id="pollRecipientsCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="pollRecipientsAdd" type="button" disabled data-i18n="polls.share.addSelected" data-i18n-icon="people">Dodaj wybrane</button>
+        </div>
+      </div>
+    </div>
+    <!-- Okno QR: kod wyświetlacza albo powiększony kod do głosowania (.uni-modal; na telefonie arkusz) -->
+    <div class="overlay modal--sheet hidden" id="pollQrModalOverlay">
+      <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="pollQrModalTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
+          <button class="btn sm" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="uni-body">
+          <div class="hint uni-hint" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
+          <div class="pollQrVote" id="pollQrModalVote" hidden></div>
+          <div class="uni-code" id="pollQrModalCode">
+            <span class="uni-code-val" id="pollQrModalCodeVal">——————</span>
+          </div>
+          <div class="hint uni-hint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familijna.app → Podłącz urządzenie → wpisz kod.</div>
+        </div>
+        <div class="uni-foot modal-actions" id="pollQrModalActions">
+          <button class="btn sm" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn" data-i18n-icon="eye">Otwórz</button>
+          <button class="btn sm gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn" data-i18n-icon="copy">Kopiuj</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

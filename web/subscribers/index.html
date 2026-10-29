@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-29T02360"/>
+
+
+  <meta charset="UTF-8"/>
+  <meta name="i18n-parts" content="contacts">
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+  <script src="/shared/js/core/page-boot.js?v=v2026-10-29T02360"></script>
+  <link rel="preconnect" href="https://supabase.familijna.app">
+  <title data-i18n="contacts.subscribers.title">Familijna — subscribers</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-29T02360" />
+  <link rel="stylesheet" href="/shared/style/tokens.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/base.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/components.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/layout.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/style/utilities.css?v=v2026-10-29T02360"/>
+  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-29T02360"/>
+  <script type="module" src="/shared/js/core/device-attrs.js?v=v2026-10-29T02360"></script>
+  <script>document.documentElement.classList.add('page-loading')</script>
+
+  <script src="/shared/vendor/supabase-js.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/subscribers/js/subscribers.js?v=v2026-10-29T02360" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-29T02360" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-29T02360" defer></script>
+
+</head>
+
+<body class="page-fit contacts-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIJNA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title" data-i18n="contacts.subscribers.title">Subskrybenci</div>
+        <div class="hint" id="hint" data-i18n="contacts.subscribers.hint"></div>
+      </div>
+    </div>
+
+    <div class="tabs-card tabs-card--split contacts-tabs" data-skel-group>
+      <div class="tabs-strip" id="contactsTabs" role="tablist">
+        <div class="tab-slot">
+          <button class="tab-label" id="contactsTabInvite" type="button" role="tab" data-split-tab="invite" aria-controls="contactsInvite"><span data-i18n="contacts.tabs.invite"></span><span class="badge" data-contact-count="invite"></span></button>
+        </div>
+        <div class="tab-slot">
+          <button class="tab-label" id="contactsTabReceived" type="button" role="tab" data-split-tab="received" aria-controls="contactsReceived"><span data-i18n="contacts.subscribers.title"></span><span class="badge" data-contact-count="received"></span></button>
+        </div>
+      </div>
+      <div class="split-panels" id="contactsHost" data-skel-step>
+      <div class="card contacts-card" id="contactsInvite" data-split-panel="invite">
+        <section class="shareSection contacts-add">
+          <h2 class="section-title" data-i18n="contacts.subscribers.add"></h2>
+          <form id="inviteForm" class="contacts-invite">
+            <label class="shareSectionSub" for="inviteInput" data-i18n="contacts.email"></label>
+            <div class="contacts-invite-row">
+              <input class="inp" id="inviteInput" type="email" required autocomplete="off" data-i18n-placeholder="contacts.email"/>
+              <button class="btn sm gold" id="btnInvite" type="submit" data-i18n-title="contacts.invite" data-i18n-aria-label="contacts.invite" title="Zaproś" aria-label="Zaproś"><i class="ico contacts-invite-icon" data-icon="plus" aria-hidden="true"></i> <span class="contacts-invite-label" data-i18n="contacts.invite">Zaproś</span></button>
+            </div>
+          </form>
+        </section>
+        <div id="contactsOutgoing"></div>
+      </div>
+      <div class="card contacts-card" id="contactsReceived" data-split-panel="received"></div>
+      <div class="load-retry" id="contactsLoadRetryWrap" hidden><button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" data-i18n-icon="refresh">Ponów</button></div>
+    </div>
+
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familijna — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-29T02360"></script>
+
+</body>
+</html>

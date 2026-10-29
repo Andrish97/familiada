@@ -1,0 +1,374 @@
+/* css/editor.css */
+@layer page {
+  /* Wysokość: .page-fit (silnik). */
+  body.editor-body .wrap { padding-top: 12px; }
+
+  .rowTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      flex-wrap: wrap
+  }
+
+
+  .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0,1fr);
+      gap: 14px;
+      margin-top: 22px;
+      min-height: 0;
+      flex: 1
+  }
+
+
+  .left,.rightPanel {
+      border-radius: var(--r-lg);
+      border: 1px solid var(--line);
+      background: var(--surface-1);
+      --under: var(--surface-1); /* podłoże przycisków (css/base.css) */
+      box-shadow: 0 24px 60px var(--k-40);
+      padding: 14px;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+  }
+
+  .left {
+    --under: var(--surface-1); /* podłoże dla kryjących teł przycisków (css/base.css) */
+      width: 360px;
+      min-width: 360px
+  }
+
+
+  .panelHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+  }
+
+  .panelHint {
+      margin: 0;
+      text-align: right;
+      min-width: 0
+  }
+
+  /* Warunki gotowości gry (readinessChecklist) */
+  .rulesList {
+      list-style: none;
+      margin: 6px 0 8px;
+      padding: 0;
+      display: grid;
+      gap: 3px;
+      font-size: 12px
+  }
+
+  .rulesList li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.35
+  }
+
+  .rulesList li .ico { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px }
+  .rulesList li.ok { opacity: .7 }
+  .rulesList li.ok .ico { color: var(--ok-text) }
+  .rulesList li.bad .ico { color: var(--accent) }
+
+  /* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
+  .listShell {
+    --under: var(--surface-inset); /* podłoże kryjących przycisków (css/base.css) */
+      margin-top: 10px;
+      border-radius: var(--r-lg);
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+  }
+
+  .list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0
+  }
+
+  .importInline {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+  }
+
+  .importInline .hint {
+      margin: 0;
+  }
+
+  .qcard {
+      position: relative;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--line);
+      --btn-tint: var(--w-4);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+
+      padding: 12px;
+      padding-right: 56px;
+      cursor: pointer;
+      overflow: hidden
+  }
+
+  /* tylko mysz: na dotyku filter na karcie z przyciskami dawał artefakty (Android) */
+  @media (hover: hover) and (pointer: fine) {
+    .qcard .x:hover,.qcard:hover { filter: brightness(1.06); }
+  }
+
+  .qord {
+      opacity: .75;
+      font-size: 12px
+  }
+
+  .qprev {
+      display: block;
+      margin-top: 6px;
+      font-weight: 1000;
+      font-size: 14px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+  }
+
+  .qmeta {
+      margin-top: 6px;
+      opacity: .75;
+      font-size: 12px
+  }
+
+  .qcard .x {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--line);
+      --btn-tint: var(--w-8);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+
+      color: var(--text-soft);
+      font-weight: 1000;
+      display: grid;
+      place-items: center;
+      cursor: pointer
+  }
+
+  .empty {
+      opacity: .8;
+      font-size: 13px;
+      padding: 16px
+  }
+
+  .rightPanel.hasQ .editorBox {
+      display: flex
+  }
+
+  .editorBox,.rightPanel.hasQ .empty {
+      display: none
+  }
+
+  .editorBox {
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+  }
+
+  .block {
+      margin-bottom: 12px
+  }
+
+  .answersBlock {
+      margin-top: 0;
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+      flex: 1;
+      grid-template-rows: auto 1fr auto; /* nagłówek z sumą, lista, hintBottom */align-content: start; /* nie rozciągaj wierszy */
+  }
+
+  .answersTop {
+      min-height: 0;
+  }
+
+  .editor.only-questions .answersBlock {
+      display: none
+  }
+
+
+  /* „Dodaj pytanie”: wspólne .addCard; w kolumnie listy niższe. */
+  #qList > .addCard { min-height: 100px; }
+
+  .qcard.good {
+      border-color: var(--ok-line);
+      --btn-tint: var(--ok-tint);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+  }
+
+  .qcard.bad {
+      border-color: var(--bad-line);
+      --btn-tint: var(--bad-tint);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, var(--bg)); /* kryjące: css/base.css */
+  }
+
+  .qcard.active:not(.addCard) {
+      border-color: var(--accent);
+      background-image:
+          linear-gradient(var(--g-10), var(--g-10)),
+          linear-gradient(var(--btn-tint), var(--btn-tint));
+      background-color: var(--under, var(--bg));
+      box-shadow: 0 0 0 2px var(--g-60), 0 10px 22px var(--k-40);
+  }
+
+  /* Okno importu: wspólne .overlay/.modal/.importRow/.importTa/.import-preview z silnika. */
+
+  @media (max-width: 600px) {
+      .left,.rightPanel {
+          padding: 12px;
+          border-radius: var(--r-lg)
+      }
+
+      .list {
+          gap: 8px;
+          padding: 0;
+      }
+
+      .importInline {
+          align-items: flex-start;
+      }
+
+      .qcard {
+          padding: 10px;
+          padding-right: 48px;
+          border-radius: var(--r-md);
+          min-height: 72px
+      }
+
+      .qord {
+          font-size: 11px
+      }
+
+      .qmeta,.qprev {
+          font-size: 13px;
+          margin-top: 4px
+      }
+
+      .qmeta {
+          font-size: 11px
+      }
+
+      .qcard .x {
+          top: 8px;
+          right: 8px;
+          width: 28px;
+          height: 28px;
+          border-radius: var(--r-sm)
+      }
+
+      #qList > .addCard {
+          padding: 10px;
+          min-height: 90px
+      }
+
+
+  }
+
+  @media (max-width: 980px) {
+      body.editor-body .layout {
+          grid-template-columns: 1fr;
+      }
+
+      body.editor-body .left {
+          width: auto;
+          min-width: 0;
+      }
+
+      body.editor-body.mobile-editing {
+          overflow: hidden;
+      }
+
+      body.editor-body.mobile-editing .left {
+          display: none;
+      }
+
+      body.editor-body.mobile-editing .rightPanel {
+          display: block;
+      }
+
+      body.editor-body:not(.mobile-editing) .rightPanel {
+          display: none;
+      }
+
+      body.editor-body.mobile-editing .rowTop .name-field {
+          display: none;
+      }
+
+
+  }
+
+  @media (max-width: 600px) and (orientation: portrait) {
+      body.editor-body .layout {
+          min-height: 0;
+          flex: 1;
+      }
+
+      body.editor-body .left,
+      body.editor-body .rightPanel {
+          max-height: 100%;
+      }
+
+      body.editor-body .listShell,
+      body.editor-body .qf-listShell {
+          overflow: auto;
+      }
+
+
+  }
+
+  @media (max-height: 500px) {
+      body.editor-body {
+          overflow: auto;
+      }
+
+      body.editor-body.mobile-editing {
+          overflow: auto;
+      }
+
+      body.editor-body .wrap {
+          flex: 0 0 auto;
+          overflow: visible;
+      }
+
+      body.editor-body .layout {
+          flex: 0 0 auto;
+          min-height: auto;
+      }
+
+      body.editor-body .left,
+      body.editor-body .rightPanel {
+          height: auto;
+          min-height: auto;
+          max-height: none;
+          overflow: visible;
+      }
+
+      body.editor-body .listShell,
+      body.editor-body .qf-listShell {
+          overflow: visible;
+          flex: 0 0 auto;
+      }
+  }
+}

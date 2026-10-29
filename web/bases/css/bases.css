@@ -1,0 +1,86 @@
+/* css/bases.css
+   BASES — layout jak games: karta z 2 wypustkami (Moje / Udostępnione).
+
+   Każda szerokość ekranu:
+   - 2 wypustki 50/50, widoczna tylko aktywna sekcja (scroll w gridzie)
+   - strona nie scrolluje (games.css)
+
+   Mobile landscape (<=980px): scroll na stronie, karta wg contentu,
+   bez wewnętrznych scrolli.
+*/
+@layer page {
+  /* =========================================================
+     SHARE MODAL + tile badges
+  ========================================================= */
+
+  /* Okno „Udostępnij bazę”: uprawnienie po lewej w stopce, Anuluj i Udostępnij po prawej. */
+  .shareSendModal .uni-foot{ align-items: center; justify-content: flex-end; }
+  .shareSendModal .uni-foot > .baseShareRoleSlot{ order: -1; margin-right: auto; }
+  .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
+  .baseShareSections .shareSection{ margin-top: 0; }
+  #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
+  #baseDeclinesHost .shareSection{ margin-top: 8px; }
+  #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
+  #baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; white-space: normal; } /* „od · odrzucono · zniknie za” w całości, jak w Zadaniach */
+  @media (max-width: 600px){
+    .modal.shareModal{ max-height: none; }
+    .baseShareLookup .inp{ flex: 1 1 0; }
+    .baseShareSections .shareList--scroll{ max-height: 180px; }
+  }
+
+  /* .btn.xs przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
+     control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
+     ładują tego pliku wcale (zgłoszone: przycisk tam wyglądał jak pełnowymiarowy
+     .btn). Zostaje tu zaimportowane niejawnie przez base.css, nie duplikowane. */
+
+  /* oznaczenia na kafelku: .tag z base.css (kolor wg data-kind w bases.js) */
+
+  /* =========================================================
+     KARTA Z WYPUSTKAMI (wszystkie szerokości)
+     Kształt wypustek wspólny (base.css, aktywna karta to sam .tab-label), 2 × 50%.
+  ========================================================= */
+
+  /* Wypustki: silnik (.tabs-card). */
+
+
+  /* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),
+     widoczny także na aktywnej wypustce, jak w Ankietach i Subskrypcjach */
+
+  /* Gość: bez udostępnień, więc bez wypustek -- zwykła, zaokrąglona karta */
+
+  /* widoczna tylko aktywna sekcja; scroll w jej gridzie */
+  .bases-layout{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .bases-section{ display: none; }
+  .bases-section.active{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .bases-section .grid{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+}
+
+
+
+@layer page {
+
+
+  /* Okno udostępniania bazy: pusta sekcja listy nie zmniejsza karty do
+     samego kafla braku (w oknie od dołu wysokość dzieli silnik). */
+  #shareOverlay .uni-body > .shareSection--shared,
+  #shareSendOverlay .baseShareSections > .shareSection--friends {
+    min-height: 180px;
+    box-sizing: border-box;
+  }
+}

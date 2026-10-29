@@ -1,0 +1,226 @@
+/* display/styles.css */
+
+html.page-loading body { opacity: 0; }
+body { transition: opacity .3s ease-in; }
+
+body,html {
+    height: 100%;
+    margin: 0
+}
+
+body {
+    background: #000;
+    overflow: hidden
+}
+
+.fs-btn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.28);
+    background: rgba(0,0,0,.28);
+    color: rgba(255,255,255,.92);
+    font: 600 16px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    user-select: none;
+    z-index: 9999
+}
+
+.fs-btn:hover {
+    background: rgba(0,0,0,.38)
+}
+
+.fs-btn:active {
+    transform: translateY(1px)
+}
+
+.fs-btn.is-active {
+    border-color: rgba(215,255,61,.55)
+}
+
+/* Ukryte ekrany i karty QR (qr.js: classList "hidden"). Reguły ekranów
+   z display pomijają .hidden (:not(.hidden)), więc ukrycie zawsze wygrywa. */
+.hidden {
+    display: none
+}
+
+/* Wideo podtrzymania ekranu (core/keep-alive.js) — Wyświetlacz nie wczytuje
+   silnika, więc ta sama reguła co w components.css. */
+.keep-alive-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none
+}
+
+.qr-screen:not(.hidden) {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: grid;
+    place-items: center;
+    z-index: 2000
+}
+
+.qr-grid {
+    width: min(1100px,92vw);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: min(6vw,80px);
+    align-items: center
+}
+
+.qr-card {
+    display: grid;
+    justify-items: center;
+    gap: 18px
+}
+
+.qr-img {
+    width: min(420px,38vw);
+    height: auto;
+    aspect-ratio: 1; /* kwadrat od razu, zanim obraz się zdekoduje (bez białego paska) */
+    image-rendering: pixelated;
+    border-radius: 18px;
+    background: #fff;
+    padding: 18px
+}
+
+.qr-code {
+    font: 700 48px/1 'Courier New',Courier,monospace;
+    color: #f5d06e;
+    letter-spacing: .18em;
+    min-height: 1.1em
+}
+
+.qr-label {
+    font: 700 26px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color: #fff;
+    letter-spacing: .6px
+}
+
+.qr-single {
+    grid-template-columns: 1fr;
+    justify-items: center
+}
+
+.black-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 1500
+}
+
+/* display2.html WYŁĄCZNIE (#audioUnlockScreen nie istnieje w starym
+   display.html) — nad #qrScreen/#blackScreen/#gameScreen, dopóki dźwięk
+   "ze źródła Wyświetlacz" nie zostanie odblokowany jednym kliknięciem. */
+.audio-unlock-screen:not(.hidden) {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0,0,0,.86);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px
+}
+
+/* Ta sama "szklana" stylistyka co już istniejący .fs-btn na tej stronie
+   (rgba(0,0,0,.28) + biała obwódka + blur) — zamiast wprowadzać nowy,
+   niespójny akcent koloru, tylko większy/bardziej widoczny wariant tego
+   samego przycisku, bo to główna akcja tego ekranu. */
+.audio-unlock-btn {
+    appearance: none;
+    border-radius: 16px;
+    padding: 20px 36px;
+    font: 700 24px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255,255,255,.4);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px)
+}
+
+.audio-unlock-btn:hover {
+    background: rgba(0,0,0,.4)
+}
+.audio-unlock-btn { min-width: min(70vw, 640px); min-height: 110px; font-size: clamp(24px, 3vw, 42px); }
+.audio-unlock-btn:focus-visible { outline: 5px solid #ffd45a; outline-offset: 10px; }
+
+/* ===== 3 WARSTWY WYŚWIETLANIA ===== */
+
+#gameScreen:not(.hidden) {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.display-root {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.display-frame {
+    position: relative;
+    width: min(100vw, 177.78vh);
+    height: min(100vh, 56.25vw);
+    aspect-ratio: 1280 / 720;
+}
+
+.layer-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.layer-base {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.layer-displays {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+}
+
+svg circle,svg rect {
+    transition: none
+}
+/* Powolne odsłanianie ekranu po pierwszym stanie gry/renderze. */
+[data-skel-step] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+[data-skel-step].skel-step-ready {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}

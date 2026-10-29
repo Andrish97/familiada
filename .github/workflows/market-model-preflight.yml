@@ -1,0 +1,31 @@
+name: Market model capacity (read only)
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Configure existing deployment identity
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SERVER_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+      - name: Read numeric capacity only
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'python3 -' <<'PY'
+          import os,json,shutil
+          data={}
+          with open('/proc/meminfo') as source:
+              for line in source:
+                  parts=line.split()
+                  if parts[0].rstrip(':') in ['MemTotal','MemAvailable','SwapTotal','SwapFree']:
+                      data[parts[0].rstrip(':')+'_bytes']=int(parts[1])*1024
+          data['cpu_count']=os.cpu_count()
+          data['disk_available_bytes']=shutil.disk_usage('/').free
+          print(json.dumps(data))
+          PY
