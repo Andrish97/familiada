@@ -373,6 +373,7 @@ test("manual: podzielony ekran tabletu — Wskazówki działają, nakładka blok
 test("manual: podgląd zrzutu — na komputerze cały obraz w oknie i przybliżanie myszą, na tablecie palcami", async ({ browser }) => {
   const open = async (page) => {
     await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6#s-6-1`, { waitUntil: "domcontentloaded" });
+    await manualReady(page);
     const shot = page.locator(".m-shot-zoom").first();
     await expect.poll(() => shot.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
     await shot.click();

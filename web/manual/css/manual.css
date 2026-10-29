@@ -536,8 +536,10 @@
   }
   .m-carousel-track::-webkit-scrollbar { display: none; }
   .m-carousel .m-shot { flex: 0 0 100%; margin: 0; scroll-snap-align: center; }
-  .m-carousel .m-shot img { max-height: min(420px, 62vw); width: auto; max-width: 100%; margin: 0 auto; }
-  .m-carousel .m-shot-zoom { width: auto; max-width: 100%; margin: 0 auto; }
+  /* Szerokość znana przed wczytaniem (limit wysokości × proporcja zrzutu 1400×875):
+     przy width:auto leniwy obrazek dalszego slajdu miał 0×0 i nigdy się nie wczytywał. */
+  .m-carousel .m-shot img { max-height: min(420px, 62vw); margin: 0 auto; }
+  .m-carousel .m-shot-zoom { width: min(100%, calc(min(420px, 62vw) * 1.6)); margin: 0 auto; }
   .m-carousel-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
   .m-carousel-dots { display: flex; gap: 6px; }
   .m-carousel-dot {
