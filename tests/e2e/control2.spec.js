@@ -3898,7 +3898,7 @@ test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu 
     for (const route of held) await route.continue().catch(() => {});
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 30000 });
     console.log(`[e2e-diag] resume: Przycisk z powrotem po ${Date.now() - resumedAt} ms`);
-    // Po powrocie z tła ekran wraca (przyciski wyłączone), w pojedynku znika.
+    // Po powrocie z tła ekran wraca (poza pojedynkiem), w pojedynku znika.
     await expect(wakeOverlay).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();

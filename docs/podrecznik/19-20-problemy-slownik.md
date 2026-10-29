@@ -102,7 +102,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   łączy się samo w kilka sekund.
 - **„Ekran może się wygasić”** na iPhonie lub iPadzie → Safari pozwala utrzymać włączony ekran
   dopiero po dotknięciu strony → naciśnij [Nie wygaszaj ekranu]; komunikat wraca po powrocie
-  z innej aplikacji. Na przycisku do pojedynku pojawia się tylko, gdy przyciski są wyłączone.
+  z innej aplikacji. Na przycisku do pojedynku nie pojawia się w trakcie pojedynku.
   Jeśli ekran i tak gaśnie, wyłącz tryb oszczędzania energii.
 - **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
   „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.

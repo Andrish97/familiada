@@ -50,9 +50,12 @@ async function main() {
   const { gameId, key } = parseParams();
   const loadError = document.getElementById("deviceLoadError");
   const offScreen = document.getElementById("offScreen");
-  // iPhone/iPad: ekran „nie wygaszaj” tylko przy wyłączonych przyciskach —
-  // w pojedynku nie może zabrać naciśnięcia, a samo naciśnięcie jest gestem.
-  const wakePrompt = initWakePrompt({ canShow: () => !!offScreen && !offScreen.hidden });
+  // iPhone/iPad: ekran „nie wygaszaj” poza pojedynkiem — przyciski działają
+  // tylko w kroku r_duel (render.js); tam ekran nie może zabrać naciśnięcia,
+  // a samo naciśnięcie jest gestem. Między pojedynkami telefon leży
+  // nietknięty najdłużej.
+  let lastRowStep = null;
+  const wakePrompt = initWakePrompt({ canShow: () => lastRowStep !== "r_duel" });
   const revealStep = (element) => {
     if (!element) return;
     element.hidden = false;
@@ -161,6 +164,7 @@ async function main() {
       }
       lastRow = row;
       presses.render(row);
+      lastRowStep = row.step || null;
       wakePrompt.sync();
       lease.setProgress({ renderedRev: Number(row.rev) || 0 });
       initialStateReady = true;

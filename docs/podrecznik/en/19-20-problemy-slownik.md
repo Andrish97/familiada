@@ -102,7 +102,7 @@ Each item: **symptom** → possible cause → what to do.
   reconnects on its own within a few seconds.
 - **"The screen may turn off"** on an iPhone or iPad → Safari keeps the screen on only after the
   page is tapped → press [Keep screen on]; the message returns after you come back from another
-  app. On the duel buzzer it appears only while the buttons are off. If the screen still turns
+  app. On the duel buzzer it never appears during a duel. If the screen still turns
   off, switch off Low Power Mode.
 - **The QR code was scanned several times** → the screen opened last works, the earlier ones show
   "This device was opened elsewhere" → use the newest screen and close the tabs you do not need.
