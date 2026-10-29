@@ -92,7 +92,9 @@ async function handleCodeConnect() {
     setCodeMsg("");
     void showDevicePreview(data);
   } catch (e) {
-    setCodeMsg(e?.message || t("common.genericError"));
+    // Brak sieci albo błąd Workera: komunikat w języku strony, nie surowy błąd przeglądarki.
+    console.warn("[connect] resolve code failed", e);
+    setCodeMsg(t("connectDevice.enterCode.networkError"));
   } finally {
     if (btnConnectCode) btnConnectCode.disabled = false;
   }

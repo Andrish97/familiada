@@ -150,8 +150,11 @@ function render() {
       b.className = "btn full";
       b.textContent = a.text || MSG.answerFallback(a.ord);
 
-      b.addEventListener("click", () => {
+      b.addEventListener("click", (e) => {
         if (voteView.finished || submitting) return;
+        // Drugie kliknięcie dwukliku trafia w przycisk następnego pytania, którego
+        // głosujący jeszcze nie widział — nie może za niego odpowiedzieć.
+        if (e.detail > 1) return;
 
         // zapamiętaj wybór (bez wysyłki)
         const packed = { question_id: q.id, answer_id: a.id };
