@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T02360";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T03194";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T02360";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-29T02360";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-29T02360";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-29T02360";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-29T02360";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-29T02360";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-29T02360";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T03194";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-29T03194";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-29T03194";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-29T03194";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-29T03194";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-29T03194";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-29T03194";
 
 
 const status = document.getElementById("status");
@@ -59,7 +59,7 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
   // Link zmiany adresu (albo migracji gościa) tego samego konta, otwarty w jego
   // sesji: nic nie przełączamy -- usunięcie gościa skasowałoby przenoszone konto.
-  const pendingTo = String(currentUser.user_metadata?.familiada_email_change_pending || "").trim().toLowerCase();
+  const pendingTo = String(currentUser.user_metadata?.familijna_email_change_pending || "").trim().toLowerCase();
   const linkTo = String(qp("to") || "").trim().toLowerCase();
   if ((qp("type") || hp("type")) === "email_change" && pendingTo && pendingTo === linkTo) return true;
 
@@ -130,9 +130,9 @@ async function markEmailIntentConfirmed(email) {
 // convertGuestToRegisteredEmailOnly w auth.js. Intent trzeba odczytać z
 // metadanych PRZED ich wyczyszczeniem poniżej.
 async function finishEmailChangeConfirmation(user) {
-  const intent = user?.user_metadata?.familiada_email_change_intent || "";
+  const intent = user?.user_metadata?.familijna_email_change_intent || "";
   try {
-    await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
+    await sb().auth.updateUser({ data: { familijna_email_change_pending: "", familijna_email_change_intent: "" } });
   } catch {}
   if (intent === "guest_migrate") {
     try {

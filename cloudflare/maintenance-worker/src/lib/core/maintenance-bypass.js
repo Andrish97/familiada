@@ -7,7 +7,7 @@ import { getCookie } from "./http.js";
 // 12 h; weryfikacja podpisu stałoczasowa (crypto.subtle.verify).
 export const ADMIN_BYPASS_TTL_SECONDS = 12 * 60 * 60;
 const BYPASS_PREFIX = "v1";
-const BYPASS_CONTEXT = "familiada-admin-bypass";
+const BYPASS_CONTEXT = "familijna-admin-bypass";
 
 function bytesToB64url(bytes) {
   let bin = "";

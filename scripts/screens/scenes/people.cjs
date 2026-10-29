@@ -222,7 +222,7 @@ module.exports = [
 
   // ================= Konto =================
   { id: "people-account-email-pending", category: C, title: "Konto — zmiana e-maila w toku (Anuluj / Wyślij ponownie)", path: "/account/", sources: ACCOUNT, ready: "#emailPendingActions:not([hidden])",
-    db: (db) => { db.user.user_metadata = { ...db.user.user_metadata, familiada_email_change_pending: "jan.nowy@example.com" }; } },
+    db: (db) => { db.user.user_metadata = { ...db.user.user_metadata, familijna_email_change_pending: "jan.nowy@example.com" }; } },
   { id: "people-account-cooldowns", category: C, title: "Konto — blokady czasowe po zmianie nazwy, e-maila i hasła", path: "/account/", sources: ACCOUNT, ready: "#usernameCooldown:not([hidden])",
     db: (db) => { db.rpc.cooldown_get = futureRows(["account:username", "account:email", "account:password"], [42, 18, 55]); } },
   { id: "people-account-username-saved", category: C, title: "Konto — nazwa użytkownika zapisana (komunikat)", path: "/account/", sources: ACCOUNT, ready: "#ratingEditBtn",
