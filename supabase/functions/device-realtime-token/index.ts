@@ -12,6 +12,12 @@ const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 // This must be the signing secret configured for the Supabase project's JWTs.
 // Never fall back to the anon/service key: tokens must be accepted by Realtime.
 const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") || Deno.env.get("JWT_SECRET") || "";
+// Ważność tokenu kanału urządzenia. Nie jest zabezpieczeniem: RLS
+// (control_device_realtime_claim_valid) przy każdym wierszu sprawdza sesję,
+// lease, epokę i ostatni sygnał z 12 s, więc token po utracie lease i tak
+// niczego nie odczyta, a nowa epoka dostaje nowy token. Krótki czas (300 s)
+// wymuszał przebudowę kanału co 4 min (eksport 29.10).
+const TOKEN_TTL_S = 6 * 3600;
 const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -39,7 +45,7 @@ async function signToken(claims: Record<string, unknown>): Promise<string> {
     role: "anon",
     iat: now,
     nbf: now - 2,
-    exp: now + 300,
+    exp: now + TOKEN_TTL_S,
     ...claims,
   })));
   const input = `${header}.${payload}`;
@@ -77,7 +83,7 @@ serve(async (req) => {
     });
     if (error || !data) return json({ ok: false, error: "forbidden" }, 403);
     const token = await signToken(data as Record<string, unknown>);
-    return json({ ok: true, token, expires_in: 300 });
+    return json({ ok: true, token, expires_in: TOKEN_TTL_S });
   } catch (error) {
     console.error("device-realtime-token failed", String((error as Error)?.message || error));
     return json({ ok: false, error: "token_issue_failed" }, 500);

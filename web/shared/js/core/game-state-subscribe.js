@@ -280,6 +280,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let directClient = null;
   let lastSocketClose = null;
   let ignoreCleanSocketCloseUntil = 0;
+  // Planowa wymiana tokenu przed jego wygaśnięciem: nowy kanał zastępuje
+  // stary, a diagnostyka zapisuje token_refresh zamiast zerwania.
+  let plannedRefreshAt = null;
   const recentSocketClose = () => lastSocketClose && performance.now() - lastSocketClose.at <= 5_000
     ? { ...lastSocketClose.details } : {};
   // Lease, dla którego wystawiono token kanału (claims: połączenie + epoka).
@@ -314,6 +317,12 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function onDirectReady() {
     if (!active) return;
     directRetry.reset();
+    if (plannedRefreshAt != null) {
+      sendDiagnostic("transport_state", "token_refresh", "postgres_changes", {
+        status: "SUBSCRIBED", duration_ms: Math.max(0, Math.round(performance.now() - plannedRefreshAt)),
+      });
+      plannedRefreshAt = null;
+    }
     const recoveredAt = directIncidentAt;
     const incident = directIncident;
     const incidentMetrics = recoveredAt != null && incident ? {
@@ -378,7 +387,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
   }
 
-  async function startDirect() {
+  async function startDirect({ planned = false } = {}) {
     if (!active) return;
     directRetry.cancel();
     const lease = getLeaseArgs();
@@ -399,7 +408,13 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       if (!active) { directToken = null; return; }
       directUnavailableLogged = false;
       if (directChannel || directTableChannels.size) ignoreCleanSocketCloseUntil = performance.now() + 5_000;
-      if (directChannel) await client.removeChannel(directChannel);
+      // Stary kanał odłączamy jako już nieaktualny: jego CLOSED po
+      // removeChannel nie jest awarią (wcześniej każda wymiana tokenu
+      // zapisywała reconnect_scheduled i planowała zbędne ponowienie).
+      const previousChannel = directChannel;
+      directChannel = null;
+      plannedRefreshAt = planned && previousChannel ? performance.now() : null;
+      if (previousChannel) await client.removeChannel(previousChannel).catch(() => {});
       for (const channel of directTableChannels.values()) await client.removeChannel(channel).catch(() => {});
       directTableChannels.clear();
       directTableConnected.clear();
@@ -470,7 +485,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       }
       clearTimeout(tokenTimer);
       tokenRetryMs = 1_000;
-      tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 240_000);
+      // Wymiana 5 min przed wygaśnięciem (serwer podaje expires_in).
+      const expiresInS = Number(data.expires_in);
+      const refreshMs = Number.isFinite(expiresInS) ? Math.max(60, expiresInS - 300) * 1000 : 240_000;
+      tokenTimer = setTimeout(() => { if (active) void startDirect({ planned: true }); }, refreshMs);
     } catch (error) {
       // No token/config or temporary Realtime failure: RPC + doorbell + poll
       // remain active, so the current transport continues to work.
@@ -500,6 +518,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     directRetry.cancel();
     clearTimeout(tokenTimer);
     tokenTimer = null;
+    plannedRefreshAt = null;
     const client = directClient;
     if (directChannel || directTableChannels.size) ignoreCleanSocketCloseUntil = performance.now() + 5_000;
     if (directChannel) {
