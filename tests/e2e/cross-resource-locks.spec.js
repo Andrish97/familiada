@@ -13,6 +13,7 @@
 //    overlay i nie odpytuje dalej (nigdy się nie "zwolni").
 
 const { test, expect } = require("./helpers/e2e-test");
+const { seedOpenPoll, importClosedPoll } = require("./helpers/game-seed");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 // Kod stron z brancha (jak editor/logo-editor): selektory śledzą bieżący
@@ -108,15 +109,8 @@ test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrze
   await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-POLLOPEN-${Date.now()}`;
-  const gameId = await page.evaluate(async (name) => {
-    const sb = window.__sbClient;
-    const { data: userData } = await sb.auth.getUser();
-    const { data, error } = await sb.from("games")
-      .insert({ name, owner_id: userData.user.id, type: "poll_text", status: "poll_open" })
-      .select("id").single();
-    if (error) throw new Error(error.message);
-    return data.id;
-  }, gameName);
+  // otwarta ankieta przez poll_open (stanu nie ustawia się zapisem z przeglądarki, 513)
+  const gameId = await seedOpenPoll(page, { type: "poll_text", name: gameName });
 
   try {
     await page.goto("https://www.familijna.app/games", { waitUntil: "domcontentloaded" });
@@ -605,22 +599,10 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
   await loginAs(page, context, gameAccount(accounts));
 
   const gameName = `E2E-XLOCK-RESET-${Date.now()}`;
-  const { gameId, questionId } = await page.evaluate(async (name) => {
-    const sb = window.__sbClient;
-    const { data: userData } = await sb.auth.getUser();
-    const { data: game, error: gErr } = await sb.from("games")
-      .insert({ name, owner_id: userData.user.id, type: "poll_text", status: "ready" })
-      .select("id").single();
-    if (gErr) throw new Error(gErr.message);
-    const { data: q, error: qErr } = await sb.from("questions")
-      .insert({ game_id: game.id, ord: 1, text: "Pytanie 1" })
-      .select("id").single();
-    if (qErr) throw new Error(qErr.message);
-    const { error: aErr } = await sb.from("answers")
-      .insert({ question_id: q.id, ord: 1, text: "Odp 1", fixed_points: 42 });
-    if (aErr) throw new Error(aErr.message);
-    return { gameId: game.id, questionId: q.id };
-  }, gameName);
+  // zamknięta ankieta (pierwsza odpowiedź 42 pkt) -- import .famgame (513)
+  const imported = await importClosedPoll(page, { type: "poll_text", name: gameName, points: [42, 20, 10] });
+  const gameId = imported.id;
+  const questionId = imported.questionIds[0];
 
   const settingsPage = await context.newPage();
   try {

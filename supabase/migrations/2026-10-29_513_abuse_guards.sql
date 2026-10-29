@@ -642,11 +642,13 @@ CREATE TRIGGER a_guard_profile_client_write BEFORE INSERT OR UPDATE ON public.pr
   FOR EACH ROW EXECUTE FUNCTION public.guard_profile_client_write();
 
 -- ----------------------------------------------------------------------
--- G2, G3: gra z przeglądarki — nowa tylko jako szkic własnego typu (jak
--- games.js createGame), zmiana tylko nazwy i ustawień (edytor, Ustawienia
--- gry). Typ, stan ankiety, pochodzenie (Społeczność, demo, „Od:”) i klucze
--- zmieniają wyłącznie funkcje serwera. Nazwa „a_…” — przed innymi
--- wyzwalaczami BEFORE, które same uzupełniają te kolumny.
+-- G2, G3: gra z przeglądarki — nowa tylko własnego typu (jak games.js
+-- createGame), zmiana nazwy i ustawień (edytor, Ustawienia gry). Typ,
+-- pochodzenie (Społeczność, zdjęcie flagi demo, „Od:”), klucze i daty ankiety
+-- zmieniają wyłącznie funkcje serwera. Gra ankietowa staje się „gotowa” tylko
+-- przez podliczenie ankiety (szkic -> gotowa omijał ankietę; zamknięcie otwartej
+-- blokuje guard_game_poll_close). Nazwa „a_…” — przed innymi wyzwalaczami
+-- BEFORE, które same uzupełniają te kolumny.
 CREATE OR REPLACE FUNCTION public.guard_game_client_write()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -657,16 +659,17 @@ begin
     return new;
   end if;
   if tg_op = 'INSERT' then
-    if new.type not in ('prepared', 'poll_text', 'poll_points') or new.status is distinct from 'draft'
-       or new.source_market_id is not null or coalesce(new.is_demo, false)
+    if new.type not in ('prepared', 'poll_text', 'poll_points') or (new.type <> 'prepared' and new.status = 'ready')
+       or new.source_market_id is not null
        or new.received_from_label is not null or new.received_from_identity is not null then
       raise exception 'game_write_forbidden' using errcode = '42501';
     end if;
     return new;
   end if;
   if new.owner_id is distinct from old.owner_id or new.type is distinct from old.type
-     or new.status is distinct from old.status or new.source_market_id is distinct from old.source_market_id
-     or new.is_demo is distinct from old.is_demo
+     or (old.type <> 'prepared' and old.status = 'draft' and new.status = 'ready')
+     or new.source_market_id is distinct from old.source_market_id
+     or (coalesce(old.is_demo, false) and not coalesce(new.is_demo, false))
      or new.received_from_label is distinct from old.received_from_label
      or new.received_from_identity is distinct from old.received_from_identity
      or new.share_key_poll is distinct from old.share_key_poll

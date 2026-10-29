@@ -147,6 +147,16 @@ do $$ declare n int; begin begin
   perform pg_temp.done('G2 kopia Społeczności -> własna gra', n > 0);
 exception when others then perform pg_temp.record(sqlerrm, 'G2 kopia Społeczności -> własna gra', sqlstate); end; end $$;
 
+-- G2b: gra demo (szablon serwisu) zamieniona we własną (np. do wysłania do Społeczności).
+do $$ declare n int; begin begin
+  insert into public.games(id, owner_id, name, type, status, is_demo) values
+    ('b1000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-00000000000b', 'demo B', 'prepared', 'draft', true);
+  perform pg_temp.as_user('b0000000-0000-4000-8000-00000000000b');
+  update public.games set is_demo = false where id = 'b1000000-0000-4000-8000-000000000002';
+  get diagnostics n = row_count;
+  perform pg_temp.done('G2b gra demo -> własna gra', n > 0);
+exception when others then perform pg_temp.record(sqlerrm, 'G2b gra demo -> własna gra', sqlstate); end; end $$;
+
 -- G3: gra ankietowa „gotowa” bez przeprowadzenia ankiety.
 do $$ declare n int; begin begin
   perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
@@ -154,6 +164,14 @@ do $$ declare n int; begin begin
   get diagnostics n = row_count;
   perform pg_temp.done('G3 ankieta gotowa bez ankiety', n > 0);
 exception when others then perform pg_temp.record(sqlerrm, 'G3 ankieta gotowa bez ankiety', sqlstate); end; end $$;
+
+-- G3b: gra ankietowa wstawiona od razu jako „gotowa”.
+do $$ declare n int; begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  insert into public.games(owner_id, name, type, status) values ('a0000000-0000-4000-8000-00000000000a', 'gotowa od razu', 'poll_points', 'ready');
+  get diagnostics n = row_count;
+  perform pg_temp.done('G3b ankieta wstawiona jako gotowa', n > 0);
+exception when others then perform pg_temp.record(sqlerrm, 'G3b ankieta wstawiona jako gotowa', sqlstate); end; end $$;
 
 -- G4: nazwa logo bez limitu.
 do $$ declare n int; begin begin
@@ -352,6 +370,8 @@ select pg_temp.legit('L05 edytor: pytanie i odpowiedź w szkicu', 'a0000000-0000
   $q$insert into public.questions(game_id, ord, text) values ('a1000000-0000-4000-8000-000000000001', 11, 'nowe');
      update public.answers set text = 'zmiana' where question_id = 'a2000000-0000-4000-8000-000000000101' and ord = 1;
      update public.answers set question_id = 'a2000000-0000-4000-8000-000000000999' where question_id = 'a2000000-0000-4000-8000-000000000101' and ord = 2$q$);
+select pg_temp.legit('L05b otwarcie ankiety zmianą statusu (Warstwa 2)', 'a0000000-0000-4000-8000-00000000000a',
+  $q$update public.games set status = 'poll_open' where id = 'a1000000-0000-4000-8000-000000000003'$q$);
 select pg_temp.legit('L06 pytanie w bazie: 6 odpowiedzi 0–100 pkt', 'a0000000-0000-4000-8000-00000000000a',
   $q$select public.qb_create_question('a4000000-0000-4000-8000-000000000001', null,
        jsonb_build_object('text', 'ok', 'answers', (select jsonb_agg(jsonb_build_object('text', 'o' || i, 'fixed_points', i * 10)) from generate_series(1, 6) i)))$q$);
