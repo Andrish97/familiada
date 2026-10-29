@@ -7,20 +7,20 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Obecność, widoczność
 // karty i odblokowanie dźwięku zapisuje heartbeat lease (device-lease.js).
 
-import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-29T03210";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-29T03210";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-29T03210";
-import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T03210";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T03210";
-import { createScene } from "./scene.js?v=v2026-10-29T03210";
-import { createQRController } from "./qr.js?v=v2026-10-29T03210";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T03210";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-29T03210";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T03210";
-import { createRenderer } from "./render.js?v=v2026-10-29T03210";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-29T03210";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-29T03210";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-29T03210";
+import { initFullscreenButton } from "../../../shared/js/core/fullscreen.js?v=v2026-10-29T02360";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-29T02360";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-29T02360";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T02360";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T02360";
+import { createScene } from "./scene.js?v=v2026-10-29T02360";
+import { createQRController } from "./qr.js?v=v2026-10-29T02360";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T02360";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-29T02360";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-29T02360";
+import { createRenderer } from "./render.js?v=v2026-10-29T02360";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-29T02360";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, onAnySfxEnded, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-29T02360";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-29T02360";
 
 
 const $ = (id) => document.getElementById(id);
@@ -472,6 +472,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (!error) {
           reportedRenderRev = revision;
           lease.setProgress({ renderedRev: revision });
+          // Sygnał dla Control i Przycisku: od razu sprawdzają potwierdzenie
+          // w bazie zamiast czekać na Realtime albo migawkę (eksport 29.10).
+          rt(doorbellTopic(game.id)).sendBroadcast("display_rendered", { rendered_rev: revision }, { mode: "http" }).catch(() => {});
         }
         else if (loggedCompletionErrorRev !== revision) {
           loggedCompletionErrorRev = revision;
@@ -484,6 +487,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       } finally { reportingCompletion = false; }
     }
+    // Potwierdzenie zaraz po końcu dźwięku (dawniej do 500 ms czekania na
+    // takt; eksport 29.10). Takt zostaje jako ponowienie zgubionego zapisu.
+    onAnySfxEnded(() => { void reportCompletion().catch(() => {}); });
     // Retry a lost acknowledgment without replaying any animation.
     setInterval(() => { void reportCompletion().catch(() => {}); }, 500);
     subscription = createSubscription({

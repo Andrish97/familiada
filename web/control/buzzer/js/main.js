@@ -130,6 +130,8 @@ async function main() {
     // Potwierdzenie Wyświetlacza prosto z tabeli potwierdzeń (RLS dla
     // urządzeń, migracja 376): Przycisk sprawdza gotowość od razu, bez
     // czekania na zmianę całego wiersza game_state (badanie 25.10).
+    // Sygnał Wyświetlacza o zapisanym potwierdzeniu — gotowość sprawdza RPC.
+    onBroadcast: { display_rendered: () => { void checkDisplayReady(); } },
     onDirectTables: {
       game_state_display_completion: ({ status }) => {
         if (status === "CHANGE" || status === "SUBSCRIBED") void checkDisplayReady();

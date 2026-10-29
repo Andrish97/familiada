@@ -420,6 +420,20 @@ export function isAnySfxPlaying() {
   return [...cache.values()].some(audio => !failedAudio.has(audio) && !audio.error && !audio.paused && !audio.ended);
 }
 
+// Koniec dowolnego dźwięku gry (playSfx). Wyświetlacz wysyła potwierdzenie
+// planszy zaraz po końcu dźwięku zamiast przy następnym takcie 500 ms.
+const endedObservers = new Set();
+export function onAnySfxEnded(observer) {
+  if (typeof observer !== "function") return () => {};
+  endedObservers.add(observer);
+  return () => endedObservers.delete(observer);
+}
+function reportEnded(key) {
+  for (const observer of endedObservers) {
+    try { observer(key); } catch {}
+  }
+}
+
 export function onSfxEnd(key, fn) {
   const a = cache.get(key);
   if (!a) return () => {};
@@ -442,6 +456,7 @@ export function playSfx(key) {
     reportPlayback({ key, failed: true, error: "sound_not_loaded", delayMs: 0 });
     return;
   }
+  a.addEventListener("ended", () => reportEnded(key), { once: true });
   try {
     const started = playSfxAudio(a, _getEffectiveVolume(key));
     if (started?.then) started.then(() => {

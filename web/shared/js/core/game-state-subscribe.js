@@ -245,8 +245,12 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // Dzwonek Control jest sprawdzany także przy połączonym kanale
   // bezpośrednim (doorbell-guard.js): zgubiona przez postgres_changes zmiana
   // nie czeka już na heartbeat lease.
+  // Najwyższa rewizja dostarczona przez sam kanał bezpośredni — zdrowie
+  // kanału liczymy niezależnie od odczytu RPC po dzwonku.
+  let directDeliveredRev = -1;
   const doorbell = createDoorbellGuard({
     getReceivedRev: () => sync.receivedRev,
+    getDirectRev: () => directDeliveredRev,
     isDirectConnected: () => active && directConnected,
     fetchNow: () => { if (active) void fetchGuarded(directConnected ? "rpc_doorbell" : "rpc_broadcast"); },
     onMissed: (metrics) => {
@@ -415,6 +419,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         const row = payload?.new;
         const rev = Number(row?.rev);
         if (row && Number.isFinite(rev)) {
+          directDeliveredRev = Math.max(directDeliveredRev, rev);
           doorbell.noteReceived(rev);
           noteDirectRevision(rev);
           sync.applyRow({ ...row, rev }, "postgres_changes");

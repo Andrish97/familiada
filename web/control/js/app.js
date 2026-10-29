@@ -1141,6 +1141,9 @@ async function main() {
   const displayCueStartWaiters = new Map();
   const displayDoorbell = rt(doorbellTopic(gameId));
   displayDoorbell.onStatus((status) => observeRealtimeState("display_transition_started", status));
+  // Wyświetlacz zapisał potwierdzenie planszy: sprawdź je w bazie od razu
+  // (sam broadcast nie jest dowodem — decyduje tabela potwierdzeń).
+  displayDoorbell.onBroadcast("display_rendered", () => { void refreshDisplayCompletion({ force: true }); });
   displayDoorbell.onBroadcast("display_transition_started", (message) => {
     const seq = Number(message?.payload?.sound_cue_seq);
     const waiter = displayCueStartWaiters.get(seq);
