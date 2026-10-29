@@ -275,25 +275,29 @@ test("control2: prywatne kanały z bazy — urządzenie, Control i odmowy", asyn
       }, { gid: game.id, key: keys[type], type });
       return { page: devicePage, ...info };
     };
+    // Odmowa: Realtime odpowiada błędem albo (pod obciążeniem) nie odpowiada
+    // przed limitem klienta — w obu przypadkach kanał się nie otwiera
+    // (przebieg 40877407202: TIMED_OUT przy równoległych ciężkich testach).
+    const DENIED = /^(CHANNEL_ERROR|TIMED_OUT)$/;
     const display = await openDevice("display");
     const host = await openDevice("host");
     expect(display.own, "Wyświetlacz dołącza do własnego kanału").toBe("SUBSCRIBED");
     expect(host.own, "Prowadzący dołącza do własnego kanału").toBe("SUBSCRIBED");
-    expect(display.control, "urządzenie nie dołączy do kanału Control").toBe("CHANNEL_ERROR");
+    expect(display.control, "urządzenie nie dołączy do kanału Control").toMatch(DENIED);
     // Cudzy kanał (Prowadzącego) z tokenem Wyświetlacza.
     const foreign = await display.page.evaluate(({ gid, conn }) => new Promise((resolve) => {
       const channel = window.__rt.channel(`game-state:${gid}:${conn}`, { config: { private: true } });
       const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
       channel.subscribe((status) => { if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); } });
     }), { gid: game.id, conn: host.connectionId });
-    expect(foreign, "token Wyświetlacza nie otworzy kanału Prowadzącego").toBe("CHANNEL_ERROR");
+    expect(foreign, "token Wyświetlacza nie otworzy kanału Prowadzącego").toMatch(DENIED);
     // Bez tokenu (zwykły anon) — odmowa.
     const anonJoin = await host.page.evaluate(({ gid, conn }) => new Promise((resolve) => {
       const channel = window.__sbClient.channel(`game-state:${gid}:${conn}`, { config: { private: true } });
       const timer = setTimeout(() => resolve("TIMEOUT"), 15000);
       channel.subscribe((status) => { if (["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status)) { clearTimeout(timer); resolve(status); } });
     }), { gid: game.id, conn: host.connectionId });
-    expect(anonJoin, "bez tokenu urządzenia brak dostępu").toBe("CHANNEL_ERROR");
+    expect(anonJoin, "bez tokenu urządzenia brak dostępu").toMatch(DENIED);
 
     // Control (właściciel): game-control:<gra>.
     const controlStatus = await page.evaluate((gid) => new Promise((resolve) => {
