@@ -18,6 +18,9 @@ import { isCompactLayout, onDeviceChange } from './device-attrs.js?v=v2026-10-29
 let _overflowState = null; // { expandAll, collapseAll, recalc }
 let _accountState = null;  // { expand, collapse }
 let _mobileActive = false;
+// Strona ustawiła konto sama (initPage: adresy z mapy, opcje strony) —
+// automatyczne ustawienie z domyślnymi adresami nie może go nadpisać.
+let _accountByPage = false;
 
 // Ten sam stan steruje dostępnością i ruchem strzałki, także przy zamknięciu z zewnątrz.
 function bindDisclosureState(trigger, popup, inline = () => false) {
@@ -282,7 +285,12 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
  * @param {function} [opts.onLogout]  callback przed wylogowaniem (może zwrócić Promise)
  * @returns {{ guestMode: boolean }}
  */
-export function setTopbarAccount(user, {
+export function setTopbarAccount(user, opts) {
+  _accountByPage = true;
+  return applyTopbarAccount(user, opts);
+}
+
+function applyTopbarAccount(user, {
   loginHref = '/login/',
   accountHref = '/account/',
   withAccountSettings = true,
@@ -443,13 +451,15 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
-  if (btn.dataset.topbarAuthReady === '1') return;
+  if (btn.dataset.topbarAuthReady === '1' || _accountByPage) return;
   const { getUser } = await import('./auth.js?v=v2026-10-29T14180');
 
-  if (btn.dataset.topbarAuthReady === '1') return;
+  if (btn.dataset.topbarAuthReady === '1' || _accountByPage) return;
   const user = await getUser();
-  if (btn.dataset.topbarAuthReady === '1') return;
-  setTopbarAccount(user);
+  // getUser bywa wolniejsze niż initPage strony — wtedy zostaje jej ustawienie
+  // (?ret= w „Ustawieniach konta”, ukryte „Zaloguj” na Prywatności).
+  if (btn.dataset.topbarAuthReady === '1' || _accountByPage) return;
+  applyTopbarAccount(user);
   btn.dataset.topbarAuthReady = '1';
 }
 

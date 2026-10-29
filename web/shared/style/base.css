@@ -158,7 +158,10 @@
   /* Stała wysokość z założenia, nie zmierzona: zmierzona --topbar-h
      „zapamiętywała” chwilowe zawinięcie paska podczas ładowania (tablet:
      pusty pas pod paskiem do końca wizyty). */
-  body.skel-body .topbar { min-height: var(--topbar-h-min); }
+  /* Ta sama wysokość paska na każdej stronie (także bez skel-body: Wskazówki,
+     Prywatność, Społeczność). */
+  body.skel-body .topbar,
+  .topbar.topbar-layout-4 { min-height: var(--topbar-h-min); }
   body.skel-body .topbar:not(.topbar-ready) .topbar-section-1 > :not(.brand),
   body.skel-body .topbar:not(.topbar-ready) .topbar-section-2 { visibility: hidden; }
   body.skel-body .topbar-section-3,
