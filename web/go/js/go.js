@@ -205,7 +205,7 @@ function addAction(label, kind, handler, action = "") {
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", copyToken ? (resolvedInviteData?.resource_kind === "logo" ? "logo" : "games") : friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
+  url.searchParams.set("next", copyToken ? "copy" : friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   if (baseToken) url.searchParams.set("b", baseToken);
   if (copyToken) url.searchParams.set("c", copyToken);

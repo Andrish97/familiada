@@ -1,5 +1,11 @@
 // Tłumaczenia PL — część wspólna — wczytuje ją każda strona.
 const pl = {
+  guestReminder: {
+    text: "Konto gościa zostanie usunięte za kilka dni. Zapisz swoje dane, zanim je stracisz.",
+    link: "Migruj teraz",
+    dismiss: "Nie pokazuj więcej",
+    close: "Zamknij",
+  },
   common: {
     passwordVisibility: "Pokaż hasło",
     menuOpen: "Otwórz menu",

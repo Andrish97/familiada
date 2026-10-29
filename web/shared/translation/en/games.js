@@ -1,11 +1,5 @@
 // Tłumaczenia EN — część „games”.
 const en = {
-  guestReminder: {
-    text: "Your guest account will be deleted in a few days. Save your data before you lose it.",
-    link: "Migrate now",
-    dismiss: "Don't show again",
-    close: "Close",
-  },
   gamesImportExport: {
     defaults: {
       gameName: "Game",

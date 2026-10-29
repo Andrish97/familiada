@@ -20,9 +20,10 @@ const pl = {
     shotN: "Widok {n} z {total}",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
-      modalText: "Zostaną dodane przykładowe materiały startowe.",
+      modalText: "Przykładowe gry, bazy pytań i logo wrócą do stanu początkowego. Zmienione materiały demo zostaną zastąpione.",
       modalOk: "Przywróć",
       modalCancel: "Anuluj",
+      restoreFailed: "Nie udało się przywrócić plików demo. Spróbuj ponownie.",
     },
   },
 };

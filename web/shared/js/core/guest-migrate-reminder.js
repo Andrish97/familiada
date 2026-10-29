@@ -6,6 +6,7 @@
 
 import { t } from "../../translation/translation.js?v=v2026-10-29T16143";
 import { icon } from "./icons.js?v=v2026-10-29T16143";
+import { linkTo } from "./nav-map.js?v=v2026-10-29T16143";
 
 
 const LAST_SHOWN_PREFIX = "fam:guest:migrate_last_shown:";
@@ -40,7 +41,7 @@ function buildBanner(uid) {
   text.textContent = t("guestReminder.text");
 
   const link = document.createElement("a");
-  link.href = "/account/";
+  link.href = linkTo("account"); // z językiem strony i powrotem (ret) wg mapy
   link.textContent = t("guestReminder.link");
 
   const dismissBtn = document.createElement("button");

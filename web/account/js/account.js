@@ -551,6 +551,7 @@ async function wireDemoActions(user) {
     const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
     if (error) {
       console.error("restore_my_demo error:", error);
+      toast(t("manual.demo.restoreFailed"), { kind: "error" });
       return;
     }
 

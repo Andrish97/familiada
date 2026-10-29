@@ -153,9 +153,8 @@ module.exports = [
   // ================= /polls/ — stany ankiety =================
   { ...P, id: "polls-draft-points", title: "Ankieta punktowa — SZKIC (udostępnianie zablokowane do uruchomienia)", path: `/polls/?id=${G.draftPoints}`, sources: POLLS, ready: "#cardMain.skel-step-ready", db: noTasks,
     steps: [async (view) => { await view.waitForFunction(() => !document.getElementById("btnOpenPoll")?.disabled, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
-  { ...P, id: "polls-draft-text-blocked", title: "Ankieta tekstowa — SZKIC zablokowany (za mało pytań, podpowiedź przy „Uruchom”)", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/game-validate.js"], ready: "#cardMain.skel-step-ready", db: noTasks,
-    steps: [async (view) => { await view.waitForFunction(() => document.getElementById("hintTop")?.textContent.trim().length > 0, null, { timeout: 8000 }); await view.waitForTimeout(300); }] },
-  { ...P, id: "polls-draft-text-blocked-slow", title: "Ankieta tekstowa — powód blokady po wolnym odczycie", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/page-layout.js"], devices: ["desktop", "phone", "phone-360"], ready: "#cardMain.skel-step-ready",
+  { ...P, id: "polls-draft-text-blocked", title: "Ankieta tekstowa — SZKIC za małej gry: strona zablokowana („Niedostępne w tym stanie gry” z powodem)", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/game-validate.js", "web/shared/js/core/resource-lock.js"], ready: ".blocking-card", db: noTasks },
+  { ...P, id: "polls-draft-text-blocked-slow", title: "Ankieta tekstowa — powód blokady po wolnym odczycie", path: `/polls/?id=${G.draftText}`, sources: [...POLLS, "web/shared/js/core/page-layout.js", "web/shared/js/core/resource-lock.js"], devices: ["desktop", "phone", "phone-360"], ready: ".blocking-card",
     db: (db) => { noTasks(db); db.latency = 250; } },
   { ...P, id: "polls-recipients-modal-empty", title: "Okno „Dodaj odbiorców” — brak znajomych i subskrybentów", path: `/polls/?id=${IDS.textPoll}`, sources: [...POLLS, "web/shared/js/core/share-sections.js"], ready: "#cardMain.skel-step-ready",
     db: (db) => { db.rpc.poll_share_panel = { ok: true, friends: [], subscribers: [], tasks: [] }; },

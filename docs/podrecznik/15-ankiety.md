@@ -6,10 +6,14 @@ Ankieta należy do gry rodzaju **Ankieta tekstowa** albo **Punktacja** (→ 7.1)
 powstaje tablica odpowiedzi z punktami (→ 2.4).
 
 Zanim uruchomisz ankietę, gra musi mieć **co najmniej 10 pytań**, a w grze „Punktacja” — od 3 do
-6 odpowiedzi w każdym pytaniu (→ 7.6).
+6 odpowiedzi w każdym pytaniu (→ 7.6). Dopóki gra tych warunków nie spełnia, przycisk [Ankieta]
+w *Moich grach* jest nieaktywny, a strona ankiety (np. otwarta z zapisanego adresu) blokuje się
+w całości komunikatem „Niedostępne w tym stanie gry” z powodem, na przykład „Gra musi mieć co
+najmniej 10 pytań (masz: 4).”.
 
 1. W *Moich grach* zaznacz grę i wybierz [Ankieta].
-2. Wybierz [Uruchom] — albo [Uruchom i wyślij zaproszenia], jeśli dodałeś już odbiorców (→ 15.2).
+2. Wybierz [Uruchom] i potwierdź w oknie „Uruchomić ankietę?”. Link, kod QR i zaproszenia dla
+   odbiorców są dostępne dopiero po uruchomieniu (→ 15.2).
 
 ![Szkic ankiety](zrzut:polls-draft-points)
 ![Szkic — za mało pytań](zrzut:polls-draft-text-blocked)
@@ -158,7 +162,9 @@ Poprawki zapisują się na bieżąco, więc możesz przerwać i wrócić późni
 
 ![Podliczanie ankiety „Punktacja”](zrzut:polls-tally-points)
 
-Gdy wszystko się zgadza, wybierz [Zatwierdź]. Zobaczysz „Głosy podliczone. Gra gotowa.”.
+Gdy wszystko się zgadza, wybierz [Zatwierdź] i potwierdź w oknie („Zatwierdzić odpowiedzi?”
+w ankiecie tekstowej, „Podliczyć głosy?” w „Punktacji”). Ankieta przejdzie w stan GOTOWA
+z dopiskiem „można grać”.
 [Wyjdź z podliczania] wraca do zatrzymanej ankiety bez zamykania.
 
 ![Zatwierdzenie podliczenia](zrzut:polls-tally-text-approve)

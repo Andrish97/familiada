@@ -157,7 +157,9 @@ Select the game in *My games* and choose [Change type]. **The same game** change
 a copy. If you want to keep the current version, use [Duplicate] first (→ 6.6).
 
 - A game with an **open or stopped** poll cannot be changed at that moment.
-- For a **closed** poll, the app will first ask whether to reset it (→ 7.5).
+- For a **closed** poll there is no separate reset question — the warning is in the "Change game
+  type" window itself: the poll's votes, links and QR codes will be removed, and the game returns
+  to a draft of the chosen type (→ 7.5).
 - Games in the Community Games tab cannot be changed.
 
 In the "Change game type" window, each type has a description of what will happen — check it before choosing [Change]:

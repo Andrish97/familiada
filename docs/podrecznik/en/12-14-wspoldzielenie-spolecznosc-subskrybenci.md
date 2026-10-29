@@ -43,10 +43,11 @@ An invitation that is not accepted expires after **5 days**.
 |---|---|---|
 | Owner | a tile on the "My bases" tab | everything: edit, share, rename, [Duplicate] and delete the base |
 | Edit | a pencil icon on the tile | add, change, move and delete questions, folders and tags; create games from them; export questions from games into this base (→ 6.7) |
-| Read | an eye icon on the tile | browse the base and export it to a file |
+| Read | an eye icon on the tile | browse the base, export it to a file and create games from its questions |
 
-A person with read access cannot create a game directly from the base. They can export the base
-to a file, import it as their own (→ 9.1) and create a game there.
+A person with read access can create a game from the base's questions (→ 9.8) — the game is
+their own and goes to their *My games*. They cannot change the base itself: they cannot add,
+change or delete questions, folders or tags.
 
 How to work with questions → 9.
 
@@ -69,7 +70,8 @@ pending, accepted and declined invitations. Next to each person you can:
 
 A person whose access is revoked loses it immediately — if they have the base open, they will see the message
 "Access revoked". You can also leave a base shared with you yourself with the
-[Remove from list] button.
+[Remove from list] button. It works like declining an invitation: the base moves to the declined
+section (you can undo it there), and the owner cannot invite you to it again for 30 days.
 
 Removing someone from your friends does not revoke their access to bases — do that separately (→ 10.4).
 

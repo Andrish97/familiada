@@ -20,9 +20,10 @@ const en = {
     shotN: "View {n} of {total}",
     demo: {
       modalTitle: "Restore demo files?",
-      modalText: "Sample starter materials will be added.",
+      modalText: "Sample games, question bases and logos will return to their original state. Demo materials you changed will be replaced.",
       modalOk: "Restore",
       modalCancel: "Cancel",
+      restoreFailed: "Could not restore the demo files. Try again.",
     },
   },
 };

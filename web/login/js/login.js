@@ -28,7 +28,7 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T16
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T16143";
 
 import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T16143";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T16143";
+import { copyGoReturnUrl, isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T16143";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T16143";
 import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T16143";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T16143";
@@ -555,6 +555,8 @@ const nextSnakeQr = params.get("qr");
 // account: centrum maili („Masz konto w Familijnej”) prowadzi do Ustawień konta (powiadomienia).
 const NEXT_TARGETS = ["tasks", "friends", "bases", "account"];
 if (isScreenshotId(nextSnakeQr)) NEXT_TARGETS.push("snake");
+// copy: link kopii gry lub logo (/go/?c=…) -- po zalogowaniu powrót do tego linku.
+if (copyGoReturnUrl(params, location.origin)) NEXT_TARGETS.push("copy");
 const hasNextTarget = NEXT_TARGETS.includes(nextTarget);
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
@@ -576,6 +578,7 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
+  if (nextTarget === "copy") return copyGoReturnUrl(params, location.origin, getUiLang());
   if (nextTarget === "snake") {
     const snake = new URL(PAGES.snake.path, location.origin);
     snake.searchParams.set("qr", nextSnakeQr);

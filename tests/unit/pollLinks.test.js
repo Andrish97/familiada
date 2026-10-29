@@ -70,3 +70,15 @@ test("go.js sprawdza kod z kadru przed rozpoznaniem rodzaju linku", async () => 
   const init = source.slice(source.indexOf("async function init()"));
   assert.ok(init.indexOf("screenshotSnakeUrl(") > 0 && init.indexOf("screenshotSnakeUrl(") < init.indexOf('qs.has("p")'));
 });
+test('login returns to the copy link on Go only for next=copy with a UUID token',async()=>{
+ const {copyGoReturnUrl}=await import('../../web/shared/js/core/poll-links.js');
+ const token='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ const url=new URL(copyGoReturnUrl(new URLSearchParams({next:'copy',c:token}),'https://www.familijna.app/login/','en'));
+ assert.equal(url.origin,'https://www.familijna.app');assert.equal(url.pathname,'/go/');
+ assert.deepEqual([...url.searchParams.entries()],[['c',token],['lang','en']]);
+ for(const params of [{next:'games',c:token},{next:'copy'},{next:'copy',c:'https://evil.example.test/'},{next:'copy',c:`${token}&next=x`}])
+  assert.equal(copyGoReturnUrl(new URLSearchParams(params),'https://www.familijna.app/login/'),null);
+ const {readFile}=await import('node:fs/promises');
+ const go=await readFile(new URL('../../web/go/js/go.js',import.meta.url),'utf8');
+ assert.match(go,/searchParams\.set\("next", copyToken \? "copy"/);
+});

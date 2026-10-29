@@ -1,11 +1,5 @@
 // Tłumaczenia PL — część „games”.
 const pl = {
-  guestReminder: {
-    text: "Konto gościa zostanie usunięte za kilka dni. Zapisz swoje dane, zanim je stracisz.",
-    link: "Migruj teraz",
-    dismiss: "Nie pokazuj więcej",
-    close: "Zamknij",
-  },
   gamesImportExport: {
     defaults: {
       gameName: "Gra",
