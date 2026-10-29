@@ -46,7 +46,7 @@ jobs:
           USER_DEPLOY: ${{ secrets.SERVER_USER }}
         run: |
           ssh -i ~/.ssh/id_deploy -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
-            "$USER_DEPLOY@$HOST" "sudo familiada-deploy-market-semantic $GITHUB_SHA"
+            "$USER_DEPLOY@$HOST" "sudo familijna-deploy-market-semantic $GITHUB_SHA"
       - name: Sprzątanie stagingu i klucza
         if: always()
         env:

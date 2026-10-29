@@ -23,8 +23,8 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
           test -n "$CLOUDFLARE_API_TOKEN"
-          ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familiada-cloudflare-token check
-          printf '%s' "$CLOUDFLARE_API_TOKEN" | ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familiada-cloudflare-token store
+          ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familijna-cloudflare-token check
+          printf '%s' "$CLOUDFLARE_API_TOKEN" | ssh -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" sudo familijna-cloudflare-token store
       - name: Usuń klucz SSH
         if: always()
         run: rm -f ~/.ssh/id_ed25519

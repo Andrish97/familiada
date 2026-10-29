@@ -1,7 +1,7 @@
 # Fragment do konfiguracji prywatnego serwera. Bez publicznego portu i domeny.
 services:
   market-semantic:
-    image: familiada-market-semantic:DEPLOY_SHA
+    image: familijna-market-semantic:DEPLOY_SHA
     restart: unless-stopped
     env_file: /etc/familiada/market-semantic.env
     environment:

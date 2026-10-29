@@ -60,7 +60,7 @@ jobs:
         run: |
           STAGING="/home/deploy/staging/edge/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "sudo familiada-deploy-edge ${{ github.sha }}"
+            "sudo familijna-deploy-edge ${{ github.sha }}"
 
       - name: Cleanup staging
         if: always()

@@ -62,7 +62,7 @@ Funkcja Edge `generate-game` potrzebuje:
   istniejący `GENERATE_GAME_SECRET`, jeśli instalator świadomie użyje go
   po obu stronach. Sekret nie trafia do przeglądarki.
 
-Przykład budowania: `docker build -t familiada-market-semantic:<sha>
+Przykład budowania: `docker build -t familijna-market-semantic:<sha>
 services/market-semantic`. W środowisku proxy z własnym CA dodać
 `--secret id=proxy_ca,src=<plik-CA>`; mount służy tylko pobieraniu i nie
 zostaje w obrazie. Zachować właściwy bundle CA, nie wyłączać TLS.
@@ -70,7 +70,7 @@ zostaje w obrazie. Zachować właściwy bundle CA, nie wyłączać TLS.
 Wdrożenie kodu modułu obsługuje `.github/workflows/deploy-market-semantic.yml`
 w tym repo: push do main ze zmianą modułu albo ręczne uruchomienie. Używa
 istniejącego konta deploy i ograniczonego instalatora
-`familiada-deploy-market-semantic <pełny SHA>`. Instalator, compose i konfiguracja
+`familijna-deploy-market-semantic <pełny SHA>`. Instalator, compose i konfiguracja
 serwera są w prywatnym `Andrish97/familijna-server`; moduł pozostaje tutaj.
 Nie wymaga nowego sekretu GitHub ani rekordu DNS.
 

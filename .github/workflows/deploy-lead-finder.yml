@@ -61,7 +61,7 @@ jobs:
         run: |
           STAGING="/home/deploy/staging/lead-finder/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "sudo familiada-deploy-lead-finder ${{ github.sha }}"
+            "sudo familijna-deploy-lead-finder ${{ github.sha }}"
 
       - name: Cleanup staging
         if: always()

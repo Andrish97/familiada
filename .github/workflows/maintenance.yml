@@ -46,7 +46,7 @@ jobs:
         id: activity
         working-directory: .
         env:
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} sudo familiada-psql reader
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} sudo familijna-psql reader
           DB_READ_TUPLES: '1'
           DB_READ_NO_NOTICE: '1'
         run: |
