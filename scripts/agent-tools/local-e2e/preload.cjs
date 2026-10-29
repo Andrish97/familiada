@@ -10,7 +10,7 @@ const { execFileSync } = require("node:child_process");
 const REPO = process.env.LB_REPO || path.resolve(__dirname, "../../..");
 const WEB = path.join(REPO, "web");
 const PGRST = process.env.LB_PGRST || "http://127.0.0.1:3555";
-const CACHE = path.join(require("node:os").homedir(), ".cache", "familiada-local-e2e");
+const CACHE = path.join(require("node:os").homedir(), ".cache", "familijna-local-e2e");
 const SECRET = process.env.LB_SECRET || "local-test-secret-local-test-secret-123456";
 const PSQL = ["-h", process.env.LB_PGHOST || "/var/tmp/pgfam", "-p", "5499", "-U", "postgres", "-d", "fam", "-qtA", "-c"];
 

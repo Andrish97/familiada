@@ -1,4 +1,4 @@
-import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-29T02360";
+import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-29T03075";
 // manual/js/manual.js
 // Podręcznik (E13): części → rozdziały → podrozdziały. Treść z content/{lang}.js
 // (generowana z docs/podrecznik przez scripts/manual/build-content.mjs).
@@ -6,28 +6,28 @@ import { bindDrawer } from "../../shared/js/core/drawer.js?v=v2026-10-29T02360";
 // Zmiana rozdziału to replaceState (jak karty, tabs.js): „Wstecz” wraca do poprzedniej strony.
 // Strona ma działać nawet bez auth: najpierw treść, potem initPage „miękko”.
 
-import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-29T02360";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T02360";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-29T02360";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T02360";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-29T02360";
-import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-29T02360";
-import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-29T02360";
-import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-29T02360";
-import chapterLoaders from "../content/chapter-loaders.js?v=v2026-10-29T02360";
+import { initI18n, setUiLang, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-29T03075";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T03075";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-29T03075";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T03075";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-29T03075";
+import { onSwipe } from "../../shared/js/core/swipe.js?v=v2026-10-29T03075";
+import { createImageViewer } from "../../shared/js/core/image-viewer.js?v=v2026-10-29T03075";
+import { buildIndex, initManualSearch, highlight } from "./search.js?v=v2026-10-29T03075";
+import chapterLoaders from "../content/chapter-loaders.js?v=v2026-10-29T03075";
 
-import { manualToc, manualArticle } from "./render.js?v=v2026-10-29T02360";
-import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-29T02360";
+import { manualToc, manualArticle } from "./render.js?v=v2026-10-29T03075";
+import { syncPublicSeo } from "../../shared/js/core/public-seo.js?v=v2026-10-29T03075";
 
 const CONTENT = {
-  pl: () => import("../content/pl.js?v=v2026-10-29T02360"),
-  en: () => import("../content/en.js?v=v2026-10-29T02360"),
-  uk: () => import("../content/uk.js?v=v2026-10-29T02360"),
+  pl: () => import("../content/pl.js?v=v2026-10-29T03075"),
+  en: () => import("../content/en.js?v=v2026-10-29T03075"),
+  uk: () => import("../content/uk.js?v=v2026-10-29T03075"),
 };
 const META = {
-  pl: () => import("../content/meta/pl.js?v=v2026-10-29T02360"),
-  en: () => import("../content/meta/en.js?v=v2026-10-29T02360"),
-  uk: () => import("../content/meta/uk.js?v=v2026-10-29T02360"),
+  pl: () => import("../content/meta/pl.js?v=v2026-10-29T03075"),
+  en: () => import("../content/meta/en.js?v=v2026-10-29T03075"),
+  uk: () => import("../content/meta/uk.js?v=v2026-10-29T03075"),
 };
 export const CHAPTER_PARAM = "ch";
 // Skąd przyszedł czytelnik po kliknięciu odnośnika w treści (rozdział albo podrozdział, np. "6.7").

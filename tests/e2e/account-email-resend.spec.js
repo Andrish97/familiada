@@ -58,7 +58,7 @@ async function cancelPendingEmail(page) {
     const { error: rpcError } = await sb.rpc("cancel_my_email_change");
     if (rpcError) throw new Error("cancel_my_email_change failed: " + rpcError.message);
     const { error: metaError } = await sb.auth.updateUser({
-      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      data: { familijna_email_change_pending: "", familijna_email_change_intent: "" },
     });
     if (metaError) throw new Error("clearing pending metadata failed: " + metaError.message);
     await sb.auth.refreshSession();

@@ -9,7 +9,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/../../.." && pwd)"
 P=/var/tmp/pgfam
 BIN=/usr/lib/postgresql/16/bin
-CACHE="$HOME/.cache/familiada-local-e2e"
+CACHE="$HOME/.cache/familijna-local-e2e"
 PSQL=(psql -h "$P" -p 5499 -U postgres -d fam -q -v ON_ERROR_STOP=1)
 mkdir -p "$CACHE"
 

@@ -32,7 +32,7 @@ test('Ś7: podpisany token obejścia z ważnością 12 h', async () => {
   // Token „na zawsze” z poprawnym podpisem i tak odrzucony (ważność > 12 h).
   const far = now + 30 * 86400000;
   const { createHmac: h } = await import('node:crypto');
-  const farSig = h('sha256', 'stary-staly-sekret').update(`familiada-admin-bypass.v1.${far}`).digest('base64url');
+  const farSig = h('sha256', 'stary-staly-sekret').update(`familijna-admin-bypass.v1.${far}`).digest('base64url');
   assert.equal(await verifyAdminBypassToken(`v1.${far}.${farSig}`, BYPASS_ENV, now), false);
 });
 

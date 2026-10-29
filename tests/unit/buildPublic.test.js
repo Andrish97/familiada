@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 const { buildPublic } = createRequire(import.meta.url)('../../scripts/build-public.cjs');
 
 test('public artifact preserves module URLs, classic scripts, CSS layers and vendor assets', async t => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'familiada-build-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'familijna-build-'));
   t.after(() => fs.rm(dir, { recursive: true, force: true }));
   const source = path.join(dir, 'src'), out = path.join(dir, 'out');
   await fs.mkdir(path.join(source, 'vendor'), { recursive: true });

@@ -1,17 +1,17 @@
-import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T02360";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T02360";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T02360";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-29T02360";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-29T02360";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T02360";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-29T02360";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T02360";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T02360";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T02360";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T02360";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T02360";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T02360";
-import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-29T02360";
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T03075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T03075";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T03075";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-29T03075";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-29T03075";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T03075";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-29T03075";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T03075";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T03075";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T03075";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T03075";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T03075";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T03075";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-29T03075";
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
@@ -365,10 +365,10 @@ async function handleMigrateCancel() {
     if (rpcErr) throw rpcErr;
     if (!rpcData?.ok) throw new Error(rpcData?.error || t("account.errCancelMigrationFailed"));
 
-    // Metadane JWT (familiada_email_change_pending/intent) trzeba wyczyścić
+    // Metadane JWT (familijna_email_change_pending/intent) trzeba wyczyścić
     // osobno — RPC dotyka tylko profiles/auth.users, nie user_metadata.
     const { error: metaErr } = await sb().auth.updateUser({
-      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      data: { familijna_email_change_pending: "", familijna_email_change_intent: "" },
     });
     if (metaErr) throw metaErr;
 
@@ -398,7 +398,7 @@ function extractPendingEmail(u) {
     u?.email_change?.email,
     u?.user_metadata?.new_email,
     u?.user_metadata?.newEmail,
-    u?.user_metadata?.familiada_email_change_pending,
+    u?.user_metadata?.familijna_email_change_pending,
   ];
   return candidates.find((v) => typeof v === "string" && v.includes("@")) || "";
 }
@@ -669,7 +669,7 @@ async function handleEmailSave() {
     reserved = true;
 
     const { error } = await sb().auth.updateUser(
-      { email: normalizedMail, data: { language, familiada_email_change_pending: normalizedMail } },
+      { email: normalizedMail, data: { language, familijna_email_change_pending: normalizedMail } },
       { emailRedirectTo: confirmUrl.toString() }
     );
     if (error) throw error;
@@ -756,7 +756,7 @@ async function handleEmailCancel() {
 
     // 2. Clear pending metadata from user_metadata
     const { error: metaErr } = await sb().auth.updateUser({
-      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      data: { familijna_email_change_pending: "", familijna_email_change_intent: "" },
     });
     if (metaErr) throw metaErr;
 

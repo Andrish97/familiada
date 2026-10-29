@@ -1,7 +1,7 @@
-import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T02360";
-import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T02360";
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T03075";
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T03075";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T02360";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T03075";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -24,17 +24,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-29T02360";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T02360";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T02360";
+} from "../../shared/js/core/auth.js?v=v2026-10-29T03075";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T03075";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T03075";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T02360";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T02360";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T02360";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T02360";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T02360";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T02360";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T02360";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T03075";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T03075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T03075";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T03075";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T03075";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T03075";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T03075";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -180,7 +180,7 @@ function loadCaptchaApi() {
 
     if (captchaLoadPromise) return captchaLoadPromise;
     captchaLoadPromise = new Promise((resolve, reject) => {
-      const onloadCallback = "__familiadaHcaptchaOnLoad";
+      const onloadCallback = "__familijnaHcaptchaOnLoad";
       const cleanup = () => { try { delete window[onloadCallback]; } catch {} };
       window[onloadCallback] = () => {
         cleanup();
@@ -648,7 +648,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   let guest = null;
   if (pendingIntent === "guest_migrate") {
     try { guest = await getUser(); } catch {}
-    const guestPending = String(guest?.user_metadata?.familiada_email_change_pending || "").trim().toLowerCase();
+    const guestPending = String(guest?.user_metadata?.familijna_email_change_pending || "").trim().toLowerCase();
     if (!guest || !isGuestUser(guest) || guestPending !== String(emailAddr || "").trim().toLowerCase()) {
       void alertModal({ text: t("index.pendingGuestMigrateElsewhere", { email: emailAddr }) });
       return true;
