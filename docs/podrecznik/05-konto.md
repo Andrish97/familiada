@@ -122,7 +122,7 @@ Wymagania:
 - od 3 do 20 znaków,
 - tylko litery, cyfry oraz znaki `_` `.` `-`,
 - nazwa nie może być zajęta przez inną osobę; niektóre nazwy są zarezerwowane
-  (na przykład zaczynające się od „admin” lub „familiada”).
+  (na przykład zaczynające się od „admin” lub „familijna”).
 
 Aby zmienić nazwę, otwórz *Ustawienia konta*, w sekcji „Nazwa użytkownika” wpisz nową
 i wybierz [Zapisz nazwę]. Nazwę można zmieniać raz na godzinę.

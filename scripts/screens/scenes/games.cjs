@@ -48,7 +48,7 @@ const TXT = {
 const TXT_BAD = { pl: "Koc /34\n#Co zabierasz na piknik?\n1 Kanapki /24\n", en: "Blanket /34\n#What do you take on a picnic?\n1 Sandwiches /24\n", uk: "Ковдру /34\n#Що береш на пікнік?\n1 Бутерброди /24\n" };
 const SENDERS = { pl: ["aleksandra_nowak", "jan_kowalski"], en: ["aleksandra_nowak", "jan_kowalski"], uk: ["aleksandra_nowak", "jan_kowalski"] };
 const RECEIVED = {
-  pl: ["Quiz o Krakowie", "Sąsiedzki turniej"], en: ["London quiz", "Neighbourhood quiz night"], uk: ["Вікторина про Київ", "Сусідська Familiada"],
+  pl: ["Quiz o Krakowie", "Sąsiedzki turniej"], en: ["London quiz", "Neighbourhood quiz night"], uk: ["Вікторина про Київ", "Сусідська Familijna"],
 };
 
 // Otrzymane kopie czekające na decyzję: wiersze gier odbiorcy (jak w bazie)
