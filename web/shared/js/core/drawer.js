@@ -1,6 +1,6 @@
 // Wspólna obsługa bocznych paneli roboczych. Układ i ruch: .drawer w silniku.
-import { setDrawerTop } from './geometry.js?v=v2026-10-29T14490';
-import { registerPageLayout } from './page-layout.js?v=v2026-10-29T14490';
+import { setDrawerTop } from './geometry.js?v=v2026-10-29T15184';
+import { registerPageLayout } from './page-layout.js?v=v2026-10-29T15184';
 
 export function bindDrawer({ panel, backdrop, toggle, anchor = toggle?.parentElement, beforeOpen, onChange } = {}) {
   if (!panel || !backdrop) return null;
