@@ -103,7 +103,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 - **„Ekran może się wygasić”** na telefonie lub tablecie → przeglądarka nie pozwoliła utrzymać
   włączonego ekranu (iPhone i iPad — do pierwszego dotknięcia strony) → naciśnij [Nie wygaszaj
   ekranu]; komunikat wraca po powrocie z innej aplikacji. Na przycisku do pojedynku nie pojawia się w trakcie pojedynku.
-  Jeśli ekran i tak gaśnie, wyłącz tryb oszczędzania energii.
+  Jeśli ekran i tak gaśnie, wyłącz tryb oszczędzania energii i podłącz ładowarkę (→ 17.1).
 - **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
   „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.
 - **„Urządzenie otwarto w innym miejscu”** → to samo urządzenie (Przycisk, ekran prowadzącego lub

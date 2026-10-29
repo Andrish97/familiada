@@ -51,6 +51,26 @@ szybko zeskanować z sali. Najlepiej użyć dwóch osobnych urządzeń.
 ![Strona *Podłącz urządzenie*](zrzut:connect-device)
 ![Po wpisaniu kodu — nazwa gry i właściciel do sprawdzenia](zrzut:play-connect-confirm)
 
+**Telefon i tablet nie mogą zgasnąć.** Strony Prowadzącego i Przycisku same proszą system, żeby
+nie wygaszał ekranu. iPhone i iPad (czasem też Android) zgadzają się na to dopiero po dotknięciu
+strony — to zabezpieczenie przeglądarki przed stronami, które bez wiedzy użytkownika trzymałyby
+włączony ekran i rozładowywały baterię. Dlatego po otwarciu urządzenia i po każdym powrocie
+z innej aplikacji może pojawić się ekran „Ekran może się wygasić”. Naciśnij [Nie wygaszaj ekranu]
+— to dotknięcie daje zgodę. Bez niego ekran zgaśnie po czasie automatycznej blokady, a urządzenie
+straci połączenie z grą.
+
+![iPhone — ekran „Ekran może się wygasić” na Przycisku](zrzut:play-buzzer-wake@phone-landscape)
+
+> Uwaga: zgaszony telefon lub tablet wypada z gry. Przed rozgrywką na każdym z nich:
+> - **wyłącz tryb oszczędzania energii** (iPhone: Tryb niskiego zużycia energii, który skraca
+>   automatyczną blokadę do 30 sekund; Android: Oszczędzanie baterii) — inaczej system może
+>   zgasić ekran mimo zgody;
+> - **podłącz ładowarkę** — gra trwa długo, a przy niskiej baterii system sam włącza oszczędzanie;
+> - **ustaw automatyczną blokadę ekranu** na najdłuższy czas albo „Nigdy”;
+> - **nie blokuj ekranu przyciskiem i nie przełączaj aplikacji** — strona w tle traci połączenie;
+> - **zrób próbę**: podłącz urządzenie, odłóż je na kilka minut i sprawdź, czy ekran nadal świeci,
+>   a kropka urządzenia w panelu jest zielona.
+
 Każde urządzenie działa w jednym miejscu naraz. Otwarcie go w nowej karcie albo na innym sprzęcie
 (np. po ponownym zeskanowaniu kodu) od razu przejmuje jego rolę, a poprzedni ekran pokazuje
 „Urządzenie otwarto w innym miejscu”. Aby wrócić do poprzedniego ekranu, kliknij na nim

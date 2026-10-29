@@ -51,6 +51,27 @@ scan them from the room. It is best to use two separate devices.
 ![The *Connect a device* page](zrzut:connect-device)
 ![After entering the code — the game name and owner to check](zrzut:play-connect-confirm)
 
+**Phones and tablets must not go dark.** The Host and Buzzer pages ask the system to keep the
+screen on. iPhone and iPad (sometimes Android too) only agree after the page is touched — the
+browser's protection against pages that would keep the screen on and drain the battery without
+the user knowing. That is why the "The screen may turn off" screen may appear after opening the
+device and after every return from another app. Press [Keep screen on] — that touch gives
+permission. Without it the screen turns off after the auto-lock time and the device loses its
+connection to the game.
+
+![iPhone — the "The screen may turn off" screen on the Buzzer](zrzut:play-buzzer-wake@phone-landscape)
+
+> Note: a phone or tablet whose screen goes dark drops out of the game. Before playing, on each of them:
+> - **turn off power saving** (iPhone: Low Power Mode, which shortens Auto-Lock to 30 seconds;
+>   Android: Battery Saver) — otherwise the system may turn the screen off despite permission;
+> - **plug in the charger** — a game takes a while, and on low battery the system turns power
+>   saving on by itself;
+> - **set Auto-Lock** to the longest time or "Never";
+> - **do not lock the screen with the button or switch apps** — a page in the background loses
+>   its connection;
+> - **do a test run**: connect the device, leave it for a few minutes and check that the screen
+>   is still on and the device dot in the panel is green.
+
 Each device works in one place at a time. Opening it in a new tab or on other hardware (e.g. after
 scanning the code again) takes over its role straight away, and the previous screen shows "This
 device was opened elsewhere". To go back to the previous screen, click [Use here] on it — the other
