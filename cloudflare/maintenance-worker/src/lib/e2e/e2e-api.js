@@ -136,6 +136,26 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: result.ok }, result.ok ? 200 : 502);
   }
 
+  // "Kopia była już wysłana" dla pary właściciel–odbiorca (blokada base:share /
+  // poll:share). mail_cooldown_reserve tylko dla klucza serwisowego (514), więc
+  // test ustawia ją tutaj, jako zalogowany właściciel zasobu z klucza.
+  if (url.pathname === "/_e2e_api/mail-cooldowns/reserve-pair" && request.method === "POST") {
+    const token = request.headers.get("Authorization") || "";
+    if (!/^Bearer [^\s]+$/.test(token)) return json({ ok: false, error: "auth_required" }, 401);
+    const user = await supabaseRequest(env, "/auth/v1/user", { headers: { Authorization: token } });
+    if (!user.ok || !user.data?.id) return json({ ok: false, error: "auth_required" }, 401);
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    const actionKey = String(body?.action_key || "");
+    const targetKey = String(body?.target_key || "");
+    const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+    const kind = { "base:share": "base", "poll:share": "game" }[actionKey];
+    const match = kind && targetKey.match(new RegExp(`^pair:(${uuid}):${uuid}:${kind}:${uuid}$`));
+    if (!match || match[1] !== user.data.id) return json({ ok: false, error: "invalid_reserve" }, 400);
+    const result = await supabaseRpc(env, "mail_cooldown_reserve", { p_action_key: actionKey, p_target_key: targetKey });
+    return json(result.ok ? { ok: true, rows: result.data } : { ok: false }, result.ok ? 200 : 502);
+  }
+
   if (url.pathname === "/_e2e_api/mark-test-guest" && request.method === "POST") {
     const token = request.headers.get("Authorization") || "";
     if (!token.startsWith("Bearer ")) return json({ok:false,error:"guest_token_required"},401);

@@ -10,6 +10,8 @@ test('standalone logo package: TEXT IMAGE DRAW, own imported image, nested sourc
  if(branch)await serveBranchCode(context,{pages:['games','logos']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
  await loginAs(page,context,accounts.standard[0]);
+ // Teksty błędów eksportu są w części tłumaczeń strony Logo (E27).
+ await page.goto('/logos/');await page.waitForFunction(()=>!!window.__sbClient,null,{timeout:30000});
  let originalUrl;
  try{
   stage='original image upload';originalUrl=await page.evaluate(async data=>{const db=window.__sbClient;const {data:a,error}=await db.auth.getUser();if(error)throw error;const {uploadImportedLogoImage}=await import('/logos/js/db.js?v=' + document.querySelector('meta[name="app-version"]').content);return uploadImportedLogoImage(data,a.user.id);},pixel);files.push(originalUrl);

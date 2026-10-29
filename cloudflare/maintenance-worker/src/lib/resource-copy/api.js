@@ -8,7 +8,7 @@ const failures={
  auth_required:401,not_found:404,received_copy_pending:409,not_exportable:409,
  resource_in_use:409,request_conflict:409,previously_removed:410,
  copy_name_unavailable:409,expired:410,
- not_friend:409,already_sent:409,declined_cooldown:429,demo_not_sendable:409,
+ not_friend:409,already_sent:409,declined_cooldown:429,demo_not_sendable:409,not_sendable:409,
 };
 async function handleResourceAction(request,env,action){
  if(request.method!=='POST')return json({ok:false,error:'method_not_allowed'},405);

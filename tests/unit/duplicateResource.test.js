@@ -173,3 +173,11 @@ test('Send late upload after recipient deletion cleans only the bound recipient 
   assert.fail('unexpected late Send upload request');
  },async calls=>{await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other,actor:other}),/invalid_copy_job/);assert.equal(calls.filter(call=>call.url.endsWith('/_resource_clone_cleanup')).length,1);});
 });
+
+test('Worker returns every send error the dialog explains with its own status, not copy_failed',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const api=await readFile(new URL('../../cloudflare/maintenance-worker/src/lib/resource-copy/api.js',import.meta.url),'utf8');
+ const pl=await readFile(new URL('../../web/shared/translation/pl/resources.js',import.meta.url),'utf8');
+ const keys=Object.keys(JSON.parse(pl.match(/"errors": (\{[^}]*\})/)[1])).filter(k=>!['failed','decisionFailed'].includes(k));
+ for(const key of keys)assert.match(api,new RegExp(`\\b${key}:\\d{3}`),key);
+});

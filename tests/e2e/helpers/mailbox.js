@@ -41,6 +41,17 @@ async function releaseMailCooldown(recipient, actionKey) {
   });
 }
 
+// Blokada wysyłki dla pary właściciel–odbiorca (base:share, poll:share), jak po
+// wcześniejszym udostępnieniu; jako zalogowany właściciel z `page`. -> [{ ok, next_allowed_at }]
+async function reservePairCooldown(page, actionKey, targetKey) {
+  const token = await page.evaluate(async () => (await window.__sbClient.auth.getSession()).data.session.access_token);
+  const data = await api("/mail-cooldowns/reserve-pair", {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action_key: actionKey, target_key: targetKey }),
+  });
+  return data.rows;
+}
+
 async function resetMailProviderLimits() {
   await api("/mail-limits/reset", { method: "POST" });
   console.log("[e2e-mail] provider limits reset before delivery test");
@@ -94,4 +105,4 @@ async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-module.exports = { releaseMailCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, reservePairCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };
