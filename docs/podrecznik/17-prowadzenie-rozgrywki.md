@@ -69,7 +69,13 @@ straci połączenie z grą.
 > - **ustaw automatyczną blokadę ekranu** na najdłuższy czas albo „Nigdy”;
 > - **nie blokuj ekranu przyciskiem i nie przełączaj aplikacji** — strona w tle traci połączenie;
 > - **włącz tryb „Nie przeszkadzać”** — przychodzące połączenia i powiadomienia nie zasłonią strony,
->   a internet działa dalej (nie używaj trybu samolotowego, bo wyłącza też internet);
+>   a internet działa dalej. Domyślnie przepuszcza on jednak część połączeń: na iPhonie od ulubionych
+>   kontaktów i drugie połączenie od tej samej osoby w ciągu 3 minut (Android ma podobne wyjątki) —
+>   wyłącz je w ustawieniach trybu;
+> - **bez połączeń telefonicznych na pewno**: włącz tryb samolotowy, potem z powrotem włącz Wi-Fi
+>   (sieć w sali) i wyłącz połączenia przez Wi-Fi (Wi-Fi Calling). Samo wyłączenie danych komórkowych
+>   nie blokuje zwykłych połączeń, a połączenia z komunikatorów (WhatsApp, Messenger, FaceTime)
+>   przychodzą przez internet — wycisza je tylko „Nie przeszkadzać”;
 > - **zrób próbę**: podłącz urządzenie, odłóż je na kilka minut i sprawdź, czy ekran nadal świeci,
 >   a kropka urządzenia w panelu jest zielona.
 

@@ -70,7 +70,13 @@ connection to the game.
 > - **do not lock the screen with the button or switch apps** — a page in the background loses
 >   its connection;
 > - **turn on Do Not Disturb** — incoming calls and notifications will not cover the page, and the
->   internet keeps working (do not use Airplane Mode, it turns the internet off too);
+>   internet keeps working. By default it still lets some calls through: on iPhone calls from
+>   favourite contacts and a second call from the same person within 3 minutes (Android has similar
+>   exceptions) — turn them off in the mode's settings;
+> - **no phone calls for sure**: turn on Airplane Mode, then turn Wi-Fi back on (the venue network)
+>   and turn off Wi-Fi Calling. Turning off mobile data alone does not block ordinary calls, and calls
+>   from messaging apps (WhatsApp, Messenger, FaceTime) come over the internet — only Do Not Disturb
+>   silences them;
 > - **do a test run**: connect the device, leave it for a few minutes and check that the screen
 >   is still on and the device dot in the panel is green.
 
