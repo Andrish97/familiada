@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PPplTxnXQM9eDfj54QjK2bmewOaYTvYf9bLbWeTMmSfXghfcFRcrCu0bm6q2XjI
+\restrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -206,6 +206,18 @@ CREATE FUNCTION "public"."_account_is_registered"("p_uid" "uuid", "p_identity" "
    AND NOT (coalesce(p_identity->>'is_anonymous','false')='true'
      AND ((p_identity->>'email_confirmed_at') IS NULL
        OR public._norm_email(p_identity->>'email') IS NULL));
+$$;
+
+
+--
+-- Name: _auth_user_email("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_auth_user_email"("p_uid" "uuid") RETURNS "text"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+  SELECT u.email FROM auth.users u WHERE u.id = p_uid AND p_uid = auth.uid();
 $$;
 
 
@@ -8564,7 +8576,8 @@ begin
   select
     ei.status,
     ei.intent,
-    ei.cooldown_until
+    ei.cooldown_until,
+    ei.user_id
   into v_intent
   from public.email_intents ei
   where ei.email = v_email
@@ -8575,7 +8588,10 @@ begin
       return query select 'confirmed'::text, 'signup'::text;
       return;
     end if;
-    if v_intent.status = 'pending' then
+    if v_intent.status = 'pending' and exists (
+         select 1 from auth.users u
+         where lower(u.email_change) = v_email
+           and (v_intent.user_id is null or u.id = v_intent.user_id)) then
       return query
       select
         'pending'::text,
@@ -8626,7 +8642,7 @@ begin
   where u.id = auth.uid()
   limit 1;
 
-  if v_auth_email = '' or v_auth_email <> v_email then
+  if v_auth_email is null or v_auth_email = '' or v_auth_email <> v_email then
     return;
   end if;
 
@@ -10198,6 +10214,13 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated');
   END IF;
 
+  IF p_device_type IS NULL OR p_device_type NOT IN ('display', 'host', 'buzzer', 'poll_qr') THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'invalid_device_type');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.games g WHERE g.id = p_game_id AND g.owner_id = v_owner) THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'forbidden');
+  END IF;
+
   -- Usuń wygasłe kody (tylko te z ustawionym expires_at)
   DELETE FROM public.device_connect_codes
   WHERE owner_id = v_owner
@@ -10214,9 +10237,11 @@ BEGIN
   INSERT INTO public.device_connect_codes
     (code, owner_id, game_id, game_name, device_type, share_key, expires_at)
   VALUES
-    (v_code, v_owner, p_game_id, p_game_name, p_device_type, p_share_key, p_expires_at)
+    (v_code, v_owner, p_game_id, left(p_game_name, 80), p_device_type, p_share_key,
+     least(coalesce(p_expires_at, now() + interval '24 hours'), now() + interval '24 hours'))
   ON CONFLICT (owner_id, game_id, device_type) DO UPDATE
     SET share_key = EXCLUDED.share_key,
+        expires_at = EXCLUDED.expires_at,
         game_name = COALESCE(EXCLUDED.game_name, device_connect_codes.game_name)
   RETURNING code INTO v_code;
 
@@ -10910,7 +10935,7 @@ declare
 begin
   select * into g from public.games where id = p_game_id;
   if not found then raise exception 'not found'; end if;
-  if g.share_key_poll <> p_key then raise exception 'forbidden'; end if;
+  if p_key is null or g.share_key_poll is distinct from p_key then raise exception 'forbidden'; end if;
 
   if g.type = 'poll_points' then
     select jsonb_build_object(
@@ -11498,6 +11523,49 @@ END $$;
 
 
 --
+-- Name: guard_game_client_write(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_game_client_write"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    if new.type not in ('prepared', 'poll_text', 'poll_points') or (new.type <> 'prepared' and new.status = 'ready')
+       or new.source_market_id is not null
+       or new.received_from_label is not null or new.received_from_identity is not null then
+      raise exception 'game_write_forbidden' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if new.owner_id is distinct from old.owner_id or new.type is distinct from old.type
+     or (old.type <> 'prepared' and old.status = 'draft' and new.status = 'ready')
+     or new.source_market_id is distinct from old.source_market_id
+     or (coalesce(old.is_demo, false) and not coalesce(new.is_demo, false))
+     or new.received_from_label is distinct from old.received_from_label
+     or new.received_from_identity is distinct from old.received_from_identity
+     or new.share_key_poll is distinct from old.share_key_poll
+     or new.share_key_control is distinct from old.share_key_control
+     or new.share_key_display is distinct from old.share_key_display
+     or new.share_key_host is distinct from old.share_key_host
+     or new.share_key_buzzer is distinct from old.share_key_buzzer
+     or new.poll_opened_at is distinct from old.poll_opened_at
+     or new.poll_closed_at is distinct from old.poll_closed_at
+     or new.poll_ended_key is distinct from old.poll_ended_key
+     or new.poll_share_updated_at is distinct from old.poll_share_updated_at
+     or new.poll_qr_lang is distinct from old.poll_qr_lang then
+    raise exception 'game_write_forbidden' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+
+--
 -- Name: guard_game_content(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11506,6 +11574,7 @@ CREATE FUNCTION "public"."guard_game_content"() RETURNS "trigger"
     SET "search_path" TO 'public'
     AS $$
 declare
+  v_ids uuid[];
   v_game_id uuid;
   v_type text;
   v_status text;
@@ -11516,28 +11585,33 @@ begin
   end if;
 
   if tg_table_name = 'questions' then
-    v_game_id := case when tg_op = 'DELETE' then old.game_id else new.game_id end;
+    v_ids := case tg_op when 'DELETE' then array[old.game_id]
+                        when 'INSERT' then array[new.game_id]
+                        else array[old.game_id, new.game_id] end;
   else
-    select q.game_id into v_game_id
+    select array_agg(q.game_id) into v_ids
     from public.questions q
-    where q.id = case when tg_op = 'DELETE' then old.question_id else new.question_id end;
+    where q.id = any(case tg_op when 'DELETE' then array[old.question_id]
+                                when 'INSERT' then array[new.question_id]
+                                else array[old.question_id, new.question_id] end);
   end if;
 
-  select g.type::text, g.status::text into v_type, v_status
-  from public.games g where g.id = v_game_id;
-  if not found then
-    return coalesce(new, old);
-  end if;
-
-  if v_type = 'market' then
-    raise exception 'game_content_locked:market' using errcode = 'P0001';
-  end if;
-  if v_type in ('poll_text', 'poll_points') and v_status in ('poll_open', 'poll_stopped') then
-    raise exception 'game_content_locked:%', v_status using errcode = 'P0001';
-  end if;
-  if public._game_control_active(v_game_id) then
-    raise exception 'game_content_locked:control_active' using errcode = 'P0001';
-  end if;
+  foreach v_game_id in array coalesce(v_ids, '{}') loop
+    select g.type::text, g.status::text into v_type, v_status
+    from public.games g where g.id = v_game_id;
+    if not found then
+      continue;
+    end if;
+    if v_type = 'market' then
+      raise exception 'game_content_locked:market' using errcode = 'P0001';
+    end if;
+    if v_type in ('poll_text', 'poll_points') and v_status in ('poll_open', 'poll_stopped') then
+      raise exception 'game_content_locked:%', v_status using errcode = 'P0001';
+    end if;
+    if public._game_control_active(v_game_id) then
+      raise exception 'game_content_locked:control_active' using errcode = 'P0001';
+    end if;
+  end loop;
 
   return coalesce(new, old);
 end;
@@ -11596,6 +11670,41 @@ $$;
 
 
 --
+-- Name: guard_profile_client_write(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_profile_client_write"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $_$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    raise exception 'profile_write_forbidden' using errcode = '42501';
+  end if;
+  if new.id is distinct from old.id or new.created_at is distinct from old.created_at
+     or new.is_guest is distinct from old.is_guest
+     or new.guest_last_active_at is distinct from old.guest_last_active_at
+     or new.guest_expires_at is distinct from old.guest_expires_at then
+    raise exception 'profile_write_forbidden' using errcode = '42501';
+  end if;
+  if new.email is distinct from old.email
+     and new.email is distinct from public._auth_user_email(new.id) then
+    raise exception 'profile_email_mismatch' using errcode = '42501';
+  end if;
+  if new.username is distinct from old.username and (
+       new.username is null or new.username !~ '^[a-zA-Z0-9_.-]{3,20}$'
+       or lower(new.username) like 'guest\_%') then
+    raise exception 'username_invalid' using errcode = '22023';
+  end if;
+  return new;
+end;
+$_$;
+
+
+--
 -- Name: guard_qb_question_text(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11620,16 +11729,59 @@ begin
   if char_length(coalesce(new.payload->>'text', '')) > 100 then
     raise exception 'content_invalid:questionTooLong' using errcode = 'P0001';
   end if;
+  if jsonb_typeof(new.payload->'answers') = 'array' and jsonb_array_length(new.payload->'answers') > 6 then
+    raise exception 'content_invalid:tooManyAnswers' using errcode = 'P0001';
+  end if;
   if jsonb_typeof(new.payload->'answers') = 'array' then
     for a in select value from jsonb_array_elements(new.payload->'answers') loop
       if char_length(coalesce(a->>'text', '')) > 17 then
         raise exception 'content_invalid:answerTooLong' using errcode = 'P0001';
+      end if;
+      if a ? 'fixed_points' and jsonb_typeof(a->'fixed_points') <> 'null'
+         and (jsonb_typeof(a->'fixed_points') <> 'number'
+              or (a->>'fixed_points')::numeric < 0 or (a->>'fixed_points')::numeric > 100) then
+        raise exception 'content_invalid:points' using errcode = 'P0001';
       end if;
       v_bad := public.fam_answer_invalid_chars(a->>'text');
       if cardinality(v_bad) > 0 then
         raise exception 'content_invalid:answerChars:%', array_to_string(v_bad, ' ') using errcode = 'P0001';
       end if;
     end loop;
+  end if;
+  return new;
+end;
+$$;
+
+
+--
+-- Name: guard_qb_tag_color(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_qb_tag_color"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $_$
+begin
+  if new.color is not null and (tg_op = 'INSERT' or new.color is distinct from old.color)
+     and new.color !~ '^(#[0-9A-Fa-f]{3}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{8}|[A-Za-z]{3,20})$' then
+    raise exception 'content_invalid:tagColor' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$_$;
+
+
+--
+-- Name: guard_resource_name_len(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_resource_name_len"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if (tg_op = 'INSERT' or new.name is distinct from old.name) and char_length(coalesce(new.name, '')) > 80 then
+    raise exception 'name_too_long' using errcode = '22001';
   end if;
   return new;
 end;
@@ -11960,6 +12112,12 @@ begin
     end if;
   end if;
 
+  if p_password is null or char_length(p_password) < 8 or char_length(p_password) > 72
+     or p_password !~ '[a-z]' or p_password !~ '[A-Z]' or p_password !~ '[0-9]'
+     or p_password !~ '[^A-Za-z0-9]' then
+    return jsonb_build_object('ok', false, 'error', 'weak_password');
+  end if;
+
   if p_password is not null and p_password <> '' then
     v_hash := extensions.crypt(p_password, extensions.gen_salt('bf'));
   end if;
@@ -11986,7 +12144,7 @@ CREATE FUNCTION "public"."guest_touch"("p_ttl_days" integer DEFAULT 5) RETURNS "
     AS $$
 declare
   v_uid uuid := auth.uid();
-  v_days int := greatest(1, least(coalesce(p_ttl_days, 5), 30));
+  v_days int := greatest(1, least(coalesce(p_ttl_days, 5), 5));
   v_count int := 0;
 begin
   if v_uid is null then
@@ -12017,7 +12175,7 @@ $$;
 CREATE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
-    AS $$
+    AS $_$
 declare
     v_email text;
     v_username text;
@@ -12037,14 +12195,19 @@ begin
     split_part(new.email, '@', 1)
   );
 
+  -- Nazwa niezgodna z zasadami, zastrzeżona albo zajęta: konto bez nazwy
+  -- (wcześniej unikalny indeks przerywał rejestrację).
+  IF v_username IS NOT NULL AND v_username <> '' AND NOT v_is_guest AND (
+       v_username !~ '^[a-zA-Z0-9_.-]{3,20}$'
+       OR lower(v_username) LIKE 'guest\_%'
+       OR public.reserved_username_reason(v_username) IS NOT NULL
+       OR EXISTS (SELECT 1 FROM public.profiles p WHERE lower(p.username) = lower(v_username) AND p.id <> new.id)) THEN
+    v_username := NULL;
+  END IF;
+
   -- If still missing (common for anonymous guests), generate a guest_XXX name
-  IF v_username IS NULL OR v_username = '' THEN
-    IF v_is_guest THEN
-      v_username := 'guest_' || substr(replace(new.id::text, '-', ''), 1, 8);
-    ELSE
-      -- For non-guests we really expect a name, but as a fallback use a slice of UUID
-      v_username := 'user_' || substr(replace(new.id::text, '-', ''), 1, 8);
-    END IF;
+  IF (v_username IS NULL OR v_username = '') AND v_is_guest THEN
+    v_username := 'guest_' || substr(replace(new.id::text, '-', ''), 1, 8);
   END IF;
 
   IF v_is_guest THEN
@@ -12080,7 +12243,7 @@ begin
 
   RETURN new;
 END;
-$$;
+$_$;
 
 
 --
@@ -12116,6 +12279,13 @@ CREATE FUNCTION "public"."initiate_email_change_intent"("p_new_email" "text") RE
     SET "search_path" TO 'public'
     AS $$
 BEGIN
+  IF auth.uid() IS NULL OR position('@' in coalesce(p_new_email, '')) = 0 THEN
+    RETURN;
+  END IF;
+  -- adres innego konta: GoTrue i tak odmówi zmiany
+  IF EXISTS (SELECT 1 FROM auth.users u WHERE lower(u.email) = lower(trim(p_new_email)) AND u.id <> auth.uid()) THEN
+    RETURN;
+  END IF;
   INSERT INTO public.email_intents (email, intent, status, cooldown_until, user_id)
   VALUES (
     lower(p_new_email),
@@ -12129,7 +12299,8 @@ BEGIN
     status        = 'pending',
     cooldown_until = now() + interval '24 hours',
     user_id       = auth.uid(),
-    updated_at    = now();
+    updated_at    = now()
+  WHERE public.email_intents.user_id IS NULL OR public.email_intents.user_id = auth.uid();
 END;
 $$;
 
@@ -12965,10 +13136,16 @@ $$;
 --
 
 CREATE FUNCTION "public"."mail_cooldown_email_reserve"("p_action_key" "text", "p_email" "text") RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
-    LANGUAGE "sql" SECURITY DEFINER
+    LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  SELECT * FROM public.mail_cooldown_reserve(p_action_key, 'email:' || md5(lower(trim(p_email))));
+BEGIN
+  IF coalesce(auth.role(), '') <> 'service_role'
+     AND (auth.uid() IS NULL OR p_action_key IS DISTINCT FROM 'auth:guest_upgrade_email') THEN
+    RAISE EXCEPTION 'mail_cooldown_email_reserve: forbidden' USING errcode = '42501';
+  END IF;
+  RETURN QUERY SELECT * FROM public.mail_cooldown_reserve(p_action_key, 'email:' || md5(lower(trim(p_email))));
+END;
 $$;
 
 
@@ -14319,6 +14496,9 @@ CREATE FUNCTION "public"."market_rate_game"("p_market_game_id" "uuid", "p_stars"
 declare v_uid uuid := auth.uid();
 begin
   if v_uid is null then return query select false, 'not_authenticated'; return; end if;
+  if not public._account_is_registered(v_uid, (select to_jsonb(u) from auth.users u where u.id = v_uid)) then
+    return query select false, 'registered_only'; return;
+  end if;
   if p_stars < 1 or p_stars > 5 then return query select false, 'invalid_stars'; return; end if;
   if not exists (select 1 from public.market_games where id = p_market_game_id and status = 'published') then
     return query select false, 'game_not_found'; return;
@@ -18086,12 +18266,17 @@ $$;
 CREATE FUNCTION "public"."resolve_device_connect_code"("p_code" "text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
-    AS $$
+    AS $_$
 DECLARE
   v_rec record;
+  v_live boolean;
 BEGIN
   DELETE FROM public.device_connect_codes
   WHERE expires_at IS NOT NULL AND expires_at < now();
+
+  IF coalesce(p_code, '') !~ '^[0-9]{6}$' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
 
   SELECT dcc.*, p.username AS owner_username
   INTO v_rec
@@ -18100,6 +18285,18 @@ BEGIN
   WHERE dcc.code = p_code;
 
   IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+
+  IF v_rec.device_type = 'poll_qr' THEN
+    v_live := EXISTS (SELECT 1 FROM public.games g
+                      WHERE g.id = v_rec.game_id AND g.owner_id = v_rec.owner_id
+                        AND g.status IN ('poll_open', 'poll_stopped') AND g.share_key_poll = v_rec.share_key);
+  ELSE
+    v_live := public.control_device_key_valid(v_rec.game_id, v_rec.device_type, v_rec.share_key);
+  END IF;
+  IF NOT v_live THEN
+    DELETE FROM public.device_connect_codes WHERE id = v_rec.id;
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
 
@@ -18113,7 +18310,7 @@ BEGIN
     'owner_username', v_rec.owner_username
   );
 END;
-$$;
+$_$;
 
 
 --
@@ -23390,6 +23587,41 @@ CREATE UNIQUE INDEX "user_logos_user_name_uniq" ON "public"."user_logos" USING "
 
 
 --
+-- Name: games a_guard_game_client_write; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_game_client_write" BEFORE INSERT OR UPDATE ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."guard_game_client_write"();
+
+
+--
+-- Name: profiles a_guard_profile_client_write; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_profile_client_write" BEFORE INSERT OR UPDATE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."guard_profile_client_write"();
+
+
+--
+-- Name: qb_tags a_guard_qb_tag_color; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_qb_tag_color" BEFORE INSERT OR UPDATE OF "color" ON "public"."qb_tags" FOR EACH ROW EXECUTE FUNCTION "public"."guard_qb_tag_color"();
+
+
+--
+-- Name: question_bases a_guard_resource_name_len; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_resource_name_len" BEFORE INSERT OR UPDATE OF "name" ON "public"."question_bases" FOR EACH ROW EXECUTE FUNCTION "public"."guard_resource_name_len"();
+
+
+--
+-- Name: user_logos a_guard_resource_name_len; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_resource_name_len" BEFORE INSERT OR UPDATE OF "name" ON "public"."user_logos" FOR EACH ROW EXECUTE FUNCTION "public"."guard_resource_name_len"();
+
+
+--
 -- Name: friendships base_friend_source_close; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -25430,14 +25662,18 @@ CREATE POLICY "No public access" ON "public"."reports" USING (false);
 -- Name: app_ratings Users can insert their own rating; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can insert their own rating" ON "public"."app_ratings" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can insert their own rating" ON "public"."app_ratings" FOR INSERT WITH CHECK ((("auth"."uid"() = "user_id") AND ("char_length"(COALESCE("comment", ''::"text")) <= 2000) AND (NOT COALESCE(( SELECT "p"."is_guest"
+   FROM "public"."profiles" "p"
+  WHERE ("p"."id" = "auth"."uid"())), true))));
 
 
 --
 -- Name: app_ratings Users can update their own rating; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK ((("auth"."uid"() = "user_id") AND ("char_length"(COALESCE("comment", ''::"text")) <= 2000) AND (NOT COALESCE(( SELECT "p"."is_guest"
+   FROM "public"."profiles" "p"
+  WHERE ("p"."id" = "auth"."uid"())), true))));
 
 
 --
@@ -26455,8 +26691,9 @@ CREATE POLICY "qb_question_tags_select" ON "public"."qb_question_tags" FOR SELEC
 CREATE POLICY "qb_question_tags_write" ON "public"."qb_question_tags" USING ((EXISTS ( SELECT 1
    FROM "public"."qb_questions" "q"
   WHERE (("q"."id" = "qb_question_tags"."question_id") AND "public"."base_can_edit"("q"."base_id", "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."qb_questions" "q"
-  WHERE (("q"."id" = "qb_question_tags"."question_id") AND "public"."base_can_edit"("q"."base_id", "auth"."uid"())))));
+   FROM ("public"."qb_questions" "q"
+     JOIN "public"."qb_tags" "t" ON (("t"."id" = "qb_question_tags"."tag_id")))
+  WHERE (("q"."id" = "qb_question_tags"."question_id") AND ("t"."base_id" = "q"."base_id") AND "public"."base_can_edit"("q"."base_id", "auth"."uid"())))));
 
 
 --
@@ -26802,5 +27039,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PPplTxnXQM9eDfj54QjK2bmewOaYTvYf9bLbWeTMmSfXghfcFRcrCu0bm6q2XjI
+\unrestrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
 
