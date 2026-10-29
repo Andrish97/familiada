@@ -99,13 +99,18 @@ The question and answer layout and the uncovering gestures stay the same.
 ![Host screen — the right part under the cover](zrzut:play-host-duel@tablet-landscape)
 ![Cover moved aside — the question and answers with points](zrzut:play-host-duel-open@tablet-landscape)
 
-**A device disconnects.** When a required device stops responding, after a few seconds
-the panel shows which devices have disconnected and pauses the game. Check the internet and the device's
-screen; if needed, connect it again with the buttons in the top bar. The game unlocks
-on its own when the devices are back. Actions confirmed earlier stay saved, and a running
-timer keeps counting down. Common causes and fixes → 19.5.
+**A device disconnects.** When a device stops responding, after a few seconds the panel shows
+which one is missing and why: **asleep** (the phone screen is locked or another app is in front —
+unlock it and return to the device page) or **no connection** (check the internet; if needed,
+connect the device again with the buttons in the top bar). The game is paused when the Display is
+missing, and during the face-off also when the Buzzer is missing (if you do not use physical
+buttons). A missing Host, or a missing Buzzer at other moments, does not stop the game — the panel
+shows a warning above the hint instead. Actions confirmed earlier stay saved, and a running timer
+keeps counting down. Common causes and fixes → 19.5.
 
-![Disconnected devices — the game is paused](zrzut:play-control-device-lost)
+![Disconnected Display — the game is paused](zrzut:play-control-device-lost)
+
+![Host and Buzzer asleep — a warning, the game goes on](zrzut:play-control-device-asleep)
 
 ## 17.2 Preparing and starting the game
 

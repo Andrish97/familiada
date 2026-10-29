@@ -2009,6 +2009,11 @@ export function createUI({ root, emit }) {
     if (hint && ctx.displayHiddenSameBrowser && !/^(devices_|setup_)/.test(s)) {
       hint.insertBefore(h("div", { class: "c2-hint-warn", role: "status", text: t("control.hints.displayHiddenSameBrowser") }), hint.firstChild);
     }
+    // Brakujące urządzenie, które nie wstrzymuje gry (uśpiony Prowadzący,
+    // Przycisk poza pojedynkiem — decyzja 2026-10-29): ostrzeżenie zamiast okna.
+    if (hint && ctx.devicesAbsent && !/^(devices_|setup_)/.test(s)) {
+      hint.insertBefore(h("div", { class: "c2-hint-warn", role: "status", text: ctx.devicesAbsent }), hint.firstChild);
+    }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;
     if (savedFocus) {

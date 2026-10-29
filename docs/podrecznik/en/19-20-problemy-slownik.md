@@ -94,7 +94,7 @@ Each item: **symptom** → possible cause → what to do.
 
 ## 19.5 Device problems
 
-- **The game pauses every now and then, and a device shows as disconnected** → the phone
+- **The panel shows a device as asleep** → the phone
   with the buttons or the host tablet went dark or was switched to another app → keep the screen
   on for the whole game, plug the device into a charger, lengthen the automatic screen lock
   time and do not switch apps. If you use physical buttons or play without a host

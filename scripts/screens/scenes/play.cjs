@@ -301,12 +301,18 @@ module.exports = [
     db: state((row, d, lang) => { S.finaleP2Done(row, d, lang); row.step = "f_end"; d.settings.endScreenMode = "money"; d.locks.gameEnded = true; d.rounds.totals = { A: 312 + d.final.runtime.sum, B: 187 }; }) },
 
   // ======================= Control: okna =======================
-  { id: "play-control-device-lost", category: CAT, title: "Control — okno „Utracono połączenie” (Prowadzący i Przycisk rozłączone w trakcie gry)", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
+  { id: "play-control-device-lost", category: CAT, title: "Control — okno „Utracono połączenie” (Wyświetlacz rozłączony w trakcie gry, gra wstrzymana)", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
     db: (db) => {
-      // Pierwsze odczyty: wszystko połączone; potem Prowadzący i Przycisk znikają.
-      db.rpc.control_devices_snapshot = "fn:(args, db) => { db.__snapN = (db.__snapN || 0) + 1; const lost = db.__snapN > 3; const dev = (on) => ({ primary_online: on, waiting_count: 0, visibility: 'visible', focused: on, audio_unlocked: on, meta: {}, last_seen_at: new Date(Date.now() - (on ? 0 : 20e3)).toISOString() }); return { ok: true, devices: { display: dev(true), host: dev(!lost), buzzer: dev(!lost) } }; }";
+      // Pierwsze odczyty: wszystko połączone; potem znika Wyświetlacz (bez przejścia w tło).
+      db.rpc.control_devices_snapshot = "fn:(args, db) => { db.__snapN = (db.__snapN || 0) + 1; const lost = db.__snapN > 3; const dev = (on) => ({ primary_online: on, waiting_count: 0, visibility: 'visible', focused: on, audio_unlocked: on, meta: {}, last_seen_at: new Date(Date.now() - (on ? 0 : 20e3)).toISOString() }); return { ok: true, devices: { display: dev(!lost), host: dev(true), buzzer: dev(true) } }; }";
     },
     steps: [waitModal("#deviceLostOverlay")] },
+  // Decyzja 2026-10-29: uśpiony Prowadzący i Przycisk poza pojedynkiem nie
+  // wstrzymują gry — ostrzeżenie nad podpowiedzią, bez okna.
+  { id: "play-control-device-asleep", category: CAT, title: "Control — uśpiony Prowadzący i Przycisk: ostrzeżenie nad podpowiedzią, gra trwa", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-hint-warn", devices: DESKTOP, settle: 600,
+    db: (db) => {
+      db.rpc.control_devices_snapshot = "fn:(args, db) => { db.__snapN = (db.__snapN || 0) + 1; const lost = db.__snapN > 3; const dev = (on, hidden) => ({ primary_online: on, waiting_count: 0, visibility: hidden ? 'hidden' : 'visible', focused: on, audio_unlocked: true, meta: {}, last_seen_at: new Date(Date.now() - (on ? 0 : 20e3)).toISOString() }); return { ok: true, devices: { display: dev(true, false), host: dev(!lost, lost), buzzer: dev(!lost, lost) } }; }";
+    } },
   { id: "play-control-leave-confirm", category: CAT, title: "Control — okno „Gra w toku” przy wyjściu do Moich gier", path: CONTROL_URL, sources: CONTROL, gameState: "round", ready: ".c2-tile", devices: DESKTOP, settle: 600,
     steps: [async (view) => { await view.waitForTimeout(600); await view.locator("#btnBack").click(); }, waitModal(".uni-modal")] },
   { id: "play-control-restart-confirm", category: CAT, title: "Control — okno „Zacznij od nowa” na ekranie końca gry", path: CONTROL_URL, sources: CONTROL, gameState: "finale", ready: ".c2-intro", devices: DESKTOP, settle: 600,

@@ -129,6 +129,7 @@ function buildModal({
   return {
     overlay,
     modal,
+    titleEl,
     sub,
     okBtn,
     cancelBtn,
@@ -167,7 +168,7 @@ function openModal({
       ? modalText("common.modal.confirmOk", "Tak")
       : modalText("common.modal.alertOk", "OK");
     const fallbackCancel = modalText("common.modal.confirmCancel", "Nie");
-    const { overlay, sub, okBtn, cancelBtn, closeBtn, msg, choiceBtns } = buildModal({
+    const { overlay, titleEl, sub, okBtn, cancelBtn, closeBtn, msg, choiceBtns } = buildModal({
       title: title ?? fallbackTitle,
       text: text ?? fallbackText,
       okText: okText === null ? null : (okText ?? fallbackOk),
@@ -215,6 +216,7 @@ function openModal({
       };
       controller.close = (value = true) => finish(value);
       controller.setText = (value) => { sub.textContent = value || ""; sub.hidden = !value; };
+      controller.setTitle = (value) => { if (value) titleEl.textContent = value; };
       controller.setMessage = (value, kind = "") => setMessage(msg, value, kind);
     }
 

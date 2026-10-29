@@ -3375,13 +3375,19 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     expect(revAfter).toBe(revBefore);
 
     // ===== Ponowne podłączenie po kolei, przez modal =====
+    // Decyzja 2026-10-29: poza pojedynkiem tylko Wyświetlacz wstrzymuje grę;
+    // brak Prowadzącego/Przycisku to ostrzeżenie nad podpowiedzią.
     displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
-    await expect(answerTile(page, 2)).toBeDisabled();
+    await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
+    await expect(page.locator(".c2-hint-warn")).toContainText("Bez połączenia");
+    await expect(page.locator(".c2-hint-warn")).toContainText("Prowadzący");
     await reconnectViaModal(browser, page, "host", contexts, errors);
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
-    await expect(answerTile(page, 2)).toBeDisabled();
+    await expect(page.locator(".c2-hint-warn")).not.toContainText("Prowadzący");
+    await expect(page.locator(".c2-hint-warn")).toContainText("Przycisk");
     buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
+    await expect(page.locator(".c2-hint-warn")).toHaveCount(0, { timeout: 10000 });
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
 
     // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry

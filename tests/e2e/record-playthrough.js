@@ -1578,7 +1578,6 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await expect(answerTile(control, 3)).toBeDisabled();
   await expect(control.locator("#deviceLostOverlay")).toBeVisible();
   await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Wyświetlacz");
-  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Prowadzący");
   await control.waitForTimeout(2200);
   await control.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
   const blockedBank = await readBank();
@@ -1722,7 +1721,6 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   await Promise.all(["display", "host", "buzzer"].map((kind) => waitForDotStatus(control, kind, "bad")));
   await expect(control.locator("#deviceLostOverlay")).toBeVisible({ timeout: 15_000 });
   await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Wyświetlacz");
-  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Prowadzący");
   await control.waitForTimeout(1500);
   await control.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
   for (const kind of ["display", "host", "buzzer"]) {

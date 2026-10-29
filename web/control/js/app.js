@@ -119,7 +119,7 @@ import { createEngine } from "./engine.js?v=v2026-10-29T03210";
 import { createActionGate } from "./actionGate.js?v=v2026-10-29T03210";
 import { createDevices } from "./devices.js?v=v2026-10-29T03210";
 import { createPresence } from "./presence.js?v=v2026-10-29T03210";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-29T03210";
+import { missingDevices, blockingDevices, absenceCause } from "./deviceGate.js?v=v2026-10-29T03210";
 import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-29T03210";
 import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-29T03210";
 import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-29T03210";
@@ -503,11 +503,11 @@ async function main() {
   document.addEventListener("pointerdown", (event) => {
     const button = event.target?.closest?.("button");
     if (!button?.disabled || !button.closest("#app")) return;
-    if (missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction("disabled_click");
+    if (blockingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction("disabled_click");
     else if (waitingForDisplayAudioUnlock()) noteAudioUnlockBlockedAction();
   }, { capture: true });
   function noteConnectivityBlockedAction(action) {
-    connectivityTracker.noteBlockedAction(action, missingDevices(store.state, presenceFlags));
+    connectivityTracker.noteBlockedAction(action, blockingDevices(store.state, presenceFlags));
   }
   function updateConnectivityIncident(missing, deviceDiagnostics, wasOnline) {
     connectivityTracker.update(missing, Object.fromEntries(missing.map(kind => [kind, summarizedDeviceContext(deviceDiagnostics, kind)])), wasOnline);
@@ -828,7 +828,7 @@ async function main() {
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
-  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || waitingForDisplay() || Date.now() < lockedUntil || blockingDevices(store.state, presenceFlags).length > 0; }
 
   function recoverLeaseStatusRead() {
     if (!presenceUnavailable) return false;
@@ -876,7 +876,7 @@ async function main() {
     }
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
-    if (!action.type.startsWith("EXPIRE_") && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return null;
+    if (!action.type.startsWith("EXPIRE_") && (presenceReadBlocksGame() || blockingDevices(store.state, presenceFlags).length)) return null;
     if (waitingForDisplay() && !action.type.startsWith("EXPIRE_")) return null;
     const prevRow = store.state.__row || null;
     committing = true;
@@ -1036,6 +1036,32 @@ async function main() {
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   const connectCodes = await connectCodesP;
 
+  function deviceLabel(kind) {
+    return { display: t("control.deviceDisplay"), host: t("control.deviceHost"), buzzer: t("control.deviceBuzzer") }[kind];
+  }
+  // Treść okna według przyczyny: uśpione urządzenie (strona zgłosiła przejście
+  // w tło — zablokowany ekran, inna aplikacja) albo zerwane połączenie.
+  // Wcześniej zawsze „sprawdź internet i podłącz ponownie”, także gdy telefon
+  // tylko zablokował ekran (eksport 29.10).
+  function deviceLostMessage(kinds, diagnostics) {
+    const asleep = kinds.filter((kind) => absenceCause(diagnostics?.[kind]) === "asleep");
+    const offline = kinds.filter((kind) => !asleep.includes(kind));
+    const parts = [];
+    if (asleep.length) parts.push(t("control.deviceAsleepText", { devices: asleep.map(deviceLabel).join(", ") }));
+    if (offline.length) parts.push(t("control.deviceOfflineText", { devices: offline.map(deviceLabel).join(", ") }));
+    parts.push(t("control.deviceBlockedNote"));
+    return { title: t(offline.length ? "control.deviceLostTitle" : "control.deviceAsleepTitle"), text: parts.join("\n\n") };
+  }
+  // Brakujące urządzenia, które NIE wstrzymują gry — krótkie ostrzeżenie.
+  function absentDevicesNotice() {
+    const blocking = blockingDevices(store.state, presenceFlags);
+    const absent = missingDevices(store.state, presenceFlags).filter((kind) => !blocking.includes(kind));
+    if (!absent.length) return null;
+    const asleep = absent.filter((kind) => absenceCause(lastDeviceDiagnostics?.[kind]) === "asleep");
+    const key = asleep.length === absent.length ? "control.hints.deviceAsleep" : "control.hints.deviceOffline";
+    return t(key, { devices: absent.map(deviceLabel).join(", ") });
+  }
+
   const presence = createPresence({
     gameId,
     onSnapshot: ({ gameRev, displayCompletion }) => {
@@ -1092,30 +1118,34 @@ async function main() {
         });
       }
       const missing = missingDevices(store.state, flags);
+      const blocking = blockingDevices(store.state, flags);
       updateConnectivityIncident(missing, deviceDiagnostics, missing.some(kind => previous[kind]));
-      if (!missing.length) {
+      // Okno tylko dla urządzeń, bez których gra stoi; pozostałe brakujące
+      // (uśpiony Prowadzący, Przycisk poza pojedynkiem) to ostrzeżenie nad
+      // podpowiedzią (ui.js, devicesAbsent) — decyzja użytkownika 2026-10-29.
+      if (!blocking.length) {
         disconnectEpisode = false;
         lastDisconnectState = "";
         deviceLostModal?.close?.(true);
         deviceLostModal = null;
       } else {
-        const labels = { display: t("control.deviceDisplay"), host: t("control.deviceHost"), buzzer: t("control.deviceBuzzer") };
-        const lostText = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
-        deviceLostModal?.setText?.(lostText);
+        const lost = deviceLostMessage(blocking, deviceDiagnostics);
+        deviceLostModal?.setText?.(lost.text);
+        deviceLostModal?.setTitle?.(lost.title);
         const disconnectState = JSON.stringify(flags);
-        if ((missing.some((kind) => previous[kind]) || disconnectEpisode) && disconnectState !== lastDisconnectState) {
+        if ((blocking.some((kind) => previous[kind]) || disconnectEpisode) && disconnectState !== lastDisconnectState) {
           lastDisconnectState = disconnectState;
           // Jeden modal na całe zdarzenie utraty połączenia. Przywracanie
           // urządzeń po kolei zmienia listę brakujących, ale nie powinno
           // ponownie zasłaniać Control ani blokować kliknięcia kolejnego
           // statusu w górnym pasku.
-          if (!disconnectEpisode && missing.some((kind) => previous[kind])) {
+          if (!disconnectEpisode && blocking.some((kind) => previous[kind])) {
             disconnectEpisode = true;
             // wspólne alertModal (modal.js); tekst odświeżany przy zmianie listy brakujących
             const ctl = {};
             deviceLostModal = ctl;
             void alertModal({
-              title: t("control.deviceLostTitle"), text: lostText, okText: t("common.a2hsOk"),
+              title: lost.title, text: lost.text, okText: t("common.a2hsOk"),
               modalClass: "modal--narrow", overlayId: "deviceLostOverlay", controller: ctl,
             }).then(() => { if (deviceLostModal === ctl) deviceLostModal = null; });
           }
@@ -1260,7 +1290,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, displayHiddenSameBrowser: displayHiddenSameBrowser(), busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || waitingForDisplay() || Date.now() < lockedUntil || blockingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || blockingDevices(store.state, presenceFlags).length > 0, devicesAbsent: absentDevicesNotice() };
   }
 
   function renderCurrent() {
@@ -1548,7 +1578,7 @@ async function main() {
       }
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
-      if (gameAction && missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction(payload?.type || action);
+      if (gameAction && blockingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction(payload?.type || action);
       if (gameAction && queuedGameAction && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") {
         // Reserve this command immediately: later typing cannot overtake
@@ -1559,7 +1589,7 @@ async function main() {
         finally { queuedGameAction = false; }
       }
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
-      if (gameAction && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return;
+      if (gameAction && (presenceReadBlocksGame() || blockingDevices(store.state, presenceFlags).length)) return;
       if (action === "ui.flushTyping") { await _dispatchGatedQueue; return; }
       if (action === "ui.rerender") {
         // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie

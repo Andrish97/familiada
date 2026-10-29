@@ -99,13 +99,18 @@ Układ pytania i odpowiedzi oraz sposób odsłaniania pozostają takie same.
 ![Ekran prowadzącego — prawa część pod zasłoną](zrzut:play-host-duel@tablet-landscape)
 ![Zasłona odsunięta — pytanie i odpowiedzi z punktami](zrzut:play-host-duel-open@tablet-landscape)
 
-**Rozłączenie urządzenia.** Gdy wymagane urządzenie przestanie odpowiadać, po kilku sekundach
-panel pokaże, które urządzenia się rozłączyły, i wstrzyma grę. Sprawdź internet i ekran
-urządzenia; w razie potrzeby podłącz je ponownie przyciskami na górnym pasku. Gra odblokuje się
-sama, gdy urządzenia wrócą. Wcześniej zatwierdzone czynności pozostają zapisane, a uruchomiony
+**Rozłączenie urządzenia.** Gdy urządzenie przestanie odpowiadać, po kilku sekundach panel
+pokaże, którego brakuje i dlaczego: **uśpione** (zablokowany ekran telefonu albo inna aplikacja
+na wierzchu — odblokuj je i wróć do strony urządzenia) albo **bez połączenia** (sprawdź internet;
+w razie potrzeby podłącz urządzenie ponownie przyciskami na górnym pasku). Grę wstrzymuje brak
+Wyświetlacza, a w pojedynku także brak Przycisku (gdy nie używasz przycisków fizycznych). Brak
+Prowadzącego albo Przycisku w pozostałych momentach nie zatrzymuje gry — panel pokazuje wtedy
+ostrzeżenie nad podpowiedzią. Wcześniej zatwierdzone czynności pozostają zapisane, a uruchomiony
 zegar dalej odlicza czas. Najczęstsze przyczyny i rozwiązania → 19.5.
 
-![Rozłączone urządzenia — gra wstrzymana](zrzut:play-control-device-lost)
+![Rozłączony Wyświetlacz — gra wstrzymana](zrzut:play-control-device-lost)
+
+![Uśpiony Prowadzący i Przycisk — ostrzeżenie, gra trwa](zrzut:play-control-device-asleep)
 
 ## 17.2 Przygotowanie i rozpoczęcie gry
 

@@ -94,7 +94,7 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
 
 ## 19.5 Problemy z urządzeniami
 
-- **Gra wstrzymuje się co jakiś czas, urządzenie pokazuje się jako rozłączone** → telefon
+- **Panel pokazuje urządzenie jako uśpione** → telefon
   z przyciskami albo tablet prowadzącego zgasł lub przełączono na inną aplikację → trzymaj ekran
   włączony przez całą grę, podłącz urządzenie do ładowarki, wydłuż czas automatycznej blokady
   ekranu i nie przełączaj aplikacji. Gdy używasz przycisków fizycznych albo grasz bez tabletu
