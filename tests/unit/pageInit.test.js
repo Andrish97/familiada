@@ -109,6 +109,24 @@ test("#btnBack: handleSheetBack idzie pierwsze, potem przejście na backHref z m
   assert.equal(loc.href, "/games/");
 });
 
+test("linki #btnBack i przycisków mapy mają adres z ?ret= od razu, zanim skończy się sprawdzanie sesji", async () => {
+  // Zgłoszenie 2026-10-29: szybkie „Wstecz” we Wskazówkach szło na zapasowe href="/".
+  els.btnBack = fakeEl("A");
+  els.btnLegal = fakeEl("A");
+  loc.pathname = "/manual/";
+  loc.search = "?ch=9&ret=%2Fbases%2F&lang=pl";
+  let release;
+  const { deps } = makeDeps({ user: null });
+  deps.getUser = () => new Promise((r) => { release = r; });
+  const done = initPage("manual", { deps });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(els.btnBack.attrs.href, "/bases/");
+  assert.equal(els.btnLegal.attrs.href, `/privacy/?ret=${encodeURIComponent("/manual/?ch=9&ret=%2Fbases%2F")}`);
+  release(null);
+  await done;
+  assert.equal(els.btnBack.attrs.href, "/bases/");
+});
+
 test("onBack zastępuje przejście i dostaje href z mapy", async () => {
   const { deps } = makeDeps();
   let got = null;

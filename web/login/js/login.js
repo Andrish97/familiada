@@ -1,7 +1,7 @@
-import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T14490";
-import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T14490";
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T15284";
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T15284";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T14490";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T15284";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -12,8 +12,7 @@ import {
   sendSignupConfirmation,
   convertGuestToRegisteredEmailOnly,
   discardCurrentGuestAccount,
-  resetPassword,
-  resetPasswordByUsername,
+  resetPasswordByLogin,
   prepareConfirmationResend,
   updateUserLanguage,
   validatePassword,
@@ -24,17 +23,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-29T14490";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T14490";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T14490";
+} from "../../shared/js/core/auth.js?v=v2026-10-29T15284";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T15284";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15284";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T14490";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T14490";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T14490";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T14490";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T14490";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T14490";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T14490";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T15284";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T15284";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T15284";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T15284";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T15284";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15284";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T15284";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -57,7 +56,6 @@ const setupTitleEl = setupCard?.querySelector(".setup-title");
 const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "/login/confirm/";
-const resetUrl = baseUrls.resetUrl || "/login/reset/";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
@@ -1112,74 +1110,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      // Nazwa użytkownika: Worker rozwiązuje nazwę, pilnuje cooldownu i wysyła
-      // link -- adres e-mail konta nie trafia do przeglądarki.
-      if (!loginOrEmail.includes("@")) {
-        const key = loginOrEmail.toLowerCase();
-        if (getForgotUntil(key) > Date.now()) {
-          setStatus(t("index.statusResetSent"));
-          showForgotCooldownForEmail(key);
-          return;
-        }
-        setStatus(t("index.statusResetSending"));
-        let captchaToken = await getCaptchaTokenOrPrompt();
-        let result;
-        try {
-          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
-        } catch (e) {
-          if (!isCaptchaError(e)) throw e;
-          captchaToken = await getCaptchaTokenOrPrompt();
-          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
-        }
-        if (result.nextAllowedAtMs) setForgotUntil(key, result.nextAllowedAtMs);
+      // Worker rozwiązuje nazwę (adres e-mail konta nie trafia do przeglądarki),
+      // pilnuje cooldownu i limitów, wysyła link -- tak samo dla adresu e-mail.
+      const key = loginOrEmail.toLowerCase();
+      // Adres e-mail: odliczanie z serwera (także z innego urządzenia).
+      if (key.includes("@")) await refreshForgotUntil(key);
+      if (getForgotUntil(key) > Date.now()) {
         setStatus(t("index.statusResetSent"));
-        hideForgotCooldown();
+        setErr("");
         showForgotCooldownForEmail(key);
         return;
       }
-      const resolved = loginOrEmail.toLowerCase();
-      // 1) cooldown check (per email, cross-device)
-      await refreshForgotUntil(resolved);
-      const until = getForgotUntil(resolved);
-      const left = until - Date.now();
-      if (left > 0) {
-        setStatus(t("index.statusResetSent"));
-        setErr("");
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-      // 2) reserve cooldown (cross-device) + send
-      const reserve = await mailCooldownEmailReserve(RESET_ACTION_KEY, resolved);
-      if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
-
-      if (!reserve.ok) {
-        setStatus(t("index.statusResetSent"));
-        setErr("");
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-
       setStatus(t("index.statusResetSending"));
-      const redirectTo = buildAuthRedirect(resetUrl);
-
       let captchaToken = await getCaptchaTokenOrPrompt();
-      let usedEmail;
+      let result;
       try {
-        usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
+        result = await resetPasswordByLogin(loginOrEmail, getUiLang(), captchaToken);
       } catch (e) {
-        if (isCaptchaError(e)) {
-          captchaToken = await getCaptchaTokenOrPrompt();
-          usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
-        } else {
-          throw e;
-        }
+        if (!isCaptchaError(e)) throw e;
+        captchaToken = await getCaptchaTokenOrPrompt();
+        result = await resetPasswordByLogin(loginOrEmail, getUiLang(), captchaToken);
       }
-
-      if (reserve.nextAllowedAtMs) setForgotUntil(usedEmail, reserve.nextAllowedAtMs);
-
+      if (result.nextAllowedAtMs) setForgotUntil(key, result.nextAllowedAtMs);
       setStatus(t("index.statusResetSent"));
       hideForgotCooldown();
-      showForgotCooldownForEmail(usedEmail);
+      showForgotCooldownForEmail(key);
 } catch (e) {
       console.error(e);
       setStatus(t("auth.statusError"));

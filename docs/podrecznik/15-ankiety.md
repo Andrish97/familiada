@@ -34,7 +34,7 @@ Na karcie „Udostępnianie” są dwa sposoby:
 - [Kopiuj link] kopiuje odnośnik do głosowania, a [Otwórz] otwiera ankietę w nowej karcie,
 - kod QR do zeskanowania telefonem — kliknij go, żeby pokazać go na cały ekran.
 
-Głosujący są anonimowi — widzisz tylko liczbę głosów. W jednej przeglądarce można zagłosować raz.
+Głosujący są anonimowi — widzisz tylko liczbę głosów. Na jednym urządzeniu kolejna osoba może zagłosować po 30 sekundach (np. gdy kilka osób dzieli się telefonem). Głosów z linku nie da się przypisać do osób — ktoś może zagłosować kilka razy, np. z innej przeglądarki. Gdy wynik ma znaczenie, zaproś odbiorców (niżej): każdy z nich zagłosuje raz.
 
 ![Udostępnianie — link i kod QR](zrzut:poll-share)
 ![Powiększony kod QR](zrzut:polls-qr-vote-modal)

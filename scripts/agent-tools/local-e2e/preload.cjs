@@ -86,6 +86,17 @@ async function handle(route) {
   if (url.hostname === "www.familijna.app" || url.hostname === "familijna.app") {
     let p = decodeURIComponent(url.pathname);
     if (p.startsWith("/api/")) return route.fulfill({ status: 200, headers: CORS, contentType: "application/json", body: "{}" });
+    // Worker: kod urządzenia (bez limitu prób) -- RPC kluczem serwisowym.
+    if (p === "/_api/device/resolve") {
+      let body = {};
+      try { body = JSON.parse(req.postData() || "{}"); } catch {}
+      const res = await route.fetch({
+        url: `${PGRST}/rpc/resolve_device_connect_code`, method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwt({ role: "service_role" })}` },
+        postData: JSON.stringify({ p_code: String(body.code || "") }),
+      });
+      return route.fulfill({ status: 200, contentType: "application/json", body: await res.text() });
+    }
     if (!p.endsWith("/") && !path.extname(p) && fs.existsSync(path.join(WEB, p, "index.html"))) p += "/";
     if (p.endsWith("/")) p += "index.html";
     let file = path.join(WEB, p);

@@ -1,6 +1,41 @@
 // The file importer and copy sender use the same canonical logo package.
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-29T14490";
+import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-29T15284";
 
+
+// Nazwa logo: jak w polu nazwy i w bazie (migracja 514).
+export const LOGO_NAME_MAX = 80;
+// Plik .famlogo z dysku: obrazy tylko osadzone (data:, tak zapisuje eksport)
+// albo z własnego Storage (bucket user-logos). Adres z obcego pliku pobierałby
+// obraz z dowolnego serwera na ekranie Prowadzącego (loadFromJSON rysunku).
+// Kopie między kontami przenosi serwer (duplicate.js), więc parser wspólny
+// (parseLogoPackage) zostawia adresy bez zmian.
+const OWN_IMAGE_URL = /^https:\/\/[^/?#]+\/storage\/v1\/object\/public\/user-logos\/[^?#]+$/i;
+const EMBEDDED_IMAGE = /^data:image\/(png|jpe?g|gif|webp);base64,/i;
+const allowedImage = (src) => EMBEDDED_IMAGE.test(src) || OWN_IMAGE_URL.test(src);
+
+function cleanScene(node) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) return node;
+  const out = { ...node };
+  for (const key of ["backgroundImage", "overlayImage"]) {
+    if (out[key] && typeof out[key] === "object" && typeof out[key].src === "string" && !allowedImage(out[key].src)) delete out[key];
+  }
+  if (out.fill && typeof out.fill === "object" && typeof out.fill.source === "string" && !allowedImage(out.fill.source)) delete out.fill;
+  if (Array.isArray(out.objects)) {
+    out.objects = out.objects
+      .filter((o) => !(o && typeof o === "object" && typeof o.src === "string" && !allowedImage(o.src)))
+      .map(cleanScene);
+  }
+  return out;
+}
+
+export function sanitizeLogoFileImport(logo) {
+  const source = logo?.payload?.source;
+  if (!source || typeof source !== "object") return logo;
+  const clean = { ...source };
+  if (typeof clean.imageUrl === "string" && !OWN_IMAGE_URL.test(clean.imageUrl)) delete clean.imageUrl;
+  if (clean.fabricData) clean.fabricData = cleanScene(clean.fabricData);
+  return { ...logo, payload: { ...logo.payload, source: clean } };
+}
 
 function invalid(code, params = {}) {
   const error = new Error(code);
@@ -13,7 +48,7 @@ export function parseLogoPackage(obj, fallbackName) {
   const kindRaw = String(obj?.kind || "").toUpperCase();
   const typeRaw = String(obj?.type || "").toUpperCase();
   const kind = kindRaw || (typeRaw.includes("GLYPH") ? "GLYPH" : typeRaw.includes("PIX") ? "PIX" : "");
-  const name = String(obj?.name || "").trim() || fallbackName;
+  const name = (String(obj?.name || "").trim() || String(fallbackName || "")).slice(0, LOGO_NAME_MAX);
   const p = obj?.payload || {};
   const source = p.source && typeof p.source === "object" ? { ...p.source } : {};
   delete source.editHistory;

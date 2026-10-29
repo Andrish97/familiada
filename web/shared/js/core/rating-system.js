@@ -1,8 +1,8 @@
 // js/core/rating-system.js
-import { sb } from "./supabase.js?v=v2026-10-29T14490";
-import { t } from "../../translation/translation.js?v=v2026-10-29T14490";
-import { alertModal, choiceModal, confirmModal } from "./modal.js?v=v2026-10-29T14490";
-import { icon } from "./icons.js?v=v2026-10-29T14490";
+import { sb } from "./supabase.js?v=v2026-10-29T15284";
+import { t } from "../../translation/translation.js?v=v2026-10-29T15284";
+import { alertModal, choiceModal, confirmModal } from "./modal.js?v=v2026-10-29T15284";
+import { icon } from "./icons.js?v=v2026-10-29T15284";
 
 
 const RATING_LS_PREFIX = "fam:app_rated:";
@@ -128,7 +128,7 @@ function ratingBody(current = null) {
       <div class="stars-row">
           ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
       </div>
-      <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
+      <textarea class="inp rating-comment" rows="3" maxlength="2000" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
   const stars = body.querySelectorAll(".star-btn");
   const commentEl = body.querySelector(".rating-comment");
   commentEl.value = current?.comment || "";

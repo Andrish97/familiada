@@ -29,14 +29,14 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { holdPageLayout, redirectPage } from "./page-layout.js?v=v2026-10-29T14490";
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-29T14490";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-29T14490";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-29T14490";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-29T14490";
-import { guardViewportWidth } from "./device-guard.js?v=v2026-10-29T14490";
-import "./scroll-fade.js?v=v2026-10-29T14490"; // wygaszona krawędź przewijanych list (wszystkie strony)
-import "./fit-row.js?v=v2026-10-29T14490"; // wiersze przycisków bez zawijania (.fit-row)
+import { holdPageLayout, redirectPage } from "./page-layout.js?v=v2026-10-29T15284";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, manualHref, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-29T15284";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-29T15284";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-29T15284";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-29T15284";
+import { guardViewportWidth } from "./device-guard.js?v=v2026-10-29T15284";
+import "./scroll-fade.js?v=v2026-10-29T15284"; // wygaszona krawędź przewijanych list (wszystkie strony)
+import "./fit-row.js?v=v2026-10-29T15284"; // wiersze przycisków bez zawijania (.fit-row)
 
 // Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
 // użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
@@ -48,10 +48,10 @@ if (globalThis.document?.documentElement?.dataset.input === "touch") {
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-29T14490"),
-    import("./topbar-controller.js?v=v2026-10-29T14490"),
-    import("./modal-sheet.js?v=v2026-10-29T14490"),
-    import("./device-guard.js?v=v2026-10-29T14490"),
+    import("./auth.js?v=v2026-10-29T15284"),
+    import("./topbar-controller.js?v=v2026-10-29T15284"),
+    import("./modal-sheet.js?v=v2026-10-29T15284"),
+    import("./device-guard.js?v=v2026-10-29T15284"),
 
   ]);
   return {
@@ -69,10 +69,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-29T14490");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-29T15284");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-29T14490");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-29T15284");
     await initRatingSystem(user);
   }
 }
@@ -105,6 +105,18 @@ function wireBack(id, user, opts, d) {
     if (opts.onBack) { await opts.onBack(href, ev); return; }
     if (href) location.href = href;
   });
+}
+
+function presetLinks(id, opts) {
+  const btn = elementOf(opts.back, "btnBack");
+  const href = btn?.tagName === "A" ? backHref(id, { anon: true }) : null; // bez ret: rodzic publiczny
+  if (href) btn.setAttribute("href", href);
+  // Linki przycisków mapy (np. „Polityka prywatności” we Wskazówkach) też od razu
+  // z ?ret=; widoczność wg roli rozstrzyga później wireButtons.
+  for (const [bid, spec] of Object.entries(PAGES[id].buttons || {})) {
+    const link = document.getElementById(bid);
+    if (link?.tagName === "A" && !spec.custom && !buttonBlocked(spec)) link.setAttribute("href", buttonHref(spec));
+  }
 }
 
 function wireManual(id, user, opts) {
@@ -230,6 +242,9 @@ export async function initPage(id, opts = {}) {
 async function initializePage(id, opts, finishLayout) {
   const p = PAGES[id];
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
+  // Linki topbara (Wskazówki, Prywatność) są klikalne, zanim skończy się
+  // sprawdzanie sesji — od razu adresy z mapy (?ret=), nie zapasowe z HTML.
+  presetLinks(id, opts);
   const d = opts.deps || await loadDeps();
 
   // Guard jest pierwszą bramką. Nie pytamy o sesję ani nie odsłaniamy strony,
@@ -259,7 +274,7 @@ async function initializePage(id, opts, finishLayout) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-29T14490")
+      void import("./nav-contact-badges.js?v=v2026-10-29T15284")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
