@@ -239,6 +239,20 @@ do $$ declare n int; begin begin
   perform pg_temp.done('R4 kolor tagu z CSS', n > 0);
 exception when others then perform pg_temp.record(sqlerrm, 'R4 kolor tagu z CSS', sqlstate); end; end $$;
 
+-- R7: tag ze spacją i folder 5000 znaków wprost do tabeli (z pominięciem qb_save_tag).
+do $$ declare n int; begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  insert into public.qb_tags(base_id, name, color) values ('a4000000-0000-4000-8000-000000000001', 'dwa słowa', '#4DA3FF');
+  get diagnostics n = row_count;
+  perform pg_temp.done('R7a tag ze spacją wprost do tabeli', n > 0);
+exception when others then perform pg_temp.record(sqlerrm, 'R7a tag ze spacją wprost do tabeli', sqlstate); end; end $$;
+do $$ declare n int; begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  insert into public.qb_categories(base_id, name) values ('a4000000-0000-4000-8000-000000000001', repeat('z', 5000));
+  get diagnostics n = row_count;
+  perform pg_temp.done('R7b folder 5000 znaków wprost do tabeli', n > 0);
+exception when others then perform pg_temp.record(sqlerrm, 'R7b folder 5000 znaków wprost do tabeli', sqlstate); end; end $$;
+
 -- R5: gość ocenia grę w Społeczności przez RPC.
 do $$ declare ok boolean; begin begin
   perform pg_temp.as_user('90000000-0000-4000-8000-000000000009');

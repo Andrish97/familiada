@@ -453,14 +453,9 @@ test("zapis z pominięciem strony: pytanie dłuższe niż 100 znaków i 7 odpowi
   expect(await questions(page, baseId)).toEqual([]);
 });
 
-// Błąd do naprawy w bazie (nie migracją w tym etapie): okno tagów i RPC
-// qb_save_tag pilnują nazwy tagu (litery, cyfry, _, do 40 znaków), ale
-// polityka qb_tags_write pozwala wstawić tag wprost do tabeli z dowolną nazwą;
-// nazwa folderu (qb_categories.name) nie ma żadnego limitu. test.fail: gdy
-// baza zacznie odrzucać takie zapisy, Playwright zgłosi „nieoczekiwanie
-// przeszedł” — wtedy usunąć test.fail.
+// Zapis wprost do tabeli podlega tym samym zasadom co okno tagów i RPC
+// qb_save_tag (litery, cyfry, _, do 40 znaków); folder do 80 (migracja 515).
 test("zapis z pominięciem strony: tag ze spacją lub 5000 znaków i folder o nazwie 5000 znaków odrzucone", async ({ page, context, accounts, loginAs }) => {
-  test.fail(true, "brak strażnika w bazie: qb_tags.name i qb_categories.name (raport bases-actions)");
   await loginAs(page, context, accounts.standard[0]);
   const baseId = await createBase(page, "directtag");
   const errors = await page.evaluate(async (baseId) => {
