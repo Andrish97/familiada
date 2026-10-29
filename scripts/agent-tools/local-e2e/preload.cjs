@@ -168,14 +168,14 @@ leaseClient.lease = async function ({ worker, needs }) {
   for (const role of ["standard", "noaccount", "disposable"]) {
     for (let i = 0; i < (needs[role] || 0); i++) {
       const name = `e2e.${role}${pad(w * 10 + i + 1)}`;
-      const email = `e2e+${role}${pad(w * 10 + i + 1)}@familiada.online`;
+      const email = `e2e+${role}${pad(w * 10 + i + 1)}@familijna.app`;
       if (role !== "noaccount") ensureUser(email, name, role);
       else execFileSync("psql", [...PSQL, `insert into public.e2e_identities(name,role,email) values ('${name}','noaccount','${email}') on conflict do nothing;`]);
       identities.push({ name, role, email, user_id: role === "noaccount" ? null : uidFor(email), admin_excluded: true });
     }
   }
   for (const purpose of [].concat(needs.dedicated || [])) {
-    const email = `e2e+dedicated${pad(w + 1)}@familiada.online`;
+    const email = `e2e+dedicated${pad(w + 1)}@familijna.app`;
     ensureUser(email, `e2e.dedicated${pad(w + 1)}`, "dedicated");
     identities.push({ name: `e2e.dedicated${pad(w + 1)}`, role: "dedicated", purpose, email, user_id: uidFor(email), admin_excluded: true });
   }

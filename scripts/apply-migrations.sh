@@ -20,7 +20,7 @@ DB_USER="supabase_admin"
 DB_NAME="postgres"
 
 # Dostęp do bazy: domyślnie docker exec (stary serwer); na nowym serwerze konto
-# deploy podaje PSQL="sudo familiada-psql admin" i SCHEMA_DUMP="sudo familiada-schema-dump".
+# deploy podaje PSQL="sudo familijna-psql admin" i SCHEMA_DUMP="sudo familijna-schema-dump".
 PSQL="${PSQL:-docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME}"
 SCHEMA_DUMP="${SCHEMA_DUMP:-}"
 

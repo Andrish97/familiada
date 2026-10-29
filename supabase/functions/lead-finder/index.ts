@@ -3,11 +3,11 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { serviceRoute } from "./routes.js";
 
 // Sterowanie Lead Finderem (familijna-server/docs/lead-finder-nowy-plan.md „Usługa”). Usługa
-// działa tylko w sieci Dockera (familiada-lead-finder:8001), bez adresu
+// działa tylko w sieci Dockera (familijna-lead-finder:8001), bez adresu
 // publicznego. Woła tylko Worker (/_admin_api/leads/*, panel admina za
 // Cloudflare Access) z nagłówkiem X-Internal-Secret = LEAD_FINDER_API_KEY.
 // Ten sam klucz idzie dalej do usługi jako Bearer. Bez CORS.
-const SERVICE_URL = (Deno.env.get("LEAD_FINDER_URL") || "http://familiada-lead-finder:8001").replace(/\/+$/, "");
+const SERVICE_URL = (Deno.env.get("LEAD_FINDER_URL") || "http://familijna-lead-finder:8001").replace(/\/+$/, "");
 
 
 

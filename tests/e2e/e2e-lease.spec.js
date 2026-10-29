@@ -4,7 +4,7 @@
 const { test, expect } = require("./helpers/e2e-test");
 const client = require("./helpers/e2e-lease-client");
 
-const E2E_ADDRESS = /^e2e\+[a-z]+\d{2}@familiada\.online$/;
+const E2E_ADDRESS = /^e2e\+[a-z]+\d{2}@familijna\.app$/;
 
 // Jedna deklaracja na plik (opcja workera): suma potrzeb wszystkich testów pliku.
 test.use({ needs: { standard: 2, noaccount: 1, disposable: 1, dedicated: "e20-gallery", resources: ["mail"] } });
@@ -24,8 +24,8 @@ test.describe("lease: standard + noaccount", () => {
 
   test("skrzynka: własna dostępna, cudza zablokowana", async ({ accounts, mailbox }) => {
     await mailbox.clear(accounts.noaccount[0]);
-    const foreign = accounts.noaccount[0].email === "e2e+noaccount10@familiada.online"
-      ? "e2e+noaccount09@familiada.online" : "e2e+noaccount10@familiada.online";
+    const foreign = accounts.noaccount[0].email === "e2e+noaccount10@familijna.app"
+      ? "e2e+noaccount09@familijna.app" : "e2e+noaccount10@familijna.app";
     const response = await fetch(`https://www.familijna.app/_e2e_api/emails?recipient=${encodeURIComponent(foreign)}`, {
       method: "DELETE", headers: client.headers(),
     });

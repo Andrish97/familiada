@@ -159,8 +159,8 @@ dedykowani agenci (pakiet E planu).
 
 | Role | Name / e-mail | Account | Do czego |
 |---|---|---|---|
-| `standard` | `e2e.standard01` / `e2e+standard01@familiada.online` | tak | wszystko zwyczajne: własne dane, udostępnianie, znajomi, poczta do zalogowanego |
-| `noaccount` | `e2e+noaccount01@familiada.online` | **nigdy** | odbiorca bez konta |
+| `standard` | `e2e.standard01` / `e2e+standard01@familijna.app` | tak | wszystko zwyczajne: własne dane, udostępnianie, znajomi, poczta do zalogowanego |
+| `noaccount` | `e2e+noaccount01@familijna.app` | **nigdy** | odbiorca bez konta |
 | `disposable` | `e2e.disposable01` (+ `e2e+disposable01.new@`) | tak, odtwarzane przy każdym lease | usuwanie konta, hasło, zmiana e-maila, profil |
 | `dedicated` | `e2e.dedicated01` | tak, dane zostają | przypisane na stałe do jednej czynności (tabela niżej) |
 | `guest` | tworzony w teście | tymczasowe | `loginAsGuest`, usuwany na końcu |

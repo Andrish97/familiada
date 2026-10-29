@@ -40,8 +40,8 @@ function leaseRequest(needs = { standard: 1 }, headers = { "X-E2E-Token": token(
 }
 
 const leased = { ok: true, identities: [
-  { name: "e2e.standard01", role: "standard", email: "e2e+standard01@familiada.online", user_id: null, purpose: null },
-  { name: "e2e.noaccount01", role: "noaccount", email: "e2e+noaccount01@familiada.online", user_id: null, purpose: null },
+  { name: "e2e.standard01", role: "standard", email: "e2e+standard01@familijna.app", user_id: null, purpose: null },
+  { name: "e2e.noaccount01", role: "noaccount", email: "e2e+noaccount01@familijna.app", user_id: null, purpose: null },
   { name: "resource.mail01", role: "resource", email: null, user_id: null, purpose: "mail" },
 ] };
 
@@ -55,7 +55,7 @@ test("lease zakłada brakujące konto z e2e_role, odtwarza je i sprawdza wyklucz
     ["/rpc/e2e_lease_release", [200, 1]],
     ["/rpc/e2e_lease", [200, leased]],
     ["/auth/v1/admin/users/u-1", [200, { id: "u-1" }]],
-    ["/auth/v1/admin/users", [200, { id: "u-1", email: "e2e+standard01@familiada.online" }]],
+    ["/auth/v1/admin/users", [200, { id: "u-1", email: "e2e+standard01@familijna.app" }]],
     ["/rpc/e2e_identity_bind", [200, null]],
     ["/rpc/auth_clear_email_change", [200, null]],
     ["/rest/v1/profiles", [200, [{ id: "u-1" }]]],
@@ -105,7 +105,7 @@ test("skrzynka e2e+ tylko dla przebiegu, który ją wypożyczył", async (t) => 
     ["/rpc/e2e_lease_owns", () => [200, owns]],
     ["/rest/v1/e2e_emails", [200, []]],
   ]);
-  const url = `https://www.familijna.app/_e2e_api/emails?recipient=${encodeURIComponent("e2e+noaccount01@familiada.online")}&after=${encodeURIComponent(new Date().toISOString())}`;
+  const url = `https://www.familijna.app/_e2e_api/emails?recipient=${encodeURIComponent("e2e+noaccount01@familijna.app")}&after=${encodeURIComponent(new Date().toISOString())}`;
   const denied = await worker.fetch(new Request(url, { headers: { "X-E2E-Token": token(), "X-E2E-Run": "run-1" } }), env(), {});
   assert.equal(denied.status, 403);
   owns = true;
@@ -131,21 +131,21 @@ function inbound(to, headerTo = to) {
 
 test("poczta e2e+: znana tożsamość do skrzynki testowej, nieznana odrzucona", async (t) => {
   const calls = mockFetch(t, [
-    ["/rpc/e2e_identity", (body) => [200, body.p_email === "e2e+noaccount01@familiada.online" ? { name: "e2e.noaccount01" } : { name: null }]],
+    ["/rpc/e2e_identity", (body) => [200, body.p_email === "e2e+noaccount01@familijna.app" ? { name: "e2e.noaccount01" } : { name: null }]],
     ["/rest/v1/e2e_emails", [201, [{ id: "m" }]]],
   ]);
-  const known = inbound("e2e+noaccount01@familiada.online");
+  const known = inbound("e2e+noaccount01@familijna.app");
   await worker.email(known.message, env(), {});
   assert.equal(known.rejected(), null);
   const saved = calls.find((c) => c.url.includes("/rest/v1/e2e_emails"));
-  assert.equal(saved.body.recipient, "e2e+noaccount01@familiada.online");
+  assert.equal(saved.body.recipient, "e2e+noaccount01@familijna.app");
 
-  const unknown = inbound("e2e+zzz99@familiada.online");
+  const unknown = inbound("e2e+zzz99@familijna.app");
   await worker.email(unknown.message, env(), {});
   assert.ok(unknown.rejected());
   assert.equal(calls.filter((c) => c.url.includes("/rest/v1/e2e_emails")).length, 1);
 
-  const bare = inbound("e2e@familiada.online", "Someone <e2e@familiada.online>");
+  const bare = inbound("e2e@familijna.app", "Someone <e2e@familijna.app>");
   await worker.email(bare.message, env(), {});
   assert.ok(bare.rejected(), "goły e2e@ bez adresu tożsamości");
 });
@@ -155,8 +155,8 @@ test("poczta e2e@ bez +detail: adresat z nagłówka To", async (t) => {
     ["/rpc/e2e_identity", [200, { name: "e2e.standard02" }]],
     ["/rest/v1/e2e_emails", [201, [{ id: "m" }]]],
   ]);
-  const m = inbound("e2e@familiada.online", "Test <e2e+standard02@familiada.online>");
+  const m = inbound("e2e@familijna.app", "Test <e2e+standard02@familijna.app>");
   await worker.email(m.message, env(), {});
   assert.equal(m.rejected(), null);
-  assert.equal(calls.find((c) => c.url.includes("/rest/v1/e2e_emails")).body.recipient, "e2e+standard02@familiada.online");
+  assert.equal(calls.find((c) => c.url.includes("/rest/v1/e2e_emails")).body.recipient, "e2e+standard02@familijna.app");
 });

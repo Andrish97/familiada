@@ -27,7 +27,7 @@ serve(async request => {
     }
     if (!ACTIONS.has(String(body.action))) return json({ ok: false, error: "unknown_action" }, 404);
     if (!["pl", "en", "uk"].includes(String(body.lang))) return json({ ok: false, error: "invalid_language" }, 400);
-    const origin = (Deno.env.get("LEAD_FINDER_URL") || "http://familiada-lead-finder:8001").replace(/\/+$/, "");
+    const origin = (Deno.env.get("LEAD_FINDER_URL") || "http://familijna-lead-finder:8001").replace(/\/+$/, "");
     const { action, ...params } = body;
     const response = await fetch(origin + "/api/questions/" + action, { method: "POST", headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
       body: JSON.stringify(params), signal: AbortSignal.timeout(action === "create" || action === "disassemble" ? 180000 : 20000) });

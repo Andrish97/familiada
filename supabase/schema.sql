@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5dpBdPc0iOAwPnhoBsSbJNYr5raRnq8J124An3CnNo8ODzeSyPrpNoZNrAx4WlF
+\restrict pxE3YgeWk8DvXaB4v2KiuthdkYxSoBXZrUOl6Mt3yClJi9LVEVmmWFqs2Rjgw8r
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7733,7 +7733,7 @@ CREATE TABLE "public"."e2e_identities" (
     CONSTRAINT "e2e_identities_check1" CHECK ((("role" = ANY (ARRAY['dedicated'::"text", 'resource'::"text"])) OR ("purpose" IS NULL))),
     CONSTRAINT "e2e_identities_check2" CHECK ((("role" <> 'resource'::"text") OR ("purpose" IS NOT NULL))),
     CONSTRAINT "e2e_identities_check3" CHECK ((("role" <> ALL (ARRAY['noaccount'::"text", 'resource'::"text"])) OR ("user_id" IS NULL))),
-    CONSTRAINT "e2e_identities_email_check" CHECK ((("email" IS NULL) OR ("email" ~ '^e2e\+[a-z]+[0-9]{2}@familiada\.online$'::"text"))),
+    CONSTRAINT "e2e_identities_email_check" CHECK ((("email" IS NULL) OR ("email" ~ '^e2e\+[a-z]+[0-9]{2}@familijna\.app$'::"text"))),
     CONSTRAINT "e2e_identities_name_check" CHECK (("name" ~ '^(e2e|resource)\.[a-z]+[0-9]{2}$'::"text")),
     CONSTRAINT "e2e_identities_purpose_check" CHECK ((("purpose" IS NULL) OR ("purpose" ~ '^[a-z0-9][a-z0-9-]{1,40}$'::"text"))),
     CONSTRAINT "e2e_identities_role_check" CHECK (("role" = ANY (ARRAY['standard'::"text", 'noaccount'::"text", 'disposable'::"text", 'dedicated'::"text", 'resource'::"text"])))
@@ -12087,7 +12087,7 @@ CREATE FUNCTION "public"."is_test_email"("p_email" "text") RETURNS boolean
     SET "search_path" TO 'public', 'pg_temp'
     AS $_$
   SELECT coalesce(
-    lower(btrim(p_email)) ~ '^e2e\+[a-z0-9.]+@familiada\.online$'
+    lower(btrim(p_email)) ~ '^e2e\+[a-z0-9.]+@(familijna\.app|familiada\.online)$'
     OR EXISTS (SELECT 1 FROM public.profiles p
                WHERE lower(p.email) = lower(btrim(p_email)) AND public.is_test_user(p.id)),
     false);
@@ -19547,7 +19547,7 @@ CREATE TABLE "public"."e2e_emails" (
     "body_html" "text",
     "received_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "expires_at" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
-    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^e2e\+[a-z]+[0-9]{2}(\.new)?@familiada\.online$'::"text"))
+    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^e2e\+[a-z]+[0-9]{2}(\.new)?@familijna\.app$'::"text"))
 );
 
 
@@ -26639,5 +26639,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5dpBdPc0iOAwPnhoBsSbJNYr5raRnq8J124An3CnNo8ODzeSyPrpNoZNrAx4WlF
+\unrestrict pxE3YgeWk8DvXaB4v2KiuthdkYxSoBXZrUOl6Mt3yClJi9LVEVmmWFqs2Rjgw8r
 

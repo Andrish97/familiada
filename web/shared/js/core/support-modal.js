@@ -1,5 +1,5 @@
-import { t } from "../../translation/translation.js?v=v2026-10-29T10071";
-import { icon } from "./icons.js?v=v2026-10-29T10071";
+import { t } from "../../translation/translation.js?v=v2026-10-29T11255";
+import { icon } from "./icons.js?v=v2026-10-29T11255";
 
 // „Postaw kawę”: dobrowolne wsparcie twórcy, bez żadnych korzyści w aplikacji.
 // Filiżanka w stopce (obok Kontaktu, bez napisu) otwiera okno z wyjaśnieniem
@@ -37,10 +37,20 @@ function applyButtonLabels(button) {
 
 // Okno jak inne okna wyboru (np. „Zmień typ” w Moich grach): tekst, lista opcji
 // z radiem, na dole Anuluj i złoty przycisk, który otwiera wybraną kawę.
+// Kliknięcie tuż po wejściu na stronę może wyprzedzić wczytanie słownika.
+function translationsReady() {
+  if (t("support.title") !== "support.title") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.addEventListener("i18n:lang", () => resolve(), { once: true });
+    setTimeout(resolve, 3000);
+  });
+}
+
 export async function openSupportModal() {
   if (!SUPPORT_URL) return false;
+  await translationsReady();
   const [{ confirmModal }, { isSheetViewport }] = await Promise.all([
-    import("./modal.js?v=v2026-10-29T10071"), import("./modal-sheet.js?v=v2026-10-29T10071"),
+    import("./modal.js?v=v2026-10-29T11255"), import("./modal-sheet.js?v=v2026-10-29T11255"),
   ]);
   const box = document.createElement("div");
   box.className = "support-sizes";

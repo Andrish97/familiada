@@ -59,18 +59,18 @@ jobs:
         run: |
           STAGING="/home/deploy/staging/migrations/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "export GITHUB_SHA='${{ github.sha }}' PSQL='sudo familiada-psql admin' SCHEMA_DUMP='sudo familiada-schema-dump'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
+            "export GITHUB_SHA='${{ github.sha }}' PSQL='sudo familijna-psql admin' SCHEMA_DUMP='sudo familijna-schema-dump'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
       - name: Verify active-game settings guard (rollback)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
+            'sudo familijna-psql admin -v ON_ERROR_STOP=1' \
             < docs/sql/test-active-game-settings-guard-381.sql
 
       - name: Verify Control 2 page visibility events (rollback)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'sudo familiada-psql admin -v ON_ERROR_STOP=1' \
+            'sudo familijna-psql admin -v ON_ERROR_STOP=1' \
             < docs/sql/test-control2-page-visibility-393.sql
 
       - name: Fetch schema.sql and migration log

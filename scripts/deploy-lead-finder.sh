@@ -8,7 +8,7 @@ set -euo pipefail
 
 STAGING_DIR="${1:-}"
 TARGET_DIR="/home/andrish97/supabase-selfhost/supabase/docker/services/lead-finder"
-CONTAINER_NAME="familiada-lead-finder"
+CONTAINER_NAME="familijna-lead-finder"
 DOCKER_DIR="/home/andrish97/supabase-selfhost/supabase/docker"
 PORT=8001
 
@@ -49,7 +49,7 @@ rsync -az --delete --checksum \
 
 # Build Docker image
 echo "🐳 Building Docker image..."
-docker build -t familiada-lead-finder:latest "$TARGET_DIR/"
+docker build -t familijna-lead-finder:latest "$TARGET_DIR/"
 
 # Remove old image to prevent stale layers
 echo "🧹 Cleaning old image..."
@@ -67,7 +67,7 @@ docker run -d \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
   --network="supabase_default" \
-  familiada-lead-finder:latest
+  familijna-lead-finder:latest
 
 # Wait for container to start
 sleep 5
