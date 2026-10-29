@@ -50,6 +50,7 @@ const pl = {
       resolving: "Sprawdzanie kodu…",
       codeNotFound: "Nie znaleziono urządzenia dla tego kodu. Sprawdź czy kod jest poprawny.",
       tooManyAttempts: "Zbyt wiele nieudanych prób. Spróbuj ponownie za kilka minut.",
+      networkError: "Nie udało się połączyć. Sprawdź połączenie internetowe i spróbuj ponownie.",
       previewGame: "Gra:",
       previewOwner: "Właściciel:",
     },
