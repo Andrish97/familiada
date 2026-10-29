@@ -89,12 +89,15 @@ const probe = async (page, i, kb) => page.evaluate(async ({ i, kb, GAP, TOL }) =
     const hit = document.elementFromPoint(cx, cy);
     if (hit && hit !== el && !el.contains(hit) && !hit.contains(el) && !el.labels?.[0]?.contains(hit)) problems.push(`zasłonięte przez ${hit.className || hit.tagName}`);
   }
-  // Zamknięcie klawiatury i powrót.
-  window.__kbSet(0);
-  el.blur();
-  await new Promise((r) => setTimeout(r, 500));
   return { needed: Math.round(needed), moved: Math.round(moved), problems };
 }, { i, kb, GAP, TOL });
+
+// Zamknięcie klawiatury i powrót.
+const closeKeyboard = (page) => page.evaluate(async () => {
+  window.__kbSet(0);
+  document.activeElement?.blur?.();
+  await new Promise((r) => setTimeout(r, 500));
+});
 
 async function checkScene(browser, origin, scene, deviceName, buildGameState) {
   const device = DEVICES[deviceName];
@@ -118,6 +121,11 @@ async function checkScene(browser, origin, scene, deviceName, buildGameState) {
     const fields = await page.evaluate(listFields);
     for (const f of fields) {
       const r = await probe(page, f.i, device.kb);
+      // SHOTS=katalog: zrzut przy błędzie (klawiatura jeszcze otwarta).
+      if (process.env.SHOTS && r.problems?.length) {
+        await page.screenshot({ path: require("node:path").join(process.env.SHOTS, `${scene.id}-${deviceName}-${String(f.label).replace(/[^\w-]+/g, "_")}.png`) });
+      }
+      if (!r.skip) await closeKeyboard(page);
       out.push({ field: f.label, ...r });
     }
   } catch (e) {

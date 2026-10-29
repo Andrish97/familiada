@@ -1257,7 +1257,7 @@
   }
 
   @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
-  @keyframes sheetDown { from { transform: translateY(calc(var(--sheet-drag, 0px) - var(--sheet-keyboard, 0px))); } to { transform: translateY(100%); } }
+  @keyframes sheetDown { from { transform: translateY(calc(var(--sheet-drag, 0px) - var(--keyboard-lift, 0px))); } to { transform: translateY(100%); } }
   @keyframes sheetScrimIn { from { background-color: transparent; } }
   @keyframes sheetScrimOut { to { background-color: transparent; } }
   @keyframes contact-captcha-in {
@@ -2859,9 +2859,9 @@
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
   /* Klawiatura ekranowa zasłania stronę (device-attrs.js): układ się nie
-     zmienia. Długa strona dostaje pod treścią niewidoczny zapas wysokości
-     klawiatury, żeby pole z samego dołu dało się postawić nad klawiaturą. */
-  :where(:root[data-keyboard]) body:not(.page-fit)::after {
+     zmienia. Pole z samego dołu strony: zapas wysokości klawiatury za
+     <body> (html::after), żeby dało się je postawić nad klawiaturą. */
+  :root[data-keyboard-room]::after {
     content: "";
     display: block;
     height: var(--keyboard-h, 0px);
@@ -2913,10 +2913,10 @@
     will-change: transform;
   }
   /* Klawiatura zasłoniłaby pole na dole okna, którego treść nie ma już dokąd
-     się przewinąć: okno podjeżdża o --sheet-keyboard (device-attrs.js). */
-  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-keyboard .modal {
+     się przewinąć: okno podjeżdża o --keyboard-lift (device-attrs.js). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.keyboard-lift .modal {
     animation: none;
-    transform: translateY(calc(var(--sheet-drag, 0px) - var(--sheet-keyboard, 0px)));
+    transform: translateY(calc(var(--sheet-drag, 0px) - var(--keyboard-lift, 0px)));
     transition: transform .25s var(--ease-out);
   }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
@@ -3276,6 +3276,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  /* Pole w części bez przewijania (np. dolny pasek list) zasłoniłaby
+     klawiatura: treść podjeżdża pod górnym paskiem (device-attrs.js). */
+  body.page-fit > main.keyboard-lift {
+    transform: translateY(calc(-1 * var(--keyboard-lift, 0px)));
+    transition: transform .25s var(--ease-out);
   }
 
   /* ── Pasek tytułu listy ───────────────────────────────────────── */

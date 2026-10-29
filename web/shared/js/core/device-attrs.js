@@ -6,8 +6,9 @@
 //   data-compact     układ telefonu: telefon albo okno do 600 px
 //   data-sheet       okna od dołu: dotyk (bez TV) albo okno do 600 px
 //   data-keyboard    klawiatura ekranowa otwarta (dotyk, aktywne pole);
-//                    --keyboard-h: jej wysokość (zapas pod treścią długiej
-//                    strony, żeby dało się podnieść pole z samego dołu)
+//                    --keyboard-h: jej wysokość
+//   data-keyboard-room  zapas pod treścią (html::after), gdy pole z samego
+//                    dołu strony trzeba podnieść ponad koniec strony
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
 import "./page-layout.js?v=v2026-10-29T13443";
 import { editableFocused } from "./device-guard.js?v=v2026-10-29T13443";
@@ -56,8 +57,8 @@ function keyboardHeight() {
 
 const scrollable = (node) => /(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight;
 
-/** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery, okno od
- * dołu (podjeżdża, gdy treść nie ma dokąd się przewinąć), potem strona. */
+/** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery, potem
+ * okno od dołu lub treść strony bez przewijania (podjeżdża), potem strona. */
 function revealAboveKeyboard(el, kb) {
   const rect = el.getBoundingClientRect();
   const topbarBottom = document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
@@ -70,17 +71,26 @@ function revealAboveKeyboard(el, kb) {
     if (step > 0) { node.scrollBy({ top: step, behavior: "smooth" }); delta -= step; }
   }
   if (delta <= 0) return;
-  const sheet = el.closest(".modal--sheet.sheet-active");
-  if (sheet) {
-    const shift = Math.min(kb, (parseFloat(sheet.style.getPropertyValue("--sheet-keyboard")) || 0) + delta);
-    sheet.style.setProperty("--sheet-keyboard", `${Math.round(shift)}px`);
-    sheet.classList.add("sheet-keyboard");
-  } else window.scrollBy({ top: delta, behavior: "smooth" });
+  // Okno od dołu albo treść strony bez przewijania (.page-fit, np. dolny
+  // pasek list z wyszukiwaniem) podjeżdża razem z klawiaturą.
+  const lift = el.closest(".modal--sheet.sheet-active") || el.closest("body.page-fit > main");
+  if (lift) {
+    const shift = Math.min(kb, (parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) + delta);
+    lift.style.setProperty("--keyboard-lift", `${Math.round(shift)}px`);
+    lift.classList.add("keyboard-lift");
+  } else {
+    // Zapas pod treścią tylko wtedy, gdy strona nie ma dokąd się przewinąć
+    // (poza układem strony: html::after, wyśrodkowane strony nie drgną).
+    const room = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+    if (room < delta) document.documentElement.toggleAttribute("data-keyboard-room", true);
+    window.scrollBy({ top: delta, behavior: "smooth" });
+  }
 }
 
-/** Klawiatura zamknięta: okno od dołu zjeżdża na swoje miejsce. */
-function settleSheets() {
-  for (const sheet of document.querySelectorAll(".modal--sheet.sheet-keyboard")) sheet.style.setProperty("--sheet-keyboard", "0px");
+/** Klawiatura zamknięta: podniesione okno lub treść zjeżdża na swoje miejsce. */
+function settleLifted() {
+  document.documentElement.removeAttribute("data-keyboard-room");
+  for (const el of document.querySelectorAll(".keyboard-lift")) el.style.setProperty("--keyboard-lift", "0px");
 }
 
 // Jedno ustawienie naraz: płynne przewijanie trwa, a pomiar w jego trakcie
@@ -108,7 +118,7 @@ function applyKeyboard() {
   root.toggleAttribute("data-keyboard", kb > 0);
   root.style.setProperty("--keyboard-h", `${kb}px`);
   if (kb > 0) scheduleReveal();
-  else settleSheets();
+  else settleLifted();
 }
 
 /** Inne pole przy otwartej klawiaturze: to samo ustawienie bez czekania na zmianę klawiatury. */
