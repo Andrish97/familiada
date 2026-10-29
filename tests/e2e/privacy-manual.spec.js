@@ -11,7 +11,18 @@ test.use({ needs: { standard: 1 } });
 // Na produkcji treść Wskazówek przychodzi gotowa z Workera i odnośniki da się
 // kliknąć, zanim manual.js je przechwyci (wtedy działają jak zwykłe linki, bez
 // from=). Testy zachowania JS czekają na gotowość strony.
-const manualReady = (page) => expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true");
+const manualReady = async (page) => {
+  const t0 = Date.now();
+  try {
+    await expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true", { timeout: 15000 });
+  } finally {
+    // [e2e-diag]: czas do gotowości i zasoby Wskazówek, które jeszcze się wczytywały.
+    const slow = await page.evaluate(() => performance.getEntriesByType("resource")
+      .filter((e) => e.duration > 1500 || !e.responseEnd)
+      .map((e) => `${new URL(e.name).pathname} ${Math.round(e.duration)}ms`).slice(0, 12)).catch(() => []);
+    console.log(`[e2e-diag] manual ready po ${Date.now() - t0} ms; wolne zasoby: ${slow.join(", ") || "brak"}`);
+  }
+};
 
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
