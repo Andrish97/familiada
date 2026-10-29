@@ -10,6 +10,8 @@ const { pl, en, uk } = dictionaries;
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
 const require = createRequire(import.meta.url);
+// Na branchu CI ustawia E2E_WEB_ROOT (zbudowany artefakt) — serveBranchCode serwuje wtedy z niego.
+const webRoot = process.env.E2E_WEB_ROOT ? path.resolve(process.env.E2E_WEB_ROOT) : path.join(root, "web");
 const { localFileFor, serveBranchCode } = require("../e2e/helpers/branch-code.js");
 const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 
@@ -45,12 +47,12 @@ test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => 
 });
 
 test("serveBranchCode mapuje zagnieżdżony edytor DRAW na jego własny index.html", () => {
-  assert.equal(localFileFor("/logos/editor/draw/", ["logos"]), path.join(root, "web/logos/editor/draw/index.html"));
+  assert.equal(localFileFor("/logos/editor/draw/", ["logos"]), path.join(webRoot, "logos/editor/draw/index.html"));
 });
 
 test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HTML strony", () => {
-  assert.equal(localFileFor("/manual/js/manual.js", ["manual"]), path.join(root, "web/manual/js/manual.js"));
-  assert.equal(localFileFor("/privacy/js/privacy.js", ["privacy"]), path.join(root, "web/privacy/js/privacy.js"));
+  assert.equal(localFileFor("/manual/js/manual.js", ["manual"]), path.join(webRoot, "manual/js/manual.js"));
+  assert.equal(localFileFor("/privacy/js/privacy.js", ["privacy"]), path.join(webRoot, "privacy/js/privacy.js"));
 });
 
 test("polski interfejs używa nazwy Strona główna", () => {
@@ -85,7 +87,7 @@ test("FAQ opisuje aktualny tryb gościa i Gry Społeczności tak samo w PL/EN/UK
 test("serveBranchCode podmienia kod login, zachowując HTML Workera i Turnstile", () => {
   assert.equal(localFileFor("/login/", ["subscribers"]), null);
   assert.equal(localFileFor("/login/index.html", ["subscribers"]), null);
-  assert.equal(localFileFor("/login/js/login.js", ["subscribers"]), path.join(root, "web/login/js/login.js"));
+  assert.equal(localFileFor("/login/js/login.js", ["subscribers"]), path.join(webRoot, "login/js/login.js"));
 });
 
 test("serveBranchCode oddaje dalszą obsługę żądań zewnętrznych kolejnym handlerom testu", async () => {
