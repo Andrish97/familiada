@@ -122,7 +122,7 @@ Requirements:
 - from 3 to 20 characters,
 - only letters, digits and the characters `_` `.` `-`,
 - the name must not be taken by someone else; some names are reserved
-  (for example ones starting with "admin" or "familiada").
+  (for example ones starting with "admin" or "familijna").
 
 To change your name, open *Account settings*, enter a new one in the "Username" section
 and choose [Save name]. You can change your name once an hour.
