@@ -72,8 +72,12 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
       return;
     }
     if (pendingRefetch) {
+      // Zakolejkowany odczyt zachowuje źródło (np. rpc_doorbell) — bez tego
+      // seria dzwonków w finale dawała fallback_applied z trigger "rpc"
+      // (eksport 29.10, 10:07–10:12).
+      const source = pendingRefetch === true ? undefined : pendingRefetch;
       pendingRefetch = false;
-      void fetchGuarded();
+      void fetchGuarded(source);
     }
   }
 
@@ -105,7 +109,7 @@ export function createRowSync({ fetchRow, onRow, onError, onProgress = null, onR
   }
 
   async function fetchGuarded(source = "rpc") {
-    if (fetching) { pendingRefetch = true; return; }
+    if (fetching) { pendingRefetch = source; return; }
     fetching = true;
     try {
       await fetchOnce(source);

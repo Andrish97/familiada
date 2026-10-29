@@ -199,3 +199,22 @@ test("przerwanie obsługi wiersza (AbortError) nie jest raportowane jako błąd 
   assert.equal(progress.length, 1);
   assert.equal(progress[0].renderError, null);
 });
+
+test("odczyt zakolejkowany w trakcie innego zachowuje źródło (rpc_doorbell)", async () => {
+  const sources = [];
+  let rev = 1;
+  let release;
+  const sync = createRowSync({
+    fetchRow: () => new Promise((resolve) => { release = () => resolve({ data: row(rev++) }); }),
+    onRow: () => {},
+    onReadStatus: ({ source }) => sources.push(source),
+  });
+  const first = sync.fetchGuarded("rpc_doorbell");
+  await sync.fetchGuarded("rpc_doorbell"); // w trakcie pierwszego — do kolejki
+  release();
+  await first;
+  await tick();
+  release();
+  await tick();
+  assert.deepEqual(sources, ["rpc_doorbell", "rpc_doorbell"]);
+});
