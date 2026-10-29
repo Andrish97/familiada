@@ -241,9 +241,12 @@ export async function createScene() {
   const updateField = async (GLYPHS, big, f, text, { out = null, in: inn = null, color = LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
     const normalizeOpts = (a) => { if (!a) return undefined; const opts = {}; if (a.pixel) opts.pixel = true; if (a.pxBatch != null) opts.pxBatch = a.pxBatch; if (a.stepPxMs != null) opts.stepPxMs = a.stepPxMs; if (a.tileMs != null) opts.tileMs = a.tileMs; return opts; };
-    if (out) { const type = out.type || "edge"; const step = normMs(out.ms, 20); if (type === "edge") await anim.outEdge(big, area, out.dir || "left", step, normalizeOpts(out)); else if (type === "matrix") await anim.outMatrix(big, area, out.axis || "down", step, normalizeOpts(out)); writeField(GLYPHS, big, f, text, color); }
-    else writeField(GLYPHS, big, f, text, color);
-    if (inn) { const type = inn.type || "edge"; const step = normMs(inn.ms, 20); if (type === "edge") await anim.inEdge(big, area, inn.dir || "left", step, normalizeOpts(inn)); else if (type === "matrix") await anim.inMatrix(big, area, inn.axis || "down", step, normalizeOpts(inn)); }
+    if (out) { const type = out.type || "edge"; const step = normMs(out.ms, 20); if (type === "edge") await anim.outEdge(big, area, out.dir || "left", step, normalizeOpts(out)); else if (type === "matrix") await anim.outMatrix(big, area, out.axis || "down", step, normalizeOpts(out)); }
+    // Bez zejścia wejście nadpisuje dotychczasową zawartość pola (kropki,
+    // stare punkty) czołem fali, zamiast najpierw gasić całe pole.
+    const from = inn && !out ? snapArea(big, area.c1, area.r1, area.c2, area.r2) : null;
+    writeField(GLYPHS, big, f, text, color);
+    if (inn) { const type = inn.type || "edge"; const step = normMs(inn.ms, 20); const opts = { ...normalizeOpts(inn), from }; if (type === "edge") await anim.inEdge(big, area, inn.dir || "left", step, opts); else if (type === "matrix") await anim.inMatrix(big, area, inn.axis || "down", step, opts); }
   };
 
   // ============================

@@ -71,6 +71,26 @@ export function createAnimator({
   };
 
   // ===== helpers do iteracji po kafelkach =====
+  // Stan początkowy animacji wejścia: pusto albo poprzednia zawartość pola
+  // (opts.from — zrzut sprzed zmiany). Z poprzednią zawartością czoło fali
+  // nadpisuje stare znaki (np. kropki odpowiedzi) zamiast gasić całe pole
+  // naraz przed odsłanianiem.
+  const paintStart = (big, A, opts) => {
+    const from = opts?.from;
+    if (!from) { clearArea(big, A.c1, A.r1, A.c2, A.r2); return; }
+    for (let r = A.r1; r <= A.r2; r++) {
+      for (let c = A.c1; c <= A.c2; c++) {
+        const t = tileAt(big, c, r);
+        const tile = from[r - A.r1]?.[c - A.c1];
+        if (!t) continue;
+        if (!tile) { clearTileAt(big, c, r); continue; }
+        for (let py = 0; py < 7; py++) {
+          for (let px = 0; px < 5; px++) t.dots[py][px].setAttribute("fill", tile[py][px]);
+        }
+      }
+    }
+  };
+
   const makeTileGrid = (area) => {
     const cols = [];
     for (let c = area.c1; c <= area.c2; c++) cols.push(c);
@@ -137,8 +157,8 @@ export function createAnimator({
     // snapshot docelowego stanu
     const snap = snapArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    // wyczyść cały obszar zanim zaczniemy rysować
-    clearArea(big, A.c1, A.r1, A.c2, A.r2);
+    // wyczyść obszar (albo pokaż poprzednią zawartość) zanim zaczniemy rysować
+    paintStart(big, A, opts);
 
     const order = buildEdgeTileOrder(A, dir);
     const steps = order.length || 1;
@@ -185,8 +205,8 @@ export function createAnimator({
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
     const snap = snapArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    // czyścimy obszar
-    clearArea(big, A.c1, A.r1, A.c2, A.r2);
+    // czyścimy obszar (albo zostawiamy poprzednią zawartość do nadpisania)
+    paintStart(big, A, opts);
 
     const Wt = A.c2 - A.c1 + 1; // liczba kafelków w poziomie
     const Ht = A.r2 - A.r1 + 1; // liczba kafelków w pionie

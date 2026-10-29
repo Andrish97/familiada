@@ -94,3 +94,19 @@ test("hidden page finishes the animation without waiting for frames", async (t) 
   assert.equal(result, "done", "ukryta karta nie może czekać na klatki, bo Control czeka na potwierdzenie planszy");
   assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "on")));
 });
+
+test("matrix entry over previous content overwrites it at the wave front instead of blanking the field", async () => {
+  const tiles = Array.from({ length: 2 }, () => ({ dots: Array.from({ length: 7 }, () => Array.from({ length: 5 }, () => ({ fill: "new", setAttribute(_, fill) { this.fill = fill; } }))) }));
+  let cleared = 0;
+  const seen = [];
+  const animator = createAnimator({
+    tileAt: (_, col) => tiles[col - 1], clearTileAt() { cleared++; }, clearArea() { cleared++; }, dotOff: "off",
+    snapArea: () => [tiles.map(() => Array.from({ length: 7 }, () => Array(5).fill("new")))],
+    wait: async () => { seen.push(tiles[1].dots[0][4].fill); },
+  });
+  const from = [tiles.map(() => Array.from({ length: 7 }, () => Array(5).fill("old")))];
+  await animator.inMatrix({}, { c1: 1, c2: 2, r1: 1, r2: 1 }, "right", 10, { from });
+  assert.equal(cleared, 0, "field is not blanked before the wave");
+  assert.equal(seen[0], "old", "the far end still shows the old content when the wave starts");
+  assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "new")));
+});
