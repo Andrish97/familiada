@@ -38,3 +38,22 @@ test('wersje zależą od treści importu, a niezależne zasoby zachowują URL', 
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('zmiana części słownika zmienia wersję translation.js (części dziedziczą jego ?v=)', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'asset-hash-i18n-'));
+  const file = (name) => path.join(root, name);
+  const write = (name, data) => { fs.mkdirSync(path.dirname(file(name)), { recursive: true }); fs.writeFileSync(file(name), data); };
+  const version = () => fs.readFileSync(file('index.html'), 'utf8').match(/translation\.js\?v=(h[0-9a-f]+)/)[1];
+  try {
+    write('index.html', '<script type="module" src="/shared/translation/translation.js?v=vOLD"></script>');
+    write('shared/translation/translation.js', 'const v = new URL(import.meta.url).search;');
+    write('shared/translation/pl/control.js', 'export default { control: { a: "A" } };');
+    contentHashAssets(root);
+    const first = version();
+    write('shared/translation/pl/control.js', 'export default { control: { a: "A", b: "B" } };');
+    contentHashAssets(root);
+    assert.notEqual(version(), first);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

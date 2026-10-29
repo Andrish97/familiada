@@ -69,6 +69,16 @@ function contentHashAssets(root) {
     records.set(file, { base: hex(normalized), refs });
   }
   for (const [key, images] of virtuals) records.set(key, { base: hex(images.map(image => hex(fs.readFileSync(image))).join('\n')), refs: [] });
+  // translation.js wczytuje części słownika (<lang>/<część>.js) dynamicznie
+  // z własnym ?v= — bez tej zależności zmiana tekstu nie zmieniała URL-a
+  // i Worker podawał starą część z pamięci (2026-10-29: surowe klucze
+  // control.deviceOfflineText w Control na produkcji).
+  const translationModule = path.join(root, 'shared/translation/translation.js');
+  if (records.has(translationModule)) {
+    const partsRoot = path.dirname(translationModule) + path.sep;
+    const parts = files.filter(file => file.startsWith(partsRoot) && /^[a-z]{2}[\\/][^\\/]+\.js$/.test(file.slice(partsRoot.length)));
+    records.get(translationModule).refs.push(...parts.map(target => ({ url: path.relative(partsRoot, target).split(path.sep).join('/'), target })));
+  }
 
   const hashes = new Map();
   const visiting = new Set();
