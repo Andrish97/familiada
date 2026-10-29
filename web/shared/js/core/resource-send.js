@@ -154,7 +154,10 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
           toast(t("resourceSend.sent", { count: ids.length }));
           await onDone?.();
         } catch (sendError) {
-          errorNode.textContent = t(`resourceSend.errors.${sendError.message}`) || t("resourceSend.errors.failed");
+          // t() zwraca sam klucz, gdy nie ma tekstu dla kodu (np. copy_failed) -- wtedy ogólny komunikat.
+          const errorKey = `resourceSend.errors.${sendError.message}`;
+          const errorText = t(errorKey);
+          errorNode.textContent = errorText && errorText !== errorKey ? errorText : t("resourceSend.errors.failed");
         } finally {
           submit.disabled = false;
           onState?.();
