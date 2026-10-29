@@ -462,7 +462,8 @@ exception when others then
 end; end $$;
 -- 516: nazwa e2e.<role><NN> przy rejestracji -- zostaje dla adresu tożsamości
 -- testowej (L20, konto zakładane ponownie formularzem), obcy adres jej nie
--- dostanie (K5c).
+-- dostanie (K5c). 517: takie konto (bez user_id w e2e_identities) od razu
+-- wykluczone ze statystyk i list admina (L21), zwykłe nie (K5d).
 do $$ begin begin
   if not exists (select 1 from pg_trigger where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created') then
     create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
@@ -474,11 +475,54 @@ do $$ begin begin
     ('d0000000-0000-4000-8000-0000000000f3', 'obcy@inny.test', '{"username":"e2e.disposable99"}');
   perform pg_temp.done('L20 rejestracja tożsamości testowej z jej nazwą',
     (select username from public.profiles where id = 'd0000000-0000-4000-8000-0000000000f2') is distinct from 'e2e.disposable99');
+exception when others then
+  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L20', sqlstate);
+  else perform pg_temp.as_admin(); insert into probe values ('L20 rejestracja tożsamości testowej z jej nazwą', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+end; end $$;
+do $$ begin begin
+  if not exists (select 1 from pg_trigger where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created') then
+    create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+  end if;
+  insert into public.reserved_username_prefixes(prefix, kind) values ('e2e.', 'test') on conflict do nothing;
+  insert into public.e2e_identities(name, role, email) values ('e2e.disposable99', 'disposable', 'e2e+disposable99@familijna.app') on conflict do nothing;
+  insert into auth.users(id, email, raw_user_meta_data) values
+    ('d0000000-0000-4000-8000-0000000000f2', 'e2e+disposable99@familijna.app', '{"username":"e2e.disposable99"}'),
+    ('d0000000-0000-4000-8000-0000000000f3', 'obcy@inny.test', '{"username":"e2e.disposable99"}');
   perform pg_temp.done('K5c obcy adres z nazwą tożsamości testowej',
     (select username from public.profiles where id = 'd0000000-0000-4000-8000-0000000000f3') is not null);
 exception when others then
-  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L20/K5c', sqlstate);
-  else perform pg_temp.as_admin(); insert into probe values ('L20 rejestracja tożsamości testowej z jej nazwą', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'K5c', sqlstate);
+  else perform pg_temp.as_admin(); insert into probe values ('K5c obcy adres z nazwą tożsamości testowej', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+end; end $$;
+do $$ begin begin
+  if not exists (select 1 from pg_trigger where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created') then
+    create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+  end if;
+  insert into public.reserved_username_prefixes(prefix, kind) values ('e2e.', 'test') on conflict do nothing;
+  insert into public.e2e_identities(name, role, email) values ('e2e.disposable99', 'disposable', 'e2e+disposable99@familijna.app') on conflict do nothing;
+  insert into auth.users(id, email, raw_user_meta_data) values
+    ('d0000000-0000-4000-8000-0000000000f2', 'e2e+disposable99@familijna.app', '{"username":"e2e.disposable99"}'),
+    ('d0000000-0000-4000-8000-0000000000f3', 'obcy@inny.test', '{"username":"e2e.disposable99"}');
+  perform pg_temp.done('L21 konto tożsamości testowej wykluczone od założenia',
+    not exists (select 1 from public.stats_exclusions_effective where user_id = 'd0000000-0000-4000-8000-0000000000f2'));
+exception when others then
+  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L21', sqlstate);
+  else perform pg_temp.as_admin(); insert into probe values ('L21 konto tożsamości testowej wykluczone od założenia', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+end; end $$;
+do $$ begin begin
+  if not exists (select 1 from pg_trigger where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created') then
+    create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+  end if;
+  insert into public.reserved_username_prefixes(prefix, kind) values ('e2e.', 'test') on conflict do nothing;
+  insert into public.e2e_identities(name, role, email) values ('e2e.disposable99', 'disposable', 'e2e+disposable99@familijna.app') on conflict do nothing;
+  insert into auth.users(id, email, raw_user_meta_data) values
+    ('d0000000-0000-4000-8000-0000000000f2', 'e2e+disposable99@familijna.app', '{"username":"e2e.disposable99"}'),
+    ('d0000000-0000-4000-8000-0000000000f3', 'obcy@inny.test', '{"username":"e2e.disposable99"}');
+  perform pg_temp.done('K5d zwykłe konto nie trafia do wykluczeń',
+    exists (select 1 from public.stats_exclusions_effective where user_id = 'd0000000-0000-4000-8000-0000000000f3'));
+exception when others then
+  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'K5d', sqlstate);
+  else perform pg_temp.as_admin(); insert into probe values ('K5d zwykłe konto nie trafia do wykluczeń', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
 end; end $$;
 -- TV: kod podany przez Control rozwiązuje Worker (service_role) -- klucz otwartej ankiety.
 do $$ declare r jsonb; c text; begin begin
