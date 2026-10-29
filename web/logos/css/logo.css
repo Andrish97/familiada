@@ -126,6 +126,17 @@
 
   body.page-fit.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
 
+  /* Klawiatura ekranowa (data-keyboard, device-attrs.js): tablet w poziomie
+     ma wtedy ok. 400 px wysokości i podgląd znikał. Chowamy to, czego się
+     teraz nie edytuje (pole nazwy, gdy pisze się w innym polu, podpowiedź
+     pod podglądem), żeby podgląd był widoczny podczas pisania. */
+  :root[data-keyboard] .editorShell > .name-field:not(:focus-within),
+  :root[data-keyboard] #paneText .imgCard > .imgCardTitle,
+  :root[data-keyboard] .editorShell .imgCard > .hint{ display: none; }
+  :root[data-keyboard] #paneText.pane > .imgCard{ padding: 0; border: 0; background: none; }
+  :root[data-keyboard] #paneText .imgPrevWrap{ padding: 4px; }
+  :root[data-keyboard] .editorShell .editorContent{ padding: 8px; }
+
   /* karta edytora —
      .card.games-card (specificity 0,2,0) ma overflow:hidden, więc
      musimy bić go selektorem o tej samej lub wyższej specyficzności */
