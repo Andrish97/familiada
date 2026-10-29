@@ -1,4 +1,4 @@
-import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-29T03210";
+import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-29T03435";
 
 
 export function createPressController({ getRow, render, send, applyRow, refetch, onAccepted, onError }) {
