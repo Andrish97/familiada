@@ -11,15 +11,34 @@
 
   const isTouch = () => navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
 
-  /** Aktywne pole tekstowe (klawiatura ekranowa na dotyku może być otwarta). */
-  function editableFocused() {
-    if (typeof document === "undefined") return false;
-    const el = document.activeElement;
+  function isEditable(el) {
     if (!el || el === document.body) return false;
     if (el.isContentEditable) return true;
     const tag = String(el.tagName || "").toLowerCase();
     if (tag === "textarea" || tag === "select") return true;
     return tag === "input" && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(el.type || "");
+  }
+
+  /** Aktywne pole tekstowe (klawiatura ekranowa na dotyku może być otwarta). */
+  function editableFocused() {
+    return typeof document !== "undefined" && isEditable(document.activeElement);
+  }
+
+  // Zamykanie klawiatury: pole traci fokus, zanim okno wróci do pełnej
+  // wysokości. Przez tę chwilę niskie okno nie jest „za małym oknem”,
+  // a tablet w pionie nie jest poziomy („Obróć urządzenie” mignięciem przy
+  // zamykaniu klawiatury, zgłoszenie 2026-10-29).
+  const KEYBOARD_CLOSE_MS = 1000;
+  let editableBlurAt = -Infinity;
+  if (typeof document !== "undefined") {
+    document.addEventListener("focusout", (event) => {
+      if (isEditable(event.target)) editableBlurAt = Date.now();
+    }, true);
+  }
+
+  /** Klawiatura ekranowa może być otwarta albo właśnie się zamyka. */
+  function keyboardLikely() {
+    return editableFocused() || Date.now() - editableBlurAt < KEYBOARD_CLOSE_MS;
   }
 
   // Orientacja z ekranu, nie z okna, gdy klawiatura może być otwarta:
@@ -48,7 +67,7 @@
     const screenHeight = Number(window.screen?.height) || height;
     return {
       formFactor: isTv ? "tv" : touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
-      orientation: (touch && editableFocused() && screenOrientation()) || (width >= height ? "landscape" : "portrait"),
+      orientation: (touch && keyboardLikely() && screenOrientation()) || (width >= height ? "landscape" : "portrait"),
       viewportWidth: width,
       viewportHeight: height,
       screenShortSide: short,
@@ -75,7 +94,7 @@
   }
 
 
-  globalThis.FamilijnaDevice = { getDeviceProfile, editableFocused, deviceLayout, PHONE_MAX_SHORT_SIDE, NARROW_MAX };
+  globalThis.FamilijnaDevice = { getDeviceProfile, editableFocused, keyboardLikely, KEYBOARD_CLOSE_MS, deviceLayout, PHONE_MAX_SHORT_SIDE, NARROW_MAX };
   if (typeof document === "undefined" || typeof window === "undefined") return;
   const root = document.documentElement;
   const next = deviceLayout();
