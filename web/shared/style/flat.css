@@ -1257,7 +1257,7 @@
   }
 
   @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
-  @keyframes sheetDown { from { transform: translateY(var(--sheet-drag, 0px)); } to { transform: translateY(100%); } }
+  @keyframes sheetDown { from { transform: translateY(calc(var(--sheet-drag, 0px) - var(--sheet-keyboard, 0px))); } to { transform: translateY(100%); } }
   @keyframes sheetScrimIn { from { background-color: transparent; } }
   @keyframes sheetScrimOut { to { background-color: transparent; } }
   @keyframes contact-captcha-in {
@@ -2858,8 +2858,14 @@
   .sheet-modal-actions[hidden] { display: none; }
 
   :where(:root[data-sheet]) body.sheet-open { overflow: hidden; }
-  /* Klawiatura ekranowa (device-attrs.js): stopka nie zabiera miejsca przy pisaniu. */
-  :where(:root[data-keyboard]) .footer { display: none; }
+  /* Klawiatura ekranowa zasłania stronę (device-attrs.js): układ się nie
+     zmienia. Długa strona dostaje pod treścią niewidoczny zapas wysokości
+     klawiatury, żeby pole z samego dołu dało się postawić nad klawiaturą. */
+  :where(:root[data-keyboard]) body:not(.page-fit)::after {
+    content: "";
+    display: block;
+    height: var(--keyboard-h, 0px);
+  }
 
   :where(:root[data-sheet]) body.sheet-open .overlay.modal--sheet:not(.sheet-active) { display: none; }
 
@@ -2905,6 +2911,13 @@
     transform: translateY(var(--sheet-drag, 0px));
     animation: sheetUp var(--dur-sheet-in) var(--ease-sheet) both;
     will-change: transform;
+  }
+  /* Klawiatura zasłoniłaby pole na dole okna, którego treść nie ma już dokąd
+     się przewinąć: okno podjeżdża o --sheet-keyboard (device-attrs.js). */
+  :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-keyboard .modal {
+    animation: none;
+    transform: translateY(calc(var(--sheet-drag, 0px) - var(--sheet-keyboard, 0px)));
+    transition: transform .25s var(--ease-out);
   }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-dragging .modal { animation: none; transition: none; }
   :where(:root[data-sheet]) .modal--sheet.sheet-active.sheet-settling .modal { animation: none; transition: transform .22s var(--ease-out); }

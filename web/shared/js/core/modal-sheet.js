@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-29T13443";
-import { dialogAllowed } from "./nav-map.js?v=v2026-10-29T13443";
-import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-29T13443";
+import { t } from "../../translation/translation.js?v=v2026-10-29T13493";
+import { dialogAllowed } from "./nav-map.js?v=v2026-10-29T13493";
+import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-29T13493";
 
 // Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
 // obsługa dla wszystkich okien .overlay); „Anuluj” z [data-modal-cancel] też
@@ -19,7 +19,7 @@ import { isSheetLayout, onDeviceChange } from "./device-attrs.js?v=v2026-10-29T1
 // już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
 // zostają otwarte.
 const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
-  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-29T13443"])`).join(", ");
+  .map((head) => `${head} button:has(use[href*="/close.svg?v=v2026-10-29T13493"])`).join(", ");
 // Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
 const visibleCloseButton = (root) => {
   const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
@@ -147,7 +147,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-29T13443").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-29T13493").then((module) => module.openContactModal());
 
     }, 0);
     return;
@@ -439,8 +439,9 @@ export function animateClose(overlay, done) {
     clearTimeout(timer);
     target.removeEventListener("animationend", onEnd);
     for (const fn of dones) fn();
-    overlay.classList.remove("sheet-closing", "is-closing");
+    overlay.classList.remove("sheet-closing", "is-closing", "sheet-keyboard");
     overlay.style.removeProperty("--sheet-drag");
+    overlay.style.removeProperty("--sheet-keyboard");
   }
   closing.set(overlay, { finish, dones });
   target.addEventListener("animationend", onEnd);
@@ -494,7 +495,8 @@ function enterModalSheet(overlayEl, { onClose, onBack, historyKey = overlayEl?.i
     overlayEl.addEventListener("scroll", () => { if (overlayEl.scrollTop) overlayEl.scrollTop = 0; });
   }
   overlayEl?.style.removeProperty("--sheet-drag");
-  overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling");
+  overlayEl?.style.removeProperty("--sheet-keyboard");
+  overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling", "sheet-keyboard");
   applyPresentation(true);
   fitSheetTop(overlayEl);
   requestAnimationFrame(() => { if (activeOverlay === overlayEl) fitSheetTop(overlayEl); });
