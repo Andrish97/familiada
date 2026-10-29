@@ -471,6 +471,85 @@ exception when others then
   else perform pg_temp.as_admin(); insert into probe values ('L11b TV: kod Wyświetlacza trwającej sesji (Worker)', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
 end; end $$;
 
+-- ---------------------------------------------- współdzielenie (podręcznik 10–14)
+-- S1: autor ocenia własną opublikowaną grę przez RPC (13.3: „Nie można ocenić własnej gry”).
+do $$ declare r record; begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  select * into r from public.market_rate_game('a3000000-0000-4000-8000-000000000001', 5);
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S1 autor ocenia własną grę (RPC)', exists (select 1 from public.market_game_ratings
+    where market_game_id = 'a3000000-0000-4000-8000-000000000001' and user_id = 'a0000000-0000-4000-8000-00000000000a'), coalesce(r.err, ''));
+exception when others then perform pg_temp.record(sqlerrm, 'S1 autor ocenia własną grę (RPC)', sqlstate); end; end $$;
+
+-- S2: gość zaprasza konto do znajomych (10.1: gość nie może mieć znajomych).
+do $$ begin begin
+  perform pg_temp.as_user('90000000-0000-4000-8000-000000000009');
+  perform public.friends_invite('probe_a');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S2 gość zaprasza do znajomych', exists (select 1 from public.friendships
+    where '90000000-0000-4000-8000-000000000009' in (requester_id, addressee_id)));
+exception when others then perform pg_temp.record(sqlerrm, 'S2 gość zaprasza do znajomych', sqlstate); end; end $$;
+
+-- S3: konto zaprasza gościa po nazwie.
+do $$ declare r jsonb; begin begin
+  perform pg_temp.as_user('b0000000-0000-4000-8000-00000000000b');
+  r := public.friends_invite('guest_probe');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S3 zaproszenie gościa do znajomych', exists (select 1 from public.friendships
+    where '90000000-0000-4000-8000-000000000009' in (requester_id, addressee_id)), coalesce(r->>'err', ''));
+exception when others then perform pg_temp.record(sqlerrm, 'S3 zaproszenie gościa do znajomych', sqlstate); end; end $$;
+
+-- S4: obcy (B) usuwa albo cofa cudzą znajomość A–C.
+do $$ begin begin
+  perform pg_temp.as_user('b0000000-0000-4000-8000-00000000000b');
+  perform public.friends_remove('a8000000-0000-4000-8000-000000000001');
+  perform public.friends_cancel('a8000000-0000-4000-8000-000000000001');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S4 obcy usuwa cudzą znajomość', not exists (select 1 from public.friendships
+    where id = 'a8000000-0000-4000-8000-000000000001' and status = 'active' and cancelled_at is null));
+exception when others then perform pg_temp.record(sqlerrm, 'S4 obcy usuwa cudzą znajomość', sqlstate); end; end $$;
+
+-- S5: udostępnienie bazy gościowi (12.2: zaproszona osoba musi mieć konto).
+do $$ begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  perform public.base_share_by_user('a4000000-0000-4000-8000-000000000001', 'guest_probe'::text, 'viewer');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S5 udostępnienie bazy gościowi', exists (select 1 from public.base_share_tasks
+    where recipient_user_id = '90000000-0000-4000-8000-000000000009'));
+exception when others then perform pg_temp.record(sqlerrm, 'S5 udostępnienie bazy gościowi', sqlstate); end; end $$;
+
+-- S6: osoba z edycją (C) udostępnia dalej, zmienia rolę lub nazwę cudzej bazy (12.4: tylko właściciel).
+do $$ begin begin
+  perform pg_temp.as_user('c0000000-0000-4000-8000-00000000000c');
+  perform public.base_share_by_user('a4000000-0000-4000-8000-000000000001', 'probe_b'::text, 'editor');
+  perform public.update_base_share_role('a4000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-00000000000c', 'viewer');
+  perform public.rename_resource_checked('base', 'a4000000-0000-4000-8000-000000000001', 'przejęta');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S6 edytor udostępnia/zmienia cudzą bazę',
+    exists (select 1 from public.base_share_tasks where base_id = 'a4000000-0000-4000-8000-000000000001')
+    or not exists (select 1 from public.question_base_shares where base_id = 'a4000000-0000-4000-8000-000000000001' and user_id = 'c0000000-0000-4000-8000-00000000000c' and role = 'editor')
+    or not exists (select 1 from public.question_bases where id = 'a4000000-0000-4000-8000-000000000001' and name = 'SEKRET_A baza'));
+exception when others then perform pg_temp.record(sqlerrm, 'S6 edytor udostępnia/zmienia cudzą bazę', sqlstate); end; end $$;
+
+-- S7: zgłoszenie do Społeczności kopii ze Społeczności (B) i cudzej gry (A) (13.5).
+do $$ begin begin
+  perform pg_temp.as_user('b0000000-0000-4000-8000-00000000000b');
+  perform public.market_submit_game('b1000000-0000-4000-8000-000000000001', 'kopia', '', 'pl', '{}'::jsonb);
+  perform public.market_submit_game('a1000000-0000-4000-8000-000000000001', 'cudza', '', 'pl', '{}'::jsonb);
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S7 zgłoszenie kopii ze Społeczności lub cudzej gry', exists (select 1 from public.market_games
+    where author_user_id = 'b0000000-0000-4000-8000-00000000000b'));
+exception when others then perform pg_temp.record(sqlerrm, 'S7 zgłoszenie kopii ze Społeczności lub cudzej gry', sqlstate); end; end $$;
+
+-- S8: gość dodaje subskrybenta (14: subskrybenci tylko dla kont).
+do $$ begin begin
+  perform pg_temp.as_user('90000000-0000-4000-8000-000000000009');
+  perform public.subscribers_invite('sub-g@probe.test');
+  perform pg_temp.as_admin();
+  perform pg_temp.done('S8 gość dodaje subskrybenta', exists (select 1 from public.poll_subscriptions
+    where owner_id = '90000000-0000-4000-8000-000000000009'));
+exception when others then perform pg_temp.record(sqlerrm, 'S8 gość dodaje subskrybenta', sqlstate); end; end $$;
+
 select code as sonda, case when leak then 'LUKA' else 'ok' end as wynik, note as uwagi from probe order by code;
 do $$ declare bad text; begin
   select string_agg(code, ', ' order by code) into bad from probe where leak;

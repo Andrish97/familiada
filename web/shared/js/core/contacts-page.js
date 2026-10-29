@@ -62,8 +62,13 @@ export async function initContactsPage(pageId) {
         focusRow(result.id);
         return;
       }
+      // Odmowy z serwera, które użytkownik może poprawić sam (siebie, zła nazwa,
+      // zły adres, adres wypisany ze wszystkich wiadomości).
+      const known = { self: "self", unknown_user: "unknownUser", invalid_email: "invalidEmail", notifications_disabled: "notificationsDisabled" };
       toast(result?.err === "cooldown" ? t("contacts.errors.cooldown", { date: new Date(result.cooldown_until).toLocaleString() })
-        : result?.err === "already" ? t("contacts.errors.already") : t("contacts.errors.action"), { kind: "error" });
+        : result?.err === "already" ? t("contacts.errors.already")
+        : Object.hasOwn(known, result?.err || "") ? t(`contacts.errors.${known[result.err]}`)
+        : t("contacts.errors.action"), { kind: "error" });
       console.warn("[contacts] action:", error);
     }
   }

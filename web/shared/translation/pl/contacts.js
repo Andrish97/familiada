@@ -48,7 +48,11 @@ const pl = {
         "emailOnly": "Do tego maila nie jest przypisane konto w systemie Familijna — możesz dodać tę osobę jako subskrybenta.",
         "cooldown": "Kolejne zaproszenie można wysłać po: {date}.",
         "already": "Ta osoba jest już na liście.",
-        "action": "Nie udało się wykonać akcji."
+        "action": "Nie udało się wykonać akcji.",
+        "self": "Nie możesz zaprosić samego siebie.",
+        "unknownUser": "Nie ma konta o takiej nazwie użytkownika. Wpisz pełną nazwę albo adres e-mail.",
+        "invalidEmail": "Wpisz poprawny adres e-mail.",
+        "notificationsDisabled": "Ta osoba zrezygnowała ze wszystkich wiadomości Familijnej — nie można jej zaprosić."
     },
     "mail": {
         "friendTitle": "{owner} zaprasza Cię do znajomych w Familijnej",
