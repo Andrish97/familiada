@@ -1,5 +1,5 @@
-import { sb } from "./supabase.js?v=v2026-10-29T04160";
-import { t } from "../../translation/translation.js?v=v2026-10-29T04160";
+import { sb } from "./supabase.js?v=v2026-10-29T04380";
+import { t } from "../../translation/translation.js?v=v2026-10-29T04380";
 
 // Wstępne sprawdzenie; zapis profilu nadal rozstrzyga konflikt w bazie.
 export async function ensureUsernameAvailable(username) {
