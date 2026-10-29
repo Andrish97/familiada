@@ -1150,7 +1150,9 @@ export function initDrawEditor(ctx) {
       const prop = baseTool === TOOL.ERASER ? "size" : "stroke";
       if (s?.[prop] == null) return;
       ev.preventDefault();
-      s[prop] = clamp(s[prop] + (k === "]" ? 1 : -1), 1, 50);
+      // ten sam zakres co pole grubości / gumki (poniżej 5 kropki znikają)
+      const [lo, hi] = baseTool === TOOL.ERASER ? RANGE.eraser : RANGE.stroke;
+      s[prop] = clamp(s[prop] + (k === "]" ? 1 : -1), lo, hi);
       if (baseTool === TOOL.BRUSH) applyBrushStyle();
       updateCursor();
       renderSettings();
