@@ -58,8 +58,10 @@ function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
   node.title = text(label); node.setAttribute('aria-label', text(label)); node.innerHTML = icon(name);
   if (href) {
-    const link = new URL(href, location.origin);
-    if (link.origin !== location.origin || link.pathname !== '/go/') throw new Error('invalid_source_link');
+    let link = null;
+    try { link = new URL(href, location.origin); } catch {}
+    // Link spoza serwisu albo nie do /go/: wiersz bez odnośnika, reszta listy działa.
+    if (!link || link.origin !== location.origin || link.pathname !== '/go/') return null;
     node.href = link.pathname + link.search;
   } else { node.type = 'button'; node.addEventListener('click', () => perform(act)); }
   return node;
@@ -92,7 +94,8 @@ function row(item) {
     if (item.status === 'pending') actions.append(actionIcon('check', 'accept', () => sourceAction(item, 'accept')));
     actions.append(actionIcon(sharingActionIcon('withdraw'), item.status === 'active' ? 'withdraw' : 'decline', () => sourceAction(item, 'decline')));
   } else {
-    actions.append(actionIcon('arrow-right', item.kind === 'poll' ? 'vote' : 'connect', null, item.link));
+    const open = actionIcon('arrow-right', item.kind === 'poll' ? 'vote' : 'connect', null, item.link);
+    if (open) actions.append(open);
     if (item.kind === 'poll') actions.append(actionIcon(sharingActionIcon('decline'), 'decline', () => sourceAction(item, 'decline')));
   }
   node.append(kind, copy, actions); return node;

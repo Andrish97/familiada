@@ -130,7 +130,7 @@ At the bottom of every page there is a [Contact] button. In the "Contact us" win
 - "Subject" and "Message" — describe the problem,
 - "Ticket number (optional)" — if you are writing about an earlier report,
   your message will be added to it,
-- "Attachments" — up to 5 files of 5 MB each, for example screenshots.
+- "Attachments" — up to 5 files of 5 MB each, for example screenshots; files over the limit are listed as skipped and are not sent.
 
 After sending, you get a ticket number. To help solve the problem faster, write:
 
