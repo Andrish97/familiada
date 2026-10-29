@@ -97,3 +97,14 @@ test("ukryty wąż: /snake/ tylko z linkiem z kodu QR (id demo), bez niego 404",
     assert.equal(isLockedSnake(u(path)), false, path);
   }
 });
+
+// Zgłoszenie 2026-10-29: na telefonie link pod planszą węża (.snake-links
+// z display:flex) wygrywał z .snake-desktop { display:none } i spychał planszę
+// poza ekran; przyciski w rogach leżały na planszy.
+test("wąż: na dotyku bez linków pod planszą, przyciski w pasie nad planszą", () => {
+  const css = fs.readFileSync(new URL("../../web/snake/css/snake.css", import.meta.url), "utf8");
+  const touch = css.slice(css.indexOf("@media (pointer: coarse)"));
+  assert.match(touch, /\.snake-wrap \.snake-desktop \{ display: none; \}/);
+  assert.match(touch, /padding: calc\(var\(--safe-top\) \+ var\(--snake-bar\)\)/);
+  assert.match(touch, /- var\(--snake-bar\)\) \* 16 \/ 9\)/);
+});
