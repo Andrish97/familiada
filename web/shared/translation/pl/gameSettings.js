@@ -181,7 +181,8 @@ const pl = {
       reveal: "Odsłanianie",
     },
     "sfxResetAll": "Przywróć domyślne",
-    "sfxTooLong": "Maksymalna długość to {limit}s"
+    "sfxTooLong": "Maksymalna długość to {limit}s",
+    "sfxNotAudio": "To nie jest plik dźwiękowy. Wybierz plik mp3, wav lub ogg."
   },
 };
 

@@ -181,7 +181,8 @@ const en = {
       reveal: "Reveals and board transitions",
     },
     "sfxResetAll": "Restore defaults",
-    "sfxTooLong": "Maximum length is {limit}s"
+    "sfxTooLong": "Maximum length is {limit}s",
+    "sfxNotAudio": "This is not an audio file. Choose an mp3, wav or ogg file."
   },
 };
 
