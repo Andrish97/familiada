@@ -70,7 +70,8 @@ ${["shared/style/tokens.css", "shared/style/base.css", "shared/style/components.
       Object.assign(state.settings, DEFAULT_SETTINGS, { hasFinal: true }, patch.settings || {});
       state.step = patch.step || "r_roundStart";
       state.phase = patch.phase || "READY";
-      state.final.picked = picked;
+      state.final.picked = patch.picked || picked;
+      state.final.confirmed = patch.confirmed ?? true;
       render();
     },
     dispatch: (action) => { queue = queue.then(() => engine.dispatch(action)).then(render); return queue; },
@@ -413,4 +414,28 @@ test("17.3 kradzież rozstrzygnięta: kafle odpowiedzi nieaktywne, 3 i Enter nie
   const after = await rounds(page);
   expect(after.bankPts).toBe(before.bankPts);
   expect(after.revealed).toEqual(before.revealed);
+});
+
+test("17.2/17.6 podsumowanie: E i B z Enter (ustawienia, powrót), N i Enter startuje grę; bez 5 pytań finału [Gotowe] nieaktywne", async ({ page }) => {
+  await openHarness(page, { step: "setup_finish", phase: null, picked: ["f1", "f2", "f3", "f4"] });
+  const start = page.locator("#app [data-c2-summary-start]");
+  await expect(start).toBeVisible();
+  await expect(start).toBeDisabled();
+  await press(page, "n");
+  await press(page, "Enter");
+  await start.click({ force: true });
+  const actions = () => st(page, () => window.__h.events.map((e) => e.action));
+  expect(await actions()).not.toContain("setup.start");
+
+  await press(page, "e");
+  await press(page, "Enter");
+  await press(page, "b");
+  await press(page, "Enter");
+  expect(await actions()).toEqual(expect.arrayContaining(["setup.openSettings", "setup.back"]));
+
+  await page.evaluate(() => window.__h.setup({ step: "setup_finish", phase: null }));
+  await expect(start).toBeEnabled();
+  await press(page, "n");
+  await press(page, "Enter");
+  expect((await actions()).filter((a) => a === "setup.start")).toHaveLength(1);
 });
