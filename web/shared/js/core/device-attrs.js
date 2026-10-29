@@ -57,6 +57,36 @@ function keyboardHeight() {
 
 const scrollable = (node) => /(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight;
 
+// Cele rozpoczętych płynnych ruchów (kontener → docelowe scrollTop). Pomiar
+// w trakcie ruchu liczy pole tam, gdzie dojedzie, więc kolejne ustawienie
+// (druga zmiana klawiatury, wolne urządzenie) nie dokłada ruchu drugi raz.
+const scrollTargets = new Map();
+const liftedBox = (lift) => (lift.classList.contains("overlay") ? lift.querySelector(":scope > .modal") : lift);
+
+/** Ile pole jeszcze przejedzie w górę w trwających ruchach. */
+function pendingMove(el) {
+  let px = 0;
+  for (const [node, target] of scrollTargets) {
+    const current = node === document.scrollingElement ? window.scrollY : node.scrollTop;
+    if (Math.abs(target - current) < 1) { scrollTargets.delete(node); continue; }
+    if (node === document.scrollingElement || node.contains(el)) px += target - current;
+  }
+  for (const lift of document.querySelectorAll(".keyboard-lift")) {
+    if (!lift.contains(el)) continue;
+    const box = liftedBox(lift);
+    const now = -(parseFloat(getComputedStyle(box || lift).translate.split(" ")[1]) || 0);
+    px += (parseFloat(lift.style.getPropertyValue("--keyboard-lift")) || 0) - now;
+  }
+  return px;
+}
+
+function smoothScroll(node, step) {
+  const isPage = node === document.scrollingElement;
+  const from = scrollTargets.get(node) ?? (isPage ? window.scrollY : node.scrollTop);
+  scrollTargets.set(node, from + step);
+  (isPage ? window : node).scrollTo({ top: from + step, behavior: "smooth" });
+}
+
 /** Przesuń pole tuż nad klawiaturę, jeśli je zasłania: kontenery z
  * przewijaniem, potem okno (.overlay) lub treść strony bez przewijania
  * (.page-fit, np. dolny pasek list) podjeżdża, a na zwykłej stronie --
@@ -66,16 +96,20 @@ function revealAboveKeyboard(el, kb) {
   const lift = overlay || el.closest("body.page-fit > main");
   // Podniesienia innego miejsca (fokus przeszedł gdzie indziej) nie trzymamy.
   for (const other of document.querySelectorAll(".keyboard-lift")) if (other !== lift) other.classList.remove("keyboard-lift");
+  const pending = pendingMove(el);
   const rect = el.getBoundingClientRect();
+  const top = rect.top - pending;
+  const bottom = rect.bottom - pending;
   // Okno zasłania górny pasek, więc wtedy granicą jest góra ekranu.
   const topbarBottom = overlay ? 0 : document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
   // Pole wyższe niż widoczna część: jego górny brzeg zostaje pod paskiem.
-  let delta = Math.min(rect.bottom - (window.innerHeight - kb - FIELD_GAP), rect.top - topbarBottom - FIELD_GAP);
+  let delta = Math.round(Math.min(bottom - (window.innerHeight - kb - FIELD_GAP), top - topbarBottom - FIELD_GAP));
   if (delta <= 0) return;
   for (let node = el.parentElement; node && node !== document.body && delta > 0; node = node.parentElement) {
     if (!scrollable(node)) continue;
-    const step = Math.min(delta, node.scrollHeight - node.clientHeight - node.scrollTop);
-    if (step > 0) { node.scrollBy({ top: step, behavior: "smooth" }); delta -= step; }
+    const at = scrollTargets.get(node) ?? node.scrollTop;
+    const step = Math.min(delta, node.scrollHeight - node.clientHeight - at);
+    if (step > 0) { smoothScroll(node, step); delta -= step; }
   }
   if (delta <= 0) return;
   if (lift) {
@@ -85,14 +119,16 @@ function revealAboveKeyboard(el, kb) {
   } else {
     // Zapas pod treścią tylko wtedy, gdy strona nie ma dokąd się przewinąć
     // (poza układem strony: html::after, wyśrodkowane strony nie drgną).
-    const room = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+    const at = scrollTargets.get(document.scrollingElement) ?? window.scrollY;
+    const room = document.documentElement.scrollHeight - window.innerHeight - at;
     if (room < delta) document.documentElement.toggleAttribute("data-keyboard-room", true);
-    window.scrollBy({ top: delta, behavior: "smooth" });
+    smoothScroll(document.scrollingElement, delta);
   }
 }
 
 /** Klawiatura zamknięta: podniesione okno lub treść zjeżdża na swoje miejsce. */
 function settleLifted() {
+  scrollTargets.clear();
   document.documentElement.removeAttribute("data-keyboard-room");
   for (const el of document.querySelectorAll(".keyboard-lift")) el.style.setProperty("--keyboard-lift", "0px");
 }

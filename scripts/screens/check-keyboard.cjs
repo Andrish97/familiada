@@ -71,8 +71,12 @@ const probe = async (page, i, kb) => page.evaluate(async ({ i, kb, GAP, TOL }) =
   addEventListener("scroll", onScroll, true);
   el.focus({ preventScroll: true });
   await new Promise((r) => setTimeout(r, 60));
+  // Dwie zmiany w trakcie otwierania (połowa, potem całość): drugie
+  // ustawienie nie może dołożyć ruchu ponad potrzebę.
+  window.__kbSet(Math.round(kb / 2));
+  await new Promise((r) => setTimeout(r, 80));
   window.__kbSet(kb);
-  await new Promise((r) => setTimeout(r, 1100));
+  await new Promise((r) => setTimeout(r, 1300));
   removeEventListener("scroll", onScroll, true);
   const after = el.getBoundingClientRect();
   const moved = before.top - after.top;
@@ -160,6 +164,7 @@ async function checkScene(browser, origin, scene, deviceName, buildGameState) {
       for (const r of res) {
         if (r.skip) { if (process.env.VERBOSE) console.log(`  – ${scene.id} ${d} ${r.field || ""}: ${r.skip}`); continue; }
         checked++;
+        if (process.env.VERBOSE) console.log(`  · ${scene.id} ${d} ${r.field}: potrzeba ${r.needed}, ruch ${r.moved}${r.problems.length ? " ✗" : ""}`);
         if (!r.problems.length) continue;
         const key = `${scene.path.split("?")[0]}|${d}|${r.field}|${r.problems.join(";")}`;
         if (reported.has(key)) continue;
