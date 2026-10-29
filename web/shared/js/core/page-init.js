@@ -107,6 +107,18 @@ function wireBack(id, user, opts, d) {
   });
 }
 
+function presetLinks(id, opts) {
+  const btn = elementOf(opts.back, "btnBack");
+  const href = btn?.tagName === "A" ? backHref(id, { anon: true }) : null; // bez ret: rodzic publiczny
+  if (href) btn.setAttribute("href", href);
+  // Linki przycisków mapy (np. „Polityka prywatności” we Wskazówkach) też od razu
+  // z ?ret=; widoczność wg roli rozstrzyga później wireButtons.
+  for (const [bid, spec] of Object.entries(PAGES[id].buttons || {})) {
+    const link = document.getElementById(bid);
+    if (link?.tagName === "A" && !spec.custom && !buttonBlocked(spec)) link.setAttribute("href", buttonHref(spec));
+  }
+}
+
 function wireManual(id, user, opts) {
   const btn = elementOf(opts.manual, "btnManual");
   if (!btn) return;
@@ -230,6 +242,9 @@ export async function initPage(id, opts = {}) {
 async function initializePage(id, opts, finishLayout) {
   const p = PAGES[id];
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
+  // Linki topbara (Wskazówki, Prywatność) są klikalne, zanim skończy się
+  // sprawdzanie sesji — od razu adresy z mapy (?ret=), nie zapasowe z HTML.
+  presetLinks(id, opts);
   const d = opts.deps || await loadDeps();
 
   // Guard jest pierwszą bramką. Nie pytamy o sesję ani nie odsłaniamy strony,
