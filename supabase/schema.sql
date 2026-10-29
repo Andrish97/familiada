@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pxE3YgeWk8DvXaB4v2KiuthdkYxSoBXZrUOl6Mt3yClJi9LVEVmmWFqs2Rjgw8r
+\restrict wlafyS7SeVpi7pT1wt9iQY1wRbjT0htMpqsefuO5mbfFj7tH3ou05XIISwBLHGg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1855,6 +1855,56 @@ CREATE FUNCTION "public"."_game_poll_reset"("p_game_id" "uuid") RETURNS "text"
 BEGIN
   RETURN public._game_poll_clear(p_game_id, true);
 END $$;
+
+
+--
+-- Name: _game_state_broadcast_devices(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_state_broadcast_devices"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_target record;
+BEGIN
+  IF to_regprocedure('realtime.send(jsonb,text,text,boolean)') IS NULL THEN
+    RETURN NULL;
+  END IF;
+  FOR v_target IN
+    SELECT slot.primary_connection_id AS connection_id
+    FROM public.control_runtime_sessions s
+    JOIN public.control_device_slots slot ON slot.session_id = s.id
+    WHERE s.game_id = NEW.game_id AND s.device_protocol = 2
+      AND s.ended_at IS NULL AND s.expires_at > clock_timestamp()
+      AND slot.game_id = NEW.game_id
+      AND slot.primary_connection_id IS NOT NULL
+      AND slot.lease_expires_at > clock_timestamp()
+  LOOP
+    BEGIN
+      PERFORM realtime.send(
+        jsonb_build_object('row', to_jsonb(NEW)),
+        'state',
+        format('game-state:%s:%s', NEW.game_id, v_target.connection_id),
+        true
+      );
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING 'game_state broadcast failed: %', SQLSTATE;
+    END;
+  END LOOP;
+  RETURN NULL;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'game_state broadcast skipped: %', SQLSTATE;
+  RETURN NULL;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION "_game_state_broadcast_devices"(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."_game_state_broadcast_devices"() IS 'Sends each game_state change to the private Realtime topic of every current primary device connection (game-state:<game_id>:<connection_id>). Never fails the write.';
 
 
 --
@@ -6395,6 +6445,35 @@ BEGIN
     AND s.control_version = 2 AND s.ended_at IS NULL;
 END;
 $$;
+
+
+--
+-- Name: control_device_broadcast_topic_valid("text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_broadcast_topic_valid"("p_topic" "text", "p_claims" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" STABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_game uuid;
+BEGIN
+  IF p_topic IS NULL OR p_claims IS NULL THEN RETURN false; END IF;
+  v_game := (p_claims ->> 'game_id')::uuid;
+  IF p_topic <> format('game-state:%s:%s', v_game, (p_claims ->> 'connection_id')::uuid) THEN
+    RETURN false;
+  END IF;
+  RETURN public.control_device_realtime_claim_valid(v_game, p_claims);
+EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+  RETURN false;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION "control_device_broadcast_topic_valid"("p_topic" "text", "p_claims" "jsonb"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."control_device_broadcast_topic_valid"("p_topic" "text", "p_claims" "jsonb") IS 'Realtime Authorization for game-state:<game_id>:<connection_id>: the device JWT must name this exact connection and hold the live primary lease.';
 
 
 --
@@ -23465,6 +23544,13 @@ CREATE TRIGGER "game_sessions_link_runtime" BEFORE INSERT ON "public"."game_sess
 
 
 --
+-- Name: game_state game_state_broadcast_devices; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "game_state_broadcast_devices" AFTER INSERT OR UPDATE ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."_game_state_broadcast_devices"();
+
+
+--
 -- Name: game_state game_state_track_session; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -26639,5 +26725,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pxE3YgeWk8DvXaB4v2KiuthdkYxSoBXZrUOl6Mt3yClJi9LVEVmmWFqs2Rjgw8r
+\unrestrict wlafyS7SeVpi7pT1wt9iQY1wRbjT0htMpqsefuO5mbfFj7tH3ou05XIISwBLHGg
 
